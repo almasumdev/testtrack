@@ -1,0 +1,109 @@
+import java.util.Properties
+
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+}
+
+/**
+ * Config that must not be committed.
+ *
+ * Precedence is environment variable first so CI can inject without a file, then
+ * `local.properties`, which is gitignored. Nothing here has a real default: a missing key
+ * produces an empty string and a loud warning rather than a value that silently half-works.
+ *
+ * See local.properties.example for the keys.
+ */
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun secret(key: String): String {
+    val value = System.getenv(key) ?: localProperties.getProperty(key)
+    if (value.isNullOrBlank()) {
+        logger.warn("WARNING: $key is not set. Add it to local.properties — see local.properties.example.")
+        return ""
+    }
+    return value
+}
+
+android {
+    namespace = "com.eazyverse.testtrack"
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = "com.eazyverse.testtrack"
+        minSdk = 26
+        targetSdk = 35
+        versionCode = 1
+        versionName = "0.1.0"
+
+        buildConfigField("String", "WEB_CLIENT_ID", "\"${secret("TESTTRACK_WEB_CLIENT_ID")}\"")
+        buildConfigField("String", "GATE_URL", "\"${secret("TESTTRACK_GATE_URL")}\"")
+        buildConfigField("String", "GROUP_URL", "\"${secret("TESTTRACK_GROUP_URL")}\"")
+    }
+
+    /**
+     * Release signing, if a keystore is configured. Skipped otherwise so a fresh clone still
+     * builds debug without any setup. Google sign-in is bound to the signing certificate, so a
+     * release build needs its SHA-1 registered in the Cloud console or sign-in fails at runtime.
+     */
+    val storePath = System.getenv("TESTTRACK_KEYSTORE") ?: localProperties.getProperty("TESTTRACK_KEYSTORE")
+    signingConfigs {
+        if (!storePath.isNullOrBlank() && file(storePath).exists()) {
+            create("release") {
+                storeFile = file(storePath)
+                storePassword = System.getenv("TESTTRACK_KEYSTORE_PASSWORD")
+                    ?: localProperties.getProperty("TESTTRACK_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("TESTTRACK_KEY_ALIAS")
+                    ?: localProperties.getProperty("TESTTRACK_KEY_ALIAS")
+                keyPassword = System.getenv("TESTTRACK_KEY_PASSWORD")
+                    ?: localProperties.getProperty("TESTTRACK_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("release")
+        }
+        debug {
+            applicationIdSuffix = ".debug"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+}
+
+dependencies {
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.activity.compose)
+
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.navigation.compose)
+    debugImplementation(libs.androidx.ui.tooling)
+}

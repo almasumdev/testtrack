@@ -1,0 +1,18 @@
+*.iml
+.gradle/
+.kotlin/
+/local.properties
+/.idea/
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Secrets. Config values live in local.properties and reach the app through
+# BuildConfig; see local.properties.example for the keys required.
+secrets.properties
+*.keystore
+*.jks
+google-services.json
