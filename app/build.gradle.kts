@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.services)
 }
 
 /**
@@ -34,11 +35,13 @@ android {
     compileSdk = 35
 
     defaultConfig {
+        // No build-type suffix: the Firebase app and the registered signing SHA-1 are both bound
+        // to this exact id, and a suffixed debug build would match neither.
         applicationId = "com.eazyverse.testtrack"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
 
         buildConfigField("String", "WEB_CLIENT_ID", "\"${secret("TESTTRACK_WEB_CLIENT_ID")}\"")
         buildConfigField("String", "GATE_URL", "\"${secret("TESTTRACK_GATE_URL")}\"")
@@ -72,9 +75,6 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.findByName("release")
         }
-        debug {
-            applicationIdSuffix = ".debug"
-        }
     }
 
     compileOptions {
@@ -106,4 +106,19 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
     debugImplementation(libs.androidx.ui.tooling)
+
+    // Identity — the Google ID token the membership service verifies.
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+
+    // Authorization — a Drive access token. Separate concern from identity.
+    implementation(libs.play.services.auth)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+
+    implementation(libs.okhttp)
+    implementation(libs.coil.compose)
 }

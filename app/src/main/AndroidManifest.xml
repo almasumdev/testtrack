@@ -1,8 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!--
+      Proof that a tester installed an owner's app, and the ability to open it from the list.
+
+      protectionLevel "normal" — granted silently at install, no prompt and no Settings trip.
+      Gives installed yes/no, the installing package, and firstInstallTime, which is the
+      continuous-install streak retroactively. Only viable because TestTrack is distributed
+      directly rather than through Play, where this is a restricted permission.
+    -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <!-- MediaProjection only runs from a foreground service of this type since Android 14. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!--
+      Returning to TestTrack after capturing someone else's app is a background activity launch,
+      which Android refuses outright (BAL_BLOCK). Holding this is the documented exemption.
+      Optional: without it capture still works and the tester switches back by hand.
+    -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
         android:allowBackup="true"
@@ -23,6 +48,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".data.CaptureService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
     </application>
 
 </manifest>

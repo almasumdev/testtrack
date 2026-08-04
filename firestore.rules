@@ -1,0 +1,44 @@
+rules_version = '2';
+
+// TestTrack access rules.
+//
+// Everyone signed in is a member of the same swap group, so reads are open across the group —
+// the grid needs other testers' names and proofs by design. Writes are locked to the owning
+// account in every case.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Names shown in owners' grids. Only you can write your own record.
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // An owner registers their own app and can correct it.
+    //
+    // `status` is pinned to "pending" on write so a client cannot approve itself; an admin
+    // flips it to "approved" from the Firebase console. That is the whole approval mechanism,
+    // and it is deliberate: verifying a Play track automatically needs developer-level
+    // authorization from every owner, which costs more than a human glance.
+    match /apps/{appId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.auth.uid == request.resource.data.ownerUid
+        && request.resource.data.status == 'pending';
+      allow delete: if false;
+    }
+
+    // Proof of one tester's visit to one app on one day. Document ids are
+    // {appId}__{testerUid}__{day}, so re-posting overwrites rather than duplicating.
+    match /proofs/{proofId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.auth.uid == request.resource.data.testerUid;
+      allow delete: if false;
+    }
+  }
+}

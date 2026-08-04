@@ -7,9 +7,22 @@ can apply for production access. Groups of developers form to test each other's 
 coordination usually happens in a WhatsApp thread full of screenshots. TestTrack replaces that
 thread: every member posts proof from the app, and each owner reviews their own 14-day grid.
 
-> **Status: early.** This repository is the production rewrite. The working prototype it is based
-> on proved out group verification, Drive-hosted proof and automated screenshot capture; those
-> land here piece by piece.
+## The daily loop
+
+```
+onboarding -> sign in -> setup checklist -> today's list
+                                              |
+                    tap an app --> it opens --> 8s --> proof captured --> back here
+                                              |
+                                    uploaded to your Drive
+                                    recorded against day N
+```
+
+Confirm screen sharing **once**; every app that day is captured under that single grant. Each app
+is opened deliberately by the tester — nothing is scripted, so the proof reflects a real visit.
+
+Owners get a grid: every tester down one side, all 14 days across the top. Green posted, red
+missed, grey still to come. Tapping a green cell shows the screenshot.
 
 ---
 
@@ -88,15 +101,40 @@ reinstall, for one extra page of proof.
 
 ---
 
+---
+
+## Data
+
+Three flat collections. Rules are in [firestore.rules](firestore.rules) — reads are open across
+the group because the grid needs other testers' proofs by design, and every write is locked to the
+owning account.
+
+```
+users/{uid}                            email, displayName
+apps/{packageName}                     ownerUid, name, startDate, status
+proofs/{appId}__{testerUid}__{day}     fileId, imageUrl, capturedAt
+```
+
+The composite proof id is what keeps this simple: posting twice overwrites instead of duplicating,
+and an owner's whole grid is one query rather than 12 × 14 reads.
+
+**Approval is a human glance.** `status` is pinned to `pending` by the security rules, so a client
+cannot approve itself; an admin flips it to `approved` in the Firebase console. Verifying a Play
+track automatically needs developer-level authorization from every owner — a service account in
+their Play Console, a linked Cloud project, or a sensitive scope requiring Google verification.
+All three cost more than the glance does.
+
 ## Roadmap
 
-- [ ] Onboarding → Google sign-in → setup checklist
-- [ ] Server-verified group membership
-- [ ] Drive-hosted proof on the narrow `drive.file` scope
-- [ ] Firestore: `users / groups / apps / enrollments / proofs`
-- [ ] Automated daily capture round
-- [ ] The 14-day owner grid
-- [ ] Admin: join requests and app approval
+- [x] Onboarding → Google sign-in → setup checklist
+- [x] Server-verified group membership
+- [x] Drive-hosted proof on the narrow `drive.file` scope
+- [x] Firestore: users / apps / proofs, with rules
+- [x] Daily capture: open, auto-screenshot, auto-return
+- [x] The 14-day owner grid
+- [ ] Admin approval in-app rather than via the console
+- [ ] Reminders for testers who have not posted today
+- [ ] Multi-group support
 
 ## Licence
 
