@@ -39,6 +39,20 @@ object AuthRepo {
     val uid: String? get() = FirebaseAuth.getInstance().currentUser?.uid
 
     /**
+     * The ID token from the last sign-in, held only in memory.
+     *
+     * Without it every membership re-check would put the Google account sheet in front of a
+     * tester who signed in a minute ago, purely to mint a token identical to the one we already
+     * had. Google's expire after an hour; this is retired early so a check never races the edge.
+     */
+    private var token: String? = null
+    private var tokenAt = 0L
+    private const val TOKEN_LIFETIME = 45 * 60 * 1000L
+
+    private val liveToken: String?
+        get() = token?.takeIf { System.currentTimeMillis() - tokenAt < TOKEN_LIFETIME }
+
+    /**
      * Set when the ID token could not be exchanged for a Firebase session.
      *
      * Almost always means Google sign-in is not enabled under Firebase Authentication for this
@@ -57,6 +71,8 @@ object AuthRepo {
      */
     suspend fun signInAndVerify(activity: Activity): Pair<GoogleAccount, GateResult> {
         val account = GroupGate.signIn(activity)
+        token = account.idToken
+        tokenAt = System.currentTimeMillis()
         firebaseError = try {
             signInToFirebase(account.idToken)
             null
@@ -64,6 +80,22 @@ object AuthRepo {
             "Signed in, but Firebase rejected the token — enable Google under Firebase " +
                 "Authentication → Sign-in method. (${e.message})"
         }
+        return account to GroupGate.check(account.idToken)
+    }
+
+    /**
+     * Asks the membership service again — after the tester has gone off and joined the group.
+     *
+     * Reuses the sign-in token while it is still good, so this is usually a bare network call
+     * with no Google UI at all. Returns the account only when one was actually chosen, which is
+     * the sole case where the signed-in address can have changed.
+     */
+    suspend fun recheckGroup(activity: Activity): Pair<GoogleAccount?, GateResult> {
+        liveToken?.let { return null to GroupGate.check(it) }
+
+        val account = GroupGate.refresh(activity)
+        token = account.idToken
+        tokenAt = System.currentTimeMillis()
         return account to GroupGate.check(account.idToken)
     }
 
@@ -93,6 +125,17 @@ object AuthRepo {
     suspend fun driveTokenOrNull(activity: Activity): String? =
         runCatching { authorizeDrive(activity).accessToken }.getOrNull()
 
+    /**
+     * Has this account already granted Drive access?
+     *
+     * Asked rather than remembered. The grant lives on Google's servers against the account and
+     * survives sign-out, reinstall and a new phone — whereas the local flag did not, so signing
+     * out and back in used to present "Connect Drive" again for an authorisation that had never
+     * been lost. This resolves silently when the grant exists; it shows nothing either way.
+     */
+    suspend fun hasDriveAccess(activity: Activity): Boolean =
+        driveTokenOrNull(activity) != null
+
     /** Pulls the access token out of the consent screen's result. */
     fun tokenFromConsent(activity: Activity, data: Intent?): String? =
         runCatching {
@@ -101,5 +144,9 @@ object AuthRepo {
                 .accessToken
         }.getOrNull()
 
-    fun signOut() = FirebaseAuth.getInstance().signOut()
+    fun signOut() {
+        token = null
+        tokenAt = 0L
+        FirebaseAuth.getInstance().signOut()
+    }
 }

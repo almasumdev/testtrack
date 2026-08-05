@@ -18,6 +18,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import androidx.compose.runtime.getValue
@@ -28,6 +29,10 @@ import androidx.core.content.ContextCompat
 import com.eazyverse.testtrack.MainActivity
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.random.Random
+
+/** A finished visit: what was on screen, and how long the tester actually spent there today. */
+data class Capture(val path: String, val usageMs: Long)
 
 /**
  * Screenshots the app under test.
@@ -41,7 +46,8 @@ import java.io.FileOutputStream
  * confirms screen sharing once and every app that day is captured under that single grant.
  *
  *   startSession(consent)   -> projection + virtual display stay open
- *   capture(pkg, dwellMs)   -> a frame is grabbed after the dwell and TestTrack pulled back
+ *   capture(pkg)            -> a visit: frame grabbed at an unannounced moment, TestTrack pulled
+ *                              back when the thirty seconds are up, usage read on the way out
  *   endSession()            -> projection stops
  */
 class CaptureService : Service() {
@@ -52,6 +58,15 @@ class CaptureService : Service() {
     private var reader: ImageReader? = null
     private var width = 0
     private var height = 0
+
+    /** Elapsed-realtime deadline for ending the current visit. */
+    private var returnDue = 0L
+
+    /** The frame taken mid-visit, held until the visit is over and its usage can be read. */
+    private var captured: Pair<String, String>? = null
+
+    /** What is left of the round, in order. */
+    private val queue = ArrayDeque<String>()
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -68,16 +83,27 @@ class CaptureService : Service() {
                 }
             }
 
-            ACTION_CAPTURE -> {
-                val pkg = intent.getStringExtra(EXTRA_PKG).orEmpty()
-                val dwell = intent.getLongExtra(EXTRA_DWELL, 8_000L)
+            ACTION_ROUND -> {
+                val packages = intent.getStringArrayListExtra(EXTRA_QUEUE).orEmpty()
                 if (projection == null) {
                     status = "no active session"
                 } else {
-                    capturing = pkg
-                    status = "capturing in ${dwell / 1000}s…"
-                    handler.postDelayed({ attempt(pkg, 0, null) }, dwell)
+                    queue.clear()
+                    queue.addAll(packages)
+                    roundTotal = queue.size
+                    roundIndex = 0
+                    visitNext()
                 }
+            }
+
+            ACTION_ABORT -> {
+                queue.clear()
+                handler.removeCallbacksAndMessages(null)
+                capturing = null
+                roundTotal = 0
+                roundIndex = 0
+                status = null
+                back()
             }
 
             ACTION_STOP -> {
@@ -152,17 +178,65 @@ class CaptureService : Service() {
             return
         }
 
-        if (shot == null) {
-            status = "no frame captured — try a longer wait"
-        } else {
+        if (shot != null) {
             val file = save(pkg, shot)
             shot.recycle()
-            results[pkg] = file.absolutePath
-            status = "captured"
+            captured = pkg to file.absolutePath
+        }
+
+        // The shot is not the end of the visit. The tester was asked for a full thirty seconds and
+        // the usage figure has to be able to show it, so hold here until the visit is up.
+        val remaining = returnDue - SystemClock.elapsedRealtime()
+        if (remaining > 0) handler.postDelayed({ finish(pkg) }, remaining) else finish(pkg)
+    }
+
+    /**
+     * Banks the visit, then moves straight on to the next app.
+     *
+     * TestTrack is deliberately not brought forward between apps — a round of twelve should be one
+     * uninterrupted stretch, not twelve trips back to a list to press the same button again.
+     */
+    private fun finish(pkg: String) {
+        val path = captured?.takeIf { it.first == pkg }?.second
+        if (path != null) {
+            results[pkg] = Capture(path, UsageRepo.foregroundMsToday(this, pkg))
+            captured = null
         }
         capturing = null
-        back()
+        visitNext()
     }
+
+    /**
+     * Opens the next app in the round and schedules its capture, or ends the round.
+     *
+     * Launching another app from a service is a background activity launch, which Android refuses
+     * without SYSTEM_ALERT_WINDOW — the same grant [back] needs. Without it the round stalls after
+     * the first app rather than failing loudly, so the caller checks for it up front.
+     */
+    private fun visitNext() {
+        val pkg = queue.removeFirstOrNull()
+        if (pkg == null) {
+            roundTotal = 0
+            roundIndex = 0
+            status = null
+            back()
+            return
+        }
+
+        roundIndex += 1
+        capturing = pkg
+        status = "Opening ${label(pkg)} — $roundIndex of $roundTotal"
+        returnDue = SystemClock.elapsedRealtime() + VISIT_MS
+        InstalledApps.launch(this, pkg)
+        handler.postDelayed(
+            { attempt(pkg, 0, null) },
+            Random.nextLong(SHOT_EARLIEST_MS, SHOT_LATEST_MS)
+        )
+    }
+
+    private fun label(pkg: String): String = runCatching {
+        packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString()
+    }.getOrDefault(pkg)
 
     /** The most recent frame off the virtual display, cropped back from its padded stride. */
     private fun frame(): Bitmap? {
@@ -285,6 +359,11 @@ class CaptureService : Service() {
     private fun teardown() {
         handler.removeCallbacksAndMessages(null)
         capturing = null
+        captured = null
+        returnDue = 0L
+        queue.clear()
+        roundTotal = 0
+        roundIndex = 0
         sessionActive = false
         display?.release(); display = null
         reader?.close(); reader = null
@@ -298,12 +377,12 @@ class CaptureService : Service() {
 
     companion object {
         private const val ACTION_START = "start"
-        private const val ACTION_CAPTURE = "capture"
+        private const val ACTION_ROUND = "round"
+        private const val ACTION_ABORT = "abort"
         private const val ACTION_STOP = "stop"
         private const val EXTRA_CODE = "code"
         private const val EXTRA_DATA = "data"
-        private const val EXTRA_PKG = "pkg"
-        private const val EXTRA_DWELL = "dwell"
+        private const val EXTRA_QUEUE = "queue"
         private const val CHANNEL = "capture"
         private const val NOTIF_ID = 7701
 
@@ -312,18 +391,46 @@ class CaptureService : Service() {
         private const val SAMPLE_STEP = 24
         private const val BLANK_RATIO = 0.96f
 
+        /**
+         * How long a visit is held open.
+         *
+         * Longer than the thirty seconds a day has to show, on purpose. The clock starts when the
+         * service schedules the visit, but usage only accrues once the app has actually reached
+         * the foreground a second or two later — measured at exactly thirty, honest full-length
+         * visits came back at 28.7s and 29.4s and failed the very rule they had satisfied.
+         */
+        const val VISIT_MS = 36_000L
+
+        /**
+         * The window the screenshot lands in, somewhere at random.
+         *
+         * A fixed delay is learnable — open, wait for the flash, leave. A shot that could arrive
+         * anywhere across twenty seconds cannot be timed around, so the only way to pass is to
+         * actually be there.
+         */
+        const val SHOT_EARLIEST_MS = 10_000L
+        const val SHOT_LATEST_MS = 32_000L
+
         /** Observed by the UI, which is not running while the app under test is on screen. */
         var sessionActive by mutableStateOf(false)
             private set
         var status by mutableStateOf<String?>(null)
             private set
 
-        /** Package currently being captured, or null. */
+        /** Package currently being visited, or null. */
         var capturing by mutableStateOf<String?>(null)
             private set
 
-        /** package -> local JPEG path, awaiting upload. */
-        val results = mutableStateMapOf<String, String>()
+        /** Position in the round, for a "3 of 12" line while the tester is in someone else's app. */
+        var roundIndex by mutableStateOf(0)
+            private set
+        var roundTotal by mutableStateOf(0)
+            private set
+
+        val roundActive: Boolean get() = roundTotal > 0
+
+        /** package -> a finished visit, awaiting upload. */
+        val results = mutableStateMapOf<String, Capture>()
 
         fun startSession(context: Context, code: Int, data: Intent) {
             status = "starting…"
@@ -334,13 +441,22 @@ class CaptureService : Service() {
             })
         }
 
-        /** [dwellMs] is how long the app under test is left on screen before the grab. */
-        fun capture(context: Context, pkg: String, dwellMs: Long) {
+        /**
+         * Runs a round: each app in turn, [VISIT_MS] apiece, frame grabbed at an unannounced
+         * moment inside each visit, no stop back at the list in between. A round of one is how a
+         * single app's Open button works, so both paths behave identically.
+         */
+        fun startRound(context: Context, packages: List<String>) {
+            if (packages.isEmpty()) return
             send(context, Intent(context, CaptureService::class.java).apply {
-                action = ACTION_CAPTURE
-                putExtra(EXTRA_PKG, pkg)
-                putExtra(EXTRA_DWELL, dwellMs)
+                action = ACTION_ROUND
+                putStringArrayListExtra(EXTRA_QUEUE, ArrayList(packages))
             })
+        }
+
+        /** Abandons whatever is left of the round and comes back. */
+        fun abortRound(context: Context) {
+            send(context, Intent(context, CaptureService::class.java).apply { action = ACTION_ABORT })
         }
 
         fun endSession(context: Context) {

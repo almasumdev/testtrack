@@ -1,0 +1,410 @@
+package com.eazyverse.testtrack.ui
+
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.graphics.drawable.toBitmap
+import com.eazyverse.testtrack.data.InstalledApps
+import com.eazyverse.testtrack.ui.theme.LocalStatusColors
+import androidx.compose.foundation.Image as ComposeImage
+
+/**
+ * The pieces every screen is built from, so consistency is the path of least resistance.
+ * See docs/ui.md.
+ */
+
+/** The page gutter. Every screen, every row, no exceptions. */
+val Gutter = 20.dp
+
+/** Where a row's divider starts: past the icon, so a column reads as a list. */
+val RowInset = 68.dp
+
+/** State colours, from the theme. Never used for a control — that is what primary is for. */
+object Status {
+    val posted: Color @Composable get() = LocalStatusColors.current.posted
+    val postedSoft: Color @Composable get() = LocalStatusColors.current.postedSoft
+    val short: Color @Composable get() = LocalStatusColors.current.short
+    val shortSoft: Color @Composable get() = LocalStatusColors.current.shortSoft
+    val missed: Color @Composable get() = LocalStatusColors.current.missed
+    val missedSoft: Color @Composable get() = LocalStatusColors.current.missedSoft
+    val upcoming: Color @Composable get() = LocalStatusColors.current.upcoming
+    val neutralSoft: Color @Composable get() = LocalStatusColors.current.neutralSoft
+}
+
+// ---- structure ---------------------------------------------------------------------------
+
+@Composable
+fun SectionLabel(text: String, trailing: String? = null) {
+    Row(
+        Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 22.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 1.2.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        trailing?.let {
+            Spacer(Modifier.weight(1f))
+            Text(
+                it,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * A group of rows on their own surface.
+ *
+ * Rows inside are separated by their own padding rather than a rule — a divider between every one
+ * of fourteen apps is fourteen lines competing with the content they are supposed to organise.
+ * The panel edge does that job once.
+ */
+@Composable
+fun Panel(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier
+            .fillMaxWidth()
+            .padding(horizontal = Gutter)
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surface),
+        content = content
+    )
+}
+
+@Composable
+fun Hairline(inset: Dp = 0.dp) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = inset)
+            .height(1.dp)
+            .background(MaterialTheme.colorScheme.outlineVariant)
+    )
+}
+
+/**
+ * Nothing here yet, said properly.
+ *
+ * A bare sentence in the middle of a screen reads like a failure. An icon, a title and a line of
+ * explanation reads like a state the product expected.
+ */
+@Composable
+fun EmptyState(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 36.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                icon, null,
+                Modifier.size(26.dp),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        Text(
+            title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+/** A sentence where content would be, when a full empty state would be too much. */
+@Composable
+fun Blank(text: String) {
+    Text(
+        text,
+        Modifier.padding(horizontal = Gutter, vertical = 14.dp),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+/** Inline, in the error colour. Dialogs are for destructive confirmation only. */
+@Composable
+fun Failure(text: String) {
+    Text(
+        text,
+        Modifier.padding(horizontal = Gutter, vertical = 14.dp),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.error
+    )
+}
+
+/** The one filled action a screen gets. */
+@Composable
+fun Primary(
+    label: String,
+    modifier: Modifier = Modifier,
+    busy: Boolean = false,
+    enabled: Boolean = true,
+    tall: Boolean = false,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled && !busy,
+        shape = RoundedCornerShape(14.dp),
+        modifier = modifier.fillMaxWidth().height(if (tall) 52.dp else 46.dp)
+    ) {
+        if (busy) {
+            androidx.compose.material3.CircularProgressIndicator(
+                Modifier.size(16.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+            Spacer(Modifier.width(10.dp))
+        }
+        Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+// ---- marks -------------------------------------------------------------------------------
+
+/**
+ * A launcher icon, or a lettered tile when the app is not installed.
+ *
+ * This is the single biggest thing separating a list of apps from a list of strings, and it costs
+ * nothing — `QUERY_ALL_PACKAGES` is already held for the install streak.
+ */
+@Composable
+fun AppIcon(pkg: String, label: String, size: Dp = 44.dp) {
+    val context = LocalContext.current
+    val bitmap: ImageBitmap? = remember(pkg) {
+        InstalledApps.icon(context, pkg)?.let { drawable ->
+            runCatching {
+                val w = drawable.intrinsicWidth.takeIf { it > 0 } ?: 108
+                val h = drawable.intrinsicHeight.takeIf { it > 0 } ?: 108
+                drawable.toBitmap(w, h).asImageBitmap()
+            }.getOrNull()
+        }
+    }
+    val shape = RoundedCornerShape(size * 0.3f)
+
+    if (bitmap != null) {
+        ComposeImage(
+            bitmap = bitmap,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.size(size).clip(shape)
+        )
+    } else {
+        Box(
+            Modifier.size(size).clip(shape).background(Status.neutralSoft),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                label.firstOrNull()?.uppercase() ?: "?",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/** A tester's initial in a tinted disc — the only stand-in for an avatar we have. */
+@Composable
+fun Initial(letter: String, size: Dp = 34.dp) {
+    Box(
+        Modifier.size(size).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            letter,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    }
+}
+
+/** Scannable down a column of twelve without reading any of them. */
+@Composable
+fun Pill(text: String, tone: Color, background: Color) {
+    Text(
+        text,
+        Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(background)
+            .padding(horizontal = 9.dp, vertical = 4.dp),
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        color = tone
+    )
+}
+
+/** Today, at a glance, without reading a word. */
+@Composable
+fun Ring(done: Int, total: Int, size: Dp = 36.dp) {
+    val track = Status.upcoming
+    val fill = MaterialTheme.colorScheme.primary
+    val fraction = if (total <= 0) 0f else (done.toFloat() / total).coerceIn(0f, 1f)
+
+    Box(Modifier.size(size), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            val stroke = this.size.minDimension * 0.13f
+            val inset = stroke / 2f
+            drawArc(
+                color = track, startAngle = 0f, sweepAngle = 360f, useCenter = false,
+                topLeft = Offset(inset, inset),
+                size = androidx.compose.ui.geometry.Size(
+                    this.size.width - stroke, this.size.height - stroke
+                ),
+                style = Stroke(stroke)
+            )
+            if (fraction > 0f) {
+                drawArc(
+                    color = fill, startAngle = -90f, sweepAngle = 360f * fraction, useCenter = false,
+                    topLeft = Offset(inset, inset),
+                    size = androidx.compose.ui.geometry.Size(
+                        this.size.width - stroke, this.size.height - stroke
+                    ),
+                    style = Stroke(stroke, cap = StrokeCap.Round)
+                )
+            }
+        }
+        Text(
+            if (total <= 0) "–" else "$done",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+/** A horizontal proportion bar. Iris, because progress is something you act on. */
+@Composable
+fun Meter(fraction: Float, modifier: Modifier = Modifier, height: Dp = 6.dp) {
+    Box(
+        modifier.fillMaxWidth().height(height).clip(CircleShape).background(Status.upcoming)
+    ) {
+        if (fraction > 0f) {
+            Box(
+                Modifier
+                    .fillMaxWidth(fraction.coerceIn(0f, 1f))
+                    .fillMaxHeight()
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+        }
+    }
+}
+
+// ---- loading -----------------------------------------------------------------------------
+
+/**
+ * A placeholder in the shape of what is arriving.
+ *
+ * Never a spinner in the middle of an empty screen: a skeleton says how much is coming and where
+ * it will be, and because results are cached this is only ever seen on genuinely first sight.
+ */
+@Composable
+fun Skeleton(width: Dp? = null, height: Dp = 12.dp, corner: Dp = 6.dp, modifier: Modifier = Modifier) {
+    val base = Status.upcoming
+    val highlight = MaterialTheme.colorScheme.surface.copy(alpha = 0.65f)
+
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val shift by transition.animateFloat(
+        initialValue = -600f,
+        targetValue = 1200f,
+        animationSpec = infiniteRepeatable(tween(1500, easing = LinearEasing)),
+        label = "shift"
+    )
+
+    Box(
+        modifier
+            .then(if (width != null) Modifier.width(width) else Modifier.fillMaxWidth())
+            .height(height)
+            .clip(RoundedCornerShape(corner))
+            .background(
+                Brush.linearGradient(
+                    listOf(base, highlight, base),
+                    start = Offset(shift, 0f),
+                    end = Offset(shift + 400f, 0f)
+                )
+            )
+    )
+}
+
+/** Three rows in the shape of the list that is coming. */
+@Composable
+fun SkeletonRows(count: Int = 3, showTrailing: Boolean = true) {
+    repeat(count) { index ->
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Skeleton(width = 44.dp, height = 44.dp, corner = 13.dp)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Skeleton(width = (110 + index * 26).dp, height = 12.dp)
+                Spacer(Modifier.height(7.dp))
+                Skeleton(width = (150 - index * 18).dp, height = 10.dp)
+            }
+            if (showTrailing) {
+                Spacer(Modifier.width(12.dp))
+                Skeleton(width = 46.dp, height = 20.dp, corner = 8.dp)
+            }
+        }
+        if (index < count - 1) Hairline(RowInset)
+    }
+}

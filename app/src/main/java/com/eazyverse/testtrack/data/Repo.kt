@@ -1,25 +1,37 @@
 package com.eazyverse.testtrack.data
 
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+/** Raised when a package name belongs to another member's app. */
+class AppTakenException(packageName: String, ownerEmail: String) : Exception(
+    if (ownerEmail.isBlank()) "$packageName is already registered by another member."
+    else "$packageName is already registered by $ownerEmail."
+)
+
 /**
  * Firestore access.
  *
- * Three collections, deliberately flat:
+ * Four collections, deliberately flat:
  *
  * ```
  * users/{uid}                              email, displayName
- * apps/{packageName}                       ownerUid, name, startDate, status
- * proofs/{appId}__{testerUid}__{day}       fileId, imageUrl, capturedAt
+ * groups/{groupId}                         memberUids, appIds, startDate, status
+ * apps/{packageName}                       ownerUid, name, groupId, status
+ * proofs/{appId}__{testerUid}__{day}       fileId, imageUrl, capturedAt, usageMs
  * ```
  *
  * The composite proof id is what keeps this simple: writing twice overwrites instead of
- * duplicating, and an owner's whole 14-day grid is one `whereEqualTo("appId", …)` query rather
- * than 12 × 14 reads.
+ * duplicating, and a whole 14-day grid is one `whereEqualTo("appId", …)` query rather than
+ * 13 × 14 reads.
+ *
+ * Nothing here writes `groups`, or an app's `groupId` and `status`. Those belong to an admin, and
+ * the security rules enforce it — see [firestore.rules].
  */
 object Repo {
 
@@ -30,6 +42,8 @@ object Repo {
             task.addOnSuccessListener { if (cont.isActive) cont.resume(it) }
                 .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
         }
+
+    // ---- users ---------------------------------------------------------------------------
 
     /** Records the signed-in tester so other members' grids can show a name, not a raw uid. */
     suspend fun upsertUser(uid: String, email: String, displayName: String) {
@@ -47,57 +61,149 @@ object Repo {
     }
 
     suspend fun testers(): List<Tester> =
-        await(db.collection("users").get()).documents.mapNotNull { doc ->
-            Tester(
-                uid = doc.getString("uid") ?: doc.id,
-                email = doc.getString("email").orEmpty(),
-                displayName = doc.getString("displayName").orEmpty()
-            ).takeIf { it.email.isNotBlank() }
-        }.sortedBy { it.shortName }
+        await(db.collection("users").get()).documents.mapNotNull(::parseTester)
+            .sortedBy { it.shortName }
 
-    /**
-     * Registers the owner's app, pending admin approval.
-     *
-     * Keyed by package name so re-submitting corrects the record instead of creating a second
-     * one. `status` is not merged in on purpose — a resubmission goes back to pending review.
-     */
-    suspend fun submitApp(uid: String, email: String, packageName: String, name: String) {
-        await(
-            db.collection("apps").document(packageName).set(
-                mapOf(
-                    "id" to packageName,
-                    "ownerUid" to uid,
-                    "ownerEmail" to email,
-                    "name" to name,
-                    "packageName" to packageName,
-                    "startDate" to System.currentTimeMillis(),
-                    "status" to TestApp.STATUS_PENDING
-                )
-            )
-        )
+    /** Just the members of one group, which is all any grid or dashboard ever needs. */
+    suspend fun testers(uids: Collection<String>): List<Tester> {
+        if (uids.isEmpty()) return emptyList()
+        return uids.distinct().chunked(30).flatMap { batch ->
+            await(db.collection("users").whereIn("uid", batch).get())
+                .documents.mapNotNull(::parseTester)
+        }.sortedBy { it.shortName }
     }
 
-    private fun parseApp(doc: com.google.firebase.firestore.DocumentSnapshot) = TestApp(
+    private fun parseTester(doc: DocumentSnapshot) = Tester(
+        uid = doc.getString("uid") ?: doc.id,
+        email = doc.getString("email").orEmpty(),
+        displayName = doc.getString("displayName").orEmpty()
+    ).takeIf { it.email.isNotBlank() }
+
+    // ---- groups --------------------------------------------------------------------------
+
+    private fun parseGroup(doc: DocumentSnapshot) = TestGroup(
+        id = doc.id,
+        name = doc.getString("name").orEmpty(),
+        memberUids = (doc.get("memberUids") as? List<*>)?.filterIsInstance<String>().orEmpty(),
+        appIds = (doc.get("appIds") as? List<*>)?.filterIsInstance<String>().orEmpty(),
+        startDate = doc.getLong("startDate") ?: 0L,
+        status = doc.getString("status") ?: TestGroup.STATUS_FORMING
+    )
+
+    /** Every cohort this tester belongs to. Membership follows from having an app placed in one. */
+    suspend fun myGroups(uid: String): List<TestGroup> =
+        await(db.collection("groups").whereArrayContains("memberUids", uid).get())
+            .documents.map(::parseGroup).sortedBy { it.name.lowercase() }
+
+    suspend fun group(id: String): TestGroup? =
+        await(db.collection("groups").document(id).get()).takeIf { it.exists() }?.let(::parseGroup)
+
+    // ---- apps ----------------------------------------------------------------------------
+
+    private fun parseApp(doc: DocumentSnapshot) = TestApp(
         id = doc.getString("id") ?: doc.id,
         ownerUid = doc.getString("ownerUid").orEmpty(),
         ownerEmail = doc.getString("ownerEmail").orEmpty(),
         name = doc.getString("name").orEmpty(),
         packageName = doc.getString("packageName") ?: doc.id,
-        startDate = doc.getLong("startDate") ?: 0L,
+        groupId = doc.getString("groupId")?.takeIf { it.isNotBlank() },
+        submittedAt = doc.getLong("submittedAt") ?: 0L,
         status = doc.getString("status") ?: TestApp.STATUS_PENDING
     )
 
-    /** Every approved app in the group — the tester's daily worklist. */
-    suspend fun approvedApps(): List<TestApp> =
+    /**
+     * Registers an app for review, or corrects one already registered.
+     *
+     * Keyed by package name so re-submitting corrects the record instead of creating a second one.
+     * Placement is deliberately absent: an owner cannot put their own app into a group, and the
+     * rules reject the write if they try.
+     *
+     * @throws AppTakenException if the package is already registered by someone else. The rules
+     *   would reject it anyway, but as a bare PERMISSION_DENIED that explains nothing.
+     */
+    suspend fun submitApp(uid: String, email: String, packageName: String, name: String) {
+        val doc = db.collection("apps").document(packageName)
+
+        // A refusal here is itself the answer: app documents are readable by their owner and by
+        // the cohort testing them, so a package we cannot read is one already registered by
+        // someone whose group we are not in. Their address stays hidden, which is the point.
+        val existing = try {
+            await(doc.get())
+        } catch (e: FirebaseFirestoreException) {
+            if (e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                throw AppTakenException(packageName, "")
+            }
+            throw e
+        }
+
+        if (existing.exists() && existing.getString("ownerUid").orEmpty() != uid) {
+            throw AppTakenException(packageName, existing.getString("ownerEmail").orEmpty())
+        }
+
+        val body = mutableMapOf<String, Any>(
+            "id" to packageName,
+            "ownerUid" to uid,
+            "ownerEmail" to email,
+            "name" to name,
+            "packageName" to packageName,
+            "submittedAt" to (existing.getLong("submittedAt")?.takeIf { it > 0 }
+                ?: System.currentTimeMillis())
+        )
+
+        // A correction must not disturb placement — merging leaves groupId and status alone, so
+        // fixing a typo on day nine does not eject the app from its group.
+        if (!existing.exists()) {
+            body["groupId"] = ""
+            body["status"] = TestApp.STATUS_PENDING
+        }
+
+        await(doc.set(body, SetOptions.merge()))
+    }
+
+    /**
+     * Withdraws an app.
+     *
+     * Its proofs are left behind: they are keyed by app id and nothing queries them once the app
+     * is gone, and deleting them would mean handing clients write access to other testers' rows.
+     */
+    suspend fun deleteApp(packageName: String) {
+        await(db.collection("apps").document(packageName).delete())
+    }
+
+    suspend fun app(id: String): TestApp? =
+        await(db.collection("apps").document(id).get()).takeIf { it.exists() }?.let(::parseApp)
+
+    /** Everything in one cohort — the tester's worklist, and the owner's peers. */
+    suspend fun appsInGroup(groupId: String): List<TestApp> =
+        await(db.collection("apps").whereEqualTo("groupId", groupId).get())
+            .documents.map(::parseApp).sortedBy { it.label.lowercase() }
+
+    /** Submitted, waiting for an admin to place it. */
+    suspend fun pendingApps(uid: String): List<TestApp> =
         await(
             db.collection("apps")
-                .whereEqualTo("status", TestApp.STATUS_APPROVED)
+                .whereEqualTo("ownerUid", uid)
+                .whereEqualTo("status", TestApp.STATUS_PENDING)
                 .get()
-        ).documents.map(::parseApp).sortedBy { it.name.lowercase() }
+        ).documents.map(::parseApp).sortedBy { it.submittedAt }
 
-    suspend fun myApp(uid: String): TestApp? =
+    suspend fun myApps(uid: String): List<TestApp> =
         await(db.collection("apps").whereEqualTo("ownerUid", uid).get())
-            .documents.firstOrNull()?.let(::parseApp)
+            .documents.map(::parseApp).sortedBy { it.label.lowercase() }
+
+    // ---- proofs --------------------------------------------------------------------------
+
+    private fun parseProof(doc: DocumentSnapshot) = Proof(
+        appId = doc.getString("appId").orEmpty(),
+        groupId = doc.getString("groupId").orEmpty(),
+        testerUid = doc.getString("testerUid").orEmpty(),
+        testerEmail = doc.getString("testerEmail").orEmpty(),
+        day = (doc.getLong("day") ?: 0L).toInt(),
+        fileId = doc.getString("fileId").orEmpty(),
+        imageUrl = doc.getString("imageUrl").orEmpty(),
+        capturedAt = doc.getLong("capturedAt") ?: 0L,
+        usageMs = doc.getLong("usageMs") ?: 0L
+    )
 
     /** Idempotent by construction: same tester, same app, same day always writes the same id. */
     suspend fun recordProof(proof: Proof) {
@@ -107,40 +213,36 @@ object Repo {
                 .set(
                     mapOf(
                         "appId" to proof.appId,
+                        "groupId" to proof.groupId,
                         "testerUid" to proof.testerUid,
                         "testerEmail" to proof.testerEmail,
                         "day" to proof.day,
                         "fileId" to proof.fileId,
                         "imageUrl" to proof.imageUrl,
-                        "capturedAt" to proof.capturedAt
+                        "capturedAt" to proof.capturedAt,
+                        "usageMs" to proof.usageMs
                     )
                 )
         )
     }
-
-    private fun parseProof(doc: com.google.firebase.firestore.DocumentSnapshot) = Proof(
-        appId = doc.getString("appId").orEmpty(),
-        testerUid = doc.getString("testerUid").orEmpty(),
-        testerEmail = doc.getString("testerEmail").orEmpty(),
-        day = (doc.getLong("day") ?: 0L).toInt(),
-        fileId = doc.getString("fileId").orEmpty(),
-        imageUrl = doc.getString("imageUrl").orEmpty(),
-        capturedAt = doc.getLong("capturedAt") ?: 0L
-    )
 
     /** Every proof for one app — the owner's whole grid, in one read. */
     suspend fun proofsForApp(appId: String): List<Proof> =
         await(db.collection("proofs").whereEqualTo("appId", appId).get())
             .documents.map(::parseProof)
 
-    /** What this tester has already posted today, so the list can show what is left. */
-    suspend fun myProofsToday(uid: String): Set<String> =
-        await(db.collection("proofs").whereEqualTo("testerUid", uid).get())
-            .documents.map(::parseProof)
-            .filter { proof ->
-                // "Today" is per-app, because each app's run started on its own date.
-                proof.capturedAt > System.currentTimeMillis() - 86_400_000L
-            }
-            .map { it.appId }
-            .toSet()
+    /**
+     * What this tester has already posted in one group today.
+     *
+     * Keyed on the group's day rather than a timestamp window, so a report at 23:59 and another at
+     * 00:01 are the same day if the group says they are.
+     */
+    suspend fun myProofsForDay(uid: String, groupId: String, day: Int): Set<String> =
+        await(
+            db.collection("proofs")
+                .whereEqualTo("testerUid", uid)
+                .whereEqualTo("groupId", groupId)
+                .whereEqualTo("day", day)
+                .get()
+        ).documents.map(::parseProof).filter { it.meetsBar }.map { it.appId }.toSet()
 }

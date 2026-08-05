@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.data
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
 
 /**
  * What we can learn about another tester's app, and how to open it.
@@ -29,7 +30,44 @@ object InstalledApps {
             get() = if (!installed) 0
             else ((System.currentTimeMillis() - firstInstall) / 86_400_000L).toInt()
 
+        /**
+         * The streak, said in a way that isn't nonsense.
+         *
+         * A preinstalled app reports an epoch `firstInstallTime`, which comes out as "6426 days" —
+         * true, useless, and it makes the row look broken. Anything past a year is just "installed";
+         * the number only matters while it is comparable to the fourteen-day run.
+         */
+        val streakLabel: String
+            get() = when {
+                !installed -> "Not installed"
+                streakDays >= 365 -> "Installed"
+                streakDays <= 0 -> "Installed today"
+                streakDays == 1 -> "1 day installed"
+                else -> "$streakDays days installed"
+            }
+
         val fromPlay: Boolean get() = installer == "com.android.vending"
+    }
+
+    /**
+     * Cached because a list of fourteen rows asks for this on every recomposition, and neither
+     * answer changes while the app is running — an install lands as a fresh process anyway.
+     */
+    private val infoCache = mutableMapOf<String, Info>()
+    private val iconCache = mutableMapOf<String, Drawable?>()
+
+    /** The launcher icon, which is what makes a row recognisable at a glance. */
+    fun icon(context: Context, pkg: String): Drawable? = iconCache.getOrPut(pkg) {
+        runCatching { context.packageManager.getApplicationIcon(pkg) }.getOrNull()
+    }
+
+    fun cachedInfo(context: Context, pkg: String): Info =
+        infoCache.getOrPut(pkg) { info(context, pkg) }
+
+    /** Forget everything — after an install the streak and the icon both need re-reading. */
+    fun forget() {
+        infoCache.clear()
+        iconCache.clear()
     }
 
     fun info(context: Context, pkg: String): Info {

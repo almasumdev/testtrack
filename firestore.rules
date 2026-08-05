@@ -2,9 +2,13 @@ rules_version = '2';
 
 // TestTrack access rules.
 //
-// Everyone signed in is a member of the same swap group, so reads are open across the group —
-// the grid needs other testers' names and proofs by design. Writes are locked to the owning
-// account in every case.
+// The membership check that gates the UI runs in Apps Script and never reaches the database, so
+// these rules cannot lean on it. What they can lean on is `groups/{id}.memberUids`, which only an
+// admin can write — so "is this reader in that cohort?" is a question the database can answer for
+// itself, and answer unforgeably.
+//
+// Everything a tester can see is scoped to a cohort they belong to. Anything that decides who
+// tests what is admin-only.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -12,32 +16,107 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Names shown in owners' grids. Only you can write your own record.
+    // Membership of this collection is the whole admin mechanism. An empty document is enough;
+    // it exists so the admin app can be a separate build with no special client code here.
+    // get()/exists() inside rules bypass read rules, so nothing needs to read this directly.
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Is the caller in this cohort? Reads memberUids, which is admin-written, so a client cannot
+    // talk its way in. Identical get() paths are cached within one request, so a query returning
+    // a hundred proofs from one group costs a single document read here.
+    function inGroup(groupId) {
+      return signedIn()
+        && groupId is string
+        && groupId != ''
+        && request.auth.uid in
+             get(/databases/$(database)/documents/groups/$(groupId)).data.memberUids;
+    }
+
+    match /admins/{uid} {
+      allow read, write: if false;      // granted from the console, never from a client
+    }
+
+    /**
+     * Names shown in grids.
+     *
+     * Open to any signed-in account, deliberately and knowingly: a grid needs to turn a uid into
+     * a name, and the queries that do it are `whereIn` over uid lists that rules cannot correlate
+     * back to a cohort without a reverse index the admin would then have to maintain. What is
+     * exposed is an address and a display name — not proof, not group structure. If that stops
+     * being an acceptable trade, the fix is an admin-written `groupIds` array here.
+     */
     match /users/{uid} {
       allow read: if signedIn();
       allow write: if signedIn() && request.auth.uid == uid;
     }
 
-    // An owner registers their own app and can correct it.
+    // A swap cohort: fourteen members, one app each, one shared 14-day run.
     //
-    // `status` is pinned to "pending" on write so a client cannot approve itself; an admin
-    // flips it to "approved" from the Firebase console. That is the whole approval mechanism,
-    // and it is deliberate: verifying a Play track automatically needs developer-level
-    // authorization from every owner, which costs more than a human glance.
-    match /apps/{appId} {
-      allow read: if signedIn();
-      allow create, update: if signedIn()
-        && request.auth.uid == request.resource.data.ownerUid
-        && request.resource.data.status == 'pending';
-      allow delete: if false;
+    // Readable only by its own members, so the shape of other people's cohorts is not browsable.
+    // Entirely admin-written: members are added by placing their app and the run starts when the
+    // thirteenth arrives, and no client can do either — otherwise a tester could start their own
+    // clock or write themselves into someone else's cohort.
+    match /groups/{groupId} {
+      allow read: if isAdmin()
+        || (signedIn() && request.auth.uid in resource.data.memberUids);
+      allow write: if isAdmin();
     }
 
-    // Proof of one tester's visit to one app on one day. Document ids are
-    // {appId}__{testerUid}__{day}, so re-posting overwrites rather than duplicating.
+    /**
+     * An app someone has registered.
+     *
+     * Visible to its owner and to the cohort testing it — nothing else. A pending app carries no
+     * group, so until an admin places it only its owner can see it.
+     *
+     * Placement is not the owner's to set: approving an app *is* assigning it to a group, and that
+     * is an admin's judgement. Pinning both fields on write is what stops approval being
+     * self-granted.
+     */
+    match /apps/{appId} {
+      allow read: if isAdmin()
+        || (signedIn() && request.auth.uid == resource.data.ownerUid)
+        || inGroup(resource.data.groupId);
+
+      allow create: if isAdmin() || (
+        signedIn()
+        && request.auth.uid == request.resource.data.ownerUid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.groupId == ''
+      );
+
+      allow update: if isAdmin() || (
+        signedIn()
+        && request.auth.uid == request.resource.data.ownerUid
+        && request.auth.uid == resource.data.ownerUid
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.groupId == resource.data.groupId
+      );
+
+      // An owner may withdraw their own app — a package name typed wrong is otherwise permanent,
+      // and once placed it would sit in thirteen other testers' lists for good.
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == resource.data.ownerUid);
+    }
+
+    /**
+     * Proof of one tester's visit to one app on one day.
+     *
+     * This is the sensitive collection: each document points at a full-screen capture that is
+     * readable by anyone holding its Drive link. Reads are therefore closed to the cohort the
+     * proof belongs to, and a tester can only ever write their own row, in a cohort they are in.
+     *
+     * Document ids are {appId}__{testerUid}__{day}, so re-posting overwrites rather than
+     * duplicating.
+     */
     match /proofs/{proofId} {
-      allow read: if signedIn();
+      allow read: if isAdmin() || inGroup(resource.data.groupId);
+
       allow create, update: if signedIn()
-        && request.auth.uid == request.resource.data.testerUid;
+        && request.auth.uid == request.resource.data.testerUid
+        && inGroup(request.resource.data.groupId);
+
       allow delete: if false;
     }
   }

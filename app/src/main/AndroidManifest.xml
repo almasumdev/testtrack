@@ -17,6 +17,18 @@
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
 
+    <!--
+      Foreground time per app per day, which is what the daily report is actually made of.
+
+      Not granted at install and not promptable: it is an appop the tester switches on under
+      Settings -> Special access. Declaring it only puts TestTrack in that list. There is no
+      cheaper source — timing the session from inside TestTrack measures only the visit TestTrack
+      started, which is the number a tester could pass by waiting.
+    -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
     <!-- MediaProjection only runs from a foreground service of this type since Android 14. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
@@ -29,8 +41,16 @@
     -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
+    <!--
+      Backup off on purpose. Everything the app keeps locally is either a cache of Firestore or a
+      flag about a grant, and Android restores SharedPreferences onto a fresh install while the
+      Firebase session and the usage-access appop do not come back with them. A restored "signed
+      in, set up" state over no session sends the app straight past sign-in into a string of
+      PERMISSION_DENIEDs. Nothing here is worth carrying across devices: sign in and it all
+      returns from the account.
+    -->
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"

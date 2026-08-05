@@ -25,8 +25,7 @@ object Session {
         email = prefs.getString(KEY_EMAIL, null)
         isGroupMember = prefs.getBoolean(KEY_MEMBER, false)
         driveConnected = prefs.getBoolean(KEY_DRIVE, false)
-        packageName = prefs.getString(KEY_PACKAGE, null)
-        trackSubmitted = prefs.getBoolean(KEY_SUBMITTED, false)
+        refreshUsageAccess(context)
     }
 
     var onboardingDone by mutableStateOf(false)
@@ -42,25 +41,31 @@ object Session {
         private set
 
     /**
-     * The owner's own app under test.
+     * Whether Settings → Special access → Usage access is on for TestTrack.
      *
-     * Not machine-verified. Reading Play track state needs developer-level authorization from
-     * every owner — a service account invited to their Play Console, a linked Cloud project, or a
-     * sensitive scope requiring Google verification. All three push setup cost onto every owner,
-     * so submissions go to an admin for approval instead.
+     * Not persisted. It can be revoked from Settings without telling us, so a stored `true` would
+     * be a lie the moment someone toggled it off; [refreshUsageAccess] re-reads it on every
+     * resume instead.
      */
-    var packageName by mutableStateOf<String?>(null)
+    var usageAccessGranted by mutableStateOf(false)
         private set
 
-    /** Sent for review. Approval arrives from the admin later; it does not block setup. */
-    var trackSubmitted by mutableStateOf(false)
-        private set
+    fun refreshUsageAccess(context: Context) {
+        usageAccessGranted = UsageRepo.hasAccess(context)
+    }
 
     val signedIn: Boolean get() = email != null
 
-    /** Every gate cleared. Approval is deliberately not required — it is asynchronous. */
+    /**
+     * Everything setup can settle.
+     *
+     * Submitting an app is deliberately not part of it — placement into a group is an admin's
+     * call and can take days, so apps live on their own screen rather than as a rung of a
+     * one-time checklist. Usage access *is* part of it: without it a daily report carries no
+     * proof anyone stayed, which is the whole point of the report.
+     */
     val setupComplete: Boolean
-        get() = signedIn && isGroupMember && driveConnected && trackSubmitted
+        get() = signedIn && isGroupMember && driveConnected && usageAccessGranted
 
     fun updateOnboardingDone() {
         prefs.edit().putBoolean(KEY_ONBOARDED, true).apply()
@@ -77,15 +82,16 @@ object Session {
         isGroupMember = value
     }
 
+    /**
+     * Cached, not authoritative.
+     *
+     * The Drive grant belongs to the Google account and outlives this install, so the real answer
+     * always comes from [AuthRepo.hasDriveAccess]. This only exists so the setup screen has
+     * something to draw before that answer arrives.
+     */
     fun updateDriveConnected(value: Boolean) {
         prefs.edit().putBoolean(KEY_DRIVE, value).apply()
         driveConnected = value
-    }
-
-    fun submitTrack(pkg: String) {
-        prefs.edit().putString(KEY_PACKAGE, pkg).putBoolean(KEY_SUBMITTED, true).apply()
-        packageName = pkg
-        trackSubmitted = true
     }
 
     /** Clears everything except onboarding — nobody wants to watch the intro twice. */
@@ -94,8 +100,6 @@ object Session {
         email = null
         isGroupMember = false
         driveConnected = false
-        packageName = null
-        trackSubmitted = false
         onboardingDone = true
     }
 
@@ -103,6 +107,4 @@ object Session {
     private const val KEY_EMAIL = "email"
     private const val KEY_MEMBER = "is_member"
     private const val KEY_DRIVE = "drive_connected"
-    private const val KEY_PACKAGE = "package_name"
-    private const val KEY_SUBMITTED = "track_submitted"
 }

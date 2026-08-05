@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import com.eazyverse.testtrack.Config
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -14,6 +15,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /** The signed-in Google account. */
@@ -59,11 +61,27 @@ object GroupGate {
      *
      * @throws NotGmailException if the chosen account is not @gmail.com.
      */
-    suspend fun signIn(context: Context): GoogleAccount {
+    suspend fun signIn(context: Context): GoogleAccount = credential(context, silent = false)
+
+    /**
+     * A replacement token for an account that has already signed in once.
+     *
+     * ID tokens expire after an hour, so re-checking membership later needs a new one. Filtering
+     * to already-authorised accounts lets Google return it without showing anything; the picker
+     * only appears if that fails, which it does when the grant has been revoked.
+     */
+    suspend fun refresh(context: Context): GoogleAccount =
+        try {
+            credential(context, silent = true)
+        } catch (e: GetCredentialException) {
+            credential(context, silent = false)
+        }
+
+    private suspend fun credential(context: Context, silent: Boolean): GoogleAccount {
         val option = GetGoogleIdOption.Builder()
             .setServerClientId(Config.WEB_CLIENT_ID)
-            .setFilterByAuthorizedAccounts(false)
-            .setAutoSelectEnabled(false)
+            .setFilterByAuthorizedAccounts(silent)
+            .setAutoSelectEnabled(silent)
             .build()
 
         val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
@@ -108,8 +126,12 @@ object GroupGate {
                 if (json.optBoolean("isMember", false)) GateResult.Member(email)
                 else GateResult.NotMember(email)
             }
+        } catch (e: IOException) {
+            // A dropped connection is not a verdict, and OkHttp's message for one names a Google
+            // IP address, which reads like the deployment is broken rather than the network.
+            GateResult.Failed("Couldn't reach the membership service. Check your connection and try again.")
         } catch (e: Exception) {
-            GateResult.Failed(e.message ?: "network error")
+            GateResult.Failed(e.message ?: "Membership check failed")
         }
     }
 }
