@@ -129,6 +129,26 @@ cases = [
          incoming=token_doc,
          name="a device can register its own token"),
 
+    # --- admin decisions, delivered by the device that cares -------------------------------
+    case("ALLOW", MEMBER,  "get", "/events/e1",
+         stored={"uid": MEMBER, "type": "assigned", "title": "x", "actorUid": ADMIN},
+         name="a tester reads a decision addressed to them"),
+    case("DENY",  OUTSIDE, "get", "/events/e1",
+         stored={"uid": MEMBER, "type": "assigned", "title": "x", "actorUid": ADMIN},
+         name="but not one addressed to somebody else"),
+    case("DENY",  MEMBER,  "create", "/events/e2",
+         incoming={"uid": MEMBER, "type": "assigned", "title": "x", "actorUid": MEMBER},
+         name="a tester cannot write themselves an approval"),
+    case("ALLOW", ADMIN,   "create", "/events/e2",
+         incoming={"uid": MEMBER, "type": "assigned", "title": "x", "actorUid": ADMIN},
+         name="an admin can record a decision"),
+    case("DENY",  ADMIN,   "create", "/events/e3",
+         incoming={"uid": MEMBER, "type": "assigned", "title": "x", "actorUid": OUTSIDE},
+         name="but not under somebody else's name"),
+    case("DENY",  ADMIN,   "delete", "/events/e1",
+         stored={"uid": MEMBER, "type": "assigned", "title": "x", "actorUid": ADMIN},
+         name="and cannot erase one afterwards"),
+
     # --- the admin list ---------------------------------------------------------------------
     case("ALLOW", MEMBER,  "get", "/admins/" + MEMBER, stored={},
          name="an account can ask whether it is itself an admin"),

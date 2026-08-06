@@ -122,4 +122,7 @@ dependencies {
 
     implementation(libs.okhttp)
     implementation(libs.coil.compose)
+
+    // Reminders are computed and raised on the phone, not sent to it.
+    implementation(libs.androidx.work.runtime)
 }

@@ -1,4 +1,25 @@
 {
-  "indexes": [],
+  "_comment": [
+    "Every other query in TestTrack is equality-only, which Firestore serves by intersecting",
+    "single-field indexes — no composite needed, and that is not an accident: proofs are read by",
+    "(appId, ownerUid) or (testerUid, groupId, day), apps by (ownerUid, status). Keeping to",
+    "equalities is what lets the whole thing deploy with an empty index list.",
+    "",
+    "The events feed is the one exception. AdminEvents asks for 'addressed to me, newer than the",
+    "last one I raised', which is an equality plus a range on a different field, and that always",
+    "needs a composite. Without it the query fails FAILED_PRECONDITION and admin decisions never",
+    "reach the device — silently, because the drain swallows its errors so a bad feed cannot break",
+    "the daily reminder."
+  ],
+  "indexes": [
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "uid", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

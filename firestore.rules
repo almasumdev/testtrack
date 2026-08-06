@@ -138,6 +138,32 @@ service cloud.firestore {
     }
 
     /**
+     * What an admin decided about someone.
+     *
+     * The admin console is a phone app, and a phone app cannot send push — FCM's v1 API wants a
+     * service account, and a service account key inside an APK is one in everybody's hands. So a
+     * decision is written here and the addressed device raises it locally. Which makes this the
+     * audit trail as well: `actorUid` is the admin who acted.
+     *
+     * Addressed to exactly one person and readable by exactly that person, so the query in
+     * AdminEvents constrains `uid` — rules are not filters, and a read without that clause is
+     * refused however impeccable the documents are.
+     *
+     * Append-only from an admin. A tester cannot write themselves an approval, and nobody can
+     * quietly erase a decision after the fact.
+     */
+    match /events/{eventId} {
+      allow read: if isAdmin()
+        || (signedIn() && request.auth.uid == resource.data.uid);
+
+      allow create: if isAdmin()
+        && request.resource.data.uid is string
+        && request.resource.data.actorUid == request.auth.uid;
+
+      allow update, delete: if false;
+    }
+
+    /**
      * Proof of one tester's visit to one app on one day.
      *
      * The sensitive collection: each document points at a full-screen capture readable by anyone

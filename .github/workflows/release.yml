@@ -1,0 +1,152 @@
+name: Release APK
+
+# ---------------------------------------------------------------------------
+# Builds a signed release APK and publishes it as a downloadable GitHub
+# Release, then prunes older releases so only the newest KEEP survive.
+#
+# TestTrack is side-loaded — it holds QUERY_ALL_PACKAGES, which Play treats as
+# restricted — so a GitHub Release is the distribution channel, not a stopgap.
+#
+# Required repository secrets:
+#   ANDROID_KEYSTORE_BASE64      base64 of app/testtrack_release.jks
+#                                  (base64 -w0 app/testtrack_release.jks)
+#   ANDROID_KEYSTORE_PASSWORD    keystore store password
+#   ANDROID_KEY_ALIAS            signing key alias (testtrack_release)
+#   ANDROID_KEY_PASSWORD         signing key password
+#   GOOGLE_SERVICES_JSON_BASE64  base64 of app/google-services.json
+#   TESTTRACK_WEB_CLIENT_ID      OAuth *web* client id
+#   TESTTRACK_GATE_URL           Apps Script membership endpoint
+#   TESTTRACK_GROUP_URL          public Google Group page
+#
+# Both google-services.json and local.properties are gitignored, so everything
+# the build needs arrives through the environment — `secret()` in
+# app/build.gradle.kts reads System.getenv first for exactly this reason.
+# ---------------------------------------------------------------------------
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'gradle/**'
+      - '*.gradle.kts'
+      - '.github/workflows/release.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  KEEP: 3          # how many releases survive the prune
+
+jobs:
+  release:
+    name: Build, publish, prune
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Read app version
+        id: version
+        run: |
+          # Anchored so versionNameSuffix and any debug block are skipped.
+          name=$(awk -F'"' '/^[[:space:]]*versionName[[:space:]]*=/{print $2; exit}' app/build.gradle.kts)
+          code=$(awk -F'=' '/^[[:space:]]*versionCode[[:space:]]*=/{gsub(/[^0-9]/,"",$2); print $2; exit}' app/build.gradle.kts)
+          [ -n "$name" ] || { echo "could not read versionName"; exit 1; }
+          echo "name=$name"                     >> "$GITHUB_OUTPUT"
+          echo "code=$code"                     >> "$GITHUB_OUTPUT"
+          # The run number keeps the tag unique across rebuilds of one version,
+          # so a re-run never collides with an existing release.
+          echo "tag=v$name-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Firebase config
+        env:
+          CONFIG: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          [ -n "$CONFIG" ] || { echo "GOOGLE_SERVICES_JSON_BASE64 is not set"; exit 1; }
+          printf '%s' "$CONFIG" | base64 -d > app/google-services.json
+          # Fail loudly here rather than three minutes later inside Gradle.
+          grep -q '"package_name"' app/google-services.json
+
+      - name: Restore signing key
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          [ -n "$KEYSTORE" ] || { echo "ANDROID_KEYSTORE_BASE64 is not set"; exit 1; }
+          printf '%s' "$KEYSTORE" | base64 -d > app/testtrack_release.jks
+
+      - name: Build signed release
+        env:
+          # file() inside app/build.gradle.kts resolves from the module directory,
+          # so this is relative to app/, not to the repo root.
+          TESTTRACK_KEYSTORE: testtrack_release.jks
+          TESTTRACK_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          TESTTRACK_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          TESTTRACK_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          TESTTRACK_WEB_CLIENT_ID: ${{ secrets.TESTTRACK_WEB_CLIENT_ID }}
+          TESTTRACK_GATE_URL: ${{ secrets.TESTTRACK_GATE_URL }}
+          TESTTRACK_GROUP_URL: ${{ secrets.TESTTRACK_GROUP_URL }}
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Verify it is actually signed
+        run: |
+          # An unsigned APK builds perfectly happily when the keystore path is
+          # wrong — the signingConfig is simply absent. The filename is the tell.
+          apk=app/build/outputs/apk/release/app-release.apk
+          [ -f "$apk" ] || { ls -R app/build/outputs/apk; echo "no signed APK — check TESTTRACK_KEYSTORE"; exit 1; }
+          "$ANDROID_HOME"/build-tools/*/apksigner verify --print-certs "$apk" | head -5
+
+      - name: Name the artifact
+        id: apk
+        run: |
+          out="TestTrack-${{ steps.version.outputs.name }}-${{ steps.version.outputs.code }}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "$out"
+          echo "path=$out" >> "$GITHUB_OUTPUT"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" "${{ steps.apk.outputs.path }}" \
+            --title "TestTrack ${{ steps.version.outputs.name }} (${{ steps.version.outputs.code }})" \
+            --notes "Signed release build from \`${GITHUB_SHA:0:7}\`.
+
+          Side-load it: download the APK below and open it on the phone. TestTrack is
+          distributed this way because it holds \`QUERY_ALL_PACKAGES\`, which Play
+          restricts.
+
+          Updating over an existing install keeps your session; the signing key is
+          fixed, so it will never ask you to uninstall first."
+
+      - name: Prune old releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Newest first, drop the ones we are keeping, delete the rest along with
+          # their tags — an orphaned tag is a release that looks deleted from the
+          # releases page and is still cloneable.
+          gh release list --limit 100 --json tagName,createdAt \
+            --jq 'sort_by(.createdAt) | reverse | .['"$KEEP"':] | .[].tagName' > stale.txt
+          if [ ! -s stale.txt ]; then
+            echo "nothing to prune — $KEEP or fewer releases"
+            exit 0
+          fi
+          while read -r tag; do
+            [ -n "$tag" ] || continue
+            echo "deleting $tag"
+            gh release delete "$tag" --cleanup-tag --yes
+          done < stale.txt

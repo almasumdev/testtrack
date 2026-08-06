@@ -175,6 +175,8 @@ admins/{uid}                           exists ⇒ admin. An empty document is th
 groups/{groupId}                       memberUids, appIds, startDate, status
 apps/{packageName}                     ownerUid, name, groupId, status
 proofs/{appId}__{testerUid}__{day}     fileId, imageUrl, capturedAt, usageMs
+events/{eventId}                       uid, type, title, body, actorUid — an admin decision,
+                                       read and raised by the device it names
 ```
 
 Tokens sit in a subcollection rather than on the user document because rules do not cascade into
@@ -211,33 +213,44 @@ app, cannot read a stranger's proof, and cannot read another device's push token
 ## Reminders
 
 A run is fourteen consecutive days, and one tester forgetting costs the other thirteen their clock.
-Push is how that gets caught in time.
+Reminders are how that gets caught in time — and they are **raised on the phone, not sent to it**.
 
-Two channels, because two different messages need sending:
+[`ReminderWorker`](app/src/main/java/com/eazyverse/testtrack/data/ReminderWorker.kt) reads the same
+data the home screen reads, counts what is still owed today, and posts a local notification if
+anything is. First run is at 7pm, because a nudge at eight in the morning is about a day that has
+barely started. Nothing is scheduled server-side, so there is no cron to keep alive, no fleet of
+device tokens to keep in step with who is still in which cohort, and no cost to a tester being
+unreachable for a week.
 
-- **A topic per group.** Every device subscribes to `group_<id>` for each cohort it is in, so
-  "Group A closes tonight" is a single call that reaches thirteen phones without reading a single
-  token. Subscriptions are diffed against the groups the tester is actually in, so leaving a cohort
-  stops the messages.
-- **A token per device**, at `users/{uid}/tokens/{installId}`, for "*you* are the one behind".
-  Keyed by install and not by the token, which FCM rotates on its own schedule — a token-keyed
-  document would leave a dead address behind every time it did.
+**Admin decisions travel the same road.** When an app is placed or pulled back out, the console
+writes an [`events`](firestore.rules) document addressed to that developer, and their device raises
+it on the next pass — or within seconds, if the app is open. Written rather than pushed because the
+console is a phone app: FCM's v1 API authenticates with a service account, and a service account
+key inside an APK is a service account key in everybody's hands. The cost is latency, which is the
+right trade for news measured in days. The document doubles as the audit trail — `actorUid` records
+which admin acted.
 
-Messages are sent **data-only**. A `notification` block is posted by the system whenever the app is
-backgrounded, which bypasses the app entirely — wrong icon, wrong channel, and no way to open the
-group it is about. Data-only always reaches `PushService`, so a reminder looks and behaves the same
-whichever state the app is in, and tapping one opens the group it names.
+That is the one query in the app needing a composite index; see
+[firestore.indexes.json](firestore.indexes.json) for why.
 
-Permission is the fifth setup step and the only optional one: a tester who declines can still do
-every part of the job, so setup finishes either way — but it will not finish without asking.
-
-There is no sender yet. [`tools/push.sh`](tools/push.sh) does what a scheduled job or the admin app
-eventually will, with an owner credential from gcloud:
+FCM is still wired up — a token per device at `users/{uid}/tokens/{installId}`, a topic per group —
+because it is the only path to instant delivery if a sender ever exists, and
+[`tools/push.sh`](tools/push.sh) can drive it by hand today:
 
 ```sh
 tools/push.sh group seed-group-a "5 apps still waiting" "Day 4 closes tonight."
-tools/push.sh uid   <firebase-uid> "You're behind"       "Two apps left in Group A."
 ```
+
+Notifications are the fifth setup step and the only optional one: a tester who declines can still do
+every part of the job, so setup finishes either way — but it will not finish without asking.
+
+## Releases
+
+Both apps are side-loaded — TestTrack holds `QUERY_ALL_PACKAGES`, which Play restricts — so a
+signed APK on the releases page *is* the distribution channel.
+[`.github/workflows/release.yml`](.github/workflows/release.yml) builds one on every push to `main`,
+publishes it, and prunes so only the newest three survive. The signing key is fixed and its SHA-1 is
+registered in Firebase, so updates install over the top and Google sign-in keeps working.
 
 ## Design
 
@@ -255,9 +268,10 @@ state by shape as well as colour.
 - [x] Real foreground time from `UsageStatsManager`
 - [x] Cohorts of 14 with a shared 14-day run
 - [x] Owner dashboard: today's reporters, the grid, who is behind
-- [x] Push reminders: per-device tokens, per-group topics, deep-linked taps
-- [x] The admin app: review submissions, form groups, place apps
-- [ ] A scheduler to send the reminders on its own — `tools/push.sh` does it by hand today
+- [x] Push plumbing: per-device tokens, per-group topics, deep-linked taps
+- [x] The admin app: review submissions, form groups, place apps, see the proof
+- [x] On-device reminders and admin decisions — no server, no scheduler
+- [x] Signed releases from CI, newest three kept
 
 ## Licence
 

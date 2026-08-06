@@ -32,6 +32,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.data.*
+import com.eazyverse.testtrack.data.AdminEvents
 import com.eazyverse.testtrack.findActivity
 import kotlinx.coroutines.launch
 
@@ -52,6 +53,10 @@ class AuthViewModel : ViewModel() {
                 AuthRepo.uid?.let { uid ->
                     runCatching { Repo.upsertUser(uid, account.email, account.email.substringBefore('@')) }
                 }
+
+                // Everything that happened before this moment is history, not news. Without this
+                // a returning tester is greeted by every placement decision ever made about them.
+                AdminEvents.markCaughtUp(activity)
 
                 // Drive was very likely authorised on a previous install or session — the grant
                 // belongs to the account, not to this phone. Ask, so a returning tester is not

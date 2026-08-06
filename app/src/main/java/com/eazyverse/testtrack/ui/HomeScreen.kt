@@ -94,6 +94,21 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    /**
+     * The daily pass, and a catch-up while the app is open.
+     *
+     * Scheduling here rather than at sign-in because this is the screen a tester always reaches,
+     * and re-scheduling is free — the work is unique and KEEP, so opening the app twenty times
+     * does not push the evening reminder twenty times further away. Draining events here as well
+     * means an admin decision lands within seconds for anyone with the app in front of them,
+     * rather than waiting for the next background run.
+     */
+    fun catchUp(context: Context) {
+        val uid = AuthRepo.uid ?: return
+        ReminderWorker.schedule(context)
+        viewModelScope.launch { runCatching { AdminEvents.drain(context, uid) } }
+    }
+
     /** Both halves or neither — see [ready]. A partial hit is a head start, not a screen. */
     private fun showCached(uid: String) {
         val cachedGroups = Cache.get<List<GroupProgress>>(Cache.groups(uid)) ?: return
@@ -112,6 +127,8 @@ class HomeViewModel : ViewModel() {
      */
     fun signOut(context: Context, then: () -> Unit) {
         val uid = AuthRepo.uid
+        ReminderWorker.cancel(context)
+        AdminEvents.clear(context)
         viewModelScope.launch {
             PushRepo.clear(context, uid)
             then()
@@ -156,6 +173,8 @@ fun HomeScreen(
     // Keyed on the group list, so placement into a new cohort subscribes to it without waiting for
     // the next cold start.
     LaunchedEffect(vm.ready, vm.groups) { if (vm.ready) vm.registerForPush(context) }
+
+    LaunchedEffect(Unit) { vm.catchUp(context) }
 
     var confirmSignOut by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
