@@ -3,6 +3,7 @@ package com.eazyverse.testtrack
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,6 +15,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,9 +50,14 @@ object Routes {
 }
 
 class MainActivity : ComponentActivity() {
+
+    /** Set on the launch intent when a reminder is tapped. */
+    private val openGroup = mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Session.init(this)
+        openGroup.value = intent?.getStringExtra(EXTRA_GROUP_ID)
         setContent {
             TestTrackTheme {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -56,11 +65,28 @@ class MainActivity : ComponentActivity() {
                     // start underneath the status bar. One inset here rather than in each screen;
                     // safeDrawing also covers the cutout, the nav bar and the keyboard.
                     Box(Modifier.safeDrawingPadding()) {
-                        if (Config.isConfigured) AppNav() else NotConfigured()
+                        if (Config.isConfigured) AppNav(openGroup) else NotConfigured()
                     }
                 }
             }
         }
+    }
+
+    /**
+     * A reminder tapped while TestTrack is already running.
+     *
+     * The launch intent is `singleTop` + `clearTop`, so this arrives here rather than through
+     * another `onCreate`, and without it the app would come forward on whatever screen it was left
+     * on — ignoring the thing the tester actually tapped.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.getStringExtra(EXTRA_GROUP_ID)?.let { openGroup.value = it }
+    }
+
+    companion object {
+        const val EXTRA_GROUP_ID = "groupId"
     }
 }
 
@@ -88,7 +114,7 @@ private fun NotConfigured() {
 }
 
 @Composable
-fun AppNav() {
+fun AppNav(openGroup: MutableState<String?> = remember { mutableStateOf(null) }) {
     val nav = rememberNavController()
 
     /**
@@ -115,6 +141,21 @@ fun AppNav() {
         }
     }
 
+    /**
+     * A tapped reminder, honoured once.
+     *
+     * Only from [Routes.HOME]: a tester part-way through setup has no business being dropped into
+     * a group screen, and a round in progress should not be yanked out from under them. Cleared
+     * either way, so returning here later does not re-navigate.
+     */
+    val pending = openGroup.value
+    LaunchedEffect(pending, start) {
+        if (pending != null) {
+            if (start == Routes.HOME) nav.push(Routes.group(pending))
+            openGroup.value = null
+        }
+    }
+
     NavHost(navController = nav, startDestination = start) {
 
         composable(Routes.ONBOARDING) {
@@ -125,8 +166,14 @@ fun AppNav() {
         }
 
         composable(Routes.AUTH) {
-            // Setup decides for itself which steps are still outstanding.
-            AuthScreen(onSignedIn = { nav.replace(Routes.SETUP) })
+            AuthScreen(
+                onSignedIn = {
+                    // Signing back in on a phone that is already set up should not walk the
+                    // checklist again. Every step but the first is derived from the account or
+                    // from Settings, so by the time we are here the answer is already known.
+                    nav.replace(if (Session.setupComplete) Routes.HOME else Routes.SETUP)
+                }
+            )
         }
 
         composable(Routes.SETUP) {
@@ -135,8 +182,12 @@ fun AppNav() {
 
         composable(Routes.HOME) {
             HomeScreen(
-                onOpenGroup = { groupId -> nav.navigate(Routes.group(groupId)) },
-                onSubmitApp = { nav.navigate(Routes.SUBMIT) },
+                onOpenGroup = { groupId -> nav.push(Routes.group(groupId)) },
+                onSubmitApp = { nav.push(Routes.SUBMIT) },
+                // Grants outlive the checklist: Drive access can be revoked from the account and
+                // usage access from Settings, and both leave a working install that quietly cannot
+                // report. Setup is where those are repaired, so it has to stay reachable.
+                onOpenSetup = { nav.push(Routes.SETUP) },
                 onSignOut = {
                     AuthRepo.signOut()
                     Session.signOut()
@@ -158,7 +209,7 @@ fun AppNav() {
         ) { entry ->
             GroupScreen(
                 groupId = entry.arguments?.getString("groupId").orEmpty(),
-                onOpenDashboard = { appId -> nav.navigate(Routes.dashboard(appId)) },
+                onOpenDashboard = { appId -> nav.push(Routes.dashboard(appId)) },
                 onBack = { nav.popBackStack() }
             )
         }
@@ -178,14 +229,23 @@ fun AppNav() {
 /**
  * Navigate forward and drop everything behind, so Back never re-enters a finished step.
  *
- * Pops up to the start destination, not the graph. Popping the graph itself takes the
- * NavController's whole stack with it and the activity finishes — which is what "sign out closes
- * the app" turned out to be. This is only safe because [AppNav] remembers its start destination,
- * so the thing being popped to does not move when session state changes.
+ * Pops up to the graph, **exclusive** — every destination above the root goes, the root graph
+ * entry stays. Both halves matter, and both were wrong before:
+ *
+ *  - Popping up to the *start destination* only works once. The first replace removes it, and
+ *    every later `popUpTo` then names a destination no longer on the stack, matches nothing, and
+ *    pops nothing — so finishing setup left `[SETUP, HOME]` and Back went back to setup.
+ *  - Popping the graph *inclusive* takes the controller's own entry with it, leaving nothing to
+ *    return to, and the activity finishes.
  */
 private fun NavHostController.replace(route: String) {
     navigate(route) {
-        popUpTo(graph.startDestinationId) { inclusive = true }
+        popUpTo(graph.id) { inclusive = false }
         launchSingleTop = true
     }
+}
+
+/** Forward, keeping what is behind. Single-top so a double tap cannot stack the same screen. */
+private fun NavHostController.push(route: String) {
+    navigate(route) { launchSingleTop = true }
 }

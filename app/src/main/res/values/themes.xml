@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.TestTrack" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+      The window Android draws before Compose puts up a frame.
+
+      It has to match the app's own ground or every launch opens on a flash of the wrong colour —
+      this was Material.Light, so a dark app started white. windowBackground is the only part that
+      matters here: the bars are transparent from Android 15 regardless, and the appearance of
+      their icons is set from the theme at runtime.
+    -->
+    <style name="Theme.TestTrack" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/paper</item>
+    </style>
 </resources>

@@ -51,43 +51,67 @@ class DashboardViewModel : ViewModel() {
         private set
     var proofs by mutableStateOf<Map<Pair<String, Int>, Proof>>(emptyMap())
         private set
-    var loading by mutableStateOf(true)
+    /**
+     * The app, its group, the roster and every proof are all in hand.
+     *
+     * One flag for the page — see [SkeletonPage]. Here the headline is the casualty: a roster
+     * without its proofs reads "0 of 13 reported today" and every cell of the grid draws as a
+     * miss. Sticky once set.
+     */
+    var ready by mutableStateOf(false)
         private set
+
     var message by mutableStateOf<String?>(null)
 
     val day: Int? get() = group?.dayIndex()
 
     fun load(appId: String) {
-        Cache.get<TestApp>(Cache.app(appId))?.let { cached ->
-            app = cached
-            cached.groupId?.let { gid ->
-                Cache.get<TestGroup>(Cache.group(gid))?.let { group = it }
-                Cache.get<List<Tester>>(Cache.testers(gid))?.let { testers = it }
-            }
-            Cache.get<Map<Pair<String, Int>, Proof>>(Cache.proofs(appId))?.let { proofs = it }
-            loading = false
-        }
+        showCached(appId)
 
         viewModelScope.launch {
             runCatching {
                 val found = Repo.app(appId)
-                app = found
-                found?.let { Cache.put(Cache.app(appId), it) }
-
                 val cohort = found?.groupId?.let { Repo.group(it) }
-                group = cohort
 
+                // The owner never tests their own app, so they are not a row in their grid.
+                val roster =
+                    if (found == null || cohort == null) emptyList()
+                    else Repo.testers(cohort.memberUids).filter { it.uid != found.ownerUid }
+                val marks =
+                    if (found == null || cohort == null) emptyMap()
+                    else Repo.proofsForApp(appId, found.ownerUid)
+                        .associateBy { it.testerUid to it.day }
+
+                // Published in one go, after every query has answered — see [ready].
+                app = found
+                group = cohort
+                testers = roster
+                proofs = marks
+
+                found?.let { Cache.put(Cache.app(appId), it) }
                 if (cohort != null) {
                     Cache.put(Cache.group(cohort.id), cohort)
-                    // The owner never tests their own app, so they are not a row in their grid.
-                    testers = Repo.testers(cohort.memberUids).filter { it.uid != found.ownerUid }
-                    Cache.put(Cache.testers(cohort.id), testers)
-                    proofs = Repo.proofsForApp(appId).associateBy { it.testerUid to it.day }
-                    Cache.put(Cache.proofs(appId), proofs)
+                    Cache.put(Cache.testers(cohort.id), roster)
+                    Cache.put(Cache.proofs(appId), marks)
                 }
             }.onFailure { message = it.message ?: "Could not load this dashboard" }
-            loading = false
+            ready = true
         }
+    }
+
+    /** Complete hit or nothing: proofs missing behind a full roster reads as thirteen no-shows. */
+    private fun showCached(appId: String) {
+        val cached = Cache.get<TestApp>(Cache.app(appId)) ?: return
+        val gid = cached.groupId ?: return
+        val cohort = Cache.get<TestGroup>(Cache.group(gid)) ?: return
+        val roster = Cache.get<List<Tester>>(Cache.testers(gid)) ?: return
+        val marks = Cache.get<Map<Pair<String, Int>, Proof>>(Cache.proofs(appId)) ?: return
+
+        app = cached
+        group = cohort
+        testers = roster
+        proofs = marks
+        ready = true
     }
 
     fun stateOf(uid: String, forDay: Int): DayState {
@@ -135,7 +159,11 @@ fun DashboardScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text(vm.app?.label ?: "Your app", fontWeight = FontWeight.SemiBold) },
+                title = {
+                    // See the note on GroupScreen's title.
+                    if (!vm.ready) Skeleton(width = 116.dp, height = 19.dp, corner = 6.dp)
+                    else Text(vm.app?.label ?: "Your app", fontWeight = FontWeight.SemiBold)
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
@@ -154,16 +182,7 @@ fun DashboardScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             when {
-                vm.app == null && vm.loading -> {
-                    Spacer(Modifier.height(12.dp))
-                    Column(Modifier.padding(horizontal = Gutter)) {
-                        Skeleton(width = 130.dp, height = 34.dp, corner = 10.dp)
-                        Spacer(Modifier.height(10.dp))
-                        Skeleton(width = 190.dp, height = 12.dp)
-                    }
-                    Spacer(Modifier.height(28.dp))
-                    SkeletonRows(3)
-                }
+                !vm.ready -> DashboardSkeleton()
 
                 vm.app == null -> Blank(vm.message ?: "That app is no longer registered.")
                 vm.group == null -> Blank("This app hasn't been placed in a group yet.")
@@ -219,6 +238,37 @@ fun DashboardScreen(
             }
         )
     }
+}
+
+/**
+ * The dashboard's own shape, since its content is not a list — the thumbnail strip is the tallest
+ * thing on the page and a generic row skeleton under it would collapse the moment it landed.
+ */
+@Composable
+private fun DashboardSkeleton() {
+    Spacer(Modifier.height(10.dp))
+    Column(Modifier.padding(horizontal = Gutter)) {
+        Skeleton(width = 132.dp, height = 34.dp, corner = 10.dp)
+        Spacer(Modifier.height(12.dp))
+        Skeleton(width = 196.dp, height = 12.dp)
+        Spacer(Modifier.height(18.dp))
+        Skeleton(height = 6.dp, corner = 3.dp)
+    }
+    Spacer(Modifier.height(30.dp))
+    Row(
+        Modifier.padding(horizontal = Gutter),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        repeat(4) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Skeleton(width = 86.dp, height = 152.dp, corner = 10.dp)
+                Spacer(Modifier.height(8.dp))
+                Skeleton(width = 54.dp, height = 9.dp)
+            }
+        }
+    }
+    Spacer(Modifier.height(30.dp))
+    Panel { SkeletonRows(8, showTrailing = false) }
 }
 
 /**

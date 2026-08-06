@@ -97,6 +97,14 @@ data class TestApp(
 data class Proof(
     val appId: String = "",
     val groupId: String = "",
+    /**
+     * The owner of [appId], copied in at write time.
+     *
+     * Carried on the proof so reading one needs no lookup: the two people entitled to see it — the
+     * tester who posted it and the owner of the app it is about — are both named in the document.
+     * A rule that had to fetch the group instead did not survive a 45-document query.
+     */
+    val ownerUid: String = "",
     val testerUid: String = "",
     val testerEmail: String = "",
     val day: Int = 0,

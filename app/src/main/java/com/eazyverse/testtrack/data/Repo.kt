@@ -60,11 +60,13 @@ object Repo {
         )
     }
 
-    suspend fun testers(): List<Tester> =
-        await(db.collection("users").get()).documents.mapNotNull(::parseTester)
-            .sortedBy { it.shortName }
-
-    /** Just the members of one group, which is all any grid or dashboard ever needs. */
+    /**
+     * Just the members of one group, which is all any grid or dashboard ever needs.
+     *
+     * There is deliberately no "every tester" variant. One existed, went unused, and was a whole
+     * user table one careless call away — the rules allow it, because a grid has to turn a uid
+     * into a name, and that permission is only defensible while the queries stay this narrow.
+     */
     suspend fun testers(uids: Collection<String>): List<Tester> {
         if (uids.isEmpty()) return emptyList()
         return uids.distinct().chunked(30).flatMap { batch ->
@@ -187,15 +189,12 @@ object Repo {
                 .get()
         ).documents.map(::parseApp).sortedBy { it.submittedAt }
 
-    suspend fun myApps(uid: String): List<TestApp> =
-        await(db.collection("apps").whereEqualTo("ownerUid", uid).get())
-            .documents.map(::parseApp).sortedBy { it.label.lowercase() }
-
     // ---- proofs --------------------------------------------------------------------------
 
     private fun parseProof(doc: DocumentSnapshot) = Proof(
         appId = doc.getString("appId").orEmpty(),
         groupId = doc.getString("groupId").orEmpty(),
+        ownerUid = doc.getString("ownerUid").orEmpty(),
         testerUid = doc.getString("testerUid").orEmpty(),
         testerEmail = doc.getString("testerEmail").orEmpty(),
         day = (doc.getLong("day") ?: 0L).toInt(),
@@ -214,6 +213,7 @@ object Repo {
                     mapOf(
                         "appId" to proof.appId,
                         "groupId" to proof.groupId,
+                        "ownerUid" to proof.ownerUid,
                         "testerUid" to proof.testerUid,
                         "testerEmail" to proof.testerEmail,
                         "day" to proof.day,
@@ -226,10 +226,23 @@ object Repo {
         )
     }
 
-    /** Every proof for one app — the owner's whole grid, in one read. */
-    suspend fun proofsForApp(appId: String): List<Proof> =
-        await(db.collection("proofs").whereEqualTo("appId", appId).get())
-            .documents.map(::parseProof)
+    /**
+     * Every proof for one app — the owner's whole grid, in one read.
+     *
+     * Filtered by owner as well as app, and that second clause is not redundant: **security rules
+     * are not filters.** For a query, Firestore will not evaluate `resource.data` document by
+     * document — it requires the query to constrain the fields the rule tests, so the whole result
+     * set is provably allowed before anything is read. The rule permits a proof to its app's
+     * owner, so the query has to say `ownerUid == me` or it is refused outright, however
+     * impeccable the documents are.
+     */
+    suspend fun proofsForApp(appId: String, ownerUid: String): List<Proof> =
+        await(
+            db.collection("proofs")
+                .whereEqualTo("appId", appId)
+                .whereEqualTo("ownerUid", ownerUid)
+                .get()
+        ).documents.map(::parseProof)
 
     /**
      * What this tester has already posted in one group today.

@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.GroupWork
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,8 +36,16 @@ class HomeViewModel : ViewModel() {
         private set
     var pending by mutableStateOf<List<TestApp>>(emptyList())
         private set
-    var loading by mutableStateOf(true)
+    /**
+     * Everything this screen shows is in hand.
+     *
+     * One flag for the page, not one per list: whichever half arrives first would otherwise be
+     * drawn over the half that hasn't, and a total struck across sections is wrong until both are
+     * counted. Sticky once set — a refresh over content already on screen must not blank it.
+     */
+    var ready by mutableStateOf(false)
         private set
+
     var message by mutableStateOf<String?>(null)
 
     /** Across every cohort — the number the tester actually cares about first thing. */
@@ -43,26 +53,68 @@ class HomeViewModel : ViewModel() {
     val dueToday: Int get() = groups.sumOf { it.toTest }
 
     fun load() {
-        val uid = AuthRepo.uid ?: run { loading = false; return }
+        val uid = AuthRepo.uid ?: run { ready = true; return }
 
-        Cache.get<List<GroupProgress>>(Cache.groups(uid))?.let { groups = it; loading = false }
-        Cache.get<List<TestApp>>(Cache.pending(uid))?.let { pending = it }
+        showCached(uid)
 
         viewModelScope.launch {
             runCatching {
-                pending = Repo.pendingApps(uid)
-                Cache.put(Cache.pending(uid), pending)
-
-                groups = Repo.myGroups(uid).map { group ->
+                val waiting = Repo.pendingApps(uid)
+                val progress = Repo.myGroups(uid).map { group ->
                     val others = Repo.appsInGroup(group.id).filter { it.ownerUid != uid }
                     val day = group.dayIndex()
                     val done = if (day == null) 0 else Repo.myProofsForDay(uid, group.id, day).size
                     GroupProgress(group, others.size, done)
                 }
-                Cache.put(Cache.groups(uid), groups)
+
+                // Published together, at the end. Assigning as each query lands would repaint a
+                // screen that already has content with a half-updated one.
+                pending = waiting
+                groups = progress
+                Cache.put(Cache.pending(uid), waiting)
+                Cache.put(Cache.groups(uid), progress)
                 message = null
             }.onFailure { message = it.message ?: "Could not load your groups" }
-            loading = false
+            ready = true
+        }
+    }
+
+    /**
+     * Makes this device reachable, and puts it on the right lists.
+     *
+     * Here rather than at sign-in because the cohort is only known once the groups are loaded, and
+     * because membership changes without the app being reinstalled — an admin places an app, and
+     * the next time home refreshes, the topic follows.
+     */
+    fun registerForPush(context: Context) {
+        val uid = AuthRepo.uid ?: return
+        viewModelScope.launch {
+            PushRepo.register(context, uid)
+            if (ready) PushRepo.syncTopics(context, groups.map { it.group.id })
+        }
+    }
+
+    /** Both halves or neither — see [ready]. A partial hit is a head start, not a screen. */
+    private fun showCached(uid: String) {
+        val cachedGroups = Cache.get<List<GroupProgress>>(Cache.groups(uid)) ?: return
+        val cachedPending = Cache.get<List<TestApp>>(Cache.pending(uid)) ?: return
+        groups = cachedGroups
+        pending = cachedPending
+        ready = true
+    }
+
+    /**
+     * Unhooks push, then hands back to navigate.
+     *
+     * Sequenced rather than fired alongside: deleting the token document is a Firestore write that
+     * needs the credentials it is being asked to abandon. `viewModelScope` outlives the dialog and
+     * is only torn down by the navigation [then] performs, so the await always completes.
+     */
+    fun signOut(context: Context, then: () -> Unit) {
+        val uid = AuthRepo.uid
+        viewModelScope.launch {
+            PushRepo.clear(context, uid)
+            then()
         }
     }
 
@@ -81,6 +133,7 @@ class HomeViewModel : ViewModel() {
 fun HomeScreen(
     onOpenGroup: (String) -> Unit,
     onSubmitApp: () -> Unit,
+    onOpenSetup: () -> Unit,
     onSignOut: () -> Unit,
     vm: HomeViewModel = viewModel()
 ) {
@@ -91,13 +144,21 @@ fun HomeScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) vm.load()
+            if (event == Lifecycle.Event.ON_RESUME) {
+                vm.load()
+                Session.refreshNotifications(context)
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    // Keyed on the group list, so placement into a new cohort subscribes to it without waiting for
+    // the next cold start.
+    LaunchedEffect(vm.ready, vm.groups) { if (vm.ready) vm.registerForPush(context) }
+
     var confirmSignOut by remember { mutableStateOf(false) }
+    var menuOpen by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -105,8 +166,30 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text("TestTrack", fontWeight = FontWeight.Bold) },
                 actions = {
-                    IconButton(onClick = { confirmSignOut = true }) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, "Sign out")
+                    Box {
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(Icons.Default.MoreVert, "More")
+                        }
+                        DropdownMenu(menuOpen, onDismissRequest = { menuOpen = false }) {
+                            DropdownMenuItem(
+                                text = { Text("Setup") },
+                                leadingIcon = { Icon(Icons.Outlined.Tune, null) },
+                                onClick = {
+                                    menuOpen = false
+                                    onOpenSetup()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Sign out") },
+                                leadingIcon = {
+                                    Icon(Icons.AutoMirrored.Filled.Logout, null)
+                                },
+                                onClick = {
+                                    menuOpen = false
+                                    confirmSignOut = true
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -122,66 +205,67 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
         ) {
 
-            if (vm.groups.isNotEmpty()) {
-                Column(Modifier.padding(start = Gutter, end = Gutter, top = 4.dp)) {
-                    Row(verticalAlignment = Alignment.Bottom) {
+            if (!vm.ready) {
+                SkeletonPage(rows = 5, showAction = false, showTrailing = false)
+            } else {
+                if (vm.groups.isNotEmpty()) {
+                    Column(Modifier.padding(start = Gutter, end = Gutter, top = 4.dp)) {
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                "${vm.doneToday} of ${vm.dueToday}",
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(Modifier.height(5.dp))
                         Text(
-                            "${vm.doneToday} of ${vm.dueToday}",
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Bold
+                            if (vm.dueToday == 0) "nothing due today"
+                            else "tested today across ${vm.groups.size} " +
+                                if (vm.groups.size == 1) "group" else "groups",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Spacer(Modifier.height(14.dp))
+                        Meter(if (vm.dueToday == 0) 0f else vm.doneToday.toFloat() / vm.dueToday)
                     }
-                    Spacer(Modifier.height(5.dp))
-                    Text(
-                        if (vm.dueToday == 0) "nothing due today"
-                        else "tested today across ${vm.groups.size} " +
-                            if (vm.groups.size == 1) "group" else "groups",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                }
+
+                // Nothing at all: one empty state rather than two headed sections standing over
+                // nothing.
+                if (vm.groups.isEmpty() && vm.pending.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Outlined.GroupWork,
+                        title = "No groups yet",
+                        subtitle = "Submit an app you've put on a closed track. An admin places " +
+                            "it into a testing group, and your 14 days start once that group is " +
+                            "full."
                     )
-                    Spacer(Modifier.height(14.dp))
-                    Meter(if (vm.dueToday == 0) 0f else vm.doneToday.toFloat() / vm.dueToday)
-                }
-            }
-
-            when {
-                vm.groups.isEmpty() && vm.loading -> {
-                    SectionLabel("Your groups")
-                    Panel { SkeletonRows(2, showTrailing = false) }
-                }
-
-                vm.groups.isEmpty() && vm.pending.isEmpty() -> EmptyState(
-                    icon = Icons.Outlined.GroupWork,
-                    title = "No groups yet",
-                    subtitle = "Submit an app you've put on a closed track. An admin places it " +
-                        "into a testing group, and your 14 days start once that group is full."
-                )
-
-                vm.groups.isEmpty() -> Unit
-
-                else -> {
+                } else {
                     SectionLabel("Your groups")
                     Panel {
-                        vm.groups.forEach { progress ->
+                        if (vm.groups.isEmpty()) Blank("None yet.")
+                        else vm.groups.forEach { progress ->
                             GroupRow(progress) { onOpenGroup(progress.group.id) }
                         }
                     }
-                }
-            }
 
-            if (vm.pending.isNotEmpty()) {
-                SectionLabel("Waiting for a group")
-                Panel {
-                    vm.pending.forEach { app ->
-                        PendingRow(app) { vm.withdraw(app) }
+                    if (vm.pending.isNotEmpty()) {
+                        SectionLabel("Waiting for a group")
+                        Panel {
+                            vm.pending.forEach { app -> PendingRow(app) { vm.withdraw(app) } }
+                        }
                     }
                 }
+
+                vm.message?.let { Failure(it) }
+
+                Spacer(Modifier.height(24.dp))
+                Primary(
+                    "Submit an app",
+                    Modifier.padding(horizontal = Gutter),
+                    onClick = onSubmitApp
+                )
             }
-
-            vm.message?.let { Failure(it) }
-
-            Spacer(Modifier.height(24.dp))
-            Primary("Submit an app", Modifier.padding(horizontal = Gutter), onClick = onSubmitApp)
             Spacer(Modifier.height(40.dp))
         }
     }
@@ -200,8 +284,10 @@ fun HomeScreen(
                 TextButton(onClick = {
                     confirmSignOut = false
                     CaptureService.endSession(context)
-                    Cache.clear()
-                    onSignOut()
+                    vm.signOut(context) {
+                        Cache.clear()
+                        onSignOut()
+                    }
                 }) { Text("Sign out", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {

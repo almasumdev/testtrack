@@ -73,6 +73,35 @@
             android:name=".data.CaptureService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
+
+        <!--
+          Push. Exported because Play services delivers to it from outside the app; the
+          MESSAGING_EVENT action is the documented contract and is not something another app can
+          usefully call.
+        -->
+        <service
+            android:name=".data.PushService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!--
+          Fallbacks for a message that arrives with a `notification` block, which the system posts
+          without ever calling PushService. TestTrack sends data-only so that path is not used, but
+          without these the system would fall back to the launcher icon — an iris square, drawn as
+          a solid white block once Android masks it to alpha.
+        -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/ic_launcher_background" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="reminders" />
     </application>
 
 </manifest>

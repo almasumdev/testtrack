@@ -9,6 +9,12 @@ rules_version = '2';
 //
 // Everything a tester can see is scoped to a cohort they belong to. Anything that decides who
 // tests what is admin-only.
+//
+// **Rules are not filters.** For a query, Firestore does not evaluate `resource.data` document by
+// document; it demands the query constrain whatever fields the rule tests, so the entire result
+// set is provably allowed before a single document is read. Every read condition below therefore
+// has a matching `where` clause in Repo.kt, and adding one here without adding the other turns a
+// working screen into a bare PERMISSION_DENIED with nothing wrong in the data.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -51,6 +57,23 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if signedIn();
       allow write: if signedIn() && request.auth.uid == uid;
+    }
+
+    /**
+     * Push addresses for one account's devices, one document per install.
+     *
+     * A separate block and not an oversight: rules do **not** cascade to subcollections unless the
+     * parent match uses `{document=**}`, so `users/{uid}` above governs the user document alone.
+     * That is exactly what is wanted here — the user document is readable by every signed-in
+     * account so grids can turn a uid into a name, and device tokens must not inherit that. A
+     * token is an address anyone could send to once a sender key leaks, and there is no reason for
+     * one tester to hold another's.
+     *
+     * Written by the device it belongs to, read by whatever ends up doing the sending — which is
+     * an admin credential today and the admin app later.
+     */
+    match /users/{uid}/tokens/{installId} {
+      allow read, write: if isAdmin() || (signedIn() && request.auth.uid == uid);
     }
 
     // A swap cohort: fourteen members, one app each, one shared 14-day run.
@@ -103,19 +126,33 @@ service cloud.firestore {
     /**
      * Proof of one tester's visit to one app on one day.
      *
-     * This is the sensitive collection: each document points at a full-screen capture that is
-     * readable by anyone holding its Drive link. Reads are therefore closed to the cohort the
-     * proof belongs to, and a tester can only ever write their own row, in a cohort they are in.
+     * The sensitive collection: each document points at a full-screen capture readable by anyone
+     * holding its Drive link.
+     *
+     * Reading needs **no document lookup**, deliberately. Only two people ever read a proof — the
+     * tester who posted it, and the owner of the app it is about — and both are named in the
+     * document, so the rule is two equality checks. An earlier version fetched the group to test
+     * cohort membership; that survives the fourteen-document apps query and is refused on the
+     * forty-five-document proofs query, which is the whole grid.
+     *
+     * Integrity lives on the write instead, where a single-document request can afford the fetch:
+     * the writer must be the tester, must be in the cohort, and cannot invent an owner.
      *
      * Document ids are {appId}__{testerUid}__{day}, so re-posting overwrites rather than
      * duplicating.
      */
     match /proofs/{proofId} {
-      allow read: if isAdmin() || inGroup(resource.data.groupId);
+      allow read: if isAdmin()
+        || (signedIn() && request.auth.uid == resource.data.testerUid)
+        || (signedIn() && request.auth.uid == resource.data.ownerUid);
 
-      allow create, update: if signedIn()
+      allow create, update: if isAdmin() || (
+        signedIn()
         && request.auth.uid == request.resource.data.testerUid
-        && inGroup(request.resource.data.groupId);
+        && inGroup(request.resource.data.groupId)
+        && request.resource.data.ownerUid ==
+             get(/databases/$(database)/documents/apps/$(request.resource.data.appId)).data.ownerUid
+      );
 
       allow delete: if false;
     }

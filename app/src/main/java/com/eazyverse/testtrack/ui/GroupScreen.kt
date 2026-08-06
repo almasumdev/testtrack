@@ -51,8 +51,18 @@ class GroupViewModel : ViewModel() {
         private set
     var reportersForMine by mutableStateOf(0)
         private set
-    var loading by mutableStateOf(true)
+    /**
+     * The group, its apps and today's tally are all in hand.
+     *
+     * One flag for the page — see [SkeletonPage]. This screen is where a partial render shows
+     * worst: the header arrives first, an empty worklist means nothing is outstanding, and the
+     * action reads "everything's done for today" in green before the apps it hasn't seen yet turn
+     * it into "start testing · 5 left". Sticky once set, so the reload on every resume does not
+     * throw the screen back to shimmer.
+     */
+    var ready by mutableStateOf(false)
         private set
+
     var uploading by mutableStateOf(0)
         private set
     var message by mutableStateOf<String?>(null)
@@ -73,41 +83,66 @@ class GroupViewModel : ViewModel() {
     fun load(groupId: String) {
         val uid = AuthRepo.uid ?: return
 
-        Cache.get<TestGroup>(Cache.group(groupId))?.let { cached ->
-            group = cached
-            Cache.get<List<TestApp>>(Cache.appsIn(groupId))?.let { apps ->
-                mine = apps.firstOrNull { it.ownerUid == uid }
-                toTest = apps.filter { it.ownerUid != uid }
-            }
-            cached.dayIndex()?.let { d ->
-                Cache.get<Set<String>>(Cache.doneToday(uid, groupId, d))?.let { doneToday = it }
-            }
-            loading = false
-        }
+        showCached(uid, groupId)
 
         viewModelScope.launch {
             runCatching {
                 val found = Repo.group(groupId) ?: return@runCatching
-                group = found
-                Cache.put(Cache.group(groupId), found)
-
                 val apps = Repo.appsInGroup(groupId)
-                Cache.put(Cache.appsIn(groupId), apps)
-                mine = apps.firstOrNull { it.ownerUid == uid }
-                toTest = apps.filter { it.ownerUid != uid }
-
+                val own = apps.firstOrNull { it.ownerUid == uid }
                 val d = found.dayIndex()
+
+                val banked =
+                    if (d == null) emptySet() else Repo.myProofsForDay(uid, groupId, d)
+                val reporters =
+                    if (d == null || own == null) 0
+                    else Repo.proofsForApp(own.id, own.ownerUid).count { it.day == d && it.meetsBar }
+
+                // Published in one go, after every query has answered — see [ready].
+                group = found
+                mine = own
+                toTest = apps.filter { it.ownerUid != uid }
+                doneToday = banked
+                reportersForMine = reporters
+
+                Cache.put(Cache.group(groupId), found)
+                Cache.put(Cache.appsIn(groupId), apps)
                 if (d != null) {
-                    doneToday = Repo.myProofsForDay(uid, groupId, d)
-                    Cache.put(Cache.doneToday(uid, groupId, d), doneToday)
-                    reportersForMine = mine?.let { app ->
-                        Repo.proofsForApp(app.id).count { it.day == d && it.meetsBar }
-                    } ?: 0
+                    Cache.put(Cache.doneToday(uid, groupId, d), banked)
+                    own?.let { Cache.put(Cache.reporters(it.id, d), reporters) }
                 }
                 message = null
             }.onFailure { message = it.message ?: "Could not load this group" }
-            loading = false
+            ready = true
         }
+    }
+
+    /**
+     * Renders the cache only on a complete hit.
+     *
+     * Every `?: return` here is a piece the screen would otherwise have to invent a value for, and
+     * the invented value is always the confident one: no apps means nothing to test, no tally
+     * means nothing done. Half a group on screen is not a faster group, it is a wrong one.
+     */
+    private fun showCached(uid: String, groupId: String) {
+        val cached = Cache.get<TestGroup>(Cache.group(groupId)) ?: return
+        val apps = Cache.get<List<TestApp>>(Cache.appsIn(groupId)) ?: return
+        val own = apps.firstOrNull { it.ownerUid == uid }
+        val d = cached.dayIndex()
+
+        val banked =
+            if (d == null) emptySet()
+            else Cache.get<Set<String>>(Cache.doneToday(uid, groupId, d)) ?: return
+        val reporters =
+            if (d == null || own == null) 0
+            else Cache.get<Int>(Cache.reporters(own.id, d)) ?: return
+
+        group = cached
+        mine = own
+        toTest = apps.filter { it.ownerUid != uid }
+        doneToday = banked
+        reportersForMine = reporters
+        ready = true
     }
 
     /**
@@ -131,7 +166,12 @@ class GroupViewModel : ViewModel() {
         viewModelScope.launch {
             val token = AuthRepo.driveTokenOrNull(activity)
             if (token == null) {
-                message = "Drive access expired — reconnect it in setup."
+                // The cached flag is now known to be wrong, and it is the only thing standing
+                // between the tester and the step that fixes this. Left true, Setup shows Drive as
+                // done and offers no way to reconnect.
+                Session.updateDriveConnected(false)
+                message = "Drive access has lapsed. Reconnect it under Setup, in the menu on the " +
+                    "home screen."
             } else {
                 val file = File(capture.path)
                 val name = "${app.packageName}_day${d}_${uid.take(6)}.jpg"
@@ -141,6 +181,7 @@ class GroupViewModel : ViewModel() {
                         val proof = Proof(
                             appId = app.id,
                             groupId = cohort.id,
+                            ownerUid = app.ownerUid,
                             testerUid = uid,
                             testerEmail = email,
                             day = d,
@@ -242,7 +283,10 @@ fun GroupScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
+                    // The bar is part of the page: a placeholder name would pop to the real one a
+                    // second later, which is the same lie the body no longer tells.
+                    if (!vm.ready) Skeleton(width = 116.dp, height = 19.dp, corner = 6.dp)
+                    else Text(
                         group?.name?.ifBlank { null } ?: "Group",
                         fontWeight = FontWeight.SemiBold
                     )
@@ -265,16 +309,7 @@ fun GroupScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             when {
-                group == null && vm.loading -> {
-                    Spacer(Modifier.height(12.dp))
-                    Column(Modifier.padding(horizontal = Gutter)) {
-                        Skeleton(width = 150.dp, height = 30.dp, corner = 10.dp)
-                        Spacer(Modifier.height(10.dp))
-                        Skeleton(width = 200.dp, height = 12.dp)
-                    }
-                    Spacer(Modifier.height(24.dp))
-                    SkeletonRows(4)
-                }
+                !vm.ready -> SkeletonPage(rows = 8)
 
                 group == null -> Blank(vm.message ?: "That group no longer exists.")
 
@@ -286,6 +321,7 @@ fun GroupScreen(
                     Action(
                         group = group,
                         outstanding = outstanding.size,
+                        remaining = vm.toTest.size - vm.doneToday.size,
                         uploading = vm.uploading,
                         usageGranted = Session.usageAccessGranted,
                         canReturn = canReturn,
@@ -315,22 +351,21 @@ fun GroupScreen(
                         if (vm.day != null) "${vm.doneToday.size} of ${vm.toTest.size}" else null
                     )
 
-                    when {
-                        vm.toTest.isEmpty() && vm.loading -> Panel { SkeletonRows(4) }
-
-                        vm.toTest.isEmpty() -> EmptyState(
+                    if (vm.toTest.isEmpty()) {
+                        EmptyState(
                             icon = Icons.Outlined.HourglassEmpty,
                             title = "Nobody else here yet",
                             subtitle = "An admin is still placing apps into this group. Once " +
                                 "there are ${TestGroup.THRESHOLD}, the run starts."
                         )
-
-                        else -> Panel {
+                    } else {
+                        Panel {
                             vm.toTest.forEach { app ->
                                 TestRow(
                                     app = app,
                                     done = app.id in vm.doneToday,
-                                    running = group.running,
+                                    live = vm.day != null,
+                                    ended = group.running,
                                     busy = CaptureService.capturing == app.packageName,
                                     onOpen = { run(listOf(app.packageName)) }
                                 )
@@ -369,11 +404,17 @@ private fun Header(group: TestGroup, done: Int, total: Int) {
         }
         Spacer(Modifier.height(5.dp))
         Text(
-            if (day != null)
-                "$done of $total done · ${group.size} of ${TestGroup.CAPACITY} members"
-            else
-                "${group.size} of ${TestGroup.THRESHOLD} members — the run starts when the " +
-                    "${TestGroup.THRESHOLD}th joins",
+            when {
+                day != null ->
+                    "$done of $total done · ${group.size} of ${TestGroup.CAPACITY} members"
+                // A run that has ended is not one that has not started. `startDate > 0` is what
+                // tells them apart, and the copy has to as well.
+                group.running ->
+                    "All $RUN_DAYS days are behind you. Your dashboard has the full record."
+                else ->
+                    "${group.size} of ${TestGroup.THRESHOLD} members — the run starts when the " +
+                        "${TestGroup.THRESHOLD}th joins"
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -408,6 +449,7 @@ private fun Header(group: TestGroup, done: Int, total: Int) {
 private fun Action(
     group: TestGroup,
     outstanding: Int,
+    remaining: Int,
     uploading: Int,
     usageGranted: Boolean,
     canReturn: Boolean,
@@ -468,6 +510,19 @@ private fun Action(
                 Spacer(Modifier.height(12.dp))
                 Primary("Allow TestTrack to switch apps", onClick = onGrantOverlay)
             }
+
+            // Nothing to run, but for two very different reasons. A round only walks apps that are
+            // actually on the phone, so a cohort none of which are installed also has nothing
+            // outstanding — and calling that "done", in green, over a header reading "0 of 11
+            // done" is the screen contradicting itself.
+            outstanding == 0 && remaining > 0 -> Text(
+                "$remaining app${if (remaining == 1) "" else "s"} still to test, and " +
+                    "${if (remaining == 1) "it isn't" else "none of them are"} installed on this " +
+                    "phone. Install ${if (remaining == 1) "it" else "them"} from Play — a round " +
+                    "can only open what is already here.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Status.missed
+            )
 
             outstanding == 0 -> Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -541,7 +596,10 @@ private fun MineRow(app: TestApp, reporters: Int, group: TestGroup, onClick: () 
 private fun TestRow(
     app: TestApp,
     done: Boolean,
-    running: Boolean,
+    /** The run is under way — the only state in which a visit can be banked against a day. */
+    live: Boolean,
+    /** Distinguishes a run that is over from one that has not begun. Only read when not [live]. */
+    ended: Boolean,
     busy: Boolean,
     onOpen: () -> Unit
 ) {
@@ -573,7 +631,16 @@ private fun TestRow(
             busy -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
             !info.installed -> Pill("Install", Status.missed, Status.missedSoft)
             done -> Pill("Done", Status.posted, Status.postedSoft)
-            !running -> Pill("Waiting", MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft)
+
+            // Off the clock, in either direction. `running` alone was not enough: it stays true
+            // once a run ends, so day 15 still offered Open — a button that spends thirty-six
+            // seconds capturing a visit `publish` then drops, because there is no day to file it
+            // under.
+            !live -> Pill(
+                if (ended) "Ended" else "Waiting",
+                MaterialTheme.colorScheme.onSurfaceVariant,
+                Status.neutralSoft
+            )
             else -> TextButton(
                 onClick = onOpen,
                 shape = RoundedCornerShape(10.dp),

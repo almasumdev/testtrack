@@ -49,9 +49,6 @@ import androidx.compose.foundation.Image as ComposeImage
 /** The page gutter. Every screen, every row, no exceptions. */
 val Gutter = 20.dp
 
-/** Where a row's divider starts: past the icon, so a column reads as a list. */
-val RowInset = 68.dp
-
 /** State colours, from the theme. Never used for a control — that is what primary is for. */
 object Status {
     val posted: Color @Composable get() = LocalStatusColors.current.posted
@@ -385,9 +382,50 @@ fun Skeleton(width: Dp? = null, height: Dp = 12.dp, corner: Dp = 6.dp, modifier:
     )
 }
 
-/** Three rows in the shape of the list that is coming. */
+/**
+ * Rows in the shape of the list that is coming.
+ *
+ * No dividers, because the list it stands in for has none — a skeleton that draws rules the real
+ * content will not is a promise the arriving screen breaks. Enough rows to fill the space too: a
+ * cohort is fourteen apps, and three placeholders under a full-height panel reads as "finished,
+ * and nearly empty" rather than "still loading".
+ */
+/**
+ * A whole screen, before any of it has arrived.
+ *
+ * One skeleton for the page, never one per section, because sections do not land together. A
+ * header drawn over a list that is still loading states things the list is about to contradict —
+ * a group page whose apps have not turned up reads as "everything's done for today", in green,
+ * and then flips to "start testing · 5 left". The header was not wrong; it was early.
+ *
+ * It stands in for content and not for structure: no section labels, no headings. A label is a
+ * claim that the section exists, and some of them will not. Content landing shifts the layout a
+ * little; a heading over something that never appears is worse.
+ */
 @Composable
-fun SkeletonRows(count: Int = 3, showTrailing: Boolean = true) {
+fun SkeletonPage(rows: Int = 8, showAction: Boolean = true, showTrailing: Boolean = true) {
+    Spacer(Modifier.height(8.dp))
+    Column(Modifier.padding(horizontal = Gutter)) {
+        Skeleton(width = 148.dp, height = 34.dp, corner = 10.dp)
+        Spacer(Modifier.height(12.dp))
+        Skeleton(width = 210.dp, height = 12.dp)
+        Spacer(Modifier.height(18.dp))
+        Skeleton(height = 6.dp, corner = 3.dp)
+        if (showAction) {
+            Spacer(Modifier.height(26.dp))
+            Skeleton(height = 52.dp, corner = 16.dp)
+        }
+    }
+    Spacer(Modifier.height(28.dp))
+    Panel { SkeletonRows(rows, showTrailing) }
+}
+
+@Composable
+fun SkeletonRows(count: Int = 7, showTrailing: Boolean = true) {
+    // Widths cycle rather than march, so a long run does not look like a wedge.
+    val titles = listOf(118, 92, 140, 104, 126, 86, 132)
+    val metas = listOf(168, 132, 190, 150, 118, 176, 142)
+
     repeat(count) { index ->
         Row(
             Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 13.dp),
@@ -396,15 +434,14 @@ fun SkeletonRows(count: Int = 3, showTrailing: Boolean = true) {
             Skeleton(width = 44.dp, height = 44.dp, corner = 13.dp)
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Skeleton(width = (110 + index * 26).dp, height = 12.dp)
+                Skeleton(width = titles[index % titles.size].dp, height = 12.dp)
                 Spacer(Modifier.height(7.dp))
-                Skeleton(width = (150 - index * 18).dp, height = 10.dp)
+                Skeleton(width = metas[index % metas.size].dp, height = 10.dp)
             }
             if (showTrailing) {
                 Spacer(Modifier.width(12.dp))
                 Skeleton(width = 46.dp, height = 20.dp, corner = 8.dp)
             }
         }
-        if (index < count - 1) Hairline(RowInset)
     }
 }

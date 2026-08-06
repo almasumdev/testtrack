@@ -126,11 +126,12 @@ app() {
       \"status\":$(str "assigned")}}"
 }
 
-# proof <appId> <groupId> <testerUid> <testerName> <day> <usageMs> <startMs>
+# proof <appId> <groupId> <testerUid> <testerName> <day> <usageMs> <startMs> <ownerUid>
 proof() {
     put "proofs/${1}__${3}__${5}" "{\"fields\":{
       \"appId\":$(str "$1"),
       \"groupId\":$(str "$2"),
+      \"ownerUid\":$(str "${8:-$UID_ME}"),
       \"testerUid\":$(str "$3"),
       \"testerEmail\":$(str "$4"),
       \"day\":$(int "$5"),
@@ -171,8 +172,9 @@ for i in $(seq 1 8); do
     proof "$MINE_A" seed-group-a "seed-tester-$i" "tester$i@example.com" 3 "$usage" "$START_A" &
 done
 
-# One app already done today, so the list shows a Done pill beside the Open buttons.
-proof "${REAL[0]}" seed-group-a "$UID_ME" "$EMAIL_ME" 3 47000 "$START_A" &
+# One app already done today, so the list shows a Done pill beside the Open buttons. Owned by the
+# seeded tester whose app it is, not by me — that is the row I am testing, not one of mine.
+proof "${REAL[0]}" seed-group-a "$UID_ME" "$EMAIL_ME" 3 47000 "$START_A" seed-tester-1 &
 wait
 
 # ---- one submission still waiting for an admin -------------------------------------------

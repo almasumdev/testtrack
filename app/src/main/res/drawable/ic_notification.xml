@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The status-bar icon. Same mark as the launcher, but Android draws a notification icon as a mask:
+  only the alpha channel survives and the colour is the system's. So this is white-on-transparent
+  and carries no background — the launcher's iris square would come through as a solid block.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,34h40v6h-40z M34,34h6v40h-6z M68,34h6v40h-6z M34,68h40v6h-40z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,53l6,-6l4,4l12,-12l6,6l-18,18z" />
+</vector>

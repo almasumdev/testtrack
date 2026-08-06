@@ -170,11 +170,16 @@ owning account, and anything deciding *who tests what* is locked to an admin.
 
 ```
 users/{uid}                            email, displayName
+users/{uid}/tokens/{installId}         token, platform, updatedAt — one row per device
 admins/{uid}                           exists ⇒ admin. An empty document is the whole mechanism.
 groups/{groupId}                       memberUids, appIds, startDate, status
 apps/{packageName}                     ownerUid, name, groupId, status
 proofs/{appId}__{testerUid}__{day}     fileId, imageUrl, capturedAt, usageMs
 ```
+
+Tokens sit in a subcollection rather than on the user document because rules do not cascade into
+subcollections, and the user document is deliberately readable by every signed-in account so that
+grids can turn a uid into a name. A push address should not inherit that.
 
 The composite proof id is what keeps this simple: posting twice overwrites instead of duplicating,
 and a whole grid is one query rather than 13 × 14 reads. Keying apps by package name gives the same
@@ -193,6 +198,42 @@ service account in their Play Console, a linked Cloud project, or a sensitive sc
 Google verification. All three cost more than an admin's glance, and placement into a cohort is a
 judgement call anyway.
 
+The refusals are the half that is easy to believe and hard to check, so
+[`tools/rules-test.sh`](tools/rules-test.sh) asserts them against the local rules before they are
+deployed — a tester cannot create a group, cannot start their own clock, cannot place their own
+app, cannot read a stranger's proof, and cannot read another device's push token.
+
+## Reminders
+
+A run is fourteen consecutive days, and one tester forgetting costs the other thirteen their clock.
+Push is how that gets caught in time.
+
+Two channels, because two different messages need sending:
+
+- **A topic per group.** Every device subscribes to `group_<id>` for each cohort it is in, so
+  "Group A closes tonight" is a single call that reaches thirteen phones without reading a single
+  token. Subscriptions are diffed against the groups the tester is actually in, so leaving a cohort
+  stops the messages.
+- **A token per device**, at `users/{uid}/tokens/{installId}`, for "*you* are the one behind".
+  Keyed by install and not by the token, which FCM rotates on its own schedule — a token-keyed
+  document would leave a dead address behind every time it did.
+
+Messages are sent **data-only**. A `notification` block is posted by the system whenever the app is
+backgrounded, which bypasses the app entirely — wrong icon, wrong channel, and no way to open the
+group it is about. Data-only always reaches `PushService`, so a reminder looks and behaves the same
+whichever state the app is in, and tapping one opens the group it names.
+
+Permission is the fifth setup step and the only optional one: a tester who declines can still do
+every part of the job, so setup finishes either way — but it will not finish without asking.
+
+There is no sender yet. [`tools/push.sh`](tools/push.sh) does what a scheduled job or the admin app
+eventually will, with an owner credential from gcloud:
+
+```sh
+tools/push.sh group seed-group-a "5 apps still waiting" "Day 4 closes tonight."
+tools/push.sh uid   <firebase-uid> "You're behind"       "Two apps left in Group A."
+```
+
 ## Design
 
 The interface guide is [docs/ui.md](docs/ui.md): flat surfaces and hairline dividers, insets and
@@ -209,8 +250,9 @@ state by shape as well as colour.
 - [x] Real foreground time from `UsageStatsManager`
 - [x] Cohorts of 14 with a shared 14-day run
 - [x] Owner dashboard: today's reporters, the grid, who is behind
+- [x] Push reminders: per-device tokens, per-group topics, deep-linked taps
 - [ ] The admin app: review submissions, form groups, place apps
-- [ ] Reminders for testers who have not reported today
+- [ ] A scheduler to send the reminders on its own — `tools/push.sh` does it by hand today
 
 ## Licence
 

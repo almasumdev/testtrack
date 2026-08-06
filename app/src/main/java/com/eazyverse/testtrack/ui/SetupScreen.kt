@@ -1,8 +1,11 @@
 package com.eazyverse.testtrack.ui
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -92,15 +95,39 @@ fun SetupScreen(onFinished: () -> Unit, vm: SetupViewModel = viewModel()) {
         if (token == null) vm.message = "Drive access was not granted"
     }
 
-    // Usage access lives in Settings and can be switched off behind our back, so it is re-read
-    // every time this screen comes forward rather than trusted from a stored flag.
+    // Usage access and notifications both live in system settings and can be switched off behind
+    // our back, so they are re-read every time this screen comes forward rather than trusted from
+    // a stored flag.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) Session.refreshUsageAccess(activity)
+            if (event == Lifecycle.Event.ON_RESUME) {
+                Session.refreshUsageAccess(activity)
+                Session.refreshNotifications(activity)
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // The channel exists before the prompt, so the name the tester sees in system settings is the
+    // one they will be looking for if they ever go turning it off.
+    LaunchedEffect(Unit) { PushRepo.ensureChannel(activity) }
+
+    /**
+     * Android answers the notification prompt exactly once per install.
+     *
+     * A second request after a refusal returns denied without showing anything, so the button has
+     * to change into one that opens system settings instead — otherwise it becomes a control that
+     * visibly does nothing.
+     */
+    var promptSpent by rememberSaveable { mutableStateOf(false) }
+    val notificationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        promptSpent = true
+        Session.refreshNotifications(activity)
+        Session.updateRemindersAsked()
     }
 
     // Same for Drive: the grant is the account's, so ask Google rather than trusting a local flag
@@ -115,7 +142,8 @@ fun SetupScreen(onFinished: () -> Unit, vm: SetupViewModel = viewModel()) {
         Session.signedIn,
         Session.isGroupMember,
         Session.driveConnected,
-        Session.usageAccessGranted
+        Session.usageAccessGranted,
+        Session.remindersSettled
     )
 
     /**
@@ -137,7 +165,7 @@ fun SetupScreen(onFinished: () -> Unit, vm: SetupViewModel = viewModel()) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "Four things to do once, in order.",
+                "Five things to do once, in order.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -194,10 +222,42 @@ fun SetupScreen(onFinished: () -> Unit, vm: SetupViewModel = viewModel()) {
                     "it can't be asked for in a pop-up — find TestTrack in the list and turn it on.",
                 done = done[3],
                 live = live(3),
-                last = true,
                 onReopen = { reopened = if (live(3)) null else 3 }.takeIf { done[3] }
             ) {
                 Primary("Open usage access settings") { UsageRepo.openSettings(activity) }
+            }
+
+            Step(
+                title = "Turn on reminders",
+                result = if (Session.notificationsGranted) "You'll be nudged if a day is slipping"
+                         else "Off — you'll need to remember on your own",
+                detail = "A run is fourteen days without a gap, and one missed day resets the " +
+                    "clock for everyone in the group, not just you. A reminder arrives only when " +
+                    "apps are still waiting on you.",
+                done = done[4],
+                live = live(4),
+                last = true,
+                onReopen = { reopened = if (live(4)) null else 4 }.takeIf { done[4] }
+            ) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !promptSpent) {
+                    Primary("Turn on reminders") {
+                        notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                } else {
+                    // Either the prompt is spent, or this is Android 12 and below where there was
+                    // never a prompt to spend — both lead to the same place.
+                    Primary("Open notification settings") {
+                        activity.startActivity(
+                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName)
+                        )
+                        Session.updateRemindersAsked()
+                    }
+                }
+                TextButton(
+                    onClick = { Session.updateRemindersAsked() },
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) { Text("Not now") }
             }
           }
 

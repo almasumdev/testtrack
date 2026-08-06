@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#1B5E36</color>
+    <!-- The dark ground, matching colorScheme.background in Theme.kt. Used for the launch window
+         so the app does not open on a colour it never uses again. -->
+    <color name="paper">#080C16</color>
+
+    <!-- Iris, the app's one accent. The launcher icon wore the old green brand. -->
+    <color name="ic_launcher_background">#4F46E5</color>
 </resources>

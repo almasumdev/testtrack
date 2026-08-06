@@ -59,6 +59,11 @@ happen next. A bare sentence in the middle of a screen reads like a failure; thi
 state the product expected. `Blank(text)` remains for places where a full empty state would be
 too much.
 
+**Nothing-to-do is not one state.** A group with no outstanding apps might be finished for the day,
+or might be a cohort none of whose apps are installed, or a run that has ended — and only the first
+is good news. Each gets its own line and its own colour. A screen that reports all three as *done*,
+in green, is one the tester learns to distrust.
+
 ## Bars and insets
 
 Handled once, centrally. No screen touches window flags or adds its own system-bar padding.
@@ -117,12 +122,28 @@ navigation, or a `MoreVert` menu. Never two.
 **Skeletons, not spinners.** `SkeletonRows(n)` renders placeholders in the shape of the list that
 is arriving, with a shimmer that respects the frame budget and stops for reduced motion.
 
-**And you rarely see them**, because [`Cache`](../app/src/main/java/com/eazyverse/testtrack/data/Cache.kt)
+**One skeleton for the page, never one per section.** Sections do not land together, and whichever
+arrives first gets drawn over the ones that have not — always stating the confident thing. An empty
+worklist means nothing is outstanding, so a group page whose apps are still in flight reads
+"Everything's done for today", in green, and a second later becomes "Start testing · 5 left". The
+header was not wrong; it was early. Every screen therefore carries a single `ready` flag, set only
+when every piece it shows is in hand, and renders `SkeletonPage(...)` until then — app-bar title
+included, since a placeholder name pops the same way. `ready` is sticky: a refresh over content
+already on screen must not blank it.
+
+The skeleton stands in for **content, not structure** — no section labels, no headings. A label is
+a claim that the section exists, and some of them will not.
+
+Same rule downstream: an empty state is a statement about the world, so it may only be shown once
+`ready`. It must never be a step on the way to content.
+
+**And you rarely see any of it**, because [`Cache`](../app/src/main/java/com/eazyverse/testtrack/data/Cache.kt)
 holds the last known value for every read. A ViewModel is rebuilt on every navigation, so without
 it, stepping into a group and back would spin over content the app already had. Screens read the
 cache synchronously, render it, and refresh underneath — the skeleton is only ever seen on
-genuinely first sight. `Cache.clear()` on sign-out, so the next account never sees the last one's
-groups.
+genuinely first sight. A **partial** cache hit does not count: `showCached` returns early unless
+every piece is present, because half a group on screen is not a faster group, it is a wrong one.
+`Cache.clear()` on sign-out, so the next account never sees the last one's groups.
 
 A spinner survives in exactly two places, both of which are genuine waits with no prior state: the
 upload after a round, and a visit in progress.
@@ -131,8 +152,13 @@ upload after a round, and a visit in progress.
 
 **One control at a time, in the order the obstacles clear.** The group screen's `Action` picks
 between: round in progress → *Stop*; uploading → progress; no usage access → *Open usage access*;
-cannot switch apps → *Allow TestTrack to switch apps*; nothing left → "Everything's done for
-today"; otherwise → **Start testing · N left**.
+cannot switch apps → *Allow TestTrack to switch apps*; nothing outstanding but apps still owed →
+"none of them are installed on this phone"; nothing left at all → "Everything's done for today";
+otherwise → **Start testing · N left**.
+
+That second-to-last branch exists because a round can only open apps that are on the phone, so a
+cohort with none installed also has nothing outstanding. Reporting that as *done* — in green, over
+a header reading "0 of 11 done" — is the screen contradicting itself on the same scroll.
 
 A button that cannot succeed is worse than no button.
 

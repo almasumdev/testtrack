@@ -33,4 +33,5 @@ object Cache {
     fun proofs(appId: String) = "proofs:$appId"
     fun testers(groupId: String) = "testers:$groupId"
     fun doneToday(uid: String, groupId: String, day: Int) = "done:$uid:$groupId:$day"
+    fun reporters(appId: String, day: Int) = "reporters:$appId:$day"
 }
