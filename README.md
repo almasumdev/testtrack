@@ -88,6 +88,22 @@ configure time and the app says plainly that it is unconfigured rather than fail
 The Web client ID must be **byte-identical** to the one the membership service checks the ID
 token's `aud` claim against — a mismatch is rejected as `wrong_audience`.
 
+### Something to look at
+
+Groups and placements are admin-only in the rules and the admin app does not exist yet, so a fresh
+install has nothing to show. [tools/seed.sh](tools/seed.sh) writes a cohort you can walk the whole
+app against — a healthy mid-run group, one still forming, one a member short so the at-risk banner
+shows, a fortnight of proof against your own app, and a submission awaiting placement.
+
+```bash
+export TESTTRACK_UID=<your firebase uid>      # from the users collection after signing in once
+export TESTTRACK_PKGS="com.some.app com.other.app"   # installed on the test phone: real icons, working Open
+tools/seed.sh up
+tools/seed.sh down
+```
+
+It writes with a `gcloud` owner credential, bypassing the rules exactly as the admin app will.
+
 ---
 
 ## How membership verification works

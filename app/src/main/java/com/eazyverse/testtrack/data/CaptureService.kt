@@ -71,9 +71,15 @@ class CaptureService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Unconditional, and before anything else. Every entry point here arrives via
+        // startForegroundService, which gives the service about five seconds to call
+        // startForeground or the system kills the process — and it does not care that the command
+        // was "stop". A stop that arrived when nothing was running used to tear down and stopSelf
+        // without ever going foreground, which crashed the app on sign-out.
+        goForeground()
+
         when (intent?.action) {
             ACTION_START -> {
-                goForeground()
                 try {
                     open(intent)
                 } catch (e: Exception) {
@@ -456,10 +462,16 @@ class CaptureService : Service() {
 
         /** Abandons whatever is left of the round and comes back. */
         fun abortRound(context: Context) {
+            if (!roundActive) return
             send(context, Intent(context, CaptureService::class.java).apply { action = ACTION_ABORT })
         }
 
+        /**
+         * Ends screen sharing. A no-op when there is nothing to end — starting a service purely to
+         * stop it is wasteful, and it is the path that used to crash.
+         */
         fun endSession(context: Context) {
+            if (!sessionActive) return
             send(context, Intent(context, CaptureService::class.java).apply { action = ACTION_STOP })
         }
 
