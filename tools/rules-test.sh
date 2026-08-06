@@ -129,6 +129,14 @@ cases = [
          incoming=token_doc,
          name="a device can register its own token"),
 
+    # --- the admin list ---------------------------------------------------------------------
+    case("ALLOW", MEMBER,  "get", "/admins/" + MEMBER, stored={},
+         name="an account can ask whether it is itself an admin"),
+    case("DENY",  MEMBER,  "get", "/admins/" + ADMIN, stored={},
+         name="but not whether anyone else is"),
+    case("DENY",  ADMIN,   "create", "/admins/" + OUTSIDE, incoming={},
+         name="an admin cannot grant admin (console only)"),
+
     # --- proof is append-only -------------------------------------------------------------
     case("DENY",  MEMBER,  "delete", "/proofs/x", stored=proof_doc,
          name="nobody deletes a proof"),

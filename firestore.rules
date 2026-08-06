@@ -41,8 +41,22 @@ service cloud.firestore {
              get(/databases/$(database)/documents/groups/$(groupId)).data.memberUids;
     }
 
+    /**
+     * The admin list.
+     *
+     * Writes are console-only — an admin app that could grant admin would make the whole thing
+     * decorative. Reads are limited to your own row, and that narrow opening is what lets the
+     * admin app tell "you are not an administrator" apart from "something went wrong": without it
+     * the only way to find out is to attempt a privileged write and read the refusal, and every
+     * screen opens on a bare PERMISSION_DENIED naming nothing.
+     *
+     * Your own row leaks nothing. The list cannot be enumerated, and nobody can ask about anybody
+     * else — `get()`/`exists()` inside a rule bypass this block entirely, so [isAdmin] is
+     * unaffected either way.
+     */
     match /admins/{uid} {
-      allow read, write: if false;      // granted from the console, never from a client
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list, write: if false;
     }
 
     /**

@@ -188,10 +188,15 @@ correction merges, so fixing a typo on day nine cannot eject the app from its gr
 withdraw their own app; its proofs are left in place, because letting clients delete those would
 mean write access to other testers' rows.
 
-**The admin app is a separate build, and this one keeps the door open for it.** `groups` is
-admin-only, and an owner's write to their own app must leave `groupId` and `status` exactly as they
-were — so approval cannot be self-granted. Placing the thirteenth app is what takes a group to
-threshold, so the same admin write sets `startDate`; no client and no Cloud Function is involved.
+**The admin app is a separate build** — [`../test_track_admin`](../test_track_admin) — and this one
+holds no privileged code at all. `groups` is admin-only, and an owner's write to their own app must
+leave `groupId` and `status` exactly as they were, so approval cannot be self-granted. Placing the
+thirteenth app is what takes a group to threshold, so the same admin write sets `startDate`; no
+client here and no Cloud Function is involved.
+
+Being an admin is one empty document at `admins/{uid}`, written from the console. An account may
+read **its own** row and nobody else's — enough for the admin app to say "this account is not an
+administrator" instead of failing with an unexplained refusal, and not enough to enumerate anyone.
 
 Verifying a Play track automatically would need developer-level authorization from every owner — a
 service account in their Play Console, a linked Cloud project, or a sensitive scope requiring
@@ -251,7 +256,7 @@ state by shape as well as colour.
 - [x] Cohorts of 14 with a shared 14-day run
 - [x] Owner dashboard: today's reporters, the grid, who is behind
 - [x] Push reminders: per-device tokens, per-group topics, deep-linked taps
-- [ ] The admin app: review submissions, form groups, place apps
+- [x] The admin app: review submissions, form groups, place apps
 - [ ] A scheduler to send the reminders on its own — `tools/push.sh` does it by hand today
 
 ## Licence
