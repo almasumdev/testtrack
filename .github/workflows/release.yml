@@ -139,8 +139,13 @@ jobs:
           # Newest first, drop the ones we are keeping, delete the rest along with
           # their tags — an orphaned tag is a release that looks deleted from the
           # releases page and is still cloneable.
-          gh release list --limit 100 --json tagName,createdAt \
-            --jq 'sort_by(.createdAt) | reverse | .['"$KEEP"':] | .[].tagName' > stale.txt
+          #
+          # publishedAt, NOT createdAt: a release's createdAt is the date of the
+          # commit its tag points at, so releases cut from the same commit all tie
+          # and sort arbitrarily. Sorted that way this step deleted the newest
+          # builds and kept the oldest — the exact opposite of the job.
+          gh release list --limit 100 --json tagName,publishedAt \
+            --jq 'sort_by(.publishedAt) | reverse | .['"$KEEP"':] | .[].tagName' > stale.txt
           if [ ! -s stale.txt ]; then
             echo "nothing to prune — $KEEP or fewer releases"
             exit 0
