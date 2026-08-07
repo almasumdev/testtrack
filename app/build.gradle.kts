@@ -1,8 +1,8 @@
 import java.util.Properties
 
 plugins {
+    // No kotlin-android: AGP 9 compiles Kotlin itself. The Compose compiler is still its own plugin.
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
 }
@@ -32,16 +32,16 @@ fun secret(key: String): String {
 
 android {
     namespace = "com.eazyverse.testtrack"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         // No build-type suffix: the Firebase app and the registered signing SHA-1 are both bound
         // to this exact id, and a suffixed debug build would match neither.
         applicationId = "com.eazyverse.testtrack"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        targetSdk = 37
+        versionCode = 2
+        versionName = "1.0.1"
 
         buildConfigField("String", "WEB_CLIENT_ID", "\"${secret("TESTTRACK_WEB_CLIENT_ID")}\"")
         buildConfigField("String", "GATE_URL", "\"${secret("TESTTRACK_GATE_URL")}\"")
@@ -77,13 +77,11 @@ android {
         }
     }
 
+    // No kotlinOptions block: AGP 9 removed it, and built-in Kotlin takes its jvmTarget from
+    // targetCompatibility below, so the two can no longer drift apart.
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = "11"
     }
 
     buildFeatures {

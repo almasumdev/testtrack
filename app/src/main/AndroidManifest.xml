@@ -7,15 +7,27 @@
 
     <!--
       Proof that a tester installed an owner's app, and the ability to open it from the list.
+      Still gives installed yes/no, the installing package, and firstInstallTime — the
+      continuous-install streak, retroactively.
 
-      protectionLevel "normal" — granted silently at install, no prompt and no Settings trip.
-      Gives installed yes/no, the installing package, and firstInstallTime, which is the
-      continuous-install streak retroactively. Only viable because TestTrack is distributed
-      directly rather than through Play, where this is a restricted permission.
+      Narrow by necessity rather than taste. QUERY_ALL_PACKAGES would read every package, but it
+      is restricted on Play and TestTrack is not a launcher, antivirus, file manager or browser,
+      which is close to the whole approved list. Staying off Play to keep it is not the neutral
+      choice it sounds like: since Android 15, Enhanced Confirmation Mode greys out usage access
+      for anything a browser installed, and usage access is what the proof is made of.
+
+      Every app in a cohort is a consumer app in closed testing, so every one has a launcher
+      entry and this query reaches all of them. One that does not is invisible here and reads as
+      not installed — but it was never testable anyway, because getLaunchIntentForPackage returns
+      null for it and a round cannot open what it cannot launch. Those are rejected at placement
+      rather than left to hold a slot.
     -->
-    <uses-permission
-        android:name="android.permission.QUERY_ALL_PACKAGES"
-        tools:ignore="QueryAllPackagesPermission" />
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
 
     <!--
       Foreground time per app per day, which is what the daily report is actually made of.

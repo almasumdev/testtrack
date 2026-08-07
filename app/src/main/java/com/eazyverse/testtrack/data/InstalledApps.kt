@@ -4,14 +4,18 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
+import android.os.Build
 
 /**
  * What we can learn about another tester's app, and how to open it.
  *
- * All of this needs QUERY_ALL_PACKAGES. Without it every lookup below throws
- * NameNotFoundException — indistinguishable from "not installed" — which is why the permission
- * is in the manifest. It is protectionLevel "normal", so the tester is never prompted; that only
- * holds because TestTrack is sideloaded rather than published to Play, where it is restricted.
+ * Reaches packages with a launcher activity and no others, which is what the `<queries>` block in
+ * the manifest asks for. Every app in a cohort has one, so this is no narrower in practice than
+ * QUERY_ALL_PACKAGES was, and unlike that permission it does not cost us Play.
+ *
+ * So NameNotFoundException now means "not installed, or has no launcher entry" rather than plainly
+ * "not installed". The ambiguity is theoretical: an app with no launcher entry cannot be opened by
+ * a round either, so it never reaches a cohort to be asked about.
  */
 object InstalledApps {
 
@@ -19,10 +23,15 @@ object InstalledApps {
         val installed: Boolean,
         /** When it was first installed. Survives updates, resets on uninstall — so it *is* the streak. */
         val firstInstall: Long = 0L,
-        val lastUpdate: Long = 0L,
-        /** `com.android.vending` means it came from Play rather than a sideload. */
+        /**
+         * `com.android.vending` means it came from Play rather than a sideload.
+         *
+         * Nothing reads this yet. A closed-test build can only be installed from Play by someone
+         * already opted in, so the source is the one thing on the device that says the tester
+         * opted in at all — and opting in is the only thing Play counts. A sideloaded copy passed
+         * around the group would otherwise pass every check here and still be worth nothing.
+         */
         val installer: String? = null,
-        val version: String? = null,
         val label: String? = null
     ) {
         /** Whole days the app has been continuously installed. */
@@ -77,9 +86,15 @@ object InstalledApps {
             Info(
                 installed = true,
                 firstInstall = p.firstInstallTime,
-                lastUpdate = p.lastUpdateTime,
-                installer = runCatching { pm.getInstallSourceInfo(pkg).installingPackageName }.getOrNull(),
-                version = p.versionName,
+                // getInstallSourceInfo is API 30. runCatching would swallow the NoSuchMethodError
+                // on anything older and report every install as sourceless, which reads the same
+                // as a sideload — so ask the older question there instead of guessing.
+                installer = runCatching {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+                        pm.getInstallSourceInfo(pkg).installingPackageName
+                    else
+                        @Suppress("DEPRECATION") pm.getInstallerPackageName(pkg)
+                }.getOrNull(),
                 label = runCatching { pm.getApplicationLabel(p.applicationInfo!!).toString() }.getOrNull()
             )
         } catch (_: PackageManager.NameNotFoundException) {

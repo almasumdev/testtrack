@@ -4,8 +4,10 @@ name: Release APK
 # Builds a signed release APK and publishes it as a downloadable GitHub
 # Release, then prunes older releases so only the newest KEEP survive.
 #
-# TestTrack is side-loaded — it holds QUERY_ALL_PACKAGES, which Play treats as
-# restricted — so a GitHub Release is the distribution channel, not a stopgap.
+# TestTrack is side-loaded, so a GitHub Release is the distribution channel
+# rather than a stopgap. It no longer holds QUERY_ALL_PACKAGES — a launcher
+# <queries> filter answers the same questions — so Play is open to it, but the
+# APK here stays the way testers get it.
 #
 # Required repository secrets:
 #   ANDROID_KEYSTORE_BASE64      base64 of app/testtrack_release.jks
@@ -42,6 +44,12 @@ concurrency:
 
 env:
   KEEP: 3          # how many releases survive the prune
+
+  # The build whose signing key changed. Installs signed with the old key cannot
+  # be updated over the top, so that one release carries an extra warning. Set to
+  # the versionCode it applies to; every other build skips it, and the notice
+  # expires on its own at the next bump.
+  KEY_ROTATED_AT_CODE: 2
 
 jobs:
   release:
@@ -120,17 +128,38 @@ jobs:
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
+          CODE: ${{ steps.version.outputs.code }}
         run: |
+          notes="Signed release build from \`${GITHUB_SHA:0:7}\`.
+
+          **Install it with \`adb\`, not the browser:**
+
+          \`\`\`
+          adb install -r ${{ steps.apk.outputs.path }}
+          \`\`\`
+
+          Since Android 15, anything a browser installs has usage access greyed out
+          under *Restricted setting* — and usage access is what the daily proof is made
+          of. An \`adb\` install is exempt outright.
+
+          Opening the APK on the phone still works, but you then have to lift the block
+          by hand: **App info → ⋮ → Allow restricted settings**, which only appears
+          after you have tapped the greyed-out toggle once.
+
+          Updating over an existing install keeps your session."
+
+          # Prepend the rotation warning only on the build it applies to.
+          if [ "$CODE" = "$KEY_ROTATED_AT_CODE" ]; then
+            notes="> **Uninstall the previous version first.** The signing key changed in
+          > this build, so Android will refuse to install it over the old one. Your
+          > account is untouched — sign in again and everything comes back.
+
+          $notes"
+          fi
+
           gh release create "${{ steps.version.outputs.tag }}" "${{ steps.apk.outputs.path }}" \
             --title "TestTrack ${{ steps.version.outputs.name }} (${{ steps.version.outputs.code }})" \
-            --notes "Signed release build from \`${GITHUB_SHA:0:7}\`.
-
-          Side-load it: download the APK below and open it on the phone. TestTrack is
-          distributed this way because it holds \`QUERY_ALL_PACKAGES\`, which Play
-          restricts.
-
-          Updating over an existing install keeps your session; the signing key is
-          fixed, so it will never ask you to uninstall first."
+            --notes "$notes"
 
       - name: Prune old releases
         env:

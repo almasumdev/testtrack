@@ -134,7 +134,12 @@ class CaptureService : Service() {
             ) ?: error("no consent token")
 
         val manager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        val mp = manager.getMediaProjection(code, data)
+
+        // Nullable, and not only in theory: since Android 14 a consent token is spent by the
+        // projection it creates, so a second start on the same token comes back empty. Thrown
+        // rather than swallowed, because onStartCommand turns it into a status the tester can
+        // read — a silent null would leave a session that looks live and captures nothing.
+        val mp = manager.getMediaProjection(code, data) ?: error("consent token already used")
         projection = mp
 
         // Android 14+ requires a callback registered before createVirtualDisplay().

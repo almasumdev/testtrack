@@ -6,6 +6,7 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Process
 import android.provider.Settings
 import java.util.Calendar
@@ -24,14 +25,26 @@ import java.util.Calendar
  */
 object UsageRepo {
 
-    /** True once the tester has switched TestTrack on under Settings → Special access. */
+    /**
+     * True once the tester has switched TestTrack on under Settings → Special access.
+     *
+     * Two spellings of one call. `unsafeCheckOpNoThrow` only exists from API 29, and this runs on
+     * 26 — reaching for it unguarded is a `NoSuchMethodError` on Android 8 and 9, on the first
+     * screen that asks whether access was granted. `checkOpNoThrow` is the same query under the
+     * older name and goes back to 19.
+     */
     fun hasAccess(context: Context): Boolean {
         val ops = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = ops.unsafeCheckOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            Process.myUid(),
-            context.packageName
-        )
+        val op = AppOpsManager.OPSTR_GET_USAGE_STATS
+        val uid = Process.myUid()
+        val pkg = context.packageName
+
+        @Suppress("DEPRECATION")
+        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            ops.unsafeCheckOpNoThrow(op, uid, pkg)
+        else
+            ops.checkOpNoThrow(op, uid, pkg)
+
         return mode == AppOpsManager.MODE_ALLOWED
     }
 

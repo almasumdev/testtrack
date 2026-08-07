@@ -139,10 +139,11 @@ because the group and the ID token can hold different strings for the same accou
 
 Three signals:
 
-- **`QUERY_ALL_PACKAGES`** — protectionLevel `normal`, granted silently at install. Gives
-  installed yes/no, the installing package, and `firstInstallTime`, which is the
+- **Package visibility** — a `<queries>` filter for launcher activities, which every app in a
+  cohort has. Gives installed yes/no, the installing package, and `firstInstallTime`, which is the
   **continuous-install streak, retroactively, in one call**. It survives app updates and resets on
-  uninstall, which is exactly the semantics a 14-day streak needs.
+  uninstall, which is exactly the semantics a 14-day streak needs. `QUERY_ALL_PACKAGES` would read
+  more, but it is restricted on Play and TestTrack matches none of the approved categories.
 - **MediaProjection** — one consent per round, held open while each app is opened, screenshotted
   and closed.
 - **`PACKAGE_USAGE_STATS`** — real foreground time per app per day. The only thing here that costs
@@ -246,11 +247,24 @@ every part of the job, so setup finishes either way — but it will not finish w
 
 ## Releases
 
-Both apps are side-loaded — TestTrack holds `QUERY_ALL_PACKAGES`, which Play restricts — so a
-signed APK on the releases page *is* the distribution channel.
+A signed APK on the releases page is the current distribution channel.
 [`.github/workflows/release.yml`](.github/workflows/release.yml) builds one on every push to `main`,
 publishes it, and prunes so only the newest three survive. The signing key is fixed and its SHA-1 is
 registered in Firebase, so updates install over the top and Google sign-in keeps working.
+
+**Install it with `adb`, not a browser.** Since Android 15, Enhanced Confirmation Mode greys out
+usage access and display-over-other-apps for any package a browser or file manager installed, and
+usage access is what the proof is made of. The toggle is recoverable by hand — App info → ⋮ →
+*Allow restricted settings*, which only appears after the blocked toggle has been tapped once — but
+`adb install` is exempt outright:
+
+```bash
+adb install -r TestTrack.apk
+```
+
+Play-installed packages are exempt too, which is why the tester app no longer holds
+`QUERY_ALL_PACKAGES`: dropping it is what makes a closed-testing track on Play possible, and that
+track is the only distribution where a tester meets no restricted setting at all.
 
 ## Design
 
