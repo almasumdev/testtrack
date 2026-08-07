@@ -49,7 +49,7 @@ env:
   # be updated over the top, so that one release carries an extra warning. Set to
   # the versionCode it applies to; every other build skips it, and the notice
   # expires on its own at the next bump.
-  KEY_ROTATED_AT_CODE: 2
+  KEY_ROTATED_AT_CODE: 3
 
 jobs:
   release:

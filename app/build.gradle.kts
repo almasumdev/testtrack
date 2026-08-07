@@ -40,8 +40,9 @@ android {
         applicationId = "com.eazyverse.testtrack"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "WEB_CLIENT_ID", "\"${secret("TESTTRACK_WEB_CLIENT_ID")}\"")
         buildConfigField("String", "GATE_URL", "\"${secret("TESTTRACK_GATE_URL")}\"")
@@ -123,4 +124,8 @@ dependencies {
 
     // Reminders are computed and raised on the phone, not sent to it.
     implementation(libs.androidx.work.runtime)
+
+    androidTestImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.junit)
+    androidTestImplementation(libs.androidx.test.runner)
 }
