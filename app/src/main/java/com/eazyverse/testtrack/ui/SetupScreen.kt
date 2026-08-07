@@ -349,30 +349,22 @@ fun SetupScreen(
     }
 
     if (confirmSignOut) {
-        AlertDialog(
-            onDismissRequest = { confirmSignOut = false },
-            title = { Text("Sign out?") },
-            text = {
-                Text(
-                    "You'll come back to the account picker and can sign in with a different " +
-                        "Gmail. Nothing you've already reported is lost."
-                )
+        Ask(
+            title = "Sign out?",
+            body = "You'll come back to the account picker and can sign in with a different " +
+                "Gmail. Nothing you've already reported is lost.",
+            confirm = "Sign out",
+            onConfirm = {
+                confirmSignOut = false
+                // Setup is reachable from home, where a round may still be running. A no-op
+                // when there is nothing to end.
+                CaptureService.endSession(activity)
+                vm.signOut(activity) {
+                    Cache.clear()
+                    onSignOut()
+                }
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmSignOut = false
-                    // Setup is reachable from home, where a round may still be running. A no-op
-                    // when there is nothing to end.
-                    CaptureService.endSession(activity)
-                    vm.signOut(activity) {
-                        Cache.clear()
-                        onSignOut()
-                    }
-                }) { Text("Sign out", color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") }
-            }
+            onDismiss = { confirmSignOut = false }
         )
     }
 }

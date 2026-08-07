@@ -10,11 +10,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -445,4 +448,99 @@ fun SkeletonRows(count: Int = 7, showTrailing: Boolean = true) {
             }
         }
     }
+}
+
+// ---- dialogs -----------------------------------------------------------------------------
+
+/**
+ * The one dialog shape this app uses.
+ *
+ * Material's default container is `surfaceContainerHigh`, a grey nothing else here is painted in,
+ * so every dialog arrived looking like a piece of another product dropped on top of this one. This
+ * takes the panel's own surface and corner, which is what the rest of the app is built from.
+ *
+ * Destructive actions are named rather than coloured red by default. "Sign out" is not a warning,
+ * and a dialog where the confirm button is always alarming teaches people to ignore the alarm — so
+ * [destructive] is opt-in, for the ones that genuinely take something away.
+ *
+ * [body] covers the ordinary case of a sentence or two. [content] is for the few that need a field
+ * or an image, and both may be given: the prose comes first.
+ */
+@Composable
+fun Ask(
+    title: String,
+    confirm: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    body: String? = null,
+    dismiss: String? = "Cancel",
+    destructive: Boolean = false,
+    confirmEnabled: Boolean = true,
+    content: (@Composable ColumnScope.() -> Unit)? = null
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(18.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        title = {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        },
+        text = if (body == null && content == null) null else {
+            {
+                Column {
+                    body?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                    content?.let {
+                        if (body != null) Spacer(Modifier.height(14.dp))
+                        it()
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = confirmEnabled) {
+                Text(
+                    confirm,
+                    fontWeight = FontWeight.SemiBold,
+                    color = when {
+                        !confirmEnabled -> MaterialTheme.colorScheme.onSurfaceVariant
+                        destructive -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.primary
+                    }
+                )
+            }
+        },
+        dismissButton = dismiss?.let {
+            {
+                TextButton(onClick = onDismiss) {
+                    Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    )
+}
+
+/** A field inside [Ask], matching the shape the rest of the app uses for one. */
+@Composable
+fun DialogField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String? = null,
+    error: String? = null,
+    supporting: String? = null,
+    singleLine: Boolean = true
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        placeholder = placeholder?.let { { Text(it) } },
+        singleLine = singleLine,
+        isError = error != null,
+        supportingText = (error ?: supporting)?.let { { Text(it) } },
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth()
+    )
 }

@@ -360,28 +360,20 @@ fun HomeScreen(
     }
 
     if (confirmSignOut) {
-        AlertDialog(
-            onDismissRequest = { confirmSignOut = false },
-            title = { Text("Sign out?") },
-            text = {
-                Text(
-                    "You'll need to sign in with Google again. Nothing you've already reported " +
-                        "is lost."
-                )
+        Ask(
+            title = "Sign out?",
+            body = "You'll need to sign in with Google again. Nothing you've already reported " +
+                "is lost.",
+            confirm = "Sign out",
+            onConfirm = {
+                confirmSignOut = false
+                CaptureService.endSession(context)
+                vm.signOut(context) {
+                    Cache.clear()
+                    onSignOut()
+                }
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmSignOut = false
-                    CaptureService.endSession(context)
-                    vm.signOut(context) {
-                        Cache.clear()
-                        onSignOut()
-                    }
-                }) { Text("Sign out", color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") }
-            }
+            onDismiss = { confirmSignOut = false }
         )
     }
 }

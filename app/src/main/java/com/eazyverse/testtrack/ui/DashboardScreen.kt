@@ -220,31 +220,29 @@ fun DashboardScreen(
     }
 
     preview?.let { (tester, proof) ->
-        AlertDialog(
-            onDismissRequest = { preview = null },
-            confirmButton = {
-                TextButton(onClick = { preview = null }) { Text("Close") }
-            },
-            title = { Text("${tester.shortName} · day ${proof.day + 1}") },
-            text = {
-                Column {
-                    Text(
-                        "${formatDuration(proof.usageMs)} in the app",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (proof.meetsBar) Status.posted else Status.missed
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    if (proof.imageUrl.isNotBlank()) {
-                        AsyncImage(
-                            model = proof.imageUrl,
-                            contentDescription = "Proof screenshot",
-                            contentScale = ContentScale.FillWidth,
-                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
-                        )
-                    }
-                }
+        Ask(
+            title = "${tester.shortName} · day ${proof.day + 1}",
+            confirm = "Close",
+            onConfirm = { preview = null },
+            onDismiss = { preview = null },
+            // Nothing to cancel: this is a look at something, not a decision about it.
+            dismiss = null
+        ) {
+            Text(
+                "${formatDuration(proof.usageMs)} in the app",
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (proof.meetsBar) Status.posted else Status.missed
+            )
+            if (proof.imageUrl.isNotBlank()) {
+                Spacer(Modifier.height(12.dp))
+                AsyncImage(
+                    model = proof.imageUrl,
+                    contentDescription = "Proof screenshot",
+                    contentScale = ContentScale.FillWidth,
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+                )
             }
-        )
+        }
     }
 }
 
