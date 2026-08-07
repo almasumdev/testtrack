@@ -110,9 +110,9 @@ dialog, because stopping those loses nothing.
 `AppIcon` (44dp) · title · one state line · a trailing affordance.
 
 The icon is the real launcher icon, pulled from the package manager and cached — the single
-biggest thing separating a list of apps from a list of strings, and it costs nothing since
-`QUERY_ALL_PACKAGES` is already held for the install streak. Apps not on the phone get a lettered
-tile.
+biggest thing separating a list of apps from a list of strings, and it costs nothing since the
+launcher `<queries>` filter is already declared for the install streak. An app with a launcher icon
+to draw is by definition one that filter can see. Apps not on the phone get a lettered tile.
 
 Trailing is one of: an **Open** button, a `Pill` (`Done` / `Install` / `Waiting`), a chevron for
 navigation, or a `MoreVert` menu. Never two.

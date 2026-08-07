@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.data
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -85,6 +86,10 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
         )
     }
 
+    // Lint wants POST_NOTIFICATIONS checked or the SecurityException handled. The notify below is
+    // already inside runCatching, which catches Throwable — lint just cannot see through an inline
+    // lambda. Declining notifications is a supported state, not an error path.
+    @SuppressLint("MissingPermission")
     private fun post(id: Int, title: String, body: String, groupId: String? = null) {
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -112,6 +117,7 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
         private const val NOTIFICATION_ID = 4201
 
         /** Raised from the worker and from [AdminEvents], which share this notifier. */
+        @SuppressLint("MissingPermission") // runCatching below; see post()
         fun notify(context: Context, id: Int, title: String, body: String, groupId: String?) {
             val intent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP

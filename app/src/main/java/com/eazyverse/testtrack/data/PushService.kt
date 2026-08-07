@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.data
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import androidx.core.app.NotificationCompat
@@ -44,6 +45,9 @@ class PushService : FirebaseMessagingService() {
         scope.launch { PushRepo.save(applicationContext, uid, token) }
     }
 
+    // See ReminderWorker.post: the notify at the end is inside runCatching, which lint cannot see
+    // through. A tester who declined notifications is a supported state, not an error path.
+    @SuppressLint("MissingPermission")
     override fun onMessageReceived(message: RemoteMessage) {
         val data = message.data
         val title = data["title"] ?: message.notification?.title ?: return

@@ -220,7 +220,8 @@ fun Primary(
  * A launcher icon, or a lettered tile when the app is not installed.
  *
  * This is the single biggest thing separating a list of apps from a list of strings, and it costs
- * nothing — `QUERY_ALL_PACKAGES` is already held for the install streak.
+ * nothing — the launcher `<queries>` filter is already declared for the install streak, and an app
+ * with a launcher icon to draw is by definition one that filter can see.
  */
 @Composable
 fun AppIcon(pkg: String, label: String, size: Dp = 44.dp) {
