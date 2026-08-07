@@ -92,6 +92,15 @@ object AdminEvents {
                     body = doc.getString("body").orEmpty(),
                     groupId = doc.getString("groupId")?.takeIf { it.isNotBlank() }
                 )
+
+                // A removal is the one thing this device can also work out for itself: the cohort
+                // simply vanishes from under it, and [Enforcement] says so. Now that the removal
+                // writes an event too, both would fire — so the event, which is the only one of
+                // the two that knows *why*, claims the group and the sweep stays quiet about it.
+                if (doc.getString("type") == EVENT_REMOVED_MISSED) {
+                    doc.getString("groupId")?.takeIf { it.isNotBlank() }
+                        ?.let { Enforcement.markExplained(context, it) }
+                }
             }
             high = maxOf(high, doc.getLong("createdAt") ?: 0L)
         }

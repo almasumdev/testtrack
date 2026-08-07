@@ -69,6 +69,7 @@ object Enforcement {
     private const val PREFS = "testtrack.enforcement"
     private const val KEY_SEEN = "seen"
     private const val KEY_NOTICES = "notices"
+    private const val KEY_EXPLAINED = "explained"
 
     /**
      * Field separator for the stored lines.
@@ -124,6 +125,26 @@ object Enforcement {
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     /**
+     * Notes that an event has already told this tester why a cohort disappeared.
+     *
+     * Written by [AdminEvents.drain], read by the next sweep. Both run in the same pass and the
+     * drain goes first, so the marker is always there before the sweep looks — see [ReminderWorker]
+     * and the home screen, which both keep that order deliberately.
+     */
+    fun markExplained(context: Context, groupId: String) {
+        val held = prefs(context).getStringSet(KEY_EXPLAINED, emptySet()).orEmpty()
+        prefs(context).edit().putStringSet(KEY_EXPLAINED, held + groupId).apply()
+    }
+
+    private fun explainedGroups(context: Context): Set<String> =
+        prefs(context).getStringSet(KEY_EXPLAINED, emptySet()).orEmpty()
+
+    /** Cleared once used. A marker outliving its sweep would silence a later, unrelated removal. */
+    private fun clearExplained(context: Context) {
+        prefs(context).edit().remove(KEY_EXPLAINED).apply()
+    }
+
+    /**
      * Runs the whole check for one account and acts on it.
      *
      * Safe to call often, and called from both the home screen and the daily worker. Removals are
@@ -162,11 +183,16 @@ object Enforcement {
         }
 
         // A cohort that has vanished from under this account is one it is no longer a member of,
-        // which is what being removed looks like from the inside. Nobody sends word of it: the
-        // write happened on another member's phone, so this is the only way to find out.
+        // which is what being removed looks like from the inside.
+        //
+        // Skipping any that an event has already accounted for. A removal writes one, and it is
+        // the better of the two messages because it knows the cause — this path cannot tell a
+        // removal from an admin dissolving the group, and saying both would be saying it twice.
+        val explained = explainedGroups(context)
         val evictedFrom = seen.keys
-            .filter { id -> groups.none { it.id == id } }
+            .filter { id -> groups.none { it.id == id } && id !in explained }
             .mapNotNull { seen[it]?.name }
+        clearExplained(context)
 
         saveSeen(context, now)
 

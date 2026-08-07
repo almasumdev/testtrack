@@ -125,34 +125,23 @@ class HomeViewModel : ViewModel() {
     }
 
     /**
-     * The daily pass, and a catch-up while the app is open.
+     * The daily pass, plus everything waiting, in the order the two have to happen.
      *
-     * Scheduling here rather than at sign-in because this is the screen a tester always reaches,
-     * and re-scheduling is free — the work is unique and KEEP, so opening the app twenty times
-     * does not push the evening reminder twenty times further away. Draining events here as well
-     * means an admin decision lands within seconds for anyone with the app in front of them,
-     * rather than waiting for the next background run.
+     * Scheduled here rather than at sign-in because this is the screen a tester always reaches,
+     * and re-scheduling is free: the work is unique and KEEP, so opening the app twenty times does
+     * not push the evening reminder twenty times further away.
+     *
+     * Drain first and sweep second, in one coroutine rather than two. They overlap on exactly one
+     * thing: a removal is both an event addressed to this device and a cohort that has vanished
+     * from under it. The event is the better of the two messages because it knows the cause, so it
+     * claims the group and the sweep stays quiet — which only works if the event has already been
+     * read by the time the sweep looks.
      */
     fun catchUp(context: Context) {
         val uid = AuthRepo.uid ?: return
         ReminderWorker.schedule(context)
-        viewModelScope.launch { runCatching { AdminEvents.drain(context, uid) } }
-    }
-
-    /**
-     * Where this tester stands against the run's own rules, once per visit to this screen.
-     *
-     * The same pass also removes anyone who has stopped opening this account's app, which is why
-     * it runs from a screen rather than only from the evening worker: enforcement that waits for a
-     * background job is enforcement that a phone in Doze can defer for hours.
-     *
-     * Kept off [load] deliberately. That runs on every resume, and re-reading a whole cohort's
-     * proofs each time someone glances at the app is a lot of reads for an answer that changes
-     * once a day.
-     */
-    fun sweep(context: Context) {
-        val uid = AuthRepo.uid ?: return
         viewModelScope.launch {
+            runCatching { AdminEvents.drain(context, uid) }
             standings = Enforcement.sweep(context, uid).standings
             notices = Enforcement.notices(context)
             refreshNotificationPrompt(context)
@@ -237,7 +226,6 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) {
         vm.catchUp(context)
-        vm.sweep(context)
     }
 
     // Anything a background sweep parked while the app was shut.
