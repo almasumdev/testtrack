@@ -1,5 +1,9 @@
 *.iml
 .gradle/
+# Written by Android Studio's updateDaemonJvm. It pins the daemon to a JDK the
+# local machine happens to have; CI sets up its own, so committing it would only
+# make the runner go and fetch a second one.
+gradle/gradle-daemon-jvm.properties
 .kotlin/
 /local.properties
 /.idea/

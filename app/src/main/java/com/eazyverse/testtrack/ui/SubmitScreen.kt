@@ -19,6 +19,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.data.*
 import kotlinx.coroutines.launch
 
+/**
+ * What submitting an app commits you to.
+ *
+ * Four promises in the owner's own voice. What happens when one is broken is stated once,
+ * underneath, in the app's voice — a person should not be made to recite their own penalty, and a
+ * list that mixes "I will" with "and then you will be removed" reads as a warning rather than an
+ * agreement.
+ */
+val SUBMIT_RULES = listOf(
+    "My app is live on a closed testing track and I've added the testers group to it.",
+    "I'll keep that release on the track for the whole 14 days.",
+    "I'll open every other app in my group, every day, until the run ends.",
+    "I won't opt out of anyone's test, or leave the group, before the 14 days are up."
+)
+
 class SubmitViewModel : ViewModel() {
     var submitting by mutableStateOf(false)
         private set
@@ -26,13 +41,43 @@ class SubmitViewModel : ViewModel() {
 
     var nameInput by mutableStateOf("")
     var packageInput by mutableStateOf("")
-    var confirmed by mutableStateOf(false)
 
-    /** Rough Android package shape: at least two dot-separated segments starting with a letter. */
-    val packageValid: Boolean
-        get() = Regex("^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)+$").matches(packageInput)
+    /** One tick for the whole of [SUBMIT_RULES]. */
+    var agreed by mutableStateOf(false)
 
-    val canSubmit: Boolean get() = packageValid && nameInput.isNotBlank() && confirmed && !submitting
+    /**
+     * Why a field is refused, or null while it is acceptable.
+     *
+     * Both return null for an empty field. A form that turns red before anything has been typed
+     * is telling someone off for not having finished yet, so the message waits until there is
+     * something to be wrong about, and the disabled button carries the "not yet" on its own.
+     */
+    val nameError: String?
+        get() {
+            val trimmed = nameInput.trim()
+            return when {
+                nameInput.isEmpty() -> null
+                trimmed.isEmpty() -> "That's only spaces."
+                trimmed.length < 2 -> "That looks too short to be an app name."
+                trimmed.length > NAME_MAX -> "Keep it under $NAME_MAX characters."
+                else -> null
+            }
+        }
+
+    val packageError: String?
+        get() = when {
+            packageInput.isEmpty() -> null
+            packageInput.length > PACKAGE_MAX -> "That's longer than a package name can be."
+            !packageInput.contains('.') -> "A package name has at least one dot, like com.example.myapp."
+            packageInput == OWN_PACKAGE -> "That's TestTrack itself. Use your own app's package name."
+            !PACKAGE_SHAPE.matches(packageInput) -> "That should look like com.example.myapp."
+            else -> null
+        }
+
+    private val nameOk: Boolean get() = nameInput.trim().length in 2..NAME_MAX
+    private val packageOk: Boolean get() = packageInput.isNotEmpty() && packageError == null
+
+    val canSubmit: Boolean get() = nameOk && packageOk && agreed && !submitting
 
     /**
      * Registers one app for review.
@@ -49,14 +94,31 @@ class SubmitViewModel : ViewModel() {
             val uid = AuthRepo.uid
             val email = Session.email
             if (uid == null || email == null) {
-                message = "Not signed in"
+                message = "You're not signed in any more. Sign in again and try this once more."
             } else {
-                runCatching { Repo.submitApp(uid, email, packageInput, nameInput.trim()) }
+                runCatching { Repo.submitApp(uid, email, packageInput.trim(), nameInput.trim()) }
                     .onSuccess { onDone() }
-                    .onFailure { message = it.message ?: "Could not submit" }
+                    .onFailure {
+                        message = it.message ?: "We couldn't submit that. Check your connection " +
+                            "and try again."
+                    }
             }
             submitting = false
         }
+    }
+
+    private companion object {
+        const val NAME_MAX = 50
+        /** Android's own ceiling for a package name. */
+        const val PACKAGE_MAX = 255
+        const val OWN_PACKAGE = "com.eazyverse.testtrack"
+
+        /**
+         * Two or more segments, each starting with a letter. Deliberately stricter than Android
+         * strictly allows: a segment may legally begin with an underscore, but a tester typing one
+         * has made a mistake far more often than they have a package that starts that way.
+         */
+        val PACKAGE_SHAPE = Regex("^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)+$")
     }
 }
 
@@ -92,11 +154,15 @@ fun SubmitScreen(
         ) {
             Spacer(Modifier.height(12.dp))
             Text(
-                "Publish a release to closed testing and add the group as testers, then submit " +
-                    "the package name. An admin places it into a testing group — that placement " +
-                    "is the approval, and the 14 days start once the group is full enough.",
+                "Two things to do in Play Console first. Put a release on a closed testing " +
+                    "track, and add the testers group to that track so everyone here can " +
+                    "install it.\n\n" +
+                    "Then tell us the package name below. An admin will put your app into a " +
+                    "testing group, and being placed is the approval. Your 14 days start once " +
+                    "that group has enough people in it.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = MaterialTheme.typography.bodyMedium.fontSize * 1.5f
             )
 
             Spacer(Modifier.height(32.dp))
@@ -104,35 +170,79 @@ fun SubmitScreen(
                 label = "App name",
                 value = vm.nameInput,
                 onValueChange = { vm.nameInput = it },
-                placeholder = "As it appears on Play",
+                placeholder = "The name testers will see on Play",
+                support = vm.nameError,
+                error = vm.nameError != null,
                 imeAction = ImeAction.Next
             )
             Spacer(Modifier.height(22.dp))
             Field(
                 label = "Package name",
                 value = vm.packageInput,
+                // Stripped as it is typed rather than checked afterwards. A package name pasted
+                // from Play Console arrives with a trailing space often enough that rejecting it
+                // would be blaming the tester for the clipboard.
                 onValueChange = { vm.packageInput = it.trim() },
                 placeholder = "com.example.myapp",
-                support = if (vm.packageInput.isNotEmpty() && !vm.packageValid)
-                    "Expected something like com.example.myapp"
-                else
-                    "Play Console → your app → App information",
-                error = vm.packageInput.isNotEmpty() && !vm.packageValid,
+                support = vm.packageError ?: "Find it in Play Console, under App information",
+                error = vm.packageError != null,
                 imeAction = ImeAction.Done
             )
 
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(32.dp))
+            Text(
+                "What you're agreeing to",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Your group is thirteen other developers waiting on the same fourteen days.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(14.dp))
+
+            // Numbered rather than bulleted: a rule you can refer to by number is one an admin can
+            // point at when a placement is refused.
+            SUBMIT_RULES.forEachIndexed { index, rule ->
+                Row(Modifier.fillMaxWidth().padding(bottom = 10.dp)) {
+                    Text(
+                        "${index + 1}.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.width(24.dp)
+                    )
+                    Text(
+                        rule,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = MaterialTheme.typography.bodyMedium.fontSize * 1.45f
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "If someone stops testing, they're removed from the group and everyone else " +
+                    "stops testing their app. That's what keeps the rest of the run going.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = MaterialTheme.typography.bodySmall.fontSize * 1.45f
+            )
+
+            Spacer(Modifier.height(14.dp))
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .clickable { vm.confirmed = !vm.confirmed }
+                    .clickable { vm.agreed = !vm.agreed }
                     .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Checkbox(checked = vm.confirmed, onCheckedChange = { vm.confirmed = it })
+                Checkbox(checked = vm.agreed, onCheckedChange = { vm.agreed = it })
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    "It's live on a closed track and the group is added as testers.",
+                    "I've read these and I agree.",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -157,7 +267,8 @@ fun SubmitScreen(
 
             Spacer(Modifier.height(40.dp))
             Text(
-                "One app per group. If you're already in a group, this one goes to another.",
+                "One app per group. If you already have an app being tested, this one will go " +
+                    "into a different group.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

@@ -1,5 +1,7 @@
 [versions]
-agp = "9.3.1"
+# Capped by Android Studio, not by us: the IDE refuses to open a project on an AGP newer than it
+# supports, and 9.2.1 is the newest it takes. Raise both together when Studio does.
+agp = "9.2.1"
 # Only the Compose compiler plugin now. AGP 9 compiles Kotlin itself, so there is no
 # kotlin-android plugin to version.
 kotlin = "2.4.10"

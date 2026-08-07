@@ -83,7 +83,7 @@ class CaptureService : Service() {
                 try {
                     open(intent)
                 } catch (e: Exception) {
-                    status = "screen sharing failed: ${e.message}"
+                    status = "Screen sharing didn't start. ${e.message}"
                     sessionActive = false
                     stopSelf()
                 }
@@ -92,7 +92,7 @@ class CaptureService : Service() {
             ACTION_ROUND -> {
                 val packages = intent.getStringArrayListExtra(EXTRA_QUEUE).orEmpty()
                 if (projection == null) {
-                    status = "no active session"
+                    status = "Screen sharing isn't running."
                 } else {
                     queue.clear()
                     queue.addAll(packages)
@@ -145,7 +145,7 @@ class CaptureService : Service() {
         // Android 14+ requires a callback registered before createVirtualDisplay().
         mp.registerCallback(object : MediaProjection.Callback() {
             override fun onStop() {
-                status = "screen sharing stopped"
+                status = "Screen sharing stopped."
                 teardown()
             }
         }, handler)
@@ -168,7 +168,7 @@ class CaptureService : Service() {
         )
 
         sessionActive = true
-        status = "ready — open an app"
+        status = "Ready. Open an app to start."
     }
 
     /**
@@ -184,7 +184,7 @@ class CaptureService : Service() {
         if (fresh != null && previous != null && previous !== fresh) previous.recycle()
 
         if (shot != null && looksBlank(shot) && tries < MAX_TRIES) {
-            status = "waiting for the app to load…"
+            status = "Waiting for the app to load…"
             handler.postDelayed({ attempt(pkg, tries + 1, shot) }, RETRY_MS)
             return
         }
@@ -236,7 +236,7 @@ class CaptureService : Service() {
 
         roundIndex += 1
         capturing = pkg
-        status = "Opening ${label(pkg)} — $roundIndex of $roundTotal"
+        status = "Opening ${label(pkg)}, $roundIndex of $roundTotal"
         returnDue = SystemClock.elapsedRealtime() + VISIT_MS
         InstalledApps.launch(this, pkg)
         handler.postDelayed(
@@ -444,7 +444,7 @@ class CaptureService : Service() {
         val results = mutableStateMapOf<String, Capture>()
 
         fun startSession(context: Context, code: Int, data: Intent) {
-            status = "starting…"
+            status = "Starting…"
             send(context, Intent(context, CaptureService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_CODE, code)

@@ -167,9 +167,13 @@ fun SetupScreen(
     )
 
     /**
-     * Only the first outstanding step is live; the rest are inert until it clears. Each depends
-     * on the one before, so a control that cannot succeed yet is worse than no control. A
-     * finished step reopens on tap — re-verifying and reconnecting Drive are both real needs.
+     * Only the first outstanding step is live; the rest are inert until it clears. Each depends on
+     * the one before, so a control that cannot succeed yet is worse than no control.
+     *
+     * A finished step then stays shut. Only sign-in reopens, and only because the wrong Gmail is
+     * the one failure the phone cannot detect for itself. Everything else is re-read when this
+     * screen comes forward, so a revoked grant or a switch turned off in Settings drops its step
+     * back to outstanding and opens it without being asked.
      */
     val outstanding = done.indexOfFirst { !it }
     var reopened by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -185,7 +189,7 @@ fun SetupScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "Five things to do once, in order.",
+                "Five things to do once. Take them in order.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -194,10 +198,11 @@ fun SetupScreen(
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
           Panel {
 
-            // The one step that cannot be redone in place — a different account means starting the
-            // checklist over. So it reopens like the others, but the only thing inside is the way
-            // out: signed in as the wrong Gmail, every step below this one fails and says nothing
-            // about why.
+            // The only step that reopens. The rest repair themselves: a revoked Drive grant or a
+            // usage switch turned off in Settings is re-read when this screen comes forward, and
+            // the step goes back to outstanding and opens on its own. Signing in is the one thing
+            // the phone cannot notice going wrong, because the wrong Gmail is not a fault, and
+            // every step below it fails without saying so.
             Step(
                 title = "Sign in",
                 result = Session.email ?: "",
@@ -206,9 +211,9 @@ fun SetupScreen(
                 onReopen = { reopened = if (live(0)) null else 0 }.takeIf { done[0] }
             ) {
                 Text(
-                    "Signed in as ${Session.email ?: "this account"}. Sign out to use a different " +
-                        "Gmail — the group and your Drive both follow the account, so the steps " +
-                        "below start again.",
+                    "You're signed in as ${Session.email ?: "this account"}. If that's the wrong " +
+                        "Gmail, sign out and pick another one. Your place in the group and your " +
+                        "Drive both belong to the account, so the steps below will start again.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -222,11 +227,12 @@ fun SetupScreen(
             Step(
                 title = "Join the testers group",
                 result = "You're in the group",
-                detail = "Owners can only add you to their closed test if you're in the group. " +
-                    "Join with the Gmail you signed in with.",
+                detail = "App owners can only add you to their closed test if you're in this " +
+                    "group. Open it, join with the same Gmail you signed in with, then come back " +
+                    "and verify.",
                 done = done[1],
                 live = live(1),
-                onReopen = { reopened = if (live(1)) null else 1 }.takeIf { done[1] }
+                onReopen = null
             ) {
                 Primary("Verify membership", busy = vm.checkingGroup) { vm.verifyGroup(activity) }
                 TextButton(
@@ -240,11 +246,11 @@ fun SetupScreen(
             Step(
                 title = "Connect Google Drive",
                 result = "Proof will be saved to your Drive",
-                detail = "Your daily screenshots go to your own Drive. TestTrack can only see " +
-                    "files it creates there.",
+                detail = "Your daily screenshots go to your own Google Drive, so the proof stays " +
+                    "yours. We can only see the files we put there and nothing else in it.",
                 done = done[2],
                 live = live(2),
-                onReopen = { reopened = if (live(2)) null else 2 }.takeIf { done[2] }
+                onReopen = null
             ) {
                 Primary("Connect Drive", busy = vm.connectingDrive) {
                     vm.connectDrive(activity) { consentLauncher.launch(it) }
@@ -254,27 +260,58 @@ fun SetupScreen(
             Step(
                 title = "Allow usage access",
                 result = "Time in each app is recorded",
-                detail = "Your daily report records how long you actually spent in each app, not " +
-                    "just that you opened it. Android only reports that with usage access, and " +
-                    "it can't be asked for in a pop-up — find TestTrack in the list and turn it on.",
+                detail = "Your daily report shows how long you actually spent in each app, not " +
+                    "just that you opened it. Android only shares that if you switch on usage " +
+                    "access, and there's no pop-up to ask for it, so you'll need to find " +
+                    "TestTrack in the list and turn it on yourself.",
                 done = done[3],
                 live = live(3),
-                onReopen = { reopened = if (live(3)) null else 3 }.takeIf { done[3] }
+                onReopen = null
             ) {
                 Primary("Open usage access settings") { UsageRepo.openSettings(activity) }
+
+                // The most common way this step fails, and the one a tester cannot solve by
+                // trying harder: the switch is there, they tap it, and Android refuses without
+                // explaining that the cause is how the app was installed rather than anything
+                // they did. Written out in full because the menu that unblocks it stays hidden
+                // until the refusal has been seen once, so nobody finds it by looking.
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    "If the switch won't turn on",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "Some phones, Samsung especially, block this for apps installed from a " +
+                        "browser instead of the Play Store. You'll see a message saying the " +
+                        "setting is restricted. Nothing is wrong with your phone or with " +
+                        "TestTrack, and you can turn it on yourself:\n\n" +
+                        "1. Tap the switch once and close the message that appears\n" +
+                        "2. Open Settings, then Apps, then TestTrack\n" +
+                        "3. Tap the three dot menu in the top right corner\n" +
+                        "4. Choose Allow restricted settings\n" +
+                        "5. Confirm with your PIN, pattern or fingerprint\n" +
+                        "6. Come back here and the switch will work\n\n" +
+                        "The menu in step 3 only appears after you've tapped the switch once, so " +
+                        "don't skip the first step.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = MaterialTheme.typography.bodyMedium.fontSize * 1.5f
+                )
             }
 
             Step(
                 title = "Turn on reminders",
                 result = if (Session.notificationsGranted) "You'll be nudged if a day is slipping"
-                         else "Off — you'll need to remember on your own",
-                detail = "A run is fourteen days without a gap, and one missed day resets the " +
-                    "clock for everyone in the group, not just you. A reminder arrives only when " +
-                    "apps are still waiting on you.",
+                         else "Off, so you'll need to remember on your own",
+                detail = "A run is fourteen days with no gaps, and one missed day resets the " +
+                    "clock for everyone in your group, not just for you. We'll only nudge you " +
+                    "when apps are still waiting, never to say well done.",
                 done = done[4],
                 live = live(4),
                 last = true,
-                onReopen = { reopened = if (live(4)) null else 4 }.takeIf { done[4] }
+                onReopen = null
             ) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !promptSpent) {
                     Primary("Turn on reminders") {

@@ -94,7 +94,7 @@ class DashboardViewModel : ViewModel() {
                     Cache.put(Cache.testers(cohort.id), roster)
                     Cache.put(Cache.proofs(appId), marks)
                 }
-            }.onFailure { message = it.message ?: "Could not load this dashboard" }
+            }.onFailure { message = it.message ?: "We couldn't load this dashboard. Check your connection and try again." }
             ready = true
         }
     }
@@ -184,8 +184,8 @@ fun DashboardScreen(
             when {
                 !vm.ready -> DashboardSkeleton()
 
-                vm.app == null -> Blank(vm.message ?: "That app is no longer registered.")
-                vm.group == null -> Blank("This app hasn't been placed in a group yet.")
+                vm.app == null -> Blank(vm.message ?: "This app isn't registered any more.")
+                vm.group == null -> Blank("This app is waiting for an admin to place it in a group.")
 
                 else -> {
                     Headline(vm)

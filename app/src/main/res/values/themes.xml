@@ -3,12 +3,18 @@
     <!--
       The window Android draws before Compose puts up a frame.
 
-      It has to match the app's own ground or every launch opens on a flash of the wrong colour —
-      this was Material.Light, so a dark app started white. windowBackground is the only part that
-      matters here: the bars are transparent from Android 15 regardless, and the appearance of
-      their icons is set from the theme at runtime.
+      windowBackground has to match the app's own ground or every launch opens on a flash of the
+      wrong colour. This was Material.Light, so a dark app started white.
+
+      The two bar colours matter on Android 14 and below, where the system paints them itself and
+      Theme.Material leaves them black. Against a #080C16 ground that reads as a black band above
+      and below an almost-black app, which looks like a rendering fault rather than a choice. From
+      Android 15 the bars are transparent and these are ignored, so setting them costs nothing
+      there and fixes the seam everywhere else.
     -->
     <style name="Theme.TestTrack" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/paper</item>
+        <item name="android:statusBarColor">@color/paper</item>
+        <item name="android:navigationBarColor">@color/paper</item>
     </style>
 </resources>

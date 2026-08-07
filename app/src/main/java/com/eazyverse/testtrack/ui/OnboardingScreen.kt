@@ -41,21 +41,22 @@ private data class Page(val title: String, val body: String, val art: Art)
 
 private val PAGES = listOf(
     Page(
-        "The thread, replaced",
-        "Play wants 12 testers opted in for 14 straight days. Coordinating that in a chat thread " +
-            "means scrolling back through hundreds of screenshots to work out who missed a day.",
+        "No more group chat screenshots",
+        "Google asks for 12 testers who stay opted in for 14 days in a row. Most groups try to " +
+            "track that in a chat thread and lose count by the second day. We keep the record so " +
+            "you don't have to.",
         Art.THREAD
     ),
     Page(
-        "Open, and it's recorded",
-        "Tap an app in your daily list. It opens, TestTrack captures proof a few seconds later " +
-            "and brings you straight back. No screenshotting, no posting, no captions.",
+        "One tap and your day is done",
+        "Open an app from your list. We time how long you spend in it, save the proof to your own " +
+            "Drive, and bring you straight back. Nothing to screenshot, nothing to post.",
         Art.CAPTURE
     ),
     Page(
-        "See your own run",
-        "Your app gets a grid: every tester down one side, all 14 days across the top. Gaps are " +
-            "obvious on day two instead of day thirteen.",
+        "See who tested, every day",
+        "Your app gets a grid with everyone testing it and all 14 days. If someone quietly stops " +
+            "on day two, you'll know on day two instead of at the end.",
         Art.GRID
     )
 )

@@ -112,7 +112,7 @@ class GroupViewModel : ViewModel() {
                     own?.let { Cache.put(Cache.reporters(it.id, d), reporters) }
                 }
                 message = null
-            }.onFailure { message = it.message ?: "Could not load this group" }
+            }.onFailure { message = it.message ?: "We couldn't load this group. Check your connection and try again." }
             ready = true
         }
     }
@@ -170,8 +170,8 @@ class GroupViewModel : ViewModel() {
                 // between the tester and the step that fixes this. Left true, Setup shows Drive as
                 // done and offers no way to reconnect.
                 Session.updateDriveConnected(false)
-                message = "Drive access has lapsed. Reconnect it under Setup, in the menu on the " +
-                    "home screen."
+                message = "Your Drive access has expired. Open Setup from the top of the home " +
+                    "screen and reconnect it, then try again."
             } else {
                 val file = File(capture.path)
                 val name = "${app.packageName}_day${d}_${uid.take(6)}.jpg"
@@ -197,11 +197,12 @@ class GroupViewModel : ViewModel() {
                                     doneToday = doneToday + app.id
                                     Cache.put(Cache.doneToday(uid, cohort.id, d), doneToday)
                                 } else {
-                                    message = "${app.label} logged only " +
-                                        "${formatDuration(proof.usageMs)} — open it again and stay put."
+                                    message = "${app.label} only counted " +
+                                        "${formatDuration(proof.usageMs)}. Open it again and " +
+                                        "stay in it until we bring you back."
                                 }
                             }
-                            .onFailure { message = it.message ?: "Could not record proof" }
+                            .onFailure { message = it.message ?: "We couldn't save that proof. Check your connection and try again." }
                     }
                 }
             }
@@ -311,7 +312,7 @@ fun GroupScreen(
             when {
                 !vm.ready -> SkeletonPage(rows = 8)
 
-                group == null -> Blank(vm.message ?: "That group no longer exists.")
+                group == null -> Blank(vm.message ?: "This group doesn't exist any more.")
 
                 else -> {
                     val outstanding = vm.outstanding(context)
@@ -412,8 +413,8 @@ private fun Header(group: TestGroup, done: Int, total: Int) {
                 group.running ->
                     "All $RUN_DAYS days are behind you. Your dashboard has the full record."
                 else ->
-                    "${group.size} of ${TestGroup.THRESHOLD} members — the run starts when the " +
-                        "${TestGroup.THRESHOLD}th joins"
+                    "${group.size} of ${TestGroup.THRESHOLD} members so far. The run starts once " +
+                        "the ${TestGroup.THRESHOLD}th joins."
             },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -425,9 +426,10 @@ private fun Header(group: TestGroup, done: Int, total: Int) {
         if (group.atRisk) {
             Spacer(Modifier.height(16.dp))
             Text(
-                "Short ${group.stillNeeded} member${if (group.stillNeeded == 1) "" else "s"}. The " +
-                    "count above keeps going, but Play may have reset its own — ask an admin to " +
-                    "fill the slot.",
+                "This group is ${group.stillNeeded} member" +
+                    "${if (group.stillNeeded == 1) "" else "s"} short. The day count above keeps " +
+                    "going, but Play may have already reset its own. Ask an admin to fill the " +
+                    "empty slot.",
                 Modifier
                     .clip(RoundedCornerShape(12.dp))
                     .background(Status.missedSoft)
@@ -491,8 +493,8 @@ private fun Action(
 
             !usageGranted -> {
                 Text(
-                    "Your report records how long you spend in each app. Turn on usage access for " +
-                        "TestTrack and come back.",
+                    "We record how long you spend in each app, and Android only shares that with " +
+                        "usage access switched on. Turn it on for TestTrack and come back here.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -502,8 +504,8 @@ private fun Action(
 
             !canReturn -> {
                 Text(
-                    "A round moves between apps on its own, which Android only allows with the " +
-                        "display-over-other-apps permission.",
+                    "A round opens each app and brings you back on its own. Android only lets us " +
+                        "do that with permission to display over other apps.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -518,8 +520,8 @@ private fun Action(
             outstanding == 0 && remaining > 0 -> Text(
                 "$remaining app${if (remaining == 1) "" else "s"} still to test, and " +
                     "${if (remaining == 1) "it isn't" else "none of them are"} installed on this " +
-                    "phone. Install ${if (remaining == 1) "it" else "them"} from Play — a round " +
-                    "can only open what is already here.",
+                    "phone yet. Install ${if (remaining == 1) "it" else "them"} from Play first. " +
+                    "A round can only open what's already here.",
                 style = MaterialTheme.typography.bodySmall,
                 color = Status.missed
             )
@@ -547,9 +549,9 @@ private fun Action(
                     Spacer(Modifier.height(8.dp))
                 }
                 Text(
-                    "Each app opens for just over half a minute and moves to the next on its own. " +
-                        "The screenshot lands at a moment you won't know in advance, so leave the " +
-                        "phone alone until you're back here.",
+                    "Each app opens for just over half a minute, then moves to the next one on " +
+                        "its own. We take the screenshot at a moment you won't know in advance, " +
+                        "so leave the phone alone until you're back here.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

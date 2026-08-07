@@ -77,8 +77,8 @@ object AuthRepo {
             signInToFirebase(account.idToken)
             null
         } catch (e: Exception) {
-            "Signed in, but Firebase rejected the token — enable Google under Firebase " +
-                "Authentication → Sign-in method. (${e.message})"
+            "You're signed in, but Firebase turned the token down. Google needs enabling under " +
+                "Firebase Authentication, in Sign-in method. (${e.message})"
         }
         return account to GroupGate.check(account.idToken)
     }

@@ -106,18 +106,18 @@ fun AuthScreen(onSignedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
 
         Reason(
             Icons.Default.Group,
-            "Proves you're in the group",
-            "Checked on Google's servers, not on your phone — so it can't be faked."
+            "We check you're in the group",
+            "The check runs on Google's servers, not on your phone, so nobody can fake their way in."
         )
         Reason(
             Icons.Default.PhotoCamera,
-            "Records your daily testing",
-            "Open an app from your list and proof is captured automatically."
+            "We record your testing for you",
+            "Open an app from your list and we capture the proof while you're using it."
         )
         Reason(
             Icons.Default.CloudUpload,
-            "Stores proof in your own Drive",
-            "TestTrack can only ever see the files it creates there."
+            "Your proof stays in your Drive",
+            "It goes to your own Google Drive. We can only see the files we put there."
         )
 
         Spacer(Modifier.weight(0.7f))
@@ -180,7 +180,7 @@ fun AuthScreen(onSignedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
 
         Spacer(Modifier.height(16.dp))
         Text(
-            "Gmail only — Play Console closed testing is keyed to Google accounts.",
+            "Gmail only, because Play Console ties closed testing to Google accounts.",
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant

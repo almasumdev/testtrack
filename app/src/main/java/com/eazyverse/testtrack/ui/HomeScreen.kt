@@ -8,7 +8,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.GroupWork
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
@@ -74,7 +73,7 @@ class HomeViewModel : ViewModel() {
                 Cache.put(Cache.pending(uid), waiting)
                 Cache.put(Cache.groups(uid), progress)
                 message = null
-            }.onFailure { message = it.message ?: "Could not load your groups" }
+            }.onFailure { message = it.message ?: "We couldn't load your groups. Check your connection and try again." }
             ready = true
         }
     }
@@ -136,7 +135,7 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             runCatching { Repo.deleteApp(app.packageName) }
                 .onSuccess { load() }
-                .onFailure { message = it.message ?: "Could not withdraw ${app.label}" }
+                .onFailure { message = it.message ?: "We couldn't withdraw ${app.label}. Try again in a moment." }
         }
     }
 }
@@ -173,38 +172,21 @@ fun HomeScreen(
     LaunchedEffect(Unit) { vm.catchUp(context) }
 
     var confirmSignOut by remember { mutableStateOf(false) }
-    var menuOpen by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text("TestTrack", fontWeight = FontWeight.Bold) },
+                // Both actions shown rather than folded behind an overflow. Two is under the
+                // threshold where a menu earns its extra tap, and neither is findable by guessing
+                // that a three-dot icon contains it.
                 actions = {
-                    Box {
-                        IconButton(onClick = { menuOpen = true }) {
-                            Icon(Icons.Default.MoreVert, "More")
-                        }
-                        DropdownMenu(menuOpen, onDismissRequest = { menuOpen = false }) {
-                            DropdownMenuItem(
-                                text = { Text("Setup") },
-                                leadingIcon = { Icon(Icons.Outlined.Tune, null) },
-                                onClick = {
-                                    menuOpen = false
-                                    onOpenSetup()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Sign out") },
-                                leadingIcon = {
-                                    Icon(Icons.AutoMirrored.Filled.Logout, null)
-                                },
-                                onClick = {
-                                    menuOpen = false
-                                    confirmSignOut = true
-                                }
-                            )
-                        }
+                    IconButton(onClick = onOpenSetup) {
+                        Icon(Icons.Outlined.Tune, "Setup")
+                    }
+                    IconButton(onClick = { confirmSignOut = true }) {
+                        Icon(Icons.AutoMirrored.Filled.Logout, "Sign out")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -364,8 +346,6 @@ private fun GroupRow(progress: GroupProgress, onClick: () -> Unit) {
 
 @Composable
 private fun PendingRow(app: TestApp, onWithdraw: () -> Unit) {
-    var menuOpen by remember { mutableStateOf(false) }
-
     Row(
         Modifier.fillMaxWidth().padding(start = Gutter, end = 4.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -385,22 +365,10 @@ private fun PendingRow(app: TestApp, onWithdraw: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Box {
-            IconButton(onClick = { menuOpen = true }) {
-                Icon(
-                    Icons.Default.MoreVert, "More",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                DropdownMenuItem(
-                    text = { Text("Withdraw", color = MaterialTheme.colorScheme.error) },
-                    onClick = {
-                        menuOpen = false
-                        onWithdraw()
-                    }
-                )
-            }
+        // Named rather than hidden behind three dots. A menu holding one item is a tap spent
+        // discovering that there was only ever one thing to do.
+        TextButton(onClick = onWithdraw) {
+            Text("Withdraw", color = MaterialTheme.colorScheme.error)
         }
     }
 }
