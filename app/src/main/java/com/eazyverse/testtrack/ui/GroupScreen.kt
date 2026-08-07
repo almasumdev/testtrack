@@ -380,7 +380,8 @@ fun GroupScreen(
                                     live = vm.day != null,
                                     ended = group.running,
                                     busy = CaptureService.capturing == app.packageName,
-                                    onOpen = { run(listOf(app.packageName)) }
+                                    onOpen = { run(listOf(app.packageName)) },
+                                    onInstall = { openOptIn(context, app) { vm.message = it } }
                                 )
                             }
                         }
@@ -532,8 +533,8 @@ private fun Action(
             outstanding == 0 && remaining > 0 -> Text(
                 "$remaining app${if (remaining == 1) "" else "s"} still to test, and " +
                     "${if (remaining == 1) "it isn't" else "none of them are"} installed on this " +
-                    "phone yet. Install ${if (remaining == 1) "it" else "them"} from Play first. " +
-                    "A round can only open what's already here.",
+                    "phone yet. Tap Install on ${if (remaining == 1) "it" else "each one"} to " +
+                    "join the test and get it from Play. A round can only open what's already here.",
                 style = MaterialTheme.typography.bodySmall,
                 color = Status.missed
             )
@@ -606,6 +607,30 @@ private fun MineRow(app: TestApp, reporters: Int, group: TestGroup, onClick: () 
     }
 }
 
+/**
+ * Sends a tester to the page where they join this app's closed test.
+ *
+ * The Play Store app claims these links, so on most phones this lands in Play rather than a
+ * browser. Where it does not, a browser is a perfectly good place to accept an invitation.
+ *
+ * A device with neither is possible — a stripped ROM, or Play disabled — and that is the one case
+ * worth a message rather than a shrug, because the tester is now stuck on a step they cannot
+ * complete from here.
+ */
+private fun openOptIn(context: Context, app: TestApp, onFailure: (String) -> Unit) {
+    runCatching {
+        context.startActivity(
+            Intent(Intent.ACTION_VIEW, Uri.parse(app.optInUrl))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    }.onFailure {
+        onFailure(
+            "We couldn't open Play on this phone. Join the test at ${app.optInUrl} and install " +
+                "${app.label} from there."
+        )
+    }
+}
+
 @Composable
 private fun TestRow(
     app: TestApp,
@@ -615,7 +640,8 @@ private fun TestRow(
     /** Distinguishes a run that is over from one that has not begun. Only read when not [live]. */
     ended: Boolean,
     busy: Boolean,
-    onOpen: () -> Unit
+    onOpen: () -> Unit,
+    onInstall: () -> Unit
 ) {
     val context = LocalContext.current
     val info = remember(app.packageName) { InstalledApps.cachedInfo(context, app.packageName) }
@@ -643,7 +669,25 @@ private fun TestRow(
 
         when {
             busy -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-            !info.installed -> Pill("Install", Status.missed, Status.missedSoft)
+
+            // A button, not a label. This sat where Open sits, in Open's shape, and did nothing
+            // at all — the one control on the screen that looked tappable and was not.
+            !info.installed -> TextButton(
+                onClick = onInstall,
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.textButtonColors(
+                    containerColor = Status.missedSoft,
+                    contentColor = Status.missed
+                ),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    "Install",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
             done -> Pill("Done", Status.posted, Status.postedSoft)
 
             // Off the clock, in either direction. `running` alone was not enough: it stays true

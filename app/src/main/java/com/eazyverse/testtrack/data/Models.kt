@@ -162,6 +162,20 @@ data class TestApp(
 
     val label: String get() = name.ifBlank { packageName }
 
+    /**
+     * Where a tester joins this app's closed test.
+     *
+     * Derived rather than stored: Play gives every track this address, and it is the package name
+     * with a fixed prefix. Nothing has to be supplied at submission and no existing app document
+     * needs a new field.
+     *
+     * The opt-in page, deliberately, not the store listing. Opting in is the step Play's fourteen
+     * days are actually counted from, and it is the step people skip — and until someone has taken
+     * it the listing shows them nothing at all, so sending them there first is sending them to a
+     * dead end.
+     */
+    val optInUrl: String get() = "https://play.google.com/apps/testing/$packageName"
+
     companion object {
         const val STATUS_PENDING = "pending"
         const val STATUS_ASSIGNED = "assigned"
