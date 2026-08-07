@@ -1,6 +1,12 @@
 package com.eazyverse.testtrack.data
 
-/** How long Play requires testers to stay opted in. Every grid is this many columns wide. */
+/**
+ * How long Play requires testers to stay opted in, and the length every run starts at.
+ *
+ * A starting point rather than a fixed rule: an admin can extend a cohort past it, so anything
+ * reading a run's length must ask the group ([TestGroup.runDays]) instead of this constant. Kept
+ * for the default and for the width of a grid nobody has extended.
+ */
 const val RUN_DAYS = 14
 
 /**
@@ -91,6 +97,14 @@ data class TestGroup(
     val appIds: List<String> = emptyList(),
     /** Epoch millis. Zero until the group first reached [THRESHOLD]; set once, by an admin. */
     val startDate: Long = 0L,
+    /**
+     * How many days this run lasts.
+     *
+     * [RUN_DAYS] unless an admin has extended it. Nothing happens on its own when a run reaches
+     * the end: the days simply stop being owed, and testing carries on for anyone who wants to.
+     * Extending is the only way obligation continues.
+     */
+    val runDays: Int = RUN_DAYS,
     val status: String = STATUS_FORMING
 ) {
     val size: Int get() = memberUids.size
@@ -111,7 +125,7 @@ data class TestGroup(
     fun dayIndex(now: Long = System.currentTimeMillis()): Int? {
         if (startDate <= 0L) return null
         val day = ((now - startDate) / 86_400_000L).toInt()
-        return day.takeIf { it in 0 until RUN_DAYS }
+        return day.takeIf { it in 0 until runDays }
     }
 
     /**
@@ -183,10 +197,13 @@ data class TestApp(
 }
 
 /**
- * One tester's proof for one app on one day.
+ * One tester's proof for one app on one day of one run.
  *
- * The document id is `{appId}__{testerUid}__{day}`, which makes posting twice an overwrite rather
- * than a duplicate and lets a whole grid come back in a single query.
+ * The document id carries the run as well as the day. Without it a restart was cosmetic: day
+ * numbering begins again at zero, the previous run's proofs are still sitting under those numbers,
+ * and a cohort restarted for having bled out would open on day one already showing everybody
+ * present. The run is identified by the `startDate` it began on, which changes every time the
+ * clock is set — so the old fortnight keeps its record and stops counting towards the new one.
  */
 data class Proof(
     val appId: String = "",
@@ -206,7 +223,14 @@ data class Proof(
     val imageUrl: String = "",
     val capturedAt: Long = 0L,
     /** Foreground time for that app that day, from UsageStatsManager. */
-    val usageMs: Long = 0L
+    val usageMs: Long = 0L,
+    /**
+     * The `startDate` of the run this belongs to.
+     *
+     * Part of the identity, not decoration: every query for a day has to name it, or a restarted
+     * cohort reads its predecessor's attendance as its own.
+     */
+    val runStartedAt: Long = 0L
 ) {
     /** A screenshot proves the app opened. The half-minute of use is what proves it was used. */
     val meetsBar: Boolean get() = usageMs >= MIN_USAGE_MS
@@ -215,7 +239,12 @@ data class Proof(
         /** The tester is asked to stay for thirty seconds, so that is what a day has to show. */
         const val MIN_USAGE_MS = 30_000L
 
-        fun id(appId: String, testerUid: String, day: Int) = "${appId}__${testerUid}__$day"
+        /**
+         * Same tester, same app, same day of the same run always writes the same document, so
+         * posting twice overwrites rather than duplicating.
+         */
+        fun id(appId: String, testerUid: String, day: Int, runStartedAt: Long) =
+            "${appId}__${testerUid}__${runStartedAt}__$day"
     }
 }
 

@@ -113,7 +113,7 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
             val day = group.dayIndex() ?: return@forEach
             val others = Repo.appsInGroup(group.id).filter { it.ownerUid != uid }
             if (others.isEmpty()) return@forEach
-            val done = Repo.myProofsForDay(uid, group.id, day).size
+            val done = Repo.myProofsForDay(uid, group.id, day, group.startDate).size
             val left = others.size - done
             if (left > 0) {
                 outstanding += left

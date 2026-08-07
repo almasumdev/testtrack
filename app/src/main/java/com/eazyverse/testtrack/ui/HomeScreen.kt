@@ -89,7 +89,7 @@ class HomeViewModel : ViewModel() {
                 val progress = Repo.myGroups(uid).map { group ->
                     val others = Repo.appsInGroup(group.id).filter { it.ownerUid != uid }
                     val day = group.dayIndex()
-                    val done = if (day == null) 0 else Repo.myProofsForDay(uid, group.id, day).size
+                    val done = if (day == null) 0 else Repo.myProofsForDay(uid, group.id, day, group.startDate).size
                     GroupProgress(group, others.size, done)
                 }
 
@@ -411,7 +411,7 @@ private fun GroupRow(progress: GroupProgress, onClick: () -> Unit) {
                 when {
                     day != null -> {
                         val left = progress.toTest - progress.done
-                        "Day ${day + 1} of $RUN_DAYS · " +
+                        "Day ${day + 1} of ${group.runDays} · " +
                             if (left <= 0) "all done" else "$left left today"
                     }
                     group.running -> "Run finished"

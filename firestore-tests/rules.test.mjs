@@ -53,8 +53,9 @@ async function seed(proofs = []) {
       submittedAt: PLACED, placedAt: PLACED,
     })
     for (const { app, uid, day } of proofs) {
-      await setDoc(doc(db, 'proofs', `${app}__${uid}__${day}`), {
+      await setDoc(doc(db, 'proofs', `${app}__${uid}__${START}__${day}`), {
         appId: app, groupId: GROUP, ownerUid: ME, testerUid: uid, day, usageMs: 40000,
+        runStartedAt: START,
       })
     }
   })
@@ -221,6 +222,32 @@ console.log('\nNo placement date recorded, so nothing can be proved')
   })
   await check('legacy app with no placedAt is refused', () => assertFails(evictGroupWrite(as(ME))))
 }
+
+console.log('\nRun length is an admin decision')
+await seed([{ app: MY_APP, uid: TARGET, day: 0 }])
+await check('a member cannot extend the run while evicting', () =>
+  assertFails(updateDoc(doc(as(ME), 'groups', GROUP), {
+    memberUids: [ME], appIds: [MY_APP], runDays: 30,
+    lastEviction: { uid: TARGET, appId: TARGET_APP, byUid: ME, byAppId: MY_APP, day: 3, at: Date.now() },
+  })))
+
+// An extended run is still a run, so removals carry on inside it rather than stopping at day 14.
+await env.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'groups', GROUP), {
+    name: 'Group A', memberUids: [ME, TARGET], appIds: [MY_APP, TARGET_APP],
+    startDate: START, status: 'running', runDays: 21,
+  })
+})
+await check('an extended run still removes', () => assertSucceeds(evictGroupWrite(as(ME))))
+
+// And past the end of one, nothing is owed, so nothing can be missed.
+await env.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'groups', GROUP), {
+    name: 'Group A', memberUids: [ME, TARGET], appIds: [MY_APP, TARGET_APP],
+    startDate: START, status: 'running', runDays: 2,
+  })
+})
+await check('a finished run removes nobody', () => assertFails(evictGroupWrite(as(ME))))
 
 console.log('\nThe audit record an automatic removal writes for itself')
 await seed([{ app: MY_APP, uid: TARGET, day: 0 }])

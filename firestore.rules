@@ -69,6 +69,11 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/apps/$(appId)).data;
     }
 
+    /** [RUN_DAYS] unless an admin has extended this cohort. */
+    function runDaysOf(group) {
+      return 'runDays' in group ? group.runDays : 14;
+    }
+
     /** Zero for a document written before placement dates were recorded, which blocks eviction. */
     function placedAtOf(appId) {
       return 'placedAt' in appData(appId) ? appData(appId).placedAt : 0;
@@ -87,10 +92,19 @@ service cloud.firestore {
         : ((placedAt - startDate) / 86400000) + 1;
     }
 
-    /** Proof ids are {appId}__{testerUid}__{day}, so absence is a question this can just ask. */
-    function noProof(appId, uid, day) {
+    /**
+     * Proof ids are {appId}__{testerUid}__{runStartedAt}__{day}, so absence is a question this can
+     * just ask.
+     *
+     * The run is part of the id because a restarted cohort numbers its days from zero again. Were
+     * it not, the abandoned run's proofs would answer for the new one and nobody could ever be
+     * removed from a restarted group.
+     */
+    function noProof(appId, uid, runStartedAt, day) {
       return !exists(
-        /databases/$(database)/documents/proofs/$(appId + '__' + uid + '__' + string(day))
+        /databases/$(database)/documents/proofs/$(
+          appId + '__' + uid + '__' + string(runStartedAt) + '__' + string(day)
+        )
       );
     }
 
@@ -101,16 +115,18 @@ service cloud.firestore {
      * puts the earliest possible removal on day three, the first day with two finished days behind
      * it.
      */
-    function missedTwo(byAppId, targetUid, targetPlacedAt, startDate) {
+    function missedTwo(byAppId, targetUid, targetPlacedAt, startDate, runDays) {
       return startDate > 0
         && targetPlacedAt > 0
         && placedAtOf(byAppId) > 0
         && dayOf(startDate) >= 2
-        && dayOf(startDate) < 14
+        // Past the end of the run nothing is owed, so nothing can be missed. An admin may have
+        // extended it, which is why this asks the group rather than assuming fourteen.
+        && dayOf(startDate) < runDays
         && dayOf(startDate) - 2 >= firstJudged(placedAtOf(byAppId), startDate)
         && dayOf(startDate) - 2 >= firstJudged(targetPlacedAt, startDate)
-        && noProof(byAppId, targetUid, dayOf(startDate) - 1)
-        && noProof(byAppId, targetUid, dayOf(startDate) - 2);
+        && noProof(byAppId, targetUid, startDate, dayOf(startDate) - 1)
+        && noProof(byAppId, targetUid, startDate, dayOf(startDate) - 2);
     }
 
     /**
@@ -229,6 +245,9 @@ service cloud.firestore {
         && request.resource.data.name == resource.data.name
         && request.resource.data.startDate == resource.data.startDate
         && request.resource.data.status == resource.data.status
+        // How long the run lasts is an admin's decision, and a member removing somebody must not
+        // be able to smuggle a change to it through in the same write.
+        && runDaysOf(request.resource.data) == runDaysOf(resource.data)
         && request.resource.data.memberUids.size() == resource.data.memberUids.size() - 1
         && resource.data.memberUids.hasAll(request.resource.data.memberUids)
         && !(request.resource.data.lastEviction.uid in request.resource.data.memberUids)
@@ -243,7 +262,8 @@ service cloud.firestore {
              request.resource.data.lastEviction.byAppId,
              request.resource.data.lastEviction.uid,
              placedAtOf(request.resource.data.lastEviction.appId),
-             resource.data.startDate
+             resource.data.startDate,
+             runDaysOf(resource.data)
            );
     }
 
@@ -307,7 +327,10 @@ service cloud.firestore {
              request.resource.data.unplacedByAppId,
              resource.data.ownerUid,
              ('placedAt' in resource.data ? resource.data.placedAt : 0),
-             get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.startDate
+             get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.startDate,
+             runDaysOf(
+               get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data
+             )
            );
 
       // An owner may withdraw their own app — a package name typed wrong is otherwise permanent,
@@ -363,7 +386,10 @@ service cloud.firestore {
              request.resource.data.uid,
              placedAtOf(request.resource.data.appId),
              get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
-               .data.startDate
+               .data.startDate,
+             runDaysOf(
+               get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data
+             )
            );
 
       allow update, delete: if false;

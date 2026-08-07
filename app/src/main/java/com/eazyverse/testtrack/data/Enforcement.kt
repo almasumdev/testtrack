@@ -261,14 +261,14 @@ object Enforcement {
         )
         val last = days.firstOrNull() ?: return null
 
-        val cleared = Repo.myProofsForDay(uid, group.id, last, requireBar = false)
+        val cleared = Repo.myProofsForDay(uid, group.id, last, group.startDate, requireBar = false)
         val missed = others.filter { it.id !in cleared }
         if (missed.isEmpty()) return null
 
         // A second consecutive gap is not a warning any more, it is the last one they get.
         val previous = days.getOrNull(1)
         val alsoMissedBefore = previous != null &&
-            Repo.myProofsForDay(uid, group.id, previous, requireBar = false)
+            Repo.myProofsForDay(uid, group.id, previous, group.startDate, requireBar = false)
                 .let { before -> missed.any { it.id !in before } }
 
         return Standing(

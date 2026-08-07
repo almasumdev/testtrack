@@ -143,11 +143,14 @@ class DashboardViewModel : ViewModel() {
         return testers.filter { stateOf(it.uid, today) != DayState.POSTED }
     }
 
+    /** As wide as this run actually is, which an admin may have extended past [RUN_DAYS]. */
+    val runDays: Int get() = group?.runDays ?: RUN_DAYS
+
     fun daysPosted(uid: String): Int =
-        (0 until RUN_DAYS).count { stateOf(uid, it) == DayState.POSTED }
+        (0 until runDays).count { stateOf(uid, it) == DayState.POSTED }
 
     fun totalUsage(uid: String): Long =
-        (0 until RUN_DAYS).sumOf { proofs[uid to it]?.usageMs ?: 0L }
+        (0 until runDays).sumOf { proofs[uid to it]?.usageMs ?: 0L }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -296,7 +299,7 @@ private fun Headline(vm: DashboardViewModel) {
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            if (day != null) "reported today · day ${day + 1} of $RUN_DAYS"
+            if (day != null) "reported today · day ${day + 1} of ${vm.runDays}"
             else "the run begins when the group reaches ${TestGroup.THRESHOLD} members",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -430,7 +433,7 @@ private fun Grid(vm: DashboardViewModel, onCell: (Tester, Proof) -> Unit) {
     Column(Modifier.horizontalScroll(horizontal).padding(horizontal = Gutter)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.width(NAME_COLUMN))
-            repeat(RUN_DAYS) { day ->
+            repeat(vm.runDays) { day ->
                 Box(Modifier.size(CELL + CELL_GAP), Alignment.Center) {
                     Text(
                         "${day + 1}",
@@ -449,7 +452,7 @@ private fun Grid(vm: DashboardViewModel, onCell: (Tester, Proof) -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1
                 )
-                repeat(RUN_DAYS) { day ->
+                repeat(vm.runDays) { day ->
                     val state = vm.stateOf(tester.uid, day)
                     val proof = vm.proofs[tester.uid to day]
                     Box(

@@ -117,6 +117,7 @@ object Repo {
         memberUids = (doc.get("memberUids") as? List<*>)?.filterIsInstance<String>().orEmpty(),
         appIds = (doc.get("appIds") as? List<*>)?.filterIsInstance<String>().orEmpty(),
         startDate = doc.getLong("startDate") ?: 0L,
+        runDays = (doc.getLong("runDays") ?: RUN_DAYS.toLong()).toInt(),
         status = doc.getString("status") ?: TestGroup.STATUS_FORMING
     )
 
@@ -234,14 +235,17 @@ object Repo {
         fileId = doc.getString("fileId").orEmpty(),
         imageUrl = doc.getString("imageUrl").orEmpty(),
         capturedAt = doc.getLong("capturedAt") ?: 0L,
-        usageMs = doc.getLong("usageMs") ?: 0L
+        usageMs = doc.getLong("usageMs") ?: 0L,
+        runStartedAt = doc.getLong("runStartedAt") ?: 0L
     )
 
     /** Idempotent by construction: same tester, same app, same day always writes the same id. */
     suspend fun recordProof(proof: Proof) {
         await(
             db.collection("proofs")
-                .document(Proof.id(proof.appId, proof.testerUid, proof.day))
+                .document(
+                    Proof.id(proof.appId, proof.testerUid, proof.day, proof.runStartedAt)
+                )
                 .set(
                     mapOf(
                         "appId" to proof.appId,
@@ -253,7 +257,8 @@ object Repo {
                         "fileId" to proof.fileId,
                         "imageUrl" to proof.imageUrl,
                         "capturedAt" to proof.capturedAt,
-                        "usageMs" to proof.usageMs
+                        "usageMs" to proof.usageMs,
+                        "runStartedAt" to proof.runStartedAt
                     )
                 )
         )
@@ -293,6 +298,7 @@ object Repo {
         uid: String,
         groupId: String,
         day: Int,
+        runStartedAt: Long,
         requireBar: Boolean = true
     ): Set<String> =
         await(
@@ -300,6 +306,9 @@ object Repo {
                 .whereEqualTo("testerUid", uid)
                 .whereEqualTo("groupId", groupId)
                 .whereEqualTo("day", day)
+                // The run, as well as the day. A restarted cohort numbers its days from zero
+                // again, so without this it opens showing the previous run's attendance.
+                .whereEqualTo("runStartedAt", runStartedAt)
                 .get()
         ).documents.map(::parseProof)
             .filter { !requireBar || it.meetsBar }

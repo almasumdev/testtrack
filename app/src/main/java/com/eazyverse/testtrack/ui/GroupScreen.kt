@@ -93,7 +93,7 @@ class GroupViewModel : ViewModel() {
                 val d = found.dayIndex()
 
                 val banked =
-                    if (d == null) emptySet() else Repo.myProofsForDay(uid, groupId, d)
+                    if (d == null) emptySet() else Repo.myProofsForDay(uid, groupId, d, found.startDate)
                 val reporters =
                     if (d == null || own == null) 0
                     else Repo.proofsForApp(own.id, own.ownerUid).count { it.day == d && it.meetsBar }
@@ -185,6 +185,7 @@ class GroupViewModel : ViewModel() {
                     is UploadResult.Failed -> message = result.reason
                     is UploadResult.Ok -> {
                         val proof = Proof(
+                            runStartedAt = cohort.startDate,
                             appId = app.id,
                             groupId = cohort.id,
                             ownerUid = app.ownerUid,
@@ -409,7 +410,7 @@ private fun Header(group: TestGroup, done: Int, total: Int) {
             if (day != null) {
                 Spacer(Modifier.width(7.dp))
                 Text(
-                    "of $RUN_DAYS",
+                    "of ${group.runDays}",
                     Modifier.padding(bottom = 5.dp),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -424,7 +425,8 @@ private fun Header(group: TestGroup, done: Int, total: Int) {
                 // A run that has ended is not one that has not started. `startDate > 0` is what
                 // tells them apart, and the copy has to as well.
                 group.running ->
-                    "All $RUN_DAYS days are behind you. Your dashboard has the full record."
+                    "All ${group.runDays} days are behind you. Testing on is welcome but no longer " +
+                        "asked for. Your dashboard has the full record."
                 else ->
                     "${group.size} of ${TestGroup.THRESHOLD} members so far. The run starts once " +
                         "the ${TestGroup.THRESHOLD}th joins."
