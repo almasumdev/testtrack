@@ -2,6 +2,7 @@ package com.eazyverse.testtrack.ui
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -41,6 +42,20 @@ class SetupViewModel : ViewModel() {
     var connectingDrive by mutableStateOf(false)
         private set
     var message by mutableStateOf<String?>(null)
+
+    /**
+     * Abandons the account and hands back to navigate.
+     *
+     * Setup is where a tester lands on the wrong Gmail — the checklist is keyed to the account,
+     * and every step below the first fails for an address that is not in the group. Without this
+     * the only way back to the picker was to uninstall.
+     */
+    fun signOut(context: Context, then: () -> Unit) {
+        viewModelScope.launch {
+            releaseSession(context)
+            then()
+        }
+    }
 
     /** Re-runs the server-side membership check for the account we already hold a token for. */
     fun verifyGroup(activity: Activity) {
@@ -84,8 +99,13 @@ class SetupViewModel : ViewModel() {
 }
 
 @Composable
-fun SetupScreen(onFinished: () -> Unit, vm: SetupViewModel = viewModel()) {
+fun SetupScreen(
+    onFinished: () -> Unit,
+    onSignOut: () -> Unit,
+    vm: SetupViewModel = viewModel()
+) {
     val activity = LocalContext.current.findActivity()
+    var confirmSignOut by remember { mutableStateOf(false) }
 
     val consentLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
@@ -174,13 +194,30 @@ fun SetupScreen(onFinished: () -> Unit, vm: SetupViewModel = viewModel()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
           Panel {
 
+            // The one step that cannot be redone in place — a different account means starting the
+            // checklist over. So it reopens like the others, but the only thing inside is the way
+            // out: signed in as the wrong Gmail, every step below this one fails and says nothing
+            // about why.
             Step(
                 title = "Sign in",
                 result = Session.email ?: "",
                 done = done[0],
-                live = false,
-                onReopen = null
-            )
+                live = live(0),
+                onReopen = { reopened = if (live(0)) null else 0 }.takeIf { done[0] }
+            ) {
+                Text(
+                    "Signed in as ${Session.email ?: "this account"}. Sign out to use a different " +
+                        "Gmail — the group and your Drive both follow the account, so the steps " +
+                        "below start again.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(12.dp))
+                TextButton(
+                    onClick = { confirmSignOut = true },
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) { Text("Sign out", color = MaterialTheme.colorScheme.error) }
+            }
 
             Step(
                 title = "Join the testers group",
@@ -271,6 +308,34 @@ fun SetupScreen(onFinished: () -> Unit, vm: SetupViewModel = viewModel()) {
             enabled = Session.setupComplete,
             tall = true,
             onClick = onFinished
+        )
+    }
+
+    if (confirmSignOut) {
+        AlertDialog(
+            onDismissRequest = { confirmSignOut = false },
+            title = { Text("Sign out?") },
+            text = {
+                Text(
+                    "You'll come back to the account picker and can sign in with a different " +
+                        "Gmail. Nothing you've already reported is lost."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmSignOut = false
+                    // Setup is reachable from home, where a round may still be running. A no-op
+                    // when there is nothing to end.
+                    CaptureService.endSession(activity)
+                    vm.signOut(activity) {
+                        Cache.clear()
+                        onSignOut()
+                    }
+                }) { Text("Sign out", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") }
+            }
         )
     }
 }

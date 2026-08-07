@@ -119,18 +119,14 @@ class HomeViewModel : ViewModel() {
     }
 
     /**
-     * Unhooks push, then hands back to navigate.
+     * Unhooks the account, then hands back to navigate.
      *
-     * Sequenced rather than fired alongside: deleting the token document is a Firestore write that
-     * needs the credentials it is being asked to abandon. `viewModelScope` outlives the dialog and
-     * is only torn down by the navigation [then] performs, so the await always completes.
+     * `viewModelScope` outlives the dialog and is only torn down by the navigation [then]
+     * performs, so the await always completes. See [releaseSession] for why the order matters.
      */
     fun signOut(context: Context, then: () -> Unit) {
-        val uid = AuthRepo.uid
-        ReminderWorker.cancel(context)
-        AdminEvents.clear(context)
         viewModelScope.launch {
-            PushRepo.clear(context, uid)
+            releaseSession(context)
             then()
         }
     }

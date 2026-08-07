@@ -177,7 +177,18 @@ fun AppNav(openGroup: MutableState<String?> = remember { mutableStateOf(null) })
         }
 
         composable(Routes.SETUP) {
-            SetupScreen(onFinished = { nav.replace(Routes.HOME) })
+            SetupScreen(
+                onFinished = { nav.replace(Routes.HOME) },
+                // Same teardown as home. `replace` pops everything above the graph root, so
+                // signing out of setup takes the home screen underneath it too — this route is
+                // pushed from there, and leaving it on the stack would let Back return to a
+                // signed-out home.
+                onSignOut = {
+                    AuthRepo.signOut()
+                    Session.signOut()
+                    nav.replace(Routes.AUTH)
+                }
+            )
         }
 
         composable(Routes.HOME) {
