@@ -110,6 +110,7 @@ object Repo {
         packageName = doc.getString("packageName") ?: doc.id,
         groupId = doc.getString("groupId")?.takeIf { it.isNotBlank() },
         submittedAt = doc.getLong("submittedAt") ?: 0L,
+        placedAt = doc.getLong("placedAt") ?: 0L,
         status = doc.getString("status") ?: TestApp.STATUS_PENDING
     )
 
@@ -250,12 +251,111 @@ object Repo {
      * Keyed on the group's day rather than a timestamp window, so a report at 23:59 and another at
      * 00:01 are the same day if the group says they are.
      */
-    suspend fun myProofsForDay(uid: String, groupId: String, day: Int): Set<String> =
+    /**
+     * @param requireBar counts only visits that cleared [Proof.MIN_USAGE_MS]. True for the day's
+     *   progress, which is what the tester is asked for. False for [Enforcement], which must
+     *   agree with the security rules — and a rule can only ask whether a proof document exists,
+     *   not how long it recorded.
+     */
+    suspend fun myProofsForDay(
+        uid: String,
+        groupId: String,
+        day: Int,
+        requireBar: Boolean = true
+    ): Set<String> =
         await(
             db.collection("proofs")
                 .whereEqualTo("testerUid", uid)
                 .whereEqualTo("groupId", groupId)
                 .whereEqualTo("day", day)
                 .get()
-        ).documents.map(::parseProof).filter { it.meetsBar }.map { it.appId }.toSet()
+        ).documents.map(::parseProof)
+            .filter { !requireBar || it.meetsBar }
+            .map { it.appId }
+            .toSet()
+
+    /** Every day this tester has posted anything in one group, whatever app it was about. */
+    suspend fun myReportedDays(uid: String, groupId: String): Set<Int> =
+        await(
+            db.collection("proofs")
+                .whereEqualTo("testerUid", uid)
+                .whereEqualTo("groupId", groupId)
+                .get()
+        ).documents.map(::parseProof).map { it.day }.toSet()
+
+    // ---- enforcement ---------------------------------------------------------------------
+
+    /**
+     * Drops a member and their app out of a cohort.
+     *
+     * The only write in this file that touches `groups`, and it is allowed for one narrow case:
+     * the owner of an app removing someone who has not opened it for [Compliance.MISSES_TO_REMOVE]
+     * completed days running. The rules re-derive that from the proof documents themselves before
+     * accepting either half, so what makes this safe is not the checks in [Enforcement] — it is
+     * that a client which skipped them would be refused.
+     *
+     * Both halves go in one transaction. Half an eviction is worse than none: a group that still
+     * lists a member whose app has left has a slot it cannot fill, and an app still pointing at a
+     * group that has forgotten it turns up in every member's worklist for ever.
+     *
+     * The evidence is written down as well as acted on. `lastEviction` is the audit trail, and it
+     * is also what the rule reads to know which app was missed.
+     */
+    suspend fun evict(
+        groupId: String,
+        targetUid: String,
+        targetAppId: String,
+        byUid: String,
+        byAppId: String,
+        day: Int
+    ) {
+        val groupRef = db.collection("groups").document(groupId)
+        val appRef = db.collection("apps").document(targetAppId)
+        val now = System.currentTimeMillis()
+
+        await(
+            db.runTransaction { tx ->
+                val group = tx.get(groupRef)
+                if (!group.exists()) return@runTransaction null
+
+                val members = (group.get("memberUids") as? List<*>)
+                    ?.filterIsInstance<String>().orEmpty()
+
+                // Someone else's sweep got here first. Every device in the cohort runs the same
+                // check against the same proofs, so concurrent agreement is the normal case, not
+                // an error — the second one through has nothing left to do.
+                if (targetUid !in members) return@runTransaction null
+
+                val appIds = (group.get("appIds") as? List<*>)
+                    ?.filterIsInstance<String>().orEmpty()
+
+                tx.update(
+                    groupRef,
+                    mapOf(
+                        "memberUids" to members - targetUid,
+                        "appIds" to appIds - targetAppId,
+                        "lastEviction" to mapOf(
+                            "uid" to targetUid,
+                            "appId" to targetAppId,
+                            "byUid" to byUid,
+                            "byAppId" to byAppId,
+                            "day" to day,
+                            "at" to now
+                        )
+                    )
+                )
+                tx.update(
+                    appRef,
+                    mapOf(
+                        "groupId" to "",
+                        "status" to TestApp.STATUS_PENDING,
+                        "placedAt" to 0L,
+                        "unplacedByAppId" to byAppId,
+                        "unplacedAt" to now
+                    )
+                )
+                null
+            }
+        )
+    }
 }

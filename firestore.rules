@@ -41,6 +41,70 @@ service cloud.firestore {
              get(/databases/$(database)/documents/groups/$(groupId)).data.memberUids;
     }
 
+    // ---- enforcement -------------------------------------------------------------------
+    //
+    // A member who stops opening the other apps loses their place, and the phones in the cohort
+    // are what carry that out — there is no server and the admin console is not in the loop. So
+    // these rules do not take the client's word for any of it. Everything below re-derives the
+    // verdict from the proof documents themselves, which means the worst a patched app can do is
+    // be refused.
+    //
+    // Kept in step with Compliance.kt in the tester app by hand. The two compute the same sums and
+    // both have to agree, or evictions start coming back PERMISSION_DENIED for no visible reason.
+
+    /** Whole days since the run began. Matches TestGroup.dayIndex(). */
+    function dayOf(startDate) {
+      return (request.time.toMillis() - startDate) / 86400000;
+    }
+
+    function appData(appId) {
+      return get(/databases/$(database)/documents/apps/$(appId)).data;
+    }
+
+    /** Zero for a document written before placement dates were recorded, which blocks eviction. */
+    function placedAtOf(appId) {
+      return 'placedAt' in appData(appId) ? appData(appId).placedAt : 0;
+    }
+
+    /**
+     * The first day a member can be held to: the day after whichever of them arrived last.
+     *
+     * An app placed on day nine has no proofs for days one to eight, and reading those as misses
+     * would evict its owner the moment anybody swept. Founding members predate the clock and are
+     * held to all of it.
+     */
+    function firstJudged(placedAt, startDate) {
+      return (placedAt <= 0 || startDate <= 0 || placedAt <= startDate)
+        ? 0
+        : ((placedAt - startDate) / 86400000) + 1;
+    }
+
+    /** Proof ids are {appId}__{testerUid}__{day}, so absence is a question this can just ask. */
+    function noProof(appId, uid, day) {
+      return !exists(
+        /databases/$(database)/documents/proofs/$(appId + '__' + uid + '__' + string(day))
+      );
+    }
+
+    /**
+     * Did this member genuinely miss the last two completed days on this app?
+     *
+     * Today is never counted: hours remain to open the app, so a gap in it is not a miss. Which
+     * puts the earliest possible removal on day three, the first day with two finished days behind
+     * it.
+     */
+    function missedTwo(byAppId, targetUid, targetPlacedAt, startDate) {
+      return startDate > 0
+        && targetPlacedAt > 0
+        && placedAtOf(byAppId) > 0
+        && dayOf(startDate) >= 2
+        && dayOf(startDate) < 14
+        && dayOf(startDate) - 2 >= firstJudged(placedAtOf(byAppId), startDate)
+        && dayOf(startDate) - 2 >= firstJudged(targetPlacedAt, startDate)
+        && noProof(byAppId, targetUid, dayOf(startDate) - 1)
+        && noProof(byAppId, targetUid, dayOf(startDate) - 2);
+    }
+
     /**
      * The admin list.
      *
@@ -100,6 +164,40 @@ service cloud.firestore {
       allow read: if isAdmin()
         || (signedIn() && request.auth.uid in resource.data.memberUids);
       allow write: if isAdmin();
+
+      /**
+       * The one write a member may make: dropping someone who stopped opening their app.
+       *
+       * `lastEviction` is both the audit trail and the argument — it names the app that went
+       * unopened, which is what lets the rule go and check. The actor has to own that app, so
+       * nobody can evict on someone else's behalf, and the proof documents settle the rest.
+       *
+       * Everything not part of an eviction is pinned. A member cannot rename the group, restart
+       * its clock, add anybody, or remove two people at once.
+       */
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.memberUids
+        && 'lastEviction' in request.resource.data
+        && request.resource.data.lastEviction.byUid == request.auth.uid
+        && request.resource.data.name == resource.data.name
+        && request.resource.data.startDate == resource.data.startDate
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.memberUids.size() == resource.data.memberUids.size() - 1
+        && resource.data.memberUids.hasAll(request.resource.data.memberUids)
+        && !(request.resource.data.lastEviction.uid in request.resource.data.memberUids)
+        && resource.data.appIds.hasAll(request.resource.data.appIds)
+        && !(request.resource.data.lastEviction.appId in request.resource.data.appIds)
+        && appData(request.resource.data.lastEviction.byAppId).ownerUid == request.auth.uid
+        && appData(request.resource.data.lastEviction.byAppId).groupId == groupId
+        && appData(request.resource.data.lastEviction.appId).ownerUid
+             == request.resource.data.lastEviction.uid
+        && appData(request.resource.data.lastEviction.appId).groupId == groupId
+        && missedTwo(
+             request.resource.data.lastEviction.byAppId,
+             request.resource.data.lastEviction.uid,
+             placedAtOf(request.resource.data.lastEviction.appId),
+             resource.data.startDate
+           );
     }
 
     /**
@@ -131,6 +229,36 @@ service cloud.firestore {
         && request.resource.data.status == resource.data.status
         && request.resource.data.groupId == resource.data.groupId
       );
+
+      /**
+       * The other half of an eviction: the removed app going back to the queue.
+       *
+       * Two documents change and each is judged alone, so this repeats the whole argument rather
+       * than trusting that the group write happened — inside a transaction neither can see the
+       * other's pending state, and a rule that assumed one had landed would accept the second on
+       * its own.
+       *
+       * Only ever back to pending. This cannot place an app, rename it, or change hands.
+       */
+      allow update: if signedIn()
+        && resource.data.groupId is string
+        && resource.data.groupId != ''
+        && inGroup(resource.data.groupId)
+        && request.resource.data.groupId == ''
+        && request.resource.data.status == 'pending'
+        && request.resource.data.placedAt == 0
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.packageName == resource.data.packageName
+        && request.resource.data.name == resource.data.name
+        && 'unplacedByAppId' in request.resource.data
+        && appData(request.resource.data.unplacedByAppId).ownerUid == request.auth.uid
+        && appData(request.resource.data.unplacedByAppId).groupId == resource.data.groupId
+        && missedTwo(
+             request.resource.data.unplacedByAppId,
+             resource.data.ownerUid,
+             ('placedAt' in resource.data ? resource.data.placedAt : 0),
+             get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.startDate
+           );
 
       // An owner may withdraw their own app — a package name typed wrong is otherwise permanent,
       // and once placed it would sit in thirteen other testers' lists for good.

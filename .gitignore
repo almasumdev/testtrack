@@ -20,3 +20,8 @@ secrets.properties
 *.keystore
 *.jks
 google-services.json
+
+# Rules tests pull their own toolchain; nothing in it belongs in the repo.
+firestore-tests/node_modules/
+firestore-tests/package-lock.json
+firestore-debug.log

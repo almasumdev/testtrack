@@ -40,8 +40,8 @@ android {
         applicationId = "com.eazyverse.testtrack"
         minSdk = 26
         targetSdk = 37
-        versionCode = 5
-        versionName = "1.0.4"
+        versionCode = 6
+        versionName = "1.0.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "WEB_CLIENT_ID", "\"${secret("TESTTRACK_WEB_CLIENT_ID")}\"")
@@ -125,7 +125,14 @@ dependencies {
     // Reminders are computed and raised on the phone, not sent to it.
     implementation(libs.androidx.work.runtime)
 
+    // Compliance is duplicated in firestore.rules and the two have to agree, so the sums are
+    // worth pinning somewhere that runs without a device.
+    testImplementation(libs.junit)
+
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
+    // Lets the reminder worker be run on demand. Its real schedule is an evening delay, so
+    // without this the only way to see it work is to wait for one.
+    androidTestImplementation(libs.androidx.work.testing)
 }

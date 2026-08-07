@@ -18,5 +18,8 @@ suspend fun releaseSession(context: Context) {
     val uid = AuthRepo.uid
     ReminderWorker.cancel(context)
     AdminEvents.clear(context)
+    // Otherwise the next account's first sweep reads this one's cohort as thirteen apps that have
+    // all just vanished, and says so.
+    Enforcement.clear(context)
     PushRepo.clear(context, uid)
 }

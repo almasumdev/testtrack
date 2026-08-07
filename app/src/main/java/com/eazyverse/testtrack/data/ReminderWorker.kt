@@ -47,8 +47,54 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
         // consequence of the news rather than a separate demand.
         runCatching { AdminEvents.drain(applicationContext, uid) }
 
+        // Then the run's own rules, which are news of the same kind and produce the one warning
+        // that is genuinely urgent: miss tonight as well and the group is gone.
+        runCatching { raise(Enforcement.sweep(applicationContext, uid)) }
+
         runCatching { nudge(uid) }
         return Result.success()
+    }
+
+    /**
+     * Turns a sweep into notifications.
+     *
+     * Distinct ids per group and per app, so a warning about one cohort does not overwrite a
+     * warning about another. Everything here is local: none of it was sent to this device.
+     */
+    private fun raise(sweep: Enforcement.Sweep) {
+        sweep.evictedFrom.forEach { group ->
+            post(
+                id = ID_EVICTED + slot(group),
+                title = "You've been removed from $group",
+                body = "Two days went by without you opening the other apps, so your app has " +
+                    "gone back to the queue. Submit it again when you're ready to keep up with " +
+                    "a group."
+            )
+        }
+
+        sweep.departed.forEach { (group, label) ->
+            post(
+                id = ID_DEPARTED + slot(label),
+                title = "Stop testing $label",
+                body = "It has left ${group.ifBlank { "your group" }}. Uninstall it and leave " +
+                    "its test, and don't count it towards your day any more."
+            )
+        }
+
+        sweep.standings.forEach { standing ->
+            post(
+                id = ID_WARNING + slot(standing.groupId),
+                title = if (standing.finalWarning) "Last chance in ${standing.groupName}"
+                        else "You missed a day in ${standing.groupName}",
+                body = if (standing.finalWarning)
+                    "That's two days without opening ${standing.names}. Open ${standing.it} " +
+                        "today or your app leaves the group."
+                else
+                    "You didn't open ${standing.names} yesterday. Open ${standing.it} today and " +
+                        "nothing comes of it.",
+                groupId = standing.groupId
+            )
+        }
     }
 
     /**
@@ -115,6 +161,15 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
     companion object {
         private const val WORK_NAME = "testtrack.reminder"
         private const val NOTIFICATION_ID = 4201
+
+        // Bases for the enforcement notices, 1000 apart, with the per-item hash masked to a byte
+        // by [slot]. Two cohorts must not share a notification id or the second warning silently
+        // replaces the first, and an unmasked hashCode is negative about half the time.
+        private const val ID_WARNING = 5000
+        private const val ID_DEPARTED = 6000
+        private const val ID_EVICTED = 7000
+
+        private fun slot(key: String) = key.hashCode() and 0xFF
 
         /** Raised from the worker and from [AdminEvents], which share this notifier. */
         @SuppressLint("MissingPermission") // runCatching below; see post()

@@ -52,6 +52,7 @@ firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 androidx-work-runtime = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
+androidx-work-testing = { group = "androidx.work", name = "work-testing", version.ref = "work" }
 
 # Instrumented only. The one thing here that cannot be reasoned about from a desk is whether
 # UsageStatsManager still answers for another app once package visibility is narrowed.

@@ -4,6 +4,77 @@ package com.eazyverse.testtrack.data
 const val RUN_DAYS = 14
 
 /**
+ * When a member has stopped holding up their end, and the arithmetic that decides it.
+ *
+ * Miss one completed day and you are warned. Miss two in a row and your app leaves the group.
+ *
+ * The check runs on testers' phones, and needs neither a server nor an admin. Every developer can
+ * already read every proof about their own app and nothing else, which happens to be exactly the
+ * evidence required: whether a given member opened *their* app on a given day. Thirteen apps in a
+ * group means thirteen devices each watching their own, and between them the whole cohort is
+ * covered.
+ *
+ * The database checks the same sums before it accepts a removal, so these are not the only place
+ * they are enforced — see the `groups` and `apps` blocks in firestore.rules. Change one and the
+ * other has to move with it, or evictions start coming back PERMISSION_DENIED.
+ */
+object Compliance {
+
+    /** Consecutive completed days missed before a member's app leaves the group. */
+    const val MISSES_TO_REMOVE = 2
+
+    private const val DAY_MS = 86_400_000L
+
+    /**
+     * The most recent day whose result is final, or null if there isn't one yet.
+     *
+     * Today is never judged: there are hours left to open the app, so a gap in it is not a miss.
+     * Which means nobody can be removed before day three, the first day on which two completed
+     * days exist to be missed.
+     */
+    fun lastCompletedDay(dayIndex: Int): Int? = (dayIndex - 1).takeIf { it >= 0 }
+
+    /**
+     * The first day this member can be held to.
+     *
+     * An app placed into a running group on day nine has no proofs for days one to eight. Read
+     * literally that is eight missed days, and the first device to open the app would evict its
+     * owner on the spot. So the count starts the day *after* they arrived: being added at 23:00 is
+     * not a day's notice either.
+     *
+     * Founding members were placed before the clock started and are held to all of it.
+     */
+    fun firstJudgedDay(placedAt: Long, startDate: Long): Int =
+        if (placedAt <= 0L || startDate <= 0L || placedAt <= startDate) 0
+        else ((placedAt - startDate) / DAY_MS).toInt() + 1
+
+    /**
+     * The completed days one member owed one app, most recent first.
+     *
+     * Both arrivals bound it, and the later of the two wins. A tester cannot be marked down for
+     * the days before they joined, and equally cannot be marked down for days before the app
+     * itself was placed — there was nothing there to open.
+     *
+     * Shorter than [count] means there is not yet enough finished run to judge, which is the
+     * answer that keeps a new member safe.
+     */
+    fun judgedDays(
+        dayIndex: Int,
+        startDate: Long,
+        testerPlacedAt: Long,
+        appPlacedAt: Long,
+        count: Int
+    ): List<Int> {
+        val last = lastCompletedDay(dayIndex) ?: return emptyList()
+        val first = maxOf(
+            firstJudgedDay(testerPlacedAt, startDate),
+            firstJudgedDay(appPlacedAt, startDate)
+        )
+        return (0 until count).map { last - it }.filter { it >= first }
+    }
+}
+
+/**
  * A swap cohort.
  *
  * Fourteen members, one app each. Google requires twelve testers opted in and does not count an
@@ -76,6 +147,15 @@ data class TestApp(
     /** Null until an admin places it. */
     val groupId: String? = null,
     val submittedAt: Long = 0L,
+    /**
+     * Epoch millis of the placement that put this app in its current group. Zero if it has never
+     * been placed, or was placed before the console started recording it.
+     *
+     * [Compliance] will not act against an app without one. Membership of a running group says
+     * nothing about *when* someone joined, and a member placed on day nine has no proofs for the
+     * eight days before they arrived — which is indistinguishable from having skipped them.
+     */
+    val placedAt: Long = 0L,
     val status: String = STATUS_PENDING
 ) {
     val placed: Boolean get() = status == STATUS_ASSIGNED && !groupId.isNullOrBlank()

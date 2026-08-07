@@ -1,9 +1,11 @@
 package com.eazyverse.testtrack.ui
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -14,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,6 +49,10 @@ class HomeViewModel : ViewModel() {
         private set
 
     var message by mutableStateOf<String?>(null)
+
+    /** Days already missed, and how close that is to costing them the group. */
+    var standings by mutableStateOf<List<Enforcement.Standing>>(emptyList())
+        private set
 
     /** Across every cohort — the number the tester actually cares about first thing. */
     val doneToday: Int get() = groups.sumOf { it.done }
@@ -106,6 +113,22 @@ class HomeViewModel : ViewModel() {
         val uid = AuthRepo.uid ?: return
         ReminderWorker.schedule(context)
         viewModelScope.launch { runCatching { AdminEvents.drain(context, uid) } }
+    }
+
+    /**
+     * Where this tester stands against the run's own rules, once per visit to this screen.
+     *
+     * The same pass also removes anyone who has stopped opening this account's app, which is why
+     * it runs from a screen rather than only from the evening worker: enforcement that waits for a
+     * background job is enforcement that a phone in Doze can defer for hours.
+     *
+     * Kept off [load] deliberately. That runs on every resume, and re-reading a whole cohort's
+     * proofs each time someone glances at the app is a lot of reads for an answer that changes
+     * once a day.
+     */
+    fun sweep(context: Context) {
+        val uid = AuthRepo.uid ?: return
+        viewModelScope.launch { standings = Enforcement.sweep(context, uid).standings }
     }
 
     /** Both halves or neither — see [ready]. A partial hit is a head start, not a screen. */
@@ -169,7 +192,10 @@ fun HomeScreen(
     // the next cold start.
     LaunchedEffect(vm.ready, vm.groups) { if (vm.ready) vm.registerForPush(context) }
 
-    LaunchedEffect(Unit) { vm.catchUp(context) }
+    LaunchedEffect(Unit) {
+        vm.catchUp(context)
+        vm.sweep(context)
+    }
 
     var confirmSignOut by remember { mutableStateOf(false) }
 
@@ -226,6 +252,10 @@ fun HomeScreen(
                         Meter(if (vm.dueToday == 0) 0f else vm.doneToday.toFloat() / vm.dueToday)
                     }
                 }
+
+                // Above everything, because a tester one day from losing their place should not
+                // have to scroll to a group row to find that out.
+                vm.standings.forEach { MissedDayNotice(it) }
 
                 // Nothing at all: one empty state rather than two headed sections standing over
                 // nothing.
@@ -340,6 +370,49 @@ private fun GroupRow(progress: GroupProgress, onClick: () -> Unit) {
         Icon(
             Icons.AutoMirrored.Filled.KeyboardArrowRight, null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * A day already missed, and what it costs.
+ *
+ * Two tones on purpose. The first miss is recoverable and says so, because a warning that reads
+ * like a final notice teaches people to ignore the final notice. The second is the last one they
+ * get, and names the apps rather than counting them, so nobody has to work out which.
+ */
+@Composable
+private fun MissedDayNotice(standing: Enforcement.Standing) {
+    val tone = if (standing.finalWarning) Status.missed else Status.short
+    val ground = if (standing.finalWarning) Status.missedSoft else Status.shortSoft
+
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Gutter)
+            .padding(top = 18.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(ground)
+            .padding(14.dp)
+    ) {
+        Text(
+            if (standing.finalWarning) "Last chance in ${standing.groupName}"
+            else "You missed yesterday in ${standing.groupName}",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = tone
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            if (standing.finalWarning)
+                "That's two days running without opening ${standing.names}. Open ${standing.it} " +
+                    "today and you keep your place. Leave it another day and your app goes back " +
+                    "to the queue."
+            else
+                "You didn't open ${standing.names}. Open ${standing.it} today and nothing comes " +
+                    "of it. Miss a second day in a row and your app leaves the group.",
+            style = MaterialTheme.typography.bodySmall,
+            color = tone
         )
     }
 }
