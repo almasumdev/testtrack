@@ -178,9 +178,14 @@ object Enforcement {
             evictedFrom.map {
                 Notice(
                     id = "evicted:$it",
-                    title = "You've been removed from $it",
-                    body = "Two days went by without you opening the other apps, so your app has " +
-                        "gone back to the queue. Submit it again when you're ready."
+                    title = "Your app is out of $it",
+                    // Both causes named, because this device cannot tell them apart. All it knows
+                    // is that a cohort it was in has gone; whether that was two missed days, an
+                    // admin unplacing the app, or the whole group being dissolved happened
+                    // somewhere else. Asserting the first would be a guess presented as a fact.
+                    body = "It's back in the queue. That happens after two days without opening " +
+                        "the other apps, and it also happens when an admin takes an app out or " +
+                        "dissolves a group. Submit it again when you're ready."
                 )
             } + departed.map { (group, label) ->
                 Notice(
@@ -280,7 +285,10 @@ object Enforcement {
                 appPlacedAt = mine.placedAt,
                 count = Compliance.MISSES_TO_REMOVE
             )
-            Log.d(TAG, "judging ${app.ownerUid} on day $day: owes $days, attended $attended")
+            // Only the days in question. Logging the whole attendance set put several thousand
+            // characters and every member's uid into logcat, once per member per sweep.
+            val covered = days.filter { (app.ownerUid to it) in attended }
+            Log.d(TAG, "judging ${app.ownerUid} on day $day: owes $days, covered $covered")
             // Too little finished run to hold them to. Not the same as having attended.
             if (days.size < Compliance.MISSES_TO_REMOVE) continue
             if (days.any { (app.ownerUid to it) in attended }) continue

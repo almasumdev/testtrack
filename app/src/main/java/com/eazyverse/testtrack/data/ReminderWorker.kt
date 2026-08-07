@@ -65,10 +65,12 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
         sweep.evictedFrom.forEach { group ->
             post(
                 id = ID_EVICTED + slot(group),
-                title = "You've been removed from $group",
-                body = "Two days went by without you opening the other apps, so your app has " +
-                    "gone back to the queue. Submit it again when you're ready to keep up with " +
-                    "a group."
+                title = "Your app is out of $group",
+                // Deliberately not asserting which of the three causes it was. See the matching
+                // note in Enforcement.sweep.
+                body = "It's back in the queue. That happens after two days without opening the " +
+                    "other apps, and it also happens when an admin takes an app out or dissolves " +
+                    "a group. Submit it again when you're ready."
             )
         }
 
