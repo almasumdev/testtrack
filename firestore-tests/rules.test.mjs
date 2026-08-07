@@ -222,6 +222,69 @@ console.log('\nNo placement date recorded, so nothing can be proved')
   await check('legacy app with no placedAt is refused', () => assertFails(evictGroupWrite(as(ME))))
 }
 
+console.log('\nThe audit record an automatic removal writes for itself')
+await seed([{ app: MY_APP, uid: TARGET, day: 0 }])
+
+const removalEvent = (over = {}) => ({
+  uid: TARGET, type: 'removed_missed', groupId: GROUP, appId: TARGET_APP,
+  byAppId: MY_APP, actorUid: ME, day: 3, createdAt: Date.now(),
+  title: 'Your app was removed from its group', body: 'Two days went by.', ...over,
+})
+
+await check('the evicting owner may record it', () =>
+  assertSucceeds(setDoc(doc(as(ME), 'events', 'ev1'), removalEvent())))
+
+await check('nobody may record a removal for themselves', () =>
+  assertFails(setDoc(doc(as(TARGET), 'events', 'ev2'),
+    removalEvent({ uid: TARGET, actorUid: TARGET }))))
+
+await check('an outsider may not record one', () =>
+  assertFails(setDoc(doc(as(OUTSIDER), 'events', 'ev3'),
+    removalEvent({ actorUid: OUTSIDER }))))
+
+await check('no other event type is admitted from a tester', () =>
+  assertFails(setDoc(doc(as(ME), 'events', 'ev4'),
+    removalEvent({ type: 'assigned' }))))
+
+await seed([{ app: MY_APP, uid: TARGET, day: 2 }])
+await check('a removal that did not happen cannot be recorded', () =>
+  assertFails(setDoc(doc(as(ME), 'events', 'ev5'), removalEvent())))
+
+console.log('\nBlocking, and the ban nobody may lift for themselves')
+async function seedUser(blocked) {
+  await env.clearFirestore()
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore()
+    await setDoc(doc(db, 'users', ME), {
+      uid: ME, email: 'me@x.com', displayName: 'Me',
+      ...(blocked ? { blocked: true, blockedReason: 'kept missing days' } : {}),
+    })
+  })
+}
+
+const newApp = (db) => setDoc(doc(db, 'apps', 'com.new.app'), {
+  id: 'com.new.app', ownerUid: ME, ownerEmail: 'me@x.com', name: 'New',
+  packageName: 'com.new.app', groupId: '', status: 'pending', submittedAt: Date.now(),
+})
+
+await seedUser(false)
+await check('an account in good standing may submit', () => assertSucceeds(newApp(as(ME))))
+
+await seedUser(true)
+await check('a blocked account may not submit', () => assertFails(newApp(as(ME))))
+
+await check('a blocked account cannot clear its own block', () =>
+  assertFails(updateDoc(doc(as(ME), 'users', ME), { blocked: false })))
+
+await check('nor smuggle it out alongside a name change', () =>
+  assertFails(updateDoc(doc(as(ME), 'users', ME), { displayName: 'Me2', blocked: false })))
+
+await check('but may still correct its own name', () =>
+  assertSucceeds(updateDoc(doc(as(ME), 'users', ME), { displayName: 'Me Again' })))
+
+await check('and cannot block somebody else', () =>
+  assertFails(updateDoc(doc(as(ME), 'users', TARGET), { blocked: true })))
+
 console.log(`\n${pass} passed, ${fail} failed\n`)
 await env.cleanup()
 process.exit(fail === 0 ? 0 : 1)

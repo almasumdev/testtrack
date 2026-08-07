@@ -14,6 +14,22 @@ class AppTakenException(packageName: String, ownerEmail: String) : Exception(
     else "$packageName is already registered by $ownerEmail."
 )
 
+/** Raised when an admin has barred this account from submitting. */
+class BlockedException(reason: String) : Exception(
+    if (reason.isBlank())
+        "An admin has paused your account, so you can't submit an app right now."
+    else
+        "An admin has paused your account, so you can't submit an app right now. Reason given: " +
+            reason
+)
+
+/**
+ * The one event kind a tester's device writes rather than an admin.
+ *
+ * Mirrored in firestore.rules, which admits this string and no other from a non-admin.
+ */
+const val EVENT_REMOVED_MISSED = "removed_missed"
+
 /**
  * Firestore access.
  *
@@ -75,6 +91,18 @@ object Repo {
         }.sortedBy { it.shortName }
     }
 
+    /**
+     * The reason an admin gave for pausing this account, or null if it is in good standing.
+     *
+     * An empty string is a block with no reason recorded, which is still a block — hence a nullable
+     * return rather than a blank one, so the two cannot be confused at the call site.
+     */
+    suspend fun blockedReason(uid: String): String? {
+        val doc = await(db.collection("users").document(uid).get())
+        if (doc.getBoolean("blocked") != true) return null
+        return doc.getString("blockedReason").orEmpty()
+    }
+
     private fun parseTester(doc: DocumentSnapshot) = Tester(
         uid = doc.getString("uid") ?: doc.id,
         email = doc.getString("email").orEmpty(),
@@ -125,6 +153,10 @@ object Repo {
      *   would reject it anyway, but as a bare PERMISSION_DENIED that explains nothing.
      */
     suspend fun submitApp(uid: String, email: String, packageName: String, name: String) {
+        // Asked before the write so a blocked account is told why, in words. The rules refuse this
+        // anyway, but as a bare PERMISSION_DENIED that names nothing and reads like a fault.
+        blockedReason(uid)?.let { throw BlockedException(it) }
+
         val doc = db.collection("apps").document(packageName)
 
         // A refusal here is itself the answer: app documents are readable by their owner and by
@@ -352,6 +384,26 @@ object Repo {
                         "placedAt" to 0L,
                         "unplacedByAppId" to byAppId,
                         "unplacedAt" to now
+                    )
+                )
+
+                // The permanent record. `lastEviction` above is only the most recent one on this
+                // group and the next removal overwrites it, so without this the history an admin
+                // needs when deciding whether to approve someone again is the one thing that never
+                // survived. Events are append-only and nothing deletes them.
+                tx.set(
+                    db.collection("events").document(),
+                    mapOf(
+                        "uid" to targetUid,
+                        "type" to EVENT_REMOVED_MISSED,
+                        "title" to "Your app was removed from its group",
+                        "body" to "Two days went by without you opening the other apps.",
+                        "groupId" to groupId,
+                        "appId" to targetAppId,
+                        "byAppId" to byAppId,
+                        "actorUid" to byUid,
+                        "day" to day,
+                        "createdAt" to now
                     )
                 )
                 null

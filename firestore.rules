@@ -52,6 +52,14 @@ service cloud.firestore {
     // Kept in step with Compliance.kt in the tester app by hand. The two compute the same sums and
     // both have to agree, or evictions start coming back PERMISSION_DENIED for no visible reason.
 
+    /**
+     * The one event type a tester's device may write, rather than an admin.
+     *
+     * Named so the rule below cannot be widened by accident: every other kind of event stays
+     * admin-only, and a client that wants to record anything else is refused on this string alone.
+     */
+    function TYPE_REMOVED_MISSED() { return 'removed_missed'; }
+
     /** Whole days since the run began. Matches TestGroup.dayIndex(). */
     function dayOf(startDate) {
       return (request.time.toMillis() - startDate) / 86400000;
@@ -106,6 +114,23 @@ service cloud.firestore {
     }
 
     /**
+     * Is this account barred from submitting?
+     *
+     * Read from the user's own document, which only an admin can set — see the `users` block, where
+     * the owner is held to a fixed list of fields precisely so that nobody can lift their own ban.
+     *
+     * Blocking stops new submissions and nothing else. It deliberately does not eject anyone from a
+     * run already under way: twelve other developers are depending on that cohort staying at
+     * strength, and punishing them for one member's record is the wrong trade. Taking someone out
+     * of a live group stays a separate, deliberate act.
+     */
+    function isBlocked(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid))
+        && 'blocked' in get(/databases/$(database)/documents/users/$(uid)).data
+        && get(/databases/$(database)/documents/users/$(uid)).data.blocked == true;
+    }
+
+    /**
      * The admin list.
      *
      * Writes are console-only — an admin app that could grant admin would make the whole thing
@@ -134,7 +159,29 @@ service cloud.firestore {
      */
     match /users/{uid} {
       allow read: if signedIn();
-      allow write: if signedIn() && request.auth.uid == uid;
+
+      /**
+       * An account writes its own row, but only the four fields that are its own business.
+       *
+       * `blocked` lives on this document and is an admin's judgement, so an owner allowed to write
+       * the document freely could simply clear it — a ban anybody can lift is not a ban. Held to a
+       * fixed list rather than a denylist, so a field added later is closed by default instead of
+       * open until somebody remembers.
+       */
+      allow create: if isAdmin() || (
+        signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'displayName', 'updatedAt'])
+      );
+
+      allow update: if isAdmin() || (
+        signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['uid', 'email', 'displayName', 'updatedAt'])
+      );
+
+      allow delete: if isAdmin();
     }
 
     /**
@@ -215,11 +262,14 @@ service cloud.firestore {
         || (signedIn() && request.auth.uid == resource.data.ownerUid)
         || inGroup(resource.data.groupId);
 
+      // A blocked account cannot register anything. Refused here rather than hidden in the app,
+      // so the ban holds against a client that simply skips the check.
       allow create: if isAdmin() || (
         signedIn()
         && request.auth.uid == request.resource.data.ownerUid
         && request.resource.data.status == 'pending'
         && request.resource.data.groupId == ''
+        && !isBlocked(request.auth.uid)
       );
 
       allow update: if isAdmin() || (
@@ -287,6 +337,34 @@ service cloud.firestore {
       allow create: if isAdmin()
         && request.resource.data.uid is string
         && request.resource.data.actorUid == request.auth.uid;
+
+      /**
+       * An automatic removal writing its own record.
+       *
+       * Without this the only trace of one is `lastEviction` on the group, which the next removal
+       * overwrites and a deleted group takes with it — so the single thing that never survived was
+       * the one an admin most needs when deciding whether to approve someone again.
+       *
+       * Admitted on exactly the evidence the removal itself needs, and no more. A client cannot
+       * write a removal that did not happen, because the proof documents have to be genuinely
+       * absent for this to pass.
+       */
+      allow create: if signedIn()
+        && request.resource.data.type == TYPE_REMOVED_MISSED()
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.uid is string
+        && request.resource.data.uid != request.auth.uid
+        && inGroup(request.resource.data.groupId)
+        && appData(request.resource.data.byAppId).ownerUid == request.auth.uid
+        && appData(request.resource.data.byAppId).groupId == request.resource.data.groupId
+        && appData(request.resource.data.appId).ownerUid == request.resource.data.uid
+        && missedTwo(
+             request.resource.data.byAppId,
+             request.resource.data.uid,
+             placedAtOf(request.resource.data.appId),
+             get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
+               .data.startDate
+           );
 
       allow update, delete: if false;
     }
