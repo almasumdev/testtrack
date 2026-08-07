@@ -68,6 +68,60 @@ object Enforcement {
     private const val TAG = "Enforcement"
     private const val PREFS = "testtrack.enforcement"
     private const val KEY_SEEN = "seen"
+    private const val KEY_NOTICES = "notices"
+
+    /**
+     * Field separator for the stored lines.
+     *
+     * The ASCII unit separator, written as a code rather than typed, because a control
+     * character sitting in a source file is invisible to review and survives a copy-paste
+     * only by luck. No group name or app label can contain it.
+     */
+    private val SEP = Char(31)
+
+    /**
+     * News from a sweep, kept until the tester has actually seen it.
+     *
+     * A notification is not enough on its own. It can be swiped away on the lock screen, silenced
+     * by a Do Not Disturb the tester forgot was on, or never shown at all if they declined the
+     * permission — and "your app was removed from its group" is not something to deliver only on a
+     * channel that any of those quietly disposes of. So the same news is also parked here and
+     * shown on the home screen until it is dismissed.
+     */
+    data class Notice(val id: String, val title: String, val body: String)
+
+    /** Everything raised but not yet acknowledged, oldest first. */
+    fun notices(context: Context): List<Notice> =
+        prefs(context).getStringSet(KEY_NOTICES, emptySet()).orEmpty()
+            .mapNotNull { line ->
+                val parts = line.split(SEP, limit = 3)
+                if (parts.size == 3) Notice(parts[0], parts[1], parts[2]) else null
+            }
+            .sortedBy { it.id }
+
+    fun dismiss(context: Context, id: String) {
+        val kept = prefs(context).getStringSet(KEY_NOTICES, emptySet()).orEmpty()
+            .filterNot { it.startsWith("$id$SEP") }
+        prefs(context).edit().putStringSet(KEY_NOTICES, kept.toSet()).apply()
+    }
+
+    /**
+     * Records news for the home screen.
+     *
+     * Keyed so the same event landing twice is one entry, not two: the worker and the home screen
+     * both sweep, and a tester who opens the app during the evening pass should not be told the
+     * same thing twice over.
+     */
+    private fun remember(context: Context, notices: List<Notice>) {
+        if (notices.isEmpty()) return
+        val existing = prefs(context).getStringSet(KEY_NOTICES, emptySet()).orEmpty()
+        val byId = existing.associateBy { it.substringBefore(SEP) }.toMutableMap()
+        notices.forEach { byId[it.id] = "${it.id}$SEP${it.title}$SEP${it.body}" }
+        prefs(context).edit().putStringSet(KEY_NOTICES, byId.values.toSet()).apply()
+    }
+
+    private fun prefs(context: Context) =
+        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     /**
      * Runs the whole check for one account and acts on it.
@@ -115,6 +169,29 @@ object Enforcement {
             .mapNotNull { seen[it]?.name }
 
         saveSeen(context, now)
+
+        // Parked for the home screen as well as raised as notifications. Both kinds here are
+        // things that happened to the tester rather than reminders for them, and neither should
+        // depend on a notification having been seen.
+        remember(
+            context,
+            evictedFrom.map {
+                Notice(
+                    id = "evicted:$it",
+                    title = "You've been removed from $it",
+                    body = "Two days went by without you opening the other apps, so your app has " +
+                        "gone back to the queue. Submit it again when you're ready."
+                )
+            } + departed.map { (group, label) ->
+                Notice(
+                    id = "departed:$group:$label",
+                    title = "Stop testing $label",
+                    body = "It has left ${group.ifBlank { "your group" }}. Uninstall it and " +
+                        "leave its test, and don't count it towards your day any more."
+                )
+            }
+        )
+
         Log.i(
             TAG,
             "swept ${groups.size} group(s): ${standings.size} standing(s), " +

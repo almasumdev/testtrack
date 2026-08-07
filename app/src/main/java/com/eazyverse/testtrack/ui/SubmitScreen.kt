@@ -99,8 +99,10 @@ class SubmitViewModel : ViewModel() {
                 runCatching { Repo.submitApp(uid, email, packageInput.trim(), nameInput.trim()) }
                     .onSuccess { onDone() }
                     .onFailure {
-                        message = it.message ?: "We couldn't submit that. Check your connection " +
-                            "and try again."
+                        message = it.friendly(
+                            "We couldn't submit that. Check your connection and try again.",
+                            denied = "That package is already registered by someone else."
+                        )
                     }
             }
             submitting = false

@@ -72,7 +72,7 @@ class SetupViewModel : ViewModel() {
                     is GateResult.Failed -> gate.reason
                 }
             } catch (e: Exception) {
-                message = e.message ?: "Check failed"
+                message = e.friendly("We couldn't check your group membership just now. Try again in a moment.")
             }
             checkingGroup = false
         }
@@ -91,7 +91,7 @@ class SetupViewModel : ViewModel() {
                     Session.updateDriveConnected(result.accessToken != null)
                 }
             } catch (e: Exception) {
-                message = e.message ?: "Drive authorization failed"
+                message = e.friendly("Google didn't complete the Drive connection. Try it again.")
             }
             connectingDrive = false
         }

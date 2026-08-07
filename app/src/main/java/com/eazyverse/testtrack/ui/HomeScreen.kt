@@ -1,6 +1,12 @@
 package com.eazyverse.testtrack.ui
 
+import android.Manifest
 import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -54,6 +60,20 @@ class HomeViewModel : ViewModel() {
     var standings by mutableStateOf<List<Enforcement.Standing>>(emptyList())
         private set
 
+    /** Removals and departures, held until acknowledged rather than only sent as notifications. */
+    var notices by mutableStateOf<List<Enforcement.Notice>>(emptyList())
+        private set
+
+    /**
+     * Notifications are switched off, and this account is in a running cohort.
+     *
+     * Worth a prompt now that a missed day costs something: the warning that says "open them today
+     * or your app leaves the group" arrives as a notification, and a tester who declined the
+     * permission gets no warning at all before the removal lands.
+     */
+    var askForNotifications by mutableStateOf(false)
+        private set
+
     /** Across every cohort — the number the tester actually cares about first thing. */
     val doneToday: Int get() = groups.sumOf { it.done }
     val dueToday: Int get() = groups.sumOf { it.toTest }
@@ -80,7 +100,11 @@ class HomeViewModel : ViewModel() {
                 Cache.put(Cache.pending(uid), waiting)
                 Cache.put(Cache.groups(uid), progress)
                 message = null
-            }.onFailure { message = it.message ?: "We couldn't load your groups. Check your connection and try again." }
+            }.onFailure {
+                message = it.friendly(
+                    "We couldn't load your groups. Check your connection and try again."
+                )
+            }
             ready = true
         }
     }
@@ -128,7 +152,26 @@ class HomeViewModel : ViewModel() {
      */
     fun sweep(context: Context) {
         val uid = AuthRepo.uid ?: return
-        viewModelScope.launch { standings = Enforcement.sweep(context, uid).standings }
+        viewModelScope.launch {
+            standings = Enforcement.sweep(context, uid).standings
+            notices = Enforcement.notices(context)
+            refreshNotificationPrompt(context)
+        }
+    }
+
+    /** Anything parked by a background sweep, picked up when the screen opens. */
+    fun showNotices(context: Context) {
+        notices = Enforcement.notices(context)
+        refreshNotificationPrompt(context)
+    }
+
+    fun dismissNotice(context: Context, id: String) {
+        Enforcement.dismiss(context, id)
+        notices = Enforcement.notices(context)
+    }
+
+    private fun refreshNotificationPrompt(context: Context) {
+        askForNotifications = !PushRepo.granted(context) && groups.any { it.group.running }
     }
 
     /** Both halves or neither — see [ready]. A partial hit is a head start, not a screen. */
@@ -158,7 +201,7 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             runCatching { Repo.deleteApp(app.packageName) }
                 .onSuccess { load() }
-                .onFailure { message = it.message ?: "We couldn't withdraw ${app.label}. Try again in a moment." }
+                .onFailure { message = it.friendly("We couldn't withdraw ${app.label}. Try again in a moment.") }
         }
     }
 }
@@ -195,6 +238,29 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         vm.catchUp(context)
         vm.sweep(context)
+    }
+
+    // Anything a background sweep parked while the app was shut.
+    LaunchedEffect(vm.ready) { if (vm.ready) vm.showNotices(context) }
+
+    /**
+     * Below Android 13 there is no runtime permission to ask for, so the system dialog never
+     * appears and the prompt would be a button that does nothing. Sending those to the app's
+     * notification settings is the only way to turn them back on there.
+     */
+    val notificationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { vm.showNotices(context) }
+
+    val askNotifications: () -> Unit = {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            context.startActivity(
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            )
+        }
     }
 
     var confirmSignOut by remember { mutableStateOf(false) }
@@ -256,6 +322,14 @@ fun HomeScreen(
                 // Above everything, because a tester one day from losing their place should not
                 // have to scroll to a group row to find that out.
                 vm.standings.forEach { MissedDayNotice(it) }
+
+                // Things that already happened, kept until acknowledged. A notification is not a
+                // record: it can be swiped off a lock screen unread.
+                vm.notices.forEach { notice ->
+                    EventNotice(notice) { vm.dismissNotice(context, notice.id) }
+                }
+
+                if (vm.askForNotifications) NotificationPrompt(onGrant = askNotifications)
 
                 // Nothing at all: one empty state rather than two headed sections standing over
                 // nothing.
@@ -414,6 +488,80 @@ private fun MissedDayNotice(standing: Enforcement.Standing) {
             style = MaterialTheme.typography.bodySmall,
             color = tone
         )
+    }
+}
+
+/**
+ * Something that has already happened to this tester, with a way to say they have read it.
+ *
+ * Dismissal is explicit rather than timed. "Your app was removed from its group" is the kind of
+ * thing someone should have to acknowledge, not something that quietly disappears while the phone
+ * is in a pocket.
+ */
+@Composable
+private fun EventNotice(notice: Enforcement.Notice, onDismiss: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Gutter)
+            .padding(top = 18.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(14.dp)
+    ) {
+        Text(
+            notice.title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            notice.body,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(4.dp))
+        TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) {
+            Text("Got it")
+        }
+    }
+}
+
+/**
+ * Asks for notifications, at the point where they start to matter.
+ *
+ * Not at sign-in. Before a run is under way there is nothing to be warned about, and a permission
+ * asked for ahead of its reason is the one people decline. Shown only while a cohort is running,
+ * which is exactly when a missed day costs something.
+ */
+@Composable
+private fun NotificationPrompt(onGrant: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Gutter)
+            .padding(top = 18.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Status.shortSoft)
+            .padding(14.dp)
+    ) {
+        Text(
+            "Turn on notifications",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = Status.short
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Your run has started, and we warn you the day before a missed day costs you your " +
+                "place in the group. Without notifications that warning has nowhere to go.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Status.short
+        )
+        Spacer(Modifier.height(4.dp))
+        TextButton(onClick = onGrant, modifier = Modifier.align(Alignment.End)) {
+            Text("Turn them on")
+        }
     }
 }
 

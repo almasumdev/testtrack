@@ -94,7 +94,12 @@ class DashboardViewModel : ViewModel() {
                     Cache.put(Cache.testers(cohort.id), roster)
                     Cache.put(Cache.proofs(appId), marks)
                 }
-            }.onFailure { message = it.message ?: "We couldn't load this dashboard. Check your connection and try again." }
+            }.onFailure {
+                message = it.friendly(
+                    "We couldn't load this dashboard. Check your connection and try again.",
+                    denied = "This app isn't yours to see any more. It may have been withdrawn."
+                )
+            }
             ready = true
         }
     }

@@ -69,7 +69,7 @@ class AuthViewModel : ViewModel() {
             } catch (e: NotGmailException) {
                 message = "${e.email} isn't a Gmail account. Sign in with the Gmail you use for testing."
             } catch (e: Exception) {
-                message = e.message ?: "Sign-in failed"
+                message = e.friendly("We couldn't sign you in. Check your connection and try again.")
             }
             busy = false
         }

@@ -112,7 +112,13 @@ class GroupViewModel : ViewModel() {
                     own?.let { Cache.put(Cache.reporters(it.id, d), reporters) }
                 }
                 message = null
-            }.onFailure { message = it.message ?: "We couldn't load this group. Check your connection and try again." }
+            }.onFailure {
+                message = it.friendly(
+                    "We couldn't load this group. Check your connection and try again.",
+                    denied = "You're not in this group any more. It may have been dissolved, or " +
+                        "your app may have been taken out of it."
+                )
+            }
             ready = true
         }
     }
@@ -202,7 +208,13 @@ class GroupViewModel : ViewModel() {
                                         "stay in it until we bring you back."
                                 }
                             }
-                            .onFailure { message = it.message ?: "We couldn't save that proof. Check your connection and try again." }
+                            .onFailure {
+                                message = it.friendly(
+                                    "We couldn't save that proof. Check your connection and try again.",
+                                    denied = "You're not in this group any more, so today's test " +
+                                        "can't be recorded against it."
+                                )
+                            }
                     }
                 }
             }
