@@ -15,12 +15,17 @@ see their own 14-day grid.
 > দিন পার করতে না হয়।
 
 
-| | |
-|:--:|:--:|
-| ![Your groups, and what today still owes](docs/screens/home.png) | ![A day's worklist and the one button that walks it](docs/screens/today.png) |
-| **Your cohorts,** and what today still owes | **One tap** opens every app in turn |
-| ![Fourteen days of who turned up](docs/screens/grid.png) | ![Five things to set up, once](docs/screens/setup.png) |
-| **Fourteen days** of who turned up | **Five things** to set up, once |
+Your cohorts and what today still owes, a day's worklist with the one button that walks it, the
+fourteen days of who turned up, and the setup you do once.
+
+<p align="center">
+  <img src="docs/screens/home.png" width="400" alt="Home: two cohorts, 23 of 26 tested today, and an app still waiting for a group">
+  <img src="docs/screens/today.png" width="400" alt="A cohort on day 7 of 14, with Start testing and the list of apps still to open">
+</p>
+<p align="center">
+  <img src="docs/screens/grid.png" width="400" alt="The fourteen day grid: every tester by name, days reported in green and missed in red">
+  <img src="docs/screens/setup.png" width="400" alt="The setup checklist: sign in, join the group, connect Drive, allow usage access, turn on reminders">
+</p>
 
 ---
 
