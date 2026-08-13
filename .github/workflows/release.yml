@@ -2,7 +2,7 @@ name: Release APK
 
 # ---------------------------------------------------------------------------
 # Builds a signed release APK and publishes it as a downloadable GitHub
-# Release, then prunes older releases so only the newest KEEP survive.
+# Release, then deletes every older release so the page only ever holds the newest.
 #
 # TestTrack is side-loaded, so a GitHub Release is the distribution channel
 # rather than a stopgap. It no longer holds QUERY_ALL_PACKAGES — a launcher
@@ -43,7 +43,12 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  KEEP: 3          # how many releases survive the prune
+  # One. The releases page is where testers get the app, not a shelf of old builds, and every
+  # copy but the newest is one somebody can install by mistake and then report bugs from.
+  #
+  # The cost is that there is no earlier APK to fall back on if a build turns out bad. Rolling
+  # back means building again from the previous commit, which is a push, not a download.
+  KEEP: 1
 
   # The build whose signing key changed. Installs signed with the old key cannot
   # be updated over the top, so that one release carries an extra warning. Set to
