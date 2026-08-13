@@ -44,6 +44,25 @@ class SetupViewModel : ViewModel() {
     var message by mutableStateOf<String?>(null)
 
     /**
+     * Which step [message] is an answer to, so it can be shown beside the button that asked.
+     *
+     * [STEP_NONE] covers anything raised without a step to blame, which still has to appear
+     * somewhere rather than be swallowed.
+     */
+    var messageStep by mutableStateOf(STEP_NONE)
+
+    fun say(step: Int, text: String?) {
+        message = text
+        messageStep = step
+    }
+
+    companion object {
+        const val STEP_NONE = -1
+        const val STEP_GROUP = 1
+        const val STEP_DRIVE = 2
+    }
+
+    /**
      * Abandons the account and hands back to navigate.
      *
      * Setup is where a tester lands on the wrong Gmail — the checklist is keyed to the account,
@@ -60,19 +79,19 @@ class SetupViewModel : ViewModel() {
     /** Re-runs the server-side membership check for the account we already hold a token for. */
     fun verifyGroup(activity: Activity) {
         checkingGroup = true
-        message = null
+        say(STEP_GROUP, null)
         viewModelScope.launch {
             try {
                 val (account, gate) = AuthRepo.recheckGroup(activity)
                 account?.let { Session.updateEmail(it.email) }
                 Session.updateMember(gate is GateResult.Member)
-                message = when (gate) {
+                say(STEP_GROUP, when (gate) {
                     is GateResult.Member -> null
                     is GateResult.NotMember -> "${gate.email} isn't in the group yet."
                     is GateResult.Failed -> gate.reason
-                }
+                })
             } catch (e: Exception) {
-                message = e.friendly("We couldn't check your group membership just now. Try again in a moment.")
+                say(STEP_GROUP, e.friendly("We couldn't check your group membership just now. Try again in a moment."))
             }
             checkingGroup = false
         }
@@ -80,7 +99,7 @@ class SetupViewModel : ViewModel() {
 
     fun connectDrive(activity: Activity, launchConsent: (IntentSenderRequest) -> Unit) {
         connectingDrive = true
-        message = null
+        say(STEP_DRIVE, null)
         viewModelScope.launch {
             try {
                 val result = AuthRepo.authorizeDrive(activity)
@@ -91,10 +110,24 @@ class SetupViewModel : ViewModel() {
                     Session.updateDriveConnected(result.accessToken != null)
                 }
             } catch (e: Exception) {
-                message = e.friendly("Google didn't complete the Drive connection. Try it again.")
+                say(STEP_DRIVE, e.friendly("Google didn't complete the Drive connection. Try it again."))
             }
             connectingDrive = false
         }
+    }
+}
+
+/** The answer to one step's button, shown under that button rather than at the foot of the page. */
+@Composable
+private fun StepMessage(vm: SetupViewModel, step: Int) {
+    if (vm.messageStep != step) return
+    vm.message?.let {
+        Spacer(Modifier.height(4.dp))
+        Text(
+            it,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error
+        )
     }
 }
 
@@ -112,7 +145,7 @@ fun SetupScreen(
     ) { result ->
         val token = AuthRepo.tokenFromConsent(activity, result.data)
         Session.updateDriveConnected(token != null)
-        if (token == null) vm.message = "Drive access was not granted"
+        if (token == null) vm.say(SetupViewModel.STEP_DRIVE, "Drive access was not granted")
     }
 
     // Usage access and notifications both live in system settings and can be switched off behind
@@ -262,6 +295,8 @@ fun SetupScreen(
                     },
                     contentPadding = PaddingValues(vertical = 8.dp)
                 ) { Text("Open the group") }
+
+                StepMessage(vm, SetupViewModel.STEP_GROUP)
             }
 
             Step(
@@ -276,6 +311,8 @@ fun SetupScreen(
                 Primary("Connect Drive", busy = vm.connectingDrive) {
                     vm.connectDrive(activity) { consentLauncher.launch(it) }
                 }
+
+                StepMessage(vm, SetupViewModel.STEP_DRIVE)
             }
 
             Step(
@@ -356,7 +393,8 @@ fun SetupScreen(
             }
           }
 
-            vm.message?.let { Failure(it) }
+            // Only what no step claimed. Everything else is shown beside its own button.
+            if (vm.messageStep == SetupViewModel.STEP_NONE) vm.message?.let { Failure(it) }
             Spacer(Modifier.height(24.dp))
         }
 
