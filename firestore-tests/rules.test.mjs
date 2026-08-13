@@ -312,6 +312,29 @@ await check('but may still correct its own name', () =>
 await check('and cannot block somebody else', () =>
   assertFails(updateDoc(doc(as(ME), 'users', TARGET), { blocked: true })))
 
+console.log('\nThe read submitApp makes before it writes')
+
+// submitApp reads apps/{package} before writing and treats PERMISSION_DENIED as "somebody else
+// holds this name". That makes the absent case load-bearing: `resource` is null for a document
+// that does not exist, and a rule that dereferences it errors, which denies. Without a branch for
+// null the very first submission of any package is reported to its own author as already taken.
+await seed()
+
+await check('a package nobody has registered reads as absent, not refused', () =>
+  assertSucceeds(getDoc(doc(as(OUTSIDER), 'apps', 'com.nobody.has.this'))))
+
+await check('an owner may read their own app', () =>
+  assertSucceeds(getDoc(doc(as(ME), 'apps', MY_APP))))
+
+await check('a cohort member may read an app they are testing', () =>
+  assertSucceeds(getDoc(doc(as(ME), 'apps', TARGET_APP))))
+
+// The refusal that still carries meaning. A name held by a stranger stays unreadable, which is
+// exactly what submitApp turns into "already registered by another member", without ever
+// revealing whose it is.
+await check('a stranger’s app stays refused, which is what marks the name taken', () =>
+  assertFails(getDoc(doc(as(OUTSIDER), 'apps', MY_APP))))
+
 console.log(`\n${pass} passed, ${fail} failed\n`)
 await env.cleanup()
 process.exit(fail === 0 ? 0 : 1)

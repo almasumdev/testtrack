@@ -278,7 +278,21 @@ service cloud.firestore {
      * self-granted.
      */
     match /apps/{appId} {
+      /**
+       * A package nobody has registered has to read as absent rather than as refused.
+       *
+       * `resource` is null for a document that does not exist, and the two conditions below
+       * dereference it. A rule that errors is a rule that denies, so without this branch every
+       * first-ever submission came back PERMISSION_DENIED, which submitApp reads as proof the
+       * package belongs to somebody else and reports as "already registered by another member".
+       *
+       * All this admits is whether a package name is taken, which is exactly the question the
+       * submit screen is asking on the owner's behalf. Nothing about a document that does exist
+       * is loosened: those are still owner-only or cohort-only, so a name held by a stranger is
+       * still refused and still reported as taken.
+       */
       allow read: if isAdmin()
+        || (signedIn() && resource == null)
         || (signedIn() && request.auth.uid == resource.data.ownerUid)
         || inGroup(resource.data.groupId);
 
