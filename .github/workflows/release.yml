@@ -130,29 +130,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           CODE: ${{ steps.version.outputs.code }}
         run: |
-          notes="Signed release build from \`${GITHUB_SHA:0:7}\`.
+          notes="Download the APK below and open it to install.
 
-          **Install it with \`adb\`, not the browser:**
+          Updating over an existing install keeps you signed in, so there is nothing to
+          uninstall and nothing to set up again.
 
-          \`\`\`
-          adb install -r ${{ steps.apk.outputs.path }}
-          \`\`\`
-
-          Since Android 15, anything a browser installs has usage access greyed out
-          under *Restricted setting* — and usage access is what the daily proof is made
-          of. An \`adb\` install is exempt outright.
-
-          Opening the APK on the phone still works, but you then have to lift the block
-          by hand: **App info → ⋮ → Allow restricted settings**, which only appears
-          after you have tapped the greyed-out toggle once.
-
-          Updating over an existing install keeps your session."
+          Built from \`${GITHUB_SHA:0:7}\`."
 
           # Prepend the rotation warning only on the build it applies to.
           if [ "$CODE" = "$KEY_ROTATED_AT_CODE" ]; then
             notes="> **Uninstall the previous version first.** The signing key changed in
           > this build, so Android will refuse to install it over the old one. Your
-          > account is untouched — sign in again and everything comes back.
+          > account is untouched, so sign in again and everything comes back.
 
           $notes"
           fi
