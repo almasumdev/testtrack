@@ -27,6 +27,33 @@ fourteen days of who turned up, and the setup you do once.
   <img src="docs/screens/setup.png" width="400" alt="The setup checklist: sign in, join the group, connect Drive, allow usage access, turn on reminders">
 </p>
 
+## Joining
+
+1. **Join the testers group.** Every cohort is drawn from
+   [googleclosetesting](https://groups.google.com/g/googleclosetesting). Play requires the list, and
+   TestTrack confirms your membership on Google's servers rather than taking the phone's word for
+   it.
+2. **Install TestTrack** from the [releases page](https://github.com/almasumdev/testtrack/releases).
+   Sign in with the same account you joined the group with.
+3. **Submit your app.** An administrator places it into a cohort, and the fourteen days start once
+   thirteen apps are in. From then it is a few minutes a day.
+
+It costs nothing, and there is nothing to buy.
+
+> **বাংলায়:** শুরু করতে তিনটা ধাপ।
+>
+> ১) [googleclosetesting](https://groups.google.com/g/googleclosetesting) গ্রুপে জয়েন করুন, সব
+> কোহর্ট এখান থেকেই বানানো হয়। Play এই লিস্টটা চায়, আর TestTrack আপনার সদস্যপদ Google এর
+> সার্ভারে গিয়ে মিলিয়ে দেখে, ফোনের কথায় বিশ্বাস করে না।
+>
+> ২) [রিলিজ পেজ](https://github.com/almasumdev/testtrack/releases) থেকে অ্যাপটা ইনস্টল করুন, আর যে
+> অ্যাকাউন্ট দিয়ে গ্রুপে ঢুকেছেন সেটা দিয়েই সাইন ইন করুন।
+>
+> ৩) নিজের অ্যাপ সাবমিট করুন। অ্যাডমিন সেটাকে একটা কোহর্টে বসাবেন, আর তেরোটা অ্যাপ হলেই চৌদ্দ দিনের
+> গণনা শুরু। এরপর দিনে কয়েক মিনিটের ব্যাপার।
+>
+> কোনো খরচ নেই, কেনার মতো কিছুও নেই।
+
 ---
 
 # Before you install
