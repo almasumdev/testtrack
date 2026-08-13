@@ -248,6 +248,27 @@ with the reason. They can pause an account, and if they do, you are told and you
 > সত্যিই কভার করেছেন, আর কোনো অ্যাপ ফিরিয়ে দেওয়া হয়ে থাকলে সেটা কেন। অ্যাডমিন চাইলে অ্যাকাউন্ট
 > সাময়িক বন্ধ করতে পারেন, আর করলে আপনাকে কারণসহ জানানো হয়।
 
+## Where to get it, and what happens on an update
+
+Every build is published as a signed APK on the
+[releases page](https://github.com/almasumdev/testtrack/releases). Take the newest one.
+
+Updates install straight over the top. You do not uninstall first, you do not lose your setup, and
+you do not sign in again. Every release is signed with the same key, which is what allows that.
+The same fact has a consequence worth knowing: a TestTrack APK from anywhere other than that page
+will refuse to install over yours. That refusal is the check doing its job, not a fault to work
+around.
+
+> **বাংলায়:** প্রতিটা বিল্ড সাইন করা APK হিসেবে
+> [রিলিজ পেজে](https://github.com/almasumdev/testtrack/releases) দেওয়া থাকে, সেখান থেকে সবচেয়ে
+> নতুনটা নিন।
+>
+> আপডেট সরাসরি আগেরটার উপরেই বসে যায়। আনইনস্টল করতে হয় না, সেটআপ হারায় না, আবার সাইন ইনও করতে হয়
+> না, কারণ প্রতিটা রিলিজ একই কী দিয়ে সাইন করা।
+>
+> এর একটা দিক জেনে রাখা ভালো, ওই পেজ ছাড়া অন্য কোথাও থেকে পাওয়া TestTrack এর APK আপনার ইনস্টল করা
+> কপির উপরে বসবে না। এটা ভুল নয়, এটাই নিরাপত্তার কাজ করছে।
+
 ## Why you install it with adb, and why that is not a trick
 
 The install instructions say to run `adb install` instead of tapping the APK. That is an unusual
@@ -399,236 +420,65 @@ app has already stopped working for other reasons.
 
 ---
 
-# Under the hood
+# Checking any of this for yourself
 
-The rest of this file is for anyone reading or building the source.
+Nothing above asks to be taken on trust. Every claim is answerable from the source, and these are
+the files that answer the ones worth asking.
 
-## Setup
-
-```bash
-git clone https://github.com/almasumdev/testtrack.git
-cd testtrack
-cp local.properties.example local.properties   # then fill it in
-./gradlew assembleDebug
-```
-
-**Nothing deployment-specific is committed.** `local.properties` is gitignored, and every value in
-it can equally be supplied as an environment variable of the same name, which is what CI does. The
-build reads them and exposes them through `BuildConfig`; a missing key logs a warning at configure
-time and the app says plainly that it is unconfigured rather than failing obscurely.
-
-| Key | What it is |
+| Question | Where it is settled |
 |---|---|
-| `TESTTRACK_WEB_CLIENT_ID` | OAuth 2.0 **Web** client ID. Not the Android one |
-| `TESTTRACK_GATE_URL` | Deployed Apps Script web app that answers the membership check |
-| `TESTTRACK_GROUP_URL` | Public URL of the testers Google Group |
-| `TESTTRACK_KEYSTORE` and friends | Optional. Release signing; debug builds work without them |
+| What permissions does it hold? | [AndroidManifest.xml](app/src/main/AndroidManifest.xml), seven of them, each with its reason |
+| What does it do with usage access? | [UsageRepo.kt](app/src/main/java/com/eazyverse/testtrack/data/UsageRepo.kt) |
+| Does it list my installed apps? | [InstalledApps.kt](app/src/main/java/com/eazyverse/testtrack/data/InstalledApps.kt), one named package at a time |
+| How much of my Drive can it reach? | [Config.kt](app/src/main/java/com/eazyverse/testtrack/Config.kt), one line |
+| Who can read my proofs? | [firestore.rules](firestore.rules) |
+| Are those limits actually enforced? | [firestore-tests/](firestore-tests/) |
+| What libraries ship in the app? | [app/build.gradle.kts](app/build.gradle.kts) |
 
-The Web client ID must be **byte-identical** to the one the membership service checks the ID
-token's `aud` claim against. A mismatch is rejected as `wrong_audience`.
-
-### Something to look at
-
-Groups and placements are admin-only in the rules, so a fresh install with an empty database has
-nothing to show. [tools/seed.sh](tools/seed.sh) writes a cohort you can walk the whole app against:
-a healthy mid-run group, one still forming, one a member short so the at-risk banner shows, a
-fortnight of proof against your own app, and a submission awaiting placement.
-
-```bash
-export TESTTRACK_UID=<your firebase uid>      # from the users collection after signing in once
-export TESTTRACK_PKGS="com.some.app com.other.app"   # installed on the test phone: real icons, working Open
-tools/seed.sh up
-tools/seed.sh down
-```
-
-It writes with a `gcloud` owner credential, bypassing the rules exactly as the admin app does.
-Point it at an emulator or a scratch project, never at one carrying real accounts.
-
-## How membership verification works
-
-Google publishes **no API** for reading members of a consumer `@googlegroups.com` group. The Admin
-SDK Directory API and the Cloud Identity Groups API are both Workspace-only, and Play Console
-accepts only `@googlegroups.com` groups. Those two facts have no overlap.
-
-What does work is **Apps Script's `GroupsApp`**, which authorises on *permission*, being a group
-owner or manager, rather than on account edition:
-
-```
-Android app                    Apps Script (runs as group owner)         Google Groups
-     .  Google ID token  ......  verify via tokeninfo
-     .                           check aud == our client id
-     .                           GroupsApp.getUsers()  ................  member list
-     .  ... { email, isMember }  compare
-```
-
-Two properties make this worth the awkwardness:
-
-- **Unforgeable.** The verdict is computed on Google's servers from a token the device cannot
-  fake. The phone never asserts its own membership.
-- **No roster leak.** The endpoint returns only `{email, isMember}` about the caller, so a
-  decompiled APK reveals nothing about anyone else.
-
-Gmail addresses are normalised on both sides, lowercased, dots stripped, `+suffix` removed, because
-the group and the ID token can hold different strings for the same account.
-
-## Proof of testing
-
-Three signals:
-
-- **Package visibility.** A `<queries>` filter for launcher activities, which every app in a
-  cohort has. Gives installed yes/no, the installing package, and `firstInstallTime`, which is the
-  continuous-install streak, retroactively, in one call. It survives app updates and resets on
-  uninstall, which is exactly the semantics a 14-day streak needs. `QUERY_ALL_PACKAGES` would read
-  more, but it is restricted on Play and TestTrack matches none of the approved categories.
-- **MediaProjection.** One consent per round, held open while each app is opened, screenshotted
-  and closed.
-- **`PACKAGE_USAGE_STATS`.** Real foreground time per app per day. The only thing here that costs
-  the tester a trip to Settings, and it is mandatory: a screenshot proves the app opened, and
-  nothing else proves anyone stayed.
-
-Usage is summed from **raw `UsageEvents`, not `queryUsageStats`**. The daily buckets that method
-returns are written periodically, so a visit that ended seconds ago still reads as zero, which is
-precisely when the reading is taken. Events are exact and include the session in progress, which
-matters because the figure is read on the way out of a visit while the app under test is still on
-screen. The aggregate is consulted as well and the larger of the two wins, since some manufacturers
-trim the event stream.
-
-An accessibility service for auto-scrolling and auto-tapping was built and removed. It worked, but
-it costs each tester a *"full control of your device"* grant that Android revokes on every
-reinstall, for one extra page of proof.
-
-## Data
-
-Flat collections. Rules are in [firestore.rules](firestore.rules): a proof is readable by the
-tester who wrote it, the owner of the app it concerns, and an admin; every write is locked to the
-owning account; and anything deciding *who tests what* is locked to an admin.
-
-```
-users/{uid}                                     email, displayName, and an admin-set
-                                                blocked flag with its reason
-users/{uid}/tokens/{installId}                  token, platform, updatedAt. One row per device
-admins/{uid}                                    exists means admin. An empty document is the
-                                                whole mechanism
-groups/{groupId}                                memberUids, appIds, startDate, runDays, status
-apps/{packageName}                              ownerUid, name, groupId, status, placedAt
-proofs/{appId}__{testerUid}__{run}__{day}       fileId, imageUrl, capturedAt, usageMs
-events/{eventId}                                uid, type, title, body, actorUid. A decision,
-                                                read and raised by the device it names
-```
-
-Tokens sit in a subcollection rather than on the user document because rules do not cascade into
-subcollections, and the user document is deliberately readable by every signed-in account so that
-grids can turn a uid into a name. A push address should not inherit that.
-
-The composite proof id is what keeps this simple: posting twice overwrites instead of duplicating,
-and a whole grid is one query rather than 13 by 14 reads. The run's start time is part of the id,
-so a restarted cohort begins with a genuinely empty record instead of inheriting the last run's
-attendance. Keying apps by package name gives the same property one level up: re-submitting
-corrects the record rather than creating a second one, and a correction merges, so fixing a typo on
-day nine cannot eject the app from its group. An owner may withdraw their own app; its proofs are
-left in place, because letting clients delete those would mean write access to other testers' rows.
-
-Nothing expires. There is no TTL and no cleanup job anywhere in the codebase, by design, because a
-developer's record is only worth consulting if it is complete.
-
-**The admin app is a separate build**, [`../test_track_admin`](../test_track_admin), and this one
-holds no privileged code at all. `groups` is admin-only, and an owner's write to their own app must
-leave `groupId` and `status` exactly as they were, so approval cannot be self-granted. Placing the
-thirteenth app is what takes a group to threshold, so the same admin write sets `startDate`. No
-client here and no Cloud Function is involved.
-
-Being an admin is one document at `admins/{uid}`, written from the console. An account may read
-**its own** row and nobody else's, which is enough for the admin app to say "this account is not an
-administrator" instead of failing with an unexplained refusal, and not enough to enumerate anyone.
-
-The `blocked` flag lives on the user document but is an admin's judgement, so the rule that lets an
-account write its own row allowlists the four fields that are its own business. Nobody can lift
-their own ban.
-
-Verifying a Play track automatically would need developer-level authorization from every owner: a
-service account in their Play Console, a linked Cloud project, or a sensitive scope requiring
-Google verification. All three cost more than an admin's glance, and placement into a cohort is a
-judgement call anyway.
-
-The refusals are the half that is easy to believe and hard to check, so
-[firestore-tests/](firestore-tests/) asserts them against the local rules before they are deployed.
-A tester cannot create a group, cannot start their own clock, cannot place their own app, cannot
-read a stranger's proof, cannot read another device's push token, cannot unblock themselves, and
-cannot remove a member who actually turned up.
+The rules are the part that is easy to assert and hard to verify, so the refusals are tested rather
+than promised. A tester cannot create a group, cannot start their own clock, cannot place their own
+app, cannot read a stranger's proof, cannot read another device's push token, cannot unblock
+themselves, and cannot remove a member who actually turned up.
 
 ```bash
 cd firestore-tests && npm install && npm test
 ```
 
-## Reminders
+You can also build the app yourself instead of trusting the published APK. It needs Android Studio,
+and `local.properties.example` lists the four values to fill in.
 
-A run is fourteen consecutive days, and one tester forgetting costs the other thirteen their clock.
-Reminders are how that gets caught in time, and they are **raised on the phone, not sent to it**.
-
-[`ReminderWorker`](app/src/main/java/com/eazyverse/testtrack/data/ReminderWorker.kt) reads the same
-data the home screen reads, counts what is still owed today, and posts a local notification if
-anything is. First run is at 7pm, because a nudge at eight in the morning is about a day that has
-barely started. Nothing is scheduled server-side, so there is no cron to keep alive, no fleet of
-device tokens to keep in step with who is still in which cohort, and no cost to a tester being
-unreachable for a week.
-
-**Admin decisions travel the same road.** When an app is placed, turned down, or pulled back out,
-the console writes an `events` document addressed to that developer, and their device raises it on
-the next pass, or within seconds if the app is open. Written rather than pushed because the console
-is a phone app: FCM's v1 API authenticates with a service account, and a service account key inside
-an APK is a service account key in everybody's hands. The cost is latency, which is the right trade
-for news measured in days. The document doubles as the audit trail, since `actorUid` records which
-admin acted.
-
-Because a notification can be swiped away on a lock screen, silenced by a Do Not Disturb nobody
-remembered was on, or never shown at all if the permission was declined, anything as consequential
-as "your app was removed from its group" is also parked on the home screen until it is dismissed.
-
-That is the one query in the app needing a composite index; see
-[firestore.indexes.json](firestore.indexes.json) for why.
-
-FCM is still wired up, a token per device at `users/{uid}/tokens/{installId}` and a topic per
-group, because it is the only path to instant delivery if a sender ever exists, and
-[`tools/push.sh`](tools/push.sh) can drive it by hand today:
-
-```sh
-tools/push.sh group seed-group-a "5 apps still waiting" "Day 4 closes tonight."
+```bash
+git clone https://github.com/almasumdev/testtrack.git
+cd testtrack
+cp local.properties.example local.properties
+./gradlew assembleDebug
 ```
 
-## Releases
+## Two things it deliberately does not ask for
 
-A signed APK on the releases page is the current distribution channel.
-[`.github/workflows/release.yml`](.github/workflows/release.yml) builds one on every push to `main`,
-publishes it, and prunes so only the newest three survive. The signing key is fixed and its SHA-1 is
-registered in Firebase, so updates install over the top and Google sign-in keeps working.
+These are worth saying because they cost the app something, and the cheaper choice was available.
 
-Play-installed packages are exempt from Enhanced Confirmation Mode too, which is why the tester app
-no longer holds `QUERY_ALL_PACKAGES`. Dropping it is what makes a closed-testing track on Play
-possible, and that track is the only distribution where a tester meets no restricted setting at all.
+**Full control of your device.** An accessibility service that scrolled and tapped inside each app
+was built and then removed. It worked. It also cost every tester a *"full control of your device"*
+grant, which Android revokes on every reinstall, and it bought one extra page of proof. That is
+not a fair trade to ask thirteen people to make.
 
-## Design
+**Access to your Play Console.** Checking a testing track automatically would need developer-level
+authorization from every app owner: a service account inside their Play Console, a linked Cloud
+project, or a sensitive scope requiring Google verification. All three cost more than an
+administrator looking at the submission, and deciding which cohort an app belongs in is a judgement
+call anyway.
 
-The interface guide is [docs/ui.md](docs/ui.md): flat surfaces and hairline dividers, insets and
-status-bar appearance handled centrally, one primary action per screen, and how the grid encodes
-state by shape as well as colour.
-
-## Roadmap
-
-- [x] Onboarding, Google sign-in, setup checklist
-- [x] Server-verified group membership
-- [x] Drive-hosted proof on the narrow `drive.file` scope
-- [x] Firestore: users, groups, apps, proofs, with admin-gated rules
-- [x] Daily capture: open, unannounced screenshot, auto-return
-- [x] Real foreground time from `UsageStatsManager`
-- [x] Cohorts of 14 with a shared 14-day run
-- [x] Owner dashboard: today's reporters, the grid, who is behind
-- [x] Push plumbing: per-device tokens, per-group topics, deep-linked taps
-- [x] The admin app: review submissions, form groups, place apps, see the proof
-- [x] On-device reminders and admin decisions, no server and no scheduler
-- [x] Device-side enforcement, re-checked by the database before it is accepted
-- [x] Developer records: run history, removals, rejections, and an account pause
-- [x] Runs that an admin can extend past fourteen days
-- [x] Signed releases from CI, newest three kept
+> **বাংলায়:** এই দুটো জিনিস ইচ্ছে করেই চাওয়া হয়নি, যদিও চাইলে সহজ হতো।
+>
+> **আপনার ডিভাইসের পূর্ণ নিয়ন্ত্রণ।** প্রতিটা অ্যাপের ভেতরে নিজে থেকে স্ক্রল আর ট্যাপ করার একটা
+> সুবিধা বানানো হয়েছিল, পরে বাদ দেওয়া হয়। কাজ করত ঠিকই, কিন্তু তার জন্য প্রত্যেক টেস্টারকে
+> "ডিভাইসের পূর্ণ নিয়ন্ত্রণ" দিতে হতো, আর বিনিময়ে পাওয়া যেত মাত্র এক পাতা বাড়তি প্রমাণ। তেরোজন
+> মানুষকে এই শর্ত দেওয়া ন্যায্য মনে হয়নি।
+>
+> **আপনার Play Console এ ঢোকার অনুমতি।** টেস্টিং ট্র্যাক নিজে থেকে যাচাই করতে হলে প্রত্যেক অ্যাপ
+> মালিকের Play Console এ ডেভেলপার পর্যায়ের অনুমতি লাগত। একজন অ্যাডমিনের চোখে দেখে নেওয়ার চেয়ে
+> সেটার দাম অনেক বেশি, আর কোন অ্যাপ কোন দলে যাবে সেটা এমনিতেও বিচারের ব্যাপার।
 
 ## Licence
 
