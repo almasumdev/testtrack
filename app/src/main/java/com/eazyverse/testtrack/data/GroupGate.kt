@@ -2,11 +2,13 @@ package com.eazyverse.testtrack.data
 
 import android.content.Context
 import androidx.credentials.CredentialManager
+import androidx.credentials.CredentialOption
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import com.eazyverse.testtrack.Config
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,11 +26,46 @@ data class GoogleAccount(val idToken: String, val email: String)
 /** Raised when a non-Gmail account is chosen — sign-in is Gmail-only by product decision. */
 class NotGmailException(val email: String) : Exception("$email is not a Gmail account")
 
+/**
+ * Raised when a step of signing in never came back at all.
+ *
+ * Not a failure anybody reported to us: it is what we say when nothing was reported, because the
+ * call we were waiting on has no limit of its own and would otherwise leave the button spinning
+ * until the tester gave up. Carries text meant for a person, so it keeps its own wording.
+ */
+class StalledException(message: String) : Exception(message)
+
 /** Result of asking the membership service whether this account is in the Google Group. */
 sealed interface GateResult {
     data class Member(val email: String) : GateResult
     data class NotMember(val email: String) : GateResult
     data class Failed(val reason: String) : GateResult
+}
+
+/** The address the service resolved from the token, or empty when it did not name one. */
+fun GateResult.address(): String = when (this) {
+    is GateResult.Member -> email
+    is GateResult.NotMember -> email
+    is GateResult.Failed -> ""
+}
+
+/**
+ * Whether this verdict is about somebody other than the account we believe we are signed in as.
+ *
+ * A phone can hold several Google accounts, and the token for a re-check comes from Credential
+ * Manager, not from the session. When more than one is authorised it picks — sometimes by auto
+ * select, sometimes by showing a sheet — and it can hand back the other one. The verdict is
+ * then perfectly correct about an address the tester is not using, which is how the group step
+ * could say "you are in" to somebody who is not and "you are not" to somebody who is, differently
+ * on different launches.
+ *
+ * Deliberately only ever rejects a verdict that names a *different* address. A blank one means the
+ * service did not say, and treating silence as a mismatch would make the whole gate inert.
+ */
+fun GateResult.isAboutSomeoneElse(signedInAs: String?): Boolean {
+    val said = address()
+    if (said.isBlank() || signedInAs.isNullOrBlank()) return false
+    return !said.equals(signedInAs, ignoreCase = true)
 }
 
 /**
@@ -64,34 +101,45 @@ object GroupGate {
         .build()
 
     /**
-     * Shows the Google account picker and returns the ID token plus the chosen address.
+     * Shows the Google account chooser and returns the ID token plus the chosen address.
      * The token's `aud` is [Config.WEB_CLIENT_ID], which is what the service checks.
+     *
+     * [GetSignInWithGoogleOption] rather than [GetGoogleIdOption], which is what this used to send
+     * and is a different flow wearing the same name. GetGoogleIdOption is the one-tap bottom
+     * sheet, a suggestion Google offers, and Android throttles suggestions: dismiss it a couple of
+     * times and it is withheld for the rest of the day. What comes back then is
+     * NoCredentialException, so a tester with three Google accounts on their phone was told there
+     * were none on it, and the only cure was to wait. This one is the flow behind a "Sign in with
+     * Google" button. It shows the full chooser every time it is asked, because somebody pressed
+     * something to ask.
      *
      * @throws NotGmailException if the chosen account is not @gmail.com.
      */
-    suspend fun signIn(context: Context): GoogleAccount = credential(context, silent = false)
+    suspend fun signIn(context: Context): GoogleAccount =
+        credential(context, GetSignInWithGoogleOption.Builder(Config.WEB_CLIENT_ID).build())
 
     /**
      * A replacement token for an account that has already signed in once.
      *
      * ID tokens expire after an hour, so re-checking membership later needs a new one. Filtering
-     * to already-authorised accounts lets Google return it without showing anything; the picker
+     * to already-authorised accounts lets Google return it without showing anything; the chooser
      * only appears if that fails, which it does when the grant has been revoked.
      */
     suspend fun refresh(context: Context): GoogleAccount =
         try {
-            credential(context, silent = true)
+            credential(
+                context,
+                GetGoogleIdOption.Builder()
+                    .setServerClientId(Config.WEB_CLIENT_ID)
+                    .setFilterByAuthorizedAccounts(true)
+                    .setAutoSelectEnabled(true)
+                    .build()
+            )
         } catch (e: GetCredentialException) {
-            credential(context, silent = false)
+            signIn(context)
         }
 
-    private suspend fun credential(context: Context, silent: Boolean): GoogleAccount {
-        val option = GetGoogleIdOption.Builder()
-            .setServerClientId(Config.WEB_CLIENT_ID)
-            .setFilterByAuthorizedAccounts(silent)
-            .setAutoSelectEnabled(silent)
-            .build()
-
+    private suspend fun credential(context: Context, option: CredentialOption): GoogleAccount {
         val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
         val response = CredentialManager.create(context).getCredential(context, request)
         val credential = response.credential

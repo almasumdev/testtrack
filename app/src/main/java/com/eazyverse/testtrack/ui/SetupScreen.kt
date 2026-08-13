@@ -34,6 +34,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.data.*
 import com.eazyverse.testtrack.findActivity
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class SetupViewModel : ViewModel() {
@@ -82,14 +83,25 @@ class SetupViewModel : ViewModel() {
         say(STEP_GROUP, null)
         viewModelScope.launch {
             try {
-                val (account, gate) = AuthRepo.recheckGroup(activity)
-                account?.let { Session.updateEmail(it.email) }
-                Session.updateMember(gate is GateResult.Member)
-                say(STEP_GROUP, when (gate) {
-                    is GateResult.Member -> null
-                    is GateResult.NotMember -> "${gate.email} isn't in the group yet."
-                    is GateResult.Failed -> gate.reason
+                val (_, gate) = AuthRepo.recheckGroup(activity)
+                say(STEP_GROUP, when {
+                    // Checked, but not about us. The old code adopted whatever address came back,
+                    // which left the session showing one Gmail while every write still belonged to
+                    // the other, and stamped that account's membership onto this one. Say so and
+                    // change nothing; switching accounts is what Sign out is for.
+                    gate.isAboutSomeoneElse(Session.email) ->
+                        "Google answered for ${gate.address()}, not ${Session.email}. Sign out at " +
+                            "the top of this page and sign back in with the Gmail you want to use."
+
+                    gate is GateResult.Failed -> gate.reason
+
+                    else -> {
+                        Session.updateMember(gate is GateResult.Member)
+                        (gate as? GateResult.NotMember)?.let { "${it.email} isn't in the group yet." }
+                    }
                 })
+            } catch (e: CancellationException) {
+                throw e   // leaving the screen cancels this; it is not a failed check
             } catch (e: Exception) {
                 say(STEP_GROUP, e.friendly("We couldn't check your group membership just now. Try again in a moment."))
             }
@@ -109,6 +121,8 @@ class SetupViewModel : ViewModel() {
                 } else {
                     Session.updateDriveConnected(result.accessToken != null)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 say(STEP_DRIVE, e.friendly("Google didn't complete the Drive connection. Try it again."))
             }
@@ -209,15 +223,29 @@ fun SetupScreen(
      * alone, because that is the service not answering, and a check that could not run is no
      * reason to throw away what was last known.
      *
+     * Silent for real, which the first attempt at this was not. That one went back to Google for a
+     * token whenever the held one had expired, and going back to Google can put an account sheet
+     * on screen; opening setup from home is not a request to pick an account. So it asks with the
+     * token from sign-in or it does not ask, and no token leaves the flag alone for the same
+     * reason a failure does. The cost is that a membership lost between one launch and the next
+     * goes unnoticed until the tester presses Verify. That is the right way round: a check that
+     * interrupts you to run is worse than one that waits to be asked.
+     *
+     * And the verdict has to be about the account on this screen. Credential Manager answers for
+     * whichever Google account it picks, not necessarily the one that signed in.
+     *
      * Nothing is said out loud here. "Not in the group yet" belongs to the Verify button, when a
      * tester asks for it, rather than greeting a newcomer who has not had a chance to join.
      */
     LaunchedEffect(Unit) {
         runCatching {
-            when (AuthRepo.recheckGroup(activity).second) {
-                is GateResult.Member -> Session.updateMember(true)
-                is GateResult.NotMember -> Session.updateMember(false)
-                is GateResult.Failed -> Unit
+            val gate = AuthRepo.recheckGroupSilently()
+            if (gate != null && !gate.isAboutSomeoneElse(Session.email)) {
+                when (gate) {
+                    is GateResult.Member -> Session.updateMember(true)
+                    is GateResult.NotMember -> Session.updateMember(false)
+                    is GateResult.Failed -> Unit
+                }
             }
         }
     }

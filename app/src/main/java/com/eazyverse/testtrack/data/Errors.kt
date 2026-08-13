@@ -28,7 +28,8 @@ fun Throwable.friendly(
     denied: String = "You don't have access to this any more. You may have been removed from the " +
         "group, or it may have been dissolved."
 ): String = when {
-    this is AppTakenException || this is BlockedException -> message ?: fallback
+    this is AppTakenException || this is BlockedException || this is StalledException ->
+        message ?: fallback
 
     this is FirebaseFirestoreException -> when (code) {
         // Also what a deleted document looks like: the read rule tests fields on a document that

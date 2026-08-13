@@ -12,7 +12,11 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.common.api.Scope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -49,6 +53,21 @@ object AuthRepo {
     private var tokenAt = 0L
     private const val TOKEN_LIFETIME = 45 * 60 * 1000L
 
+    /**
+     * How long each half of signing in may take before the app stops waiting.
+     *
+     * Neither half has a limit of its own, which is the whole reason for these. Credential Manager
+     * is a binder call into Play services and Firebase answers with a Task, and when the thing at
+     * the far end is wedged neither returns, throws, or times out. The button then spins for as
+     * long as the tester is willing to watch it and the report we get back is "it just loads",
+     * which contains nothing to act on. A wait that ends says which half ended it.
+     *
+     * The Google half is generous because there is a person inside it choosing an account. The
+     * Firebase half is not: nobody is looking at it and it is one round trip.
+     */
+    private const val GOOGLE_LIMIT = 120_000L
+    private const val FIREBASE_LIMIT = 20_000L
+
     private val liveToken: String?
         get() = token?.takeIf { System.currentTimeMillis() - tokenAt < TOKEN_LIFETIME }
 
@@ -76,12 +95,25 @@ object AuthRepo {
      * still lands somewhere they can act instead of watching sign-in collapse.
      */
     suspend fun signIn(activity: Activity): GoogleAccount {
-        val account = GroupGate.signIn(activity)
+        val account = withTimeoutOrNull(GOOGLE_LIMIT) { GroupGate.signIn(activity) }
+            ?: throw StalledException(
+                "Google never came back with an answer. Close TestTrack from your recent apps, " +
+                    "open it again and tap Continue with Google. If it happens a second time, " +
+                    "restart the phone. It is Play services that has stalled, not your account."
+            )
+
         token = account.idToken
         tokenAt = System.currentTimeMillis()
         firebaseError = try {
-            signInToFirebase(account.idToken)
+            withTimeout(FIREBASE_LIMIT) { signInToFirebase(account.idToken) }
             null
+        } catch (e: TimeoutCancellationException) {
+            // Caught before CancellationException on purpose: a timeout is one, so the branch
+            // below would rethrow it and the spinner this exists to end would go on turning.
+            "Google signed you in, but TestTrack's own sign-in didn't answer. Check your " +
+                "connection and tap Continue with Google again."
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             "You're signed in, but Firebase turned the token down. Google needs enabling under " +
                 "Firebase Authentication, in Sign-in method. (${e.message})"
@@ -90,11 +122,26 @@ object AuthRepo {
     }
 
     /**
+     * The verdict for the token we already hold, or null when we do not hold one.
+     *
+     * The quiet counterpart of [recheckGroup], for the background check the setup screen runs on
+     * its own initiative. It asks Credential Manager for nothing, which is the whole point: the
+     * interactive path can put an account sheet on screen, and a check nobody requested must never
+     * do that. Null means there are no credentials to ask with, which is a reason to leave the
+     * last known answer alone rather than guess at a new one.
+     *
+     * Using only the sign-in token also settles *whose* membership is being reported: it is the
+     * account that signed in, and cannot be some other Gmail on the same phone.
+     */
+    suspend fun recheckGroupSilently(): GateResult? = liveToken?.let { GroupGate.check(it) }
+
+    /**
      * Asks the membership service again — after the tester has gone off and joined the group.
      *
-     * Reuses the sign-in token while it is still good, so this is usually a bare network call
-     * with no Google UI at all. Returns the account only when one was actually chosen, which is
-     * the sole case where the signed-in address can have changed.
+     * Reuses the sign-in token while it is still good. Without one it goes back to Google for a
+     * fresh token, which can show the account sheet, so this belongs behind a button somebody
+     * pressed. Returns the account only when one was actually chosen, which is the sole case where
+     * the address the verdict is about can differ from the one we signed in as.
      */
     suspend fun recheckGroup(activity: Activity): Pair<GoogleAccount?, GateResult> {
         liveToken?.let { return null to GroupGate.check(it) }

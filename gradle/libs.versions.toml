@@ -11,9 +11,13 @@ lifecycle = "2.8.7"
 activityCompose = "1.9.3"
 composeBom = "2026.06.01"
 navigationCompose = "2.8.4"
-credentials = "1.3.0"
-googleid = "1.1.1"
-playServicesAuth = "21.2.0"
+# Credential Manager delegates to the platform provider on Android 14 and up, so this is the
+# one dependency whose age is measured against the OS rather than against convenience. 1.3.0
+# predates the last three Android releases; sign-ins that never returned were called down to
+# it. Keep it and credentials-play-services-auth on the same version, always.
+credentials = "1.6.0"
+googleid = "1.2.0"
+playServicesAuth = "21.6.0"
 firebaseBom = "34.17.0"
 okhttp = "4.12.0"
 coil = "2.7.0"
