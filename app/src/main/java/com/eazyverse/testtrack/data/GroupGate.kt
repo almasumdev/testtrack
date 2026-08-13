@@ -6,11 +6,13 @@ import androidx.credentials.CredentialOption
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import com.eazyverse.testtrack.Config
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -115,8 +117,30 @@ object GroupGate {
      *
      * @throws NotGmailException if the chosen account is not @gmail.com.
      */
-    suspend fun signIn(context: Context): GoogleAccount =
-        credential(context, GetSignInWithGoogleOption.Builder(Config.WEB_CLIENT_ID).build())
+    suspend fun signIn(context: Context): GoogleAccount {
+        val option = GetSignInWithGoogleOption.Builder(Config.WEB_CLIENT_ID).build()
+        return try {
+            credential(context, option)
+        } catch (e: NoCredentialException) {
+            // Asked again because the first refusal is not believable.
+            //
+            // Nothing in this app differs between one press of the button and the next: the token
+            // is only written on success, and no flag is touched by a failure. So when the first
+            // press says there is no account and the second offers a chooser, the account was
+            // there the whole time and Play services had not finished looking. It resolves its
+            // provider and reads its account list lazily, and a cold call can return before that
+            // is done.
+            //
+            // Only NoCredentialException. Somebody who closed the chooser gets
+            // GetCredentialCancellationException instead, and reopening it under them because
+            // they shut it would be its own kind of rude.
+            delay(RETRY_PAUSE)
+            credential(context, option)
+        }
+    }
+
+    /** Long enough for Play services to finish waking, short enough to feel like one tap. */
+    private const val RETRY_PAUSE = 600L
 
     /**
      * A replacement token for an account that has already signed in once.
@@ -139,9 +163,22 @@ object GroupGate {
             signIn(context)
         }
 
+    /**
+     * One [CredentialManager], not a new one per attempt.
+     *
+     * Building it resolves and binds the credential provider, and doing that again on every press
+     * of the button means every press races the same cold start. Held against the application
+     * context so it outlives the activity; the activity is still what gets passed to
+     * `getCredential`, because that is the thing the chooser has to be shown over.
+     */
+    @Volatile private var cached: CredentialManager? = null
+
+    private fun manager(context: Context): CredentialManager =
+        cached ?: CredentialManager.create(context.applicationContext).also { cached = it }
+
     private suspend fun credential(context: Context, option: CredentialOption): GoogleAccount {
         val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
-        val response = CredentialManager.create(context).getCredential(context, request)
+        val response = manager(context).getCredential(context, request)
         val credential = response.credential
 
         if (credential is CustomCredential &&

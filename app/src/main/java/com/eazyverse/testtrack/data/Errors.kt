@@ -58,9 +58,14 @@ fun Throwable.friendly(
     this is GetCredentialCancellationException ->
         "Sign-in was cancelled. Tap Continue with Google when you're ready."
 
+    // Not "there is no Google account on this phone", which is what this said for months and is
+    // a claim the exception never makes. It means Google had no credential to offer *this
+    // request*, which is also what comes back while its account list is still warming up. So the
+    // people most likely to see it were being told to go and add the Gmail they were holding.
     this is NoCredentialException ->
-        "There's no Google account on this phone yet. Add the Gmail you test with under " +
-            "Settings, Accounts, then come back and try again."
+        "Google didn't offer an account to sign in with. If the Gmail you test with is already " +
+            "on this phone, open Settings, then Accounts, and check it's signed in. Then come " +
+            "back and try again."
 
     this is GetCredentialException -> "Google couldn't complete the sign-in. ${detail()}"
 
