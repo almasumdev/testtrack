@@ -130,8 +130,23 @@ object GroupGate {
                     return@withContext GateResult.Failed(it)
                 }
 
+                // A missing `isMember` is not a "no".
+                //
+                // optBoolean defaults to false, so every reply that did not explicitly say true
+                // came back as "isn't in the group yet": a truncated body, a shape the script
+                // changed, an error it phrased in a field this does not read. Telling somebody
+                // who joined an hour ago that they are not a member is the answer most likely to
+                // make them give up and least likely to be questioned, because it sounds like a
+                // fact rather than a failure. An answer we cannot read now says so.
+                if (!json.has("isMember")) {
+                    return@withContext GateResult.Failed(
+                        "The membership check gave an answer we couldn't read. " +
+                            "Try again in a moment. (${raw.take(100)})"
+                    )
+                }
+
                 val email = json.optString("email")
-                if (json.optBoolean("isMember", false)) GateResult.Member(email)
+                if (json.getBoolean("isMember")) GateResult.Member(email)
                 else GateResult.NotMember(email)
             }
         } catch (e: IOException) {
