@@ -3,8 +3,8 @@
 TestTrack helps a group of Android developers get each other's apps through Google Play's
 closed-testing requirement, without anyone having to chase screenshots in a WhatsApp thread.
 
-A new personal Play developer account needs 12 testers opted in for 14 continuous days before it
-can apply for production access. Finding 12 people willing to keep an app installed for a
+A new personal Play developer account needs [12 testers opted in for 14 continuous days](https://support.google.com/googleplay/android-developer/answer/14151465)
+before it can apply for production access. Finding 12 people willing to keep an app installed for a
 fortnight is hard alone, so developers form groups and test each other's apps. TestTrack is the
 place that group keeps score: you open the apps, the app records that you did, and every owner can
 see their own 14-day grid.
@@ -72,13 +72,17 @@ the single package it is checking, which is one of the apps in your group. Every
 skipped on the spot. Nothing about any other app is stored, remembered, or sent anywhere. The
 whole function is about forty lines and you can read it in
 [UsageRepo.kt](app/src/main/java/com/eazyverse/testtrack/data/UsageRepo.kt); the line that does the
-discarding is `if (event.packageName != pkg) continue`.
+discarding is `if (event.packageName != pkg) continue`. The numbers come from Android's
+[UsageStatsManager](https://developer.android.com/reference/android/app/usage/UsageStatsManager), which is
+the only source of them there is.
 
 **What leaves your phone.** One integer per app per day, the milliseconds that app was on screen.
 That is the entire upload. Not app names you use, not a timeline, not a browsing history.
 
-**It is not silent.** Usage access cannot be granted by a popup. You have to walk into Settings,
-into Special access, and switch it on yourself, and you can switch it off in the same place at any
+**It is not silent.** Usage access cannot be granted by a popup.
+[PACKAGE_USAGE_STATS](https://developer.android.com/reference/android/Manifest.permission#PACKAGE_USAGE_STATS)
+is not that kind of permission. You have to walk into Settings, into Special access, and switch it
+on yourself, and you can switch it off in the same place at any
 moment. TestTrack cannot turn it on, and cannot keep it on.
 
 > **বাংলায়:** Play শুধু অ্যাপ খোলা হয়েছে কিনা দেখে না, কতক্ষণ চালানো হয়েছে সেটাও দেখে। তাই শুধু
@@ -101,7 +105,9 @@ moment. TestTrack cannot turn it on, and cannot keep it on.
 
 **When it happens.** Only during a round that you start by pressing the button yourself. Android
 asks you to confirm screen sharing, and while the round runs it shows its own indicator that no
-app can hide. When the round ends, the capture stops.
+app can hide. When the round ends, the capture stops. The mechanism is Android's
+[MediaProjection](https://developer.android.com/media/grow/media-projection), and the consent prompt
+and the indicator are its rules rather than ours.
 
 **Why the moment is unannounced.** The shot lands at a random point inside each visit rather than
 at a fixed second. If it were predictable, opening an app and waiting for the flash would be
@@ -143,8 +149,9 @@ private things off your screen while a round runs.
 
 ## Google Drive access
 
-TestTrack asks for `drive.file`, which is the narrowest Drive permission Google publishes. It
-grants access to files this app itself created, and to nothing else. Not your documents, not your
+TestTrack asks for [`drive.file`](https://developers.google.com/workspace/drive/api/guides/api-specific-auth), which is
+the narrowest Drive permission Google publishes, and the one Google itself classifies as
+non-sensitive. It grants access to files this app itself created, and to nothing else. Not your documents, not your
 photos, not your backups, not a file some other app put there.
 
 This is not a promise the app is making. It is a boundary Google enforces on its own servers. Even
@@ -152,8 +159,10 @@ if TestTrack asked for one of your other files, the request would be refused. Th
 line, in [Config.kt](app/src/main/java/com/eazyverse/testtrack/Config.kt), and the comment beside
 it says not to widen it.
 
-You can withdraw the access at any time from your Google account's security page, without
-uninstalling anything.
+You can withdraw the access at any time from
+[your Google account's third-party access page](https://myaccount.google.com/permissions), without
+uninstalling anything. Google explains the procedure
+[here](https://support.google.com/accounts/answer/13533235).
 
 > **বাংলায়:** TestTrack Drive এর সবচেয়ে ছোট পারমিশনটা চায়, `drive.file`। এটা দিয়ে শুধু এই অ্যাপ
 > নিজে যেসব ফাইল বানিয়েছে সেগুলোতেই হাত দেওয়া যায়। আপনার ডকুমেন্ট, ছবি, ব্যাকআপ, অন্য অ্যাপের রাখা
@@ -174,8 +183,11 @@ would let it. What it learns about each of those named packages is: whether it i
 it was first installed, which store installed it, its name, and its icon. See
 [InstalledApps.kt](app/src/main/java/com/eazyverse/testtrack/data/InstalledApps.kt).
 
-The manifest deliberately does not hold `QUERY_ALL_PACKAGES`, the permission that would reveal
-everything on the phone. Dropping it is also what keeps TestTrack eligible for Play.
+The manifest deliberately does not hold [`QUERY_ALL_PACKAGES`](https://support.google.com/googleplay/android-developer/answer/10158779),
+the permission that would reveal everything on the phone. Play restricts it to a short list of app
+types that TestTrack is not one of, so dropping it is also what keeps TestTrack eligible. What it
+uses instead is ordinary
+[package visibility](https://developer.android.com/training/package-visibility).
 
 > **বাংলায়:** আপনার গ্রুপের অ্যাপগুলো ইনস্টল আছে কিনা, আর লিস্টে দেখানোর জন্য সেগুলোর নাম আর আইকন,
 > TestTrack এইটুকুই জানে। সে একটা একটা করে নির্দিষ্ট প্যাকেজের নাম ধরে জিজ্ঞেস করে। আপনার ফোনে কী কী
@@ -279,8 +291,10 @@ around.
 On some phones the usage access toggle is visible but refuses to move. Nothing is broken and it is
 not something TestTrack can fix from inside the app, so here is what is happening.
 
-Since Android 15, a protection called Enhanced Confirmation Mode blocks that setting for any app
-that arrived through a browser or a file manager. Apps that came from Play are not affected.
+Since Android 15, a protection called
+[Enhanced Confirmation Mode](https://developer.android.com/about/versions/15/behavior-changes-all)
+blocks that setting for any app that arrived through a browser or a file manager. Apps that came
+from Play are not affected.
 
 To clear it: open App info for TestTrack, tap the three-dot menu in the corner, and choose
 *Allow restricted settings*. That entry only appears after you have tried the blocked toggle once,
