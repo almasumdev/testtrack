@@ -25,3 +25,7 @@ google-services.json
 firestore-tests/node_modules/
 firestore-tests/package-lock.json
 firestore-debug.log
+
+# The Apps Script behind the membership check. Deliberately not tracked: the copy that decides
+# anything is the one deployed at /exec, and a second copy in here is one more thing to drift.
+gate.gs
