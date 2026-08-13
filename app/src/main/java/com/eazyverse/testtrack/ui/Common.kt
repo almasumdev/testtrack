@@ -229,7 +229,9 @@ fun Primary(
 @Composable
 fun AppIcon(pkg: String, label: String, size: Dp = 44.dp) {
     val context = LocalContext.current
-    val bitmap: ImageBitmap? = remember(pkg) {
+    // The revision is a key here too. An app that was absent cached a null icon, and without this
+    // the row stays a grey placeholder for the rest of the session after it is installed.
+    val bitmap: ImageBitmap? = remember(pkg, InstalledApps.revision) {
         InstalledApps.icon(context, pkg)?.let { drawable ->
             runCatching {
                 val w = drawable.intrinsicWidth.takeIf { it > 0 } ?: 108

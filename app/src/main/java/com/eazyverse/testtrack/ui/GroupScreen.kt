@@ -1,8 +1,10 @@
 package com.eazyverse.testtrack.ui
 
 import android.app.Activity
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
@@ -28,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
@@ -245,11 +248,39 @@ fun GroupScreen(
             if (event == Lifecycle.Event.ON_RESUME) {
                 canReturn = Settings.canDrawOverlays(context)
                 Session.refreshUsageAccess(context)
+                // Coming back from Play with the app now installed looks exactly like coming back
+                // from anywhere else, so every resume re-asks. It is one call per row and it moves
+                // nothing unless an answer changed.
+                InstalledApps.refresh(context)
                 vm.load(groupId)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+
+        // Resume alone is not enough. Play frequently finishes the download after the tester has
+        // already come back, so the row they are looking at would stay stale until they left and
+        // returned a second time, for no reason they could see. The system announces the install
+        // when it lands; a receiver that lives only as long as this screen is the cheap way to
+        // hear it, and needs no permission because these are protected broadcasts.
+        val installs = object : BroadcastReceiver() {
+            override fun onReceive(c: Context?, i: Intent?) = InstalledApps.refresh(context)
+        }
+        ContextCompat.registerReceiver(
+            context,
+            installs,
+            IntentFilter().apply {
+                addAction(Intent.ACTION_PACKAGE_ADDED)
+                addAction(Intent.ACTION_PACKAGE_REPLACED)
+                addAction(Intent.ACTION_PACKAGE_REMOVED)
+                addDataScheme("package")
+            },
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            runCatching { context.unregisterReceiver(installs) }
+        }
     }
 
     // A round finishes with TestTrack back in front and several captures banked at once, so every
@@ -651,7 +682,11 @@ private fun TestRow(
     onInstall: () -> Unit
 ) {
     val context = LocalContext.current
-    val info = remember(app.packageName) { InstalledApps.cachedInfo(context, app.packageName) }
+    // Keyed on the revision as well as the package: without it this row holds the answer it was
+    // first given, and an app installed since then keeps offering Install.
+    val info = remember(app.packageName, InstalledApps.revision) {
+        InstalledApps.cachedInfo(context, app.packageName)
+    }
 
     Row(
         Modifier.fillMaxWidth().padding(start = Gutter, end = 12.dp, top = 10.dp, bottom = 10.dp),

@@ -5,6 +5,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.os.Build
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 
 /**
  * What we can learn about another tester's app, and how to open it.
@@ -59,24 +62,65 @@ object InstalledApps {
     }
 
     /**
-     * Cached because a list of fourteen rows asks for this on every recomposition, and neither
-     * answer changes while the app is running — an install lands as a fresh process anyway.
+     * Cached because a list of fourteen rows asks for this on every recomposition.
+     *
+     * The cache used to be justified by "an install lands as a fresh process anyway", which is
+     * true of installing *this* app and not of installing any other. TestTrack sits in the
+     * background the whole time the tester is in Play, so it comes back to the same process
+     * holding the same answer it cached before they left: not installed. Hence [refresh].
      */
     private val infoCache = mutableMapOf<String, Info>()
     private val iconCache = mutableMapOf<String, Drawable?>()
+
+    /**
+     * Bumped whenever a cached answer actually changes.
+     *
+     * Compose state rather than a plain counter, so that reading it is a subscription. Clearing a
+     * map cannot make anything recompose on its own: a screen that never re-reads is exactly as
+     * stale as a cache that was never cleared.
+     */
+    private var generation by mutableIntStateOf(0)
+
+    /** Read this as a `remember` key to be re-run when the answers move. */
+    val revision: Int get() = generation
 
     /** The launcher icon, which is what makes a row recognisable at a glance. */
     fun icon(context: Context, pkg: String): Drawable? = iconCache.getOrPut(pkg) {
         runCatching { context.packageManager.getApplicationIcon(pkg) }.getOrNull()
     }
 
-    fun cachedInfo(context: Context, pkg: String): Info =
-        infoCache.getOrPut(pkg) { info(context, pkg) }
+    fun cachedInfo(context: Context, pkg: String): Info {
+        // Touched so that a composable reaching this through a helper subscribes too, rather than
+        // only the call sites that pass `revision` as a key.
+        @Suppress("UNUSED_EXPRESSION") generation
+        return infoCache.getOrPut(pkg) { info(context, pkg) }
+    }
 
-    /** Forget everything — after an install the streak and the icon both need re-reading. */
-    fun forget() {
-        infoCache.clear()
-        iconCache.clear()
+    /**
+     * Re-reads everything already cached, and says whether any of it moved.
+     *
+     * Called when TestTrack returns to the front, because that is the far side of the one event
+     * this cache cannot observe: the tester tapped Install, went to Play, and came back. There is
+     * no broadcast for "an app you asked about earlier now exists" that does not cost a receiver
+     * and a permission.
+     *
+     * The generation moves only when an answer genuinely changed, so the ordinary resume costs one
+     * PackageManager call per row and recomposes nothing. An uninstall is caught by the same pass,
+     * in the same way.
+     */
+    fun refresh(context: Context) {
+        var moved = false
+        for (pkg in infoCache.keys.toList()) {
+            val fresh = info(context, pkg)
+            if (fresh != infoCache[pkg]) {
+                infoCache[pkg] = fresh
+                // The icon could not be read while the app was absent, so a null was cached for
+                // it. Dropping that is what lets the row stop being a grey placeholder.
+                iconCache.remove(pkg)
+                moved = true
+            }
+        }
+        if (moved) generation++
     }
 
     fun info(context: Context, pkg: String): Info {
