@@ -199,15 +199,25 @@ fun SetupScreen(
      * costs nobody anything, because the tester is already on the screen and reading the step it
      * belongs to.
      *
-     * Silent, and only ever good news. "Not in the group yet" is left for the Verify button to
-     * say out loud when the tester asks it, rather than greeting a newcomer who has not had the
-     * chance to join yet with a refusal.
+     * Silent, but not one-way. It used to run only while the flag was false and only ever write
+     * true, and the flag is kept on disk, so the first true was permanent: somebody who left the
+     * group, was removed from it, or never belonged and got one wrong answer went on being told
+     * "You're in the group" on every launch after. A membership check that cannot take a
+     * membership away is not a check.
+     *
+     * So a definite verdict is written either way. Only [GateResult.Failed] leaves the flag
+     * alone, because that is the service not answering, and a check that could not run is no
+     * reason to throw away what was last known.
+     *
+     * Nothing is said out loud here. "Not in the group yet" belongs to the Verify button, when a
+     * tester asks for it, rather than greeting a newcomer who has not had a chance to join.
      */
     LaunchedEffect(Unit) {
-        if (!Session.isGroupMember) {
-            runCatching {
-                val (_, gate) = AuthRepo.recheckGroup(activity)
-                if (gate is GateResult.Member) Session.updateMember(true)
+        runCatching {
+            when (AuthRepo.recheckGroup(activity).second) {
+                is GateResult.Member -> Session.updateMember(true)
+                is GateResult.NotMember -> Session.updateMember(false)
+                is GateResult.Failed -> Unit
             }
         }
     }
