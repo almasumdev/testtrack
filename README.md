@@ -269,39 +269,27 @@ around.
 > এর একটা দিক জেনে রাখা ভালো, ওই পেজ ছাড়া অন্য কোথাও থেকে পাওয়া TestTrack এর APK আপনার ইনস্টল করা
 > কপির উপরে বসবে না। এটা ভুল নয়, এটাই নিরাপত্তার কাজ করছে।
 
-## Why you install it with adb, and why that is not a trick
+## If usage access will not switch on
 
-The install instructions say to run `adb install` instead of tapping the APK. That is an unusual
-thing to be asked, and being suspicious of an unusual instruction is the correct instinct. Here is
-the actual reason.
+On some phones the usage access toggle is visible but refuses to move. Nothing is broken and it is
+not something TestTrack can fix from inside the app, so here is what is happening.
 
-Since Android 15, a feature called Enhanced Confirmation Mode greys out usage access for any app
-that a browser or a file manager installed. The toggle is visibly there and simply will not move.
-Usage access is what this app's proof is made of, so an app installed by tapping a downloaded file
-cannot do its job at all.
+Since Android 15, a protection called Enhanced Confirmation Mode blocks that setting for any app
+that arrived through a browser or a file manager. Apps that came from Play are not affected.
 
-Installs from `adb`, and installs from Play, are both exempt. So there are exactly two ways to end
-up with a working copy, and until the Play track is open, `adb` is the one available.
+To clear it: open App info for TestTrack, tap the three-dot menu in the corner, and choose
+*Allow restricted settings*. That entry only appears after you have tried the blocked toggle once,
+so tap the toggle first if you do not see it. Then switch usage access on as normal.
 
-You can also fix it by hand after a browser install: App info, then the three-dot menu, then
-*Allow restricted settings*, which only appears after you have tapped the blocked toggle once. It
-is fiddly, which is why the instructions do not lead with it.
-
-> **বাংলায়:** ইনস্টলের নিয়মে বলা আছে APK তে ট্যাপ না করে `adb install` দিয়ে ইনস্টল করতে। এমন
-> অস্বাভাবিক নির্দেশ দেখে সন্দেহ হওয়াটাই স্বাভাবিক, তাই আসল কারণটা বলে রাখি।
+> **বাংলায়:** কোনো কোনো ফোনে usage access এর টগলটা দেখা যায় কিন্তু নড়ে না। কিছু নষ্ট হয়নি, আর
+> অ্যাপের ভেতর থেকে এটা ঠিক করারও উপায় নেই, তাই ব্যাপারটা বলে রাখি।
 >
-> Android 15 থেকে Enhanced Confirmation Mode নামে একটা ব্যবস্থা আছে, যেটা ব্রাউজার বা ফাইল
-> ম্যানেজার দিয়ে ইনস্টল করা অ্যাপের usage access বন্ধ করে রাখে। টগলটা চোখে দেখা যায়, কিন্তু নড়ে না।
-> আর এই অ্যাপের পুরো প্রমাণটাই ওই usage access দিয়ে তৈরি, তাই ডাউনলোড করা ফাইলে ট্যাপ করে ইনস্টল
-> করলে অ্যাপটা কাজই করতে পারবে না।
+> Android 15 থেকে Enhanced Confirmation Mode নামে একটা সুরক্ষা আছে, যেটা ব্রাউজার বা ফাইল ম্যানেজার
+> দিয়ে আসা অ্যাপের জন্য ওই সেটিংটা আটকে রাখে। Play থেকে আসা অ্যাপে এই বাধা নেই।
 >
-> `adb` দিয়ে ইনস্টল আর Play থেকে ইনস্টল, এই দুটোতে ওই বাধা নেই। Play এর ট্র্যাক খোলা না হওয়া পর্যন্ত
-> `adb` ই একমাত্র উপায়। চাইলে হাতেও ঠিক করা যায়, App info তে গিয়ে তিন ডটের মেনু থেকে *Allow
-> restricted settings*, তবে সেটা ঝামেলার, তাই ওটা আগে বলা হয় না।
-
-```bash
-adb install -r TestTrack.apk
-```
+> ঠিক করতে হলে, TestTrack এর App info খুলুন, কোনার তিন ডটের মেনুতে চাপ দিন, আর *Allow restricted
+> settings* বেছে নিন। অপশনটা তখনই দেখা যায় যখন একবার বন্ধ টগলটাতে চাপ দেওয়া হয়েছে, তাই না দেখলে
+> আগে টগলে একবার চাপ দিন। এরপর স্বাভাবিকভাবেই usage access চালু করতে পারবেন।
 
 ## What TestTrack never does
 
