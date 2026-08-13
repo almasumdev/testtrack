@@ -46,7 +46,6 @@ import androidx.compose.foundation.Image as ComposeImage
 
 /**
  * The pieces every screen is built from, so consistency is the path of least resistance.
- * See docs/ui.md.
  */
 
 /** The page gutter. Every screen, every row, no exceptions. */
