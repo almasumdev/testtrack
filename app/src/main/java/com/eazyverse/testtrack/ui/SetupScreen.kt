@@ -158,6 +158,27 @@ fun SetupScreen(
         }
     }
 
+    /**
+     * And the group, which used to be answered during sign-in and had no business being there.
+     *
+     * This is the slowest question the app asks: the service verifies the token with Google and
+     * then reads the whole testers roster, which grows with every person who joins. Asked here it
+     * costs nobody anything, because the tester is already on the screen and reading the step it
+     * belongs to.
+     *
+     * Silent, and only ever good news. "Not in the group yet" is left for the Verify button to
+     * say out loud when the tester asks it, rather than greeting a newcomer who has not had the
+     * chance to join yet with a refusal.
+     */
+    LaunchedEffect(Unit) {
+        if (!Session.isGroupMember) {
+            runCatching {
+                val (_, gate) = AuthRepo.recheckGroup(activity)
+                if (gate is GateResult.Member) Session.updateMember(true)
+            }
+        }
+    }
+
     val done = listOf(
         Session.signedIn,
         Session.isGroupMember,

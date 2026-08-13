@@ -13,7 +13,6 @@ import com.google.android.gms.common.api.Scope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -64,13 +63,19 @@ object AuthRepo {
         private set
 
     /**
-     * Signs in, exchanges the token for a Firebase session, and asks whether the account is in
-     * the group.
+     * Signs in and exchanges the token for a Firebase session. Nothing else.
      *
-     * A Firebase failure is recorded rather than thrown: the membership gate is independent of
-     * it, so the tester can still be told where they stand instead of seeing sign-in collapse.
+     * Deliberately only those two things. Setup exists to settle group membership, Drive, usage
+     * access and reminders, and it already asks each of them for itself. Sign-in used to answer
+     * two of those a second time while a spinner sat over the screen saying "Signing in...", which
+     * made the slowest question in the app, the group roster, the thing standing between a tester
+     * and the rest of it. Getting a session is quick; everything after it belongs to the screen
+     * that shows its progress.
+     *
+     * A Firebase failure is recorded rather than thrown, so a tester with a working Google account
+     * still lands somewhere they can act instead of watching sign-in collapse.
      */
-    suspend fun signInAndVerify(activity: Activity): Pair<GoogleAccount, GateResult> {
+    suspend fun signIn(activity: Activity): GoogleAccount {
         val account = GroupGate.signIn(activity)
         token = account.idToken
         tokenAt = System.currentTimeMillis()
@@ -81,23 +86,8 @@ object AuthRepo {
             "You're signed in, but Firebase turned the token down. Google needs enabling under " +
                 "Firebase Authentication, in Sign-in method. (${e.message})"
         }
-
-        // Bounded, and a slow answer is treated as "not yet" rather than as a failure.
-        //
-        // This call is the slow half of signing in, and it is not one request: the service checks
-        // the token with Google and then reads the whole testers roster, which gets longer every
-        // time somebody joins. It sits on the sign-in spinner, so as the group grew it turned a
-        // few seconds into a wait people quite reasonably read as the app being broken.
-        //
-        // Little is lost by giving up early. The next screen's first step is "Join the testers
-        // group" with a Verify button that runs this very check, so a member who times out here
-        // spends one tap instead of a minute, and is shown no error on the way.
-        val gate = withTimeoutOrNull(GATE_BUDGET) { GroupGate.check(account.idToken) }
-        return account to (gate ?: GateResult.NotMember(account.email))
+        return account
     }
-
-    /** Long enough for a warm service on a poor connection, short enough to keep a person. */
-    private const val GATE_BUDGET = 9_000L
 
     /**
      * Asks the membership service again — after the tester has gone off and joined the group.

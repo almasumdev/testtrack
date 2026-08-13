@@ -35,7 +35,6 @@ import com.eazyverse.testtrack.data.*
 import com.eazyverse.testtrack.data.AdminEvents
 import com.eazyverse.testtrack.findActivity
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 
 class AuthViewModel : ViewModel() {
     var busy by mutableStateOf(false)
@@ -47,28 +46,27 @@ class AuthViewModel : ViewModel() {
         message = null
         viewModelScope.launch {
             try {
-                val (account, gate) = AuthRepo.signInAndVerify(activity)
+                val account = AuthRepo.signIn(activity)
                 Session.updateEmail(account.email)
-                Session.updateMember(gate is GateResult.Member)
-
-                // Bounded, because a Firestore write does not report done until the server has
-                // acknowledged it. On a connection that drops here the coroutine simply never
-                // resumes and the spinner above it never comes down, which is the one way this
-                // screen can hang outright. Nothing on the way to Setup needs the row, and the
-                // next sign-in writes it again.
-                AuthRepo.uid?.let { uid ->
-                    withTimeoutOrNull(8_000) {
-                        runCatching { Repo.upsertUser(uid, account.email, account.email.substringBefore('@')) }
-                    }
-                }
 
                 // Everything that happened before this moment is history, not news. Without this
                 // a returning tester is greeted by every placement decision ever made about them.
                 AdminEvents.markCaughtUp(activity)
 
                 message = AuthRepo.firebaseError
-                    ?: (gate as? GateResult.Failed)?.reason
                 onDone()
+
+                // Started, not waited for. A Firestore write does not report done until the
+                // server has acknowledged it, so awaiting this on a connection that drops means a
+                // spinner that never comes down. Nothing on the way to Setup reads the row: it is
+                // a name for other people's grids, and the next sign-in writes it again.
+                AuthRepo.uid?.let { uid ->
+                    launch {
+                        runCatching {
+                            Repo.upsertUser(uid, account.email, account.email.substringBefore('@'))
+                        }
+                    }
+                }
             } catch (e: NotGmailException) {
                 message = "${e.email} isn't a Gmail account. Sign in with the Gmail you use for testing."
             } catch (e: Exception) {
