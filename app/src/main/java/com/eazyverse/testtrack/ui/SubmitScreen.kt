@@ -97,7 +97,14 @@ class SubmitViewModel : ViewModel() {
                 message = "You're not signed in any more. Sign in again and try this once more."
             } else {
                 runCatching { Repo.submitApp(uid, email, packageInput.trim(), nameInput.trim()) }
-                    .onSuccess { onDone() }
+                    .onSuccess {
+                        // After the write, never instead of it. The queue is the record; this only
+                        // saves an admin from finding out whenever they next happen to look.
+                        // Silent and best effort, so a failure here cannot cost a submission that
+                        // has already been accepted.
+                        runCatching { Notify.submission(nameInput.trim()) }
+                        onDone()
+                    }
                     .onFailure {
                         message = it.friendly(
                             "We couldn't submit that. Check your connection and try again.",
