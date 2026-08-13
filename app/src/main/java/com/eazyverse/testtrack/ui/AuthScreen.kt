@@ -34,7 +34,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.data.*
 import com.eazyverse.testtrack.data.AdminEvents
 import com.eazyverse.testtrack.findActivity
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 class AuthViewModel : ViewModel() {
     var busy by mutableStateOf(false)
@@ -53,22 +55,34 @@ class AuthViewModel : ViewModel() {
                 // a returning tester is greeted by every placement decision ever made about them.
                 AdminEvents.markCaughtUp(activity)
 
-                message = AuthRepo.firebaseError
-                onDone()
-
-                // Started, not waited for. A Firestore write does not report done until the
-                // server has acknowledged it, so awaiting this on a connection that drops means a
-                // spinner that never comes down. Nothing on the way to Setup reads the row: it is
-                // a name for other people's grids, and the next sign-in writes it again.
+                // Bounded rather than unawaited. A Firestore write does not report done until
+                // the server acknowledges it, so waiting without a limit is how this screen
+                // hangs; but launching it and walking away is worse, because navigating clears
+                // this ViewModel and cancels the scope, and the row quietly never gets written.
+                // It is the tester's name in twelve other people's grids, so it is worth six
+                // seconds and worth being sure about.
                 AuthRepo.uid?.let { uid ->
-                    launch {
+                    withTimeoutOrNull(6_000) {
                         runCatching {
                             Repo.upsertUser(uid, account.email, account.email.substringBefore('@'))
                         }
                     }
                 }
+
+                message = AuthRepo.firebaseError
+
+                // Last, and with nothing after it. This navigates, which clears the ViewModel and
+                // cancels the scope underneath us; any work left below would be killed mid-flight
+                // and reported as a failure by the catch.
+                onDone()
             } catch (e: NotGmailException) {
                 message = "${e.email} isn't a Gmail account. Sign in with the Gmail you use for testing."
+            } catch (e: CancellationException) {
+                // Navigating away cancels this scope, and CancellationException is an Exception,
+                // so the catch below was turning a completely normal sign-in into "We couldn't
+                // sign you in. Check your connection" on the way out. Cancellation is not a
+                // failure and must not be swallowed.
+                throw e
             } catch (e: Exception) {
                 message = e.friendly("We couldn't sign you in. Check your connection and try again.")
             }
