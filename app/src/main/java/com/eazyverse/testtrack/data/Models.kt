@@ -177,18 +177,28 @@ data class TestApp(
     val label: String get() = name.ifBlank { packageName }
 
     /**
-     * Where a tester joins this app's closed test.
+     * Where a tester installs this app.
      *
-     * Derived rather than stored: Play gives every track this address, and it is the package name
-     * with a fixed prefix. Nothing has to be supplied at submission and no existing app document
-     * needs a new field.
+     * Derived rather than stored: it is the package name with a fixed prefix, so nothing has to be
+     * supplied at submission and no existing app document needs a new field.
      *
-     * The opt-in page, deliberately, not the store listing. Opting in is the step Play's fourteen
-     * days are actually counted from, and it is the step people skip — and until someone has taken
-     * it the listing shows them nothing at all, so sending them there first is sending them to a
-     * dead end.
+     * The store listing, not `play.google.com/apps/testing/{package}`. That opt-in page belongs to
+     * a track whose testers were invited by email address, where accepting the invitation is a
+     * step of its own. TestTrack's cohorts are not built that way: every member joins the testers
+     * Google Group during setup, and being in the group *is* the opt-in. There is nothing left to
+     * accept, so the opt-in page has nothing to show and answers with an error, which is the one
+     * outcome guaranteed to read as a broken app.
      */
-    val optInUrl: String get() = "https://play.google.com/apps/testing/$packageName"
+    val storeUrl: String get() = "https://play.google.com/store/apps/details?id=$packageName"
+
+    /**
+     * The same listing, addressed to the Play app rather than to whatever claims https links.
+     *
+     * Worth trying first. A closed-testing listing is only visible to an account on the tester
+     * list, so opening it in a browser signed in as a different Google account shows "item not
+     * found" — the same dead end by another route. The Play app is already on the right account.
+     */
+    val storeAppUri: String get() = "market://details?id=$packageName"
 
     companion object {
         const val STATUS_PENDING = "pending"

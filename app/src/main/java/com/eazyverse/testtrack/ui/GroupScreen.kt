@@ -382,7 +382,7 @@ fun GroupScreen(
                                     ended = group.running,
                                     busy = CaptureService.capturing == app.packageName,
                                     onOpen = { run(listOf(app.packageName)) },
-                                    onInstall = { openOptIn(context, app) { vm.message = it } }
+                                    onInstall = { openInPlay(context, app) { vm.message = it } }
                                 )
                             }
                         }
@@ -610,27 +610,32 @@ private fun MineRow(app: TestApp, reporters: Int, group: TestGroup, onClick: () 
 }
 
 /**
- * Sends a tester to the page where they join this app's closed test.
+ * Sends a tester to this app's listing, to install it.
  *
- * The Play Store app claims these links, so on most phones this lands in Play rather than a
- * browser. Where it does not, a browser is a perfectly good place to accept an invitation.
+ * The Play app is asked directly first, by `market://`, and only then the https address. Both
+ * reach the same listing, but a closed-testing listing is visible only to an account on the tester
+ * list: opened in a browser signed in as somebody else, it reports the app as missing. Going to
+ * the Play app first keeps that from happening on a phone where it would have worked.
  *
- * A device with neither is possible — a stripped ROM, or Play disabled — and that is the one case
- * worth a message rather than a shrug, because the tester is now stuck on a step they cannot
- * complete from here.
+ * A device with neither is possible, a stripped ROM or Play disabled, and that is the one case
+ * worth a message rather than a shrug, because the tester is stuck on a step they cannot complete
+ * from here.
  */
-private fun openOptIn(context: Context, app: TestApp, onFailure: (String) -> Unit) {
-    runCatching {
+private fun openInPlay(context: Context, app: TestApp, onFailure: (String) -> Unit) {
+    fun open(uri: String) = runCatching {
         context.startActivity(
-            Intent(Intent.ACTION_VIEW, Uri.parse(app.optInUrl))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        )
-    }.onFailure {
-        onFailure(
-            "We couldn't open Play on this phone. Join the test at ${app.optInUrl} and install " +
-                "${app.label} from there."
+            Intent(Intent.ACTION_VIEW, Uri.parse(uri)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
     }
+
+    open(app.storeAppUri)
+        .recoverCatching { open(app.storeUrl).getOrThrow() }
+        .onFailure {
+            onFailure(
+                "We couldn't open Play on this phone. Install ${app.label} from " +
+                    "${app.storeUrl}, using the account you joined the testers group with."
+            )
+        }
 }
 
 @Composable
