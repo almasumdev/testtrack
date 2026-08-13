@@ -15,10 +15,12 @@ see their own 14-day grid.
 > দিন পার করতে না হয়।
 
 
-| | | | |
-|:--:|:--:|:--:|:--:|
-| ![Your groups, and what today still owes](docs/screens/home.png) | ![A day's worklist and the one button that walks it](docs/screens/today.png) | ![Fourteen days of who turned up](docs/screens/grid.png) | ![Five things to set up, once](docs/screens/setup.png) |
-| **Your cohorts,** and what today still owes | **One tap** opens every app in turn | **Fourteen days** of who turned up | **Five things** to set up, once |
+| | |
+|:--:|:--:|
+| ![Your groups, and what today still owes](docs/screens/home.png) | ![A day's worklist and the one button that walks it](docs/screens/today.png) |
+| **Your cohorts,** and what today still owes | **One tap** opens every app in turn |
+| ![Fourteen days of who turned up](docs/screens/grid.png) | ![Five things to set up, once](docs/screens/setup.png) |
+| **Fourteen days** of who turned up | **Five things** to set up, once |
 
 ---
 
