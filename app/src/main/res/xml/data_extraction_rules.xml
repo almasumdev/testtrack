@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Nothing leaves this app. Not to Google's servers, and not to a new phone.
+
+  android:allowBackup="false" was meant to be the whole answer and on Android 12 and up it is
+  not. It stops cloud backup, but "on devices from some device manufacturers" it does not stop a
+  device-to-device transfer, which is how a Samsung carried this app's flags through an
+  uninstall. The device-transfer block is the half that closes that, and it is the half that
+  cannot be expressed as a boolean anywhere in the manifest.
+
+  Everything is excluded rather than some chosen subset, because there is nothing here worth
+  carrying. Every fact that matters lives in Firestore against the Google account, or in the
+  tester's own Drive, and both come back on the next sign-in by themselves. What is left is a
+  handful of local flags, and a restored "you're in the group" is a lie the app then has to be
+  talked out of. We have paid for that bug twice already.
+
+  Both sections have to be spelled out. A section left empty means "back everything up", not
+  "back nothing up", so silence here would be the opposite of what it looks like.
+-->
+<data-extraction-rules>
+
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+        <!-- Direct-boot storage. Nothing lives here today; excluded so that stays true if
+             anything ever moves. -->
+        <exclude domain="device_root" />
+        <exclude domain="device_file" />
+        <exclude domain="device_database" />
+        <exclude domain="device_sharedpref" />
+    </cloud-backup>
+
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+        <exclude domain="device_root" />
+        <exclude domain="device_file" />
+        <exclude domain="device_database" />
+        <exclude domain="device_sharedpref" />
+    </device-transfer>
+
+</data-extraction-rules>

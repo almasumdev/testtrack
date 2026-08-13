@@ -131,9 +131,10 @@ fun AppNav(openGroup: MutableState<String?> = remember { mutableStateOf(null) })
     val start = remember {
         when {
             !Session.onboardingDone -> Routes.ONBOARDING
-            // Both halves must agree. The flags live in SharedPreferences, which Android's
-            // auto-backup restores onto a fresh install; the Firebase session does not come back
-            // with them. Trust the flags alone and the app sails past sign-in into a string of
+            // Both halves must agree. The flags live in SharedPreferences and the Firebase
+            // session does not, so the two can disagree: cleared credentials, a session expired
+            // while the app was shut, a restore that carried the flags and not the account.
+            // Trust the flags alone and the app sails past sign-in into a string of
             // PERMISSION_DENIEDs.
             !Session.signedIn || AuthRepo.uid == null -> Routes.AUTH
             !Session.setupComplete -> Routes.SETUP
