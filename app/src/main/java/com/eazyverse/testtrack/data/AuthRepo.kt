@@ -13,6 +13,7 @@ import com.google.android.gms.common.api.Scope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -80,8 +81,23 @@ object AuthRepo {
             "You're signed in, but Firebase turned the token down. Google needs enabling under " +
                 "Firebase Authentication, in Sign-in method. (${e.message})"
         }
-        return account to GroupGate.check(account.idToken)
+
+        // Bounded, and a slow answer is treated as "not yet" rather than as a failure.
+        //
+        // This call is the slow half of signing in, and it is not one request: the service checks
+        // the token with Google and then reads the whole testers roster, which gets longer every
+        // time somebody joins. It sits on the sign-in spinner, so as the group grew it turned a
+        // few seconds into a wait people quite reasonably read as the app being broken.
+        //
+        // Little is lost by giving up early. The next screen's first step is "Join the testers
+        // group" with a Verify button that runs this very check, so a member who times out here
+        // spends one tap instead of a minute, and is shown no error on the way.
+        val gate = withTimeoutOrNull(GATE_BUDGET) { GroupGate.check(account.idToken) }
+        return account to (gate ?: GateResult.NotMember(account.email))
     }
+
+    /** Long enough for a warm service on a poor connection, short enough to keep a person. */
+    private const val GATE_BUDGET = 9_000L
 
     /**
      * Asks the membership service again — after the tester has gone off and joined the group.

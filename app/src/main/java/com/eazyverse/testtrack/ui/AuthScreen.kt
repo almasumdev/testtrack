@@ -35,6 +35,7 @@ import com.eazyverse.testtrack.data.*
 import com.eazyverse.testtrack.data.AdminEvents
 import com.eazyverse.testtrack.findActivity
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 class AuthViewModel : ViewModel() {
     var busy by mutableStateOf(false)
@@ -50,18 +51,20 @@ class AuthViewModel : ViewModel() {
                 Session.updateEmail(account.email)
                 Session.updateMember(gate is GateResult.Member)
 
+                // Bounded, because a Firestore write does not report done until the server has
+                // acknowledged it. On a connection that drops here the coroutine simply never
+                // resumes and the spinner above it never comes down, which is the one way this
+                // screen can hang outright. Nothing on the way to Setup needs the row, and the
+                // next sign-in writes it again.
                 AuthRepo.uid?.let { uid ->
-                    runCatching { Repo.upsertUser(uid, account.email, account.email.substringBefore('@')) }
+                    withTimeoutOrNull(8_000) {
+                        runCatching { Repo.upsertUser(uid, account.email, account.email.substringBefore('@')) }
+                    }
                 }
 
                 // Everything that happened before this moment is history, not news. Without this
                 // a returning tester is greeted by every placement decision ever made about them.
                 AdminEvents.markCaughtUp(activity)
-
-                // Drive was very likely authorised on a previous install or session — the grant
-                // belongs to the account, not to this phone. Ask, so a returning tester is not
-                // marched through a step they cleared months ago.
-                Session.updateDriveConnected(AuthRepo.hasDriveAccess(activity))
 
                 message = AuthRepo.firebaseError
                     ?: (gate as? GateResult.Failed)?.reason

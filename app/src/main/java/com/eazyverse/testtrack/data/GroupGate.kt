@@ -45,10 +45,18 @@ sealed interface GateResult {
  */
 object GroupGate {
 
+    /**
+     * Short enough that a person is still waiting when it gives up.
+     *
+     * Sixty seconds is a sensible ceiling for a background job and a terrible one for a button.
+     * The membership check sits on the sign-in spinner, so the old limits meant a stalled Apps
+     * Script could hold "Signing in..." for the better part of two minutes before saying anything,
+     * which every tester read as the app being broken. A warm call answers in under two seconds.
+     */
     internal val http: OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(20, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
-        .writeTimeout(60, TimeUnit.SECONDS)
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(25, TimeUnit.SECONDS)
+        .writeTimeout(25, TimeUnit.SECONDS)
         // Apps Script /exec answers 302 -> script.googleusercontent.com and the JSON lives at
         // the redirect target. OkHttp follows it and downgrades POST to GET, which is exactly
         // what that endpoint expects. Leave followRedirects on.
