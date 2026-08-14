@@ -33,6 +33,31 @@ class GateResultTest {
     }
 
     @Test
+    fun `nor is a dot, which is how this shipped broken`() {
+        // The service folds dots before it looks anybody up, so it answers about the dotless
+        // form while the phone holds whatever the account sheet reported. Comparing the two
+        // strings told a real member, in the app, that Google had answered for somebody else.
+        // Four of twelve members write their address with dots.
+        assertFalse(GateResult.Member("mdbillamaruf@gmail.com").isAboutSomeoneElse("md.billamaruf@gmail.com"))
+        assertFalse(GateResult.NotMember("md.billamaruf@gmail.com").isAboutSomeoneElse("mdbillamaruf@gmail.com"))
+    }
+
+    @Test
+    fun `nor a plus suffix, nor googlemail`() {
+        assertFalse(GateResult.Member("tester+play@gmail.com").isAboutSomeoneElse(us))
+        assertFalse(GateResult.Member("tester@googlemail.com").isAboutSomeoneElse(us))
+    }
+
+    @Test
+    fun `a dot still separates two people outside gmail`() {
+        // Only Google promises dots are decoration. Everywhere else they are part of the name,
+        // and folding them there would merge two genuinely different accounts.
+        assertTrue(
+            GateResult.Member("first.last@example.com").isAboutSomeoneElse("firstlast@example.com")
+        )
+    }
+
+    @Test
     fun `a verdict about another account is rejected either way`() {
         // The one that let a non-member through: Credential Manager handed back the other Google
         // account on the phone, which really is in the group.
