@@ -176,10 +176,18 @@ object Enforcement {
 
             val day = group.dayIndex() ?: continue
             val mine = apps.firstOrNull { it.ownerUid == uid }
-            val others = apps.filter { it.ownerUid != uid }
+            val others = apps.filter { it.ownerUid != uid && it.active }
 
             standingFor(uid, group, day, others, mine)?.let { standings += it }
-            if (mine != null) enforceOn(uid, group, day, mine, apps)
+
+            // Nothing is enforced against an app that is already out of testing.
+            //
+            // Not leniency, arithmetic. Everyone was told to uninstall it, so nobody has been
+            // reporting on it, so every day since counts as missed and the very next sweep would
+            // remove it again for the absence its own removal caused. The days are forgiven
+            // because they were never asked for; the grid still shows them empty, which is the
+            // truth and is the admin's cue that something needs sorting out.
+            if (mine != null && !mine.removed) enforceOn(uid, group, day, mine, apps)
         }
 
         // A cohort that has vanished from under this account is one it is no longer a member of,
@@ -322,17 +330,14 @@ object Enforcement {
             // One member's removal failing must not stop the rest of the pass, so this is caught
             // here rather than left to the caller. Logged for the same reason as above: a refusal
             // means this device and the rules disagree about the sums, and that is worth seeing.
+            //
+            // Taken out of testing, not out of the group. Nobody's slot is emptied by arithmetic
+            // running on somebody else's phone at three in the morning; the cohort keeps its
+            // count and an admin decides what to do about it.
             runCatching {
-                Repo.evict(
-                    groupId = group.id,
-                    targetUid = app.ownerUid,
-                    targetAppId = app.id,
-                    byUid = uid,
-                    byAppId = mine.id,
-                    day = day
-                )
-                Log.i(TAG, "evicted ${app.ownerUid} from ${group.id} on day $day")
-            }.onFailure { Log.w(TAG, "could not evict ${app.ownerUid} from ${group.id}", it) }
+                Repo.softRemove(targetAppId = app.id, byAppId = mine.id)
+                Log.i(TAG, "removed ${app.ownerUid} from testing in ${group.id} on day $day")
+            }.onFailure { Log.w(TAG, "could not remove ${app.ownerUid} in ${group.id}", it) }
         }
     }
 

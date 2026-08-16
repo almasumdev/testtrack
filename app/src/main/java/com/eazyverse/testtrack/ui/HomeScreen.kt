@@ -87,7 +87,11 @@ class HomeViewModel : ViewModel() {
             runCatching {
                 val waiting = Repo.pendingApps(uid)
                 val progress = Repo.myGroups(uid).map { group ->
-                    val others = Repo.appsInGroup(group.id).filter { it.ownerUid != uid }
+                    // active, not placed: a removed app is still in the group and is owed
+                    // nothing, so counting it here would ask for a day on an app this tester has
+                    // been told to uninstall.
+                    val others = Repo.appsInGroup(group.id)
+                        .filter { it.ownerUid != uid && it.active }
                     val day = group.dayIndex()
                     val done = if (day == null) 0 else Repo.myProofsForDay(uid, group.id, day, group.startDate).size
                     GroupProgress(group, others.size, done)
@@ -412,14 +416,6 @@ private fun GroupRow(progress: GroupProgress, onClick: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            if (group.atRisk) {
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    "Short ${group.stillNeeded} member${if (group.stillNeeded == 1) "" else "s"}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Status.missed
-                )
-            }
         }
         Icon(
             Icons.AutoMirrored.Filled.KeyboardArrowRight, null,

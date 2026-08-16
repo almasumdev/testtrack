@@ -110,12 +110,6 @@ data class TestGroup(
     val size: Int get() = memberUids.size
     val running: Boolean get() = startDate > 0L
 
-    /** Short of the threshold. Before the run starts that is normal; during it, it is a problem. */
-    val underStrength: Boolean get() = size < THRESHOLD
-
-    /** How many more members before the clock can start. */
-    val stillNeeded: Int get() = (THRESHOLD - size).coerceAtLeast(0)
-
     /**
      * Which day of the run today is, or null before it starts and after it ends.
      *
@@ -129,12 +123,18 @@ data class TestGroup(
     }
 
     /**
-     * Losing a member mid-run does not rewind the count.
+     * Deliberately not here any more.
      *
-     * Play Console will have reset its own, so the two can disagree — the group screen says so
-     * outright rather than letting a grid that reads "day nine" quietly imply otherwise.
+     * There was an `atRisk` on this model, and two screens drew a red panel from it saying the
+     * group was short and to go and ask an admin. It has gone, along with the panels, because a
+     * group can now be started short on purpose: an admin can begin a run with eight people
+     * rather than leave eight waiting for a ninth. Under that, "you are five members short" is
+     * describing the plan, not a fault, and it is not something the person reading it could do
+     * anything about in either case.
+     *
+     * The admin console keeps its version of the warning, in full, because the person who can
+     * place another app is the one looking at that screen.
      */
-    val atRisk: Boolean get() = running && underStrength
 
     companion object {
         const val CAPACITY = 14
@@ -170,9 +170,33 @@ data class TestApp(
      * eight days before they arrived — which is indistinguishable from having skipped them.
      */
     val placedAt: Long = 0L,
-    val status: String = STATUS_PENDING
+    val status: String = STATUS_PENDING,
+
+    /**
+     * Taken out of testing by an admin, without leaving the group.
+     *
+     * Everybody uninstalls it and stops owing it a day. The owner keeps their own days on
+     * everybody else's apps and is told to go and talk to an admin. The group's member count does
+     * not move, which is deliberate: the slot is still theirs and this is reversible.
+     *
+     * Set by an admin only, and by the security rules rather than by convention, because an owner
+     * writing `removed: false` over their own removal is otherwise a single field away.
+     */
+    val removed: Boolean = false,
+    val removedAt: Long = 0L,
+    /** Blank for an automatic removal, which is every one nobody typed a reason for. */
+    val removedReason: String = ""
 ) {
     val placed: Boolean get() = status == STATUS_ASSIGNED && !groupId.isNullOrBlank()
+
+    /**
+     * In a group and being tested. Every daily obligation is built from these.
+     *
+     * The distinction that matters is between "in the group" and "owed a day". A removed app is
+     * the first and not the second, and code that reaches for [placed] where it means this is how
+     * somebody ends up being nagged to open an app they were told to uninstall.
+     */
+    val active: Boolean get() = placed && !removed
 
     val label: String get() = name.ifBlank { packageName }
 

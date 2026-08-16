@@ -306,12 +306,23 @@ service cloud.firestore {
         && !isBlocked(request.auth.uid)
       );
 
+      /**
+       * `removed` is the whole of a soft removal, so it is admin-only or it is nothing.
+       *
+       * The three fields are refused by name rather than by value, because an owner writing
+       * `removed: false` over their own removal is the entire attack and it looks like an
+       * ordinary update from every other angle. Absent fields are handled by asking what the
+       * write *touches*: documents from before this existed have none of them, and a write that
+       * leaves them alone affects no key here whether they are there or not.
+       */
       allow update: if isAdmin() || (
         signedIn()
         && request.auth.uid == request.resource.data.ownerUid
         && request.auth.uid == resource.data.ownerUid
         && request.resource.data.status == resource.data.status
         && request.resource.data.groupId == resource.data.groupId
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(['removed', 'removedAt', 'removedReason'].toSet())
       );
 
       /**
@@ -339,6 +350,45 @@ service cloud.firestore {
         && appData(request.resource.data.unplacedByAppId).groupId == resource.data.groupId
         && missedTwo(
              request.resource.data.unplacedByAppId,
+             resource.data.ownerUid,
+             ('placedAt' in resource.data ? resource.data.placedAt : 0),
+             get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.startDate,
+             runDaysOf(
+               get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data
+             )
+           );
+
+      /**
+       * Automatic removal: a member who stopped opening this app takes it out of testing.
+       *
+       * The same argument the eviction rule makes, reaching the same conclusion about the same
+       * person, and stopping short of the same act. Nothing here touches the group, so the
+       * cohort keeps its count and its slot, and only an admin can empty one.
+       *
+       * `hasOnly` rather than a list of pinned fields. The eviction rule above has to name every
+       * field it will not have changed, and that list has to be right forever; this one says what
+       * may change and refuses the rest by construction, so a field added to app documents next
+       * year cannot quietly become writable by a peer.
+       *
+       * `removed == true` only. Undoing a removal is an admin's, and a rule that accepted false
+       * here would let the removed member simply write it back.
+       *
+       * And never yourself. Removing your own app cannot help you — nobody would be testing it —
+       * but it would take you out of testing without an admin ever hearing about it.
+       */
+      allow update: if signedIn()
+        && resource.data.groupId is string
+        && resource.data.groupId != ''
+        && inGroup(resource.data.groupId)
+        && resource.data.ownerUid != request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['removed', 'removedAt', 'removedReason', 'removedByAppId'].toSet())
+        && request.resource.data.removed == true
+        && 'removedByAppId' in request.resource.data
+        && appData(request.resource.data.removedByAppId).ownerUid == request.auth.uid
+        && appData(request.resource.data.removedByAppId).groupId == resource.data.groupId
+        && missedTwo(
+             request.resource.data.removedByAppId,
              resource.data.ownerUid,
              ('placedAt' in resource.data ? resource.data.placedAt : 0),
              get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.startDate,

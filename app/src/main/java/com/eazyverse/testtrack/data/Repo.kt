@@ -140,7 +140,11 @@ object Repo {
         groupId = doc.getString("groupId")?.takeIf { it.isNotBlank() },
         submittedAt = doc.getLong("submittedAt") ?: 0L,
         placedAt = doc.getLong("placedAt") ?: 0L,
-        status = doc.getString("status") ?: TestApp.STATUS_PENDING
+        status = doc.getString("status") ?: TestApp.STATUS_PENDING,
+        // Absent from every document written before this existed, which reads as not removed.
+        removed = doc.getBoolean("removed") ?: false,
+        removedAt = doc.getLong("removedAt") ?: 0L,
+        removedReason = doc.getString("removedReason").orEmpty()
     )
 
     /**
@@ -342,6 +346,37 @@ object Repo {
      * The evidence is written down as well as acted on. `lastEviction` is the audit trail, and it
      * is also what the rule reads to know which app was missed.
      */
+    /**
+     * Takes somebody's app out of testing for missing their days, without taking their slot.
+     *
+     * What [evict] used to be called for and no longer is. Evicting dropped the member, which
+     * dropped the group to twelve and punished the twelve as much as the one; this leaves the
+     * cohort exactly as it was and stops the app being tested. Emptying a slot is an admin's
+     * decision now, taken in the console, with the person in front of them.
+     *
+     * One document and three fields, so there is no transaction and nothing to keep in step. Safe
+     * to run twice: every device in the cohort reaches the same conclusion from the same proofs,
+     * and the second write says what the first one said.
+     *
+     * `removedReason` is left blank on purpose. Blank is what the apps read as "no admin typed
+     * this", which is the difference between "an admin decided something about you" and "the
+     * count caught up with you".
+     */
+    suspend fun softRemove(targetAppId: String, byAppId: String) {
+        await(
+            db.collection("apps").document(targetAppId).update(
+                mapOf(
+                    "removed" to true,
+                    "removedAt" to System.currentTimeMillis(),
+                    "removedReason" to "",
+                    // The audit trail, and the rule's argument: it names the app that went
+                    // unopened, which is what lets the server go and check the proofs itself.
+                    "removedByAppId" to byAppId
+                )
+            )
+        )
+    }
+
     suspend fun evict(
         groupId: String,
         targetUid: String,

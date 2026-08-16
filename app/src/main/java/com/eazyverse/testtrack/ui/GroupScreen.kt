@@ -49,6 +49,16 @@ class GroupViewModel : ViewModel() {
     var mine by mutableStateOf<TestApp?>(null)
         private set
     var toTest by mutableStateOf<List<TestApp>>(emptyList())
+
+    /**
+     * Apps in this group that an admin has taken out of testing.
+     *
+     * Held separately from [toTest] rather than filtered out of it and forgotten, because there
+     * is something to do about these and it is more urgent than the day's list: they have to come
+     * off the phone. An app left installed goes on counting as an install against a developer who
+     * is no longer being tested.
+     */
+    var toUninstall by mutableStateOf<List<TestApp>>(emptyList())
         private set
     var doneToday by mutableStateOf<Set<String>>(emptySet())
         private set
@@ -104,7 +114,8 @@ class GroupViewModel : ViewModel() {
                 // Published in one go, after every query has answered — see [ready].
                 group = found
                 mine = own
-                toTest = apps.filter { it.ownerUid != uid }
+                toTest = apps.filter { it.ownerUid != uid && it.active }
+                toUninstall = apps.filter { it.ownerUid != uid && it.removed }
                 doneToday = banked
                 reportersForMine = reporters
 
@@ -148,7 +159,8 @@ class GroupViewModel : ViewModel() {
 
         group = cached
         mine = own
-        toTest = apps.filter { it.ownerUid != uid }
+        toTest = apps.filter { it.ownerUid != uid && it.active }
+        toUninstall = apps.filter { it.ownerUid != uid && it.removed }
         doneToday = banked
         reportersForMine = reporters
         ready = true
@@ -160,6 +172,20 @@ class GroupViewModel : ViewModel() {
      * Drive first, Firestore second: the proof document points at a Drive file, so writing the
      * document before the upload lands would leave a grid cell referencing nothing.
      */
+    /**
+     * Tells the admins this app cannot be installed.
+     *
+     * Answered on screen straight away rather than waiting for the send, because the tester's
+     * part is finished the moment they press it and the round trip is not theirs to watch. If it
+     * never arrives they have lost nothing they had.
+     */
+    fun reportCannotInstall(app: TestApp) {
+        message = "Thanks. The admins have been told about ${app.label}."
+        viewModelScope.launch {
+            runCatching { Notify.cannotInstall(app.label, app.packageName) }
+        }
+    }
+
     fun publish(activity: Activity, app: TestApp, capture: Capture) {
         val cohort = group ?: return
         val uid = AuthRepo.uid ?: return
@@ -242,6 +268,9 @@ fun GroupScreen(
     LaunchedEffect(groupId) { vm.load(groupId) }
 
     var canReturn by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
+
+    /** The app a tester is about to report as uninstallable, or null. */
+    var reporting by remember { mutableStateOf<TestApp?>(null) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -363,6 +392,18 @@ fun GroupScreen(
 
                     Header(group, vm.doneToday.size, vm.toTest.size)
 
+                    // Above the day's list, and above the button that starts it, because this is
+                    // the more urgent of the two and it is the one nothing else will remind them
+                    // about. An app left installed after its developer has been taken out of
+                    // testing goes on counting as an install for somebody nobody is testing.
+                    if (vm.toUninstall.isNotEmpty()) {
+                        Skipped(vm.toUninstall) { app ->
+                            context.startActivity(
+                                Intent(Intent.ACTION_DELETE, Uri.parse("package:${app.packageName}"))
+                            )
+                        }
+                    }
+
                     Action(
                         group = group,
                         outstanding = outstanding.size,
@@ -413,7 +454,8 @@ fun GroupScreen(
                                     ended = group.running,
                                     busy = CaptureService.capturing == app.packageName,
                                     onOpen = { run(listOf(app.packageName)) },
-                                    onInstall = { openInPlay(context, app) { vm.message = it } }
+                                    onInstall = { openInPlay(context, app) { vm.message = it } },
+                                    onCannotInstall = { reporting = app }
                                 )
                             }
                         }
@@ -424,6 +466,22 @@ fun GroupScreen(
                 }
             }
         }
+    }
+
+    reporting?.let { app ->
+        Ask(
+            title = "Can't install ${app.label}?",
+            body = "If Play says the app is not available, its testing track is set up wrong " +
+                "and nobody else can install it either. Telling the admins is the only way " +
+                "anyone finds out, and they can skip it so it stops counting against your " +
+                "day. Nothing happens to your own record either way.",
+            confirm = "Tell the admins",
+            onConfirm = {
+                reporting = null
+                vm.reportCannotInstall(app)
+            },
+            onDismiss = { reporting = null }
+        )
     }
 }
 
@@ -469,21 +527,14 @@ private fun Header(group: TestGroup, done: Int, total: Int) {
             Spacer(Modifier.height(14.dp))
             Meter(if (total == 0) 0f else done.toFloat() / total)
         }
-        if (group.atRisk) {
-            Spacer(Modifier.height(16.dp))
-            Text(
-                "This group is ${group.stillNeeded} member" +
-                    "${if (group.stillNeeded == 1) "" else "s"} short. The day count above keeps " +
-                    "going, but Play may have already reset its own. Ask an admin to fill the " +
-                    "empty slot.",
-                Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Status.missedSoft)
-                    .padding(12.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = Status.missed
-            )
-        }
+        // A short-handed group used to be called out here in red. It is not shown any more, and
+        // the reason is that being short is now something an admin can choose: a run can be
+        // started deliberately with eight people, and telling those eight every day that they are
+        // five short reads as a fault in their group rather than a decision about it.
+        //
+        // Nothing is hidden that a tester can act on. Filling an empty slot was never theirs to
+        // do, the day count in front of them is the same either way, and the admin console still
+        // shows the warning in full, which is where the person who can fix it is looking.
     }
 }
 
@@ -604,6 +655,66 @@ private fun Action(
             }
         }
     }
+
+}
+
+/**
+ * Apps nobody is being asked for, and what to do about them.
+ *
+ * Deliberately not called "uninstall these", which is what it said first and which assumes the
+ * tester ever got it installed. The commonest reason an app ends up here is that it was never
+ * installable: a closed testing track set up wrong, a listing that answers with an error, and
+ * thirteen people who could not have opened it however willing they were. Telling those thirteen
+ * to uninstall something they never had reads as an app that has lost track of itself.
+ *
+ * A removal is not a punishment being announced to the group either, so this says as little about
+ * the developer as it can. The reason line is shown when an admin typed one, because "not on
+ * closed testing yet" is worth knowing and stops people trying again.
+ *
+ * "Until it comes back" rather than a date, because there is no date. An admin decides, and
+ * anything more definite would be invented.
+ */
+@Composable
+private fun Skipped(apps: List<TestApp>, onUninstall: (TestApp) -> Unit) {
+    // Read once, out here. Inside the remember lambda it is a composable call in a place that is
+    // not composable, which the compiler catches and is right to.
+    val context = LocalContext.current
+
+    SectionLabel("Not being tested")
+    Panel {
+        apps.forEach { app ->
+            val info = remember(app.packageName, InstalledApps.revision) {
+                InstalledApps.cachedInfo(context, app.packageName)
+            }
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        app.label,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        app.removedReason.ifBlank {
+                            "Skipped for now. It does not count towards your day."
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                // Offered only to somebody who actually has it. The rest have nothing to do here.
+                if (info.installed) {
+                    Spacer(Modifier.width(10.dp))
+                    TextButton(onClick = { onUninstall(app) }) {
+                        Text("Uninstall", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -679,7 +790,8 @@ private fun TestRow(
     ended: Boolean,
     busy: Boolean,
     onOpen: () -> Unit,
-    onInstall: () -> Unit
+    onInstall: () -> Unit,
+    onCannotInstall: () -> Unit
 ) {
     val context = LocalContext.current
     // Keyed on the revision as well as the package: without it this row holds the answer it was
@@ -706,6 +818,25 @@ private fun TestRow(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            /*
+             * Only while it is not installed, because that is the only state in which somebody
+             * would say it.
+             *
+             * This exists because the failure it reports is invisible from everywhere else. An
+             * app whose closed testing track is set up wrong cannot be installed by anyone, and
+             * from the outside that looks exactly like thirteen people who did not bother. The
+             * tester staring at the error is the only one who knows, and without a button they
+             * have nowhere to put it except a chat nobody reads.
+             */
+            if (!info.installed) {
+                TextButton(
+                    onClick = onCannotInstall,
+                    contentPadding = PaddingValues(vertical = 4.dp)
+                ) {
+                    Text("Can't install this?", style = MaterialTheme.typography.labelSmall)
+                }
+            }
         }
         Spacer(Modifier.width(10.dp))
 

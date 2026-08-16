@@ -158,6 +158,89 @@ await check('the app half cannot change hands', () =>
     groupId: '', status: 'pending', placedAt: 0, ownerUid: ME, unplacedByAppId: MY_APP,
   })))
 
+console.log('\nRemoval is admin-only, in both directions')
+{
+  await env.clearFirestore()
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'apps', MY_APP), {
+      id: MY_APP, ownerUid: ME, ownerEmail: 'me@x.com', name: 'Mine',
+      packageName: MY_APP, groupId: GROUP, status: 'assigned',
+      submittedAt: PLACED, placedAt: PLACED, removed: true, removedAt: PLACED, removedReason: '',
+    })
+  })
+
+  // The whole attack, and from every other angle it is an ordinary update: the owner is the
+  // owner, the status is unchanged, the group is unchanged, and one boolean undoes a decision
+  // that was never theirs to take.
+  await check('an owner cannot lift their own removal', () =>
+    assertFails(updateDoc(doc(as(ME), 'apps', MY_APP), { removed: false })))
+  await check('nor smuggle it in beside a legitimate field', () =>
+    assertFails(updateDoc(doc(as(ME), 'apps', MY_APP), { name: 'Renamed', removed: false })))
+  await check('nor rewrite when it happened', () =>
+    assertFails(updateDoc(doc(as(ME), 'apps', MY_APP), { removedAt: 0 })))
+  await check('nor the reason it gives', () =>
+    assertFails(updateDoc(doc(as(ME), 'apps', MY_APP), { removedReason: 'nothing to see here' })))
+
+  // Three keys are refused, not every write. An owner still owns the rest of their document, and
+  // closing this by taking that away would be the worse trade.
+  await check('but still owns the rest of the document', () =>
+    assertSucceeds(updateDoc(doc(as(ME), 'apps', MY_APP), { name: 'Renamed' })))
+}
+
+console.log('\nAutomatic removal takes the app out of testing, not out of the group')
+{
+  await env.clearFirestore()
+  await seed([])                       // nobody has reported anything, so TARGET has missed
+
+  const soft = (as_, extra = {}) => updateDoc(doc(as_, 'apps', TARGET_APP), {
+    removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: MY_APP, ...extra,
+  })
+
+  await check('a cohort member may take a missing app out of testing', () =>
+    assertSucceeds(soft(as(ME))))
+  await check('an outsider may not', () =>
+    assertFails(soft(as(OUTSIDER))))
+
+  // The group is untouched by design. This is the whole difference between the two removals, so
+  // it is worth a test that says so rather than an absence nobody notices.
+  await check('and cannot drop the member while doing it', () =>
+    assertFails(updateDoc(doc(as(ME), 'groups', GROUP), { memberUids: [ME], appIds: [MY_APP] })))
+
+  await check('cannot smuggle another field alongside', () =>
+    assertFails(soft(as(ME), { name: 'Renamed' })))
+  await check('cannot place or unplace through it', () =>
+    assertFails(soft(as(ME), { groupId: '' })))
+  await check('cannot undo a removal, only make one', () =>
+    assertFails(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
+      removed: false, removedByAppId: MY_APP,
+    })))
+  await check('cannot claim somebody else did the checking', () =>
+    assertFails(soft(as(ME), { removedByAppId: TARGET_APP })))
+}
+
+{
+  await env.clearFirestore()
+  await seed([])
+  // Removing your own app cannot help anybody, and it would take them out of testing without an
+  // admin ever hearing about it.
+  await check('nobody may take their own app out of testing', () =>
+    assertFails(updateDoc(doc(as(TARGET), 'apps', TARGET_APP), {
+      removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: TARGET_APP,
+    })))
+}
+
+{
+  await env.clearFirestore()
+  // TARGET opening MY_APP is what proves they turned up. The other direction is me testing
+  // them, which says nothing about whether they did their days.
+  await seed([{ app: MY_APP, uid: TARGET, day: 1 }, { app: MY_APP, uid: TARGET, day: 2 }])
+  await check('somebody who has been reporting cannot be removed', () =>
+    assertFails(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
+      removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: MY_APP,
+    })))
+}
+
+
 console.log('\nToo early in the run to judge anyone')
 {
   const runStart = Date.now() - 1 * DAY - 3600_000  // day 1: only day 0 is finished

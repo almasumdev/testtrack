@@ -64,4 +64,28 @@ object Notify {
                 .put("name", appName)
         )
     }
+
+    /**
+     * Tells the admins an app in a group cannot be installed.
+     *
+     * The only way this is ever found out. An app whose closed testing track is set up wrong is
+     * not installable by anybody, so thirteen people fail at the same thing on the same day and
+     * every one of them assumes it is their phone. Nothing on the server can see it: the app
+     * document is perfectly well formed, the placement is real, and the only evidence is thirteen
+     * absences that look exactly like thirteen people not bothering.
+     *
+     * So a tester says so, and an admin marks it skipped. Silent and best effort like the rest of
+     * this: pressing the button is the tester's part, and whether the push lands is not their
+     * problem to see.
+     */
+    suspend fun cannotInstall(appName: String, packageName: String) {
+        val token = firebaseToken() ?: return
+        post(
+            JSONObject()
+                .put("idToken", token)
+                .put("action", "notifyProblem")
+                .put("name", appName)
+                .put("packageName", packageName)
+        )
+    }
 }
