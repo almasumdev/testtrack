@@ -74,6 +74,11 @@ service cloud.firestore {
       return 'runDays' in group ? group.runDays : 14;
     }
 
+    /** Absent on every group written before opening days could be excused, which means none were. */
+    function graceOf(group) {
+      return 'graceDays' in group ? group.graceDays : 0;
+    }
+
     /** Zero for a document written before placement dates were recorded, which blocks eviction. */
     function placedAtOf(appId) {
       return 'placedAt' in appData(appId) ? appData(appId).placedAt : 0;
@@ -115,11 +120,15 @@ service cloud.firestore {
      * puts the earliest possible removal on day three, the first day with two finished days behind
      * it.
      */
-    function missedTwo(byAppId, targetUid, targetPlacedAt, startDate, runDays) {
+    function missedTwo(byAppId, targetUid, targetPlacedAt, startDate, runDays, graceDays) {
       return startDate > 0
         && targetPlacedAt > 0
         && placedAtOf(byAppId) > 0
         && dayOf(startDate) >= 2
+        // Opening days an admin excused for the whole cohort. The same floor the tester app
+        // applies, and it has to be here too or a device that agrees with the rule about
+        // everything else has its write refused for agreeing about this.
+        && dayOf(startDate) - 2 >= graceDays
         // Past the end of the run nothing is owed, so nothing can be missed. An admin may have
         // extended it, which is why this asks the group rather than assuming fourteen.
         && dayOf(startDate) < runDays
@@ -263,7 +272,8 @@ service cloud.firestore {
              request.resource.data.lastEviction.uid,
              placedAtOf(request.resource.data.lastEviction.appId),
              resource.data.startDate,
-             runDaysOf(resource.data)
+             runDaysOf(resource.data),
+             graceOf(resource.data)
            );
     }
 
@@ -355,6 +365,9 @@ service cloud.firestore {
              get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.startDate,
              runDaysOf(
                get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data
+             ),
+             graceOf(
+               get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data
              )
            );
 
@@ -393,6 +406,9 @@ service cloud.firestore {
              ('placedAt' in resource.data ? resource.data.placedAt : 0),
              get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.startDate,
              runDaysOf(
+               get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data
+             ),
+             graceOf(
                get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data
              )
            );
@@ -452,6 +468,9 @@ service cloud.firestore {
              get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
                .data.startDate,
              runDaysOf(
+               get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data
+             ),
+             graceOf(
                get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data
              )
            );

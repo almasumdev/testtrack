@@ -69,12 +69,16 @@ object Compliance {
         startDate: Long,
         testerPlacedAt: Long,
         appPlacedAt: Long,
-        count: Int
+        count: Int,
+        graceDays: Int = 0
     ): List<Int> {
         val last = lastCompletedDay(dayIndex) ?: return emptyList()
+        // Three floors, and the latest of them wins: when the tester arrived, when the app
+        // arrived, and how many opening days an admin excused for everybody.
         val first = maxOf(
             firstJudgedDay(testerPlacedAt, startDate),
-            firstJudgedDay(appPlacedAt, startDate)
+            firstJudgedDay(appPlacedAt, startDate),
+            graceDays.coerceAtLeast(0)
         )
         return (0 until count).map { last - it }.filter { it >= first }
     }
@@ -104,6 +108,21 @@ data class TestGroup(
      * the end: the days simply stop being owed, and testing carries on for anyone who wants to.
      * Extending is the only way obligation continues.
      */
+    /**
+     * Days at the start of the run that nobody is held to.
+     *
+     * A run begins the moment its thirteenth app is placed, which can be eight in the evening, and
+     * the people it begins for are not watching for it. They find out when they next open the app,
+     * and two of those days in a row is a removal for somebody who never knew the clock had
+     * started.
+     *
+     * The days still exist and still show in the grid, empty. This only decides whether anybody
+     * can be removed for them, which is the part that cannot be undone.
+     *
+     * Zero on every group written before this, which reads as "hold everyone to everything" and
+     * is what those groups have been doing all along.
+     */
+    val graceDays: Int = 0,
     val runDays: Int = RUN_DAYS,
     val status: String = STATUS_FORMING
 ) {

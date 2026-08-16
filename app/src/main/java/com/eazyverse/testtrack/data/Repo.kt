@@ -118,6 +118,7 @@ object Repo {
         appIds = (doc.get("appIds") as? List<*>)?.filterIsInstance<String>().orEmpty(),
         startDate = doc.getLong("startDate") ?: 0L,
         runDays = (doc.getLong("runDays") ?: RUN_DAYS.toLong()).toInt(),
+        graceDays = (doc.getLong("graceDays") ?: 0L).toInt(),
         status = doc.getString("status") ?: TestGroup.STATUS_FORMING
     )
 

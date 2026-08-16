@@ -31,7 +31,7 @@ async function check(name, fn) {
   catch (e) { console.log(`  FAIL  ${name}\n        ${String(e).split('\n')[0]}`); fail++ }
 }
 
-async function seed(proofs = []) {
+async function seed(proofs = [], group = {}) {
   await env.clearFirestore()
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore()
@@ -41,6 +41,7 @@ async function seed(proofs = []) {
       appIds: [MY_APP, TARGET_APP],
       startDate: START,
       status: 'running',
+      ...group,
     })
     await setDoc(doc(db, 'apps', MY_APP), {
       id: MY_APP, ownerUid: ME, ownerEmail: 'me@x.com', name: 'Mine',
@@ -236,6 +237,33 @@ console.log('\nAutomatic removal takes the app out of testing, not out of the gr
   await seed([{ app: MY_APP, uid: TARGET, day: 1 }, { app: MY_APP, uid: TARGET, day: 2 }])
   await check('somebody who has been reporting cannot be removed', () =>
     assertFails(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
+      removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: MY_APP,
+    })))
+}
+
+
+console.log('\nOpening days an admin excused are owed by nobody')
+{
+  // START is three days back, so today is day 3 and days 2 and 1 would ordinarily be judged.
+  await seed([], { graceDays: 2 })
+  await check('a removal inside the excused days is refused', () =>
+    assertFails(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
+      removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: MY_APP,
+    })))
+
+  // Same group, same absences, nothing excused. Without this the test above proves only that
+  // something refused it, not that the excusing did.
+  await seed([], { graceDays: 0 })
+  await check('and allowed once nothing is excused', () =>
+    assertSucceeds(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
+      removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: MY_APP,
+    })))
+
+  // Groups written before any of this have no graceDays at all, and have to carry on behaving as
+  // they always did rather than erroring their way into a refusal.
+  await seed([])
+  await check('a group with no graceDays field behaves as it always did', () =>
+    assertSucceeds(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
       removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: MY_APP,
     })))
 }

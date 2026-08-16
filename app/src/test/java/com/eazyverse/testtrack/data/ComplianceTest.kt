@@ -56,6 +56,32 @@ class ComplianceTest {
     }
 
     @Test
+    fun `excused opening days are not owed by anybody`() {
+        val founder = start - 1000L
+        // Day 3, so days 2 and 1 would ordinarily be judged. Excusing two takes day 1 out.
+        assertEquals(listOf(2), Compliance.judgedDays(3, start, founder, founder, 2, graceDays = 2))
+        // Excuse three and there is nothing left to judge until day 4 has finished.
+        assertEquals(
+            emptyList<Int>(),
+            Compliance.judgedDays(3, start, founder, founder, 2, graceDays = 3)
+        )
+        // And it stops mattering once the run is past it.
+        assertEquals(
+            listOf(9, 8),
+            Compliance.judgedDays(10, start, founder, founder, 2, graceDays = 2)
+        )
+    }
+
+    @Test
+    fun `excusing nothing is what every run did before this existed`() {
+        val founder = start - 1000L
+        assertEquals(
+            Compliance.judgedDays(5, start, founder, founder, 2),
+            Compliance.judgedDays(5, start, founder, founder, 2, graceDays = 0)
+        )
+    }
+
+    @Test
     fun `the later of the two arrivals bounds the days owed`() {
         val founder = start - 1000L
         val joinedDayTwo = start + 2 * day + 1000L

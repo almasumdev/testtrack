@@ -317,7 +317,8 @@ object Enforcement {
                 startDate = group.startDate,
                 testerPlacedAt = app.placedAt,
                 appPlacedAt = mine.placedAt,
-                count = Compliance.MISSES_TO_REMOVE
+                count = Compliance.MISSES_TO_REMOVE,
+                graceDays = group.graceDays
             )
             // Only the days in question. Logging the whole attendance set put several thousand
             // characters and every member's uid into logcat, once per member per sweep.
