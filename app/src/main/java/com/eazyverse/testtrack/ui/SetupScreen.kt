@@ -478,7 +478,7 @@ fun SetupScreen(
                 // button and Open a text link under it, so the loud control was the one that
                 // cannot succeed until the quiet one has been used. Somebody arriving at this
                 // step has not joined yet; that is what the step is for.
-                Primary("Open the group") {
+                Primary("Open the group", enabled = !vm.checkingGroup) {
                     activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Config.GROUP_URL)))
                 }
                 Spacer(Modifier.height(8.dp))
@@ -488,9 +488,9 @@ fun SetupScreen(
                         vm.needsGoogle -> "Confirm with Google"
                         else -> "I've joined, check now"
                     },
-                    Modifier.fillMaxWidth()
+                    Modifier.fillMaxWidth(),
+                    enabled = !vm.checkingGroup
                 ) {
-                    if (vm.checkingGroup) return@Secondary
                     if (vm.needsGoogle) vm.signInAgain(activity) else vm.verifyGroup(activity)
                 }
 

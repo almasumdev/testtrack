@@ -160,10 +160,12 @@ fun Secondary(
     label: String,
     modifier: Modifier = Modifier,
     destructive: Boolean = false,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     OutlinedButton(
         onClick = onClick,
+        enabled = enabled,
         shape = RoundedCornerShape(10.dp),
         contentPadding = PaddingValues(horizontal = 8.dp),
         modifier = modifier.height(42.dp)
@@ -172,8 +174,13 @@ fun Secondary(
             label,
             style = MaterialTheme.typography.labelLarge,
             maxLines = 1,
-            color = if (destructive) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurface
+            // Dimmed rather than merely inert. A control that ignores taps while still looking
+            // pressable reads as the app having missed them.
+            color = when {
+                !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                destructive -> MaterialTheme.colorScheme.error
+                else -> MaterialTheme.colorScheme.onSurface
+            }
         )
     }
 }
