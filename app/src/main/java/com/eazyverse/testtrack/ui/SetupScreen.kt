@@ -16,6 +16,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -39,6 +41,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.data.*
 import com.eazyverse.testtrack.findActivity
@@ -417,7 +423,8 @@ fun SetupScreen(
                             "next to the group's name. Tap that and ignore everything below it.\n\n" +
                             "If there is no Join group button, the browser is signed in as a " +
                             "different Google account. Switch it to the Gmail on step one and " +
-                            "open the link again."
+                            "open the link again.",
+                        art = { GroupPageShots() }
                     ),
                     QA(
                         "I joined, but Verify says I'm not in it",
@@ -649,7 +656,20 @@ fun SetupScreen(
 }
 
 /** One question a step raises, and the answer to it. */
-data class QA(val q: String, val a: String)
+/**
+ * One question a step raises, the answer to it, and sometimes a picture.
+ *
+ * [art] is for the one case where words are the wrong tool: a page whose layout is the problem.
+ * Drawn rather than photographed, and deliberately not a lookalike. A screenshot of somebody
+ * else's page goes stale the week they restyle it, and a convincing copy of a Google page is a
+ * thing nobody should be shipping. A diagram in this app's own colours can only be read as a
+ * diagram, which is what it is.
+ */
+data class QA(
+    val q: String,
+    val a: String,
+    val art: (@Composable () -> Unit)? = null
+)
 
 /**
  * One node on the rail.
@@ -853,11 +873,63 @@ private fun Answers(items: List<QA>) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = MaterialTheme.typography.bodySmall.fontSize * 1.5f
                     )
+                    item.art?.let {
+                        Spacer(Modifier.height(12.dp))
+                        it()
+                    }
                 }
             }
             Dashes()
         }
     }
+}
+
+/**
+ * The page itself, twice, with the difference between the two marked.
+ *
+ * Drawn from the real thing rather than approximated, because the whole problem is where a
+ * particular button sits relative to a particular message, and a tidied-up illustration would put
+ * them wherever it was convenient. The ring and the dashed box are the only things added.
+ *
+ * Above: the way in, which is small, at the top, and easy to miss under a refusal set three times
+ * its size. Below: the same page on the wrong Google account, where the button is simply absent,
+ * which is a different problem with a different fix and looks almost identical until you know
+ * where to look.
+ */
+@Composable
+private fun GroupPageShots() {
+    Column(Modifier.fillMaxWidth()) {
+        Shot(
+            R.drawable.group_page_join,
+            "Signed in as the right account. Tap the button at the top and ignore the rest."
+        )
+        Spacer(Modifier.height(14.dp))
+        Shot(
+            R.drawable.group_page_no_join,
+            "No button at all. The browser is on a different Google account, so switch it to the " +
+                "Gmail on step one."
+        )
+    }
+}
+
+@Composable
+private fun Shot(id: Int, caption: String) {
+    Image(
+        painter = painterResource(id),
+        contentDescription = null,
+        contentScale = ContentScale.FillWidth,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp))
+    )
+    Spacer(Modifier.height(6.dp))
+    Text(
+        caption,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        lineHeight = MaterialTheme.typography.labelSmall.fontSize * 1.4f
+    )
 }
 
 /** The console's dashed rule, which is what separates rows in a list over there. */
