@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -366,25 +367,6 @@ fun SetupScreen(
                 live = live(0),
                 onToggle = { toggle(0) },
                 actionOutlivesTheStep = true,
-                answers = listOf(
-                    QA(
-                        "Why does it have to be a Gmail?",
-                        "Play Console ties closed testing to Google accounts. An app owner adds " +
-                            "you to their test by email address, and Google will only accept a " +
-                            "Google one."
-                    ),
-                    QA(
-                        "I used the wrong account. What do I lose?",
-                        "Nothing that was already reported. Your days, your group and your Drive " +
-                            "files stay with the account that made them, and they are waiting if " +
-                            "you sign back in."
-                    ),
-                    QA(
-                        "Can I use two accounts on one phone?",
-                        "You can have both on the phone, but TestTrack works with the one you " +
-                            "sign in as. The Drive connection below follows that same account."
-                    )
-                )
             ) {
                 Text(
                     "You're signed in as ${Session.email ?: "this account"}. If that's the wrong " +
@@ -922,25 +904,41 @@ private fun GroupPageShots() {
     Column(Modifier.fillMaxWidth()) {
         Shot(
             R.drawable.group_page_join,
-            "Signed in as the right account. Tap the button at the top and ignore the rest."
+            286.dp,
+            "Tap the button. When it disappears, you have joined."
         )
         Spacer(Modifier.height(14.dp))
         Shot(
             R.drawable.group_page_no_join,
-            "No button at all. The browser is on a different Google account, so switch it to the " +
-                "Gmail on step one."
+            270.dp,
+            "No button here? Your browser is signed in with a different Gmail. Switch it to " +
+                "the one on step one, then open the link again."
         )
     }
 }
 
+/**
+ * [height] is stated rather than derived, which looks like the lazy way round and is not.
+ *
+ * The rail this sits inside is a Row measured at IntrinsicSize.Min, so the connector can run the
+ * height of whatever the step turns out to be. Intrinsic measurement asks a child how tall it
+ * wants to be without telling it how wide it will end up, and an image sized from its own aspect
+ * ratio cannot answer that: it reports something far too short, gets laid out at that height, and
+ * loses its top. Both screenshots came out missing the title row, which is where the button and
+ * the ring are, so the picture lost the only thing it was there to show.
+ *
+ * A stated height answers the intrinsic query honestly. Fit then scales the picture inside it, so
+ * a narrower screen makes it smaller rather than cutting a piece off.
+ */
 @Composable
-private fun Shot(id: Int, caption: String) {
+private fun Shot(id: Int, height: Dp, caption: String) {
     Image(
         painter = painterResource(id),
         contentDescription = null,
-        contentScale = ContentScale.FillWidth,
+        contentScale = ContentScale.Fit,
         modifier = Modifier
             .fillMaxWidth()
+            .height(height)
             .clip(RoundedCornerShape(10.dp))
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp))
     )
