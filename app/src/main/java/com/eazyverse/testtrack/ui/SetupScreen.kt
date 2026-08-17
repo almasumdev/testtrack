@@ -289,7 +289,21 @@ fun SetupScreen(
 
         val outstanding = done.indexOfFirst { !it }
         var reopened by rememberSaveable { mutableStateOf<Int?>(null) }
+
+        /**
+         * Which step is showing its instructions.
+         *
+         * The first outstanding one by default, which is almost always the one somebody came for.
+         * [reopened] overrides it, and now any step can set it: tap a finished one to see how it
+         * was done, tap one further down to read what is coming.
+         *
+         * Still one at a time. Five steps expanded at once is a page of instructions with no
+         * indication of where you are in it, which is the screen this replaced.
+         */
         fun live(index: Int) = if (reopened != null) reopened == index else index == outstanding
+
+        /** Tapping the open one closes it, which hands the choice back to the app. */
+        fun toggle(index: Int) { reopened = if (live(index)) null else index }
 
         Column(Modifier.padding(start = Gutter, end = Gutter, top = 36.dp, bottom = 24.dp)) {
             Text(
@@ -329,7 +343,7 @@ fun SetupScreen(
                 result = Session.email ?: "",
                 done = done[0],
                 live = live(0),
-                onReopen = { reopened = if (live(0)) null else 0 }.takeIf { done[0] },
+                onToggle = { toggle(0) },
                 answers = listOf(
                     QA(
                         "Why does it have to be a Gmail?",
@@ -373,7 +387,7 @@ fun SetupScreen(
                     "and verify.",
                 done = done[1],
                 live = live(1),
-                onReopen = null,
+                onToggle = { toggle(1) },
                 answers = listOf(
                     QA(
                         "I joined, but Verify says I'm not in it",
@@ -415,7 +429,7 @@ fun SetupScreen(
                     "yours. We can only see the files we put there and nothing else in it.",
                 done = done[2],
                 live = live(2),
-                onReopen = null,
+                onToggle = { toggle(2) },
                 answers = listOf(
                     // First, and open by default, because it is the one people arrive with. The
                     // grant is the account's, and a phone carrying two Google accounts is the
@@ -464,7 +478,7 @@ fun SetupScreen(
                     "TestTrack in the list and turn it on yourself.",
                 done = done[3],
                 live = live(3),
-                onReopen = null,
+                onToggle = { toggle(3) },
                 answers = listOf(
                     // The most common way this step fails, and the one a tester cannot solve by
                     // trying harder: the switch is there, they tap it, and Android refuses
@@ -520,7 +534,7 @@ fun SetupScreen(
                 done = done[4],
                 live = live(4),
                 last = true,
-                onReopen = null,
+                onToggle = { toggle(4) },
                 answers = listOf(
                     QA(
                         "How many will I get?",
@@ -621,7 +635,7 @@ private fun Step(
     result: String,
     done: Boolean,
     live: Boolean,
-    onReopen: (() -> Unit)?,
+    onToggle: () -> Unit,
     detail: String? = null,
     last: Boolean = false,
     answers: List<QA> = emptyList(),
@@ -630,7 +644,10 @@ private fun Step(
     Row(
         Modifier
             .fillMaxWidth()
-            .then(if (onReopen != null && !live) Modifier.clickable(onClick = onReopen) else Modifier)
+            // Always, and in both directions. It used to be tappable only when it was closed
+            // and only on the one step that could reopen, so a step you had opened out of
+            // curiosity could not be put away again.
+            .clickable(onClick = onToggle)
             .padding(horizontal = Gutter)
             .height(IntrinsicSize.Min)
     ) {
