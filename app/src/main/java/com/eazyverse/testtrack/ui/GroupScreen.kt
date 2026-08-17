@@ -40,6 +40,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.data.*
 import com.eazyverse.testtrack.findActivity
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -94,9 +96,34 @@ class GroupViewModel : ViewModel() {
      * Shows what was known before fetching. A ViewModel is rebuilt on every navigation, so without
      * the cache, stepping into an app and back would spin over content already in hand.
      */
+    /**
+     * Held for as long as this screen is on the stack, and started once.
+     *
+     * The apps in a cohort are the one thing here that another person changes: an admin takes one
+     * out of testing and everybody else is meant to uninstall it. Everything else on the screen is
+     * about the reader, so it stays on [load].
+     */
+    private var watching: Job? = null
+
+    private fun watch(groupId: String) {
+        if (watching != null) return
+        watching = viewModelScope.launch {
+            Repo.watchAppsInGroup(groupId)
+                .catch { /* The reload on resume is still there and still corrects this. */ }
+                .collect { apps ->
+                    val uid = AuthRepo.uid ?: return@collect
+                    toTest = apps.filter { it.ownerUid != uid && it.active }
+                    toUninstall = apps.filter { it.ownerUid != uid && it.removed }
+                    mine = apps.firstOrNull { it.ownerUid == uid }
+                    Cache.put(Cache.appsIn(groupId), apps)
+                }
+        }
+    }
+
     fun load(groupId: String) {
         val uid = AuthRepo.uid ?: return
 
+        watch(groupId)
         showCached(uid, groupId)
 
         viewModelScope.launch {

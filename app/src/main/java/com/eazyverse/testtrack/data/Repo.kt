@@ -4,6 +4,9 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -330,6 +333,33 @@ object Repo {
     suspend fun appsInGroup(groupId: String): List<TestApp> =
         await(db.collection("apps").whereEqualTo("groupId", groupId).get())
             .documents.map(::parseApp).sortedBy { it.label.lowercase() }
+
+    /**
+     * The same cohort, live.
+     *
+     * A one-shot read is right for a list that only changes when its owner changes it. This one
+     * changes when somebody else does: an admin takes an app out of testing and thirteen people
+     * are supposed to stop opening it and uninstall it. Read once on entry, those thirteen carry
+     * on being asked to install it until each of them happens to leave the screen and come back,
+     * which for anybody sitting on it is never.
+     *
+     * Firestore answers a listener from the local cache first, so this loses none of the instant
+     * first paint the cache was there for.
+     */
+    fun watchAppsInGroup(groupId: String): Flow<List<TestApp>> = callbackFlow {
+        val registration = db.collection("apps").whereEqualTo("groupId", groupId)
+            .addSnapshotListener { snapshot, error ->
+                when {
+                    // Closed rather than swallowed. A listener that has failed will not start
+                    // working again on its own, and only the collector can decide what to do.
+                    error != null -> close(error)
+                    snapshot != null -> trySend(
+                        snapshot.documents.map(::parseApp).sortedBy { it.label.lowercase() }
+                    )
+                }
+            }
+        awaitClose { registration.remove() }
+    }
 
     /** Submitted, waiting for an admin to place it. */
     suspend fun pendingApps(uid: String): List<TestApp> =
