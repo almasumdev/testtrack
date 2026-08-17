@@ -344,6 +344,7 @@ fun SetupScreen(
                 done = done[0],
                 live = live(0),
                 onToggle = { toggle(0) },
+                actionOutlivesTheStep = true,
                 answers = listOf(
                     QA(
                         "Why does it have to be a Gmail?",
@@ -535,6 +536,7 @@ fun SetupScreen(
                 live = live(4),
                 last = true,
                 onToggle = { toggle(4) },
+                actionOutlivesTheStep = true,
                 answers = listOf(
                     QA(
                         "How many will I get?",
@@ -636,6 +638,24 @@ private fun Step(
     done: Boolean,
     live: Boolean,
     onToggle: () -> Unit,
+    /**
+     * Whether [action] still means anything once the step is finished.
+     *
+     * False for the ones that perform the step. Opening a finished step to read how it was done
+     * and being handed Connect Drive is the screen asking for something it already has, and the
+     * button is worse than useless: pressing it sends somebody back through a Google consent
+     * sheet to arrive exactly where they started.
+     *
+     * True for the two where the control is not "do this step" but "change what it produced".
+     * Signing out is the only fix for the wrong Gmail. Reminders count as settled when somebody
+     * declines them, so a finished reminders step is often a switched-off one, and hiding the way
+     * to turn it on would strand anybody who changed their mind.
+     *
+     * Nothing is lost by hiding the rest. Every one of them is re-read when this screen comes
+     * forward, so a Drive grant revoked or a usage switch turned off drops its step back to
+     * outstanding on its own, action and all.
+     */
+    actionOutlivesTheStep: Boolean = false,
     detail: String? = null,
     last: Boolean = false,
     answers: List<QA> = emptyList(),
@@ -683,7 +703,7 @@ private fun Step(
                 }
             )
 
-            if (done && !live && result.isNotBlank()) {
+            if (done && result.isNotBlank()) {
                 Text(
                     result,
                     style = MaterialTheme.typography.bodyMedium,
@@ -700,7 +720,7 @@ private fun Step(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                if (action != null) {
+                if (action != null && (!done || actionOutlivesTheStep)) {
                     Spacer(Modifier.height(16.dp))
                     action()
                 }
