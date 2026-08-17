@@ -175,7 +175,15 @@ object AuthRepo {
     suspend fun recheckGroup(activity: Activity): Pair<GoogleAccount?, GateResult> {
         liveToken?.let { return null to GroupGate.check(it) }
 
-        val account = GroupGate.refresh(activity)
+        // Silently or not at all. Google re-issues without showing anything for an account that
+        // has used this app before, which is every account that reaches this screen. When it
+        // cannot, the honest answer is that the sign-in has expired, not a list of every Google
+        // account on the phone attached to a button that asked about one of them.
+        val account = runCatching { GroupGate.refresh(activity) }.getOrNull()
+            ?: return null to GateResult.Failed(
+                "Your sign-in has expired. Open the first step, sign out, and sign back in."
+            )
+
         token = account.idToken
         tokenAt = System.currentTimeMillis()
         return account to GroupGate.check(account.idToken)

@@ -174,25 +174,30 @@ object GroupGate {
     private const val RETRY_PAUSE = 600L
 
     /**
-     * A replacement token for an account that has already signed in once.
+     * A replacement token for an account that has already signed in once, or nothing.
      *
      * ID tokens expire after an hour, so re-checking membership later needs a new one. Filtering
-     * to already-authorised accounts lets Google return it without showing anything; the chooser
-     * only appears if that fails, which it does when the grant has been revoked.
+     * to already-authorised accounts lets Google hand one back without showing anything.
+     *
+     * It used to fall back to the full chooser when that failed, and the chooser is the problem.
+     * Somebody who pressed a button that says check whether I have joined was shown a list of
+     * every Google account on the phone and asked to pick one, which is a question they had no
+     * reason to expect and could answer wrongly: the verdict would then be about an account they
+     * are not signed in as. That case was caught afterwards and explained, but being saved by an
+     * error message is not the same as not being asked.
+     *
+     * So it throws instead, and the caller says the sign-in has expired. Nothing offers an
+     * account that is not the one already signed in.
      */
     suspend fun refresh(context: Context): GoogleAccount =
-        try {
-            credential(
-                context,
-                GetGoogleIdOption.Builder()
-                    .setServerClientId(Config.WEB_CLIENT_ID)
-                    .setFilterByAuthorizedAccounts(true)
-                    .setAutoSelectEnabled(true)
-                    .build()
-            )
-        } catch (e: GetCredentialException) {
-            signIn(context)
-        }
+        credential(
+            context,
+            GetGoogleIdOption.Builder()
+                .setServerClientId(Config.WEB_CLIENT_ID)
+                .setFilterByAuthorizedAccounts(true)
+                .setAutoSelectEnabled(true)
+                .build()
+        )
 
     /**
      * One [CredentialManager], not a new one per attempt.
