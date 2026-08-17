@@ -564,18 +564,12 @@ fun SetupScreen(
                     // nobody finds it by looking.
                     QA(
                         "The switch won't turn on",
-                        "Some phones, Samsung especially, block this for apps installed from a " +
-                            "browser instead of the Play Store. You'll see a message saying the " +
-                            "setting is restricted. Nothing is wrong with your phone or with " +
-                            "TestTrack, and you can turn it on yourself:\n\n" +
-                            "1. Tap the switch once and close the message that appears\n" +
-                            "2. Open Settings, then Apps, then TestTrack\n" +
-                            "3. Tap the three dot menu in the top right corner\n" +
-                            "4. Choose Allow restricted settings\n" +
-                            "5. Confirm with your PIN, pattern or fingerprint\n" +
-                            "6. Come back here and the switch will work\n\n" +
-                            "The menu in step 3 only appears after you've tapped the switch " +
-                            "once, so don't skip the first step."
+                        "Tap the switch once, close the message, then open Settings, Apps, " +
+                            "TestTrack and use the three dot menu. Confirm with your PIN, come " +
+                            "back, and the switch will work.",
+                        lead = "Nothing is wrong with your phone. Some phones block this for " +
+                            "apps installed from a browser instead of the Play Store.",
+                        art = { RestrictedSettingShots() }
                     ),
                     QA(
                         "Can you see every app I use?",
@@ -970,6 +964,44 @@ private fun GroupPageShots() {
             // No caption. The picture is the same page without the button, which is the whole of
             // what it has to say, and the paragraph above already covers the two reasons for that.
             null
+        )
+    }
+}
+
+/**
+ * The four screens of the restricted setting, in the order they happen.
+ *
+ * This step used to carry six numbered instructions and a paragraph explaining why they were
+ * needed, which is the longest piece of writing in the app and describes a route through somebody
+ * else's Settings. Every one of those screens looks like every other screen in Settings, so the
+ * words had to do all the identifying: the three dot menu in the top right corner, the switch that
+ * says Controlled by Restricted Setting.
+ *
+ * Pictures do that better and in a quarter of the space. The order is the instruction, and the
+ * only text left is what a picture cannot say: that nothing is wrong with the phone, and that the
+ * menu in the third one does not exist until the message in the second has been seen once.
+ */
+@Composable
+private fun RestrictedSettingShots() {
+    Column(Modifier.fillMaxWidth()) {
+        Shot(R.drawable.usage_switch, 180.dp, "Tap the switch, even though it looks disabled.")
+        Spacer(Modifier.height(14.dp))
+        Shot(
+            R.drawable.usage_denied,
+            315.dp,
+            "Close this. It has to be seen once before the menu below appears."
+        )
+        Spacer(Modifier.height(14.dp))
+        Shot(
+            R.drawable.usage_menu,
+            110.dp,
+            "Settings, then Apps, then TestTrack. Open the three dot menu."
+        )
+        Spacer(Modifier.height(14.dp))
+        Shot(
+            R.drawable.usage_allow,
+            120.dp,
+            "Choose this and confirm with your PIN. The switch will work now."
         )
     }
 }
