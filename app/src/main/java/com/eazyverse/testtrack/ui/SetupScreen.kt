@@ -536,7 +536,14 @@ fun SetupScreen(
                 live = live(4),
                 last = true,
                 onToggle = { toggle(4) },
-                actionOutlivesTheStep = true,
+                // Only while they are actually off.
+                //
+                // This step counts as done when it has been settled, and declining settles it, so
+                // a tick here means "you have decided" rather than "they are on". Somebody who
+                // said Not now and came back needs the button; somebody whose reminders are
+                // already arriving was being shown a tick and an offer to turn on the thing that
+                // is on, which reads as the screen not knowing its own state.
+                actionOutlivesTheStep = !Session.notificationsGranted,
                 answers = listOf(
                     QA(
                         "How many will I get?",
