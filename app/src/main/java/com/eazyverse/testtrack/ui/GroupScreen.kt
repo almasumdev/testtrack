@@ -722,7 +722,7 @@ private fun Action(
                     Spacer(Modifier.height(8.dp))
                 }
                 Text(
-                    "Each app opens for just over half a minute, then moves to the next one on " +
+                    "Each app opens for about twenty seconds, then moves to the next one on " +
                         "its own. We take the screenshot at a moment you won't know in advance, " +
                         "so leave the phone alone until you're back here.",
                     style = MaterialTheme.typography.bodySmall,
@@ -971,7 +971,7 @@ private fun TestRow(
             done -> Pill("Done", Status.posted, Status.postedSoft)
 
             // Off the clock, in either direction. `running` alone was not enough: it stays true
-            // once a run ends, so day 15 still offered Open — a button that spends thirty-six
+            // once a run ends, so day 15 still offered Open — a button that spends twenty
             // seconds capturing a visit `publish` then drops, because there is no day to file it
             // under.
             !live -> Pill(

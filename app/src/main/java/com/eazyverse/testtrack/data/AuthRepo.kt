@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.eazyverse.testtrack.Config
+import android.accounts.Account
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.AuthorizationResult
 import com.google.android.gms.auth.api.identity.Identity
@@ -35,10 +36,38 @@ import kotlin.coroutines.resumeWithException
  */
 object AuthRepo {
 
+    /**
+     * The Drive request, pinned to the account that is signed in.
+     *
+     * Without [AuthorizationRequest.Builder.setAccount] the authorization API is not told which
+     * account the question is about, and on a phone carrying more than one Google account it
+     * answers about whichever one it picks. That is wrong twice over: an existing grant on the
+     * signed-in account goes unseen, so the setup screen offers Connect Drive for an
+     * authorisation nobody lost, and a grant made from that screen can land on the other account,
+     * which would put a tester's proof in a Drive that is not the one their record points at.
+     *
+     * Firebase is the authority on who is signed in, because it is the session Firestore rules
+     * key on. [Session.email] is the same address remembered locally and only stands in while
+     * Firebase is still restoring.
+     */
     private val driveRequest: AuthorizationRequest
         get() = AuthorizationRequest.builder()
             .setRequestedScopes(listOf(Scope(Config.DRIVE_SCOPE)))
+            .apply {
+                val address = FirebaseAuth.getInstance().currentUser?.email ?: Session.email
+                address?.let { setAccount(Account(it, "com.google")) }
+            }
             .build()
+
+    /**
+     * How long Play services gets to answer before the screen stops believing it will.
+     *
+     * There is no timeout inside the authorization API: the task simply never completes when
+     * Play services cannot service the call, and it retries in the background about every ten
+     * seconds while it does so. A coroutine awaiting that task waits for the rest of the day, and
+     * the only thing the tester sees is a spinner on a button that never stops.
+     */
+    const val AUTH_TIMEOUT_MS = 20_000L
 
     val uid: String? get() = FirebaseAuth.getInstance().currentUser?.uid
 
@@ -176,7 +205,9 @@ object AuthRepo {
 
     /** The access token, if one can be had without showing anything. Null means consent needed. */
     suspend fun driveTokenOrNull(activity: Activity): String? =
-        runCatching { authorizeDrive(activity).accessToken }.getOrNull()
+        withTimeoutOrNull(AUTH_TIMEOUT_MS) {
+            runCatching { authorizeDrive(activity).accessToken }.getOrNull()
+        }
 
     /**
      * Has this account already granted Drive access?

@@ -193,7 +193,7 @@ class HomeViewModel : ViewModel() {
     fun withdraw(app: TestApp) {
         message = null
         viewModelScope.launch {
-            runCatching { Repo.deleteApp(app.packageName) }
+            runCatching { Repo.withdrawApp(app.packageName) }
                 .onSuccess { load() }
                 .onFailure { message = it.friendly("We couldn't withdraw ${app.label}. Try again in a moment.") }
         }

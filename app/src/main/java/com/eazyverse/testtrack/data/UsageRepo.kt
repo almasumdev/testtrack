@@ -9,7 +9,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Process
 import android.provider.Settings
-import java.util.Calendar
 
 /**
  * How long an app was actually on screen.
@@ -67,32 +66,34 @@ object UsageRepo {
     }
 
     /**
-     * Foreground milliseconds for [pkg] since midnight, across every session however it was
-     * opened — not only the one TestTrack launched.
+     * Foreground milliseconds for [pkg] since [since].
+     *
+     * This used to measure the calendar day, from local midnight, and that was a second clock
+     * nobody had asked for. A run's day turns over at the hour its group started, not at midnight,
+     * so the two windows sat at an offset and time from yesterday's run-day was counted toward
+     * today's. It survived because at a thirty second bar an honest visit cleared it on its own.
+     * At ten it does not survive: one long session earlier the same calendar day passes the bar
+     * before the visit begins, and the visit then proves nothing that the screenshot did not.
+     *
+     * So the window is the visit, handed in by the caller. One number, one meaning, no day
+     * boundary to line up with anything.
      *
      * Summed from raw events rather than read off `queryUsageStats`. The daily buckets that method
      * returns are written periodically, so a visit that ended seconds ago is still reported as
      * zero — which is exactly when we ask. Events are exact and include the session in progress,
      * which matters because the reading is taken while the app under test is still on screen.
      *
-     * The aggregate is still consulted and the larger of the two wins: some manufacturers trim the
-     * event stream, and under-reporting a tester's day is worse than an approximate figure.
+     * No `queryUsageStats` cross-check any more either. That aggregate is only ever per day, so
+     * over a twenty second window it could only ever answer with somebody's whole day and win the
+     * `maxOf`, which would put the old behaviour straight back.
      */
-    fun foregroundMsToday(context: Context, pkg: String): Long {
+    fun foregroundMsSince(context: Context, pkg: String, since: Long): Long {
         if (!hasAccess(context)) return 0L
         val manager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-        val start = startOfToday()
         val now = System.currentTimeMillis()
+        if (since <= 0L || since >= now) return 0L
 
-        val fromEvents = runCatching { sumSessions(manager, pkg, start, now) }.getOrDefault(0L)
-        val fromBuckets = runCatching {
-            manager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, start, now)
-                .orEmpty()
-                .filter { it.packageName == pkg }
-                .sumOf { it.totalTimeInForeground }
-        }.getOrDefault(0L)
-
-        return maxOf(fromEvents, fromBuckets)
+        return runCatching { sumSessions(manager, pkg, since, now) }.getOrDefault(0L)
     }
 
     @Suppress("DEPRECATION")
@@ -127,10 +128,4 @@ object UsageRepo {
         return total
     }
 
-    private fun startOfToday(): Long = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
 }

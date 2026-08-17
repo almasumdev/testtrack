@@ -270,9 +270,33 @@ data class TestApp(
      */
     val storeAppUri: String get() = "market://details?id=$packageName"
 
+    /** Anything that is not waiting and not in a group. It keeps its document either way. */
+    val closed: Boolean
+        get() = status == STATUS_REJECTED || status == STATUS_WITHDRAWN || status == STATUS_DONE
+
     companion object {
         const val STATUS_PENDING = "pending"
         const val STATUS_ASSIGNED = "assigned"
+
+        /**
+         * The three ways an app stops being in play without ceasing to exist.
+         *
+         * Turning a submission down used to delete the document and withdrawing one used to
+         * delete it too, which lost the only record that the app had ever been submitted. Events
+         * survived, so the developer's profile still showed something had happened, and the thing
+         * it happened to was gone: no package name to place, no way to reverse a decision, and
+         * the owner's only route back was to submit it again from scratch.
+         *
+         * So a package name is claimed by its first submission and never released. What changes
+         * afterwards is the status, and every one of these can be put back on the queue by an
+         * admin. Nobody else can: the owner-update rule pins `status`, so a developer cannot
+         * revive their own app whatever they send.
+         */
+        const val STATUS_REJECTED = "rejected"
+        const val STATUS_WITHDRAWN = "withdrawn"
+
+        /** Finished a full run. A second fortnight is an admin's decision, not the owner's. */
+        const val STATUS_DONE = "done"
     }
 }
 
@@ -312,12 +336,12 @@ data class Proof(
      */
     val runStartedAt: Long = 0L
 ) {
-    /** A screenshot proves the app opened. The half-minute of use is what proves it was used. */
+    /** A screenshot proves the app opened. The ten seconds of use is what proves it was used. */
     val meetsBar: Boolean get() = usageMs >= MIN_USAGE_MS
 
     companion object {
-        /** The tester is asked to stay for thirty seconds, so that is what a day has to show. */
-        const val MIN_USAGE_MS = 30_000L
+        /** The tester is asked to stay for ten seconds, so that is what a day has to show. */
+        const val MIN_USAGE_MS = 10_000L
 
         /**
          * Same tester, same app, same day of the same run always writes the same document, so

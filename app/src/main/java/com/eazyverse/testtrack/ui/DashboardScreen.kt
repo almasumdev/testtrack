@@ -130,7 +130,7 @@ class DashboardViewModel : ViewModel() {
         }
     }
 
-    /** Reported today and stayed the full half-minute. */
+    /** Reported today and stayed the full ten seconds. */
     fun reportedToday(): List<Pair<Tester, Proof>> {
         val today = day ?: return emptyList()
         return testers.mapNotNull { tester ->
@@ -405,7 +405,7 @@ private fun Legend() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         LegendKey(DayState.POSTED, "reported")
-        LegendKey(DayState.SHORT, "under 30s")
+        LegendKey(DayState.SHORT, "under ${Proof.MIN_USAGE_MS / 1000}s")
         LegendKey(DayState.MISSED, "missed")
         LegendKey(DayState.UPCOMING, "to come")
     }
@@ -482,7 +482,7 @@ private fun Grid(vm: DashboardViewModel, onCell: (Tester, Proof) -> Unit) {
 
 private fun DayState.spoken() = when (this) {
     DayState.POSTED -> "reported"
-    DayState.SHORT -> "reported but under thirty seconds"
+    DayState.SHORT -> "reported but under ten seconds"
     DayState.MISSED -> "missed"
     DayState.UPCOMING -> "still to come"
 }

@@ -47,7 +47,7 @@ data class Capture(val path: String, val usageMs: Long)
  *
  *   startSession(consent)   -> projection + virtual display stay open
  *   capture(pkg)            -> a visit: frame grabbed at an unannounced moment, TestTrack pulled
- *                              back when the thirty seconds are up, usage read on the way out
+ *                              back when the visit is up, usage read on the way out
  *   endSession()            -> projection stops
  */
 class CaptureService : Service() {
@@ -61,6 +61,16 @@ class CaptureService : Service() {
 
     /** Elapsed-realtime deadline for ending the current visit. */
     private var returnDue = 0L
+
+    /**
+     * Wall-clock start of the current visit, which is the window the usage figure is read over.
+     *
+     * Wall clock and not [SystemClock.elapsedRealtime], unlike [returnDue] beside it, because this
+     * one is handed to `UsageStatsManager` and its events are stamped in wall-clock time. The
+     * deadline above never leaves this class, so it uses the monotonic clock that a change of time
+     * zone or a corrected clock cannot move.
+     */
+    private var visitStartedAt = 0L
 
     /** The frame taken mid-visit, held until the visit is over and its usage can be read. */
     private var captured: Pair<String, String>? = null
@@ -195,7 +205,7 @@ class CaptureService : Service() {
             captured = pkg to file.absolutePath
         }
 
-        // The shot is not the end of the visit. The tester was asked for a full thirty seconds and
+        // The shot is not the end of the visit. The tester was asked for the full ten seconds and
         // the usage figure has to be able to show it, so hold here until the visit is up.
         val remaining = returnDue - SystemClock.elapsedRealtime()
         if (remaining > 0) handler.postDelayed({ finish(pkg) }, remaining) else finish(pkg)
@@ -210,7 +220,7 @@ class CaptureService : Service() {
     private fun finish(pkg: String) {
         val path = captured?.takeIf { it.first == pkg }?.second
         if (path != null) {
-            results[pkg] = Capture(path, UsageRepo.foregroundMsToday(this, pkg))
+            results[pkg] = Capture(path, UsageRepo.foregroundMsSince(this, pkg, visitStartedAt))
             captured = null
         }
         capturing = null
@@ -238,6 +248,7 @@ class CaptureService : Service() {
         capturing = pkg
         status = "Opening ${label(pkg)}, $roundIndex of $roundTotal"
         returnDue = SystemClock.elapsedRealtime() + VISIT_MS
+        visitStartedAt = System.currentTimeMillis()
         InstalledApps.launch(this, pkg)
         handler.postDelayed(
             { attempt(pkg, 0, null) },
@@ -372,6 +383,7 @@ class CaptureService : Service() {
         capturing = null
         captured = null
         returnDue = 0L
+        visitStartedAt = 0L
         queue.clear()
         roundTotal = 0
         roundIndex = 0
@@ -405,22 +417,31 @@ class CaptureService : Service() {
         /**
          * How long a visit is held open.
          *
-         * Longer than the thirty seconds a day has to show, on purpose. The clock starts when the
+         * Longer than the ten seconds a day has to show, on purpose. The clock starts when the
          * service schedules the visit, but usage only accrues once the app has actually reached
-         * the foreground a second or two later — measured at exactly thirty, honest full-length
-         * visits came back at 28.7s and 29.4s and failed the very rule they had satisfied.
+         * the foreground a second or two later, so a visit measured at exactly the bar comes back
+         * a shade under it and fails the very rule it satisfied.
+         *
+         * Not ten plus a margin, though, and this is the part the number cannot be cut past: the
+         * screenshot has to land after the app under test has finished showing its logo, and a
+         * WebView wrapper can still be on its splash at eight seconds. Ten would photograph
+         * splash screens. So the visit stays long enough to take a picture worth keeping, and the
+         * bar underneath it is what actually has to be cleared.
          */
-        const val VISIT_MS = 36_000L
+        const val VISIT_MS = 20_000L
 
         /**
          * The window the screenshot lands in, somewhere at random.
          *
          * A fixed delay is learnable — open, wait for the flash, leave. A shot that could arrive
-         * anywhere across twenty seconds cannot be timed around, so the only way to pass is to
+         * anywhere across seven seconds cannot be timed around, so the only way to pass is to
          * actually be there.
+         *
+         * The earliest is held at ten seconds even though the visit is shorter now, because that
+         * is the splash screen budget rather than a fraction of the visit.
          */
         const val SHOT_EARLIEST_MS = 10_000L
-        const val SHOT_LATEST_MS = 32_000L
+        const val SHOT_LATEST_MS = 17_000L
 
         /** Observed by the UI, which is not running while the app under test is on screen. */
         var sessionActive by mutableStateOf(false)

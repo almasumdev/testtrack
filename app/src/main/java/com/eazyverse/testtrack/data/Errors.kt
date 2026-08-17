@@ -18,56 +18,56 @@ import java.io.IOException
  * beside it was never once displayed.
  *
  * A raw code is worse than useless to a tester. It names a database they have never heard of,
- * implies they did something wrong, and gives them nothing to do about it. What follows says what
- * happened in terms of their group, and where that is genuinely actionable, what to do.
+ * implies they did something wrong, and gives them nothing to do about it.
+ *
+ * Every line below is one sentence of cause and, where there is one, one short thing to do. They
+ * are read on a phone, in a hurry, by somebody who wants to get back to what they were doing, and
+ * a paragraph gets skimmed to its first full stop anyway. Where the cause is genuinely unknown the
+ * exception's own name and text are appended rather than guessed at.
  *
  * Our own exceptions keep their text. They were written for this.
  */
 fun Throwable.friendly(
     fallback: String,
-    denied: String = "You don't have access to this any more. You may have been removed from the " +
-        "group, or it may have been dissolved."
+    denied: String = "You're not in this group any more, or it was dissolved."
 ): String = when {
-    this is AppTakenException || this is BlockedException || this is StalledException ->
-        message ?: fallback
+    this is AppTakenException || this is BlockedException || this is StalledException ||
+        this is AppClosedException -> message ?: fallback
 
     this is FirebaseFirestoreException -> when (code) {
         // Also what a deleted document looks like: the read rule tests fields on a document that
         // is not there, which is a refusal rather than an empty answer.
         Code.PERMISSION_DENIED -> denied
 
-        Code.UNAUTHENTICATED ->
-            "Your sign-in has expired. Open Setup from the top of the home screen and sign in again."
+        Code.UNAUTHENTICATED -> "Your sign-in expired. Open Setup and sign in again."
 
         Code.UNAVAILABLE, Code.DEADLINE_EXCEEDED, Code.ABORTED, Code.CANCELLED ->
-            "We couldn't reach TestTrack. Check your connection and try again."
+            "Can't reach TestTrack. Check your connection."
 
-        Code.RESOURCE_EXHAUSTED ->
-            "TestTrack is busy right now. Give it a minute and try again."
+        Code.RESOURCE_EXHAUSTED -> "TestTrack is busy. Try again in a minute."
 
         else -> fallback
     }
 
-    this is IOException ->
-        "We couldn't reach TestTrack. Check your connection and try again."
+    this is IOException -> "Can't reach TestTrack. Check your connection."
 
     // Signing in fails in Credential Manager or Play services far more often than it fails in
     // Firestore, and none of those are an IOException, so every one of them used to fall through
     // to the generic fallback. A phone with no Google account on it and a build whose signing key
     // is not registered were both told, wrongly, to check their connection.
+    // Nothing went wrong here, and saying so keeps it out of the same register as the rest.
     this is GetCredentialCancellationException ->
-        "Sign-in was cancelled. Tap Continue with Google when you're ready."
+        "You closed the sign-in. Press the button to try again."
 
-    // Not "there is no Google account on this phone", which is what this said for months and is
-    // a claim the exception never makes. It means Google had no credential to offer *this
-    // request*, which is also what comes back while its account list is still warming up. So the
-    // people most likely to see it were being told to go and add the Gmail they were holding.
+    // Not "there is no Google account on this phone", which is a claim the exception never
+    // makes, and which sent people to Settings to add a Gmail that was already sitting there.
+    // What it means is that Google had nothing to offer *this request*, and in practice that is
+    // Play services still reading its account list on the first press after a cold start. So the
+    // instruction is the one that actually works: press it again.
     this is NoCredentialException ->
-        "Google didn't offer an account to sign in with. If the Gmail you test with is already " +
-            "on this phone, open Settings, then Accounts, and check it's signed in. Then come " +
-            "back and try again."
+        "Google had no account ready yet. Press the button again."
 
-    this is GetCredentialException -> "Google couldn't complete the sign-in. ${detail()}"
+    this is GetCredentialException -> "Google couldn't finish the sign-in. ${detail()}"
 
     this is ApiException -> "Google turned the sign-in down. ${detail()}"
 

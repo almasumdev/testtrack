@@ -14,6 +14,29 @@ class AppTakenException(packageName: String, ownerEmail: String) : Exception(
     else "$packageName is already registered by $ownerEmail."
 )
 
+/**
+ * Raised when the owner's own app has been closed and cannot be sent again.
+ *
+ * A package name is claimed by its first submission and never released, so an app that was turned
+ * down, withdrawn, or has finished its fortnight cannot be resubmitted by the person who owns it.
+ * That is deliberate rather than an oversight: an app turned down by Play after fourteen days
+ * needs another fourteen, and whether a cohort spends its next fortnight on it is a decision
+ * somebody makes rather than one a developer takes by pressing submit.
+ *
+ * Refused here for the message. The security rules refuse it anyway, by pinning `status` on an
+ * owner's write, and a bare PERMISSION_DENIED tells nobody who to ask.
+ */
+class AppClosedException(label: String, status: String) : Exception(
+    when (status) {
+        TestApp.STATUS_REJECTED ->
+            "$label was turned down, so it can't be sent again. Ask an admin to put it back."
+        TestApp.STATUS_WITHDRAWN ->
+            "You withdrew $label. Ask an admin to put it back in the queue."
+        else ->
+            "$label has finished a run. Ask an admin to start another one."
+    }
+)
+
 /** Raised when an admin has barred this account from submitting. */
 class BlockedException(reason: String) : Exception(
     if (reason.isBlank())
@@ -69,6 +92,34 @@ object Repo {
                     "uid" to uid,
                     "email" to email,
                     "displayName" to displayName,
+                    "updatedAt" to System.currentTimeMillis()
+                ),
+                SetOptions.merge()
+            )
+        )
+    }
+
+    /**
+     * Records which handset this account signs in from.
+     *
+     * Its own collection rather than a field on the user document, and that is the whole of the
+     * privacy design. `users/{uid}` is readable by every signed-in account, because a grid has to
+     * turn a uid into a name; a device fingerprint sitting there would let any tester work out
+     * which of their cohort share a phone. Here it is readable by its owner and by an admin, and
+     * by nobody else.
+     *
+     * Keyed by uid, so each account claims one row and two accounts on one handset are two rows
+     * carrying the same value. That is the whole detection: a duplicate is a repeated string.
+     *
+     * Failure is swallowed by the caller. A tester whose phone will not report an id still has a
+     * working app, and this is a signal for an admin rather than a step in anybody's setup.
+     */
+    suspend fun claimDevice(uid: String, fingerprint: String) {
+        await(
+            db.collection("devices").document(uid).set(
+                mapOf(
+                    "uid" to uid,
+                    "deviceId" to fingerprint,
                     "updatedAt" to System.currentTimeMillis()
                 ),
                 SetOptions.merge()
@@ -190,6 +241,17 @@ object Repo {
             throw AppTakenException(packageName, existing.getString("ownerEmail").orEmpty())
         }
 
+        // Their own app, but finished with. Sending it again is a correction to a live record
+        // everywhere else in this method, and here it would be a silent no-op: the merge below
+        // leaves `status` alone, so the app would stay closed and the screen would report success.
+        val closedAs = existing.getString("status").orEmpty()
+        if (existing.exists() && closedAs in CLOSED) {
+            throw AppClosedException(
+                existing.getString("name")?.takeIf { it.isNotBlank() } ?: packageName,
+                closedAs
+            )
+        }
+
         val body = mutableMapOf<String, Any>(
             "id" to packageName,
             "ownerUid" to uid,
@@ -230,17 +292,39 @@ object Repo {
     }
 
     /**
-     * Withdraws an app.
+     * Withdraws an app, which no longer means destroying it.
      *
-     * Its proofs are left behind: they are keyed by app id and nothing queries them once the app
-     * is gone, and deleting them would mean handing clients write access to other testers' rows.
+     * The document stays and its status changes. Deleting it took the only record that the app
+     * had ever existed: the developer's profile kept the events but had nothing to point them at,
+     * an admin could not undo anything, and the package name went back into circulation as though
+     * it had never been claimed.
+     *
+     * Its proofs were always left behind, keyed by app id, and now they have something to belong
+     * to again.
+     *
+     * Only from the queue. Withdrawing from inside a running cohort would leave twelve people
+     * owing days to an app whose owner has walked away, and the rules refuse it for the same
+     * reason: the group is an admin's to change.
      */
-    suspend fun deleteApp(packageName: String) {
-        await(db.collection("apps").document(packageName).delete())
+    suspend fun withdrawApp(packageName: String) {
+        await(
+            db.collection("apps").document(packageName).set(
+                mapOf(
+                    "status" to TestApp.STATUS_WITHDRAWN,
+                    "withdrawnAt" to System.currentTimeMillis()
+                ),
+                SetOptions.merge()
+            )
+        )
     }
 
     suspend fun app(id: String): TestApp? =
         await(db.collection("apps").document(id).get()).takeIf { it.exists() }?.let(::parseApp)
+
+    /** The three states an owner cannot write their way out of. */
+    private val CLOSED = setOf(
+        TestApp.STATUS_REJECTED, TestApp.STATUS_WITHDRAWN, TestApp.STATUS_DONE
+    )
 
     /** Everything in one cohort — the tester's worklist, and the owner's peers. */
     suspend fun appsInGroup(groupId: String): List<TestApp> =

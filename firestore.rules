@@ -226,6 +226,42 @@ service cloud.firestore {
       allow read, write: if isAdmin() || (signedIn() && request.auth.uid == uid);
     }
 
+    /**
+     * Which handset an account signs in from, as a salted hash.
+     *
+     * Play counts testers rather than accounts, and two accounts on one phone are one tester to
+     * it. A cohort carrying that unknowingly wastes a fortnight for thirteen other people, so an
+     * admin needs to be able to see it. Nothing here enforces anything: a duplicate is two rows
+     * holding the same string, and what happens next is a person's decision.
+     *
+     * Its own collection rather than a field on the user document, which is the entire reason this
+     * block exists. `users/{uid}` is readable by every signed-in account so a grid can turn a uid
+     * into a name; a fingerprint sitting there would let any tester work out which of their cohort
+     * share a phone, which is nobody's business but the admin's.
+     *
+     * So: `get` for the owner and for admins, `list` for admins alone. Without that split the
+     * owner's own read permission would let anybody enumerate the collection and do the matching
+     * themselves, which is the leak this block was written to close.
+     *
+     * Writes are the owner's, held to the three fields and pinned to their own uid, so nobody can
+     * plant a fingerprint on somebody else's row and manufacture a duplicate. Only an admin
+     * deletes, which is what clears a claim left behind by a phone that changed hands.
+     */
+    match /devices/{uid} {
+      allow get: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow list: if isAdmin();
+
+      allow create, update: if isAdmin() || (
+        signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['uid', 'deviceId', 'updatedAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.deviceId is string
+      );
+
+      allow delete: if isAdmin();
+    }
+
     // A swap cohort: fourteen members, one app each, one shared 14-day run.
     //
     // Readable only by its own members, so the shape of other people's cohorts is not browsable.
@@ -334,6 +370,30 @@ service cloud.firestore {
         && !request.resource.data.diff(resource.data).affectedKeys()
              .hasAny(['removed', 'removedAt', 'removedReason'].toSet())
       );
+
+      /**
+       * Withdrawing: the owner taking their own app out, without destroying the record.
+       *
+       * A delete until now, and the delete is what this replaces. Losing the document lost the
+       * only proof the app had ever been submitted, released a package name that should stay
+       * claimed, and left an admin nothing to reverse.
+       *
+       * Narrow on purpose, because `status` is otherwise pinned for owners and this is the single
+       * exception. Only from `pending`: an app inside a cohort is twelve other people's obligation
+       * for the fortnight, and walking away from that is an admin's call rather than a button.
+       * Only to `withdrawn`, so this cannot become a way of reviving anything — an owner still
+       * cannot move their own app back to `pending`, which is the whole point of the claim.
+       *
+       * `withdrawnAt` is admitted alongside it, and nothing else is.
+       */
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.ownerUid
+        && resource.data.status == 'pending'
+        && request.resource.data.status == 'withdrawn'
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.groupId == resource.data.groupId
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'withdrawnAt'].toSet());
 
       /**
        * The other half of an eviction: the removed app going back to the queue.

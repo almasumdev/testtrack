@@ -7,6 +7,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
@@ -48,8 +50,14 @@ import androidx.compose.foundation.Image as ComposeImage
  * The pieces every screen is built from, so consistency is the path of least resistance.
  */
 
-/** The page gutter. Every screen, every row, no exceptions. */
-val Gutter = 20.dp
+/**
+ * The page gutter. Every screen, every row, no exceptions.
+ *
+ * Sixteen, which is what the console settled on. The two apps are read one after the other by the
+ * same person on the same phone, and a four point step in the margin between them is the kind of
+ * difference nobody names but everybody feels.
+ */
+val Gutter = 16.dp
 
 /** State colours, from the theme. Never used for a control — that is what primary is for. */
 object Status {
@@ -188,7 +196,15 @@ fun Failure(text: String) {
     )
 }
 
-/** The one filled action a screen gets. */
+/**
+ * The one filled action a screen gets.
+ *
+ * [mark] is for the single case where a button is asking somebody else's service rather than doing
+ * something itself, and the mark is how anyone recognises which one. Drawn as an Icon and left to
+ * take the default tint, which is the same colour the label is painted in and follows it into the
+ * disabled state as well. It gives way to the spinner while the button is busy: two things sitting
+ * in the same place is one too many.
+ */
 @Composable
 fun Primary(
     label: String,
@@ -196,6 +212,7 @@ fun Primary(
     busy: Boolean = false,
     enabled: Boolean = true,
     tall: Boolean = false,
+    mark: Painter? = null,
     onClick: () -> Unit
 ) {
     Button(
@@ -210,6 +227,9 @@ fun Primary(
                 strokeWidth = 2.dp,
                 color = MaterialTheme.colorScheme.onPrimary
             )
+            Spacer(Modifier.width(10.dp))
+        } else if (mark != null) {
+            Icon(mark, null, Modifier.size(18.dp))
             Spacer(Modifier.width(10.dp))
         }
         Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
@@ -330,6 +350,42 @@ fun Ring(done: Int, total: Int, size: Dp = 36.dp) {
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
+    }
+}
+
+/**
+ * Progress as a fixed number of boxes, one per thing to be done.
+ *
+ * The console's meter, and the same reasoning: five steps is a small enough number to be counted,
+ * and a bar filling by fifths says less than five boxes with two of them lit. A proportion bar is
+ * for quantities nobody counts, which is what the overload below is for.
+ *
+ * Every box carries its own edge, drawn inside its bounds, and a filled one is painted inside that
+ * edge rather than over it. So all of them sit on one grid at one size whether they are done or
+ * not, and nothing grows by a pixel as it fills.
+ */
+@Composable
+fun Meter(done: Int, total: Int, modifier: Modifier = Modifier, height: Dp = 10.dp) {
+    if (total <= 0) return
+    val box = RoundedCornerShape(3.dp)
+    val filled = MaterialTheme.colorScheme.primary
+    val edge = MaterialTheme.colorScheme.outlineVariant
+
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        repeat(total) { index ->
+            val on = index < done
+            Box(
+                Modifier
+                    .weight(1f)
+                    .height(height)
+                    .border(1.dp, if (on) filled else edge, box)
+                    // Inside the edge, not across it. The border is the box; the fill is what is
+                    // in it.
+                    .padding(1.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(if (on) filled else Color.Transparent)
+            )
+        }
     }
 }
 

@@ -67,6 +67,14 @@ class AuthViewModel : ViewModel() {
                             Repo.upsertUser(uid, account.email, account.email.substringBefore('@'))
                         }
                     }
+
+                    // Alongside it, and just as quietly. Nothing on this screen depends on the
+                    // answer: it is a fact an admin reads later, not a gate anybody passes.
+                    Device.fingerprint(activity)?.let { phone ->
+                        withTimeoutOrNull(6_000) {
+                            runCatching { Repo.claimDevice(uid, phone) }
+                        }
+                    }
                 }
 
                 message = AuthRepo.firebaseError
@@ -76,15 +84,17 @@ class AuthViewModel : ViewModel() {
                 // and reported as a failure by the catch.
                 onDone()
             } catch (e: NotGmailException) {
-                message = "${e.email} isn't a Gmail account. Sign in with the Gmail you use for testing."
+                message = "${e.email} isn't a Gmail account. Pick the Gmail you test with."
             } catch (e: CancellationException) {
                 // Navigating away cancels this scope, and CancellationException is an Exception,
-                // so the catch below was turning a completely normal sign-in into "We couldn't
-                // sign you in. Check your connection" on the way out. Cancellation is not a
-                // failure and must not be swallowed.
+                // so the catch below was turning a completely normal sign-in into a failure
+                // message on the way out. Cancellation is not a failure and must not be
+                // swallowed.
                 throw e
             } catch (e: Exception) {
-                message = e.friendly("We couldn't sign you in. Check your connection and try again.")
+                // Short, because friendly() appends the real cause when it has no better
+                // sentence of its own, and two guesses in a row read as noise.
+                message = e.friendly("Sign-in didn't work.")
             }
             busy = false
         }
@@ -121,18 +131,18 @@ fun AuthScreen(onSignedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
 
         Reason(
             Icons.Default.Group,
-            "We check you're in the group",
-            "The check runs on Google's servers, not on your phone, so nobody can fake their way in."
+            "You test theirs, they test yours",
+            "Fourteen people in a group, all testing the same fortnight together."
         )
         Reason(
             Icons.Default.PhotoCamera,
-            "We record your testing for you",
-            "Open an app from your list and we capture the proof while you're using it."
+            "Ten seconds a day",
+            "Open an app from your list. The time is logged while you use it, with nothing to fill in."
         )
         Reason(
             Icons.Default.CloudUpload,
-            "Your proof stays in your Drive",
-            "It goes to your own Google Drive. We can only see the files we put there."
+            "The proof stays yours",
+            "It goes to your own Google Drive. We only see the files TestTrack puts there."
         )
 
         Spacer(Modifier.weight(0.7f))
