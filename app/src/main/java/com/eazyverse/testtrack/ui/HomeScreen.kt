@@ -457,7 +457,10 @@ private fun NotesDialog(app: TestApp, onSave: (String) -> Unit, onDismiss: () ->
                 supporting = "Anything they need to get past the front door. Everyone in your " +
                     "group and the admins can read this, so use a throwaway account, never your " +
                     "own password.",
-                singleLine = false
+                singleLine = false,
+                // The same floor the submit form gives it. A field asking for a sign-in note is
+                // asking for a couple of lines, and one line high says it wants a word.
+                minHeight = 96.dp
             )
         }
     )
