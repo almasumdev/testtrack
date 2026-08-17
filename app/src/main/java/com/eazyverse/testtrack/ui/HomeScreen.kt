@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -197,6 +198,26 @@ class HomeViewModel : ViewModel() {
                 .onFailure { message = it.friendly("We couldn't withdraw ${app.label}. Try again in a moment.") }
         }
     }
+
+    /**
+     * Saves the way into an app that is still waiting for a group.
+     *
+     * Reloads rather than patching the row in place, for the same reason [withdraw] does: this
+     * list is whatever Firestore last said, and a row edited locally would keep showing the new
+     * login even on the attempt where the write never landed.
+     */
+    fun updateNotes(app: TestApp, notes: String) {
+        message = null
+        viewModelScope.launch {
+            runCatching { Repo.updateNotes(app.packageName, notes) }
+                .onSuccess { load() }
+                .onFailure {
+                    message = it.friendly(
+                        "We couldn't save your notes for ${app.label}. Try again in a moment."
+                    )
+                }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -256,6 +277,14 @@ fun HomeScreen(
     }
 
     var confirmSignOut by remember { mutableStateOf(false) }
+
+    /**
+     * The app whose notes are being written, or null.
+     *
+     * Editable before a group exists on purpose. A developer submits, then spends days waiting for
+     * a cohort, and that gap is exactly when they realise the test account they gave has expired.
+     */
+    var editingNotes by remember { mutableStateOf<TestApp?>(null) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -345,7 +374,13 @@ fun HomeScreen(
                     if (vm.pending.isNotEmpty()) {
                         SectionLabel("Waiting for a group")
                         Panel {
-                            vm.pending.forEach { app -> PendingRow(app) { vm.withdraw(app) } }
+                            vm.pending.forEach { app ->
+                                PendingRow(
+                                    app = app,
+                                    onEditNotes = { editingNotes = app },
+                                    onWithdraw = { vm.withdraw(app) }
+                                )
+                            }
                         }
                     }
                 }
@@ -380,6 +415,50 @@ fun HomeScreen(
             onDismiss = { confirmSignOut = false }
         )
     }
+
+    editingNotes?.let { app ->
+        NotesDialog(
+            app = app,
+            onSave = {
+                editingNotes = null
+                vm.updateNotes(app, it)
+            },
+            onDismiss = { editingNotes = null }
+        )
+    }
+}
+
+/**
+ * The way into an app, written before anybody has been asked to open it.
+ *
+ * Not destructive, and an empty field saved is a real answer rather than a slip to guard against:
+ * clearing the field is the only way to take down a login that has stopped working.
+ */
+@Composable
+private fun NotesDialog(app: TestApp, onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    var text by remember(app.packageName) { mutableStateOf(app.notes) }
+
+    Ask(
+        title = "Notes for your testers",
+        confirm = "Save",
+        onConfirm = { onSave(text.trim()) },
+        onDismiss = onDismiss,
+        content = {
+            DialogField(
+                value = text,
+                // Held to the cap as they type rather than checked on save, because the limit is
+                // the document's. Refusing it afterwards would throw away whatever they had
+                // already written past the end.
+                onValueChange = { text = it.take(NOTES_MAX) },
+                label = "Notes",
+                placeholder = "Test account: demo@example.com / pass1234",
+                supporting = "Anything they need to get past the front door. Everyone in your " +
+                    "group and the admins can read this, so use a throwaway account, never your " +
+                    "own password.",
+                singleLine = false
+            )
+        }
+    )
 }
 
 @Composable
@@ -542,7 +621,7 @@ private fun NotificationPrompt(onGrant: () -> Unit) {
 }
 
 @Composable
-private fun PendingRow(app: TestApp, onWithdraw: () -> Unit) {
+private fun PendingRow(app: TestApp, onEditNotes: () -> Unit, onWithdraw: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(start = Gutter, end = 4.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -561,6 +640,23 @@ private fun PendingRow(app: TestApp, onWithdraw: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            // Shown back to the owner, clipped the same way the group's rows clip it, so what they
+            // are reading here is what the twelve people will be reading there.
+            if (app.notes.isNotBlank()) {
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    app.notes,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+        // Two labels, because an owner who has never written notes has no reason to expect the row
+        // hides a field, and "Notes" on its own reads as a heading rather than something to press.
+        TextButton(onClick = onEditNotes) {
+            Text(if (app.notes.isBlank()) "Add notes" else "Edit notes")
         }
         // Named rather than hidden behind three dots. A menu holding one item is a tap spent
         // discovering that there was only ever one thing to do.

@@ -1,8 +1,13 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -10,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -41,6 +47,13 @@ class SubmitViewModel : ViewModel() {
 
     var nameInput by mutableStateOf("")
     var packageInput by mutableStateOf("")
+
+    /**
+     * Optional, and staying that way. Plenty of apps open straight onto something a tester can
+     * use, and making this a condition of submitting would have those owners inventing a sentence
+     * to satisfy the form.
+     */
+    var notesInput by mutableStateOf("")
 
     /** One tick for the whole of [SUBMIT_RULES]. */
     var agreed by mutableStateOf(false)
@@ -96,7 +109,11 @@ class SubmitViewModel : ViewModel() {
             if (uid == null || email == null) {
                 message = "You're not signed in any more. Sign in again and try this once more."
             } else {
-                runCatching { Repo.submitApp(uid, email, packageInput.trim(), nameInput.trim()) }
+                runCatching {
+                    Repo.submitApp(
+                        uid, email, packageInput.trim(), nameInput.trim(), notesInput.trim()
+                    )
+                }
                     .onSuccess {
                         // After the write, never instead of it. The queue is the record; this only
                         // saves an admin from finding out whenever they next happen to look.
@@ -196,6 +213,19 @@ fun SubmitScreen(
                 support = vm.packageError ?: "Find it in Play Console, under App information",
                 error = vm.packageError != null,
                 imeAction = ImeAction.Done
+            )
+            Spacer(Modifier.height(22.dp))
+            Field(
+                label = "Notes for your testers",
+                value = vm.notesInput,
+                // Trimmed to the cap as it is typed rather than refused on submit. The limit is
+                // there to keep a list row readable, not to catch anyone out, and a form that
+                // takes six hundred characters and then rejects them has wasted the typing.
+                onValueChange = { vm.notesInput = it.take(NOTES_MAX) },
+                placeholder = "Test account: demo@example.com / pass1234",
+                support = "Anything they need to get past the front door. Everyone in your " +
+                    "group and the admins can read this, so use a throwaway account, never " +
+                    "your own password."
             )
 
             Spacer(Modifier.height(32.dp))

@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -186,6 +187,27 @@ class GroupViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Saves the way into this app, then re-reads the group so the row shows what was saved.
+     *
+     * Nothing is put on screen ahead of the write, unlike [reportCannotInstall]. This is the text
+     * twelve people will be typing in tonight, so a row that claims the new login is saved when
+     * Firestore never took it would send all twelve to a sign-in screen that turns them away.
+     */
+    fun updateNotes(app: TestApp, notes: String) {
+        val groupId = group?.id ?: return
+        message = null
+        viewModelScope.launch {
+            runCatching { Repo.updateNotes(app.packageName, notes) }
+                .onSuccess { load(groupId) }
+                .onFailure {
+                    message = it.friendly(
+                        "We couldn't save your notes. Check your connection and try again."
+                    )
+                }
+        }
+    }
+
     fun publish(activity: Activity, app: TestApp, capture: Capture) {
         val cohort = group ?: return
         val uid = AuthRepo.uid ?: return
@@ -271,6 +293,9 @@ fun GroupScreen(
 
     /** The app a tester is about to report as uninstallable, or null. */
     var reporting by remember { mutableStateOf<TestApp?>(null) }
+
+    /** The owner's own app while its notes are being edited, or null. */
+    var editingNotes by remember { mutableStateOf<TestApp?>(null) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -428,7 +453,13 @@ fun GroupScreen(
                     vm.mine?.let { app ->
                         SectionLabel("Your app")
                         Panel {
-                            MineRow(app, vm.reportersForMine, group) { onOpenDashboard(app.id) }
+                            MineRow(
+                                app = app,
+                                reporters = vm.reportersForMine,
+                                group = group,
+                                onEditNotes = { editingNotes = app },
+                                onClick = { onOpenDashboard(app.id) }
+                            )
                         }
                     }
 
@@ -483,6 +514,51 @@ fun GroupScreen(
             onDismiss = { reporting = null }
         )
     }
+
+    editingNotes?.let { app ->
+        NotesDialog(
+            app = app,
+            onSave = {
+                editingNotes = null
+                vm.updateNotes(app, it)
+            },
+            onDismiss = { editingNotes = null }
+        )
+    }
+}
+
+/**
+ * The way into an app, written by the person who has it and read by everyone who needs it.
+ *
+ * Not destructive, and an empty field saved is a real answer rather than a slip to guard against:
+ * an app that needed a test account last week may not need one now, and clearing the field is the
+ * only way to take a stale login down once it stops working.
+ */
+@Composable
+private fun NotesDialog(app: TestApp, onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    var text by remember(app.packageName) { mutableStateOf(app.notes) }
+
+    Ask(
+        title = "Notes for your testers",
+        confirm = "Save",
+        onConfirm = { onSave(text.trim()) },
+        onDismiss = onDismiss,
+        content = {
+            DialogField(
+                value = text,
+                // Held to the cap as they type rather than checked on save, because the limit is
+                // the document's. Refusing it afterwards would throw away whatever they had
+                // already written past the end.
+                onValueChange = { text = it.take(NOTES_MAX) },
+                label = "Notes",
+                placeholder = "Test account: demo@example.com / pass1234",
+                supporting = "Anything they need to get past the front door. Everyone in your " +
+                    "group and the admins can read this, so use a throwaway account, never your " +
+                    "own password.",
+                singleLine = false
+            )
+        }
+    )
 }
 
 @Composable
@@ -718,7 +794,13 @@ private fun Skipped(apps: List<TestApp>, onUninstall: (TestApp) -> Unit) {
 }
 
 @Composable
-private fun MineRow(app: TestApp, reporters: Int, group: TestGroup, onClick: () -> Unit) {
+private fun MineRow(
+    app: TestApp,
+    reporters: Int,
+    group: TestGroup,
+    onEditNotes: () -> Unit,
+    onClick: () -> Unit
+) {
     val expected = (group.size - 1).coerceAtLeast(0)
 
     Row(
@@ -743,6 +825,12 @@ private fun MineRow(app: TestApp, reporters: Int, group: TestGroup, onClick: () 
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+        // Two labels, because the two states are not the same job. An owner who has never written
+        // notes has no reason to expect the row hides a field, and "Notes" on its own reads as a
+        // heading rather than something to press.
+        TextButton(onClick = onEditNotes) {
+            Text(if (app.notes.isBlank()) "Add notes" else "Edit notes")
         }
         Icon(
             Icons.AutoMirrored.Filled.KeyboardArrowRight, null,
@@ -818,6 +906,25 @@ private fun TestRow(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            /*
+             * What the developer said you need to get in, on the row you need it on.
+             *
+             * Two lines and no more. Thirteen rows each carrying a paragraph is a list nobody
+             * reads, and the first line is nearly always the account and the password. Somebody
+             * who wrote more can still see all of it from their own screen, and the tester who
+             * needs the rest has the label right above it to ask about.
+             */
+            if (app.notes.isNotBlank()) {
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    app.notes,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
 
             /*
              * Only while it is not installed, because that is the only state in which somebody

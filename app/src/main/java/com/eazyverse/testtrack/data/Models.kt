@@ -10,6 +10,17 @@ package com.eazyverse.testtrack.data
 const val RUN_DAYS = 14
 
 /**
+ * The longest a set of [TestApp.notes] can be.
+ *
+ * A cap exists because the notes are read on a phone, in a list row alongside twelve other apps.
+ * Left unbounded, one developer pasting their whole onboarding guide turns the daily list every
+ * other member opens into a wall of scrolling, and the twelve rows they actually came for go
+ * below the fold. Five hundred characters is enough for an account, a code and a sentence of
+ * explanation, which is all this field is for.
+ */
+const val NOTES_MAX = 500
+
+/**
  * When a member has stopped holding up their end, and the arithmetic that decides it.
  *
  * Miss one completed day and you are warned. Miss two in a row and your app leaves the group.
@@ -204,7 +215,23 @@ data class TestApp(
     val removed: Boolean = false,
     val removedAt: Long = 0L,
     /** Blank for an automatic removal, which is every one nobody typed a reason for. */
-    val removedReason: String = ""
+    val removedReason: String = "",
+
+    /**
+     * How a tester gets past the front door: a test account, a sign-in code, a sandbox card
+     * number. Whatever an app asks for before it will show anything worth testing.
+     *
+     * Blank on every app submitted before this field existed, and blank is the normal answer for
+     * an app that just opens.
+     *
+     * Read by the owner, by every member of the cohort testing the app, and by every admin. It is
+     * stored in plain text in the app document, so it is not a secret and cannot be made into one:
+     * anything written here is visible to at least thirteen people and lives in the database as
+     * typed. That is why the field asks for a throwaway test account rather than a real password,
+     * and why anyone extending this should keep it that way rather than adding a field that looks
+     * private without being it.
+     */
+    val notes: String = ""
 ) {
     val placed: Boolean get() = status == STATUS_ASSIGNED && !groupId.isNullOrBlank()
 

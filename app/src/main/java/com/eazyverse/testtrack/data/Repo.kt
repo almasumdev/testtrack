@@ -145,7 +145,10 @@ object Repo {
         // Absent from every document written before this existed, which reads as not removed.
         removed = doc.getBoolean("removed") ?: false,
         removedAt = doc.getLong("removedAt") ?: 0L,
-        removedReason = doc.getString("removedReason").orEmpty()
+        removedReason = doc.getString("removedReason").orEmpty(),
+        // Also absent from every document written before this existed, and blank there reads as
+        // an app with nothing a tester needs before opening it, which is the honest answer.
+        notes = doc.getString("notes").orEmpty()
     )
 
     /**
@@ -158,7 +161,13 @@ object Repo {
      * @throws AppTakenException if the package is already registered by someone else. The rules
      *   would reject it anyway, but as a bare PERMISSION_DENIED that explains nothing.
      */
-    suspend fun submitApp(uid: String, email: String, packageName: String, name: String) {
+    suspend fun submitApp(
+        uid: String,
+        email: String,
+        packageName: String,
+        name: String,
+        notes: String
+    ) {
         // Asked before the write so a blocked account is told why, in words. The rules refuse this
         // anyway, but as a bare PERMISSION_DENIED that names nothing and reads like a fault.
         blockedReason(uid)?.let { throw BlockedException(it) }
@@ -186,6 +195,7 @@ object Repo {
             "ownerUid" to uid,
             "ownerEmail" to email,
             "name" to name,
+            "notes" to notes,
             "packageName" to packageName,
             "submittedAt" to (existing.getLong("submittedAt")?.takeIf { it > 0 }
                 ?: System.currentTimeMillis())
@@ -199,6 +209,24 @@ object Repo {
         }
 
         await(doc.set(body, SetOptions.merge()))
+    }
+
+    /**
+     * Replaces just the sign-in notes on an app the caller owns.
+     *
+     * Separate from [submitApp] because the notes are the one thing an owner routinely gets wrong
+     * after the fact: the test account expires, or nobody could get in and they need to say so
+     * today, and none of that should mean walking back through the submission form.
+     *
+     * No rule had to be deployed for this. The owner-update rule pins `status`, `groupId` and the
+     * three `removed*` keys and says nothing about the rest, so a merge of any other field was
+     * already permitted, whether or not the app has been placed in a group.
+     */
+    suspend fun updateNotes(packageName: String, notes: String) {
+        await(
+            db.collection("apps").document(packageName)
+                .set(mapOf("notes" to notes), SetOptions.merge())
+        )
     }
 
     /**

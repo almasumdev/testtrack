@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -23,6 +24,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
@@ -41,7 +43,17 @@ fun Field(
     placeholder: String = "",
     support: String? = null,
     error: Boolean = false,
-    imeAction: ImeAction = ImeAction.Done
+    imeAction: ImeAction = ImeAction.Done,
+    /**
+     * One line, or as many as somebody types.
+     *
+     * A field asking for a sign-in note is asking for a couple of lines, and on one line five
+     * hundred characters scroll away sideways past the left edge where they cannot be read back.
+     * Multiline also gives the return key back, so the ime action goes with it: a keyboard that
+     * says Done and inserts a newline is a keyboard lying about what its own button does.
+     */
+    singleLine: Boolean = true,
+    minHeight: Dp = 0.dp
 ) {
     val focus = LocalFocusManager.current
     val interactions = remember { MutableInteractionSource() }
@@ -66,18 +78,20 @@ fun Field(
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
-            singleLine = true,
+            singleLine = singleLine,
             interactionSource = interactions,
             textStyle = MaterialTheme.typography.bodyLarge.copy(
                 color = MaterialTheme.colorScheme.onSurface
             ),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            keyboardOptions = KeyboardOptions(imeAction = imeAction),
+            keyboardOptions = KeyboardOptions(
+                imeAction = if (singleLine) imeAction else ImeAction.Default
+            ),
             keyboardActions = KeyboardActions(
                 onNext = { focus.moveFocus(FocusDirection.Down) },
                 onDone = { focus.clearFocus() }
             ),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = minHeight),
             decorationBox = { field ->
                 Box(Modifier.padding(vertical = 4.dp)) {
                     if (value.isEmpty()) {
