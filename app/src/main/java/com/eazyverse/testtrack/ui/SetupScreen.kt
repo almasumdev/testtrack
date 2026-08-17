@@ -399,9 +399,7 @@ fun SetupScreen(
                     QA(
                         "The group page says I don't have permission",
                         "If you see a Join group button at the top, tap it. When it " +
-                            "disappears, you are in.\n\n" +
-                            "If there is no button at all, the browser is on a different Google " +
-                            "account. Switch it to the Gmail on step one and open the link again.",
+                            "disappears, you are in.",
                         lead = "Ignore that message. Joining is the only thing to do on that page.",
                         art = { GroupPageShots() }
                     ),
@@ -911,8 +909,9 @@ private fun GroupPageShots() {
         Shot(
             R.drawable.group_page_no_join,
             275.dp,
-            "No button here? Your browser is signed in with a different Gmail. Switch it to " +
-                "the one on step one, then open the link again."
+            // No caption. The picture is the same page without the button, which is the whole of
+            // what it has to say, and the paragraph above already covers the two reasons for that.
+            null
         )
     }
 }
@@ -931,7 +930,7 @@ private fun GroupPageShots() {
  * a narrower screen makes it smaller rather than cutting a piece off.
  */
 @Composable
-private fun Shot(id: Int, height: Dp, caption: String) {
+private fun Shot(id: Int, height: Dp, caption: String?) {
     Image(
         painter = painterResource(id),
         contentDescription = null,
@@ -942,13 +941,15 @@ private fun Shot(id: Int, height: Dp, caption: String) {
             .clip(RoundedCornerShape(10.dp))
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp))
     )
-    Spacer(Modifier.height(6.dp))
-    Text(
-        caption,
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        lineHeight = MaterialTheme.typography.labelSmall.fontSize * 1.4f
-    )
+    caption?.let {
+        Spacer(Modifier.height(6.dp))
+        Text(
+            it,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            lineHeight = MaterialTheme.typography.labelSmall.fontSize * 1.4f
+        )
+    }
 }
 
 /** The console's dashed rule, which is what separates rows in a list over there. */
