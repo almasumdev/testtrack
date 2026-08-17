@@ -954,13 +954,13 @@ private fun GroupPageShots() {
     Column(Modifier.fillMaxWidth()) {
         Shot(
             R.drawable.group_page_join,
-            290.dp,
+            296.dp,
             "Tap the button. When it disappears, you have joined."
         )
         Spacer(Modifier.height(14.dp))
         Shot(
             R.drawable.group_page_no_join,
-            275.dp,
+            281.dp,
             // No caption. The picture is the same page without the button, which is the whole of
             // what it has to say, and the paragraph above already covers the two reasons for that.
             null
@@ -984,23 +984,23 @@ private fun GroupPageShots() {
 @Composable
 private fun RestrictedSettingShots() {
     Column(Modifier.fillMaxWidth()) {
-        Shot(R.drawable.usage_switch, 180.dp, "Tap the switch, even though it looks disabled.")
+        Shot(R.drawable.usage_switch, 184.dp, "Tap the switch, even though it looks disabled.")
         Spacer(Modifier.height(14.dp))
         Shot(
             R.drawable.usage_denied,
-            315.dp,
+            322.dp,
             "Close this. It has to be seen once before the menu below appears."
         )
         Spacer(Modifier.height(14.dp))
         Shot(
             R.drawable.usage_menu,
-            110.dp,
+            112.dp,
             "Settings, then Apps, then TestTrack. Open the three dot menu."
         )
         Spacer(Modifier.height(14.dp))
         Shot(
             R.drawable.usage_allow,
-            120.dp,
+            121.dp,
             "Choose this and confirm with your PIN. The switch will work now."
         )
     }
@@ -1016,15 +1016,21 @@ private fun RestrictedSettingShots() {
  * loses its top. Both screenshots came out missing the title row, which is where the button and
  * the ring are, so the picture lost the only thing it was there to show.
  *
- * A stated height answers the intrinsic query honestly. Fit then scales the picture inside it, so
- * a narrower screen makes it smaller rather than cutting a piece off.
+ * A stated height answers the intrinsic query honestly, and FillWidth then fills that width on any
+ * screen. Fit was there first and was wrong in a quieter way: it scales to whichever side runs out
+ * of room first, so on a narrower phone the picture shrank and left the column with a margin down
+ * both sides.
+ *
+ * Every height here is a little larger than the picture needs at the width this column has, so
+ * what is left over is a band above and below rather than a piece taken off the top. Against the
+ * page ground that band is invisible.
  */
 @Composable
 private fun Shot(id: Int, height: Dp, caption: String?) {
     Image(
         painter = painterResource(id),
         contentDescription = null,
-        contentScale = ContentScale.Fit,
+        contentScale = ContentScale.FillWidth,
         modifier = Modifier
             .fillMaxWidth()
             .height(height)
