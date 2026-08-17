@@ -277,13 +277,28 @@ fun SetupScreen(
      * screen comes forward, so a revoked grant or a switch turned off in Settings drops its step
      * back to outstanding and opens it without being asked.
      */
-    val done = listOf(
+    val granted = listOf(
         Session.signedIn,
         Session.isGroupMember,
         Session.driveConnected,
         Session.usageAccessGranted,
         Session.remindersSettled
     )
+
+    /**
+     * Finished, and finished in order.
+     *
+     * A step reads as done only when everything above it is. The five are asked in sequence but
+     * the underlying grants are independent, so a Drive connected on a previous install shows up
+     * the moment this screen opens, and step three sat there ticked while step two was still
+     * outstanding.
+     *
+     * Which is true and useless. The tick is the one thing on this screen nobody reads twice, and
+     * a tick further down than you have got says you are further along than you are. The grant is
+     * not lost: the moment step two clears, step three is already green without anybody pressing
+     * anything.
+     */
+    val done = granted.runningFold(true) { above, step -> above && step }.drop(1)
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
 
