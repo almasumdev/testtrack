@@ -192,40 +192,41 @@ fun SubmitScreen(
             )
 
             Spacer(Modifier.height(32.dp))
-            Field(
-                label = "App name",
+            DialogField(
                 value = vm.nameInput,
                 onValueChange = { vm.nameInput = it },
+                label = "App name",
                 placeholder = "The name testers will see on Play",
-                support = vm.nameError,
-                error = vm.nameError != null,
+                error = vm.nameError,
                 imeAction = ImeAction.Next
             )
             Spacer(Modifier.height(22.dp))
-            Field(
-                label = "Package name",
+            DialogField(
                 value = vm.packageInput,
                 // Stripped as it is typed rather than checked afterwards. A package name pasted
                 // from Play Console arrives with a trailing space often enough that rejecting it
                 // would be blaming the tester for the clipboard.
                 onValueChange = { vm.packageInput = it.trim() },
+                label = "Package name",
                 placeholder = "com.example.myapp",
-                support = vm.packageError ?: "Find it in Play Console, under App information",
-                error = vm.packageError != null,
+                error = vm.packageError,
+                supporting = "Find it in Play Console, under App information",
                 imeAction = ImeAction.Done
             )
             Spacer(Modifier.height(22.dp))
-            Field(
-                label = "Notes for your testers",
+            DialogField(
                 value = vm.notesInput,
                 // Trimmed to the cap as it is typed rather than refused on submit. The limit is
                 // there to keep a list row readable, not to catch anyone out, and a form that
                 // takes six hundred characters and then rejects them has wasted the typing.
                 onValueChange = { vm.notesInput = it.take(NOTES_MAX) },
+                label = "Notes for your testers",
                 placeholder = "Test account: demo@example.com / pass1234",
-                support = "Anything they need to get past the front door. Everyone in your " +
+                supporting = "Anything they need to get past the front door. Everyone in your " +
                     "group and the admins can read this, so use a throwaway account, never " +
-                    "your own password."
+                    "your own password.",
+                singleLine = false,
+                minHeight = 96.dp
             )
 
             Spacer(Modifier.height(32.dp))

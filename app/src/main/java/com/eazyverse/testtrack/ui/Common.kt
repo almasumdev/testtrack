@@ -19,6 +19,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -707,17 +710,46 @@ fun DialogField(
     placeholder: String? = null,
     error: String? = null,
     supporting: String? = null,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    /** Which key the keyboard offers. Ignored where the field takes more than one line. */
+    imeAction: ImeAction = ImeAction.Done,
+    /** A floor, for a field that expects a sentence or two rather than a word. */
+    minHeight: Dp = 0.dp
 ) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        placeholder = placeholder?.let { { Text(it) } },
-        singleLine = singleLine,
-        isError = error != null,
-        supportingText = (error ?: supporting)?.let { { Text(it) } },
-        shape = RoundedCornerShape(14.dp),
-        modifier = Modifier.fillMaxWidth()
-    )
+    Column(Modifier.fillMaxWidth()) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(6.dp))
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = placeholder?.let {
+                { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            },
+            singleLine = singleLine,
+            isError = error != null,
+            shape = RoundedCornerShape(8.dp),
+            // A keyboard that says Done and inserts a newline is lying about its own button, so a
+            // field taking more than one line does not get to name the action.
+            keyboardOptions = KeyboardOptions(
+                imeAction = if (singleLine) imeAction else ImeAction.Default
+            ),
+            modifier = Modifier.fillMaxWidth().heightIn(min = minHeight)
+        )
+        // Ours rather than the field's own supporting slot, which reserves the height whether or
+        // not anything is in it and pushes whatever follows down over nothing.
+        (error ?: supporting)?.let {
+            Spacer(Modifier.height(6.dp))
+            Text(
+                it,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (error != null) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }
