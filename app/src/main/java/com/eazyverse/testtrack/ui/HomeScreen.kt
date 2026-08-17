@@ -316,7 +316,7 @@ fun HomeScreen(
         ) {
 
             if (!vm.ready) {
-                SkeletonPage(rows = 5, showAction = false, showTrailing = false)
+                SkeletonPage(showAction = false) { SkeletonGroupList(5) }
             } else {
                 if (vm.groups.isNotEmpty()) {
                     Column(Modifier.padding(start = Gutter, end = Gutter, top = 4.dp)) {
@@ -336,7 +336,7 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(Modifier.height(14.dp))
-                        Meter(if (vm.dueToday == 0) 0f else vm.doneToday.toFloat() / vm.dueToday)
+                        Meter(done = vm.doneToday, total = vm.dueToday)
                     }
                 }
 
@@ -475,8 +475,6 @@ private fun GroupRow(progress: GroupProgress, onClick: () -> Unit) {
             .padding(horizontal = Gutter, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Ring(progress.done, progress.toTest)
-        Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(
                 group.name.ifBlank { "Group" },
@@ -497,7 +495,12 @@ private fun GroupRow(progress: GroupProgress, onClick: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (day != null && progress.toTest > 0) {
+                Spacer(Modifier.height(8.dp))
+                Meter(done = progress.done, total = progress.toTest, height = 8.dp)
+            }
         }
+        Spacer(Modifier.width(12.dp))
         Icon(
             Icons.AutoMirrored.Filled.KeyboardArrowRight, null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant

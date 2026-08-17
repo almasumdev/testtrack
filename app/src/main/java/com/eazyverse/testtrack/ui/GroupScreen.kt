@@ -435,7 +435,7 @@ fun GroupScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             when {
-                !vm.ready -> SkeletonPage(rows = 8)
+                !vm.ready -> SkeletonPage { SkeletonAppList() }
 
                 group == null -> Blank(vm.message ?: "This group doesn't exist any more.")
 

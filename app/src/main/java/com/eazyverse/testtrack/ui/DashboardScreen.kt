@@ -274,7 +274,7 @@ private fun DashboardSkeleton() {
         }
     }
     Spacer(Modifier.height(30.dp))
-    Rows { SkeletonRows(8, showTrailing = false) }
+    Rows { SkeletonGroupList(8) }
 }
 
 /**

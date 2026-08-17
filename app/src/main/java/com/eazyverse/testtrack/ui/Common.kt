@@ -557,30 +557,63 @@ fun Skeleton(width: Dp? = null, height: Dp = 12.dp, corner: Dp = 6.dp, modifier:
  * little; a heading over something that never appears is worse.
  */
 @Composable
-fun SkeletonPage(rows: Int = 8, showAction: Boolean = true, showTrailing: Boolean = true) {
+fun SkeletonPage(showAction: Boolean = true, list: @Composable () -> Unit) {
     Spacer(Modifier.height(8.dp))
     Column(Modifier.padding(horizontal = Gutter)) {
         Skeleton(width = 148.dp, height = 34.dp, corner = 10.dp)
         Spacer(Modifier.height(12.dp))
         Skeleton(width = 210.dp, height = 12.dp)
         Spacer(Modifier.height(18.dp))
-        Skeleton(height = 6.dp, corner = 3.dp)
+        Skeleton(height = 10.dp, corner = 3.dp)
         if (showAction) {
             Spacer(Modifier.height(26.dp))
             Skeleton(height = 52.dp, corner = 16.dp)
         }
     }
     Spacer(Modifier.height(28.dp))
-    Rows { SkeletonRows(rows, showTrailing) }
+    Rows { list() }
 }
 
-@Composable
-fun SkeletonRows(count: Int = 7, showTrailing: Boolean = true) {
-    // Widths cycle rather than march, so a long run does not look like a wedge.
-    val titles = listOf(118, 92, 140, 104, 126, 86, 132)
-    val metas = listOf(168, 132, 190, 150, 118, 176, 142)
+/**
+ * How many rows a skeleton draws.
+ *
+ * More than the screen holds on purpose. A list that stops halfway down has already answered the
+ * question, and the answer it gives is "there are three of these", which is a thing nobody knows
+ * yet.
+ */
+const val SKELETON_ROWS = 8
 
-    repeat(count) { index ->
+private val Titles = listOf(118, 92, 140, 104, 126, 86, 132)
+private val Metas = listOf(168, 132, 190, 150, 118, 176, 142)
+
+private fun title(i: Int) = Titles[i % Titles.size].dp
+private fun meta(i: Int) = Metas[i % Metas.size].dp
+
+/** A ring, a group name, and the day underneath it: the shape of a row on the home screen. */
+@Composable
+fun SkeletonGroupList(rows: Int = SKELETON_ROWS) {
+    repeat(rows) { i ->
+        if (i > 0) RowDivider()
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Skeleton(width = 36.dp, height = 36.dp, corner = 18.dp)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Skeleton(width = title(i), height = 13.dp)
+                Spacer(Modifier.height(6.dp))
+                Skeleton(width = meta(i), height = 11.dp)
+            }
+        }
+    }
+}
+
+/** An icon, an app name, and what it is waiting for. */
+@Composable
+fun SkeletonAppList(rows: Int = SKELETON_ROWS) {
+    repeat(rows) { i ->
+        if (i > 0) RowDivider()
         Row(
             Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 13.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -588,19 +621,13 @@ fun SkeletonRows(count: Int = 7, showTrailing: Boolean = true) {
             Skeleton(width = 44.dp, height = 44.dp, corner = 13.dp)
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Skeleton(width = titles[index % titles.size].dp, height = 12.dp)
-                Spacer(Modifier.height(7.dp))
-                Skeleton(width = metas[index % metas.size].dp, height = 10.dp)
-            }
-            if (showTrailing) {
-                Spacer(Modifier.width(12.dp))
-                Skeleton(width = 46.dp, height = 20.dp, corner = 8.dp)
+                Skeleton(width = title(i), height = 13.dp)
+                Spacer(Modifier.height(6.dp))
+                Skeleton(width = meta(i), height = 11.dp)
             }
         }
     }
 }
-
-// ---- dialogs -----------------------------------------------------------------------------
 
 /**
  * The one dialog shape this app uses.
