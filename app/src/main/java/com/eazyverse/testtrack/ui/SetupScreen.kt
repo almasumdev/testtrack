@@ -390,6 +390,20 @@ fun SetupScreen(
                 live = live(1),
                 onToggle = { toggle(1) },
                 answers = listOf(
+                    // First, and open by default, because it happens before anybody gets as far
+                    // as verifying. The page refuses in large friendly letters and the way in is
+                    // a button above the refusal, so people read the refusal and stop.
+                    QA(
+                        "The group page says I don't have permission",
+                        "That message is normal and it is not about joining. The group's posts " +
+                            "are private, so the page will not show them to anybody who is not a " +
+                            "member yet. It is not telling you that you cannot join.\n\n" +
+                            "Look at the top of the page instead. There is a Join group button " +
+                            "next to the group's name. Tap that and ignore everything below it.\n\n" +
+                            "If there is no Join group button, the browser is signed in as a " +
+                            "different Google account. Switch it to the Gmail on step one and " +
+                            "open the link again."
+                    ),
                     QA(
                         "I joined, but Verify says I'm not in it",
                         "Google takes a minute or two to publish a new member, and the check " +
