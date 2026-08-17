@@ -32,7 +32,5 @@ gate.gs
 
 # Local run helpers. They hardcode this machine's SDK path and AVD name, so they are one
 # developer's convenience rather than a project decision.
-/run
-/emu
 /run.cmd
 /emu.cmd
