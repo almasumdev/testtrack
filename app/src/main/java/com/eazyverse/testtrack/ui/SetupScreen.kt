@@ -324,8 +324,21 @@ fun SetupScreen(
          */
         fun live(index: Int) = if (reopened != null) reopened == index else index == outstanding
 
-        /** Tapping the open one closes it, which hands the choice back to the app. */
-        fun toggle(index: Int) { reopened = if (live(index)) null else index }
+        /**
+         * Tapping the open one closes it, which hands the choice back to the app.
+         *
+         * Nothing below the outstanding step opens at all. Reading ahead sounds harmless and is
+         * not: every step's instructions assume the ones above it are done, and its control
+         * cannot succeed yet. Somebody who opens step four before joining the group gets a button
+         * that fails and an explanation of a thing they cannot do.
+         */
+        fun toggle(index: Int) {
+            if (index > outstanding) return
+            reopened = if (live(index)) null else index
+        }
+
+        /** Whether the row responds to a tap at all, which is the same question. */
+        fun opens(index: Int) = index <= outstanding
 
         Column(Modifier.padding(start = Gutter, end = Gutter, top = 36.dp, bottom = 24.dp)) {
             Text(
@@ -365,7 +378,7 @@ fun SetupScreen(
                 result = Session.email ?: "",
                 done = done[0],
                 live = live(0),
-                onToggle = { toggle(0) },
+                onToggle = { toggle(0) }.takeIf { opens(0) },
                 actionOutlivesTheStep = true,
             ) {
                 Text(
@@ -391,7 +404,7 @@ fun SetupScreen(
                     "and verify.",
                 done = done[1],
                 live = live(1),
-                onToggle = { toggle(1) },
+                onToggle = { toggle(1) }.takeIf { opens(1) },
                 answers = listOf(
                     // First, and open by default, because it happens before anybody gets as far
                     // as verifying. The page refuses in large friendly letters and the way in is
@@ -450,7 +463,7 @@ fun SetupScreen(
                     "yours. We can only see the files we put there and nothing else in it.",
                 done = done[2],
                 live = live(2),
-                onToggle = { toggle(2) },
+                onToggle = { toggle(2) }.takeIf { opens(2) },
                 answers = listOf(
                     // First, and open by default, because it is the one people arrive with. The
                     // grant is the account's, and a phone carrying two Google accounts is the
@@ -499,7 +512,7 @@ fun SetupScreen(
                     "TestTrack in the list and turn it on yourself.",
                 done = done[3],
                 live = live(3),
-                onToggle = { toggle(3) },
+                onToggle = { toggle(3) }.takeIf { opens(3) },
                 answers = listOf(
                     // The most common way this step fails, and the one a tester cannot solve by
                     // trying harder: the switch is there, they tap it, and Android refuses
@@ -555,7 +568,7 @@ fun SetupScreen(
                 done = done[4],
                 live = live(4),
                 last = true,
-                onToggle = { toggle(4) },
+                onToggle = { toggle(4) }.takeIf { opens(4) },
                 // Only while they are actually off.
                 //
                 // This step counts as done when it has been settled, and declining settles it, so
@@ -684,7 +697,7 @@ private fun Step(
     result: String,
     done: Boolean,
     live: Boolean,
-    onToggle: () -> Unit,
+    onToggle: (() -> Unit)?,
     /**
      * Whether [action] still means anything once the step is finished.
      *
@@ -714,7 +727,7 @@ private fun Step(
             // Always, and in both directions. It used to be tappable only when it was closed
             // and only on the one step that could reopen, so a step you had opened out of
             // curiosity could not be put away again.
-            .clickable(onClick = onToggle)
+            .then(if (onToggle != null) Modifier.clickable(onClick = onToggle) else Modifier)
             .padding(horizontal = Gutter)
             .height(IntrinsicSize.Min)
     ) {
