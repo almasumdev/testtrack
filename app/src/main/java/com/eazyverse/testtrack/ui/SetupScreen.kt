@@ -904,13 +904,13 @@ private fun GroupPageShots() {
     Column(Modifier.fillMaxWidth()) {
         Shot(
             R.drawable.group_page_join,
-            286.dp,
+            290.dp,
             "Tap the button. When it disappears, you have joined."
         )
         Spacer(Modifier.height(14.dp))
         Shot(
             R.drawable.group_page_no_join,
-            270.dp,
+            275.dp,
             "No button here? Your browser is signed in with a different Gmail. Switch it to " +
                 "the one on step one, then open the link again."
         )
