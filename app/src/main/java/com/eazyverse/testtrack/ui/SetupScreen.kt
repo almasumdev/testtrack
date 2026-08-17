@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
@@ -378,11 +380,23 @@ fun SetupScreen(
         fun opens(index: Int) = index <= outstanding
 
         Column(Modifier.padding(start = Gutter, end = Gutter, top = 36.dp, bottom = 24.dp)) {
-            Text(
-                "Set up TestTrack",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
+            // The same control the home screen carries, in the same corner, for the same reason.
+            // Setup is where somebody discovers they are on the wrong Gmail, and until now the way
+            // out was a text link buried inside step one, which is closed unless you open it.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Set up TestTrack",
+                    Modifier.weight(1f),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(
+                    onClick = { confirmSignOut = true },
+                    modifier = Modifier.offset(x = 12.dp)
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.Logout, "Sign out")
+                }
+            }
             Spacer(Modifier.height(8.dp))
             Text(
                 "Five things to do once. Take them in order.",
@@ -416,7 +430,6 @@ fun SetupScreen(
                 done = done[0],
                 live = live(0),
                 onToggle = { toggle(0) }.takeIf { opens(0) },
-                actionOutlivesTheStep = true,
             ) {
                 Text(
                     "You're signed in as ${Session.email ?: "this account"}. If that's the wrong " +
@@ -425,11 +438,6 @@ fun SetupScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(Modifier.height(12.dp))
-                TextButton(
-                    onClick = { confirmSignOut = true },
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) { Text("Sign out", color = MaterialTheme.colorScheme.error) }
             }
 
             Step(

@@ -76,6 +76,28 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.findByName("release")
         }
+
+        /**
+         * Signed with the release key too, where there is one.
+         *
+         * Android refuses to install a build over one signed with a different key, and the two
+         * defaults are different keys, so a phone carrying a release build could only take a debug
+         * one after an uninstall. That is not a small cost on a real phone: it takes the signed-in
+         * session, the Drive grant, and the usage access that had to be argued out of Samsung's
+         * restricted settings.
+         *
+         * One key means `install -r` always lands, whichever variant is already there.
+         *
+         * It also settles a smaller nuisance. Google checks the calling app's signature, so the
+         * debug key needs its own OAuth client registered or sign-in fails in debug and works in
+         * release. Sharing the key means one registration governs both.
+         *
+         * Falls back to the ordinary debug key where the keystore is absent, so a checkout without
+         * local.properties still builds.
+         */
+        debug {
+            signingConfig = signingConfigs.findByName("release") ?: signingConfig
+        }
     }
 
     // No kotlinOptions block: AGP 9 removed it, and built-in Kotlin takes its jvmTarget from
