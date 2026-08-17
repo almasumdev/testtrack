@@ -53,6 +53,14 @@ data class Capture(val path: String, val usageMs: Long)
 class CaptureService : Service() {
 
     private val handler = Handler(Looper.getMainLooper())
+
+    /**
+     * The ring the tester watches while an app under test is on screen.
+     *
+     * Created once and reused, because a WindowManager view is cheap to add and remove and
+     * expensive to leak. It draws nothing at all where the overlay grant has not been given.
+     */
+    private val overlay by lazy { VisitOverlay(this) }
     private var projection: MediaProjection? = null
     private var display: VirtualDisplay? = null
     private var reader: ImageReader? = null
@@ -218,6 +226,7 @@ class CaptureService : Service() {
      * uninterrupted stretch, not twelve trips back to a list to press the same button again.
      */
     private fun finish(pkg: String) {
+        overlay.hide()
         val path = captured?.takeIf { it.first == pkg }?.second
         if (path != null) {
             results[pkg] = Capture(path, UsageRepo.foregroundMsSince(this, pkg, visitStartedAt))
@@ -254,6 +263,28 @@ class CaptureService : Service() {
             { attempt(pkg, 0, null) },
             Random.nextLong(SHOT_EARLIEST_MS, SHOT_LATEST_MS)
         )
+
+        // Raised after the launch, so it lands on top of the app rather than under it.
+        overlay.show(
+            label = label(pkg),
+            position = "$roundIndex of $roundTotal",
+            millis = VISIT_MS,
+            onNext = { skip(pkg) }
+        )
+    }
+
+    /**
+     * Moves on before the visit is up, because somebody asked.
+     *
+     * The shot still has to happen, so this is not a way of skipping the work: if the frame has
+     * not been grabbed yet the pending attempt is brought forward rather than cancelled. What it
+     * shortens is the waiting, and the usage figure shortens with it, honestly. A tester who
+     * presses Next after four seconds banks four seconds and the bar is not met.
+     */
+    private fun skip(pkg: String) {
+        if (capturing != pkg) return
+        handler.removeCallbacksAndMessages(null)
+        if (captured?.first == pkg) finish(pkg) else attempt(pkg, MAX_TRIES, null)
     }
 
     private fun label(pkg: String): String = runCatching {
@@ -379,6 +410,7 @@ class CaptureService : Service() {
     }
 
     private fun teardown() {
+        overlay.hide()
         handler.removeCallbacksAndMessages(null)
         capturing = null
         captured = null
