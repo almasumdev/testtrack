@@ -843,7 +843,10 @@ private fun Node(number: Int, done: Boolean, live: Boolean) {
 @Composable
 private fun Answers(items: List<QA>) {
     if (items.isEmpty()) return
-    var open by remember { mutableStateOf(0) }
+    // Nothing open to begin with. One of them being open by default made the step taller than it
+    // needed to be and answered a question the reader had not asked yet, which is the opposite of
+    // what a list of questions is for.
+    var open by remember { mutableStateOf(-1) }
 
     Column(Modifier.padding(top = 18.dp)) {
         Dashes()
