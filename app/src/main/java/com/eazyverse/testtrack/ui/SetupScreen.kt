@@ -416,14 +416,11 @@ fun SetupScreen(
                     // a button above the refusal, so people read the refusal and stop.
                     QA(
                         "The group page says I don't have permission",
-                        "That message is normal and it is not about joining. The group's posts " +
-                            "are private, so the page will not show them to anybody who is not a " +
-                            "member yet. It is not telling you that you cannot join.\n\n" +
-                            "Look at the top of the page instead. There is a Join group button " +
-                            "next to the group's name. Tap that and ignore everything below it.\n\n" +
-                            "If there is no Join group button, the browser is signed in as a " +
-                            "different Google account. Switch it to the Gmail on step one and " +
-                            "open the link again.",
+                        "If you see a Join group button at the top, tap it. When it " +
+                            "disappears, you are in.\n\n" +
+                            "If there is no button at all, the browser is on a different Google " +
+                            "account. Switch it to the Gmail on step one and open the link again.",
+                        lead = "Ignore that message. Joining is the only thing to do on that page.",
                         art = { GroupPageShots() }
                     ),
                     QA(
@@ -447,13 +444,20 @@ fun SetupScreen(
                     )
                 )
             ) {
-                Primary("Verify membership", busy = vm.checkingGroup) { vm.verifyGroup(activity) }
-                TextButton(
-                    onClick = {
-                        activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Config.GROUP_URL)))
-                    },
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) { Text("Open the group") }
+                // Open, then verify, which is the order they happen in. Verify was the filled
+                // button and Open a text link under it, so the loud control was the one that
+                // cannot succeed until the quiet one has been used. Somebody arriving at this
+                // step has not joined yet; that is what the step is for.
+                Primary("Open the group") {
+                    activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Config.GROUP_URL)))
+                }
+                Spacer(Modifier.height(8.dp))
+                Secondary(
+                    if (vm.checkingGroup) "Checking\u2026" else "I've joined, check now",
+                    Modifier.fillMaxWidth()
+                ) {
+                    if (!vm.checkingGroup) vm.verifyGroup(activity)
+                }
 
                 StepMessage(vm, SetupViewModel.STEP_GROUP)
             }
@@ -668,7 +672,14 @@ fun SetupScreen(
 data class QA(
     val q: String,
     val a: String,
-    val art: (@Composable () -> Unit)? = null
+    val art: (@Composable () -> Unit)? = null,
+    /**
+     * The one sentence that would do on its own, said louder than the rest.
+     *
+     * For the answers where somebody is already lost and reading fast. Everything under it is
+     * still worth having, and none of it is worth having first.
+     */
+    val lead: String? = null
 )
 
 /**
@@ -866,6 +877,16 @@ private fun Answers(items: List<QA>) {
                     )
                 }
                 if (shown) {
+                    item.lead?.let {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            lineHeight = MaterialTheme.typography.bodyMedium.fontSize * 1.4f
+                        )
+                    }
                     Spacer(Modifier.height(6.dp))
                     Text(
                         item.a,
