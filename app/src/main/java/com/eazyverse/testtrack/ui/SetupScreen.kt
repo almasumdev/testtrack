@@ -56,6 +56,16 @@ import kotlinx.coroutines.launch
 class SetupViewModel : ViewModel() {
     var checkingGroup by mutableStateOf(false)
         private set
+
+    /**
+     * Google would not confirm the account without being asked, so the step offers to ask.
+     *
+     * Deliberately not a sign-out. The app's own session is intact and everything else works;
+     * only the token the membership service verifies has aged out, and one press of Google's
+     * button replaces it.
+     */
+    var needsGoogle by mutableStateOf(false)
+        private set
     var connectingDrive by mutableStateOf(false)
         private set
     var message by mutableStateOf<String?>(null)
@@ -109,6 +119,11 @@ class SetupViewModel : ViewModel() {
                         "Google answered for ${gate.address()}, not ${Session.email}. Sign out at " +
                             "the top of this page and sign back in with the Gmail you want to use."
 
+                    gate is GateResult.Failed && gate.reason == AuthRepo.NEEDS_GOOGLE -> {
+                        needsGoogle = true
+                        "Google needs to confirm this account again before it can check."
+                    }
+
                     gate is GateResult.Failed -> gate.reason
 
                     else -> {
@@ -122,6 +137,28 @@ class SetupViewModel : ViewModel() {
                 say(STEP_GROUP, e.friendly("We couldn't check your group membership just now. Try again in a moment."))
             }
             checkingGroup = false
+        }
+    }
+
+    /**
+     * Asks Google once, then checks again.
+     *
+     * The full sign-in, which is the only thing that mints a fresh ID token, and it does show the
+     * account chooser. That is fine here and was not fine before: this runs from a control that
+     * says it will, rather than appearing under a button that asked about group membership.
+     */
+    fun signInAgain(activity: Activity) {
+        checkingGroup = true
+        say(STEP_GROUP, null)
+        viewModelScope.launch {
+            val ok = runCatching { AuthRepo.signIn(activity) }
+                .onFailure { say(STEP_GROUP, it.friendly("Google didn't finish signing you in.")) }
+                .isSuccess
+            checkingGroup = false
+            if (ok) {
+                needsGoogle = false
+                verifyGroup(activity)
+            }
         }
     }
 
@@ -446,10 +483,15 @@ fun SetupScreen(
                 }
                 Spacer(Modifier.height(8.dp))
                 Secondary(
-                    if (vm.checkingGroup) "Checking\u2026" else "I've joined, check now",
+                    when {
+                        vm.checkingGroup -> "Checking\u2026"
+                        vm.needsGoogle -> "Confirm with Google"
+                        else -> "I've joined, check now"
+                    },
                     Modifier.fillMaxWidth()
                 ) {
-                    if (!vm.checkingGroup) vm.verifyGroup(activity)
+                    if (vm.checkingGroup) return@Secondary
+                    if (vm.needsGoogle) vm.signInAgain(activity) else vm.verifyGroup(activity)
                 }
 
                 StepMessage(vm, SetupViewModel.STEP_GROUP)

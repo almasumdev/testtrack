@@ -83,6 +83,20 @@ object AuthRepo {
     private const val TOKEN_LIFETIME = 45 * 60 * 1000L
 
     /**
+     * Google will not re-issue a token without being asked out loud.
+     *
+     * Not the same as being signed out, and worth keeping the two apart. The Firebase session
+     * persists and refreshes itself, so the account, its uid and its Drive are all still here and
+     * everything else in the app carries on working. What has aged out is the Google ID token the
+     * membership service verifies, which is a thing only Google can mint and only for somebody
+     * standing in front of the phone.
+     *
+     * So the answer is not to sign anybody out. It is to ask Google once, from a control that
+     * says so.
+     */
+    const val NEEDS_GOOGLE = "needs-google"
+
+    /**
      * How long each half of signing in may take before the app stops waiting.
      *
      * Neither half has a limit of its own, which is the whole reason for these. Credential Manager
@@ -180,9 +194,7 @@ object AuthRepo {
         // cannot, the honest answer is that the sign-in has expired, not a list of every Google
         // account on the phone attached to a button that asked about one of them.
         val account = runCatching { GroupGate.refresh(activity) }.getOrNull()
-            ?: return null to GateResult.Failed(
-                "Your sign-in has expired. Open the first step, sign out, and sign back in."
-            )
+            ?: return null to GateResult.Failed(NEEDS_GOOGLE)
 
         token = account.idToken
         tokenAt = System.currentTimeMillis()
