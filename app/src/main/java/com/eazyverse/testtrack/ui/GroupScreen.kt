@@ -479,7 +479,7 @@ fun GroupScreen(
 
                     vm.mine?.let { app ->
                         SectionLabel("Your app")
-                        Panel {
+                        Rows {
                             MineRow(
                                 app = app,
                                 reporters = vm.reportersForMine,
@@ -503,8 +503,9 @@ fun GroupScreen(
                                 "there are ${TestGroup.THRESHOLD}, the run starts."
                         )
                     } else {
-                        Panel {
-                            vm.toTest.forEach { app ->
+                        Rows {
+                            vm.toTest.forEachIndexed { index, app ->
+                                if (index > 0) RowDivider()
                                 TestRow(
                                     app = app,
                                     done = app.id in vm.doneToday,
@@ -784,8 +785,9 @@ private fun Skipped(apps: List<TestApp>, onUninstall: (TestApp) -> Unit) {
     val context = LocalContext.current
 
     SectionLabel("Not being tested")
-    Panel {
-        apps.forEach { app ->
+    Rows {
+        apps.forEachIndexed { index, app ->
+            if (index > 0) RowDivider()
             val info = remember(app.packageName, InstalledApps.revision) {
                 InstalledApps.cachedInfo(context, app.packageName)
             }

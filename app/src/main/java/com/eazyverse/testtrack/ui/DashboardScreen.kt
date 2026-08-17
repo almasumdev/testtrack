@@ -274,7 +274,7 @@ private fun DashboardSkeleton() {
         }
     }
     Spacer(Modifier.height(30.dp))
-    Panel { SkeletonRows(8, showTrailing = false) }
+    Rows { SkeletonRows(8, showTrailing = false) }
 }
 
 /**
@@ -538,8 +538,10 @@ private fun PerTester(vm: DashboardViewModel) {
     val elapsed = (vm.day?.plus(1)) ?: 0
 
     SectionLabel("Every tester")
-    Panel {
-        vm.testers.sortedByDescending { vm.daysPosted(it.uid) }.forEach { tester ->
+    Rows {
+        vm.testers.sortedByDescending { vm.daysPosted(it.uid) }
+            .forEachIndexed { index, tester ->
+                if (index > 0) RowDivider()
             val posted = vm.daysPosted(tester.uid)
             val usage = vm.totalUsage(tester.uid)
 

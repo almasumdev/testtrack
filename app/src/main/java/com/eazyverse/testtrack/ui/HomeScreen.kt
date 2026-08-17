@@ -364,17 +364,19 @@ fun HomeScreen(
                     )
                 } else {
                     SectionLabel("Your groups")
-                    Panel {
+                    Rows {
                         if (vm.groups.isEmpty()) Blank("None yet.")
-                        else vm.groups.forEach { progress ->
+                        else vm.groups.forEachIndexed { index, progress ->
+                            if (index > 0) RowDivider()
                             GroupRow(progress) { onOpenGroup(progress.group.id) }
                         }
                     }
 
                     if (vm.pending.isNotEmpty()) {
                         SectionLabel("Waiting for a group")
-                        Panel {
-                            vm.pending.forEach { app ->
+                        Rows {
+                            vm.pending.forEachIndexed { index, app ->
+                                if (index > 0) RowDivider()
                                 PendingRow(
                                     app = app,
                                     onEditNotes = { editingNotes = app },

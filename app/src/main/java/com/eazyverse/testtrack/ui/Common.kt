@@ -15,6 +15,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -98,33 +102,115 @@ fun SectionLabel(text: String, trailing: String? = null) {
 }
 
 /**
- * A group of rows on their own surface.
+ * A group of rows, on the page rather than on a card.
  *
- * Rows inside are separated by their own padding rather than a rule — a divider between every one
- * of fourteen apps is fourteen lines competing with the content they are supposed to organise.
- * The panel edge does that job once.
+ * This used to be a raised surface with rounded corners, and the surface was doing the organising:
+ * rows inside were separated by their own padding and the panel edge drew the boundary once. It
+ * worked, and it made every list on the screen a floating slab, indented from both margins, with
+ * the page showing through between them.
+ *
+ * The console went the other way and it reads better: rows sit on the page ground at the full
+ * width, and what separates them is [RowDivider]. Nothing is raised, so nothing has to be aligned
+ * against anything else, and a list that runs to fourteen apps has one less edge in it.
  */
 @Composable
-fun Panel(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Column(
-        modifier
+fun Rows(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(modifier.fillMaxWidth(), content = content)
+}
+
+/**
+ * A dashed rule between rows.
+ *
+ * Dashed rather than solid, which is a small thing that stops mattering the moment you see
+ * fourteen of them: a solid rule between every row is fourteen hard lines competing with the
+ * content they are meant to organise, and a dashed one recedes far enough to be structure rather
+ * than furniture.
+ *
+ * Inset by the gutter so it lines up with the text either side of it and never touches the screen
+ * edge.
+ */
+@Composable
+fun RowDivider() {
+    val ink = MaterialTheme.colorScheme.outlineVariant
+    Canvas(
+        Modifier
             .fillMaxWidth()
             .padding(horizontal = Gutter)
-            .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surface),
-        content = content
+            .height(1.dp)
+    ) {
+        drawLine(
+            color = ink,
+            start = Offset(0f, size.height / 2f),
+            end = Offset(size.width, size.height / 2f),
+            strokeWidth = size.height,
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.5.dp.toPx(), 3.dp.toPx()))
+        )
+    }
+}
+
+/**
+ * The other actions on a screen, beside its one [Primary].
+ *
+ * Outlined, and short enough to sit two to a row. Four of these stacked full width is four equally
+ * loud invitations and half a phone of button, when what they actually are is the things you might
+ * do before the one thing you came to do.
+ */
+@Composable
+fun Secondary(
+    label: String,
+    modifier: Modifier = Modifier,
+    destructive: Boolean = false,
+    onClick: () -> Unit
+) {
+    OutlinedButton(
+        onClick = onClick,
+        shape = RoundedCornerShape(10.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp),
+        modifier = modifier.height(42.dp)
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge,
+            maxLines = 1,
+            color = if (destructive) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+/**
+ * A small bordered action, for the handful that are neither the screen's one primary nor a row.
+ *
+ * As full width text links stacked one above the other they read as a menu of equally weighted
+ * choices while pushing the list, which is the reason the screen exists, below the fold.
+ */
+@Composable
+fun Chip(label: String, onClick: () -> Unit) {
+    Text(
+        label,
+        Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 7.dp),
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.primary
     )
 }
 
-@Composable
-fun Hairline(inset: Dp = 0.dp) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .padding(start = inset)
-            .height(1.dp)
-            .background(MaterialTheme.colorScheme.outlineVariant)
-    )
+/**
+ * Long enough to be seen, short enough not to be waited on.
+ *
+ * A pull that finishes in eighty milliseconds flashes the skeleton and puts it away again, which
+ * reads as a glitch rather than as a refresh. Held to a floor so the answer to "did that do
+ * anything" is always yes.
+ */
+const val MIN_REFRESH = 550L
+
+suspend fun holdShimmer(startedAt: Long) {
+    val left = MIN_REFRESH - (System.currentTimeMillis() - startedAt)
+    if (left > 0) kotlinx.coroutines.delay(left)
 }
 
 /**
@@ -478,7 +564,7 @@ fun SkeletonPage(rows: Int = 8, showAction: Boolean = true, showTrailing: Boolea
         }
     }
     Spacer(Modifier.height(28.dp))
-    Panel { SkeletonRows(rows, showTrailing) }
+    Rows { SkeletonRows(rows, showTrailing) }
 }
 
 @Composable
