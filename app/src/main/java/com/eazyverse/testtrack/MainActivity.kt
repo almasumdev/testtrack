@@ -34,7 +34,6 @@ import androidx.navigation.navArgument
 import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.CaptureService
 import com.eazyverse.testtrack.data.Session
-import com.eazyverse.testtrack.data.Telemetry
 import com.eazyverse.testtrack.data.AppUpdateService
 import com.eazyverse.testtrack.data.UpdateTier
 import androidx.compose.runtime.collectAsState
@@ -77,8 +76,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Session.init(this)
-        AppUpdateService.init(this)
-        Telemetry.init(this)
         openGroup.value = intent?.getStringExtra(EXTRA_GROUP_ID)
         setContent {
             TestTrackTheme {

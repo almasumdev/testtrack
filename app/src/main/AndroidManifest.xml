@@ -76,6 +76,7 @@
       returns from the account.
     -->
     <application
+        android:name=".App"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
