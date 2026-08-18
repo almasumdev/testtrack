@@ -5,9 +5,13 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.util.LruCache
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
 
 /**
  * What we can learn about another tester's app, and how to open it.
@@ -89,6 +93,33 @@ object InstalledApps {
         runCatching { context.packageManager.getApplicationIcon(pkg) }.getOrNull()
     }
 
+    /**
+     * The same icon as a bitmap, rasterised once.
+     *
+     * [icon] caches the drawable, which is the cheap half. The expensive half is turning an
+     * adaptive icon into pixels, and that was happening per row per screen because the only thing
+     * holding the result was a `remember` inside one composable. A list that recycles its rows
+     * throws those away exactly when a tester is scrolling.
+     *
+     * Bounded, unlike the drawable cache above it, because these are pixels. Four megabytes is
+     * comfortably more icons than a phone has apps under test.
+     */
+    fun iconBitmap(context: Context, pkg: String): ImageBitmap? {
+        bitmapCache[pkg]?.let { return it }
+        val drawable = icon(context, pkg) ?: return null
+        val bitmap = runCatching {
+            val w = drawable.intrinsicWidth.takeIf { it > 0 } ?: 108
+            val h = drawable.intrinsicHeight.takeIf { it > 0 } ?: 108
+            drawable.toBitmap(w, h).asImageBitmap()
+        }.getOrNull() ?: return null
+        bitmapCache.put(pkg, bitmap)
+        return bitmap
+    }
+
+    private val bitmapCache = object : LruCache<String, ImageBitmap>(4 * 1024 * 1024) {
+        override fun sizeOf(key: String, value: ImageBitmap) = value.width * value.height * 4
+    }
+
     fun cachedInfo(context: Context, pkg: String): Info {
         // Touched so that a composable reaching this through a helper subscribes too, rather than
         // only the call sites that pass `revision` as a key.
@@ -115,8 +146,10 @@ object InstalledApps {
             if (fresh != infoCache[pkg]) {
                 infoCache[pkg] = fresh
                 // The icon could not be read while the app was absent, so a null was cached for
-                // it. Dropping that is what lets the row stop being a grey placeholder.
+                // it. Dropping that is what lets the row stop being a grey placeholder. The
+                // rasterised copy goes with it, or the row keeps drawing the old app's icon.
                 iconCache.remove(pkg)
+                bitmapCache.remove(pkg)
                 moved = true
             }
         }

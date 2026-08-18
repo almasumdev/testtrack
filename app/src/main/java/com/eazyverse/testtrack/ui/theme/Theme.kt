@@ -105,7 +105,11 @@ private val DarkStatus = StatusColors(
     neutralSoft = Color(0xFF182034)
 )
 
-val LocalStatusColors = staticCompositionLocalOf { LightStatus }
+// Dark, because [ALWAYS_DARK] is. This default is only ever reached outside [TestTrackTheme] —
+// a preview, or something rendered before the provider is in place — and until now that fallback
+// handed out light-mode status tones to be drawn on a dark ground. The console defaults to its
+// dark set for the same reason.
+val LocalStatusColors = staticCompositionLocalOf { DarkStatus }
 
 /**
  * TestTrack is a dark app.

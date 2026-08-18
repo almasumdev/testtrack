@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import com.eazyverse.testtrack.data.*
 import kotlinx.coroutines.launch
 
@@ -235,10 +235,15 @@ fun DashboardScreen(
             )
             if (proof.imageUrl.isNotBlank()) {
                 Spacer(Modifier.height(12.dp))
-                AsyncImage(
+                // Subcompose so the wait has a shape. These come off Drive over whatever
+                // connection the tester has, and an image with no loading state is a page that
+                // reflows under the reader when it lands.
+                SubcomposeAsyncImage(
                     model = proof.imageUrl,
                     contentDescription = "Proof screenshot",
                     contentScale = ContentScale.FillWidth,
+                    loading = { Skeleton(height = 260.dp, corner = 8.dp) },
+                    error = { Skeleton(height = 260.dp, corner = 8.dp) },
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
                 )
             }
@@ -330,10 +335,12 @@ private fun Reporters(vm: DashboardViewModel, onOpen: (Pair<Tester, Proof>) -> U
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (proof.imageUrl.isNotBlank()) {
-                    AsyncImage(
+                    SubcomposeAsyncImage(
                         model = proof.imageUrl,
                         contentDescription = "${tester.shortName}'s screenshot",
                         contentScale = ContentScale.Crop,
+                        loading = { Skeleton(width = 86.dp, height = 152.dp, corner = 10.dp) },
+                        error = { Skeleton(width = 86.dp, height = 152.dp, corner = 10.dp) },
                         modifier = Modifier
                             .size(86.dp, 152.dp)
                             .clip(RoundedCornerShape(10.dp))

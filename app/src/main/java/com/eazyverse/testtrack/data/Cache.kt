@@ -22,8 +22,17 @@ object Cache {
         entries[key] = value
     }
 
-    /** Signing out must not leave the next account looking at the last one's groups. */
-    fun clear() = entries.clear()
+    /**
+     * Signing out must not leave the next account looking at the last one's groups.
+     *
+     * The decoded faces go too. They are keyed by their own bytes rather than by account, so they
+     * could not be served to the wrong person, but holding a stranger's photograph in memory after
+     * they have signed out is not a thing to leave to that argument.
+     */
+    fun clear() {
+        entries.clear()
+        Photo.clear()
+    }
 
     fun groups(uid: String) = "groups:$uid"
     fun pending(uid: String) = "pending:$uid"

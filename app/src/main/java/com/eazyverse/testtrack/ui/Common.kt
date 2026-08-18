@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import com.eazyverse.testtrack.data.InstalledApps
+import com.eazyverse.testtrack.data.Photo
 import com.eazyverse.testtrack.ui.theme.LocalStatusColors
 import androidx.compose.foundation.Image as ComposeImage
 
@@ -347,13 +348,7 @@ fun AppIcon(pkg: String, label: String, size: Dp = 44.dp) {
     // The revision is a key here too. An app that was absent cached a null icon, and without this
     // the row stays a grey placeholder for the rest of the session after it is installed.
     val bitmap: ImageBitmap? = remember(pkg, InstalledApps.revision) {
-        InstalledApps.icon(context, pkg)?.let { drawable ->
-            runCatching {
-                val w = drawable.intrinsicWidth.takeIf { it > 0 } ?: 108
-                val h = drawable.intrinsicHeight.takeIf { it > 0 } ?: 108
-                drawable.toBitmap(w, h).asImageBitmap()
-            }.getOrNull()
-        }
+        InstalledApps.iconBitmap(context, pkg)
     }
     val shape = RoundedCornerShape(size * 0.3f)
 
@@ -395,6 +390,38 @@ fun Initial(letter: String, size: Dp = 34.dp) {
     }
 }
 
+/**
+ * Somebody's face, or their letter where there is no face.
+ *
+ * The fallback is not an error state and is not drawn like one. Most accounts will never set a
+ * picture, so [Initial] is the ordinary case and this is the exception that improves on it.
+ *
+ * Decoding is remembered against the encoded string rather than done on every recomposition,
+ * because this is drawn in list rows and the string is the only thing that can change it.
+ */
+@Composable
+fun Avatar(photo: String, letter: String, size: Dp = 34.dp, loading: Boolean = false) {
+    // Nothing has been fetched yet, so there is no letter to show either — the name it would come
+    // from is on the same document as the picture. A shimmer says "coming", where a letter would
+    // say "this is who they are" and then change its mind.
+    if (loading) {
+        Skeleton(width = size, height = size, corner = size / 2)
+        return
+    }
+
+    val bitmap = remember(photo) { Photo.decode(photo)?.asImageBitmap() }
+    if (bitmap == null) {
+        Initial(letter, size)
+    } else {
+        ComposeImage(
+            bitmap = bitmap,
+            contentDescription = null,
+            modifier = Modifier.size(size).clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+
 /** Scannable down a column of twelve without reading any of them. */
 @Composable
 fun Pill(text: String, tone: Color, background: Color) {
@@ -410,41 +437,36 @@ fun Pill(text: String, tone: Color, background: Color) {
     )
 }
 
-/** Today, at a glance, without reading a word. */
+/**
+ * A [Pill] for a row that is busy, saying which kind of busy it is.
+ *
+ * Where an action would sit, and shaped like the states beside it, so a list mid round reads as one
+ * list rather than a column of buttons with holes punched in it.
+ *
+ * The word is the point. A bare spinner says something is happening and leaves which row is
+ * capturing and which is uploading to be worked out from position, which is exactly the thing
+ * somebody watching a round wants to know.
+ */
 @Composable
-fun Ring(done: Int, total: Int, size: Dp = 36.dp) {
-    val track = Status.upcoming
-    val fill = MaterialTheme.colorScheme.primary
-    val fraction = if (total <= 0) 0f else (done.toFloat() / total).coerceIn(0f, 1f)
-
-    Box(Modifier.size(size), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize()) {
-            val stroke = this.size.minDimension * 0.13f
-            val inset = stroke / 2f
-            drawArc(
-                color = track, startAngle = 0f, sweepAngle = 360f, useCenter = false,
-                topLeft = Offset(inset, inset),
-                size = androidx.compose.ui.geometry.Size(
-                    this.size.width - stroke, this.size.height - stroke
-                ),
-                style = Stroke(stroke)
-            )
-            if (fraction > 0f) {
-                drawArc(
-                    color = fill, startAngle = -90f, sweepAngle = 360f * fraction, useCenter = false,
-                    topLeft = Offset(inset, inset),
-                    size = androidx.compose.ui.geometry.Size(
-                        this.size.width - stroke, this.size.height - stroke
-                    ),
-                    style = Stroke(stroke, cap = StrokeCap.Round)
-                )
-            }
-        }
+fun Working(text: String) {
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(Status.neutralSoft)
+            .padding(horizontal = 9.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        androidx.compose.material3.CircularProgressIndicator(
+            Modifier.size(11.dp),
+            strokeWidth = 1.5.dp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.width(6.dp))
         Text(
-            if (total <= 0) "–" else "$done",
+            text,
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
