@@ -27,6 +27,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import android.text.format.DateFormat
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -44,6 +45,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.Date
 
 class GroupViewModel : ViewModel() {
 
@@ -691,6 +693,34 @@ private fun Header(group: TestGroup, done: Int, total: Int) {
         if (day != null) {
             Spacer(Modifier.height(14.dp))
             Meter(if (total == 0) 0f else done.toFloat() / total)
+
+            /*
+             * When the day turns over, spelled out.
+             *
+             * The run's clock starts at the hour the group did, so this is almost never midnight
+             * and there is no way to work it out from anything else on screen. Somebody testing
+             * after dinner can put half a round on one day and half on the next and see only that
+             * their count went back to zero.
+             *
+             * The date is in it as well as the time. "Ends at 8:33 pm" on an evening after 8:33 is
+             * a sentence about tomorrow that reads as one about tonight.
+             */
+            group.dayEndsAt()?.let { ends ->
+                Spacer(Modifier.height(10.dp))
+                val context = LocalContext.current
+                val clock = remember(ends) {
+                    val time = DateFormat.getTimeFormat(context).format(Date(ends))
+                    val today = DateFormat.getDateFormat(context).format(Date())
+                    val then = DateFormat.getDateFormat(context).format(Date(ends))
+                    if (today == then) "Day ${day + 1} ends at $time today"
+                    else "Day ${day + 1} ends at $time tomorrow"
+                }
+                Text(
+                    clock,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
         // A short-handed group used to be called out here in red. It is not shown any more, and
         // the reason is that being short is now something an admin can choose: a run can be

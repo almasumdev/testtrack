@@ -153,6 +153,20 @@ data class TestGroup(
     }
 
     /**
+     * When today stops counting and the next day begins, or null when nothing is running.
+     *
+     * Worth showing, because it is not midnight and nobody would guess it. The clock starts at the
+     * hour the group did, so a cohort that began at half past eight in the evening rolls over at
+     * half past eight every evening after — and a tester who does their round after dinner can
+     * find that half of it landed on one day and half on the next, with no way to tell from the
+     * screen why.
+     */
+    fun dayEndsAt(now: Long = System.currentTimeMillis()): Long? {
+        val day = dayIndex(now) ?: return null
+        return startDate + (day + 1) * 86_400_000L
+    }
+
+    /**
      * Deliberately not here any more.
      *
      * There was an `atRisk` on this model, and two screens drew a red panel from it saying the
