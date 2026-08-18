@@ -356,7 +356,9 @@ data class Proof(
 data class Tester(
     val uid: String = "",
     val email: String = "",
-    val displayName: String = ""
+    val displayName: String = "",
+    /** A tiny JPEG as base64, or blank. See [Photo] for why it lives on the document. */
+    val photo: String = ""
 ) {
     /** `someone@gmail.com` -> `someone`, which is all a grid column has room for. */
     val shortName: String

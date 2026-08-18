@@ -160,8 +160,48 @@ object Repo {
     private fun parseTester(doc: DocumentSnapshot) = Tester(
         uid = doc.getString("uid") ?: doc.id,
         email = doc.getString("email").orEmpty(),
-        displayName = doc.getString("displayName").orEmpty()
+        displayName = doc.getString("displayName").orEmpty(),
+        photo = doc.getString("photo").orEmpty()
     ).takeIf { it.email.isNotBlank() }
+
+    /** This account's own row, for the profile screen. */
+    suspend fun me(uid: String): Tester? =
+        parseTester(await(db.collection("users").document(uid).get()))
+
+    /**
+     * The name and face this account shows the rest of its cohort.
+     *
+     * Written as one call because they are edited on one screen and a half-saved profile is worse
+     * than an unsaved one. `photo` is a blank string rather than a deletion when it is cleared,
+     * which keeps the shape of the document fixed and the rules' key list honest.
+     */
+    suspend fun updateProfile(uid: String, displayName: String, photo: String) {
+        await(
+            db.collection("users").document(uid).set(
+                mapOf(
+                    "displayName" to displayName.trim(),
+                    "photo" to photo,
+                    "updatedAt" to System.currentTimeMillis()
+                ),
+                SetOptions.merge()
+            )
+        )
+    }
+
+    /**
+     * Everything this account has ever submitted, whatever became of it.
+     *
+     * Constrained on `ownerUid` because rules are not filters: the read rule admits an app to its
+     * owner, so the query has to say who is asking or the whole set is refused before a single
+     * document is looked at. Unsorted here and ordered by the screen, which wants live ones first
+     * rather than oldest first.
+     */
+    suspend fun myApps(uid: String): List<TestApp> =
+        await(
+            db.collection("apps")
+                .whereEqualTo("ownerUid", uid)
+                .get()
+        ).documents.map(::parseApp)
 
     // ---- groups --------------------------------------------------------------------------
 

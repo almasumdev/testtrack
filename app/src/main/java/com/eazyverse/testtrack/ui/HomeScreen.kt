@@ -79,9 +79,29 @@ class HomeViewModel : ViewModel() {
     val doneToday: Int get() = groups.sumOf { it.done }
     val dueToday: Int get() = groups.sumOf { it.toTest }
 
+    /**
+     * This account's own face, for the button that leads to it.
+     *
+     * Its own state rather than part of [load]'s batch, because it is the one thing on this screen
+     * that is not about today and must not hold the rest of it up. A failed read leaves the
+     * initial showing, which is what most accounts see anyway.
+     */
+    var me by mutableStateOf<Tester?>(null)
+        private set
+
+    val photo: String get() = me?.photo.orEmpty()
+    val initial: String
+        get() = me?.initial ?: Session.email?.firstOrNull()?.uppercase() ?: "?"
+
+    private fun loadMe() {
+        val uid = AuthRepo.uid ?: return
+        viewModelScope.launch { runCatching { me = Repo.me(uid) } }
+    }
+
     fun load() {
         val uid = AuthRepo.uid ?: run { ready = true; return }
 
+        loadMe()
         showCached(uid)
 
         viewModelScope.launch {
@@ -226,7 +246,7 @@ fun HomeScreen(
     onOpenGroup: (String) -> Unit,
     onSubmitApp: () -> Unit,
     onOpenSetup: () -> Unit,
-    onSignOut: () -> Unit,
+    onOpenProfile: () -> Unit,
     vm: HomeViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -276,8 +296,6 @@ fun HomeScreen(
         }
     }
 
-    var confirmSignOut by remember { mutableStateOf(false) }
-
     /**
      * The app whose notes are being written, or null.
      *
@@ -294,12 +312,17 @@ fun HomeScreen(
                 // Both actions shown rather than folded behind an overflow. Two is under the
                 // threshold where a menu earns its extra tap, and neither is findable by guessing
                 // that a three-dot icon contains it.
+                //
+                // Sign out used to be the second of them and now lives on the profile, which is
+                // where an account action belongs and what the face on the right leads to. It is
+                // still on Setup as well, because that is the screen somebody lands on when they
+                // have signed in as the wrong person.
                 actions = {
                     IconButton(onClick = onOpenSetup) {
                         Icon(Icons.Outlined.Tune, "Setup")
                     }
-                    IconButton(onClick = { confirmSignOut = true }) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, "Sign out")
+                    IconButton(onClick = onOpenProfile) {
+                        Avatar(vm.photo, vm.initial, size = 28.dp, loading = vm.me == null)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -398,24 +421,6 @@ fun HomeScreen(
             }
             Spacer(Modifier.height(40.dp))
         }
-    }
-
-    if (confirmSignOut) {
-        Ask(
-            title = "Sign out?",
-            body = "You'll need to sign in with Google again. Nothing you've already reported " +
-                "is lost.",
-            confirm = "Sign out",
-            onConfirm = {
-                confirmSignOut = false
-                CaptureService.endSession(context)
-                vm.signOut(context) {
-                    Cache.clear()
-                    onSignOut()
-                }
-            },
-            onDismiss = { confirmSignOut = false }
-        )
     }
 
     editingNotes?.let { app ->
