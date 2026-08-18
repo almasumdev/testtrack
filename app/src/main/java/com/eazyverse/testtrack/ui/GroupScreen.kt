@@ -94,6 +94,16 @@ class GroupViewModel : ViewModel() {
     var sending by mutableStateOf<Set<String>>(emptySet())
         private set
 
+    /**
+     * Who each app belongs to, by uid.
+     *
+     * One read of the roster for the whole list rather than a lookup per row. The email is already
+     * on the app document, so this is only here for the name somebody chose — an account that has
+     * not set one falls back to the address, which is what [Tester.shortName] does anyway.
+     */
+    var owners by mutableStateOf<Map<String, Tester>>(emptyMap())
+        private set
+
     var message by mutableStateOf<String?>(null)
 
     val day: Int? get() = group?.dayIndex()
@@ -151,6 +161,7 @@ class GroupViewModel : ViewModel() {
                 val reporters =
                     if (d == null || own == null) 0
                     else Repo.proofsForApp(own.id, own.ownerUid).count { it.day == d && it.meetsBar }
+                val people = runCatching { Repo.testers(found.memberUids) }.getOrDefault(emptyList())
 
                 // Published in one go, after every query has answered — see [ready].
                 group = found
@@ -159,8 +170,13 @@ class GroupViewModel : ViewModel() {
                 toUninstall = apps.filter { it.ownerUid != uid && it.removed }
                 doneToday = banked
                 reportersForMine = reporters
+                // Failure here is not failure of the screen. A row with no name against it is a
+                // row that still opens, so the roster is fetched with its own runCatching rather
+                // than taking the day's list down with it.
+                if (people.isNotEmpty()) owners = people.associateBy { it.uid }
 
                 Cache.put(Cache.group(groupId), found)
+                Cache.put(Cache.testers(groupId), people)
                 Cache.put(Cache.appsIn(groupId), apps)
                 if (d != null) {
                     Cache.put(Cache.doneToday(uid, groupId, d), banked)
@@ -197,6 +213,11 @@ class GroupViewModel : ViewModel() {
         val reporters =
             if (d == null || own == null) 0
             else Cache.get<Int>(Cache.reporters(own.id, d)) ?: return
+
+        // Not a `?: return` like the others. A name is a nicety on a row that works without one,
+        // so its absence should not hold back a screen the cache can otherwise draw in full.
+        Cache.get<List<Tester>>(Cache.testers(groupId))
+            ?.let { owners = it.associateBy { person -> person.uid } }
 
         group = cached
         mine = own
@@ -590,6 +611,7 @@ fun GroupScreen(
                                     ended = group.running,
                                     busy = CaptureService.capturing == app.packageName,
                                     sending = app.id in vm.sending,
+                                    owner = vm.owners[app.ownerUid],
                                     onOpen = { run(listOf(app.packageName)) },
                                     onInstall = { openInPlay(context, app) { vm.message = it } },
                                     onCannotInstall = { reporting = app }
@@ -1018,6 +1040,8 @@ private fun TestRow(
     busy: Boolean,
     /** This app's proof is uploading. Not done yet, and not something to start again either. */
     sending: Boolean,
+    /** Whose app this is, if the roster has arrived. The row works without it. */
+    owner: Tester?,
     onOpen: () -> Unit,
     onInstall: () -> Unit,
     onCannotInstall: () -> Unit
@@ -1041,11 +1065,43 @@ private fun TestRow(
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold
             )
+            /*
+             * Whose app this is.
+             *
+             * A cohort is thirteen strangers holding each other to a fortnight, and until now the
+             * only thing on the row was a package name. Somebody who cannot get past a login
+             * screen needs to know who to ask, and somebody deciding whether the notes are worth
+             * trusting needs to know who wrote them.
+             *
+             * The name is dropped when it adds nothing, and blank is not the only way it can add
+             * nothing. Google hands back a display name for every account and for most of these it
+             * is the address with the domain taken off, so testing for emptiness alone gave a
+             * column of rows reading "abdudevs · abdudevs@gmail.com". Compared against the local
+             * part instead, which is the thing it duplicates.
+             */
+            val who = remember(owner, app.ownerEmail) {
+                val mail = app.ownerEmail.takeIf { it.isNotBlank() }
+                val local = mail?.substringBefore('@')
+                val name = owner?.displayName
+                    ?.takeIf { it.isNotBlank() && !it.equals(local, ignoreCase = true) }
+                listOfNotNull(name, mail).joinToString(" · ")
+            }
+            if (who.isNotBlank()) {
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    who,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
             Spacer(Modifier.height(2.dp))
             Text(
                 if (info.installed) info.streakLabel else app.packageName,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.outline
             )
 
             /*
