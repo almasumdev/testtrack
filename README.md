@@ -77,7 +77,7 @@ question, it is linked.
 
 | What it asks for | What it actually does | What it never does |
 |---|---|---|
-| Usage access | Reads how many seconds one named app spent on screen today | Read what you did inside any app |
+| Usage access | Reads how many seconds one named app was on screen during the visit | Read what you did inside any app, or when |
 | Screen capture | One screenshot per app, only during a round you started | Run in the background or record video |
 | Google Drive | Writes your screenshots to a folder it creates | Touch anything else in your Drive |
 | Google sign-in | Your email and name, so a grid can show who is who | Ask for or see your password |
@@ -104,8 +104,9 @@ TestTrack, because TestTrack can only time the visit it started itself. That is 
 a person could fake by opening an app and walking away.
 
 **What Android hands over.** Be clear about this, because a half-answer here is worse than none.
-When TestTrack asks the system for today's activity, Android returns a stream covering every app
-on the phone. That is how the API works, and no app can ask for a narrower slice.
+When TestTrack asks the system what happened during a visit, Android returns a stream covering
+every app on the phone for that window. That is how the API works, and no app can ask for a
+narrower slice.
 
 **What TestTrack does with it.** It walks that stream and keeps one number: the seconds spent in
 the single package it is checking, which is one of the apps in your group. Every other event is
@@ -116,8 +117,9 @@ discarding is `if (event.packageName != pkg) continue`. The numbers come from An
 [UsageStatsManager](https://developer.android.com/reference/android/app/usage/UsageStatsManager), which is
 the only source of them there is.
 
-**What leaves your phone.** One integer per app per day, the milliseconds that app was on screen.
-That is the entire upload. Not app names you use, not a timeline, not a browsing history.
+**What leaves your phone.** One integer per app per day, the milliseconds that app was on screen
+during the visit. That is the entire upload. Not app names you use, not a timeline, not a browsing
+history.
 
 **It is not silent.** Usage access cannot be granted by a popup.
 [PACKAGE_USAGE_STATS](https://developer.android.com/reference/android/Manifest.permission#PACKAGE_USAGE_STATS)
@@ -396,20 +398,23 @@ Five steps, and the last one is optional:
 
 1. Open TestTrack and press **Start testing**.
 2. Confirm screen sharing once. The round covers the whole group under that single confirmation.
-3. Each app opens in turn, is held for 36 seconds, is screenshotted at an unannounced moment, and
+3. Each app opens in turn, is held for 20 seconds, is screenshotted at an unannounced moment, and
    hands straight over to the next one. You do not press anything in between.
 4. You land back in TestTrack, and every proof uploads to your Drive.
 
 A single **Open** on any row runs a round of one, so both paths behave identically.
 
-**A day needs 30 seconds of use, not a launch.** The visit is held for 36 seconds to clear a
-30-second bar, because the clock starts when the service schedules the visit while usage only
-accrues once the app has actually reached the foreground a second or two later. Measured at
-exactly thirty, honest full-length visits came back at 28.7s and 29.4s and failed the very rule
-they had satisfied.
+**A day needs 10 seconds of use, not a launch.** The visit is held for 20 seconds to clear a
+10-second bar, and the gap between the two is doing two jobs. The clock starts when the service
+schedules the visit while usage only accrues once the app has reached the foreground a second or
+two later, so a visit measured at exactly the bar comes back a shade under it and fails the rule
+it satisfied. The larger reason is the screenshot: it lands somewhere between 10 and 17 seconds,
+because a WebView wrapper can still be showing its logo at eight, and a shorter visit would
+photograph splash screens.
 
-Foreground time covers the whole day, not just the visit TestTrack started, so opening an app on
-your own earlier still counts.
+Foreground time is measured across the visit itself, not the calendar day. It used to be the day,
+and at a lower bar that stopped being honest: one long session earlier the same day cleared the
+bar before the visit even began, and the visit then proved nothing the screenshot had not.
 
 Owners get a dashboard per app: how many of the thirteen reported today with their screenshots and
 times, the 14-day grid, who is still to report, and a per-tester breakdown.
