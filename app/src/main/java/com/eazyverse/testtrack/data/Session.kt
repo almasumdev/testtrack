@@ -26,7 +26,7 @@ object Session {
         isGroupMember = prefs.getBoolean(KEY_MEMBER, false)
         driveConnected = prefs.getBoolean(KEY_DRIVE, false)
         remindersAsked = prefs.getBoolean(KEY_REMINDERS_ASKED, false)
-        nudgedBuild = prefs.getInt(KEY_NUDGED_BUILD, 0)
+        updatePromptedBuild = prefs.getInt(KEY_UPDATE_PROMPTED, 0)
         refreshUsageAccess(context)
         refreshNotifications(context)
     }
@@ -98,17 +98,17 @@ object Session {
         get() = signedIn && isGroupMember && driveConnected && usageAccessGranted && remindersSettled
 
     /**
-     * The newest build they have already waved an update prompt away for.
+     * The newest build an update prompt has already been dismissed for.
      *
-     * Per build rather than a flag, so dismissing one offer does not silence the next one. See
-     * [UpdateGate].
+     * Per build rather than a flag, so waving one offer away does not silence the next one. Read
+     * and written by [AppUpdateService], which is where the original keeps it in its room repo.
      */
-    var nudgedBuild by mutableStateOf(0)
+    var updatePromptedBuild by mutableStateOf(0)
         private set
 
-    fun updateNudgedBuild(value: Int) {
-        prefs.edit().putInt(KEY_NUDGED_BUILD, value).apply()
-        nudgedBuild = value
+    fun updateUpdatePromptedBuild(value: Int) {
+        prefs.edit().putInt(KEY_UPDATE_PROMPTED, value).apply()
+        updatePromptedBuild = value
     }
 
     fun updateOnboardingDone() {
@@ -146,7 +146,7 @@ object Session {
     fun signOut() {
         prefs.edit().clear()
             .putBoolean(KEY_ONBOARDED, true)
-            .putInt(KEY_NUDGED_BUILD, nudgedBuild)
+            .putInt(KEY_UPDATE_PROMPTED, updatePromptedBuild)
             .apply()
         email = null
         isGroupMember = false
@@ -160,5 +160,5 @@ object Session {
     private const val KEY_MEMBER = "is_member"
     private const val KEY_DRIVE = "drive_connected"
     private const val KEY_REMINDERS_ASKED = "reminders_asked"
-    private const val KEY_NUDGED_BUILD = "nudged_build"
+    private const val KEY_UPDATE_PROMPTED = "update_prompted_build"
 }

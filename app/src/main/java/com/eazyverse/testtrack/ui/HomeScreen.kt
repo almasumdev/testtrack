@@ -288,13 +288,22 @@ fun HomeScreen(
     // Play hands back an IntentSender rather than an Intent, so the update flow needs its own
     // contract. The result is ignored on purpose: cancelling is an answer, and the offer comes
     // back on its own when Play next says there is something to fetch.
-    val update = rememberLauncherForActivityResult(
+    val updateLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) {}
 
     // Dismissal for this visit. The durable half lives in Session, keyed to the build, so waving
     // one offer away does not silence the next.
-    var nudgeDismissed by remember { mutableStateOf(false) }
+    var updateNudgeDismissed by remember { mutableStateOf(false) }
+
+    val updateTier by AppUpdateService.tier.collectAsState()
+    val updateDownloaded by AppUpdateService.isDownloaded.collectAsState()
+    val updateBanner = when {
+        updateDownloaded -> HomeUpdateBanner.DOWNLOADED
+        updateTier == UpdateTier.NUDGE && !updateNudgeDismissed && AppUpdateService.hasPendingNudge() ->
+            HomeUpdateBanner.NUDGE
+        else -> HomeUpdateBanner.NONE
+    }
 
     val askNotifications: () -> Unit = {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -393,19 +402,20 @@ fun HomeScreen(
                  * with nothing to do yet. An offer to update mid-round would be asking them to
                  * restart the app in the middle of the one thing the app is for.
                  */
-                if (UpdateGate.downloaded) {
-                    RestartNotice(onRestart = { UpdateGate.install() })
-                } else if (UpdateGate.nudging && !nudgeDismissed) {
-                    UpdateNotice(
+                if (updateBanner != HomeUpdateBanner.NONE) {
+                    UpdateBannerCard(
+                        state = updateBanner,
                         onUpdate = {
-                            UpdateGate.nudged()
-                            nudgeDismissed = true
-                            UpdateGate.start(update)
+                            AppUpdateService.markNudgeShown()
+                            updateNudgeDismissed = true
+                            AppUpdateService.startFlexibleUpdate(updateLauncher)
                         },
+                        onRestart = { AppUpdateService.completeUpdate() },
                         onDismiss = {
-                            UpdateGate.nudged()
-                            nudgeDismissed = true
-                        }
+                            AppUpdateService.markNudgeShown()
+                            updateNudgeDismissed = true
+                        },
+                        modifier = Modifier.padding(horizontal = Gutter).padding(top = 18.dp)
                     )
                 }
 

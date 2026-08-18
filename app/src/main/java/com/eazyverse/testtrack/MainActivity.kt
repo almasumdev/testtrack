@@ -4,9 +4,9 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -35,8 +35,10 @@ import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.CaptureService
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.data.Telemetry
-import com.eazyverse.testtrack.data.UpdateGate
+import com.eazyverse.testtrack.data.AppUpdateService
 import com.eazyverse.testtrack.data.UpdateTier
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import com.eazyverse.testtrack.ui.*
@@ -63,10 +65,19 @@ class MainActivity : ComponentActivity() {
     /** Set on the launch intent when a reminder is tapped. */
     private val openGroup = mutableStateOf<String?>(null)
 
+    /**
+     * Play hands back an IntentSender rather than an Intent, so the update flow needs its own
+     * contract. Registered on the activity rather than in a composable because the blocked gate and
+     * the home banner both start the same flow, and the result is ignored either way: cancelling is
+     * an answer, and the offer returns on its own the next time Play has something to give.
+     */
+    private val updateLauncher =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Session.init(this)
-        UpdateGate.init(this)
+        AppUpdateService.init(this)
         Telemetry.init(this)
         openGroup.value = intent?.getStringExtra(EXTRA_GROUP_ID)
         setContent {
@@ -87,15 +98,15 @@ class MainActivity : ComponentActivity() {
                          * against Play first: this only ever appears when there is genuinely an
                          * update to be had.
                          */
-                        if (UpdateGate.tier == UpdateTier.BLOCKED) {
-                            val update = rememberLauncherForActivityResult(
-                                ActivityResultContracts.StartIntentSenderForResult()
-                            ) {}
-                            ForceUpdate(
-                                downloaded = UpdateGate.downloaded,
-                                canDownloadInApp = UpdateGate.canDownloadInApp,
-                                onUpdate = { UpdateGate.start(update) },
-                                onRestart = { UpdateGate.install() }
+                        val tier by AppUpdateService.tier.collectAsState()
+                        val downloaded by AppUpdateService.isDownloaded.collectAsState()
+                        if (tier == UpdateTier.BLOCKED) {
+                            ForceUpdateScreen(
+                                downloaded = downloaded,
+                                canDownloadInApp = AppUpdateService.canDownloadInApp,
+                                onUpdate = { AppUpdateService.startFlexibleUpdate(updateLauncher) },
+                                onRestart = { AppUpdateService.completeUpdate() },
+                                onOpenStore = { openPlayStoreListing() }
                             )
                         }
                     }
@@ -119,19 +130,29 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         CaptureService.leftRound(this)
-        // Every time the app comes forward, because the answer changes without us: a rollout
-        // reaches this device, an admin raises the floor, a download finishes while we were away.
-        lifecycleScope.launch { UpdateGate.refresh() }
     }
 
     override fun onStart() {
         super.onStart()
-        UpdateGate.listen()
+        AppUpdateService.registerInstallListener()
+        // Every time the app comes forward, because the answer changes without us: a rollout
+        // reaches this device, an admin raises the floor, a download finishes while we were away.
+        lifecycleScope.launch { AppUpdateService.refresh() }
     }
 
     override fun onStop() {
         super.onStop()
-        UpdateGate.stopListening()
+        AppUpdateService.unregisterInstallListener()
+    }
+
+    /** Where the blocked gate sends somebody Play will not download for in the background. */
+    private fun openPlayStoreListing() {
+        runCatching {
+            startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        }
     }
 
     /**

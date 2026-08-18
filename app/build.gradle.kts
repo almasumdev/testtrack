@@ -41,8 +41,8 @@ android {
         applicationId = "com.eazyverse.testtrack"
         minSdk = 26
         targetSdk = 37
-        versionCode = 52
-        versionName = "1.5.0"
+        versionCode = 53
+        versionName = "1.5.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "WEB_CLIENT_ID", "\"${secret("TESTTRACK_WEB_CLIENT_ID")}\"")
@@ -163,6 +163,9 @@ dependencies {
     // a question only Play can answer: it knows the track the copy came from and the rollout it
     // sits in.
     implementation(libs.play.app.update)
+    // Task.await(), which the update service is written against. The rest of this app hand-rolls
+    // it with suspendCancellableCoroutine; this one file is kept identical to the original.
+    implementation(libs.coroutines.play.services)
 
     implementation(libs.okhttp)
     implementation(libs.coil.compose)
