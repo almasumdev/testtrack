@@ -264,6 +264,24 @@ class GroupViewModel : ViewModel() {
         // app in flight is handed to a second upload of the same file.
         if (app.id in sending) return
 
+        /*
+         * The picture is gone before we have started.
+         *
+         * The guard above is what stopped this happening, because the second of two publishes of
+         * one visit arrived after the first had uploaded the file and deleted it. Kept anyway, and
+         * checked here rather than left to the upload, for two reasons: the upload's answer for a
+         * missing file was the path and `ENOENT` printed in red on a tester's screen, and this is
+         * the only place that knows which app the row belongs to.
+         *
+         * Consumed rather than left pending. There is nothing on disk to retry.
+         */
+        if (!File(capture.path).exists()) {
+            message = "${app.label} didn't leave a screenshot behind, so it hasn't counted. " +
+                "Open it again."
+            CaptureService.consume(app.packageName)
+            return
+        }
+
         uploading += 1
         sending = sending + app.id
         viewModelScope.launch {

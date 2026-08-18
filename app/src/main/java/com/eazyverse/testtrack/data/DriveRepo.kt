@@ -11,6 +11,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
 
 /** A proof image stored in the tester's own Drive. */
 data class DriveFile(val id: String, val name: String) {
@@ -120,7 +122,7 @@ object DriveRepo {
                 GroupGate.http.newCall(request).execute().use { response ->
                     val body = response.body?.string().orEmpty()
                     if (!response.isSuccessful) {
-                        return@withContext UploadResult.Failed("upload ${response.code}: ${body.take(200)}")
+                        return@withContext UploadResult.Failed(refusal(response.code, body))
                     }
 
                     val json = JSONObject(body)
@@ -129,7 +131,41 @@ object DriveRepo {
                     UploadResult.Ok(uploaded)
                 }
             } catch (e: Exception) {
-                UploadResult.Failed(e.message ?: "upload error")
+                UploadResult.Failed(broke(e))
             }
         }
+
+    /**
+     * Why Drive turned an upload down, in the tester's terms.
+     *
+     * The two that matter are told apart because the answers are opposites: a full Drive is
+     * something only they can fix and retrying will never help, and a stale token fixes itself
+     * from Setup. Everything else keeps its status code, which is the one part of the raw body
+     * worth carrying — it is what makes a report actionable when somebody sends a screenshot.
+     */
+    private fun refusal(code: Int, body: String): String = when {
+        code == 401 || code == 403 && body.contains("authError", true) ->
+            "Your Drive access has expired. Open Setup from the home screen and reconnect it."
+        body.contains("storageQuota", true) || body.contains("quotaExceeded", true) ->
+            "Your Google Drive is full, so the screenshot couldn't be saved. Free some space and " +
+                "open the app again."
+        code == 429 || code >= 500 ->
+            "Drive is busy. Try opening the app again in a minute. ($code)"
+        else -> "Drive wouldn't take the screenshot. ($code)"
+    }
+
+    /**
+     * Why the upload never reached Drive.
+     *
+     * This used to be `e.message`, which is how somebody testing a shopping app came to be shown
+     * `/data/user/0/com.eazyverse.testtrack/files/captures/com.sylhetlink.provider_178697…jpg:
+     * open failed: ENOENT (No such file or directory)` in red. Every word of it was true and none
+     * of it was theirs to do anything about.
+     */
+    private fun broke(e: Exception): String = when (e) {
+        is FileNotFoundException ->
+            "That screenshot didn't survive long enough to be saved. Open the app again."
+        is IOException -> "Can't reach Drive. Check your connection and try again."
+        else -> "We couldn't save that screenshot. Open the app again."
+    }
 }
