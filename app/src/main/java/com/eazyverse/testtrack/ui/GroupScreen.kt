@@ -81,6 +81,17 @@ class GroupViewModel : ViewModel() {
 
     var uploading by mutableStateOf(0)
         private set
+
+    /**
+     * Which apps have a proof in the air, rather than how many.
+     *
+     * [uploading] counts, and a count can only be spent on one line at the top of the screen. The
+     * rows underneath it went on offering Open for an app whose proof was already on its way, so
+     * the obvious thing to do about a row that looked untouched was to do it again.
+     */
+    var sending by mutableStateOf<Set<String>>(emptySet())
+        private set
+
     var message by mutableStateOf<String?>(null)
 
     val day: Int? get() = group?.dayIndex()
@@ -246,7 +257,13 @@ class GroupViewModel : ViewModel() {
             return
         }
 
+        // Already on its way. The effect that drains finished visits restarts whenever the map it
+        // is reading changes size, which it does on every upload that lands, so without this an
+        // app in flight is handed to a second upload of the same file.
+        if (app.id in sending) return
+
         uploading += 1
+        sending = sending + app.id
         viewModelScope.launch {
             val token = AuthRepo.driveTokenOrNull(activity)
             if (token == null) {
@@ -299,6 +316,7 @@ class GroupViewModel : ViewModel() {
             }
             CaptureService.consume(app.packageName)
             uploading -= 1
+            sending = sending - app.id
         }
     }
 }
@@ -364,11 +382,50 @@ fun GroupScreen(
         }
     }
 
+    /*
+     * Screen sharing belongs to this page and is handed back on the way off it.
+     *
+     * Both guards are load bearing, because leaving composition is not the same thing as leaving
+     * the screen. A configuration change disposes and rebuilds this, and MainActivity declares no
+     * configChanges, so a landscape app under test tearing the activity down looks identical to
+     * somebody pressing back. And during a round the tester is inside somebody else's app rather
+     * than here, which is the one time a dispose certainly does not mean they left.
+     *
+     * What is left over is a dispose that happens mid-round and really was a departure. It cannot
+     * happen from this screen, and if it somehow does the session ends the next time the page is
+     * left or the app is closed.
+     */
+    DisposableEffect(Unit) {
+        onDispose {
+            if (!activity.isChangingConfigurations && !CaptureService.roundActive) {
+                CaptureService.endSession(context)
+            }
+        }
+    }
+
     // A round finishes with TestTrack back in front and several captures banked at once, so every
     // pending result is drained here rather than one screen at a time.
     LaunchedEffect(CaptureService.results.size, vm.toTest) {
         CaptureService.results.forEach { (pkg, capture) ->
             vm.toTest.firstOrNull { it.packageName == pkg }?.let { vm.publish(activity, it, capture) }
+        }
+    }
+
+    // A visit that came back without a picture is the one failure a tester cannot see. The app
+    // opened, the ring emptied, TestTrack came back, and the row simply did not move. Said by name
+    // here, because "nothing happened" is not something a list can express.
+    LaunchedEffect(CaptureService.missed.size, vm.toTest) {
+        val names = CaptureService.missed.map { pkg ->
+            vm.toTest.firstOrNull { it.packageName == pkg }?.label ?: pkg
+        }
+        if (names.isNotEmpty()) {
+            val rest = names.size - 1
+            vm.message =
+                if (rest == 0) "We couldn't get a picture of ${names[0]}, so it hasn't counted " +
+                    "yet. Open it again."
+                else "We couldn't get a picture of ${names[0]} and $rest more, so they haven't " +
+                    "counted yet. Run the rest of today's list again."
+            CaptureService.forgetMissed()
         }
     }
 
@@ -512,6 +569,7 @@ fun GroupScreen(
                                     live = vm.day != null,
                                     ended = group.running,
                                     busy = CaptureService.capturing == app.packageName,
+                                    sending = app.id in vm.sending,
                                     onOpen = { run(listOf(app.packageName)) },
                                     onInstall = { openInPlay(context, app) { vm.message = it } },
                                     onCannotInstall = { reporting = app }
@@ -908,7 +966,10 @@ private fun TestRow(
     live: Boolean,
     /** Distinguishes a run that is over from one that has not begun. Only read when not [live]. */
     ended: Boolean,
+    /** This app is on screen right now, being visited. */
     busy: Boolean,
+    /** This app's proof is uploading. Not done yet, and not something to start again either. */
+    sending: Boolean,
     onOpen: () -> Unit,
     onInstall: () -> Unit,
     onCannotInstall: () -> Unit
@@ -980,7 +1041,11 @@ private fun TestRow(
         Spacer(Modifier.width(10.dp))
 
         when {
-            busy -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+            busy -> Working("Opening")
+
+            // Ahead of every other state on purpose, including Install. An upload in flight is
+            // about this exact row and outranks anything the row would otherwise be saying.
+            sending -> Working("Uploading")
 
             // A button, not a label. This sat where Open sits, in Open's shape, and did nothing
             // at all — the one control on the screen that looked tappable and was not.
