@@ -54,6 +54,20 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <!--
+      The Uninstall button beside an app that has been taken out of testing.
+
+      Granted at install and never prompted for, because it does not grant the power to remove
+      anything: it only buys the right to ask. The system still puts up its own confirmation and
+      the tester still has to agree to it, which is the whole point of sending them there rather
+      than doing it quietly.
+
+      Without it the request is not refused out loud. The system uninstaller starts, sees a caller
+      that never declared this, and finishes before it draws, so the button looks broken rather
+      than blocked.
+    -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
+    <!--
       Backup off on purpose. Everything the app keeps locally is either a cache of Firestore or a
       flag about a grant, and Android restores SharedPreferences onto a fresh install while the
       Firebase session and the usage-access appop do not come back with them. A restored "signed
