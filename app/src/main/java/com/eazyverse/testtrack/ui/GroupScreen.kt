@@ -161,9 +161,24 @@ class GroupViewModel : ViewModel() {
 
                 val banked =
                     if (d == null) emptySet() else Repo.myProofsForDay(uid, groupId, d, found.startDate)
+                /*
+                 * People, not documents.
+                 *
+                 * This counted proofs and said "14 of 12 reported today" for a cohort that only
+                 * holds twelve other testers. A proof is keyed by run as well as by day, so one
+                 * tester can hold two for the same day whenever a run's start has been corrected
+                 * underneath them, and counting rows counted that person twice.
+                 *
+                 * The run stamp is the same filter the tester's own side already applies in
+                 * [Repo.myProofsForDay]. Without it this answers with days numbered from a start
+                 * date that is no longer the start date.
+                 */
                 val reporters =
                     if (d == null || own == null) 0
-                    else Repo.proofsForApp(own.id, own.ownerUid).count { it.day == d && it.meetsBar }
+                    else Repo.proofsForApp(own.id, own.ownerUid)
+                        .filter { it.day == d && it.meetsBar && it.runStartedAt == found.startDate }
+                        .distinctBy { it.testerUid }
+                        .size
                 val people = runCatching { Repo.testers(found.memberUids) }.getOrDefault(emptyList())
 
                 // Published in one go, after every query has answered — see [ready].
@@ -735,7 +750,10 @@ private fun Header(group: TestGroup, done: Int, total: Int) {
         )
         if (day != null) {
             Spacer(Modifier.height(14.dp))
-            Meter(if (total == 0) 0f else done.toFloat() / total)
+            // The same segmented bar the home screen uses. One bar per app, so the day reads as
+            // twelve things to do rather than a percentage, and the two screens agree about what
+            // the same day looks like.
+            Meter(done = done, total = total)
 
             /*
              * When the day turns over, spelled out.
