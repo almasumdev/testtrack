@@ -80,6 +80,8 @@ question, it is linked.
 | Usage access | Reads how many seconds one named app was on screen during the visit | Read what you did inside any app, or when |
 | Screen capture | One screenshot per app, only during a round you started | Run in the background or record video |
 | Google Drive | Writes your screenshots to a folder it creates | Touch anything else in your Drive |
+| Crash reports | Sends the stack trace when something breaks | Say who it broke for |
+| Counts | Four numbers: a round started, a round finished, a proof posted, an app submitted | Name an app, a person, or a time |
 | Google sign-in | Your email and name, so a grid can show who is who | Ask for or see your password |
 | Notifications | A reminder from your own phone in the evening | Anything, if you decline. It is optional |
 
@@ -307,6 +309,27 @@ with the reason. They can pause an account, and if they do, you are told and you
 > কভার করেছেন, আর কোনো অ্যাপ ফিরিয়ে দেওয়া হয়ে থাকলে সেটা কেন। অ্যাডমিন চাইলে অ্যাকাউন্ট আটকে দিতে
 > পারেন, আর দিলে আপনাকে কারণসহ জানানো হয়।
 
+## Crash reports and counts
+
+Two things now report back, both from Firebase, and both off entirely in the builds made on this
+machine.
+
+**Crashes.** Nearly every failure in a round is caught and turned into a sentence you can act on.
+That is right for the person it happens to and it means nobody else ever finds out. A crash that
+only happened on landscape apps survived a whole release that way: the only person who could see
+it was the tester it happened to, and they had no way to send it anywhere. Crash reports are how
+that stops. What goes with one is the stack trace and a fixed word naming the place it came from,
+never a message, a value, a package name, or anything about you.
+
+**Counts.** Four events, and they are the whole list: a round started, a round finished with how
+many were captured and how many were missed, a proof posted, an app submitted. Numbers only. A run
+of rounds ending with misses is the shape a real bug made once and it was invisible from outside
+the phone it happened on.
+
+Neither carries a uid, an address, a name, or the identity of any app you are testing. What they
+cannot do is more useful than what they can: nothing here can reconstruct who tested what, or
+when.
+
 ## Where to get it, and what happens on an update
 
 Every build is published as a signed APK on the
@@ -314,6 +337,14 @@ Every build is published as a signed APK on the
 
 Updates install straight over the top. You do not uninstall first, you do not lose your setup, and
 you do not sign in again. Every release is signed with the same key, which is what allows that.
+
+Where TestTrack came from Play, it will also offer the update itself, and take it in the
+background rather than sending you anywhere. That exists for a reason worth stating plainly: the
+rules of a run ship inside the app, so a cohort where everyone is on a different build is a cohort
+where the same day looks different to different people. One tester's screen called a visit short
+for two days after that stopped being the rule, because their copy still held the old one. Where a
+build no longer counts a day the way its cohort does, the app says so and asks to be updated
+before you carry on.
 The same fact has a consequence worth knowing: a TestTrack APK from anywhere other than that page
 will refuse to install over yours. That refusal is the check doing its job, not a fault to work
 around.
@@ -360,8 +391,10 @@ so tap the toggle first if you do not see it. Then switch usage access on as nor
   whole time one is running.
 - It never asks for your Google password. Sign-in happens on Google's own screen and the app only
   receives a token afterwards.
-- It never asks for money, shows an advert, or carries an analytics or tracking library.
+- It never asks for money and never shows an advert.
 - It never uploads anything about apps outside your group.
+- It never sends anything that identifies you to a crash report or a count. See below for exactly
+  what those two do send.
 
 ---
 

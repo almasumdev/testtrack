@@ -285,6 +285,17 @@ fun HomeScreen(
         ActivityResultContracts.RequestPermission()
     ) { vm.showNotices(context) }
 
+    // Play hands back an IntentSender rather than an Intent, so the update flow needs its own
+    // contract. The result is ignored on purpose: cancelling is an answer, and the offer comes
+    // back on its own when Play next says there is something to fetch.
+    val update = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) {}
+
+    // Dismissal for this visit. The durable half lives in Session, keyed to the build, so waving
+    // one offer away does not silence the next.
+    var nudgeDismissed by remember { mutableStateOf(false) }
+
     val askNotifications: () -> Unit = {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -374,6 +385,29 @@ fun HomeScreen(
                 }
 
                 if (vm.askForNotifications) NotificationPrompt(onGrant = askNotifications)
+
+                /*
+                 * The soft half of the update gate. The hard half sits over the whole app.
+                 *
+                 * Here rather than anywhere else because home is the screen somebody arrives on
+                 * with nothing to do yet. An offer to update mid-round would be asking them to
+                 * restart the app in the middle of the one thing the app is for.
+                 */
+                if (UpdateGate.downloaded) {
+                    RestartNotice(onRestart = { UpdateGate.install() })
+                } else if (UpdateGate.nudging && !nudgeDismissed) {
+                    UpdateNotice(
+                        onUpdate = {
+                            UpdateGate.nudged()
+                            nudgeDismissed = true
+                            UpdateGate.start(update)
+                        },
+                        onDismiss = {
+                            UpdateGate.nudged()
+                            nudgeDismissed = true
+                        }
+                    )
+                }
 
                 // Nothing at all: one empty state rather than two headed sections standing over
                 // nothing.

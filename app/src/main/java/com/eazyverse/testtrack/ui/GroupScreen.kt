@@ -353,6 +353,7 @@ class GroupViewModel : ViewModel() {
                         )
                         runCatching { Repo.recordProof(proof) }
                             .onSuccess {
+                                Telemetry.proofPosted()
                                 file.delete()
                                 if (proof.meetsBar) {
                                     doneToday = doneToday + app.id

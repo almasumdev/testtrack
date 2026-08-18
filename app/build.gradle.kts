@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 /**
@@ -40,8 +41,8 @@ android {
         applicationId = "com.eazyverse.testtrack"
         minSdk = 26
         targetSdk = 37
-        versionCode = 51
-        versionName = "1.4.1"
+        versionCode = 52
+        versionName = "1.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "WEB_CLIENT_ID", "\"${secret("TESTTRACK_WEB_CLIENT_ID")}\"")
@@ -71,6 +72,8 @@ android {
 
     buildTypes {
         release {
+            manifestPlaceholders["crashlytics"] = "true"
+            manifestPlaceholders["analytics"] = "true"
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -97,6 +100,17 @@ android {
          */
         debug {
             signingConfig = signingConfigs.findByName("release") ?: signingConfig
+
+            /*
+             * No crash reports and no analytics off this machine.
+             *
+             * Every build here is a debug build, and a debug build spends its life being force
+             * stopped, reinstalled over, and crashed on purpose. Left on, it would fill the very
+             * dashboard that exists to show what is happening to testers with what is happening
+             * to me.
+             */
+            manifestPlaceholders["crashlytics"] = "false"
+            manifestPlaceholders["analytics"] = "false"
         }
     }
 
@@ -140,6 +154,15 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.messaging)
+    // Crash reports and the handful of automatic events. Both are opt-out for the tester through
+    // Play, and neither is given anything about who they are beyond what Firebase collects itself.
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
+
+    // Play's in-app update flow. It answers whether *this* install can update right now, which is
+    // a question only Play can answer: it knows the track the copy came from and the rollout it
+    // sits in.
+    implementation(libs.play.app.update)
 
     implementation(libs.okhttp)
     implementation(libs.coil.compose)

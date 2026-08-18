@@ -185,6 +185,23 @@ service cloud.firestore {
      * else — `get()`/`exists()` inside a rule bypass this block entirely, so [isAdmin] is
      * unaffected either way.
      */
+    /**
+     * The update policy every install reads on the way in.
+     *
+     * One document, four numbers, and it decides whether somebody can use the app at all — so it
+     * is written from the console and from nowhere else. A client that could raise
+     * `minSupportedBuild` could lock out a whole cohort, and one that could lower it could keep
+     * itself on a build the cohort has moved past.
+     *
+     * `get` rather than `read`: there is one document here and nothing to list. Signed in, because
+     * an install that has not got that far has nothing to be gated out of yet, and a missing
+     * document already resolves to "block nobody".
+     */
+    match /config/{doc} {
+      allow get: if signedIn();
+      allow list, write: if false;
+    }
+
     match /admins/{uid} {
       allow get: if signedIn() && request.auth.uid == uid;
       allow list, write: if false;

@@ -115,6 +115,7 @@ class SubmitViewModel : ViewModel() {
                     )
                 }
                     .onSuccess {
+                        Telemetry.appSubmitted()
                         // After the write, never instead of it. The queue is the record; this only
                         // saves an admin from finding out whenever they next happen to look.
                         // Silent and best effort, so a failure here cannot cost a submission that

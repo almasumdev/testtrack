@@ -131,6 +131,9 @@ object DriveRepo {
                     UploadResult.Ok(uploaded)
                 }
             } catch (e: Exception) {
+                // The tester gets a sentence they can act on and nobody else hears about it, which
+                // is right for them and leaves the failure invisible from here. See [Telemetry].
+                Telemetry.broke("drive-upload", e)
                 UploadResult.Failed(broke(e))
             }
         }

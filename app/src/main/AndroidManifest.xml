@@ -84,6 +84,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TestTrack">
 
+        <!--
+          Off in debug, on in release, set from the build type. See app/build.gradle.kts: a debug
+          build is force stopped and crashed on purpose all day, and its reports would drown the
+          ones that came from a tester.
+        -->
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="${crashlytics}" />
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="${analytics}" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -140,6 +140,7 @@ class CaptureService : Service() {
                     missed.clear()
                     roundTotal = queue.size
                     roundIndex = 0
+                    Telemetry.roundStarted(roundTotal)
                     visitNext()
                 }
             }
@@ -272,6 +273,9 @@ class CaptureService : Service() {
             // it is swapped, and closing underneath it abandons a queue mid-frame.
             old?.let { handler.postDelayed({ runCatching { it.close() } }, HANDOVER_MS) }
         }.onFailure {
+            // The one that took a whole release to find, because the only person who could see it
+            // was the tester it happened to. See [Telemetry].
+            Telemetry.broke("mirror", it)
             status = "Screen sharing stopped. Start the round again from your group."
             teardown()
         }
@@ -383,6 +387,7 @@ class CaptureService : Service() {
     private fun visitNext() {
         val pkg = queue.removeFirstOrNull()
         if (pkg == null) {
+            Telemetry.roundFinished(captured = results.size, missed = missed.size)
             roundTotal = 0
             roundIndex = 0
             status = null

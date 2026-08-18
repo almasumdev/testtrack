@@ -6,7 +6,9 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -32,6 +34,11 @@ import androidx.navigation.navArgument
 import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.CaptureService
 import com.eazyverse.testtrack.data.Session
+import com.eazyverse.testtrack.data.Telemetry
+import com.eazyverse.testtrack.data.UpdateGate
+import com.eazyverse.testtrack.data.UpdateTier
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import com.eazyverse.testtrack.ui.*
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 
@@ -59,6 +66,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Session.init(this)
+        UpdateGate.init(this)
+        Telemetry.init(this)
         openGroup.value = intent?.getStringExtra(EXTRA_GROUP_ID)
         setContent {
             TestTrackTheme {
@@ -68,6 +77,27 @@ class MainActivity : ComponentActivity() {
                     // safeDrawing also covers the cutout, the nav bar and the keyboard.
                     Box(Modifier.safeDrawingPadding()) {
                         if (Config.isConfigured) AppNav(openGroup) else NotConfigured()
+
+                        /*
+                         * Over everything, including the nav host.
+                         *
+                         * A build that no longer counts a day the way its cohort does is not one
+                         * screen out of date, it is wrong everywhere, so this cannot be something
+                         * a screen opts into. See [UpdateGate] for why the tier is resolved
+                         * against Play first: this only ever appears when there is genuinely an
+                         * update to be had.
+                         */
+                        if (UpdateGate.tier == UpdateTier.BLOCKED) {
+                            val update = rememberLauncherForActivityResult(
+                                ActivityResultContracts.StartIntentSenderForResult()
+                            ) {}
+                            ForceUpdate(
+                                downloaded = UpdateGate.downloaded,
+                                canDownloadInApp = UpdateGate.canDownloadInApp,
+                                onUpdate = { UpdateGate.start(update) },
+                                onRestart = { UpdateGate.install() }
+                            )
+                        }
                     }
                 }
             }
@@ -89,6 +119,19 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         CaptureService.leftRound(this)
+        // Every time the app comes forward, because the answer changes without us: a rollout
+        // reaches this device, an admin raises the floor, a download finishes while we were away.
+        lifecycleScope.launch { UpdateGate.refresh() }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        UpdateGate.listen()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        UpdateGate.stopListening()
     }
 
     /**
