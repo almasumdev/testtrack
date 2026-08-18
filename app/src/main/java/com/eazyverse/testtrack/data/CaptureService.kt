@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import com.eazyverse.testtrack.MainActivity
+import com.eazyverse.testtrack.R
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.random.Random
@@ -524,7 +525,10 @@ class CaptureService : Service() {
         val notification: Notification = Notification.Builder(this, CHANNEL)
             .setContentTitle("TestTrack")
             .setContentText("Capturing today's proof")
-            .setSmallIcon(android.R.drawable.ic_menu_camera)
+            // The app's own mark, like every other notification it raises. This was Android's
+            // stock camera glyph, which is the one notification a tester sees while their screen
+            // is being recorded and the one that most needs to say who is doing it.
+            .setSmallIcon(R.drawable.ic_notification)
             .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
