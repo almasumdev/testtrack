@@ -1090,12 +1090,17 @@ private fun TestRow(
             // tester has not installed yet would be answering a question nobody asked.
             enableUserInput = info.streakBadge != null
         ) {
-            Box(Modifier.fillMaxHeight()) {
-                AppIcon(
-                    app.packageName,
-                    app.label,
-                    modifier = Modifier.fillMaxHeight().aspectRatio(1f)
-                )
+            Box(
+                Modifier
+                    // Squared against the text, within reason. Matching it outright made the
+                    // icon the biggest thing on the screen — three lines plus the button on the
+                    // title line comes to about 70dp, and an app icon that size stops being a
+                    // label for the row and starts being the row.
+                    .heightIn(min = 44.dp, max = 54.dp)
+                    .fillMaxHeight()
+                    .aspectRatio(1f)
+            ) {
+                AppIcon(app.packageName, app.label, modifier = Modifier.fillMaxSize())
                 info.streakBadge?.let { badge ->
                     Box(
                         Modifier
@@ -1151,7 +1156,9 @@ private fun TestRow(
                     Spacer(Modifier.width(2.dp))
                     Box(
                         Modifier
-                            .size(30.dp)
+                            // Sized to the line it sits on rather than to a touch target. Any
+                            // taller and it, not the app name, decides how tall the title line is.
+                            .size(26.dp)
                             .clip(CircleShape)
                             .clickable { details = true },
                         contentAlignment = Alignment.Center
