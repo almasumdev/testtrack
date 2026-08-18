@@ -228,33 +228,53 @@ class CaptureService : Service() {
     }
 
     /**
-     * Points a fresh virtual display at a fresh reader, at whatever size the screen is now.
+     * Points the mirror at a fresh reader, at whatever size the screen is now.
      *
-     * Torn down and rebuilt rather than resized. What goes wrong is the mirror being detached from
-     * the real display, not its being the wrong shape, and resizing something that is no longer
-     * attached to anything fixes nothing.
+     * The virtual display is created once per consent and never again. Android 14 made
+     * `createVirtualDisplay` one call per token and throws a SecurityException on the second, and
+     * this used to release and rebuild — so the moment an app that forces landscape rotated the
+     * screen, the listener fired, the second call went in, and the whole app went down mid-round.
+     * A tester who opened a piano app lost the round and everything after it.
+     *
+     * Resizing and handing over a new surface is the supported way to follow the screen, and it
+     * reattaches the mirror, which is the thing that was actually broken. Failure ends the round
+     * with something to do about it rather than taking the app with it: without a mirror there
+     * are no frames, and carrying on would bank nothing while saying nothing.
      */
     private fun mirror() {
         val mp = projection ?: return
         val (w, h, dpi) = screen()
-        width = w
-        height = h
 
-        display?.release()
-        reader?.close()
+        runCatching {
+            // No OnImageAvailableListener on purpose. Draining frames as they arrive races the
+            // grab: a static screen stops producing, so the listener empties the queue and the
+            // grab finds nothing. VirtualDisplay drops old buffers rather than stalling, so
+            // acquiring on demand reliably yields the most recent frame.
+            val ir = ImageReader.newInstance(w, h, PixelFormat.RGBA_8888, 2)
+            val old = reader
+            reader = ir
+            width = w
+            height = h
 
-        // No OnImageAvailableListener on purpose. Draining frames as they arrive races the grab:
-        // a static screen stops producing, so the listener empties the queue and the grab finds
-        // nothing. VirtualDisplay drops old buffers rather than stalling, so acquiring on demand
-        // reliably yields the most recent frame.
-        val ir = ImageReader.newInstance(w, h, PixelFormat.RGBA_8888, 2)
-        reader = ir
+            val vd = display
+            if (vd == null) {
+                display = mp.createVirtualDisplay(
+                    "TestTrackCapture", w, h, dpi,
+                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                    ir.surface, null, handler
+                )
+            } else {
+                vd.resize(w, h, dpi)
+                vd.setSurface(ir.surface)
+            }
 
-        display = mp.createVirtualDisplay(
-            "TestTrackCapture", w, h, dpi,
-            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-            ir.surface, null, handler
-        )
+            // Closed a beat late. The display is still writing to the old surface at the moment
+            // it is swapped, and closing underneath it abandons a queue mid-frame.
+            old?.let { handler.postDelayed({ runCatching { it.close() } }, HANDOVER_MS) }
+        }.onFailure {
+            status = "Screen sharing stopped. Start the round again from your group."
+            teardown()
+        }
     }
 
     /**
@@ -568,6 +588,9 @@ class CaptureService : Service() {
          * that is a matter of a frame or two.
          */
         private const val REMIRROR_MS = 700L
+
+        /** Long enough for the display to have let go of the surface it was handed. */
+        private const val HANDOVER_MS = 250L
         private const val MAX_TRIES = 3
         private const val SAMPLE_STEP = 24
         private const val BLANK_RATIO = 0.96f
