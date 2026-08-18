@@ -20,8 +20,10 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.SystemClock
 import android.util.DisplayMetrics
+import android.view.Display
 import android.view.WindowManager
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -42,12 +44,20 @@ data class Capture(val path: String, val usageMs: Long)
  * that is already foreground **before** getMediaProjection() is called — hence a Service rather
  * than doing this inline in the Activity.
  *
- * The projection is held open for the whole session, because it survives app switches: the tester
- * confirms screen sharing once and every app that day is captured under that single grant.
+ * The projection is held for as long as the tester is on the group screen, and no longer. It
+ * survives app switches, so one confirmation covers a round of twelve, a single app opened again
+ * on its own, and everything else done without leaving the page. What it must not survive is the
+ * page itself: a grant that outlives the work it was given for leaves a screen recording running
+ * on somebody's phone with nothing on screen to account for it, waiting to be noticed.
  *
- *   startSession(consent)   -> projection + virtual display stay open
- *   capture(pkg)            -> a visit: frame grabbed at an unannounced moment, TestTrack pulled
- *                              back when the visit is up, usage read on the way out
+ * So the group screen ends it on the way out, and [onTaskRemoved] ends it if TestTrack is swiped
+ * away first. Ending it when a round finished was tried and was worse: the common case is a round
+ * that leaves apps behind, and paying a confirmation for each of them is the cost of a rule nobody
+ * asked for.
+ *
+ *   startSession(consent)   -> projection + virtual display open
+ *   startRound(packages)    -> each app in turn: frame grabbed at an unannounced moment, TestTrack
+ *                              pulled back when the visit is up, usage read on the way out
  *   endSession()            -> projection stops
  */
 class CaptureService : Service() {
@@ -83,6 +93,19 @@ class CaptureService : Service() {
     /** The frame taken mid-visit, held until the visit is over and its usage can be read. */
     private var captured: Pair<String, String>? = null
 
+    /**
+     * The tester has switched off moving on by itself, for this visit.
+     *
+     * Only the advance is paused. The clock keeps running and the ring keeps emptying, because the
+     * twenty seconds are owed to the app whatever the tester decides, and because a paused clock
+     * would make the usage figure argue with the picture beside it. Cleared at the top of every
+     * visit, so pausing is a decision about this app and not a mode the round gets stuck in.
+     */
+    private var paused = false
+
+    /** The current visit has served its time and is only still here because [paused] is set. */
+    private var overstaying = false
+
     /** What is left of the round, in order. */
     private val queue = ArrayDeque<String>()
 
@@ -114,6 +137,7 @@ class CaptureService : Service() {
                 } else {
                     queue.clear()
                     queue.addAll(packages)
+                    missed.clear()
                     roundTotal = queue.size
                     roundIndex = 0
                     visitNext()
@@ -123,11 +147,17 @@ class CaptureService : Service() {
             ACTION_ABORT -> {
                 queue.clear()
                 handler.removeCallbacksAndMessages(null)
+                overlay.hide()
                 capturing = null
+                paused = false
+                overstaying = false
                 roundTotal = 0
                 roundIndex = 0
                 status = null
-                back()
+                // Not when the tester walked back here themselves. They are already looking at
+                // TestTrack, and re-launching the activity under them is a flicker that says
+                // something went wrong.
+                if (intent.getBooleanExtra(EXTRA_RETURN, true)) back()
             }
 
             ACTION_STOP -> {
@@ -168,9 +198,50 @@ class CaptureService : Service() {
             }
         }, handler)
 
+        mirror()
+        displays.registerDisplayListener(rotations, handler)
+
+        sessionActive = true
+        status = "Ready. Open an app to start."
+    }
+
+    private val displays by lazy {
+        getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+    }
+
+    /**
+     * Rebuilds the mirror when the real screen changes shape underneath it.
+     *
+     * An app that forces landscape rotates the display, and the mirror does not survive it. The
+     * projection stays open, the virtual display stays alive, the tester sees nothing wrong — and
+     * frames simply stop arriving, for good. One piano app a third of the way through a round is
+     * enough to lose every capture after it.
+     */
+    private val rotations = object : DisplayManager.DisplayListener {
+        override fun onDisplayAdded(displayId: Int) = Unit
+        override fun onDisplayRemoved(displayId: Int) = Unit
+        override fun onDisplayChanged(displayId: Int) {
+            if (displayId != Display.DEFAULT_DISPLAY || projection == null) return
+            val (w, h, _) = screen()
+            if (w != width || h != height) mirror()
+        }
+    }
+
+    /**
+     * Points a fresh virtual display at a fresh reader, at whatever size the screen is now.
+     *
+     * Torn down and rebuilt rather than resized. What goes wrong is the mirror being detached from
+     * the real display, not its being the wrong shape, and resizing something that is no longer
+     * attached to anything fixes nothing.
+     */
+    private fun mirror() {
+        val mp = projection ?: return
         val (w, h, dpi) = screen()
         width = w
         height = h
+
+        display?.release()
+        reader?.close()
 
         // No OnImageAvailableListener on purpose. Draining frames as they arrive races the grab:
         // a static screen stops producing, so the listener empties the queue and the grab finds
@@ -184,9 +255,6 @@ class CaptureService : Service() {
             DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
             ir.surface, null, handler
         )
-
-        sessionActive = true
-        status = "Ready. Open an app to start."
     }
 
     /**
@@ -200,6 +268,15 @@ class CaptureService : Service() {
         val fresh = frame()
         val shot = fresh ?: previous
         if (fresh != null && previous != null && previous !== fresh) previous.recycle()
+
+        // Nothing at all, on a screen that is showing something: the mirror has come off the real
+        // display. It is rebuilt and asked again rather than treated as a screen with no picture
+        // on it, because the alternative is banking nothing and saying nothing.
+        if (shot == null && tries < MAX_TRIES) {
+            mirror()
+            handler.postDelayed({ attempt(pkg, tries + 1, null) }, REMIRROR_MS)
+            return
+        }
 
         if (shot != null && looksBlank(shot) && tries < MAX_TRIES) {
             status = "Waiting for the app to load…"
@@ -216,7 +293,42 @@ class CaptureService : Service() {
         // The shot is not the end of the visit. The tester was asked for the full ten seconds and
         // the usage figure has to be able to show it, so hold here until the visit is up.
         val remaining = returnDue - SystemClock.elapsedRealtime()
-        if (remaining > 0) handler.postDelayed({ finish(pkg) }, remaining) else finish(pkg)
+        if (remaining > 0) handler.postDelayed({ served(pkg) }, remaining) else served(pkg)
+    }
+
+    /**
+     * The visit has served its time. Either it ends here or it waits to be sent on.
+     *
+     * This is the whole of what Pause buys. Every visit reaches this point at the same moment
+     * whether the tester touched anything or not, and all the button decides is which of the two
+     * things happens next.
+     */
+    private fun served(pkg: String) {
+        if (capturing != pkg) return
+        if (paused) {
+            // Already showing play, and it stays showing play. The button does not change at the
+            // end of a paused visit because what it is offering has not changed: carry on.
+            overstaying = true
+        } else {
+            finish(pkg)
+        }
+    }
+
+    /**
+     * The one button on the overlay, pressed.
+     *
+     * Play means the same thing in both places it appears, which is why there are two icons rather
+     * than three. Before the ring empties it hands the visit back to the clock; after it, there is
+     * no clock left to hand it to, so it moves on itself.
+     */
+    private fun tap(pkg: String) {
+        if (capturing != pkg) return
+        if (overstaying) {
+            finish(pkg)
+            return
+        }
+        paused = !paused
+        overlay.action(if (paused) VisitOverlay.Mode.PLAY else VisitOverlay.Mode.PAUSE)
     }
 
     /**
@@ -231,6 +343,11 @@ class CaptureService : Service() {
         if (path != null) {
             results[pkg] = Capture(path, UsageRepo.foregroundMsSince(this, pkg, visitStartedAt))
             captured = null
+        } else {
+            // A visit that produced no picture used to end exactly like one that did, and the app
+            // it was for stayed on the list with nothing said about why. Twenty seconds of the
+            // tester's evening went into it, so it is worth a sentence.
+            missed += pkg
         }
         capturing = null
         visitNext()
@@ -255,6 +372,8 @@ class CaptureService : Service() {
 
         roundIndex += 1
         capturing = pkg
+        paused = false
+        overstaying = false
         status = "Opening ${label(pkg)}, $roundIndex of $roundTotal"
         returnDue = SystemClock.elapsedRealtime() + VISIT_MS
         visitStartedAt = System.currentTimeMillis()
@@ -265,26 +384,7 @@ class CaptureService : Service() {
         )
 
         // Raised after the launch, so it lands on top of the app rather than under it.
-        overlay.show(
-            label = label(pkg),
-            position = "$roundIndex of $roundTotal",
-            millis = VISIT_MS,
-            onNext = { skip(pkg) }
-        )
-    }
-
-    /**
-     * Moves on before the visit is up, because somebody asked.
-     *
-     * The shot still has to happen, so this is not a way of skipping the work: if the frame has
-     * not been grabbed yet the pending attempt is brought forward rather than cancelled. What it
-     * shortens is the waiting, and the usage figure shortens with it, honestly. A tester who
-     * presses Next after four seconds banks four seconds and the bar is not met.
-     */
-    private fun skip(pkg: String) {
-        if (capturing != pkg) return
-        handler.removeCallbacksAndMessages(null)
-        if (captured?.first == pkg) finish(pkg) else attempt(pkg, MAX_TRIES, null)
+        overlay.show(millis = VISIT_MS, onTap = { tap(pkg) })
     }
 
     private fun label(pkg: String): String = runCatching {
@@ -411,9 +511,12 @@ class CaptureService : Service() {
 
     private fun teardown() {
         overlay.hide()
+        runCatching { displays.unregisterDisplayListener(rotations) }
         handler.removeCallbacksAndMessages(null)
         capturing = null
         captured = null
+        paused = false
+        overstaying = false
         returnDue = 0L
         visitStartedAt = 0L
         queue.clear()
@@ -423,6 +526,19 @@ class CaptureService : Service() {
         display?.release(); display = null
         reader?.close(); reader = null
         projection?.stop(); projection = null
+    }
+
+    /**
+     * TestTrack was swiped out of recents.
+     *
+     * Safe to treat as an ending even mid-round, because a round leaves TestTrack's task sitting
+     * in recents while somebody else's app is on screen — removing it is a deliberate act and not
+     * something the round does on its own.
+     */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        teardown()
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
     }
 
     override fun onDestroy() {
@@ -438,10 +554,20 @@ class CaptureService : Service() {
         private const val EXTRA_CODE = "code"
         private const val EXTRA_DATA = "data"
         private const val EXTRA_QUEUE = "queue"
+        private const val EXTRA_RETURN = "return"
         private const val CHANNEL = "capture"
         private const val NOTIF_ID = 7701
 
         private const val RETRY_MS = 3_000L
+
+        /**
+         * How long a rebuilt mirror is given before it is asked for a frame.
+         *
+         * Much shorter than [RETRY_MS], which is a wait for somebody else's splash screen to
+         * finish. This one is a wait for our own virtual display to render its first frame, and
+         * that is a matter of a frame or two.
+         */
+        private const val REMIRROR_MS = 700L
         private const val MAX_TRIES = 3
         private const val SAMPLE_STEP = 24
         private const val BLANK_RATIO = 0.96f
@@ -496,6 +622,15 @@ class CaptureService : Service() {
         /** package -> a finished visit, awaiting upload. */
         val results = mutableStateMapOf<String, Capture>()
 
+        /**
+         * Packages that were visited and came back without a picture.
+         *
+         * Kept apart from [results] because there is nothing to upload and nothing to record — the
+         * only thing owed here is telling the tester, so that a round which quietly did nothing for
+         * five apps cannot look like a round that worked.
+         */
+        val missed = mutableStateListOf<String>()
+
         fun startSession(context: Context, code: Int, data: Intent) {
             status = "Starting…"
             send(context, Intent(context, CaptureService::class.java).apply {
@@ -525,6 +660,28 @@ class CaptureService : Service() {
         }
 
         /**
+         * The tester came back to TestTrack in the middle of a round, so the round is over.
+         *
+         * A round is meant to be one uninterrupted stretch, and the service is deliberately deaf
+         * to where the tester actually is — it opens the next app on a timer whether or not
+         * anybody is still following it. Walking back here used to leave it running, so the next
+         * app would open a few seconds later and take the phone off them again.
+         *
+         * Safe to call on every resume. `roundActive` is already false by the time a round that
+         * ended on its own brings the app forward, so this only ever fires on a departure.
+         */
+        fun leftRound(context: Context) {
+            if (!roundActive) return
+            send(
+                context,
+                Intent(context, CaptureService::class.java).apply {
+                    action = ACTION_ABORT
+                    putExtra(EXTRA_RETURN, false)
+                }
+            )
+        }
+
+        /**
          * Ends screen sharing. A no-op when there is nothing to end — starting a service purely to
          * stop it is wasteful, and it is the path that used to crash.
          */
@@ -535,6 +692,11 @@ class CaptureService : Service() {
 
         fun consume(pkg: String) {
             results.remove(pkg)
+        }
+
+        /** Called once the tester has been told, so the same sentence is not shown twice. */
+        fun forgetMissed() {
+            missed.clear()
         }
 
         private fun send(context: Context, intent: Intent) =

@@ -30,6 +30,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.eazyverse.testtrack.data.AuthRepo
+import com.eazyverse.testtrack.data.CaptureService
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.ui.*
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
@@ -40,6 +41,7 @@ object Routes {
     const val SETUP = "setup"
     const val HOME = "home"
     const val SUBMIT = "submit"
+    const val PROFILE = "profile"
 
     const val GROUP = "group/{groupId}"
     fun group(groupId: String) = "group/$groupId"
@@ -70,6 +72,23 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Coming back here in the middle of a round ends the round.
+     *
+     * The service opens the next app on a timer and does not care where the tester is, so without
+     * this a round carried on after somebody had walked away from it: they would arrive back at
+     * TestTrack, get a few seconds, and be taken into the next app again.
+     *
+     * Here rather than on a screen, so it holds however they got back — recents, the launcher, the
+     * notification, the back gesture out of the app under test. A round that ended on its own has
+     * already cleared itself before it brings the app forward, so this cannot fire on the normal
+     * path.
+     */
+    override fun onResume() {
+        super.onResume()
+        CaptureService.leftRound(this)
     }
 
     /**
@@ -200,6 +219,16 @@ fun AppNav(openGroup: MutableState<String?> = remember { mutableStateOf(null) })
                 // usage access from Settings, and both leave a working install that quietly cannot
                 // report. Setup is where those are repaired, so it has to stay reachable.
                 onOpenSetup = { nav.push(Routes.SETUP) },
+                onOpenProfile = { nav.push(Routes.PROFILE) }
+            )
+        }
+
+        composable(Routes.PROFILE) {
+            ProfileScreen(
+                onBack = { nav.popBackStack() },
+                // The same teardown the other two do, and for the same reason: `replace` pops
+                // everything above the graph root, so home does not survive underneath a
+                // signed-out profile for Back to land on.
                 onSignOut = {
                     AuthRepo.signOut()
                     Session.signOut()

@@ -5,109 +5,72 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.PixelFormat
 import android.graphics.RectF
-import android.graphics.Typeface
 import android.os.Build
 import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
-import android.widget.FrameLayout
-import android.widget.LinearLayout
-import android.widget.TextView
 import kotlin.math.min
 
 /**
  * What a tester sees while an app under test is on screen.
  *
- * A round used to happen entirely behind the app it was visiting: it opened, something was
- * captured at a moment nobody could predict, and control came back a while later. It worked and it
- * gave the person holding the phone nothing to look at, so the only way to know it was working was
- * to wait and find out.
+ * One circle, and nothing else. The ring around the edge empties over the visit and the button in
+ * the middle is the only control: pause while it is running, play to set it going again, and play
+ * once more at the end to move on.
  *
- * This is a ring that empties over the visit, the app's name, its place in the round, and a button
- * to move on early. Both halves of that matter: the ring means somebody who is watching knows how
- * long is left, and the button means somebody who has seen enough does not have to wait for it.
+ * It used to be a bar carrying the app's name and its place in the round as well. That was more
+ * honest about what was happening and it was also a strip of somebody else's app covered over for
+ * twenty seconds at a time, thirteen times an evening. The name is on the screen underneath it
+ * already, which is the whole point of the visit.
  *
- * It draws over another app, which needs `SYSTEM_ALERT_WINDOW`, and that grant is already asked
- * for on the group screen because switching apps needs it too. Where it has not been given there
- * is simply no overlay: [show] does nothing and the round runs exactly as it did before, which is
- * the same trade the switching already makes.
+ * Drawing over another app needs `SYSTEM_ALERT_WINDOW`, and that grant is already asked for on the
+ * group screen because switching apps needs it too. Where it has not been given there is simply no
+ * overlay: [show] does nothing and the round runs exactly as it did before.
  *
  * It is in the screenshot, deliberately. Hiding it for the grab and putting it back is a frame of
  * flicker on somebody else's app and a race with the capture, to remove something that gives the
- * picture a timestamp and a name.
+ * picture a timestamp.
  */
 class VisitOverlay(private val context: Context) {
 
     private val windows = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    private var view: View? = null
-    private var ring: RingView? = null
+    private var dial: Dial? = null
     private var animator: ValueAnimator? = null
 
     val allowed: Boolean get() = Settings.canDrawOverlays(context)
 
     /**
-     * Puts the ring up for one visit.
+     * What the middle of the circle is offering.
      *
-     * [onNext] is what the button does, and the caller decides what that means — here it is only a
-     * press. The ring is wall clock rather than frame driven, so a slow app does not slow it down.
+     * Two, because there are only ever two things to say. [PLAY] covers both "let it carry on by
+     * itself" and, once the ring has emptied, "move on now" — which is the same intent twice and
+     * reads as one button rather than a control that changes its mind at the end.
      */
-    fun show(label: String, position: String, millis: Long, onNext: () -> Unit) {
+    enum class Mode { PAUSE, PLAY }
+
+    /**
+     * Puts the dial up for one visit.
+     *
+     * The ring is wall clock rather than frame driven, so an app that stutters does not slow it
+     * down. [onTap] is a press and nothing more: what a press means belongs to the service, which
+     * is the only thing that knows whether the visit still has time on it.
+     */
+    fun show(millis: Long, onTap: () -> Unit) {
         if (!allowed) return
         hide()
 
         val density = context.resources.displayMetrics.density
         fun dp(value: Int) = (value * density).toInt()
 
-        val ringView = RingView(context, density).also { ring = it }
-
-        val name = TextView(context).apply {
-            text = label
-            setTextColor(Color.WHITE)
-            textSize = 13f
-            typeface = Typeface.DEFAULT_BOLD
-            maxLines = 1
+        val view = Dial(context, density).apply {
+            setOnClickListener { onTap() }
+            mode(Mode.PAUSE)
         }
-        val place = TextView(context).apply {
-            text = position
-            setTextColor(Color.parseColor("#99A1B6"))
-            textSize = 11f
-        }
-        val next = TextView(context).apply {
-            text = "Next"
-            setTextColor(Color.parseColor("#241E52"))
-            textSize = 13f
-            typeface = Typeface.DEFAULT_BOLD
-            setPadding(dp(14), dp(7), dp(14), dp(7))
-            background = pill(Color.parseColor("#A6A0FA"), dp(16).toFloat())
-            setOnClickListener { onNext() }
-        }
-
-        val words = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            addView(name)
-            addView(place)
-        }
-
-        val bar = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(12), dp(10), dp(12), dp(10))
-            background = pill(Color.parseColor("#E60B0F19"), dp(26).toFloat())
-            addView(ringView, LinearLayout.LayoutParams(dp(34), dp(34)))
-            addView(words, LinearLayout.LayoutParams(0, -2, 1f).apply {
-                marginStart = dp(12)
-                marginEnd = dp(12)
-            })
-            addView(next)
-        }
-
-        val host = FrameLayout(context).apply {
-            setPadding(dp(16), 0, dp(16), 0)
-            addView(bar, FrameLayout.LayoutParams(-1, -2))
-        }
+        dial = view
 
         val type =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -118,51 +81,51 @@ class VisitOverlay(private val context: Context) {
             }
 
         val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            dp(SIZE), dp(SIZE),
             type,
             // Not focusable, so the app underneath keeps the keyboard and every touch that is not
-            // on the bar itself. NOT_TOUCH_MODAL is what lets those touches through.
+            // on the circle itself. NOT_TOUCH_MODAL is what lets those through, and the window is
+            // now only as big as the circle, so almost the whole screen is "not on it".
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = Gravity.TOP
-            y = dp(48)
+            gravity = Gravity.TOP or Gravity.END
+            x = dp(16)
+            y = dp(80)
         }
 
         runCatching {
-            windows.addView(host, params)
-            view = host
-        }
+            windows.addView(view, params)
+        }.onFailure { dial = null }
 
         animator = ValueAnimator.ofFloat(1f, 0f).apply {
             duration = millis
-            addUpdateListener { ringView.setFraction(it.animatedValue as Float) }
+            addUpdateListener { view.fraction(it.animatedValue as Float) }
             start()
         }
+    }
+
+    fun action(mode: Mode) {
+        dial?.mode(mode)
     }
 
     fun hide() {
         animator?.cancel()
         animator = null
-        ring = null
-        view?.let { runCatching { windows.removeView(it) } }
-        view = null
+        dial?.let { runCatching { windows.removeView(it) } }
+        dial = null
     }
 
-    private fun pill(colour: Int, radius: Float) =
-        android.graphics.drawable.GradientDrawable().apply {
-            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
-            cornerRadius = radius
-            setColor(colour)
+    /** A ring that empties clockwise from the top, around a play or pause glyph. */
+    private class Dial(context: Context, private val density: Float) : View(context) {
+
+        private var left = 1f
+        private var mode = Mode.PAUSE
+
+        private val ground = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#E60B0F19")
         }
-
-    /** A ring that empties clockwise from the top. */
-    private class RingView(context: Context, private val density: Float) : View(context) {
-
-        private var fraction = 1f
-
         private val track = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             strokeWidth = 3f * density
@@ -174,18 +137,68 @@ class VisitOverlay(private val context: Context) {
             strokeCap = Paint.Cap.ROUND
             color = Color.parseColor("#A6A0FA")
         }
+        private val glyph = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#EEF1F8")
+        }
 
-        fun setFraction(value: Float) {
-            fraction = value
+        private val wedge = Path()
+
+        fun fraction(value: Float) {
+            left = value
+            invalidate()
+        }
+
+        fun mode(value: Mode) {
+            mode = value
             invalidate()
         }
 
         override fun onDraw(canvas: Canvas) {
-            val inset = fill.strokeWidth / 2f
             val size = min(width, height).toFloat()
+            val middle = size / 2f
+            canvas.drawCircle(middle, middle, middle, ground)
+
+            // Inset by a whole stroke rather than half, so the ring sits inside the disc instead of
+            // straddling its edge, where the outer half would be drawn against another app.
+            val inset = fill.strokeWidth
             val box = RectF(inset, inset, size - inset, size - inset)
             canvas.drawArc(box, 0f, 360f, false, track)
-            canvas.drawArc(box, -90f, 360f * fraction, false, fill)
+            if (left > 0f) canvas.drawArc(box, -90f, 360f * left, false, fill)
+
+            if (mode == Mode.PAUSE) drawPause(canvas, middle) else drawPlay(canvas, middle)
         }
+
+        private fun drawPause(canvas: Canvas, middle: Float) {
+            val bar = 3.5f * density
+            val tall = 13f * density
+            val gap = 4f * density
+            val top = middle - tall / 2f
+            val corner = bar / 2f
+            canvas.drawRoundRect(
+                middle - gap / 2f - bar, top, middle - gap / 2f, top + tall, corner, corner, glyph
+            )
+            canvas.drawRoundRect(
+                middle + gap / 2f, top, middle + gap / 2f + bar, top + tall, corner, corner, glyph
+            )
+        }
+
+        private fun drawPlay(canvas: Canvas, middle: Float) {
+            val tall = 14f * density
+            val wide = 12f * density
+            // Nudged right, because a triangle centred on its bounding box reads as sitting left
+            // of centre. The eye balances it against the centroid, which is a third of the way in.
+            val start = middle - wide / 2f + 1.5f * density
+            wedge.reset()
+            wedge.moveTo(start, middle - tall / 2f)
+            wedge.lineTo(start + wide, middle)
+            wedge.lineTo(start, middle + tall / 2f)
+            wedge.close()
+            canvas.drawPath(wedge, glyph)
+        }
+    }
+
+    private companion object {
+        /** Big enough to be an easy target on top of another app, small enough to ignore. */
+        const val SIZE = 56
     }
 }
