@@ -16,12 +16,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.HourglassEmpty
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -1028,6 +1031,7 @@ private fun openInPlay(context: Context, app: TestApp, onFailure: (String) -> Un
         }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TestRow(
     app: TestApp,
@@ -1053,18 +1057,103 @@ private fun TestRow(
         InstalledApps.cachedInfo(context, app.packageName)
     }
 
+    var details by remember { mutableStateOf(false) }
+    if (details) AppDetails(app) { details = false }
+
     Row(
         Modifier.fillMaxWidth().padding(start = Gutter, end = 12.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AppIcon(app.packageName, app.label)
+        /*
+         * How long they have held on to it, on the icon it belongs to.
+         *
+         * This was a line of text under the package name, which is a whole row of type spent on
+         * one small number, thirteen times down the screen. Play counts continuous days installed
+         * and nothing else, so it is worth showing and not worth a line.
+         *
+         * Long press gives the sentence back. A corner badge reading "2d" is a reminder for
+         * somebody who already knows what it counts, and a tooltip is where the answer goes for
+         * somebody who does not.
+         */
+        TooltipBox(
+            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+            tooltip = { PlainTooltip { Text(info.streakLabel) } },
+            state = rememberTooltipState(),
+            // Nothing to explain where there is no badge, and a tooltip that opens on an app the
+            // tester has not installed yet would be answering a question nobody asked.
+            enableUserInput = info.streakBadge != null
+        ) {
+            Box {
+                AppIcon(app.packageName, app.label)
+                info.streakBadge?.let { badge ->
+                    Box(
+                        Modifier
+                            .align(Alignment.BottomEnd)
+                            .offset(x = 5.dp, y = 5.dp)
+                            // Painted in the page ground and padded, which draws a ring cutting
+                            // the badge out of the icon behind it. Without it the pill sits on
+                            // whatever colour that corner of the icon happens to be.
+                            .clip(RoundedCornerShape(9.dp))
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(2.dp)
+                    ) {
+                        Text(
+                            badge,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(7.dp))
+                                .background(Status.neutralSoft)
+                                .padding(horizontal = 5.dp, vertical = 1.dp)
+                        )
+                    }
+                }
+            }
+        }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(
-                app.label,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    app.label,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    // Not filling: the button belongs beside the name it is about, not pushed out
+                    // to the far edge where it reads as another action on the row.
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+                /*
+                 * What the developer left for you, when there is any.
+                 *
+                 * The row can only ever show the first two lines of it and none of it can be
+                 * selected, which is the one thing a test login exists to be: copied into somebody
+                 * else's sign-in screen. Shown only where notes exist, so the button is a promise
+                 * that there is something behind it rather than furniture on every row.
+                 *
+                 * Hand-rolled rather than an IconButton, which reserves a 48dp touch target and
+                 * would set the height of the title line on its own.
+                 */
+                if (app.notes.isNotBlank()) {
+                    Spacer(Modifier.width(2.dp))
+                    Box(
+                        Modifier
+                            .size(30.dp)
+                            .clip(CircleShape)
+                            .clickable { details = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Outlined.Info,
+                            contentDescription = "How to get into ${app.label}",
+                            modifier = Modifier.size(17.dp),
+                            tint = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
+            }
             /*
              * Whose app this is.
              *
@@ -1073,18 +1162,14 @@ private fun TestRow(
              * screen needs to know who to ask, and somebody deciding whether the notes are worth
              * trusting needs to know who wrote them.
              *
-             * The name is dropped when it adds nothing, and blank is not the only way it can add
-             * nothing. Google hands back a display name for every account and for most of these it
-             * is the address with the domain taken off, so testing for emptiness alone gave a
-             * column of rows reading "abdudevs · abdudevs@gmail.com". Compared against the local
-             * part instead, which is the thing it duplicates.
+             * The name alone, on its own line. Google hands back a display name for every account
+             * and for most of these it is the address with the domain taken off, so joining the
+             * two gave a column of rows reading "abdudevs · abdudevs@gmail.com". The address is
+             * behind the button above, where it can be copied and cannot be cut short.
              */
             val who = remember(owner, app.ownerEmail) {
-                val mail = app.ownerEmail.takeIf { it.isNotBlank() }
-                val local = mail?.substringBefore('@')
-                val name = owner?.displayName
-                    ?.takeIf { it.isNotBlank() && !it.equals(local, ignoreCase = true) }
-                listOfNotNull(name, mail).joinToString(" · ")
+                owner?.displayName?.takeIf { it.isNotBlank() }
+                    ?: app.ownerEmail.substringBefore('@')
             }
             if (who.isNotBlank()) {
                 Spacer(Modifier.height(3.dp))
@@ -1097,12 +1182,17 @@ private fun TestRow(
                 )
             }
 
-            Spacer(Modifier.height(2.dp))
-            Text(
-                if (info.installed) info.streakLabel else app.packageName,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline
-            )
+            // Only while it is missing. The streak moved to the badge on the icon, and the
+            // package name is here for the one job it has left: telling somebody hunting for the
+            // right listing in Play that they have found it.
+            if (!info.installed) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    app.packageName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
 
             /*
              * What the developer said you need to get in, on the row you need it on.
@@ -1195,6 +1285,69 @@ private fun TestRow(
                     fontWeight = FontWeight.SemiBold
                 )
             }
+        }
+    }
+}
+
+/**
+ * What the developer wrote down so you could get past their front door.
+ *
+ * Whose app it is stays on the row, where it is read; this is only the part that gets *used*. A
+ * test login is typed into another app's sign-in screen, and a row is the one place it cannot be
+ * taken from: it truncates at two lines, and text in a list is not selectable.
+ *
+ * Selectable, not editable. A text field would offer a keyboard and a cursor for text nobody here
+ * is allowed to change, and a value that looks editable gets typed into anyway. Long press picks
+ * it up, which is the gesture people already use on a message.
+ */
+@Composable
+private fun AppDetails(app: TestApp, onDismiss: () -> Unit) {
+    Ask(
+        title = app.label,
+        confirm = "Close",
+        onConfirm = onDismiss,
+        onDismiss = onDismiss,
+        // Nothing is being decided here, so a Cancel next to Close would be two words for one door.
+        dismiss = null,
+        content = {
+            Column(
+                // Notes run to 500 characters and the dialog would otherwise grow until the
+                // buttons went off the bottom of the screen.
+                Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Detail("How to get in", app.notes)
+                // Second, and quietly, because it is a fallback: the badge and the Install button
+                // cover the normal case, and this is for somebody who has gone looking in Play and
+                // wants to be sure the listing in front of them is the right one.
+                Detail("Package name", app.packageName)
+            }
+        }
+    )
+}
+
+/** One labelled value in [AppDetails], sitting in a box you can lift the text out of. */
+@Composable
+private fun Detail(label: String, value: String) {
+    Column(Modifier.fillMaxWidth()) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(6.dp))
+        SelectionContainer {
+            Text(
+                value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Status.neutralSoft)
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            )
         }
     }
 }

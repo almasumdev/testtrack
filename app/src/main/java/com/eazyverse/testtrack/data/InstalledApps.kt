@@ -62,6 +62,21 @@ object InstalledApps {
                 else -> "$streakDays days installed"
             }
 
+        /**
+         * The same streak, short enough to sit on the corner of a 44dp icon.
+         *
+         * Null where a number would be noise rather than information: nothing to count for an app
+         * that is not there, and nothing worth counting once it is past a year, which is the case
+         * [streakLabel] already answers with a flat "Installed". "new" rather than "0d" for the
+         * first day, because a badge reading zero looks like a count that failed.
+         */
+        val streakBadge: String?
+            get() = when {
+                !installed || streakDays >= 365 -> null
+                streakDays <= 0 -> "new"
+                else -> "${streakDays}d"
+            }
+
         val fromPlay: Boolean get() = installer == "com.android.vending"
     }
 
