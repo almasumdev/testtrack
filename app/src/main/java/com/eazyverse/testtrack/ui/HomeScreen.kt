@@ -579,8 +579,8 @@ private fun HomeSkeleton() {
         Skeleton(width = 148.dp, height = 34.dp, corner = 10.dp)
         Spacer(Modifier.height(12.dp))
         Skeleton(width = 210.dp, height = 12.dp)
-        Spacer(Modifier.height(16.dp))
-        Skeleton(height = 10.dp, corner = 3.dp)
+        Spacer(Modifier.height(14.dp))
+        SkeletonMeter()
     }
 
     Spacer(Modifier.height(30.dp))

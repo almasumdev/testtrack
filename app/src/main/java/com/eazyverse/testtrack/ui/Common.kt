@@ -597,8 +597,8 @@ fun SkeletonPage(showAction: Boolean = true, list: @Composable () -> Unit) {
         Skeleton(width = 148.dp, height = 34.dp, corner = 10.dp)
         Spacer(Modifier.height(12.dp))
         Skeleton(width = 210.dp, height = 12.dp)
-        Spacer(Modifier.height(18.dp))
-        Skeleton(height = 10.dp, corner = 3.dp)
+        Spacer(Modifier.height(14.dp))
+        SkeletonMeter()
         if (showAction) {
             Spacer(Modifier.height(26.dp))
             Skeleton(height = 52.dp, corner = 16.dp)
@@ -644,6 +644,24 @@ fun SkeletonGroupList(rows: Int = SKELETON_ROWS) {
 }
 
 /**
+ * A meter's placeholder, in the meter's own shape.
+ *
+ * [Meter] is boxes with gaps between them, so a single long bar standing in for it is a skeleton
+ * describing a different component. The count is a guess because the real one is not known yet,
+ * which is fine: what a skeleton owes is the shape, and a row of boxes is unmistakably the shape.
+ *
+ * Same 4dp gap and 3dp corner as the real one, so nothing shifts sideways when it lands.
+ */
+@Composable
+fun SkeletonMeter(boxes: Int = 12, height: Dp = 10.dp) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        repeat(boxes) {
+            Skeleton(height = height, corner = 3.dp, modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+/**
  * A cohort row on the home screen: a name, the day under it, and the day's own meter.
  *
  * Its own shape rather than [SkeletonGroupList], which draws a face at the left because the list
@@ -659,7 +677,8 @@ fun SkeletonCohortList(rows: Int = 3) {
             Spacer(Modifier.height(7.dp))
             Skeleton(width = meta(i), height = 11.dp)
             Spacer(Modifier.height(10.dp))
-            Skeleton(height = 8.dp, corner = 4.dp)
+            // The row's own day meter, at the 8dp the real one uses.
+            SkeletonMeter(boxes = 12, height = 8.dp)
         }
     }
 }

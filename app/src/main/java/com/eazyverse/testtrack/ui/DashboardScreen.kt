@@ -263,7 +263,7 @@ private fun DashboardSkeleton() {
         Spacer(Modifier.height(12.dp))
         Skeleton(width = 196.dp, height = 12.dp)
         Spacer(Modifier.height(18.dp))
-        Skeleton(height = 6.dp, corner = 3.dp)
+        SkeletonMeter()
     }
     Spacer(Modifier.height(30.dp))
     Row(
