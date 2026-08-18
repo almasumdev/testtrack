@@ -309,7 +309,10 @@ private fun Headline(vm: DashboardViewModel) {
         )
         if (day != null) {
             Spacer(Modifier.height(16.dp))
-            Meter(if (expected == 0) 0f else reported.toFloat() / expected)
+            // One box per tester, the same as home, the group screen and setup. A solid bar says
+            // "most of them"; twelve boxes with two gaps says which day this actually was, and
+            // this is the screen where that is the whole question.
+            Meter(done = reported, total = expected)
         }
     }
 }

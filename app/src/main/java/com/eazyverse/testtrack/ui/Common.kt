@@ -643,6 +643,27 @@ fun SkeletonGroupList(rows: Int = SKELETON_ROWS) {
     }
 }
 
+/**
+ * A cohort row on the home screen: a name, the day under it, and the day's own meter.
+ *
+ * Its own shape rather than [SkeletonGroupList], which draws a face at the left because the list
+ * it stands in for on the dashboard has one. Home's rows do not, and a circle that resolves into
+ * nothing is the skeleton telling a small lie about what is coming.
+ */
+@Composable
+fun SkeletonCohortList(rows: Int = 3) {
+    repeat(rows) { i ->
+        if (i > 0) RowDivider()
+        Column(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 14.dp)) {
+            Skeleton(width = title(i), height = 15.dp)
+            Spacer(Modifier.height(7.dp))
+            Skeleton(width = meta(i), height = 11.dp)
+            Spacer(Modifier.height(10.dp))
+            Skeleton(height = 8.dp, corner = 4.dp)
+        }
+    }
+}
+
 /** An icon, an app name, and what it is waiting for. */
 @Composable
 fun SkeletonAppList(rows: Int = SKELETON_ROWS) {
