@@ -1061,7 +1061,14 @@ private fun TestRow(
     if (details) AppDetails(app) { details = false }
 
     Row(
-        Modifier.fillMaxWidth().padding(start = Gutter, end = 12.dp, top = 10.dp, bottom = 10.dp),
+        Modifier
+            .fillMaxWidth()
+            .padding(start = Gutter, end = 12.dp, top = 10.dp, bottom = 10.dp)
+            // The icon is squared off against the three lines beside it rather than set to a
+            // number. Three lines of type is not a fixed height — it moves with the font size in
+            // the tester's own display settings — and a 44dp square next to it was a small icon
+            // floating in the middle of a tall row.
+            .height(IntrinsicSize.Min),
         verticalAlignment = Alignment.CenterVertically
     ) {
         /*
@@ -1083,8 +1090,12 @@ private fun TestRow(
             // tester has not installed yet would be answering a question nobody asked.
             enableUserInput = info.streakBadge != null
         ) {
-            Box {
-                AppIcon(app.packageName, app.label)
+            Box(Modifier.fillMaxHeight()) {
+                AppIcon(
+                    app.packageName,
+                    app.label,
+                    modifier = Modifier.fillMaxHeight().aspectRatio(1f)
+                )
                 info.streakBadge?.let { badge ->
                     Box(
                         Modifier
@@ -1155,17 +1166,18 @@ private fun TestRow(
                 }
             }
             /*
-             * Whose app this is.
+             * Whose app this is, on two lines of its own.
              *
              * A cohort is thirteen strangers holding each other to a fortnight, and until now the
              * only thing on the row was a package name. Somebody who cannot get past a login
              * screen needs to know who to ask, and somebody deciding whether the notes are worth
              * trusting needs to know who wrote them.
              *
-             * The name alone, on its own line. Google hands back a display name for every account
-             * and for most of these it is the address with the domain taken off, so joining the
-             * two gave a column of rows reading "abdudevs · abdudevs@gmail.com". The address is
-             * behind the button above, where it can be copied and cannot be cut short.
+             * Name above address, not joined by a separator: the two ran together as "abdudevs
+             * · abdudevs@gmail.com" often enough to look broken, because Google hands back a
+             * display name for every account and for most of these it is the address with the
+             * domain taken off. Stacked, the repetition reads as one person rather than a bug, and
+             * the address gets the whole width instead of being cut in half.
              */
             val who = remember(owner, app.ownerEmail) {
                 owner?.displayName?.takeIf { it.isNotBlank() }
@@ -1181,34 +1193,13 @@ private fun TestRow(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-
-            // Only while it is missing. The streak moved to the badge on the icon, and the
-            // package name is here for the one job it has left: telling somebody hunting for the
-            // right listing in Play that they have found it.
-            if (!info.installed) {
+            if (app.ownerEmail.isNotBlank()) {
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    app.packageName,
+                    app.ownerEmail,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-
-            /*
-             * What the developer said you need to get in, on the row you need it on.
-             *
-             * Two lines and no more. Thirteen rows each carrying a paragraph is a list nobody
-             * reads, and the first line is nearly always the account and the password. Somebody
-             * who wrote more can still see all of it from their own screen, and the tester who
-             * needs the rest has the label right above it to ask about.
-             */
-            if (app.notes.isNotBlank()) {
-                Spacer(Modifier.height(3.dp))
-                Text(
-                    app.notes,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
+                    color = MaterialTheme.colorScheme.outline,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -1293,8 +1284,9 @@ private fun TestRow(
  * What the developer wrote down so you could get past their front door.
  *
  * Whose app it is stays on the row, where it is read; this is only the part that gets *used*. A
- * test login is typed into another app's sign-in screen, and a row is the one place it cannot be
- * taken from: it truncates at two lines, and text in a list is not selectable.
+ * test login is typed into another app's sign-in screen, and it was on the row until now in the
+ * worst possible form: cut off after two lines, and not selectable, which is the one thing a
+ * password is for.
  *
  * Selectable, not editable. A text field would offer a keyboard and a cursor for text nobody here
  * is allowed to change, and a value that looks editable gets typed into anyway. Long press picks
@@ -1310,44 +1302,25 @@ private fun AppDetails(app: TestApp, onDismiss: () -> Unit) {
         // Nothing is being decided here, so a Cancel next to Close would be two words for one door.
         dismiss = null,
         content = {
-            Column(
-                // Notes run to 500 characters and the dialog would otherwise grow until the
-                // buttons went off the bottom of the screen.
-                Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Detail("How to get in", app.notes)
-                // Second, and quietly, because it is a fallback: the badge and the Install button
-                // cover the normal case, and this is for somebody who has gone looking in Play and
-                // wants to be sure the listing in front of them is the right one.
-                Detail("Package name", app.packageName)
+            // No label over it. The dialog is titled with the app and holds one thing, so a
+            // heading would only be a word explaining the only word on screen.
+            SelectionContainer {
+                Text(
+                    app.notes,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        // Notes run to 500 characters and the dialog would otherwise grow until
+                        // the buttons went off the bottom of the screen.
+                        .heightIn(max = 360.dp)
+                        .verticalScroll(rememberScrollState())
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Status.neutralSoft)
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                )
             }
         }
     )
 }
 
-/** One labelled value in [AppDetails], sitting in a box you can lift the text out of. */
-@Composable
-private fun Detail(label: String, value: String) {
-    Column(Modifier.fillMaxWidth()) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(6.dp))
-        SelectionContainer {
-            Text(
-                value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Status.neutralSoft)
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
-            )
-        }
-    }
-}

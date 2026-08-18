@@ -343,7 +343,16 @@ fun Primary(
  * with a launcher icon to draw is by definition one that filter can see.
  */
 @Composable
-fun AppIcon(pkg: String, label: String, size: Dp = 44.dp) {
+fun AppIcon(
+    pkg: String,
+    label: String,
+    size: Dp = 44.dp,
+    /**
+     * Overrides the square. A row that sets its own height wants the icon to match whatever the
+     * text beside it came out at, and [size] is then only the corner radius it is rounded by.
+     */
+    modifier: Modifier = Modifier.size(size)
+) {
     val context = LocalContext.current
     // The revision is a key here too. An app that was absent cached a null icon, and without this
     // the row stays a grey placeholder for the rest of the session after it is installed.
@@ -357,11 +366,11 @@ fun AppIcon(pkg: String, label: String, size: Dp = 44.dp) {
             bitmap = bitmap,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.size(size).clip(shape)
+            modifier = modifier.clip(shape)
         )
     } else {
         Box(
-            Modifier.size(size).clip(shape).background(Status.neutralSoft),
+            modifier.clip(shape).background(Status.neutralSoft),
             contentAlignment = Alignment.Center
         ) {
             Text(
