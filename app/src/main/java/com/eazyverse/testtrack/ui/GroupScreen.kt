@@ -902,10 +902,18 @@ private fun Action(
                 } else {
                     Spacer(Modifier.height(8.dp))
                 }
+                /*
+                 * This used to end "so leave the phone alone until you're back here", which read
+                 * as an instruction to sit still through the round. It was aimed at the wrong
+                 * thing: what breaks a visit is switching away from the app, not touching it. Told
+                 * to do nothing, a tester does nothing, and twelve people opening apps and staring
+                 * at them is not testing and would not survive anybody looking at it.
+                 */
                 Text(
                     "Each app opens for about twenty seconds, then moves to the next one on " +
-                        "its own. We take the screenshot at a moment you won't know in advance, " +
-                        "so leave the phone alone until you're back here.",
+                        "its own. Have a proper look while you're in there. The screenshot is " +
+                        "taken at a moment you won't know in advance, so stay in the app until " +
+                        "it hands over.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
