@@ -156,6 +156,23 @@ service cloud.firestore {
     }
 
     /**
+     * An avatar that will not slow down somebody else's group screen.
+     *
+     * Eight thousand base64 characters, against an app that squeezes to six and gives up rather
+     * than exceed it. The headroom is for a future that stores a slightly larger face, not for a
+     * client to fill: the cost of this field is paid thirty times over on every cohort read, which
+     * is a much tighter constraint than the megabyte a document is allowed.
+     *
+     * A missing field passes. Most accounts never set one, and every write that only touches the
+     * name goes through here too.
+     */
+    function smallEnoughPhoto() {
+      return !('photo' in request.resource.data)
+        || (request.resource.data.photo is string
+            && request.resource.data.photo.size() <= 8000);
+    }
+
+    /**
      * The admin list.
      *
      * Writes are console-only — an admin app that could grant admin would make the whole thing
@@ -186,24 +203,32 @@ service cloud.firestore {
       allow read: if signedIn();
 
       /**
-       * An account writes its own row, but only the four fields that are its own business.
+       * An account writes its own row, but only the fields that are its own business.
        *
        * `blocked` lives on this document and is an admin's judgement, so an owner allowed to write
        * the document freely could simply clear it — a ban anybody can lift is not a ban. Held to a
        * fixed list rather than a denylist, so a field added later is closed by default instead of
        * open until somebody remembers.
+       *
+       * `photo` is a base64 avatar, and the size limit is not a formality. This document is read
+       * thirty at a time whenever a cohort turns uids into names, so an unbounded picture here is
+       * a slow group screen for twelve other people rather than a large document for its owner.
+       * The app aims well under this; the number is what a client that skips the app is held to.
        */
       allow create: if isAdmin() || (
         signedIn()
         && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['uid', 'email', 'displayName', 'updatedAt'])
+        && request.resource.data.keys()
+             .hasOnly(['uid', 'email', 'displayName', 'photo', 'updatedAt'])
+        && smallEnoughPhoto()
       );
 
       allow update: if isAdmin() || (
         signedIn()
         && request.auth.uid == uid
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['uid', 'email', 'displayName', 'updatedAt'])
+             .hasOnly(['uid', 'email', 'displayName', 'photo', 'updatedAt'])
+        && smallEnoughPhoto()
       );
 
       allow delete: if isAdmin();
@@ -349,6 +374,7 @@ service cloud.firestore {
         && request.auth.uid == request.resource.data.ownerUid
         && request.resource.data.status == 'pending'
         && request.resource.data.groupId == ''
+        && (!('notes' in request.resource.data) || request.resource.data.notes.size() <= 500)
         && !isBlocked(request.auth.uid)
       );
 
@@ -360,6 +386,20 @@ service cloud.firestore {
        * ordinary update from every other angle. Absent fields are handled by asking what the
        * write *touches*: documents from before this existed have none of them, and a write that
        * leaves them alone affects no key here whether they are there or not.
+       *
+       * `packageName` is pinned. It is what a tester's phone installs and opens, and until now an
+       * owner already placed in a running cohort could point it anywhere: the document id stays
+       * the package that was claimed, so nothing about the claim looks wrong and twelve people
+       * quietly spend their fortnight opening a different app.
+       *
+       * `name` is deliberately not pinned beside it. Resubmitting is how a typo gets fixed, the
+       * write merges into a placed document on purpose, and a developer correcting their own app's
+       * name on day nine is the feature rather than the attack.
+       *
+       * `notes` is capped here as well as in the app. The tester app stops at NOTES_MAX and the
+       * console only ever reads the field, so nothing legitimate comes near this limit — but the
+       * string is rendered in a list row by all twelve members of the cohort, and a client that
+       * skips the check is exactly the one that would put a megabyte in it.
        */
       allow update: if isAdmin() || (
         signedIn()
@@ -367,6 +407,8 @@ service cloud.firestore {
         && request.auth.uid == resource.data.ownerUid
         && request.resource.data.status == resource.data.status
         && request.resource.data.groupId == resource.data.groupId
+        && request.resource.data.packageName == resource.data.packageName
+        && (!('notes' in request.resource.data) || request.resource.data.notes.size() <= 500)
         && !request.resource.data.diff(resource.data).affectedKeys()
              .hasAny(['removed', 'removedAt', 'removedReason'].toSet())
       );
@@ -473,9 +515,20 @@ service cloud.firestore {
              )
            );
 
-      // An owner may withdraw their own app — a package name typed wrong is otherwise permanent,
-      // and once placed it would sit in thirteen other testers' lists for good.
-      allow delete: if isAdmin() || (signedIn() && request.auth.uid == resource.data.ownerUid);
+      /**
+       * Nobody. Not the owner, not an admin.
+       *
+       * This used to admit both, on the reasoning that a package name typed wrong would otherwise
+       * be permanent. That reason is gone: withdrawing moves the document to `withdrawn` and
+       * turning a submission down moves it to `rejected`, and both leave the record where the
+       * person who submitted it can still see it. Neither app has called delete since.
+       *
+       * Which made this the last way a submission could vanish outright, and the one that takes
+       * the package name's claim with it, the reason it was refused, and the developer's evidence
+       * they ever submitted at all. A permission nothing uses and nothing should is better closed
+       * than documented, because the next client to reach for it will be the one nobody wrote.
+       */
+      allow delete: if false;
     }
 
     /**

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "firebase emulators:exec --only firestore --project rules-test \"node rules.test.mjs\""
+    "test": "firebase emulators:exec --only firestore --project rules-test \"node rules.test.mjs && node notes.test.mjs && node devices.test.mjs && node lifecycle.test.mjs && node profile.test.mjs\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.0",

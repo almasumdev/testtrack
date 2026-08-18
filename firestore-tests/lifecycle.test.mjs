@@ -138,10 +138,40 @@ await check('owner can still read their closed app', () =>
 await check('an admin can read a closed app', () =>
   assertSucceeds(getDoc(doc(as(ADMIN), 'apps', 'com.me.withdrawn'))))
 
-// Delete is still permitted by the rules for an owner and an admin. Nothing in either app calls
-// it any more, and this records that the rule is the last line rather than the only one.
-await check('the delete rule still exists, and nothing in the apps uses it', () =>
-  assertSucceeds(deleteDoc(doc(as(ME), 'apps', 'com.me.withdrawn'))))
+// ---- nothing gets deleted, by anyone -------------------------------------------------------
+// Every other route out of the queue keeps the document: withdrawn, rejected, done. Delete was
+// the one that did not, and it is closed rather than merely unused, because the whole point of
+// the statuses above is that a submission stays where the person who made it can still see it.
+await check('an owner cannot delete their own withdrawn app', () =>
+  assertFails(deleteDoc(doc(as(ME), 'apps', 'com.me.withdrawn'))))
+
+await check('an owner cannot delete an app waiting in the queue', () =>
+  assertFails(deleteDoc(doc(as(ME), 'apps', 'com.me.waiting'))))
+
+await check('an admin cannot delete a rejected app either', () =>
+  assertFails(deleteDoc(doc(as(ADMIN), 'apps', 'com.me.rejected'))))
+
+// ---- the identity of an app is fixed once it is claimed --------------------------------------
+// The document id stays the package that was claimed, so repointing this field breaks nothing an
+// admin would notice and sends twelve people to open something else for a fortnight.
+await check('owner cannot repoint a placed app at another package', () =>
+  assertFails(updateDoc(doc(as(ME), 'apps', 'com.me.placed'),
+    { packageName: 'com.someone.else' })))
+
+await check('owner cannot repoint a waiting app either', () =>
+  assertFails(updateDoc(doc(as(ME), 'apps', 'com.me.waiting'),
+    { packageName: 'com.someone.else' })))
+
+// ---- notes are bounded where they are written, not only where they are typed -----------------
+await check('owner cannot write notes past the cap', () =>
+  assertFails(updateDoc(doc(as(ME), 'apps', 'com.me.placed'), { notes: 'x'.repeat(501) })))
+
+await check('owner may write notes right up to the cap', () =>
+  assertSucceeds(updateDoc(doc(as(ME), 'apps', 'com.me.placed'), { notes: 'x'.repeat(500) })))
+
+await check('a submission cannot arrive with oversized notes', () =>
+  assertFails(setDoc(doc(as(ME), 'apps', 'com.me.wordy'),
+    { ...app('com.me.wordy'), status: 'pending', groupId: '', notes: 'x'.repeat(501) })))
 
 console.log(`\n${pass} passed, ${fail} failed\n`)
 await env.cleanup()
