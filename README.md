@@ -15,17 +15,25 @@ see their own 14-day grid.
 > দিন পার করতে না হয়।
 
 
-Your cohorts and what today still owes, a day's worklist with the one button that walks it, the
-fourteen days of who turned up, and the setup you do once.
+<p align="center">
+  <img src="docs/feature.png" width="820" alt="TestTrack: twelve testers, fourteen days, and proof that each one showed up">
+</p>
+
+What today still owes across every cohort, the day's worklist behind one button, who each app
+belongs to, the fourteen days of who turned up, and your own record.
 
 <p align="center">
-  <img src="docs/screens/home.png" width="400" alt="Home: two cohorts, 23 of 26 tested today, and an app still waiting for a group">
-  <img src="docs/screens/today.png" width="400" alt="A cohort on day 7 of 14, with Start testing and the list of apps still to open">
+  <img src="docs/screens/home.png" width="230" alt="Home: two cohorts, 20 of 23 tested today, and an app still waiting for a group">
+  <img src="docs/screens/today.png" width="230" alt="A cohort on day 9 of 14, with Start testing and the apps still to open">
+  <img src="docs/screens/list.png" width="230" alt="The day's list: every app with the developer who owns it and their address">
 </p>
 <p align="center">
-  <img src="docs/screens/grid.png" width="400" alt="The fourteen day grid: every tester by name, days reported in green and missed in red">
-  <img src="docs/screens/setup.png" width="400" alt="The setup checklist: sign in, join the group, connect Drive, allow usage access, turn on reminders">
+  <img src="docs/screens/grid.png" width="230" alt="Your own app: who reported today with their screenshot and time, and the fourteen day grid">
+  <img src="docs/screens/profile.png" width="230" alt="A profile: cohorts joined, apps submitted, and days reported">
 </p>
+
+> The cohort in these shots is invented. The people in a real one are developers who joined a
+> testing group, not a publicity photo, and their addresses are on every row.
 
 ## Joining
 
@@ -269,6 +277,11 @@ by any signed-in account. That is deliberate: a grid has to turn an account id i
 and there is no way to do that without the name being readable. What is exposed is an address and
 a name, nothing else. Your proofs, your times, and your history are not part of it.
 
+The name is the one Google has on your account, taken at sign-in. It used to be your address with
+the domain cut off, which made a cohort of thirteen developers read as a column of email
+fragments. Change it from your profile and it stays changed: signing in again never writes over a
+name you chose.
+
 Your proofs are narrower than people usually assume. A proof document can be read by the person
 who made it, the developer who owns the app it is about, and an administrator. Not by the rest of
 the group. The rules that enforce this are in [firestore.rules](firestore.rules) and every refusal
@@ -334,6 +347,9 @@ when.
 
 Every build is published as a signed APK on the
 [releases page](https://github.com/almasumdev/testtrack/releases). Take the newest one.
+
+TestTrack is also on Play's internal track. Where it came from there, updates arrive the way any
+app's updates arrive and none of the rest of this section applies.
 
 Updates install straight over the top. You do not uninstall first, you do not lose your setup, and
 you do not sign in again. Every release is signed with the same key, which is what allows that.
