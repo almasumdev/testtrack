@@ -23,7 +23,14 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /** The signed-in Google account. */
-data class GoogleAccount(val idToken: String, val email: String)
+/**
+ * The account the picker handed back.
+ *
+ * [name] is what Google has on the account, which is what everybody else in a cohort should see
+ * against your apps. The app used to throw it away and store the address with the domain cut off,
+ * so a grid of thirteen developers read as a column of email fragments.
+ */
+data class GoogleAccount(val idToken: String, val email: String, val name: String)
 
 /** Raised when a non-Gmail account is chosen — sign-in is Gmail-only by product decision. */
 class NotGmailException(val email: String) : Exception("$email is not a Gmail account")
@@ -228,7 +235,17 @@ object GroupGate {
             val domain = email.substringAfterLast('@', "").lowercase()
             if (domain !in Config.ALLOWED_DOMAINS) throw NotGmailException(email)
 
-            return GoogleAccount(google.idToken, email)
+            // Google returns the profile name where the account has one, and both halves
+            // separately where it does not. The address with its domain cut off is the last
+            // resort, not the first: it is what this used to store for everybody.
+            val name = google.displayName?.takeIf { it.isNotBlank() }
+                ?: listOfNotNull(
+                    google.givenName?.takeIf { it.isNotBlank() },
+                    google.familyName?.takeIf { it.isNotBlank() },
+                ).joinToString(" ").takeIf { it.isNotBlank() }
+                ?: email.substringBefore('@')
+
+            return GoogleAccount(google.idToken, email, name)
         }
         error("Unexpected credential type: ${credential.type}")
     }

@@ -64,7 +64,7 @@ class AuthViewModel : ViewModel() {
                 AuthRepo.uid?.let { uid ->
                     withTimeoutOrNull(6_000) {
                         runCatching {
-                            Repo.upsertUser(uid, account.email, account.email.substringBefore('@'))
+                            Repo.upsertUser(uid, account.email, account.name)
                         }
                     }
 

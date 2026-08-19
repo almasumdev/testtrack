@@ -87,19 +87,32 @@ object Repo {
 
     // ---- users ---------------------------------------------------------------------------
 
-    /** Records the signed-in tester so other members' grids can show a name, not a raw uid. */
+    /**
+     * Records the signed-in tester so other members' grids can show a name, not a raw uid.
+     *
+     * The name is written on the way in only while nobody has chosen one. This runs on every
+     * sign-in, so writing it unconditionally would undo the profile screen: a tester sets their
+     * name, signs out and back in, and Google's version lands on top of it.
+     *
+     * The address with its domain cut off counts as nobody having chosen. That is what this used
+     * to store for everybody, so treating it as unset is what repairs the accounts that already
+     * carry it, on their next sign-in, without touching a name anybody typed.
+     */
     suspend fun upsertUser(uid: String, email: String, displayName: String) {
-        await(
-            db.collection("users").document(uid).set(
-                mapOf(
-                    "uid" to uid,
-                    "email" to email,
-                    "displayName" to displayName,
-                    "updatedAt" to System.currentTimeMillis()
-                ),
-                SetOptions.merge()
-            )
+        val doc = db.collection("users").document(uid)
+        val existing = runCatching { await(doc.get()).getString("displayName").orEmpty() }
+            .getOrDefault("")
+        val chosen = existing.isNotBlank() &&
+            !existing.equals(email.substringBefore('@'), ignoreCase = true)
+
+        val fields = mutableMapOf<String, Any>(
+            "uid" to uid,
+            "email" to email,
+            "updatedAt" to System.currentTimeMillis()
         )
+        if (!chosen) fields["displayName"] = displayName
+
+        await(doc.set(fields, SetOptions.merge()))
     }
 
     /**
