@@ -1,5 +1,5 @@
 /**
- * What may happen to an app document now that nothing deletes one.
+ * What may happen to an app document, and who is allowed to erase one.
  *
  * The claim under test is that a package name, once submitted, is claimed forever and only an
  * admin can put it back in play. Two rules carry that between them and neither says it out loud:
@@ -32,6 +32,9 @@ const PEER = 'uid-peer'
 const ADMIN = 'uid-admin'
 const GROUP = 'g1'
 
+/** One proof about the placed app, id-shaped the way Repo writes them. */
+const PROOF = 'com.me.placed__uid-peer__0__1'
+
 let pass = 0, fail = 0
 async function check(name, fn) {
   try { await fn(); console.log(`  PASS  ${name}`); pass++ }
@@ -62,10 +65,21 @@ async function seed() {
     await setDoc(doc(db, 'apps', 'com.me.withdrawn'),
       app('com.me.withdrawn', { status: 'withdrawn', withdrawnAt: 1 }))
     await setDoc(doc(db, 'apps', 'com.me.done'), app('com.me.done', { status: 'done' }))
+
+    // The two collections that trail an app around. Erasing the app without them leaves proofs
+    // counting days towards a developer who is gone, and events addressed to nothing.
+    await setDoc(doc(db, 'proofs', PROOF), {
+      appId: 'com.me.placed', groupId: GROUP, ownerUid: ME, testerUid: PEER,
+      day: 1, usageMs: 40000, runStartedAt: 0,
+    })
+    await setDoc(doc(db, 'events', 'ev-assigned'), {
+      uid: ME, type: 'assigned', title: 'Placed', body: '',
+      groupId: GROUP, appId: 'com.me.placed', actorUid: ADMIN, createdAt: 1,
+    })
   })
 }
 
-console.log('\nan app document is never deleted\n')
+console.log('\nan app document outlives every decision about it, and only an admin erases one\n')
 await seed()
 
 // ---- withdrawing, which is the one transition an owner gets ---------------------------------
@@ -138,18 +152,26 @@ await check('owner can still read their closed app', () =>
 await check('an admin can read a closed app', () =>
   assertSucceeds(getDoc(doc(as(ADMIN), 'apps', 'com.me.withdrawn'))))
 
-// ---- nothing gets deleted, by anyone -------------------------------------------------------
-// Every other route out of the queue keeps the document: withdrawn, rejected, done. Delete was
-// the one that did not, and it is closed rather than merely unused, because the whole point of
-// the statuses above is that a submission stays where the person who made it can still see it.
+// ---- the owner never deletes; the console does ----------------------------------------------
+// Every other route out of the queue keeps the document: withdrawn, rejected, done. Delete stays
+// shut for the owner, because the whole point of those statuses is that a submission stays where
+// the person who made it can still see it, and a developer who could erase one would release the
+// package name's claim and the reason it was refused along with it.
+//
+// The console is the exception, and the reason this pair is worth testing together: erasing a
+// test submission, a duplicate, or an account at its owner's request is admin work, and until it
+// was admitted here the only way to do it was the Firebase web console.
 await check('an owner cannot delete their own withdrawn app', () =>
   assertFails(deleteDoc(doc(as(ME), 'apps', 'com.me.withdrawn'))))
 
 await check('an owner cannot delete an app waiting in the queue', () =>
   assertFails(deleteDoc(doc(as(ME), 'apps', 'com.me.waiting'))))
 
-await check('an admin cannot delete a rejected app either', () =>
-  assertFails(deleteDoc(doc(as(ADMIN), 'apps', 'com.me.rejected'))))
+await check('a stranger cannot delete an app that is not theirs', () =>
+  assertFails(deleteDoc(doc(as(PEER), 'apps', 'com.me.rejected'))))
+
+await check('an admin may delete a rejected app', () =>
+  assertSucceeds(deleteDoc(doc(as(ADMIN), 'apps', 'com.me.rejected'))))
 
 // ---- the identity of an app is fixed once it is claimed --------------------------------------
 // The document id stays the package that was claimed, so repointing this field breaks nothing an
@@ -172,6 +194,30 @@ await check('owner may write notes right up to the cap', () =>
 await check('a submission cannot arrive with oversized notes', () =>
   assertFails(setDoc(doc(as(ME), 'apps', 'com.me.wordy'),
     { ...app('com.me.wordy'), status: 'pending', groupId: '', notes: 'x'.repeat(501) })))
+
+// ---- and what trails an app around goes with it ---------------------------------------------
+// Erasing an app is only erasure if the proofs and events about it go too: a proof left behind
+// keeps counting a day towards a developer whose record no longer exists, and an event left
+// behind is a decision about nothing. Both stay shut to everybody else — a tester who could
+// delete a proof could withdraw evidence they already posted, and an audit trail anybody can
+// prune is not one.
+await check('a tester cannot delete a proof they posted', () =>
+  assertFails(deleteDoc(doc(as(PEER), 'proofs', PROOF))))
+
+await check('the app owner cannot delete a proof about their app', () =>
+  assertFails(deleteDoc(doc(as(ME), 'proofs', PROOF))))
+
+await check('an admin may delete a proof', () =>
+  assertSucceeds(deleteDoc(doc(as(ADMIN), 'proofs', PROOF))))
+
+await check('the person an event is about cannot delete it', () =>
+  assertFails(deleteDoc(doc(as(ME), 'events', 'ev-assigned'))))
+
+await check('nobody edits an event, not even an admin', () =>
+  assertFails(updateDoc(doc(as(ADMIN), 'events', 'ev-assigned'), { body: 'rewritten' })))
+
+await check('an admin may delete an event', () =>
+  assertSucceeds(deleteDoc(doc(as(ADMIN), 'events', 'ev-assigned'))))
 
 console.log(`\n${pass} passed, ${fail} failed\n`)
 await env.cleanup()

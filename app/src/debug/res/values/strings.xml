@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The launcher name for the debug build, which sits beside the release one.
+
+  Two icons that both say TestTrack is two icons nobody can tell apart, and the one that matters
+  is the one in the cohort. The suffix is on the label rather than in the icon because the icon is
+  what gets tapped and the label is what gets read.
+-->
+<resources>
+    <string name="app_name">TestTrack Debug</string>
+</resources>

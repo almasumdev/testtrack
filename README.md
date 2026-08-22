@@ -555,6 +555,12 @@ cp local.properties.example local.properties
 ./gradlew assembleDebug
 ```
 
+That produces `com.eazyverse.testtrack.debug`, labelled *TestTrack Debug*, which installs beside a
+copy from the store rather than replacing it. Deliberate: the store copy is the one in a cohort,
+holding the signed-in session, the Drive grant and the usage access, and a build you are only
+looking at should not take any of that with it. A build of your own needs its own Firebase
+registration and its own signing SHA-1 to sign in, the same as any other package.
+
 ## Two things it deliberately does not ask for
 
 These are worth saying because they cost the app something, and the cheaper choice was available.

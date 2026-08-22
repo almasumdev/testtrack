@@ -533,19 +533,25 @@ service cloud.firestore {
            );
 
       /**
-       * Nobody. Not the owner, not an admin.
+       * An admin, and nobody else.
        *
-       * This used to admit both, on the reasoning that a package name typed wrong would otherwise
-       * be permanent. That reason is gone: withdrawing moves the document to `withdrawn` and
-       * turning a submission down moves it to `rejected`, and both leave the record where the
-       * person who submitted it can still see it. Neither app has called delete since.
+       * Closed to everyone for a long time, and the reasoning still holds for the owner: a
+       * developer who could delete their own submission could release the package name's claim,
+       * erase the reason it was refused, and come back as a stranger. Withdrawing and being
+       * turned down both keep the document where the person who made it can still see it, which
+       * is what those statuses are for.
        *
-       * Which made this the last way a submission could vanish outright, and the one that takes
-       * the package name's claim with it, the reason it was refused, and the developer's evidence
-       * they ever submitted at all. A permission nothing uses and nothing should is better closed
-       * than documented, because the next client to reach for it will be the one nobody wrote.
+       * None of that is an argument for the console being unable to erase anything. A test
+       * submission, a duplicate, a package that should never have been registered, an account
+       * being wiped at its owner's request: every one of those is a document that has to go, and
+       * until this opened the only answer was the Firebase web console. An admin acting through
+       * the app they were given beats an admin reaching around it.
+       *
+       * Deliberate and unrecoverable, so the console asks for the package name to be typed before
+       * it will. That guard is the app's and cannot be enforced here; what can be enforced is
+       * that only an admin ever reaches this line.
        */
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
     /**
@@ -605,7 +611,16 @@ service cloud.firestore {
              )
            );
 
-      allow update, delete: if false;
+      /**
+       * Never edited. Erased only as part of erasing what it is about.
+       *
+       * An event is the audit trail, so rewriting one after the fact is closed to everybody
+       * including the admin who wrote it. Deleting is admitted for one reason: an app or an
+       * account being erased outright leaves its notifications addressed to nothing, and a record
+       * of decisions about something that no longer exists is not an audit trail, it is litter.
+       */
+      allow update: if false;
+      allow delete: if isAdmin();
     }
 
     /**
@@ -639,7 +654,19 @@ service cloud.firestore {
              get(/databases/$(database)/documents/apps/$(request.resource.data.appId)).data.ownerUid
       );
 
-      allow delete: if false;
+      /**
+       * An admin, and only ever alongside the thing it is proof of.
+       *
+       * A tester cannot withdraw evidence they already posted, and an app owner cannot destroy a
+       * day somebody covered — that is the whole reliability record, and a record anybody can
+       * prune is not one. The console deletes these only when the app or the account they belong
+       * to is being erased, where leaving them behind would keep counting days towards a
+       * developer who is gone.
+       *
+       * The screenshot itself lives in Drive and is not reached from here. Deleting the document
+       * removes the day from every grid and every count; the file stays where it was uploaded.
+       */
+      allow delete: if isAdmin();
     }
   }
 }

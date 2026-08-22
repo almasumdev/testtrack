@@ -36,8 +36,8 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        // No build-type suffix: the Firebase app and the registered signing SHA-1 are both bound
-        // to this exact id, and a suffixed debug build would match neither.
+        // The id Play knows. The debug build appends `.debug` to it and is a separate app on the
+        // phone with its own Firebase registration; see the debug block below.
         applicationId = "com.eazyverse.testtrack"
         minSdk = 26
         targetSdk = 37
@@ -81,24 +81,39 @@ android {
         }
 
         /**
-         * Signed with the release key too, where there is one.
+         * Its own app on the phone, beside the release build rather than on top of it.
          *
-         * Android refuses to install a build over one signed with a different key, and the two
-         * defaults are different keys, so a phone carrying a release build could only take a debug
-         * one after an uninstall. That is not a small cost on a real phone: it takes the signed-in
-         * session, the Drive grant, and the usage access that had to be argued out of Samsung's
-         * restricted settings.
+         * The two used to share an id, and sharing one meant that installing what was being worked
+         * on replaced what was being tested. On a phone that is also a tester's phone that is the
+         * wrong trade: the release build is the one in the cohort, owing days to twelve other
+         * people, and it should not go anywhere because somebody wanted to look at a screen.
          *
-         * One key means `install -r` always lands, whichever variant is already there.
+         * The suffix is what separates them, and it is not free. An application id is the primary
+         * key for Firebase, for Google sign-in and for Play, so `com.eazyverse.testtrack.debug`
+         * needs its own Android app in the Firebase project with its own signing SHA-1s
+         * registered, or sign-in comes back refused with nothing wrong in the code. That
+         * registration exists; `app/google-services.json` carries the client for it.
          *
-         * It also settles a smaller nuisance. Google checks the calling app's signature, so the
-         * debug key needs its own OAuth client registered or sign-in fails in debug and works in
-         * release. Sharing the key means one registration governs both.
-         *
-         * Falls back to the ordinary debug key where the keystore is absent, so a checkout without
-         * local.properties still builds.
+         * Play's own in-app update check has no such app, and says so rather than failing: see
+         * AppUpdateService, which treats a sideloaded install as "no update, no block".
          */
         debug {
+            applicationIdSuffix = ".debug"
+
+            /*
+             * Signed with the release key where there is one, and it is no longer load-bearing.
+             *
+             * It was: with one shared id, two different keys meant a debug build could not be
+             * installed over a release one without an uninstall, and an uninstall costs the
+             * signed-in session, the Drive grant, and the usage access that had to be argued out
+             * of Samsung's restricted settings. The suffix settles that by keeping the two apart
+             * altogether.
+             *
+             * Kept because both keys are registered against the debug package either way, and
+             * because one key across every build this machine makes is one fewer thing that can
+             * refuse an `install -r` for a reason nobody remembers. Falls back to the ordinary
+             * debug key where the keystore is absent, so a fresh checkout still builds.
+             */
             signingConfig = signingConfigs.findByName("release") ?: signingConfig
 
             /*
