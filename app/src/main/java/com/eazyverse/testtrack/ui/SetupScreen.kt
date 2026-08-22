@@ -663,7 +663,7 @@ fun SetupScreen(
 
             // Only what no step claimed. Everything else is shown beside its own button.
             if (vm.messageStep == SetupViewModel.STEP_NONE) vm.message?.let { Failure(it) }
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(Gutter))
         }
 
         Primary(

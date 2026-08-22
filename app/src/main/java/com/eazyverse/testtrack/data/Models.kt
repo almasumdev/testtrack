@@ -21,6 +21,15 @@ const val RUN_DAYS = 14
 const val NOTES_MAX = 500
 
 /**
+ * How long an owner must wait between broadcasts to their own cohort.
+ *
+ * Enforced by firestore.rules against [TestApp.lastBroadcastAt], not only by the UI disabling a
+ * button — a value here that drifted from the rules' own copy would either let a client through
+ * that the server refuses, or hold a button disabled the server would have allowed.
+ */
+const val BROADCAST_COOLDOWN_MS = 2 * 24 * 60 * 60 * 1000L
+
+/**
  * When a member has stopped holding up their end, and the arithmetic that decides it.
  *
  * Miss one completed day and you are warned. Miss two in a row and your app leaves the group.
@@ -81,15 +90,24 @@ object Compliance {
         testerPlacedAt: Long,
         appPlacedAt: Long,
         count: Int,
-        graceDays: Int = 0
+        graceDays: Int = 0,
+        /**
+         * When an admin last put this tester's app back into testing, or zero if it never left.
+         *
+         * The fourth floor: a member reinstated after being flagged has to be given the same
+         * grace a genuine late joiner gets, or the days that got them flagged are still sitting
+         * there the moment the next device sweeps, and the admin's own "put back in testing" is
+         * undone within the hour by somebody else's phone.
+         */
+        reinstatedAt: Long = 0L
     ): List<Int> {
         val last = lastCompletedDay(dayIndex) ?: return emptyList()
-        // Three floors, and the latest of them wins: when the tester arrived, when the app
-        // arrived, and how many opening days an admin excused for everybody.
+        // Four floors, and the latest of them wins: when the tester arrived, when the app
+        // arrived, how many opening days an admin excused for everybody, and when this tester
+        // was last reinstated.
         val first = maxOf(
-            firstJudgedDay(testerPlacedAt, startDate),
-            firstJudgedDay(appPlacedAt, startDate),
-            graceDays.coerceAtLeast(0)
+            maxOf(firstJudgedDay(testerPlacedAt, startDate), firstJudgedDay(appPlacedAt, startDate)),
+            maxOf(firstJudgedDay(reinstatedAt, startDate), graceDays.coerceAtLeast(0))
         )
         return (0 until count).map { last - it }.filter { it >= first }
     }
@@ -232,6 +250,73 @@ data class TestApp(
     val removedReason: String = "",
 
     /**
+     * A cohort member saying this app's owner has missed two days running on theirs — set once,
+     * automatically, by whoever's device noticed. Nothing is taken away when this is set: the
+     * member stays in the group and the app stays in testing, so an admin who never opens the
+     * console does not accidentally cost anyone their place. It exists to be seen and decided on,
+     * not acted on by itself.
+     *
+     * Cleared by [reinstatedAt] moving forward, whether that happens because an admin cleared the
+     * flag on its own or because they took the app out of testing and later put it back — either
+     * way the member should meet the next check with a clean two days, not the ones that already
+     * flagged them once.
+     */
+    val flaggedAt: Long = 0L,
+    val flaggedByAppId: String = "",
+
+    /**
+     * The last time an admin put this app back into testing, or gave it a clean slate without
+     * ever taking it out — zero if that has never happened.
+     *
+     * The fourth floor in [Compliance.judgedDays], for the same reason [placedAt] is one of the
+     * first three: a member reinstated this morning cannot be judged on the two days that got
+     * them flagged, because those days are the ones the reinstatement was about. Without this, the
+     * very same evidence that justified the flag the first time re-flags them within the hour, on
+     * whichever cohort-mate's phone happens to sweep next.
+     */
+    val reinstatedAt: Long = 0L,
+
+    /**
+     * A cohort member saying this app would not open, or broke, before an admin ever heard about
+     * it any other way.
+     *
+     * Set once, by whoever hit the problem — not the owner, who has nothing to report about their
+     * own app. From the day it is set onward, nobody's judged for missing this app: a day nobody
+     * could get into is not a day anybody skipped. Cleared only by an admin, from the console,
+     * once whatever was wrong is sorted out; a tester who filed one cannot un-file it, which is
+     * what would happen if writing `reportedAt: 0` over it were merely another update.
+     *
+     * [removed] is the harsher, admin-only tool for the same shape of problem — this is what
+     * exists for the gap before an admin has looked at it at all.
+     */
+    val reportedAt: Long = 0L,
+    val reportedBy: String = "",
+    /** Same cap as [notes] — read by whoever eventually resolves it, not typed for an audience. */
+    val reportedReason: String = "",
+
+    /**
+     * The last time this app's owner told their cohort an update was out.
+     *
+     * Zero until the first broadcast. [BROADCAST_COOLDOWN_MS] after this is when the next one is
+     * allowed — enforced by firestore.rules against this exact field, not merely by the UI
+     * disabling a button, since a patched client could otherwise send one every time it liked.
+     */
+    val lastBroadcastAt: Long = 0L,
+
+    /**
+     * An admin's standing permission for this app to be skipped, member by member, rather than
+     * for everybody at once.
+     *
+     * [removed] excuses the whole cohort in one admin action; this is the other shape of the same
+     * problem, for when the app is fine for most people but a genuine blocker for a few — each
+     * member decides for themselves whether to skip it, in the `skips` collection, and this field
+     * is only the switch that makes that collection's writes admissible at all. Admin-only, pinned
+     * in the owner-update rule the same as [removed]/[reportedAt] — an owner granting their own app
+     * blanket immunity from being tested is exactly the attack that pinning closes.
+     */
+    val skippable: Boolean = false,
+
+    /**
      * How a tester gets past the front door: a test account, a sign-in code, a sandbox card
      * number. Whatever an app asks for before it will show anything worth testing.
      *
@@ -348,7 +433,16 @@ data class Proof(
      * Part of the identity, not decoration: every query for a day has to name it, or a restarted
      * cohort reads its predecessor's attendance as its own.
      */
-    val runStartedAt: Long = 0L
+    val runStartedAt: Long = 0L,
+    /**
+     * The screenshot was supplied by hand — see CaptureService.supplyManualCapture — because that
+     * day's automated capture genuinely failed to save a frame. [usageMs] is unaffected either
+     * way: it always comes from the real visit, never from the picture.
+     *
+     * Read by the row that posted it, to mark that day yellow rather than green — a real day, just
+     * not one the random-timed capture itself produced a picture for.
+     */
+    val manual: Boolean = false
 ) {
     /** A screenshot proves the app opened. The ten seconds of use is what proves it was used. */
     val meetsBar: Boolean get() = usageMs >= MIN_USAGE_MS
@@ -361,6 +455,35 @@ data class Proof(
          * Same tester, same app, same day of the same run always writes the same document, so
          * posting twice overwrites rather than duplicating.
          */
+        fun id(appId: String, testerUid: String, day: Int, runStartedAt: Long) =
+            "${appId}__${testerUid}__${runStartedAt}__$day"
+    }
+}
+
+/**
+ * A tester's own note about an app they're testing — a rough edge, a typo, something that works
+ * but shouldn't, anything worth the owner hearing that isn't the app being broken outright. That
+ * case is [TestApp.reportedAt], which excuses the day; this is the opposite kind of message, sent
+ * on a day that otherwise went fine.
+ *
+ * Same shape as [Proof] on purpose, including the id: one of these a day per (tester, app, run),
+ * and posting a second one the same day overwrites rather than piling up — a tester refining one
+ * thought during the day is not the same thing as a thread.
+ */
+data class Feedback(
+    val appId: String = "",
+    val groupId: String = "",
+    /** The owner of [appId], copied in at write time — see [Proof.ownerUid] for why. */
+    val ownerUid: String = "",
+    val testerUid: String = "",
+    val day: Int = 0,
+    val runStartedAt: Long = 0L,
+    val text: String = "",
+    val createdAt: Long = 0L
+) {
+    companion object {
+        const val TEXT_MAX = 1000
+
         fun id(appId: String, testerUid: String, day: Int, runStartedAt: Long) =
             "${appId}__${testerUid}__${runStartedAt}__$day"
     }

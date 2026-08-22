@@ -38,9 +38,21 @@ object Cache {
     fun pending(uid: String) = "pending:$uid"
     fun group(id: String) = "group:$id"
     fun appsIn(groupId: String) = "appsIn:$groupId"
+    /**
+     * Every member's own placedAt, by uid — Dashboard's own view of the same cohort. Its own key,
+     * not [appsIn]: that one holds a `List<TestApp>` for Group's own use, and the two used to
+     * share a key and a value shape that only coincidentally matched, until the day it didn't —
+     * whichever screen loaded second overwrote the other's cache entry with the wrong type, and
+     * the next read crashed on a plain cast.
+     */
+    fun arrivals(groupId: String) = "arrivals:$groupId"
     fun app(id: String) = "app:$id"
     fun proofs(appId: String) = "proofs:$appId"
     fun testers(groupId: String) = "testers:$groupId"
     fun doneToday(uid: String, groupId: String, day: Int) = "done:$uid:$groupId:$day"
+    fun manualToday(uid: String, groupId: String, day: Int) = "manual:$uid:$groupId:$day"
     fun reporters(appId: String, day: Int) = "reporters:$appId:$day"
+    fun skips(uid: String, groupId: String) = "skips:$uid:$groupId"
+    fun feedbackToday(uid: String, groupId: String, day: Int) = "feedback:$uid:$groupId:$day"
+    fun feedbackFor(appId: String) = "feedbackFor:$appId"
 }

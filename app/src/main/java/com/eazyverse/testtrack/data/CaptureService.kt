@@ -8,13 +8,16 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.PixelFormat
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
+import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
@@ -30,12 +33,24 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import com.eazyverse.testtrack.MainActivity
 import com.eazyverse.testtrack.R
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.random.Random
 
 /** A finished visit: what was on screen, and how long the tester actually spent there today. */
-data class Capture(val path: String, val usageMs: Long)
+data class Capture(val path: String, val usageMs: Long, val manual: Boolean = false)
+
+/**
+ * A visit whose usage genuinely counted but whose automated screenshot did not.
+ *
+ * [usageMs] is the real figure `UsageStatsManager` measured for that visit — the same one a
+ * successful capture would have carried — held here so a manually picked screenshot can be
+ * matched to it later rather than the tester's twenty seconds being thrown away along with the
+ * frame that failed to save. See [CaptureService.supplyManualCapture].
+ */
+data class MissedVisit(val pkg: String, val usageMs: Long)
 
 /**
  * Screenshots the app under test.
@@ -71,7 +86,7 @@ class CaptureService : Service() {
      * Created once and reused, because a WindowManager view is cheap to add and remove and
      * expensive to leak. It draws nothing at all where the overlay grant has not been given.
      */
-    private val overlay by lazy { VisitOverlay(this) }
+    private val overlay by lazy { VisitOverlay(this, handler) }
     private var projection: MediaProjection? = null
     private var display: VirtualDisplay? = null
     private var reader: ImageReader? = null
@@ -110,6 +125,16 @@ class CaptureService : Service() {
     /** What is left of the round, in order. */
     private val queue = ArrayDeque<String>()
 
+    /**
+     * Each queued app's own sign-in note, package by package — see `TestApp.notes`.
+     *
+     * Carried across every round this session has run, not just the current one, since a package
+     * missing from this map (an app with nothing to copy) is exactly as valid a state as one
+     * present with blank text, and there is no call to make the overlay forget a note it was once
+     * told just because a later round did not repeat it.
+     */
+    private val notesByPkg = mutableMapOf<String, String>()
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -133,12 +158,20 @@ class CaptureService : Service() {
 
             ACTION_ROUND -> {
                 val packages = intent.getStringArrayListExtra(EXTRA_QUEUE).orEmpty()
+                intent.getBundleExtra(EXTRA_NOTES)?.let { notes ->
+                    notes.keySet().forEach { pkg -> notes.getString(pkg)?.let { notesByPkg[pkg] = it } }
+                }
                 if (projection == null) {
                     status = "Screen sharing isn't running."
                 } else {
                     queue.clear()
                     queue.addAll(packages)
-                    missed.clear()
+                    // Only the packages being retried — not a blanket clear, or retrying one app
+                    // would also drop another still-missed app's "pick a screenshot" affordance
+                    // for no reason connected to it.
+                    missed.removeAll { it.pkg in packages }
+                    newlyMissed.removeAll { it.pkg in packages }
+                    persistMissed(this)
                     roundTotal = queue.size
                     roundIndex = 0
                     Telemetry.roundStarted(roundTotal)
@@ -365,14 +398,24 @@ class CaptureService : Service() {
     private fun finish(pkg: String) {
         overlay.hide()
         val path = captured?.takeIf { it.first == pkg }?.second
+        val usageMs = UsageRepo.foregroundMsSince(this, pkg, visitStartedAt)
         if (path != null) {
-            results[pkg] = Capture(path, UsageRepo.foregroundMsSince(this, pkg, visitStartedAt))
+            results[pkg] = Capture(path, usageMs)
             captured = null
         } else {
             // A visit that produced no picture used to end exactly like one that did, and the app
             // it was for stayed on the list with nothing said about why. Twenty seconds of the
-            // tester's evening went into it, so it is worth a sentence.
-            missed += pkg
+            // tester's evening went into it, so it is worth a sentence — and the usage figure that
+            // earned it is worth keeping, so a picture supplied by hand afterward does not have to
+            // re-earn it. See [missed] and [supplyManualCapture].
+            val visit = MissedVisit(pkg, usageMs)
+            missed += visit
+            newlyMissed += visit
+            // Local, not Firestore — this is a per-device reminder to pick a screenshot, not a
+            // record anybody else needs. Without it, closing the app before acting on [missed]
+            // (or a fresh install landing in between, as happened while chasing this down)
+            // silently threw away a visit that had already earned its usage time.
+            persistMissed(this)
         }
         capturing = null
         visitNext()
@@ -410,7 +453,7 @@ class CaptureService : Service() {
         )
 
         // Raised after the launch, so it lands on top of the app rather than under it.
-        overlay.show(millis = VISIT_MS, onTap = { tap(pkg) })
+        overlay.show(millis = VISIT_MS, copyText = notesByPkg[pkg], onTap = { tap(pkg) })
     }
 
     private fun label(pkg: String): String = runCatching {
@@ -470,19 +513,7 @@ class CaptureService : Service() {
     }
 
     /** 1080px on the long edge, JPEG 80 — roughly 150 KB, well inside anyone's Drive quota. */
-    private fun save(pkg: String, bitmap: Bitmap): File {
-        val dir = File(filesDir, "captures").apply { mkdirs() }
-        val longest = maxOf(bitmap.width, bitmap.height)
-        val scaled = if (longest <= 1080) bitmap else {
-            val ratio = 1080f / longest
-            Bitmap.createScaledBitmap(
-                bitmap, (bitmap.width * ratio).toInt(), (bitmap.height * ratio).toInt(), true
-            )
-        }
-        val file = File(dir, "${pkg}_${System.currentTimeMillis()}.jpg")
-        FileOutputStream(file).use { scaled.compress(Bitmap.CompressFormat.JPEG, 80, it) }
-        return file
-    }
+    private fun save(pkg: String, bitmap: Bitmap): File = saveCapture(this, pkg, bitmap)
 
     private fun screen(): Triple<Int, Int, Int> {
         val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -528,7 +559,7 @@ class CaptureService : Service() {
             // The app's own mark, like every other notification it raises. This was Android's
             // stock camera glyph, which is the one notification a tester sees while their screen
             // is being recorded and the one that most needs to say who is doing it.
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.drawable.ic_stat_name)
             .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -583,6 +614,7 @@ class CaptureService : Service() {
         private const val EXTRA_CODE = "code"
         private const val EXTRA_DATA = "data"
         private const val EXTRA_QUEUE = "queue"
+        private const val EXTRA_NOTES = "notes"
         private const val EXTRA_RETURN = "return"
         private const val CHANNEL = "capture"
         private const val NOTIF_ID = 7701
@@ -655,13 +687,65 @@ class CaptureService : Service() {
         val results = mutableStateMapOf<String, Capture>()
 
         /**
-         * Packages that were visited and came back without a picture.
+         * Visits that were served in full and came back without a picture, still waiting on one.
          *
-         * Kept apart from [results] because there is nothing to upload and nothing to record — the
-         * only thing owed here is telling the tester, so that a round which quietly did nothing for
-         * five apps cannot look like a round that worked.
+         * Kept apart from [results] because there was nothing to upload the moment the visit
+         * ended — but each entry's usage figure is real and already earned, so this stays
+         * populated (unlike a one-shot notice) until either a picture is supplied by hand for it
+         * — see [supplyManualCapture] — or a fresh round for the same package clears it out on
+         * its own way to trying again.
          */
-        val missed = mutableStateListOf<String>()
+        val missed = mutableStateListOf<MissedVisit>()
+
+        /**
+         * The subset of [missed] not yet announced to the tester.
+         *
+         * [missed] itself has to survive being read — a "Pick a screenshot" affordance staying on
+         * screen depends on it — so it cannot also double as a one-shot queue the way it used to.
+         * This is that one-shot queue instead: appended to at the same moment as [missed], and
+         * drained the moment the UI has said its sentence, leaving [missed] untouched.
+         */
+        val newlyMissed = mutableStateListOf<MissedVisit>()
+
+        private const val PENDING_PREFS = "capture_pending"
+        private const val KEY_MISSED = "missed"
+        private var restoredPending = false
+
+        /**
+         * Re-hydrates [missed] from local storage, once per process.
+         *
+         * [missed] otherwise lives only in this companion's memory, which does not survive the
+         * app being closed, killed by the OS to reclaim memory, or updated — any of which throws
+         * away a visit that already happened and already earned its usage time, with no way back
+         * short of opening the app again and hoping it fails a second time. Called from the group
+         * screen on load; safe to call every time, since after the first call in a process this
+         * is a no-op.
+         */
+        fun restorePending(context: Context) {
+            if (restoredPending) return
+            restoredPending = true
+            val raw = context.getSharedPreferences(PENDING_PREFS, Context.MODE_PRIVATE)
+                .getString(KEY_MISSED, null) ?: return
+            runCatching {
+                val array = JSONArray(raw)
+                for (i in 0 until array.length()) {
+                    val o = array.getJSONObject(i)
+                    val visit = MissedVisit(o.getString("pkg"), o.getLong("usageMs"))
+                    if (missed.none { it.pkg == visit.pkg }) missed += visit
+                }
+            }
+        }
+
+        /** [missed]'s durable half — see [restorePending]. Written on every change to [missed]. */
+        private fun persistMissed(context: Context) {
+            val array = JSONArray()
+            missed.forEach { visit ->
+                array.put(JSONObject().put("pkg", visit.pkg).put("usageMs", visit.usageMs))
+            }
+            context.getSharedPreferences(PENDING_PREFS, Context.MODE_PRIVATE).edit()
+                .putString(KEY_MISSED, array.toString())
+                .apply()
+        }
 
         fun startSession(context: Context, code: Int, data: Intent) {
             status = "Starting…"
@@ -677,11 +761,14 @@ class CaptureService : Service() {
          * moment inside each visit, no stop back at the list in between. A round of one is how a
          * single app's Open button works, so both paths behave identically.
          */
-        fun startRound(context: Context, packages: List<String>) {
+        fun startRound(context: Context, packages: List<String>, notes: Map<String, String> = emptyMap()) {
             if (packages.isEmpty()) return
             send(context, Intent(context, CaptureService::class.java).apply {
                 action = ACTION_ROUND
                 putStringArrayListExtra(EXTRA_QUEUE, ArrayList(packages))
+                if (notes.isNotEmpty()) {
+                    putExtra(EXTRA_NOTES, Bundle().apply { notes.forEach { (pkg, note) -> putString(pkg, note) } })
+                }
             })
         }
 
@@ -726,9 +813,51 @@ class CaptureService : Service() {
             results.remove(pkg)
         }
 
-        /** Called once the tester has been told, so the same sentence is not shown twice. */
-        fun forgetMissed() {
-            missed.clear()
+        /** Called once the tester has been told about [newlyMissed], so it is not said twice. */
+        fun forgetNewlyMissed() {
+            newlyMissed.clear()
+        }
+
+        /**
+         * Hands a manually chosen picture to the visit in [missed] it belongs to.
+         *
+         * The usage figure is not re-earned here, only matched back up — [MissedVisit.usageMs]
+         * already came from the real, OS-measured visit; picking a picture replaces the frame that
+         * visit's own capture could not save, nothing about whether the tester was there for it.
+         *
+         * Feeds [results] exactly as an automated capture would, so the same drain-and-upload path
+         * in GroupViewModel.publish handles it without knowing the difference.
+         *
+         * @return false if there is no longer a missed visit for [pkg] to attach this to (it was
+         *   retried, or already supplied), or the picked image could not be read.
+         */
+        fun supplyManualCapture(context: Context, pkg: String, source: Uri): Boolean {
+            val visit = missed.firstOrNull { it.pkg == pkg } ?: return false
+            val bitmap = runCatching {
+                context.contentResolver.openInputStream(source)?.use(BitmapFactory::decodeStream)
+            }.getOrNull() ?: return false
+
+            val file = saveCapture(context, pkg, bitmap)
+            bitmap.recycle()
+            results[pkg] = Capture(file.absolutePath, visit.usageMs, manual = true)
+            missed.remove(visit)
+            persistMissed(context)
+            return true
+        }
+
+        /** 1080px on the long edge, JPEG 80 — roughly 150 KB, well inside anyone's Drive quota. */
+        private fun saveCapture(context: Context, pkg: String, bitmap: Bitmap): File {
+            val dir = File(context.filesDir, "captures").apply { mkdirs() }
+            val longest = maxOf(bitmap.width, bitmap.height)
+            val scaled = if (longest <= 1080) bitmap else {
+                val ratio = 1080f / longest
+                Bitmap.createScaledBitmap(
+                    bitmap, (bitmap.width * ratio).toInt(), (bitmap.height * ratio).toInt(), true
+                )
+            }
+            val file = File(dir, "${pkg}_${System.currentTimeMillis()}.jpg")
+            FileOutputStream(file).use { scaled.compress(Bitmap.CompressFormat.JPEG, 80, it) }
+            return file
         }
 
         private fun send(context: Context, intent: Intent) =

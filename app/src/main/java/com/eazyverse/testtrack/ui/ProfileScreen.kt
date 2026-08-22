@@ -59,6 +59,9 @@ class ProfileViewModel : ViewModel() {
 
     var ready by mutableStateOf(false)
         private set
+    /** A pull-to-refresh in flight over content already on screen — see [HomeViewModel.refreshing]. */
+    var refreshing by mutableStateOf(false)
+        private set
     var saving by mutableStateOf(false)
         private set
     var message by mutableStateOf<String?>(null)
@@ -66,6 +69,7 @@ class ProfileViewModel : ViewModel() {
     fun load() {
         val uid = AuthRepo.uid ?: run { ready = true; return }
         viewModelScope.launch {
+            refreshing = ready // only worth flagging over content that's already on screen
             runCatching {
                 val mine = Repo.myApps(uid)
                 val cohorts = Repo.myGroups(uid)
@@ -83,6 +87,7 @@ class ProfileViewModel : ViewModel() {
                 message = it.friendly("We couldn't load your profile. Check your connection.")
             }
             ready = true
+            refreshing = false
         }
     }
 
@@ -162,8 +167,13 @@ fun ProfileScreen(
             )
         }
     ) { padding ->
+        RefreshBox(
+            isRefreshing = vm.refreshing,
+            onRefresh = vm::load,
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState())
         ) {
             if (!vm.ready) {
                 Loading()
@@ -213,7 +223,8 @@ fun ProfileScreen(
                 Spacer(Modifier.height(20.dp))
                 Failure(it)
             }
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(Gutter))
+        }
         }
     }
 

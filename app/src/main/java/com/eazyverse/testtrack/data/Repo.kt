@@ -253,6 +253,18 @@ object Repo {
         removed = doc.getBoolean("removed") ?: false,
         removedAt = doc.getLong("removedAt") ?: 0L,
         removedReason = doc.getString("removedReason").orEmpty(),
+        // Absent everywhere before flagging existed, which reads as never flagged.
+        flaggedAt = doc.getLong("flaggedAt") ?: 0L,
+        flaggedByAppId = doc.getString("flaggedByAppId").orEmpty(),
+        reinstatedAt = doc.getLong("reinstatedAt") ?: 0L,
+        // Absent everywhere before this existed, which reads as nobody having reported anything.
+        reportedAt = doc.getLong("reportedAt") ?: 0L,
+        reportedBy = doc.getString("reportedBy").orEmpty(),
+        reportedReason = doc.getString("reportedReason").orEmpty(),
+        // Absent everywhere before broadcasting existed, which reads as never sent.
+        lastBroadcastAt = doc.getLong("lastBroadcastAt") ?: 0L,
+        // Absent everywhere before this existed, which reads as not skippable.
+        skippable = doc.getBoolean("skippable") ?: false,
         // Also absent from every document written before this existed, and blank there reads as
         // an app with nothing a tester needs before opening it, which is the honest answer.
         notes = doc.getString("notes").orEmpty()
@@ -436,7 +448,10 @@ object Repo {
         imageUrl = doc.getString("imageUrl").orEmpty(),
         capturedAt = doc.getLong("capturedAt") ?: 0L,
         usageMs = doc.getLong("usageMs") ?: 0L,
-        runStartedAt = doc.getLong("runStartedAt") ?: 0L
+        runStartedAt = doc.getLong("runStartedAt") ?: 0L,
+        // Absent on everything posted before manual capture existed, which reads as automated —
+        // the only kind there was.
+        manual = doc.getBoolean("manual") ?: false
     )
 
     /** Idempotent by construction: same tester, same app, same day always writes the same id. */
@@ -458,7 +473,8 @@ object Repo {
                         "imageUrl" to proof.imageUrl,
                         "capturedAt" to proof.capturedAt,
                         "usageMs" to proof.usageMs,
-                        "runStartedAt" to proof.runStartedAt
+                        "runStartedAt" to proof.runStartedAt,
+                        "manual" to proof.manual
                     )
                 )
         )
@@ -515,6 +531,29 @@ object Repo {
             .map { it.appId }
             .toSet()
 
+    /**
+     * The same day [myProofsForDay] reads, but appId -> whether that proof was supplied by hand —
+     * for [GroupViewModel] to mark a manually-completed day yellow rather than green. One query
+     * rather than two: [myProofsForDay]'s own callers in [Enforcement] don't need this, so it
+     * stays a separate function instead of changing that one's return shape for everybody.
+     */
+    suspend fun myProofDetailsForDay(
+        uid: String,
+        groupId: String,
+        day: Int,
+        runStartedAt: Long
+    ): Map<String, Boolean> =
+        await(
+            db.collection("proofs")
+                .whereEqualTo("testerUid", uid)
+                .whereEqualTo("groupId", groupId)
+                .whereEqualTo("day", day)
+                .whereEqualTo("runStartedAt", runStartedAt)
+                .get()
+        ).documents.map(::parseProof)
+            .filter { it.meetsBar }
+            .associate { it.appId to it.manual }
+
     /** Every day this tester has posted anything in one group, whatever app it was about. */
     suspend fun myReportedDays(uid: String, groupId: String): Set<Int> =
         await(
@@ -524,130 +563,211 @@ object Repo {
                 .get()
         ).documents.map(::parseProof).map { it.day }.toSet()
 
+    // ---- feedback --------------------------------------------------------------------------
+
+    private fun parseFeedback(doc: DocumentSnapshot) = Feedback(
+        appId = doc.getString("appId").orEmpty(),
+        groupId = doc.getString("groupId").orEmpty(),
+        ownerUid = doc.getString("ownerUid").orEmpty(),
+        testerUid = doc.getString("testerUid").orEmpty(),
+        day = (doc.getLong("day") ?: 0L).toInt(),
+        runStartedAt = doc.getLong("runStartedAt") ?: 0L,
+        text = doc.getString("text").orEmpty(),
+        createdAt = doc.getLong("createdAt") ?: 0L
+    )
+
+    /**
+     * A tester's own note about an app they're testing, for a day that otherwise went fine — see
+     * [TestApp.reportedAt] for the app-is-broken case this is not. Idempotent by construction,
+     * the same reasoning as [recordProof]: same tester, same app, same day of the same run always
+     * writes the same id, so refining a thought later the same day overwrites rather than piling up.
+     *
+     * Written alongside an event addressed to the owner, in the same batch, the same shape as
+     * [broadcastUpdate]'s own pairing of an app write with the events it depends on — an owner
+     * should not have to think to open their dashboard to find out testers left something there.
+     */
+    suspend fun submitFeedback(app: TestApp, uid: String, groupId: String, day: Int, runStartedAt: Long, text: String) {
+        val trimmed = text.take(Feedback.TEXT_MAX)
+        val batch = db.batch()
+        batch.set(
+            db.collection("feedback").document(Feedback.id(app.id, uid, day, runStartedAt)),
+            mapOf(
+                "appId" to app.id,
+                "groupId" to groupId,
+                "ownerUid" to app.ownerUid,
+                "testerUid" to uid,
+                "day" to day,
+                "runStartedAt" to runStartedAt,
+                "text" to trimmed,
+                "createdAt" to System.currentTimeMillis()
+            )
+        )
+        batch.set(
+            db.collection("events").document(),
+            mapOf(
+                "uid" to app.ownerUid,
+                "type" to "feedback",
+                "title" to "New feedback on ${app.label}",
+                "body" to trimmed,
+                "groupId" to groupId,
+                "appId" to app.id,
+                "actorUid" to uid,
+                "createdAt" to System.currentTimeMillis()
+            )
+        )
+        await(batch.commit())
+    }
+
+    /** Which apps this tester has already left today's note on, so the row can stop offering it. */
+    suspend fun myFeedbackToday(uid: String, groupId: String, day: Int, runStartedAt: Long): Set<String> =
+        await(
+            db.collection("feedback")
+                .whereEqualTo("testerUid", uid)
+                .whereEqualTo("groupId", groupId)
+                .whereEqualTo("day", day)
+                .whereEqualTo("runStartedAt", runStartedAt)
+                .get()
+        ).documents.map(::parseFeedback).map { it.appId }.toSet()
+
+    /** Every note left on one app, newest first — the owner's own feed of what testers found. */
+    suspend fun feedbackForApp(appId: String, ownerUid: String): List<Feedback> =
+        await(
+            db.collection("feedback")
+                .whereEqualTo("appId", appId)
+                .whereEqualTo("ownerUid", ownerUid)
+                .get()
+        ).documents.map(::parseFeedback).sortedByDescending { it.createdAt }
+
     // ---- enforcement ---------------------------------------------------------------------
 
     /**
-     * Drops a member and their app out of a cohort.
+     * Says a cohort-mate's app owner has missed two days running on this one — a flag, not a
+     * removal. Nothing about the target changes: not their slot, not whether the app is tested.
+     * It exists so an admin sees it and decides, in the console, with the person's history in
+     * front of them, rather than having a device three time zones away make the call.
      *
-     * The only write in this file that touches `groups`, and it is allowed for one narrow case:
-     * the owner of an app removing someone who has not opened it for [Compliance.MISSES_TO_REMOVE]
-     * completed days running. The rules re-derive that from the proof documents themselves before
-     * accepting either half, so what makes this safe is not the checks in [Enforcement] — it is
-     * that a client which skipped them would be refused.
-     *
-     * Both halves go in one transaction. Half an eviction is worse than none: a group that still
-     * lists a member whose app has left has a slot it cannot fill, and an app still pointing at a
-     * group that has forgotten it turns up in every member's worklist for ever.
-     *
-     * The evidence is written down as well as acted on. `lastEviction` is the audit trail, and it
-     * is also what the rule reads to know which app was missed.
-     */
-    /**
-     * Takes somebody's app out of testing for missing their days, without taking their slot.
-     *
-     * What [evict] used to be called for and no longer is. Evicting dropped the member, which
-     * dropped the group to twelve and punished the twelve as much as the one; this leaves the
-     * cohort exactly as it was and stops the app being tested. Emptying a slot is an admin's
-     * decision now, taken in the console, with the person in front of them.
-     *
-     * One document and three fields, so there is no transaction and nothing to keep in step. Safe
+     * One document and two fields, so there is no transaction and nothing to keep in step. Safe
      * to run twice: every device in the cohort reaches the same conclusion from the same proofs,
-     * and the second write says what the first one said.
-     *
-     * `removedReason` is left blank on purpose. Blank is what the apps read as "no admin typed
-     * this", which is the difference between "an admin decided something about you" and "the
-     * count caught up with you".
+     * and the rules refuse a second write once the first has already landed — which is also what
+     * keeps a dozen devices from raising a dozen pushes about the same two days.
      */
-    suspend fun softRemove(targetAppId: String, byAppId: String) {
+    suspend fun flagAtRisk(targetAppId: String, byAppId: String) {
         await(
             db.collection("apps").document(targetAppId).update(
                 mapOf(
-                    "removed" to true,
-                    "removedAt" to System.currentTimeMillis(),
-                    "removedReason" to "",
+                    "flaggedAt" to System.currentTimeMillis(),
                     // The audit trail, and the rule's argument: it names the app that went
                     // unopened, which is what lets the server go and check the proofs itself.
-                    "removedByAppId" to byAppId
+                    "flaggedByAppId" to byAppId
                 )
             )
         )
     }
 
-    suspend fun evict(
-        groupId: String,
-        targetUid: String,
-        targetAppId: String,
-        byUid: String,
-        byAppId: String,
-        day: Int
-    ) {
-        val groupRef = db.collection("groups").document(groupId)
-        val appRef = db.collection("apps").document(targetAppId)
-        val now = System.currentTimeMillis()
-
+    /**
+     * Says an app in the caller's own cohort would not open, or broke, before any admin heard
+     * about it another way.
+     *
+     * Set-once by the rules: a report already on the app refuses a second write, so this can be
+     * called freely from the "Can't install this?" flow without first checking whether somebody
+     * else already said the same thing.
+     */
+    suspend fun reportProblem(appId: String, uid: String, reason: String) {
         await(
-            db.runTransaction { tx ->
-                val group = tx.get(groupRef)
-                if (!group.exists()) return@runTransaction null
-
-                val members = (group.get("memberUids") as? List<*>)
-                    ?.filterIsInstance<String>().orEmpty()
-
-                // Someone else's sweep got here first. Every device in the cohort runs the same
-                // check against the same proofs, so concurrent agreement is the normal case, not
-                // an error — the second one through has nothing left to do.
-                if (targetUid !in members) return@runTransaction null
-
-                val appIds = (group.get("appIds") as? List<*>)
-                    ?.filterIsInstance<String>().orEmpty()
-
-                tx.update(
-                    groupRef,
-                    mapOf(
-                        "memberUids" to members - targetUid,
-                        "appIds" to appIds - targetAppId,
-                        "lastEviction" to mapOf(
-                            "uid" to targetUid,
-                            "appId" to targetAppId,
-                            "byUid" to byUid,
-                            "byAppId" to byAppId,
-                            "day" to day,
-                            "at" to now
-                        )
-                    )
+            db.collection("apps").document(appId).update(
+                mapOf(
+                    "reportedAt" to System.currentTimeMillis(),
+                    "reportedBy" to uid,
+                    "reportedReason" to reason.take(NOTES_MAX)
                 )
-                tx.update(
-                    appRef,
-                    mapOf(
-                        "groupId" to "",
-                        "status" to TestApp.STATUS_PENDING,
-                        "placedAt" to 0L,
-                        "unplacedByAppId" to byAppId,
-                        "unplacedAt" to now
-                    )
-                )
-
-                // The permanent record. `lastEviction` above is only the most recent one on this
-                // group and the next removal overwrites it, so without this the history an admin
-                // needs when deciding whether to approve someone again is the one thing that never
-                // survived. Events are append-only and nothing deletes them.
-                tx.set(
-                    db.collection("events").document(),
-                    mapOf(
-                        "uid" to targetUid,
-                        "type" to EVENT_REMOVED_MISSED,
-                        "title" to "Your app was removed from its group",
-                        "body" to "Two days went by without you opening the other apps.",
-                        "groupId" to groupId,
-                        "appId" to targetAppId,
-                        "byAppId" to byAppId,
-                        "actorUid" to byUid,
-                        "day" to day,
-                        "createdAt" to now
-                    )
-                )
-                null
-            }
+            )
         )
+    }
+
+    /**
+     * Takes a report back — the tester who filed it changing their mind, without waiting on an
+     * admin to notice and clear it from the console.
+     *
+     * The rules only accept this from `reportedBy` itself, so the write below either lands
+     * exactly as sent or is refused outright; there is no partial-success case to handle.
+     */
+    suspend fun clearMyReport(appId: String) {
+        await(
+            db.collection("apps").document(appId).update(
+                mapOf(
+                    "reportedAt" to 0L,
+                    "reportedBy" to "",
+                    "reportedReason" to ""
+                )
+            )
+        )
+    }
+
+    /**
+     * Tells every other member of this app's cohort that an update is out, and advances the
+     * cooldown so the next one waits its turn.
+     *
+     * One events document per member plus the app's own timestamp, all in a single batch. The
+     * rules gate every write in a batch against the same pre-batch snapshot — see the
+     * `owner_broadcast` rule and the dedicated `lastBroadcastAt` update rule in firestore.rules —
+     * so there is no ordering dependency between the two halves and no way for one to land
+     * without the other passing the same cooldown check.
+     */
+    suspend fun broadcastUpdate(app: TestApp, group: TestGroup) {
+        val now = System.currentTimeMillis()
+        val batch = db.batch()
+        group.memberUids.filter { it != app.ownerUid }.forEach { uid ->
+            batch.set(
+                db.collection("events").document(),
+                mapOf(
+                    "uid" to uid,
+                    "type" to "owner_broadcast",
+                    "title" to "${app.label} has an update",
+                    "body" to "An update is out for ${app.label}. Install it from the Play " +
+                        "Store, then keep testing as usual.",
+                    "groupId" to group.id,
+                    "appId" to app.id,
+                    "actorUid" to app.ownerUid,
+                    "createdAt" to now
+                )
+            )
+        }
+        batch.update(db.collection("apps").document(app.id), mapOf("lastBroadcastAt" to now))
+        await(batch.commit())
+    }
+
+    /** {appId}__{uid}, exactly as firestore.rules' skips block expects to derive it. */
+    private fun skipId(appId: String, uid: String) = "${appId}__$uid"
+
+    /** Whether [uid] has personally opted out of testing [appId] — see the `skips` collection. */
+    suspend fun hasSkipped(appId: String, uid: String): Boolean =
+        await(db.collection("skips").document(skipId(appId, uid)).get()).exists()
+
+    /** Every app in [groupId] the caller has personally skipped, for [TestRow]'s own state. */
+    suspend fun mySkips(uid: String, groupId: String): Set<String> =
+        await(
+            db.collection("skips")
+                .whereEqualTo("uid", uid)
+                .whereEqualTo("groupId", groupId)
+                .get()
+        ).documents.mapNotNull { it.getString("appId") }.toSet()
+
+    /** Opts the caller out of testing [app] — only admitted when [TestApp.skippable] is set. */
+    suspend fun setSkip(app: TestApp, uid: String, groupId: String) {
+        await(
+            db.collection("skips").document(skipId(app.id, uid)).set(
+                mapOf(
+                    "appId" to app.id,
+                    "uid" to uid,
+                    "groupId" to groupId,
+                    "skippedAt" to System.currentTimeMillis()
+                )
+            )
+        )
+    }
+
+    /** Reverses [setSkip] — the app owes its ordinary day again for this member from now on. */
+    suspend fun clearSkip(appId: String, uid: String) {
+        await(db.collection("skips").document(skipId(appId, uid)).delete())
     }
 }

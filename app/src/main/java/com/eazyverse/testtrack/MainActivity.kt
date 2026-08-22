@@ -51,12 +51,17 @@ object Routes {
     const val SUBMIT = "submit"
     const val PROFILE = "profile"
 
-    const val GROUP = "group/{groupId}"
-    fun group(groupId: String) = "group/$groupId"
+    // The name is carried along, not looked up: whoever is navigating here almost always already
+    // has it on screen (a row in Home, a row in Group), and showing that immediately in the app
+    // bar beats leaving it blank for the gap before this screen's own load answers the same
+    // question. Optional — the notification-tap path has no row to read a name from, and falls
+    // back to the ordinary blank-then-populate the screen already does without one.
+    const val GROUP = "group/{groupId}?name={name}"
+    fun group(groupId: String, name: String = "") = "group/$groupId?name=${Uri.encode(name)}"
 
     /** Your own app's 14-day picture. */
-    const val DASHBOARD = "dashboard/{appId}"
-    fun dashboard(appId: String) = "dashboard/$appId"
+    const val DASHBOARD = "dashboard/{appId}?name={name}"
+    fun dashboard(appId: String, name: String = "") = "dashboard/$appId?name=${Uri.encode(name)}"
 }
 
 class MainActivity : ComponentActivity() {
@@ -274,7 +279,7 @@ fun AppNav(openGroup: MutableState<String?> = remember { mutableStateOf(null) })
 
         composable(Routes.HOME) {
             HomeScreen(
-                onOpenGroup = { groupId -> nav.push(Routes.group(groupId)) },
+                onOpenGroup = { groupId, name -> nav.push(Routes.group(groupId, name)) },
                 onSubmitApp = { nav.push(Routes.SUBMIT) },
                 // Grants outlive the checklist: Drive access can be revoked from the account and
                 // usage access from Settings, and both leave a working install that quietly cannot
@@ -307,21 +312,29 @@ fun AppNav(openGroup: MutableState<String?> = remember { mutableStateOf(null) })
 
         composable(
             Routes.GROUP,
-            arguments = listOf(navArgument("groupId") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("groupId") { type = NavType.StringType },
+                navArgument("name") { type = NavType.StringType; defaultValue = "" }
+            )
         ) { entry ->
             GroupScreen(
                 groupId = entry.arguments?.getString("groupId").orEmpty(),
-                onOpenDashboard = { appId -> nav.push(Routes.dashboard(appId)) },
+                groupName = entry.arguments?.getString("name").orEmpty(),
+                onOpenDashboard = { appId, name -> nav.push(Routes.dashboard(appId, name)) },
                 onBack = { nav.popBackStack() }
             )
         }
 
         composable(
             Routes.DASHBOARD,
-            arguments = listOf(navArgument("appId") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("appId") { type = NavType.StringType },
+                navArgument("name") { type = NavType.StringType; defaultValue = "" }
+            )
         ) { entry ->
             DashboardScreen(
                 appId = entry.arguments?.getString("appId").orEmpty(),
+                appName = entry.arguments?.getString("name").orEmpty(),
                 onBack = { nav.popBackStack() }
             )
         }

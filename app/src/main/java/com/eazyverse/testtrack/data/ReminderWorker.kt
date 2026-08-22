@@ -150,7 +150,7 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
         )
 
         val notification = NotificationCompat.Builder(applicationContext, PushRepo.CHANNEL_REMINDERS)
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.drawable.ic_stat_name)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
@@ -186,7 +186,7 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             val notification = NotificationCompat.Builder(context, PushRepo.CHANNEL_REMINDERS)
-                .setSmallIcon(R.drawable.ic_notification)
+                .setSmallIcon(R.drawable.ic_stat_name)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))

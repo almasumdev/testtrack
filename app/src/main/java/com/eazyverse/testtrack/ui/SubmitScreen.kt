@@ -223,11 +223,11 @@ fun SubmitScreen(
                 onValueChange = { vm.notesInput = it.take(NOTES_MAX) },
                 label = "Notes for your testers",
                 placeholder = "Test account: demo@example.com / pass1234",
-                supporting = "Anything they need to get past the front door. Everyone in your " +
-                    "group and the admins can read this, so use a throwaway account, never " +
-                    "your own password.",
+                supporting = "Everyone in the group and the admins can read this. Use a " +
+                    "throwaway account, never your real password.",
                 singleLine = false,
-                minHeight = 96.dp
+                minHeight = 120.dp,
+                maxLength = NOTES_MAX
             )
 
             Spacer(Modifier.height(32.dp))
@@ -313,7 +313,7 @@ fun SubmitScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(Gutter))
         }
     }
 }

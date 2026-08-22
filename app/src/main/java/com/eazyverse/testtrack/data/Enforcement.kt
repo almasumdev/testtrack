@@ -70,6 +70,7 @@ object Enforcement {
     private const val KEY_SEEN = "seen"
     private const val KEY_NOTICES = "notices"
     private const val KEY_EXPLAINED = "explained"
+    private const val KEY_DISMISSED = "dismissed_standings"
 
     /**
      * Field separator for the stored lines.
@@ -104,6 +105,20 @@ object Enforcement {
         val kept = prefs(context).getStringSet(KEY_NOTICES, emptySet()).orEmpty()
             .filterNot { it.startsWith("$id$SEP") }
         prefs(context).edit().putStringSet(KEY_NOTICES, kept.toSet()).apply()
+    }
+
+    private fun standingId(groupId: String, missedDay: Int) = "$groupId|$missedDay"
+
+    /**
+     * Closed by the tester, and gone until there is something new to say.
+     *
+     * Keyed on the group and the missed day it's about, not just the group: a warning for day 3
+     * closed today must not swallow day 4's, whether that one turns out milder or the final one.
+     */
+    fun dismissStanding(context: Context, standing: Standing) {
+        val id = standingId(standing.groupId, standing.missedDay)
+        val kept = prefs(context).getStringSet(KEY_DISMISSED, emptySet()).orEmpty() + id
+        prefs(context).edit().putStringSet(KEY_DISMISSED, kept).apply()
     }
 
     /**
@@ -231,12 +246,15 @@ object Enforcement {
             }
         )
 
+        val dismissed = prefs(context).getStringSet(KEY_DISMISSED, emptySet()).orEmpty()
+        val visible = standings.filterNot { standingId(it.groupId, it.missedDay) in dismissed }
+
         Log.i(
             TAG,
             "swept ${groups.size} group(s): ${standings.size} standing(s), " +
                 "${departed.size} departed, ${evictedFrom.size} eviction(s) of this account"
         )
-        Sweep(standings, departed, evictedFrom)
+        Sweep(visible, departed, evictedFrom)
     }.getOrElse {
         // Swallowed on purpose — this runs beside a screen refresh that has its own error
         // handling — but not silently. A sweep that stops finding anything is indistinguishable
@@ -265,12 +283,19 @@ object Enforcement {
             startDate = group.startDate,
             testerPlacedAt = mine?.placedAt ?: 0L,
             appPlacedAt = 0L,
-            count = Compliance.MISSES_TO_REMOVE
+            count = Compliance.MISSES_TO_REMOVE,
+            reinstatedAt = mine?.reinstatedAt ?: 0L
         )
         val last = days.firstOrNull() ?: return null
 
         val cleared = Repo.myProofsForDay(uid, group.id, last, group.startDate, requireBar = false)
-        val missed = others.filter { it.id !in cleared }
+        // A reported app is excused outright rather than day by day here: this warning is about
+        // the shared pair of days everybody in [others] is judged against at once, and a day
+        // nobody could get into has no business inside that pair for any of them. An app this
+        // caller has personally skipped is excused the same way — their own choice, not a fact
+        // about the app, so it only ever removes it from their own [missed], nobody else's.
+        val missed = others.filter { it.id !in cleared && it.reportedAt <= 0L }
+            .filterNot { Repo.hasSkipped(it.id, uid) }
         if (missed.isEmpty()) return null
 
         // A second consecutive gap is not a warning any more, it is the last one they get.
@@ -289,10 +314,18 @@ object Enforcement {
     }
 
     /**
-     * Removes anyone who has stopped opening this device owner's app.
+     * Flags anyone who has stopped opening this device owner's app, for an admin to see.
      *
      * Judged only against [mine], because that is the only app whose proofs this account is
      * entitled to read. Every other member is running the same pass over theirs.
+     *
+     * This used to remove the app from testing on the spot. It doesn't any more: with thirteen
+     * devices each reaching the same verdict independently, an admin who put somebody back in
+     * testing had it undone by whichever phone next happened to sweep, sometimes within the hour
+     * and never by anyone who knew a decision had just been made. So a device raises this once
+     * and stops — [TestApp.flaggedAt] is set-once by the rules, which is what keeps a dozen
+     * devices from raising a dozen pushes about the same two days, and only an admin's own hand
+     * on [TestApp.removed] actually takes anyone out of testing.
      */
     private suspend fun enforceOn(
         uid: String,
@@ -305,6 +338,11 @@ object Enforcement {
         // has skipped every day since the start, and the rules will refuse the write anyway.
         if (mine.placedAt <= 0L) return
 
+        // A reported app judges nobody until an admin clears the report. All or nothing, not day
+        // by day: the point is that a day nobody could get into stops counting the moment it is
+        // known about, which a report filed today has to cover the very check running today.
+        if (mine.reportedAt > 0L) return
+
         val attended = Repo.proofsForApp(mine.id, uid)
             .map { it.testerUid to it.day }
             .toSet()
@@ -312,13 +350,23 @@ object Enforcement {
         for (app in apps) {
             if (app.ownerUid == uid || app.placedAt <= 0L) continue
 
+            // Already raised. Checked here rather than left to the rules refusing a second write,
+            // so a member who stays absent does not cost every device in the cohort a failed
+            // write attempt on every sweep until an admin gets to it.
+            if (app.flaggedAt > 0L) continue
+
+            // This member's own choice, made because [mine] is skippable — not evidence of
+            // truancy, so it never reaches the flag check below at all.
+            if (Repo.hasSkipped(mine.id, app.ownerUid)) continue
+
             val days = Compliance.judgedDays(
                 dayIndex = day,
                 startDate = group.startDate,
                 testerPlacedAt = app.placedAt,
                 appPlacedAt = mine.placedAt,
                 count = Compliance.MISSES_TO_REMOVE,
-                graceDays = group.graceDays
+                graceDays = group.graceDays,
+                reinstatedAt = app.reinstatedAt
             )
             // Only the days in question. Logging the whole attendance set put several thousand
             // characters and every member's uid into logcat, once per member per sweep.
@@ -328,17 +376,14 @@ object Enforcement {
             if (days.size < Compliance.MISSES_TO_REMOVE) continue
             if (days.any { (app.ownerUid to it) in attended }) continue
 
-            // One member's removal failing must not stop the rest of the pass, so this is caught
+            // One member's flag failing must not stop the rest of the pass, so this is caught
             // here rather than left to the caller. Logged for the same reason as above: a refusal
             // means this device and the rules disagree about the sums, and that is worth seeing.
-            //
-            // Taken out of testing, not out of the group. Nobody's slot is emptied by arithmetic
-            // running on somebody else's phone at three in the morning; the cohort keeps its
-            // count and an admin decides what to do about it.
             runCatching {
-                Repo.softRemove(targetAppId = app.id, byAppId = mine.id)
-                Log.i(TAG, "removed ${app.ownerUid} from testing in ${group.id} on day $day")
-            }.onFailure { Log.w(TAG, "could not remove ${app.ownerUid} in ${group.id}", it) }
+                Repo.flagAtRisk(targetAppId = app.id, byAppId = mine.id)
+                Log.i(TAG, "flagged ${app.ownerUid} in ${group.id} on day $day")
+                runCatching { Notify.flagged(app.label, app.packageName) }
+            }.onFailure { Log.w(TAG, "could not flag ${app.ownerUid} in ${group.id}", it) }
         }
     }
 

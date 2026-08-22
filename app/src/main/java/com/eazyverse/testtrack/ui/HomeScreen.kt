@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.GroupWork
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
@@ -34,6 +35,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.data.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 /** One group as home needs it: the cohort, plus how much of today this tester still owes it. */
@@ -45,6 +49,28 @@ class HomeViewModel : ViewModel() {
         private set
     var pending by mutableStateOf<List<TestApp>>(emptyList())
         private set
+
+    /**
+     * A background refetch is in flight while cached numbers are still on screen.
+     *
+     * [ready] is sticky-true once first set, on purpose — see its own doc — which means it
+     * cannot also mark "this refresh is still running." Without a second flag, numbers left over
+     * from before a group was edited elsewhere sit on screen looking current for however long the
+     * refetch takes, with nothing to say they might be about to change.
+     */
+    var refreshing by mutableStateOf(false)
+        private set
+
+    /**
+     * The reader pulled for this themselves, rather than the screen doing it quietly on its own.
+     *
+     * A pull is asking outright, which earns the same full skeleton a first load gets — not the
+     * small mark [refreshing] leaves in the app bar for a refresh nobody asked for, on resuming
+     * or coming back from a group.
+     */
+    var pulling by mutableStateOf(false)
+        private set
+
     /**
      * Everything this screen shows is in hand.
      *
@@ -98,24 +124,36 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch { runCatching { me = Repo.me(uid) } }
     }
 
-    fun load() {
+    /** [fromPull] is the reader asking outright — see [pulling]'s own doc for what that changes. */
+    fun load(fromPull: Boolean = false) {
         val uid = AuthRepo.uid ?: run { ready = true; return }
 
         loadMe()
         showCached(uid)
 
         viewModelScope.launch {
+            refreshing = ready // only worth flagging over content that's already on screen
+            if (fromPull) pulling = true
             runCatching {
                 val waiting = Repo.pendingApps(uid)
-                val progress = Repo.myGroups(uid).map { group ->
-                    // active, not placed: a removed app is still in the group and is owed
-                    // nothing, so counting it here would ask for a day on an app this tester has
-                    // been told to uninstall.
-                    val others = Repo.appsInGroup(group.id)
-                        .filter { it.ownerUid != uid && it.active }
-                    val day = group.dayIndex()
-                    val done = if (day == null) 0 else Repo.myProofsForDay(uid, group.id, day, group.startDate).size
-                    GroupProgress(group, others.size, done)
+                // Each group's own two reads run concurrently with every other group's, not
+                // queued behind them — with N groups this was up to 2N sequential round trips
+                // before anything on screen changed, which is the multi-second window where
+                // Home kept showing yesterday's numbers after an edit elsewhere.
+                val progress = coroutineScope {
+                    Repo.myGroups(uid).map { group ->
+                        async {
+                            // active, not placed: a removed app is still in the group and is
+                            // owed nothing, so counting it here would ask for a day on an app
+                            // this tester has been told to uninstall.
+                            val others = Repo.appsInGroup(group.id)
+                                .filter { it.ownerUid != uid && it.active }
+                            val day = group.dayIndex()
+                            val done = if (day == null) 0
+                                else Repo.myProofsForDay(uid, group.id, day, group.startDate).size
+                            GroupProgress(group, others.size, done)
+                        }
+                    }.awaitAll()
                 }
 
                 // Published together, at the end. Assigning as each query lands would repaint a
@@ -131,6 +169,8 @@ class HomeViewModel : ViewModel() {
                 )
             }
             ready = true
+            refreshing = false
+            pulling = false
         }
     }
 
@@ -182,6 +222,12 @@ class HomeViewModel : ViewModel() {
     fun dismissNotice(context: Context, id: String) {
         Enforcement.dismiss(context, id)
         notices = Enforcement.notices(context)
+    }
+
+    /** Closed by the tester. Stays gone until a fresh sweep has something new to say about it. */
+    fun dismissStanding(context: Context, standing: Enforcement.Standing) {
+        Enforcement.dismissStanding(context, standing)
+        standings = standings - standing
     }
 
     private fun refreshNotificationPrompt(context: Context) {
@@ -243,7 +289,7 @@ class HomeViewModel : ViewModel() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onOpenGroup: (String) -> Unit,
+    onOpenGroup: (String, String) -> Unit,
     onSubmitApp: () -> Unit,
     onOpenSetup: () -> Unit,
     onOpenProfile: () -> Unit,
@@ -328,7 +374,24 @@ fun HomeScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("TestTrack", fontWeight = FontWeight.Bold) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("TestTrack", fontWeight = FontWeight.Bold)
+                        // Content already on screen quietly catching up with itself — coming back
+                        // from a group, or the app returning to the foreground. Small and off to
+                        // the side on purpose: the numbers below are the thing worth looking at,
+                        // not this. Never alongside a pull, which gets the full skeleton below
+                        // instead — asking outright earns a stronger answer than this.
+                        if (vm.refreshing && !vm.pulling) {
+                            Spacer(Modifier.width(8.dp))
+                            CircularProgressIndicator(
+                                Modifier.size(14.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                },
                 // Both actions shown rather than folded behind an overflow. Two is under the
                 // threshold where a menu earns its extra tap, and neither is findable by guessing
                 // that a three-dot icon contains it.
@@ -351,25 +414,31 @@ fun HomeScreen(
             )
         }
     ) { padding ->
+        RefreshBox(
+            // Bound to the pull, not the general refresh — otherwise the gesture's own arc plays
+            // for a resume or a return from a group too, which nobody pulled for.
+            isRefreshing = vm.pulling,
+            onRefresh = { vm.load(fromPull = true) },
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
 
-            if (!vm.ready) {
+            // A pull gets the same full skeleton a first load does — asking outright earns a
+            // stronger answer than the small app-bar mark a quiet resume settles for.
+            if (!vm.ready || vm.pulling) {
                 HomeSkeleton()
             } else {
                 if (vm.groups.isNotEmpty()) {
                     Column(Modifier.padding(start = Gutter, end = Gutter, top = 4.dp)) {
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text(
-                                "${vm.doneToday} of ${vm.dueToday}",
-                                style = MaterialTheme.typography.displaySmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        Text(
+                            "${vm.doneToday} of ${vm.dueToday}",
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.Bold
+                        )
                         Spacer(Modifier.height(5.dp))
                         Text(
                             if (vm.dueToday == 0) "nothing due today"
@@ -385,7 +454,9 @@ fun HomeScreen(
 
                 // Above everything, because a tester one day from losing their place should not
                 // have to scroll to a group row to find that out.
-                vm.standings.forEach { MissedDayNotice(it) }
+                vm.standings.forEach { standing ->
+                    MissedDayNotice(standing) { vm.dismissStanding(context, standing) }
+                }
 
                 // Things that already happened, kept until acknowledged. A notification is not a
                 // record: it can be swiped off a lock screen unread.
@@ -435,7 +506,7 @@ fun HomeScreen(
                         if (vm.groups.isEmpty()) Blank("None yet.")
                         else vm.groups.forEachIndexed { index, progress ->
                             if (index > 0) RowDivider()
-                            GroupRow(progress) { onOpenGroup(progress.group.id) }
+                            GroupRow(progress) { onOpenGroup(progress.group.id, progress.group.name) }
                         }
                     }
 
@@ -463,7 +534,8 @@ fun HomeScreen(
                     onClick = onSubmitApp
                 )
             }
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(Gutter))
+        }
         }
     }
 
@@ -607,7 +679,7 @@ private fun HomeSkeleton() {
  * get, and names the apps rather than counting them, so nobody has to work out which.
  */
 @Composable
-private fun MissedDayNotice(standing: Enforcement.Standing) {
+private fun MissedDayNotice(standing: Enforcement.Standing, onDismiss: () -> Unit) {
     val tone = if (standing.finalWarning) Status.missed else Status.short
     val ground = if (standing.finalWarning) Status.missedSoft else Status.shortSoft
 
@@ -620,13 +692,19 @@ private fun MissedDayNotice(standing: Enforcement.Standing) {
             .background(ground)
             .padding(14.dp)
     ) {
-        Text(
-            if (standing.finalWarning) "Last chance in ${standing.groupName}"
-            else "You missed yesterday in ${standing.groupName}",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = tone
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                if (standing.finalWarning) "Last chance in ${standing.groupName}"
+                else "You missed yesterday in ${standing.groupName}",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = tone,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
+                Icon(Icons.Default.Close, "Close", tint = tone, modifier = Modifier.size(18.dp))
+            }
+        }
         Spacer(Modifier.height(4.dp))
         Text(
             if (standing.finalWarning)

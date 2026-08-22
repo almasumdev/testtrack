@@ -53,12 +53,23 @@ service cloud.firestore {
     // both have to agree, or evictions start coming back PERMISSION_DENIED for no visible reason.
 
     /**
-     * The one event type a tester's device may write, rather than an admin.
+     * The event types a tester's device may write, rather than an admin.
      *
-     * Named so the rule below cannot be widened by accident: every other kind of event stays
+     * Named so the rules below cannot be widened by accident: every other kind of event stays
      * admin-only, and a client that wants to record anything else is refused on this string alone.
      */
-    function TYPE_REMOVED_MISSED() { return 'removed_missed'; }
+    function TYPE_OWNER_BROADCAST() { return 'owner_broadcast'; }
+
+    /** The other one: a tester telling an app's owner that feedback is waiting for them. */
+    function TYPE_FEEDBACK() { return 'feedback'; }
+
+    /** How long an owner must wait between broadcasts to the same cohort. Matches Repo.kt. */
+    function BROADCAST_COOLDOWN_MS() { return 172800000; }
+
+    /** Zero for a document written before broadcasting existed, which reads as never sent. */
+    function lastBroadcastAtOf(appId) {
+      return 'lastBroadcastAt' in appData(appId) ? appData(appId).lastBroadcastAt : 0;
+    }
 
     /** Whole days since the run began. Matches TestGroup.dayIndex(). */
     function dayOf(startDate) {
@@ -82,6 +93,11 @@ service cloud.firestore {
     /** Zero for a document written before placement dates were recorded, which blocks eviction. */
     function placedAtOf(appId) {
       return 'placedAt' in appData(appId) ? appData(appId).placedAt : 0;
+    }
+
+    /** Zero unless an admin has put this app back into testing, which blocks a flag until then. */
+    function reinstatedAtOf(appId) {
+      return 'reinstatedAt' in appData(appId) ? appData(appId).reinstatedAt : 0;
     }
 
     /**
@@ -113,17 +129,41 @@ service cloud.firestore {
       );
     }
 
+    /** True once a cohort member has reported this app, before any admin has cleared it. */
+    function isReported(appId) {
+      return 'reportedAt' in appData(appId) && appData(appId).reportedAt > 0;
+    }
+
+    /**
+     * True once [targetUid] has personally opted out of testing [appId] — see the `skips`
+     * collection, admitted only while [appId]'s own `skippable` is set.
+     */
+    function skippedBy(appId, targetUid) {
+      return exists(/databases/$(database)/documents/skips/$(appId + '__' + targetUid));
+    }
+
+    /** False for every app written before skipping existed, which is all of them until now. */
+    function isSkippable(appId) {
+      return 'skippable' in appData(appId) && appData(appId).skippable == true;
+    }
+
     /**
      * Did this member genuinely miss the last two completed days on this app?
      *
      * Today is never counted: hours remain to open the app, so a gap in it is not a miss. Which
-     * puts the earliest possible removal on day three, the first day with two finished days behind
+     * puts the earliest possible flag on day three, the first day with two finished days behind
      * it.
      */
-    function missedTwo(byAppId, targetUid, targetPlacedAt, startDate, runDays, graceDays) {
+    function missedTwo(byAppId, targetAppId, targetUid, targetPlacedAt, startDate, runDays, graceDays) {
       return startDate > 0
         && targetPlacedAt > 0
         && placedAtOf(byAppId) > 0
+        // A reported app judges nobody until the report is cleared — see Enforcement.enforceOn,
+        // which stops for the same reason on the client before ever reaching for this rule.
+        && !isReported(byAppId)
+        // Nor does one this member chose to skip themselves — their own call, not a fact about
+        // the app, so it excuses only them and nobody else in the cohort.
+        && !skippedBy(byAppId, targetUid)
         && dayOf(startDate) >= 2
         // Opening days an admin excused for the whole cohort. The same floor the tester app
         // applies, and it has to be here too or a device that agrees with the rule about
@@ -134,6 +174,11 @@ service cloud.firestore {
         && dayOf(startDate) < runDays
         && dayOf(startDate) - 2 >= firstJudged(placedAtOf(byAppId), startDate)
         && dayOf(startDate) - 2 >= firstJudged(targetPlacedAt, startDate)
+        // The fourth floor: a member an admin only just put back into testing cannot be judged
+        // on the very two days that got them flagged the first time — see Compliance.judgedDays'
+        // own reinstatedAt floor, which this has to agree with or a device that trusts the client
+        // math ends up flagging someone the rules themselves would refuse to flag again.
+        && dayOf(startDate) - 2 >= firstJudged(reinstatedAtOf(targetAppId), startDate)
         && noProof(byAppId, targetUid, startDate, dayOf(startDate) - 1)
         && noProof(byAppId, targetUid, startDate, dayOf(startDate) - 2);
     }
@@ -313,46 +358,12 @@ service cloud.firestore {
     match /groups/{groupId} {
       allow read: if isAdmin()
         || (signedIn() && request.auth.uid in resource.data.memberUids);
-      allow write: if isAdmin();
 
-      /**
-       * The one write a member may make: dropping someone who stopped opening their app.
-       *
-       * `lastEviction` is both the audit trail and the argument — it names the app that went
-       * unopened, which is what lets the rule go and check. The actor has to own that app, so
-       * nobody can evict on someone else's behalf, and the proof documents settle the rest.
-       *
-       * Everything not part of an eviction is pinned. A member cannot rename the group, restart
-       * its clock, add anybody, or remove two people at once.
-       */
-      allow update: if signedIn()
-        && request.auth.uid in resource.data.memberUids
-        && 'lastEviction' in request.resource.data
-        && request.resource.data.lastEviction.byUid == request.auth.uid
-        && request.resource.data.name == resource.data.name
-        && request.resource.data.startDate == resource.data.startDate
-        && request.resource.data.status == resource.data.status
-        // How long the run lasts is an admin's decision, and a member removing somebody must not
-        // be able to smuggle a change to it through in the same write.
-        && runDaysOf(request.resource.data) == runDaysOf(resource.data)
-        && request.resource.data.memberUids.size() == resource.data.memberUids.size() - 1
-        && resource.data.memberUids.hasAll(request.resource.data.memberUids)
-        && !(request.resource.data.lastEviction.uid in request.resource.data.memberUids)
-        && resource.data.appIds.hasAll(request.resource.data.appIds)
-        && !(request.resource.data.lastEviction.appId in request.resource.data.appIds)
-        && appData(request.resource.data.lastEviction.byAppId).ownerUid == request.auth.uid
-        && appData(request.resource.data.lastEviction.byAppId).groupId == groupId
-        && appData(request.resource.data.lastEviction.appId).ownerUid
-             == request.resource.data.lastEviction.uid
-        && appData(request.resource.data.lastEviction.appId).groupId == groupId
-        && missedTwo(
-             request.resource.data.lastEviction.byAppId,
-             request.resource.data.lastEviction.uid,
-             placedAtOf(request.resource.data.lastEviction.appId),
-             resource.data.startDate,
-             runDaysOf(resource.data),
-             graceOf(resource.data)
-           );
+      // Entirely admin-written. A member who stops opening the other apps in their cohort is
+      // flagged on the app document below, for an admin to act on — nothing here removes anyone
+      // from a group without an admin's own hand on it. See apps/{appId}'s flag rule and
+      // Enforcement.enforceOn for why that changed.
+      allow write: if isAdmin();
     }
 
     /**
@@ -417,6 +428,23 @@ service cloud.firestore {
        * console only ever reads the field, so nothing legitimate comes near this limit — but the
        * string is rendered in a list row by all twelve members of the cohort, and a client that
        * skips the check is exactly the one that would put a megabyte in it.
+       *
+       * `reported*` is pinned alongside `removed*` for the same reason: an owner clearing a report
+       * filed about their own app is the same attack in a different field, and this rule is wide
+       * enough otherwise (nothing else here names those keys) that it would otherwise admit it.
+       *
+       * `lastBroadcastAt` is pinned too, and admitted only through the dedicated rule below —
+       * this one has no cooldown check, so leaving it open here would let an owner bump their own
+       * timestamp for free without the wait it exists to enforce.
+       *
+       * `skippable` is pinned for the same reason as `removed`/`reportedAt`: it is the switch that
+       * lets the whole cohort start skipping this app member by member, and an owner granting
+       * their own app that blanket immunity is exactly the attack pinning exists to close. Set
+       * only by an admin, through the unrestricted branch above.
+       *
+       * `flagged*`/`reinstatedAt` are pinned the same way again: an owner clearing their own flag,
+       * or backdating their own reinstatement to widen the days it excuses, is the identical
+       * attack in fields that did not exist when the others were closed.
        */
       allow update: if isAdmin() || (
         signedIn()
@@ -427,8 +455,27 @@ service cloud.firestore {
         && request.resource.data.packageName == resource.data.packageName
         && (!('notes' in request.resource.data) || request.resource.data.notes.size() <= 500)
         && !request.resource.data.diff(resource.data).affectedKeys()
-             .hasAny(['removed', 'removedAt', 'removedReason'].toSet())
+             .hasAny(['removed', 'removedAt', 'removedReason',
+                      'reportedAt', 'reportedBy', 'reportedReason',
+                      'lastBroadcastAt', 'skippable',
+                      'flaggedAt', 'flaggedByAppId', 'reinstatedAt'].toSet())
       );
+
+      /**
+       * The app-side half of an owner's broadcast: moving `lastBroadcastAt` forward.
+       *
+       * Own app only, one field only, and gated by the same cooldown the events half checks — see
+       * the `owner_broadcast` rule above for why both sides ask the same question rather than one
+       * trusting the other already did.
+       */
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.ownerUid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastBroadcastAt'].toSet())
+        && request.resource.data.lastBroadcastAt is int
+        && request.resource.data.lastBroadcastAt > 0
+        && request.time.toMillis()
+             - (('lastBroadcastAt' in resource.data) ? resource.data.lastBroadcastAt : 0)
+             >= BROADCAST_COOLDOWN_MS();
 
       /**
        * Withdrawing: the owner taking their own app out, without destroying the record.
@@ -455,30 +502,38 @@ service cloud.firestore {
              .hasOnly(['status', 'withdrawnAt'].toSet());
 
       /**
-       * The other half of an eviction: the removed app going back to the queue.
+       * A member who stopped opening this app flags its owner, for an admin to see.
        *
-       * Two documents change and each is judged alone, so this repeats the whole argument rather
-       * than trusting that the group write happened — inside a transaction neither can see the
-       * other's pending state, and a rule that assumed one had landed would accept the second on
-       * its own.
+       * Nothing here touches the group or even this document's own testability — `hasOnly` says
+       * exactly the two fields this may change and refuses the rest by construction, so a field
+       * added to app documents next year cannot quietly become writable by a peer. Taking
+       * somebody out of testing, or dropping them from the group, is `removed`/`groups` and
+       * admin-only either way; see Enforcement.enforceOn for why a device no longer does either
+       * one itself.
        *
-       * Only ever back to pending. This cannot place an app, rename it, or change hands.
+       * Set-once, the same shape as the report rule below: `resource.data.flaggedAt` must be
+       * unset or zero going in, so a dozen devices reaching the same verdict about the same two
+       * days cost one write and eleven refusals, not twelve pushes to the same admin.
+       *
+       * And never yourself. Flagging your own app cannot help you, but it would tell an admin
+       * something false about who noticed.
        */
       allow update: if signedIn()
         && resource.data.groupId is string
         && resource.data.groupId != ''
         && inGroup(resource.data.groupId)
-        && request.resource.data.groupId == ''
-        && request.resource.data.status == 'pending'
-        && request.resource.data.placedAt == 0
-        && request.resource.data.ownerUid == resource.data.ownerUid
-        && request.resource.data.packageName == resource.data.packageName
-        && request.resource.data.name == resource.data.name
-        && 'unplacedByAppId' in request.resource.data
-        && appData(request.resource.data.unplacedByAppId).ownerUid == request.auth.uid
-        && appData(request.resource.data.unplacedByAppId).groupId == resource.data.groupId
+        && resource.data.ownerUid != request.auth.uid
+        && (!('flaggedAt' in resource.data) || resource.data.flaggedAt == 0)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['flaggedAt', 'flaggedByAppId'].toSet())
+        && request.resource.data.flaggedAt is int
+        && request.resource.data.flaggedAt > 0
+        && 'flaggedByAppId' in request.resource.data
+        && appData(request.resource.data.flaggedByAppId).ownerUid == request.auth.uid
+        && appData(request.resource.data.flaggedByAppId).groupId == resource.data.groupId
         && missedTwo(
-             request.resource.data.unplacedByAppId,
+             request.resource.data.flaggedByAppId,
+             appId,
              resource.data.ownerUid,
              ('placedAt' in resource.data ? resource.data.placedAt : 0),
              get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.startDate,
@@ -491,46 +546,59 @@ service cloud.firestore {
            );
 
       /**
-       * Automatic removal: a member who stopped opening this app takes it out of testing.
+       * A cohort member saying an app would not open, or broke, before any admin hears about it
+       * another way — see reportProblem in Repo.kt.
        *
-       * The same argument the eviction rule makes, reaching the same conclusion about the same
-       * person, and stopping short of the same act. Nothing here touches the group, so the
-       * cohort keeps its count and its slot, and only an admin can empty one.
+       * A report is a fact a device can attest to about itself, the same shape of claim the
+       * self-service removal above makes, so it is written directly rather than waiting on
+       * somebody reading a push. Nothing here judges whether the app really is broken; that is
+       * for an admin to decide once they see it, from the console.
        *
-       * `hasOnly` rather than a list of pinned fields. The eviction rule above has to name every
-       * field it will not have changed, and that list has to be right forever; this one says what
-       * may change and refuses the rest by construction, so a field added to app documents next
-       * year cannot quietly become writable by a peer.
+       * Set-once. `resource.data.reportedAt` must be unset or zero going in, so a tester cannot
+       * bump their own report's timestamp. Undoing one is a different write, admitted by the rule
+       * just below rather than by widening this one — an owner still cannot touch either.
        *
-       * `removed == true` only. Undoing a removal is an admin's, and a rule that accepted false
-       * here would let the removed member simply write it back.
-       *
-       * And never yourself. Removing your own app cannot help you — nobody would be testing it —
-       * but it would take you out of testing without an admin ever hearing about it.
+       * Never the owner. There is nothing for an owner to report about their own app; admitting
+       * them here would just be a second way to write `removed`-shaped relief without the
+       * missedTwo check the removal rule requires.
        */
       allow update: if signedIn()
         && resource.data.groupId is string
         && resource.data.groupId != ''
         && inGroup(resource.data.groupId)
         && resource.data.ownerUid != request.auth.uid
+        && (!('reportedAt' in resource.data) || resource.data.reportedAt == 0)
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['removed', 'removedAt', 'removedReason', 'removedByAppId'].toSet())
-        && request.resource.data.removed == true
-        && 'removedByAppId' in request.resource.data
-        && appData(request.resource.data.removedByAppId).ownerUid == request.auth.uid
-        && appData(request.resource.data.removedByAppId).groupId == resource.data.groupId
-        && missedTwo(
-             request.resource.data.removedByAppId,
-             resource.data.ownerUid,
-             ('placedAt' in resource.data ? resource.data.placedAt : 0),
-             get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.startDate,
-             runDaysOf(
-               get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data
-             ),
-             graceOf(
-               get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data
-             )
-           );
+             .hasOnly(['reportedAt', 'reportedBy', 'reportedReason'].toSet())
+        && request.resource.data.reportedAt is int
+        && request.resource.data.reportedAt > 0
+        && request.resource.data.reportedBy == request.auth.uid
+        && (!('reportedReason' in request.resource.data)
+             || request.resource.data.reportedReason.size() <= 500);
+
+      /**
+       * The reporter taking their own report back — see clearMyReport in Repo.kt.
+       *
+       * Only `reportedBy` may do this, not the wider cohort and not the owner: it is the one
+       * person who can attest the thing they reported got sorted out, or that they jumped the
+       * gun. An admin can still clear any report through the unrestricted `allow update` above —
+       * this rule only ever adds a second door for the reporter's own, never takes theirs away.
+       *
+       * Full zero, not a partial edit. Anything short of putting all three fields back to their
+       * unset shape would leave `reportedBy` pointing at this tester while the report itself
+       * reads as gone, which is a state nothing else here expects to see.
+       */
+      allow update: if signedIn()
+        && resource.data.groupId is string
+        && resource.data.groupId != ''
+        && ('reportedBy' in resource.data)
+        && resource.data.reportedBy == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['reportedAt', 'reportedBy', 'reportedReason'].toSet())
+        && request.resource.data.reportedAt == 0
+        && request.resource.data.reportedBy == ''
+        && (!('reportedReason' in request.resource.data)
+             || request.resource.data.reportedReason == '');
 
       /**
        * An admin, and nobody else.
@@ -552,6 +620,45 @@ service cloud.firestore {
        * that only an admin ever reaches this line.
        */
       allow delete: if isAdmin();
+    }
+
+    /**
+     * One member's own choice to skip one app — see Repo.kt's setSkip/clearSkip and
+     * DashboardScreen's TestRow toggle.
+     *
+     * A row per (app, member), not a field on `apps`: `removed` and `reportedAt` both excuse the
+     * whole cohort at once, and this is the one place a member's decision is theirs alone rather
+     * than something the app document could hold, since two members of the same cohort routinely
+     * disagree about the same app.
+     *
+     * Doc id is `{appId}__{uid}`, exactly like a proof id without the run/day suffix — existence is
+     * the whole fact, so create is "skip" and delete is "un-skip," and there is nothing to update.
+     */
+    match /skips/{skipId} {
+      allow read: if isAdmin() || inGroup(resource.data.groupId);
+
+      /**
+       * Own uid only, own choice only, and only where an admin has actually opened this app up to
+       * being skipped — `skippable` is the switch, checked fresh against the live document rather
+       * than trusted from the write, so a client cannot skip an app the admin never allowed just by
+       * omitting the check on its own side.
+       *
+       * The owner is excluded on the same reasoning as everywhere else here: skipping your own app
+       * is not a real choice about testing it, it is a stray write nothing should have to account
+       * for.
+       */
+      allow create: if signedIn()
+        && skipId == request.resource.data.appId + '__' + request.auth.uid
+        && request.resource.data.uid == request.auth.uid
+        && inGroup(request.resource.data.groupId)
+        && appData(request.resource.data.appId).ownerUid != request.auth.uid
+        && appData(request.resource.data.appId).groupId == request.resource.data.groupId
+        && isSkippable(request.resource.data.appId);
+
+      allow update: if false;
+
+      /** Un-skipping. An admin may also clear one, the same way they clear a report. */
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
     /**
@@ -578,38 +685,43 @@ service cloud.firestore {
         && request.resource.data.actorUid == request.auth.uid;
 
       /**
-       * An automatic removal writing its own record.
+       * An owner telling one member of their cohort an update is out — see Repo.kt's
+       * broadcastUpdate, which writes one of these per member in the same batch that advances
+       * the app's own `lastBroadcastAt`.
        *
-       * Without this the only trace of one is `lastEviction` on the group, which the next removal
-       * overwrites and a deleted group takes with it — so the single thing that never survived was
-       * the one an admin most needs when deciding whether to approve someone again.
-       *
-       * Admitted on exactly the evidence the removal itself needs, and no more. A client cannot
-       * write a removal that did not happen, because the proof documents have to be genuinely
-       * absent for this to pass.
+       * The cooldown is checked here too, not only on the `apps` write below: this is the half
+       * that actually lands in somebody else's mailbox, and reading `lastBroadcastAt` against the
+       * pre-batch snapshot is what stops a client from writing the twelve events first and the
+       * timestamp bump after, hoping the check would only ever see its own side of the batch.
        */
       allow create: if signedIn()
-        && request.resource.data.type == TYPE_REMOVED_MISSED()
+        && request.resource.data.type == TYPE_OWNER_BROADCAST()
         && request.resource.data.actorUid == request.auth.uid
         && request.resource.data.uid is string
         && request.resource.data.uid != request.auth.uid
         && inGroup(request.resource.data.groupId)
-        && appData(request.resource.data.byAppId).ownerUid == request.auth.uid
-        && appData(request.resource.data.byAppId).groupId == request.resource.data.groupId
-        && appData(request.resource.data.appId).ownerUid == request.resource.data.uid
-        && missedTwo(
-             request.resource.data.byAppId,
-             request.resource.data.uid,
-             placedAtOf(request.resource.data.appId),
+        && appData(request.resource.data.appId).ownerUid == request.auth.uid
+        && appData(request.resource.data.appId).groupId == request.resource.data.groupId
+        && request.resource.data.uid in
              get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
-               .data.startDate,
-             runDaysOf(
-               get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data
-             ),
-             graceOf(
-               get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data
-             )
-           );
+               .data.memberUids
+        && request.time.toMillis() - lastBroadcastAtOf(request.resource.data.appId)
+             >= BROADCAST_COOLDOWN_MS();
+
+      /**
+       * A tester telling an app's owner that feedback is waiting for them — see Repo.kt's
+       * submitFeedback, which writes one of these in the same batch as the feedback document
+       * itself. No cooldown: the feedback collection's own once-a-day-per-app shape is already
+       * what keeps this from repeating, and this rule does not need to re-derive that.
+       */
+      allow create: if signedIn()
+        && request.resource.data.type == TYPE_FEEDBACK()
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.uid is string
+        && request.resource.data.uid != request.auth.uid
+        && inGroup(request.resource.data.groupId)
+        && appData(request.resource.data.appId).ownerUid == request.resource.data.uid
+        && appData(request.resource.data.appId).groupId == request.resource.data.groupId;
 
       /**
        * Never edited. Erased only as part of erasing what it is about.
@@ -665,6 +777,39 @@ service cloud.firestore {
        *
        * The screenshot itself lives in Drive and is not reached from here. Deleting the document
        * removes the day from every grid and every count; the file stays where it was uploaded.
+       */
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * A tester's own note about an app — a rough edge, a typo, something worth the owner hearing
+     * that isn't the app being broken outright. See Repo.submitFeedback and Feedback in Models.kt.
+     *
+     * Same shape as `proofs` on purpose, including why: a `feedbackId` query is one document, so
+     * the integrity check happens on the write rather than being re-proven on every read.
+     *
+     * Document ids are {appId}__{testerUid}__{runStartedAt}__{day}, so a second note the same day
+     * overwrites rather than piling up — the same reasoning `proofs` already gives.
+     */
+    match /feedback/{feedbackId} {
+      allow read: if isAdmin()
+        || (signedIn() && request.auth.uid == resource.data.testerUid)
+        || (signedIn() && request.auth.uid == resource.data.ownerUid);
+
+      allow create, update: if isAdmin() || (
+        signedIn()
+        && request.auth.uid == request.resource.data.testerUid
+        && inGroup(request.resource.data.groupId)
+        && request.resource.data.ownerUid == appData(request.resource.data.appId).ownerUid
+        && request.resource.data.ownerUid != request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000
+      );
+
+      /**
+       * An admin, same as `proofs`: not the tester who wrote it, and not the owner it's about —
+       * the point of a note the owner cannot make disappear is lost the moment they can.
        */
       allow delete: if isAdmin();
     }

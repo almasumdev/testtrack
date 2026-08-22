@@ -4,7 +4,7 @@ import {
   assertSucceeds,
   assertFails,
 } from '@firebase/rules-unit-testing'
-import { doc, getDoc, setDoc, updateDoc, writeBatch, runTransaction } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore'
 
 const DAY = 86400000
 const RULES = fs.readFileSync(process.argv[2] ?? new URL("../firestore.rules", import.meta.url), 'utf8')
@@ -21,7 +21,7 @@ const GROUP = 'g1'
 const MY_APP = 'com.me.app'
 const TARGET_APP = 'com.target.app'
 
-// Day 3 of the run: days 0, 1 and 2 are finished, so days 1 and 2 are the pair a removal rests on.
+// Day 3 of the run: days 0, 1 and 2 are finished, so days 1 and 2 are the pair a flag rests on.
 const START = Date.now() - 3 * DAY - 3600_000
 const PLACED = START - 3600_000
 
@@ -62,19 +62,10 @@ async function seed(proofs = [], group = {}) {
   })
 }
 
-// The two halves of an eviction, exactly as Repo.evict writes them.
-function evictGroupWrite(db, { byUid = ME, byAppId = MY_APP, target = TARGET, targetApp = TARGET_APP } = {}) {
-  return updateDoc(doc(db, 'groups', GROUP), {
-    memberUids: [ME, TARGET].filter((u) => u !== target),
-    appIds: [MY_APP, TARGET_APP].filter((a) => a !== targetApp),
-    lastEviction: { uid: target, appId: targetApp, byUid, byAppId, day: 3, at: Date.now() },
-  })
-}
-
-function evictAppWrite(db, { byAppId = MY_APP, targetApp = TARGET_APP } = {}) {
+// A flag, exactly as Repo.flagAtRisk writes it.
+function flagWrite(db, { byAppId = MY_APP, targetApp = TARGET_APP, extra = {} } = {}) {
   return updateDoc(doc(db, 'apps', targetApp), {
-    groupId: '', status: 'pending', placedAt: 0,
-    unplacedByAppId: byAppId, unplacedAt: Date.now(),
+    flaggedAt: Date.now(), flaggedByAppId: byAppId, ...extra,
   })
 }
 
@@ -82,91 +73,73 @@ const as = (uid) => env.authenticatedContext(uid).firestore()
 
 console.log('\nTwo missed days, by the owner of the app that went unopened')
 await seed([{ app: MY_APP, uid: TARGET, day: 0 }])
-await check('group half is allowed', () => assertSucceeds(evictGroupWrite(as(ME))))
-await check('app half is allowed', () => assertSucceeds(evictAppWrite(as(ME))))
-
-console.log('\nBoth halves at once, the way Repo.evict actually writes them')
-await seed([{ app: MY_APP, uid: TARGET, day: 0 }])
-await check('the batch is allowed', () => assertSucceeds((async () => {
-  const db = as(ME)
-  const batch = writeBatch(db)
-  batch.update(doc(db, 'groups', GROUP), {
-    memberUids: [ME], appIds: [MY_APP],
-    lastEviction: { uid: TARGET, appId: TARGET_APP, byUid: ME, byAppId: MY_APP, day: 3, at: Date.now() },
-  })
-  batch.update(doc(db, 'apps', TARGET_APP), {
-    groupId: '', status: 'pending', placedAt: 0, unplacedByAppId: MY_APP, unplacedAt: Date.now(),
-  })
-  await batch.commit()
-})()))
-
-// A batch is all or nothing, so an unjustified half has to take the justified one down with it.
-await seed([{ app: MY_APP, uid: TARGET, day: 2 }])
-await check('a batch with one bad half is refused whole', () => assertFails((async () => {
-  const db = as(ME)
-  const batch = writeBatch(db)
-  batch.update(doc(db, 'groups', GROUP), {
-    memberUids: [ME], appIds: [MY_APP],
-    lastEviction: { uid: TARGET, appId: TARGET_APP, byUid: ME, byAppId: MY_APP, day: 3, at: Date.now() },
-  })
-  batch.update(doc(db, 'apps', TARGET_APP), {
-    groupId: '', status: 'pending', placedAt: 0, unplacedByAppId: MY_APP, unplacedAt: Date.now(),
-  })
-  await batch.commit()
-})()))
+await check('a cohort member may flag another for missing their days', () =>
+  assertSucceeds(flagWrite(as(ME))))
 
 console.log('\nThe member actually turned up')
 await seed([{ app: MY_APP, uid: TARGET, day: 2 }])
-await check('one of the two days covered, group half refused', () => assertFails(evictGroupWrite(as(ME))))
-await check('one of the two days covered, app half refused', () => assertFails(evictAppWrite(as(ME))))
+await check('one of the two days covered, refused', () => assertFails(flagWrite(as(ME))))
 
 await seed([{ app: MY_APP, uid: TARGET, day: 1 }])
-await check('the older day covered, group half refused', () => assertFails(evictGroupWrite(as(ME))))
+await check('the older day covered, still refused', () => assertFails(flagWrite(as(ME))))
 
 console.log('\nWho is asking')
 await seed()
-await check('an outsider cannot evict', () => assertFails(evictGroupWrite(as(OUTSIDER))))
-await check('the target cannot evict themselves out of trouble', () =>
-  assertFails(evictGroupWrite(as(TARGET), { byUid: TARGET, byAppId: MY_APP })))
-await check('cannot claim someone else\'s app as the missed one', () =>
-  assertFails(evictGroupWrite(as(TARGET), { byUid: TARGET, byAppId: MY_APP, target: ME, targetApp: MY_APP })))
+await check('an outsider cannot flag anyone', () => assertFails(flagWrite(as(OUTSIDER))))
+await check('cannot claim an app you don\'t own noticed', () =>
+  assertFails(flagWrite(as(TARGET), { targetApp: MY_APP, byAppId: MY_APP })))
 
-console.log('\nWhat else the opening might let through')
+console.log('\nWhat else the write might let through')
 await seed()
-await check('cannot rename the group while evicting', () =>
+await check('cannot smuggle another field in alongside the flag', () =>
+  assertFails(flagWrite(as(ME), { extra: { name: 'Renamed' } })))
+await check('cannot place or unplace through it', () =>
+  assertFails(flagWrite(as(ME), { extra: { groupId: '' } })))
+await check('cannot undo a flag, only make one', () =>
+  assertFails(updateDoc(doc(as(ME), 'apps', TARGET_APP), { flaggedAt: 0, flaggedByAppId: MY_APP })))
+await check('cannot claim somebody else did the checking', () =>
+  assertFails(flagWrite(as(ME), { extra: { flaggedByAppId: TARGET_APP } })))
+
+console.log('\nA member can no longer evict, hard or soft — both capabilities are gone')
+// The two writes Repo.evict used to make in one transaction: dropping the member from the group,
+// and sending their app back to the queue. Nothing writes either any more, and these are the
+// regression guard that says so — the same two missed days that flag an app on the block above
+// no longer clear either of these, even though every fact in the write is genuine.
+await seed([{ app: MY_APP, uid: TARGET, day: 0 }])
+await check('the group half of an old-style eviction is refused', () =>
   assertFails(updateDoc(doc(as(ME), 'groups', GROUP), {
-    name: 'Hijacked', memberUids: [ME], appIds: [MY_APP],
+    memberUids: [ME], appIds: [MY_APP],
     lastEviction: { uid: TARGET, appId: TARGET_APP, byUid: ME, byAppId: MY_APP, day: 3, at: Date.now() },
   })))
-await check('cannot restart the clock while evicting', () =>
-  assertFails(updateDoc(doc(as(ME), 'groups', GROUP), {
-    startDate: Date.now(), memberUids: [ME], appIds: [MY_APP],
-    lastEviction: { uid: TARGET, appId: TARGET_APP, byUid: ME, byAppId: MY_APP, day: 3, at: Date.now() },
-  })))
-await check('cannot add a member while evicting', () =>
-  assertFails(updateDoc(doc(as(ME), 'groups', GROUP), {
-    memberUids: [ME, 'uid-smuggled'], appIds: [MY_APP],
-    lastEviction: { uid: TARGET, appId: TARGET_APP, byUid: ME, byAppId: MY_APP, day: 3, at: Date.now() },
-  })))
-await check('a plain member write with no eviction is still refused', () =>
-  assertFails(updateDoc(doc(as(ME), 'groups', GROUP), { name: 'Renamed' })))
-await check('the app half cannot place an app', () =>
+await check('the app half — sending it back to the queue — is refused too', () =>
   assertFails(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
-    groupId: 'other-group', status: 'assigned', placedAt: Date.now(), unplacedByAppId: MY_APP,
-  })))
-await check('the app half cannot change hands', () =>
-  assertFails(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
-    groupId: '', status: 'pending', placedAt: 0, ownerUid: ME, unplacedByAppId: MY_APP,
+    groupId: '', status: 'pending', placedAt: 0, unplacedByAppId: MY_APP, unplacedAt: Date.now(),
   })))
 
-console.log('\nRemoval is admin-only, in both directions')
+// The write Repo.softRemove used to make, on its own, in one document. This is the one an
+// account still running yesterday's build would actually attempt — the rules are what stop it,
+// not whatever the client thinks it's doing, so this has to be proved against the write itself
+// rather than assumed from deleting the Kotlin that used to send it.
+await check('an old build\'s own self-removal write is refused too', () =>
+  assertFails(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
+    removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: MY_APP,
+  })))
+
+console.log('\nA second device reaching the same verdict has nothing left to do')
+await seed()
+await flagWrite(as(ME))
+await check('a second flag on the same app is refused', () => assertFails(flagWrite(as(ME))))
+
+console.log('\nRemoving, flagging and reinstating are all admin-only to undo or fake')
 {
   await env.clearFirestore()
   await env.withSecurityRulesDisabled(async (ctx) => {
     await setDoc(doc(ctx.firestore(), 'apps', MY_APP), {
       id: MY_APP, ownerUid: ME, ownerEmail: 'me@x.com', name: 'Mine',
       packageName: MY_APP, groupId: GROUP, status: 'assigned',
-      submittedAt: PLACED, placedAt: PLACED, removed: true, removedAt: PLACED, removedReason: '',
+      submittedAt: PLACED, placedAt: PLACED,
+      removed: true, removedAt: PLACED, removedReason: '',
+      flaggedAt: PLACED, flaggedByAppId: TARGET_APP,
     })
   })
 
@@ -181,53 +154,24 @@ console.log('\nRemoval is admin-only, in both directions')
     assertFails(updateDoc(doc(as(ME), 'apps', MY_APP), { removedAt: 0 })))
   await check('nor the reason it gives', () =>
     assertFails(updateDoc(doc(as(ME), 'apps', MY_APP), { removedReason: 'nothing to see here' })))
+  await check('an owner cannot clear their own flag', () =>
+    assertFails(updateDoc(doc(as(ME), 'apps', MY_APP), { flaggedAt: 0, flaggedByAppId: '' })))
+  await check('nor backdate their own reinstatement', () =>
+    assertFails(updateDoc(doc(as(ME), 'apps', MY_APP), { reinstatedAt: Date.now() })))
 
-  // Three keys are refused, not every write. An owner still owns the rest of their document, and
+  // Six keys are refused, not every write. An owner still owns the rest of their document, and
   // closing this by taking that away would be the worse trade.
   await check('but still owns the rest of the document', () =>
     assertSucceeds(updateDoc(doc(as(ME), 'apps', MY_APP), { name: 'Renamed' })))
 }
 
-console.log('\nAutomatic removal takes the app out of testing, not out of the group')
-{
-  await env.clearFirestore()
-  await seed([])                       // nobody has reported anything, so TARGET has missed
-
-  const soft = (as_, extra = {}) => updateDoc(doc(as_, 'apps', TARGET_APP), {
-    removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: MY_APP, ...extra,
-  })
-
-  await check('a cohort member may take a missing app out of testing', () =>
-    assertSucceeds(soft(as(ME))))
-  await check('an outsider may not', () =>
-    assertFails(soft(as(OUTSIDER))))
-
-  // The group is untouched by design. This is the whole difference between the two removals, so
-  // it is worth a test that says so rather than an absence nobody notices.
-  await check('and cannot drop the member while doing it', () =>
-    assertFails(updateDoc(doc(as(ME), 'groups', GROUP), { memberUids: [ME], appIds: [MY_APP] })))
-
-  await check('cannot smuggle another field alongside', () =>
-    assertFails(soft(as(ME), { name: 'Renamed' })))
-  await check('cannot place or unplace through it', () =>
-    assertFails(soft(as(ME), { groupId: '' })))
-  await check('cannot undo a removal, only make one', () =>
-    assertFails(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
-      removed: false, removedByAppId: MY_APP,
-    })))
-  await check('cannot claim somebody else did the checking', () =>
-    assertFails(soft(as(ME), { removedByAppId: TARGET_APP })))
-}
-
 {
   await env.clearFirestore()
   await seed([])
-  // Removing your own app cannot help anybody, and it would take them out of testing without an
-  // admin ever hearing about it.
-  await check('nobody may take their own app out of testing', () =>
-    assertFails(updateDoc(doc(as(TARGET), 'apps', TARGET_APP), {
-      removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: TARGET_APP,
-    })))
+  // Flagging your own app cannot help you — nobody would be testing it either way — but it
+  // would tell an admin something false about who noticed.
+  await check('nobody may flag their own app', () =>
+    assertFails(flagWrite(as(TARGET), { targetApp: TARGET_APP, byAppId: TARGET_APP })))
 }
 
 {
@@ -235,10 +179,8 @@ console.log('\nAutomatic removal takes the app out of testing, not out of the gr
   // TARGET opening MY_APP is what proves they turned up. The other direction is me testing
   // them, which says nothing about whether they did their days.
   await seed([{ app: MY_APP, uid: TARGET, day: 1 }, { app: MY_APP, uid: TARGET, day: 2 }])
-  await check('somebody who has been reporting cannot be removed', () =>
-    assertFails(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
-      removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: MY_APP,
-    })))
+  await check('somebody who has been reporting cannot be flagged', () =>
+    assertFails(flagWrite(as(ME))))
 }
 
 
@@ -246,26 +188,18 @@ console.log('\nOpening days an admin excused are owed by nobody')
 {
   // START is three days back, so today is day 3 and days 2 and 1 would ordinarily be judged.
   await seed([], { graceDays: 2 })
-  await check('a removal inside the excused days is refused', () =>
-    assertFails(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
-      removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: MY_APP,
-    })))
+  await check('a flag inside the excused days is refused', () => assertFails(flagWrite(as(ME))))
 
   // Same group, same absences, nothing excused. Without this the test above proves only that
   // something refused it, not that the excusing did.
   await seed([], { graceDays: 0 })
-  await check('and allowed once nothing is excused', () =>
-    assertSucceeds(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
-      removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: MY_APP,
-    })))
+  await check('and allowed once nothing is excused', () => assertSucceeds(flagWrite(as(ME))))
 
   // Groups written before any of this have no graceDays at all, and have to carry on behaving as
   // they always did rather than erroring their way into a refusal.
   await seed([])
   await check('a group with no graceDays field behaves as it always did', () =>
-    assertSucceeds(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
-      removed: true, removedAt: Date.now(), removedReason: '', removedByAppId: MY_APP,
-    })))
+    assertSucceeds(flagWrite(as(ME))))
 }
 
 
@@ -288,7 +222,7 @@ console.log('\nToo early in the run to judge anyone')
       groupId: GROUP, status: 'assigned', submittedAt: runStart - 1000, placedAt: runStart - 1000,
     })
   })
-  await check('day 1, no two finished days yet, refused', () => assertFails(evictGroupWrite(as(ME))))
+  await check('day 1, no two finished days yet, refused', () => assertFails(flagWrite(as(ME))))
 }
 
 console.log('\nPlaced mid-run, so the earlier days were never theirs to miss')
@@ -310,7 +244,7 @@ console.log('\nPlaced mid-run, so the earlier days were never theirs to miss')
       groupId: GROUP, status: 'assigned', submittedAt: PLACED, placedAt: START + 2 * DAY + 1000,
     })
   })
-  await check('a member who joined on day 2 is safe on day 3', () => assertFails(evictGroupWrite(as(ME))))
+  await check('a member who joined on day 2 is safe on day 3', () => assertFails(flagWrite(as(ME))))
 }
 
 console.log('\nNo placement date recorded, so nothing can be proved')
@@ -331,62 +265,341 @@ console.log('\nNo placement date recorded, so nothing can be proved')
       groupId: GROUP, status: 'assigned', submittedAt: PLACED,
     })
   })
-  await check('legacy app with no placedAt is refused', () => assertFails(evictGroupWrite(as(ME))))
+  await check('legacy app with no placedAt is refused', () => assertFails(flagWrite(as(ME))))
 }
 
 console.log('\nRun length is an admin decision')
 await seed([{ app: MY_APP, uid: TARGET, day: 0 }])
-await check('a member cannot extend the run while evicting', () =>
-  assertFails(updateDoc(doc(as(ME), 'groups', GROUP), {
-    memberUids: [ME], appIds: [MY_APP], runDays: 30,
-    lastEviction: { uid: TARGET, appId: TARGET_APP, byUid: ME, byAppId: MY_APP, day: 3, at: Date.now() },
-  })))
-
-// An extended run is still a run, so removals carry on inside it rather than stopping at day 14.
-await env.withSecurityRulesDisabled(async (ctx) => {
-  await setDoc(doc(ctx.firestore(), 'groups', GROUP), {
-    name: 'Group A', memberUids: [ME, TARGET], appIds: [MY_APP, TARGET_APP],
-    startDate: START, status: 'running', runDays: 21,
-  })
-})
-await check('an extended run still removes', () => assertSucceeds(evictGroupWrite(as(ME))))
+await env.withSecurityRulesDisabled((ctx) =>
+  updateDoc(doc(ctx.firestore(), 'groups', GROUP), { runDays: 21 }))
+// An extended run is still a run, so flags carry on inside it rather than stopping at day 14.
+await check('an extended run still flags', () => assertSucceeds(flagWrite(as(ME))))
 
 // And past the end of one, nothing is owed, so nothing can be missed.
-await env.withSecurityRulesDisabled(async (ctx) => {
-  await setDoc(doc(ctx.firestore(), 'groups', GROUP), {
-    name: 'Group A', memberUids: [ME, TARGET], appIds: [MY_APP, TARGET_APP],
-    startDate: START, status: 'running', runDays: 2,
+await env.withSecurityRulesDisabled((ctx) =>
+  updateDoc(doc(ctx.firestore(), 'groups', GROUP), { runDays: 2 }))
+await check('a finished run flags nobody', () => assertFails(flagWrite(as(ME))))
+
+console.log('\nReinstating gives a genuine fresh start, not an invitation to re-flag on the spot')
+{
+  // Same two missed days that would ordinarily flag TARGET — see the very first block above.
+  await seed([])
+  await env.withSecurityRulesDisabled((ctx) =>
+    updateDoc(doc(ctx.firestore(), 'apps', TARGET_APP), { reinstatedAt: Date.now() }))
+  await check('the same two days do not flag again once reinstated', () =>
+    assertFails(flagWrite(as(ME))))
+
+  // An app with no reinstatedAt at all has to behave exactly as it did before this existed.
+  await seed([])
+  await check('an app never reinstated behaves as it always did', () =>
+    assertSucceeds(flagWrite(as(ME))))
+
+  // A custom timeline: today is day 5, TARGET was reinstated partway through day 2, and has
+  // missed the two days since — proving reinstatement only forgives the days before it, not
+  // every day forever after.
+  await env.clearFirestore()
+  const runStart = Date.now() - 5 * DAY - 3600_000
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore()
+    await setDoc(doc(db, 'groups', GROUP), {
+      name: 'Group A', memberUids: [ME, TARGET], appIds: [MY_APP, TARGET_APP],
+      startDate: runStart, status: 'running',
+    })
+    await setDoc(doc(db, 'apps', MY_APP), {
+      id: MY_APP, ownerUid: ME, ownerEmail: 'me@x.com', name: 'Mine', packageName: MY_APP,
+      groupId: GROUP, status: 'assigned', submittedAt: runStart - 1000, placedAt: runStart - 1000,
+    })
+    await setDoc(doc(db, 'apps', TARGET_APP), {
+      id: TARGET_APP, ownerUid: TARGET, ownerEmail: 't@x.com', name: 'Theirs', packageName: TARGET_APP,
+      groupId: GROUP, status: 'assigned', submittedAt: runStart - 1000, placedAt: runStart - 1000,
+      reinstatedAt: runStart + 2 * DAY + 1000,
+    })
   })
-})
-await check('a finished run removes nobody', () => assertFails(evictGroupWrite(as(ME))))
+  await check('two fresh misses after reinstatement still flag', () => assertSucceeds(flagWrite(as(ME))))
+}
 
-console.log('\nThe audit record an automatic removal writes for itself')
+console.log('\nReporting an app that would not open, or broke, before an admin hears any other way')
+{
+  // Exactly as Repo.reportProblem writes it.
+  const report = (db, appId, over = {}) => updateDoc(doc(db, 'apps', appId), {
+    reportedAt: Date.now(), reportedBy: ME, reportedReason: 'Install fails at the sign-in step.',
+    ...over,
+  })
+
+  await seed()
+  await check('a cohort member may report an app they are testing', () =>
+    assertSucceeds(report(as(ME), TARGET_APP)))
+
+  await seed()
+  await check('the owner may not report their own app', () =>
+    assertFails(report(as(TARGET), TARGET_APP, { reportedBy: TARGET })))
+
+  await seed()
+  await check('an outsider may not report an app outside their cohort', () =>
+    assertFails(report(as(OUTSIDER), TARGET_APP, { reportedBy: OUTSIDER })))
+
+  await seed()
+  await check('cannot claim somebody else filed the report', () =>
+    assertFails(report(as(ME), TARGET_APP, { reportedBy: TARGET })))
+
+  await seed()
+  await check('cannot smuggle another field in alongside a report', () =>
+    assertFails(report(as(ME), TARGET_APP, { name: 'Renamed' })))
+
+  await seed()
+  await check('a reason past the cap is refused', () =>
+    assertFails(report(as(ME), TARGET_APP, { reportedReason: 'x'.repeat(501) })))
+
+  // Already reported once — set directly, the way a prior report would have landed.
+  const reseedReport = () => env.withSecurityRulesDisabled((ctx) =>
+    updateDoc(doc(ctx.firestore(), 'apps', TARGET_APP), {
+      reportedAt: Date.now() - DAY, reportedBy: ME, reportedReason: 'Already noted.',
+    }))
+  await reseedReport()
+  await check('a second report cannot overwrite the first', () =>
+    assertFails(report(as(ME), TARGET_APP)))
+
+  // Exactly as Repo.clearMyReport writes it.
+  const clearReport = (db, appId, over = {}) => updateDoc(doc(db, 'apps', appId), {
+    reportedAt: 0, reportedBy: '', reportedReason: '', ...over,
+  })
+
+  await check('an outsider cannot clear somebody else\'s report', () =>
+    assertFails(clearReport(as(OUTSIDER), TARGET_APP)))
+  await check('the owner may not clear a report filed against their own app', () =>
+    assertFails(clearReport(as(TARGET), TARGET_APP)))
+  await check('a partial clear that leaves reportedBy set is refused', () =>
+    assertFails(updateDoc(doc(as(ME), 'apps', TARGET_APP), { reportedAt: 0 })))
+  await check('the reporter may take their own report back', () =>
+    assertSucceeds(clearReport(as(ME), TARGET_APP)))
+
+  await reseedReport()
+  await check('cannot clear a report while smuggling another field in', () =>
+    assertFails(clearReport(as(ME), TARGET_APP, { name: 'Renamed' })))
+  await check('cannot "clear" while actually leaving a reason behind', () =>
+    assertFails(clearReport(as(ME), TARGET_APP, { reportedReason: 'still here' })))
+}
+
+console.log('\nA tester leaving day-one feedback on an app that otherwise went fine')
+{
+  const DAY_INDEX = 3
+  const feedbackId = (appId, uid) => `${appId}__${uid}__${START}__${DAY_INDEX}`
+  // Exactly as Repo.submitFeedback writes it.
+  const giveFeedback = (db, appId, uid, ownerUid, over = {}) => setDoc(doc(db, 'feedback', feedbackId(appId, uid)), {
+    appId, groupId: GROUP, ownerUid, testerUid: uid, day: DAY_INDEX, runStartedAt: START,
+    text: 'The settings icon is hard to find.', createdAt: Date.now(),
+    ...over,
+  })
+
+  await seed()
+  await check('a cohort member may leave feedback on an app they are testing', () =>
+    assertSucceeds(giveFeedback(as(ME), TARGET_APP, ME, TARGET)))
+
+  await seed()
+  await check('the owner may not leave feedback on their own app', () =>
+    assertFails(giveFeedback(as(TARGET), TARGET_APP, TARGET, TARGET)))
+
+  await seed()
+  await check('an outsider may not leave feedback outside their cohort', () =>
+    assertFails(giveFeedback(as(OUTSIDER), TARGET_APP, OUTSIDER, TARGET)))
+
+  await seed()
+  await check('cannot claim somebody else left the feedback', () =>
+    assertFails(giveFeedback(as(ME), TARGET_APP, TARGET, TARGET)))
+
+  await seed()
+  await check('cannot put the wrong owner on the note', () =>
+    assertFails(giveFeedback(as(ME), TARGET_APP, ME, ME)))
+
+  await seed()
+  await check('empty feedback is refused', () =>
+    assertFails(giveFeedback(as(ME), TARGET_APP, ME, TARGET, { text: '' })))
+
+  await seed()
+  await check('feedback past the cap is refused', () =>
+    assertFails(giveFeedback(as(ME), TARGET_APP, ME, TARGET, { text: 'x'.repeat(1001) })))
+
+  await seed()
+  await check('a second note the same day overwrites rather than piling up', async () => {
+    await giveFeedback(as(ME), TARGET_APP, ME, TARGET)
+    await assertSucceeds(giveFeedback(as(ME), TARGET_APP, ME, TARGET, { text: 'Actually, never mind.' }))
+  })
+
+  await seed()
+  await giveFeedback(as(ME), TARGET_APP, ME, TARGET)
+  await check('the tester who wrote it may read it back', () =>
+    assertSucceeds(getDoc(doc(as(ME), 'feedback', feedbackId(TARGET_APP, ME)))))
+  await check('the app owner may read it', () =>
+    assertSucceeds(getDoc(doc(as(TARGET), 'feedback', feedbackId(TARGET_APP, ME)))))
+  await check('an outsider may not read it', () =>
+    assertFails(getDoc(doc(as(OUTSIDER), 'feedback', feedbackId(TARGET_APP, ME)))))
+  await check('the tester cannot delete their own note', () =>
+    assertFails(deleteDoc(doc(as(ME), 'feedback', feedbackId(TARGET_APP, ME)))))
+  await check('the owner cannot delete a note about their app', () =>
+    assertFails(deleteDoc(doc(as(TARGET), 'feedback', feedbackId(TARGET_APP, ME)))))
+}
+
+console.log('\nA reported app is judged by nobody until the report is cleared')
+{
+  // TARGET has missed both judged days on MY_APP, which would ordinarily allow ME to flag them —
+  // see the very first block in this file. The only difference here is that MY_APP itself carries
+  // an open report.
+  await seed([])
+  await env.withSecurityRulesDisabled((ctx) =>
+    updateDoc(doc(ctx.firestore(), 'apps', MY_APP), {
+      reportedAt: Date.now(), reportedBy: TARGET, reportedReason: 'Crashes on launch.',
+    }))
+  await check('the flag this would otherwise allow is refused', () =>
+    assertFails(flagWrite(as(ME))))
+
+  // Clearing the report — an admin-only write, done directly here the way the console does it —
+  // puts the ordinary flag back in reach without anything else about the day changing.
+  await env.withSecurityRulesDisabled((ctx) =>
+    updateDoc(doc(ctx.firestore(), 'apps', MY_APP), { reportedAt: 0, reportedBy: '', reportedReason: '' }))
+  await check('and clearing it restores the ordinary flag', () =>
+    assertSucceeds(flagWrite(as(ME))))
+}
+
+console.log('\nAn owner broadcasting "update available" to one member of their cohort')
+{
+  const broadcastEvent = (over = {}) => ({
+    uid: TARGET, type: 'owner_broadcast', groupId: GROUP, appId: MY_APP,
+    actorUid: ME, title: 'Mine has an update', body: 'Please update and keep testing.',
+    createdAt: Date.now(), ...over,
+  })
+  const bumpBroadcast = (db, appId = MY_APP, at = Date.now()) =>
+    updateDoc(doc(db, 'apps', appId), { lastBroadcastAt: at })
+
+  await seed()
+  await check('the owner may tell a cohort member', () =>
+    assertSucceeds(setDoc(doc(as(ME), 'events', 'bc1'), broadcastEvent())))
+  await check('and may advance their own app\'s cooldown', () =>
+    assertSucceeds(bumpBroadcast(as(ME))))
+
+  await seed()
+  await check('nobody may broadcast about somebody else\'s app', () =>
+    assertFails(setDoc(doc(as(TARGET), 'events', 'bc2'), broadcastEvent({ actorUid: TARGET }))))
+  await check('an outsider may not broadcast into the group at all', () =>
+    assertFails(setDoc(doc(as(OUTSIDER), 'events', 'bc3'),
+      broadcastEvent({ actorUid: OUTSIDER }))))
+  await check('cannot address a broadcast to somebody outside the cohort', () =>
+    assertFails(setDoc(doc(as(ME), 'events', 'bc4'), broadcastEvent({ uid: OUTSIDER }))))
+  await check('cannot broadcast to yourself', () =>
+    assertFails(setDoc(doc(as(ME), 'events', 'bc5'), broadcastEvent({ uid: ME }))))
+  await check('no other event type reaches this rule', () =>
+    assertFails(setDoc(doc(as(ME), 'events', 'bc6'), broadcastEvent({ type: 'assigned' }))))
+  await check('the app-side bump is refused for somebody else\'s app', () =>
+    assertFails(bumpBroadcast(as(TARGET), MY_APP)))
+  await check('cannot smuggle another field in alongside the bump', () =>
+    assertFails(updateDoc(doc(as(ME), 'apps', MY_APP), { lastBroadcastAt: Date.now(), name: 'Renamed' })))
+
+  console.log('\n...and cannot repeat within the cooldown')
+  await seed()
+  await env.withSecurityRulesDisabled((ctx) =>
+    updateDoc(doc(ctx.firestore(), 'apps', MY_APP), { lastBroadcastAt: Date.now() - DAY }))
+  await check('a second broadcast inside two days is refused', () =>
+    assertFails(setDoc(doc(as(ME), 'events', 'bc7'), broadcastEvent())))
+  await check('and so is bumping the timestamp again on its own', () =>
+    assertFails(bumpBroadcast(as(ME))))
+
+  await env.withSecurityRulesDisabled((ctx) =>
+    updateDoc(doc(ctx.firestore(), 'apps', MY_APP), { lastBroadcastAt: Date.now() - 3 * DAY }))
+  await check('but a broadcast past two days is allowed again', () =>
+    assertSucceeds(setDoc(doc(as(ME), 'events', 'bc8'), broadcastEvent())))
+
+  await seed()
+  await check('a group with no prior broadcast behaves as day zero, not as blocked', () =>
+    assertSucceeds(setDoc(doc(as(ME), 'events', 'bc9'), broadcastEvent())))
+}
+
+console.log('\nA tester telling an app\'s owner that feedback is waiting for them')
+{
+  const feedbackEvent = (over = {}) => ({
+    uid: ME, type: 'feedback', groupId: GROUP, appId: MY_APP,
+    actorUid: TARGET, title: 'New feedback on Mine', body: 'The settings icon is hard to find.',
+    createdAt: Date.now(), ...over,
+  })
+
+  await seed()
+  await check('a tester may tell the owner feedback is waiting', () =>
+    assertSucceeds(setDoc(doc(as(TARGET), 'events', 'fb1'), feedbackEvent())))
+  await check('an owner cannot notify themselves about their own app', () =>
+    assertFails(setDoc(doc(as(ME), 'events', 'fb2'), feedbackEvent({ actorUid: ME }))))
+  await check('an outsider may not notify into the group at all', () =>
+    assertFails(setDoc(doc(as(OUTSIDER), 'events', 'fb3'),
+      feedbackEvent({ actorUid: OUTSIDER }))))
+  await check('cannot claim somebody else sent it', () =>
+    assertFails(setDoc(doc(as(TARGET), 'events', 'fb4'), feedbackEvent({ actorUid: ME }))))
+  await check('cannot address it to somebody who doesn\'t own the app', () =>
+    assertFails(setDoc(doc(as(TARGET), 'events', 'fb5'), feedbackEvent({ uid: TARGET }))))
+  await check('no other event type reaches this rule', () =>
+    assertFails(setDoc(doc(as(TARGET), 'events', 'fb6'), feedbackEvent({ type: 'assigned' }))))
+}
+
+console.log('\nA member skipping one app on their own, once an admin has allowed it')
+{
+  const skipDoc = (appId = TARGET_APP, uid = ME) => ({ appId, uid, groupId: GROUP, skippedAt: Date.now() })
+  const skip = (db, appId = TARGET_APP, uid = ME) =>
+    setDoc(doc(db, 'skips', `${appId}__${uid}`), skipDoc(appId, uid))
+
+  await seed()
+  await check('not skippable by default: a member may not skip', () => assertFails(skip(as(ME))))
+
+  await env.withSecurityRulesDisabled((ctx) =>
+    updateDoc(doc(ctx.firestore(), 'apps', TARGET_APP), { skippable: true }))
+  await check('but may once the app is marked skippable', () => assertSucceeds(skip(as(ME))))
+  await check('and may un-skip it again', () =>
+    assertSucceeds(deleteDoc(doc(as(ME), 'skips', `${TARGET_APP}__${ME}`))))
+
+  await check('the owner may not skip their own app', () =>
+    assertFails(skip(as(TARGET), TARGET_APP, TARGET)))
+  await check('an outsider may not skip an app outside their cohort', () =>
+    assertFails(skip(as(OUTSIDER), TARGET_APP, OUTSIDER)))
+  await check('cannot claim to be somebody else while skipping', () =>
+    assertFails(setDoc(doc(as(ME), 'skips', `${TARGET_APP}__${TARGET}`), skipDoc(TARGET_APP, TARGET))))
+  await check('the doc id must match app and uid, not just the fields inside it', () =>
+    assertFails(setDoc(doc(as(ME), 'skips', 'not-the-right-id'), skipDoc())))
+
+  await skip(as(ME))
+  await check('an outsider may not un-skip somebody else\'s row', () =>
+    assertFails(deleteDoc(doc(as(OUTSIDER), 'skips', `${TARGET_APP}__${ME}`))))
+  await check('and neither may another cohort member', () =>
+    assertFails(deleteDoc(doc(as(TARGET), 'skips', `${TARGET_APP}__${ME}`))))
+
+  console.log('\n...and a skipped app judges nobody who skipped it')
+  // TARGET has missed both judged days on MY_APP, same setup as the very first block in this file
+  // — the only difference is TARGET has skipped it.
+  await seed([])
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore()
+    await updateDoc(doc(db, 'apps', MY_APP), { skippable: true })
+    await setDoc(doc(db, 'skips', `${MY_APP}__${TARGET}`), skipDoc(MY_APP, TARGET))
+  })
+  await check('the flag this would otherwise allow is refused', () =>
+    assertFails(flagWrite(as(ME))))
+
+  // A skip only ever excuses the member who made it — it must not read as a blanket exemption.
+  await seed([])
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore()
+    await updateDoc(doc(db, 'apps', MY_APP), { skippable: true })
+    await setDoc(doc(db, 'skips', `${MY_APP}__${OUTSIDER}`), skipDoc(MY_APP, OUTSIDER))
+  })
+  await check('but someone else skipping the same app does not excuse this member', () =>
+    assertSucceeds(flagWrite(as(ME))))
+}
+
+console.log('\nA tester can no longer write an automatic-removal record — that capability is gone')
+// This is what Repo.evict used to write for itself, back when a device could evict somebody on
+// the spot. Nothing writes it any more, and this is the regression guard that says so: not an
+// absence nobody notices, a write that is now refused even though every fact in it is genuine.
 await seed([{ app: MY_APP, uid: TARGET, day: 0 }])
-
-const removalEvent = (over = {}) => ({
-  uid: TARGET, type: 'removed_missed', groupId: GROUP, appId: TARGET_APP,
-  byAppId: MY_APP, actorUid: ME, day: 3, createdAt: Date.now(),
-  title: 'Your app was removed from its group', body: 'Two days went by.', ...over,
-})
-
-await check('the evicting owner may record it', () =>
-  assertSucceeds(setDoc(doc(as(ME), 'events', 'ev1'), removalEvent())))
-
-await check('nobody may record a removal for themselves', () =>
-  assertFails(setDoc(doc(as(TARGET), 'events', 'ev2'),
-    removalEvent({ uid: TARGET, actorUid: TARGET }))))
-
-await check('an outsider may not record one', () =>
-  assertFails(setDoc(doc(as(OUTSIDER), 'events', 'ev3'),
-    removalEvent({ actorUid: OUTSIDER }))))
-
-await check('no other event type is admitted from a tester', () =>
-  assertFails(setDoc(doc(as(ME), 'events', 'ev4'),
-    removalEvent({ type: 'assigned' }))))
-
-await seed([{ app: MY_APP, uid: TARGET, day: 2 }])
-await check('a removal that did not happen cannot be recorded', () =>
-  assertFails(setDoc(doc(as(ME), 'events', 'ev5'), removalEvent())))
+await check('the removal event a device used to write for itself is refused', () =>
+  assertFails(setDoc(doc(as(ME), 'events', 'ev1'), {
+    uid: TARGET, type: 'removed_missed', groupId: GROUP, appId: TARGET_APP,
+    byAppId: MY_APP, actorUid: ME, day: 3, createdAt: Date.now(),
+    title: 'Your app was removed from its group', body: 'Two days went by.',
+  })))
 
 console.log('\nBlocking, and the ban nobody may lift for themselves')
 async function seedUser(blocked) {

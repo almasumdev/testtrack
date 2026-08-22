@@ -14,10 +14,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.heightIn
@@ -77,6 +79,31 @@ object Status {
     val missedSoft: Color @Composable get() = LocalStatusColors.current.missedSoft
     val upcoming: Color @Composable get() = LocalStatusColors.current.upcoming
     val neutralSoft: Color @Composable get() = LocalStatusColors.current.neutralSoft
+}
+
+/**
+ * A pull to refresh, in Material's own stock appearance.
+ *
+ * One place for it rather than four, so every screen's gesture looks and feels identical.
+ * [isRefreshing] doubles as the signal for a refresh this screen started on its own — opening it
+ * or coming back to it — not only one the reader pulled for themselves; the indicator is the one
+ * place that state needs to show up, rather than a second one competing with a page's own numbers
+ * for attention.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RefreshBox(
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit
+) {
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        modifier = modifier,
+        content = content
+    )
 }
 
 // ---- structure ---------------------------------------------------------------------------
@@ -480,6 +507,12 @@ fun Working(text: String) {
     }
 }
 
+/** A cooldown in whole hours, or in days once it is a day or more — nobody needs the minutes. */
+fun formatWait(ms: Long): String {
+    val hours = (ms / 3_600_000L).coerceAtLeast(1L)
+    return if (hours < 24) "${hours}h" else "${(hours + 23) / 24}d"
+}
+
 /**
  * Progress as a fixed number of boxes, one per thing to be done.
  *
@@ -704,6 +737,45 @@ fun SkeletonAppList(rows: Int = SKELETON_ROWS) {
 }
 
 /**
+ * An icon, a name, who it belongs to, and the row of actions underneath — the shape TestRow and
+ * MineRow both settle into now that icon size follows the three lines beside it and every action
+ * lives on its own line rather than trailing the title. Its own function rather than a parameter
+ * on [SkeletonAppList]: that one still stands for Home's pending queue and Profile's submissions,
+ * both still the older single-line shape, and widening it in place would make the skeleton wrong
+ * for two screens to fix it for one.
+ *
+ * Three action-chip widths rather than a fixed count per row: real rows show anywhere from one
+ * chip to five, and varying it here is what keeps the skeleton from reading as a promise that
+ * every row is about to look identical.
+ */
+@Composable
+fun SkeletonGroupAppList(rows: Int = SKELETON_ROWS) {
+    val chipCounts = listOf(2, 3, 1, 3, 2)
+    repeat(rows) { i ->
+        if (i > 0) RowDivider()
+        Column(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Skeleton(width = 52.dp, height = 52.dp, corner = 14.dp)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Skeleton(width = title(i), height = 13.dp)
+                    Spacer(Modifier.height(5.dp))
+                    Skeleton(width = meta(i) * 0.7f, height = 11.dp)
+                    Spacer(Modifier.height(4.dp))
+                    Skeleton(width = meta(i + 1), height = 10.dp)
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                repeat(chipCounts[i % chipCounts.size]) { c ->
+                    Skeleton(width = (60 + c * 24).dp, height = 24.dp, corner = 8.dp)
+                }
+            }
+        }
+    }
+}
+
+/**
  * The one dialog shape this app uses.
  *
  * Material's default container is `surfaceContainerHigh`, a grey nothing else here is painted in,
@@ -785,7 +857,10 @@ fun DialogField(
     /** Which key the keyboard offers. Ignored where the field takes more than one line. */
     imeAction: ImeAction = ImeAction.Done,
     /** A floor, for a field that expects a sentence or two rather than a word. */
-    minHeight: Dp = 0.dp
+    minHeight: Dp = 0.dp,
+    /** The field's own cap, shown as "used/max" under it. Not enforced here — the caller already
+     * has to hold typing to the limit, since this only draws what that number already is. */
+    maxLength: Int? = null
 ) {
     Column(Modifier.fillMaxWidth()) {
         Text(
@@ -813,14 +888,25 @@ fun DialogField(
         )
         // Ours rather than the field's own supporting slot, which reserves the height whether or
         // not anything is in it and pushes whatever follows down over nothing.
-        (error ?: supporting)?.let {
+        if (error != null || supporting != null || maxLength != null) {
             Spacer(Modifier.height(6.dp))
-            Text(
-                it,
-                style = MaterialTheme.typography.bodySmall,
-                color = if (error != null) MaterialTheme.colorScheme.error
-                        else MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(Modifier.fillMaxWidth()) {
+                Text(
+                    (error ?: supporting).orEmpty(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (error != null) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                )
+                if (maxLength != null) {
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "${value.length}/$maxLength",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }

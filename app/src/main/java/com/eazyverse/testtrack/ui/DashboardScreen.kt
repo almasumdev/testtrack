@@ -34,8 +34,8 @@ import coil.compose.SubcomposeAsyncImage
 import com.eazyverse.testtrack.data.*
 import kotlinx.coroutines.launch
 
-/** How a tester's day reads. Four states, each with a shape of its own — see [Cell]. */
-enum class DayState { POSTED, SHORT, MISSED, UPCOMING }
+/** How a tester's day reads. Five states, each with a shape of its own — see [Cell]. */
+enum class DayState { POSTED, SHORT, MISSED, UPCOMING, NOT_JOINED, REPORTED }
 
 private val CELL = 26.dp
 private val CELL_GAP = 2.dp
@@ -51,6 +51,12 @@ class DashboardViewModel : ViewModel() {
         private set
     var proofs by mutableStateOf<Map<Pair<String, Int>, Proof>>(emptyMap())
         private set
+    /** Day-one notes testers have left on this app — see [Repo.submitFeedback], newest first. */
+    var feedback by mutableStateOf<List<Feedback>>(emptyList())
+        private set
+    /** Every tester's own [TestApp.placedAt], for [stateOf] to tell "not a member yet" from "missed". */
+    var placedAt by mutableStateOf<Map<String, Long>>(emptyMap())
+        private set
     /**
      * The app, its group, the roster and every proof are all in hand.
      *
@@ -61,14 +67,24 @@ class DashboardViewModel : ViewModel() {
     var ready by mutableStateOf(false)
         private set
 
+    /** A refresh in flight over content already on screen — see [HomeViewModel.refreshing]. */
+    var refreshing by mutableStateOf(false)
+        private set
+
+    /** The reader pulled for this themselves — see [HomeViewModel.pulling]. */
+    var pulling by mutableStateOf(false)
+        private set
+
     var message by mutableStateOf<String?>(null)
 
     val day: Int? get() = group?.dayIndex()
 
-    fun load(appId: String) {
+    fun load(appId: String, fromPull: Boolean = false) {
         showCached(appId)
 
         viewModelScope.launch {
+            refreshing = ready // only worth flagging over content that's already on screen
+            if (fromPull) pulling = true
             runCatching {
                 val found = Repo.app(appId)
                 val cohort = found?.groupId?.let { Repo.group(it) }
@@ -81,19 +97,33 @@ class DashboardViewModel : ViewModel() {
                     if (found == null || cohort == null) emptyMap()
                     else Repo.proofsForApp(appId, found.ownerUid)
                         .associateBy { it.testerUid to it.day }
+                // Each tester's own arrival, so a day before it reads as "not a member yet"
+                // rather than "missed" — see Compliance.firstJudgedDay.
+                val arrivals =
+                    if (cohort == null) emptyMap()
+                    else Repo.appsInGroup(cohort.id).associate { it.ownerUid to it.placedAt }
+                // Best-effort, the same reasoning [roster] already gives: a note that failed to
+                // load is not worth taking the grid down with it.
+                val notes = if (found == null) emptyList() else runCatching {
+                    Repo.feedbackForApp(appId, found.ownerUid)
+                }.getOrDefault(emptyList())
 
                 // Published in one go, after every query has answered — see [ready].
                 app = found
                 group = cohort
                 testers = roster
                 proofs = marks
+                placedAt = arrivals
+                feedback = notes
 
                 found?.let { Cache.put(Cache.app(appId), it) }
                 if (cohort != null) {
                     Cache.put(Cache.group(cohort.id), cohort)
                     Cache.put(Cache.testers(cohort.id), roster)
                     Cache.put(Cache.proofs(appId), marks)
+                    Cache.put(Cache.arrivals(cohort.id), arrivals)
                 }
+                Cache.put(Cache.feedbackFor(appId), notes)
             }.onFailure {
                 message = it.friendly(
                     "We couldn't load this dashboard. Check your connection and try again.",
@@ -101,6 +131,8 @@ class DashboardViewModel : ViewModel() {
                 )
             }
             ready = true
+            refreshing = false
+            pulling = false
         }
     }
 
@@ -111,20 +143,30 @@ class DashboardViewModel : ViewModel() {
         val cohort = Cache.get<TestGroup>(Cache.group(gid)) ?: return
         val roster = Cache.get<List<Tester>>(Cache.testers(gid)) ?: return
         val marks = Cache.get<Map<Pair<String, Int>, Proof>>(Cache.proofs(appId)) ?: return
+        val arrivals = Cache.get<Map<String, Long>>(Cache.arrivals(gid)) ?: return
 
         app = cached
         group = cohort
         testers = roster
         proofs = marks
+        placedAt = arrivals
+        Cache.get<List<Feedback>>(Cache.feedbackFor(appId))?.let { feedback = it }
         ready = true
     }
 
     fun stateOf(uid: String, forDay: Int): DayState {
         val today = day
         val proof = proofs[uid to forDay]
+        val firstJudged = group?.let { Compliance.firstJudgedDay(placedAt[uid] ?: 0L, it.startDate) } ?: 0
+        // All or nothing, the same as Enforcement.enforceOn: while the app carries an open
+        // report nobody could have tested it, so a day with no proof reads as excused rather
+        // than missed for every tester at once, not just the one who filed it.
+        val reported = (app?.reportedAt ?: 0L) > 0L
         return when {
             proof != null && proof.meetsBar -> DayState.POSTED
             proof != null -> DayState.SHORT
+            forDay < firstJudged -> DayState.NOT_JOINED
+            reported && (today == null || forDay < today) -> DayState.REPORTED
             today == null || forDay < today -> DayState.MISSED
             else -> DayState.UPCOMING
         }
@@ -140,7 +182,9 @@ class DashboardViewModel : ViewModel() {
 
     fun behind(): List<Tester> {
         val today = day ?: return emptyList()
-        return testers.filter { stateOf(it.uid, today) != DayState.POSTED }
+        return testers.filter {
+            stateOf(it.uid, today) !in setOf(DayState.POSTED, DayState.NOT_JOINED, DayState.REPORTED)
+        }
     }
 
     /** As wide as this run actually is, which an admin may have extended past [RUN_DAYS]. */
@@ -157,6 +201,9 @@ class DashboardViewModel : ViewModel() {
 @Composable
 fun DashboardScreen(
     appId: String,
+    /** What the caller already knew this app as, shown until [vm]'s own load answers the same
+     *  question — see Routes.DASHBOARD and the note on GroupScreen's title. */
+    appName: String,
     onBack: () -> Unit,
     vm: DashboardViewModel = viewModel()
 ) {
@@ -168,9 +215,8 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    // See the note on GroupScreen's title.
-                    if (!vm.ready) Skeleton(width = 116.dp, height = 19.dp, corner = 6.dp)
-                    else Text(vm.app?.label ?: "Your app", fontWeight = FontWeight.SemiBold)
+                    val label = vm.app?.label?.ifBlank { null } ?: appName.ifBlank { null }
+                    if (label != null) Text(label, fontWeight = FontWeight.SemiBold)
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -183,39 +229,52 @@ fun DashboardScreen(
             )
         }
     ) { padding ->
+        RefreshBox(
+            // Bound to the pull, not the general refresh — see HomeScreen's own note on this.
+            isRefreshing = vm.pulling,
+            onRefresh = { vm.load(appId, fromPull = true) },
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
             when {
-                !vm.ready -> DashboardSkeleton()
+                // A pull gets the same full skeleton a first load does — see HomeScreen's own
+                // note on this.
+                !vm.ready || vm.pulling -> DashboardSkeleton()
 
                 vm.app == null -> Blank(vm.message ?: "This app isn't registered any more.")
                 vm.group == null -> Blank("This app is waiting for an admin to place it in a group.")
 
                 else -> {
                     Headline(vm)
-                    Spacer(Modifier.height(32.dp))
+                    Spacer(Modifier.height(22.dp))
 
                     Reporters(vm) { preview = it }
-                    Spacer(Modifier.height(32.dp))
+                    Spacer(Modifier.height(22.dp))
 
                     Behind(vm)
 
                     SectionLabel("The 14 days")
                     Legend()
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(10.dp))
                     Grid(vm) { tester, proof -> preview = tester to proof }
 
-                    Spacer(Modifier.height(32.dp))
+                    Spacer(Modifier.height(22.dp))
                     PerTester(vm)
 
+                    if (vm.feedback.isNotEmpty()) {
+                        Spacer(Modifier.height(22.dp))
+                        FeedbackList(vm)
+                    }
+
                     vm.message?.let { Failure(it) }
-                    Spacer(Modifier.height(40.dp))
+                    Spacer(Modifier.height(Gutter))
                 }
             }
+        }
         }
     }
 
@@ -398,7 +457,44 @@ private fun Behind(vm: DashboardViewModel) {
             }
         }
     }
-    Spacer(Modifier.height(32.dp))
+    Spacer(Modifier.height(22.dp))
+}
+
+/**
+ * What testers have found worth saying, newest first — see [Feedback] and
+ * [Repo.submitFeedback]. The one place any of it reaches the owner; there is no push for this,
+ * only the console the way every other decision here arrives.
+ */
+@Composable
+private fun FeedbackList(vm: DashboardViewModel) {
+    SectionLabel("Feedback", "${vm.feedback.size}")
+    Rows {
+        vm.feedback.forEachIndexed { index, note ->
+            if (index > 0) RowDivider()
+            val from = vm.testers.firstOrNull { it.uid == note.testerUid }?.shortName ?: "A tester"
+            Column(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        from,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        "Day ${note.day + 1}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    note.text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+    }
 }
 
 /**
@@ -418,6 +514,8 @@ private fun Legend() {
         LegendKey(DayState.SHORT, "under ${Proof.MIN_USAGE_MS / 1000}s")
         LegendKey(DayState.MISSED, "missed")
         LegendKey(DayState.UPCOMING, "to come")
+        LegendKey(DayState.NOT_JOINED, "not joined yet")
+        LegendKey(DayState.REPORTED, "excused")
     }
 }
 
@@ -495,19 +593,22 @@ private fun DayState.spoken() = when (this) {
     DayState.SHORT -> "reported but under ten seconds"
     DayState.MISSED -> "missed"
     DayState.UPCOMING -> "still to come"
+    DayState.NOT_JOINED -> "before they joined"
+    DayState.REPORTED -> "excused while the app is reported"
 }
 
 /**
  * One day for one tester.
  *
- * Fill, outline and a struck-through slash separate the four states without relying on hue, so
- * the grid still reads under colour-vision deficiency, in greyscale, and when printed.
+ * Fill, outline, a struck-through slash and a lone dot separate the five states without relying
+ * on hue, so the grid still reads under colour-vision deficiency, in greyscale, and when printed.
  */
 @Composable
 private fun Cell(state: DayState, size: androidx.compose.ui.unit.Dp) {
     val posted = Status.posted
     val missed = Status.missed
     val upcoming = Status.upcoming
+    val reported = Status.short
 
     Canvas(Modifier.size(size)) {
         val radius = CornerRadius(this.size.minDimension * 0.28f)
@@ -537,6 +638,32 @@ private fun Cell(state: DayState, size: androidx.compose.ui.unit.Dp) {
 
             DayState.UPCOMING ->
                 drawRoundRect(upcoming, cornerRadius = radius)
+
+            // No fill, no slash — this day isn't owed at all, which is a different fact from
+            // "owed and not yet here" (UPCOMING) or "owed and missed" (MISSED). A single faint
+            // dot says "nothing to report here" without reading as either of those.
+            DayState.NOT_JOINED -> {
+                drawRoundRect(
+                    upcoming.copy(alpha = 0.35f), cornerRadius = radius,
+                    style = Stroke(strokeWidth * 0.6f)
+                )
+                drawCircle(upcoming, radius = this.size.minDimension * 0.06f)
+            }
+
+            // A horizontal bar, not MISSED's diagonal slash — this day was never anybody's to
+            // lose. The app itself was the problem, not the tester, so the mark reads as "on
+            // hold" rather than "failed."
+            DayState.REPORTED -> {
+                drawRoundRect(reported.copy(alpha = 0.18f), cornerRadius = radius)
+                val inset = this.size.minDimension * 0.26f
+                drawLine(
+                    color = reported,
+                    start = Offset(inset, this.size.height / 2f),
+                    end = Offset(this.size.width - inset, this.size.height / 2f),
+                    strokeWidth = strokeWidth,
+                    cap = StrokeCap.Round
+                )
+            }
         }
     }
 }

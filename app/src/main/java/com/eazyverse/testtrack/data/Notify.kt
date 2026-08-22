@@ -88,4 +88,24 @@ object Notify {
                 .put("packageName", packageName)
         )
     }
+
+    /**
+     * Tells the admins a member has missed two days running on somebody's app.
+     *
+     * Rides the same `notifyProblem` action [cannotInstall] already uses rather than a new one:
+     * the Apps Script gate lives outside this repo, and a push worth having today reads as a
+     * generic problem rather than one worth having next week that needs a script change first.
+     * What actually distinguishes the two is on the console, in [TestApp.flaggedAt] — the push is
+     * only ever the doorbell.
+     */
+    suspend fun flagged(appName: String, packageName: String) {
+        val token = firebaseToken() ?: return
+        post(
+            JSONObject()
+                .put("idToken", token)
+                .put("action", "notifyProblem")
+                .put("name", appName)
+                .put("packageName", packageName)
+        )
+    }
 }
