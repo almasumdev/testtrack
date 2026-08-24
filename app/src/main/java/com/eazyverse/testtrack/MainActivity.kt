@@ -56,8 +56,12 @@ object Routes {
     // bar beats leaving it blank for the gap before this screen's own load answers the same
     // question. Optional — the notification-tap path has no row to read a name from, and falls
     // back to the ordinary blank-then-populate the screen already does without one.
-    const val GROUP = "group/{groupId}?name={name}"
-    fun group(groupId: String, name: String = "") = "group/$groupId?name=${Uri.encode(name)}"
+    // feedbackFor is the same idea again: a notification asking for feedback about one specific
+    // app carries that app's id along, so the group screen underneath can open straight to its
+    // feedback prompt instead of leaving the tester to find the right row themselves.
+    const val GROUP = "group/{groupId}?name={name}&feedbackFor={feedbackFor}"
+    fun group(groupId: String, name: String = "", feedbackFor: String = "") =
+        "group/$groupId?name=${Uri.encode(name)}&feedbackFor=${Uri.encode(feedbackFor)}"
 
     /** Your own app's 14-day picture. */
     const val DASHBOARD = "dashboard/{appId}?name={name}"
@@ -68,6 +72,9 @@ class MainActivity : ComponentActivity() {
 
     /** Set on the launch intent when a reminder is tapped. */
     private val openGroup = mutableStateOf<String?>(null)
+
+    /** Set alongside [openGroup] when the tap was specifically an ask for feedback about one app. */
+    private val openFeedbackFor = mutableStateOf<String?>(null)
 
     /**
      * Play hands back an IntentSender rather than an Intent, so the update flow needs its own
@@ -82,6 +89,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Session.init(this)
         openGroup.value = intent?.getStringExtra(EXTRA_GROUP_ID)
+        openFeedbackFor.value = intent?.getStringExtra(EXTRA_FEEDBACK_APP_ID)
         setContent {
             TestTrackTheme {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -89,7 +97,7 @@ class MainActivity : ComponentActivity() {
                     // start underneath the status bar. One inset here rather than in each screen;
                     // safeDrawing also covers the cutout, the nav bar and the keyboard.
                     Box(Modifier.safeDrawingPadding()) {
-                        if (Config.isConfigured) AppNav(openGroup) else NotConfigured()
+                        if (Config.isConfigured) AppNav(openGroup, openFeedbackFor) else NotConfigured()
 
                         /*
                          * Over everything, including the nav host.
@@ -168,10 +176,12 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         intent.getStringExtra(EXTRA_GROUP_ID)?.let { openGroup.value = it }
+        intent.getStringExtra(EXTRA_FEEDBACK_APP_ID)?.let { openFeedbackFor.value = it }
     }
 
     companion object {
         const val EXTRA_GROUP_ID = "groupId"
+        const val EXTRA_FEEDBACK_APP_ID = "feedbackAppId"
     }
 }
 
@@ -199,7 +209,10 @@ private fun NotConfigured() {
 }
 
 @Composable
-fun AppNav(openGroup: MutableState<String?> = remember { mutableStateOf(null) }) {
+fun AppNav(
+    openGroup: MutableState<String?> = remember { mutableStateOf(null) },
+    openFeedbackFor: MutableState<String?> = remember { mutableStateOf(null) }
+) {
     val nav = rememberNavController()
 
     /**
@@ -237,8 +250,11 @@ fun AppNav(openGroup: MutableState<String?> = remember { mutableStateOf(null) })
     val pending = openGroup.value
     LaunchedEffect(pending, start) {
         if (pending != null) {
-            if (start == Routes.HOME) nav.push(Routes.group(pending))
+            if (start == Routes.HOME) {
+                nav.push(Routes.group(pending, feedbackFor = openFeedbackFor.value.orEmpty()))
+            }
             openGroup.value = null
+            openFeedbackFor.value = null
         }
     }
 
@@ -314,12 +330,14 @@ fun AppNav(openGroup: MutableState<String?> = remember { mutableStateOf(null) })
             Routes.GROUP,
             arguments = listOf(
                 navArgument("groupId") { type = NavType.StringType },
-                navArgument("name") { type = NavType.StringType; defaultValue = "" }
+                navArgument("name") { type = NavType.StringType; defaultValue = "" },
+                navArgument("feedbackFor") { type = NavType.StringType; defaultValue = "" }
             )
         ) { entry ->
             GroupScreen(
                 groupId = entry.arguments?.getString("groupId").orEmpty(),
                 groupName = entry.arguments?.getString("name").orEmpty(),
+                feedbackForAppId = entry.arguments?.getString("feedbackFor").orEmpty(),
                 onOpenDashboard = { appId, name -> nav.push(Routes.dashboard(appId, name)) },
                 onBack = { nav.popBackStack() }
             )

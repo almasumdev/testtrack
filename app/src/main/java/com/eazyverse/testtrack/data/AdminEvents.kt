@@ -82,6 +82,7 @@ object AdminEvents {
         var high = since
         snapshot.documents.forEach { doc ->
             val title = doc.getString("title").orEmpty()
+            val type = doc.getString("type")
             if (title.isNotBlank()) {
                 ReminderWorker.notify(
                     context = context,
@@ -90,14 +91,23 @@ object AdminEvents {
                     id = doc.id.hashCode(),
                     title = title,
                     body = doc.getString("body").orEmpty(),
-                    groupId = doc.getString("groupId")?.takeIf { it.isNotBlank() }
+                    groupId = doc.getString("groupId")?.takeIf { it.isNotBlank() },
+                    // Only this one event kind gets the Play Store shortcut — every other
+                    // decision is answered by opening TestTrack, not somebody's app listing.
+                    storeAppId = if (type == EVENT_OWNER_BROADCAST) {
+                        doc.getString("appId")?.takeIf { it.isNotBlank() }
+                    } else null,
+                    // And only this one gets routed straight to its feedback prompt.
+                    feedbackAppId = if (type == EVENT_FEEDBACK_ASK) {
+                        doc.getString("appId")?.takeIf { it.isNotBlank() }
+                    } else null
                 )
 
                 // A removal is the one thing this device can also work out for itself: the cohort
                 // simply vanishes from under it, and [Enforcement] says so. Now that the removal
                 // writes an event too, both would fire — so the event, which is the only one of
                 // the two that knows *why*, claims the group and the sweep stays quiet about it.
-                if (doc.getString("type") == EVENT_REMOVED_MISSED) {
+                if (type == EVENT_REMOVED_MISSED) {
                     doc.getString("groupId")?.takeIf { it.isNotBlank() }
                         ?.let { Enforcement.markExplained(context, it) }
                 }

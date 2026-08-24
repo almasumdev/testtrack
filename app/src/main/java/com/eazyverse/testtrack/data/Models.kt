@@ -30,6 +30,15 @@ const val NOTES_MAX = 500
 const val BROADCAST_COOLDOWN_MS = 2 * 24 * 60 * 60 * 1000L
 
 /**
+ * How long an owner must wait between asking their own cohort for feedback.
+ *
+ * Same duration as [BROADCAST_COOLDOWN_MS] and enforced the same way, against
+ * [TestApp.lastFeedbackAskAt] — its own field and its own rule, so one cooldown running out
+ * does not quietly reset the other.
+ */
+const val FEEDBACK_ASK_COOLDOWN_MS = 2 * 24 * 60 * 60 * 1000L
+
+/**
  * When a member has stopped holding up their end, and the arithmetic that decides it.
  *
  * Miss one completed day and you are warned. Miss two in a row and your app leaves the group.
@@ -302,6 +311,16 @@ data class TestApp(
      * disabling a button, since a patched client could otherwise send one every time it liked.
      */
     val lastBroadcastAt: Long = 0L,
+
+    /**
+     * The last time this app's owner asked their cohort for feedback.
+     *
+     * Zero until the first ask. [FEEDBACK_ASK_COOLDOWN_MS] after this is when the next one is
+     * allowed — its own field and its own rule, the same discipline as [lastBroadcastAt] right
+     * above it, so the two asks stay on independent cooldowns rather than one resetting the
+     * other.
+     */
+    val lastFeedbackAskAt: Long = 0L,
 
     /**
      * An admin's standing permission for this app to be skipped, member by member, rather than

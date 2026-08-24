@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.Constraints
@@ -174,9 +175,24 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
 
         private fun slot(key: String) = key.hashCode() and 0xFF
 
-        /** Raised from the worker and from [AdminEvents], which share this notifier. */
+        /**
+         * Raised from the worker and from [AdminEvents], which share this notifier.
+         *
+         * [storeAppId] and [feedbackAppId] are the two things worth a second tap target, and
+         * never both at once: an update notice's useful next step is "open the Play listing this
+         * is about," and a feedback ask's is "open straight to that app's own feedback prompt" —
+         * both skip past "open TestTrack" to somewhere the content intent alone can't reach.
+         */
         @SuppressLint("MissingPermission") // runCatching below; see post()
-        fun notify(context: Context, id: Int, title: String, body: String, groupId: String?) {
+        fun notify(
+            context: Context,
+            id: Int,
+            title: String,
+            body: String,
+            groupId: String?,
+            storeAppId: String? = null,
+            feedbackAppId: String? = null
+        ) {
             val intent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 groupId?.let { putExtra(MainActivity.EXTRA_GROUP_ID, it) }
@@ -185,15 +201,47 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
                 context, id, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            val notification = NotificationCompat.Builder(context, PushRepo.CHANNEL_REMINDERS)
+            val builder = NotificationCompat.Builder(context, PushRepo.CHANNEL_REMINDERS)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))
                 .setAutoCancel(true)
                 .setContentIntent(pending)
-                .build()
-            runCatching { NotificationManagerCompat.from(context).notify(id, notification) }
+
+            if (storeAppId != null) {
+                val storeIntent = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://play.google.com/store/apps/details?id=$storeAppId")
+                )
+                // A web link rather than a market: intent — this has to resolve even on a phone
+                // without the Play Store app, and https:// falls back to a browser on its own
+                // where market:// would just silently fail with nothing to hand the intent to.
+                val storePending = PendingIntent.getActivity(
+                    // XORed rather than reusing id, so the action's own PendingIntent cannot
+                    // collide with the content intent above and get treated as the same one.
+                    context, id xor 0x5A5A5A5A, storeIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                builder.addAction(0, "Open in Play Store", storePending)
+            }
+
+            if (feedbackAppId != null && groupId != null) {
+                val feedbackIntent = Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    putExtra(MainActivity.EXTRA_GROUP_ID, groupId)
+                    putExtra(MainActivity.EXTRA_FEEDBACK_APP_ID, feedbackAppId)
+                }
+                val feedbackPending = PendingIntent.getActivity(
+                    // A third, differently masked request code — distinct from both the content
+                    // intent's own id and the store action's above, so all three can coexist.
+                    context, id xor 0x3C3C3C3C, feedbackIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                builder.addAction(0, "Give feedback", feedbackPending)
+            }
+
+            runCatching { NotificationManagerCompat.from(context).notify(id, builder.build()) }
         }
 
         /**

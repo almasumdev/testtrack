@@ -512,6 +512,65 @@ console.log('\nAn owner broadcasting "update available" to one member of their c
     assertSucceeds(setDoc(doc(as(ME), 'events', 'bc9'), broadcastEvent())))
 }
 
+console.log('\nAn owner asking one member of their cohort for feedback')
+{
+  const askEvent = (over = {}) => ({
+    uid: TARGET, type: 'feedback_ask', groupId: GROUP, appId: MY_APP,
+    actorUid: ME, title: 'Mine would like your feedback', body: 'Leave a note when you can.',
+    createdAt: Date.now(), ...over,
+  })
+  const bumpAsk = (db, appId = MY_APP, at = Date.now()) =>
+    updateDoc(doc(db, 'apps', appId), { lastFeedbackAskAt: at })
+
+  await seed()
+  await check('the owner may ask a cohort member', () =>
+    assertSucceeds(setDoc(doc(as(ME), 'events', 'fa1'), askEvent())))
+  await check('and may advance their own app\'s cooldown', () =>
+    assertSucceeds(bumpAsk(as(ME))))
+
+  await seed()
+  await check('nobody may ask on behalf of somebody else\'s app', () =>
+    assertFails(setDoc(doc(as(TARGET), 'events', 'fa2'), askEvent({ actorUid: TARGET }))))
+  await check('an outsider may not ask into the group at all', () =>
+    assertFails(setDoc(doc(as(OUTSIDER), 'events', 'fa3'),
+      askEvent({ actorUid: OUTSIDER }))))
+  await check('cannot address an ask to somebody outside the cohort', () =>
+    assertFails(setDoc(doc(as(ME), 'events', 'fa4'), askEvent({ uid: OUTSIDER }))))
+  await check('cannot ask yourself for feedback', () =>
+    assertFails(setDoc(doc(as(ME), 'events', 'fa5'), askEvent({ uid: ME }))))
+  await check('no other event type reaches this rule', () =>
+    assertFails(setDoc(doc(as(ME), 'events', 'fa6'), askEvent({ type: 'assigned' }))))
+  await check('the app-side bump is refused for somebody else\'s app', () =>
+    assertFails(bumpAsk(as(TARGET), MY_APP)))
+  await check('cannot smuggle another field in alongside the bump', () =>
+    assertFails(updateDoc(doc(as(ME), 'apps', MY_APP), { lastFeedbackAskAt: Date.now(), name: 'Renamed' })))
+
+  console.log('\n...and cannot repeat within the cooldown')
+  await seed()
+  await env.withSecurityRulesDisabled((ctx) =>
+    updateDoc(doc(ctx.firestore(), 'apps', MY_APP), { lastFeedbackAskAt: Date.now() - DAY }))
+  await check('a second ask inside two days is refused', () =>
+    assertFails(setDoc(doc(as(ME), 'events', 'fa7'), askEvent())))
+  await check('and so is bumping the timestamp again on its own', () =>
+    assertFails(bumpAsk(as(ME))))
+
+  await env.withSecurityRulesDisabled((ctx) =>
+    updateDoc(doc(ctx.firestore(), 'apps', MY_APP), { lastFeedbackAskAt: Date.now() - 3 * DAY }))
+  await check('but an ask past two days is allowed again', () =>
+    assertSucceeds(setDoc(doc(as(ME), 'events', 'fa8'), askEvent())))
+
+  await seed()
+  await check('a group with no prior ask behaves as day zero, not as blocked', () =>
+    assertSucceeds(setDoc(doc(as(ME), 'events', 'fa9'), askEvent())))
+
+  console.log('\n...and the two cooldowns are independent')
+  await seed()
+  await env.withSecurityRulesDisabled((ctx) =>
+    updateDoc(doc(ctx.firestore(), 'apps', MY_APP), { lastBroadcastAt: Date.now() }))
+  await check('a fresh broadcast cooldown does not block an ask', () =>
+    assertSucceeds(setDoc(doc(as(ME), 'events', 'fa10'), askEvent())))
+}
+
 console.log('\nA tester telling an app\'s owner that feedback is waiting for them')
 {
   const feedbackEvent = (over = {}) => ({

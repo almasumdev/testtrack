@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.GroupWork
 import androidx.compose.material.icons.outlined.Tune
@@ -25,15 +26,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.data.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -149,8 +153,18 @@ class HomeViewModel : ViewModel() {
                             val others = Repo.appsInGroup(group.id)
                                 .filter { it.ownerUid != uid && it.active }
                             val day = group.dayIndex()
+                            // Meant against today's roster, not raw proof count: a proof posted
+                            // earlier today for an app that has since been taken out of testing
+                            // (or reported, or the owner's own) is still a proof, but it is no
+                            // longer one of the apps [others] is counting — without this filter
+                            // it kept counting toward "done" anyway, and the header could read
+                            // more done than there were apps to do, like "26 of 25".
                             val done = if (day == null) 0
-                                else Repo.myProofsForDay(uid, group.id, day, group.startDate).size
+                                else {
+                                    val owed = others.mapTo(HashSet()) { it.id }
+                                    Repo.myProofsForDay(uid, group.id, day, group.startDate)
+                                        .count { it in owed }
+                                }
                             GroupProgress(group, others.size, done)
                         }
                     }.awaitAll()
@@ -376,6 +390,15 @@ fun HomeScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        // The same mark the notification shade already shows for this app, at UI
+                        // scale instead of status-bar scale — one glyph standing for TestTrack
+                        // rather than two different ones depending on where you see it.
+                        Icon(
+                            painterResource(R.drawable.ic_stat_name), null,
+                            modifier = Modifier.size(22.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.width(8.dp))
                         Text("TestTrack", fontWeight = FontWeight.Bold)
                         // Content already on screen quietly catching up with itself — coming back
                         // from a group, or the app returning to the foreground. Small and off to
@@ -412,6 +435,30 @@ fun HomeScreen(
                     containerColor = MaterialTheme.colorScheme.background
                 )
             )
+        },
+        // Its own slot rather than the last thing in the scrolling column, so the one button
+        // every visit here ends with is never a scroll away — the skeleton and the loading gate
+        // it used to share a condition with stay exactly the same, only where it sits changed.
+        bottomBar = {
+            if (vm.ready && !vm.pulling) {
+                Column {
+                    // Solid, not the dashed rule rows use between each other — this is the edge
+                    // of a fixed piece of chrome, not a separator between two like things.
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant)
+                    )
+                    Primary(
+                        "Submit an app",
+                        Modifier
+                            .padding(horizontal = Gutter)
+                            .padding(top = 12.dp, bottom = 12.dp),
+                        onClick = onSubmitApp
+                    )
+                }
+            }
         }
     ) { padding ->
         RefreshBox(
@@ -433,22 +480,76 @@ fun HomeScreen(
                 HomeSkeleton()
             } else {
                 if (vm.groups.isNotEmpty()) {
-                    Column(Modifier.padding(start = Gutter, end = Gutter, top = 4.dp)) {
-                        Text(
-                            "${vm.doneToday} of ${vm.dueToday}",
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(Modifier.height(5.dp))
-                        Text(
-                            if (vm.dueToday == 0) "nothing due today"
-                            else "tested today across ${vm.groups.size} " +
-                                if (vm.groups.size == 1) "group" else "groups",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(Modifier.height(14.dp))
-                        Meter(done = vm.doneToday, total = vm.dueToday)
+                    Row(
+                        Modifier
+                            .padding(start = Gutter, end = Gutter, top = 4.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(Modifier.size(108.dp), contentAlignment = Alignment.Center) {
+                            SegmentedRing(
+                                done = vm.doneToday,
+                                total = vm.dueToday,
+                                modifier = Modifier.fillMaxSize(),
+                                strokeWidth = 9.dp
+                            )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    "${vm.doneToday}",
+                                    style = MaterialTheme.typography.displaySmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    "of ${vm.dueToday}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(Modifier.width(20.dp))
+
+                        val remaining = vm.dueToday - vm.doneToday
+                        val groupsPhrase = "${vm.groups.size} " +
+                            if (vm.groups.size == 1) "group" else "groups"
+                        // Real, not invented: the same VISIT_MS every visit is actually held open
+                        // for, times what is actually left, rounded to the nearest minute and
+                        // never down to zero while there is still at least one app to go.
+                        val minutesLeft = ((remaining * CaptureService.VISIT_MS + 30_000L) / 60_000L)
+                            .coerceAtLeast(1L)
+
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Today".uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 1.2.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                when {
+                                    vm.dueToday == 0 -> "Nothing due today"
+                                    remaining <= 0 -> "You're clear for tonight"
+                                    remaining == 1 -> "One app left before you're clear for tonight"
+                                    else -> "$remaining apps left before you're clear for tonight"
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (vm.dueToday > 0) {
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    "Tested across $groupsPhrase so far" +
+                                        if (remaining > 0) {
+                                            " · about " +
+                                                (if (minutesLeft == 1L) "a minute" else "$minutesLeft minutes") +
+                                                " to finish up"
+                                        } else "",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -526,13 +627,6 @@ fun HomeScreen(
                 }
 
                 vm.message?.let { Failure(it) }
-
-                Spacer(Modifier.height(24.dp))
-                Primary(
-                    "Submit an app",
-                    Modifier.padding(horizontal = Gutter),
-                    onClick = onSubmitApp
-                )
             }
             Spacer(Modifier.height(Gutter))
         }
@@ -591,6 +685,7 @@ private fun NotesDialog(app: TestApp, onSave: (String) -> Unit, onDismiss: () ->
 private fun GroupRow(progress: GroupProgress, onClick: () -> Unit) {
     val group = progress.group
     val day = group.dayIndex()
+    val left = progress.toTest - progress.done
 
     Row(
         Modifier
@@ -599,6 +694,56 @@ private fun GroupRow(progress: GroupProgress, onClick: () -> Unit) {
             .padding(horizontal = Gutter, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // The row's own leading mark, same idea as the hero ring above: a day still owed reads
+        // amber and fills green once nothing is left, a group still filling its roster reads
+        // neutral against the same threshold its own text already states.
+        when {
+            day != null && progress.toTest > 0 -> {
+                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                    SegmentedRing(
+                        done = progress.done,
+                        total = progress.toTest,
+                        modifier = Modifier.fillMaxSize(),
+                        strokeWidth = 5.dp,
+                        fillColor = if (left <= 0) Status.posted else Status.short
+                    )
+                    if (left <= 0) {
+                        Icon(
+                            Icons.Filled.Check, null,
+                            modifier = Modifier.size(16.dp),
+                            tint = Status.posted
+                        )
+                    } else {
+                        // Same convention as the hero ring above it: the number in the middle is
+                        // how many are done, not how many are left — one rule for every ring on
+                        // the screen rather than a different one per size.
+                        Text(
+                            "${progress.done}",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                Spacer(Modifier.width(14.dp))
+            }
+            day == null && !group.running -> {
+                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                    SegmentedRing(
+                        done = group.size,
+                        total = TestGroup.THRESHOLD,
+                        modifier = Modifier.fillMaxSize(),
+                        strokeWidth = 5.dp,
+                        fillColor = MaterialTheme.colorScheme.outline
+                    )
+                    Text(
+                        "${group.size}",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(Modifier.width(14.dp))
+            }
+        }
         Column(Modifier.weight(1f)) {
             Text(
                 group.name.ifBlank { "Group" },
@@ -608,21 +753,15 @@ private fun GroupRow(progress: GroupProgress, onClick: () -> Unit) {
             Spacer(Modifier.height(2.dp))
             Text(
                 when {
-                    day != null -> {
-                        val left = progress.toTest - progress.done
+                    day != null ->
                         "Day ${day + 1} of ${group.runDays} · " +
                             if (left <= 0) "all done" else "$left left today"
-                    }
                     group.running -> "Run finished"
                     else -> "Forming · ${group.size} of ${TestGroup.THRESHOLD} members"
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            if (day != null && progress.toTest > 0) {
-                Spacer(Modifier.height(8.dp))
-                Meter(done = progress.done, total = progress.toTest, height = 8.dp)
-            }
         }
         Spacer(Modifier.width(12.dp))
         Icon(

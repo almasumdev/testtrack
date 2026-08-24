@@ -57,6 +57,21 @@ class BlockedException(reason: String) : Exception(
 const val EVENT_REMOVED_MISSED = "removed_missed"
 
 /**
+ * An app owner's own "update available" broadcast to their cohort — the other event kind a
+ * tester's device writes. Named here, rather than left as a literal at the one call site, so
+ * [AdminEvents] can recognise it and offer a Play Store shortcut without repeating the string.
+ */
+const val EVENT_OWNER_BROADCAST = "owner_broadcast"
+
+/**
+ * An app owner asking their cohort for feedback — the third event kind a tester's device
+ * writes. Named here for the same reason as [EVENT_OWNER_BROADCAST]: so [AdminEvents] can
+ * recognise it and route its notification straight to the feedback prompt rather than just
+ * opening the group.
+ */
+const val EVENT_FEEDBACK_ASK = "feedback_ask"
+
+/**
  * Firestore access.
  *
  * Four collections, deliberately flat:
@@ -263,6 +278,8 @@ object Repo {
         reportedReason = doc.getString("reportedReason").orEmpty(),
         // Absent everywhere before broadcasting existed, which reads as never sent.
         lastBroadcastAt = doc.getLong("lastBroadcastAt") ?: 0L,
+        // Absent everywhere before asking for feedback existed, which reads as never asked.
+        lastFeedbackAskAt = doc.getLong("lastFeedbackAskAt") ?: 0L,
         // Absent everywhere before this existed, which reads as not skippable.
         skippable = doc.getBoolean("skippable") ?: false,
         // Also absent from every document written before this existed, and blank there reads as
@@ -721,7 +738,7 @@ object Repo {
                 db.collection("events").document(),
                 mapOf(
                     "uid" to uid,
-                    "type" to "owner_broadcast",
+                    "type" to EVENT_OWNER_BROADCAST,
                     "title" to "${app.label} has an update",
                     "body" to "An update is out for ${app.label}. Install it from the Play " +
                         "Store, then keep testing as usual.",
@@ -733,6 +750,35 @@ object Repo {
             )
         }
         batch.update(db.collection("apps").document(app.id), mapOf("lastBroadcastAt" to now))
+        await(batch.commit())
+    }
+
+    /**
+     * Asks every other member of this app's cohort to leave feedback, and advances the
+     * cooldown so the next ask waits its turn.
+     *
+     * Same shape as [broadcastUpdate], on its own field and its own rule — see
+     * `feedback_ask` and the dedicated `lastFeedbackAskAt` update rule in firestore.rules.
+     */
+    suspend fun askForFeedback(app: TestApp, group: TestGroup) {
+        val now = System.currentTimeMillis()
+        val batch = db.batch()
+        group.memberUids.filter { it != app.ownerUid }.forEach { uid ->
+            batch.set(
+                db.collection("events").document(),
+                mapOf(
+                    "uid" to uid,
+                    "type" to EVENT_FEEDBACK_ASK,
+                    "title" to "${app.label} would like your feedback",
+                    "body" to "Leave them a note about how it's going, whenever you have a moment.",
+                    "groupId" to group.id,
+                    "appId" to app.id,
+                    "actorUid" to app.ownerUid,
+                    "createdAt" to now
+                )
+            )
+        }
+        batch.update(db.collection("apps").document(app.id), mapOf("lastFeedbackAskAt" to now))
         await(batch.commit())
     }
 

@@ -63,12 +63,23 @@ service cloud.firestore {
     /** The other one: a tester telling an app's owner that feedback is waiting for them. */
     function TYPE_FEEDBACK() { return 'feedback'; }
 
+    /** The third: an owner asking their cohort for feedback, the reverse of [TYPE_FEEDBACK]. */
+    function TYPE_FEEDBACK_ASK() { return 'feedback_ask'; }
+
     /** How long an owner must wait between broadcasts to the same cohort. Matches Repo.kt. */
     function BROADCAST_COOLDOWN_MS() { return 172800000; }
+
+    /** Same duration, own field — matches FEEDBACK_ASK_COOLDOWN_MS in Repo.kt. */
+    function FEEDBACK_ASK_COOLDOWN_MS() { return 172800000; }
 
     /** Zero for a document written before broadcasting existed, which reads as never sent. */
     function lastBroadcastAtOf(appId) {
       return 'lastBroadcastAt' in appData(appId) ? appData(appId).lastBroadcastAt : 0;
+    }
+
+    /** Zero for a document written before asking for feedback existed, which reads as never asked. */
+    function lastFeedbackAskAtOf(appId) {
+      return 'lastFeedbackAskAt' in appData(appId) ? appData(appId).lastFeedbackAskAt : 0;
     }
 
     /** Whole days since the run began. Matches TestGroup.dayIndex(). */
@@ -433,9 +444,10 @@ service cloud.firestore {
        * filed about their own app is the same attack in a different field, and this rule is wide
        * enough otherwise (nothing else here names those keys) that it would otherwise admit it.
        *
-       * `lastBroadcastAt` is pinned too, and admitted only through the dedicated rule below —
-       * this one has no cooldown check, so leaving it open here would let an owner bump their own
-       * timestamp for free without the wait it exists to enforce.
+       * `lastBroadcastAt` and `lastFeedbackAskAt` are pinned too, and admitted only through their
+       * own dedicated rules below — this one has no cooldown check, so leaving either open here
+       * would let an owner bump their own timestamp for free without the wait it exists to
+       * enforce.
        *
        * `skippable` is pinned for the same reason as `removed`/`reportedAt`: it is the switch that
        * lets the whole cohort start skipping this app member by member, and an owner granting
@@ -457,7 +469,7 @@ service cloud.firestore {
         && !request.resource.data.diff(resource.data).affectedKeys()
              .hasAny(['removed', 'removedAt', 'removedReason',
                       'reportedAt', 'reportedBy', 'reportedReason',
-                      'lastBroadcastAt', 'skippable',
+                      'lastBroadcastAt', 'lastFeedbackAskAt', 'skippable',
                       'flaggedAt', 'flaggedByAppId', 'reinstatedAt'].toSet())
       );
 
@@ -476,6 +488,21 @@ service cloud.firestore {
         && request.time.toMillis()
              - (('lastBroadcastAt' in resource.data) ? resource.data.lastBroadcastAt : 0)
              >= BROADCAST_COOLDOWN_MS();
+
+      /**
+       * The app-side half of an owner's feedback ask: moving `lastFeedbackAskAt` forward.
+       *
+       * Same shape as the broadcast's own app-side rule directly above — own app only, one field
+       * only, gated by the same cooldown the events half checks.
+       */
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.ownerUid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastFeedbackAskAt'].toSet())
+        && request.resource.data.lastFeedbackAskAt is int
+        && request.resource.data.lastFeedbackAskAt > 0
+        && request.time.toMillis()
+             - (('lastFeedbackAskAt' in resource.data) ? resource.data.lastFeedbackAskAt : 0)
+             >= FEEDBACK_ASK_COOLDOWN_MS();
 
       /**
        * Withdrawing: the owner taking their own app out, without destroying the record.
@@ -707,6 +734,26 @@ service cloud.firestore {
                .data.memberUids
         && request.time.toMillis() - lastBroadcastAtOf(request.resource.data.appId)
              >= BROADCAST_COOLDOWN_MS();
+
+      /**
+       * An owner asking one member of their cohort for feedback — see Repo.kt's
+       * askForFeedback, which writes one of these per member in the same batch that advances
+       * the app's own `lastFeedbackAskAt`. Same shape as the `owner_broadcast` rule above, for
+       * the same reasons — including the same pre-batch cooldown read.
+       */
+      allow create: if signedIn()
+        && request.resource.data.type == TYPE_FEEDBACK_ASK()
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.uid is string
+        && request.resource.data.uid != request.auth.uid
+        && inGroup(request.resource.data.groupId)
+        && appData(request.resource.data.appId).ownerUid == request.auth.uid
+        && appData(request.resource.data.appId).groupId == request.resource.data.groupId
+        && request.resource.data.uid in
+             get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
+               .data.memberUids
+        && request.time.toMillis() - lastFeedbackAskAtOf(request.resource.data.appId)
+             >= FEEDBACK_ASK_COOLDOWN_MS();
 
       /**
        * A tester telling an app's owner that feedback is waiting for them — see Repo.kt's

@@ -109,8 +109,12 @@ class VisitOverlay(private val context: Context, private val handler: Handler) {
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT
         ).apply {
+            // START rather than END even though the default sits on the right: free-drag tracks
+            // x/y as plain left-origin offsets (see the touch listener below), and mixing that
+            // with END-relative coordinates would have the capsule drift the wrong way the first
+            // time it was dragged.
             gravity = Gravity.TOP or Gravity.START
-            x = lastX ?: dp(16)
+            x = lastX ?: (metrics.widthPixels - view.widthPx - dp(16))
             // A starting point only, chosen for a one-handed hold: not the top, not the very
             // bottom, roughly where a thumb rests mid-grip. A drag remembers where it lands (see
             // [lastX]/[lastY]) so this default is only ever seen once per session.

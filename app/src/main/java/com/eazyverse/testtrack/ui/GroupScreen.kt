@@ -168,6 +168,33 @@ class GroupViewModel : ViewModel() {
         }
     }
 
+    var askingForFeedback by mutableStateOf(false)
+        private set
+
+    /** Millis until [mine]'s owner may ask for feedback again, or 0 if one could be sent now. */
+    fun feedbackAskCooldownRemaining(): Long {
+        val last = mine?.lastFeedbackAskAt?.takeIf { it > 0L } ?: return 0L
+        return (FEEDBACK_ASK_COOLDOWN_MS - (System.currentTimeMillis() - last)).coerceAtLeast(0L)
+    }
+
+    /** [broadcast]'s reverse: asking the cohort to speak up, on its own independent cooldown. */
+    fun askForFeedback() {
+        val a = mine ?: return
+        val g = group ?: return
+        askingForFeedback = true
+        viewModelScope.launch {
+            runCatching { Repo.askForFeedback(a, g) }
+                .onSuccess {
+                    mine = a.copy(lastFeedbackAskAt = System.currentTimeMillis())
+                    message = "Asked everyone testing ${a.label} for feedback."
+                }
+                .onFailure {
+                    message = it.friendly("We couldn't send that. Check your connection and try again.")
+                }
+            askingForFeedback = false
+        }
+    }
+
     /** Installed, in the run, and not yet banked — exactly what a round should walk. */
     fun outstanding(context: Context): List<TestApp> =
         if (day == null) emptyList()
@@ -218,8 +245,16 @@ class GroupViewModel : ViewModel() {
                 val own = apps.firstOrNull { it.ownerUid == uid }
                 val d = found.dayIndex()
 
+                // Same shape as HomeViewModel's own fix: a proof posted earlier today for an app
+                // since taken out of testing is still a proof, but it is not one of today's owed
+                // apps any more — left uncounted here, or the header can read more done than
+                // there are apps to do, like "26 of 25".
+                val owed = apps.asSequence().filter { it.ownerUid != uid && it.active }
+                    .mapTo(HashSet()) { it.id }
                 val details =
-                    if (d == null) emptyMap() else Repo.myProofDetailsForDay(uid, groupId, d, found.startDate)
+                    if (d == null) emptyMap()
+                    else Repo.myProofDetailsForDay(uid, groupId, d, found.startDate)
+                        .filterKeys { it in owed }
                 val banked = details.keys.toSet()
                 val manual = details.filterValues { it }.keys.toSet()
                 /*
@@ -550,6 +585,9 @@ fun GroupScreen(
     /** What the caller already knew this group as, shown until [vm]'s own load answers the same
      *  question — see Routes.GROUP. Blank for the rare entry with no row to read it from. */
     groupName: String,
+    /** An app to open the feedback prompt for as soon as it loads — see Routes.GROUP. Blank the
+     *  ordinary way in here, from every entry that isn't a tapped "ask for feedback" notification. */
+    feedbackForAppId: String = "",
     onOpenDashboard: (String, String) -> Unit,
     onBack: () -> Unit,
     vm: GroupViewModel = viewModel()
@@ -572,6 +610,20 @@ fun GroupScreen(
 
     /** The app a tester is about to leave a day-one note on, or null. */
     var givingFeedback by remember { mutableStateOf<TestApp?>(null) }
+
+    // Opened once, the moment the target of a tapped "ask for feedback" notification actually
+    // shows up in the list — vm.toTest starts empty every time this screen is composed fresh, so
+    // firing on the param alone would miss it. Guarded so a later reload (pull, resume) does not
+    // reopen a dialog the tester already dealt with.
+    var feedbackAutoOpened by remember { mutableStateOf(false) }
+    LaunchedEffect(vm.toTest) {
+        if (!feedbackAutoOpened && feedbackForAppId.isNotBlank()) {
+            vm.toTest.firstOrNull { it.id == feedbackForAppId }?.let {
+                givingFeedback = it
+                feedbackAutoOpened = true
+            }
+        }
+    }
 
     /** The owner's own app while its notes are being edited, or null. */
     var editingNotes by remember { mutableStateOf<TestApp?>(null) }
@@ -634,6 +686,29 @@ fun GroupScreen(
             if (!activity.isChangingConfigurations && !CaptureService.roundActive) {
                 CaptureService.endSession(context)
             }
+        }
+    }
+
+    /*
+     * Nothing left owed today, so nothing left for the recording to be open for — ended here
+     * rather than the moment a round's own queue empties, which is CaptureService's call and
+     * deliberately not this: a round only covers what was outstanding when it started, and a
+     * tester opening rows one at a time instead of tapping Start reaches the same "done" a step
+     * at a time. Ending the session after the first of those would ask for a fresh consent
+     * before every single one after it — the exact cost the round-level version of this was
+     * built to avoid. Checked against every app owed, not just this round's queue, so it fires
+     * once regardless of which way the tester got there.
+     *
+     * Not gated on CaptureService.missed being empty: supplying a screenshot by hand for a visit
+     * that already ran is a gallery pick, not a new capture, and needs no live recording either
+     * way.
+     */
+    LaunchedEffect(vm.doneToday, vm.toTest, CaptureService.roundActive) {
+        if (vm.toTest.isNotEmpty() &&
+            vm.doneToday.size == vm.toTest.size &&
+            !CaptureService.roundActive
+        ) {
+            CaptureService.endSession(context)
         }
     }
 
@@ -835,8 +910,11 @@ fun GroupScreen(
                                 group = group,
                                 broadcastCooldown = vm.broadcastCooldownRemaining(),
                                 broadcasting = vm.broadcasting,
+                                feedbackAskCooldown = vm.feedbackAskCooldownRemaining(),
+                                askingForFeedback = vm.askingForFeedback,
                                 onEditNotes = { editingNotes = app },
                                 onBroadcast = { vm.broadcast() },
+                                onAskForFeedback = { vm.askForFeedback() },
                                 onClick = { onOpenDashboard(app.id, app.label) }
                             )
                         }
@@ -1368,8 +1446,11 @@ private fun MineRow(
     group: TestGroup,
     broadcastCooldown: Long,
     broadcasting: Boolean,
+    feedbackAskCooldown: Long,
+    askingForFeedback: Boolean,
     onEditNotes: () -> Unit,
     onBroadcast: () -> Unit,
+    onAskForFeedback: () -> Unit,
     onClick: () -> Unit
 ) {
     val expected = (group.size - 1).coerceAtLeast(0)
@@ -1476,6 +1557,22 @@ private fun MineRow(
                     Status.neutralSoft
                 ) {
                     if (broadcastCooldown <= 0L && !broadcasting) onBroadcast()
+                }
+
+                // [broadcast]'s reverse and its own cooldown — an owner curious how it's going
+                // for their cohort has had no way to ask, short of writing to each of them one at
+                // a time outside the app entirely.
+                ActionChip(
+                    when {
+                        askingForFeedback -> "Sending…"
+                        feedbackAskCooldown > 0L -> "Ask again in ${formatWait(feedbackAskCooldown)}"
+                        else -> "Ask for feedback"
+                    },
+                    if (feedbackAskCooldown > 0L || askingForFeedback) MaterialTheme.colorScheme.outline
+                    else MaterialTheme.colorScheme.primary,
+                    Status.neutralSoft
+                ) {
+                    if (feedbackAskCooldown <= 0L && !askingForFeedback) onAskForFeedback()
                 }
             }
         }
@@ -1747,11 +1844,6 @@ private fun TestRow(
          * Every action this row could take, flush with the row's own left edge rather than
          * indented under the icon, scrolling sideways rather than wrapping so the row's height
          * never depends on how many of them apply.
-         *
-         * Open and Update are two different errands — launching a visit versus checking the
-         * Store for a newer build — so both stay on screen together whenever the app is
-         * installed, [done] or not: finishing today's visit is not a reason to take away the
-         * only way back into the app.
          */
         Row(
             Modifier.horizontalScroll(rememberScrollState()),
@@ -1777,6 +1869,16 @@ private fun TestRow(
                 app.reportedAt > 0L && !done -> ActionChip("Reported", Status.short, Status.shortSoft) { reportDetails = true }
 
                 !info.installed -> ActionChip("Install", Status.missed, Status.missedSoft, onInstall)
+
+                // Today's visit is banked. Open used to stay regardless, on the idea that
+                // finishing today is not a reason to take away the only way into the app — but
+                // mid-round that read as the row asking to be opened again right after it just
+                // finished, which is exactly backwards. Tomorrow this clears with [done] itself.
+                //
+                // Nothing shown here at all, Done pill included: the checkbox beside the app's
+                // name already says done, top-right of the same row, and repeating it here said
+                // the same word twice for every finished app in the list.
+                live && done -> Unit
 
                 // Off the clock. `live` alone was not enough for this once it stayed true after
                 // a run ends — a day with no run left to file a visit under has nothing here to

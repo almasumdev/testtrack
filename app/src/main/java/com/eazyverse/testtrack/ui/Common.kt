@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -44,6 +45,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -458,16 +460,23 @@ fun Avatar(photo: String, letter: String, size: Dp = 34.dp, loading: Boolean = f
     }
 }
 
-/** Scannable down a column of twelve without reading any of them. */
+/**
+ * Scannable down a column of twelve without reading any of them.
+ *
+ * Sized to match [ActionChip][com.eazyverse.testtrack.ui.ActionChip] and [Working] exactly — same
+ * corner, same padding, same bumped-up text size — so a row does not visibly grow or shrink as it
+ * moves between an actionable state and a settled one. It used to be a size of its own, smaller all
+ * round, and a list mid scroll read as buttons of two different sizes rather than one list.
+ */
 @Composable
 fun Pill(text: String, tone: Color, background: Color) {
     Text(
         text,
         Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(9.dp))
             .background(background)
-            .padding(horizontal = 9.dp, vertical = 4.dp),
-        style = MaterialTheme.typography.labelSmall,
+            .padding(horizontal = 13.dp, vertical = 7.dp),
+        style = MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp),
         fontWeight = FontWeight.SemiBold,
         color = tone
     )
@@ -477,7 +486,8 @@ fun Pill(text: String, tone: Color, background: Color) {
  * A [Pill] for a row that is busy, saying which kind of busy it is.
  *
  * Where an action would sit, and shaped like the states beside it, so a list mid round reads as one
- * list rather than a column of buttons with holes punched in it.
+ * list rather than a column of buttons with holes punched in it. Sized the same as [Pill], for the
+ * same reason.
  *
  * The word is the point. A bare spinner says something is happening and leaves which row is
  * capturing and which is uploading to be worked out from position, which is exactly the thing
@@ -487,20 +497,20 @@ fun Pill(text: String, tone: Color, background: Color) {
 fun Working(text: String) {
     Row(
         Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(9.dp))
             .background(Status.neutralSoft)
-            .padding(horizontal = 9.dp, vertical = 4.dp),
+            .padding(horizontal = 13.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         androidx.compose.material3.CircularProgressIndicator(
-            Modifier.size(11.dp),
+            Modifier.size(14.dp),
             strokeWidth = 1.5.dp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.width(6.dp))
         Text(
             text,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp),
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -544,6 +554,60 @@ fun Meter(done: Int, total: Int, modifier: Modifier = Modifier, height: Dp = 10.
                     .padding(1.dp)
                     .clip(RoundedCornerShape(2.dp))
                     .background(if (on) filled else Color.Transparent)
+            )
+        }
+    }
+}
+
+/**
+ * [Meter]'s own reasoning, drawn as a ring instead of a row of boxes.
+ *
+ * Meant for a spot too small for a row to sit comfortably in — a hero number, the leading mark on
+ * a row that already has a name and a chevron to fit beside it. Still one tick per thing to be
+ * done and not a swept fraction, for the same reason [Meter] counts rather than fills: a handful
+ * of apps reads as a handful of ticks, not sixty percent of a circle.
+ */
+@Composable
+fun SegmentedRing(
+    done: Int,
+    total: Int,
+    modifier: Modifier = Modifier,
+    strokeWidth: Dp = 6.dp,
+    // A physical size rather than a fixed number of degrees. Degrees alone read fine on a large
+    // ring and vanish on a small one — the same angle sweeps far less actual arc length once the
+    // radius shrinks, which is what made a 44dp ring's gaps disappear into a solid-looking circle
+    // even though the math said they were there.
+    gap: Dp = 3.dp,
+    fillColor: Color = MaterialTheme.colorScheme.primary,
+    trackColor: Color = MaterialTheme.colorScheme.surfaceVariant
+) {
+    if (total <= 0) return
+    val strokePx = with(LocalDensity.current) { strokeWidth.toPx() }
+    val gapPx = with(LocalDensity.current) { gap.toPx() }
+
+    Canvas(modifier) {
+        val radius = (size.minDimension - strokePx) / 2f
+        val topLeft = Offset((size.width - radius * 2) / 2f, (size.height - radius * 2) / 2f)
+        val arcSize = Size(radius * 2, radius * 2)
+        val anglePerSegment = 360f / total
+        // This ring's own radius decides how many degrees that physical gap needs, capped so a
+        // very large count can't demand a gap wider than the segment it is supposed to separate.
+        val gapDegrees = Math.toDegrees((gapPx / radius).toDouble()).toFloat()
+            .coerceAtMost(anglePerSegment * 0.6f)
+        val sweep = anglePerSegment - gapDegrees
+        repeat(total) { index ->
+            drawArc(
+                color = if (index < done) fillColor else trackColor,
+                startAngle = -90f + index * anglePerSegment + gapDegrees / 2f,
+                sweepAngle = sweep,
+                useCenter = false,
+                topLeft = topLeft,
+                size = arcSize,
+                // Butt, not round — a round cap protrudes past its own path endpoint by about
+                // half the stroke width, which is what was quietly eating the gap above back
+                // down to nothing: two rounded ends meeting across a few dp of empty path left
+                // no empty pixels between them. Butt paints exactly the sweep it is given.
+                style = Stroke(width = strokePx, cap = StrokeCap.Butt)
             )
         }
     }
