@@ -176,6 +176,33 @@ console.log('\nRemoving, flagging and reinstating are all admin-only to undo or 
 
 {
   await env.clearFirestore()
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore()
+    await setDoc(doc(db, 'groups', GROUP), {
+      name: 'Group A', memberUids: [ME, TARGET], appIds: [MY_APP, TARGET_APP],
+      startDate: START, status: 'running',
+    })
+    await setDoc(doc(db, 'apps', MY_APP), {
+      id: MY_APP, ownerUid: ME, ownerEmail: 'me@x.com', name: 'Mine',
+      packageName: MY_APP, groupId: GROUP, status: 'assigned',
+      submittedAt: PLACED, placedAt: PLACED,
+    })
+    // Already taken out of testing before this sweep ever ran.
+    await setDoc(doc(db, 'apps', TARGET_APP), {
+      id: TARGET_APP, ownerUid: TARGET, ownerEmail: 't@x.com', name: 'Theirs',
+      packageName: TARGET_APP, groupId: GROUP, status: 'assigned',
+      submittedAt: PLACED, placedAt: PLACED,
+      removed: true, removedAt: PLACED, removedReason: '',
+    })
+  })
+  // Without the removed guard this would succeed: the two missed days are genuine, and nothing
+  // else here would refuse it — which is exactly how a removed app used to get re-flagged, and
+  // re-notified about, on every single sweep after the one that excused it.
+  await check('an already-removed app cannot be flagged again', () => assertFails(flagWrite(as(ME))))
+}
+
+{
+  await env.clearFirestore()
   // TARGET opening MY_APP is what proves they turned up. The other direction is me testing
   // them, which says nothing about whether they did their days.
   await seed([{ app: MY_APP, uid: TARGET, day: 1 }, { app: MY_APP, uid: TARGET, day: 2 }])

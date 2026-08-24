@@ -544,12 +544,18 @@ service cloud.firestore {
        *
        * And never yourself. Flagging your own app cannot help you, but it would tell an admin
        * something false about who noticed.
+       *
+       * And never an app already taken out of testing. `removed` excuses it from judgment
+       * entirely — see Enforcement.enforceOn's matching client-side skip — so without this a
+       * removed app would keep getting re-flagged on every sweep, forever, since it can never
+       * earn back the attendance that would otherwise clear the flag.
        */
       allow update: if signedIn()
         && resource.data.groupId is string
         && resource.data.groupId != ''
         && inGroup(resource.data.groupId)
         && resource.data.ownerUid != request.auth.uid
+        && (!('removed' in resource.data) || resource.data.removed != true)
         && (!('flaggedAt' in resource.data) || resource.data.flaggedAt == 0)
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['flaggedAt', 'flaggedByAppId'].toSet())

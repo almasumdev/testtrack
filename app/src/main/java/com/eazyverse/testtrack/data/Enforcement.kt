@@ -350,6 +350,11 @@ object Enforcement {
         for (app in apps) {
             if (app.ownerUid == uid || app.placedAt <= 0L) continue
 
+            // Already taken out of testing. Nobody is opening it any more, by design — flagging it
+            // for that would just be re-reporting the decision that already excused it, forever,
+            // since a removed app can never earn back the attendance that would clear the flag.
+            if (!app.active) continue
+
             // Already raised. Checked here rather than left to the rules refusing a second write,
             // so a member who stays absent does not cost every device in the cohort a failed
             // write attempt on every sweep until an admin gets to it.
