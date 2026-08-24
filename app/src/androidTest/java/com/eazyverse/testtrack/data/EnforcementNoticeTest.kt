@@ -24,7 +24,6 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class EnforcementNoticeTest {
-
     private val context: Context get() = ApplicationProvider.getApplicationContext()
 
     private fun posted(): List<Pair<String, String>> {
@@ -61,23 +60,24 @@ class EnforcementNoticeTest {
     }
 
     @Test
-    fun theWorkerRaisesWhateverTheSweepFound() = runBlocking {
-        val uid = waitForAuth()
-        assumeTrue("no account signed in on this device", uid != null)
-        assumeTrue("notifications not granted", PushRepo.granted(context))
-        println("SIGNED IN as $uid")
+    fun theWorkerRaisesWhateverTheSweepFound() =
+        runBlocking {
+            val uid = waitForAuth()
+            assumeTrue("no account signed in on this device", uid != null)
+            assumeTrue("notifications not granted", PushRepo.granted(context))
+            println("SIGNED IN as $uid")
 
-        context.getSystemService(NotificationManager::class.java).cancelAll()
+            context.getSystemService(NotificationManager::class.java).cancelAll()
 
-        // Only the worker sweeps. Calling Enforcement.sweep first would consume the very change
-        // being tested — a departure is the difference against what this device last saw, so the
-        // first sweep to notice it is also the one that records it as no longer news.
-        val worker = TestListenableWorkerBuilder<ReminderWorker>(context).build()
-        val result = worker.doWork()
-        println("WORKER result=$result")
+            // Only the worker sweeps. Calling Enforcement.sweep first would consume the very change
+            // being tested — a departure is the difference against what this device last saw, so the
+            // first sweep to notice it is also the one that records it as no longer news.
+            val worker = TestListenableWorkerBuilder<ReminderWorker>(context).build()
+            val result = worker.doWork()
+            println("WORKER result=$result")
 
-        // Give the notification manager a moment to hand them back.
-        Thread.sleep(1500)
-        posted().forEach { (title, text) -> println("NOTIFICATION | $title | $text") }
-    }
+            // Give the notification manager a moment to hand them back.
+            Thread.sleep(1500)
+            posted().forEach { (title, text) -> println("NOTIFICATION | $title | $text") }
+        }
 }

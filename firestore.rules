@@ -789,6 +789,45 @@ service cloud.firestore {
     }
 
     /**
+     * A cohort's own record — who joined, who was taken out of testing and put back, who was
+     * kicked, and when. See AdminRepo.logHistory.
+     *
+     * Its own collection rather than another `events` type: `events` is deliberately disposable —
+     * an app or an account being erased takes its events with it, see that block's own delete
+     * rule — and the entire point here is the opposite. Nothing in this collection is ever
+     * deleted, not even by an admin.
+     *
+     * Unbounded by construction — nothing is ever removed from a group's record, which is the
+     * whole point — so this cannot be read the way `apps` reads `inGroup(groupId)`: that check
+     * costs a `get()` per matched document, and `proofs` below already documents what happens
+     * once a query like that grows past a handful of results. So this stays off the `inGroup`
+     * path entirely: an admin sees every row through `isAdmin()`, which costs nothing extra
+     * regardless of how large this grows; everyone else sees only the rows actually about them,
+     * which is also what lets somebody keep seeing their own the day after `inGroup` itself would
+     * have started refusing them.
+     */
+    match /history/{entryId} {
+      allow read: if isAdmin()
+        || (signedIn() && request.auth.uid == resource.data.uid);
+
+      /**
+       * Admin-only: every trigger today is an admin action. `groupId` is required and non-blank,
+       * unlike `events` where it is often absent — a line in a cohort's own record that does not
+       * name the cohort is not a record of anything.
+       */
+      allow create: if isAdmin()
+        && request.resource.data.groupId is string
+        && request.resource.data.groupId != ''
+        && request.resource.data.uid is string
+        && request.resource.data.uid != ''
+        && request.resource.data.type in ['joined', 'removed', 'restored', 'kicked']
+        && request.resource.data.actorUid == request.auth.uid;
+
+      // Never edited, never deleted — see the block's own note above.
+      allow update, delete: if false;
+    }
+
+    /**
      * Proof of one tester's visit to one app on one day.
      *
      * The sensitive collection: each document points at a full-screen capture readable by anyone

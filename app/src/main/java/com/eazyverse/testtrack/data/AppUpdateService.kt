@@ -74,14 +74,16 @@ object AppUpdateService {
     /** Whether Play will download in the background rather than sending the user to the store. */
     val canDownloadInApp: Boolean get() = playUpdateAvailable && flexibleAllowed
 
-    private val installListener = InstallStateUpdatedListener { state ->
-        when (state.installStatus()) {
-            InstallStatus.DOWNLOADED -> _isDownloaded.value = true
-            InstallStatus.INSTALLING, InstallStatus.INSTALLED,
-            InstallStatus.FAILED, InstallStatus.CANCELED -> _isDownloaded.value = false
-            else -> {}
+    private val installListener =
+        InstallStateUpdatedListener { state ->
+            when (state.installStatus()) {
+                InstallStatus.DOWNLOADED -> _isDownloaded.value = true
+                InstallStatus.INSTALLING, InstallStatus.INSTALLED,
+                InstallStatus.FAILED, InstallStatus.CANCELED,
+                -> _isDownloaded.value = false
+                else -> {}
+            }
         }
-    }
 
     /** Once, at process start. Reads the running build/version; never throws. */
     fun init(context: Context) {
@@ -127,7 +129,13 @@ object AppUpdateService {
             stalenessDays = 0
         }
         try {
-            val snap = FirebaseFirestore.getInstance().collection("config").document("app").get().await()
+            val snap =
+                FirebaseFirestore
+                    .getInstance()
+                    .collection("config")
+                    .document("app")
+                    .get()
+                    .await()
             latestBuild = snap.getLong("latestBuild")?.toInt() ?: 0
             latestVersionName = snap.getString("latestVersionName") ?: ""
             minSupportedBuild = snap.getLong("minSupportedBuild")?.toInt() ?: 0
@@ -136,22 +144,22 @@ object AppUpdateService {
             Log.d(TAG, "Config read failed: ${e.message}")
             minSupportedBuild = 0
         }
-        _tier.value = resolveTier(
-            playUpdateAvailable = playUpdateAvailable,
-            availableBuild = availableBuild,
-            currentBuild = currentBuild,
-            currentMajor = currentMajor,
-            latestBuild = latestBuild,
-            latestVersionName = latestVersionName,
-            minSupportedBuild = minSupportedBuild,
-            stalenessDays = stalenessDays,
-            nudgeAfterDays = nudgeAfterDays,
-        )
+        _tier.value =
+            resolveTier(
+                playUpdateAvailable = playUpdateAvailable,
+                availableBuild = availableBuild,
+                currentBuild = currentBuild,
+                currentMajor = currentMajor,
+                latestBuild = latestBuild,
+                latestVersionName = latestVersionName,
+                minSupportedBuild = minSupportedBuild,
+                stalenessDays = stalenessDays,
+                nudgeAfterDays = nudgeAfterDays,
+            )
     }
 
     /** True when there's a nudge for a build we haven't dismissed yet (throttled per available build). */
-    fun hasPendingNudge(): Boolean =
-        _tier.value == UpdateTier.NUDGE && availableBuild > Session.updatePromptedBuild
+    fun hasPendingNudge(): Boolean = _tier.value == UpdateTier.NUDGE && availableBuild > Session.updatePromptedBuild
 
     /** Records that the current available build's nudge has been dismissed, so it isn't shown again. */
     fun markNudgeShown() {
@@ -164,7 +172,9 @@ object AppUpdateService {
         val mgr = manager ?: return
         try {
             mgr.startUpdateFlowForResult(
-                info, launcher, AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build()
+                info,
+                launcher,
+                AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build(),
             )
         } catch (e: Exception) {
             Log.d(TAG, "Flexible update failed to start: ${e.message}")

@@ -29,7 +29,6 @@ import java.security.MessageDigest
  * ordinary case, which is somebody helping a friend out without knowing it does not work.
  */
 object Device {
-
     /**
      * Not a secret and not pretending to be one.
      *
@@ -42,10 +41,11 @@ object Device {
 
     @SuppressLint("HardwareIds")
     fun fingerprint(context: Context): String? {
-        val raw = Settings.Secure.getString(
-            context.applicationContext.contentResolver,
-            Settings.Secure.ANDROID_ID
-        )
+        val raw =
+            Settings.Secure.getString(
+                context.applicationContext.contentResolver,
+                Settings.Secure.ANDROID_ID,
+            )
 
         // Null on a device that will not say, and the string of zeroes is a known emulator answer.
         // Either way there is nothing to compare, and a shared placeholder would flag every one of

@@ -15,7 +15,10 @@ import java.io.FileNotFoundException
 import java.io.IOException
 
 /** A proof image stored in the tester's own Drive. */
-data class DriveFile(val id: String, val name: String) {
+data class DriveFile(
+    val id: String,
+    val name: String,
+) {
     /** Viewable by anyone with the link, once [DriveRepo.makeLinkReadable] has run. */
     val viewUrl: String get() = "https://drive.google.com/file/d/$id/view"
 
@@ -24,8 +27,13 @@ data class DriveFile(val id: String, val name: String) {
 }
 
 sealed interface UploadResult {
-    data class Ok(val file: DriveFile) : UploadResult
-    data class Failed(val reason: String) : UploadResult
+    data class Ok(
+        val file: DriveFile,
+    ) : UploadResult
+
+    data class Failed(
+        val reason: String,
+    ) : UploadResult
 }
 
 /**
@@ -38,20 +46,22 @@ sealed interface UploadResult {
  * silently passing.
  */
 object DriveRepo {
-
     private const val UPLOAD_URL = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart"
     private const val FILES_URL = "https://www.googleapis.com/drive/v3/files"
 
     /** Finds or creates the app's folder. `drive.file` can see folders this app made. */
     private fun folderId(accessToken: String): String {
-        val query = "mimeType='application/vnd.google-apps.folder' and " +
-            "name='${Config.DRIVE_FOLDER}' and trashed=false"
+        val query =
+            "mimeType='application/vnd.google-apps.folder' and " +
+                "name='${Config.DRIVE_FOLDER}' and trashed=false"
 
-        val lookup = Request.Builder()
-            .url("$FILES_URL?q=${Uri.encode(query)}&fields=files(id,name)&spaces=drive")
-            .header("Authorization", "Bearer $accessToken")
-            .get()
-            .build()
+        val lookup =
+            Request
+                .Builder()
+                .url("$FILES_URL?q=${Uri.encode(query)}&fields=files(id,name)&spaces=drive")
+                .header("Authorization", "Bearer $accessToken")
+                .get()
+                .build()
 
         GroupGate.http.newCall(lookup).execute().use { response ->
             val body = response.body?.string().orEmpty()
@@ -61,15 +71,18 @@ object DriveRepo {
             }
         }
 
-        val metadata = JSONObject()
-            .put("name", Config.DRIVE_FOLDER)
-            .put("mimeType", "application/vnd.google-apps.folder")
+        val metadata =
+            JSONObject()
+                .put("name", Config.DRIVE_FOLDER)
+                .put("mimeType", "application/vnd.google-apps.folder")
 
-        val create = Request.Builder()
-            .url("$FILES_URL?fields=id")
-            .header("Authorization", "Bearer $accessToken")
-            .post(metadata.toString().toRequestBody("application/json".toMediaType()))
-            .build()
+        val create =
+            Request
+                .Builder()
+                .url("$FILES_URL?fields=id")
+                .header("Authorization", "Bearer $accessToken")
+                .post(metadata.toString().toRequestBody("application/json".toMediaType()))
+                .build()
 
         GroupGate.http.newCall(create).execute().use { response ->
             val body = response.body?.string().orEmpty()
@@ -82,13 +95,18 @@ object DriveRepo {
      * Grants read access to anyone holding the link, so the app owner can view the proof.
      * Not optional: without it the file stays private to the tester and the grid shows nothing.
      */
-    private fun makeLinkReadable(accessToken: String, fileId: String) {
+    private fun makeLinkReadable(
+        accessToken: String,
+        fileId: String,
+    ) {
         val body = JSONObject().put("role", "reader").put("type", "anyone")
-        val request = Request.Builder()
-            .url("$FILES_URL/$fileId/permissions")
-            .header("Authorization", "Bearer $accessToken")
-            .post(body.toString().toRequestBody("application/json".toMediaType()))
-            .build()
+        val request =
+            Request
+                .Builder()
+                .url("$FILES_URL/$fileId/permissions")
+                .header("Authorization", "Bearer $accessToken")
+                .post(body.toString().toRequestBody("application/json".toMediaType()))
+                .build()
 
         GroupGate.http.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
@@ -98,26 +116,35 @@ object DriveRepo {
     }
 
     /** Uploads an already-compressed JPEG written by the capture service. */
-    suspend fun upload(accessToken: String, file: File, fileName: String): UploadResult =
+    suspend fun upload(
+        accessToken: String,
+        file: File,
+        fileName: String,
+    ): UploadResult =
         withContext(Dispatchers.IO) {
             try {
                 val parent = folderId(accessToken)
 
-                val metadata = JSONObject()
-                    .put("name", fileName)
-                    .put("parents", JSONArray().put(parent))
+                val metadata =
+                    JSONObject()
+                        .put("name", fileName)
+                        .put("parents", JSONArray().put(parent))
 
-                val multipart = MultipartBody.Builder()
-                    .setType("multipart/related".toMediaType())
-                    .addPart(metadata.toString().toRequestBody("application/json; charset=UTF-8".toMediaType()))
-                    .addPart(file.readBytes().toRequestBody("image/jpeg".toMediaType()))
-                    .build()
+                val multipart =
+                    MultipartBody
+                        .Builder()
+                        .setType("multipart/related".toMediaType())
+                        .addPart(metadata.toString().toRequestBody("application/json; charset=UTF-8".toMediaType()))
+                        .addPart(file.readBytes().toRequestBody("image/jpeg".toMediaType()))
+                        .build()
 
-                val request = Request.Builder()
-                    .url("$UPLOAD_URL&fields=id,name")
-                    .header("Authorization", "Bearer $accessToken")
-                    .post(multipart)
-                    .build()
+                val request =
+                    Request
+                        .Builder()
+                        .url("$UPLOAD_URL&fields=id,name")
+                        .header("Authorization", "Bearer $accessToken")
+                        .post(multipart)
+                        .build()
 
                 GroupGate.http.newCall(request).execute().use { response ->
                     val body = response.body?.string().orEmpty()
@@ -146,16 +173,20 @@ object DriveRepo {
      * from Setup. Everything else keeps its status code, which is the one part of the raw body
      * worth carrying — it is what makes a report actionable when somebody sends a screenshot.
      */
-    private fun refusal(code: Int, body: String): String = when {
-        code == 401 || code == 403 && body.contains("authError", true) ->
-            "Your Drive access has expired. Open Setup from the home screen and reconnect it."
-        body.contains("storageQuota", true) || body.contains("quotaExceeded", true) ->
-            "Your Google Drive is full, so the screenshot couldn't be saved. Free some space and " +
-                "open the app again."
-        code == 429 || code >= 500 ->
-            "Drive is busy. Try opening the app again in a minute. ($code)"
-        else -> "Drive wouldn't take the screenshot. ($code)"
-    }
+    private fun refusal(
+        code: Int,
+        body: String,
+    ): String =
+        when {
+            code == 401 || code == 403 && body.contains("authError", true) ->
+                "Your Drive access has expired. Open Setup from the home screen and reconnect it."
+            body.contains("storageQuota", true) || body.contains("quotaExceeded", true) ->
+                "Your Google Drive is full, so the screenshot couldn't be saved. Free some space and " +
+                    "open the app again."
+            code == 429 || code >= 500 ->
+                "Drive is busy. Try opening the app again in a minute. ($code)"
+            else -> "Drive wouldn't take the screenshot. ($code)"
+        }
 
     /**
      * Why the upload never reached Drive.
@@ -165,10 +196,11 @@ object DriveRepo {
      * open failed: ENOENT (No such file or directory)` in red. Every word of it was true and none
      * of it was theirs to do anything about.
      */
-    private fun broke(e: Exception): String = when (e) {
-        is FileNotFoundException ->
-            "That screenshot didn't survive long enough to be saved. Open the app again."
-        is IOException -> "Can't reach Drive. Check your connection and try again."
-        else -> "We couldn't save that screenshot. Open the app again."
-    }
+    private fun broke(e: Exception): String =
+        when (e) {
+            is FileNotFoundException ->
+                "That screenshot didn't survive long enough to be saved. Open the app again."
+            is IOException -> "Can't reach Drive. Check your connection and try again."
+            else -> "We couldn't save that screenshot. Open the app again."
+        }
 }

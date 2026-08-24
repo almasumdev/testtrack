@@ -1,12 +1,12 @@
 package com.eazyverse.testtrack.data
 
+import android.accounts.Account
 import android.app.Activity
 import android.content.Intent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.eazyverse.testtrack.Config
-import android.accounts.Account
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.AuthorizationResult
 import com.google.android.gms.auth.api.identity.Identity
@@ -35,7 +35,6 @@ import kotlin.coroutines.resumeWithException
  * is a single tap from then on.
  */
 object AuthRepo {
-
     /**
      * The Drive request, pinned to the account that is signed in.
      *
@@ -51,13 +50,14 @@ object AuthRepo {
      * Firebase is still restoring.
      */
     private val driveRequest: AuthorizationRequest
-        get() = AuthorizationRequest.builder()
-            .setRequestedScopes(listOf(Scope(Config.DRIVE_SCOPE)))
-            .apply {
-                val address = FirebaseAuth.getInstance().currentUser?.email ?: Session.email
-                address?.let { setAccount(Account(it, "com.google")) }
-            }
-            .build()
+        get() =
+            AuthorizationRequest
+                .builder()
+                .setRequestedScopes(listOf(Scope(Config.DRIVE_SCOPE)))
+                .apply {
+                    val address = FirebaseAuth.getInstance().currentUser?.email ?: Session.email
+                    address?.let { setAccount(Account(it, "com.google")) }
+                }.build()
 
     /**
      * How long Play services gets to answer before the screen stops believing it will.
@@ -138,29 +138,31 @@ object AuthRepo {
      * still lands somewhere they can act instead of watching sign-in collapse.
      */
     suspend fun signIn(activity: Activity): GoogleAccount {
-        val account = withTimeoutOrNull(GOOGLE_LIMIT) { GroupGate.signIn(activity) }
-            ?: throw StalledException(
-                "Google never came back with an answer. Close TestTrack from your recent apps, " +
-                    "open it again and tap Continue with Google. If it happens a second time, " +
-                    "restart the phone. It is Play services that has stalled, not your account."
-            )
+        val account =
+            withTimeoutOrNull(GOOGLE_LIMIT) { GroupGate.signIn(activity) }
+                ?: throw StalledException(
+                    "Google never came back with an answer. Close TestTrack from your recent apps, " +
+                        "open it again and tap Continue with Google. If it happens a second time, " +
+                        "restart the phone. It is Play services that has stalled, not your account.",
+                )
 
         token = account.idToken
         tokenAt = System.currentTimeMillis()
-        firebaseError = try {
-            withTimeout(FIREBASE_LIMIT) { signInToFirebase(account.idToken) }
-            null
-        } catch (e: TimeoutCancellationException) {
-            // Caught before CancellationException on purpose: a timeout is one, so the branch
-            // below would rethrow it and the spinner this exists to end would go on turning.
-            "Google signed you in, but TestTrack's own sign-in didn't answer. Check your " +
-                "connection and tap Continue with Google again."
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            "You're signed in, but Firebase turned the token down. Google needs enabling under " +
-                "Firebase Authentication, in Sign-in method. (${e.message})"
-        }
+        firebaseError =
+            try {
+                withTimeout(FIREBASE_LIMIT) { signInToFirebase(account.idToken) }
+                null
+            } catch (e: TimeoutCancellationException) {
+                // Caught before CancellationException on purpose: a timeout is one, so the branch
+                // below would rethrow it and the spinner this exists to end would go on turning.
+                "Google signed you in, but TestTrack's own sign-in didn't answer. Check your " +
+                    "connection and tap Continue with Google again."
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                "You're signed in, but Firebase turned the token down. Google needs enabling under " +
+                    "Firebase Authentication, in Sign-in method. (${e.message})"
+            }
         return account
     }
 
@@ -193,20 +195,23 @@ object AuthRepo {
         // has used this app before, which is every account that reaches this screen. When it
         // cannot, the honest answer is that the sign-in has expired, not a list of every Google
         // account on the phone attached to a button that asked about one of them.
-        val account = runCatching { GroupGate.refresh(activity) }.getOrNull()
-            ?: return null to GateResult.Failed(NEEDS_GOOGLE)
+        val account =
+            runCatching { GroupGate.refresh(activity) }.getOrNull()
+                ?: return null to GateResult.Failed(NEEDS_GOOGLE)
 
         token = account.idToken
         tokenAt = System.currentTimeMillis()
         return account to GroupGate.check(account.idToken)
     }
 
-    private suspend fun signInToFirebase(idToken: String) = suspendCancellableCoroutine { cont ->
-        FirebaseAuth.getInstance()
-            .signInWithCredential(GoogleAuthProvider.getCredential(idToken, null))
-            .addOnSuccessListener { if (cont.isActive) cont.resume(Unit) }
-            .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
-    }
+    private suspend fun signInToFirebase(idToken: String) =
+        suspendCancellableCoroutine { cont ->
+            FirebaseAuth
+                .getInstance()
+                .signInWithCredential(GoogleAuthProvider.getCredential(idToken, null))
+                .addOnSuccessListener { if (cont.isActive) cont.resume(Unit) }
+                .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
+        }
 
     /**
      * Requests the Drive access token.
@@ -217,7 +222,8 @@ object AuthRepo {
      */
     suspend fun authorizeDrive(activity: Activity): AuthorizationResult =
         suspendCancellableCoroutine { cont ->
-            Identity.getAuthorizationClient(activity)
+            Identity
+                .getAuthorizationClient(activity)
                 .authorize(driveRequest)
                 .addOnSuccessListener { if (cont.isActive) cont.resume(it) }
                 .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
@@ -237,13 +243,16 @@ object AuthRepo {
      * out and back in used to present "Connect Drive" again for an authorisation that had never
      * been lost. This resolves silently when the grant exists; it shows nothing either way.
      */
-    suspend fun hasDriveAccess(activity: Activity): Boolean =
-        driveTokenOrNull(activity) != null
+    suspend fun hasDriveAccess(activity: Activity): Boolean = driveTokenOrNull(activity) != null
 
     /** Pulls the access token out of the consent screen's result. */
-    fun tokenFromConsent(activity: Activity, data: Intent?): String? =
+    fun tokenFromConsent(
+        activity: Activity,
+        data: Intent?,
+    ): String? =
         runCatching {
-            Identity.getAuthorizationClient(activity)
+            Identity
+                .getAuthorizationClient(activity)
                 .getAuthorizationResultFromIntent(data)
                 .accessToken
         }.getOrNull()

@@ -17,7 +17,6 @@ import com.eazyverse.testtrack.data.Telemetry
  * resolves before anything is composed, and it needs to stay in the activity for that.
  */
 class App : Application() {
-
     override fun onCreate() {
         super.onCreate()
         AppUpdateService.init(this)

@@ -5,7 +5,6 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.CredentialOption
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
 import com.eazyverse.testtrack.Config
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -22,7 +21,6 @@ import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-/** The signed-in Google account. */
 /**
  * The account the picker handed back.
  *
@@ -30,10 +28,16 @@ import java.util.concurrent.TimeUnit
  * against your apps. The app used to throw it away and store the address with the domain cut off,
  * so a grid of thirteen developers read as a column of email fragments.
  */
-data class GoogleAccount(val idToken: String, val email: String, val name: String)
+data class GoogleAccount(
+    val idToken: String,
+    val email: String,
+    val name: String,
+)
 
 /** Raised when a non-Gmail account is chosen — sign-in is Gmail-only by product decision. */
-class NotGmailException(val email: String) : Exception("$email is not a Gmail account")
+class NotGmailException(
+    val email: String,
+) : Exception("$email is not a Gmail account")
 
 /**
  * Raised when a step of signing in never came back at all.
@@ -42,21 +46,32 @@ class NotGmailException(val email: String) : Exception("$email is not a Gmail ac
  * call we were waiting on has no limit of its own and would otherwise leave the button spinning
  * until the tester gave up. Carries text meant for a person, so it keeps its own wording.
  */
-class StalledException(message: String) : Exception(message)
+class StalledException(
+    message: String,
+) : Exception(message)
 
 /** Result of asking the membership service whether this account is in the Google Group. */
 sealed interface GateResult {
-    data class Member(val email: String) : GateResult
-    data class NotMember(val email: String) : GateResult
-    data class Failed(val reason: String) : GateResult
+    data class Member(
+        val email: String,
+    ) : GateResult
+
+    data class NotMember(
+        val email: String,
+    ) : GateResult
+
+    data class Failed(
+        val reason: String,
+    ) : GateResult
 }
 
 /** The address the service resolved from the token, or empty when it did not name one. */
-fun GateResult.address(): String = when (this) {
-    is GateResult.Member -> email
-    is GateResult.NotMember -> email
-    is GateResult.Failed -> ""
-}
+fun GateResult.address(): String =
+    when (this) {
+        is GateResult.Member -> email
+        is GateResult.NotMember -> email
+        is GateResult.Failed -> ""
+    }
 
 /**
  * The one form of an address that two systems can agree on.
@@ -121,7 +136,6 @@ fun GateResult.isAboutSomeoneElse(signedInAs: String?): Boolean {
  * and the phone never asserts its own membership.
  */
 object GroupGate {
-
     /**
      * Short enough that a person is still waiting when it gives up.
      *
@@ -130,15 +144,17 @@ object GroupGate {
      * Script could hold "Signing in..." for the better part of two minutes before saying anything,
      * which every tester read as the app being broken. A warm call answers in under two seconds.
      */
-    internal val http: OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(25, TimeUnit.SECONDS)
-        .writeTimeout(25, TimeUnit.SECONDS)
-        // Apps Script /exec answers 302 -> script.googleusercontent.com and the JSON lives at
-        // the redirect target. OkHttp follows it and downgrades POST to GET, which is exactly
-        // what that endpoint expects. Leave followRedirects on.
-        .followRedirects(true)
-        .build()
+    internal val http: OkHttpClient =
+        OkHttpClient
+            .Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(25, TimeUnit.SECONDS)
+            .writeTimeout(25, TimeUnit.SECONDS)
+            // Apps Script /exec answers 302 -> script.googleusercontent.com and the JSON lives at
+            // the redirect target. OkHttp follows it and downgrades POST to GET, which is exactly
+            // what that endpoint expects. Leave followRedirects on.
+            .followRedirects(true)
+            .build()
 
     /**
      * Shows the Google account chooser and returns the ID token plus the chosen address.
@@ -199,11 +215,12 @@ object GroupGate {
     suspend fun refresh(context: Context): GoogleAccount =
         credential(
             context,
-            GetGoogleIdOption.Builder()
+            GetGoogleIdOption
+                .Builder()
                 .setServerClientId(Config.WEB_CLIENT_ID)
                 .setFilterByAuthorizedAccounts(true)
                 .setAutoSelectEnabled(true)
-                .build()
+                .build(),
         )
 
     /**
@@ -219,7 +236,10 @@ object GroupGate {
     private fun manager(context: Context): CredentialManager =
         cached ?: CredentialManager.create(context.applicationContext).also { cached = it }
 
-    private suspend fun credential(context: Context, option: CredentialOption): GoogleAccount {
+    private suspend fun credential(
+        context: Context,
+        option: CredentialOption,
+    ): GoogleAccount {
         val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
         val response = manager(context).getCredential(context, request)
         val credential = response.credential
@@ -228,7 +248,7 @@ object GroupGate {
             credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
         ) {
             val google = GoogleIdTokenCredential.createFrom(credential.data)
-            val email = google.id            // GoogleIdTokenCredential.id is the account address
+            val email = google.id // GoogleIdTokenCredential.id is the account address
 
             // The picker cannot be filtered by domain, so reject after selection with a clear
             // message rather than letting a Workspace account fail confusingly later.
@@ -238,12 +258,13 @@ object GroupGate {
             // Google returns the profile name where the account has one, and both halves
             // separately where it does not. The address with its domain cut off is the last
             // resort, not the first: it is what this used to store for everybody.
-            val name = google.displayName?.takeIf { it.isNotBlank() }
-                ?: listOfNotNull(
-                    google.givenName?.takeIf { it.isNotBlank() },
-                    google.familyName?.takeIf { it.isNotBlank() },
-                ).joinToString(" ").takeIf { it.isNotBlank() }
-                ?: email.substringBefore('@')
+            val name =
+                google.displayName?.takeIf { it.isNotBlank() }
+                    ?: listOfNotNull(
+                        google.givenName?.takeIf { it.isNotBlank() },
+                        google.familyName?.takeIf { it.isNotBlank() },
+                    ).joinToString(" ").takeIf { it.isNotBlank() }
+                    ?: email.substringBefore('@')
 
             return GoogleAccount(google.idToken, email, name)
         }
@@ -251,48 +272,54 @@ object GroupGate {
     }
 
     /** Asks the membership service. Network and parse failures are values, not exceptions. */
-    suspend fun check(idToken: String): GateResult = withContext(Dispatchers.IO) {
-        try {
-            val payload = JSONObject().put("idToken", idToken).toString()
-            val request = Request.Builder()
-                .url(Config.GATE_URL)
-                .post(payload.toRequestBody("application/json".toMediaType()))
-                .build()
+    suspend fun check(idToken: String): GateResult =
+        withContext(Dispatchers.IO) {
+            try {
+                val payload = JSONObject().put("idToken", idToken).toString()
+                val request =
+                    Request
+                        .Builder()
+                        .url(Config.GATE_URL)
+                        .post(payload.toRequestBody("application/json".toMediaType()))
+                        .build()
 
-            http.newCall(request).execute().use { response ->
-                val raw = response.body?.string().orEmpty()
-                if (!response.isSuccessful) return@withContext GateResult.Failed("HTTP ${response.code}")
+                http.newCall(request).execute().use { response ->
+                    val raw = response.body?.string().orEmpty()
+                    if (!response.isSuccessful) return@withContext GateResult.Failed("HTTP ${response.code}")
 
-                val json = JSONObject(raw)
-                json.optString("error").takeIf { it.isNotEmpty() }?.let {
-                    return@withContext GateResult.Failed(it)
+                    val json = JSONObject(raw)
+                    json.optString("error").takeIf { it.isNotEmpty() }?.let {
+                        return@withContext GateResult.Failed(it)
+                    }
+
+                    // A missing `isMember` is not a "no".
+                    //
+                    // optBoolean defaults to false, so every reply that did not explicitly say true
+                    // came back as "isn't in the group yet": a truncated body, a shape the script
+                    // changed, an error it phrased in a field this does not read. Telling somebody
+                    // who joined an hour ago that they are not a member is the answer most likely to
+                    // make them give up and least likely to be questioned, because it sounds like a
+                    // fact rather than a failure. An answer we cannot read now says so.
+                    if (!json.has("isMember")) {
+                        return@withContext GateResult.Failed(
+                            "The membership check gave an answer we couldn't read. " +
+                                "Try again in a moment. (${raw.take(100)})",
+                        )
+                    }
+
+                    val email = json.optString("email")
+                    if (json.getBoolean("isMember")) {
+                        GateResult.Member(email)
+                    } else {
+                        GateResult.NotMember(email)
+                    }
                 }
-
-                // A missing `isMember` is not a "no".
-                //
-                // optBoolean defaults to false, so every reply that did not explicitly say true
-                // came back as "isn't in the group yet": a truncated body, a shape the script
-                // changed, an error it phrased in a field this does not read. Telling somebody
-                // who joined an hour ago that they are not a member is the answer most likely to
-                // make them give up and least likely to be questioned, because it sounds like a
-                // fact rather than a failure. An answer we cannot read now says so.
-                if (!json.has("isMember")) {
-                    return@withContext GateResult.Failed(
-                        "The membership check gave an answer we couldn't read. " +
-                            "Try again in a moment. (${raw.take(100)})"
-                    )
-                }
-
-                val email = json.optString("email")
-                if (json.getBoolean("isMember")) GateResult.Member(email)
-                else GateResult.NotMember(email)
+            } catch (e: IOException) {
+                // A dropped connection is not a verdict, and OkHttp's message for one names a Google
+                // IP address, which reads like the deployment is broken rather than the network.
+                GateResult.Failed("Couldn't reach the membership service. Check your connection and try again.")
+            } catch (e: Exception) {
+                GateResult.Failed(e.message ?: "Membership check failed")
             }
-        } catch (e: IOException) {
-            // A dropped connection is not a verdict, and OkHttp's message for one names a Google
-            // IP address, which reads like the deployment is broken rather than the network.
-            GateResult.Failed("Couldn't reach the membership service. Check your connection and try again.")
-        } catch (e: Exception) {
-            GateResult.Failed(e.message ?: "Membership check failed")
         }
-    }
 }

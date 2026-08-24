@@ -43,7 +43,10 @@ class AuthViewModel : ViewModel() {
         private set
     var message by mutableStateOf<String?>(null)
 
-    fun signIn(activity: Activity, onDone: () -> Unit) {
+    fun signIn(
+        activity: Activity,
+        onDone: () -> Unit,
+    ) {
         busy = true
         message = null
         viewModelScope.launch {
@@ -102,12 +105,15 @@ class AuthViewModel : ViewModel() {
 }
 
 @Composable
-fun AuthScreen(onSignedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
+fun AuthScreen(
+    onSignedIn: () -> Unit,
+    vm: AuthViewModel = viewModel(),
+) {
     val activity = LocalContext.current.findActivity()
 
     Column(
         Modifier.fillMaxSize().padding(horizontal = 28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.weight(0.9f))
 
@@ -117,14 +123,14 @@ fun AuthScreen(onSignedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
         Text(
             "TestTrack",
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Spacer(Modifier.height(8.dp))
         Text(
             "Sign in with the Gmail you use for closed testing.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         Spacer(Modifier.weight(0.7f))
@@ -132,17 +138,17 @@ fun AuthScreen(onSignedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
         Reason(
             Icons.Default.Group,
             "You test theirs, they test yours",
-            "Fourteen people in a group, all testing the same fortnight together."
+            "Fourteen people in a group, all testing the same fortnight together.",
         )
         Reason(
             Icons.Default.PhotoCamera,
             "Ten seconds a day",
-            "Open an app from your list. The time is logged while you use it, with nothing to fill in."
+            "Open an app from your list. The time is logged while you use it, with nothing to fill in.",
         )
         Reason(
             Icons.Default.CloudUpload,
             "The proof stays yours",
-            "It goes to your own Google Drive. We only see the files TestTrack puts there."
+            "It goes to your own Google Drive. We only see the files TestTrack puts there.",
         )
 
         Spacer(Modifier.weight(0.7f))
@@ -153,18 +159,19 @@ fun AuthScreen(onSignedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
                     .background(MaterialTheme.colorScheme.errorContainer)
-                    .padding(14.dp)
+                    .padding(14.dp),
             ) {
                 Icon(
-                    Icons.Default.ErrorOutline, null,
+                    Icons.Default.ErrorOutline,
+                    null,
                     Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onErrorContainer
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
                 )
                 Spacer(Modifier.width(10.dp))
                 Text(
                     it,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer
+                    color = MaterialTheme.colorScheme.onErrorContainer,
                 )
             }
             Spacer(Modifier.height(14.dp))
@@ -177,20 +184,21 @@ fun AuthScreen(onSignedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
             enabled = !vm.busy,
             shape = RoundedCornerShape(16.dp),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                disabledContainerColor = MaterialTheme.colorScheme.surface,
-                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    disabledContainerColor = MaterialTheme.colorScheme.surface,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp),
-            modifier = Modifier.fillMaxWidth().height(56.dp)
+            modifier = Modifier.fillMaxWidth().height(56.dp),
         ) {
             if (vm.busy) {
                 CircularProgressIndicator(
                     Modifier.size(18.dp),
                     strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
                 GoogleMark(Modifier.size(22.dp))
@@ -199,7 +207,7 @@ fun AuthScreen(onSignedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
             Text(
                 if (vm.busy) "Signing in…" else "Continue with Google",
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
         }
 
@@ -208,7 +216,7 @@ fun AuthScreen(onSignedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
             "Gmail only, because Play Console ties closed testing to Google accounts.",
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(28.dp))
     }
@@ -218,17 +226,18 @@ fun AuthScreen(onSignedIn: () -> Unit, vm: AuthViewModel = viewModel()) {
 @Composable
 private fun BrandMark() {
     val onMark = MaterialTheme.colorScheme.onPrimary
-    val tint = listOf(
-        MaterialTheme.colorScheme.primary,
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.78f)
-    )
+    val tint =
+        listOf(
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.78f),
+        )
 
     Box(
         Modifier
             .size(78.dp)
             .clip(RoundedCornerShape(24.dp))
             .background(Brush.linearGradient(tint)),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Canvas(Modifier.size(38.dp)) {
             val cell = size.width * 0.28f
@@ -241,7 +250,7 @@ private fun BrandMark() {
                         color = onMark.copy(alpha = if (pending) 0.30f else 0.95f),
                         topLeft = Offset(col * (cell + gap), row * (cell + gap)),
                         size = Size(cell, cell),
-                        cornerRadius = CornerRadius(cell * 0.34f)
+                        cornerRadius = CornerRadius(cell * 0.34f),
                     )
                 }
             }
@@ -250,14 +259,18 @@ private fun BrandMark() {
 }
 
 @Composable
-private fun Reason(icon: ImageVector, title: String, body: String) {
+private fun Reason(
+    icon: ImageVector,
+    title: String,
+    body: String,
+) {
     Row(Modifier.fillMaxWidth().padding(bottom = 18.dp)) {
         Box(
             Modifier
                 .size(38.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Icon(icon, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
         }
@@ -268,7 +281,7 @@ private fun Reason(icon: ImageVector, title: String, body: String) {
             Text(
                 body,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -295,25 +308,29 @@ private fun GoogleMark(modifier: Modifier = Modifier) {
         val box = Offset(centre.x - radius, centre.y - radius)
         val arcSize = Size(radius * 2, radius * 2)
 
-        fun arc(color: Color, start: Float, sweep: Float) = drawArc(
+        fun arc(
+            color: Color,
+            start: Float,
+            sweep: Float,
+        ) = drawArc(
             color = color,
             startAngle = start,
             sweepAngle = sweep,
             useCenter = false,
             topLeft = box,
             size = arcSize,
-            style = Stroke(stroke)
+            style = Stroke(stroke),
         )
 
-        arc(GoogleBlue, 268f, 92f)     // top right, running into the crossbar
-        arc(GoogleGreen, 24f, 88f)     // lower right and along the bottom
-        arc(GoogleYellow, 112f, 64f)   // bottom left
-        arc(GoogleRed, 176f, 92f)      // left and over the top
+        arc(GoogleBlue, 268f, 92f) // top right, running into the crossbar
+        arc(GoogleGreen, 24f, 88f) // lower right and along the bottom
+        arc(GoogleYellow, 112f, 64f) // bottom left
+        arc(GoogleRed, 176f, 92f) // left and over the top
 
         drawRect(
             color = GoogleBlue,
             topLeft = Offset(centre.x, centre.y - stroke / 2f),
-            size = Size(radius + stroke / 2f, stroke)
+            size = Size(radius + stroke / 2f, stroke),
         )
     }
 }

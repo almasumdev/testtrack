@@ -32,7 +32,6 @@ import kotlin.coroutines.resumeWithException
  * every time, so every send would go to a growing pile of dead addresses.
  */
 object PushRepo {
-
     private const val PREFS = "testtrack.push"
     private const val KEY_INSTALL_ID = "install_id"
     private const val KEY_TOPICS = "topics"
@@ -43,12 +42,12 @@ object PushRepo {
 
     private suspend fun <T> await(task: Task<T>): T =
         suspendCancellableCoroutine { cont ->
-            task.addOnSuccessListener { if (cont.isActive) cont.resume(it) }
+            task
+                .addOnSuccessListener { if (cont.isActive) cont.resume(it) }
                 .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
         }
 
-    private fun prefs(context: Context) =
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     /**
      * This install, named once and for good.
@@ -96,10 +95,10 @@ object PushRepo {
             NotificationChannel(
                 CHANNEL_REMINDERS,
                 "Daily reminders",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_DEFAULT,
             ).apply {
                 description = "Nudges when apps in your groups are still waiting on you today."
-            }
+            },
         )
     }
 
@@ -112,25 +111,36 @@ object PushRepo {
      * accumulating. Failure is not surfaced — a tester who cannot be reached by push has lost a
      * convenience, not the ability to test, and an error banner over that would be noise.
      */
-    suspend fun register(context: Context, uid: String) {
-        val token = runCatching { await(FirebaseMessaging.getInstance().token) }.getOrNull()
-            ?: return
+    suspend fun register(
+        context: Context,
+        uid: String,
+    ) {
+        val token =
+            runCatching { await(FirebaseMessaging.getInstance().token) }.getOrNull()
+                ?: return
         save(context, uid, token)
     }
 
     /** Called from [PushService.onNewToken] as well, where the token arrives unasked. */
-    suspend fun save(context: Context, uid: String, token: String) {
+    suspend fun save(
+        context: Context,
+        uid: String,
+        token: String,
+    ) {
         runCatching {
             await(
-                db.collection("users").document(uid)
-                    .collection("tokens").document(installId(context))
+                db
+                    .collection("users")
+                    .document(uid)
+                    .collection("tokens")
+                    .document(installId(context))
                     .set(
                         mapOf(
                             "token" to token,
                             "platform" to "android",
-                            "updatedAt" to System.currentTimeMillis()
-                        )
-                    )
+                            "updatedAt" to System.currentTimeMillis(),
+                        ),
+                    ),
             )
         }
     }
@@ -147,7 +157,10 @@ object PushRepo {
      * leaving an old group would otherwise mean hearing about it for good. The set of what we are
      * subscribed to is kept locally because there is no API to ask FCM what a device is on.
      */
-    suspend fun syncTopics(context: Context, groupIds: Collection<String>) {
+    suspend fun syncTopics(
+        context: Context,
+        groupIds: Collection<String>,
+    ) {
         val wanted = groupIds.map(::topic).toSet()
         val store = prefs(context)
         val held = store.getStringSet(KEY_TOPICS, emptySet()).orEmpty()
@@ -182,7 +195,10 @@ object PushRepo {
      * would race, reach the server unauthenticated, and come back PERMISSION_DENIED, leaving the
      * token behind for good.
      */
-    suspend fun clear(context: Context, uid: String?) {
+    suspend fun clear(
+        context: Context,
+        uid: String?,
+    ) {
         val store = prefs(context)
         val messaging = FirebaseMessaging.getInstance()
         store.getStringSet(KEY_TOPICS, emptySet()).orEmpty().forEach { name ->
@@ -193,8 +209,12 @@ object PushRepo {
         if (uid != null) {
             runCatching {
                 await(
-                    db.collection("users").document(uid)
-                        .collection("tokens").document(installId(context)).delete()
+                    db
+                        .collection("users")
+                        .document(uid)
+                        .collection("tokens")
+                        .document(installId(context))
+                        .delete(),
                 )
             }
         }

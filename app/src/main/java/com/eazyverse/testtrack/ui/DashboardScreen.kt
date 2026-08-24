@@ -1,9 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,190 +8,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
 import com.eazyverse.testtrack.data.*
-import kotlinx.coroutines.launch
 
 /** How a tester's day reads. Five states, each with a shape of its own — see [Cell]. */
 enum class DayState { POSTED, SHORT, MISSED, UPCOMING, NOT_JOINED, REPORTED }
-
-private val CELL = 26.dp
-private val CELL_GAP = 2.dp
-private val NAME_COLUMN = 96.dp
-
-class DashboardViewModel : ViewModel() {
-
-    var app by mutableStateOf<TestApp?>(null)
-        private set
-    var group by mutableStateOf<TestGroup?>(null)
-        private set
-    var testers by mutableStateOf<List<Tester>>(emptyList())
-        private set
-    var proofs by mutableStateOf<Map<Pair<String, Int>, Proof>>(emptyMap())
-        private set
-    /** Day-one notes testers have left on this app — see [Repo.submitFeedback], newest first. */
-    var feedback by mutableStateOf<List<Feedback>>(emptyList())
-        private set
-    /** Every tester's own [TestApp.placedAt], for [stateOf] to tell "not a member yet" from "missed". */
-    var placedAt by mutableStateOf<Map<String, Long>>(emptyMap())
-        private set
-    /**
-     * The app, its group, the roster and every proof are all in hand.
-     *
-     * One flag for the page — see [SkeletonPage]. Here the headline is the casualty: a roster
-     * without its proofs reads "0 of 13 reported today" and every cell of the grid draws as a
-     * miss. Sticky once set.
-     */
-    var ready by mutableStateOf(false)
-        private set
-
-    /** A refresh in flight over content already on screen — see [HomeViewModel.refreshing]. */
-    var refreshing by mutableStateOf(false)
-        private set
-
-    /** The reader pulled for this themselves — see [HomeViewModel.pulling]. */
-    var pulling by mutableStateOf(false)
-        private set
-
-    var message by mutableStateOf<String?>(null)
-
-    val day: Int? get() = group?.dayIndex()
-
-    fun load(appId: String, fromPull: Boolean = false) {
-        showCached(appId)
-
-        viewModelScope.launch {
-            refreshing = ready // only worth flagging over content that's already on screen
-            if (fromPull) pulling = true
-            runCatching {
-                val found = Repo.app(appId)
-                val cohort = found?.groupId?.let { Repo.group(it) }
-
-                // The owner never tests their own app, so they are not a row in their grid.
-                val roster =
-                    if (found == null || cohort == null) emptyList()
-                    else Repo.testers(cohort.memberUids).filter { it.uid != found.ownerUid }
-                val marks =
-                    if (found == null || cohort == null) emptyMap()
-                    else Repo.proofsForApp(appId, found.ownerUid)
-                        .associateBy { it.testerUid to it.day }
-                // Each tester's own arrival, so a day before it reads as "not a member yet"
-                // rather than "missed" — see Compliance.firstJudgedDay.
-                val arrivals =
-                    if (cohort == null) emptyMap()
-                    else Repo.appsInGroup(cohort.id).associate { it.ownerUid to it.placedAt }
-                // Best-effort, the same reasoning [roster] already gives: a note that failed to
-                // load is not worth taking the grid down with it.
-                val notes = if (found == null) emptyList() else runCatching {
-                    Repo.feedbackForApp(appId, found.ownerUid)
-                }.getOrDefault(emptyList())
-
-                // Published in one go, after every query has answered — see [ready].
-                app = found
-                group = cohort
-                testers = roster
-                proofs = marks
-                placedAt = arrivals
-                feedback = notes
-
-                found?.let { Cache.put(Cache.app(appId), it) }
-                if (cohort != null) {
-                    Cache.put(Cache.group(cohort.id), cohort)
-                    Cache.put(Cache.testers(cohort.id), roster)
-                    Cache.put(Cache.proofs(appId), marks)
-                    Cache.put(Cache.arrivals(cohort.id), arrivals)
-                }
-                Cache.put(Cache.feedbackFor(appId), notes)
-            }.onFailure {
-                message = it.friendly(
-                    "We couldn't load this dashboard. Check your connection and try again.",
-                    denied = "This app isn't yours to see any more. It may have been withdrawn."
-                )
-            }
-            ready = true
-            refreshing = false
-            pulling = false
-        }
-    }
-
-    /** Complete hit or nothing: proofs missing behind a full roster reads as thirteen no-shows. */
-    private fun showCached(appId: String) {
-        val cached = Cache.get<TestApp>(Cache.app(appId)) ?: return
-        val gid = cached.groupId ?: return
-        val cohort = Cache.get<TestGroup>(Cache.group(gid)) ?: return
-        val roster = Cache.get<List<Tester>>(Cache.testers(gid)) ?: return
-        val marks = Cache.get<Map<Pair<String, Int>, Proof>>(Cache.proofs(appId)) ?: return
-        val arrivals = Cache.get<Map<String, Long>>(Cache.arrivals(gid)) ?: return
-
-        app = cached
-        group = cohort
-        testers = roster
-        proofs = marks
-        placedAt = arrivals
-        Cache.get<List<Feedback>>(Cache.feedbackFor(appId))?.let { feedback = it }
-        ready = true
-    }
-
-    fun stateOf(uid: String, forDay: Int): DayState {
-        val today = day
-        val proof = proofs[uid to forDay]
-        val firstJudged = group?.let { Compliance.firstJudgedDay(placedAt[uid] ?: 0L, it.startDate) } ?: 0
-        // All or nothing, the same as Enforcement.enforceOn: while the app carries an open
-        // report nobody could have tested it, so a day with no proof reads as excused rather
-        // than missed for every tester at once, not just the one who filed it.
-        val reported = (app?.reportedAt ?: 0L) > 0L
-        return when {
-            proof != null && proof.meetsBar -> DayState.POSTED
-            proof != null -> DayState.SHORT
-            forDay < firstJudged -> DayState.NOT_JOINED
-            reported && (today == null || forDay < today) -> DayState.REPORTED
-            today == null || forDay < today -> DayState.MISSED
-            else -> DayState.UPCOMING
-        }
-    }
-
-    /** Reported today and stayed the full ten seconds. */
-    fun reportedToday(): List<Pair<Tester, Proof>> {
-        val today = day ?: return emptyList()
-        return testers.mapNotNull { tester ->
-            proofs[tester.uid to today]?.takeIf { it.meetsBar }?.let { tester to it }
-        }
-    }
-
-    fun behind(): List<Tester> {
-        val today = day ?: return emptyList()
-        return testers.filter {
-            stateOf(it.uid, today) !in setOf(DayState.POSTED, DayState.NOT_JOINED, DayState.REPORTED)
-        }
-    }
-
-    /** As wide as this run actually is, which an admin may have extended past [RUN_DAYS]. */
-    val runDays: Int get() = group?.runDays ?: RUN_DAYS
-
-    fun daysPosted(uid: String): Int =
-        (0 until runDays).count { stateOf(uid, it) == DayState.POSTED }
-
-    fun totalUsage(uid: String): Long =
-        (0 until runDays).sumOf { proofs[uid to it]?.usageMs ?: 0L }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -205,7 +28,7 @@ fun DashboardScreen(
      *  question — see Routes.DASHBOARD and the note on GroupScreen's title. */
     appName: String,
     onBack: () -> Unit,
-    vm: DashboardViewModel = viewModel()
+    vm: DashboardViewModel = viewModel(),
 ) {
     LaunchedEffect(appId) { vm.load(appId) }
     var preview by remember { mutableStateOf<Pair<Tester, Proof>?>(null) }
@@ -223,58 +46,59 @@ fun DashboardScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
             )
-        }
+        },
     ) { padding ->
         RefreshBox(
             // Bound to the pull, not the general refresh — see HomeScreen's own note on this.
             isRefreshing = vm.pulling,
             onRefresh = { vm.load(appId, fromPull = true) },
-            modifier = Modifier.fillMaxSize().padding(padding)
+            modifier = Modifier.fillMaxSize().padding(padding),
         ) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
-            when {
-                // A pull gets the same full skeleton a first load does — see HomeScreen's own
-                // note on this.
-                !vm.ready || vm.pulling -> DashboardSkeleton()
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                when {
+                    // A pull gets the same full skeleton a first load does — see HomeScreen's own
+                    // note on this.
+                    !vm.ready || vm.pulling -> DashboardSkeleton()
 
-                vm.app == null -> Blank(vm.message ?: "This app isn't registered any more.")
-                vm.group == null -> Blank("This app is waiting for an admin to place it in a group.")
+                    vm.app == null -> Blank(vm.message ?: "This app isn't registered any more.")
+                    vm.group == null -> Blank("This app is waiting for an admin to place it in a group.")
 
-                else -> {
-                    Headline(vm)
-                    Spacer(Modifier.height(22.dp))
-
-                    Reporters(vm) { preview = it }
-                    Spacer(Modifier.height(22.dp))
-
-                    Behind(vm)
-
-                    SectionLabel("The 14 days")
-                    Legend()
-                    Spacer(Modifier.height(10.dp))
-                    Grid(vm) { tester, proof -> preview = tester to proof }
-
-                    Spacer(Modifier.height(22.dp))
-                    PerTester(vm)
-
-                    if (vm.feedback.isNotEmpty()) {
+                    else -> {
+                        Headline(vm)
                         Spacer(Modifier.height(22.dp))
-                        FeedbackList(vm)
-                    }
 
-                    vm.message?.let { Failure(it) }
-                    Spacer(Modifier.height(Gutter))
+                        Reporters(vm) { preview = it }
+                        Spacer(Modifier.height(22.dp))
+
+                        Behind(vm)
+
+                        SectionLabel("The 14 days")
+                        Legend()
+                        Spacer(Modifier.height(10.dp))
+                        Grid(vm) { tester, proof -> preview = tester to proof }
+
+                        Spacer(Modifier.height(22.dp))
+                        PerTester(vm)
+
+                        if (vm.feedback.isNotEmpty()) {
+                            Spacer(Modifier.height(22.dp))
+                            FeedbackList(vm)
+                        }
+
+                        vm.message?.let { Failure(it) }
+                        Spacer(Modifier.height(Gutter))
+                    }
                 }
             }
-        }
         }
     }
 
@@ -285,12 +109,12 @@ fun DashboardScreen(
             onConfirm = { preview = null },
             onDismiss = { preview = null },
             // Nothing to cancel: this is a look at something, not a decision about it.
-            dismiss = null
+            dismiss = null,
         ) {
             Text(
                 "${formatDuration(proof.usageMs)} in the app",
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (proof.meetsBar) Status.posted else Status.missed
+                color = if (proof.meetsBar) Status.posted else Status.missed,
             )
             if (proof.imageUrl.isNotBlank()) {
                 Spacer(Modifier.height(12.dp))
@@ -303,406 +127,8 @@ fun DashboardScreen(
                     contentScale = ContentScale.FillWidth,
                     loading = { Skeleton(height = 260.dp, corner = 8.dp) },
                     error = { Skeleton(height = 260.dp, corner = 8.dp) },
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
                 )
-            }
-        }
-    }
-}
-
-/**
- * The dashboard's own shape, since its content is not a list — the thumbnail strip is the tallest
- * thing on the page and a generic row skeleton under it would collapse the moment it landed.
- */
-@Composable
-private fun DashboardSkeleton() {
-    Spacer(Modifier.height(10.dp))
-    Column(Modifier.padding(horizontal = Gutter)) {
-        Skeleton(width = 132.dp, height = 34.dp, corner = 10.dp)
-        Spacer(Modifier.height(12.dp))
-        Skeleton(width = 196.dp, height = 12.dp)
-        Spacer(Modifier.height(18.dp))
-        SkeletonMeter()
-    }
-    Spacer(Modifier.height(30.dp))
-    Row(
-        Modifier.padding(horizontal = Gutter),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        repeat(4) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Skeleton(width = 86.dp, height = 152.dp, corner = 10.dp)
-                Spacer(Modifier.height(8.dp))
-                Skeleton(width = 54.dp, height = 9.dp)
-            }
-        }
-    }
-    Spacer(Modifier.height(30.dp))
-    Rows { SkeletonGroupList(8) }
-}
-
-/**
- * The one number that matters, stated rather than plotted.
- *
- * A count out of thirteen is not a chart — the bar underneath is there to make "well behind" and
- * "nearly there" readable at a glance, not to carry the value.
- */
-@Composable
-private fun Headline(vm: DashboardViewModel) {
-    val reported = vm.reportedToday().size
-    val expected = vm.testers.size
-    val day = vm.day
-
-    Column(Modifier.padding(start = Gutter, end = Gutter, top = 12.dp)) {
-        Text(
-            if (day != null) "$reported of $expected" else "Not started",
-            style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            if (day != null) "reported today · day ${day + 1} of ${vm.runDays}"
-            else "the run begins when the group reaches ${TestGroup.THRESHOLD} members",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        if (day != null) {
-            Spacer(Modifier.height(16.dp))
-            // One box per tester, the same as home, the group screen and setup. A solid bar says
-            // "most of them"; twelve boxes with two gaps says which day this actually was, and
-            // this is the screen where that is the whole question.
-            Meter(done = reported, total = expected)
-        }
-    }
-}
-
-@Composable
-private fun Reporters(vm: DashboardViewModel, onOpen: (Pair<Tester, Proof>) -> Unit) {
-    val reported = vm.reportedToday()
-
-    SectionLabel("Today")
-    if (reported.isEmpty()) {
-        Blank("Nobody has reported yet today.")
-        return
-    }
-
-    Row(
-        Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = Gutter),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        reported.forEach { entry ->
-            val (tester, proof) = entry
-            Column(
-                Modifier.width(86.dp).clickable { onOpen(entry) },
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                if (proof.imageUrl.isNotBlank()) {
-                    SubcomposeAsyncImage(
-                        model = proof.imageUrl,
-                        contentDescription = "${tester.shortName}'s screenshot",
-                        contentScale = ContentScale.Crop,
-                        loading = { Skeleton(width = 86.dp, height = 152.dp, corner = 10.dp) },
-                        error = { Skeleton(width = 86.dp, height = 152.dp, corner = 10.dp) },
-                        modifier = Modifier
-                            .size(86.dp, 152.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Status.upcoming)
-                    )
-                } else {
-                    Box(
-                        Modifier
-                            .size(86.dp, 152.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Status.upcoming),
-                        contentAlignment = Alignment.Center
-                    ) { Initial(tester.initial) }
-                }
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    tester.shortName,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1
-                )
-                Text(
-                    formatDuration(proof.usageMs),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun Behind(vm: DashboardViewModel) {
-    val behind = vm.behind()
-    if (vm.day == null || behind.isEmpty()) return
-
-    SectionLabel("Still to report")
-    Row(
-        Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = Gutter),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        behind.forEach { tester ->
-            Row(
-                Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.08f))
-                    .padding(start = 6.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Initial(tester.initial, 26.dp)
-                Spacer(Modifier.width(8.dp))
-                Text(tester.shortName, style = MaterialTheme.typography.bodySmall)
-            }
-        }
-    }
-    Spacer(Modifier.height(22.dp))
-}
-
-/**
- * What testers have found worth saying, newest first — see [Feedback] and
- * [Repo.submitFeedback]. The one place any of it reaches the owner; there is no push for this,
- * only the console the way every other decision here arrives.
- */
-@Composable
-private fun FeedbackList(vm: DashboardViewModel) {
-    SectionLabel("Feedback", "${vm.feedback.size}")
-    Rows {
-        vm.feedback.forEachIndexed { index, note ->
-            if (index > 0) RowDivider()
-            val from = vm.testers.firstOrNull { it.uid == note.testerUid }?.shortName ?: "A tester"
-            Column(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 12.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        from,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        "Day ${note.day + 1}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    note.text,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
-    }
-}
-
-/**
- * Legend for the grid.
- *
- * Present because the cells encode state, and state must never be carried by colour alone — each
- * swatch here shows the shape that goes with it, and every cell also announces itself to
- * accessibility services.
- */
-@Composable
-private fun Legend() {
-    Row(
-        Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = Gutter),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        LegendKey(DayState.POSTED, "reported")
-        LegendKey(DayState.SHORT, "under ${Proof.MIN_USAGE_MS / 1000}s")
-        LegendKey(DayState.MISSED, "missed")
-        LegendKey(DayState.UPCOMING, "to come")
-        LegendKey(DayState.NOT_JOINED, "not joined yet")
-        LegendKey(DayState.REPORTED, "excused")
-    }
-}
-
-@Composable
-private fun LegendKey(state: DayState, label: String) {
-    Row(Modifier.padding(end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Cell(state, 14.dp)
-        Spacer(Modifier.width(6.dp))
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun Grid(vm: DashboardViewModel, onCell: (Tester, Proof) -> Unit) {
-    val horizontal = rememberScrollState()
-
-    Column(Modifier.horizontalScroll(horizontal).padding(horizontal = Gutter)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Spacer(Modifier.width(NAME_COLUMN))
-            repeat(vm.runDays) { day ->
-                Box(Modifier.size(CELL + CELL_GAP), Alignment.Center) {
-                    Text(
-                        "${day + 1}",
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-
-        vm.testers.forEach { tester ->
-            Row(Modifier.padding(vertical = 1.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    tester.shortName,
-                    Modifier.width(NAME_COLUMN).padding(end = 8.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1
-                )
-                repeat(vm.runDays) { day ->
-                    val state = vm.stateOf(tester.uid, day)
-                    val proof = vm.proofs[tester.uid to day]
-                    Box(
-                        Modifier
-                            .padding(end = CELL_GAP)
-                            .semantics {
-                                contentDescription =
-                                    "${tester.shortName}, day ${day + 1}, ${state.spoken()}"
-                            }
-                            .then(
-                                if (proof != null) Modifier.clickable { onCell(tester, proof) }
-                                else Modifier
-                            )
-                    ) { Cell(state, CELL) }
-                }
-            }
-        }
-
-        if (vm.testers.isEmpty()) {
-            Text(
-                "No other members in this group yet.",
-                Modifier.padding(vertical = 24.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-private fun DayState.spoken() = when (this) {
-    DayState.POSTED -> "reported"
-    DayState.SHORT -> "reported but under ten seconds"
-    DayState.MISSED -> "missed"
-    DayState.UPCOMING -> "still to come"
-    DayState.NOT_JOINED -> "before they joined"
-    DayState.REPORTED -> "excused while the app is reported"
-}
-
-/**
- * One day for one tester.
- *
- * Fill, outline, a struck-through slash and a lone dot separate the five states without relying
- * on hue, so the grid still reads under colour-vision deficiency, in greyscale, and when printed.
- */
-@Composable
-private fun Cell(state: DayState, size: androidx.compose.ui.unit.Dp) {
-    val posted = Status.posted
-    val missed = Status.missed
-    val upcoming = Status.upcoming
-    val reported = Status.short
-
-    Canvas(Modifier.size(size)) {
-        val radius = CornerRadius(this.size.minDimension * 0.28f)
-        val strokeWidth = this.size.minDimension * 0.12f
-
-        when (state) {
-            DayState.POSTED ->
-                drawRoundRect(posted, cornerRadius = radius)
-
-            DayState.SHORT ->
-                drawRoundRect(
-                    posted, cornerRadius = radius,
-                    style = Stroke(strokeWidth)
-                )
-
-            DayState.MISSED -> {
-                drawRoundRect(missed.copy(alpha = 0.18f), cornerRadius = radius)
-                val inset = this.size.minDimension * 0.26f
-                drawLine(
-                    color = missed,
-                    start = Offset(inset, this.size.height - inset),
-                    end = Offset(this.size.width - inset, inset),
-                    strokeWidth = strokeWidth,
-                    cap = StrokeCap.Round
-                )
-            }
-
-            DayState.UPCOMING ->
-                drawRoundRect(upcoming, cornerRadius = radius)
-
-            // No fill, no slash — this day isn't owed at all, which is a different fact from
-            // "owed and not yet here" (UPCOMING) or "owed and missed" (MISSED). A single faint
-            // dot says "nothing to report here" without reading as either of those.
-            DayState.NOT_JOINED -> {
-                drawRoundRect(
-                    upcoming.copy(alpha = 0.35f), cornerRadius = radius,
-                    style = Stroke(strokeWidth * 0.6f)
-                )
-                drawCircle(upcoming, radius = this.size.minDimension * 0.06f)
-            }
-
-            // A horizontal bar, not MISSED's diagonal slash — this day was never anybody's to
-            // lose. The app itself was the problem, not the tester, so the mark reads as "on
-            // hold" rather than "failed."
-            DayState.REPORTED -> {
-                drawRoundRect(reported.copy(alpha = 0.18f), cornerRadius = radius)
-                val inset = this.size.minDimension * 0.26f
-                drawLine(
-                    color = reported,
-                    start = Offset(inset, this.size.height / 2f),
-                    end = Offset(this.size.width - inset, this.size.height / 2f),
-                    strokeWidth = strokeWidth,
-                    cap = StrokeCap.Round
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PerTester(vm: DashboardViewModel) {
-    if (vm.testers.isEmpty()) return
-    val best = vm.testers.maxOfOrNull { vm.totalUsage(it.uid) }?.coerceAtLeast(1L) ?: 1L
-    val elapsed = (vm.day?.plus(1)) ?: 0
-
-    SectionLabel("Every tester")
-    Rows {
-        vm.testers.sortedByDescending { vm.daysPosted(it.uid) }
-            .forEachIndexed { index, tester ->
-                if (index > 0) RowDivider()
-            val posted = vm.daysPosted(tester.uid)
-            val usage = vm.totalUsage(tester.uid)
-
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Initial(tester.initial)
-                Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        tester.shortName,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(Modifier.height(3.dp))
-                    Text(
-                        "$posted of $elapsed days · ${formatDuration(usage)} total",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Meter(usage.toFloat() / best, height = 4.dp)
-                }
             }
         }
     }

@@ -1,304 +1,33 @@
 package com.eazyverse.testtrack.ui
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.GroupWork
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.data.*
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-
-/** One group as home needs it: the cohort, plus how much of today this tester still owes it. */
-data class GroupProgress(val group: TestGroup, val toTest: Int, val done: Int)
-
-class HomeViewModel : ViewModel() {
-
-    var groups by mutableStateOf<List<GroupProgress>>(emptyList())
-        private set
-    var pending by mutableStateOf<List<TestApp>>(emptyList())
-        private set
-
-    /**
-     * A background refetch is in flight while cached numbers are still on screen.
-     *
-     * [ready] is sticky-true once first set, on purpose — see its own doc — which means it
-     * cannot also mark "this refresh is still running." Without a second flag, numbers left over
-     * from before a group was edited elsewhere sit on screen looking current for however long the
-     * refetch takes, with nothing to say they might be about to change.
-     */
-    var refreshing by mutableStateOf(false)
-        private set
-
-    /**
-     * The reader pulled for this themselves, rather than the screen doing it quietly on its own.
-     *
-     * A pull is asking outright, which earns the same full skeleton a first load gets — not the
-     * small mark [refreshing] leaves in the app bar for a refresh nobody asked for, on resuming
-     * or coming back from a group.
-     */
-    var pulling by mutableStateOf(false)
-        private set
-
-    /**
-     * Everything this screen shows is in hand.
-     *
-     * One flag for the page, not one per list: whichever half arrives first would otherwise be
-     * drawn over the half that hasn't, and a total struck across sections is wrong until both are
-     * counted. Sticky once set — a refresh over content already on screen must not blank it.
-     */
-    var ready by mutableStateOf(false)
-        private set
-
-    var message by mutableStateOf<String?>(null)
-
-    /** Days already missed, and how close that is to costing them the group. */
-    var standings by mutableStateOf<List<Enforcement.Standing>>(emptyList())
-        private set
-
-    /** Removals and departures, held until acknowledged rather than only sent as notifications. */
-    var notices by mutableStateOf<List<Enforcement.Notice>>(emptyList())
-        private set
-
-    /**
-     * Notifications are switched off, and this account is in a running cohort.
-     *
-     * Worth a prompt now that a missed day costs something: the warning that says "open them today
-     * or your app leaves the group" arrives as a notification, and a tester who declined the
-     * permission gets no warning at all before the removal lands.
-     */
-    var askForNotifications by mutableStateOf(false)
-        private set
-
-    /** Across every cohort — the number the tester actually cares about first thing. */
-    val doneToday: Int get() = groups.sumOf { it.done }
-    val dueToday: Int get() = groups.sumOf { it.toTest }
-
-    /**
-     * This account's own face, for the button that leads to it.
-     *
-     * Its own state rather than part of [load]'s batch, because it is the one thing on this screen
-     * that is not about today and must not hold the rest of it up. A failed read leaves the
-     * initial showing, which is what most accounts see anyway.
-     */
-    var me by mutableStateOf<Tester?>(null)
-        private set
-
-    val photo: String get() = me?.photo.orEmpty()
-    val initial: String
-        get() = me?.initial ?: Session.email?.firstOrNull()?.uppercase() ?: "?"
-
-    private fun loadMe() {
-        val uid = AuthRepo.uid ?: return
-        viewModelScope.launch { runCatching { me = Repo.me(uid) } }
-    }
-
-    /** [fromPull] is the reader asking outright — see [pulling]'s own doc for what that changes. */
-    fun load(fromPull: Boolean = false) {
-        val uid = AuthRepo.uid ?: run { ready = true; return }
-
-        loadMe()
-        showCached(uid)
-
-        viewModelScope.launch {
-            refreshing = ready // only worth flagging over content that's already on screen
-            if (fromPull) pulling = true
-            runCatching {
-                val waiting = Repo.pendingApps(uid)
-                // Each group's own two reads run concurrently with every other group's, not
-                // queued behind them — with N groups this was up to 2N sequential round trips
-                // before anything on screen changed, which is the multi-second window where
-                // Home kept showing yesterday's numbers after an edit elsewhere.
-                val progress = coroutineScope {
-                    Repo.myGroups(uid).map { group ->
-                        async {
-                            // active, not placed: a removed app is still in the group and is
-                            // owed nothing, so counting it here would ask for a day on an app
-                            // this tester has been told to uninstall.
-                            val others = Repo.appsInGroup(group.id)
-                                .filter { it.ownerUid != uid && it.active }
-                            val day = group.dayIndex()
-                            // Meant against today's roster, not raw proof count: a proof posted
-                            // earlier today for an app that has since been taken out of testing
-                            // (or reported, or the owner's own) is still a proof, but it is no
-                            // longer one of the apps [others] is counting — without this filter
-                            // it kept counting toward "done" anyway, and the header could read
-                            // more done than there were apps to do, like "26 of 25".
-                            val done = if (day == null) 0
-                                else {
-                                    val owed = others.mapTo(HashSet()) { it.id }
-                                    Repo.myProofsForDay(uid, group.id, day, group.startDate)
-                                        .count { it in owed }
-                                }
-                            GroupProgress(group, others.size, done)
-                        }
-                    }.awaitAll()
-                }
-
-                // Published together, at the end. Assigning as each query lands would repaint a
-                // screen that already has content with a half-updated one.
-                pending = waiting
-                groups = progress
-                Cache.put(Cache.pending(uid), waiting)
-                Cache.put(Cache.groups(uid), progress)
-                message = null
-            }.onFailure {
-                message = it.friendly(
-                    "We couldn't load your groups. Check your connection and try again."
-                )
-            }
-            ready = true
-            refreshing = false
-            pulling = false
-        }
-    }
-
-    /**
-     * Makes this device reachable, and puts it on the right lists.
-     *
-     * Here rather than at sign-in because the cohort is only known once the groups are loaded, and
-     * because membership changes without the app being reinstalled — an admin places an app, and
-     * the next time home refreshes, the topic follows.
-     */
-    fun registerForPush(context: Context) {
-        val uid = AuthRepo.uid ?: return
-        viewModelScope.launch {
-            PushRepo.register(context, uid)
-            if (ready) PushRepo.syncTopics(context, groups.map { it.group.id })
-        }
-    }
-
-    /**
-     * The daily pass, plus everything waiting, in the order the two have to happen.
-     *
-     * Scheduled here rather than at sign-in because this is the screen a tester always reaches,
-     * and re-scheduling is free: the work is unique and KEEP, so opening the app twenty times does
-     * not push the evening reminder twenty times further away.
-     *
-     * Drain first and sweep second, in one coroutine rather than two. They overlap on exactly one
-     * thing: a removal is both an event addressed to this device and a cohort that has vanished
-     * from under it. The event is the better of the two messages because it knows the cause, so it
-     * claims the group and the sweep stays quiet — which only works if the event has already been
-     * read by the time the sweep looks.
-     */
-    fun catchUp(context: Context) {
-        val uid = AuthRepo.uid ?: return
-        ReminderWorker.schedule(context)
-        viewModelScope.launch {
-            runCatching { AdminEvents.drain(context, uid) }
-            standings = Enforcement.sweep(context, uid).standings
-            notices = Enforcement.notices(context)
-            refreshNotificationPrompt(context)
-        }
-    }
-
-    /** Anything parked by a background sweep, picked up when the screen opens. */
-    fun showNotices(context: Context) {
-        notices = Enforcement.notices(context)
-        refreshNotificationPrompt(context)
-    }
-
-    fun dismissNotice(context: Context, id: String) {
-        Enforcement.dismiss(context, id)
-        notices = Enforcement.notices(context)
-    }
-
-    /** Closed by the tester. Stays gone until a fresh sweep has something new to say about it. */
-    fun dismissStanding(context: Context, standing: Enforcement.Standing) {
-        Enforcement.dismissStanding(context, standing)
-        standings = standings - standing
-    }
-
-    private fun refreshNotificationPrompt(context: Context) {
-        askForNotifications = !PushRepo.granted(context) && groups.any { it.group.running }
-    }
-
-    /** Both halves or neither — see [ready]. A partial hit is a head start, not a screen. */
-    private fun showCached(uid: String) {
-        val cachedGroups = Cache.get<List<GroupProgress>>(Cache.groups(uid)) ?: return
-        val cachedPending = Cache.get<List<TestApp>>(Cache.pending(uid)) ?: return
-        groups = cachedGroups
-        pending = cachedPending
-        ready = true
-    }
-
-    /**
-     * Unhooks the account, then hands back to navigate.
-     *
-     * `viewModelScope` outlives the dialog and is only torn down by the navigation [then]
-     * performs, so the await always completes. See [releaseSession] for why the order matters.
-     */
-    fun signOut(context: Context, then: () -> Unit) {
-        viewModelScope.launch {
-            releaseSession(context)
-            then()
-        }
-    }
-
-    fun withdraw(app: TestApp) {
-        message = null
-        viewModelScope.launch {
-            runCatching { Repo.withdrawApp(app.packageName) }
-                .onSuccess { load() }
-                .onFailure { message = it.friendly("We couldn't withdraw ${app.label}. Try again in a moment.") }
-        }
-    }
-
-    /**
-     * Saves the way into an app that is still waiting for a group.
-     *
-     * Reloads rather than patching the row in place, for the same reason [withdraw] does: this
-     * list is whatever Firestore last said, and a row edited locally would keep showing the new
-     * login even on the attempt where the write never landed.
-     */
-    fun updateNotes(app: TestApp, notes: String) {
-        message = null
-        viewModelScope.launch {
-            runCatching { Repo.updateNotes(app.packageName, notes) }
-                .onSuccess { load() }
-                .onFailure {
-                    message = it.friendly(
-                        "We couldn't save your notes for ${app.label}. Try again in a moment."
-                    )
-                }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -307,7 +36,7 @@ fun HomeScreen(
     onSubmitApp: () -> Unit,
     onOpenSetup: () -> Unit,
     onOpenProfile: () -> Unit,
-    vm: HomeViewModel = viewModel()
+    vm: HomeViewModel = viewModel(),
 ) {
     val context = LocalContext.current
 
@@ -315,12 +44,13 @@ fun HomeScreen(
     // about yet.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                vm.load()
-                Session.refreshNotifications(context)
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    vm.load()
+                    Session.refreshNotifications(context)
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
@@ -341,16 +71,18 @@ fun HomeScreen(
      * appears and the prompt would be a button that does nothing. Sending those to the app's
      * notification settings is the only way to turn them back on there.
      */
-    val notificationLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { vm.showNotices(context) }
+    val notificationLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+        ) { vm.showNotices(context) }
 
     // Play hands back an IntentSender rather than an Intent, so the update flow needs its own
     // contract. The result is ignored on purpose: cancelling is an answer, and the offer comes
     // back on its own when Play next says there is something to fetch.
-    val updateLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartIntentSenderForResult()
-    ) {}
+    val updateLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.StartIntentSenderForResult(),
+        ) {}
 
     // Dismissal for this visit. The durable half lives in Session, keyed to the build, so waving
     // one offer away does not silence the next.
@@ -358,12 +90,13 @@ fun HomeScreen(
 
     val updateTier by AppUpdateService.tier.collectAsState()
     val updateDownloaded by AppUpdateService.isDownloaded.collectAsState()
-    val updateBanner = when {
-        updateDownloaded -> HomeUpdateBanner.DOWNLOADED
-        updateTier == UpdateTier.NUDGE && !updateNudgeDismissed && AppUpdateService.hasPendingNudge() ->
-            HomeUpdateBanner.NUDGE
-        else -> HomeUpdateBanner.NONE
-    }
+    val updateBanner =
+        when {
+            updateDownloaded -> HomeUpdateBanner.DOWNLOADED
+            updateTier == UpdateTier.NUDGE && !updateNudgeDismissed && AppUpdateService.hasPendingNudge() ->
+                HomeUpdateBanner.NUDGE
+            else -> HomeUpdateBanner.NONE
+        }
 
     val askNotifications: () -> Unit = {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -371,7 +104,7 @@ fun HomeScreen(
         } else {
             context.startActivity(
                 Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
             )
         }
     }
@@ -394,9 +127,10 @@ fun HomeScreen(
                         // scale instead of status-bar scale — one glyph standing for TestTrack
                         // rather than two different ones depending on where you see it.
                         Icon(
-                            painterResource(R.drawable.ic_stat_name), null,
+                            painterResource(R.drawable.ic_stat_name),
+                            null,
                             modifier = Modifier.size(22.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.primary,
                         )
                         Spacer(Modifier.width(8.dp))
                         Text("TestTrack", fontWeight = FontWeight.Bold)
@@ -410,7 +144,7 @@ fun HomeScreen(
                             CircularProgressIndicator(
                                 Modifier.size(14.dp),
                                 strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -431,9 +165,10 @@ fun HomeScreen(
                         Avatar(vm.photo, vm.initial, size = 28.dp, loading = vm.me == null)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
             )
         },
         // Its own slot rather than the last thing in the scrolling column, so the one button
@@ -448,124 +183,127 @@ fun HomeScreen(
                         Modifier
                             .fillMaxWidth()
                             .height(1.dp)
-                            .background(MaterialTheme.colorScheme.outlineVariant)
+                            .background(MaterialTheme.colorScheme.outlineVariant),
                     )
                     Primary(
                         "Submit an app",
                         Modifier
                             .padding(horizontal = Gutter)
                             .padding(top = 12.dp, bottom = 12.dp),
-                        onClick = onSubmitApp
+                        onClick = onSubmitApp,
                     )
                 }
             }
-        }
+        },
     ) { padding ->
         RefreshBox(
             // Bound to the pull, not the general refresh — otherwise the gesture's own arc plays
             // for a resume or a return from a group too, which nobody pulled for.
             isRefreshing = vm.pulling,
             onRefresh = { vm.load(fromPull = true) },
-            modifier = Modifier.fillMaxSize().padding(padding)
+            modifier = Modifier.fillMaxSize().padding(padding),
         ) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
-
-            // A pull gets the same full skeleton a first load does — asking outright earns a
-            // stronger answer than the small app-bar mark a quiet resume settles for.
-            if (!vm.ready || vm.pulling) {
-                HomeSkeleton()
-            } else {
-                if (vm.groups.isNotEmpty()) {
-                    Row(
-                        Modifier
-                            .padding(start = Gutter, end = Gutter, top = 4.dp)
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(Modifier.size(108.dp), contentAlignment = Alignment.Center) {
-                            SegmentedRing(
-                                done = vm.doneToday,
-                                total = vm.dueToday,
-                                modifier = Modifier.fillMaxSize(),
-                                strokeWidth = 9.dp
-                            )
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    "${vm.doneToday}",
-                                    style = MaterialTheme.typography.displaySmall,
-                                    fontWeight = FontWeight.Bold
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                // A pull gets the same full skeleton a first load does — asking outright earns a
+                // stronger answer than the small app-bar mark a quiet resume settles for.
+                if (!vm.ready || vm.pulling) {
+                    HomeSkeleton()
+                } else {
+                    if (vm.groups.isNotEmpty()) {
+                        Row(
+                            Modifier
+                                .padding(start = Gutter, end = Gutter, top = 4.dp)
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(Modifier.size(108.dp), contentAlignment = Alignment.Center) {
+                                SegmentedRing(
+                                    done = vm.doneToday,
+                                    total = vm.dueToday,
+                                    modifier = Modifier.fillMaxSize(),
+                                    strokeWidth = 9.dp,
                                 )
-                                Text(
-                                    "of ${vm.dueToday}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        "${vm.doneToday}",
+                                        style = MaterialTheme.typography.displaySmall,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Text(
+                                        "of ${vm.dueToday}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
                             }
-                        }
-                        Spacer(Modifier.width(20.dp))
+                            Spacer(Modifier.width(20.dp))
 
-                        val remaining = vm.dueToday - vm.doneToday
-                        val groupsPhrase = "${vm.groups.size} " +
-                            if (vm.groups.size == 1) "group" else "groups"
-                        // Real, not invented: the same VISIT_MS every visit is actually held open
-                        // for, times what is actually left, rounded to the nearest minute and
-                        // never down to zero while there is still at least one app to go.
-                        val minutesLeft = ((remaining * CaptureService.VISIT_MS + 30_000L) / 60_000L)
-                            .coerceAtLeast(1L)
+                            val remaining = vm.dueToday - vm.doneToday
+                            val groupsPhrase =
+                                "${vm.groups.size} " +
+                                    if (vm.groups.size == 1) "group" else "groups"
+                            // Real, not invented: the same VISIT_MS every visit is actually held open
+                            // for, times what is actually left, rounded to the nearest minute and
+                            // never down to zero while there is still at least one app to go.
+                            val minutesLeft =
+                                ((remaining * CaptureService.VISIT_MS + 30_000L) / 60_000L)
+                                    .coerceAtLeast(1L)
 
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                "Today".uppercase(),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                letterSpacing = 1.2.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(Modifier.height(6.dp))
-                            Text(
-                                when {
-                                    vm.dueToday == 0 -> "Nothing due today"
-                                    remaining <= 0 -> "You're clear for tonight"
-                                    remaining == 1 -> "One app left before you're clear for tonight"
-                                    else -> "$remaining apps left before you're clear for tonight"
-                                },
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            if (vm.dueToday > 0) {
-                                Spacer(Modifier.height(4.dp))
+                            Column(Modifier.weight(1f)) {
                                 Text(
-                                    "Tested across $groupsPhrase so far" +
-                                        if (remaining > 0) {
-                                            " · about " +
-                                                (if (minutesLeft == 1L) "a minute" else "$minutesLeft minutes") +
-                                                " to finish up"
-                                        } else "",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    "Today".uppercase(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    letterSpacing = 1.2.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    when {
+                                        vm.dueToday == 0 -> "Nothing due today"
+                                        remaining <= 0 -> "You're clear for tonight"
+                                        remaining == 1 -> "One app left before you're clear for tonight"
+                                        else -> "$remaining apps left before you're clear for tonight"
+                                    },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                if (vm.dueToday > 0) {
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        "Tested across $groupsPhrase so far" +
+                                            if (remaining > 0) {
+                                                " · about " +
+                                                    (if (minutesLeft == 1L) "a minute" else "$minutesLeft minutes") +
+                                                    " to finish up"
+                                            } else {
+                                                ""
+                                            },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                // Above everything, because a tester one day from losing their place should not
-                // have to scroll to a group row to find that out.
-                vm.standings.forEach { standing ->
-                    MissedDayNotice(standing) { vm.dismissStanding(context, standing) }
-                }
+                    // Above everything, because a tester one day from losing their place should not
+                    // have to scroll to a group row to find that out.
+                    vm.standings.forEach { standing ->
+                        MissedDayNotice(standing) { vm.dismissStanding(context, standing) }
+                    }
 
-                // Things that already happened, kept until acknowledged. A notification is not a
-                // record: it can be swiped off a lock screen unread.
-                vm.notices.forEach { notice ->
-                    EventNotice(notice) { vm.dismissNotice(context, notice.id) }
-                }
+                    // Things that already happened, kept until acknowledged. A notification is not a
+                    // record: it can be swiped off a lock screen unread.
+                    vm.notices.forEach { notice ->
+                        EventNotice(notice) { vm.dismissNotice(context, notice.id) }
+                    }
 
-                if (vm.askForNotifications) NotificationPrompt(onGrant = askNotifications)
+                    if (vm.askForNotifications) NotificationPrompt(onGrant = askNotifications)
 
                 /*
                  * The soft half of the update gate. The hard half sits over the whole app.
@@ -574,407 +312,77 @@ fun HomeScreen(
                  * with nothing to do yet. An offer to update mid-round would be asking them to
                  * restart the app in the middle of the one thing the app is for.
                  */
-                if (updateBanner != HomeUpdateBanner.NONE) {
-                    UpdateBannerCard(
-                        state = updateBanner,
-                        onUpdate = {
-                            AppUpdateService.markNudgeShown()
-                            updateNudgeDismissed = true
-                            AppUpdateService.startFlexibleUpdate(updateLauncher)
-                        },
-                        onRestart = { AppUpdateService.completeUpdate() },
-                        onDismiss = {
-                            AppUpdateService.markNudgeShown()
-                            updateNudgeDismissed = true
-                        },
-                        modifier = Modifier.padding(horizontal = Gutter).padding(top = 18.dp)
-                    )
-                }
-
-                // Nothing at all: one empty state rather than two headed sections standing over
-                // nothing.
-                if (vm.groups.isEmpty() && vm.pending.isEmpty()) {
-                    EmptyState(
-                        icon = Icons.Outlined.GroupWork,
-                        title = "No groups yet",
-                        subtitle = "Submit an app you've put on a closed track. An admin places " +
-                            "it into a testing group, and your 14 days start once that group is " +
-                            "full."
-                    )
-                } else {
-                    SectionLabel("Your groups")
-                    Rows {
-                        if (vm.groups.isEmpty()) Blank("None yet.")
-                        else vm.groups.forEachIndexed { index, progress ->
-                            if (index > 0) RowDivider()
-                            GroupRow(progress) { onOpenGroup(progress.group.id, progress.group.name) }
-                        }
+                    if (updateBanner != HomeUpdateBanner.NONE) {
+                        UpdateBannerCard(
+                            state = updateBanner,
+                            onUpdate = {
+                                AppUpdateService.markNudgeShown()
+                                updateNudgeDismissed = true
+                                AppUpdateService.startFlexibleUpdate(updateLauncher)
+                            },
+                            onRestart = { AppUpdateService.completeUpdate() },
+                            onDismiss = {
+                                AppUpdateService.markNudgeShown()
+                                updateNudgeDismissed = true
+                            },
+                            modifier = Modifier.padding(horizontal = Gutter).padding(top = 18.dp),
+                        )
                     }
 
-                    if (vm.pending.isNotEmpty()) {
-                        SectionLabel("Waiting for a group")
+                    // Nothing at all: one empty state rather than two headed sections standing over
+                    // nothing.
+                    if (vm.groups.isEmpty() && vm.pending.isEmpty()) {
+                        EmptyState(
+                            icon = Icons.Outlined.GroupWork,
+                            title = "No groups yet",
+                            subtitle =
+                                "Submit an app you've put on a closed track. An admin places " +
+                                    "it into a testing group, and your 14 days start once that group is " +
+                                    "full.",
+                        )
+                    } else {
+                        SectionLabel("Your groups")
                         Rows {
-                            vm.pending.forEachIndexed { index, app ->
-                                if (index > 0) RowDivider()
-                                PendingRow(
-                                    app = app,
-                                    onEditNotes = { editingNotes = app },
-                                    onWithdraw = { vm.withdraw(app) }
-                                )
+                            if (vm.groups.isEmpty()) {
+                                Blank("None yet.")
+                            } else {
+                                vm.groups.forEachIndexed { index, progress ->
+                                    if (index > 0) RowDivider()
+                                    GroupRow(progress) { onOpenGroup(progress.group.id, progress.group.name) }
+                                }
+                            }
+                        }
+
+                        if (vm.pending.isNotEmpty()) {
+                            SectionLabel("Waiting for a group")
+                            Rows {
+                                vm.pending.forEachIndexed { index, app ->
+                                    if (index > 0) RowDivider()
+                                    PendingRow(
+                                        app = app,
+                                        onEditNotes = { editingNotes = app },
+                                        onWithdraw = { vm.withdraw(app) },
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                vm.message?.let { Failure(it) }
+                    vm.message?.let { Failure(it) }
+                }
+                Spacer(Modifier.height(Gutter))
             }
-            Spacer(Modifier.height(Gutter))
-        }
         }
     }
 
     editingNotes?.let { app ->
-        NotesDialog(
+        HomeNotesDialog(
             app = app,
             onSave = {
                 editingNotes = null
                 vm.updateNotes(app, it)
             },
-            onDismiss = { editingNotes = null }
+            onDismiss = { editingNotes = null },
         )
-    }
-}
-
-/**
- * The way into an app, written before anybody has been asked to open it.
- *
- * Not destructive, and an empty field saved is a real answer rather than a slip to guard against:
- * clearing the field is the only way to take down a login that has stopped working.
- */
-@Composable
-private fun NotesDialog(app: TestApp, onSave: (String) -> Unit, onDismiss: () -> Unit) {
-    var text by remember(app.packageName) { mutableStateOf(app.notes) }
-
-    Ask(
-        title = "Notes for your testers",
-        confirm = "Save",
-        onConfirm = { onSave(text.trim()) },
-        onDismiss = onDismiss,
-        content = {
-            DialogField(
-                value = text,
-                // Held to the cap as they type rather than checked on save, because the limit is
-                // the document's. Refusing it afterwards would throw away whatever they had
-                // already written past the end.
-                onValueChange = { text = it.take(NOTES_MAX) },
-                label = "Notes",
-                placeholder = "Test account: demo@example.com / pass1234",
-                supporting = "Anything they need to get past the front door. Everyone in your " +
-                    "group and the admins can read this, so use a throwaway account, never your " +
-                    "own password.",
-                singleLine = false,
-                // The same floor the submit form gives it. A field asking for a sign-in note is
-                // asking for a couple of lines, and one line high says it wants a word.
-                minHeight = 96.dp
-            )
-        }
-    )
-}
-
-@Composable
-private fun GroupRow(progress: GroupProgress, onClick: () -> Unit) {
-    val group = progress.group
-    val day = group.dayIndex()
-    val left = progress.toTest - progress.done
-
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = Gutter, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // The row's own leading mark, same idea as the hero ring above: a day still owed reads
-        // amber and fills green once nothing is left, a group still filling its roster reads
-        // neutral against the same threshold its own text already states.
-        when {
-            day != null && progress.toTest > 0 -> {
-                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-                    SegmentedRing(
-                        done = progress.done,
-                        total = progress.toTest,
-                        modifier = Modifier.fillMaxSize(),
-                        strokeWidth = 5.dp,
-                        fillColor = if (left <= 0) Status.posted else Status.short
-                    )
-                    if (left <= 0) {
-                        Icon(
-                            Icons.Filled.Check, null,
-                            modifier = Modifier.size(16.dp),
-                            tint = Status.posted
-                        )
-                    } else {
-                        // Same convention as the hero ring above it: the number in the middle is
-                        // how many are done, not how many are left — one rule for every ring on
-                        // the screen rather than a different one per size.
-                        Text(
-                            "${progress.done}",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-                Spacer(Modifier.width(14.dp))
-            }
-            day == null && !group.running -> {
-                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-                    SegmentedRing(
-                        done = group.size,
-                        total = TestGroup.THRESHOLD,
-                        modifier = Modifier.fillMaxSize(),
-                        strokeWidth = 5.dp,
-                        fillColor = MaterialTheme.colorScheme.outline
-                    )
-                    Text(
-                        "${group.size}",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Spacer(Modifier.width(14.dp))
-            }
-        }
-        Column(Modifier.weight(1f)) {
-            Text(
-                group.name.ifBlank { "Group" },
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                when {
-                    day != null ->
-                        "Day ${day + 1} of ${group.runDays} · " +
-                            if (left <= 0) "all done" else "$left left today"
-                    group.running -> "Run finished"
-                    else -> "Forming · ${group.size} of ${TestGroup.THRESHOLD} members"
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Spacer(Modifier.width(12.dp))
-        Icon(
-            Icons.AutoMirrored.Filled.KeyboardArrowRight, null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-/**
- * Home, before any of it has arrived.
- *
- * Its own rather than [SkeletonPage], which is built for the group and dashboard screens: one
- * header, one list, and an action button sitting under the header. Home is not that shape. It has
- * a headline over a meter, then cohorts, then apps still waiting for one, and its button is at the
- * bottom under all of it.
- *
- * Drawn long on purpose. The old one stopped after five short rows against a full-height screen,
- * which reads as a finished page with very little on it rather than a page still loading, and home
- * is the screen most likely to be opened cold on a slow connection.
- */
-@Composable
-private fun HomeSkeleton() {
-    Spacer(Modifier.height(8.dp))
-    Column(Modifier.padding(horizontal = Gutter, vertical = 4.dp)) {
-        Skeleton(width = 148.dp, height = 34.dp, corner = 10.dp)
-        Spacer(Modifier.height(12.dp))
-        Skeleton(width = 210.dp, height = 12.dp)
-        Spacer(Modifier.height(14.dp))
-        SkeletonMeter()
-    }
-
-    Spacer(Modifier.height(30.dp))
-    Rows { SkeletonCohortList(3) }
-
-    // The apps waiting on an admin. Two, because more than that is unusual and a skeleton that
-    // promises a queue nobody has is worse than one that stops short.
-    Spacer(Modifier.height(26.dp))
-    Rows { SkeletonAppList(2) }
-
-    // Where Submit an app lands, at the bottom rather than under the header.
-    Spacer(Modifier.height(26.dp))
-    Column(Modifier.padding(horizontal = Gutter)) {
-        Skeleton(height = 52.dp, corner = 16.dp)
-    }
-    Spacer(Modifier.height(24.dp))
-}
-
-/**
- * A day already missed, and what it costs.
- *
- * Two tones on purpose. The first miss is recoverable and says so, because a warning that reads
- * like a final notice teaches people to ignore the final notice. The second is the last one they
- * get, and names the apps rather than counting them, so nobody has to work out which.
- */
-@Composable
-private fun MissedDayNotice(standing: Enforcement.Standing, onDismiss: () -> Unit) {
-    val tone = if (standing.finalWarning) Status.missed else Status.short
-    val ground = if (standing.finalWarning) Status.missedSoft else Status.shortSoft
-
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Gutter)
-            .padding(top = 18.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(ground)
-            .padding(14.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                if (standing.finalWarning) "Last chance in ${standing.groupName}"
-                else "You missed yesterday in ${standing.groupName}",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = tone,
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-                Icon(Icons.Default.Close, "Close", tint = tone, modifier = Modifier.size(18.dp))
-            }
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            if (standing.finalWarning)
-                "That's two days running without opening ${standing.names}. Open ${standing.it} " +
-                    "today and you keep your place. Leave it another day and your app goes back " +
-                    "to the queue."
-            else
-                "You didn't open ${standing.names}. Open ${standing.it} today and nothing comes " +
-                    "of it. Miss a second day in a row and your app leaves the group.",
-            style = MaterialTheme.typography.bodySmall,
-            color = tone
-        )
-    }
-}
-
-/**
- * Something that has already happened to this tester, with a way to say they have read it.
- *
- * Dismissal is explicit rather than timed. "Your app was removed from its group" is the kind of
- * thing someone should have to acknowledge, not something that quietly disappears while the phone
- * is in a pocket.
- */
-@Composable
-private fun EventNotice(notice: Enforcement.Notice, onDismiss: () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Gutter)
-            .padding(top = 18.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(14.dp)
-    ) {
-        Text(
-            notice.title,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            notice.body,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(4.dp))
-        TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) {
-            Text("Got it")
-        }
-    }
-}
-
-/**
- * Asks for notifications, at the point where they start to matter.
- *
- * Not at sign-in. Before a run is under way there is nothing to be warned about, and a permission
- * asked for ahead of its reason is the one people decline. Shown only while a cohort is running,
- * which is exactly when a missed day costs something.
- */
-@Composable
-private fun NotificationPrompt(onGrant: () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Gutter)
-            .padding(top = 18.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(Status.shortSoft)
-            .padding(14.dp)
-    ) {
-        Text(
-            "Turn on notifications",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = Status.short
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            "Your run has started, and we warn you the day before a missed day costs you your " +
-                "place in the group. Without notifications that warning has nowhere to go.",
-            style = MaterialTheme.typography.bodySmall,
-            color = Status.short
-        )
-        Spacer(Modifier.height(4.dp))
-        TextButton(onClick = onGrant, modifier = Modifier.align(Alignment.End)) {
-            Text("Turn them on")
-        }
-    }
-}
-
-@Composable
-private fun PendingRow(app: TestApp, onEditNotes: () -> Unit, onWithdraw: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().padding(start = Gutter, end = 4.dp, top = 10.dp, bottom = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        AppIcon(app.packageName, app.label)
-        Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                app.label,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                app.packageName,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            // Shown back to the owner, clipped the same way the group's rows clip it, so what they
-            // are reading here is what the twelve people will be reading there.
-            if (app.notes.isNotBlank()) {
-                Spacer(Modifier.height(3.dp))
-                Text(
-                    app.notes,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-        // Two labels, because an owner who has never written notes has no reason to expect the row
-        // hides a field, and "Notes" on its own reads as a heading rather than something to press.
-        TextButton(onClick = onEditNotes) {
-            Text(if (app.notes.isBlank()) "Add notes" else "Edit notes")
-        }
-        // Named rather than hidden behind three dots. A menu holding one item is a tap spent
-        // discovering that there was only ever one thing to do.
-        TextButton(onClick = onWithdraw) {
-            Text("Withdraw", color = MaterialTheme.colorScheme.error)
-        }
     }
 }

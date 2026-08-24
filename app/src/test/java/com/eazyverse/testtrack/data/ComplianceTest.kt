@@ -13,7 +13,6 @@ import org.junit.Test
  * firestore-tests/rules.test.mjs one for one.
  */
 class ComplianceTest {
-
     private val day = 86_400_000L
     private val start = 1_700_000_000_000L
 
@@ -63,12 +62,12 @@ class ComplianceTest {
         // Excuse three and there is nothing left to judge until day 4 has finished.
         assertEquals(
             emptyList<Int>(),
-            Compliance.judgedDays(3, start, founder, founder, 2, graceDays = 3)
+            Compliance.judgedDays(3, start, founder, founder, 2, graceDays = 3),
         )
         // And it stops mattering once the run is past it.
         assertEquals(
             listOf(9, 8),
-            Compliance.judgedDays(10, start, founder, founder, 2, graceDays = 2)
+            Compliance.judgedDays(10, start, founder, founder, 2, graceDays = 2),
         )
     }
 
@@ -77,7 +76,7 @@ class ComplianceTest {
         val founder = start - 1000L
         assertEquals(
             Compliance.judgedDays(5, start, founder, founder, 2),
-            Compliance.judgedDays(5, start, founder, founder, 2, graceDays = 0)
+            Compliance.judgedDays(5, start, founder, founder, 2, graceDays = 0),
         )
     }
 
@@ -102,5 +101,45 @@ class ComplianceTest {
         // dayIndex is null past the fourteenth day, so judgedDays is never reached — but a run
         // still going on its last day judges the pair before it.
         assertEquals(listOf(12, 11), Compliance.judgedDays(13, start, start - 1000L, start - 1000L, 2))
+    }
+
+    @Test
+    fun `a reinstated member is given the same grace as a late joiner`() {
+        val founder = start - 1000L
+        // Reinstated mid-day-8, which moves the floor to day 9 — the same arithmetic
+        // firstJudgedDay gives a fresh arrival — otherwise the days that got them flagged are
+        // still sitting there the moment the next device sweeps, undoing the reinstatement
+        // within the hour.
+        val reinstated = start + 8 * day + 1000L
+
+        // Day 10: the pair would ordinarily be days 9 and 8. Day 8 is on the near side of the
+        // reinstatement and stays excused; day 9 is on the far side and still stands.
+        assertEquals(
+            listOf(9),
+            Compliance.judgedDays(10, start, founder, founder, 2, reinstatedAt = reinstated),
+        )
+        // Day 9: both days of the pair (8 and 7) are on the near side — nothing judged yet.
+        assertEquals(
+            emptyList<Int>(),
+            Compliance.judgedDays(9, start, founder, founder, 2, reinstatedAt = reinstated),
+        )
+        // By day 12 both days of the pair are on the far side of the reinstatement.
+        assertEquals(
+            listOf(11, 10),
+            Compliance.judgedDays(12, start, founder, founder, 2, reinstatedAt = reinstated),
+        )
+    }
+
+    @Test
+    fun `reinstatement never lowers the floor a late joiner or grace period already set`() {
+        val founder = start - 1000L
+        // Reinstated on day 1 — long before this member even joined on day 8. The later floor,
+        // their own arrival, still wins; the earlier reinstatement changes nothing.
+        val joinedDayEight = start + 8 * day + 1000L
+        val reinstatedDayOne = start + 1000L
+        assertEquals(
+            Compliance.judgedDays(12, start, joinedDayEight, founder, 2),
+            Compliance.judgedDays(12, start, joinedDayEight, founder, 2, reinstatedAt = reinstatedDayOne),
+        )
     }
 }

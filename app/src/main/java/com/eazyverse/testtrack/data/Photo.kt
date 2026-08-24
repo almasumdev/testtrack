@@ -24,7 +24,6 @@ import kotlin.math.min
  * a face at the sizes it is ever drawn at.
  */
 object Photo {
-
     /**
      * The widest a stored avatar is allowed to be, in base64 characters.
      *
@@ -49,7 +48,10 @@ object Photo {
      * avatar picker runs a phone out of memory, so `inSampleSize` gets it down to roughly the right
      * order of magnitude before a single pixel is allocated.
      */
-    fun encode(context: Context, uri: Uri): String? {
+    fun encode(
+        context: Context,
+        uri: Uri,
+    ): String? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         // The stream is what is checked for null, not the decode. With `inJustDecodeBounds` the
         // decode returns null by design and writes its answer into `bounds`, so treating that null
@@ -60,12 +62,14 @@ object Photo {
         val smallest = min(bounds.outWidth, bounds.outHeight)
         if (smallest <= 0) return null
 
-        val options = BitmapFactory.Options().apply {
-            inSampleSize = max(1, smallest / SIZE)
-        }
-        val source = context.contentResolver.openInputStream(uri)?.use {
-            BitmapFactory.decodeStream(it, null, options)
-        } ?: return null
+        val options =
+            BitmapFactory.Options().apply {
+                inSampleSize = max(1, smallest / SIZE)
+            }
+        val source =
+            context.contentResolver.openInputStream(uri)?.use {
+                BitmapFactory.decodeStream(it, null, options)
+            } ?: return null
 
         // Squared before it is scaled, so a portrait photograph becomes a face rather than a face
         // with two thirds of a room under it.
@@ -90,7 +94,11 @@ object Photo {
         val edge = min(source.width, source.height)
         if (source.width == source.height) return source
         return Bitmap.createBitmap(
-            source, (source.width - edge) / 2, (source.height - edge) / 2, edge, edge
+            source,
+            (source.width - edge) / 2,
+            (source.height - edge) / 2,
+            edge,
+            edge,
         )
     }
 
@@ -117,9 +125,13 @@ object Photo {
      * a budget in a unit nobody can convert. Two megabytes is around fifty faces at [SIZE], which
      * is three cohorts' worth and more than any screen has ever asked for at once.
      */
-    private val decoded = object : LruCache<String, Bitmap>(2 * 1024 * 1024) {
-        override fun sizeOf(key: String, value: Bitmap) = value.byteCount
-    }
+    private val decoded =
+        object : LruCache<String, Bitmap>(2 * 1024 * 1024) {
+            override fun sizeOf(
+                key: String,
+                value: Bitmap,
+            ) = value.byteCount
+        }
 
     /**
      * Back to a bitmap for drawing, or null for anything that is not a picture.
@@ -136,10 +148,11 @@ object Photo {
     fun decode(encoded: String): Bitmap? {
         if (encoded.isBlank()) return null
         decoded[encoded]?.let { return it }
-        val bitmap = runCatching {
-            val bytes = Base64.decode(encoded, Base64.NO_WRAP)
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-        }.getOrNull() ?: return null
+        val bitmap =
+            runCatching {
+                val bytes = Base64.decode(encoded, Base64.NO_WRAP)
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            }.getOrNull() ?: return null
         decoded.put(encoded, bitmap)
         return bitmap
     }

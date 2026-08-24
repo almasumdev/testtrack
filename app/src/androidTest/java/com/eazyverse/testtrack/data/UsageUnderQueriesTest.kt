@@ -20,7 +20,6 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class UsageUnderQueriesTest {
-
     private val context: Context
         get() = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -31,7 +30,9 @@ class UsageUnderQueriesTest {
      */
     @Before
     fun grantUsageAccess() {
-        InstrumentationRegistry.getInstrumentation().uiAutomation
+        InstrumentationRegistry
+            .getInstrumentation()
+            .uiAutomation
             .executeShellCommand("appops set ${context.packageName} GET_USAGE_STATS allow")
             .close()
         Thread.sleep(1_000)
@@ -41,7 +42,8 @@ class UsageUnderQueriesTest {
     /** Every app the launcher query reaches — which is every app a cohort can contain. */
     private fun launchableApps(): List<String> {
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        return context.packageManager.queryIntentActivities(intent, 0)
+        return context.packageManager
+            .queryIntentActivities(intent, 0)
             .map { it.activityInfo.packageName }
             .distinct()
             .filter { it != context.packageName }
@@ -60,8 +62,10 @@ class UsageUnderQueriesTest {
         assertTrue("launcher <queries> returned nothing", apps.size > 5)
 
         val pkg = apps.first()
-        assertTrue("$pkg visible to queryIntentActivities but not to getPackageInfo",
-            InstalledApps.info(context, pkg).installed)
+        assertTrue(
+            "$pkg visible to queryIntentActivities but not to getPackageInfo",
+            InstalledApps.info(context, pkg).installed,
+        )
     }
 
     /**
@@ -82,7 +86,7 @@ class UsageUnderQueriesTest {
         assertTrue(
             "UsageStatsManager reported ${ms}ms for $pkg after a 15s visit — " +
                 "package visibility is filtering usage stats, and the proof mechanism is gone",
-            ms >= 5_000
+            ms >= 5_000,
         )
     }
 }

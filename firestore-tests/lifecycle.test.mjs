@@ -219,6 +219,85 @@ await check('nobody edits an event, not even an admin', () =>
 await check('an admin may delete an event', () =>
   assertSucceeds(deleteDoc(doc(as(ADMIN), 'events', 'ev-assigned'))))
 
+// ---- a cohort's own record, and why it outlives membership itself ---------------------------
+// The claim under test: history is the one collection that must still answer for somebody after
+// every other reason it would has gone — after `inGroup` itself would refuse them. So this is
+// tested against a group ME is no longer a member of, on purpose, rather than the running cohort
+// every other block in this file seeds.
+console.log('\na cohort\'s own record\n')
+
+const HISTORY_GROUP = 'g-history'
+
+const historyDoc = (over = {}) => ({
+  groupId: HISTORY_GROUP, groupName: 'Batch 07', uid: ME, type: 'kicked',
+  appId: 'com.me.placed', appLabel: 'Mine', actorUid: ADMIN, createdAt: 1, ...over,
+})
+
+async function seedHistory() {
+  await env.clearFirestore()
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore()
+    await setDoc(doc(db, 'admins', ADMIN), {})
+    // ME already gone from the group by the time these tests run — memberUids has only PEER.
+    await setDoc(doc(db, 'groups', HISTORY_GROUP), {
+      name: 'Batch 07', memberUids: [PEER], appIds: [], startDate: 1, status: 'running',
+    })
+  })
+}
+
+await seedHistory()
+
+await check('an admin may write a history entry', () =>
+  assertSucceeds(setDoc(doc(as(ADMIN), 'history', 'h1'), historyDoc())))
+
+await check('a history entry must name its group', () =>
+  assertFails(setDoc(doc(as(ADMIN), 'history', 'h2'), historyDoc({ groupId: '' }))))
+
+await check('a history entry must name who it is about', () =>
+  assertFails(setDoc(doc(as(ADMIN), 'history', 'h3'), historyDoc({ uid: '' }))))
+
+await check('an unrecognised type is refused', () =>
+  assertFails(setDoc(doc(as(ADMIN), 'history', 'h4'), historyDoc({ type: 'evicted' }))))
+
+await check('an admin cannot claim somebody else did it', () =>
+  assertFails(setDoc(doc(as(ADMIN), 'history', 'h5'), historyDoc({ actorUid: ME }))))
+
+await check('a tester cannot write a history entry at all', () =>
+  assertFails(setDoc(doc(as(PEER), 'history', 'h6'), historyDoc({ actorUid: PEER }))))
+
+await check('an outsider cannot write one either', () =>
+  assertFails(setDoc(doc(as(ME), 'history', 'h7'), historyDoc({ actorUid: ME }))))
+
+// One entry about ME, one about PEER, both already written under rules disabled — the write
+// path above is already proven, this half is purely about who may read what.
+await seedHistory()
+await env.withSecurityRulesDisabled(async (ctx) => {
+  const db = ctx.firestore()
+  await setDoc(doc(db, 'history', 'about-me'), historyDoc({ uid: ME }))
+  await setDoc(doc(db, 'history', 'about-peer'), historyDoc({ uid: PEER }))
+})
+
+await check('an admin may read any entry', () =>
+  assertSucceeds(getDoc(doc(as(ADMIN), 'history', 'about-me'))))
+
+await check('the person it is about may read their own entry', () =>
+  assertSucceeds(getDoc(doc(as(ME), 'history', 'about-me'))))
+
+await check('a cohort-mate may not read somebody else\'s entry', () =>
+  assertFails(getDoc(doc(as(PEER), 'history', 'about-me'))))
+
+// The direct regression guard for the actual bug this collection exists to fix: ME is not in
+// HISTORY_GROUP's memberUids (seedHistory only ever put PEER there) — inGroup(HISTORY_GROUP)
+// would refuse ME today, and the read still has to succeed anyway.
+await check('the person it is about can still read it after leaving the group', () =>
+  assertSucceeds(getDoc(doc(as(ME), 'history', 'about-me'))))
+
+await check('nobody may edit a history entry, not even an admin', () =>
+  assertFails(updateDoc(doc(as(ADMIN), 'history', 'about-me'), { type: 'joined' })))
+
+await check('nobody may delete a history entry, not even an admin', () =>
+  assertFails(deleteDoc(doc(as(ADMIN), 'history', 'about-me'))))
+
 console.log(`\n${pass} passed, ${fail} failed\n`)
 await env.cleanup()
 process.exit(fail === 0 ? 0 : 1)

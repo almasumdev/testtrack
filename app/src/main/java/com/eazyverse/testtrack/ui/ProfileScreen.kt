@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -45,7 +44,6 @@ import kotlinx.coroutines.launch
  * Everything shown is already readable by this account. Nothing here is a new permission.
  */
 class ProfileViewModel : ViewModel() {
-
     var me by mutableStateOf<Tester?>(null)
         private set
     var apps by mutableStateOf<List<TestApp>>(emptyList())
@@ -59,6 +57,7 @@ class ProfileViewModel : ViewModel() {
 
     var ready by mutableStateOf(false)
         private set
+
     /** A pull-to-refresh in flight over content already on screen — see [HomeViewModel.refreshing]. */
     var refreshing by mutableStateOf(false)
         private set
@@ -67,7 +66,11 @@ class ProfileViewModel : ViewModel() {
     var message by mutableStateOf<String?>(null)
 
     fun load() {
-        val uid = AuthRepo.uid ?: run { ready = true; return }
+        val uid =
+            AuthRepo.uid ?: run {
+                ready = true
+                return
+            }
         viewModelScope.launch {
             refreshing = ready // only worth flagging over content that's already on screen
             runCatching {
@@ -97,7 +100,10 @@ class ProfileViewModel : ViewModel() {
      * [releaseSession] has to finish before the caller drops the account, because clearing the push
      * token is a Firestore write made with the credentials being abandoned.
      */
-    fun signOut(context: android.content.Context, then: () -> Unit) {
+    fun signOut(
+        context: android.content.Context,
+        then: () -> Unit,
+    ) {
         viewModelScope.launch {
             releaseSession(context)
             then()
@@ -110,7 +116,11 @@ class ProfileViewModel : ViewModel() {
      * The screen shows what was saved rather than what was typed, so a failure leaves the old
      * values on screen instead of a hopeful edit that never landed.
      */
-    fun save(displayName: String, photo: String, then: () -> Unit) {
+    fun save(
+        displayName: String,
+        photo: String,
+        then: () -> Unit,
+    ) {
         val uid = AuthRepo.uid ?: return
         saving = true
         viewModelScope.launch {
@@ -119,8 +129,7 @@ class ProfileViewModel : ViewModel() {
                     me = me?.copy(displayName = displayName.trim(), photo = photo)
                     message = null
                     then()
-                }
-                .onFailure {
+                }.onFailure {
                     message = it.friendly("We couldn't save your profile. Check your connection.")
                 }
             saving = false
@@ -133,7 +142,7 @@ class ProfileViewModel : ViewModel() {
 fun ProfileScreen(
     onBack: () -> Unit,
     onSignOut: () -> Unit,
-    vm: ProfileViewModel = viewModel()
+    vm: ProfileViewModel = viewModel(),
 ) {
     val context = LocalContext.current
     val activity = context.findActivity()
@@ -161,70 +170,71 @@ fun ProfileScreen(
                         Icon(Icons.AutoMirrored.Filled.Logout, "Sign out")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
             )
-        }
+        },
     ) { padding ->
         RefreshBox(
             isRefreshing = vm.refreshing,
             onRefresh = vm::load,
-            modifier = Modifier.fillMaxSize().padding(padding)
+            modifier = Modifier.fillMaxSize().padding(padding),
         ) {
-        Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-        ) {
-            if (!vm.ready) {
-                Loading()
-                return@Column
-            }
-
-            val me = vm.me
-            Header(
-                photo = me?.photo.orEmpty(),
-                initial = me?.initial ?: "?",
-                name = me?.shortName.orEmpty(),
-                email = me?.email.orEmpty(),
-                cohorts = vm.groups.size,
-                submissions = vm.apps.size,
-                days = vm.daysReported
-            )
-
-            if (vm.apps.isNotEmpty()) {
-                SectionLabel("Your apps", "${vm.apps.size}")
-                Rows {
-                    vm.apps.forEachIndexed { index, app ->
-                        if (index > 0) RowDivider()
-                        SubmissionRow(app)
-                    }
+            Column(
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+            ) {
+                if (!vm.ready) {
+                    Loading()
+                    return@Column
                 }
-            }
 
-            if (vm.groups.isNotEmpty()) {
-                SectionLabel("Cohorts", "${vm.groups.size}")
-                Rows {
-                    vm.groups.forEachIndexed { index, group ->
-                        if (index > 0) RowDivider()
-                        CohortRow(group)
-                    }
-                }
-            }
-
-            if (vm.apps.isEmpty() && vm.groups.isEmpty()) {
-                EmptyState(
-                    icon = Icons.Outlined.Inbox,
-                    title = "Nothing here yet",
-                    subtitle = "Submit an app and your record starts filling in."
+                val me = vm.me
+                Header(
+                    photo = me?.photo.orEmpty(),
+                    initial = me?.initial ?: "?",
+                    name = me?.shortName.orEmpty(),
+                    email = me?.email.orEmpty(),
+                    cohorts = vm.groups.size,
+                    submissions = vm.apps.size,
+                    days = vm.daysReported,
                 )
-            }
 
-            vm.message?.let {
-                Spacer(Modifier.height(20.dp))
-                Failure(it)
+                if (vm.apps.isNotEmpty()) {
+                    SectionLabel("Your apps", "${vm.apps.size}")
+                    Rows {
+                        vm.apps.forEachIndexed { index, app ->
+                            if (index > 0) RowDivider()
+                            SubmissionRow(app)
+                        }
+                    }
+                }
+
+                if (vm.groups.isNotEmpty()) {
+                    SectionLabel("Cohorts", "${vm.groups.size}")
+                    Rows {
+                        vm.groups.forEachIndexed { index, group ->
+                            if (index > 0) RowDivider()
+                            CohortRow(group)
+                        }
+                    }
+                }
+
+                if (vm.apps.isEmpty() && vm.groups.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Outlined.Inbox,
+                        title = "Nothing here yet",
+                        subtitle = "Submit an app and your record starts filling in.",
+                    )
+                }
+
+                vm.message?.let {
+                    Spacer(Modifier.height(20.dp))
+                    Failure(it)
+                }
+                Spacer(Modifier.height(Gutter))
             }
-            Spacer(Modifier.height(Gutter))
-        }
         }
     }
 
@@ -233,15 +243,16 @@ fun ProfileScreen(
             me = vm.me!!,
             saving = vm.saving,
             onSave = { name, photo -> vm.save(name, photo) { editing = false } },
-            onDismiss = { editing = false }
+            onDismiss = { editing = false },
         )
     }
 
     if (confirmSignOut) {
         Ask(
             title = "Sign out?",
-            body = "Your record stays where it is. Signing back in with the same account brings " +
-                "it all back.",
+            body =
+                "Your record stays where it is. Signing back in with the same account brings " +
+                    "it all back.",
             confirm = "Sign out",
             destructive = true,
             onConfirm = {
@@ -252,7 +263,7 @@ fun ProfileScreen(
                     onSignOut()
                 }
             },
-            onDismiss = { confirmSignOut = false }
+            onDismiss = { confirmSignOut = false },
         )
     }
 }
@@ -270,40 +281,41 @@ private fun EditProfile(
     me: Tester,
     saving: Boolean,
     onSave: (String, String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
     var name by remember { mutableStateOf(me.displayName) }
     var photo by remember { mutableStateOf(me.photo) }
     var tooBig by remember { mutableStateOf(false) }
 
-    val picker = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        if (uri != null) {
-            val encoded = Photo.encode(context, uri)
-            tooBig = encoded == null
-            if (encoded != null) photo = encoded
+    val picker =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.PickVisualMedia(),
+        ) { uri ->
+            if (uri != null) {
+                val encoded = Photo.encode(context, uri)
+                tooBig = encoded == null
+                if (encoded != null) photo = encoded
+            }
         }
-    }
 
     Ask(
         title = "Edit profile",
         confirm = if (saving) "Saving" else "Save",
         confirmEnabled = !saving,
         onConfirm = { onSave(name, photo) },
-        onDismiss = onDismiss
+        onDismiss = onDismiss,
     ) {
         Column(
             Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // The badge is the only way in, and the whole avatar is tappable behind it. A text
             // button underneath saying the same thing was a second control for one action, which
             // is a thing to read and decide about rather than a thing to press.
             val pick = {
                 picker.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
                 )
             }
             Box(contentAlignment = Alignment.BottomEnd) {
@@ -319,13 +331,13 @@ private fun EditProfile(
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary)
                         .clickable { pick() },
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         Icons.Outlined.PhotoCamera,
                         "Change picture",
                         Modifier.size(15.dp),
-                        tint = MaterialTheme.colorScheme.onPrimary
+                        tint = MaterialTheme.colorScheme.onPrimary,
                     )
                 }
             }
@@ -333,7 +345,10 @@ private fun EditProfile(
             // Only ever shown when there is something to remove, so the row is empty rather than
             // disabled for the accounts that never set one.
             if (photo.isNotBlank()) {
-                TextButton(onClick = { photo = ""; tooBig = false }) {
+                TextButton(onClick = {
+                    photo = ""
+                    tooBig = false
+                }) {
                     Text("Remove picture", color = MaterialTheme.colorScheme.error)
                 }
             } else {
@@ -352,7 +367,7 @@ private fun EditProfile(
                 // actually fails now, so that is what it says.
                 error = if (tooBig) "We couldn't read that picture. Try another one." else null,
                 supporting = "This is what the rest of your cohort sees beside your app.",
-                imeAction = androidx.compose.ui.text.input.ImeAction.Done
+                imeAction = androidx.compose.ui.text.input.ImeAction.Done,
             )
         }
     }
@@ -363,7 +378,7 @@ private fun EditProfile(
 private fun SubmissionRow(app: TestApp) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 13.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         AppIcon(app.packageName, app.label)
         Spacer(Modifier.width(14.dp))
@@ -373,7 +388,7 @@ private fun SubmissionRow(app: TestApp) {
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(2.dp))
             Text(
@@ -381,22 +396,23 @@ private fun SubmissionRow(app: TestApp) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
         Spacer(Modifier.width(10.dp))
-        val (label, tone, background) = when {
-            app.status == TestApp.STATUS_REJECTED ->
-                Triple("Turned down", Status.missed, Status.missedSoft)
-            app.status == TestApp.STATUS_WITHDRAWN ->
-                Triple("Withdrawn", MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft)
-            app.status == TestApp.STATUS_DONE ->
-                Triple("Finished", MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft)
-            app.removed ->
-                Triple("Taken out", Status.short, Status.shortSoft)
-            app.placed -> Triple("In a cohort", Status.posted, Status.postedSoft)
-            else -> Triple("Waiting", MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft)
-        }
+        val (label, tone, background) =
+            when {
+                app.status == TestApp.STATUS_REJECTED ->
+                    Triple("Turned down", Status.missed, Status.missedSoft)
+                app.status == TestApp.STATUS_WITHDRAWN ->
+                    Triple("Withdrawn", MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft)
+                app.status == TestApp.STATUS_DONE ->
+                    Triple("Finished", MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft)
+                app.removed ->
+                    Triple("Taken out", Status.short, Status.shortSoft)
+                app.placed -> Triple("In a cohort", Status.posted, Status.postedSoft)
+                else -> Triple("Waiting", MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft)
+            }
         Pill(label, tone, background)
     }
 }
@@ -407,13 +423,13 @@ private fun CohortRow(group: TestGroup) {
     val day = group.dayIndex()
     Row(
         Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
             Text(
                 group.name,
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
             Spacer(Modifier.height(2.dp))
             Text(
@@ -426,7 +442,7 @@ private fun CohortRow(group: TestGroup) {
                     else -> "Waiting to start"
                 },
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -451,7 +467,7 @@ private fun Header(
     email: String,
     cohorts: Int,
     submissions: Int,
-    days: Int
+    days: Int,
 ) {
     Column(Modifier.padding(start = Gutter, end = Gutter, top = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -463,7 +479,7 @@ private fun Header(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 if (email.isNotBlank()) {
                     Text(
@@ -471,7 +487,7 @@ private fun Header(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -482,7 +498,7 @@ private fun Header(
             Modifier
                 .fillMaxWidth()
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(13.dp)),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Figure(Modifier.weight(1f), "$cohorts", "cohorts")
             Upright()
@@ -519,18 +535,22 @@ private fun Upright() {
         Modifier
             .width(1.dp)
             .height(46.dp)
-            .background(MaterialTheme.colorScheme.outlineVariant)
+            .background(MaterialTheme.colorScheme.outlineVariant),
     )
 }
 
 @Composable
-private fun Figure(modifier: Modifier, value: String, caption: String) {
+private fun Figure(
+    modifier: Modifier,
+    value: String,
+    caption: String,
+) {
     Column(modifier.padding(horizontal = 12.dp, vertical = 11.dp)) {
         Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Text(
             caption,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.outline
+            color = MaterialTheme.colorScheme.outline,
         )
     }
 }

@@ -25,7 +25,6 @@ import kotlin.coroutines.resume
  * error banner about it would be noise about a thing they cannot act on.
  */
 object Notify {
-
     /**
      * A Firebase ID token, not the Google one the membership check sends.
      *
@@ -36,23 +35,30 @@ object Notify {
     private suspend fun firebaseToken(): String? {
         val user = FirebaseAuth.getInstance().currentUser ?: return null
         return suspendCancellableCoroutine { cont ->
-            user.getIdToken(false)
+            user
+                .getIdToken(false)
                 .addOnSuccessListener { if (cont.isActive) cont.resume(it.token) }
                 .addOnFailureListener { if (cont.isActive) cont.resume(null) }
         }
     }
 
-    private suspend fun post(body: JSONObject) = withContext(Dispatchers.IO) {
-        runCatching {
-            val request = Request.Builder()
-                .url(Config.GATE_URL)
-                .post(body.toString().toRequestBody("application/json".toMediaType()))
-                .build()
-            // Reuses the gate's client, so this inherits its timeouts and its connection pool
-            // rather than standing up a second one for two calls a week.
-            GroupGate.http.newCall(request).execute().close()
+    private suspend fun post(body: JSONObject) =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val request =
+                    Request
+                        .Builder()
+                        .url(Config.GATE_URL)
+                        .post(body.toString().toRequestBody("application/json".toMediaType()))
+                        .build()
+                // Reuses the gate's client, so this inherits its timeouts and its connection pool
+                // rather than standing up a second one for two calls a week.
+                GroupGate.http
+                    .newCall(request)
+                    .execute()
+                    .close()
+            }
         }
-    }
 
     /** Tells whoever is watching the admin queue that something has arrived in it. */
     suspend fun submission(appName: String) {
@@ -61,7 +67,7 @@ object Notify {
             JSONObject()
                 .put("idToken", token)
                 .put("action", "notifySubmission")
-                .put("name", appName)
+                .put("name", appName),
         )
     }
 
@@ -78,14 +84,17 @@ object Notify {
      * this: pressing the button is the tester's part, and whether the push lands is not their
      * problem to see.
      */
-    suspend fun cannotInstall(appName: String, packageName: String) {
+    suspend fun cannotInstall(
+        appName: String,
+        packageName: String,
+    ) {
         val token = firebaseToken() ?: return
         post(
             JSONObject()
                 .put("idToken", token)
                 .put("action", "notifyProblem")
                 .put("name", appName)
-                .put("packageName", packageName)
+                .put("packageName", packageName),
         )
     }
 
@@ -98,14 +107,17 @@ object Notify {
      * What actually distinguishes the two is on the console, in [TestApp.flaggedAt] — the push is
      * only ever the doorbell.
      */
-    suspend fun flagged(appName: String, packageName: String) {
+    suspend fun flagged(
+        appName: String,
+        packageName: String,
+    ) {
         val token = firebaseToken() ?: return
         post(
             JSONObject()
                 .put("idToken", token)
                 .put("action", "notifyProblem")
                 .put("name", appName)
-                .put("packageName", packageName)
+                .put("packageName", packageName),
         )
     }
 }

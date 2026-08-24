@@ -1,66 +1,35 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.toBitmap
-import com.eazyverse.testtrack.data.InstalledApps
-import com.eazyverse.testtrack.data.Photo
 import com.eazyverse.testtrack.ui.theme.LocalStatusColors
-import androidx.compose.foundation.Image as ComposeImage
-
-/**
- * The pieces every screen is built from, so consistency is the path of least resistance.
- */
 
 /**
  * The page gutter. Every screen, every row, no exceptions.
@@ -98,37 +67,40 @@ fun RefreshBox(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
-    content: @Composable BoxScope.() -> Unit
+    content: @Composable BoxScope.() -> Unit,
 ) {
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = onRefresh,
         modifier = modifier,
-        content = content
+        content = content,
     )
 }
 
 // ---- structure ---------------------------------------------------------------------------
 
 @Composable
-fun SectionLabel(text: String, trailing: String? = null) {
+fun SectionLabel(
+    text: String,
+    trailing: String? = null,
+) {
     Row(
         Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 22.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text.uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 1.2.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         trailing?.let {
             Spacer(Modifier.weight(1f))
             Text(
                 it,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -147,7 +119,10 @@ fun SectionLabel(text: String, trailing: String? = null) {
  * against anything else, and a list that runs to fourteen apps has one less edge in it.
  */
 @Composable
-fun Rows(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+fun Rows(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Column(modifier.fillMaxWidth(), content = content)
 }
 
@@ -169,14 +144,14 @@ fun RowDivider() {
         Modifier
             .fillMaxWidth()
             .padding(horizontal = Gutter)
-            .height(1.dp)
+            .height(1.dp),
     ) {
         drawLine(
             color = ink,
             start = Offset(0f, size.height / 2f),
             end = Offset(size.width, size.height / 2f),
             strokeWidth = size.height,
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.5.dp.toPx(), 3.dp.toPx()))
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.5.dp.toPx(), 3.dp.toPx())),
         )
     }
 }
@@ -194,14 +169,14 @@ fun Secondary(
     modifier: Modifier = Modifier,
     destructive: Boolean = false,
     enabled: Boolean = true,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
         shape = RoundedCornerShape(10.dp),
         contentPadding = PaddingValues(horizontal = 8.dp),
-        modifier = modifier.height(42.dp)
+        modifier = modifier.height(42.dp),
     ) {
         Text(
             label,
@@ -209,11 +184,12 @@ fun Secondary(
             maxLines = 1,
             // Dimmed rather than merely inert. A control that ignores taps while still looking
             // pressable reads as the app having missed them.
-            color = when {
-                !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                destructive -> MaterialTheme.colorScheme.error
-                else -> MaterialTheme.colorScheme.onSurface
-            }
+            color =
+                when {
+                    !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    destructive -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurface
+                },
         )
     }
 }
@@ -225,7 +201,10 @@ fun Secondary(
  * choices while pushing the list, which is the reason the screen exists, below the fold.
  */
 @Composable
-fun Chip(label: String, onClick: () -> Unit) {
+fun Chip(
+    label: String,
+    onClick: () -> Unit,
+) {
     Text(
         label,
         Modifier
@@ -235,7 +214,7 @@ fun Chip(label: String, onClick: () -> Unit) {
             .padding(horizontal = 12.dp, vertical = 7.dp),
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.Medium,
-        color = MaterialTheme.colorScheme.primary
+        color = MaterialTheme.colorScheme.primary,
     )
 }
 
@@ -264,23 +243,24 @@ fun EmptyState(
     icon: ImageVector,
     title: String,
     subtitle: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 36.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
             Modifier
                 .size(56.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
-                icon, null,
+                icon,
+                null,
                 Modifier.size(26.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
             )
         }
         Spacer(Modifier.height(16.dp))
@@ -288,14 +268,14 @@ fun EmptyState(
             title,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(6.dp))
         Text(
             subtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -307,7 +287,7 @@ fun Blank(text: String) {
         text,
         Modifier.padding(horizontal = Gutter, vertical = 14.dp),
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 
@@ -318,7 +298,7 @@ fun Failure(text: String) {
         text,
         Modifier.padding(horizontal = Gutter, vertical = 14.dp),
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.error
+        color = MaterialTheme.colorScheme.error,
     )
 }
 
@@ -339,19 +319,19 @@ fun Primary(
     enabled: Boolean = true,
     tall: Boolean = false,
     mark: Painter? = null,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,
         enabled = enabled && !busy,
         shape = RoundedCornerShape(14.dp),
-        modifier = modifier.fillMaxWidth().height(if (tall) 52.dp else 46.dp)
+        modifier = modifier.fillMaxWidth().height(if (tall) 52.dp else 46.dp),
     ) {
         if (busy) {
             androidx.compose.material3.CircularProgressIndicator(
                 Modifier.size(16.dp),
                 strokeWidth = 2.dp,
-                color = MaterialTheme.colorScheme.onPrimary
+                color = MaterialTheme.colorScheme.onPrimary,
             )
             Spacer(Modifier.width(10.dp))
         } else if (mark != null) {
@@ -359,618 +339,5 @@ fun Primary(
             Spacer(Modifier.width(10.dp))
         }
         Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-// ---- marks -------------------------------------------------------------------------------
-
-/**
- * A launcher icon, or a lettered tile when the app is not installed.
- *
- * This is the single biggest thing separating a list of apps from a list of strings, and it costs
- * nothing — the launcher `<queries>` filter is already declared for the install streak, and an app
- * with a launcher icon to draw is by definition one that filter can see.
- */
-@Composable
-fun AppIcon(
-    pkg: String,
-    label: String,
-    size: Dp = 44.dp,
-    /**
-     * Overrides the square. A row that sets its own height wants the icon to match whatever the
-     * text beside it came out at, and [size] is then only the corner radius it is rounded by.
-     */
-    modifier: Modifier = Modifier.size(size)
-) {
-    val context = LocalContext.current
-    // The revision is a key here too. An app that was absent cached a null icon, and without this
-    // the row stays a grey placeholder for the rest of the session after it is installed.
-    val bitmap: ImageBitmap? = remember(pkg, InstalledApps.revision) {
-        InstalledApps.iconBitmap(context, pkg)
-    }
-    val shape = RoundedCornerShape(size * 0.3f)
-
-    if (bitmap != null) {
-        ComposeImage(
-            bitmap = bitmap,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = modifier.clip(shape)
-        )
-    } else {
-        Box(
-            modifier.clip(shape).background(Status.neutralSoft),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                label.firstOrNull()?.uppercase() ?: "?",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-/** A tester's initial in a tinted disc — the only stand-in for an avatar we have. */
-@Composable
-fun Initial(letter: String, size: Dp = 34.dp) {
-    Box(
-        Modifier.size(size).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            letter,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-    }
-}
-
-/**
- * Somebody's face, or their letter where there is no face.
- *
- * The fallback is not an error state and is not drawn like one. Most accounts will never set a
- * picture, so [Initial] is the ordinary case and this is the exception that improves on it.
- *
- * Decoding is remembered against the encoded string rather than done on every recomposition,
- * because this is drawn in list rows and the string is the only thing that can change it.
- */
-@Composable
-fun Avatar(photo: String, letter: String, size: Dp = 34.dp, loading: Boolean = false) {
-    // Nothing has been fetched yet, so there is no letter to show either — the name it would come
-    // from is on the same document as the picture. A shimmer says "coming", where a letter would
-    // say "this is who they are" and then change its mind.
-    if (loading) {
-        Skeleton(width = size, height = size, corner = size / 2)
-        return
-    }
-
-    val bitmap = remember(photo) { Photo.decode(photo)?.asImageBitmap() }
-    if (bitmap == null) {
-        Initial(letter, size)
-    } else {
-        ComposeImage(
-            bitmap = bitmap,
-            contentDescription = null,
-            modifier = Modifier.size(size).clip(CircleShape),
-            contentScale = ContentScale.Crop
-        )
-    }
-}
-
-/**
- * Scannable down a column of twelve without reading any of them.
- *
- * Sized to match [ActionChip][com.eazyverse.testtrack.ui.ActionChip] and [Working] exactly — same
- * corner, same padding, same bumped-up text size — so a row does not visibly grow or shrink as it
- * moves between an actionable state and a settled one. It used to be a size of its own, smaller all
- * round, and a list mid scroll read as buttons of two different sizes rather than one list.
- */
-@Composable
-fun Pill(text: String, tone: Color, background: Color) {
-    Text(
-        text,
-        Modifier
-            .clip(RoundedCornerShape(9.dp))
-            .background(background)
-            .padding(horizontal = 13.dp, vertical = 7.dp),
-        style = MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp),
-        fontWeight = FontWeight.SemiBold,
-        color = tone
-    )
-}
-
-/**
- * A [Pill] for a row that is busy, saying which kind of busy it is.
- *
- * Where an action would sit, and shaped like the states beside it, so a list mid round reads as one
- * list rather than a column of buttons with holes punched in it. Sized the same as [Pill], for the
- * same reason.
- *
- * The word is the point. A bare spinner says something is happening and leaves which row is
- * capturing and which is uploading to be worked out from position, which is exactly the thing
- * somebody watching a round wants to know.
- */
-@Composable
-fun Working(text: String) {
-    Row(
-        Modifier
-            .clip(RoundedCornerShape(9.dp))
-            .background(Status.neutralSoft)
-            .padding(horizontal = 13.dp, vertical = 7.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        androidx.compose.material3.CircularProgressIndicator(
-            Modifier.size(14.dp),
-            strokeWidth = 1.5.dp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-/** A cooldown in whole hours, or in days once it is a day or more — nobody needs the minutes. */
-fun formatWait(ms: Long): String {
-    val hours = (ms / 3_600_000L).coerceAtLeast(1L)
-    return if (hours < 24) "${hours}h" else "${(hours + 23) / 24}d"
-}
-
-/**
- * Progress as a fixed number of boxes, one per thing to be done.
- *
- * The console's meter, and the same reasoning: five steps is a small enough number to be counted,
- * and a bar filling by fifths says less than five boxes with two of them lit. A proportion bar is
- * for quantities nobody counts, which is what the overload below is for.
- *
- * Every box carries its own edge, drawn inside its bounds, and a filled one is painted inside that
- * edge rather than over it. So all of them sit on one grid at one size whether they are done or
- * not, and nothing grows by a pixel as it fills.
- */
-@Composable
-fun Meter(done: Int, total: Int, modifier: Modifier = Modifier, height: Dp = 10.dp) {
-    if (total <= 0) return
-    val box = RoundedCornerShape(3.dp)
-    val filled = MaterialTheme.colorScheme.primary
-    val edge = MaterialTheme.colorScheme.outlineVariant
-
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        repeat(total) { index ->
-            val on = index < done
-            Box(
-                Modifier
-                    .weight(1f)
-                    .height(height)
-                    .border(1.dp, if (on) filled else edge, box)
-                    // Inside the edge, not across it. The border is the box; the fill is what is
-                    // in it.
-                    .padding(1.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(if (on) filled else Color.Transparent)
-            )
-        }
-    }
-}
-
-/**
- * [Meter]'s own reasoning, drawn as a ring instead of a row of boxes.
- *
- * Meant for a spot too small for a row to sit comfortably in — a hero number, the leading mark on
- * a row that already has a name and a chevron to fit beside it. Still one tick per thing to be
- * done and not a swept fraction, for the same reason [Meter] counts rather than fills: a handful
- * of apps reads as a handful of ticks, not sixty percent of a circle.
- */
-@Composable
-fun SegmentedRing(
-    done: Int,
-    total: Int,
-    modifier: Modifier = Modifier,
-    strokeWidth: Dp = 6.dp,
-    // A physical size rather than a fixed number of degrees. Degrees alone read fine on a large
-    // ring and vanish on a small one — the same angle sweeps far less actual arc length once the
-    // radius shrinks, which is what made a 44dp ring's gaps disappear into a solid-looking circle
-    // even though the math said they were there.
-    gap: Dp = 3.dp,
-    fillColor: Color = MaterialTheme.colorScheme.primary,
-    trackColor: Color = MaterialTheme.colorScheme.surfaceVariant
-) {
-    if (total <= 0) return
-    val strokePx = with(LocalDensity.current) { strokeWidth.toPx() }
-    val gapPx = with(LocalDensity.current) { gap.toPx() }
-
-    Canvas(modifier) {
-        val radius = (size.minDimension - strokePx) / 2f
-        val topLeft = Offset((size.width - radius * 2) / 2f, (size.height - radius * 2) / 2f)
-        val arcSize = Size(radius * 2, radius * 2)
-        val anglePerSegment = 360f / total
-        // This ring's own radius decides how many degrees that physical gap needs, capped so a
-        // very large count can't demand a gap wider than the segment it is supposed to separate.
-        val gapDegrees = Math.toDegrees((gapPx / radius).toDouble()).toFloat()
-            .coerceAtMost(anglePerSegment * 0.6f)
-        val sweep = anglePerSegment - gapDegrees
-        repeat(total) { index ->
-            drawArc(
-                color = if (index < done) fillColor else trackColor,
-                startAngle = -90f + index * anglePerSegment + gapDegrees / 2f,
-                sweepAngle = sweep,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                // Butt, not round — a round cap protrudes past its own path endpoint by about
-                // half the stroke width, which is what was quietly eating the gap above back
-                // down to nothing: two rounded ends meeting across a few dp of empty path left
-                // no empty pixels between them. Butt paints exactly the sweep it is given.
-                style = Stroke(width = strokePx, cap = StrokeCap.Butt)
-            )
-        }
-    }
-}
-
-/** A horizontal proportion bar. Iris, because progress is something you act on. */
-@Composable
-fun Meter(fraction: Float, modifier: Modifier = Modifier, height: Dp = 6.dp) {
-    Box(
-        modifier.fillMaxWidth().height(height).clip(CircleShape).background(Status.upcoming)
-    ) {
-        if (fraction > 0f) {
-            Box(
-                Modifier
-                    .fillMaxWidth(fraction.coerceIn(0f, 1f))
-                    .fillMaxHeight()
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary)
-            )
-        }
-    }
-}
-
-// ---- loading -----------------------------------------------------------------------------
-
-/**
- * A placeholder in the shape of what is arriving.
- *
- * Never a spinner in the middle of an empty screen: a skeleton says how much is coming and where
- * it will be, and because results are cached this is only ever seen on genuinely first sight.
- */
-@Composable
-fun Skeleton(width: Dp? = null, height: Dp = 12.dp, corner: Dp = 6.dp, modifier: Modifier = Modifier) {
-    val base = Status.upcoming
-    val highlight = MaterialTheme.colorScheme.surface.copy(alpha = 0.65f)
-
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val shift by transition.animateFloat(
-        initialValue = -600f,
-        targetValue = 1200f,
-        animationSpec = infiniteRepeatable(tween(1500, easing = LinearEasing)),
-        label = "shift"
-    )
-
-    Box(
-        modifier
-            .then(if (width != null) Modifier.width(width) else Modifier.fillMaxWidth())
-            .height(height)
-            .clip(RoundedCornerShape(corner))
-            .background(
-                Brush.linearGradient(
-                    listOf(base, highlight, base),
-                    start = Offset(shift, 0f),
-                    end = Offset(shift + 400f, 0f)
-                )
-            )
-    )
-}
-
-/**
- * Rows in the shape of the list that is coming.
- *
- * No dividers, because the list it stands in for has none — a skeleton that draws rules the real
- * content will not is a promise the arriving screen breaks. Enough rows to fill the space too: a
- * cohort is fourteen apps, and three placeholders under a full-height panel reads as "finished,
- * and nearly empty" rather than "still loading".
- */
-/**
- * A whole screen, before any of it has arrived.
- *
- * One skeleton for the page, never one per section, because sections do not land together. A
- * header drawn over a list that is still loading states things the list is about to contradict —
- * a group page whose apps have not turned up reads as "everything's done for today", in green,
- * and then flips to "start testing · 5 left". The header was not wrong; it was early.
- *
- * It stands in for content and not for structure: no section labels, no headings. A label is a
- * claim that the section exists, and some of them will not. Content landing shifts the layout a
- * little; a heading over something that never appears is worse.
- */
-@Composable
-fun SkeletonPage(showAction: Boolean = true, list: @Composable () -> Unit) {
-    Spacer(Modifier.height(8.dp))
-    Column(Modifier.padding(horizontal = Gutter)) {
-        Skeleton(width = 148.dp, height = 34.dp, corner = 10.dp)
-        Spacer(Modifier.height(12.dp))
-        Skeleton(width = 210.dp, height = 12.dp)
-        Spacer(Modifier.height(14.dp))
-        SkeletonMeter()
-        if (showAction) {
-            Spacer(Modifier.height(26.dp))
-            Skeleton(height = 52.dp, corner = 16.dp)
-        }
-    }
-    Spacer(Modifier.height(28.dp))
-    Rows { list() }
-}
-
-/**
- * How many rows a skeleton draws.
- *
- * More than the screen holds on purpose. A list that stops halfway down has already answered the
- * question, and the answer it gives is "there are three of these", which is a thing nobody knows
- * yet.
- */
-const val SKELETON_ROWS = 8
-
-private val Titles = listOf(118, 92, 140, 104, 126, 86, 132)
-private val Metas = listOf(168, 132, 190, 150, 118, 176, 142)
-
-private fun title(i: Int) = Titles[i % Titles.size].dp
-private fun meta(i: Int) = Metas[i % Metas.size].dp
-
-/** A ring, a group name, and the day underneath it: the shape of a row on the home screen. */
-@Composable
-fun SkeletonGroupList(rows: Int = SKELETON_ROWS) {
-    repeat(rows) { i ->
-        if (i > 0) RowDivider()
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Skeleton(width = 36.dp, height = 36.dp, corner = 18.dp)
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
-                Skeleton(width = title(i), height = 13.dp)
-                Spacer(Modifier.height(6.dp))
-                Skeleton(width = meta(i), height = 11.dp)
-            }
-        }
-    }
-}
-
-/**
- * A meter's placeholder, in the meter's own shape.
- *
- * [Meter] is boxes with gaps between them, so a single long bar standing in for it is a skeleton
- * describing a different component. The count is a guess because the real one is not known yet,
- * which is fine: what a skeleton owes is the shape, and a row of boxes is unmistakably the shape.
- *
- * Same 4dp gap and 3dp corner as the real one, so nothing shifts sideways when it lands.
- */
-@Composable
-fun SkeletonMeter(boxes: Int = 12, height: Dp = 10.dp) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        repeat(boxes) {
-            Skeleton(height = height, corner = 3.dp, modifier = Modifier.weight(1f))
-        }
-    }
-}
-
-/**
- * A cohort row on the home screen: a name, the day under it, and the day's own meter.
- *
- * Its own shape rather than [SkeletonGroupList], which draws a face at the left because the list
- * it stands in for on the dashboard has one. Home's rows do not, and a circle that resolves into
- * nothing is the skeleton telling a small lie about what is coming.
- */
-@Composable
-fun SkeletonCohortList(rows: Int = 3) {
-    repeat(rows) { i ->
-        if (i > 0) RowDivider()
-        Column(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 14.dp)) {
-            Skeleton(width = title(i), height = 15.dp)
-            Spacer(Modifier.height(7.dp))
-            Skeleton(width = meta(i), height = 11.dp)
-            Spacer(Modifier.height(10.dp))
-            // The row's own day meter, at the 8dp the real one uses.
-            SkeletonMeter(boxes = 12, height = 8.dp)
-        }
-    }
-}
-
-/** An icon, an app name, and what it is waiting for. */
-@Composable
-fun SkeletonAppList(rows: Int = SKELETON_ROWS) {
-    repeat(rows) { i ->
-        if (i > 0) RowDivider()
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 13.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Skeleton(width = 44.dp, height = 44.dp, corner = 13.dp)
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
-                Skeleton(width = title(i), height = 13.dp)
-                Spacer(Modifier.height(6.dp))
-                Skeleton(width = meta(i), height = 11.dp)
-            }
-        }
-    }
-}
-
-/**
- * An icon, a name, who it belongs to, and the row of actions underneath — the shape TestRow and
- * MineRow both settle into now that icon size follows the three lines beside it and every action
- * lives on its own line rather than trailing the title. Its own function rather than a parameter
- * on [SkeletonAppList]: that one still stands for Home's pending queue and Profile's submissions,
- * both still the older single-line shape, and widening it in place would make the skeleton wrong
- * for two screens to fix it for one.
- *
- * Three action-chip widths rather than a fixed count per row: real rows show anywhere from one
- * chip to five, and varying it here is what keeps the skeleton from reading as a promise that
- * every row is about to look identical.
- */
-@Composable
-fun SkeletonGroupAppList(rows: Int = SKELETON_ROWS) {
-    val chipCounts = listOf(2, 3, 1, 3, 2)
-    repeat(rows) { i ->
-        if (i > 0) RowDivider()
-        Column(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Skeleton(width = 52.dp, height = 52.dp, corner = 14.dp)
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Skeleton(width = title(i), height = 13.dp)
-                    Spacer(Modifier.height(5.dp))
-                    Skeleton(width = meta(i) * 0.7f, height = 11.dp)
-                    Spacer(Modifier.height(4.dp))
-                    Skeleton(width = meta(i + 1), height = 10.dp)
-                }
-            }
-            Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                repeat(chipCounts[i % chipCounts.size]) { c ->
-                    Skeleton(width = (60 + c * 24).dp, height = 24.dp, corner = 8.dp)
-                }
-            }
-        }
-    }
-}
-
-/**
- * The one dialog shape this app uses.
- *
- * Material's default container is `surfaceContainerHigh`, a grey nothing else here is painted in,
- * so every dialog arrived looking like a piece of another product dropped on top of this one. This
- * takes the panel's own surface and corner, which is what the rest of the app is built from.
- *
- * Destructive actions are named rather than coloured red by default. "Sign out" is not a warning,
- * and a dialog where the confirm button is always alarming teaches people to ignore the alarm — so
- * [destructive] is opt-in, for the ones that genuinely take something away.
- *
- * [body] covers the ordinary case of a sentence or two. [content] is for the few that need a field
- * or an image, and both may be given: the prose comes first.
- */
-@Composable
-fun Ask(
-    title: String,
-    confirm: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    body: String? = null,
-    dismiss: String? = "Cancel",
-    destructive: Boolean = false,
-    confirmEnabled: Boolean = true,
-    content: (@Composable ColumnScope.() -> Unit)? = null
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(18.dp),
-        containerColor = MaterialTheme.colorScheme.surface,
-        titleContentColor = MaterialTheme.colorScheme.onSurface,
-        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        title = {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        },
-        text = if (body == null && content == null) null else {
-            {
-                Column {
-                    body?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                    content?.let {
-                        if (body != null) Spacer(Modifier.height(14.dp))
-                        it()
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm, enabled = confirmEnabled) {
-                Text(
-                    confirm,
-                    fontWeight = FontWeight.SemiBold,
-                    color = when {
-                        !confirmEnabled -> MaterialTheme.colorScheme.onSurfaceVariant
-                        destructive -> MaterialTheme.colorScheme.error
-                        else -> MaterialTheme.colorScheme.primary
-                    }
-                )
-            }
-        },
-        dismissButton = dismiss?.let {
-            {
-                TextButton(onClick = onDismiss) {
-                    Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
-    )
-}
-
-/** A field inside [Ask], matching the shape the rest of the app uses for one. */
-@Composable
-fun DialogField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    placeholder: String? = null,
-    error: String? = null,
-    supporting: String? = null,
-    singleLine: Boolean = true,
-    /** Which key the keyboard offers. Ignored where the field takes more than one line. */
-    imeAction: ImeAction = ImeAction.Done,
-    /** A floor, for a field that expects a sentence or two rather than a word. */
-    minHeight: Dp = 0.dp,
-    /** The field's own cap, shown as "used/max" under it. Not enforced here — the caller already
-     * has to hold typing to the limit, since this only draws what that number already is. */
-    maxLength: Int? = null
-) {
-    Column(Modifier.fillMaxWidth()) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(6.dp))
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder = placeholder?.let {
-                { Text(it, style = MaterialTheme.typography.bodyMedium) }
-            },
-            singleLine = singleLine,
-            isError = error != null,
-            shape = RoundedCornerShape(8.dp),
-            // A keyboard that says Done and inserts a newline is lying about its own button, so a
-            // field taking more than one line does not get to name the action.
-            keyboardOptions = KeyboardOptions(
-                imeAction = if (singleLine) imeAction else ImeAction.Default
-            ),
-            modifier = Modifier.fillMaxWidth().heightIn(min = minHeight)
-        )
-        // Ours rather than the field's own supporting slot, which reserves the height whether or
-        // not anything is in it and pushes whatever follows down over nothing.
-        if (error != null || supporting != null || maxLength != null) {
-            Spacer(Modifier.height(6.dp))
-            Row(Modifier.fillMaxWidth()) {
-                Text(
-                    (error ?: supporting).orEmpty(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (error != null) MaterialTheme.colorScheme.error
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f)
-                )
-                if (maxLength != null) {
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "${value.length}/$maxLength",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
     }
 }

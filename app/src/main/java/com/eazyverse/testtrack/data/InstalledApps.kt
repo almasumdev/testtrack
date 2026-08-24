@@ -25,7 +25,6 @@ import androidx.core.graphics.drawable.toBitmap
  * a round either, so it never reaches a cohort to be asked about.
  */
 object InstalledApps {
-
     data class Info(
         val installed: Boolean,
         /** When it was first installed. Survives updates, resets on uninstall — so it *is* the streak. */
@@ -39,12 +38,16 @@ object InstalledApps {
          * around the group would otherwise pass every check here and still be worth nothing.
          */
         val installer: String? = null,
-        val label: String? = null
+        val label: String? = null,
     ) {
         /** Whole days the app has been continuously installed. */
         val streakDays: Int
-            get() = if (!installed) 0
-            else ((System.currentTimeMillis() - firstInstall) / 86_400_000L).toInt()
+            get() =
+                if (!installed) {
+                    0
+                } else {
+                    ((System.currentTimeMillis() - firstInstall) / 86_400_000L).toInt()
+                }
 
         /**
          * The streak, said in a way that isn't nonsense.
@@ -54,13 +57,14 @@ object InstalledApps {
          * the number only matters while it is comparable to the fourteen-day run.
          */
         val streakLabel: String
-            get() = when {
-                !installed -> "Not installed"
-                streakDays >= 365 -> "Installed"
-                streakDays <= 0 -> "Installed today"
-                streakDays == 1 -> "1 day installed"
-                else -> "$streakDays days installed"
-            }
+            get() =
+                when {
+                    !installed -> "Not installed"
+                    streakDays >= 365 -> "Installed"
+                    streakDays <= 0 -> "Installed today"
+                    streakDays == 1 -> "1 day installed"
+                    else -> "$streakDays days installed"
+                }
 
         /**
          * The same streak, short enough to sit on the corner of a 44dp icon.
@@ -71,11 +75,12 @@ object InstalledApps {
          * first day, because a badge reading zero looks like a count that failed.
          */
         val streakBadge: String?
-            get() = when {
-                !installed || streakDays >= 365 -> null
-                streakDays <= 0 -> "new"
-                else -> "${streakDays}d"
-            }
+            get() =
+                when {
+                    !installed || streakDays >= 365 -> null
+                    streakDays <= 0 -> "new"
+                    else -> "${streakDays}d"
+                }
 
         val fromPlay: Boolean get() = installer == "com.android.vending"
     }
@@ -104,9 +109,13 @@ object InstalledApps {
     val revision: Int get() = generation
 
     /** The launcher icon, which is what makes a row recognisable at a glance. */
-    fun icon(context: Context, pkg: String): Drawable? = iconCache.getOrPut(pkg) {
-        runCatching { context.packageManager.getApplicationIcon(pkg) }.getOrNull()
-    }
+    fun icon(
+        context: Context,
+        pkg: String,
+    ): Drawable? =
+        iconCache.getOrPut(pkg) {
+            runCatching { context.packageManager.getApplicationIcon(pkg) }.getOrNull()
+        }
 
     /**
      * The same icon as a bitmap, rasterised once.
@@ -119,26 +128,38 @@ object InstalledApps {
      * Bounded, unlike the drawable cache above it, because these are pixels. Four megabytes is
      * comfortably more icons than a phone has apps under test.
      */
-    fun iconBitmap(context: Context, pkg: String): ImageBitmap? {
+    fun iconBitmap(
+        context: Context,
+        pkg: String,
+    ): ImageBitmap? {
         bitmapCache[pkg]?.let { return it }
         val drawable = icon(context, pkg) ?: return null
-        val bitmap = runCatching {
-            val w = drawable.intrinsicWidth.takeIf { it > 0 } ?: 108
-            val h = drawable.intrinsicHeight.takeIf { it > 0 } ?: 108
-            drawable.toBitmap(w, h).asImageBitmap()
-        }.getOrNull() ?: return null
+        val bitmap =
+            runCatching {
+                val w = drawable.intrinsicWidth.takeIf { it > 0 } ?: 108
+                val h = drawable.intrinsicHeight.takeIf { it > 0 } ?: 108
+                drawable.toBitmap(w, h).asImageBitmap()
+            }.getOrNull() ?: return null
         bitmapCache.put(pkg, bitmap)
         return bitmap
     }
 
-    private val bitmapCache = object : LruCache<String, ImageBitmap>(4 * 1024 * 1024) {
-        override fun sizeOf(key: String, value: ImageBitmap) = value.width * value.height * 4
-    }
+    private val bitmapCache =
+        object : LruCache<String, ImageBitmap>(4 * 1024 * 1024) {
+            override fun sizeOf(
+                key: String,
+                value: ImageBitmap,
+            ) = value.width * value.height * 4
+        }
 
-    fun cachedInfo(context: Context, pkg: String): Info {
+    fun cachedInfo(
+        context: Context,
+        pkg: String,
+    ): Info {
         // Touched so that a composable reaching this through a helper subscribes too, rather than
         // only the call sites that pass `revision` as a key.
-        @Suppress("UNUSED_EXPRESSION") generation
+        @Suppress("UNUSED_EXPRESSION")
+        generation
         return infoCache.getOrPut(pkg) { info(context, pkg) }
     }
 
@@ -171,7 +192,10 @@ object InstalledApps {
         if (moved) generation++
     }
 
-    fun info(context: Context, pkg: String): Info {
+    fun info(
+        context: Context,
+        pkg: String,
+    ): Info {
         val pm = context.packageManager
         return try {
             val p = pm.getPackageInfo(pkg, 0)
@@ -181,13 +205,16 @@ object InstalledApps {
                 // getInstallSourceInfo is API 30. runCatching would swallow the NoSuchMethodError
                 // on anything older and report every install as sourceless, which reads the same
                 // as a sideload — so ask the older question there instead of guessing.
-                installer = runCatching {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-                        pm.getInstallSourceInfo(pkg).installingPackageName
-                    else
-                        @Suppress("DEPRECATION") pm.getInstallerPackageName(pkg)
-                }.getOrNull(),
-                label = runCatching { pm.getApplicationLabel(p.applicationInfo!!).toString() }.getOrNull()
+                installer =
+                    runCatching {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            pm.getInstallSourceInfo(pkg).installingPackageName
+                        } else {
+                            @Suppress("DEPRECATION")
+                            pm.getInstallerPackageName(pkg)
+                        }
+                    }.getOrNull(),
+                label = runCatching { pm.getApplicationLabel(p.applicationInfo!!).toString() }.getOrNull(),
             )
         } catch (_: PackageManager.NameNotFoundException) {
             Info(installed = false)
@@ -195,7 +222,10 @@ object InstalledApps {
     }
 
     /** Opens the app's launcher activity. False if it isn't installed or has no launchable entry. */
-    fun launch(context: Context, pkg: String): Boolean {
+    fun launch(
+        context: Context,
+        pkg: String,
+    ): Boolean {
         val intent = context.packageManager.getLaunchIntentForPackage(pkg) ?: return false
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)

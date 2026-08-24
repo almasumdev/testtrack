@@ -37,29 +37,34 @@ import kotlin.math.absoluteValue
 
 private enum class Art { THREAD, CAPTURE, GRID }
 
-private data class Page(val title: String, val body: String, val art: Art)
-
-private val PAGES = listOf(
-    Page(
-        "No more group chat screenshots",
-        "Google asks for 12 testers who stay opted in for 14 days in a row. Most groups try to " +
-            "track that in a chat thread and lose count by the second day. We keep the record so " +
-            "you don't have to.",
-        Art.THREAD
-    ),
-    Page(
-        "One tap and your day is done",
-        "Open an app from your list. We time how long you spend in it, save the proof to your own " +
-            "Drive, and bring you straight back. Nothing to screenshot, nothing to post.",
-        Art.CAPTURE
-    ),
-    Page(
-        "See who tested, every day",
-        "Your app gets a grid with everyone testing it and all 14 days. If someone quietly stops " +
-            "on day two, you'll know on day two instead of at the end.",
-        Art.GRID
-    )
+private data class Page(
+    val title: String,
+    val body: String,
+    val art: Art,
 )
+
+private val PAGES =
+    listOf(
+        Page(
+            "No more group chat screenshots",
+            "Google asks for 12 testers who stay opted in for 14 days in a row. Most groups try to " +
+                "track that in a chat thread and lose count by the second day. We keep the record so " +
+                "you don't have to.",
+            Art.THREAD,
+        ),
+        Page(
+            "One tap and your day is done",
+            "Open an app from your list. We time how long you spend in it, save the proof to your own " +
+                "Drive, and bring you straight back. Nothing to screenshot, nothing to post.",
+            Art.CAPTURE,
+        ),
+        Page(
+            "See who tested, every day",
+            "Your app gets a grid with everyone testing it and all 14 days. If someone quietly stops " +
+                "on day two, you'll know on day two instead of at the end.",
+            Art.GRID,
+        ),
+    )
 
 @Composable
 fun OnboardingScreen(onDone: () -> Unit) {
@@ -69,16 +74,15 @@ fun OnboardingScreen(onDone: () -> Unit) {
     val skipAlpha by animateFloatAsState(if (last) 0f else 1f, label = "skip")
 
     Column(Modifier.fillMaxSize()) {
-
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 "TestTrack",
                 Modifier.padding(start = 12.dp),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
             Spacer(Modifier.weight(1f))
             TextButton(onClick = onDone, enabled = !last, modifier = Modifier.alpha(skipAlpha)) {
@@ -97,7 +101,7 @@ fun OnboardingScreen(onDone: () -> Unit) {
             Column(
                 Modifier.fillMaxSize().padding(horizontal = 28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
             ) {
                 Illustration(
                     page.art,
@@ -110,7 +114,7 @@ fun OnboardingScreen(onDone: () -> Unit) {
                             scaleY = 0.86f + 0.14f * nearness
                             // Drifts against the swipe, so the art trails the text slightly.
                             translationX = distance * size.width * 0.22f
-                        }
+                        },
                 )
 
                 Spacer(Modifier.height(44.dp))
@@ -120,7 +124,7 @@ fun OnboardingScreen(onDone: () -> Unit) {
                     Modifier.alpha(nearness),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(14.dp))
                 Text(
@@ -129,7 +133,7 @@ fun OnboardingScreen(onDone: () -> Unit) {
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     lineHeight = MaterialTheme.typography.bodyLarge.fontSize * 1.5f,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -138,16 +142,19 @@ fun OnboardingScreen(onDone: () -> Unit) {
 
         Button(
             onClick = {
-                if (last) onDone()
-                else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) }
+                if (last) {
+                    onDone()
+                } else {
+                    scope.launch { pager.animateScrollToPage(pager.currentPage + 1) }
+                }
             },
             shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp).height(56.dp)
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp).height(56.dp),
         ) {
             Text(
                 if (last) "Get started" else "Next",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
             if (!last) {
                 Spacer(Modifier.width(8.dp))
@@ -160,7 +167,10 @@ fun OnboardingScreen(onDone: () -> Unit) {
 
 /** Dots for the pages behind you, a pill for the one you are on. */
 @Composable
-private fun Indicator(pager: PagerState, modifier: Modifier = Modifier) {
+private fun Indicator(
+    pager: PagerState,
+    modifier: Modifier = Modifier,
+) {
     Row(modifier) {
         repeat(PAGES.size) { index ->
             val selected = pager.currentPage == index
@@ -171,9 +181,12 @@ private fun Indicator(pager: PagerState, modifier: Modifier = Modifier) {
                     .size(width = width, height = 8.dp)
                     .clip(CircleShape)
                     .background(
-                        if (selected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.22f)
-                    )
+                        if (selected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.22f)
+                        },
+                    ),
             )
         }
     }
@@ -186,22 +199,26 @@ private fun Indicator(pager: PagerState, modifier: Modifier = Modifier) {
  * scheme they follow the device's dynamic colour for free, in light and dark.
  */
 @Composable
-private fun Illustration(art: Art, modifier: Modifier = Modifier) {
+private fun Illustration(
+    art: Art,
+    modifier: Modifier = Modifier,
+) {
     val accent = MaterialTheme.colorScheme.primary
     val danger = MaterialTheme.colorScheme.error
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val surface = MaterialTheme.colorScheme.surface
-    val halo = listOf(
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-        MaterialTheme.colorScheme.secondary.copy(alpha = 0.05f)
-    )
+    val halo =
+        listOf(
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+            MaterialTheme.colorScheme.secondary.copy(alpha = 0.05f),
+        )
 
     Box(modifier) {
         Box(
             Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(44.dp))
-                .background(Brush.linearGradient(halo))
+                .background(Brush.linearGradient(halo)),
         )
         Canvas(Modifier.fillMaxSize().padding(30.dp)) {
             when (art) {
@@ -214,7 +231,11 @@ private fun Illustration(art: Art, modifier: Modifier = Modifier) {
 }
 
 /** A chat thread: screenshots stacked in bubbles, older ones fading out of reach. */
-private fun DrawScope.drawThread(accent: Color, muted: Color, surface: Color) {
+private fun DrawScope.drawThread(
+    accent: Color,
+    muted: Color,
+    surface: Color,
+) {
     val bubbleH = size.height * 0.21f
     val gap = size.height * 0.075f
     val top = (size.height - (3 * bubbleH + 2 * gap)) / 2f
@@ -232,7 +253,7 @@ private fun DrawScope.drawThread(accent: Color, muted: Color, surface: Color) {
             color = if (newest) accent else muted.copy(alpha = 0.14f + 0.10f * row),
             topLeft = Offset(x, y),
             size = Size(bw, bubbleH),
-            cornerRadius = CornerRadius(bubbleH * 0.38f)
+            cornerRadius = CornerRadius(bubbleH * 0.38f),
         )
 
         val pad = bubbleH * 0.19f
@@ -241,7 +262,7 @@ private fun DrawScope.drawThread(accent: Color, muted: Color, surface: Color) {
             color = ink.copy(alpha = if (newest) 0.90f else 0.30f),
             topLeft = Offset(x + pad, y + pad),
             size = Size(thumb, thumb),
-            cornerRadius = CornerRadius(thumb * 0.22f)
+            cornerRadius = CornerRadius(thumb * 0.22f),
         )
 
         val lineX = x + pad * 2 + thumb
@@ -250,19 +271,22 @@ private fun DrawScope.drawThread(accent: Color, muted: Color, surface: Color) {
             color = ink.copy(alpha = if (newest) 0.85f else 0.28f),
             topLeft = Offset(lineX, y + bubbleH * 0.33f),
             size = Size(lineW, bubbleH * 0.12f),
-            cornerRadius = CornerRadius(bubbleH * 0.06f)
+            cornerRadius = CornerRadius(bubbleH * 0.06f),
         )
         drawRoundRect(
             color = ink.copy(alpha = if (newest) 0.60f else 0.20f),
             topLeft = Offset(lineX, y + bubbleH * 0.55f),
             size = Size(lineW * 0.58f, bubbleH * 0.12f),
-            cornerRadius = CornerRadius(bubbleH * 0.06f)
+            cornerRadius = CornerRadius(bubbleH * 0.06f),
         )
     }
 }
 
 /** A phone with the app open, a countdown running, and the shot framed by capture brackets. */
-private fun DrawScope.drawCapture(accent: Color, muted: Color) {
+private fun DrawScope.drawCapture(
+    accent: Color,
+    muted: Color,
+) {
     val stroke = size.width * 0.020f
     val phoneW = size.width * 0.46f
     val phoneH = size.height * 0.76f
@@ -272,8 +296,11 @@ private fun DrawScope.drawCapture(accent: Color, muted: Color) {
 
     drawRoundRect(accent.copy(alpha = 0.08f), Offset(x, y), Size(phoneW, phoneH), radius)
     drawRoundRect(
-        accent, Offset(x, y), Size(phoneW, phoneH), radius,
-        style = Stroke(stroke * 1.3f)
+        accent,
+        Offset(x, y),
+        Size(phoneW, phoneH),
+        radius,
+        style = Stroke(stroke * 1.3f),
     )
 
     // The app that was opened.
@@ -282,7 +309,7 @@ private fun DrawScope.drawCapture(accent: Color, muted: Color) {
         color = accent,
         topLeft = Offset(x + (phoneW - tile) / 2f, y + phoneH * 0.14f),
         size = Size(tile, tile),
-        cornerRadius = CornerRadius(tile * 0.30f)
+        cornerRadius = CornerRadius(tile * 0.30f),
     )
 
     // The dwell before the shot is taken.
@@ -297,31 +324,32 @@ private fun DrawScope.drawCapture(accent: Color, muted: Color) {
         useCenter = false,
         topLeft = Offset(cx - ring, cy - ring),
         size = Size(ring * 2, ring * 2),
-        style = Stroke(stroke * 1.6f, cap = StrokeCap.Round)
+        style = Stroke(stroke * 1.6f, cap = StrokeCap.Round),
     )
     drawCircle(accent, ring * 0.34f, Offset(cx, cy))
 
     // Framing brackets — the shot being taken around it.
     val arm = size.width * 0.13f
     val inset = size.width * 0.01f
-    val corners = listOf(
-        Triple(Offset(inset, inset), Offset(inset + arm, inset), Offset(inset, inset + arm)),
-        Triple(
-            Offset(size.width - inset, inset),
-            Offset(size.width - inset - arm, inset),
-            Offset(size.width - inset, inset + arm)
-        ),
-        Triple(
-            Offset(inset, size.height - inset),
-            Offset(inset + arm, size.height - inset),
-            Offset(inset, size.height - inset - arm)
-        ),
-        Triple(
-            Offset(size.width - inset, size.height - inset),
-            Offset(size.width - inset - arm, size.height - inset),
-            Offset(size.width - inset, size.height - inset - arm)
+    val corners =
+        listOf(
+            Triple(Offset(inset, inset), Offset(inset + arm, inset), Offset(inset, inset + arm)),
+            Triple(
+                Offset(size.width - inset, inset),
+                Offset(size.width - inset - arm, inset),
+                Offset(size.width - inset, inset + arm),
+            ),
+            Triple(
+                Offset(inset, size.height - inset),
+                Offset(inset + arm, size.height - inset),
+                Offset(inset, size.height - inset - arm),
+            ),
+            Triple(
+                Offset(size.width - inset, size.height - inset),
+                Offset(size.width - inset - arm, size.height - inset),
+                Offset(size.width - inset, size.height - inset - arm),
+            ),
         )
-    )
     corners.forEach { (corner, horizontal, vertical) ->
         drawLine(muted.copy(alpha = 0.45f), corner, horizontal, stroke * 1.4f, StrokeCap.Round)
         drawLine(muted.copy(alpha = 0.45f), corner, vertical, stroke * 1.4f, StrokeCap.Round)
@@ -329,15 +357,20 @@ private fun DrawScope.drawCapture(accent: Color, muted: Color) {
 }
 
 /** The owner's grid: testers down the side, days across, one gap standing out. */
-private fun DrawScope.drawGrid(accent: Color, danger: Color, muted: Color) {
+private fun DrawScope.drawGrid(
+    accent: Color,
+    danger: Color,
+    muted: Color,
+) {
     // '*' posted, '.' missed, ' ' still to come. Mostly kept, with the gaps easy to pick out —
     // which is the point the page is making.
-    val pattern = listOf(
-        "****** ",
-        "***.** ",
-        "****** ",
-        "*****. "
-    )
+    val pattern =
+        listOf(
+            "****** ",
+            "***.** ",
+            "****** ",
+            "*****. ",
+        )
     val cols = pattern[0].length
     val rows = pattern.size
 
@@ -358,7 +391,7 @@ private fun DrawScope.drawGrid(accent: Color, danger: Color, muted: Color) {
             color = muted.copy(alpha = 0.30f),
             topLeft = Offset(gridLeft + c * (cell + gap) + cell * 0.25f, top - cell * 0.9f),
             size = Size(cell * 0.5f, cell * 0.22f),
-            cornerRadius = CornerRadius(cell * 0.11f)
+            cornerRadius = CornerRadius(cell * 0.11f),
         )
     }
 
@@ -369,20 +402,21 @@ private fun DrawScope.drawGrid(accent: Color, danger: Color, muted: Color) {
             color = muted.copy(alpha = 0.28f),
             topLeft = Offset(left, y + cell * 0.28f),
             size = Size(nameW, cell * 0.44f),
-            cornerRadius = CornerRadius(cell * 0.22f)
+            cornerRadius = CornerRadius(cell * 0.22f),
         )
 
         row.forEachIndexed { c, mark ->
-            val color = when (mark) {
-                '*' -> accent
-                '.' -> danger.copy(alpha = 0.85f)
-                else -> muted.copy(alpha = 0.16f)
-            }
+            val color =
+                when (mark) {
+                    '*' -> accent
+                    '.' -> danger.copy(alpha = 0.85f)
+                    else -> muted.copy(alpha = 0.16f)
+                }
             drawRoundRect(
                 color = color,
                 topLeft = Offset(gridLeft + c * (cell + gap), y),
                 size = Size(cell, cell),
-                cornerRadius = CornerRadius(cell * 0.32f)
+                cornerRadius = CornerRadius(cell * 0.32f),
             )
         }
     }

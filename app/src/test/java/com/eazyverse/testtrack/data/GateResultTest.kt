@@ -17,7 +17,6 @@ import org.junit.Test
  * whole gate off and nobody would ever be let in again.
  */
 class GateResultTest {
-
     private val us = "tester@gmail.com"
 
     @Test
@@ -53,7 +52,7 @@ class GateResultTest {
         // Only Google promises dots are decoration. Everywhere else they are part of the name,
         // and folding them there would merge two genuinely different accounts.
         assertTrue(
-            GateResult.Member("first.last@example.com").isAboutSomeoneElse("firstlast@example.com")
+            GateResult.Member("first.last@example.com").isAboutSomeoneElse("firstlast@example.com"),
         )
     }
 

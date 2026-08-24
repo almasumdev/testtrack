@@ -8,7 +8,6 @@ package com.eazyverse.testtrack
  * — see [isConfigured].
  */
 object Config {
-
     /** OAuth *Web* client ID. The membership service checks the ID token's `aud` against it. */
     val WEB_CLIENT_ID: String = BuildConfig.WEB_CLIENT_ID
 

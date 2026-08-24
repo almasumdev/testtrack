@@ -31,7 +31,6 @@ import kotlinx.coroutines.launch
  * ```
  */
 class PushService : FirebaseMessagingService() {
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /**
@@ -60,33 +59,38 @@ class PushService : FirebaseMessagingService() {
         PushRepo.ensureChannel(this)
         if (!PushRepo.granted(this)) return
 
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            data["groupId"]?.let { putExtra(MainActivity.EXTRA_GROUP_ID, it) }
-        }
-        val pending = PendingIntent.getActivity(
-            this,
-            // One slot per group, so a nudge about Group A does not overwrite the intent of a
-            // nudge about Group C that is still on screen.
-            (data["groupId"] ?: "").hashCode(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val intent =
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                data["groupId"]?.let { putExtra(MainActivity.EXTRA_GROUP_ID, it) }
+            }
+        val pending =
+            PendingIntent.getActivity(
+                this,
+                // One slot per group, so a nudge about Group A does not overwrite the intent of a
+                // nudge about Group C that is still on screen.
+                (data["groupId"] ?: "").hashCode(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
 
-        val notification = NotificationCompat.Builder(this, PushRepo.CHANNEL_REMINDERS)
-            .setSmallIcon(R.drawable.ic_stat_name)
-            .setContentTitle(title)
-            .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
-            .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pending)
-            .build()
+        val notification =
+            NotificationCompat
+                .Builder(this, PushRepo.CHANNEL_REMINDERS)
+                .setSmallIcon(R.drawable.ic_stat_name)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(pending)
+                .build()
 
         // Same id per group, so a second reminder about the same cohort replaces the first rather
         // than stacking up over a day of them.
         runCatching {
-            NotificationManagerCompat.from(this)
+            NotificationManagerCompat
+                .from(this)
                 .notify((data["groupId"] ?: "general").hashCode(), notification)
         }
     }

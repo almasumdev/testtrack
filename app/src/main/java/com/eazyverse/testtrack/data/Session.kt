@@ -16,7 +16,6 @@ import androidx.compose.runtime.setValue
  * setter on the JVM.
  */
 object Session {
-
     private lateinit var prefs: SharedPreferences
 
     fun init(context: Context) {
@@ -144,7 +143,9 @@ object Session {
      * it. Signing out and back in is not a reason to be asked again.
      */
     fun signOut() {
-        prefs.edit().clear()
+        prefs
+            .edit()
+            .clear()
             .putBoolean(KEY_ONBOARDED, true)
             .putInt(KEY_UPDATE_PROMPTED, updatePromptedBuild)
             .apply()

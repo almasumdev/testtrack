@@ -12,13 +12,15 @@ package com.eazyverse.testtrack.data
  * proof counts surviving a cold start would be worse than a brief skeleton.
  */
 object Cache {
-
     private val entries = mutableMapOf<String, Any>()
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> get(key: String): T? = entries[key] as? T
 
-    fun put(key: String, value: Any) {
+    fun put(
+        key: String,
+        value: Any,
+    ) {
         entries[key] = value
     }
 
@@ -35,9 +37,13 @@ object Cache {
     }
 
     fun groups(uid: String) = "groups:$uid"
+
     fun pending(uid: String) = "pending:$uid"
+
     fun group(id: String) = "group:$id"
+
     fun appsIn(groupId: String) = "appsIn:$groupId"
+
     /**
      * Every member's own placedAt, by uid — Dashboard's own view of the same cohort. Its own key,
      * not [appsIn]: that one holds a `List<TestApp>` for Group's own use, and the two used to
@@ -46,13 +52,52 @@ object Cache {
      * the next read crashed on a plain cast.
      */
     fun arrivals(groupId: String) = "arrivals:$groupId"
+
     fun app(id: String) = "app:$id"
+
     fun proofs(appId: String) = "proofs:$appId"
+
     fun testers(groupId: String) = "testers:$groupId"
-    fun doneToday(uid: String, groupId: String, day: Int) = "done:$uid:$groupId:$day"
-    fun manualToday(uid: String, groupId: String, day: Int) = "manual:$uid:$groupId:$day"
-    fun reporters(appId: String, day: Int) = "reporters:$appId:$day"
-    fun skips(uid: String, groupId: String) = "skips:$uid:$groupId"
-    fun feedbackToday(uid: String, groupId: String, day: Int) = "feedback:$uid:$groupId:$day"
+
+    /**
+     * Dashboard's own list of members who posted here before leaving the cohort. Its own key for
+     * the same reason [arrivals] has one: a `List<Tester>` shaped like [testers] but scoped to
+     * this one app rather than the whole group, so the two must not collide.
+     */
+    fun departedTesters(appId: String) = "departedTesters:$appId"
+
+    fun doneToday(
+        uid: String,
+        groupId: String,
+        day: Int,
+    ) = "done:$uid:$groupId:$day"
+
+    fun manualToday(
+        uid: String,
+        groupId: String,
+        day: Int,
+    ) = "manual:$uid:$groupId:$day"
+
+    fun reporters(
+        appId: String,
+        day: Int,
+    ) = "reporters:$appId:$day"
+
+    fun skips(
+        uid: String,
+        groupId: String,
+    ) = "skips:$uid:$groupId"
+
+    fun myHistory(
+        uid: String,
+        groupId: String,
+    ) = "myHistory:$uid:$groupId"
+
+    fun feedbackToday(
+        uid: String,
+        groupId: String,
+        day: Int,
+    ) = "feedback:$uid:$groupId:$day"
+
     fun feedbackFor(appId: String) = "feedbackFor:$appId"
 }

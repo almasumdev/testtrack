@@ -35,9 +35,10 @@ import java.util.concurrent.TimeUnit
  * defer under Doze; a reminder that lands within an hour of the evening is a reminder that worked,
  * and one that wakes the phone on a schedule is a battery complaint.
  */
-class ReminderWorker(context: Context, params: WorkerParameters) :
-    CoroutineWorker(context, params) {
-
+class ReminderWorker(
+    context: Context,
+    params: WorkerParameters,
+) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val uid = AuthRepo.uid ?: return Result.success()
         if (!PushRepo.granted(applicationContext)) return Result.success()
@@ -69,9 +70,10 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
                 title = "Your app is out of $group",
                 // Deliberately not asserting which of the three causes it was. See the matching
                 // note in Enforcement.sweep.
-                body = "It's back in the queue. That happens after two days without opening the " +
-                    "other apps, and it also happens when an admin takes an app out or dissolves " +
-                    "a group. Submit it again when you're ready."
+                body =
+                    "It's back in the queue. That happens after two days without opening the " +
+                        "other apps, and it also happens when an admin takes an app out or dissolves " +
+                        "a group. Submit it again when you're ready.",
             )
         }
 
@@ -79,23 +81,30 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
             post(
                 id = ID_DEPARTED + slot(label),
                 title = "Stop testing $label",
-                body = "It has left ${group.ifBlank { "your group" }}. Uninstall it and leave " +
-                    "its test, and don't count it towards your day any more."
+                body =
+                    "It has left ${group.ifBlank { "your group" }}. Uninstall it and leave " +
+                        "its test, and don't count it towards your day any more.",
             )
         }
 
         sweep.standings.forEach { standing ->
             post(
                 id = ID_WARNING + slot(standing.groupId),
-                title = if (standing.finalWarning) "Last chance in ${standing.groupName}"
-                        else "You missed a day in ${standing.groupName}",
-                body = if (standing.finalWarning)
-                    "That's two days without opening ${standing.names}. Open ${standing.it} " +
-                        "today or your app leaves the group."
-                else
-                    "You didn't open ${standing.names} yesterday. Open ${standing.it} today and " +
-                        "nothing comes of it.",
-                groupId = standing.groupId
+                title =
+                    if (standing.finalWarning) {
+                        "Last chance in ${standing.groupName}"
+                    } else {
+                        "You missed a day in ${standing.groupName}"
+                    },
+                body =
+                    if (standing.finalWarning) {
+                        "That's two days without opening ${standing.names}. Open ${standing.it} " +
+                            "today or your app leaves the group."
+                    } else {
+                        "You didn't open ${standing.names} yesterday. Open ${standing.it} today and " +
+                            "nothing comes of it."
+                    },
+                groupId = standing.groupId,
             )
         }
     }
@@ -112,8 +121,10 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
 
         Repo.myGroups(uid).forEach { group ->
             val day = group.dayIndex() ?: return@forEach
-            val others = Repo.appsInGroup(group.id)
-                .filter { it.ownerUid != uid && it.active }
+            val others =
+                Repo
+                    .appsInGroup(group.id)
+                    .filter { it.ownerUid != uid && it.active }
             if (others.isEmpty()) return@forEach
             val done = Repo.myProofsForDay(uid, group.id, day, group.startDate).size
             val left = others.size - done
@@ -125,14 +136,18 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
 
         if (outstanding == 0) return
 
-        val body = if (groups == 1) "Open TestTrack and clear them before the day rolls over."
-                   else "Across $groups groups. Open TestTrack and clear them before the day " +
-                       "rolls over."
+        val body =
+            if (groups == 1) {
+                "Open TestTrack and clear them before the day rolls over."
+            } else {
+                "Across $groups groups. Open TestTrack and clear them before the day " +
+                    "rolls over."
+            }
 
         post(
             id = NOTIFICATION_ID,
             title = "$outstanding app${if (outstanding == 1) "" else "s"} still waiting today",
-            body = body
+            body = body,
         )
     }
 
@@ -140,24 +155,35 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
     // already inside runCatching, which catches Throwable — lint just cannot see through an inline
     // lambda. Declining notifications is a supported state, not an error path.
     @SuppressLint("MissingPermission")
-    private fun post(id: Int, title: String, body: String, groupId: String? = null) {
-        val intent = Intent(applicationContext, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            groupId?.let { putExtra(MainActivity.EXTRA_GROUP_ID, it) }
-        }
-        val pending = PendingIntent.getActivity(
-            applicationContext, id, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+    private fun post(
+        id: Int,
+        title: String,
+        body: String,
+        groupId: String? = null,
+    ) {
+        val intent =
+            Intent(applicationContext, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                groupId?.let { putExtra(MainActivity.EXTRA_GROUP_ID, it) }
+            }
+        val pending =
+            PendingIntent.getActivity(
+                applicationContext,
+                id,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
 
-        val notification = NotificationCompat.Builder(applicationContext, PushRepo.CHANNEL_REMINDERS)
-            .setSmallIcon(R.drawable.ic_stat_name)
-            .setContentTitle(title)
-            .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
-            .setAutoCancel(true)
-            .setContentIntent(pending)
-            .build()
+        val notification =
+            NotificationCompat
+                .Builder(applicationContext, PushRepo.CHANNEL_REMINDERS)
+                .setSmallIcon(R.drawable.ic_stat_name)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+                .setAutoCancel(true)
+                .setContentIntent(pending)
+                .build()
 
         runCatching { NotificationManagerCompat.from(applicationContext).notify(id, notification) }
     }
@@ -191,53 +217,67 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
             body: String,
             groupId: String?,
             storeAppId: String? = null,
-            feedbackAppId: String? = null
+            feedbackAppId: String? = null,
         ) {
-            val intent = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                groupId?.let { putExtra(MainActivity.EXTRA_GROUP_ID, it) }
-            }
-            val pending = PendingIntent.getActivity(
-                context, id, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            val builder = NotificationCompat.Builder(context, PushRepo.CHANNEL_REMINDERS)
-                .setSmallIcon(R.drawable.ic_stat_name)
-                .setContentTitle(title)
-                .setContentText(body)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(body))
-                .setAutoCancel(true)
-                .setContentIntent(pending)
+            val intent =
+                Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    groupId?.let { putExtra(MainActivity.EXTRA_GROUP_ID, it) }
+                }
+            val pending =
+                PendingIntent.getActivity(
+                    context,
+                    id,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+            val builder =
+                NotificationCompat
+                    .Builder(context, PushRepo.CHANNEL_REMINDERS)
+                    .setSmallIcon(R.drawable.ic_stat_name)
+                    .setContentTitle(title)
+                    .setContentText(body)
+                    .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+                    .setAutoCancel(true)
+                    .setContentIntent(pending)
 
             if (storeAppId != null) {
-                val storeIntent = Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse("https://play.google.com/store/apps/details?id=$storeAppId")
-                )
+                val storeIntent =
+                    Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("https://play.google.com/store/apps/details?id=$storeAppId"),
+                    )
                 // A web link rather than a market: intent — this has to resolve even on a phone
                 // without the Play Store app, and https:// falls back to a browser on its own
                 // where market:// would just silently fail with nothing to hand the intent to.
-                val storePending = PendingIntent.getActivity(
-                    // XORed rather than reusing id, so the action's own PendingIntent cannot
-                    // collide with the content intent above and get treated as the same one.
-                    context, id xor 0x5A5A5A5A, storeIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
+                val storePending =
+                    PendingIntent.getActivity(
+                        // XORed rather than reusing id, so the action's own PendingIntent cannot
+                        // collide with the content intent above and get treated as the same one.
+                        context,
+                        id xor 0x5A5A5A5A,
+                        storeIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    )
                 builder.addAction(0, "Open in Play Store", storePending)
             }
 
             if (feedbackAppId != null && groupId != null) {
-                val feedbackIntent = Intent(context, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                    putExtra(MainActivity.EXTRA_GROUP_ID, groupId)
-                    putExtra(MainActivity.EXTRA_FEEDBACK_APP_ID, feedbackAppId)
-                }
-                val feedbackPending = PendingIntent.getActivity(
-                    // A third, differently masked request code — distinct from both the content
-                    // intent's own id and the store action's above, so all three can coexist.
-                    context, id xor 0x3C3C3C3C, feedbackIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
+                val feedbackIntent =
+                    Intent(context, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                        putExtra(MainActivity.EXTRA_GROUP_ID, groupId)
+                        putExtra(MainActivity.EXTRA_FEEDBACK_APP_ID, feedbackAppId)
+                    }
+                val feedbackPending =
+                    PendingIntent.getActivity(
+                        // A third, differently masked request code — distinct from both the content
+                        // intent's own id and the store action's above, so all three can coexist.
+                        context,
+                        id xor 0x3C3C3C3C,
+                        feedbackIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    )
                 builder.addAction(0, "Give feedback", feedbackPending)
             }
 
@@ -252,16 +292,18 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
          * away each time the app is opened.
          */
         fun schedule(context: Context) {
-            val work = PeriodicWorkRequestBuilder<ReminderWorker>(6, TimeUnit.HOURS)
-                .setInitialDelay(untilEvening(), TimeUnit.MILLISECONDS)
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .build()
-                )
-                .build()
+            val work =
+                PeriodicWorkRequestBuilder<ReminderWorker>(6, TimeUnit.HOURS)
+                    .setInitialDelay(untilEvening(), TimeUnit.MILLISECONDS)
+                    .setConstraints(
+                        Constraints
+                            .Builder()
+                            .setRequiredNetworkType(NetworkType.CONNECTED)
+                            .build(),
+                    ).build()
 
-            WorkManager.getInstance(context)
+            WorkManager
+                .getInstance(context)
                 .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, work)
         }
 
@@ -277,11 +319,12 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
          */
         private fun untilEvening(): Long {
             val now = Calendar.getInstance()
-            val target = (now.clone() as Calendar).apply {
-                set(Calendar.HOUR_OF_DAY, 19)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-            }
+            val target =
+                (now.clone() as Calendar).apply {
+                    set(Calendar.HOUR_OF_DAY, 19)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                }
             if (target.before(now)) return 0L
             return target.timeInMillis - now.timeInMillis
         }

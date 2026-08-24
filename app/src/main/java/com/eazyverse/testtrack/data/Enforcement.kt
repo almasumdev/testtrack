@@ -26,7 +26,6 @@ import android.util.Log
  * failure to go, since the run is already over in that case.
  */
 object Enforcement {
-
     /**
      * Where this tester stands in one cohort, when it is somewhere worth telling them about.
      *
@@ -40,7 +39,7 @@ object Enforcement {
         /** Labels of the apps left unopened. Named, because "you missed three" invites a guess. */
         val missed: List<String>,
         /** They also missed the day before. One more and the group loses them. */
-        val finalWarning: Boolean
+        val finalWarning: Boolean,
     ) {
         /** The apps, named. "You missed three" only invites the question of which three. */
         val names: String get() = missed.joinToString(", ")
@@ -56,13 +55,16 @@ object Enforcement {
      * write that happens on somebody else's phone, and there is nothing to send a message with —
      * so each device works out for itself what changed while it was away.
      */
-    data class Departed(val groupName: String, val label: String)
+    data class Departed(
+        val groupName: String,
+        val label: String,
+    )
 
     data class Sweep(
         val standings: List<Standing> = emptyList(),
         val departed: List<Departed> = emptyList(),
         /** This tester's own app was removed from a cohort. Their name for the group. */
-        val evictedFrom: List<String> = emptyList()
+        val evictedFrom: List<String> = emptyList(),
     )
 
     private const val TAG = "Enforcement"
@@ -90,24 +92,38 @@ object Enforcement {
      * channel that any of those quietly disposes of. So the same news is also parked here and
      * shown on the home screen until it is dismissed.
      */
-    data class Notice(val id: String, val title: String, val body: String)
+    data class Notice(
+        val id: String,
+        val title: String,
+        val body: String,
+    )
 
     /** Everything raised but not yet acknowledged, oldest first. */
     fun notices(context: Context): List<Notice> =
-        prefs(context).getStringSet(KEY_NOTICES, emptySet()).orEmpty()
+        prefs(context)
+            .getStringSet(KEY_NOTICES, emptySet())
+            .orEmpty()
             .mapNotNull { line ->
                 val parts = line.split(SEP, limit = 3)
                 if (parts.size == 3) Notice(parts[0], parts[1], parts[2]) else null
-            }
-            .sortedBy { it.id }
+            }.sortedBy { it.id }
 
-    fun dismiss(context: Context, id: String) {
-        val kept = prefs(context).getStringSet(KEY_NOTICES, emptySet()).orEmpty()
-            .filterNot { it.startsWith("$id$SEP") }
+    fun dismiss(
+        context: Context,
+        id: String,
+    ) {
+        val kept =
+            prefs(context)
+                .getStringSet(KEY_NOTICES, emptySet())
+                .orEmpty()
+                .filterNot { it.startsWith("$id$SEP") }
         prefs(context).edit().putStringSet(KEY_NOTICES, kept.toSet()).apply()
     }
 
-    private fun standingId(groupId: String, missedDay: Int) = "$groupId|$missedDay"
+    private fun standingId(
+        groupId: String,
+        missedDay: Int,
+    ) = "$groupId|$missedDay"
 
     /**
      * Closed by the tester, and gone until there is something new to say.
@@ -115,7 +131,10 @@ object Enforcement {
      * Keyed on the group and the missed day it's about, not just the group: a warning for day 3
      * closed today must not swallow day 4's, whether that one turns out milder or the final one.
      */
-    fun dismissStanding(context: Context, standing: Standing) {
+    fun dismissStanding(
+        context: Context,
+        standing: Standing,
+    ) {
         val id = standingId(standing.groupId, standing.missedDay)
         val kept = prefs(context).getStringSet(KEY_DISMISSED, emptySet()).orEmpty() + id
         prefs(context).edit().putStringSet(KEY_DISMISSED, kept).apply()
@@ -128,7 +147,10 @@ object Enforcement {
      * both sweep, and a tester who opens the app during the evening pass should not be told the
      * same thing twice over.
      */
-    private fun remember(context: Context, notices: List<Notice>) {
+    private fun remember(
+        context: Context,
+        notices: List<Notice>,
+    ) {
         if (notices.isEmpty()) return
         val existing = prefs(context).getStringSet(KEY_NOTICES, emptySet()).orEmpty()
         val byId = existing.associateBy { it.substringBefore(SEP) }.toMutableMap()
@@ -136,8 +158,7 @@ object Enforcement {
         prefs(context).edit().putStringSet(KEY_NOTICES, byId.values.toSet()).apply()
     }
 
-    private fun prefs(context: Context) =
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     /**
      * Notes that an event has already told this tester why a cohort disappeared.
@@ -146,13 +167,15 @@ object Enforcement {
      * drain goes first, so the marker is always there before the sweep looks — see [ReminderWorker]
      * and the home screen, which both keep that order deliberately.
      */
-    fun markExplained(context: Context, groupId: String) {
+    fun markExplained(
+        context: Context,
+        groupId: String,
+    ) {
         val held = prefs(context).getStringSet(KEY_EXPLAINED, emptySet()).orEmpty()
         prefs(context).edit().putStringSet(KEY_EXPLAINED, held + groupId).apply()
     }
 
-    private fun explainedGroups(context: Context): Set<String> =
-        prefs(context).getStringSet(KEY_EXPLAINED, emptySet()).orEmpty()
+    private fun explainedGroups(context: Context): Set<String> = prefs(context).getStringSet(KEY_EXPLAINED, emptySet()).orEmpty()
 
     /** Cleared once used. A marker outliving its sweep would silence a later, unrelated removal. */
     private fun clearExplained(context: Context) {
@@ -171,97 +194,105 @@ object Enforcement {
      * enforcement pass that could take the home screen down with it would be a poor trade for a
      * feature nobody is waiting on.
      */
-    suspend fun sweep(context: Context, uid: String): Sweep = runCatching {
-        val groups = Repo.myGroups(uid)
-        val standings = mutableListOf<Standing>()
-        val departed = mutableListOf<Departed>()
+    suspend fun sweep(
+        context: Context,
+        uid: String,
+    ): Sweep =
+        runCatching {
+            val groups = Repo.myGroups(uid)
+            val standings = mutableListOf<Standing>()
+            val departed = mutableListOf<Departed>()
 
-        val seen = lastSeen(context)
-        val now = mutableMapOf<String, SeenGroup>()
+            val seen = lastSeen(context)
+            val now = mutableMapOf<String, SeenGroup>()
 
-        for (group in groups) {
-            val apps = Repo.appsInGroup(group.id)
-            now[group.id] = SeenGroup(group.name, apps.associate { it.id to it.label })
+            for (group in groups) {
+                val apps = Repo.appsInGroup(group.id)
+                now[group.id] = SeenGroup(group.name, apps.associate { it.id to it.label })
 
-            // Anything this device knew about and can no longer find has been taken out from under
-            // it, by an admin or by another member's sweep.
-            seen[group.id]?.apps.orEmpty().forEach { (id, label) ->
-                if (apps.none { it.id == id }) departed += Departed(group.name, label)
+                // Anything this device knew about and can no longer find has been taken out from under
+                // it, by an admin or by another member's sweep.
+                seen[group.id]?.apps.orEmpty().forEach { (id, label) ->
+                    if (apps.none { it.id == id }) departed += Departed(group.name, label)
+                }
+
+                val day = group.dayIndex() ?: continue
+                val mine = apps.firstOrNull { it.ownerUid == uid }
+                val others = apps.filter { it.ownerUid != uid && it.active }
+
+                standingFor(uid, group, day, others, mine)?.let { standings += it }
+
+                // Nothing is enforced against an app that is already out of testing.
+                //
+                // Not leniency, arithmetic. Everyone was told to uninstall it, so nobody has been
+                // reporting on it, so every day since counts as missed and the very next sweep would
+                // remove it again for the absence its own removal caused. The days are forgiven
+                // because they were never asked for; the grid still shows them empty, which is the
+                // truth and is the admin's cue that something needs sorting out.
+                if (mine != null && !mine.removed) enforceOn(uid, group, day, mine, apps)
             }
 
-            val day = group.dayIndex() ?: continue
-            val mine = apps.firstOrNull { it.ownerUid == uid }
-            val others = apps.filter { it.ownerUid != uid && it.active }
-
-            standingFor(uid, group, day, others, mine)?.let { standings += it }
-
-            // Nothing is enforced against an app that is already out of testing.
+            // A cohort that has vanished from under this account is one it is no longer a member of,
+            // which is what being removed looks like from the inside.
             //
-            // Not leniency, arithmetic. Everyone was told to uninstall it, so nobody has been
-            // reporting on it, so every day since counts as missed and the very next sweep would
-            // remove it again for the absence its own removal caused. The days are forgiven
-            // because they were never asked for; the grid still shows them empty, which is the
-            // truth and is the admin's cue that something needs sorting out.
-            if (mine != null && !mine.removed) enforceOn(uid, group, day, mine, apps)
+            // Skipping any that an event has already accounted for. A removal writes one, and it is
+            // the better of the two messages because it knows the cause — this path cannot tell a
+            // removal from an admin dissolving the group, and saying both would be saying it twice.
+            val explained = explainedGroups(context)
+            val evictedFrom =
+                seen.keys
+                    .filter { id -> groups.none { it.id == id } && id !in explained }
+                    .mapNotNull { seen[it]?.name }
+            clearExplained(context)
+
+            saveSeen(context, now)
+
+            // Parked for the home screen as well as raised as notifications. Both kinds here are
+            // things that happened to the tester rather than reminders for them, and neither should
+            // depend on a notification having been seen.
+            remember(
+                context,
+                evictedFrom.map {
+                    Notice(
+                        id = "evicted:$it",
+                        title = "Your app is out of $it",
+                        // Both causes named, because this device cannot tell them apart. All it knows
+                        // is that a cohort it was in has gone; whether that was two missed days, an
+                        // admin unplacing the app, or the whole group being dissolved happened
+                        // somewhere else. Asserting the first would be a guess presented as a fact.
+                        body =
+                            "It's back in the queue. That happens after two days without opening " +
+                                "the other apps, and it also happens when an admin takes an app out or " +
+                                "dissolves a group. Submit it again when you're ready.",
+                    )
+                } +
+                    departed.map { (group, label) ->
+                        Notice(
+                            id = "departed:$group:$label",
+                            title = "Stop testing $label",
+                            body =
+                                "It has left ${group.ifBlank { "your group" }}. Uninstall it and " +
+                                    "leave its test, and don't count it towards your day any more.",
+                        )
+                    },
+            )
+
+            val dismissed = prefs(context).getStringSet(KEY_DISMISSED, emptySet()).orEmpty()
+            val visible = standings.filterNot { standingId(it.groupId, it.missedDay) in dismissed }
+
+            Log.i(
+                TAG,
+                "swept ${groups.size} group(s): ${standings.size} standing(s), " +
+                    "${departed.size} departed, ${evictedFrom.size} eviction(s) of this account",
+            )
+            Sweep(visible, departed, evictedFrom)
+        }.getOrElse {
+            // Swallowed on purpose — this runs beside a screen refresh that has its own error
+            // handling — but not silently. A sweep that stops finding anything is indistinguishable
+            // from a cohort with nothing to find, and that is the one failure nobody would notice.
+            Log.w(TAG, "sweep failed", it)
+            Sweep()
         }
-
-        // A cohort that has vanished from under this account is one it is no longer a member of,
-        // which is what being removed looks like from the inside.
-        //
-        // Skipping any that an event has already accounted for. A removal writes one, and it is
-        // the better of the two messages because it knows the cause — this path cannot tell a
-        // removal from an admin dissolving the group, and saying both would be saying it twice.
-        val explained = explainedGroups(context)
-        val evictedFrom = seen.keys
-            .filter { id -> groups.none { it.id == id } && id !in explained }
-            .mapNotNull { seen[it]?.name }
-        clearExplained(context)
-
-        saveSeen(context, now)
-
-        // Parked for the home screen as well as raised as notifications. Both kinds here are
-        // things that happened to the tester rather than reminders for them, and neither should
-        // depend on a notification having been seen.
-        remember(
-            context,
-            evictedFrom.map {
-                Notice(
-                    id = "evicted:$it",
-                    title = "Your app is out of $it",
-                    // Both causes named, because this device cannot tell them apart. All it knows
-                    // is that a cohort it was in has gone; whether that was two missed days, an
-                    // admin unplacing the app, or the whole group being dissolved happened
-                    // somewhere else. Asserting the first would be a guess presented as a fact.
-                    body = "It's back in the queue. That happens after two days without opening " +
-                        "the other apps, and it also happens when an admin takes an app out or " +
-                        "dissolves a group. Submit it again when you're ready."
-                )
-            } + departed.map { (group, label) ->
-                Notice(
-                    id = "departed:$group:$label",
-                    title = "Stop testing $label",
-                    body = "It has left ${group.ifBlank { "your group" }}. Uninstall it and " +
-                        "leave its test, and don't count it towards your day any more."
-                )
-            }
-        )
-
-        val dismissed = prefs(context).getStringSet(KEY_DISMISSED, emptySet()).orEmpty()
-        val visible = standings.filterNot { standingId(it.groupId, it.missedDay) in dismissed }
-
-        Log.i(
-            TAG,
-            "swept ${groups.size} group(s): ${standings.size} standing(s), " +
-                "${departed.size} departed, ${evictedFrom.size} eviction(s) of this account"
-        )
-        Sweep(visible, departed, evictedFrom)
-    }.getOrElse {
-        // Swallowed on purpose — this runs beside a screen refresh that has its own error
-        // handling — but not silently. A sweep that stops finding anything is indistinguishable
-        // from a cohort with nothing to find, and that is the one failure nobody would notice.
-        Log.w(TAG, "sweep failed", it)
-        Sweep()
-    }
 
     /**
      * What to tell this tester about their own last completed day.
@@ -274,18 +305,19 @@ object Enforcement {
         group: TestGroup,
         day: Int,
         others: List<TestApp>,
-        mine: TestApp?
+        mine: TestApp?,
     ): Standing? {
         if (others.isEmpty()) return null
 
-        val days = Compliance.judgedDays(
-            dayIndex = day,
-            startDate = group.startDate,
-            testerPlacedAt = mine?.placedAt ?: 0L,
-            appPlacedAt = 0L,
-            count = Compliance.MISSES_TO_REMOVE,
-            reinstatedAt = mine?.reinstatedAt ?: 0L
-        )
+        val days =
+            Compliance.judgedDays(
+                dayIndex = day,
+                startDate = group.startDate,
+                testerPlacedAt = mine?.placedAt ?: 0L,
+                appPlacedAt = 0L,
+                count = Compliance.MISSES_TO_REMOVE,
+                reinstatedAt = mine?.reinstatedAt ?: 0L,
+            )
         val last = days.firstOrNull() ?: return null
 
         val cleared = Repo.myProofsForDay(uid, group.id, last, group.startDate, requireBar = false)
@@ -294,22 +326,26 @@ object Enforcement {
         // nobody could get into has no business inside that pair for any of them. An app this
         // caller has personally skipped is excused the same way — their own choice, not a fact
         // about the app, so it only ever removes it from their own [missed], nobody else's.
-        val missed = others.filter { it.id !in cleared && it.reportedAt <= 0L }
-            .filterNot { Repo.hasSkipped(it.id, uid) }
+        val missed =
+            others
+                .filter { it.id !in cleared && it.reportedAt <= 0L }
+                .filterNot { Repo.hasSkipped(it.id, uid) }
         if (missed.isEmpty()) return null
 
         // A second consecutive gap is not a warning any more, it is the last one they get.
         val previous = days.getOrNull(1)
-        val alsoMissedBefore = previous != null &&
-            Repo.myProofsForDay(uid, group.id, previous, group.startDate, requireBar = false)
-                .let { before -> missed.any { it.id !in before } }
+        val alsoMissedBefore =
+            previous != null &&
+                Repo
+                    .myProofsForDay(uid, group.id, previous, group.startDate, requireBar = false)
+                    .let { before -> missed.any { it.id !in before } }
 
         return Standing(
             groupId = group.id,
             groupName = group.name,
             missedDay = last,
             missed = missed.map { it.label },
-            finalWarning = alsoMissedBefore
+            finalWarning = alsoMissedBefore,
         )
     }
 
@@ -332,7 +368,7 @@ object Enforcement {
         group: TestGroup,
         day: Int,
         mine: TestApp,
-        apps: List<TestApp>
+        apps: List<TestApp>,
     ) {
         // Without a placement date there is no way to tell a member who joined late from one who
         // has skipped every day since the start, and the rules will refuse the write anyway.
@@ -343,9 +379,11 @@ object Enforcement {
         // known about, which a report filed today has to cover the very check running today.
         if (mine.reportedAt > 0L) return
 
-        val attended = Repo.proofsForApp(mine.id, uid)
-            .map { it.testerUid to it.day }
-            .toSet()
+        val attended =
+            Repo
+                .proofsForApp(mine.id, uid)
+                .map { it.testerUid to it.day }
+                .toSet()
 
         for (app in apps) {
             if (app.ownerUid == uid || app.placedAt <= 0L) continue
@@ -364,15 +402,16 @@ object Enforcement {
             // truancy, so it never reaches the flag check below at all.
             if (Repo.hasSkipped(mine.id, app.ownerUid)) continue
 
-            val days = Compliance.judgedDays(
-                dayIndex = day,
-                startDate = group.startDate,
-                testerPlacedAt = app.placedAt,
-                appPlacedAt = mine.placedAt,
-                count = Compliance.MISSES_TO_REMOVE,
-                graceDays = group.graceDays,
-                reinstatedAt = app.reinstatedAt
-            )
+            val days =
+                Compliance.judgedDays(
+                    dayIndex = day,
+                    startDate = group.startDate,
+                    testerPlacedAt = app.placedAt,
+                    appPlacedAt = mine.placedAt,
+                    count = Compliance.MISSES_TO_REMOVE,
+                    graceDays = group.graceDays,
+                    reinstatedAt = app.reinstatedAt,
+                )
             // Only the days in question. Logging the whole attendance set put several thousand
             // characters and every member's uid into logcat, once per member per sweep.
             val covered = days.filter { (app.ownerUid to it) in attended }
@@ -394,7 +433,10 @@ object Enforcement {
 
     // ---- what this device last saw --------------------------------------------------------
 
-    private data class SeenGroup(val name: String, val apps: Map<String, String>)
+    private data class SeenGroup(
+        val name: String,
+        val apps: Map<String, String>,
+    )
 
     /**
      * What each cohort held, as of the last sweep.
@@ -408,32 +450,43 @@ object Enforcement {
      * which is where a removal happens.
      */
     private fun lastSeen(context: Context): Map<String, SeenGroup> =
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        context.applicationContext
+            .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getStringSet(KEY_SEEN, emptySet())
             .orEmpty()
             .mapNotNull { line ->
                 val parts = line.split('|', limit = 4)
                 if (parts.size == 4) parts[0] to Triple(parts[1], parts[2], parts[3]) else null
-            }
-            .groupBy({ it.first }, { it.second })
+            }.groupBy({ it.first }, { it.second })
             .mapValues { (_, rows) ->
                 SeenGroup(
                     name = rows.first().first,
-                    apps = rows.associate { it.second to it.third }
+                    apps = rows.associate { it.second to it.third },
                 )
             }
 
-    private fun saveSeen(context: Context, state: Map<String, SeenGroup>) {
-        val lines = state.flatMap { (groupId, group) ->
-            group.apps.map { (id, label) -> "$groupId|${group.name}|$id|$label" }
-        }.toSet()
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit().putStringSet(KEY_SEEN, lines).apply()
+    private fun saveSeen(
+        context: Context,
+        state: Map<String, SeenGroup>,
+    ) {
+        val lines =
+            state
+                .flatMap { (groupId, group) ->
+                    group.apps.map { (id, label) -> "$groupId|${group.name}|$id|$label" }
+                }.toSet()
+        context.applicationContext
+            .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putStringSet(KEY_SEEN, lines)
+            .apply()
     }
 
     /** Signing out must not leave the next account inheriting this one's view of the cohort. */
     fun clear(context: Context) {
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit().clear().apply()
+        context.applicationContext
+            .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .apply()
     }
 }

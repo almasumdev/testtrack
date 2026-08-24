@@ -19,29 +19,30 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.eazyverse.testtrack.data.AppUpdateService
 import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.CaptureService
 import com.eazyverse.testtrack.data.Session
-import com.eazyverse.testtrack.data.AppUpdateService
 import com.eazyverse.testtrack.data.UpdateTier
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
+import com.eazyverse.testtrack.data.leftRound
 import com.eazyverse.testtrack.ui.*
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
+import kotlinx.coroutines.launch
 
 object Routes {
     const val ONBOARDING = "onboarding"
@@ -60,16 +61,23 @@ object Routes {
     // app carries that app's id along, so the group screen underneath can open straight to its
     // feedback prompt instead of leaving the tester to find the right row themselves.
     const val GROUP = "group/{groupId}?name={name}&feedbackFor={feedbackFor}"
-    fun group(groupId: String, name: String = "", feedbackFor: String = "") =
-        "group/$groupId?name=${Uri.encode(name)}&feedbackFor=${Uri.encode(feedbackFor)}"
+
+    fun group(
+        groupId: String,
+        name: String = "",
+        feedbackFor: String = "",
+    ) = "group/$groupId?name=${Uri.encode(name)}&feedbackFor=${Uri.encode(feedbackFor)}"
 
     /** Your own app's 14-day picture. */
     const val DASHBOARD = "dashboard/{appId}?name={name}"
-    fun dashboard(appId: String, name: String = "") = "dashboard/$appId?name=${Uri.encode(name)}"
+
+    fun dashboard(
+        appId: String,
+        name: String = "",
+    ) = "dashboard/$appId?name=${Uri.encode(name)}"
 }
 
 class MainActivity : ComponentActivity() {
-
     /** Set on the launch intent when a reminder is tapped. */
     private val openGroup = mutableStateOf<String?>(null)
 
@@ -116,7 +124,7 @@ class MainActivity : ComponentActivity() {
                                 canDownloadInApp = AppUpdateService.canDownloadInApp,
                                 onUpdate = { AppUpdateService.startFlexibleUpdate(updateLauncher) },
                                 onRestart = { AppUpdateService.completeUpdate() },
-                                onOpenStore = { openPlayStoreListing() }
+                                onOpenStore = { openPlayStoreListing() },
                             )
                         }
                     }
@@ -160,7 +168,7 @@ class MainActivity : ComponentActivity() {
         runCatching {
             startActivity(
                 Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
         }
     }
@@ -203,7 +211,7 @@ private fun NotConfigured() {
                 "keys and rebuild.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.error
+            color = MaterialTheme.colorScheme.error,
         )
     }
 }
@@ -211,7 +219,7 @@ private fun NotConfigured() {
 @Composable
 fun AppNav(
     openGroup: MutableState<String?> = remember { mutableStateOf(null) },
-    openFeedbackFor: MutableState<String?> = remember { mutableStateOf(null) }
+    openFeedbackFor: MutableState<String?> = remember { mutableStateOf(null) },
 ) {
     val nav = rememberNavController()
 
@@ -226,19 +234,20 @@ fun AppNav(
      * Session was loaded synchronously in onCreate, so the right screen shows immediately rather
      * than flashing onboarding and then jumping.
      */
-    val start = remember {
-        when {
-            !Session.onboardingDone -> Routes.ONBOARDING
-            // Both halves must agree. The flags live in SharedPreferences and the Firebase
-            // session does not, so the two can disagree: cleared credentials, a session expired
-            // while the app was shut, a restore that carried the flags and not the account.
-            // Trust the flags alone and the app sails past sign-in into a string of
-            // PERMISSION_DENIEDs.
-            !Session.signedIn || AuthRepo.uid == null -> Routes.AUTH
-            !Session.setupComplete -> Routes.SETUP
-            else -> Routes.HOME
+    val start =
+        remember {
+            when {
+                !Session.onboardingDone -> Routes.ONBOARDING
+                // Both halves must agree. The flags live in SharedPreferences and the Firebase
+                // session does not, so the two can disagree: cleared credentials, a session expired
+                // while the app was shut, a restore that carried the flags and not the account.
+                // Trust the flags alone and the app sails past sign-in into a string of
+                // PERMISSION_DENIEDs.
+                !Session.signedIn || AuthRepo.uid == null -> Routes.AUTH
+                !Session.setupComplete -> Routes.SETUP
+                else -> Routes.HOME
+            }
         }
-    }
 
     /**
      * A tapped reminder, honoured once.
@@ -259,7 +268,6 @@ fun AppNav(
     }
 
     NavHost(navController = nav, startDestination = start) {
-
         composable(Routes.ONBOARDING) {
             OnboardingScreen(onDone = {
                 Session.updateOnboardingDone()
@@ -274,7 +282,7 @@ fun AppNav(
                     // checklist again. Every step but the first is derived from the account or
                     // from Settings, so by the time we are here the answer is already known.
                     nav.replace(if (Session.setupComplete) Routes.HOME else Routes.SETUP)
-                }
+                },
             )
         }
 
@@ -289,7 +297,7 @@ fun AppNav(
                     AuthRepo.signOut()
                     Session.signOut()
                     nav.replace(Routes.AUTH)
-                }
+                },
             )
         }
 
@@ -301,7 +309,7 @@ fun AppNav(
                 // usage access from Settings, and both leave a working install that quietly cannot
                 // report. Setup is where those are repaired, so it has to stay reachable.
                 onOpenSetup = { nav.push(Routes.SETUP) },
-                onOpenProfile = { nav.push(Routes.PROFILE) }
+                onOpenProfile = { nav.push(Routes.PROFILE) },
             )
         }
 
@@ -315,45 +323,56 @@ fun AppNav(
                     AuthRepo.signOut()
                     Session.signOut()
                     nav.replace(Routes.AUTH)
-                }
+                },
             )
         }
 
         composable(Routes.SUBMIT) {
             SubmitScreen(
                 onDone = { nav.popBackStack() },
-                onBack = { nav.popBackStack() }
+                onBack = { nav.popBackStack() },
             )
         }
 
         composable(
             Routes.GROUP,
-            arguments = listOf(
-                navArgument("groupId") { type = NavType.StringType },
-                navArgument("name") { type = NavType.StringType; defaultValue = "" },
-                navArgument("feedbackFor") { type = NavType.StringType; defaultValue = "" }
-            )
+            arguments =
+                listOf(
+                    navArgument("groupId") { type = NavType.StringType },
+                    navArgument("name") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument("feedbackFor") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                ),
         ) { entry ->
             GroupScreen(
                 groupId = entry.arguments?.getString("groupId").orEmpty(),
                 groupName = entry.arguments?.getString("name").orEmpty(),
                 feedbackForAppId = entry.arguments?.getString("feedbackFor").orEmpty(),
                 onOpenDashboard = { appId, name -> nav.push(Routes.dashboard(appId, name)) },
-                onBack = { nav.popBackStack() }
+                onBack = { nav.popBackStack() },
             )
         }
 
         composable(
             Routes.DASHBOARD,
-            arguments = listOf(
-                navArgument("appId") { type = NavType.StringType },
-                navArgument("name") { type = NavType.StringType; defaultValue = "" }
-            )
+            arguments =
+                listOf(
+                    navArgument("appId") { type = NavType.StringType },
+                    navArgument("name") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                ),
         ) { entry ->
             DashboardScreen(
                 appId = entry.arguments?.getString("appId").orEmpty(),
                 appName = entry.arguments?.getString("name").orEmpty(),
-                onBack = { nav.popBackStack() }
+                onBack = { nav.popBackStack() },
             )
         }
     }

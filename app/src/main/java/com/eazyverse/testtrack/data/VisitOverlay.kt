@@ -48,8 +48,10 @@ import kotlin.math.abs
  * flicker on somebody else's app and a race with the capture, to remove something that gives the
  * picture a timestamp.
  */
-class VisitOverlay(private val context: Context, private val handler: Handler) {
-
+class VisitOverlay(
+    private val context: Context,
+    private val handler: Handler,
+) {
     private val windows = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private var bubble: Bubble? = null
     private var ticker: Runnable? = null
@@ -79,17 +81,23 @@ class VisitOverlay(private val context: Context, private val handler: Handler) {
      * what decides whether the capsule grows a second button at all.
      */
     @android.annotation.SuppressLint("ClickableViewAccessibility")
-    fun show(millis: Long, copyText: String?, onTap: () -> Unit) {
+    fun show(
+        millis: Long,
+        copyText: String?,
+        onTap: () -> Unit,
+    ) {
         if (!allowed) return
         hide()
 
         val metrics = context.resources.displayMetrics
         val density = metrics.density
+
         fun dp(value: Int) = (value * density).toInt()
 
-        val view = Bubble(context, density, copyText?.takeIf { it.isNotBlank() }).apply {
-            mode(Mode.PAUSE)
-        }
+        val view =
+            Bubble(context, density, copyText?.takeIf { it.isNotBlank() }).apply {
+                mode(Mode.PAUSE)
+            }
         bubble = view
 
         val type =
@@ -100,26 +108,29 @@ class VisitOverlay(private val context: Context, private val handler: Handler) {
                 WindowManager.LayoutParams.TYPE_PHONE
             }
 
-        val lp = WindowManager.LayoutParams(
-            view.widthPx, view.heightPx,
-            type,
-            // Not focusable, so the app underneath keeps the keyboard and every touch that is not
-            // on the capsule itself. NOT_TOUCH_MODAL is what lets those through.
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            // START rather than END even though the default sits on the right: free-drag tracks
-            // x/y as plain left-origin offsets (see the touch listener below), and mixing that
-            // with END-relative coordinates would have the capsule drift the wrong way the first
-            // time it was dragged.
-            gravity = Gravity.TOP or Gravity.START
-            x = lastX ?: (metrics.widthPixels - view.widthPx - dp(16))
-            // A starting point only, chosen for a one-handed hold: not the top, not the very
-            // bottom, roughly where a thumb rests mid-grip. A drag remembers where it lands (see
-            // [lastX]/[lastY]) so this default is only ever seen once per session.
-            y = lastY ?: (metrics.heightPixels * 0.62f).toInt()
-        }
+        val lp =
+            WindowManager
+                .LayoutParams(
+                    view.widthPx,
+                    view.heightPx,
+                    type,
+                    // Not focusable, so the app underneath keeps the keyboard and every touch that is not
+                    // on the capsule itself. NOT_TOUCH_MODAL is what lets those through.
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                    PixelFormat.TRANSLUCENT,
+                ).apply {
+                    // START rather than END even though the default sits on the right: free-drag tracks
+                    // x/y as plain left-origin offsets (see the touch listener below), and mixing that
+                    // with END-relative coordinates would have the capsule drift the wrong way the first
+                    // time it was dragged.
+                    gravity = Gravity.TOP or Gravity.START
+                    x = lastX ?: (metrics.widthPixels - view.widthPx - dp(16))
+                    // A starting point only, chosen for a one-handed hold: not the top, not the very
+                    // bottom, roughly where a thumb rests mid-grip. A drag remembers where it lands (see
+                    // [lastX]/[lastY]) so this default is only ever seen once per session.
+                    y = lastY ?: (metrics.heightPixels * 0.62f).toInt()
+                }
 
         var downRawX = 0f
         var downRawY = 0f
@@ -191,7 +202,11 @@ class VisitOverlay(private val context: Context, private val handler: Handler) {
      * run next still lands on the correct fraction, because it was never carrying forward an error
      * from the tick before it.
      */
-    private fun tick(view: Bubble, deadline: Long, total: Long) {
+    private fun tick(
+        view: Bubble,
+        deadline: Long,
+        total: Long,
+    ) {
         val now = SystemClock.elapsedRealtime()
         val fraction = ((deadline - now).toFloat() / total).coerceIn(0f, 1f)
         view.fraction(fraction)
@@ -220,9 +235,11 @@ class VisitOverlay(private val context: Context, private val handler: Handler) {
      * copy. With it, the capsule grows straight down from the same top cap, so the ring never moves
      * and a tester's eye does not have to find it again.
      */
-    private class Bubble(context: Context, private val density: Float, private val copyText: String?) :
-        View(context) {
-
+    private class Bubble(
+        context: Context,
+        private val density: Float,
+        private val copyText: String?,
+    ) : View(context) {
         private fun dp(v: Int) = (v * density).toInt()
 
         private val ringSize = dp(RING_SIZE)
@@ -244,31 +261,37 @@ class VisitOverlay(private val context: Context, private val handler: Handler) {
         private var left = 1f
         private var mode = Mode.PAUSE
 
-        private val ground = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#E60B0F19")
-        }
-        private val track = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = 3f * density
-            color = Color.parseColor("#33FFFFFF")
-        }
-        private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = 3f * density
-            strokeCap = Paint.Cap.ROUND
-            color = Color.parseColor("#A6A0FA")
-        }
-        private val glyph = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#EEF1F8")
-        }
-        private val buttonGround = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#33FFFFFF")
-        }
-        private val copyStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = 1.6f * density
-            color = Color.parseColor("#EEF1F8")
-        }
+        private val ground =
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.parseColor("#E60B0F19")
+            }
+        private val track =
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = 3f * density
+                color = Color.parseColor("#33FFFFFF")
+            }
+        private val fill =
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = 3f * density
+                strokeCap = Paint.Cap.ROUND
+                color = Color.parseColor("#A6A0FA")
+            }
+        private val glyph =
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.parseColor("#EEF1F8")
+            }
+        private val buttonGround =
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.parseColor("#33FFFFFF")
+            }
+        private val copyStroke =
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = 1.6f * density
+                color = Color.parseColor("#EEF1F8")
+            }
 
         private val wedge = Path()
         private val capsule = RectF()
@@ -287,7 +310,10 @@ class VisitOverlay(private val context: Context, private val handler: Handler) {
         }
 
         /** Whether a tap at this view-local point landed on the copy button, not the ring. */
-        fun hitCopy(x: Float, y: Float): Boolean {
+        fun hitCopy(
+            x: Float,
+            y: Float,
+        ): Boolean {
             if (!hasCopy) return false
             val r = buttonSize / 2f
             val dx = x - ringCenterX
@@ -330,21 +356,41 @@ class VisitOverlay(private val context: Context, private val handler: Handler) {
             }
         }
 
-        private fun drawPause(canvas: Canvas, cx: Float, cy: Float) {
+        private fun drawPause(
+            canvas: Canvas,
+            cx: Float,
+            cy: Float,
+        ) {
             val bar = 3.5f * density
             val tall = 13f * density
             val gap = 4f * density
             val top = cy - tall / 2f
             val corner = bar / 2f
             canvas.drawRoundRect(
-                cx - gap / 2f - bar, top, cx - gap / 2f, top + tall, corner, corner, glyph
+                cx - gap / 2f - bar,
+                top,
+                cx - gap / 2f,
+                top + tall,
+                corner,
+                corner,
+                glyph,
             )
             canvas.drawRoundRect(
-                cx + gap / 2f, top, cx + gap / 2f + bar, top + tall, corner, corner, glyph
+                cx + gap / 2f,
+                top,
+                cx + gap / 2f + bar,
+                top + tall,
+                corner,
+                corner,
+                glyph,
             )
         }
 
-        private fun drawPlay(canvas: Canvas, cx: Float, cy: Float) {
+        private fun drawPlay(
+            canvas: Canvas,
+            cx: Float,
+            cy: Float,
+        ) {
             val tall = 14f * density
             val wide = 12f * density
             // Nudged right, because a triangle centred on its bounding box reads as sitting left
@@ -359,7 +405,11 @@ class VisitOverlay(private val context: Context, private val handler: Handler) {
         }
 
         /** Two overlapping sheets, the standard shorthand for "copy" — drawn, not imported. */
-        private fun drawCopyGlyph(canvas: Canvas, cx: Float, cy: Float) {
+        private fun drawCopyGlyph(
+            canvas: Canvas,
+            cx: Float,
+            cy: Float,
+        ) {
             val w = 10f * density
             val h = 12f * density
             val corner = 2f * density

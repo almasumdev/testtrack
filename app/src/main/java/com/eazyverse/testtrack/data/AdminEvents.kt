@@ -25,7 +25,6 @@ import kotlin.coroutines.resumeWithException
  * moment there is more than one.
  */
 object AdminEvents {
-
     private const val PREFS = "testtrack.events"
     private const val KEY_SEEN = "last_seen_at"
 
@@ -41,12 +40,12 @@ object AdminEvents {
 
     private suspend fun <T> await(task: com.google.android.gms.tasks.Task<T>): T =
         suspendCancellableCoroutine { cont ->
-            task.addOnSuccessListener { if (cont.isActive) cont.resume(it) }
+            task
+                .addOnSuccessListener { if (cont.isActive) cont.resume(it) }
                 .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
         }
 
-    private fun prefs(context: Context) =
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     /**
      * Marks everything up to now as already seen, without raising any of it.
@@ -64,19 +63,26 @@ object AdminEvents {
      * The watermark is only advanced past events that were actually notified, so a failure part
      * way through means they are seen again next time rather than lost.
      */
-    suspend fun drain(context: Context, uid: String) {
+    suspend fun drain(
+        context: Context,
+        uid: String,
+    ) {
         val store = prefs(context)
-        val since = store.getLong(KEY_SEEN, 0L)
-            .coerceAtLeast(System.currentTimeMillis() - MAX_AGE_MS)
+        val since =
+            store
+                .getLong(KEY_SEEN, 0L)
+                .coerceAtLeast(System.currentTimeMillis() - MAX_AGE_MS)
 
-        val snapshot = await(
-            db.collection("events")
-                .whereEqualTo("uid", uid)
-                .whereGreaterThan("createdAt", since)
-                .orderBy("createdAt", Query.Direction.ASCENDING)
-                .limit(20)
-                .get()
-        )
+        val snapshot =
+            await(
+                db
+                    .collection("events")
+                    .whereEqualTo("uid", uid)
+                    .whereGreaterThan("createdAt", since)
+                    .orderBy("createdAt", Query.Direction.ASCENDING)
+                    .limit(20)
+                    .get(),
+            )
         if (snapshot.isEmpty) return
 
         var high = since
@@ -94,13 +100,19 @@ object AdminEvents {
                     groupId = doc.getString("groupId")?.takeIf { it.isNotBlank() },
                     // Only this one event kind gets the Play Store shortcut — every other
                     // decision is answered by opening TestTrack, not somebody's app listing.
-                    storeAppId = if (type == EVENT_OWNER_BROADCAST) {
-                        doc.getString("appId")?.takeIf { it.isNotBlank() }
-                    } else null,
+                    storeAppId =
+                        if (type == EVENT_OWNER_BROADCAST) {
+                            doc.getString("appId")?.takeIf { it.isNotBlank() }
+                        } else {
+                            null
+                        },
                     // And only this one gets routed straight to its feedback prompt.
-                    feedbackAppId = if (type == EVENT_FEEDBACK_ASK) {
-                        doc.getString("appId")?.takeIf { it.isNotBlank() }
-                    } else null
+                    feedbackAppId =
+                        if (type == EVENT_FEEDBACK_ASK) {
+                            doc.getString("appId")?.takeIf { it.isNotBlank() }
+                        } else {
+                            null
+                        },
                 )
 
                 // A removal is the one thing this device can also work out for itself: the cohort
@@ -108,7 +120,9 @@ object AdminEvents {
                 // writes an event too, both would fire — so the event, which is the only one of
                 // the two that knows *why*, claims the group and the sweep stays quiet about it.
                 if (type == EVENT_REMOVED_MISSED) {
-                    doc.getString("groupId")?.takeIf { it.isNotBlank() }
+                    doc
+                        .getString("groupId")
+                        ?.takeIf { it.isNotBlank() }
                         ?.let { Enforcement.markExplained(context, it) }
                 }
             }

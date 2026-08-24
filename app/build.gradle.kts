@@ -6,6 +6,17 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
+    // Applied here too, not only at the root: the root's own apply only reaches its own build
+    // scripts (hence "ktlintKotlinScriptCheck" and nothing else) — the actual app/src Kotlin
+    // needs the plugin on the module that holds it, which for this single-module project is
+    // this one.
+    alias(libs.plugins.ktlint)
+}
+
+// See the root build.gradle.kts for why this exists on both — the setting itself is per-project,
+// so applying the plugin at the root does not carry this configuration down to this module.
+ktlint {
+    android.set(true)
 }
 
 /**
@@ -17,10 +28,11 @@ plugins {
  *
  * See local.properties.example for the keys.
  */
-val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) file.inputStream().use { load(it) }
-}
+val localProperties =
+    Properties().apply {
+        val file = rootProject.file("local.properties")
+        if (file.exists()) file.inputStream().use { load(it) }
+    }
 
 fun secret(key: String): String {
     val value = System.getenv(key) ?: localProperties.getProperty(key)

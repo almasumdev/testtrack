@@ -25,7 +25,6 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
  * Both are off in debug builds. See the manifest.
  */
 object Telemetry {
-
     /**
      * Analytics needs a context and this is an object, so it is handed one at startup rather than
      * reaching for a static. Null until then, which reads as "say nothing" — the same answer a
@@ -35,8 +34,9 @@ object Telemetry {
 
     fun init(context: Context) {
         if (analytics == null) {
-            analytics = runCatching { FirebaseAnalytics.getInstance(context.applicationContext) }
-                .getOrNull()
+            analytics =
+                runCatching { FirebaseAnalytics.getInstance(context.applicationContext) }
+                    .getOrNull()
         }
     }
 
@@ -48,8 +48,10 @@ object Telemetry {
      * a run of rounds ending with misses is the shape the five-lost-captures bug made, and it was
      * invisible from here at the time.
      */
-    fun roundFinished(captured: Int, missed: Int) =
-        log("round_finished", "captured" to captured.toLong(), "missed" to missed.toLong())
+    fun roundFinished(
+        captured: Int,
+        missed: Int,
+    ) = log("round_finished", "captured" to captured.toLong(), "missed" to missed.toLong())
 
     /** One proof reached Drive and Firestore. */
     fun proofPosted() = log("proof_posted")
@@ -64,19 +66,28 @@ object Telemetry {
      * [where] is a fixed string from the calling site, never a message and never a value, so
      * nothing about the person or their apps can be carried in on it by accident.
      */
-    fun broke(where: String, cause: Throwable) {
+    fun broke(
+        where: String,
+        cause: Throwable,
+    ) {
         runCatching {
             FirebaseCrashlytics.getInstance().log(where)
             FirebaseCrashlytics.getInstance().recordException(cause)
         }
     }
 
-    private fun log(event: String, vararg params: Pair<String, Long>) {
+    private fun log(
+        event: String,
+        vararg params: Pair<String, Long>,
+    ) {
         val sink = analytics ?: return
         runCatching {
-            sink.logEvent(event, Bundle().apply {
-                params.forEach { (key, value) -> putLong(key, value) }
-            })
+            sink.logEvent(
+                event,
+                Bundle().apply {
+                    params.forEach { (key, value) -> putLong(key, value) }
+                },
+            )
         }
     }
 }

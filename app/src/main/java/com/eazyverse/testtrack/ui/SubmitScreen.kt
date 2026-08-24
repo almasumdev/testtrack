@@ -1,13 +1,9 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -33,12 +28,13 @@ import kotlinx.coroutines.launch
  * list that mixes "I will" with "and then you will be removed" reads as a warning rather than an
  * agreement.
  */
-val SUBMIT_RULES = listOf(
-    "My app is live on a closed testing track and I've added the testers group to it.",
-    "I'll keep that release on the track for the whole 14 days.",
-    "I'll open every other app in my group, every day, until the run ends.",
-    "I won't opt out of anyone's test, or leave the group, before the 14 days are up."
-)
+val SUBMIT_RULES =
+    listOf(
+        "My app is live on a closed testing track and I've added the testers group to it.",
+        "I'll keep that release on the track for the whole 14 days.",
+        "I'll open every other app in my group, every day, until the run ends.",
+        "I won't opt out of anyone's test, or leave the group, before the 14 days are up.",
+    )
 
 class SubmitViewModel : ViewModel() {
     var submitting by mutableStateOf(false)
@@ -78,14 +74,15 @@ class SubmitViewModel : ViewModel() {
         }
 
     val packageError: String?
-        get() = when {
-            packageInput.isEmpty() -> null
-            packageInput.length > PACKAGE_MAX -> "That's longer than a package name can be."
-            !packageInput.contains('.') -> "A package name has at least one dot, like com.example.myapp."
-            packageInput == OWN_PACKAGE -> "That's TestTrack itself. Use your own app's package name."
-            !PACKAGE_SHAPE.matches(packageInput) -> "That should look like com.example.myapp."
-            else -> null
-        }
+        get() =
+            when {
+                packageInput.isEmpty() -> null
+                packageInput.length > PACKAGE_MAX -> "That's longer than a package name can be."
+                !packageInput.contains('.') -> "A package name has at least one dot, like com.example.myapp."
+                packageInput == OWN_PACKAGE -> "That's TestTrack itself. Use your own app's package name."
+                !PACKAGE_SHAPE.matches(packageInput) -> "That should look like com.example.myapp."
+                else -> null
+            }
 
     private val nameOk: Boolean get() = nameInput.trim().length in 2..NAME_MAX
     private val packageOk: Boolean get() = packageInput.isNotEmpty() && packageError == null
@@ -111,24 +108,27 @@ class SubmitViewModel : ViewModel() {
             } else {
                 runCatching {
                     Repo.submitApp(
-                        uid, email, packageInput.trim(), nameInput.trim(), notesInput.trim()
+                        uid,
+                        email,
+                        packageInput.trim(),
+                        nameInput.trim(),
+                        notesInput.trim(),
                     )
-                }
-                    .onSuccess {
-                        Telemetry.appSubmitted()
-                        // After the write, never instead of it. The queue is the record; this only
-                        // saves an admin from finding out whenever they next happen to look.
-                        // Silent and best effort, so a failure here cannot cost a submission that
-                        // has already been accepted.
-                        runCatching { Notify.submission(nameInput.trim()) }
-                        onDone()
-                    }
-                    .onFailure {
-                        message = it.friendly(
+                }.onSuccess {
+                    Telemetry.appSubmitted()
+                    // After the write, never instead of it. The queue is the record; this only
+                    // saves an admin from finding out whenever they next happen to look.
+                    // Silent and best effort, so a failure here cannot cost a submission that
+                    // has already been accepted.
+                    runCatching { Notify.submission(nameInput.trim()) }
+                    onDone()
+                }.onFailure {
+                    message =
+                        it.friendly(
                             "We couldn't submit that. Check your connection and try again.",
-                            denied = "That package is already registered by someone else."
+                            denied = "That package is already registered by someone else.",
                         )
-                    }
+                }
             }
             submitting = false
         }
@@ -136,6 +136,7 @@ class SubmitViewModel : ViewModel() {
 
     private companion object {
         const val NAME_MAX = 50
+
         /** Android's own ceiling for a package name. */
         const val PACKAGE_MAX = 255
         const val OWN_PACKAGE = "com.eazyverse.testtrack"
@@ -154,7 +155,7 @@ class SubmitViewModel : ViewModel() {
 fun SubmitScreen(
     onDone: () -> Unit,
     onBack: () -> Unit,
-    vm: SubmitViewModel = viewModel()
+    vm: SubmitViewModel = viewModel(),
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -166,18 +167,19 @@ fun SubmitScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
             )
-        }
+        },
     ) { padding ->
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = Gutter)
+                .padding(horizontal = Gutter),
         ) {
             Spacer(Modifier.height(12.dp))
             Text(
@@ -189,7 +191,7 @@ fun SubmitScreen(
                     "that group has enough people in it.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = MaterialTheme.typography.bodyMedium.fontSize * 1.5f
+                lineHeight = MaterialTheme.typography.bodyMedium.fontSize * 1.5f,
             )
 
             Spacer(Modifier.height(32.dp))
@@ -199,7 +201,7 @@ fun SubmitScreen(
                 label = "App name",
                 placeholder = "The name testers will see on Play",
                 error = vm.nameError,
-                imeAction = ImeAction.Next
+                imeAction = ImeAction.Next,
             )
             Spacer(Modifier.height(22.dp))
             DialogField(
@@ -212,7 +214,7 @@ fun SubmitScreen(
                 placeholder = "com.example.myapp",
                 error = vm.packageError,
                 supporting = "Find it in Play Console, under App information",
-                imeAction = ImeAction.Done
+                imeAction = ImeAction.Done,
             )
             Spacer(Modifier.height(22.dp))
             DialogField(
@@ -223,24 +225,25 @@ fun SubmitScreen(
                 onValueChange = { vm.notesInput = it.take(NOTES_MAX) },
                 label = "Notes for your testers",
                 placeholder = "Test account: demo@example.com / pass1234",
-                supporting = "Everyone in the group and the admins can read this. Use a " +
-                    "throwaway account, never your real password.",
+                supporting =
+                    "Everyone in the group and the admins can read this. Use a " +
+                        "throwaway account, never your real password.",
                 singleLine = false,
                 minHeight = 120.dp,
-                maxLength = NOTES_MAX
+                maxLength = NOTES_MAX,
             )
 
             Spacer(Modifier.height(32.dp))
             Text(
                 "What you're agreeing to",
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
             Spacer(Modifier.height(4.dp))
             Text(
                 "Your group is thirteen other developers waiting on the same fourteen days.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(14.dp))
 
@@ -252,13 +255,13 @@ fun SubmitScreen(
                         "${index + 1}.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.width(24.dp)
+                        modifier = Modifier.width(24.dp),
                     )
                     Text(
                         rule,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = MaterialTheme.typography.bodyMedium.fontSize * 1.45f
+                        lineHeight = MaterialTheme.typography.bodyMedium.fontSize * 1.45f,
                     )
                 }
             }
@@ -269,7 +272,7 @@ fun SubmitScreen(
                     "stops testing their app. That's what keeps the rest of the run going.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = MaterialTheme.typography.bodySmall.fontSize * 1.45f
+                lineHeight = MaterialTheme.typography.bodySmall.fontSize * 1.45f,
             )
 
             Spacer(Modifier.height(14.dp))
@@ -278,13 +281,13 @@ fun SubmitScreen(
                     .fillMaxWidth()
                     .clickable { vm.agreed = !vm.agreed }
                     .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Checkbox(checked = vm.agreed, onCheckedChange = { vm.agreed = it })
                 Spacer(Modifier.width(6.dp))
                 Text(
                     "I've read these and I agree.",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
 
@@ -294,7 +297,7 @@ fun SubmitScreen(
                 busy = vm.submitting,
                 enabled = vm.canSubmit,
                 tall = true,
-                onClick = { vm.submit(onDone) }
+                onClick = { vm.submit(onDone) },
             )
 
             vm.message?.let {
@@ -302,7 +305,7 @@ fun SubmitScreen(
                 Text(
                     it,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.error,
                 )
             }
 
@@ -311,7 +314,7 @@ fun SubmitScreen(
                 "One app per group. If you already have an app being tested, this one will go " +
                     "into a different group.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(Gutter))
         }

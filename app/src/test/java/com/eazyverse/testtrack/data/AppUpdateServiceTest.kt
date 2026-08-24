@@ -8,7 +8,6 @@ import org.junit.Test
  * with the same cases Sound Scheduler's AppUpdateServiceTest exercises.
  */
 class AppUpdateServiceTest {
-
     private fun tier(
         playUpdateAvailable: Boolean = true,
         availableBuild: Int = 10,
@@ -20,8 +19,15 @@ class AppUpdateServiceTest {
         stalenessDays: Int = 5,
         nudgeAfterDays: Int = 3,
     ) = AppUpdateService.resolveTier(
-        playUpdateAvailable, availableBuild, currentBuild, currentMajor,
-        latestBuild, latestVersionName, minSupportedBuild, stalenessDays, nudgeAfterDays,
+        playUpdateAvailable,
+        availableBuild,
+        currentBuild,
+        currentMajor,
+        latestBuild,
+        latestVersionName,
+        minSupportedBuild,
+        stalenessDays,
+        nudgeAfterDays,
     )
 
     @Test

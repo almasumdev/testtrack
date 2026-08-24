@@ -7,6 +7,7 @@ agp = "9.2.1"
 kotlin = "2.4.10"
 googleServices = "4.5.0"
 crashlytics = "3.0.2"
+ktlint = "14.2.0"
 appUpdate = "2.1.0"
 coroutinesPlayServices = "1.9.0"
 coreKtx = "1.15.0"
@@ -76,3 +77,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }

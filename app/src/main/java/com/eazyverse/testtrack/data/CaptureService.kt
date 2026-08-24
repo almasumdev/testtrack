@@ -8,16 +8,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.PixelFormat
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
-import android.net.Uri
 import android.os.Build
-import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
@@ -30,7 +27,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.content.ContextCompat
 import com.eazyverse.testtrack.MainActivity
 import com.eazyverse.testtrack.R
 import org.json.JSONArray
@@ -40,7 +36,11 @@ import java.io.FileOutputStream
 import kotlin.random.Random
 
 /** A finished visit: what was on screen, and how long the tester actually spent there today. */
-data class Capture(val path: String, val usageMs: Long, val manual: Boolean = false)
+data class Capture(
+    val path: String,
+    val usageMs: Long,
+    val manual: Boolean = false,
+)
 
 /**
  * A visit whose usage genuinely counted but whose automated screenshot did not.
@@ -50,7 +50,10 @@ data class Capture(val path: String, val usageMs: Long, val manual: Boolean = fa
  * matched to it later rather than the tester's twenty seconds being thrown away along with the
  * frame that failed to save. See [CaptureService.supplyManualCapture].
  */
-data class MissedVisit(val pkg: String, val usageMs: Long)
+data class MissedVisit(
+    val pkg: String,
+    val usageMs: Long,
+)
 
 /**
  * Screenshots the app under test.
@@ -77,7 +80,6 @@ data class MissedVisit(val pkg: String, val usageMs: Long)
  *   endSession()            -> projection stops
  */
 class CaptureService : Service() {
-
     private val handler = Handler(Looper.getMainLooper())
 
     /**
@@ -137,7 +139,11 @@ class CaptureService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         // Unconditional, and before anything else. Every entry point here arrives via
         // startForegroundService, which gives the service about five seconds to call
         // startForeground or the system kills the process — and it does not care that the command
@@ -209,11 +215,13 @@ class CaptureService : Service() {
         val code = intent.getIntExtra(EXTRA_CODE, 0)
 
         @Suppress("DEPRECATION")
-        val data: Intent = (
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-                intent.getParcelableExtra(EXTRA_DATA, Intent::class.java)
-            else
-                intent.getParcelableExtra(EXTRA_DATA)
+        val data: Intent =
+            (
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent.getParcelableExtra(EXTRA_DATA, Intent::class.java)
+                } else {
+                    intent.getParcelableExtra(EXTRA_DATA)
+                }
             ) ?: error("no consent token")
 
         val manager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
@@ -226,12 +234,15 @@ class CaptureService : Service() {
         projection = mp
 
         // Android 14+ requires a callback registered before createVirtualDisplay().
-        mp.registerCallback(object : MediaProjection.Callback() {
-            override fun onStop() {
-                status = "Screen sharing stopped."
-                teardown()
-            }
-        }, handler)
+        mp.registerCallback(
+            object : MediaProjection.Callback() {
+                override fun onStop() {
+                    status = "Screen sharing stopped."
+                    teardown()
+                }
+            },
+            handler,
+        )
 
         mirror()
         displays.registerDisplayListener(rotations, handler)
@@ -252,15 +263,18 @@ class CaptureService : Service() {
      * frames simply stop arriving, for good. One piano app a third of the way through a round is
      * enough to lose every capture after it.
      */
-    private val rotations = object : DisplayManager.DisplayListener {
-        override fun onDisplayAdded(displayId: Int) = Unit
-        override fun onDisplayRemoved(displayId: Int) = Unit
-        override fun onDisplayChanged(displayId: Int) {
-            if (displayId != Display.DEFAULT_DISPLAY || projection == null) return
-            val (w, h, _) = screen()
-            if (w != width || h != height) mirror()
+    private val rotations =
+        object : DisplayManager.DisplayListener {
+            override fun onDisplayAdded(displayId: Int) = Unit
+
+            override fun onDisplayRemoved(displayId: Int) = Unit
+
+            override fun onDisplayChanged(displayId: Int) {
+                if (displayId != Display.DEFAULT_DISPLAY || projection == null) return
+                val (w, h, _) = screen()
+                if (w != width || h != height) mirror()
+            }
         }
-    }
 
     /**
      * Points the mirror at a fresh reader, at whatever size the screen is now.
@@ -293,11 +307,17 @@ class CaptureService : Service() {
 
             val vd = display
             if (vd == null) {
-                display = mp.createVirtualDisplay(
-                    "TestTrackCapture", w, h, dpi,
-                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                    ir.surface, null, handler
-                )
+                display =
+                    mp.createVirtualDisplay(
+                        "TestTrackCapture",
+                        w,
+                        h,
+                        dpi,
+                        DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                        ir.surface,
+                        null,
+                        handler,
+                    )
             } else {
                 vd.resize(w, h, dpi)
                 vd.setSurface(ir.surface)
@@ -322,7 +342,11 @@ class CaptureService : Service() {
      * `acquireLatestImage` returns null on every retry — without this, retrying a still screen
      * loses the capture entirely instead of keeping the perfectly good frame already in hand.
      */
-    private fun attempt(pkg: String, tries: Int, previous: Bitmap?) {
+    private fun attempt(
+        pkg: String,
+        tries: Int,
+        previous: Bitmap?,
+    ) {
         val fresh = frame()
         val shot = fresh ?: previous
         if (fresh != null && previous != null && previous !== fresh) previous.recycle()
@@ -449,16 +473,17 @@ class CaptureService : Service() {
         InstalledApps.launch(this, pkg)
         handler.postDelayed(
             { attempt(pkg, 0, null) },
-            Random.nextLong(SHOT_EARLIEST_MS, SHOT_LATEST_MS)
+            Random.nextLong(SHOT_EARLIEST_MS, SHOT_LATEST_MS),
         )
 
         // Raised after the launch, so it lands on top of the app rather than under it.
         overlay.show(millis = VISIT_MS, copyText = notesByPkg[pkg], onTap = { tap(pkg) })
     }
 
-    private fun label(pkg: String): String = runCatching {
-        packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString()
-    }.getOrDefault(pkg)
+    private fun label(pkg: String): String =
+        runCatching {
+            packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString()
+        }.getOrDefault(pkg)
 
     /** The most recent frame off the virtual display, cropped back from its padded stride. */
     private fun frame(): Bitmap? {
@@ -468,9 +493,12 @@ class CaptureService : Service() {
             // slightly too wide and has to be cropped back.
             val plane = image.planes[0]
             val padding = plane.rowStride - plane.pixelStride * width
-            val padded = Bitmap.createBitmap(
-                width + padding / plane.pixelStride, height, Bitmap.Config.ARGB_8888
-            )
+            val padded =
+                Bitmap.createBitmap(
+                    width + padding / plane.pixelStride,
+                    height,
+                    Bitmap.Config.ARGB_8888,
+                )
             padded.copyPixelsFromBuffer(plane.buffer)
             Bitmap.createBitmap(padded, 0, 0, width, height).also { padded.recycle() }
         } catch (_: Exception) {
@@ -499,9 +527,10 @@ class CaptureService : Service() {
             while (x < bitmap.width) {
                 // Quantise to 4 bits per channel so near-identical shades collapse together.
                 val p = bitmap.getPixel(x, y)
-                val key = (((p shr 20) and 0xF) shl 8) or
-                    (((p shr 12) and 0xF) shl 4) or
-                    ((p shr 4) and 0xF)
+                val key =
+                    (((p shr 20) and 0xF) shl 8) or
+                        (((p shr 12) and 0xF) shl 4) or
+                        ((p shr 4) and 0xF)
                 counts[key] = (counts[key] ?: 0) + 1
                 total++
                 x += SAMPLE_STEP
@@ -513,7 +542,10 @@ class CaptureService : Service() {
     }
 
     /** 1080px on the long edge, JPEG 80 — roughly 150 KB, well inside anyone's Drive quota. */
-    private fun save(pkg: String, bitmap: Bitmap): File = saveCapture(this, pkg, bitmap)
+    private fun save(
+        pkg: String,
+        bitmap: Bitmap,
+    ): File = saveCapture(this, pkg, bitmap)
 
     private fun screen(): Triple<Int, Int, Int> {
         val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -540,8 +572,8 @@ class CaptureService : Service() {
                 Intent(this, MainActivity::class.java).addFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK or
                         Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
-                        Intent.FLAG_ACTIVITY_SINGLE_TOP
-                )
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                ),
             )
         }
     }
@@ -550,17 +582,19 @@ class CaptureService : Service() {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             nm.createNotificationChannel(
-                NotificationChannel(CHANNEL, "Proof capture", NotificationManager.IMPORTANCE_LOW)
+                NotificationChannel(CHANNEL, "Proof capture", NotificationManager.IMPORTANCE_LOW),
             )
         }
-        val notification: Notification = Notification.Builder(this, CHANNEL)
-            .setContentTitle("TestTrack")
-            .setContentText("Capturing today's proof")
-            // The app's own mark, like every other notification it raises. This was Android's
-            // stock camera glyph, which is the one notification a tester sees while their screen
-            // is being recorded and the one that most needs to say who is doing it.
-            .setSmallIcon(R.drawable.ic_stat_name)
-            .build()
+        val notification: Notification =
+            Notification
+                .Builder(this, CHANNEL)
+                .setContentTitle("TestTrack")
+                .setContentText("Capturing today's proof")
+                // The app's own mark, like every other notification it raises. This was Android's
+                // stock camera glyph, which is the one notification a tester sees while their screen
+                // is being recorded and the one that most needs to say who is doing it.
+                .setSmallIcon(R.drawable.ic_stat_name)
+                .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
@@ -583,9 +617,12 @@ class CaptureService : Service() {
         roundTotal = 0
         roundIndex = 0
         sessionActive = false
-        display?.release(); display = null
-        reader?.close(); reader = null
-        projection?.stop(); projection = null
+        display?.release()
+        display = null
+        reader?.close()
+        reader = null
+        projection?.stop()
+        projection = null
     }
 
     /**
@@ -607,15 +644,15 @@ class CaptureService : Service() {
     }
 
     companion object {
-        private const val ACTION_START = "start"
-        private const val ACTION_ROUND = "round"
-        private const val ACTION_ABORT = "abort"
-        private const val ACTION_STOP = "stop"
-        private const val EXTRA_CODE = "code"
-        private const val EXTRA_DATA = "data"
-        private const val EXTRA_QUEUE = "queue"
-        private const val EXTRA_NOTES = "notes"
-        private const val EXTRA_RETURN = "return"
+        const val ACTION_START = "start"
+        const val ACTION_ROUND = "round"
+        const val ACTION_ABORT = "abort"
+        const val ACTION_STOP = "stop"
+        const val EXTRA_CODE = "code"
+        const val EXTRA_DATA = "data"
+        const val EXTRA_QUEUE = "queue"
+        const val EXTRA_NOTES = "notes"
+        const val EXTRA_RETURN = "return"
         private const val CHANNEL = "capture"
         private const val NOTIF_ID = 7701
 
@@ -669,7 +706,6 @@ class CaptureService : Service() {
         var sessionActive by mutableStateOf(false)
             private set
         var status by mutableStateOf<String?>(null)
-            private set
 
         /** Package currently being visited, or null. */
         var capturing by mutableStateOf<String?>(null)
@@ -707,160 +743,45 @@ class CaptureService : Service() {
          */
         val newlyMissed = mutableStateListOf<MissedVisit>()
 
-        private const val PENDING_PREFS = "capture_pending"
-        private const val KEY_MISSED = "missed"
-        private var restoredPending = false
-
-        /**
-         * Re-hydrates [missed] from local storage, once per process.
-         *
-         * [missed] otherwise lives only in this companion's memory, which does not survive the
-         * app being closed, killed by the OS to reclaim memory, or updated — any of which throws
-         * away a visit that already happened and already earned its usage time, with no way back
-         * short of opening the app again and hoping it fails a second time. Called from the group
-         * screen on load; safe to call every time, since after the first call in a process this
-         * is a no-op.
-         */
-        fun restorePending(context: Context) {
-            if (restoredPending) return
-            restoredPending = true
-            val raw = context.getSharedPreferences(PENDING_PREFS, Context.MODE_PRIVATE)
-                .getString(KEY_MISSED, null) ?: return
-            runCatching {
-                val array = JSONArray(raw)
-                for (i in 0 until array.length()) {
-                    val o = array.getJSONObject(i)
-                    val visit = MissedVisit(o.getString("pkg"), o.getLong("usageMs"))
-                    if (missed.none { it.pkg == visit.pkg }) missed += visit
-                }
-            }
-        }
+        const val PENDING_PREFS = "capture_pending"
+        const val KEY_MISSED = "missed"
 
         /** [missed]'s durable half — see [restorePending]. Written on every change to [missed]. */
-        private fun persistMissed(context: Context) {
+        fun persistMissed(context: Context) {
             val array = JSONArray()
             missed.forEach { visit ->
                 array.put(JSONObject().put("pkg", visit.pkg).put("usageMs", visit.usageMs))
             }
-            context.getSharedPreferences(PENDING_PREFS, Context.MODE_PRIVATE).edit()
+            context
+                .getSharedPreferences(PENDING_PREFS, Context.MODE_PRIVATE)
+                .edit()
                 .putString(KEY_MISSED, array.toString())
                 .apply()
         }
 
-        fun startSession(context: Context, code: Int, data: Intent) {
-            status = "Starting…"
-            send(context, Intent(context, CaptureService::class.java).apply {
-                action = ACTION_START
-                putExtra(EXTRA_CODE, code)
-                putExtra(EXTRA_DATA, data)
-            })
-        }
-
-        /**
-         * Runs a round: each app in turn, [VISIT_MS] apiece, frame grabbed at an unannounced
-         * moment inside each visit, no stop back at the list in between. A round of one is how a
-         * single app's Open button works, so both paths behave identically.
-         */
-        fun startRound(context: Context, packages: List<String>, notes: Map<String, String> = emptyMap()) {
-            if (packages.isEmpty()) return
-            send(context, Intent(context, CaptureService::class.java).apply {
-                action = ACTION_ROUND
-                putStringArrayListExtra(EXTRA_QUEUE, ArrayList(packages))
-                if (notes.isNotEmpty()) {
-                    putExtra(EXTRA_NOTES, Bundle().apply { notes.forEach { (pkg, note) -> putString(pkg, note) } })
-                }
-            })
-        }
-
-        /** Abandons whatever is left of the round and comes back. */
-        fun abortRound(context: Context) {
-            if (!roundActive) return
-            send(context, Intent(context, CaptureService::class.java).apply { action = ACTION_ABORT })
-        }
-
-        /**
-         * The tester came back to TestTrack in the middle of a round, so the round is over.
-         *
-         * A round is meant to be one uninterrupted stretch, and the service is deliberately deaf
-         * to where the tester actually is — it opens the next app on a timer whether or not
-         * anybody is still following it. Walking back here used to leave it running, so the next
-         * app would open a few seconds later and take the phone off them again.
-         *
-         * Safe to call on every resume. `roundActive` is already false by the time a round that
-         * ended on its own brings the app forward, so this only ever fires on a departure.
-         */
-        fun leftRound(context: Context) {
-            if (!roundActive) return
-            send(
-                context,
-                Intent(context, CaptureService::class.java).apply {
-                    action = ACTION_ABORT
-                    putExtra(EXTRA_RETURN, false)
-                }
-            )
-        }
-
-        /**
-         * Ends screen sharing. A no-op when there is nothing to end — starting a service purely to
-         * stop it is wasteful, and it is the path that used to crash.
-         */
-        fun endSession(context: Context) {
-            if (!sessionActive) return
-            send(context, Intent(context, CaptureService::class.java).apply { action = ACTION_STOP })
-        }
-
-        fun consume(pkg: String) {
-            results.remove(pkg)
-        }
-
-        /** Called once the tester has been told about [newlyMissed], so it is not said twice. */
-        fun forgetNewlyMissed() {
-            newlyMissed.clear()
-        }
-
-        /**
-         * Hands a manually chosen picture to the visit in [missed] it belongs to.
-         *
-         * The usage figure is not re-earned here, only matched back up — [MissedVisit.usageMs]
-         * already came from the real, OS-measured visit; picking a picture replaces the frame that
-         * visit's own capture could not save, nothing about whether the tester was there for it.
-         *
-         * Feeds [results] exactly as an automated capture would, so the same drain-and-upload path
-         * in GroupViewModel.publish handles it without knowing the difference.
-         *
-         * @return false if there is no longer a missed visit for [pkg] to attach this to (it was
-         *   retried, or already supplied), or the picked image could not be read.
-         */
-        fun supplyManualCapture(context: Context, pkg: String, source: Uri): Boolean {
-            val visit = missed.firstOrNull { it.pkg == pkg } ?: return false
-            val bitmap = runCatching {
-                context.contentResolver.openInputStream(source)?.use(BitmapFactory::decodeStream)
-            }.getOrNull() ?: return false
-
-            val file = saveCapture(context, pkg, bitmap)
-            bitmap.recycle()
-            results[pkg] = Capture(file.absolutePath, visit.usageMs, manual = true)
-            missed.remove(visit)
-            persistMissed(context)
-            return true
-        }
-
         /** 1080px on the long edge, JPEG 80 — roughly 150 KB, well inside anyone's Drive quota. */
-        private fun saveCapture(context: Context, pkg: String, bitmap: Bitmap): File {
+        fun saveCapture(
+            context: Context,
+            pkg: String,
+            bitmap: Bitmap,
+        ): File {
             val dir = File(context.filesDir, "captures").apply { mkdirs() }
             val longest = maxOf(bitmap.width, bitmap.height)
-            val scaled = if (longest <= 1080) bitmap else {
-                val ratio = 1080f / longest
-                Bitmap.createScaledBitmap(
-                    bitmap, (bitmap.width * ratio).toInt(), (bitmap.height * ratio).toInt(), true
-                )
-            }
+            val scaled =
+                if (longest <= 1080) {
+                    bitmap
+                } else {
+                    val ratio = 1080f / longest
+                    Bitmap.createScaledBitmap(
+                        bitmap,
+                        (bitmap.width * ratio).toInt(),
+                        (bitmap.height * ratio).toInt(),
+                        true,
+                    )
+                }
             val file = File(dir, "${pkg}_${System.currentTimeMillis()}.jpg")
             FileOutputStream(file).use { scaled.compress(Bitmap.CompressFormat.JPEG, 80, it) }
             return file
         }
-
-        private fun send(context: Context, intent: Intent) =
-            ContextCompat.startForegroundService(context, intent)
     }
 }

@@ -55,41 +55,44 @@ fun UpdateBannerCard(
     onUpdate: () -> Unit,
     onRestart: () -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     if (state == HomeUpdateBanner.NONE) return
     val downloaded = state == HomeUpdateBanner.DOWNLOADED
     val title = if (downloaded) "The update is ready" else "A newer TestTrack is out"
-    val body = if (downloaded) {
-        "It installs when TestTrack restarts. Nothing you have done today is lost."
-    } else {
-        "Your cohort and this copy of the app should agree about what a day looks like. " +
-            "Updating happens in the background."
-    }
+    val body =
+        if (downloaded) {
+            "It installs when TestTrack restarts. Nothing you have done today is lost."
+        } else {
+            "Your cohort and this copy of the app should agree about what a day looks like. " +
+                "Updating happens in the background."
+        }
     val actionText = if (downloaded) "Restart now" else "Update"
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Status.neutralSoft)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
-            .padding(14.dp)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(Status.neutralSoft)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
+                .padding(14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 Icons.Outlined.Info,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             )
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 10.dp)
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(start = 10.dp),
             )
             // Only the optional nudge is dismissible; a downloaded update stays until applied.
             if (!downloaded) {
@@ -98,7 +101,7 @@ fun UpdateBannerCard(
                         Icons.Filled.Close,
                         contentDescription = "Dismiss",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(15.dp)
+                        modifier = Modifier.size(15.dp),
                     )
                 }
             }
@@ -107,23 +110,25 @@ fun UpdateBannerCard(
             text = body,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp)
+            modifier = Modifier.padding(top = 8.dp),
         )
         Button(
             onClick = if (downloaded) onRestart else onUpdate,
             shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            ),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                ),
             contentPadding = PaddingValues(horizontal = 18.dp, vertical = 8.dp),
-            modifier = Modifier
-                .align(Alignment.End)
-                .padding(top = 12.dp)
+            modifier =
+                Modifier
+                    .align(Alignment.End)
+                    .padding(top = 12.dp),
         ) {
             Text(
                 text = actionText,
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
         }
     }
@@ -140,35 +145,38 @@ fun ForceUpdateScreen(
     canDownloadInApp: Boolean,
     onUpdate: () -> Unit,
     onRestart: () -> Unit,
-    onOpenStore: () -> Unit
+    onOpenStore: () -> Unit,
 ) {
     BackHandler(enabled = true) { /* non-dismissible */ }
     var starting by remember { mutableStateOf(false) }
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .pointerInput(Unit) { detectTapGestures { } },
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .pointerInput(Unit) { detectTapGestures { } },
+        contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     Icons.Outlined.Info,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(34.dp)
+                    modifier = Modifier.size(34.dp),
                 )
             }
             Text(
@@ -176,40 +184,43 @@ fun ForceUpdateScreen(
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 20.dp)
+                modifier = Modifier.padding(top = 20.dp),
             )
             Text(
-                text = "This version of TestTrack no longer counts a day the way your cohort " +
-                    "does. Carrying on with it would show you a record nobody else can see.",
+                text =
+                    "This version of TestTrack no longer counts a day the way your cohort " +
+                        "does. Carrying on with it would show you a record nobody else can see.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 10.dp)
+                modifier = Modifier.padding(top = 10.dp),
             )
             Spacer(Modifier.height(24.dp))
             when {
                 downloaded -> AccentButton("Restart now", onClick = onRestart)
                 !canDownloadInApp -> AccentButton("Open Play Store", onClick = onOpenStore)
-                starting -> Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        text = "Starting the download",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 10.dp)
-                    )
-                }
-                else -> AccentButton("Update") {
-                    starting = true
-                    onUpdate()
-                }
+                starting ->
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Text(
+                            text = "Starting the download",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 10.dp),
+                        )
+                    }
+                else ->
+                    AccentButton("Update") {
+                        starting = true
+                        onUpdate()
+                    }
             }
         }
     }
@@ -217,21 +228,25 @@ fun ForceUpdateScreen(
 
 /** Full-width accent button for the force-update screen. */
 @Composable
-private fun AccentButton(text: String, onClick: () -> Unit) {
+private fun AccentButton(
+    text: String,
+    onClick: () -> Unit,
+) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.primary)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(MaterialTheme.colorScheme.primary)
+                .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimary
+            color = MaterialTheme.colorScheme.onPrimary,
         )
     }
 }

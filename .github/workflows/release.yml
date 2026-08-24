@@ -118,6 +118,11 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # Ahead of restoring any secret, since a style violation needs neither and this way it
+      # fails in seconds rather than after the config/keystore steps below have already run.
+      - name: Check code style
+        run: ./gradlew --no-daemon ktlintCheck
+
       - name: Read app version
         id: version
         run: |

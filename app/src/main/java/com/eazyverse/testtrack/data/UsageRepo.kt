@@ -23,7 +23,6 @@ import android.provider.Settings
  * waiting.
  */
 object UsageRepo {
-
     /**
      * True once the tester has switched TestTrack on under Settings → Special access.
      *
@@ -39,10 +38,12 @@ object UsageRepo {
         val pkg = context.packageName
 
         @Suppress("DEPRECATION")
-        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-            ops.unsafeCheckOpNoThrow(op, uid, pkg)
-        else
-            ops.checkOpNoThrow(op, uid, pkg)
+        val mode =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ops.unsafeCheckOpNoThrow(op, uid, pkg)
+            } else {
+                ops.checkOpNoThrow(op, uid, pkg)
+            }
 
         return mode == AppOpsManager.MODE_ALLOWED
     }
@@ -54,12 +55,14 @@ object UsageRepo {
      * a wrong-but-open Settings page beats an ActivityNotFoundException.
      */
     fun openSettings(context: Context) {
-        val direct = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
-            data = Uri.parse("package:${context.packageName}")
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        val fallback = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val direct =
+            Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                data = Uri.parse("package:${context.packageName}")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        val fallback =
+            Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         runCatching { context.startActivity(direct) }
             .recoverCatching { context.startActivity(fallback) }
@@ -87,7 +90,11 @@ object UsageRepo {
      * over a twenty second window it could only ever answer with somebody's whole day and win the
      * `maxOf`, which would put the old behaviour straight back.
      */
-    fun foregroundMsSince(context: Context, pkg: String, since: Long): Long {
+    fun foregroundMsSince(
+        context: Context,
+        pkg: String,
+        since: Long,
+    ): Long {
         if (!hasAccess(context)) return 0L
         val manager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val now = System.currentTimeMillis()
@@ -101,7 +108,7 @@ object UsageRepo {
         manager: UsageStatsManager,
         pkg: String,
         start: Long,
-        now: Long
+        now: Long,
     ): Long {
         val events = manager.queryEvents(start, now)
         val event = UsageEvents.Event()
@@ -115,10 +122,11 @@ object UsageRepo {
                 // ACTIVITY_RESUMED / ACTIVITY_PAUSED under their pre-29 names, which carry the
                 // same values and are the ones available at our minSdk.
                 UsageEvents.Event.MOVE_TO_FOREGROUND -> openedAt = event.timeStamp
-                UsageEvents.Event.MOVE_TO_BACKGROUND -> if (openedAt > 0L) {
-                    total += event.timeStamp - openedAt
-                    openedAt = 0L
-                }
+                UsageEvents.Event.MOVE_TO_BACKGROUND ->
+                    if (openedAt > 0L) {
+                        total += event.timeStamp - openedAt
+                        openedAt = 0L
+                    }
             }
         }
 
@@ -127,5 +135,4 @@ object UsageRepo {
         if (openedAt > 0L) total += now - openedAt
         return total
     }
-
 }

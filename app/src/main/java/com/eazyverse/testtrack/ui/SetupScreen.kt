@@ -1,210 +1,48 @@
 package com.eazyverse.testtrack.ui
 
 import android.Manifest
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.foundation.Image
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.data.*
 import com.eazyverse.testtrack.findActivity
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.launch
-
-class SetupViewModel : ViewModel() {
-    var checkingGroup by mutableStateOf(false)
-        private set
-
-    /**
-     * Google would not confirm the account without being asked, so the step offers to ask.
-     *
-     * Deliberately not a sign-out. The app's own session is intact and everything else works;
-     * only the token the membership service verifies has aged out, and one press of Google's
-     * button replaces it.
-     */
-    var needsGoogle by mutableStateOf(false)
-        private set
-    var connectingDrive by mutableStateOf(false)
-        private set
-    var message by mutableStateOf<String?>(null)
-
-    /**
-     * Which step [message] is an answer to, so it can be shown beside the button that asked.
-     *
-     * [STEP_NONE] covers anything raised without a step to blame, which still has to appear
-     * somewhere rather than be swallowed.
-     */
-    var messageStep by mutableStateOf(STEP_NONE)
-
-    fun say(step: Int, text: String?) {
-        message = text
-        messageStep = step
-    }
-
-    companion object {
-        const val STEP_NONE = -1
-        const val STEP_GROUP = 1
-        const val STEP_DRIVE = 2
-    }
-
-    /**
-     * Abandons the account and hands back to navigate.
-     *
-     * Setup is where a tester lands on the wrong Gmail — the checklist is keyed to the account,
-     * and every step below the first fails for an address that is not in the group. Without this
-     * the only way back to the picker was to uninstall.
-     */
-    fun signOut(context: Context, then: () -> Unit) {
-        viewModelScope.launch {
-            releaseSession(context)
-            then()
-        }
-    }
-
-    /** Re-runs the server-side membership check for the account we already hold a token for. */
-    fun verifyGroup(activity: Activity) {
-        checkingGroup = true
-        say(STEP_GROUP, null)
-        viewModelScope.launch {
-            try {
-                val (_, gate) = AuthRepo.recheckGroup(activity)
-                say(STEP_GROUP, when {
-                    // Checked, but not about us. The old code adopted whatever address came back,
-                    // which left the session showing one Gmail while every write still belonged to
-                    // the other, and stamped that account's membership onto this one. Say so and
-                    // change nothing; switching accounts is what Sign out is for.
-                    gate.isAboutSomeoneElse(Session.email) ->
-                        "Google answered for ${gate.address()}, not ${Session.email}. Sign out at " +
-                            "the top of this page and sign back in with the Gmail you want to use."
-
-                    gate is GateResult.Failed && gate.reason == AuthRepo.NEEDS_GOOGLE -> {
-                        needsGoogle = true
-                        "Google needs to confirm this account again before it can check."
-                    }
-
-                    gate is GateResult.Failed -> gate.reason
-
-                    else -> {
-                        Session.updateMember(gate is GateResult.Member)
-                        (gate as? GateResult.NotMember)?.let { "${it.email} isn't in the group yet." }
-                    }
-                })
-            } catch (e: CancellationException) {
-                throw e   // leaving the screen cancels this; it is not a failed check
-            } catch (e: Exception) {
-                say(STEP_GROUP, e.friendly("We couldn't check your group membership just now. Try again in a moment."))
-            }
-            checkingGroup = false
-        }
-    }
-
-    /**
-     * Asks Google once, then checks again.
-     *
-     * The full sign-in, which is the only thing that mints a fresh ID token, and it does show the
-     * account chooser. That is fine here and was not fine before: this runs from a control that
-     * says it will, rather than appearing under a button that asked about group membership.
-     */
-    fun signInAgain(activity: Activity) {
-        checkingGroup = true
-        say(STEP_GROUP, null)
-        viewModelScope.launch {
-            val ok = runCatching { AuthRepo.signIn(activity) }
-                .onFailure { say(STEP_GROUP, it.friendly("Google didn't finish signing you in.")) }
-                .isSuccess
-            checkingGroup = false
-            if (ok) {
-                needsGoogle = false
-                verifyGroup(activity)
-            }
-        }
-    }
-
-    fun connectDrive(activity: Activity, launchConsent: (IntentSenderRequest) -> Unit) {
-        connectingDrive = true
-        say(STEP_DRIVE, null)
-        viewModelScope.launch {
-            try {
-                // Bounded, because the task underneath this never fails on its own when Play
-                // services cannot service the call. It retries quietly and the button spins for
-                // as long as somebody is willing to watch it.
-                val result = withTimeoutOrNull(AuthRepo.AUTH_TIMEOUT_MS) {
-                    AuthRepo.authorizeDrive(activity)
-                }
-                val pending = result?.pendingIntent
-                when {
-                    result == null ->
-                        say(STEP_DRIVE, "Google Play services didn't answer. Try again.")
-
-                    result.hasResolution() && pending != null ->
-                        launchConsent(IntentSenderRequest.Builder(pending.intentSender).build())
-
-                    else -> Session.updateDriveConnected(result.accessToken != null)
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                say(STEP_DRIVE, e.friendly("Google didn't complete the Drive connection. Try it again."))
-            }
-            connectingDrive = false
-        }
-    }
-}
 
 /** The answer to one step's button, shown under that button rather than at the foot of the page. */
 @Composable
-private fun StepMessage(vm: SetupViewModel, step: Int) {
+private fun StepMessage(
+    vm: SetupViewModel,
+    step: Int,
+) {
     if (vm.messageStep != step) return
     vm.message?.let {
         Spacer(Modifier.height(4.dp))
         Text(
             it,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.error
+            color = MaterialTheme.colorScheme.error,
         )
     }
 }
@@ -213,30 +51,32 @@ private fun StepMessage(vm: SetupViewModel, step: Int) {
 fun SetupScreen(
     onFinished: () -> Unit,
     onSignOut: () -> Unit,
-    vm: SetupViewModel = viewModel()
+    vm: SetupViewModel = viewModel(),
 ) {
     val activity = LocalContext.current.findActivity()
     var confirmSignOut by remember { mutableStateOf(false) }
 
-    val consentLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartIntentSenderForResult()
-    ) { result ->
-        val token = AuthRepo.tokenFromConsent(activity, result.data)
-        Session.updateDriveConnected(token != null)
-        if (token == null) vm.say(SetupViewModel.STEP_DRIVE, "Drive access was not granted")
-    }
+    val consentLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.StartIntentSenderForResult(),
+        ) { result ->
+            val token = AuthRepo.tokenFromConsent(activity, result.data)
+            Session.updateDriveConnected(token != null)
+            if (token == null) vm.say(SetupViewModel.STEP_DRIVE, "Drive access was not granted")
+        }
 
     // Usage access and notifications both live in system settings and can be switched off behind
     // our back, so they are re-read every time this screen comes forward rather than trusted from
     // a stored flag.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                Session.refreshUsageAccess(activity)
-                Session.refreshNotifications(activity)
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    Session.refreshUsageAccess(activity)
+                    Session.refreshNotifications(activity)
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
@@ -253,13 +93,14 @@ fun SetupScreen(
      * visibly does nothing.
      */
     var promptSpent by rememberSaveable { mutableStateOf(false) }
-    val notificationLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) {
-        promptSpent = true
-        Session.refreshNotifications(activity)
-        Session.updateRemindersAsked()
-    }
+    val notificationLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+        ) {
+            promptSpent = true
+            Session.refreshNotifications(activity)
+            Session.updateRemindersAsked()
+        }
 
     // Same for Drive: the grant is the account's, so ask Google rather than trusting a local flag
     // that sign-out cleared. Silent when it is already there.
@@ -323,13 +164,14 @@ fun SetupScreen(
      * screen comes forward, so a revoked grant or a switch turned off in Settings drops its step
      * back to outstanding and opens it without being asked.
      */
-    val granted = listOf(
-        Session.signedIn,
-        Session.isGroupMember,
-        Session.driveConnected,
-        Session.usageAccessGranted,
-        Session.remindersSettled
-    )
+    val granted =
+        listOf(
+            Session.signedIn,
+            Session.isGroupMember,
+            Session.driveConnected,
+            Session.usageAccessGranted,
+            Session.remindersSettled,
+        )
 
     /**
      * Finished, and finished in order.
@@ -347,7 +189,6 @@ fun SetupScreen(
     val done = granted.runningFold(true) { above, step -> above && step }.drop(1)
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-
         val outstanding = done.indexOfFirst { !it }
         var reopened by rememberSaveable { mutableStateOf<Int?>(null) }
 
@@ -388,11 +229,11 @@ fun SetupScreen(
                     "Set up TestTrack",
                     Modifier.weight(1f),
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 IconButton(
                     onClick = { confirmSignOut = true },
-                    modifier = Modifier.offset(x = 12.dp)
+                    modifier = Modifier.offset(x = 12.dp),
                 ) {
                     Icon(Icons.AutoMirrored.Filled.Logout, "Sign out")
                 }
@@ -401,7 +242,7 @@ fun SetupScreen(
             Text(
                 "Five things to do once. Take them in order.",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             // Five steps with no sense of how many remain is how somebody abandons this halfway.
@@ -412,12 +253,11 @@ fun SetupScreen(
             Text(
                 "${done.count { it }} of ${done.size} done",
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-
             // The only step that reopens. The rest repair themselves: a revoked Drive grant or a
             // usage switch turned off in Settings is re-read when this screen comes forward, and
             // the step goes back to outstanding and opens on its own. Signing in is the one thing
@@ -436,7 +276,7 @@ fun SetupScreen(
                         "Gmail, sign out and pick another one. Your place in the group and your " +
                         "Drive both belong to the account, so the steps below will start again.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
@@ -444,43 +284,45 @@ fun SetupScreen(
                 number = 2,
                 title = "Join the testers group",
                 result = "You're in the group",
-                detail = "App owners can only add you to their closed test if you're in this " +
-                    "group. Open it, join with the same Gmail you signed in with, then come back " +
-                    "and verify.",
+                detail =
+                    "App owners can only add you to their closed test if you're in this " +
+                        "group. Open it, join with the same Gmail you signed in with, then come back " +
+                        "and verify.",
                 done = done[1],
                 live = live(1),
                 onToggle = { toggle(1) }.takeIf { opens(1) },
-                answers = listOf(
-                    // First, and open by default, because it happens before anybody gets as far
-                    // as verifying. The page refuses in large friendly letters and the way in is
-                    // a button above the refusal, so people read the refusal and stop.
-                    QA(
-                        "The group page says I don't have permission",
-                        "If you see a Join group button at the top, tap it. When it " +
-                            "disappears, you are in.",
-                        lead = "Ignore that message. Joining is the only thing to do on that page.",
-                        art = { GroupPageShots() }
+                answers =
+                    listOf(
+                        // First, and open by default, because it happens before anybody gets as far
+                        // as verifying. The page refuses in large friendly letters and the way in is
+                        // a button above the refusal, so people read the refusal and stop.
+                        QA(
+                            "The group page says I don't have permission",
+                            "If you see a Join group button at the top, tap it. When it " +
+                                "disappears, you are in.",
+                            lead = "Ignore that message. Joining is the only thing to do on that page.",
+                            art = { GroupPageShots() },
+                        ),
+                        QA(
+                            "I joined, but Verify says I'm not in it",
+                            "Google takes a minute or two to publish a new member, and the check " +
+                                "reads Google rather than this phone. Wait a moment and press Verify " +
+                                "again. If it still refuses, the usual cause is joining with a " +
+                                "different Gmail than the one on step one.",
+                        ),
+                        QA(
+                            "What does joining let you do?",
+                            "Nothing on its own. It is a list Google keeps, and being on it is what " +
+                                "makes you eligible to be added to a closed test. It gives nobody " +
+                                "access to your account.",
+                        ),
+                        QA(
+                            "Can I leave later?",
+                            "Yes, from Google Groups. Leaving mid run means the apps you were " +
+                                "testing drop out of your list and your group is a person short, so " +
+                                "finish the fortnight first if you can.",
+                        ),
                     ),
-                    QA(
-                        "I joined, but Verify says I'm not in it",
-                        "Google takes a minute or two to publish a new member, and the check " +
-                            "reads Google rather than this phone. Wait a moment and press Verify " +
-                            "again. If it still refuses, the usual cause is joining with a " +
-                            "different Gmail than the one on step one."
-                    ),
-                    QA(
-                        "What does joining let you do?",
-                        "Nothing on its own. It is a list Google keeps, and being on it is what " +
-                            "makes you eligible to be added to a closed test. It gives nobody " +
-                            "access to your account."
-                    ),
-                    QA(
-                        "Can I leave later?",
-                        "Yes, from Google Groups. Leaving mid run means the apps you were " +
-                            "testing drop out of your list and your group is a person short, so " +
-                            "finish the fortnight first if you can."
-                    )
-                )
             ) {
                 // Open, then verify, which is the order they happen in. Verify was the filled
                 // button and Open a text link under it, so the loud control was the one that
@@ -497,7 +339,7 @@ fun SetupScreen(
                         else -> "I've joined, check now"
                     },
                     Modifier.fillMaxWidth(),
-                    enabled = !vm.checkingGroup
+                    enabled = !vm.checkingGroup,
                 ) {
                     if (vm.needsGoogle) vm.signInAgain(activity) else vm.verifyGroup(activity)
                 }
@@ -509,41 +351,43 @@ fun SetupScreen(
                 number = 3,
                 title = "Connect Google Drive",
                 result = "Proof will be saved to your Drive",
-                detail = "Your daily screenshots go to your own Google Drive, so the proof stays " +
-                    "yours. We can only see the files we put there and nothing else in it.",
+                detail =
+                    "Your daily screenshots go to your own Google Drive, so the proof stays " +
+                        "yours. We can only see the files we put there and nothing else in it.",
                 done = done[2],
                 live = live(2),
                 onToggle = { toggle(2) }.takeIf { opens(2) },
-                answers = listOf(
-                    // First, and open by default, because it is the one people arrive with. The
-                    // grant is the account's, and a phone carrying two Google accounts is the
-                    // ordinary case rather than the odd one.
-                    QA(
-                        "It says connect, but I already did",
-                        "The grant belongs to a Google account, not to the phone. If more than " +
-                            "one account is signed in here, check the address on step one is the " +
-                            "one you connected. Connecting again on the right account costs " +
-                            "nothing."
+                answers =
+                    listOf(
+                        // First, and open by default, because it is the one people arrive with. The
+                        // grant is the account's, and a phone carrying two Google accounts is the
+                        // ordinary case rather than the odd one.
+                        QA(
+                            "It says connect, but I already did",
+                            "The grant belongs to a Google account, not to the phone. If more than " +
+                                "one account is signed in here, check the address on step one is the " +
+                                "one you connected. Connecting again on the right account costs " +
+                                "nothing.",
+                        ),
+                        QA(
+                            "Can you read the rest of my Drive?",
+                            "No. The permission asked for is the one that limits an app to the files " +
+                                "it created itself. Everything else in your Drive is invisible to " +
+                                "TestTrack, including files you put in the same folder by hand.",
+                        ),
+                        QA(
+                            "What exactly gets uploaded?",
+                            "One screenshot per app per day, taken while that app is open, plus the " +
+                                "time you spent in it. Nothing from any other app and nothing while " +
+                                "TestTrack is closed.",
+                        ),
+                        QA(
+                            "How much space will it use?",
+                            "A fortnight of testing thirteen apps is about a hundred and eighty " +
+                                "screenshots, which is somewhere near fifty megabytes. It is yours " +
+                                "to delete whenever the run is over.",
+                        ),
                     ),
-                    QA(
-                        "Can you read the rest of my Drive?",
-                        "No. The permission asked for is the one that limits an app to the files " +
-                            "it created itself. Everything else in your Drive is invisible to " +
-                            "TestTrack, including files you put in the same folder by hand."
-                    ),
-                    QA(
-                        "What exactly gets uploaded?",
-                        "One screenshot per app per day, taken while that app is open, plus the " +
-                            "time you spent in it. Nothing from any other app and nothing while " +
-                            "TestTrack is closed."
-                    ),
-                    QA(
-                        "How much space will it use?",
-                        "A fortnight of testing thirteen apps is about a hundred and eighty " +
-                            "screenshots, which is somewhere near fifty megabytes. It is yours " +
-                            "to delete whenever the run is over."
-                    )
-                )
             ) {
                 Primary("Connect Drive", busy = vm.connectingDrive) {
                     vm.connectDrive(activity) { consentLauncher.launch(it) }
@@ -556,47 +400,50 @@ fun SetupScreen(
                 number = 4,
                 title = "Allow usage access",
                 result = "Time in each app is recorded",
-                detail = "Your daily report shows how long you actually spent in each app, not " +
-                    "just that you opened it. Android only shares that if you switch on usage " +
-                    "access, and there's no pop-up to ask for it, so you'll need to find " +
-                    "TestTrack in the list and turn it on yourself.",
+                detail =
+                    "Your daily report shows how long you actually spent in each app, not " +
+                        "just that you opened it. Android only shares that if you switch on usage " +
+                        "access, and there's no pop-up to ask for it, so you'll need to find " +
+                        "TestTrack in the list and turn it on yourself.",
                 done = done[3],
                 live = live(3),
                 onToggle = { toggle(3) }.takeIf { opens(3) },
-                answers = listOf(
-                    // The most common way this step fails, and the one a tester cannot solve by
-                    // trying harder: the switch is there, they tap it, and Android refuses
-                    // without explaining that the cause is how the app was installed rather than
-                    // anything they did. It sits first and opens by default, because the menu
-                    // that unblocks it stays hidden until the refusal has been seen once, so
-                    // nobody finds it by looking.
-                    QA(
-                        "The switch won't turn on",
-                        "Tap the switch once, close the message, then open Settings, Apps, " +
-                            "TestTrack and use the three dot menu. Confirm with your PIN, come " +
-                            "back, and the switch will work.",
-                        lead = "Nothing is wrong with your phone. Some phones block this for " +
-                            "apps installed from a browser instead of the Play Store.",
-                        art = { RestrictedSettingShots() }
+                answers =
+                    listOf(
+                        // The most common way this step fails, and the one a tester cannot solve by
+                        // trying harder: the switch is there, they tap it, and Android refuses
+                        // without explaining that the cause is how the app was installed rather than
+                        // anything they did. It sits first and opens by default, because the menu
+                        // that unblocks it stays hidden until the refusal has been seen once, so
+                        // nobody finds it by looking.
+                        QA(
+                            "The switch won't turn on",
+                            "Tap the switch once, close the message, then open Settings, Apps, " +
+                                "TestTrack and use the three dot menu. Confirm with your PIN, come " +
+                                "back, and the switch will work.",
+                            lead =
+                                "Nothing is wrong with your phone. Some phones block this for " +
+                                    "apps installed from a browser instead of the Play Store.",
+                            art = { RestrictedSettingShots() },
+                        ),
+                        QA(
+                            "Can you see every app I use?",
+                            "The permission is broad, but TestTrack only ever asks Android about the " +
+                                "apps on your testing list. Nothing else is read, and nothing about " +
+                                "your phone leaves it except the seconds you spent in those apps.",
+                        ),
+                        QA(
+                            "Will it drain my battery?",
+                            "No. Nothing runs in the background for this. The figure is read once, " +
+                                "from a total Android already keeps, at the moment a visit ends.",
+                        ),
+                        QA(
+                            "Can I skip it?",
+                            "Not this one. Without it a day can only prove the app opened, and " +
+                                "opening is not testing. It is the step that makes your report worth " +
+                                "anything to the developer.",
+                        ),
                     ),
-                    QA(
-                        "Can you see every app I use?",
-                        "The permission is broad, but TestTrack only ever asks Android about the " +
-                            "apps on your testing list. Nothing else is read, and nothing about " +
-                            "your phone leaves it except the seconds you spent in those apps."
-                    ),
-                    QA(
-                        "Will it drain my battery?",
-                        "No. Nothing runs in the background for this. The figure is read once, " +
-                            "from a total Android already keeps, at the moment a visit ends."
-                    ),
-                    QA(
-                        "Can I skip it?",
-                        "Not this one. Without it a day can only prove the app opened, and " +
-                            "opening is not testing. It is the step that makes your report worth " +
-                            "anything to the developer."
-                    )
-                )
             ) {
                 Primary("Open usage access settings") { UsageRepo.openSettings(activity) }
             }
@@ -604,11 +451,16 @@ fun SetupScreen(
             Step(
                 number = 5,
                 title = "Turn on reminders",
-                result = if (Session.notificationsGranted) "You'll be nudged if a day is slipping"
-                         else "Off, so you'll need to remember on your own",
-                detail = "A run is fourteen days with no gaps, and one missed day resets the " +
-                    "clock for everyone in your group, not just for you. We'll only nudge you " +
-                    "when apps are still waiting, never to say well done.",
+                result =
+                    if (Session.notificationsGranted) {
+                        "You'll be nudged if a day is slipping"
+                    } else {
+                        "Off, so you'll need to remember on your own"
+                    },
+                detail =
+                    "A run is fourteen days with no gaps, and one missed day resets the " +
+                        "clock for everyone in your group, not just for you. We'll only nudge you " +
+                        "when apps are still waiting, never to say well done.",
                 done = done[4],
                 live = live(4),
                 last = true,
@@ -621,24 +473,25 @@ fun SetupScreen(
                 // already arriving was being shown a tick and an offer to turn on the thing that
                 // is on, which reads as the screen not knowing its own state.
                 actionOutlivesTheStep = !Session.notificationsGranted,
-                answers = listOf(
-                    QA(
-                        "How many will I get?",
-                        "At most one a day, in the evening, and only if something is still " +
-                            "outstanding. Finish early and you hear nothing at all."
+                answers =
+                    listOf(
+                        QA(
+                            "How many will I get?",
+                            "At most one a day, in the evening, and only if something is still " +
+                                "outstanding. Finish early and you hear nothing at all.",
+                        ),
+                        QA(
+                            "Can I say no and still use TestTrack?",
+                            "Yes. This is the one step you can decline. Not now marks it settled and " +
+                                "you keep track of the days yourself.",
+                        ),
+                        QA(
+                            "I said no and changed my mind",
+                            "Come back to this screen and the step is here. After the first refusal " +
+                                "Android will not ask again, so it opens your notification settings " +
+                                "instead.",
+                        ),
                     ),
-                    QA(
-                        "Can I say no and still use TestTrack?",
-                        "Yes. This is the one step you can decline. Not now marks it settled and " +
-                            "you keep track of the days yourself."
-                    ),
-                    QA(
-                        "I said no and changed my mind",
-                        "Come back to this screen and the step is here. After the first refusal " +
-                            "Android will not ask again, so it opens your notification settings " +
-                            "instead."
-                    )
-                )
             ) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !promptSpent) {
                     Primary("Turn on reminders") {
@@ -650,14 +503,14 @@ fun SetupScreen(
                     Primary("Open notification settings") {
                         activity.startActivity(
                             Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                .putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName)
+                                .putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName),
                         )
                         Session.updateRemindersAsked()
                     }
                 }
                 TextButton(
                     onClick = { Session.updateRemindersAsked() },
-                    contentPadding = PaddingValues(vertical = 8.dp)
+                    contentPadding = PaddingValues(vertical = 8.dp),
                 ) { Text("Not now") }
             }
 
@@ -671,15 +524,16 @@ fun SetupScreen(
             Modifier.padding(start = Gutter, end = Gutter, top = 12.dp, bottom = 24.dp),
             enabled = Session.setupComplete,
             tall = true,
-            onClick = onFinished
+            onClick = onFinished,
         )
     }
 
     if (confirmSignOut) {
         Ask(
             title = "Sign out?",
-            body = "You'll come back to the account picker and can sign in with a different " +
-                "Gmail. Nothing you've already reported is lost.",
+            body =
+                "You'll come back to the account picker and can sign in with a different " +
+                    "Gmail. Nothing you've already reported is lost.",
             confirm = "Sign out",
             onConfirm = {
                 confirmSignOut = false
@@ -691,382 +545,7 @@ fun SetupScreen(
                     onSignOut()
                 }
             },
-            onDismiss = { confirmSignOut = false }
-        )
-    }
-}
-
-/** One question a step raises, and the answer to it. */
-/**
- * One question a step raises, the answer to it, and sometimes a picture.
- *
- * [art] is for the one case where words are the wrong tool: a page whose layout is the problem.
- * Drawn rather than photographed, and deliberately not a lookalike. A screenshot of somebody
- * else's page goes stale the week they restyle it, and a convincing copy of a Google page is a
- * thing nobody should be shipping. A diagram in this app's own colours can only be read as a
- * diagram, which is what it is.
- */
-data class QA(
-    val q: String,
-    val a: String,
-    val art: (@Composable () -> Unit)? = null,
-    /**
-     * The one sentence that would do on its own, said louder than the rest.
-     *
-     * For the answers where somebody is already lost and reading fast. Everything under it is
-     * still worth having, and none of it is worth having first.
-     */
-    val lead: String? = null
-)
-
-/**
- * One node on the rail.
- *
- * A finished step keeps only what it produced: the address, the outcome. The live step is the only
- * one showing instructions, controls or answers. Everything ahead is the title alone, dimmed: it
- * says what is coming without offering anything to press.
- *
- * The dot carries the state so the screen can be read without reading it. Done is a tick on the
- * same green a kept day is drawn in everywhere else in the app, live is the number on the iris the
- * buttons use, ahead is the number outlined and faint. The connector between two finished steps is
- * green as well, which is how far you got, said without a word.
- *
- * [IntrinsicSize.Min] is what lets the connector run the height of whatever the body turns out to
- * be, which for step four with its walkthrough open is most of a screen.
- */
-@Composable
-private fun Step(
-    number: Int,
-    title: String,
-    result: String,
-    done: Boolean,
-    live: Boolean,
-    onToggle: (() -> Unit)?,
-    /**
-     * Whether [action] still means anything once the step is finished.
-     *
-     * False for the ones that perform the step. Opening a finished step to read how it was done
-     * and being handed Connect Drive is the screen asking for something it already has, and the
-     * button is worse than useless: pressing it sends somebody back through a Google consent
-     * sheet to arrive exactly where they started.
-     *
-     * True for the two where the control is not "do this step" but "change what it produced".
-     * Signing out is the only fix for the wrong Gmail. Reminders count as settled when somebody
-     * declines them, so a finished reminders step is often a switched-off one, and hiding the way
-     * to turn it on would strand anybody who changed their mind.
-     *
-     * Nothing is lost by hiding the rest. Every one of them is re-read when this screen comes
-     * forward, so a Drive grant revoked or a usage switch turned off drops its step back to
-     * outstanding on its own, action and all.
-     */
-    actionOutlivesTheStep: Boolean = false,
-    detail: String? = null,
-    last: Boolean = false,
-    answers: List<QA> = emptyList(),
-    action: @Composable (ColumnScope.() -> Unit)? = null
-) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            // Always, and in both directions. It used to be tappable only when it was closed
-            // and only on the one step that could reopen, so a step you had opened out of
-            // curiosity could not be put away again.
-            .then(if (onToggle != null) Modifier.clickable(onClick = onToggle) else Modifier)
-            .padding(horizontal = Gutter)
-            .height(IntrinsicSize.Min)
-    ) {
-        Column(
-            Modifier.width(24.dp).fillMaxHeight(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Node(number, done, live)
-            if (!last) {
-                Box(
-                    Modifier
-                        .width(2.dp)
-                        .weight(1f)
-                        .padding(vertical = 4.dp)
-                        .background(
-                            if (done) Status.posted else MaterialTheme.colorScheme.outlineVariant
-                        )
-                )
-            }
-        }
-
-        Spacer(Modifier.width(14.dp))
-
-        Column(Modifier.weight(1f).padding(bottom = if (last) 8.dp else 22.dp)) {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = if (live) FontWeight.SemiBold else FontWeight.Normal,
-                lineHeight = 24.sp,
-                color = when {
-                    live || done -> MaterialTheme.colorScheme.onSurface
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                }
-            )
-
-            if (done && result.isNotBlank()) {
-                Text(
-                    result,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            if (live) {
-                detail?.let {
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                if (action != null && (!done || actionOutlivesTheStep)) {
-                    Spacer(Modifier.height(16.dp))
-                    action()
-                }
-                Answers(answers)
-            }
-        }
-    }
-}
-
-/** Done, doing, or waiting its turn. */
-@Composable
-private fun Node(number: Int, done: Boolean, live: Boolean) {
-    val fill = when {
-        done -> Status.posted
-        live -> MaterialTheme.colorScheme.primary
-        else -> Color.Transparent
-    }
-
-    Box(
-        Modifier
-            .size(24.dp)
-            .clip(CircleShape)
-            .background(fill)
-            .then(
-                if (done || live) Modifier
-                else Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        if (done) {
-            // The page ground, which is dark behind the light green of the dark theme and light
-            // behind the deep green of the light one. One value, legible on both.
-            Icon(
-                Icons.Default.Check, null,
-                Modifier.size(14.dp),
-                tint = MaterialTheme.colorScheme.background
-            )
-        } else {
-            Text(
-                "$number",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = if (live) MaterialTheme.colorScheme.onPrimary
-                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-            )
-        }
-    }
-}
-
-/**
- * What people ask when they get stuck on this step.
- *
- * The first one open, the rest closed, one at a time. These are not documentation moved closer:
- * without them a tester wondering what lands in their Drive has nowhere to look, so they guess,
- * and the ones who guess wrong stop setting up and never say why.
- *
- * Which question somebody opened is deliberately not remembered across a launch. It is a glance,
- * not a place in a document.
- */
-@Composable
-private fun Answers(items: List<QA>) {
-    if (items.isEmpty()) return
-    // Nothing open to begin with. One of them being open by default made the step taller than it
-    // needed to be and answered a question the reader had not asked yet, which is the opposite of
-    // what a list of questions is for.
-    var open by remember { mutableStateOf(-1) }
-
-    Column(Modifier.padding(top = 18.dp)) {
-        Dashes()
-        items.forEachIndexed { index, item ->
-            val shown = open == index
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { open = if (shown) -1 else index }
-                    .padding(vertical = 11.dp)
-            ) {
-                Row(verticalAlignment = Alignment.Top) {
-                    Text(
-                        item.q,
-                        Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        if (shown) "\u2013" else "+",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                if (shown) {
-                    item.lead?.let {
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            it,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            lineHeight = MaterialTheme.typography.bodyMedium.fontSize * 1.4f
-                        )
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        item.a,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = MaterialTheme.typography.bodySmall.fontSize * 1.5f
-                    )
-                    item.art?.let {
-                        Spacer(Modifier.height(12.dp))
-                        it()
-                    }
-                }
-            }
-            Dashes()
-        }
-    }
-}
-
-/**
- * The page itself, twice, with the difference between the two marked.
- *
- * Drawn from the real thing rather than approximated, because the whole problem is where a
- * particular button sits relative to a particular message, and a tidied-up illustration would put
- * them wherever it was convenient. The ring and the dashed box are the only things added.
- *
- * Above: the way in, which is small, at the top, and easy to miss under a refusal set three times
- * its size. Below: the same page on the wrong Google account, where the button is simply absent,
- * which is a different problem with a different fix and looks almost identical until you know
- * where to look.
- */
-@Composable
-private fun GroupPageShots() {
-    Column(Modifier.fillMaxWidth()) {
-        Shot(
-            R.drawable.group_page_join,
-            296.dp,
-            "Tap the button. When it disappears, you have joined."
-        )
-        Spacer(Modifier.height(14.dp))
-        Shot(
-            R.drawable.group_page_no_join,
-            281.dp,
-            // No caption. The picture is the same page without the button, which is the whole of
-            // what it has to say, and the paragraph above already covers the two reasons for that.
-            null
-        )
-    }
-}
-
-/**
- * The four screens of the restricted setting, in the order they happen.
- *
- * This step used to carry six numbered instructions and a paragraph explaining why they were
- * needed, which is the longest piece of writing in the app and describes a route through somebody
- * else's Settings. Every one of those screens looks like every other screen in Settings, so the
- * words had to do all the identifying: the three dot menu in the top right corner, the switch that
- * says Controlled by Restricted Setting.
- *
- * Pictures do that better and in a quarter of the space. The order is the instruction, and the
- * only text left is what a picture cannot say: that nothing is wrong with the phone, and that the
- * menu in the third one does not exist until the message in the second has been seen once.
- */
-@Composable
-private fun RestrictedSettingShots() {
-    Column(Modifier.fillMaxWidth()) {
-        Shot(R.drawable.usage_switch, 184.dp, "Tap the switch, even though it looks disabled.")
-        Spacer(Modifier.height(14.dp))
-        Shot(
-            R.drawable.usage_denied,
-            322.dp,
-            "Close this. It has to be seen once before the menu below appears."
-        )
-        Spacer(Modifier.height(14.dp))
-        Shot(
-            R.drawable.usage_menu,
-            112.dp,
-            "Settings, then Apps, then TestTrack. Open the three dot menu."
-        )
-        Spacer(Modifier.height(14.dp))
-        Shot(
-            R.drawable.usage_allow,
-            121.dp,
-            "Choose this and confirm with your PIN. The switch will work now."
-        )
-    }
-}
-
-/**
- * [height] is stated rather than derived, which looks like the lazy way round and is not.
- *
- * The rail this sits inside is a Row measured at IntrinsicSize.Min, so the connector can run the
- * height of whatever the step turns out to be. Intrinsic measurement asks a child how tall it
- * wants to be without telling it how wide it will end up, and an image sized from its own aspect
- * ratio cannot answer that: it reports something far too short, gets laid out at that height, and
- * loses its top. Both screenshots came out missing the title row, which is where the button and
- * the ring are, so the picture lost the only thing it was there to show.
- *
- * A stated height answers the intrinsic query honestly, and FillWidth then fills that width on any
- * screen. Fit was there first and was wrong in a quieter way: it scales to whichever side runs out
- * of room first, so on a narrower phone the picture shrank and left the column with a margin down
- * both sides.
- *
- * Every height here is a little larger than the picture needs at the width this column has, so
- * what is left over is a band above and below rather than a piece taken off the top. Against the
- * page ground that band is invisible.
- */
-@Composable
-private fun Shot(id: Int, height: Dp, caption: String?) {
-    Image(
-        painter = painterResource(id),
-        contentDescription = null,
-        contentScale = ContentScale.FillWidth,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(height)
-            .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp))
-    )
-    caption?.let {
-        Spacer(Modifier.height(6.dp))
-        Text(
-            it,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            lineHeight = MaterialTheme.typography.labelSmall.fontSize * 1.4f
-        )
-    }
-}
-
-/** The console's dashed rule, which is what separates rows in a list over there. */
-@Composable
-private fun Dashes() {
-    val ink = MaterialTheme.colorScheme.outlineVariant
-    Canvas(Modifier.fillMaxWidth().height(1.dp)) {
-        drawLine(
-            color = ink,
-            start = Offset(0f, size.height / 2f),
-            end = Offset(size.width, size.height / 2f),
-            strokeWidth = size.height,
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.5.dp.toPx(), 3.dp.toPx()))
+            onDismiss = { confirmSignOut = false },
         )
     }
 }

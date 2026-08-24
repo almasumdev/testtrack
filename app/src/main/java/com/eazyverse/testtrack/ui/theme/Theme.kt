@@ -26,47 +26,49 @@ import androidx.core.view.WindowCompat
 private val Iris = Color(0xFF4F46E5)
 private val IrisLight = Color(0xFF8B87F5)
 
-private val LightColors = lightColorScheme(
-    primary = Iris,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFEEECFD),
-    onPrimaryContainer = Color(0xFF2E2792),
-    secondary = Color(0xFF5B6478),
-    onSecondary = Color.White,
-    background = Color(0xFFF6F7FB),
-    onBackground = Color(0xFF0B1020),
-    surface = Color(0xFFFFFFFF),
-    onSurface = Color(0xFF0B1020),
-    surfaceVariant = Color(0xFFEDF0F7),
-    onSurfaceVariant = Color(0xFF5B6478),
-    outline = Color(0xFF8E96AA),
-    outlineVariant = Color(0xFFE2E6F0),
-    error = Color(0xFFE11D48),
-    onError = Color.White,
-    errorContainer = Color(0xFFFCE9ED),
-    onErrorContainer = Color(0xFF9F1239)
-)
+private val LightColors =
+    lightColorScheme(
+        primary = Iris,
+        onPrimary = Color.White,
+        primaryContainer = Color(0xFFEEECFD),
+        onPrimaryContainer = Color(0xFF2E2792),
+        secondary = Color(0xFF5B6478),
+        onSecondary = Color.White,
+        background = Color(0xFFF6F7FB),
+        onBackground = Color(0xFF0B1020),
+        surface = Color(0xFFFFFFFF),
+        onSurface = Color(0xFF0B1020),
+        surfaceVariant = Color(0xFFEDF0F7),
+        onSurfaceVariant = Color(0xFF5B6478),
+        outline = Color(0xFF8E96AA),
+        outlineVariant = Color(0xFFE2E6F0),
+        error = Color(0xFFE11D48),
+        onError = Color.White,
+        errorContainer = Color(0xFFFCE9ED),
+        onErrorContainer = Color(0xFF9F1239),
+    )
 
-private val DarkColors = darkColorScheme(
-    primary = IrisLight,
-    onPrimary = Color(0xFF1A1745),
-    primaryContainer = Color(0xFF1C1D3A),
-    onPrimaryContainer = Color(0xFFD7D4FE),
-    secondary = Color(0xFF98A2B8),
-    onSecondary = Color(0xFF0B1020),
-    background = Color(0xFF080C16),
-    onBackground = Color(0xFFEEF1F8),
-    surface = Color(0xFF101626),
-    onSurface = Color(0xFFEEF1F8),
-    surfaceVariant = Color(0xFF182034),
-    onSurfaceVariant = Color(0xFF98A2B8),
-    outline = Color(0xFF6B7692),
-    outlineVariant = Color(0xFF232B41),
-    error = Color(0xFFFB7185),
-    onError = Color(0xFF3D0A17),
-    errorContainer = Color(0xFF31151F),
-    onErrorContainer = Color(0xFFFECDD3)
-)
+private val DarkColors =
+    darkColorScheme(
+        primary = IrisLight,
+        onPrimary = Color(0xFF1A1745),
+        primaryContainer = Color(0xFF1C1D3A),
+        onPrimaryContainer = Color(0xFFD7D4FE),
+        secondary = Color(0xFF98A2B8),
+        onSecondary = Color(0xFF0B1020),
+        background = Color(0xFF080C16),
+        onBackground = Color(0xFFEEF1F8),
+        surface = Color(0xFF101626),
+        onSurface = Color(0xFFEEF1F8),
+        surfaceVariant = Color(0xFF182034),
+        onSurfaceVariant = Color(0xFF98A2B8),
+        outline = Color(0xFF6B7692),
+        outlineVariant = Color(0xFF232B41),
+        error = Color(0xFFFB7185),
+        onError = Color(0xFF3D0A17),
+        errorContainer = Color(0xFF31151F),
+        onErrorContainer = Color(0xFFFECDD3),
+    )
 
 /**
  * State colours. Material has no slot for "reported but under the bar", so they live here and are
@@ -80,30 +82,32 @@ data class StatusColors(
     val missed: Color,
     val missedSoft: Color,
     val upcoming: Color,
-    val neutralSoft: Color
+    val neutralSoft: Color,
 )
 
-private val LightStatus = StatusColors(
-    posted = Color(0xFF059669),
-    postedSoft = Color(0xFFE2F4ED),
-    short = Color(0xFFC2670A),
-    shortSoft = Color(0xFFFBF0E1),
-    missed = Color(0xFFE11D48),
-    missedSoft = Color(0xFFFCE9ED),
-    upcoming = Color(0xFFE3E7F0),
-    neutralSoft = Color(0xFFEDF0F7)
-)
+private val LightStatus =
+    StatusColors(
+        posted = Color(0xFF059669),
+        postedSoft = Color(0xFFE2F4ED),
+        short = Color(0xFFC2670A),
+        shortSoft = Color(0xFFFBF0E1),
+        missed = Color(0xFFE11D48),
+        missedSoft = Color(0xFFFCE9ED),
+        upcoming = Color(0xFFE3E7F0),
+        neutralSoft = Color(0xFFEDF0F7),
+    )
 
-private val DarkStatus = StatusColors(
-    posted = Color(0xFF34D399),
-    postedSoft = Color(0xFF0E2A21),
-    short = Color(0xFFFBBF24),
-    shortSoft = Color(0xFF2C2210),
-    missed = Color(0xFFFB7185),
-    missedSoft = Color(0xFF31151F),
-    upcoming = Color(0xFF212940),
-    neutralSoft = Color(0xFF182034)
-)
+private val DarkStatus =
+    StatusColors(
+        posted = Color(0xFF34D399),
+        postedSoft = Color(0xFF0E2A21),
+        short = Color(0xFFFBBF24),
+        shortSoft = Color(0xFF2C2210),
+        missed = Color(0xFFFB7185),
+        missedSoft = Color(0xFF31151F),
+        upcoming = Color(0xFF212940),
+        neutralSoft = Color(0xFF182034),
+    )
 
 // Dark, because [ALWAYS_DARK] is. This default is only ever reached outside [TestTrackTheme] —
 // a preview, or something rendered before the provider is in place — and until now that fallback
@@ -124,7 +128,7 @@ private const val ALWAYS_DARK = true
 @Composable
 fun TestTrackTheme(
     darkTheme: Boolean = ALWAYS_DARK || isSystemInDarkTheme(),
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val colors = if (darkTheme) DarkColors else LightColors
 

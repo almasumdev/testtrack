@@ -54,7 +54,6 @@ const val FEEDBACK_ASK_COOLDOWN_MS = 2 * 24 * 60 * 60 * 1000L
  * other has to move with it, or evictions start coming back PERMISSION_DENIED.
  */
 object Compliance {
-
     /** Consecutive completed days missed before a member's app leaves the group. */
     const val MISSES_TO_REMOVE = 2
 
@@ -79,9 +78,15 @@ object Compliance {
      *
      * Founding members were placed before the clock started and are held to all of it.
      */
-    fun firstJudgedDay(placedAt: Long, startDate: Long): Int =
-        if (placedAt <= 0L || startDate <= 0L || placedAt <= startDate) 0
-        else ((placedAt - startDate) / DAY_MS).toInt() + 1
+    fun firstJudgedDay(
+        placedAt: Long,
+        startDate: Long,
+    ): Int =
+        if (placedAt <= 0L || startDate <= 0L || placedAt <= startDate) {
+            0
+        } else {
+            ((placedAt - startDate) / DAY_MS).toInt() + 1
+        }
 
     /**
      * The completed days one member owed one app, most recent first.
@@ -108,16 +113,17 @@ object Compliance {
          * there the moment the next device sweeps, and the admin's own "put back in testing" is
          * undone within the hour by somebody else's phone.
          */
-        reinstatedAt: Long = 0L
+        reinstatedAt: Long = 0L,
     ): List<Int> {
         val last = lastCompletedDay(dayIndex) ?: return emptyList()
         // Four floors, and the latest of them wins: when the tester arrived, when the app
         // arrived, how many opening days an admin excused for everybody, and when this tester
         // was last reinstated.
-        val first = maxOf(
-            maxOf(firstJudgedDay(testerPlacedAt, startDate), firstJudgedDay(appPlacedAt, startDate)),
-            maxOf(firstJudgedDay(reinstatedAt, startDate), graceDays.coerceAtLeast(0))
-        )
+        val first =
+            maxOf(
+                maxOf(firstJudgedDay(testerPlacedAt, startDate), firstJudgedDay(appPlacedAt, startDate)),
+                maxOf(firstJudgedDay(reinstatedAt, startDate), graceDays.coerceAtLeast(0)),
+            )
         return (0 until count).map { last - it }.filter { it >= first }
     }
 }
@@ -140,13 +146,6 @@ data class TestGroup(
     /** Epoch millis. Zero until the group first reached [THRESHOLD]; set once, by an admin. */
     val startDate: Long = 0L,
     /**
-     * How many days this run lasts.
-     *
-     * [RUN_DAYS] unless an admin has extended it. Nothing happens on its own when a run reaches
-     * the end: the days simply stop being owed, and testing carries on for anyone who wants to.
-     * Extending is the only way obligation continues.
-     */
-    /**
      * Days at the start of the run that nobody is held to.
      *
      * A run begins the moment its thirteenth app is placed, which can be eight in the evening, and
@@ -161,8 +160,15 @@ data class TestGroup(
      * is what those groups have been doing all along.
      */
     val graceDays: Int = 0,
+    /**
+     * How many days this run lasts.
+     *
+     * [RUN_DAYS] unless an admin has extended it. Nothing happens on its own when a run reaches
+     * the end: the days simply stop being owed, and testing carries on for anyone who wants to.
+     * Extending is the only way obligation continues.
+     */
     val runDays: Int = RUN_DAYS,
-    val status: String = STATUS_FORMING
+    val status: String = STATUS_FORMING,
 ) {
     val size: Int get() = memberUids.size
     val running: Boolean get() = startDate > 0L
@@ -242,7 +248,6 @@ data class TestApp(
      */
     val placedAt: Long = 0L,
     val status: String = STATUS_PENDING,
-
     /**
      * Taken out of testing by an admin, without leaving the group.
      *
@@ -257,7 +262,6 @@ data class TestApp(
     val removedAt: Long = 0L,
     /** Blank for an automatic removal, which is every one nobody typed a reason for. */
     val removedReason: String = "",
-
     /**
      * A cohort member saying this app's owner has missed two days running on theirs — set once,
      * automatically, by whoever's device noticed. Nothing is taken away when this is set: the
@@ -272,7 +276,6 @@ data class TestApp(
      */
     val flaggedAt: Long = 0L,
     val flaggedByAppId: String = "",
-
     /**
      * The last time an admin put this app back into testing, or gave it a clean slate without
      * ever taking it out — zero if that has never happened.
@@ -284,7 +287,6 @@ data class TestApp(
      * whichever cohort-mate's phone happens to sweep next.
      */
     val reinstatedAt: Long = 0L,
-
     /**
      * A cohort member saying this app would not open, or broke, before an admin ever heard about
      * it any other way.
@@ -302,7 +304,6 @@ data class TestApp(
     val reportedBy: String = "",
     /** Same cap as [notes] — read by whoever eventually resolves it, not typed for an audience. */
     val reportedReason: String = "",
-
     /**
      * The last time this app's owner told their cohort an update was out.
      *
@@ -311,7 +312,6 @@ data class TestApp(
      * disabling a button, since a patched client could otherwise send one every time it liked.
      */
     val lastBroadcastAt: Long = 0L,
-
     /**
      * The last time this app's owner asked their cohort for feedback.
      *
@@ -321,7 +321,6 @@ data class TestApp(
      * other.
      */
     val lastFeedbackAskAt: Long = 0L,
-
     /**
      * An admin's standing permission for this app to be skipped, member by member, rather than
      * for everybody at once.
@@ -334,7 +333,6 @@ data class TestApp(
      * blanket immunity from being tested is exactly the attack that pinning closes.
      */
     val skippable: Boolean = false,
-
     /**
      * How a tester gets past the front door: a test account, a sign-in code, a sandbox card
      * number. Whatever an app asks for before it will show anything worth testing.
@@ -349,7 +347,7 @@ data class TestApp(
      * and why anyone extending this should keep it that way rather than adding a field that looks
      * private without being it.
      */
-    val notes: String = ""
+    val notes: String = "",
 ) {
     val placed: Boolean get() = status == STATUS_ASSIGNED && !groupId.isNullOrBlank()
 
@@ -461,7 +459,7 @@ data class Proof(
      * Read by the row that posted it, to mark that day yellow rather than green — a real day, just
      * not one the random-timed capture itself produced a picture for.
      */
-    val manual: Boolean = false
+    val manual: Boolean = false,
 ) {
     /** A screenshot proves the app opened. The ten seconds of use is what proves it was used. */
     val meetsBar: Boolean get() = usageMs >= MIN_USAGE_MS
@@ -474,8 +472,12 @@ data class Proof(
          * Same tester, same app, same day of the same run always writes the same document, so
          * posting twice overwrites rather than duplicating.
          */
-        fun id(appId: String, testerUid: String, day: Int, runStartedAt: Long) =
-            "${appId}__${testerUid}__${runStartedAt}__$day"
+        fun id(
+            appId: String,
+            testerUid: String,
+            day: Int,
+            runStartedAt: Long,
+        ) = "${appId}__${testerUid}__${runStartedAt}__$day"
     }
 }
 
@@ -498,13 +500,17 @@ data class Feedback(
     val day: Int = 0,
     val runStartedAt: Long = 0L,
     val text: String = "",
-    val createdAt: Long = 0L
+    val createdAt: Long = 0L,
 ) {
     companion object {
         const val TEXT_MAX = 1000
 
-        fun id(appId: String, testerUid: String, day: Int, runStartedAt: Long) =
-            "${appId}__${testerUid}__${runStartedAt}__$day"
+        fun id(
+            appId: String,
+            testerUid: String,
+            day: Int,
+            runStartedAt: Long,
+        ) = "${appId}__${testerUid}__${runStartedAt}__$day"
     }
 }
 
@@ -514,7 +520,7 @@ data class Tester(
     val email: String = "",
     val displayName: String = "",
     /** A tiny JPEG as base64, or blank. See [Photo] for why it lives on the document. */
-    val photo: String = ""
+    val photo: String = "",
 ) {
     /** `someone@gmail.com` -> `someone`, which is all a grid column has room for. */
     val shortName: String
@@ -522,6 +528,35 @@ data class Tester(
 
     val initial: String get() = shortName.firstOrNull()?.uppercase() ?: "?"
 }
+
+/** [History.type] values. Every one is written by an admin — see AdminRepo.logHistory. */
+const val HISTORY_JOINED = "joined"
+const val HISTORY_REMOVED = "removed"
+const val HISTORY_RESTORED = "restored"
+const val HISTORY_KICKED = "kicked"
+
+/**
+ * One durable line in a cohort's own record — see AdminRepo.logHistory in the admin app.
+ *
+ * Unlike an event, nothing ever deletes one of these: an app being erased or an account being
+ * wiped takes their live documents with it, not the fact that they were once here.
+ *
+ * [groupName] and [appLabel] are copied in at write time rather than looked up when a row is
+ * drawn, because both source documents can later be gone — the app erased, the group emptied and
+ * deleted — and a durable record that goes blank the moment the thing it names is cleaned up was
+ * never durable at all.
+ */
+data class History(
+    val id: String = "",
+    val groupId: String = "",
+    val groupName: String = "",
+    val uid: String = "",
+    val type: String = "",
+    val appId: String = "",
+    val appLabel: String = "",
+    val actorUid: String = "",
+    val createdAt: Long = 0L,
+)
 
 /** Milliseconds as `4m 12s` / `45s`, for a stat line. */
 fun formatDuration(ms: Long): String {
