@@ -53,8 +53,8 @@ android {
         applicationId = "com.eazyverse.testtrack"
         minSdk = 26
         targetSdk = 37
-        versionCode = 62
-        versionName = "1.5.10"
+        versionCode = 63
+        versionName = "1.5.11"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "WEB_CLIENT_ID", "\"${secret("TESTTRACK_WEB_CLIENT_ID")}\"")

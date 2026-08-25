@@ -223,7 +223,7 @@ fun SubmitScreen(
                 // there to keep a list row readable, not to catch anyone out, and a form that
                 // takes six hundred characters and then rejects them has wasted the typing.
                 onValueChange = { vm.notesInput = it.take(NOTES_MAX) },
-                label = "Notes for your testers",
+                label = "Notes for your testers (optional)",
                 placeholder = "Test account: demo@example.com / pass1234",
                 supporting =
                     "Everyone in the group and the admins can read this. Use a " +
