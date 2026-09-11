@@ -52,8 +52,25 @@ enum class ReviewStep(
 data class ReviewJob(
     val post: ApiPost,
     val review: ApiReview,
+    /**
+     * Whether this sitting has already sent the reviewer to the Play review page.
+     *
+     * The one part of the job with no server state behind it, and it cannot have one: nobody
+     * outside Google can see that a review was left, which is the whole reason a screenshot is
+     * asked for. So the server's states run out at [ReviewStep.LEAVE], and without this the proof
+     * step is unreachable and a live app can never be submitted at all.
+     *
+     * It is not evidence and nothing is paid on it. It only opens the dialog. Losing it to a
+     * restart costs one more tap on a button that was going to be tapped anyway.
+     */
+    val leftReview: Boolean = false,
 ) {
-    val step: ReviewStep get() = ReviewStep.of(review)
+    val step: ReviewStep
+        get() {
+            val reached = ReviewStep.of(review)
+            val readyToProve = reached == ReviewStep.LEAVE && post.isLive && leftReview
+            return if (readyToProve) ReviewStep.PROVE else reached
+        }
 
     /** How far through the usage requirement, between nothing and everything. */
     val usedFraction: Float

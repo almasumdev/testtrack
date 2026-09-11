@@ -92,6 +92,16 @@ class ReviewViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Note that the reviewer has been handed to the Play review page.
+     *
+     * Which is as much as the app can ever know about a Play review, and all it is used for: the
+     * proof step opens. What gets judged is the screenshot.
+     */
+    fun markLeft() {
+        job = job?.copy(leftReview = true)
+    }
+
     /** The evidence, and the end of the reviewer's part. */
     fun submit(
         proofRef: String,

@@ -246,4 +246,10 @@ dependencies {
     // Lets the reminder worker be run on demand. Its real schedule is an evening delay, so
     // without this the only way to see it work is to wait for one.
     androidTestImplementation(libs.androidx.work.testing)
+    // The screens themselves, opened on a device. Everything else here checks what the app
+    // computes; this is the only thing that checks what somebody is actually shown.
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.androidx.espresso.core)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }

@@ -63,6 +63,33 @@ class ReviewStepTest {
     }
 
     @Test
+    fun a_live_post_waits_at_leave_until_play_has_actually_been_opened() {
+        // The server's last word on a live post is "used". Nothing outside Google can see that a
+        // review was left, so if the job did not carry this the proof step would be unreachable
+        // and a live post could never be submitted at all.
+        val waiting = ReviewJob(post, review("used"))
+        assertEquals(ReviewStep.LEAVE, waiting.step)
+        assertEquals(ReviewStep.PROVE, waiting.copy(leftReview = true).step)
+    }
+
+    @Test
+    fun a_closed_test_never_jumps_to_proof_because_there_is_no_play_page_to_leave() {
+        // Its review is written in the app, so being sent to Play is not a thing that happens and
+        // the flag must not move the step even if it somehow gets set.
+        val closed = post.copy(isLive = false)
+        val job = ReviewJob(closed, review("used"), leftReview = true)
+        assertEquals(ReviewStep.LEAVE, job.step)
+    }
+
+    @Test
+    fun having_opened_play_does_not_drag_an_earlier_step_forward() {
+        // The flag is only ever read at LEAVE. Someone who opened Play out of order is still on
+        // the step the server says they are on.
+        assertEquals(ReviewStep.INSTALL, ReviewJob(post, review("claimed"), leftReview = true).step)
+        assertEquals(ReviewStep.USE, ReviewJob(post, review("installed"), leftReview = true).step)
+    }
+
+    @Test
     fun the_usage_bar_is_a_fraction_of_what_is_needed() {
         assertEquals(0f, ReviewJob(post, review("installed", used = 0)).usedFraction, 0.001f)
         assertEquals(0.5f, ReviewJob(post, review("installed", used = 15_000)).usedFraction, 0.001f)

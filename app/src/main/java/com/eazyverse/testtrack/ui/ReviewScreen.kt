@@ -25,6 +25,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +57,11 @@ import com.eazyverse.testtrack.net.ApiPost
  *
  * Nothing here decides whether a step is done. The phone reports what it sees and the server says
  * what that adds up to, which is why the screen simply redraws whatever comes back.
+ *
+ * This half is the wiring: the view model, the lifecycle, the intents. Everything drawn lives in
+ * [ReviewBody], which is handed plain values and so can be opened by a test at any step, without
+ * an account, a network or Play. That split is not tidiness. The stepper shipped once with every
+ * step but the last already ticked, for want of a test that could open it.
  */
 @Composable
 fun ReviewScreen(
@@ -65,14 +71,13 @@ fun ReviewScreen(
 ) {
     val context = LocalContext.current
     val snackbars = remember { SnackbarHostState() }
-    var proving by remember { mutableStateOf(false) }
 
     LaunchedEffect(post.id) { vm.start(context, post) }
 
     // Every return to this screen is a measurement. Coming back from the app under review is the
     // whole interaction, so resume is where the stepper moves rather than a button.
     val owner = LocalLifecycleOwner.current
-    androidx.compose.runtime.DisposableEffect(owner) {
+    DisposableEffect(owner) {
         val watcher =
             LifecycleEventObserver { _, event ->
                 if (event == Lifecycle.Event.ON_RESUME) vm.refresh(context)
@@ -86,6 +91,48 @@ fun ReviewScreen(
         snackbars.showSnackbar(message)
         vm.clearMessage()
     }
+
+    ReviewBody(
+        post = post,
+        job = vm.job,
+        sideloaded = vm.sideloaded,
+        snackbars = snackbars,
+        onClose = onClose,
+        onLeave = { step ->
+            when (step) {
+                ReviewStep.INSTALL -> openPlay(context, post.packageName)
+                ReviewStep.USE -> openApp(context, post.packageName)
+                // Going to Play is also the only signal that the review may now exist, so the
+                // proof step opens on the way out rather than waiting for a state that cannot come.
+                ReviewStep.LEAVE -> {
+                    openPlay(context, post.packageName)
+                    vm.markLeft()
+                }
+                else -> Unit
+            }
+        },
+        onSend = { proof, written -> vm.submit(proof, written) },
+    )
+}
+
+/**
+ * The review, drawn.
+ *
+ * Takes what it shows rather than fetching it, so the screen a reviewer sees can be put in front
+ * of a test at any step. [onLeave] covers only the steps that hand somebody to another app;
+ * writing the proof opens a dialog this owns, because that is where the words are typed.
+ */
+@Composable
+fun ReviewBody(
+    post: ApiPost,
+    job: ReviewJob?,
+    sideloaded: Boolean,
+    snackbars: SnackbarHostState,
+    onClose: () -> Unit,
+    onLeave: (ReviewStep) -> Unit,
+    onSend: (proof: String, written: String) -> Unit,
+) {
+    var proving by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -121,7 +168,6 @@ fun ReviewScreen(
             }
         },
     ) { padding ->
-        val job = vm.job
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (job == null) {
                 Blank("Getting this ready.")
@@ -154,7 +200,7 @@ fun ReviewScreen(
                     }
                 }
 
-                if (vm.sideloaded) {
+                if (sideloaded) {
                     item {
                         Box(Modifier.padding(horizontal = Gutter, vertical = 12.dp)) {
                             Notice(Status.short, Lucide.TriangleAlert) {
@@ -177,18 +223,12 @@ fun ReviewScreen(
                             step = step,
                             job = job,
                             onAct = {
-                                when (step) {
-                                    ReviewStep.INSTALL -> openPlay(context, post.packageName)
-                                    ReviewStep.USE -> openApp(context, post.packageName)
-                                    ReviewStep.LEAVE ->
-                                        if (post.isLive) {
-                                            openPlay(context, post.packageName)
-                                        } else {
-                                            proving = true
-                                        }
-                                    ReviewStep.PROVE -> proving = true
-                                    ReviewStep.WAIT -> Unit
-                                }
+                                // Writing happens here. Every other step hands the reviewer to
+                                // Play or to the app itself, which is somebody else's screen.
+                                val writing =
+                                    step == ReviewStep.PROVE ||
+                                        (step == ReviewStep.LEAVE && !post.isLive)
+                                if (writing) proving = true else onLeave(step)
                             },
                         )
                     }
@@ -202,7 +242,7 @@ fun ReviewScreen(
             live = post.isLive,
             onSend = { proof, written ->
                 proving = false
-                vm.submit(proof, written)
+                onSend(proof, written)
             },
             onDismiss = { proving = false },
         )
@@ -252,7 +292,11 @@ private fun StepRow(
     onAct: () -> Unit,
 ) {
     val steps = ReviewStep.entries.filter { it != ReviewStep.WAIT }
-    val here = steps.indexOf(job.step).coerceAtLeast(steps.size - 1)
+
+    // Where the reviewer is standing. WAIT is not in this list, so a settled or unrecognised
+    // state answers -1, and that floors to the first step rather than the last: offering somebody
+    // the final step is an invitation to skip the three before it.
+    val here = steps.indexOf(job.step).coerceAtLeast(0)
     val mine = steps.indexOf(step)
     val done = job.settled || mine < here
     val current = !job.settled && mine == here
@@ -263,7 +307,9 @@ private fun StepRow(
                 Modifier
                     .size(26.dp)
                     .clip(RoundedCornerShape(percent = 50))
-                    .background(if (done) Status.postedSoft else MaterialTheme.colorScheme.surfaceVariant),
+                    .background(
+                        if (done) Status.postedSoft else MaterialTheme.colorScheme.surfaceVariant,
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 if (done) {
