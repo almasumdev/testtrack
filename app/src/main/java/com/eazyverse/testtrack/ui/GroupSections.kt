@@ -4,9 +4,6 @@ import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.HourglassEmpty
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,6 +12,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Hourglass
+import com.composables.icons.lucide.Info
+import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.data.*
 import kotlinx.coroutines.delay
 import java.util.Date
@@ -146,7 +146,7 @@ private fun DayEndBlock(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            Icons.Outlined.HourglassEmpty,
+            Lucide.Hourglass,
             contentDescription = null,
             modifier = Modifier.size(20.dp),
             tint = MaterialTheme.colorScheme.primary,
@@ -300,7 +300,7 @@ fun Action(
                         modifier = Modifier.size(46.dp),
                     ) {
                         Icon(
-                            Icons.Outlined.Info,
+                            Lucide.Info,
                             contentDescription = "How a round works",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

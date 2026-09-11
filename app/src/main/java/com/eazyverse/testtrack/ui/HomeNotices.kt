@@ -3,8 +3,6 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,6 +10,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.BellRing
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.TriangleAlert
+import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.data.*
 
 /**
@@ -27,16 +29,11 @@ fun MissedDayNotice(
     onDismiss: () -> Unit,
 ) {
     val tone = if (standing.finalWarning) Status.missed else Status.short
-    val ground = if (standing.finalWarning) Status.missedSoft else Status.shortSoft
 
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Gutter)
-            .padding(top = 18.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(ground)
-            .padding(14.dp),
+    Notice(
+        tone = tone,
+        icon = Lucide.TriangleAlert,
+        modifier = Modifier.padding(horizontal = Gutter).padding(top = 18.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -51,7 +48,7 @@ fun MissedDayNotice(
                 modifier = Modifier.weight(1f),
             )
             IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-                Icon(Icons.Default.Close, "Close", tint = tone, modifier = Modifier.size(18.dp))
+                Icon(Lucide.X, "Close", tint = tone, modifier = Modifier.size(18.dp))
             }
         }
         Spacer(Modifier.height(4.dp))
@@ -62,7 +59,7 @@ fun MissedDayNotice(
                     "to the queue."
             } else {
                 "You didn't open ${standing.names}. Open ${standing.it} today and nothing comes " +
-                    "of it. Miss a second day in a row and your app leaves the group."
+                    "of it. Miss a second day in a row and your app leaves the crew."
             },
             style = MaterialTheme.typography.bodySmall,
             color = tone,
@@ -73,7 +70,7 @@ fun MissedDayNotice(
 /**
  * Something that has already happened to this tester, with a way to say they have read it.
  *
- * Dismissal is explicit rather than timed. "Your app was removed from its group" is the kind of
+ * Dismissal is explicit rather than timed. "Your app was removed from its crew" is the kind of
  * thing someone should have to acknowledge, not something that quietly disappears while the phone
  * is in a pocket.
  */
@@ -118,14 +115,10 @@ fun EventNotice(
  */
 @Composable
 fun NotificationPrompt(onGrant: () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Gutter)
-            .padding(top = 18.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(Status.shortSoft)
-            .padding(14.dp),
+    Notice(
+        tone = Status.short,
+        icon = Lucide.BellRing,
+        modifier = Modifier.padding(horizontal = Gutter).padding(top = 18.dp),
     ) {
         Text(
             "Turn on notifications",
@@ -136,9 +129,11 @@ fun NotificationPrompt(onGrant: () -> Unit) {
         Spacer(Modifier.height(4.dp))
         Text(
             "Your run has started, and we warn you the day before a missed day costs you your " +
-                "place in the group. Without notifications that warning has nowhere to go.",
+                "place in the crew. Without notifications that warning has nowhere to go.",
+            // Ordinary text now that the edge carries the tone. A whole paragraph in amber was
+            // the loudest thing on Home and the least worth reading twice.
             style = MaterialTheme.typography.bodySmall,
-            color = Status.short,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(4.dp))
         TextButton(onClick = onGrant, modifier = Modifier.align(Alignment.End)) {

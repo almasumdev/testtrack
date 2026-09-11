@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -103,6 +104,8 @@ fun DialogField(
     singleLine: Boolean = true,
     /** Which key the keyboard offers. Ignored where the field takes more than one line. */
     imeAction: ImeAction = ImeAction.Done,
+    /** Which keyboard. A field that only accepts digits should not open a letter one. */
+    keyboardType: KeyboardType = KeyboardType.Text,
     /** A floor, for a field that expects a sentence or two rather than a word. */
     minHeight: Dp = 0.dp,
     /** The field's own cap, shown as "used/max" under it. Not enforced here — the caller already
@@ -131,6 +134,7 @@ fun DialogField(
             // field taking more than one line does not get to name the action.
             keyboardOptions =
                 KeyboardOptions(
+                    keyboardType = keyboardType,
                     imeAction = if (singleLine) imeAction else ImeAction.Default,
                 ),
             modifier = Modifier.fillMaxWidth().heightIn(min = minHeight),

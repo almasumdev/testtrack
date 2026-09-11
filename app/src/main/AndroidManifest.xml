@@ -47,6 +47,22 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!--
+      The same service stays foreground a little longer under this type once a round ends, only
+      long enough to see that round's captures actually reach Drive and Firestore before the
+      process loses the standing that was protecting them — see CaptureService.beginDrainingThenStop.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!--
+      Keeps the screen on for a round's duration. A round switches between other apps on a timer
+      with nobody touching the screen in between, which is exactly what a normal screen timeout
+      does not expect — losing the display mid-round mid-visit corrupts both the screenshot and
+      the usage figure it is paired with. Held only while a round is actually running; see
+      CaptureService.acquireScreenWakeLock.
+    -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!--
       Returning to TestTrack after capturing someone else's app is a background activity launch,
       which Android refuses outright (BAL_BLOCK). Holding this is the documented exemption.
       Optional: without it capture still works and the tester switches back by hand.
@@ -112,7 +128,7 @@
         <service
             android:name=".data.CaptureService"
             android:exported="false"
-            android:foregroundServiceType="mediaProjection" />
+            android:foregroundServiceType="mediaProjection|dataSync" />
 
         <!--
           Push. Exported because Play services delivers to it from outside the app; the

@@ -341,3 +341,37 @@ fun Primary(
         Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
     }
 }
+
+/**
+ * Something the reader needs to know, drawn as an edge rather than a fill.
+ *
+ * Anything larger than a chip gets this instead of a coloured ground. A hairline in the tone, the
+ * tone on the glyph, and the words in ordinary text: it says the same thing and leaves the surface
+ * alone. See [StatusColors] for why a filled one did not.
+ *
+ * It also matches how the rest of the app is built. Every card here is bordered rather than
+ * raised, so a notice that is bordered rather than filled is the same idea one size down.
+ */
+@Composable
+fun Notice(
+    tone: Color,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        modifier
+            .fillMaxWidth()
+            .clip(shape)
+            // Forty per cent, not full strength. At full strength a hairline reads as a box that
+            // has been drawn around something, which is louder than the sentence inside it.
+            .border(1.dp, tone.copy(alpha = 0.42f), shape)
+            .padding(horizontal = 13.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Icon(icon, null, Modifier.padding(top = 1.dp).size(16.dp), tint = tone)
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f), content = content)
+    }
+}

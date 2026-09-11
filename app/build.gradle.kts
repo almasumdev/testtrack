@@ -4,6 +4,7 @@ plugins {
     // No kotlin-android: AGP 9 compiles Kotlin itself. The Compose compiler is still its own plugin.
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
     // Applied here too, not only at the root: the root's own apply only reaches its own build
@@ -60,6 +61,16 @@ android {
         buildConfigField("String", "WEB_CLIENT_ID", "\"${secret("TESTTRACK_WEB_CLIENT_ID")}\"")
         buildConfigField("String", "GATE_URL", "\"${secret("TESTTRACK_GATE_URL")}\"")
         buildConfigField("String", "GROUP_URL", "\"${secret("TESTTRACK_GROUP_URL")}\"")
+
+        /*
+         * Where our own API lives. A field rather than a constant, because debug and release
+         * point at different places and a constant is a thing somebody has to remember to
+         * change back before shipping.
+         *
+         * Overridden per build type below. This default is the live one, so a build type that
+         * forgets to set it talks to production rather than to nothing.
+         */
+        buildConfigField("String", "API_BASE", "\"https://testtrack.eazyverse.com/api/v1\"")
     }
 
     /**
@@ -111,6 +122,17 @@ android {
          */
         debug {
             applicationIdSuffix = ".debug"
+
+            /*
+             * The same API, still over HTTPS. Pointing a debug build at a plain HTTP address
+             * on the LAN was the other option and it costs more than it looks: Android blocks
+             * cleartext by default, so it needs a network security exemption that then has to
+             * be kept out of release, and the address changes with the network.
+             *
+             * Set explicitly anyway rather than inherited, so that pointing debug somewhere
+             * else is one line here and touches nothing that ships.
+             */
+            buildConfigField("String", "API_BASE", "\"https://testtrack.eazyverse.com/api/v1\"")
 
             /*
              * Signed with the release key where there is one, and it is no longer load-bearing.
@@ -165,7 +187,21 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.material.icons.extended)
+    /*
+     * Icons, in place of material-icons-extended.
+     *
+     * Material's own set is frozen legacy, and Google's guidance is not to ship the extended
+     * artifact at all: two thousand icons behind one import, for the thirty this app draws.
+     * Lucide is one uniform 24px grid at a 2px stroke, which is the half of the redesign an icon
+     * set is responsible for, and it holds up beside a monospace numeral in a way Material's
+     * mixed filled-and-outlined set never did.
+     *
+     * Same shape of artifact, so the same R8 shrinking applies: `Lucide.Check` is a top level
+     * extension property, and the ones nothing references do not reach the release build.
+     */
+    implementation(libs.okhttp)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.lucide)
     implementation(libs.androidx.navigation.compose)
     debugImplementation(libs.androidx.ui.tooling)
 

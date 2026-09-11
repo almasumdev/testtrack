@@ -276,7 +276,7 @@ private fun History.verb() =
         HISTORY_JOINED -> "You joined"
         HISTORY_REMOVED -> "You were taken out of testing"
         HISTORY_RESTORED -> "You were put back in testing"
-        HISTORY_KICKED -> "You were kicked from the group"
+        HISTORY_KICKED -> "You were kicked from the crew"
         else -> type
     }
 

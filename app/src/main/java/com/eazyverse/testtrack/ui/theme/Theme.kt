@@ -71,8 +71,26 @@ private val DarkColors =
     )
 
 /**
- * State colours. Material has no slot for "reported but under the bar", so they live here and are
- * read through [com.eazyverse.testtrack.ui.Status].
+ * State colours, and one deliberate flattening in them.
+ *
+ * Material has no slot for "reported but under the bar", so they live here and are read through
+ * [com.eazyverse.testtrack.ui.Status].
+ *
+ * The three soft tones are the same colour, and the name they keep is the status they belong to
+ * rather than the value they hold. That is not an oversight to tidy up later.
+ *
+ * They used to be a tint of their own hue: a green black, a warm brown, a maroon. Every surface in
+ * this app is cool navy, and amber and rose have almost no blue in them, so those tints carried
+ * none of the ground they sat on. At the size of one word nobody could tell. Across the width of a
+ * card, which is what a notice is, the eye had an inch of it to judge against the surface
+ * underneath and it read as a stain rather than as a warning.
+ *
+ * So a chip has one ground and the status lives in its label. Five backgrounds in a row read as
+ * five kinds of object; one ground with five words on it reads as one set of five states, which is
+ * what they are. Anything larger than a chip is outlined instead of filled, see [Notice].
+ *
+ * The accent is the exception and keeps its own fill, because it is the only one of them that can
+ * be pressed.
  */
 data class StatusColors(
     val posted: Color,
@@ -88,11 +106,11 @@ data class StatusColors(
 private val LightStatus =
     StatusColors(
         posted = Color(0xFF059669),
-        postedSoft = Color(0xFFE2F4ED),
+        postedSoft = Color(0xFFEDF0F7),
         short = Color(0xFFC2670A),
-        shortSoft = Color(0xFFFBF0E1),
+        shortSoft = Color(0xFFEDF0F7),
         missed = Color(0xFFE11D48),
-        missedSoft = Color(0xFFFCE9ED),
+        missedSoft = Color(0xFFEDF0F7),
         upcoming = Color(0xFFE3E7F0),
         neutralSoft = Color(0xFFEDF0F7),
     )
@@ -100,11 +118,11 @@ private val LightStatus =
 private val DarkStatus =
     StatusColors(
         posted = Color(0xFF34D399),
-        postedSoft = Color(0xFF0E2A21),
+        postedSoft = Color(0xFF182034),
         short = Color(0xFFFBBF24),
-        shortSoft = Color(0xFF2C2210),
+        shortSoft = Color(0xFF182034),
         missed = Color(0xFFFB7185),
-        missedSoft = Color(0xFF31151F),
+        missedSoft = Color(0xFF182034),
         upcoming = Color(0xFF212940),
         neutralSoft = Color(0xFF182034),
     )

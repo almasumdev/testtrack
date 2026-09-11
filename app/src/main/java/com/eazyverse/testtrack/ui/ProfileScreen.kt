@@ -11,12 +11,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.outlined.Inbox
-import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +23,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Camera
+import com.composables.icons.lucide.Inbox
+import com.composables.icons.lucide.LogOut
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Pencil
 import com.eazyverse.testtrack.data.*
 import com.eazyverse.testtrack.findActivity
 import kotlinx.coroutines.launch
@@ -159,15 +159,15 @@ fun ProfileScreen(
                 title = { },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Lucide.ArrowLeft, "Back")
                     }
                 },
                 actions = {
                     IconButton(onClick = { editing = true }) {
-                        Icon(Icons.Default.Edit, "Edit profile")
+                        Icon(Lucide.Pencil, "Edit profile")
                     }
                     IconButton(onClick = { confirmSignOut = true }) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, "Sign out")
+                        Icon(Lucide.LogOut, "Sign out")
                     }
                 },
                 colors =
@@ -223,7 +223,7 @@ fun ProfileScreen(
 
                 if (vm.apps.isEmpty() && vm.groups.isEmpty()) {
                     EmptyState(
-                        icon = Icons.Outlined.Inbox,
+                        icon = Lucide.Inbox,
                         title = "Nothing here yet",
                         subtitle = "Submit an app and your record starts filling in.",
                     )
@@ -334,7 +334,7 @@ private fun EditProfile(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        Icons.Outlined.PhotoCamera,
+                        Lucide.Camera,
                         "Change picture",
                         Modifier.size(15.dp),
                         tint = MaterialTheme.colorScheme.onPrimary,

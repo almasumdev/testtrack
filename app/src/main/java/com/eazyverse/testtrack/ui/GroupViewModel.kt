@@ -9,9 +9,21 @@ import com.eazyverse.testtrack.data.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.File
 
 class GroupViewModel : ViewModel() {
+    /**
+     * Serializes [publish]'s uploads.
+     *
+     * A round finishes with every visit landing at once, and that used to mean up to fourteen
+     * concurrent Drive uploads and auth fetches — exactly the burst that trips transient failures
+     * (rate limits, token contention). One at a time gives Drive far less to contend with, and as
+     * a side effect stops [DriveRepo.folderId]'s lookup-or-create from racing itself into
+     * duplicate folders when the very first upload of a session is what creates one.
+     */
+    private val uploadMutex = Mutex()
     var group by mutableStateOf<TestGroup?>(null)
         private set
     var mine by mutableStateOf<TestApp?>(null)
@@ -292,9 +304,9 @@ class GroupViewModel : ViewModel() {
             }.onFailure {
                 message =
                     it.friendly(
-                        "We couldn't load this group. Check your connection and try again.",
+                        "We couldn't load this crew. Check your connection and try again.",
                         denied =
-                            "You're not in this group any more. It may have been dissolved, or " +
+                            "You're not in this crew any more. It may have been dissolved, or " +
                                 "your app may have been taken out of it.",
                     )
             }
@@ -527,62 +539,75 @@ class GroupViewModel : ViewModel() {
         uploading += 1
         sending = sending + app.id
         viewModelScope.launch {
-            val token = AuthRepo.driveTokenOrNull(activity)
-            if (token == null) {
-                // The cached flag is now known to be wrong, and it is the only thing standing
-                // between the tester and the step that fixes this. Left true, Setup shows Drive as
-                // done and offers no way to reconnect.
-                Session.updateDriveConnected(false)
-                message = "Your Drive access has expired. Open Setup from the top of the home " +
-                    "screen and reconnect it, then try again."
-            } else {
-                val file = File(capture.path)
-                val name = "${app.packageName}_day${d}_${uid.take(6)}.jpg"
-                when (val result = DriveRepo.upload(token, file, name)) {
-                    is UploadResult.Failed -> message = result.reason
-                    is UploadResult.Ok -> {
-                        val proof =
-                            Proof(
-                                runStartedAt = cohort.startDate,
-                                appId = app.id,
-                                groupId = cohort.id,
-                                ownerUid = app.ownerUid,
-                                testerUid = uid,
-                                testerEmail = email,
-                                day = d,
-                                fileId = result.file.id,
-                                imageUrl = result.file.thumbUrl,
-                                capturedAt = System.currentTimeMillis(),
-                                usageMs = capture.usageMs,
-                                manual = capture.manual,
-                            )
-                        runCatching { Repo.recordProof(proof) }
-                            .onSuccess {
-                                Telemetry.proofPosted()
-                                file.delete()
-                                if (proof.meetsBar) {
-                                    doneToday = doneToday + app.id
-                                    if (capture.manual) manualToday = manualToday + app.id
-                                    Cache.put(Cache.doneToday(uid, cohort.id, d), doneToday)
-                                    Cache.put(Cache.manualToday(uid, cohort.id, d), manualToday)
-                                } else {
-                                    message = "${app.label} only counted " +
-                                        "${formatDuration(proof.usageMs)}. Open it again and " +
-                                        "stay in it until we bring you back."
-                                }
-                            }.onFailure {
-                                message =
-                                    it.friendly(
-                                        "We couldn't save that proof. Check your connection and try again.",
-                                        denied =
-                                            "You're not in this group any more, so today's test " +
-                                                "can't be recorded against it.",
-                                    )
+            // Only a visit that genuinely finished — uploaded and recorded — is consumed below.
+            // A transient failure used to be indistinguishable from success as far as the queue
+            // was concerned: either way it vanished from CaptureService.results. Now it stays
+            // there, so the next time this same drain effect runs (the next visit that lands, or
+            // simply leaving and returning to this screen) picks it back up and tries again,
+            // instead of the tester's already-earned visit being gone for good.
+            val recorded =
+                uploadMutex.withLock {
+                    val token = AuthRepo.driveTokenOrNull(activity)
+                    if (token == null) {
+                        // The cached flag is now known to be wrong, and it is the only thing
+                        // standing between the tester and the step that fixes this. Left true,
+                        // Setup shows Drive as done and offers no way to reconnect.
+                        Session.updateDriveConnected(false)
+                        message = "Your Drive access has expired. Open Setup from the top of " +
+                            "the home screen and reconnect it, then try again."
+                        false
+                    } else {
+                        val file = File(capture.path)
+                        val name = "${app.packageName}_day${d}_${uid.take(6)}.jpg"
+                        when (val result = DriveRepo.upload(token, file, name)) {
+                            is UploadResult.Failed -> {
+                                message = result.reason
+                                false
                             }
+                            is UploadResult.Ok -> {
+                                val proof =
+                                    Proof(
+                                        runStartedAt = cohort.startDate,
+                                        appId = app.id,
+                                        groupId = cohort.id,
+                                        ownerUid = app.ownerUid,
+                                        testerUid = uid,
+                                        testerEmail = email,
+                                        day = d,
+                                        fileId = result.file.id,
+                                        imageUrl = result.file.thumbUrl,
+                                        capturedAt = System.currentTimeMillis(),
+                                        usageMs = capture.usageMs,
+                                        manual = capture.manual,
+                                    )
+                                runCatching { Repo.recordProof(proof) }
+                                    .onSuccess {
+                                        Telemetry.proofPosted()
+                                        file.delete()
+                                        if (proof.meetsBar) {
+                                            doneToday = doneToday + app.id
+                                            if (capture.manual) manualToday = manualToday + app.id
+                                            Cache.put(Cache.doneToday(uid, cohort.id, d), doneToday)
+                                            Cache.put(Cache.manualToday(uid, cohort.id, d), manualToday)
+                                        } else {
+                                            message = "${app.label} only counted " +
+                                                "${formatDuration(proof.usageMs)}. Open it again and " +
+                                                "stay in it until we bring you back."
+                                        }
+                                    }.onFailure {
+                                        message =
+                                            it.friendly(
+                                                "We couldn't save that proof. Check your connection and try again.",
+                                                denied =
+                                                    "You're not in this crew any more, so today's test " +
+                                                        "can't be recorded against it.",
+                                            )
+                                    }.isSuccess
+                            }
+                        }
                     }
                 }
-            }
-            CaptureService.consume(app.packageName)
+            if (recorded) CaptureService.consume(app.packageName)
             uploading -= 1
             sending = sending - app.id
         }

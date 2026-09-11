@@ -86,7 +86,7 @@ fun Grid(
 
         if (vm.testers.isEmpty()) {
             Text(
-                "No other members in this group yet.",
+                "No other members in this crew yet.",
                 Modifier.padding(vertical = 24.dp),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -126,7 +126,7 @@ private fun GridRow(
             )
             if (departed) {
                 Text(
-                    "Left the group",
+                    "Left the crew",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -140,7 +140,7 @@ private fun GridRow(
                     .padding(end = CELL_GAP)
                     .semantics {
                         contentDescription = "${tester.shortName}, day ${day + 1}, " +
-                            (if (departed) "left the group, " else "") + state.spoken()
+                            (if (departed) "left the crew, " else "") + state.spoken()
                     }.then(
                         if (proof != null) {
                             Modifier.clickable { onCell(tester, proof) }

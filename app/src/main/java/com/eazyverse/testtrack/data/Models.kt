@@ -348,6 +348,17 @@ data class TestApp(
      * private without being it.
      */
     val notes: String = "",
+    /**
+     * The versionCode this app's owner last had installed via Play on a device running
+     * TestTrack — a stand-in for "the build live on Play," since nobody but the owner can see
+     * the closed-testing listing testers are gated behind. See [InstalledApps.Info.fromPlay].
+     *
+     * Zero until that has happened once, which a cohort member's Update chip treats the same as
+     * "already current" — nothing to route to yet either way.
+     */
+    val latestVersionCode: Long = 0L,
+    /** Captured alongside [latestVersionCode] from the same read; blank until then. */
+    val latestVersionName: String = "",
 ) {
     val placed: Boolean get() = status == STATUS_ASSIGNED && !groupId.isNullOrBlank()
 

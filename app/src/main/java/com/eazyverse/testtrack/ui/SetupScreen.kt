@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -26,6 +24,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.LogOut
+import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.data.*
 import com.eazyverse.testtrack.findActivity
@@ -235,7 +235,7 @@ fun SetupScreen(
                     onClick = { confirmSignOut = true },
                     modifier = Modifier.offset(x = 12.dp),
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.Logout, "Sign out")
+                    Icon(Lucide.LogOut, "Sign out")
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -319,7 +319,7 @@ fun SetupScreen(
                         QA(
                             "Can I leave later?",
                             "Yes, from Google Groups. Leaving mid run means the apps you were " +
-                                "testing drop out of your list and your group is a person short, so " +
+                                "testing drop out of your list and your crew is a person short, so " +
                                 "finish the fortnight first if you can.",
                         ),
                     ),
@@ -459,7 +459,7 @@ fun SetupScreen(
                     },
                 detail =
                     "A run is fourteen days with no gaps, and one missed day resets the " +
-                        "clock for everyone in your group, not just for you. We'll only nudge you " +
+                        "clock for everyone in your crew, not just for you. We'll only nudge you " +
                         "when apps are still waiting, never to say well done.",
                 done = done[4],
                 live = live(4),

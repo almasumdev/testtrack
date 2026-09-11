@@ -10,8 +10,6 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,6 +30,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.ArrowRight
+import com.composables.icons.lucide.Lucide
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
@@ -158,7 +158,7 @@ fun OnboardingScreen(onDone: () -> Unit) {
             )
             if (!last) {
                 Spacer(Modifier.width(8.dp))
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(20.dp))
+                Icon(Lucide.ArrowRight, null, Modifier.size(20.dp))
             }
         }
         Spacer(Modifier.height(20.dp))

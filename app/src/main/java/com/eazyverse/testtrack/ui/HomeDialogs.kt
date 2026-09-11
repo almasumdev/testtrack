@@ -34,7 +34,7 @@ fun HomeNotesDialog(
                 placeholder = "Test account: demo@example.com / pass1234",
                 supporting =
                     "Anything they need to get past the front door. Everyone in your " +
-                        "group and the admins can read this, so use a throwaway account, never your " +
+                        "crew and the admins can read this, so use a throwaway account, never your " +
                         "own password.",
                 singleLine = false,
                 // The same floor the submit form gives it. A field asking for a sign-in note is

@@ -78,11 +78,12 @@ class UsageUnderQueriesTest {
     @Test
     fun foregroundTimeIsReadableForAnotherApp() {
         val pkg = launchableApps().first()
+        val since = System.currentTimeMillis()
 
         assertTrue("could not launch $pkg", InstalledApps.launch(context, pkg))
         Thread.sleep(15_000)
 
-        val ms = UsageRepo.foregroundMsToday(context, pkg)
+        val ms = UsageRepo.foregroundMsSince(context, pkg, since)
         assertTrue(
             "UsageStatsManager reported ${ms}ms for $pkg after a 15s visit — " +
                 "package visibility is filtering usage stats, and the proof mechanism is gone",

@@ -41,6 +41,10 @@ fun parseApp(doc: DocumentSnapshot) =
         // Also absent from every document written before this existed, and blank there reads as
         // an app with nothing a tester needs before opening it, which is the honest answer.
         notes = doc.getString("notes").orEmpty(),
+        // Absent everywhere before this existed, which reads as never synced from the owner's
+        // own device — see TestApp.latestVersionCode.
+        latestVersionCode = doc.getLong("latestVersionCode") ?: 0L,
+        latestVersionName = doc.getString("latestVersionName").orEmpty(),
     )
 
 /**
@@ -138,6 +142,31 @@ suspend fun Repo.updateNotes(
             .collection("apps")
             .document(packageName)
             .set(mapOf("notes" to notes), SetOptions.merge()),
+    )
+}
+
+/**
+ * Records the versionCode/versionName the owner's own device just read from its Play-installed
+ * copy of this app — see [TestApp.latestVersionCode]. Called only once that read has already
+ * been confirmed to both come from Play and be newer than what is on record, so there is nothing
+ * left to check here; this just writes it down.
+ */
+suspend fun Repo.updateLatestVersion(
+    packageName: String,
+    versionCode: Long,
+    versionName: String,
+) {
+    await(
+        db
+            .collection("apps")
+            .document(packageName)
+            .set(
+                mapOf(
+                    "latestVersionCode" to versionCode,
+                    "latestVersionName" to versionName,
+                ),
+                SetOptions.merge(),
+            ),
     )
 }
 

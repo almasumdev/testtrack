@@ -39,6 +39,9 @@ object InstalledApps {
          */
         val installer: String? = null,
         val label: String? = null,
+        /** From the same [android.content.pm.PackageInfo] read as everything else here — no extra cost. */
+        val versionCode: Long = 0L,
+        val versionName: String? = null,
     ) {
         /** Whole days the app has been continuously installed. */
         val streakDays: Int
@@ -215,6 +218,14 @@ object InstalledApps {
                         }
                     }.getOrNull(),
                 label = runCatching { pm.getApplicationLabel(p.applicationInfo!!).toString() }.getOrNull(),
+                versionCode =
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        p.longVersionCode
+                    } else {
+                        @Suppress("DEPRECATION")
+                        p.versionCode.toLong()
+                    },
+                versionName = p.versionName,
             )
         } catch (_: PackageManager.NameNotFoundException) {
             Info(installed = false)

@@ -71,7 +71,7 @@ fun Headline(vm: DashboardViewModel) {
             if (day != null) {
                 "reported today · day ${day + 1} of ${vm.runDays}"
             } else {
-                "the run begins when the group reaches ${TestGroup.THRESHOLD} members"
+                "the run begins when the crew reaches ${TestGroup.THRESHOLD} members"
             },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -253,11 +253,11 @@ fun PerTester(vm: DashboardViewModel) {
 
     // A day fraction here would be unfair rather than just imprecise: "elapsed" is the whole
     // cohort's current day, not however long this person was actually a member for, and there is
-    // deliberately no record of that in the grid — see stateOf. "Left the group" is the honest
+    // deliberately no record of that in the grid — see stateOf. "Left the crew" is the honest
     // version of that same fact.
     if (vm.departed.isNotEmpty()) {
         Spacer(Modifier.height(22.dp))
-        SectionLabel("Left the group")
+        SectionLabel("Left the crew")
         Rows {
             vm.departed.forEachIndexed { index, tester ->
                 if (index > 0) RowDivider()

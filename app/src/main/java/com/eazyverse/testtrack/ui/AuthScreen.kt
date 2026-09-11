@@ -7,11 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,6 +26,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.Camera
+import com.composables.icons.lucide.CircleAlert
+import com.composables.icons.lucide.CloudUpload
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.data.*
 import com.eazyverse.testtrack.data.AdminEvents
 import com.eazyverse.testtrack.findActivity
@@ -136,17 +136,17 @@ fun AuthScreen(
         Spacer(Modifier.weight(0.7f))
 
         Reason(
-            Icons.Default.Group,
+            Lucide.Users,
             "You test theirs, they test yours",
-            "Fourteen people in a group, all testing the same fortnight together.",
+            "Fourteen people in a crew, all testing the same fortnight together.",
         )
         Reason(
-            Icons.Default.PhotoCamera,
+            Lucide.Camera,
             "Ten seconds a day",
             "Open an app from your list. The time is logged while you use it, with nothing to fill in.",
         )
         Reason(
-            Icons.Default.CloudUpload,
+            Lucide.CloudUpload,
             "The proof stays yours",
             "It goes to your own Google Drive. We only see the files TestTrack puts there.",
         )
@@ -162,7 +162,7 @@ fun AuthScreen(
                     .padding(14.dp),
             ) {
                 Icon(
-                    Icons.Default.ErrorOutline,
+                    Lucide.CircleAlert,
                     null,
                     Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onErrorContainer,

@@ -5,8 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.data.*
 import kotlinx.coroutines.launch
 
@@ -32,8 +32,8 @@ val SUBMIT_RULES =
     listOf(
         "My app is live on a closed testing track and I've added the testers group to it.",
         "I'll keep that release on the track for the whole 14 days.",
-        "I'll open every other app in my group, every day, until the run ends.",
-        "I won't opt out of anyone's test, or leave the group, before the 14 days are up.",
+        "I'll open every other app in my crew, every day, until the run ends.",
+        "I won't opt out of anyone's test, or leave my crew, before the 14 days are up.",
     )
 
 class SubmitViewModel : ViewModel() {
@@ -164,7 +164,7 @@ fun SubmitScreen(
                 title = { Text("Submit an app", fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Lucide.ArrowLeft, "Back")
                     }
                 },
                 colors =
@@ -187,8 +187,8 @@ fun SubmitScreen(
                     "track, and add the testers group to that track so everyone here can " +
                     "install it.\n\n" +
                     "Then tell us the package name below. An admin will put your app into a " +
-                    "testing group, and being placed is the approval. Your 14 days start once " +
-                    "that group has enough people in it.",
+                    "crew, and being placed is the approval. Your 14 days start once " +
+                    "that crew has enough people in it.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = MaterialTheme.typography.bodyMedium.fontSize * 1.5f,
@@ -226,7 +226,7 @@ fun SubmitScreen(
                 label = "Notes for your testers (optional)",
                 placeholder = "Test account: demo@example.com / pass1234",
                 supporting =
-                    "Everyone in the group and the admins can read this. Use a " +
+                    "Everyone in your crew and the admins can read this. Use a " +
                         "throwaway account, never your real password.",
                 singleLine = false,
                 minHeight = 120.dp,
@@ -241,7 +241,7 @@ fun SubmitScreen(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Your group is thirteen other developers waiting on the same fourteen days.",
+                "Your crew is thirteen other developers waiting on the same fourteen days.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -268,7 +268,7 @@ fun SubmitScreen(
 
             Spacer(Modifier.height(4.dp))
             Text(
-                "If someone stops testing, they're removed from the group and everyone else " +
+                "If someone stops testing, they're removed from the crew and everyone else " +
                     "stops testing their app. That's what keeps the rest of the run going.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -311,8 +311,8 @@ fun SubmitScreen(
 
             Spacer(Modifier.height(40.dp))
             Text(
-                "One app per group. If you already have an app being tested, this one will go " +
-                    "into a different group.",
+                "One app per crew. If you already have an app being tested, this one will go " +
+                    "into a different crew.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

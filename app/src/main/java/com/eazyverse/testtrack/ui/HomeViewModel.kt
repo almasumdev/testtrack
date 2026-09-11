@@ -161,7 +161,7 @@ class HomeViewModel : ViewModel() {
             }.onFailure {
                 message =
                     it.friendly(
-                        "We couldn't load your groups. Check your connection and try again.",
+                        "We couldn't load your crews. Check your connection and try again.",
                     )
             }
             ready = true
@@ -182,6 +182,29 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             PushRepo.register(context, uid)
             if (ready) PushRepo.syncTopics(context, groups.map { it.group.id })
+        }
+    }
+
+    /**
+     * Tells each of the caller's own apps what their own device can see of itself.
+     *
+     * Only a Play-sourced install counts — see [InstalledApps.Info.fromPlay] — because that is
+     * the one fact on the device saying this exact build actually came through Play's pipeline
+     * rather than a local Android Studio run, which is what most owners have on this same phone
+     * most of the time. Advances [TestApp.latestVersionCode] only forward, so a stray older
+     * install lying around never regresses what the cohort is told.
+     */
+    fun syncMyVersions(context: Context) {
+        val uid = AuthRepo.uid ?: return
+        viewModelScope.launch {
+            runCatching {
+                Repo.myApps(uid).forEach { app ->
+                    val info = InstalledApps.info(context, app.packageName)
+                    if (info.installed && info.fromPlay && info.versionCode > app.latestVersionCode) {
+                        Repo.updateLatestVersion(app.packageName, info.versionCode, info.versionName.orEmpty())
+                    }
+                }
+            }
         }
     }
 

@@ -16,9 +16,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -30,6 +27,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Hourglass
+import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.data.*
 import com.eazyverse.testtrack.findActivity
 
@@ -305,7 +305,7 @@ fun GroupScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Lucide.ArrowLeft, "Back")
                     }
                 },
                 colors =
@@ -331,7 +331,7 @@ fun GroupScreen(
                     // note on this.
                     !vm.ready || vm.pulling -> SkeletonPage { SkeletonGroupAppList() }
 
-                    group == null -> Blank(vm.message ?: "This group doesn't exist any more.")
+                    group == null -> Blank(vm.message ?: "This crew doesn't exist any more.")
 
                     else -> {
                         val outstanding = vm.outstanding(context)
@@ -397,10 +397,10 @@ fun GroupScreen(
 
                         if (vm.toTest.isEmpty()) {
                             EmptyState(
-                                icon = Icons.Outlined.HourglassEmpty,
+                                icon = Lucide.Hourglass,
                                 title = "Nobody else here yet",
                                 subtitle =
-                                    "An admin is still placing apps into this group. Once " +
+                                    "An admin is still placing apps into this crew. Once " +
                                         "there are ${TestGroup.THRESHOLD}, the run starts.",
                             )
                         } else {

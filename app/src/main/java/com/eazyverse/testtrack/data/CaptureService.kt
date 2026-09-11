@@ -18,6 +18,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.view.Display
@@ -27,8 +28,17 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import com.eazyverse.testtrack.MainActivity
 import com.eazyverse.testtrack.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -77,10 +87,23 @@ data class MissedVisit(
  *   startSession(consent)   -> projection + virtual display open
  *   startRound(packages)    -> each app in turn: frame grabbed at an unannounced moment, TestTrack
  *                              pulled back when the visit is up, usage read on the way out
- *   endSession()            -> projection stops
+ *   endSession()            -> projection stops immediately; the service itself stays foreground
+ *                              a little longer if the round it just ran left anything still
+ *                              uploading, so leaving the group screen right after a round cannot
+ *                              cost the process its priority mid-upload — see
+ *                              [beginDrainingThenStop]
  */
 class CaptureService : Service() {
     private val handler = Handler(Looper.getMainLooper())
+
+    /** Cancelled in [onDestroy]; hosts [drainJob] and nothing else. */
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    /** Waiting for a round's uploads to finish before finally stopping — see [beginDrainingThenStop]. */
+    private var drainJob: Job? = null
+
+    /** Held only while a round is actually running — see [acquireScreenWakeLock]. */
+    private var wakeLock: PowerManager.WakeLock? = null
 
     /**
      * The ring the tester watches while an app under test is on screen.
@@ -151,6 +174,12 @@ class CaptureService : Service() {
         // without ever going foreground, which crashed the app on sign-out.
         goForeground()
 
+        // Any fresh instruction means whatever a previous ACTION_STOP was waiting out is stale —
+        // most obviously a new round starting before the last one finished uploading, which
+        // otherwise raced beginDrainingThenStop's own stopSelf() against work that is active again.
+        drainJob?.cancel()
+        drainJob = null
+
         when (intent?.action) {
             ACTION_START -> {
                 try {
@@ -181,6 +210,7 @@ class CaptureService : Service() {
                     roundTotal = queue.size
                     roundIndex = 0
                     Telemetry.roundStarted(roundTotal)
+                    acquireScreenWakeLock()
                     visitNext()
                 }
             }
@@ -195,6 +225,7 @@ class CaptureService : Service() {
                 roundTotal = 0
                 roundIndex = 0
                 status = null
+                releaseScreenWakeLock()
                 // Not when the tester walked back here themselves. They are already looking at
                 // TestTrack, and re-launching the activity under them is a flicker that says
                 // something went wrong.
@@ -203,7 +234,7 @@ class CaptureService : Service() {
 
             ACTION_STOP -> {
                 teardown()
-                stopSelf()
+                beginDrainingThenStop()
             }
 
             else -> stopSelf()
@@ -421,6 +452,26 @@ class CaptureService : Service() {
      */
     private fun finish(pkg: String) {
         overlay.hide()
+
+        // Usage access can be pulled by the OS mid-round on some manufacturers' battery/permission
+        // housekeeping — a real, observed cause of an entire round reading zero seconds, since
+        // every reading after the moment it is revoked would be equally worthless. The round stops
+        // here rather than working through the rest of the queue recording zeros nobody asked for
+        // and nobody can act on until they are back on screen anyway. Nothing further needs saying
+        // from here: Session.usageAccessGranted already re-reads this the moment GroupScreen
+        // resumes, which is exactly when the tester lands after [back] below.
+        if (!UsageRepo.hasAccess(this)) {
+            captured = null
+            queue.clear()
+            roundTotal = 0
+            roundIndex = 0
+            status = null
+            capturing = null
+            releaseScreenWakeLock()
+            back()
+            return
+        }
+
         val path = captured?.takeIf { it.first == pkg }?.second
         val usageMs = UsageRepo.foregroundMsSince(this, pkg, visitStartedAt)
         if (path != null) {
@@ -459,6 +510,7 @@ class CaptureService : Service() {
             roundTotal = 0
             roundIndex = 0
             status = null
+            releaseScreenWakeLock()
             back()
             return
         }
@@ -617,12 +669,106 @@ class CaptureService : Service() {
         roundTotal = 0
         roundIndex = 0
         sessionActive = false
+        releaseScreenWakeLock()
         display?.release()
         display = null
         reader?.close()
         reader = null
         projection?.stop()
         projection = null
+    }
+
+    /**
+     * Keeps the screen on for as long as a round is actually running.
+     *
+     * A round switches between other apps on a fixed schedule with nobody touching the screen in
+     * between — exactly the shape of activity an ordinary screen timeout does not expect, and
+     * losing the display mid-visit corrupts both the screenshot ([looksBlank] has nothing to
+     * sample) and the usage figure paired with it ([UsageRepo.foregroundMsSince] measures real
+     * screen-on foreground time, not a suspended session).
+     *
+     * `SCREEN_BRIGHT_WAKE_LOCK` is deprecated in favour of a window's own `FLAG_KEEP_SCREEN_ON` —
+     * advice that assumes the app asking is the one on screen. Here it is never TestTrack's own
+     * window; it is whichever of the fourteen apps the round has open at that moment, so there is
+     * no window of ours to set the flag on. This is the one legitimate remaining use for it.
+     *
+     * `acquire(timeout)` rather than a bare `acquire()`: a battery held awake forever by a bug
+     * that skips [releaseScreenWakeLock] is a worse fault than the one this exists to fix, so the
+     * lock lets go on its own well past any round this app runs, even if every other release path
+     * were somehow missed.
+     */
+    @Suppress("DEPRECATION")
+    private fun acquireScreenWakeLock() {
+        if (wakeLock?.isHeld == true) return
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock =
+            pm
+                .newWakeLock(
+                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE,
+                    "TestTrack:round",
+                ).apply {
+                    setReferenceCounted(false)
+                    acquire(MAX_WAKE_LOCK_MS)
+                }
+    }
+
+    private fun releaseScreenWakeLock() {
+        wakeLock?.let { if (it.isHeld) it.release() }
+        wakeLock = null
+    }
+
+    /**
+     * The service's own foreground standing while it waits for a finished round's captures to
+     * actually reach Drive and Firestore, rather than dropping that standing the moment the
+     * tester leaves the group screen — see [beginDrainingThenStop].
+     *
+     * A different, honest notification and foreground service type: nothing is being captured any
+     * more by this point, `mediaProjection` no longer describes what is happening, and Android 14+
+     * expects the declared type to match the actual work.
+     */
+    private fun goForegroundSyncing() {
+        val notification: Notification =
+            Notification
+                .Builder(this, CHANNEL)
+                .setContentTitle("TestTrack")
+                .setContentText("Saving today's proof")
+                .setSmallIcon(R.drawable.ic_stat_name)
+                .build()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        } else {
+            startForeground(NOTIF_ID, notification)
+        }
+    }
+
+    /**
+     * The other half of leaving the group screen.
+     *
+     * [endSession] used to mean an immediate [stopSelf] — fine while the only thing at stake was
+     * the screen recording, but a round hands its captures to `GroupViewModel.publish` on the way
+     * out, and that upload keeps running in the background after this service, and the foreground
+     * standing protecting the whole process from it, had already gone. Waiting here for
+     * [CaptureService.results] to actually empty closes that gap: the process stays hard to kill
+     * for exactly as long as there is still something of the tester's to lose.
+     *
+     * Capped rather than open-ended. A permanently stuck upload — expired Drive access, no
+     * connection — must not pin a foreground notification indefinitely, and does not need to:
+     * `publish` already leaves an unfinished visit safely queued for next time either way, so
+     * giving up here costs nothing but the process losing its priority a little sooner than ideal.
+     */
+    private fun beginDrainingThenStop() {
+        if (results.isEmpty()) {
+            stopSelf()
+            return
+        }
+        goForegroundSyncing()
+        drainJob =
+            serviceScope.launch {
+                withTimeoutOrNull(MAX_DRAIN_WAIT_MS) {
+                    snapshotFlow { results.isEmpty() }.first { it }
+                }
+                stopSelf()
+            }
     }
 
     /**
@@ -640,6 +786,7 @@ class CaptureService : Service() {
 
     override fun onDestroy() {
         teardown()
+        serviceScope.cancel()
         super.onDestroy()
     }
 
@@ -701,6 +848,16 @@ class CaptureService : Service() {
          */
         const val SHOT_EARLIEST_MS = 10_000L
         const val SHOT_LATEST_MS = 17_000L
+
+        /**
+         * Safety ceiling for [acquireScreenWakeLock], well past any round this app actually runs.
+         * The real release is [releaseScreenWakeLock], called at every point a round can end; this
+         * is only the backstop for a path that misses it.
+         */
+        private const val MAX_WAKE_LOCK_MS = 10 * 60_000L
+
+        /** How long [beginDrainingThenStop] waits for a round's uploads before giving up on them. */
+        private const val MAX_DRAIN_WAIT_MS = 2 * 60_000L
 
         /** Observed by the UI, which is not running while the app under test is on screen. */
         var sessionActive by mutableStateOf(false)

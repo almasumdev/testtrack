@@ -43,7 +43,7 @@ fun NotesDialog(
                 label = "Notes",
                 placeholder = "Test account: demo@example.com / pass1234",
                 supporting =
-                    "Everyone in the group and the admins can read this. Use a " +
+                    "Everyone in your crew and the admins can read this. Use a " +
                         "throwaway account, never your real password.",
                 singleLine = false,
                 // The same floor the other input dialogs give it, so a field asking for a

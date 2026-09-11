@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -15,6 +13,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.data.*
 
 /** How a tester's day reads. Five states, each with a shape of its own — see [Cell]. */
@@ -43,7 +43,7 @@ fun DashboardScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Lucide.ArrowLeft, "Back")
                     }
                 },
                 colors =
@@ -70,7 +70,7 @@ fun DashboardScreen(
                     !vm.ready || vm.pulling -> DashboardSkeleton()
 
                     vm.app == null -> Blank(vm.message ?: "This app isn't registered any more.")
-                    vm.group == null -> Blank("This app is waiting for an admin to place it in a group.")
+                    vm.group == null -> Blank("This app is waiting for an admin to place it in a crew.")
 
                     else -> {
                         Headline(vm)

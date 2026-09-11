@@ -10,9 +10,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.GroupWork
-import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,10 +19,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.SlidersHorizontal
+import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.data.*
 
@@ -40,31 +37,12 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
 
-    // A round finishes with the tester back here, days marked off that this screen has not heard
-    // about yet.
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer =
-            LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) {
-                    vm.load()
-                    Session.refreshNotifications(context)
-                }
-            }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-
-    // Keyed on the group list, so placement into a new cohort subscribes to it without waiting for
-    // the next cold start.
-    LaunchedEffect(vm.ready, vm.groups) { if (vm.ready) vm.registerForPush(context) }
-
-    LaunchedEffect(Unit) {
-        vm.catchUp(context)
-    }
-
-    // Anything a background sweep parked while the app was shut.
-    LaunchedEffect(vm.ready) { if (vm.ready) vm.showNotices(context) }
+    /*
+     * Loading, push registration, catch-up, notices and the version sync all used to live here.
+     * They are in [MainShell] now — see the note there. None of them were ever about the group
+     * list; they were about the app being open, and this screen stopped being the whole of that
+     * the moment it became one tab of five.
+     */
 
     /**
      * Below Android 13 there is no runtime permission to ask for, so the system dialog never
@@ -159,7 +137,7 @@ fun HomeScreen(
                 // have signed in as the wrong person.
                 actions = {
                     IconButton(onClick = onOpenSetup) {
-                        Icon(Icons.Outlined.Tune, "Setup")
+                        Icon(Lucide.SlidersHorizontal, "Setup")
                     }
                     IconButton(onClick = onOpenProfile) {
                         Avatar(vm.photo, vm.initial, size = 28.dp, loading = vm.me == null)
@@ -333,15 +311,15 @@ fun HomeScreen(
                     // nothing.
                     if (vm.groups.isEmpty() && vm.pending.isEmpty()) {
                         EmptyState(
-                            icon = Icons.Outlined.GroupWork,
-                            title = "No groups yet",
+                            icon = Lucide.Users,
+                            title = "No crews yet",
                             subtitle =
                                 "Submit an app you've put on a closed track. An admin places " +
-                                    "it into a testing group, and your 14 days start once that group is " +
+                                    "it into a crew, and your 14 days start once that crew is " +
                                     "full.",
                         )
                     } else {
-                        SectionLabel("Your groups")
+                        SectionLabel("Your crews")
                         Rows {
                             if (vm.groups.isEmpty()) {
                                 Blank("None yet.")
@@ -354,7 +332,7 @@ fun HomeScreen(
                         }
 
                         if (vm.pending.isNotEmpty()) {
-                            SectionLabel("Waiting for a group")
+                            SectionLabel("Waiting for a crew")
                             Rows {
                                 vm.pending.forEachIndexed { index, app ->
                                     if (index > 0) RowDivider()

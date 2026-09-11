@@ -48,9 +48,10 @@ object Routes {
     const val ONBOARDING = "onboarding"
     const val AUTH = "auth"
     const val SETUP = "setup"
+
+    /** Not one screen: the five tabbed ones, held by [com.eazyverse.testtrack.ui.MainShell]. */
     const val HOME = "home"
     const val SUBMIT = "submit"
-    const val PROFILE = "profile"
 
     // The name is carried along, not looked up: whoever is navigating here almost always already
     // has it on screen (a row in Home, a row in Group), and showing that immediately in the app
@@ -302,22 +303,15 @@ fun AppNav(
         }
 
         composable(Routes.HOME) {
-            HomeScreen(
+            MainShell(
                 onOpenGroup = { groupId, name -> nav.push(Routes.group(groupId, name)) },
                 onSubmitApp = { nav.push(Routes.SUBMIT) },
                 // Grants outlive the checklist: Drive access can be revoked from the account and
                 // usage access from Settings, and both leave a working install that quietly cannot
                 // report. Setup is where those are repaired, so it has to stay reachable.
                 onOpenSetup = { nav.push(Routes.SETUP) },
-                onOpenProfile = { nav.push(Routes.PROFILE) },
-            )
-        }
-
-        composable(Routes.PROFILE) {
-            ProfileScreen(
-                onBack = { nav.popBackStack() },
                 // The same teardown the other two do, and for the same reason: `replace` pops
-                // everything above the graph root, so home does not survive underneath a
+                // everything above the graph root, so the shell does not survive underneath a
                 // signed-out profile for Back to land on.
                 onSignOut = {
                     AuthRepo.signOut()

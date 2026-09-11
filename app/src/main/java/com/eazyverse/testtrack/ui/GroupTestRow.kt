@@ -7,10 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckBox
-import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +16,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Info
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Square
+import com.composables.icons.lucide.SquareCheck
 import com.eazyverse.testtrack.data.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -186,7 +186,7 @@ fun TestRow(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
-                                    Icons.Outlined.Info,
+                                    Lucide.Info,
                                     contentDescription = "How to get into ${app.label}",
                                     modifier = Modifier.size(16.dp),
                                     tint = MaterialTheme.colorScheme.outline,
@@ -202,7 +202,7 @@ fun TestRow(
                      * all of them.
                      */
                     Icon(
-                        if (done) Icons.Filled.CheckBox else Icons.Outlined.CheckBoxOutlineBlank,
+                        if (done) Lucide.SquareCheck else Lucide.Square,
                         contentDescription = if (done) "Done today" else "Not done today",
                         modifier = Modifier.size(18.dp),
                         tint =
@@ -319,8 +319,11 @@ fun TestRow(
 
             // The only route to a newer build once one is out — kept separate from Open/Install
             // above rather than folded into either, since checking the Store is not the same
-            // errand as opening the app or installing it the first time.
-            if (info.installed && !busy && !sending) {
+            // errand as opening the app or installing it the first time. Shown only once one is
+            // actually out: latestVersionCode only ever moves forward from the owner's own
+            // Play-installed copy (HomeViewModel.syncMyVersions), so an app that has never synced
+            // one, or is already current, has nothing to route to yet.
+            if (info.installed && !busy && !sending && app.latestVersionCode > info.versionCode) {
                 ActionChip("Update", MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft, onOpenStore)
             }
 
