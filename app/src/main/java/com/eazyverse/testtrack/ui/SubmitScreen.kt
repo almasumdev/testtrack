@@ -241,7 +241,7 @@ fun SubmitScreen(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Your crew is thirteen other developers waiting on the same fourteen days.",
+                "Your crew is fourteen other developers waiting on the same fourteen days.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

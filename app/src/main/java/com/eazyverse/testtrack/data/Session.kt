@@ -66,7 +66,7 @@ object Session {
      * Persisted, unlike the grant itself. Reminders are the one thing on the checklist that is
      * genuinely optional — a tester who declines can still do every part of the job — so setup has
      * to be able to finish without them. What it must not do is finish without *asking*: a missed
-     * day costs thirteen other people their run, and silence is a poor reason for it.
+     * day costs fourteen other people their run, and silence is a poor reason for it.
      */
     var remindersAsked by mutableStateOf(false)
         private set

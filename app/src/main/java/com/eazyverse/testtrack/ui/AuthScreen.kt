@@ -138,7 +138,7 @@ fun AuthScreen(
         Reason(
             Lucide.Users,
             "You test theirs, they test yours",
-            "Fourteen people in a crew, all testing the same fortnight together.",
+            "Fifteen people in a crew, all testing the same fortnight together.",
         )
         Reason(
             Lucide.Camera,

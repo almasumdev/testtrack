@@ -96,7 +96,7 @@ data class FeedRequest(
 enum class FeedEventKind(
     val label: String,
 ) {
-    /** Fourteen apps found each other and the clock started. */
+    /** Fifteen apps found each other and the clock started. */
     STARTED("Under way"),
 
     /** Day seven, with nobody dropped yet. The point where a cohort is going to make it. */
@@ -300,7 +300,7 @@ object SampleFeed {
                 id = "ev-started",
                 kind = FeedEventKind.STARTED,
                 headline = "Crew 08 filled up and started today",
-                detail = "Fourteen apps, fourteen days. First reports are due tonight.",
+                detail = "Fifteen apps, fourteen days. First reports are due tonight.",
                 happenedAt = now - 3L * DAY,
                 faces = listOf("R", "M", "A"),
                 moreFaces = 11,

@@ -10,7 +10,7 @@ import java.security.MessageDigest
  *
  * Play counts testers, not accounts, and two Google accounts on one handset are one tester to it.
  * A cohort that spends a fortnight with two of its fourteen slots filled by the same phone finds
- * out on day fifteen, when somebody's submission is turned down and thirteen other people's time
+ * out on day fifteen, when somebody's submission is turned down and fourteen other people's time
  * has gone with it. Nothing here prevents that. It exists so an admin can see it on day two.
  *
  * [Settings.Secure.ANDROID_ID] is the right identifier for this and the wrong one to store. Since
