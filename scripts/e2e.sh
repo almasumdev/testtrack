@@ -40,12 +40,16 @@ seed() {
   "$SSH" "$VPS" "cd $REMOTE_DIR && docker compose exec -T api python -m scripts.seed_e2e"
 }
 
+# Only ever this run's world. Seeding by hand to look at the app is a normal thing to be doing
+# at the same time, and a test suite must not clear somebody's screen out from under them.
 clean() {
-  "$SSH" "$VPS" "cd $REMOTE_DIR && docker compose exec -T api python -m scripts.seed_e2e --clean" >/dev/null
+  local cmd="cd $REMOTE_DIR && docker compose exec -T api"
+  "$SSH" "$VPS" "$cmd python -m scripts.seed_e2e --clean --run $RUN" >/dev/null
 }
 
 echo "Seeding..."
 WORLD="$(seed | tail -n 1)"
+RUN="$(printf '%s' "$WORLD" | python -c "import json,sys;print(json.load(sys.stdin)['run'])")"
 
 if [[ "$KEEP" != "--keep" ]]; then
   # Runs on any exit, including a failed test run, so a red suite does not leave rows behind.
