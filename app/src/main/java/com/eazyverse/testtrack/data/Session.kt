@@ -26,6 +26,12 @@ object Session {
         driveConnected = prefs.getBoolean(KEY_DRIVE, false)
         remindersAsked = prefs.getBoolean(KEY_REMINDERS_ASKED, false)
         updatePromptedBuild = prefs.getInt(KEY_UPDATE_PROMPTED, 0)
+        cachedUpdateAvailableBuild = prefs.getInt(KEY_UPDATE_CACHE_AVAILABLE, 0)
+        cachedUpdateStalenessDays = prefs.getInt(KEY_UPDATE_CACHE_STALENESS, 0)
+        cachedUpdateLatestBuild = prefs.getInt(KEY_UPDATE_CACHE_LATEST, 0)
+        cachedUpdateLatestVersionName = prefs.getString(KEY_UPDATE_CACHE_LATEST_NAME, null) ?: ""
+        cachedUpdateMinSupportedBuild = prefs.getInt(KEY_UPDATE_CACHE_MIN, 0)
+        cachedUpdateNudgeAfterDays = prefs.getInt(KEY_UPDATE_CACHE_NUDGE_AFTER, 0)
         refreshUsageAccess(context)
         refreshNotifications(context)
     }
@@ -110,6 +116,71 @@ object Session {
         updatePromptedBuild = value
     }
 
+    /*
+     * The inputs of the last update decision Play and Firestore agreed on, so it can be replayed
+     * when either cannot be asked (docs/in-app-update-system.md, "Offline Protection Cache").
+     *
+     * Inputs, never the verdict: once the installed build reaches [cachedUpdateAvailableBuild] the
+     * same inputs resolve to nothing, so an update installed offline releases its own prompt. Plain
+     * properties rather than Compose state — nothing draws them, only [AppUpdateService] reads them.
+     * 0 in [cachedUpdateAvailableBuild] means nothing is cached.
+     */
+    var cachedUpdateAvailableBuild = 0
+        private set
+    var cachedUpdateStalenessDays = 0
+        private set
+    var cachedUpdateLatestBuild = 0
+        private set
+    var cachedUpdateLatestVersionName = ""
+        private set
+    var cachedUpdateMinSupportedBuild = 0
+        private set
+    var cachedUpdateNudgeAfterDays = 0
+        private set
+
+    fun updateCachedUpdatePolicy(
+        availableBuild: Int,
+        stalenessDays: Int,
+        latestBuild: Int,
+        latestVersionName: String,
+        minSupportedBuild: Int,
+        nudgeAfterDays: Int,
+    ) {
+        prefs
+            .edit()
+            .putInt(KEY_UPDATE_CACHE_AVAILABLE, availableBuild)
+            .putInt(KEY_UPDATE_CACHE_STALENESS, stalenessDays)
+            .putInt(KEY_UPDATE_CACHE_LATEST, latestBuild)
+            .putString(KEY_UPDATE_CACHE_LATEST_NAME, latestVersionName)
+            .putInt(KEY_UPDATE_CACHE_MIN, minSupportedBuild)
+            .putInt(KEY_UPDATE_CACHE_NUDGE_AFTER, nudgeAfterDays)
+            .apply()
+        cachedUpdateAvailableBuild = availableBuild
+        cachedUpdateStalenessDays = stalenessDays
+        cachedUpdateLatestBuild = latestBuild
+        cachedUpdateLatestVersionName = latestVersionName
+        cachedUpdateMinSupportedBuild = minSupportedBuild
+        cachedUpdateNudgeAfterDays = nudgeAfterDays
+    }
+
+    fun clearCachedUpdatePolicy() {
+        prefs
+            .edit()
+            .remove(KEY_UPDATE_CACHE_AVAILABLE)
+            .remove(KEY_UPDATE_CACHE_STALENESS)
+            .remove(KEY_UPDATE_CACHE_LATEST)
+            .remove(KEY_UPDATE_CACHE_LATEST_NAME)
+            .remove(KEY_UPDATE_CACHE_MIN)
+            .remove(KEY_UPDATE_CACHE_NUDGE_AFTER)
+            .apply()
+        cachedUpdateAvailableBuild = 0
+        cachedUpdateStalenessDays = 0
+        cachedUpdateLatestBuild = 0
+        cachedUpdateLatestVersionName = ""
+        cachedUpdateMinSupportedBuild = 0
+        cachedUpdateNudgeAfterDays = 0
+    }
+
     fun updateOnboardingDone() {
         prefs.edit().putBoolean(KEY_ONBOARDED, true).apply()
         onboardingDone = true
@@ -139,8 +210,8 @@ object Session {
 
     /**
      * Clears everything except onboarding — nobody wants to watch the intro twice — and except the
-     * update prompt, which is about this copy of the app rather than about whoever is signed into
-     * it. Signing out and back in is not a reason to be asked again.
+     * update prompt and cached update policy, which are about this copy of the app rather than about
+     * whoever is signed into it. Signing out and back in is not a reason to be asked again.
      */
     fun signOut() {
         prefs
@@ -148,6 +219,12 @@ object Session {
             .clear()
             .putBoolean(KEY_ONBOARDED, true)
             .putInt(KEY_UPDATE_PROMPTED, updatePromptedBuild)
+            .putInt(KEY_UPDATE_CACHE_AVAILABLE, cachedUpdateAvailableBuild)
+            .putInt(KEY_UPDATE_CACHE_STALENESS, cachedUpdateStalenessDays)
+            .putInt(KEY_UPDATE_CACHE_LATEST, cachedUpdateLatestBuild)
+            .putString(KEY_UPDATE_CACHE_LATEST_NAME, cachedUpdateLatestVersionName)
+            .putInt(KEY_UPDATE_CACHE_MIN, cachedUpdateMinSupportedBuild)
+            .putInt(KEY_UPDATE_CACHE_NUDGE_AFTER, cachedUpdateNudgeAfterDays)
             .apply()
         email = null
         isGroupMember = false
@@ -162,4 +239,10 @@ object Session {
     private const val KEY_DRIVE = "drive_connected"
     private const val KEY_REMINDERS_ASKED = "reminders_asked"
     private const val KEY_UPDATE_PROMPTED = "update_prompted_build"
+    private const val KEY_UPDATE_CACHE_AVAILABLE = "update_cache_available_build"
+    private const val KEY_UPDATE_CACHE_STALENESS = "update_cache_staleness_days"
+    private const val KEY_UPDATE_CACHE_LATEST = "update_cache_latest_build"
+    private const val KEY_UPDATE_CACHE_LATEST_NAME = "update_cache_latest_version_name"
+    private const val KEY_UPDATE_CACHE_MIN = "update_cache_min_supported_build"
+    private const val KEY_UPDATE_CACHE_NUDGE_AFTER = "update_cache_nudge_after_days"
 }

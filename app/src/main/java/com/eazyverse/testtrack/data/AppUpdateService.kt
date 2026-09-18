@@ -23,22 +23,29 @@ import kotlinx.coroutines.tasks.await
 enum class UpdateTier { NONE, NUDGE, BLOCKED }
 
 /**
- * In-app update gate, ported from Sound Scheduler's AppUpdateService. Two independent inputs:
+ * In-app update gate, ported from Sound Scheduler's AppUpdateService. Follows
+ * docs/in-app-update-system.md, the same flow Bluefy uses:
  *
- *  - **Google Play** ([AppUpdateManager]) answers "can this user install an update right now?" —
+ *  - **Google Play** ([AppUpdateManager]) decides whether this device can install an update. It is
  *    resolved on device against the track this install actually came from, so it accounts for staged
- *    rollouts and device compatibility. It is the only source of truth for availability, checked first
- *    and unconditionally.
- *  - **Firestore `config/app`** answers "how hard should we push?": `latestBuild`, `latestVersionName`
- *    (its major drives forcing), `minSupportedBuild` (manual kill-switch, 0 blocks nobody),
- *    `nudgeAfterDays`.
+ *    rollouts, track membership and device compatibility. Always asked first.
+ *  - **Firestore `config/app`** decides how strongly to ask: `latestBuild`, `latestVersionName` (its
+ *    major drives forcing), `minSupportedBuild` (manual kill-switch, 0 blocks nobody),
+ *    `nudgeAfterDays`. Read only after Play says an update is available, so it can never create update
+ *    UI on its own.
  *
- * Everything fails open: no Play, no network, a sideloaded build or a missing doc all resolve to
+ * When both answer, their inputs are cached. When Play or Firestore cannot answer, the last decision
+ * proven online on this device is replayed from those inputs, until the installed build reaches the
+ * cached available build. When Play says there is no update, the cache is cleared.
+ *
+ * Otherwise everything fails open: no cache, a sideloaded build or a missing doc resolve to
  * [UpdateTier.NONE]. A gate that locks people out on a hiccup is far worse than one that misses an
  * update. Both nudge and blocked use Play's flexible (background) flow; only the UI differs.
  *
- * The one thing TestTrack changes: the per-build dismissal is kept in [Session] rather than a room
- * repo, because that is where this app keeps everything that survives a restart.
+ * The one thing TestTrack changes: the per-build dismissal and the cached policy are kept in
+ * [Session] rather than a room repo, because that is where this app keeps everything that survives a
+ * restart. Session is loaded by the activity, after [init] has run, so the cached decision is applied
+ * from there through [applyCachedDecision] rather than from [init].
  */
 object AppUpdateService {
     private const val TAG = "AppUpdateService"
@@ -98,6 +105,14 @@ object AppUpdateService {
         }
     }
 
+    /**
+     * Until Play answers, show whatever was last proven online, so a forced update survives a cold
+     * start with no network. Call once [Session] is loaded and before the first [refresh].
+     */
+    fun applyCachedDecision() {
+        applyOfflinePolicy()
+    }
+
     fun registerInstallListener() {
         manager?.registerListener(installListener)
     }
@@ -106,9 +121,11 @@ object AppUpdateService {
         manager?.unregisterListener(installListener)
     }
 
-    /** Re-ask Play + config. Worth calling on foreground. Never throws. */
+    /** Re-ask Play, then config only if Play has an update. Worth calling on foreground. Never throws. */
     suspend fun refresh() {
         val mgr = manager ?: return
+
+        // 1. Play first.
         try {
             val info = mgr.appUpdateInfo.await()
             lastInfo = info
@@ -120,14 +137,21 @@ object AppUpdateService {
             stalenessDays = info.clientVersionStalenessDays() ?: 0
             if (info.installStatus() == InstallStatus.DOWNLOADED) _isDownloaded.value = true
         } catch (e: Exception) {
-            // Thrown on sideloaded / non-Play installs. Fail open: no update, no block.
+            // Thrown on sideloaded / non-Play installs, or with no connection to Play.
             Log.d(TAG, "Play update check unavailable: ${e.message}")
-            lastInfo = null
-            playUpdateAvailable = false
-            flexibleAllowed = false
-            availableBuild = 0
-            stalenessDays = 0
+            applyOfflinePolicy()
+            return
         }
+
+        // 2. Play says nothing to install: no policy read, no update UI, and forget any cached decision.
+        if (!playUpdateAvailable) {
+            resetConfig()
+            Session.clearCachedUpdatePolicy()
+            _tier.value = UpdateTier.NONE
+            return
+        }
+
+        // 3. Play has an update: read policy once and combine.
         try {
             val snap =
                 FirebaseFirestore
@@ -142,8 +166,11 @@ object AppUpdateService {
             nudgeAfterDays = snap.getLong("nudgeAfterDays")?.toInt() ?: 0
         } catch (e: Exception) {
             Log.d(TAG, "Config read failed: ${e.message}")
-            minSupportedBuild = 0
+            resetConfig()
+            applyOfflinePolicy()
+            return
         }
+        cachePolicy()
         _tier.value =
             resolveTier(
                 playUpdateAvailable = playUpdateAvailable,
@@ -158,6 +185,68 @@ object AppUpdateService {
             )
     }
 
+    private fun resetConfig() {
+        latestBuild = 0
+        latestVersionName = ""
+        minSupportedBuild = 0
+        nudgeAfterDays = 0
+    }
+
+    /** Stores the inputs of a decision Play and Firestore just agreed on. Never the verdict. */
+    private fun cachePolicy() {
+        if (!playUpdateAvailable || availableBuild <= currentBuild) {
+            Session.clearCachedUpdatePolicy()
+            return
+        }
+        Session.updateCachedUpdatePolicy(
+            availableBuild = availableBuild,
+            stalenessDays = stalenessDays,
+            latestBuild = latestBuild,
+            latestVersionName = latestVersionName,
+            minSupportedBuild = minSupportedBuild,
+            nudgeAfterDays = nudgeAfterDays,
+        )
+    }
+
+    /**
+     * Replays the last decision proven online, or NONE. The cached Play answer is restored with
+     * flexibleAllowed false and no [lastInfo]: with Play unreachable there is nothing to download
+     * in-app, so the UI falls back to opening the store listing.
+     */
+    private fun applyOfflinePolicy() {
+        val cachedAvailable = Session.cachedUpdateAvailableBuild
+        lastInfo = null
+        flexibleAllowed = false
+        if (cachedAvailable <= 0 || currentBuild >= cachedAvailable) {
+            // Nothing proven, or the update it was about is already installed: forget it.
+            Session.clearCachedUpdatePolicy()
+            playUpdateAvailable = false
+            availableBuild = 0
+            stalenessDays = 0
+            resetConfig()
+            _tier.value = UpdateTier.NONE
+            return
+        }
+        playUpdateAvailable = true
+        availableBuild = cachedAvailable
+        stalenessDays = Session.cachedUpdateStalenessDays
+        latestBuild = Session.cachedUpdateLatestBuild
+        latestVersionName = Session.cachedUpdateLatestVersionName
+        minSupportedBuild = Session.cachedUpdateMinSupportedBuild
+        nudgeAfterDays = Session.cachedUpdateNudgeAfterDays
+        _tier.value =
+            resolveCachedTier(
+                currentBuild = currentBuild,
+                currentMajor = currentMajor,
+                cachedAvailableBuild = cachedAvailable,
+                cachedStalenessDays = stalenessDays,
+                cachedLatestBuild = latestBuild,
+                cachedLatestVersionName = latestVersionName,
+                cachedMinSupportedBuild = minSupportedBuild,
+                cachedNudgeAfterDays = nudgeAfterDays,
+            )
+    }
+
     /** True when there's a nudge for a build we haven't dismissed yet (throttled per available build). */
     fun hasPendingNudge(): Boolean = _tier.value == UpdateTier.NUDGE && availableBuild > Session.updatePromptedBuild
 
@@ -166,18 +255,24 @@ object AppUpdateService {
         if (availableBuild > 0) Session.updateUpdatePromptedBuild(availableBuild)
     }
 
-    /** Start Play's flexible (background) download flow. No-op if there's nothing to install. */
-    fun startFlexibleUpdate(launcher: ActivityResultLauncher<IntentSenderRequest>) {
-        val info = lastInfo ?: return
-        val mgr = manager ?: return
-        try {
+    /**
+     * Start Play's flexible (background) download flow. Returns false when Play has nothing flexible
+     * to offer (including an offline replay), so the caller can open the store listing instead.
+     */
+    fun startFlexibleUpdate(launcher: ActivityResultLauncher<IntentSenderRequest>): Boolean {
+        if (!canDownloadInApp) return false
+        val info = lastInfo ?: return false
+        val mgr = manager ?: return false
+        return try {
             mgr.startUpdateFlowForResult(
                 info,
                 launcher,
                 AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build(),
             )
+            true
         } catch (e: Exception) {
             Log.d(TAG, "Flexible update failed to start: ${e.message}")
+            false
         }
     }
 
@@ -216,6 +311,37 @@ object AppUpdateService {
             return UpdateTier.BLOCKED
         }
         return if (stalenessDays >= nudgeAfterDays) UpdateTier.NUDGE else UpdateTier.NONE
+    }
+
+    /**
+     * The offline replay, as a pure function. The installed build is checked before anything else, so a
+     * cache left behind after the update was installed can never keep prompting or blocking.
+     */
+    @VisibleForTesting
+    fun resolveCachedTier(
+        currentBuild: Int,
+        currentMajor: Int,
+        cachedAvailableBuild: Int,
+        cachedStalenessDays: Int,
+        cachedLatestBuild: Int,
+        cachedLatestVersionName: String,
+        cachedMinSupportedBuild: Int,
+        cachedNudgeAfterDays: Int,
+    ): UpdateTier {
+        if (cachedAvailableBuild <= 0) return UpdateTier.NONE
+        if (currentBuild <= 0) return UpdateTier.NONE
+        if (currentBuild >= cachedAvailableBuild) return UpdateTier.NONE
+        return resolveTier(
+            playUpdateAvailable = true,
+            availableBuild = cachedAvailableBuild,
+            currentBuild = currentBuild,
+            currentMajor = currentMajor,
+            latestBuild = cachedLatestBuild,
+            latestVersionName = cachedLatestVersionName,
+            minSupportedBuild = cachedMinSupportedBuild,
+            stalenessDays = cachedStalenessDays,
+            nudgeAfterDays = cachedNudgeAfterDays,
+        )
     }
 
     /** Leading segment of a version name as an int: "1.3.4" -> 1. Parsed numerically (never lexically,

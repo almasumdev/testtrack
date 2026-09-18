@@ -1,0 +1,25 @@
+# mkit settings for TestTrack. The engine lives in H:\tools\mkit (almasumdev/mkit);
+# this file only says what TestTrack is and which features it uses.
+# Secrets live in .env (this app) and ~/.mkit/.env (all apps). `mkit doctor` checks it.
+#
+# Two release channels, on purpose:
+#   mkit deploy    Play (internal track) + the config/app update document
+#   git push       .github/workflows/release.yml builds the signed APK testers
+#                  download from the GitHub Release (TestTrack is side-loaded)
+requires = ">=0.2"
+
+[app]
+name    = "TestTrack"
+kind    = "android"
+package = "com.eazyverse.testtrack"
+# Release signing comes from local.properties (TESTTRACK_KEYSTORE_*) and app/testtrack_release.jks.
+signing = "local.properties"
+
+[play]
+
+[firebase]
+project    = "test-track-ev"
+rules      = true
+update_doc = "config/app"
+
+[notify.telegram]

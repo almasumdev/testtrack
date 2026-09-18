@@ -7,8 +7,9 @@
  * whole cohort is walled out of a run they are being held to, lower it and a client keeps itself
  * on a build everyone else has moved past.
  *
- * So the shape being defended is narrow. Any signed-in account may read the one document. Nobody
- * outside the console may write anything, including the account that would benefit most.
+ * So the shape being defended is narrow. Anyone may read the one document (the update gate reads
+ * it before sign-in). Nobody outside the console may write anything, including the account that
+ * would benefit most.
  */
 import fs from 'node:fs'
 import {
@@ -59,11 +60,13 @@ await seed()
 await check('a signed-in install can read the policy', () =>
   assertSucceeds(getDoc(doc(as(ME), 'config', 'app'))))
 
-// Not a security boundary so much as a statement of when the gate applies. An install that has
-// not signed in has no cohort to be out of step with, and a missing answer already means "block
-// nobody", so refusing here costs nothing.
-await check('an install that has not signed in cannot', () =>
-  assertFails(getDoc(doc(anon(), 'config', 'app'))))
+// The gate asks Play first and then reads this in onStart, usually before sign-in. Refusing it
+// there would let a retired build run a whole session before the next check.
+await check('an install that has not signed in can read it too', () =>
+  assertSucceeds(getDoc(doc(anon(), 'config', 'app'))))
+
+await check('an install that has not signed in cannot write it', () =>
+  assertFails(updateDoc(doc(anon(), 'config', 'app'), { minSupportedBuild: 0 })))
 
 // One document, nothing to enumerate. Listing is closed so the collection cannot become a place
 // things are discovered.

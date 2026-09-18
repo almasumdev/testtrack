@@ -37,3 +37,6 @@ gate.gs
 # The interactive log console run.cmd hands over to. Same category: it exists to make one
 # machine's edit-and-look loop quick, and it is useless without the .cmd that calls it.
 /run-console.ps1
+
+# mkit: this app's secrets
+.env

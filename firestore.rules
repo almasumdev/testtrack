@@ -249,12 +249,13 @@ service cloud.firestore {
      * `minSupportedBuild` could lock out a whole cohort, and one that could lower it could keep
      * itself on a build the cohort has moved past.
      *
-     * `get` rather than `read`: there is one document here and nothing to list. Signed in, because
-     * an install that has not got that far has nothing to be gated out of yet, and a missing
-     * document already resolves to "block nobody".
+     * `get` rather than `read`: there is one document here and nothing to list. Readable without
+     * signing in, per the shared update rules (bluefy docs/in-app-update-system.md): the gate asks
+     * Play first and reads this in onStart, often before sign-in, and a retired build must not get a
+     * usable session just because its first read came too early. Four numbers, nothing personal.
      */
     match /config/{doc} {
-      allow get: if signedIn();
+      allow get: if true;
       allow list, write: if false;
     }
 

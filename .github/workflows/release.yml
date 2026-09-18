@@ -7,10 +7,10 @@ name: Release APK
 # TestTrack is side-loaded, so a GitHub Release is the distribution channel
 # rather than a stopgap. It no longer holds QUERY_ALL_PACKAGES — a launcher
 # <queries> filter answers the same questions — so Play is open to it, but the
-# APK here stays the way testers get it. The same build also produces an AAB,
-# uploaded to Play's Internal testing track — promotion from there to the
-# Closed testing track the app actually runs on is a manual step in Play
-# Console, not something this workflow does.
+# APK here stays the way testers get it. Play is not this workflow's job any
+# more: `mkit deploy` (see mkit.toml) uploads to the Internal testing track
+# and writes the config/app update document, from a developer's machine; the
+# push that follows lands here and builds the matching APK.
 #
 # Runs on every push that touches app/gradle files, but only actually builds
 # and publishes when versionCode changed — see the check-version job.
@@ -27,10 +27,6 @@ name: Release APK
 #   TESTTRACK_WEB_CLIENT_ID      OAuth *web* client id
 #   TESTTRACK_GATE_URL           Apps Script membership endpoint
 #   TESTTRACK_GROUP_URL          public Google Group page
-#   PLAY_SERVICE_ACCOUNT_JSON    plain-text contents of a Google Play service account
-#                                  key (Setup > API access in Play Console), granted
-#                                  release permission on com.eazyverse.testtrack.
-#                                  Not base64 — pasted in as-is.
 #
 # Both google-services.json and local.properties are gitignored, so everything
 # the build needs arrives through the environment — `secret()` in
@@ -163,7 +159,7 @@ jobs:
           TESTTRACK_WEB_CLIENT_ID: ${{ secrets.TESTTRACK_WEB_CLIENT_ID }}
           TESTTRACK_GATE_URL: ${{ secrets.TESTTRACK_GATE_URL }}
           TESTTRACK_GROUP_URL: ${{ secrets.TESTTRACK_GROUP_URL }}
-        run: ./gradlew --no-daemon assembleRelease bundleRelease
+        run: ./gradlew --no-daemon assembleRelease
 
       - name: Verify it is actually signed
         run: |
@@ -228,13 +224,3 @@ jobs:
             echo "deleting $tag"
             gh release delete "$tag" --cleanup-tag --yes
           done < stale.txt
-
-      - name: Publish bundle to Internal testing
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: com.eazyverse.testtrack
-          releaseFiles: app/build/outputs/bundle/release/app-release.aab
-          tracks: internal
-          status: completed
-          releaseName: ${{ steps.version.outputs.name }}

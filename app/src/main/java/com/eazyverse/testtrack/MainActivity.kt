@@ -97,6 +97,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Session.init(this)
+        // The last update decision proven online, until Play answers in onStart. Here rather than in
+        // App because it reads Session, which is only loaded now.
+        AppUpdateService.applyCachedDecision()
         openGroup.value = intent?.getStringExtra(EXTRA_GROUP_ID)
         openFeedbackFor.value = intent?.getStringExtra(EXTRA_FEEDBACK_APP_ID)
         setContent {
@@ -123,7 +126,9 @@ class MainActivity : ComponentActivity() {
                             ForceUpdateScreen(
                                 downloaded = downloaded,
                                 canDownloadInApp = AppUpdateService.canDownloadInApp,
-                                onUpdate = { AppUpdateService.startFlexibleUpdate(updateLauncher) },
+                                onUpdate = {
+                                    if (!AppUpdateService.startFlexibleUpdate(updateLauncher)) openPlayStoreListing()
+                                },
                                 onRestart = { AppUpdateService.completeUpdate() },
                                 onOpenStore = { openPlayStoreListing() },
                             )
