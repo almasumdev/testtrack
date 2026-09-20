@@ -1,7 +1,8 @@
 # Crews
 
-Replaces admin-assigned groups. Decided September 2026. Not yet implemented against the backend;
-the shipped code still has `CAPACITY = 14` and manual placement.
+> **This is the plan, not the state.** Written before any of it was built and kept as the record of what was decided and why. For what actually runs and how the app talks to it, see [architecture.md](architecture.md).
+
+Replaces admin-assigned groups. Decided September 2026.
 
 ## What changed and why
 

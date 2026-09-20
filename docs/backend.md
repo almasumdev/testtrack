@@ -1,6 +1,8 @@
 # Backend
 
-A backend of our own, on the VPS, for everything new. Decided September 2026. Nothing built yet.
+> **This is the plan, not the state.** Written before any of it was built and kept as the record of what was decided and why. For what actually runs and how the app talks to it, see [architecture.md](architecture.md).
+
+A backend of our own, on the VPS, for everything new. Decided September 2026.
 
 The old app keeps running on Firestore and is not touched by any of this. The same Firebase project
 stays in use for sign-in and push. What leaves Firebase is the data.

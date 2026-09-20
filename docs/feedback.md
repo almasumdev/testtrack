@@ -1,6 +1,8 @@
 # Feedback
 
-Circle's paid half, redesigned. Decided September 2026. Not built.
+> **This is the plan, not the state.** Written before any of it was built and kept as the record of what was decided and why. For what actually runs and how the app talks to it, see [architecture.md](architecture.md).
+
+Circle's paid half, redesigned. Decided September 2026.
 
 ## What it is for
 
