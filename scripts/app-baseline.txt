@@ -14,7 +14,6 @@ app/src/main/java/com/eazyverse/testtrack/ui/DashboardGrid.kt: ui imports data
 app/src/main/java/com/eazyverse/testtrack/ui/DashboardScreen.kt: ui imports data
 app/src/main/java/com/eazyverse/testtrack/ui/DashboardSections.kt: ui imports data
 app/src/main/java/com/eazyverse/testtrack/ui/DashboardViewModel.kt: ui imports data
-app/src/main/java/com/eazyverse/testtrack/ui/FeedRows.kt: 602 lines, over 500
 app/src/main/java/com/eazyverse/testtrack/ui/FeedRows.kt: ui imports net
 app/src/main/java/com/eazyverse/testtrack/ui/FeedScreen.kt: ui imports net
 app/src/main/java/com/eazyverse/testtrack/ui/FeedViewModel.kt: ui imports net

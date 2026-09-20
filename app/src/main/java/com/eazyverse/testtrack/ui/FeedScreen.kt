@@ -151,7 +151,11 @@ fun FeedScreen(vm: FeedViewModel = viewModel()) {
                     // The row keeps its own space below the pill rather than sitting flush on its
                     // own bottom edge. What comes off to hold the total to one gutter is the
                     // list's inset above the first card. See [ListTop].
-                    .padding(start = Gutter, end = Gutter, top = 16.dp, bottom = 8.dp),
+                    // Two of these three used to be the top of the screen. The header above now
+                    // brings its own space below itself and the tabs bring their own touch
+                    // padding, so this row adds almost nothing of its own or the three stack into
+                    // a gap the size of a card.
+                    .padding(start = Gutter, end = Gutter, top = 2.dp, bottom = 4.dp),
                 // The control takes only the width its two words need and the space between the
                 // two of them does the rest, so neither is given a weight to stretch into.
                 horizontalArrangement = Arrangement.SpaceBetween,
