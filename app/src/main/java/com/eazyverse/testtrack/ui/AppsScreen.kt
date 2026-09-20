@@ -69,12 +69,11 @@ fun AppsBody(
     // without an account; this is the first screen that cannot answer without knowing who they
     // are, so this is where the question belongs, with the way out attached to it.
     if (signedOut) {
-        EmptyState(
-            icon = Lucide.LayoutGrid,
-            title = "Sign in to see your apps",
-            subtitle = "This is the list of what you have put up, so it needs your account.",
-            actionLabel = "Continue with Google",
-            onAction = onSignIn,
+        Gated(
+            heading = "Nothing up yet",
+            body = "Your apps, and how each one is getting on, belong to your account.",
+            onSignIn = onSignIn,
+            mark = { AppsMark() },
         )
         return
     }

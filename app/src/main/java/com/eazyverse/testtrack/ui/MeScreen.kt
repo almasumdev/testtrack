@@ -88,12 +88,13 @@ fun MeBody(
     onSignIn: () -> Unit = {},
 ) {
     if (signedOut) {
-        EmptyState(
-            icon = Lucide.UserRound,
-            title = "Signed out",
-            subtitle = "Sign in and your record, your tix and your apps come back with you.",
-            actionLabel = "Continue with Google",
-            onAction = onSignIn,
+        Gated(
+            heading = "Level one, waiting",
+            body =
+                "Every night you open somebody's app moves this ring. Sign in and it starts " +
+                    "counting.",
+            onSignIn = onSignIn,
+            mark = { LevelMark() },
         )
         return
     }

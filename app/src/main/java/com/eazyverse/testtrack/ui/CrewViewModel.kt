@@ -63,6 +63,16 @@ class CrewViewModel : ViewModel() {
     var offline by mutableStateOf(false)
         private set
 
+    /**
+     * Nobody is signed in, which is not the same as being in no crews.
+     *
+     * Open answers a stranger and the other three tabs cannot: which crews are yours is a
+     * question about an account. Without this the three of them said "Nothing running" and the
+     * rest, which is the app reporting a result it never got.
+     */
+    var signedOut by mutableStateOf(false)
+        private set
+
     /** The server's reason a seat cannot be taken, shown as it arrives. */
     var blocked by mutableStateOf<String?>(null)
         private set
@@ -114,7 +124,7 @@ class CrewViewModel : ViewModel() {
                 // No guard. The crew list reads without an account and answers a stranger with
                 // the one that is filling and its seat count, which is the only evidence anywhere
                 // in the app that there are real people waiting to test each other's work.
-                ApiAuth.ensure(context)
+                signedOut = !ApiAuth.ensure(context)
                 apply(Api.crews())
                 offline = false
             } catch (e: ApiError) {

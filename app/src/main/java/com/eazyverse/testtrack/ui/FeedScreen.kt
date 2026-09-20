@@ -67,7 +67,10 @@ private val ListTop = 8.dp
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FeedScreen(vm: FeedViewModel = viewModel()) {
+fun FeedScreen(
+    onSignIn: () -> Unit = {},
+    vm: FeedViewModel = viewModel(),
+) {
     val snackbars = remember { SnackbarHostState() }
 
     // Cleared here rather than on a timer in the view model, so a message cannot be spent by a
@@ -200,10 +203,9 @@ fun FeedScreen(vm: FeedViewModel = viewModel()) {
                         item(key = "ask") { FeedAskButton { posting = true } }
                         if (vm.offline) {
                             item {
-                                Blank(
-                                    "Sign in to see what people are asking for. " +
-                                        "Circle needs an account.",
-                                )
+                                // Not a sign in prompt any more. The posts come back for
+                                // anybody, so reaching here means the server could not be got at.
+                                Blank("Circle did not load. Pull to try again.")
                             }
                         } else if (vm.loading) {
                             item { Blank("Loading.") }
@@ -240,11 +242,13 @@ fun FeedScreen(vm: FeedViewModel = viewModel()) {
                         disputes = vm.disputes,
                         loading = vm.loading,
                         offline = vm.offline,
+                        signedOut = vm.signedOut,
                         busy = vm.busy,
                         proof = { ref -> ProofImage(ref) },
                         onApprove = { vm.approve(context, it) },
                         onReject = { refusing = it },
                         onVote = { dispute, forReviewer -> vm.vote(context, dispute, forReviewer) },
+                        onSignIn = onSignIn,
                     )
             }
         }

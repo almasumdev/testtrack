@@ -5,7 +5,6 @@ app/src/main/java/com/eazyverse/testtrack/data/Models.kt: 577 lines, over 500
 app/src/main/java/com/eazyverse/testtrack/ui/AppsScreen.kt: ui imports net
 app/src/main/java/com/eazyverse/testtrack/ui/CommonMarks.kt: ui imports data
 app/src/main/java/com/eazyverse/testtrack/ui/CrewRows.kt: 540 lines, over 500
-app/src/main/java/com/eazyverse/testtrack/ui/CrewTabs.kt: 548 lines, over 500
 app/src/main/java/com/eazyverse/testtrack/ui/CrewViewModel.kt: ui imports data
 app/src/main/java/com/eazyverse/testtrack/ui/CrewViewModel.kt: ui imports net
 app/src/main/java/com/eazyverse/testtrack/ui/CrewWire.kt: ui imports net

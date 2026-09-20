@@ -205,12 +205,36 @@ fun MainShell(
                 ),
         ) {
             when (tab) {
-                MainTab.CIRCLE -> FeedScreen()
+                MainTab.CIRCLE ->
+                    FeedScreen(
+                        onSignIn = {
+                            asking =
+                                SignInReason(
+                                    title = "Sign in to see what is waiting",
+                                    why =
+                                        "Reviews of your apps and cases you are asked to decide " +
+                                            "are addressed to an account. The rest of Circle " +
+                                            "you can read without one.",
+                                )
+                        },
+                    )
 
                 // The new crew screens, running on in-memory state. HomeScreen and the group
                 // screens it pushes are still on disk and still work; nothing points at them from
                 // the bar while this is being built. See docs/crew.md.
-                MainTab.GROUPS -> CrewScreen()
+                MainTab.GROUPS ->
+                    CrewScreen(
+                        onSignIn = {
+                            asking =
+                                SignInReason(
+                                    title = "Sign in to see your crews",
+                                    why =
+                                        "Which seats are yours, what you owe tonight and what " +
+                                            "you have finished all hang off the account. Open " +
+                                            "reads without one.",
+                                )
+                        },
+                    )
 
                 MainTab.RANKS -> RanksScreen()
 

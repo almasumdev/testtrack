@@ -39,6 +39,7 @@ fun WaitingBody(
     disputes: List<Case>,
     loading: Boolean = false,
     offline: Boolean = false,
+    signedOut: Boolean = false,
     busy: Boolean = false,
     /**
      * How a screenshot gets on screen.
@@ -51,12 +52,26 @@ fun WaitingBody(
     onApprove: (Waiting) -> Unit = {},
     onReject: (Waiting) -> Unit = {},
     onVote: (Case, Boolean) -> Unit = { _, _ -> },
+    onSignIn: () -> Unit = {},
 ) {
+    // Asked before the network is blamed. This branch used to be the offline one and it was
+    // titled "Sign in to see what is waiting", so a dropped connection told the reader they were
+    // the problem, and a reader without an account was never told anything at all.
+    if (signedOut) {
+        Gated(
+            heading = "Nothing addressed to you",
+            body = "Reviews of your apps, and cases you are asked to decide, arrive here.",
+            aside = "Feedback and Activity both read without an account.",
+            onSignIn = onSignIn,
+            mark = { NoteMark() },
+        )
+        return
+    }
     if (offline) {
         EmptyState(
             icon = Lucide.Inbox,
-            title = "Sign in to see what is waiting",
-            subtitle = "Reviews of your apps, and cases you can help decide.",
+            title = "What is waiting did not load",
+            subtitle = "Check your connection and pull to try again.",
         )
         return
     }

@@ -55,7 +55,10 @@ import com.eazyverse.testtrack.findActivity
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CrewScreen(vm: CrewViewModel = viewModel()) {
+fun CrewScreen(
+    onSignIn: () -> Unit = {},
+    vm: CrewViewModel = viewModel(),
+) {
     val context = LocalContext.current
 
     /** The seat being given up, which is confirmed first: it is a place fourteen people share. */
@@ -163,10 +166,10 @@ fun CrewScreen(vm: CrewViewModel = viewModel()) {
                     )
                 crew != null -> CrewRecordPhase(crew)
 
-                vm.tab == CrewPhase.RUN -> CrewRunTab(vm) { vm.show(it) }
+                vm.tab == CrewPhase.RUN -> CrewRunTab(vm, onSignIn) { vm.show(it) }
                 vm.tab == CrewPhase.LOBBY ->
-                    CrewLobbyTab(vm) { id, seat -> judging = id to seat }
-                vm.tab == CrewPhase.RECORD -> CrewRecordTab(vm) { vm.show(it) }
+                    CrewLobbyTab(vm, onSignIn) { id, seat -> judging = id to seat }
+                vm.tab == CrewPhase.RECORD -> CrewRecordTab(vm, onSignIn) { vm.show(it) }
                 else -> CrewOpenTab(vm) { taking = it }
             }
         }
