@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,9 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,18 +31,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.Crown
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Trophy
 import com.eazyverse.testtrack.net.BoardRow
@@ -157,7 +149,21 @@ fun RanksBody(
             contentPadding =
                 PaddingValues(top = 4.dp, bottom = if (mine == null) Gutter else PinRoom),
         ) {
-            if (podium) item(key = PODIUM_KEY) { Podium(rows.take(PODIUM), mine?.id) }
+            if (podium) {
+                item(key = PODIUM_KEY) {
+                    Column {
+                        Podium(rows.take(PODIUM).map { it.onThePodium(mine?.id) })
+                        // A floor for them to stand on, edge to edge. Without it the blocks stop
+                        // in mid air and the first row of the list reads as the ground.
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(MaterialTheme.colorScheme.outlineVariant),
+                        )
+                    }
+                }
+            }
             if (rest.isNotEmpty()) {
                 item(key = HEADING_KEY) {
                     CrewHeading(if (podium) "${PODIUM + 1} to ${rows.size}" else "Top ${rows.size}")
@@ -202,132 +208,6 @@ private fun seatOf(
     if (anchor == PODIUM_KEY) return 0
     val ahead = (if (podium) 1 else 0) + (if (rest.isNotEmpty()) 1 else 0)
     return (ahead + rest.indexOfFirst { it.id == mine.id }).coerceAtLeast(0)
-}
-
-/**
- * The three at the top, on blocks.
- *
- * Second, first, third, because that is the shape a podium has and left to right is not how
- * anybody looks at one. The winner is raised, larger and crowned, and the blocks are in
- * proportion so the standing is legible from the silhouette before a number is read.
- */
-@Composable
-private fun Podium(
-    top: List<BoardRow>,
-    mineId: String?,
-) {
-    Row(
-        Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 10.dp),
-        verticalAlignment = Alignment.Bottom,
-    ) {
-        Step(top[1], Medal.silver, seat = 50.dp, face = 48.dp, mineId = mineId)
-        Spacer(Modifier.width(9.dp))
-        Step(top[0], Medal.gold, seat = 70.dp, face = 60.dp, mineId = mineId, crowned = true)
-        Spacer(Modifier.width(9.dp))
-        Step(top[2], Medal.bronze, seat = 38.dp, face = 48.dp, mineId = mineId)
-    }
-}
-
-/** One place on the podium: the face, what they did, and the block they stand on. */
-@Composable
-private fun RowScope.Step(
-    row: BoardRow,
-    medal: Color,
-    seat: Dp,
-    face: Dp,
-    mineId: String?,
-    crowned: Boolean = false,
-) {
-    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-        if (crowned) {
-            Icon(Lucide.Crown, null, Modifier.size(17.dp), tint = medal)
-            Spacer(Modifier.height(4.dp))
-        }
-        // The medal is a ring around the face rather than a badge beside it: one object, with the
-        // colour doing the ranking instead of sitting next to it.
-        Box(
-            Modifier
-                .size(face)
-                .clip(CircleShape)
-                .background(medal)
-                .padding(2.5.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Avatar(row.photoUrl, row.name.take(1).uppercase(), size = face - 5.dp)
-        }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            if (row.id == mineId) "You" else row.name,
-            Modifier.padding(horizontal = 3.dp),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-        )
-        Text(
-            "${row.points}",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = medal,
-        )
-        Text(
-            work(row),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.outline,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Spacer(Modifier.height(9.dp))
-
-        /*
-         * The block: the app's own surface, with the medal only on its top edge and its numeral.
-         *
-         * It was a wash of the medal colour fading downward, which is the exact thing the theme
-         * file warns about. Gold and bronze have almost no blue in them, and over four hundred
-         * square points of navy the eye has enough of it to judge against the ground underneath,
-         * so it read as a stain rather than as a colour. Three navy blocks of different heights
-         * with a gold, silver and bronze edge read as a podium and as this app at the same time.
-         */
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(seat)
-                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                .background(MaterialTheme.colorScheme.surface),
-            contentAlignment = Alignment.TopCenter,
-        ) {
-            Box(Modifier.fillMaxWidth().height(3.dp).background(medal))
-            Text(
-                "${row.place}",
-                Modifier.padding(top = 10.dp),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = medal,
-            )
-        }
-    }
-}
-
-/**
- * Gold, silver and bronze, and the one time this app reaches outside its own scheme.
- *
- * A board with no gold on it is a list, and first place stops being worth anything. Darkened on
- * the light theme rather than reused: the dark values are mixed to sit on navy, and a bronze
- * nobody can read is worse than no bronze.
- */
-private object Medal {
-    private val pale: Boolean
-        @Composable get() = MaterialTheme.colorScheme.background.luminance() > 0.5f
-
-    val gold: Color
-        @Composable get() = if (pale) Color(0xFF9A7B1F) else Color(0xFFE8B84B)
-
-    val silver: Color
-        @Composable get() = if (pale) Color(0xFF6B7488) else Color(0xFFAFB9D0)
-
-    val bronze: Color
-        @Composable get() = if (pale) Color(0xFF8A5A34) else Color(0xFFC58455)
 }
 
 /**
@@ -435,6 +315,16 @@ private fun BoardRowView(
         )
     }
 }
+
+/** The wire row, turned into the six values the podium draws. */
+private fun BoardRow.onThePodium(mineId: String?) =
+    PodiumPlace(
+        name = if (id == mineId) "You" else name,
+        photo = photoUrl,
+        place = place,
+        points = points,
+        work = work(this),
+    )
 
 /** What earned the points, under the name. */
 private fun work(row: BoardRow): String =
