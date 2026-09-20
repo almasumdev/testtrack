@@ -273,7 +273,7 @@ fun SetupScreen(
             ) {
                 Text(
                     "You're signed in as ${Session.email ?: "this account"}. If that's the wrong " +
-                        "Gmail, sign out and pick another one. Your place in the group and your " +
+                        "account, sign out and pick another one. Your place in the group and your " +
                         "Drive both belong to the account, so the steps below will start again.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -286,7 +286,7 @@ fun SetupScreen(
                 result = "You're in the group",
                 detail =
                     "App owners can only add you to their closed test if you're in this " +
-                        "group. Open it, join with the same Gmail you signed in with, then come back " +
+                        "group. Open it, join with the same account you signed in with, then come back " +
                         "and verify.",
                 done = done[1],
                 live = live(1),
@@ -308,7 +308,7 @@ fun SetupScreen(
                             "Google takes a minute or two to publish a new member, and the check " +
                                 "reads Google rather than this phone. Wait a moment and press Verify " +
                                 "again. If it still refuses, the usual cause is joining with a " +
-                                "different Gmail than the one on step one.",
+                                "different account than the one on step one.",
                         ),
                         QA(
                             "What does joining let you do?",
@@ -533,7 +533,7 @@ fun SetupScreen(
             title = "Sign out?",
             body =
                 "You'll come back to the account picker and can sign in with a different " +
-                    "Gmail. Nothing you've already reported is lost.",
+                    "account. Nothing you've already reported is lost.",
             confirm = "Sign out",
             onConfirm = {
                 confirmSignOut = false

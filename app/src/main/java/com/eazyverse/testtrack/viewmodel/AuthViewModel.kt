@@ -10,7 +10,6 @@ import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.AdminEvents
 import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.Device
-import com.eazyverse.testtrack.data.NotGmailException
 import com.eazyverse.testtrack.data.Repo
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.data.claimDevice
@@ -80,8 +79,6 @@ class AuthViewModel : ViewModel() {
                 // Somebody shut the account picker. That is an answer, not a fault, and it was
                 // being reported back to them as "you closed the sign-in", which is the app
                 // narrating what they had just done as though it were a problem.
-            } catch (e: NotGmailException) {
-                message = "${e.email} isn't a Gmail account. Pick the Gmail you test with."
             } catch (e: CancellationException) {
                 // Navigating away cancels this scope, and CancellationException is an Exception,
                 // so the catch below was turning a completely normal sign-in into a failure

@@ -83,7 +83,7 @@ class SetupViewModel : ViewModel() {
                         // change nothing; switching accounts is what Sign out is for.
                         gate.isAboutSomeoneElse(Session.email) ->
                             "Google answered for ${gate.address()}, not ${Session.email}. Sign out at " +
-                                "the top of this page and sign back in with the Gmail you want to use."
+                                "the top of this page and sign back in with the account you want to use."
 
                         gate is GateResult.Failed && gate.reason == AuthRepo.NEEDS_GOOGLE -> {
                             needsGoogle = true

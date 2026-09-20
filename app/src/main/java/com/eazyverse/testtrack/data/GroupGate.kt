@@ -34,11 +34,6 @@ data class GoogleAccount(
     val name: String,
 )
 
-/** Raised when a non-Gmail account is chosen — sign-in is Gmail-only by product decision. */
-class NotGmailException(
-    val email: String,
-) : Exception("$email is not a Gmail account")
-
 /**
  * Raised when a step of signing in never came back at all.
  *
@@ -169,7 +164,6 @@ object GroupGate {
      * Google" button. It shows the full chooser every time it is asked, because somebody pressed
      * something to ask.
      *
-     * @throws NotGmailException if the chosen account is not @gmail.com.
      */
     suspend fun signIn(context: Context): GoogleAccount {
         val option = GetSignInWithGoogleOption.Builder(Config.WEB_CLIENT_ID).build()
@@ -249,11 +243,6 @@ object GroupGate {
         ) {
             val google = GoogleIdTokenCredential.createFrom(credential.data)
             val email = google.id // GoogleIdTokenCredential.id is the account address
-
-            // The picker cannot be filtered by domain, so reject after selection with a clear
-            // message rather than letting a Workspace account fail confusingly later.
-            val domain = email.substringAfterLast('@', "").lowercase()
-            if (domain !in Config.ALLOWED_DOMAINS) throw NotGmailException(email)
 
             // Google returns the profile name where the account has one, and both halves
             // separately where it does not. The address with its domain cut off is the last

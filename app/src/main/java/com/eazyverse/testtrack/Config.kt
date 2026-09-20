@@ -25,9 +25,6 @@ object Config {
 
     const val DRIVE_FOLDER = "TestTrack Proofs"
 
-    /** Sign-in is Gmail-only; Play Console closed testing is keyed to Google accounts. */
-    val ALLOWED_DOMAINS = setOf("gmail.com", "googlemail.com")
-
     /** False when local.properties was not filled in, so the app can say so plainly. */
     val isConfigured: Boolean
         get() = WEB_CLIENT_ID.isNotBlank() && GATE_URL.isNotBlank()

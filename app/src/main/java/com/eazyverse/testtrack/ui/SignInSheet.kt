@@ -74,8 +74,8 @@ fun SignInSheet(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "Play Console ties closed testing to Google accounts, so TestTrack uses the " +
-                    "same one. Your crews, your apps and what you have earned belong to it, and " +
+                "Play ties closed testing to Google accounts, so TestTrack signs in with one " +
+                    "too. Your crews, your apps and what you have earned belong to it, and " +
                     "follow you onto any phone you sign in on.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
