@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -78,19 +79,25 @@ fun FeedTabs(
 
             Row(
                 Modifier
-                    // Unbounded and centred, rather than a rounded rectangle drawn tight around a
-                    // word. A box appearing behind text reads as a box appearing, not as a press.
+                    // The press is taken here and drawn further in. The whole of this is the
+                    // target, because a word is not one: the padding is what makes it the size of
+                    // a thumb rather than the size of the ink.
                     .clickable(
                         interactionSource = press,
-                        indication = ripple(bounded = false, radius = 34.dp),
+                        indication = null,
                     ) { onSelect(tab) }
-                    // A word is not a target. The padding is what makes this the size of a thumb
-                    // rather than the size of the ink.
                     .padding(horizontal = 4.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     tab.label,
+                    // Drawn on the word and nowhere else. Bounded to the text's own box, so what
+                    // lights up is the thing that was pressed rather than a shape around it. The
+                    // count is left out on purpose: it is a reading, not a button.
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .indication(press, ripple()),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = tint,
