@@ -159,7 +159,10 @@ fun FeedScreen(vm: FeedViewModel = viewModel()) {
             ) {
                 // The balance used to sit here. It is in the shell's header now, where it is on
                 // every screen rather than on this one, so what is left is the control.
-                FeedTabs(vm.tab) { vm.show(it) }
+                FeedTabs(
+                    selected = vm.tab,
+                    waiting = vm.waiting.size + vm.disputes.size,
+                ) { vm.show(it) }
             }
         },
     ) { padding ->

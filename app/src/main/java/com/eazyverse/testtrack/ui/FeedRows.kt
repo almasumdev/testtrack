@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -235,63 +236,88 @@ fun AppTile(
 private const val POST_LABEL = "Post an app"
 
 /**
- * Which half of Circle you are looking at, and the screen's heading.
+ * Circle's three tabs, as three words.
  *
- * There is no title above these any more. The bottom bar already says Circle and highlights it, so
- * a heading up here spent a whole row repeating a word the reader could see without scrolling, and
- * in doing so pushed the tabs onto a strip of their own where two labels had to divide a phone
- * between them. The selected tab names the place instead, which is what the label was for.
+ * No container and no fill. The pill this replaces was sized to its own words, which left a third
+ * of the row empty once the balance moved up into the header, and it marked the selected tab with
+ * `primaryContainer` on `surface`: #1C1D3A on #101626, three percent apart in lightness, the same
+ * smudge the bottom bar was marking its selected tab with. Weight and colour do it instead, which
+ * cannot be too low contrast because it is the text itself.
  *
- * One rounded control holding two settings, at exactly the width the two words need. Wrapped
- * rather than stretched, and at the start rather than centred: it is a thing you operate, and a
- * thing you operate belongs where the reading starts, not adrift in the middle of a row.
+ * It also stops the top of this screen being three rounded containers stacked on each other, now
+ * that the header above is one.
  *
- * Fully rounded, outer and inner both. Everything else on this screen is a soft cornered
- * rectangle, so a shape the page does not otherwise use is what makes this read as sitting on top
- * of the page rather than ruled into it. There is no underline and no rule beneath, because there
- * is no longer a bar for either to belong to.
+ * [waiting] is the only number here, and it is the one thing on the screen genuinely owed: reviews
+ * of this account's apps, and cases it can help decide. Shown from whichever tab you are on rather
+ * than only from Waiting, because it is an alert, and an alert you can only see once you have gone
+ * looking is not one.
  */
 @Composable
 fun FeedTabs(
     selected: FeedTab,
     modifier: Modifier = Modifier,
+    waiting: Int = 0,
     onSelect: (FeedTab) -> Unit,
 ) {
-    val pill = RoundedCornerShape(percent = 50)
     Row(
-        modifier
-            .clip(pill)
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, pill)
-            .padding(4.dp),
+        modifier,
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         FeedTab.entries.forEach { tab ->
             val current = tab == selected
-            Box(
+            val tint by animateColorAsState(
+                targetValue =
+                    if (current) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.outline
+                    },
+                animationSpec = tween(durationMillis = 180),
+                label = "tab",
+            )
+
+            Row(
                 Modifier
-                    .clip(pill)
-                    .background(
-                        if (current) {
-                            MaterialTheme.colorScheme.primaryContainer
-                        } else {
-                            Color.Transparent
-                        },
-                    ).clickable { onSelect(tab) }
-                    .padding(horizontal = 20.dp, vertical = 9.dp),
+                    .clip(RoundedCornerShape(10.dp))
+                    .clickable { onSelect(tab) }
+                    // A word is not a target. The padding is what makes this the size of a thumb
+                    // rather than the size of the ink.
+                    .padding(horizontal = 4.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     tab.label,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = if (current) FontWeight.Bold else FontWeight.Medium,
-                    color =
-                        if (current) {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
+                    color = tint,
+                    maxLines = 1,
                 )
+                if (tab == FeedTab.WAITING && waiting > 0) {
+                    Spacer(Modifier.width(6.dp))
+                    WaitingCount(waiting)
+                }
             }
         }
+    }
+}
+
+/** How many things are sitting on this account, or nothing at all when none are. */
+@Composable
+private fun WaitingCount(count: Int) {
+    Box(
+        Modifier
+            .clip(RoundedCornerShape(percent = 50))
+            .background(MaterialTheme.colorScheme.primary)
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            "$count",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimary,
+        )
     }
 }
 
