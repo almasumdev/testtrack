@@ -243,7 +243,11 @@ fun AppNav(
     val start =
         remember {
             when {
-                !Session.onboardingDone -> Routes.ONBOARDING
+                // Onboarding is deliberately skipped: it describes the product as it was before
+                // crews and Feedback, so showing it would be the app's first screen telling a
+                // new person something untrue. The screen is still in the tree and the route is
+                // still registered, so putting it back is this branch and nothing else.
+                //
                 // Both halves must agree. The flags live in SharedPreferences and the Firebase
                 // session does not, so the two can disagree: cleared credentials, a session expired
                 // while the app was shut, a restore that carried the flags and not the account.
