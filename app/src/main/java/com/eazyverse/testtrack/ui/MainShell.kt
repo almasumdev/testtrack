@@ -4,16 +4,19 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,9 +26,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -176,6 +182,17 @@ fun MainShell(
  * surface. The app has exactly one raised colour and it is the accent; a bar in a grey nothing
  * else here is painted in reads as a piece of another product bolted to the bottom, which is the
  * same reason [Ask] takes over the dialog container.
+ *
+ * Built by hand rather than from [NavigationBar], because the mark for the selected tab is a rail
+ * along the top edge of the item and Material's own is a pill behind the icon. There is no way to
+ * move that pill, so using the component would have meant hiding its indicator and drawing over
+ * it, which is more code than the row below and leaves a component fighting its own defaults.
+ *
+ * What the pill was doing wrong is worth keeping written down. It was filled in `primaryContainer`
+ * on a `background` bar, two colours three percent apart in lightness, so the selected tab was
+ * marked by a smudge nobody could see; and its icon took `onPrimaryContainer` while its label took
+ * `primary`, so one tab wore two different accents. A rail has no fill to get wrong, and both
+ * halves of the selected item are now the one colour.
  */
 @Composable
 private fun MainBar(
@@ -189,34 +206,68 @@ private fun MainBar(
                 .height(1.dp)
                 .background(MaterialTheme.colorScheme.outlineVariant),
         )
-        NavigationBar(
-            containerColor = MaterialTheme.colorScheme.background,
-            tonalElevation = 0.dp,
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
+                .height(BarHeight),
         ) {
             MainTab.entries.forEach { tab ->
-                val current = tab == selected
-                NavigationBarItem(
-                    selected = current,
-                    onClick = { onSelect(tab) },
-                    icon = { Icon(tab.icon, null, Modifier.size(22.dp)) },
-                    label = {
-                        Text(
-                            tab.label,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = if (current) FontWeight.Bold else FontWeight.Medium,
-                            maxLines = 1,
-                        )
-                    },
-                    colors =
-                        NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
-                )
+                MainBarItem(tab, tab == selected) { onSelect(tab) }
             }
+        }
+    }
+}
+
+/** Material's own bar height, kept so the rest of the layout is unchanged by the rewrite. */
+private val BarHeight = 80.dp
+
+@Composable
+private fun RowScope.MainBarItem(
+    tab: MainTab,
+    current: Boolean,
+    onSelect: () -> Unit,
+) {
+    val tint =
+        if (current) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        }
+
+    Box(
+        Modifier
+            .weight(1f)
+            .fillMaxHeight()
+            // `selectable` rather than `clickable`: it carries the selected state into the
+            // accessibility tree, which a coloured icon on its own does not, and Tab is the role
+            // a screen reader announces for one of a set of five.
+            .selectable(
+                selected = current,
+                onClick = onSelect,
+                role = Role.Tab,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (current) {
+            Box(
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .size(width = 30.dp, height = 3.dp)
+                    .clip(RoundedCornerShape(bottomStart = 3.dp, bottomEnd = 3.dp))
+                    .background(MaterialTheme.colorScheme.primary),
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(tab.icon, null, Modifier.size(22.dp), tint = tint)
+            Spacer(Modifier.height(5.dp))
+            Text(
+                tab.label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = if (current) FontWeight.SemiBold else FontWeight.Medium,
+                color = tint,
+                maxLines = 1,
+            )
         }
     }
 }
