@@ -161,6 +161,13 @@ data class SeatIn(
 )
 
 @Serializable
+data class MeIn(
+    @SerialName("display_name") val displayName: String,
+    /** An uploaded image by its reference. Empty clears it back to the initial. */
+    @SerialName("photo_ref") val photoRef: String = "",
+)
+
+@Serializable
 data class ApiUpload(
     /** What a review carries as its proof. Opaque to the app. */
     val id: String,

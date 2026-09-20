@@ -1,5 +1,9 @@
 package com.eazyverse.testtrack.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,6 +19,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -42,6 +50,7 @@ fun MeScreen(
     vm: MeViewModel = viewModel(),
 ) {
     val context = LocalContext.current
+    var editing by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { vm.load(context) }
 
     TabScaffold("Profile") {
@@ -49,7 +58,17 @@ fun MeScreen(
             profile = vm.profile,
             loading = vm.loading,
             offline = vm.offline,
+            onEdit = { editing = true },
             onSignOut = onSignOut,
+        )
+    }
+
+    if (editing) {
+        MeEditDialog(
+            name = vm.profile?.displayName.orEmpty(),
+            busy = vm.busy,
+            onSave = { name, photo -> vm.save(context, name, photo) { editing = false } },
+            onDismiss = { editing = false },
         )
     }
 }
@@ -60,6 +79,7 @@ fun MeBody(
     profile: ApiProfile?,
     loading: Boolean = false,
     offline: Boolean = false,
+    onEdit: () -> Unit = {},
     onSignOut: () -> Unit = {},
 ) {
     if (offline) {
@@ -79,7 +99,7 @@ fun MeBody(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 4.dp, bottom = Gutter),
     ) {
-        item { Who(profile) }
+        item { Who(profile, onEdit) }
         item { Spacer(Modifier.height(12.dp)) }
         item { Record(profile) }
         item { Spacer(Modifier.height(12.dp)) }
@@ -95,7 +115,10 @@ fun MeBody(
 
 /** Name, face and balance. The three things somebody checks without reading. */
 @Composable
-private fun Who(profile: ApiProfile) {
+private fun Who(
+    profile: ApiProfile,
+    onEdit: () -> Unit,
+) {
     Box(Modifier.padding(horizontal = Gutter)) {
         CrewCard(padding = PaddingValues(16.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -131,6 +154,8 @@ private fun Who(profile: ApiProfile) {
                     MaterialTheme.colorScheme.primaryContainer,
                 )
             }
+            Spacer(Modifier.height(12.dp))
+            Secondary("Edit", Modifier.fillMaxWidth(), onClick = onEdit)
         }
     }
 }
@@ -220,4 +245,69 @@ fun ordinal(place: Int): String {
             else -> "th"
         }
     return "$place$suffix"
+}
+
+/**
+ * Changing how you appear to everybody else.
+ *
+ * The old Firestore profile could do this and the version that replaced it could not, so an
+ * account was stuck with whatever Google last called it. Two fields, because two is all an
+ * account is allowed to change: the email came from Google and the balance comes from the ledger.
+ *
+ * The picker is permissionless — it hands back one item the person chose and never gives the app
+ * the library — which is why there is no permission prompt anywhere in this flow.
+ */
+@Composable
+fun MeEditDialog(
+    name: String,
+    busy: Boolean = false,
+    onSave: (String, Uri?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var typed by remember { mutableStateOf(name) }
+    var photo by remember { mutableStateOf<Uri?>(null) }
+
+    val pick =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) photo = uri
+        }
+
+    Ask(
+        title = "How you appear",
+        body = "Your name and picture are what the other fourteen people in a crew see.",
+        confirm = if (busy) "Saving" else "Save",
+        confirmEnabled = typed.trim().isNotBlank() && !busy,
+        onConfirm = { onSave(typed, photo) },
+        onDismiss = onDismiss,
+        content = {
+            DialogField(
+                value = typed,
+                onValueChange = { typed = it.take(120) },
+                label = "Name",
+                placeholder = "Rafiul",
+                error = if (typed.isNotEmpty() && typed.isBlank()) "That is only spaces." else null,
+                supporting = "However you want to be known. It does not have to be your real one.",
+            )
+            Spacer(Modifier.height(14.dp))
+            Text(
+                "Picture",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(6.dp))
+            Secondary(
+                if (photo == null) "Choose a picture" else "Chosen. Pick another",
+                Modifier.fillMaxWidth(),
+                enabled = !busy,
+            ) {
+                pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Optional. Without one your initial is used.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+    )
 }

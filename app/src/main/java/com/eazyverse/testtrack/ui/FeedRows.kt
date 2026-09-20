@@ -94,7 +94,7 @@ fun FeedCard(
 
 /** The rule inside a card, between what a post is and what you can do about it. */
 @Composable
-private fun CardRule() {
+fun CardRule() {
     Box(
         Modifier
             .fillMaxWidth()

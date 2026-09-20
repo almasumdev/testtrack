@@ -157,6 +157,9 @@ object Api {
 
     suspend fun profile(): ApiProfile = get("/me/profile")
 
+    /** Change this account's name or face. Nothing else about it is ours to set. */
+    suspend fun updateMe(body: MeIn): Me = patch("/me", body)
+
     suspend fun myApps(): MyApps = get("/me/apps")
 
     /** Where a piece of proof lives. Needs the token, so it is fetched, never linked. */
@@ -191,6 +194,12 @@ object Api {
 
     @PublishedApi
     internal suspend inline fun <reified T> get(path: String): T = send(Request.Builder().url(url(path)).get())
+
+    @PublishedApi
+    internal suspend inline fun <reified In, reified Out> patch(
+        path: String,
+        body: In,
+    ): Out = send(Request.Builder().url(url(path)).patch(json.encodeToString(body).toRequestBody(JSON)))
 
     @PublishedApi
     internal suspend inline fun <reified T> delete(path: String): T = send(Request.Builder().url(url(path)).delete())

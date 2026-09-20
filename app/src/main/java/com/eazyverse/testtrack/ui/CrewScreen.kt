@@ -59,6 +59,9 @@ import com.composables.icons.lucide.Lucide
 fun CrewScreen(vm: CrewViewModel = viewModel()) {
     val context = LocalContext.current
 
+    /** The seat being given up, which is confirmed first: it is a place fourteen people share. */
+    var leaving by remember { mutableStateOf<CrewSeat?>(null) }
+
     // Reloaded on every arrival: a crew fills, a verdict lands and a fortnight starts while
     // somebody is on another screen.
     LaunchedEffect(Unit) { vm.load(context) }
@@ -144,7 +147,11 @@ fun CrewScreen(vm: CrewViewModel = viewModel()) {
         Column(Modifier.fillMaxSize().padding(padding)) {
             when {
                 crew != null && crew.phase == CrewPhase.LOBBY ->
-                    CrewLobbyPhase(crew) { judging = crew.id to it }
+                    CrewLobbyPhase(
+                        crew = crew,
+                        onJudge = { judging = crew.id to it },
+                        onLeave = { leaving = crew.seats.firstOrNull { seat -> seat.mine } },
+                    )
                 crew != null && crew.phase == CrewPhase.RUN ->
                     CrewRunPhase(
                         crew = crew,
@@ -172,6 +179,22 @@ fun CrewScreen(vm: CrewViewModel = viewModel()) {
                 vm.judge(id, seat, installed)
             },
             onDismiss = { judging = null },
+        )
+    }
+
+    leaving?.let { seat ->
+        Ask(
+            title = "Take ${seat.appName} back out?",
+            body =
+                "The seat is freed for somebody else and this crew goes back to waiting. You " +
+                    "can take another one straight away.",
+            confirm = "Take it out",
+            destructive = true,
+            onConfirm = {
+                leaving = null
+                vm.leave(context, seat)
+            },
+            onDismiss = { leaving = null },
         )
     }
 

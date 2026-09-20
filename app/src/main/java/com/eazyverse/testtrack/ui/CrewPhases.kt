@@ -42,6 +42,7 @@ private val ListTop = 8.dp
 fun CrewLobbyPhase(
     crew: Crew,
     onJudge: (CrewSeat) -> Unit,
+    onLeave: () -> Unit = {},
 ) {
     val confirmed = CrewRules.filled(crew.seats)
     val checking = crew.seats.count { it.state == SeatState.CHECKING }
@@ -121,6 +122,21 @@ fun CrewLobbyPhase(
                             }
                             Spacer(Modifier.width(10.dp))
                             SeatPill(mine.state)
+                        }
+
+                        // Leaving is only offered before the crew starts. Fourteen people are
+                        // relying on it after that, and the server refuses it anyway; a button
+                        // that is going to be refused is worse than no button.
+                        if (crew.phase != CrewPhase.RUN && crew.phase != CrewPhase.RECORD) {
+                            Spacer(Modifier.height(12.dp))
+                            CardRule()
+                            Spacer(Modifier.height(12.dp))
+                            Secondary(
+                                "Take it back out",
+                                Modifier.fillMaxWidth(),
+                                destructive = true,
+                                onClick = onLeave,
+                            )
                         }
                     }
                 }

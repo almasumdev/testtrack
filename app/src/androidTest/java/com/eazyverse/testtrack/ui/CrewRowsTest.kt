@@ -272,3 +272,59 @@ class CrewRowsTest {
         compose.onNodeWithText("Left on day 4").assertIsDisplayed()
     }
 }
+
+/**
+ * Giving a seat back.
+ *
+ * The API has supported it since crews shipped and nothing in the app called it, so somebody who
+ * put the wrong app in was stuck with it until the crew filled. The rule that matters is when the
+ * offer disappears: once a crew is running, fourteen people are relying on that seat.
+ */
+@RunWith(AndroidJUnit4::class)
+class CrewLeaveTest {
+    @get:Rule
+    val compose = createComposeRule()
+
+    private fun crewWith(phase: CrewPhase): Crew {
+        val mine =
+            CrewSeat(
+                id = "mine",
+                appName = "Nikosh Budget",
+                owner = "You",
+                crew = "Crew 07",
+                greens = 1,
+                mine = true,
+            )
+        return Crew(id = "c1", name = "Crew 07", phase = phase, seats = listOf(mine))
+    }
+
+    @Test
+    fun a_seat_can_be_taken_back_out_before_the_crew_starts() {
+        var left = 0
+        compose.setContent {
+            TestTrackTheme {
+                CrewLobbyPhase(crewWith(CrewPhase.LOBBY), onJudge = {}, onLeave = { left++ })
+            }
+        }
+        compose.onNodeWithText("Take it back out").assertIsDisplayed().performClick()
+        assertEquals(1, left)
+    }
+
+    @Test
+    fun once_the_run_has_started_it_is_not_offered() {
+        // The server refuses it then, and a button that is going to be refused is worse than no
+        // button: it reads as something the product allows and then does not.
+        compose.setContent {
+            TestTrackTheme { CrewLobbyPhase(crewWith(CrewPhase.RUN), onJudge = {}) }
+        }
+        compose.onNodeWithText("Take it back out").assertDoesNotExist()
+    }
+
+    @Test
+    fun a_finished_crew_is_a_record_and_nothing_can_be_withdrawn_from_it() {
+        compose.setContent {
+            TestTrackTheme { CrewLobbyPhase(crewWith(CrewPhase.RECORD), onJudge = {}) }
+        }
+        compose.onNodeWithText("Take it back out").assertDoesNotExist()
+    }
+}

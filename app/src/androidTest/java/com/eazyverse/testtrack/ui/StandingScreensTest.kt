@@ -1,10 +1,15 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.eazyverse.testtrack.net.ApiMyApp
 import com.eazyverse.testtrack.net.ApiProfile
@@ -305,5 +310,94 @@ class StandingScreensTest {
     fun signed_out_the_profile_says_what_comes_back() {
         compose.setContent { TestTrackTheme { MeBody(profile = null, offline = true) } }
         compose.onNodeWithText("Signed out").assertIsDisplayed()
+    }
+}
+
+/**
+ * Changing how you appear.
+ *
+ * Removed along with the old Firestore profile and gone for a while, so an account was stuck with
+ * whatever Google last called it. These cover the two things the dialog has to get right: a name
+ * is required, and the picture is not.
+ */
+@RunWith(AndroidJUnit4::class)
+class MeEditDialogTest {
+    @get:Rule
+    val compose = createComposeRule()
+
+    @Test
+    fun the_profile_offers_a_way_to_change_itself() {
+        var edited = 0
+        compose.setContent {
+            TestTrackTheme {
+                MeBody(
+                    profile =
+                        ApiProfile(
+                            id = "u1",
+                            email = "rafiul@example.com",
+                            displayName = "Rafiul",
+                            timezone = "Asia/Dhaka",
+                            tix = 0,
+                            opens = 0,
+                            reviews = 0,
+                            points = 0,
+                            place = 0,
+                            crewsRunning = 0,
+                            crewsFinished = 0,
+                            joinedAt = "2026-09-01T00:00:00+00:00",
+                        ),
+                    onEdit = { edited++ },
+                )
+            }
+        }
+        compose.onNodeWithText("Edit").performClick()
+        assertEquals(1, edited)
+    }
+
+    @Test
+    fun a_name_is_required_and_spaces_are_not_one() {
+        var saved: String? = null
+        compose.setContent {
+            TestTrackTheme {
+                MeEditDialog(name = "Rafiul", onSave = { n, _ -> saved = n }, onDismiss = {})
+            }
+        }
+
+        compose.onNode(hasSetTextAction()).performTextClearance()
+        compose.onNodeWithText("Save").assertIsNotEnabled()
+
+        // Three spaces clear a length check and arrive as nothing, which is what the server had
+        // to be taught too.
+        compose.onNode(hasSetTextAction()).performTextInput("   ")
+        compose.onNodeWithText("Save").assertIsNotEnabled()
+        compose.onNodeWithText("That is only spaces.").assertIsDisplayed()
+
+        compose.onNode(hasSetTextAction()).performTextClearance()
+        compose.onNode(hasSetTextAction()).performTextInput("Nadia")
+        compose.onNodeWithText("Save").performClick()
+        assertEquals("Nadia", saved)
+    }
+
+    @Test
+    fun a_picture_is_optional_and_says_so() {
+        compose.setContent {
+            TestTrackTheme {
+                MeEditDialog(name = "Rafiul", onSave = { _, _ -> }, onDismiss = {})
+            }
+        }
+        compose.onNodeWithText("Choose a picture").assertIsDisplayed()
+        compose.onNodeWithText("Optional", substring = true).assertIsDisplayed()
+        // And it saves without one, since the name is the only required half.
+        compose.onNodeWithText("Save").assertIsEnabled()
+    }
+
+    @Test
+    fun nothing_can_be_saved_twice_while_the_first_save_is_in_flight() {
+        compose.setContent {
+            TestTrackTheme {
+                MeEditDialog(name = "Rafiul", busy = true, onSave = { _, _ -> }, onDismiss = {})
+            }
+        }
+        compose.onNodeWithText("Saving").assertIsNotEnabled()
     }
 }

@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -12,6 +13,7 @@ import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiMyApp
 import com.eazyverse.testtrack.net.ApiProfile
 import com.eazyverse.testtrack.net.BoardRow
+import com.eazyverse.testtrack.net.MeIn
 import kotlinx.coroutines.launch
 
 /*
@@ -108,6 +110,56 @@ class MeViewModel : ViewModel() {
 
     var offline by mutableStateOf(false)
         private set
+
+    var busy by mutableStateOf(false)
+        private set
+
+    var message by mutableStateOf<String?>(null)
+        private set
+
+    fun clearMessage() {
+        message = null
+    }
+
+    /**
+     * Change the name, and the face if a new one was chosen.
+     *
+     * The picture goes up first because the second call needs what the first returns. Leaving the
+     * picture alone sends back what is already there, since the endpoint takes both fields and a
+     * missing one would read as "clear it".
+     */
+    fun save(
+        context: Context,
+        name: String,
+        photo: Uri?,
+        onDone: () -> Unit,
+    ) {
+        if (busy) return
+        busy = true
+        viewModelScope.launch {
+            try {
+                val ref =
+                    if (photo == null) {
+                        profile?.photoUrl.orEmpty()
+                    } else {
+                        val resolver = context.contentResolver
+                        val bytes =
+                            resolver.openInputStream(photo)?.use { it.readBytes() }
+                                ?: throw ApiError(400, "unreadable", "That image could not be read.")
+                        Api.upload(bytes, resolver.getType(photo) ?: "image/jpeg").id
+                    }
+                Api.updateMe(MeIn(displayName = name.trim(), photoRef = ref))
+                load(context)
+                onDone()
+            } catch (e: ApiError) {
+                message = e.message
+            } catch (_: Exception) {
+                message = "We could not reach TestTrack. Check your connection."
+            } finally {
+                busy = false
+            }
+        }
+    }
 
     fun load(context: Context) {
         viewModelScope.launch {

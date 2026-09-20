@@ -345,6 +345,20 @@ class CrewViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Give your seat up before the crew starts.
+     *
+     * Only possible before it fills. The server refuses it afterwards, because by then fourteen
+     * other people have committed a fortnight on the strength of it being there.
+     */
+    fun leave(
+        context: Context,
+        seat: CrewSeat,
+    ) = call(
+        context = context,
+        onDone = { message = "Taken back out. You are free to take another seat." },
+    ) { Api.withdraw(seat.id) }
+
     /** Excused rather than owed, for an app nobody in the crew can get into. */
     fun report(
         context: Context,
