@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.AdminEvents
@@ -75,6 +76,10 @@ class AuthViewModel : ViewModel() {
                 // cancels the scope underneath us; any work left below would be killed mid-flight
                 // and reported as a failure by the catch.
                 onDone()
+            } catch (_: GetCredentialCancellationException) {
+                // Somebody shut the account picker. That is an answer, not a fault, and it was
+                // being reported back to them as "you closed the sign-in", which is the app
+                // narrating what they had just done as though it were a problem.
             } catch (e: NotGmailException) {
                 message = "${e.email} isn't a Gmail account. Pick the Gmail you test with."
             } catch (e: CancellationException) {
@@ -86,7 +91,7 @@ class AuthViewModel : ViewModel() {
             } catch (e: Exception) {
                 // Short, because friendly() appends the real cause when it has no better
                 // sentence of its own, and two guesses in a row read as noise.
-                message = e.friendly("Sign-in didn't work.")
+                message = e.friendly("Sign-in could not be completed.")
             }
             busy = false
         }

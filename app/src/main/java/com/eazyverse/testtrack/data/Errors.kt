@@ -60,8 +60,10 @@ fun Throwable.friendly(
         // to the generic fallback. A phone with no Google account on it and a build whose signing key
         // is not registered were both told, wrongly, to check their connection.
         // Nothing went wrong here, and saying so keeps it out of the same register as the rest.
-        this is GetCredentialCancellationException ->
-            "You closed the sign-in. Press the button to try again."
+        // Better still is not to ask: the sign-in path catches this itself and says nothing at
+        // all, because narrating back to somebody what they have just chosen to do reads as the
+        // app being confused about who decided it.
+        this is GetCredentialCancellationException -> "Sign-in was not completed."
 
         // Not "there is no Google account on this phone", which is a claim the exception never
         // makes, and which sent people to Settings to add a Gmail that was already sitting there.
@@ -69,7 +71,7 @@ fun Throwable.friendly(
         // Play services still reading its account list on the first press after a cold start. So the
         // instruction is the one that actually works: press it again.
         this is NoCredentialException ->
-            "Google had no account ready yet. Press the button again."
+            "Google had no account ready. Try once more."
 
         this is GetCredentialException -> "Google couldn't finish the sign-in. ${detail()}"
 

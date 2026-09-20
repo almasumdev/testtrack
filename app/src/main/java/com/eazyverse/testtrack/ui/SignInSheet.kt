@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.CircleAlert
@@ -75,8 +74,9 @@ fun SignInSheet(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "Your crews, your apps and what you have earned all belong to the account, so " +
-                    "they follow you onto any phone you sign in on.",
+                "Play Console ties closed testing to Google accounts, so TestTrack uses the " +
+                    "same one. Your crews, your apps and what you have earned belong to it, and " +
+                    "follow you onto any phone you sign in on.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -144,15 +144,6 @@ fun SignInSheet(
                     fontWeight = FontWeight.SemiBold,
                 )
             }
-
-            Spacer(Modifier.height(14.dp))
-            Text(
-                "Gmail only, because Play Console ties closed testing to Google accounts.",
-                style = MaterialTheme.typography.labelSmall,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-            )
         }
     }
 }

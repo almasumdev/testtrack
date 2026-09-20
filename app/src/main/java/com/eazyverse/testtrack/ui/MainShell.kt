@@ -301,13 +301,20 @@ private fun MainBar(
     }
 }
 
-/** Material's own bar height, kept so the rest of the layout is unchanged by the rewrite. */
-private val BarHeight = 80.dp
+/*
+ * Shorter than Material's eighty.
+ *
+ * That height is built for a bar with a filled pill behind the selected icon, and there is no pill
+ * here: a rail along the top edge needs no room of its own. What the eighty was buying was space
+ * around a shape that is gone, and on a phone the bar is the one piece of furniture that is on
+ * screen the whole time, so what it does not need it should not take from the content above it.
+ */
+private val BarHeight = 64.dp
 private val RailWidth = 30.dp
 private val RailHeight = 3.dp
 
 /** Wide enough to take a thumb, and the reason the touch target is not the ripple. */
-private val TapSize = 40.dp
+private val TapSize = 36.dp
 
 @Composable
 private fun RowScope.MainBarItem(
@@ -364,12 +371,15 @@ private fun RowScope.MainBarItem(
                     .indication(press, ripple(bounded = false, radius = TapSize / 2)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(tab.icon, null, Modifier.size(22.dp), tint = tint)
+                Icon(tab.icon, null, Modifier.size(21.dp), tint = tint)
             }
             Text(
                 tab.label,
                 style = MaterialTheme.typography.labelSmall,
-                fontWeight = if (current) FontWeight.SemiBold else FontWeight.Medium,
+                // One weight, for the same reason the tabs above have one: semi bold is
+                // wider than medium, so a weight that moved with the selection re-measured the
+                // word and nudged the icon above it off centre at the moment of the tap.
+                fontWeight = FontWeight.Medium,
                 color = tint,
                 maxLines = 1,
             )
