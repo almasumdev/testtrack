@@ -20,6 +20,14 @@ enum class FeedTab(
 
     /** Nobody writes these. They are posted by things happening: a ship, a finished cohort. */
     ACTIVITY("Activity"),
+
+    /**
+     * Anything waiting on a decision from this account.
+     *
+     * Reviews of your own apps, and cases between two other people you are eligible to help
+     * decide. One tab because from the reader's side it is one errand: somebody is waiting.
+     */
+    WAITING("Waiting"),
 }
 
 /**

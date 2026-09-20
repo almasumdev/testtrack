@@ -192,3 +192,55 @@ private fun ChoicePill(
         )
     }
 }
+
+/**
+ * Refusing a review, which costs something.
+ *
+ * The reason is required because it is the only thing three strangers will have to judge by: a
+ * refusal with no account of itself asks them to guess, and one of the two people involved pays
+ * for that guess.
+ */
+@Composable
+fun FeedRefuseDialog(
+    appName: String,
+    onRefuse: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var reason by remember { mutableStateOf("") }
+    val enough = reason.trim().length >= 15
+
+    Ask(
+        title = "Refuse this review?",
+        body =
+            "Three members will decide it, and whoever it goes against pays them. Say what is " +
+                "wrong with it so they have something to go on.",
+        confirm = "Refuse it",
+        destructive = true,
+        confirmEnabled = enough,
+        onConfirm = { onRefuse(reason.trim()) },
+        onDismiss = onDismiss,
+        content = {
+            DialogField(
+                value = reason,
+                onValueChange = { reason = it.take(280) },
+                label = "What is wrong with it",
+                placeholder = "The screenshot is of a different app's listing.",
+                supporting =
+                    if (enough) {
+                        "The reviewer sees this too."
+                    } else {
+                        "A few more words. This is all the three of them will have."
+                    },
+                singleLine = false,
+                minHeight = 96.dp,
+                maxLength = 280,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Accepting $appName's review instead costs nothing.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+    )
+}

@@ -10,12 +10,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.MaterialTheme
@@ -31,9 +33,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.eazyverse.testtrack.domain.Waiting
+import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiPost
 
 /**
@@ -72,6 +81,9 @@ fun FeedScreen(vm: FeedViewModel = viewModel()) {
     /** The post being reviewed, which takes over the whole screen while it is open. */
     var reviewing by remember { mutableStateOf<ApiPost?>(null) }
     var posting by remember { mutableStateOf(false) }
+
+    /** The review being refused, which needs a reason before anything is charged. */
+    var refusing by remember { mutableStateOf<Waiting?>(null) }
     val context = LocalContext.current
 
     // Reloaded on every arrival rather than once. Coming back from a review is the commonest way
@@ -206,8 +218,32 @@ fun FeedScreen(vm: FeedViewModel = viewModel()) {
                     ) {
                         items(vm.events, key = { it.id }) { event -> FeedEventCard(event) }
                     }
+
+                FeedTab.WAITING ->
+                    WaitingBody(
+                        reviews = vm.waiting,
+                        disputes = vm.disputes,
+                        loading = vm.loading,
+                        offline = vm.offline,
+                        busy = vm.busy,
+                        proof = { ref -> ProofImage(ref) },
+                        onApprove = { vm.approve(context, it) },
+                        onReject = { refusing = it },
+                        onVote = { dispute, forReviewer -> vm.vote(context, dispute, forReviewer) },
+                    )
             }
         }
+    }
+
+    refusing?.let { review ->
+        FeedRefuseDialog(
+            appName = review.appName,
+            onRefuse = { reason ->
+                refusing = null
+                vm.reject(context, review, reason)
+            },
+            onDismiss = { refusing = null },
+        )
     }
 
     if (posting) {
@@ -220,4 +256,36 @@ fun FeedScreen(vm: FeedViewModel = viewModel()) {
             onDismiss = { posting = false },
         )
     }
+}
+
+/**
+ * A proof screenshot, fetched with the session on it.
+ *
+ * Served by our API and refused without a token, so it cannot be an ordinary image URL. The
+ * loader borrows the same OkHttp client every other call uses, which is what puts the token on
+ * the request and refreshes it when it has expired.
+ */
+@Composable
+fun ProofImage(ref: String) {
+    val context = LocalContext.current
+    val loader = ImageLoader.Builder(context).okHttpClient { Api.http }.build()
+
+    AsyncImage(
+        model =
+            ImageRequest
+                .Builder(context)
+                .data(Api.proofUrl(ref))
+                .crossfade(true)
+                .build(),
+        contentDescription = "The screenshot sent as proof",
+        imageLoader = loader,
+        // Tall, because a phone screenshot is. Cropped rather than letterboxed: the part that
+        // matters is the review at the top, and a shrunk-to-fit screenshot is unreadable.
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(3f / 4f)
+                .clip(RoundedCornerShape(10.dp)),
+        contentScale = ContentScale.Crop,
+    )
 }

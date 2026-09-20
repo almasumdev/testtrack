@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eazyverse.testtrack.domain.Case
+import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
@@ -46,6 +48,23 @@ class FeedViewModel : ViewModel() {
         tab = next
     }
 
+    /** Reviews of this account's apps, waiting to be accepted or refused. */
+    var waiting by mutableStateOf<List<Waiting>>(emptyList())
+        private set
+
+    /** Cases this account is eligible to help decide. */
+    var disputes by mutableStateOf<List<Case>>(emptyList())
+        private set
+
+    var busy by mutableStateOf(false)
+        private set
+
+    /** How many decisions are owed, for the badge on the tab. */
+    val owed: Int get() = waiting.size + disputes.size
+
+    /** Which app a waiting review is of, since a review only carries the post's id. */
+    fun appNameFor(postId: String): String = posts.firstOrNull { it.id == postId }?.appName ?: "Your app"
+
     fun clearMessage() {
         message = null
     }
@@ -61,6 +80,32 @@ class FeedViewModel : ViewModel() {
                 }
                 posts = Api.posts().posts
                 tix = Api.me().tix
+                // Both duties, fetched with the feed rather than when the tab is opened: the
+                // badge has to be right before anybody looks at it.
+                // Mapped here rather than drawn raw: a post id means nothing on a card, and
+                // the screen should not have to know what the database calls things.
+                waiting =
+                    Api.waiting().map {
+                        Waiting(
+                            id = it.id,
+                            appName = appNameFor(it.postId),
+                            written = it.written,
+                            proofRef = it.proofRef,
+                        )
+                    }
+                disputes =
+                    Api.disputes().map {
+                        Case(
+                            id = it.id,
+                            appName = it.appName,
+                            reason = it.reason,
+                            written = it.written,
+                            proofRef = it.proofRef,
+                            stake = it.stake,
+                            votesCast = it.votesCast,
+                            votesNeeded = it.votesNeeded,
+                        )
+                    }
                 offline = false
             } catch (e: ApiError) {
                 message = e.message
@@ -93,6 +138,59 @@ class FeedViewModel : ViewModel() {
                 message = e.message
             } catch (_: Exception) {
                 message = "We could not reach TestTrack. Check your connection."
+            }
+        }
+    }
+
+    /** Accept a review of your app. The reviewer is paid and the post is one closer to done. */
+    fun approve(
+        context: Context,
+        review: Waiting,
+    ) = decide(context, "Accepted. The reviewer has been paid.") { Api.approve(review.id) }
+
+    /**
+     * Refuse one, which is not free.
+     *
+     * Three members decide it and the loser funds them, so the screen says the stake before the
+     * button is pressed rather than after the tix have gone.
+     */
+    fun reject(
+        context: Context,
+        review: Waiting,
+        reason: String,
+    ) = decide(context, "Refused. Three members will decide it.") { Api.reject(review.id, reason) }
+
+    /** Come down on one side of a case between two other people. */
+    fun vote(
+        context: Context,
+        dispute: Case,
+        forReviewer: Boolean,
+    ) = decide(context, "Counted. Thank you.") { Api.vote(dispute.id, forReviewer) }
+
+    /**
+     * One decision, one reload, one place failure is handled.
+     *
+     * Reloaded rather than patched, because a vote can close a case and a case closing moves
+     * somebody's tix, and neither of those is one row on this screen.
+     */
+    private fun decide(
+        context: Context,
+        done: String,
+        block: suspend () -> Unit,
+    ) {
+        if (busy) return
+        busy = true
+        viewModelScope.launch {
+            try {
+                block()
+                message = done
+                load(context)
+            } catch (e: ApiError) {
+                message = e.message
+            } catch (_: Exception) {
+                message = "We could not reach TestTrack. Check your connection."
+            } finally {
+                busy = false
             }
         }
     }

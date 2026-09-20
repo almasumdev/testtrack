@@ -28,7 +28,13 @@ object Api {
 
     @PublishedApi internal val JSON = "application/json; charset=utf-8".toMediaType()
 
-    private val http =
+    /**
+     * Shared, because an image loader needs the same client and the same token.
+     *
+     * A proof screenshot is served by this API and refused without a session, so the only way to
+     * put one on screen is to fetch it the way everything else is fetched. See [ProofImage].
+     */
+    val http =
         OkHttpClient
             .Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
@@ -152,6 +158,9 @@ object Api {
     suspend fun profile(): ApiProfile = get("/me/profile")
 
     suspend fun myApps(): MyApps = get("/me/apps")
+
+    /** Where a piece of proof lives. Needs the token, so it is fetched, never linked. */
+    fun proofUrl(ref: String): String = url("/uploads/$ref")
 
     // ---------------------------------------------------------------- files
 
