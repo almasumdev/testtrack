@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -114,7 +115,12 @@ fun FeedTabs(
                     tab.label,
                     // Drawn on the letters and nowhere else. The count is left out on purpose:
                     // it is a reading, not a button.
-                    modifier = Modifier.inkRipple(press, MaterialTheme.colorScheme.primary),
+                    modifier =
+                        Modifier.inkRipple(
+                            interactionSource = press,
+                            resting = tint,
+                            lit = MaterialTheme.colorScheme.primary,
+                        ),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = tint,
@@ -169,7 +175,8 @@ private fun WaitingCount(count: Int) {
 @Composable
 private fun Modifier.inkRipple(
     interactionSource: InteractionSource,
-    color: Color,
+    resting: Color,
+    lit: Color,
 ): Modifier {
     val spread = remember { Animatable(0f) }
     val strength = remember { Animatable(0f) }
@@ -200,7 +207,11 @@ private fun Modifier.inkRipple(
                 // Far enough to cover the word from its middle, whatever its length.
                 val reach = kotlin.math.hypot(size.width, size.height) / 2f
                 drawCircle(
-                    color = color.copy(alpha = 0.75f * strength.value),
+                    // Opaque, and the press is carried by moving the colour rather than by
+                    // thinning it. A translucent SrcIn leaves the glyph itself translucent, and
+                    // the ground behind this is nearly black, so fading the ink in turned the
+                    // word darker at exactly the moment it was meant to light up.
+                    color = lerp(resting, lit, strength.value),
                     radius = reach * spread.value,
                     center = center,
                     blendMode = BlendMode.SrcIn,
