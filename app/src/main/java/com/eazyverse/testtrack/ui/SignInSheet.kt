@@ -1,5 +1,12 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -102,70 +109,106 @@ fun SignInSheet(
                 .fillMaxWidth()
                 .padding(start = Gutter, end = Gutter, bottom = 30.dp),
         ) {
-            val account = vm.signedInAs
-            if (account != null) {
-                SignedIn(account)
-                return@Column
-            }
-
-            Text(
-                reason.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                reason.why,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            vm.message?.let { Refusal(it) }
-
-            Spacer(Modifier.height(20.dp))
-
-            // Google asks for its own mark on a plain surface rather than a tinted button, which
-            // also keeps it distinct from the app's own primary actions.
-            Button(
-                onClick = { vm.signIn(activity) },
-                enabled = !vm.busy,
-                shape = RoundedCornerShape(15.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                        disabledContainerColor = MaterialTheme.colorScheme.background,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ),
-                modifier = Modifier.fillMaxWidth().height(54.dp),
-            ) {
-                if (vm.busy) {
-                    CircularProgressIndicator(
-                        Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            /*
+             * Crossed over rather than swapped.
+             *
+             * The two halves of this sheet are different heights and different shapes, and it was
+             * cutting from one to the other on the frame the answer arrived: the form vanished,
+             * the panel appeared, and the sheet jumped to its new height under both of them. The
+             * one moment in this flow worth feeling was the only one with nothing in it.
+             *
+             * The outgoing goes first and faster, so the two are never both solid on top of each
+             * other, and the incoming lifts a little as it arrives. SizeTransform is what carries
+             * the sheet between the two heights instead of snapping.
+             */
+            AnimatedContent(
+                targetState = vm.signedInAs,
+                transitionSpec = {
+                    (
+                        fadeIn(tween(durationMillis = 260, delayMillis = 110)) +
+                            slideInVertically(
+                                tween(durationMillis = 300, delayMillis = 110),
+                            ) { it / 5 }
+                    ).togetherWith(fadeOut(tween(durationMillis = 130)))
+                        .using(SizeTransform(clip = false))
+                },
+                label = "signin",
+            ) { account ->
+                if (account == null) {
+                    AskToSignIn(reason, vm) { vm.signIn(activity) }
                 } else {
-                    GoogleMark(Modifier.size(20.dp))
+                    SignedIn(account)
                 }
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    if (vm.busy) "Waiting for Google" else "Continue with Google",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                )
             }
+        }
+    }
+}
 
-            Spacer(Modifier.height(12.dp))
+/** The half that asks. */
+@Composable
+private fun AskToSignIn(
+    reason: SignInReason,
+    vm: AuthViewModel,
+    onPress: () -> Unit,
+) {
+    Column {
+        Text(
+            reason.title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            reason.why,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        vm.message?.let { Refusal(it) }
+
+        Spacer(Modifier.height(20.dp))
+
+        // Google asks for its own mark on a plain surface rather than a tinted button, which
+        // also keeps it distinct from the app's own primary actions.
+        Button(
+            onClick = onPress,
+            enabled = !vm.busy,
+            shape = RoundedCornerShape(15.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    disabledContainerColor = MaterialTheme.colorScheme.background,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+            modifier = Modifier.fillMaxWidth().height(54.dp),
+        ) {
+            if (vm.busy) {
+                CircularProgressIndicator(
+                    Modifier.size(18.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                GoogleMark(Modifier.size(20.dp))
+            }
+            Spacer(Modifier.width(12.dp))
             Text(
-                "Play ties closed testing to Google accounts.",
-                style = MaterialTheme.typography.labelSmall,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.fillMaxWidth(),
+                if (vm.busy) "Waiting for Google" else "Continue with Google",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
             )
         }
+
+        Spacer(Modifier.height(12.dp))
+        Text(
+            "Play ties closed testing to Google accounts.",
+            style = MaterialTheme.typography.labelSmall,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
