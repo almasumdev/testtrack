@@ -2,7 +2,6 @@ package com.eazyverse.testtrack.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -102,7 +100,10 @@ fun CrewScreen(vm: CrewViewModel = viewModel()) {
                     Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.background)
-                        .padding(start = Gutter, end = Gutter, top = 16.dp, bottom = 8.dp),
+                        // Nothing of its own, the same as Circle's: the header above brings its
+                        // space below itself and the tabs bring their own touch padding, and a
+                        // third helping on top of those two is the gap that was here.
+                        .padding(start = Gutter, end = Gutter),
                 ) {
                     PhaseTabs(vm.tab, { vm.badge(it) }) { vm.showTab(it) }
                 }
@@ -236,11 +237,11 @@ fun CrewScreen(vm: CrewViewModel = viewModel()) {
 }
 
 /**
- * The four stages, as one control.
+ * Crew's four, drawn by the same row Circle's three use.
  *
- * Equal shares rather than each pill hugging its own word, so a three letter label is as easy to
- * hit as a six letter one. The count beside a label is what is outstanding there, and it is absent
- * rather than zero: a tab that says nothing is a tab with nothing owed.
+ * It was a second copy of the pill, with the same container sized to its own words and the same
+ * near invisible fill on the selected one. Sharing it means a change to how a tab looks happens
+ * once; see [WordTabs].
  */
 @Composable
 private fun PhaseTabs(
@@ -248,62 +249,13 @@ private fun PhaseTabs(
     badge: (CrewPhase) -> Int,
     onSelect: (CrewPhase) -> Unit,
 ) {
-    val pill = RoundedCornerShape(percent = 50)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(pill)
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, pill)
-            .padding(4.dp),
-    ) {
-        CrewPhase.entries.forEach { phase ->
-            val current = phase == selected
-            val count = badge(phase)
-            Box(
-                Modifier
-                    .weight(1f)
-                    .clip(pill)
-                    .background(
-                        if (current) {
-                            MaterialTheme.colorScheme.primaryContainer
-                        } else {
-                            Color.Transparent
-                        },
-                    ).clickable { onSelect(phase) }
-                    .padding(vertical = 10.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        phase.name.lowercase().replaceFirstChar { it.uppercase() },
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = if (current) FontWeight.Bold else FontWeight.Medium,
-                        color =
-                            if (current) {
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                    )
-                    if (count > 0) {
-                        Spacer(Modifier.width(5.dp))
-                        Text(
-                            "$count",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color =
-                                if (current) {
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.primary
-                                },
-                        )
-                    }
-                }
-            }
-        }
-    }
+    WordTabs(
+        labels = CrewPhase.entries.map { it.name.lowercase().replaceFirstChar(Char::uppercase) },
+        selected = CrewPhase.entries.indexOf(selected),
+        // Four words and their counts have less room than Circle's three, so they sit closer.
+        counts = CrewPhase.entries.map(badge),
+        gap = 14,
+    ) { onSelect(CrewPhase.entries[it]) }
 }
 
 /**

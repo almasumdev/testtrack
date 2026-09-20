@@ -166,10 +166,16 @@ fun FeedScreen(vm: FeedViewModel = viewModel()) {
             ) {
                 // The balance used to sit here. It is in the shell's header now, where it is on
                 // every screen rather than on this one, so what is left is the control.
-                FeedTabs(
-                    selected = vm.tab,
-                    waiting = vm.waiting.size + vm.disputes.size,
-                ) { vm.show(it) }
+                // The count is the one thing on this screen genuinely owed: reviews of this
+                // account's apps, and cases it can help decide. It shows from whichever tab you
+                // are on rather than only from Waiting, because it is an alert, and an alert you
+                // have to go looking for is not one.
+                val owed = vm.waiting.size + vm.disputes.size
+                WordTabs(
+                    labels = FeedTab.entries.map { it.label },
+                    selected = FeedTab.entries.indexOf(vm.tab),
+                    counts = FeedTab.entries.map { if (it == FeedTab.WAITING) owed else 0 },
+                ) { vm.show(FeedTab.entries[it]) }
             }
         },
     ) { padding ->
