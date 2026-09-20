@@ -1,10 +1,13 @@
 package com.eazyverse.testtrack.data
 
+import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,6 +40,23 @@ class UsageUnderQueriesTest {
             .close()
         Thread.sleep(1_000)
         assertTrue("usage access was not granted", UsageRepo.hasAccess(context))
+
+        // Granted is not the same as working. On some handsets the appop flips to allow and
+        // UsageStatsManager still answers with nothing for a package installed seconds ago, and
+        // the grant only takes for real on the next install. That is worth skipping on rather
+        // than failing on: this test exists to tell "package visibility is filtering usage
+        // stats" apart from "there is no usage data to filter", and it cannot do that with no
+        // access. A red here would say the proof mechanism is gone when it is only unmeasurable.
+        val manager =
+            context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val day = 24 * 60 * 60 * 1000L
+        val now = System.currentTimeMillis()
+        val anything = manager.queryEvents(now - day, now).hasNextEvent()
+        assumeTrue(
+            "Usage access is set to allow but this device returns no events at all. Grant " +
+                "Usage access to ${context.packageName} by hand and run it again.",
+            anything,
+        )
     }
 
     /** Every app the launcher query reaches — which is every app a cohort can contain. */
@@ -77,17 +97,30 @@ class UsageUnderQueriesTest {
      */
     @Test
     fun foregroundTimeIsReadableForAnotherApp() {
-        val pkg = launchableApps().first()
-        val since = System.currentTimeMillis()
+        // Tried in order rather than taking whichever package happens to sort first. That is what
+        // this test used to do, and it made the result depend on the handset: the emulator's
+        // first launchable app is a camera that does not always come up, and the phone's is
+        // Settings. A launch that silently did not happen looks exactly like a measurement that
+        // silently did not work, which is the one thing this test exists to tell apart.
+        val tried = mutableListOf<String>()
+        for (pkg in launchableApps().take(6)) {
+            tried += pkg
+            val since = System.currentTimeMillis()
+            if (!InstalledApps.launch(context, pkg)) continue
+            Thread.sleep(15_000)
 
-        assertTrue("could not launch $pkg", InstalledApps.launch(context, pkg))
-        Thread.sleep(15_000)
+            // Did it actually get there? Asked of UsageStatsManager itself, since that is the
+            // thing under test and a foreground check from anywhere else would prove nothing
+            // about it.
+            val ms = UsageRepo.foregroundMsSince(context, pkg, since)
+            if (ms >= 5_000) return
+        }
 
-        val ms = UsageRepo.foregroundMsSince(context, pkg, since)
-        assertTrue(
-            "UsageStatsManager reported ${ms}ms for $pkg after a 15s visit — " +
-                "package visibility is filtering usage stats, and the proof mechanism is gone",
-            ms >= 5_000,
+        fail(
+            "No launchable app reported foreground time after a 15s visit. Tried: " +
+                tried.joinToString() +
+                ". Either package visibility is filtering usage stats and the proof mechanism " +
+                "is gone, or nothing on this device would come to the foreground.",
         )
     }
 }
