@@ -36,9 +36,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -138,6 +140,11 @@ fun RanksBody(
 
     val podium = rows.size >= PODIUM
     val rest = if (podium) rows.drop(PODIUM) else rows
+
+    // Sized to the deepest place the screen will actually print, counting the reader's own even
+    // when it is off the board. A column wide enough for three digits, holding a 4, is most of a
+    // centimetre of nothing between the edge of the screen and the first thing on the row.
+    val room = placeRoom(maxOf(rows.lastOrNull()?.place ?: 0, mine?.place ?: 0))
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
@@ -205,7 +212,7 @@ fun RanksBody(
                 }
                 itemsIndexed(rest, key = { _, row -> row.id }) { index, row ->
                     if (index > 0) RowDivider()
-                    BoardRowView(row, mine = row.id == mine?.id)
+                    BoardRowView(row, mine = row.id == mine?.id, room = room)
                 }
             }
 
@@ -213,6 +220,7 @@ fun RanksBody(
                 PinnedBar(
                     row = mine,
                     showing = pinned,
+                    room = room,
                     // Only offered where there is somewhere to go. Off the board entirely, this
                     // bar is the only place their standing exists.
                     onJump =
@@ -238,6 +246,7 @@ fun RanksBody(
 private fun BoxScope.PinnedBar(
     row: BoardRow,
     showing: Boolean,
+    room: Dp,
     onJump: (() -> Unit)?,
 ) {
     AnimatedVisibility(
@@ -246,7 +255,7 @@ private fun BoxScope.PinnedBar(
         exit = slideOutVertically { it } + fadeOut(),
         modifier = Modifier.align(Alignment.BottomCenter),
     ) {
-        PinnedMine(row = row, onJump = onJump)
+        PinnedMine(row = row, room = room, onJump = onJump)
     }
 }
 
@@ -269,6 +278,7 @@ private fun seatOf(
 @Composable
 private fun PinnedMine(
     row: BoardRow,
+    room: Dp,
     onJump: (() -> Unit)?,
 ) {
     Column(
@@ -284,7 +294,7 @@ private fun PinnedMine(
                 .height(1.dp)
                 .background(MaterialTheme.colorScheme.outlineVariant),
         )
-        BoardRowView(row, mine = true, jump = onJump != null, washed = false)
+        BoardRowView(row, mine = true, room = room, jump = onJump != null, washed = false)
     }
 }
 
@@ -298,9 +308,27 @@ private fun PinnedMine(
 private fun BoardRowView(
     row: BoardRow,
     mine: Boolean,
+    room: Dp,
     jump: Boolean = false,
     washed: Boolean = true,
 ) {
+    /*
+     * The face is exactly as tall as the two lines next to it.
+     *
+     * It was 34dp, which is a number somebody typed, and at every font scale but one it either
+     * overhung the name and the work under it or fell short of them. Measured off the two styles
+     * that draw those lines, it is the same height as what it sits beside on any phone, however
+     * large its owner has set the type.
+     */
+    val face =
+        with(LocalDensity.current) {
+            MaterialTheme.typography.bodyMedium.lineHeight
+                .toDp() +
+                MaterialTheme.typography.bodySmall.lineHeight
+                    .toDp() +
+                1.dp
+        }
+
     Row(
         Modifier
             .fillMaxWidth()
@@ -315,7 +343,7 @@ private fun BoardRowView(
     ) {
         Text(
             "${row.place}",
-            Modifier.width(26.dp),
+            Modifier.width(room),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.End,
@@ -326,8 +354,8 @@ private fun BoardRowView(
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },
         )
-        Spacer(Modifier.width(12.dp))
-        Avatar(row.photoUrl, row.name.take(1).uppercase(), size = 32.dp)
+        Spacer(Modifier.width(11.dp))
+        Avatar(row.photoUrl, row.name.take(1).uppercase(), size = face)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
@@ -374,6 +402,19 @@ private fun BoardRow.onThePodium(mineId: String?) =
         points = points,
         work = work(this),
     )
+
+/**
+ * How much of the row the place gets, given the deepest one on it.
+ *
+ * Right aligned so the digits stack into a column, which means the width has to be the width of
+ * the longest number and not a guess at one. Roughly a digit each, with a little air.
+ */
+private fun placeRoom(widest: Int): Dp =
+    when {
+        widest >= 100 -> 27.dp
+        widest >= 10 -> 19.dp
+        else -> 11.dp
+    }
 
 /** What earned the points, under the name. */
 private fun work(row: BoardRow): String =
