@@ -84,6 +84,14 @@ fun MainShell(
     onSubmitApp: () -> Unit,
     onOpenSetup: () -> Unit,
     onSignOut: () -> Unit,
+    /**
+     * The way to a name, from whichever tab needed one.
+     *
+     * The app opens here now rather than at sign-in, so a reader can arrive on any of these five
+     * tabs without an account. Three of them answer perfectly well that way; the two that cannot
+     * ask, and this is what they call.
+     */
+    onSignIn: () -> Unit = {},
     homeVm: HomeViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -153,9 +161,9 @@ fun MainShell(
 
                 MainTab.RANKS -> RanksScreen()
 
-                MainTab.APPS -> AppsScreen()
+                MainTab.APPS -> AppsScreen(onSignIn = onSignIn)
 
-                MainTab.PROFILE -> MeScreen(onSignOut = onSignOut)
+                MainTab.PROFILE -> MeScreen(onSignOut = onSignOut, onSignIn = onSignIn)
             }
         }
     }

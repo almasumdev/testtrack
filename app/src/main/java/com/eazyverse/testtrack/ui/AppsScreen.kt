@@ -38,12 +38,21 @@ import com.eazyverse.testtrack.net.ApiMyApp
  * is a pill on the right rather than something to work out from a date.
  */
 @Composable
-fun AppsScreen(vm: AppsViewModel = viewModel()) {
+fun AppsScreen(
+    onSignIn: () -> Unit = {},
+    vm: AppsViewModel = viewModel(),
+) {
     val context = LocalContext.current
     LaunchedEffect(Unit) { vm.load(context) }
 
     TabScaffold("My apps") {
-        AppsBody(apps = vm.apps, loading = vm.loading, offline = vm.offline)
+        AppsBody(
+            apps = vm.apps,
+            loading = vm.loading,
+            offline = vm.offline,
+            signedOut = vm.signedOut,
+            onSignIn = onSignIn,
+        )
     }
 }
 
@@ -53,12 +62,27 @@ fun AppsBody(
     apps: List<ApiMyApp>,
     loading: Boolean = false,
     offline: Boolean = false,
+    signedOut: Boolean = false,
+    onSignIn: () -> Unit = {},
 ) {
-    if (offline) {
+    // Asked for here rather than at the door. Somebody can read the feed, the crews and the board
+    // without an account; this is the first screen that cannot answer without knowing who they
+    // are, so this is where the question belongs, with the way out attached to it.
+    if (signedOut) {
         EmptyState(
             icon = Lucide.LayoutGrid,
             title = "Sign in to see your apps",
             subtitle = "This is the list of what you have put up, so it needs your account.",
+            actionLabel = "Continue with Google",
+            onAction = onSignIn,
+        )
+        return
+    }
+    if (offline) {
+        EmptyState(
+            icon = Lucide.LayoutGrid,
+            title = "Your apps did not load",
+            subtitle = "Check your connection and try again.",
         )
         return
     }

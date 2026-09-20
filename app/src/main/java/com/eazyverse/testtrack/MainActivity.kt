@@ -248,13 +248,16 @@ fun AppNav(
                 // new person something untrue. The screen is still in the tree and the route is
                 // still registered, so putting it back is this branch and nothing else.
                 //
-                // Both halves must agree. The flags live in SharedPreferences and the Firebase
-                // session does not, so the two can disagree: cleared credentials, a session expired
-                // while the app was shut, a restore that carried the flags and not the account.
-                // Trust the flags alone and the app sails past sign-in into a string of
-                // PERMISSION_DENIEDs.
-                !Session.signedIn || AuthRepo.uid == null -> Routes.AUTH
-                !Session.setupComplete -> Routes.SETUP
+                // Sign-in is no longer a door either. The feed, the crews and the board all read
+                // without an account, so somebody who has just installed this can look at what is
+                // actually happening instead of being asked for a Gmail by a screen that has
+                // shown them nothing. The two tabs that need a name ask for one themselves, at
+                // the moment they cannot answer without it.
+                //
+                // Setup keeps its branch only for an account part-way through it. A stranger has
+                // nothing to set up, and the steps that remain are each attached to the action
+                // that needs them.
+                Session.signedIn && AuthRepo.uid != null && !Session.setupComplete -> Routes.SETUP
                 else -> Routes.HOME
             }
         }
@@ -288,10 +291,17 @@ fun AppNav(
         composable(Routes.AUTH) {
             AuthScreen(
                 onSignedIn = {
-                    // Signing back in on a phone that is already set up should not walk the
-                    // checklist again. Every step but the first is derived from the account or
-                    // from Settings, so by the time we are here the answer is already known.
-                    nav.replace(if (Session.setupComplete) Routes.HOME else Routes.SETUP)
+                    // Back where they were standing when they were asked.
+                    //
+                    // This screen is reached two ways now. Pushed from a tab that could not
+                    // answer without a name, in which case popping lands them on that tab with
+                    // the thing they wanted finally on it; or as the only entry on the stack,
+                    // in which case there is nothing to pop and Home is where they go.
+                    //
+                    // Setup is not on either path any more. Its remaining steps are each asked
+                    // for by the action that needs them, so walking a checklist here would be
+                    // demanding four answers for something they have not tried to do yet.
+                    if (!nav.popBackStack()) nav.replace(Routes.HOME)
                 },
             )
         }
@@ -306,7 +316,10 @@ fun AppNav(
                 onSignOut = {
                     AuthRepo.signOut()
                     Session.signOut()
-                    nav.replace(Routes.AUTH)
+                    // Back to the app rather than out of it. There is something to look at
+                    // signed out now, so throwing somebody at a sign-in screen for choosing to
+                    // sign out would be taking the app away as a punishment.
+                    nav.replace(Routes.HOME)
                 },
             )
         }
@@ -325,8 +338,14 @@ fun AppNav(
                 onSignOut = {
                     AuthRepo.signOut()
                     Session.signOut()
-                    nav.replace(Routes.AUTH)
+                    // Back to the app rather than out of it. There is something worth looking at
+                    // signed out now, so sending somebody to a sign-in screen for choosing to
+                    // sign out would be taking the app away as a punishment.
+                    nav.replace(Routes.HOME)
                 },
+                // Pushed, not replaced: whoever asked was standing on a tab and wants to end up
+                // back on it with the thing they wanted finally on it.
+                onSignIn = { nav.push(Routes.AUTH) },
             )
         }
 

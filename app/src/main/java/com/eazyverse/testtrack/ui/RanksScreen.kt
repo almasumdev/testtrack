@@ -75,11 +75,14 @@ fun RanksBody(
     loading: Boolean = false,
     offline: Boolean = false,
 ) {
+    // No longer the signed-out case. The board reads without an account, and somebody deciding
+    // whether this is worth joining is exactly who most needs to see that people are doing the
+    // work. Reaching here now means the server genuinely could not be got at.
     if (offline) {
         EmptyState(
             icon = Lucide.Trophy,
-            title = "Sign in to see the board",
-            subtitle = "Ranks counts what you have done, so it needs to know who you are.",
+            title = "The board did not load",
+            subtitle = "Check your connection and pull to try again.",
         )
         return
     }

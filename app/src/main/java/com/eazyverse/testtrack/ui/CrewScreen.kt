@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Lucide
+import com.eazyverse.testtrack.findActivity
 
 /**
  * Crew: one cohort, at whatever point it has reached.
@@ -195,6 +196,29 @@ fun CrewScreen(vm: CrewViewModel = viewModel()) {
                 vm.leave(context, seat)
             },
             onDismiss = { leaving = null },
+        )
+    }
+
+    /*
+     * The one permission the crew flow cannot do without, asked at the first app somebody opens.
+     *
+     * It used to be the fourth rung of a checklist walked before they had seen a crew at all,
+     * which is the worst moment to send anybody into Settings: nothing on screen explained what
+     * the switch was for. Here the app they were opening is named in the question.
+     *
+     * Dismissing is allowed. Refusing means tonight does not count, which is theirs to choose,
+     * and the ask returns the next time they try.
+     */
+    vm.needsUsageFor?.let { label ->
+        Ask(
+            title = "Let TestTrack see the time",
+            body =
+                "Android only tells us how long $label was open if usage access is on. Without " +
+                    "it a visit cannot be counted, however long you stay.",
+            confirm = "Open settings",
+            dismiss = "Not now",
+            onConfirm = { vm.openUsageSettings(context.findActivity()) },
+            onDismiss = { vm.clearUsageAsk() },
         )
     }
 

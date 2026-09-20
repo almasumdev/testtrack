@@ -23,6 +23,11 @@ import kotlinx.coroutines.launch
  * given up. None of them computes anything, which is why there is no arithmetic here to test —
  * the figures are the server's and the screens draw them.
  *
+ * Two flags rather than one, and the split is the point. "Offline" used to mean both "we could
+ * not reach the server" and "nobody is signed in", which was harmless while every endpoint needed
+ * a token and both meant an empty screen. The board now answers without one, so conflating them
+ * would tell somebody to check their connection while the server was answering perfectly well.
+ *
  * The loading and offline pair is repeated rather than shared, because a base class that only
  * removes six lines each is a class somebody has to read before they can read the six.
  */
@@ -31,6 +36,7 @@ class RanksViewModel : ViewModel() {
     var rows by mutableStateOf<List<BoardRow>>(emptyList())
         private set
 
+    /** Null for a reader with no account, which is what the server sends back for a stranger. */
     var mine by mutableStateOf<BoardRow?>(null)
         private set
 
@@ -47,21 +53,26 @@ class RanksViewModel : ViewModel() {
     var offline by mutableStateOf(false)
         private set
 
+    /**
+     * The board, signed in or not.
+     *
+     * No session check before the call. A stranger gets the same rows and no row of their own,
+     * which is the honest answer and the reason to show them a board at all: it is the only
+     * evidence on the whole screen that there are people in here doing the work.
+     */
     fun load(context: Context) {
         viewModelScope.launch {
             try {
-                if (!ApiAuth.ensure(context)) {
-                    offline = true
-                    return@launch
-                }
+                ApiAuth.ensure(context)
                 val answer = Api.board()
                 rows = answer.rows
                 mine = answer.mine
                 openPoints = answer.openPoints
                 reviewPoints = answer.reviewPoints
                 offline = false
-            } catch (e: ApiError) {
-                offline = e.isAuth
+            } catch (_: ApiError) {
+                // A 401 here is no longer the ordinary signed-out case, so it is a real fault.
+                offline = true
             } catch (_: Exception) {
                 offline = true
             } finally {
@@ -81,17 +92,22 @@ class AppsViewModel : ViewModel() {
     var offline by mutableStateOf(false)
         private set
 
+    /** Nobody is signed in. Not a fault, and not the same thing as being unable to reach us. */
+    var signedOut by mutableStateOf(false)
+        private set
+
     fun load(context: Context) {
         viewModelScope.launch {
             try {
                 if (!ApiAuth.ensure(context)) {
-                    offline = true
+                    signedOut = true
                     return@launch
                 }
+                signedOut = false
                 apps = Api.myApps().apps
                 offline = false
             } catch (e: ApiError) {
-                offline = e.isAuth
+                if (e.isAuth) signedOut = true else offline = true
             } catch (_: Exception) {
                 offline = true
             } finally {
@@ -109,6 +125,9 @@ class MeViewModel : ViewModel() {
         private set
 
     var offline by mutableStateOf(false)
+        private set
+
+    var signedOut by mutableStateOf(false)
         private set
 
     var busy by mutableStateOf(false)
@@ -165,13 +184,14 @@ class MeViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 if (!ApiAuth.ensure(context)) {
-                    offline = true
+                    signedOut = true
                     return@launch
                 }
+                signedOut = false
                 profile = Api.profile()
                 offline = false
             } catch (e: ApiError) {
-                offline = e.isAuth
+                if (e.isAuth) signedOut = true else offline = true
             } catch (_: Exception) {
                 offline = true
             } finally {

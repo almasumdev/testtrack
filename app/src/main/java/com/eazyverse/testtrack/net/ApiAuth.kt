@@ -18,6 +18,15 @@ object ApiAuth {
      *
      * Called wherever the app is about to talk to the API and might not have a session yet:
      * launch, and after a sign-in. Cheap when there already is one, which is nearly always.
+     *
+     * False is no longer a reason not to make the call. The crew list, the feed and the board
+     * answer without a token, and a stranger reading them is the whole point rather than a
+     * failure: the one question somebody arriving has is whether real people are in here, and
+     * the answer used to sit behind the screen asking them to sign in.
+     *
+     * So the answer is only worth checking on the screens that show one person's own things,
+     * and there it means "sign in", never "you are offline". [Api] sends no Authorization header
+     * when there is no token, which is exactly what the server reads as a stranger.
      */
     suspend fun ensure(context: Context): Boolean {
         ApiSession.load(context)

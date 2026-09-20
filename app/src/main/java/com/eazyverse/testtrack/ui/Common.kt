@@ -244,6 +244,15 @@ fun EmptyState(
     title: String,
     subtitle: String,
     modifier: Modifier = Modifier,
+    /**
+     * The way out, where there is one.
+     *
+     * Added for the screens a signed-out reader can now reach. "Sign in to see your apps" with
+     * nothing to press is a dead end, and the reader has to work out for themselves that the
+     * answer is on a different tab.
+     */
+    actionLabel: String = "",
+    onAction: () -> Unit = {},
 ) {
     Column(
         modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 36.dp),
@@ -277,6 +286,10 @@ fun EmptyState(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
+        if (actionLabel.isNotBlank()) {
+            Spacer(Modifier.height(20.dp))
+            Primary(actionLabel, onClick = onAction)
+        }
     }
 }
 

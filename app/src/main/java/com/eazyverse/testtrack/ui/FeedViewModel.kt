@@ -42,6 +42,15 @@ class FeedViewModel : ViewModel() {
     var offline by mutableStateOf(false)
         private set
 
+    /**
+     * Nobody is signed in, so the three personal halves of this tab are empty.
+     *
+     * The posts are not: they read without an account, and they are the whole reason somebody
+     * without one is allowed in here at all.
+     */
+    var signedOut by mutableStateOf(false)
+        private set
+
     val events = SampleFeed.events()
 
     fun show(next: FeedTab) {
@@ -73,12 +82,19 @@ class FeedViewModel : ViewModel() {
     fun load(context: Context) {
         viewModelScope.launch {
             try {
-                if (!ApiAuth.ensure(context)) {
-                    offline = true
-                    loading = false
+                // The posts come either way. Everything after them is about one account, so a
+                // stranger gets the feed and nothing else, rather than an error page in front of
+                // content the server was perfectly willing to hand over.
+                val named = ApiAuth.ensure(context)
+                signedOut = !named
+                posts = Api.posts().posts
+                if (!named) {
+                    tix = 0
+                    waiting = emptyList()
+                    disputes = emptyList()
+                    offline = false
                     return@launch
                 }
-                posts = Api.posts().posts
                 tix = Api.me().tix
                 // Both duties, fetched with the feed rather than when the tab is opened: the
                 // badge has to be right before anybody looks at it.
@@ -109,7 +125,7 @@ class FeedViewModel : ViewModel() {
                 offline = false
             } catch (e: ApiError) {
                 message = e.message
-                offline = e.isAuth
+                if (e.isAuth) signedOut = true else offline = true
             } catch (_: Exception) {
                 offline = true
             } finally {

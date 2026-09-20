@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import android.app.Activity
 import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +67,31 @@ class CrewViewModel : ViewModel() {
     var blocked by mutableStateOf<String?>(null)
         private set
 
+    /**
+     * The app somebody tried to open without usage access, or null.
+     *
+     * Holds the label rather than a boolean so the ask can name what it is for. Set at the point
+     * of the first open and cleared either way, so it is a question asked once about a thing they
+     * were actually doing, not a banner that lives on the screen.
+     */
+    var needsUsageFor by mutableStateOf<String?>(null)
+        private set
+
+    fun clearUsageAsk() {
+        needsUsageFor = null
+    }
+
+    /**
+     * Send them to the switch.
+     *
+     * Here rather than in the screen so the screen does not have to reach into data for it. This
+     * file already talks to UsageRepo to take the measurement, so the pair of it lives together.
+     */
+    fun openUsageSettings(activity: Activity) {
+        needsUsageFor = null
+        UsageRepo.openSettings(activity)
+    }
+
     private var settledTab = false
 
     fun clearMessage() {
@@ -85,16 +111,15 @@ class CrewViewModel : ViewModel() {
     fun load(context: Context) {
         viewModelScope.launch {
             try {
-                if (!ApiAuth.ensure(context)) {
-                    offline = true
-                    loading = false
-                    return@launch
-                }
+                // No guard. The crew list reads without an account and answers a stranger with
+                // the one that is filling and its seat count, which is the only evidence anywhere
+                // in the app that there are real people waiting to test each other's work.
+                ApiAuth.ensure(context)
                 apply(Api.crews())
                 offline = false
             } catch (e: ApiError) {
                 message = e.message
-                offline = e.isAuth
+                offline = true
             } catch (_: Exception) {
                 offline = true
             } finally {
@@ -296,6 +321,16 @@ class CrewViewModel : ViewModel() {
     ) {
         if (app.packageName.isBlank()) {
             message = "${app.label} did not come with a package name, so it cannot be opened."
+            return
+        }
+        // Asked for here, at the first app somebody tries to open, rather than on a checklist
+        // they walked before they had seen a crew. Without the grant [settle] reads zero
+        // foreground milliseconds, the server refuses the visit for being under its floor, and
+        // the evening silently does not count. A permission whose absence looks like a bug
+        // belongs at the moment it is needed, where the reason for it is on screen.
+        if (!UsageRepo.hasAccess(context)) {
+            round = emptyList()
+            needsUsageFor = app.label
             return
         }
         away = Away(app.id, app.packageName, app.label, System.currentTimeMillis())

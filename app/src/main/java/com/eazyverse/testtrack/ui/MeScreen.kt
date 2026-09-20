@@ -47,6 +47,7 @@ import com.eazyverse.testtrack.net.ApiProfile
 @Composable
 fun MeScreen(
     onSignOut: () -> Unit,
+    onSignIn: () -> Unit = {},
     vm: MeViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -58,8 +59,10 @@ fun MeScreen(
             profile = vm.profile,
             loading = vm.loading,
             offline = vm.offline,
+            signedOut = vm.signedOut,
             onEdit = { editing = true },
             onSignOut = onSignOut,
+            onSignIn = onSignIn,
         )
     }
 
@@ -79,14 +82,26 @@ fun MeBody(
     profile: ApiProfile?,
     loading: Boolean = false,
     offline: Boolean = false,
+    signedOut: Boolean = false,
     onEdit: () -> Unit = {},
     onSignOut: () -> Unit = {},
+    onSignIn: () -> Unit = {},
 ) {
-    if (offline) {
+    if (signedOut) {
         EmptyState(
             icon = Lucide.UserRound,
             title = "Signed out",
             subtitle = "Sign in and your record, your tix and your apps come back with you.",
+            actionLabel = "Continue with Google",
+            onAction = onSignIn,
+        )
+        return
+    }
+    if (offline) {
+        EmptyState(
+            icon = Lucide.UserRound,
+            title = "Your record did not load",
+            subtitle = "Check your connection and try again.",
         )
         return
     }
