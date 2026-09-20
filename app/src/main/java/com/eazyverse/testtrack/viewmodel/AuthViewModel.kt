@@ -30,12 +30,21 @@ import kotlinx.coroutines.withTimeoutOrNull
 class AuthViewModel : ViewModel() {
     var busy by mutableStateOf(false)
         private set
-    var message by mutableStateOf<String?>(null)
 
-    fun signIn(
-        activity: Activity,
-        onDone: () -> Unit,
-    ) {
+    var message by mutableStateOf<String?>(null)
+        private set
+
+    /**
+     * The account, once there is one. Null until then.
+     *
+     * The sheet shows it for a beat before it goes, so somebody who has three Google accounts on
+     * the phone can see which of them they just picked. Signing in and having the sheet vanish
+     * leaves that unanswered, and the only way to check would be the profile tab.
+     */
+    var signedInAs by mutableStateOf<String?>(null)
+        private set
+
+    fun signIn(activity: Activity) {
         busy = true
         message = null
         viewModelScope.launch {
@@ -70,11 +79,7 @@ class AuthViewModel : ViewModel() {
                 }
 
                 message = AuthRepo.firebaseError
-
-                // Last, and with nothing after it. This navigates, which clears the ViewModel and
-                // cancels the scope underneath us; any work left below would be killed mid-flight
-                // and reported as a failure by the catch.
-                onDone()
+                signedInAs = account.email
             } catch (_: GetCredentialCancellationException) {
                 // Somebody shut the account picker. That is an answer, not a fault, and it was
                 // being reported back to them as "you closed the sign-in", which is the app

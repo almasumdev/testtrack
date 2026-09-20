@@ -115,8 +115,7 @@ fun MainShell(
      * Held here rather than by a screen, because it is asked for from the header, which is above
      * all five of them, and from two of the tabs themselves. One sheet, one place it is opened.
      */
-    var asking by rememberSaveable { mutableStateOf(false) }
-    val onSignIn: () -> Unit = { asking = true }
+    var asking by remember { mutableStateOf<SignInReason?>(null) }
 
     val show: (MainTab) -> Unit = { next ->
         if (next != tab) cameFrom = tab
@@ -190,7 +189,7 @@ fun MainShell(
                 openCrew = hudVm.openCrew,
                 openTaken = hudVm.openTaken,
                 openSeats = hudVm.openSeats,
-                onSignIn = onSignIn,
+                onSignIn = { asking = StartReason },
             )
         },
         bottomBar = { MainBar(tab, show) },
@@ -215,18 +214,44 @@ fun MainShell(
 
                 MainTab.RANKS -> RanksScreen()
 
-                MainTab.APPS -> AppsScreen(onSignIn = onSignIn)
+                MainTab.APPS ->
+                    AppsScreen(
+                        onSignIn = {
+                            asking =
+                                SignInReason(
+                                    title = "Sign in to see your apps",
+                                    why =
+                                        "This is the list of what you have put up, so it needs " +
+                                            "to know who you are. Everything else in TestTrack " +
+                                            "you can read without an account.",
+                                )
+                        },
+                    )
 
-                MainTab.PROFILE -> MeScreen(onSignOut = onSignOut, onSignIn = onSignIn)
+                MainTab.PROFILE ->
+                    MeScreen(
+                        onSignOut = onSignOut,
+                        onSignIn = {
+                            asking =
+                                SignInReason(
+                                    title = "Sign in to see your record",
+                                    why =
+                                        "Your level, your tix and what you have done belong to " +
+                                            "the account. Everything else in TestTrack you can " +
+                                            "read without one.",
+                                )
+                        },
+                    )
             }
         }
     }
 
-    if (asking) {
+    asking?.let { reason ->
         SignInSheet(
-            onDismiss = { asking = false },
+            reason = reason,
+            onDismiss = { asking = null },
             onSignedIn = {
-                asking = false
+                asking = null
                 // Everything on screen was drawn for somebody without a name. The header is the
                 // one that would otherwise sit there telling them to sign in after they have.
                 hudVm.load(context)
