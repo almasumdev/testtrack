@@ -46,7 +46,8 @@ import kotlinx.coroutines.launch
 
 object Routes {
     const val ONBOARDING = "onboarding"
-    const val AUTH = "auth"
+
+    // There is no sign-in route. It is a sheet over whatever asked for it; see ui/SignInSheet.
     const val SETUP = "setup"
 
     /** Not one screen: the five tabbed ones, held by [com.eazyverse.testtrack.ui.MainShell]. */
@@ -284,26 +285,8 @@ fun AppNav(
         composable(Routes.ONBOARDING) {
             OnboardingScreen(onDone = {
                 Session.updateOnboardingDone()
-                nav.replace(Routes.AUTH)
+                nav.replace(Routes.HOME)
             })
-        }
-
-        composable(Routes.AUTH) {
-            AuthScreen(
-                onSignedIn = {
-                    // Back where they were standing when they were asked.
-                    //
-                    // This screen is reached two ways now. Pushed from a tab that could not
-                    // answer without a name, in which case popping lands them on that tab with
-                    // the thing they wanted finally on it; or as the only entry on the stack,
-                    // in which case there is nothing to pop and Home is where they go.
-                    //
-                    // Setup is not on either path any more. Its remaining steps are each asked
-                    // for by the action that needs them, so walking a checklist here would be
-                    // demanding four answers for something they have not tried to do yet.
-                    if (!nav.popBackStack()) nav.replace(Routes.HOME)
-                },
-            )
         }
 
         composable(Routes.SETUP) {
@@ -345,7 +328,6 @@ fun AppNav(
                 },
                 // Pushed, not replaced: whoever asked was standing on a tab and wants to end up
                 // back on it with the thing they wanted finally on it.
-                onSignIn = { nav.push(Routes.AUTH) },
             )
         }
 

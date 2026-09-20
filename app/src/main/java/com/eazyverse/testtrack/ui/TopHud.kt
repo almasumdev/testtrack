@@ -8,6 +8,8 @@ import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -168,7 +170,41 @@ private fun SignedOutHud(
             }
         }
 
-        Secondary("Sign in", onClick = onSignIn)
+        SignInChip(onSignIn)
+    }
+}
+
+/**
+ * The way in, at the size a header can carry.
+ *
+ * A full button was too much furniture for a strip that also holds a mark and two lines of text,
+ * and "Sign in" on its own said nothing about what signing in would involve. The Google mark says
+ * it in the space a word would have taken: this is one tap and an account picker, not a form.
+ *
+ * Outlined rather than filled. The one filled thing in this app is the accent, and the accent is
+ * for what somebody is doing here rather than for the door.
+ */
+@Composable
+private fun SignInChip(onClick: () -> Unit) {
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(percent = 50))
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outlineVariant,
+                RoundedCornerShape(percent = 50),
+            ).clickable(onClick = onClick)
+            .padding(start = 11.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        GoogleMark(Modifier.size(16.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(
+            "Sign in",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 

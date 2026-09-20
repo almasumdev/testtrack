@@ -100,14 +100,6 @@ fun MainShell(
     onSubmitApp: () -> Unit,
     onOpenSetup: () -> Unit,
     onSignOut: () -> Unit,
-    /**
-     * The way to a name, from whichever tab needed one.
-     *
-     * The app opens here now rather than at sign-in, so a reader can arrive on any of these five
-     * tabs without an account. Three of them answer perfectly well that way; the two that cannot
-     * ask, and this is what they call.
-     */
-    onSignIn: () -> Unit = {},
     homeVm: HomeViewModel = viewModel(),
     hudVm: HudViewModel = viewModel(),
 ) {
@@ -116,6 +108,15 @@ fun MainShell(
 
     /** Where Back from the profile goes, so it lands where you actually came from. */
     var cameFrom by rememberSaveable { mutableStateOf(MainTab.CIRCLE) }
+
+    /**
+     * Whether the sign-in sheet is up.
+     *
+     * Held here rather than by a screen, because it is asked for from the header, which is above
+     * all five of them, and from two of the tabs themselves. One sheet, one place it is opened.
+     */
+    var asking by rememberSaveable { mutableStateOf(false) }
+    val onSignIn: () -> Unit = { asking = true }
 
     val show: (MainTab) -> Unit = { next ->
         if (next != tab) cameFrom = tab
@@ -219,6 +220,18 @@ fun MainShell(
                 MainTab.PROFILE -> MeScreen(onSignOut = onSignOut, onSignIn = onSignIn)
             }
         }
+    }
+
+    if (asking) {
+        SignInSheet(
+            onDismiss = { asking = false },
+            onSignedIn = {
+                asking = false
+                // Everything on screen was drawn for somebody without a name. The header is the
+                // one that would otherwise sit there telling them to sign in after they have.
+                hudVm.load(context)
+            },
+        )
     }
 }
 
