@@ -81,7 +81,7 @@ class ReviewBodyTest {
         leftReview: Boolean = false,
         sideloaded: Boolean = false,
         onLeave: (ReviewStep) -> Unit = {},
-        onSend: (String, String) -> Unit = { _, _ -> },
+        onSend: (android.net.Uri?, String) -> Unit = { _, _ -> },
     ) {
         compose.setContent {
             TestTrackTheme {
@@ -234,29 +234,33 @@ class ReviewBodyTest {
     }
 
     @Test
-    fun the_proof_dialog_will_not_send_until_there_is_something_to_send() {
-        var sent: Pair<String, String>? = null
-        open("used", leftReview = true, onSend = { proof, written -> sent = proof to written })
+    fun the_proof_dialog_will_not_send_until_a_screenshot_is_chosen() {
+        var sent = 0
+        open("used", leftReview = true, onSend = { _, _ -> sent++ })
 
         compose.onNodeWithText("Send the proof").performClick()
         compose.onNodeWithText("Prove you left it").assertIsDisplayed()
 
-        // Nothing typed yet, so Send is not a thing that can be pressed. A dialog that accepts an
+        // Nothing chosen, so Send is not a thing that can be pressed. A dialog that accepts an
         // empty proof sends the developer a rejection they cannot judge.
         compose.onNodeWithText("Send").assertIsNotEnabled()
+        assertEquals(0, sent)
 
-        // The field rather than its label, which is drawn as its own line of text above it.
-        compose.onNode(hasSetTextAction()).performTextInput("shot-1")
-        compose.onNodeWithText("Send").assertIsEnabled().performClick()
-        assertEquals("shot-1", sent?.first)
+        // And it says where the screenshot comes from, since nothing in the app takes one.
+        compose.onNodeWithText("Choose the screenshot").assertIsDisplayed()
+        compose
+            .onNodeWithText("Your phone's own screenshot", substring = true)
+            .assertIsDisplayed()
     }
 
     @Test
     fun a_closed_test_holds_out_for_more_than_a_word() {
         // The words are the whole review when there is no listing, so a one-word answer is not
         // one. The floor is in the dialog because that is where somebody finds out.
-        var sent: Pair<String, String>? = null
-        open("used", live = false, onSend = { proof, written -> sent = proof to written })
+        // A closed test has no screenshot: the words are the whole review, so that is all the
+        // dialog collects and all this looks at.
+        var sent: String? = null
+        open("used", live = false, onSend = { _, written -> sent = written })
 
         compose.onNodeWithText("Write it").performClick()
         compose.onNode(hasSetTextAction()).performTextInput("Fine.")
@@ -267,9 +271,6 @@ class ReviewBodyTest {
             .onNode(hasSetTextAction())
             .performTextInput(" The sign-up screen took three tries before it took my number.")
         compose.onNodeWithText("Send").assertIsEnabled().performClick()
-        assertEquals(
-            "Fine. The sign-up screen took three tries before it took my number.",
-            sent?.second,
-        )
+        assertEquals("Fine. The sign-up screen took three tries before it took my number.", sent)
     }
 }

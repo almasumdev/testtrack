@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -102,16 +103,44 @@ class ReviewViewModel : ViewModel() {
         job = job?.copy(leftReview = true)
     }
 
-    /** The evidence, and the end of the reviewer's part. */
+    /**
+     * The evidence, and the end of the reviewer's part.
+     *
+     * Two calls, in this order, because the second needs what the first gives back: the image
+     * goes up and answers with a reference, and the review is submitted carrying it. Uploading
+     * first also means a submit that fails leaves an orphan file rather than a review claiming
+     * proof that was never stored.
+     */
     fun submit(
-        proofRef: String,
+        context: Context,
+        proof: Uri?,
         written: String,
     ) {
         val current = job ?: return
         run {
-            job = current.copy(review = Api.submit(current.review.id, proofRef, written))
+            val ref = if (proof == null) "" else upload(context, proof)
+            job = current.copy(review = Api.submit(current.review.id, ref, written))
             message = "Sent. The developer has two days, then it approves itself."
         }
+    }
+
+    /**
+     * Read the chosen image and send it.
+     *
+     * Read through the resolver rather than as a file path: what the picker hands back is a grant
+     * to one item, not a location on disk, and on a modern Android there is no path behind it to
+     * open. The type comes from the resolver too, since the server checks it and a guess from the
+     * file extension is a guess.
+     */
+    private suspend fun upload(
+        context: Context,
+        uri: Uri,
+    ): String {
+        val resolver = context.contentResolver
+        val bytes =
+            resolver.openInputStream(uri)?.use { it.readBytes() }
+                ?: throw ApiError(400, "unreadable", "That image could not be read.")
+        return Api.upload(bytes, resolver.getType(uri) ?: "image/jpeg").id
     }
 
     /** Give the slot back so somebody else can take it. */

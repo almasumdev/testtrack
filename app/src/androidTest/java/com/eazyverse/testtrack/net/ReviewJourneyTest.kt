@@ -81,6 +81,58 @@ class ReviewJourneyTest {
 
     private fun fingerprint() = requireNotNull(Device.fingerprint(context)) { "no ANDROID_ID" }
 
+    /**
+     * A real PNG, built here rather than shipped as a test asset.
+     *
+     * The server checks the type it was told and stores the bytes it was given, so the bytes
+     * ought to be an image: a test that uploads the word "proof" proves only that nothing looks.
+     */
+    private fun onePixelPng(): ByteArray {
+        fun crc(bytes: ByteArray): Int {
+            var c = 0xFFFFFFFFu
+            for (b in bytes) {
+                c = c xor (b.toUInt() and 0xFFu)
+                repeat(8) { c = if (c and 1u != 0u) (c shr 1) xor 0xEDB88320u else c shr 1 }
+            }
+            return (c xor 0xFFFFFFFFu).toInt()
+        }
+
+        fun chunk(
+            type: String,
+            data: ByteArray,
+        ): ByteArray {
+            val body = type.toByteArray() + data
+            return java.nio.ByteBuffer
+                .allocate(12 + data.size)
+                .putInt(data.size)
+                .put(body)
+                .putInt(crc(body))
+                .array()
+        }
+
+        val header = byteArrayOf(-119, 80, 78, 71, 13, 10, 26, 10)
+        val ihdr =
+            java.nio.ByteBuffer
+                .allocate(13)
+                .putInt(1)
+                .putInt(1)
+                .put(8)
+                .put(2)
+                .put(0)
+                .put(0)
+                .put(0)
+                .array()
+        val pixel =
+            java.util.zip.Deflater().let { d ->
+                d.setInput(byteArrayOf(0, -1, -1, -1))
+                d.finish()
+                val out = ByteArray(64)
+                val n = d.deflate(out)
+                out.copyOf(n)
+            }
+        return header + chunk("IHDR", ihdr) + chunk("IDAT", pixel) + chunk("IEND", ByteArray(0))
+    }
+
     // ------------------------------------------------------------------ the journey
 
     /**
@@ -126,7 +178,13 @@ class ReviewJourneyTest {
                 assertTrue("Wrong refusal: ${e.message}", e.status in 400..422)
             }
 
-            val submitted = Api.submit(claimed.id, proofRef = "e2e-screenshot-ref")
+            // The proof is a real file this time, sent the way the app sends it. Until there was
+            // an upload endpoint the dialog asked for a screenshot with nowhere to put one, so a
+            // live review could be worked all the way through and never submitted.
+            val shot = Api.upload(onePixelPng(), "image/png")
+            assertTrue("An upload answers with what it stored", shot.size > 0)
+
+            val submitted = Api.submit(claimed.id, proofRef = shot.id)
             assertEquals("submitted", submitted.state)
             assertNotNull(submitted.submittedAt)
 

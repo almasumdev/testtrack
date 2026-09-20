@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -96,6 +97,7 @@ fun ReviewScreen(
         post = post,
         job = vm.job,
         sideloaded = vm.sideloaded,
+        busy = vm.busy,
         snackbars = snackbars,
         onClose = onClose,
         onLeave = { step ->
@@ -111,7 +113,7 @@ fun ReviewScreen(
                 else -> Unit
             }
         },
-        onSend = { proof, written -> vm.submit(proof, written) },
+        onSend = { proof, written -> vm.submit(context, proof, written) },
     )
 }
 
@@ -127,10 +129,11 @@ fun ReviewBody(
     post: ApiPost,
     job: ReviewJob?,
     sideloaded: Boolean,
+    busy: Boolean = false,
     snackbars: SnackbarHostState,
     onClose: () -> Unit,
     onLeave: (ReviewStep) -> Unit,
-    onSend: (proof: String, written: String) -> Unit,
+    onSend: (proof: Uri?, written: String) -> Unit,
 ) {
     var proving by remember { mutableStateOf(false) }
 
@@ -240,6 +243,7 @@ fun ReviewBody(
     if (proving) {
         ReviewProofDialog(
             live = post.isLive,
+            busy = busy,
             onSend = { proof, written ->
                 proving = false
                 onSend(proof, written)

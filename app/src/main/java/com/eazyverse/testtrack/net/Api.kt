@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -151,6 +152,31 @@ object Api {
     suspend fun profile(): ApiProfile = get("/me/profile")
 
     suspend fun myApps(): MyApps = get("/me/apps")
+
+    // ---------------------------------------------------------------- files
+
+    /**
+     * Send a screenshot, and get back the reference a review is submitted with.
+     *
+     * Multipart rather than JSON: the bytes are the payload, and base64 in a body would be a
+     * third larger on the wire for nothing. The filename is deliberately fixed — the server names
+     * the file by its own id, and whatever the picker called it is not ours to pass on.
+     */
+    suspend fun upload(
+        bytes: ByteArray,
+        mediaType: String,
+    ): ApiUpload {
+        val body =
+            MultipartBody
+                .Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart(
+                    "file",
+                    "proof",
+                    bytes.toRequestBody(mediaType.toMediaType(), 0, bytes.size),
+                ).build()
+        return send(Request.Builder().url(url("/uploads")).post(body))
+    }
 
     // ---------------------------------------------------------------- plumbing
 

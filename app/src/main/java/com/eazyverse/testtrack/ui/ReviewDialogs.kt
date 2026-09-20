@@ -3,14 +3,21 @@ package com.eazyverse.testtrack.ui
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 /**
@@ -23,37 +30,63 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ReviewProofDialog(
     live: Boolean,
-    onSend: (proof: String, written: String) -> Unit,
+    busy: Boolean = false,
+    onSend: (proof: Uri?, written: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var written by remember { mutableStateOf("") }
-    var proof by remember { mutableStateOf("") }
+    var picked by remember { mutableStateOf<Uri?>(null) }
 
-    val ready = if (live) proof.isNotBlank() else written.trim().length >= 40
+    // The system picker, which is permissionless: it hands back one item the person chose and
+    // never gives the app the library. Asking for READ_MEDIA_IMAGES to read one file somebody is
+    // about to hand over anyway is a permission prompt bought for nothing.
+    val pick =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) picked = uri
+        }
+
+    val ready = if (live) picked != null else written.trim().length >= 40
 
     Ask(
         title = if (live) "Prove you left it" else "What did you find?",
         body =
             if (live) {
-                "Paste or pick the screenshot of your review. The developer sees this and has " +
-                    "two days to accept it."
+                "Take a screenshot of your review on Play, then pick it here. The developer " +
+                    "sees it and has two days to accept it."
             } else {
                 "This app is not on Play yet, so your words are the review."
             },
-        confirm = "Send",
-        confirmEnabled = ready,
-        onConfirm = { onSend(proof, written.trim()) },
+        confirm = if (busy) "Sending" else "Send",
+        confirmEnabled = ready && !busy,
+        onConfirm = { onSend(picked, written.trim()) },
         onDismiss = onDismiss,
         content = {
             if (live) {
-                DialogField(
-                    value = proof,
-                    onValueChange = { proof = it.take(200) },
-                    label = "Screenshot",
-                    placeholder = "Tap the camera button while you are on the review page",
-                    supporting =
-                        "The floating button captures it for you without leaving Play. " +
-                            "Take it after the review is posted.",
+                Text(
+                    "Screenshot",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(6.dp))
+                Secondary(
+                    if (picked == null) "Choose the screenshot" else "Chosen. Pick another",
+                    Modifier.fillMaxWidth(),
+                ) {
+                    pick.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                    )
+                }
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    if (picked == null) {
+                        "Your phone's own screenshot, taken after the review is posted."
+                    } else {
+                        "Only the developer and, if they refuse it, the members deciding, " +
+                            "can see it."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
                 DialogField(
