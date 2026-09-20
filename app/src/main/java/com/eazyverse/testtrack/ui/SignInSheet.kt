@@ -95,6 +95,10 @@ fun SignInSheet(
     LaunchedEffect(vm.signedInAs) {
         if (vm.signedInAs != null) {
             delay(1_100)
+            // Hidden first, then removed. A ModalBottomSheet taken out of the composition while
+            // still open has no chance to run its own exit: it vanishes on one frame, which is
+            // what made the end of this flow feel broken however well the halves crossed over.
+            state.hide()
             onSignedIn()
         }
     }
@@ -104,11 +108,36 @@ fun SignInSheet(
         sheetState = state,
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(start = Gutter, end = Gutter, bottom = 30.dp),
-        ) {
+        SignInSheetBody(
+            reason = reason,
+            busy = vm.busy,
+            message = vm.message,
+            signedInAs = vm.signedInAs,
+            onPress = { vm.signIn(activity) },
+        )
+    }
+}
+
+/**
+ * The sheet's contents, given its state rather than holding it.
+ *
+ * The same shape the rest of the screens here take, and for the same reason: everything this draws
+ * can be put in front of a test this way, including the half that only exists after a real Google
+ * account has said yes, which is the half no emulator can reach.
+ */
+@Composable
+fun SignInSheetBody(
+    reason: SignInReason,
+    busy: Boolean = false,
+    message: String? = null,
+    signedInAs: String? = null,
+    onPress: () -> Unit = {},
+) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = Gutter, end = Gutter, bottom = 30.dp),
+    ) {
             /*
              * Crossed over rather than swapped.
              *
@@ -121,24 +150,23 @@ fun SignInSheet(
              * other, and the incoming lifts a little as it arrives. SizeTransform is what carries
              * the sheet between the two heights instead of snapping.
              */
-            AnimatedContent(
-                targetState = vm.signedInAs,
-                transitionSpec = {
-                    (
-                        fadeIn(tween(durationMillis = 260, delayMillis = 110)) +
-                            slideInVertically(
-                                tween(durationMillis = 300, delayMillis = 110),
-                            ) { it / 5 }
-                    ).togetherWith(fadeOut(tween(durationMillis = 130)))
-                        .using(SizeTransform(clip = false))
-                },
-                label = "signin",
-            ) { account ->
-                if (account == null) {
-                    AskToSignIn(reason, vm) { vm.signIn(activity) }
-                } else {
-                    SignedIn(account)
-                }
+        AnimatedContent(
+            targetState = signedInAs,
+            transitionSpec = {
+                (
+                    fadeIn(tween(durationMillis = 240, delayMillis = 70)) +
+                        slideInVertically(
+                            tween(durationMillis = 300, delayMillis = 110),
+                        ) { it / 5 }
+                ).togetherWith(fadeOut(tween(durationMillis = 150)))
+                    .using(SizeTransform(clip = false))
+            },
+            label = "signin",
+        ) { account ->
+            if (account == null) {
+                AskToSignIn(reason, busy, message, onPress)
+            } else {
+                SignedIn(account)
             }
         }
     }
@@ -148,7 +176,8 @@ fun SignInSheet(
 @Composable
 private fun AskToSignIn(
     reason: SignInReason,
-    vm: AuthViewModel,
+    busy: Boolean,
+    message: String?,
     onPress: () -> Unit,
 ) {
     Column {
@@ -164,7 +193,7 @@ private fun AskToSignIn(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        vm.message?.let { Refusal(it) }
+        message?.let { Refusal(it) }
 
         Spacer(Modifier.height(20.dp))
 
@@ -172,7 +201,7 @@ private fun AskToSignIn(
         // also keeps it distinct from the app's own primary actions.
         Button(
             onClick = onPress,
-            enabled = !vm.busy,
+            enabled = !busy,
             shape = RoundedCornerShape(15.dp),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             colors =
@@ -184,7 +213,7 @@ private fun AskToSignIn(
                 ),
             modifier = Modifier.fillMaxWidth().height(54.dp),
         ) {
-            if (vm.busy) {
+            if (busy) {
                 CircularProgressIndicator(
                     Modifier.size(18.dp),
                     strokeWidth = 2.dp,
@@ -195,7 +224,7 @@ private fun AskToSignIn(
             }
             Spacer(Modifier.width(12.dp))
             Text(
-                if (vm.busy) "Waiting for Google" else "Continue with Google",
+                if (busy) "Waiting for Google" else "Continue with Google",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -245,40 +274,48 @@ private fun Refusal(message: String) {
     }
 }
 
-/** It worked. Shown for a beat so the account is visible, then the sheet goes on its own. */
+/**
+ * It worked. Shown for a beat so the account is visible, then the sheet goes on its own.
+ *
+ * Its own Column, and that is not tidiness. AnimatedContent lays its content out in a Box, so
+ * siblings emitted here stack on top of each other rather than under: the title, the address and
+ * the line about loading were all drawn over one another, which is what "broken" looked like.
+ */
 @Composable
 private fun SignedIn(account: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(Status.posted.copy(alpha = 0.16f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Lucide.Check, null, Modifier.size(20.dp), tint = Status.posted)
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Status.posted.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Lucide.Check, null, Modifier.size(20.dp), tint = Status.posted)
+            }
+            Spacer(Modifier.width(13.dp))
+            Column {
+                Text(
+                    "Signed in",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    account,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
-        Spacer(Modifier.width(13.dp))
-        Column {
-            Text(
-                "Signed in",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                account,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        Spacer(Modifier.height(16.dp))
+        Text(
+            "Your crews and everything you have earned are loading.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(20.dp))
     }
-    Spacer(Modifier.height(16.dp))
-    Text(
-        "Your crews and everything you have earned are loading.",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(Modifier.height(20.dp))
 }
 
 /**
