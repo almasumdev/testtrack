@@ -5,7 +5,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -71,7 +72,7 @@ fun FeedTabs(
                     if (current) {
                         MaterialTheme.colorScheme.onSurface
                     } else {
-                        MaterialTheme.colorScheme.outline
+                        MaterialTheme.colorScheme.onSurfaceVariant
                     },
                 animationSpec = tween(durationMillis = 200),
                 label = "tab",
@@ -92,11 +93,21 @@ fun FeedTabs(
                     // The press is taken here and drawn further in. The whole of this is the
                     // target, because a word is not one: the padding is what makes it the size of
                     // a thumb rather than the size of the ink.
-                    .clickable(
+                    //
+                    // The tab you are already on does not answer. Selecting it again does nothing
+                    // but flash, and a control that lights up without changing anything teaches
+                    // people that pressing things here is not reliable.
+                    //
+                    // `selectable` rather than `clickable` so the selected one is still announced
+                    // as selected: taking the click away must not take that with it.
+                    .selectable(
+                        selected = current,
+                        enabled = !current,
                         interactionSource = press,
                         indication = null,
-                    ) { onSelect(tab) }
-                    .padding(horizontal = 4.dp, vertical = 10.dp),
+                        role = Role.Tab,
+                        onClick = { onSelect(tab) },
+                    ).padding(horizontal = 4.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(

@@ -78,7 +78,7 @@ fun TopHud(
     Row(
         modifier
             .fillMaxWidth()
-            .padding(start = Gutter, end = Gutter, top = 10.dp, bottom = 10.dp),
+            .padding(start = Gutter, end = Gutter, top = 10.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         LevelRing(level, intoLevel, forNext)
@@ -132,7 +132,7 @@ private fun SignedOutHud(
     Row(
         modifier
             .fillMaxWidth()
-            .padding(start = Gutter, end = Gutter, top = 11.dp, bottom = 11.dp),
+            .padding(start = Gutter, end = Gutter, top = 11.dp, bottom = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         HudMark()

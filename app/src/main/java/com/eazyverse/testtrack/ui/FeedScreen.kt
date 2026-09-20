@@ -155,7 +155,10 @@ fun FeedScreen(vm: FeedViewModel = viewModel()) {
                     // brings its own space below itself and the tabs bring their own touch
                     // padding, so this row adds almost nothing of its own or the three stack into
                     // a gap the size of a card.
-                    .padding(start = Gutter, end = Gutter, top = 2.dp, bottom = 4.dp),
+                    // Nothing of its own. The header above brings its space below itself and
+                    // the tabs bring their own, which is their touch target and cannot be given
+                    // up; anything here is a third helping on top of those two.
+                    .padding(start = Gutter, end = Gutter),
                 // The control takes only the width its two words need and the space between the
                 // two of them does the rest, so neither is given a weight to stretch into.
                 horizontalArrangement = Arrangement.SpaceBetween,
