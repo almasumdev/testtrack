@@ -2,10 +2,12 @@
 # this file only says what TestTrack is and which features it uses.
 # Secrets live in .env (this app) and ~/.mkit/.env (all apps). `mkit doctor` checks it.
 #
-# Two release channels, on purpose:
-#   mkit deploy    Play (internal track) + the config/app update document
-#   git push       .github/workflows/release.yml builds the signed APK testers
-#                  download from the GitHub Release (TestTrack is side-loaded)
+# Releases go through mkit. The GitHub Actions workflows were removed, so a push
+# no longer builds anything: `mkit deploy` is the one path to Play and to the
+# config/app update document.
+#
+# Nothing runs the checks automatically any more either. Before pushing:
+#   python scripts/check_app.py && ./gradlew ktlintCheck testDebugUnitTest
 requires = ">=0.2"
 
 [app]
