@@ -1,0 +1,54 @@
+# Every push, not just a release.
+#
+# release.yml builds and signs an APK; it never ran a test, which meant the app's tests only ran
+# when somebody remembered to ask for them. Tests that run by invitation are tests that rot.
+#
+# Only the two that need no device run here. The instrumented ones need a handset or an emulator,
+# and the live-API journeys need a seeded session that is minted in the backend repository, so
+# both stay a local step (scripts/e2e.sh).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      # First, because it is the fastest thing that can fail and it says the most about whether
+      # the change respects the shape of the app.
+      - name: Architecture
+        run: python scripts/check_app.py
+
+      - name: Format
+        run: ./gradlew --no-daemon ktlintCheck
+
+      - name: Unit tests
+        run: ./gradlew --no-daemon testDebugUnitTest
+
+      - name: Build
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: app/build/reports/tests/
+          retention-days: 7
