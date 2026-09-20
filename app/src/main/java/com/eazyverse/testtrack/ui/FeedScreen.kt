@@ -157,10 +157,9 @@ fun FeedScreen(vm: FeedViewModel = viewModel()) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                // The balance used to sit here. It is in the shell's header now, where it is on
+                // every screen rather than on this one, so what is left is the control.
                 FeedTabs(vm.tab) { vm.show(it) }
-                // The balance, and nothing else. It is the one number that changes as a result of
-                // what happens on this screen.
-                TixChip(vm.tix)
             }
         },
     ) { padding ->

@@ -41,6 +41,15 @@ data class Me(
     val tix: Int,
     val timezone: String,
     @SerialName("is_admin") val isAdmin: Boolean,
+    // Experience is the same number the board ranks by, which is the work this account has done.
+    // Nothing spends it. Defaulted so a phone on this build still parses an older server's answer
+    // rather than failing the whole call over four integers.
+    val exp: Int = 0,
+    val level: Int = 1,
+    // How far into the level, and how wide the level is. The pair rather than totals, so the bar
+    // is the two numbers it draws and the phone does no arithmetic the server could disagree with.
+    @SerialName("exp_into_level") val expIntoLevel: Int = 0,
+    @SerialName("exp_for_next") val expForNext: Int = 0,
 )
 
 @Serializable

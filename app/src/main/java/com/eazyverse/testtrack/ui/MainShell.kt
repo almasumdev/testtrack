@@ -54,6 +54,7 @@ import com.composables.icons.lucide.Trophy
 import com.composables.icons.lucide.User
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.data.Session
+import com.eazyverse.testtrack.viewmodel.HudViewModel
 
 /**
  * The five places the app has.
@@ -108,6 +109,7 @@ fun MainShell(
      */
     onSignIn: () -> Unit = {},
     homeVm: HomeViewModel = viewModel(),
+    hudVm: HudViewModel = viewModel(),
 ) {
     val context = LocalContext.current
     var tab by rememberSaveable { mutableStateOf(MainTab.CIRCLE) }
@@ -159,13 +161,45 @@ fun MainShell(
     // bar has taught everybody to expect. Off on the first tab, so Back there still leaves.
     BackHandler(enabled = tab != MainTab.CIRCLE) { show(MainTab.CIRCLE) }
 
+    // Read again on every arrival at the shell, and on every return to it. Tix move while somebody
+    // is inside another app being tested, so coming back to a stale balance would be the screen
+    // telling them their last ten seconds did not count.
+    LaunchedEffect(tab) { hudVm.load(context) }
+    val owner = LocalLifecycleOwner.current
+    DisposableEffect(owner) {
+        val watcher =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) hudVm.load(context)
+            }
+        owner.lifecycle.addObserver(watcher)
+        onDispose { owner.lifecycle.removeObserver(watcher) }
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        // Above all five tabs rather than inside any of them, because it belongs to the account
+        // and not to a screen. The two tabbed screens keep their own controls and now sit under
+        // this rather than beside it.
+        topBar = {
+            TopHud(
+                level = hudVm.level,
+                intoLevel = hudVm.intoLevel,
+                forNext = hudVm.forNext,
+                tix = hudVm.tix,
+            )
+        },
         bottomBar = { MainBar(tab, show) },
     ) { padding ->
-        // Only the bottom inset is taken. Each tab brings its own app bar and handles its own top,
-        // and passing the whole thing down would push every one of them below a gap nothing fills.
-        Box(Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())) {
+        // The top inset is taken now that the shell has a bar of its own; each tab still handles
+        // whatever it puts under it.
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(
+                    top = padding.calculateTopPadding(),
+                    bottom = padding.calculateBottomPadding(),
+                ),
+        ) {
             when (tab) {
                 MainTab.CIRCLE -> FeedScreen()
 
