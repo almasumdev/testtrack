@@ -177,9 +177,13 @@ private fun SignedOutHud(
 /**
  * The way in, at the size a header can carry.
  *
- * A full button was too much furniture for a strip that also holds a mark and two lines of text,
- * and "Sign in" on its own said nothing about what signing in would involve. The Google mark says
- * it in the space a word would have taken: this is one tap and an account picker, not a form.
+ * A full button was too much furniture for a strip that also holds a mark and two lines of text.
+ *
+ * It does not say "sign in". The Google mark beside it already says how, in the space that word
+ * would have taken, so the word itself is free to say why. "Get started" is also the honest one:
+ * signing in does not get anybody a seat, it opens the app up, and the seat is a separate thing
+ * they do with an app of their own afterwards. "Join", next to a line about a crew filling, would
+ * have promised the seat.
  *
  * Outlined rather than filled. The one filled thing in this app is the accent, and the accent is
  * for what somebody is doing here rather than for the door.
@@ -200,7 +204,7 @@ private fun SignInChip(onClick: () -> Unit) {
         GoogleMark(Modifier.size(16.dp))
         Spacer(Modifier.width(8.dp))
         Text(
-            "Sign in",
+            "Get started",
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
