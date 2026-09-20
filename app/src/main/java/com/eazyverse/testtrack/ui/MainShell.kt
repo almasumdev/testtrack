@@ -1,16 +1,23 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
@@ -19,11 +26,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -183,16 +192,20 @@ fun MainShell(
  * else here is painted in reads as a piece of another product bolted to the bottom, which is the
  * same reason [Ask] takes over the dialog container.
  *
- * Built by hand rather than from [NavigationBar], because the mark for the selected tab is a rail
- * along the top edge of the item and Material's own is a pill behind the icon. There is no way to
+ * Built by hand rather than from Material's NavigationBar, because the mark for the selected tab
+ * is a rail along the top edge and Material's own is a pill behind the icon. There is no way to
  * move that pill, so using the component would have meant hiding its indicator and drawing over
- * it, which is more code than the row below and leaves a component fighting its own defaults.
+ * it, which is more code than this and leaves a component fighting its own defaults.
  *
  * What the pill was doing wrong is worth keeping written down. It was filled in `primaryContainer`
  * on a `background` bar, two colours three percent apart in lightness, so the selected tab was
  * marked by a smudge nobody could see; and its icon took `onPrimaryContainer` while its label took
- * `primary`, so one tab wore two different accents. A rail has no fill to get wrong, and both
- * halves of the selected item are now the one colour.
+ * `primary`, so one tab wore two different accents.
+ *
+ * The rail is drawn here rather than inside the selected item, which is the whole reason the bar
+ * needs its own width. One rail that slides is a bar with five places in it; a rail per item that
+ * appears and disappears is five separate things blinking, and it read as a glitch rather than as
+ * a movement.
  */
 @Composable
 private fun MainBar(
@@ -206,21 +219,44 @@ private fun MainBar(
                 .height(1.dp)
                 .background(MaterialTheme.colorScheme.outlineVariant),
         )
-        Row(
+        BoxWithConstraints(
             Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background)
                 .height(BarHeight),
         ) {
-            MainTab.entries.forEach { tab ->
-                MainBarItem(tab, tab == selected) { onSelect(tab) }
+            val slot = maxWidth / MainTab.entries.size
+            val index = MainTab.entries.indexOf(selected)
+            val railX by animateDpAsState(
+                targetValue = slot * index + (slot - RailWidth) / 2,
+                animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
+                label = "rail",
+            )
+
+            Row(Modifier.fillMaxSize()) {
+                MainTab.entries.forEach { tab ->
+                    MainBarItem(tab, tab == selected) { onSelect(tab) }
+                }
             }
+
+            Box(
+                Modifier
+                    .offset(x = railX)
+                    .size(width = RailWidth, height = RailHeight)
+                    .clip(RoundedCornerShape(bottomStart = RailHeight, bottomEnd = RailHeight))
+                    .background(MaterialTheme.colorScheme.primary),
+            )
         }
     }
 }
 
 /** Material's own bar height, kept so the rest of the layout is unchanged by the rewrite. */
 private val BarHeight = 80.dp
+private val RailWidth = 30.dp
+private val RailHeight = 3.dp
+
+/** Wide enough to take a thumb, and the reason the touch target is not the ripple. */
+private val TapSize = 40.dp
 
 @Composable
 private fun RowScope.MainBarItem(
@@ -228,12 +264,31 @@ private fun RowScope.MainBarItem(
     current: Boolean,
     onSelect: () -> Unit,
 ) {
-    val tint =
-        if (current) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        }
+    // Crossfaded rather than switched. The rail takes a quarter of a second to arrive and a colour
+    // that changed instantly would beat it there, which is what made the old switch look broken:
+    // two halves of one movement happening at different times.
+    val tint by animateColorAsState(
+        targetValue =
+            if (current) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        animationSpec = tween(durationMillis = 220),
+        label = "tint",
+    )
+
+    /*
+     * The press and what it draws are deliberately on different elements.
+     *
+     * The whole item is the touch target, because a thumb is wider than an icon and a tab that
+     * only answers a direct hit is a tab people miss. But letting the ripple fill that target
+     * flashes a rectangle nearly the height of the bar, square-cornered and running into its
+     * neighbours, which is the odd thing you see on a tap. Handing the same interaction source to
+     * a small round patch behind the icon keeps the large target and draws the circle somebody
+     * expects at the place they actually aimed.
+     */
+    val press = remember { MutableInteractionSource() }
 
     Box(
         Modifier
@@ -244,23 +299,22 @@ private fun RowScope.MainBarItem(
             // a screen reader announces for one of a set of five.
             .selectable(
                 selected = current,
-                onClick = onSelect,
+                interactionSource = press,
+                indication = null,
                 role = Role.Tab,
+                onClick = onSelect,
             ),
         contentAlignment = Alignment.Center,
     ) {
-        if (current) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 Modifier
-                    .align(Alignment.TopCenter)
-                    .size(width = 30.dp, height = 3.dp)
-                    .clip(RoundedCornerShape(bottomStart = 3.dp, bottomEnd = 3.dp))
-                    .background(MaterialTheme.colorScheme.primary),
-            )
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(tab.icon, null, Modifier.size(22.dp), tint = tint)
-            Spacer(Modifier.height(5.dp))
+                    .size(TapSize)
+                    .indication(press, ripple(bounded = false, radius = TapSize / 2)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(tab.icon, null, Modifier.size(22.dp), tint = tint)
+            }
             Text(
                 tab.label,
                 style = MaterialTheme.typography.labelSmall,
