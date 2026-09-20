@@ -299,3 +299,38 @@ class CrewTabArithmeticTest {
         assertFalse(mayJudgeIn(emptyList(), "nowhere"))
     }
 }
+
+/**
+ * The rule a night's open has to clear.
+ *
+ * Small arithmetic guarding the product's one factual claim: that somebody opened an app today.
+ * For a while nothing checked it at all, and a single button press credited a whole night.
+ */
+class VisitRuleTest {
+    @Test
+    fun a_night_open_is_ten_seconds_not_the_thirty_a_review_needs() {
+        // A crew visit is "you opened it today", which is what Google asks of a tester. A review
+        // is somebody forming an opinion, and that is a different length of time.
+        assertEquals(10, CrewRules.VISIT_SECONDS)
+        assertTrue(CrewRules.VISIT_SECONDS < 30)
+    }
+
+    @Test
+    fun an_app_row_carries_what_is_needed_to_open_it() {
+        // A row without a package name can only be claimed, never opened. That was the bug.
+        val seat =
+            ApiSeat(
+                id = "s1",
+                crewId = "c1",
+                appName = "Nikosh Budget",
+                packageName = "com.example.nikosh",
+                ownerName = "Rafiul",
+                state = "confirmed",
+                greens = 2,
+                reds = 0,
+                mine = false,
+                createdAt = "2026-09-20T00:00:00+00:00",
+            )
+        assertEquals("com.example.nikosh", seat.toApp().packageName)
+    }
+}

@@ -72,6 +72,7 @@ fun ApiSeat.toApp(crewName: String = "") =
     CrewApp(
         id = id,
         label = appName,
+        packageName = packageName,
         owner = ownerName,
         crew = crewName,
         done = openedToday,

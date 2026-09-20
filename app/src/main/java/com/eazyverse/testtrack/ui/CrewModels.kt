@@ -68,6 +68,15 @@ object CrewRules {
     const val VERDICTS = 2
 
     /**
+     * Real foreground seconds before a night's open counts.
+     *
+     * Ten, not the thirty a Feedback review needs: a crew visit is "you opened it today", which is
+     * what Google asks of a tester, while a review is somebody forming an opinion. Mirrored from
+     * rules.VISIT_SECONDS on the server, which refuses anything short regardless of what is sent.
+     */
+    const val VISIT_SECONDS = 10
+
+    /**
      * Seats filled, out of [SEATS].
      *
      * Only confirmed ones. A seat still being checked is somebody's intention, and a crew that
@@ -142,6 +151,8 @@ data class CrewMember(
 data class CrewApp(
     val id: String,
     val label: String,
+    /** What actually gets launched and timed. A row without it cannot be opened, only claimed. */
+    val packageName: String = "",
     val owner: String,
     val crew: String = "",
     val done: Boolean = false,

@@ -137,7 +137,10 @@ object Api {
      * foreground rather than when a button is pressed: a button records an intention, and what
      * is owed is the opening.
      */
-    suspend fun visit(seatId: String): ApiSeat = post("/crews/seats/$seatId/visit", Empty())
+    suspend fun visit(
+        seatId: String,
+        usedMs: Long,
+    ): ApiSeat = post("/crews/seats/$seatId/visit", VisitIn(usedMs))
 
     suspend fun withdraw(seatId: String): ApiSeat = delete("/crews/seats/$seatId")
 

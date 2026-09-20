@@ -23,6 +23,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +36,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Lucide
@@ -58,6 +62,18 @@ fun CrewScreen(vm: CrewViewModel = viewModel()) {
     // Reloaded on every arrival: a crew fills, a verdict lands and a fortnight starts while
     // somebody is on another screen.
     LaunchedEffect(Unit) { vm.load(context) }
+
+    // Coming back from somebody's app is the whole interaction, so resume is where a visit is
+    // measured and recorded. Nothing happens here unless this screen sent them somewhere.
+    val owner = LocalLifecycleOwner.current
+    DisposableEffect(owner) {
+        val watcher =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) vm.settle(context)
+            }
+        owner.lifecycle.addObserver(watcher)
+        onDispose { owner.lifecycle.removeObserver(watcher) }
+    }
     val snackbars = remember { SnackbarHostState() }
     var judging by remember { mutableStateOf<Pair<String, CrewSeat>?>(null) }
     var taking by remember { mutableStateOf<String?>(null) }

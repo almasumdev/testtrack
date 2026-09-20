@@ -161,6 +161,12 @@ data class SeatIn(
 )
 
 @Serializable
+data class VisitIn(
+    /** Real foreground milliseconds, measured on this phone. The server holds it to its floor. */
+    @SerialName("used_ms") val usedMs: Long,
+)
+
+@Serializable
 data class VerdictIn(
     val ok: Boolean,
     val reason: String = "",

@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.Device
+import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiCrew
@@ -234,19 +235,46 @@ class CrewViewModel : ViewModel() {
         }
     }
 
-    /** Tonight's tap: the app was opened and the evening is one app shorter. */
+    /**
+     * The app somebody was sent to, and when. Null when nothing is in flight.
+     *
+     * Held because the measurement cannot be taken at the moment of leaving. It is taken on the
+     * way back, from what UsageStatsManager saw while this app was not on screen.
+     */
+    private data class Away(
+        val seatId: String,
+        val packageName: String,
+        val label: String,
+        val since: Long,
+    )
+
+    private var away: Away? = null
+
+    /** What is left of a round, so the night can be walked without fourteen returns to this list. */
+    private var round: List<CrewApp> = emptyList()
+
+    /**
+     * Tonight's open: go to the app, stay a moment, come back.
+     *
+     * The whole obligation is opening somebody's app, so this launches it. It used to post the
+     * visit immediately and launch nothing, which meant one press credited an app nobody had
+     * seen, and the button that did fourteen of them credited a night nobody had spent. Every
+     * figure the product reports about testing rested on that.
+     */
     fun openApp(
         context: Context,
         app: CrewApp,
-    ) = call(context = context) { Api.visit(app.id) }
+    ) {
+        round = emptyList()
+        sendTo(context, app)
+    }
 
     /**
-     * Open everything still owed, in one press.
+     * Walk the whole night, one app at a time.
      *
-     * Recorded one at a time because that is what actually happened: fourteen separate opens, and
-     * a single call claiming all of them would be the client asserting work rather than reporting
-     * it. Failures are counted rather than raised, since a night that got thirteen through is
-     * thirteen better off than one that stopped at the first refusal.
+     * A queue rather than a loop: each app has to actually be on screen for its seconds, and only
+     * one app can be on screen at once. Every return lands in [settle], which records the one
+     * just visited and opens the next.
      */
     fun openAll(
         context: Context,
@@ -258,18 +286,62 @@ class CrewViewModel : ViewModel() {
                 .flatMap { crew -> crew.apps.filter { !it.done && !it.reported } }
         if (owed.isEmpty()) return
 
+        round = owed.drop(1)
+        sendTo(context, owed.first())
+    }
+
+    private fun sendTo(
+        context: Context,
+        app: CrewApp,
+    ) {
+        if (app.packageName.isBlank()) {
+            message = "${app.label} did not come with a package name, so it cannot be opened."
+            return
+        }
+        away = Away(app.id, app.packageName, app.label, System.currentTimeMillis())
+        message = "Stay in ${app.label} for ${CrewRules.VISIT_SECONDS} seconds."
+        openApp(context, app.packageName)
+    }
+
+    /**
+     * Back from an app. Measure what happened and report it.
+     *
+     * Called on every resume, and does nothing unless somebody was actually sent somewhere. The
+     * reading is of real foreground time, which is the only thing here the phone cannot be talked
+     * into inventing, and the server refuses anything under its own floor regardless.
+     */
+    fun settle(context: Context) {
+        val trip = away ?: return
+        away = null
+
         viewModelScope.launch {
-            var done = 0
-            for (app in owed) {
-                if (runCatching { Api.visit(app.id) }.isSuccess) done++
-            }
-            message =
-                if (done == owed.size) {
-                    "Opened everything owed tonight."
+            val used = UsageRepo.foregroundMsSince(context, trip.packageName, trip.since)
+            val short = used < CrewRules.VISIT_SECONDS * 1000L
+            try {
+                if (short) {
+                    round = emptyList()
+                    message =
+                        "That was ${used / 1000}s in ${trip.label}. " +
+                        "It needs ${CrewRules.VISIT_SECONDS}, so it has not counted yet."
                 } else {
-                    "Opened $done of ${owed.size}. The rest can wait for a better connection."
+                    Api.visit(trip.seatId, used)
                 }
-            load(context)
+            } catch (e: ApiError) {
+                round = emptyList()
+                message = e.message
+            } catch (_: Exception) {
+                round = emptyList()
+                message = "We could not reach TestTrack. Check your connection."
+            }
+
+            val next = round.firstOrNull()
+            if (!short && next != null) {
+                round = round.drop(1)
+                sendTo(context, next)
+            } else {
+                if (!short && round.isEmpty()) message = "That is tonight done."
+                load(context)
+            }
         }
     }
 
