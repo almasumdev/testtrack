@@ -202,14 +202,30 @@ server is by definition not what was reviewed.
 
 Honest list, so this file does not become another one that lies.
 
-- **Editing your profile.** Name and photo. The old Firestore screen had it; the replacement does
-  not, and there is no endpoint.
-- **Leaving a crew from the app.** `DELETE /crews/seats/{id}` exists and is tested. No button.
-- **The screenshot the proof dialog asks for.** Nothing captures it. A live review cannot be
-  finished.
-- **Owner and juror screens.** `approve`, `reject` and `vote` have no caller in the app, so every
-  review auto-approves after 48 hours.
+- **Realtime in the app.** The server publishes correctly and nothing listens: there is no socket
+  client, not even the URL. Screens refetch on arrival and after each action, so a crew filling
+  while you watch shows the old count until you leave and come back.
+- **Login and setup.** Sign-in works, but the setup checklist behind it is still the Firestore-era
+  flow built on Drive and an Apps Script endpoint. Being replaced.
 - **An unresolved contradiction.** `held_before_start` refuses a new seat while you hold one in a
   crew that is `FILLING` *or* `FULL`. `FULL` means running, so the backend permits one crew at a
   time, ever — while the app's own copy assumes several ("two crews is twenty-eight apps a
   night"). One of the two is wrong and it has not been decided which.
+- **The old half.** Roughly 7,900 lines of Firestore screens still ship: Home, Group, Dashboard,
+  Setup, Submit, and the services under them. Largely untested, and the reason `data/` has almost
+  no coverage.
+- **43 architecture violations**, held flat by `scripts/check_app.py`. Mostly one fact: the view
+  models still live in `ui/`.
+
+### Recently closed
+
+Worth naming, because each was a journey that could not complete:
+
+- A crew visit was recorded on a button press and opened nothing, so one tap credited a night.
+  It now launches the app and measures real foreground time, and the server holds it to ten
+  seconds.
+- The proof dialog asked for a screenshot with nowhere to put one. There are uploads now, and a
+  rule about who may look at them.
+- `approve`, `reject` and `vote` had no caller, so every review approved itself on a timer. The
+  Waiting tab is the way in.
+- Leaving a crew, and editing your own name and picture.
