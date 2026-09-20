@@ -42,6 +42,23 @@ class HudViewModel : ViewModel() {
         private set
 
     /**
+     * The crew filling right now, for somebody who has not signed in.
+     *
+     * The header would otherwise be a ring with no progress in it, which answers nothing and asks
+     * nothing. This is the one true thing a stranger can be told, and it happens to be the only
+     * question they have: whether anybody is actually in here. Null when no crew is filling, and
+     * then the header says nothing rather than inventing something.
+     */
+    var openCrew by mutableStateOf<String?>(null)
+        private set
+
+    var openTaken by mutableStateOf(0)
+        private set
+
+    var openSeats by mutableStateOf(0)
+        private set
+
+    /**
      * Read it again.
      *
      * Called on every resume rather than once, because tix move while somebody is inside another
@@ -53,6 +70,12 @@ class HudViewModel : ViewModel() {
             try {
                 if (!ApiAuth.ensure(context)) {
                     signedOut = true
+                    // The crew list reads without a token, so the header has something true to
+                    // put in the space the level would have taken.
+                    val open = Api.crews().open
+                    openCrew = open?.name
+                    openTaken = open?.taken ?: 0
+                    openSeats = open?.seats ?: 0
                     return@launch
                 }
                 val me = Api.me()

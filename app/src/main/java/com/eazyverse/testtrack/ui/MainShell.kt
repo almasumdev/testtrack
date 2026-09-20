@@ -186,6 +186,10 @@ fun MainShell(
                 intoLevel = hudVm.intoLevel,
                 forNext = hudVm.forNext,
                 tix = hudVm.tix,
+                openCrew = hudVm.openCrew,
+                openTaken = hudVm.openTaken,
+                openSeats = hudVm.openSeats,
+                onSignIn = onSignIn,
             )
         },
         bottomBar = { MainBar(tab, show) },
