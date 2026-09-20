@@ -55,9 +55,9 @@ import com.composables.icons.lucide.UserRound
  * and no second pitch, because the sheet is about to make that case properly and a page that
  * makes it first is the same sentence twice.
  *
- * [aside] is for the two screens with a public sibling. Lobby and Waiting are both one tab away
- * from something that reads perfectly well without an account, and saying so is the difference
- * between a locked page and a locked section.
+ * There is no third line. Two of these used to carry a footnote naming the sibling tab that reads
+ * without an account, which was the page explaining the product's permission model to somebody
+ * who had not asked about it, under a button they had already been given.
  */
 @Composable
 fun Gated(
@@ -65,7 +65,6 @@ fun Gated(
     body: String,
     onSignIn: () -> Unit,
     modifier: Modifier = Modifier,
-    aside: String = "",
     mark: @Composable () -> Unit,
 ) {
     Column(
@@ -108,17 +107,6 @@ fun Gated(
                 "Get started",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-            )
-        }
-
-        if (aside.isNotBlank()) {
-            Spacer(Modifier.height(18.dp))
-            Text(
-                aside,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.widthIn(max = 250.dp),
             )
         }
     }

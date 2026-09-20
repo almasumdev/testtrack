@@ -61,7 +61,6 @@ fun WaitingBody(
         Gated(
             heading = "Nothing addressed to you",
             body = "Reviews of your apps, and cases you are asked to decide, arrive here.",
-            aside = "Feedback and Activity both read without an account.",
             onSignIn = onSignIn,
             mark = { NoteMark() },
         )

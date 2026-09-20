@@ -167,7 +167,6 @@ fun CrewLobbyTab(
         Gated(
             heading = "No seat held",
             body = "A crew you have joined waits here until all fifteen seats are confirmed.",
-            aside = "Open has a crew filling right now, and needs no account to look at.",
             onSignIn = onSignIn,
             mark = { SeatsMark() },
         )

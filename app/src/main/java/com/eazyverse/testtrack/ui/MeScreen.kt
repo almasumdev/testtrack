@@ -54,17 +54,15 @@ fun MeScreen(
     var editing by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { vm.load(context) }
 
-    TabScaffold("Profile") {
-        MeBody(
-            profile = vm.profile,
-            loading = vm.loading,
-            offline = vm.offline,
-            signedOut = vm.signedOut,
-            onEdit = { editing = true },
-            onSignOut = onSignOut,
-            onSignIn = onSignIn,
-        )
-    }
+    MeBody(
+        profile = vm.profile,
+        loading = vm.loading,
+        offline = vm.offline,
+        signedOut = vm.signedOut,
+        onEdit = { editing = true },
+        onSignOut = onSignOut,
+        onSignIn = onSignIn,
+    )
 
     if (editing) {
         MeEditDialog(

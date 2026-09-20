@@ -50,19 +50,17 @@ class GatedTest {
         name: String,
         heading: String,
         body: String,
-        aside: String = "",
         mark: @Composable () -> Unit,
     ) {
         compose.setContent {
             TestTrackTheme {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Gated(heading = heading, body = body, aside = aside, onSignIn = {}, mark = mark)
+                    Gated(heading = heading, body = body, onSignIn = {}, mark = mark)
                 }
             }
         }
         compose.onNodeWithText(heading).assertIsDisplayed()
         compose.onNodeWithText("Get started").assertIsDisplayed()
-        if (aside.isNotBlank()) compose.onNodeWithText(aside).assertIsDisplayed()
         keep(name, compose.onRoot().captureToImage().asAndroidBitmap())
     }
 
@@ -90,7 +88,6 @@ class GatedTest {
             "3-lobby",
             "No seat held",
             "A crew you have joined waits here until all fifteen seats are confirmed.",
-            aside = "Open has a crew filling right now, and needs no account to look at.",
         ) { SeatsMark() }
     }
 
@@ -118,7 +115,6 @@ class GatedTest {
             "6-waiting",
             "Nothing addressed to you",
             "Reviews of your apps, and cases you are asked to decide, arrive here.",
-            aside = "Feedback and Activity both read without an account.",
         ) { NoteMark() }
     }
 

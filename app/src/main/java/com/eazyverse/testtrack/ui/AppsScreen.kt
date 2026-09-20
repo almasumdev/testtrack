@@ -45,15 +45,13 @@ fun AppsScreen(
     val context = LocalContext.current
     LaunchedEffect(Unit) { vm.load(context) }
 
-    TabScaffold("My apps") {
-        AppsBody(
-            apps = vm.apps,
-            loading = vm.loading,
-            offline = vm.offline,
-            signedOut = vm.signedOut,
-            onSignIn = onSignIn,
-        )
-    }
+    AppsBody(
+        apps = vm.apps,
+        loading = vm.loading,
+        offline = vm.offline,
+        signedOut = vm.signedOut,
+        onSignIn = onSignIn,
+    )
 }
 
 /** The list, drawn. Handed its values so every state it has can be put in front of a test. */

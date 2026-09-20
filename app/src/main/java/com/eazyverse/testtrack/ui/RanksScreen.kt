@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -48,16 +47,14 @@ fun RanksScreen(vm: RanksViewModel = viewModel()) {
     val context = LocalContext.current
     LaunchedEffect(Unit) { vm.load(context) }
 
-    TabScaffold("Ranks") {
-        RanksBody(
-            rows = vm.rows,
-            mine = vm.mine,
-            openPoints = vm.openPoints,
-            reviewPoints = vm.reviewPoints,
-            loading = vm.loading,
-            offline = vm.offline,
-        )
-    }
+    RanksBody(
+        rows = vm.rows,
+        mine = vm.mine,
+        openPoints = vm.openPoints,
+        reviewPoints = vm.reviewPoints,
+        loading = vm.loading,
+        offline = vm.offline,
+    )
 }
 
 /**
@@ -238,29 +235,12 @@ private fun Place(place: Int) {
     }
 }
 
-/** The three tabs that are one screen each share a bar, so it is written once. */
-@Composable
-fun TabScaffold(
-    title: String,
-    trailing: @Composable () -> Unit = {},
-    content: @Composable () -> Unit,
-) {
-    Column(Modifier.fillMaxSize()) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(start = Gutter, end = Gutter, top = 14.dp, bottom = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            trailing()
-        }
-        content()
-    }
-}
+/*
+ * There is no title bar here any more.
+ *
+ * Ranks, My apps and Profile each carried their own name across the top in title size, directly
+ * under a header that is on every screen and above a bar whose lit tab says the same word. Three
+ * places telling somebody where they are, one of which cost a line of the screen. Circle and Crew
+ * never had one, because their tabs were already doing it, so this also makes the five tabs
+ * behave the same way as each other.
+ */
