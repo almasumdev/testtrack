@@ -58,6 +58,24 @@ class CrewJourneyTest {
 
     private fun uniquePackage() = "com.eazyverse.e2e.crew${System.currentTimeMillis()}"
 
+    /*
+     * Finding this account's own rows, rather than assuming they are the only ones there.
+     *
+     * The seeded world shares a server with whatever else is on it, including crews seeded by
+     * hand for somebody to look at. A journey that says "the crew" is a journey that starts
+     * failing the first time the thing it tests is used by anybody else.
+     */
+
+    private suspend fun myCrew(): ApiCrew =
+        Api.crews().mine.firstOrNull { it.mySeatId != null }
+            ?: error("This account holds no seat, so there is nothing to look at.")
+
+    private suspend fun mineNow(seatId: String): ApiCrew =
+        Api.crews().mine.firstOrNull { crew -> crew.members.any { it.id == seatId } }
+            ?: error("The seat just taken is not in any crew this account is in.")
+
+    private suspend fun myOwnSeat(): ApiSeat = myCrew().members.first { it.mine }
+
     // ------------------------------------------------------------------ the journey
 
     @Test
@@ -82,16 +100,19 @@ class CrewJourneyTest {
             assertTrue(seat.mine)
 
             // And the crew it landed in now says so.
-            val after = Api.crews()
-            assertEquals(1, after.mine.size)
-            val crew = after.mine.single()
+            //
+            // Nothing here counts absolutely. This runs against the live server, which has other
+            // people's crews on it, and a test that assumes it is alone in the world passes only
+            // until somebody else uses the thing it is testing.
+            val crew = mineNow(seat.id)
             assertEquals(CrewRules.SEATS, crew.seats)
             assertEquals(CrewRules.RUN_DAYS, crew.runDays)
-            assertEquals(seat.id, crew.mySeatId)
             assertEquals("filling", crew.state)
             // Taken but not counted: a seat nobody has installed is somebody's intention.
-            assertEquals(1, crew.taken)
-            assertEquals(0, crew.filled)
+            assertTrue("The new seat is in the taken count", crew.taken >= 1)
+            assertTrue("A crew cannot hold more than its seats", crew.taken <= crew.seats)
+            assertTrue("An unconfirmed seat is not a filled one", crew.filled < crew.taken)
+            assertTrue(crew.members.any { it.id == seat.id && it.mine })
 
             // The screen's own reading of it.
             val drawn = crew.toCrew()
@@ -100,7 +121,10 @@ class CrewJourneyTest {
             assertTrue("A crew that has not started owes nothing tonight", drawn.apps.isEmpty())
 
             // Holding one now, so the server says why another cannot be taken.
-            assertNotNull("The screen has to be told why it cannot offer a seat", after.blocked)
+            assertNotNull(
+                "The screen has to be told why it cannot offer a seat",
+                Api.crews().blocked,
+            )
         }
 
     @Test
@@ -125,13 +149,7 @@ class CrewJourneyTest {
     @Test
     fun t3_nobody_verifies_their_own_app() =
         runBlocking {
-            val mine =
-                Api
-                    .crews()
-                    .mine
-                    .single()
-                    .members
-                    .first { it.mine }
+            val mine = myOwnSeat()
             try {
                 Api.verdict(mine.id, ok = true)
                 fail("Verifying your own seat should be refused.")
@@ -143,7 +161,7 @@ class CrewJourneyTest {
     @Test
     fun t4_the_crew_page_is_readable_from_inside_and_not_from_outside() =
         runBlocking {
-            val crew = Api.crews().mine.single()
+            val crew = myCrew()
 
             // A member sees the list, which carries package names and the notes that get a tester
             // past a front door.
@@ -166,8 +184,7 @@ class CrewJourneyTest {
     @Test
     fun t5_a_seat_can_be_given_up_and_the_place_reused() =
         runBlocking {
-            val crew = Api.crews().mine.single()
-            val mine = crew.members.first { it.mine }
+            val mine = myOwnSeat()
 
             val gone = Api.withdraw(mine.id)
             assertEquals("withdrawn", gone.state)
