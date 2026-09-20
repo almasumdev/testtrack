@@ -1,7 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,17 +23,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.Lucide
+import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.viewmodel.AuthViewModel
 
@@ -159,50 +157,21 @@ fun SignInSheet(
     }
 }
 
-private val GoogleBlue = Color(0xFF4285F4)
-private val GoogleGreen = Color(0xFF34A853)
-private val GoogleYellow = Color(0xFFFBBC05)
-private val GoogleRed = Color(0xFFEA4335)
-
 /**
- * The Google G, drawn as four arcs and the crossbar.
+ * Google's own mark, from Google's own outline.
  *
- * Drawn rather than bundled: the mark is only ever needed at one size in one place, and a vector
- * asset would be a second copy of Google's artwork to keep in step. The blue arc stops at three
- * o'clock so the crossbar meets it flush.
+ * It was four arcs and a crossbar drawn here by hand, which was close enough to recognise and not
+ * close enough to be right: the proportions were ours rather than theirs. A drawable is also the
+ * one place it can be fixed for every button that uses it.
+ *
+ * Untinted on purpose. The four colours are the mark; painting it in one of ours would make it a
+ * different logo.
  */
 @Composable
 fun GoogleMark(modifier: Modifier = Modifier) {
-    Canvas(modifier) {
-        val stroke = size.minDimension * 0.215f
-        val radius = (size.minDimension - stroke) / 2f
-        val centre = Offset(size.width / 2f, size.height / 2f)
-        val box = Offset(centre.x - radius, centre.y - radius)
-        val arcSize = Size(radius * 2, radius * 2)
-
-        fun arc(
-            color: Color,
-            start: Float,
-            sweep: Float,
-        ) = drawArc(
-            color = color,
-            startAngle = start,
-            sweepAngle = sweep,
-            useCenter = false,
-            topLeft = box,
-            size = arcSize,
-            style = Stroke(stroke),
-        )
-
-        arc(GoogleBlue, 268f, 92f) // top right, running into the crossbar
-        arc(GoogleGreen, 24f, 88f) // lower right and along the bottom
-        arc(GoogleYellow, 112f, 64f) // bottom left
-        arc(GoogleRed, 176f, 92f) // left and over the top
-
-        drawRect(
-            color = GoogleBlue,
-            topLeft = Offset(centre.x, centre.y - stroke / 2f),
-            size = Size(radius + stroke / 2f, stroke),
-        )
-    }
+    Image(
+        painter = painterResource(R.drawable.ic_google),
+        contentDescription = null,
+        modifier = modifier,
+    )
 }
