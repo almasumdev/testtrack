@@ -1,11 +1,15 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -15,15 +19,21 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 /**
  * Circle's three tabs, as three words.
@@ -91,13 +101,9 @@ fun FeedTabs(
             ) {
                 Text(
                     tab.label,
-                    // Drawn on the word and nowhere else. Bounded to the text's own box, so what
-                    // lights up is the thing that was pressed rather than a shape around it. The
-                    // count is left out on purpose: it is a reading, not a button.
-                    modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .indication(press, ripple()),
+                    // Drawn on the letters and nowhere else. The count is left out on purpose:
+                    // it is a reading, not a button.
+                    modifier = Modifier.inkRipple(press, MaterialTheme.colorScheme.primary),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = tint,
@@ -129,4 +135,65 @@ private fun WaitingCount(count: Int) {
             color = MaterialTheme.colorScheme.onPrimary,
         )
     }
+}
+
+/**
+ * A press that spreads through the letters and nowhere else.
+ *
+ * Material's ripple fills a shape, so on a word it is a rounded rectangle lighting up behind the
+ * text: the box flashes and the word sits on it. What is wanted here is the ink itself.
+ *
+ * The trick is the blend mode. The text is composited into its own layer, and the growing circle
+ * is then drawn over that layer with [BlendMode.SrcIn], which keeps the new colour only where the
+ * layer already had something opaque. The letterforms are the only opaque thing in it, so the
+ * circle is clipped to the glyphs: counters, the gap between letters and everything outside the
+ * word stay as they were. [CompositingStrategy.Offscreen] is what makes that layer exist; without
+ * it the blend would reach for whatever is behind the text and take the background with it.
+ *
+ * It spreads from the middle of the word rather than from the finger. A press is reported in the
+ * coordinates of whatever took the click, which is the whole tab including the padding that makes
+ * it thumb sized, and carrying that offset across to here to be a few pixels more accurate about
+ * something a word wide is not worth the arithmetic it would take to get wrong.
+ */
+@Composable
+private fun Modifier.inkRipple(
+    interactionSource: InteractionSource,
+    color: Color,
+): Modifier {
+    val spread = remember { Animatable(0f) }
+    val strength = remember { Animatable(0f) }
+
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is PressInteraction.Press -> {
+                    // Full the instant it is touched, then it grows. The other way round is a
+                    // delay somebody reads as the tap not having registered.
+                    strength.snapTo(1f)
+                    spread.snapTo(0f)
+                    launch { spread.animateTo(1f, tween(durationMillis = 340, easing = FastOutSlowInEasing)) }
+                }
+
+                is PressInteraction.Release, is PressInteraction.Cancel -> {
+                    strength.animateTo(0f, tween(durationMillis = 260))
+                }
+            }
+        }
+    }
+
+    return this
+        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+        .drawWithContent {
+            drawContent()
+            if (strength.value > 0f) {
+                // Far enough to cover the word from its middle, whatever its length.
+                val reach = kotlin.math.hypot(size.width, size.height) / 2f
+                drawCircle(
+                    color = color.copy(alpha = 0.75f * strength.value),
+                    radius = reach * spread.value,
+                    center = center,
+                    blendMode = BlendMode.SrcIn,
+                )
+            }
+        }
 }
