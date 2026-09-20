@@ -40,12 +40,13 @@ class RanksViewModel : ViewModel() {
     var mine by mutableStateOf<BoardRow?>(null)
         private set
 
-    /** What each kind of work is worth, as the server weighs it. */
-    var openPoints by mutableStateOf(1)
-        private set
-
-    var reviewPoints by mutableStateOf(5)
-        private set
+    /*
+     * The weighting the server sends is not held here any more.
+     *
+     * It was read by a card at the top of the board explaining the arithmetic, which is a
+     * reference page pretending to be a leaderboard. Nothing reads it now, and a view model
+     * holding a value for nobody is a value that drifts.
+     */
 
     var loading by mutableStateOf(true)
         private set
@@ -67,8 +68,6 @@ class RanksViewModel : ViewModel() {
                 val answer = Api.board()
                 rows = answer.rows
                 mine = answer.mine
-                openPoints = answer.openPoints
-                reviewPoints = answer.reviewPoints
                 offline = false
             } catch (_: ApiError) {
                 // A 401 here is no longer the ordinary signed-out case, so it is a real fault.

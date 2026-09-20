@@ -100,22 +100,10 @@ class StandingScreensTest {
     // ------------------------------------------------------------------ ranks
 
     @Test
-    fun the_board_says_what_it_is_counting_before_it_counts_anybody() {
-        // A rank nobody can explain is a rank nobody trusts, so the weighting is on the screen.
-        compose.setContent {
-            TestTrackTheme {
-                RanksBody(rows = emptyList(), mine = null, openPoints = 1, reviewPoints = 5)
-            }
-        }
-        compose.onNodeWithText("How it counts").assertIsDisplayed()
-        compose.onNodeWithText("worth 5", substring = true).assertIsDisplayed()
-    }
-
-    @Test
     fun an_empty_board_invites_rather_than_apologises() {
         compose.setContent {
             TestTrackTheme {
-                RanksBody(rows = emptyList(), mine = null, openPoints = 1, reviewPoints = 5)
+                RanksBody(rows = emptyList(), mine = null)
             }
         }
         compose.onNodeWithText("Nobody has started yet").assertIsDisplayed()
@@ -133,8 +121,6 @@ class StandingScreensTest {
                 RanksBody(
                     rows = top,
                     mine = row("me", "Rafiul", 40, opens = 2),
-                    openPoints = 1,
-                    reviewPoints = 5,
                 )
             }
         }
@@ -150,7 +136,7 @@ class StandingScreensTest {
         val me = row("me", "Rafiul", 1, opens = 40)
         compose.setContent {
             TestTrackTheme {
-                RanksBody(rows = listOf(me), mine = me, openPoints = 1, reviewPoints = 5)
+                RanksBody(rows = listOf(me), mine = me)
             }
         }
         assertEquals(
@@ -166,8 +152,6 @@ class StandingScreensTest {
                 RanksBody(
                     rows = listOf(row("a", "Tanvir", 1, opens = 12, reviews = 2)),
                     mine = null,
-                    openPoints = 1,
-                    reviewPoints = 5,
                 )
             }
         }
@@ -181,8 +165,6 @@ class StandingScreensTest {
                 RanksBody(
                     rows = listOf(row("a", "Tanvir", 1, opens = 1)),
                     mine = null,
-                    openPoints = 1,
-                    reviewPoints = 5,
                 )
             }
         }
@@ -190,19 +172,66 @@ class StandingScreensTest {
     }
 
     @Test
-    fun signed_out_the_board_says_why_it_is_empty() {
+    fun a_board_that_could_not_be_reached_blames_the_network_and_not_the_reader() {
         compose.setContent {
             TestTrackTheme {
                 RanksBody(
                     rows = emptyList(),
                     mine = null,
-                    openPoints = 1,
-                    reviewPoints = 5,
                     offline = true,
                 )
             }
         }
-        compose.onNodeWithText("Sign in to see the board").assertIsDisplayed()
+        compose.onNodeWithText("The board did not load").assertIsDisplayed()
+    }
+
+    @Test
+    fun the_three_at_the_top_stand_on_a_podium() {
+        // Second, first, third. The order on screen is the shape of a podium and not the order of
+        // the list, so a test that only checked the names would pass on a plain list of three.
+        compose.setContent {
+            TestTrackTheme {
+                RanksBody(
+                    rows =
+                        listOf(
+                            row("a", "Tanvir", 1, opens = 37),
+                            row("b", "Habib", 2, opens = 21),
+                            row("c", "Nadia", 3, opens = 15),
+                        ),
+                    mine = null,
+                )
+            }
+        }
+
+        compose.onNodeWithText("Tanvir").assertIsDisplayed()
+        compose.onNodeWithText("Habib").assertIsDisplayed()
+        compose.onNodeWithText("Nadia").assertIsDisplayed()
+        // The blocks carry the place, so all three numbers are on screen without a list of rows.
+        compose.onNodeWithText("1").assertIsDisplayed()
+        compose.onNodeWithText("3").assertIsDisplayed()
+    }
+
+    @Test
+    fun the_rest_of_the_board_starts_at_four() {
+        val board = (1..6).map { row("id$it", "Name $it", it, opens = 10 - it) }
+        compose.setContent { TestTrackTheme { RanksBody(rows = board, mine = null) } }
+
+        // Not "Top 6". Three of them are on the podium above, and a heading that counts them
+        // twice is a heading that lies about what is under it.
+        compose.onNodeWithText("4 TO 6").assertIsDisplayed()
+    }
+
+    @Test
+    fun a_reader_on_the_podium_is_not_also_pinned_underneath_it() {
+        val me = row("me", "Rafiul", 1, opens = 40)
+        val board = listOf(me, row("b", "Habib", 2, opens = 21), row("c", "Nadia", 3, opens = 15))
+        compose.setContent { TestTrackTheme { RanksBody(rows = board, mine = me) } }
+        compose.waitForIdle()
+
+        // The top three live inside one podium item rather than three rows, so the bar has to
+        // watch for the podium and not for an id. Getting that wrong pins the winner to the
+        // bottom of their own board.
+        assertEquals(1, compose.onAllNodes(hasText("You")).fetchSemanticsNodes().size)
     }
 
     // ------------------------------------------------------------------ my apps
@@ -306,10 +335,27 @@ class StandingScreensTest {
         assertEquals(1, signedOut)
     }
 
+    /*
+     * Two tests where there was one, because these are two different facts.
+     *
+     * The old one passed `offline = true` and asserted the signed-out words, which was harmless
+     * only while both branches said the same thing. They do not any more: one of them is the app
+     * admitting it does not know who you are, and the other is the app admitting it could not
+     * reach the server, and telling somebody to sign in when their connection dropped is the
+     * fault this pair exists to stop coming back.
+     */
+
     @Test
-    fun signed_out_the_profile_says_what_comes_back() {
+    fun signed_out_the_profile_shows_where_everybody_starts() {
+        compose.setContent { TestTrackTheme { MeBody(profile = null, signedOut = true) } }
+        compose.onNodeWithText("Level one, waiting").assertIsDisplayed()
+        compose.onNodeWithText("Get started").assertIsDisplayed()
+    }
+
+    @Test
+    fun a_profile_that_could_not_be_reached_blames_the_network() {
         compose.setContent { TestTrackTheme { MeBody(profile = null, offline = true) } }
-        compose.onNodeWithText("Signed out").assertIsDisplayed()
+        compose.onNodeWithText("Your record did not load").assertIsDisplayed()
     }
 }
 
