@@ -52,6 +52,16 @@ class RanksViewModel : ViewModel() {
     var loading by mutableStateOf(true)
         private set
 
+    /**
+     * A refresh somebody asked for by pulling, as opposed to one the screen started by itself.
+     *
+     * Separate from [loading] because the indicator is bound to this one. Arriving on the tab and
+     * coming back to it both reload, and playing the gesture's own arc for a pull nobody made is
+     * the spinner claiming somebody asked.
+     */
+    var pulling by mutableStateOf(false)
+        private set
+
     var offline by mutableStateOf(false)
         private set
 
@@ -62,8 +72,13 @@ class RanksViewModel : ViewModel() {
      * which is the honest answer and the reason to show them a board at all: it is the only
      * evidence on the whole screen that there are people in here doing the work.
      */
-    fun load(context: Context) {
+    fun load(
+        context: Context,
+        fromPull: Boolean = false,
+    ) {
         viewModelScope.launch {
+            val startedAt = System.currentTimeMillis()
+            if (fromPull) pulling = true
             try {
                 ApiAuth.ensure(context)
                 val answer = Api.board()
@@ -77,6 +92,12 @@ class RanksViewModel : ViewModel() {
                 offline = true
             } finally {
                 loading = false
+                // Long enough for the arc to be a thing that happened rather than a flicker. Only
+                // on a pull: nothing else here shows an indicator worth holding.
+                if (fromPull) {
+                    holdShimmer(startedAt)
+                    pulling = false
+                }
             }
         }
     }

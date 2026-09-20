@@ -8,6 +8,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -24,6 +25,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -38,6 +40,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Trophy
@@ -59,17 +64,37 @@ fun RanksScreen(vm: RanksViewModel = viewModel()) {
     val context = LocalContext.current
     LaunchedEffect(Unit) { vm.load(context) }
 
-    RanksBody(
-        rows = vm.rows,
-        mine = vm.mine,
-        loading = vm.loading,
-        offline = vm.offline,
-    )
+    // Counted afresh on every return, not once when the tab was first opened. A board read at
+    // breakfast and still on screen at midnight was this app answering "how am I doing", and it
+    // took closing the whole thing to get a newer answer.
+    val owner = LocalLifecycleOwner.current
+    DisposableEffect(owner) {
+        val watcher =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) vm.load(context)
+            }
+        owner.lifecycle.addObserver(watcher)
+        onDispose { owner.lifecycle.removeObserver(watcher) }
+    }
+
+    RefreshBox(
+        // Bound to the pull alone. A resume refreshes too, and playing the gesture's arc for one
+        // nobody made is the indicator lying about who asked.
+        isRefreshing = vm.pulling,
+        onRefresh = { vm.load(context, fromPull = true) },
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        RanksBody(
+            rows = vm.rows,
+            mine = vm.mine,
+            loading = vm.loading,
+            offline = vm.offline,
+        )
+    }
 }
 
 /** The three at the top get a podium; everybody after them gets a row. */
 private const val PODIUM = 3
-private const val PODIUM_KEY = "podium"
 private const val HEADING_KEY = "heading"
 
 /** Room under the last row for the pinned bar, which is over the list and not beside it. */
@@ -116,81 +141,85 @@ fun RanksBody(
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
-    /*
-     * Which item in the list is the reader's own, if any.
-     *
-     * The top three sit inside one podium item rather than three rows of their own, so being
-     * first on the board means the thing to watch for is the podium and not an id. Null means the
-     * board does not hold them at all, which is the case the pinned bar was written for.
-     */
-    val anchor: Any? =
-        when {
-            mine == null -> null
-            rows.none { it.id == mine.id } -> null
-            podium && mine.place <= PODIUM -> PODIUM_KEY
-            else -> mine.id
-        }
+    val listed = mine != null && rows.any { it.id == mine.id }
+
+    /** The podium does not scroll, so anybody on it is on screen for as long as the tab is. */
+    val onPodium = listed && podium && mine != null && mine.place <= PODIUM
+
+    /** The row in the scrolling part that is the reader's own, where they are in it at all. */
+    val anchor: Any? = if (listed && !onPodium) mine?.id else null
 
     // Pinned only while the real row is off screen, and gone the moment it arrives. Nobody should
     // be looking at themselves in two places on the same list.
-    val pinned by remember(anchor, mine) {
+    val pinned by remember(anchor, onPodium, mine) {
         derivedStateOf {
-            // Nothing is visible before the first layout pass, which would read as "your row is
-            // off screen" and flash the bar up for a frame every time the tab is opened.
-            val onScreen = list.layoutInfo.visibleItemsInfo
-            mine != null && onScreen.isNotEmpty() && onScreen.none { it.key == anchor }
+            when {
+                mine == null -> false
+                onPodium -> false
+                // Not on the board at all, so this bar is the only place their standing exists.
+                anchor == null -> true
+                else -> {
+                    // Nothing is visible before the first layout pass, which would read as "your
+                    // row is off screen" and flash the bar up for a frame on every open.
+                    val onScreen = list.layoutInfo.visibleItemsInfo
+                    onScreen.isNotEmpty() && onScreen.none { it.key == anchor }
+                }
+            }
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
-        LazyColumn(
-            state = list,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding =
-                PaddingValues(top = 4.dp, bottom = if (mine == null) Gutter else PinRoom),
-        ) {
-            if (podium) {
-                item(key = PODIUM_KEY) {
-                    Column {
-                        Podium(rows.take(PODIUM).map { it.onThePodium(mine?.id) })
-                        // A floor for them to stand on, edge to edge. Without it the blocks stop
-                        // in mid air and the first row of the list reads as the ground.
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(MaterialTheme.colorScheme.outlineVariant),
+    Column(Modifier.fillMaxSize()) {
+        /*
+         * Above the scroll, not in it.
+         *
+         * The three at the top are the one thing on this page that stays true whatever else
+         * somebody is looking at, and scrolling them away to reach row twelve takes with them the
+         * only reference the rest of the numbers have. The podium holds its place and the list
+         * runs underneath it.
+         */
+        if (podium) {
+            Podium(rows.take(PODIUM).map { it.onThePodium(mine?.id) })
+            // A floor for them to stand on, edge to edge. Without it the blocks stop in mid air
+            // and the first row of the list reads as the ground.
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant),
+            )
+        }
+
+        Box(Modifier.weight(1f)) {
+            LazyColumn(
+                state = list,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding =
+                    PaddingValues(top = 4.dp, bottom = if (mine == null) Gutter else PinRoom),
+            ) {
+                if (rest.isNotEmpty()) {
+                    item(key = HEADING_KEY) {
+                        CrewHeading(
+                            if (podium) "${PODIUM + 1} to ${rows.size}" else "Top ${rows.size}",
                         )
                     }
                 }
-            }
-            if (rest.isNotEmpty()) {
-                item(key = HEADING_KEY) {
-                    CrewHeading(if (podium) "${PODIUM + 1} to ${rows.size}" else "Top ${rows.size}")
+                itemsIndexed(rest, key = { _, row -> row.id }) { index, row ->
+                    if (index > 0) RowDivider()
+                    BoardRowView(row, mine = row.id == mine?.id)
                 }
             }
-            itemsIndexed(rest, key = { _, row -> row.id }) { index, row ->
-                if (index > 0) RowDivider()
-                BoardRowView(row, mine = row.id == mine?.id)
-            }
-        }
 
-        if (mine != null) {
-            AnimatedVisibility(
-                visible = pinned,
-                enter = slideInVertically { it } + fadeIn(),
-                exit = slideOutVertically { it } + fadeOut(),
-                modifier = Modifier.align(Alignment.BottomCenter),
-            ) {
-                PinnedMine(
+            if (mine != null) {
+                PinnedBar(
                     row = mine,
+                    showing = pinned,
                     // Only offered where there is somewhere to go. Off the board entirely, this
                     // bar is the only place their standing exists.
                     onJump =
                         if (anchor == null) {
                             null
                         } else {
-                            { scope.launch { list.animateScrollToItem(seatOf(anchor, mine, rest, podium)) } }
+                            { scope.launch { list.animateScrollToItem(seatOf(mine, rest)) } }
                         },
                 )
             }
@@ -198,16 +227,36 @@ fun RanksBody(
     }
 }
 
-/** Where the reader's own row sits in the lazy list, counting the podium and the heading. */
+/**
+ * The bar, arriving and leaving.
+ *
+ * Its own composable rather than three more lines in the body, and not only for length: inside
+ * the body both a Column and a Box are in scope, and AnimatedVisibility has an overload for each,
+ * so the call cannot say which one it means. Here there is only the Box.
+ */
+@Composable
+private fun BoxScope.PinnedBar(
+    row: BoardRow,
+    showing: Boolean,
+    onJump: (() -> Unit)?,
+) {
+    AnimatedVisibility(
+        visible = showing,
+        enter = slideInVertically { it } + fadeIn(),
+        exit = slideOutVertically { it } + fadeOut(),
+        modifier = Modifier.align(Alignment.BottomCenter),
+    ) {
+        PinnedMine(row = row, onJump = onJump)
+    }
+}
+
+/** Where the reader's own row sits in the scrolling part, counting the heading above it. */
 private fun seatOf(
-    anchor: Any?,
     mine: BoardRow,
     rest: List<BoardRow>,
-    podium: Boolean,
 ): Int {
-    if (anchor == PODIUM_KEY) return 0
-    val ahead = (if (podium) 1 else 0) + (if (rest.isNotEmpty()) 1 else 0)
-    return (ahead + rest.indexOfFirst { it.id == mine.id }).coerceAtLeast(0)
+    val heading = if (rest.isNotEmpty()) 1 else 0
+    return (heading + rest.indexOfFirst { it.id == mine.id }).coerceAtLeast(0)
 }
 
 /**
