@@ -227,6 +227,84 @@ data class CrewList(
     val blocked: String? = null,
 )
 
+// ------------------------------------------------------- standing, apps and the profile
+
+@Serializable
+data class BoardRow(
+    val id: String,
+    val name: String,
+    @SerialName("photo_url") val photoUrl: String = "",
+    /** Where they sit, counted from one. */
+    val place: Int,
+    /** Apps opened on a testing night. The work. */
+    val opens: Int,
+    /** Reviews of theirs a developer accepted. */
+    val reviews: Int,
+    /** What those two come to, weighted. */
+    val points: Int,
+)
+
+@Serializable
+data class ApiBoard(
+    val rows: List<BoardRow> = emptyList(),
+    /** This account's own row, whether or not it is in [rows]. */
+    val mine: BoardRow? = null,
+    /**
+     * What each kind of work is worth.
+     *
+     * Sent rather than held here, so changing what a review is worth is one change on the server
+     * and not a release of the app.
+     */
+    @SerialName("open_points") val openPoints: Int = 1,
+    @SerialName("review_points") val reviewPoints: Int = 5,
+)
+
+@Serializable
+data class ApiProfile(
+    val id: String,
+    val email: String,
+    @SerialName("display_name") val displayName: String,
+    @SerialName("photo_url") val photoUrl: String = "",
+    val timezone: String,
+    val tix: Int,
+    val opens: Int,
+    val reviews: Int,
+    val points: Int,
+    /** Zero before this account has done anything, since nobody is ranked before they start. */
+    val place: Int,
+    @SerialName("crews_running") val crewsRunning: Int,
+    @SerialName("crews_finished") val crewsFinished: Int,
+    @SerialName("joined_at") val joinedAt: String,
+)
+
+@Serializable
+data class ApiMyApp(
+    val id: String,
+    /** "crew" or "post". One list, both halves of the product. */
+    val kind: String,
+    @SerialName("app_name") val appName: String,
+    @SerialName("package_name") val packageName: String,
+    /** waiting, checking, testing, finished, rejected, withdrawn, collecting, done. */
+    val state: String,
+    /** The crew's name, or Circle. */
+    val where: String,
+    @SerialName("crew_id") val crewId: String? = null,
+    val day: Int = 0,
+    @SerialName("run_days") val runDays: Int = 0,
+    /** People testing it, or reviews collected so far. */
+    val testers: Int = 0,
+    val greens: Int = 0,
+    val reds: Int = 0,
+    @SerialName("reviews_bought") val reviewsBought: Int = 0,
+    val reward: Int = 0,
+    @SerialName("created_at") val createdAt: String,
+)
+
+@Serializable
+data class MyApps(
+    val apps: List<ApiMyApp> = emptyList(),
+)
+
 /**
  * A body with nothing in it.
  *

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -17,8 +16,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -154,32 +151,11 @@ fun MainShell(
                 // the bar while this is being built. See docs/crew.md.
                 MainTab.GROUPS -> CrewScreen()
 
-                MainTab.RANKS ->
-                    TabStub(
-                        bar = "Ranks",
-                        icon = Lucide.Trophy,
-                        title = "Leaderboard",
-                        body =
-                            "Who is carrying their cohorts, ranked by days tested and feedback " +
-                                "given. Not built yet.",
-                    )
+                MainTab.RANKS -> RanksScreen()
 
-                MainTab.APPS ->
-                    TabStub(
-                        bar = "My apps",
-                        icon = Lucide.LayoutGrid,
-                        title = "Your apps",
-                        body =
-                            "Everything you have submitted in one place: waiting for a crew, " +
-                                "testing now, and live. Not built yet. Until then they are on " +
-                                "Crew and on your profile.",
-                    )
+                MainTab.APPS -> AppsScreen()
 
-                MainTab.PROFILE ->
-                    ProfileScreen(
-                        onBack = { show(cameFrom) },
-                        onSignOut = onSignOut,
-                    )
+                MainTab.PROFILE -> MeScreen(onSignOut = onSignOut)
             }
         }
     }
@@ -233,39 +209,6 @@ private fun MainBar(
                         ),
                 )
             }
-        }
-    }
-}
-
-/**
- * A tab that exists in the bar before it exists as a screen.
- *
- * Said outright rather than dressed up as an empty list. A tab that looks like it loaded and found
- * nothing sends people looking for the thing they did wrong; one that says it is not built yet
- * costs a sentence and answers the question.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TabStub(
-    bar: String,
-    icon: ImageVector,
-    title: String,
-    body: String,
-) {
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = { Text(bar, fontWeight = FontWeight.Bold) },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                    ),
-            )
-        },
-    ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            EmptyState(icon = icon, title = title, subtitle = body)
         }
     }
 }

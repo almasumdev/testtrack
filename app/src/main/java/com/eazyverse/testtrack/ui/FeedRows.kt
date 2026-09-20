@@ -208,7 +208,7 @@ fun TixChip(
  * a green Done pill.
  */
 @Composable
-private fun AppTile(
+fun AppTile(
     name: String,
     size: Dp = 44.dp,
 ) {

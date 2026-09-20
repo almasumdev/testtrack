@@ -141,6 +141,14 @@ object Api {
 
     suspend fun withdraw(seatId: String): ApiSeat = delete("/crews/seats/$seatId")
 
+    // ------------------------------------------- standing, apps and the profile
+
+    suspend fun board(): ApiBoard = get("/board")
+
+    suspend fun profile(): ApiProfile = get("/me/profile")
+
+    suspend fun myApps(): MyApps = get("/me/apps")
+
     // ---------------------------------------------------------------- plumbing
 
     @PublishedApi
