@@ -149,6 +149,84 @@ data class ApiErrorOut(
     val error: ApiErrorBody,
 )
 
+// ---------------------------------------------------------------------------------- crews
+
+@Serializable
+data class SeatIn(
+    @SerialName("app_name") val appName: String,
+    @SerialName("package_name") val packageName: String,
+    val notes: String = "",
+    @SerialName("device_fp") val deviceFp: String,
+    val timezone: String = "UTC",
+)
+
+@Serializable
+data class VerdictIn(
+    val ok: Boolean,
+    val reason: String = "",
+)
+
+@Serializable
+data class ApiSeat(
+    val id: String,
+    @SerialName("crew_id") val crewId: String,
+    @SerialName("app_name") val appName: String,
+    @SerialName("package_name") val packageName: String,
+    val notes: String = "",
+    @SerialName("owner_name") val ownerName: String,
+    val state: String,
+    val greens: Int,
+    val reds: Int,
+    val mine: Boolean,
+    /** This account's own answer, or null while it is still theirs to give. */
+    @SerialName("my_verdict") val myVerdict: Boolean? = null,
+    /** Why it was turned down. Only ever sent to the seat's owner. */
+    val reasons: List<String> = emptyList(),
+    /**
+     * Opened by this account on its current day.
+     *
+     * On somebody else's seat it means "I have done this one tonight". On your own it means your
+     * whole night is finished, which is the same question asked of everything you owe.
+     */
+    @SerialName("opened_today") val openedToday: Boolean = false,
+    /** Days already let go by unfinished. Only ever filled in on your own seat. */
+    val missed: Int = 0,
+    /** Which day of the fortnight this account is on. */
+    @SerialName("days_done") val daysDone: Int = 0,
+    @SerialName("created_at") val createdAt: String,
+)
+
+@Serializable
+data class ApiCrew(
+    val id: String,
+    val number: Int,
+    val name: String,
+    val state: String,
+    /** Confirmed seats. A seat still being checked is somebody's intention, not a place filled. */
+    val filled: Int,
+    /** Seats holding a place either way, which is what decides whether there is room. */
+    val taken: Int,
+    val seats: Int,
+    @SerialName("run_days") val runDays: Int,
+    /** This account's own day of the fortnight. Zero before their own midnight. */
+    val day: Int = 0,
+    @SerialName("starts_in_ms") val startsInMs: Long = 0,
+    @SerialName("my_seat_id") val mySeatId: String? = null,
+    @SerialName("filled_at") val filledAt: String? = null,
+    @SerialName("created_at") val createdAt: String,
+    /** Only sent for a crew this account is in. */
+    val members: List<ApiSeat> = emptyList(),
+)
+
+@Serializable
+data class CrewList(
+    val mine: List<ApiCrew> = emptyList(),
+    /** The crew a new seat would go into, or null if there is nowhere to go. */
+    val open: ApiCrew? = null,
+    /** Why a seat cannot be taken right now, in words the screen can show as they arrive. */
+    val blocked: String? = null,
+)
+
 /**
  * A body with nothing in it.
  *

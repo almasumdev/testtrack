@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.ChevronRight
@@ -59,6 +60,7 @@ fun CrewRunTab(
     vm: CrewViewModel,
     onOpenCrew: (String) -> Unit,
 ) {
+    val here = LocalContext.current
     val runs = vm.crews.filter { it.phase == CrewPhase.RUN }
 
     if (runs.isEmpty()) {
@@ -118,7 +120,7 @@ fun CrewRunTab(
                         // The whole night, across every crew, in one press. A member with two runs
                         // going came here to finish an evening, not to visit two screens first.
                         Spacer(Modifier.height(16.dp))
-                        Primary("Open all $left") { vm.openAll() }
+                        Primary("Open all $left") { vm.openAll(here) }
                     }
                 }
             }

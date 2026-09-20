@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,6 +53,11 @@ import com.composables.icons.lucide.Lucide
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CrewScreen(vm: CrewViewModel = viewModel()) {
+    val context = LocalContext.current
+
+    // Reloaded on every arrival: a crew fills, a verdict lands and a fortnight starts while
+    // somebody is on another screen.
+    LaunchedEffect(Unit) { vm.load(context) }
     val snackbars = remember { SnackbarHostState() }
     var judging by remember { mutableStateOf<Pair<String, CrewSeat>?>(null) }
     var taking by remember { mutableStateOf<String?>(null) }
@@ -126,9 +132,9 @@ fun CrewScreen(vm: CrewViewModel = viewModel()) {
                 crew != null && crew.phase == CrewPhase.RUN ->
                     CrewRunPhase(
                         crew = crew,
-                        onOpen = { vm.openApp(it) },
-                        onReport = { vm.report(it) },
-                        onOpenAll = { vm.openAll(crew.id) },
+                        onOpen = { vm.openApp(context, it) },
+                        onReport = { vm.report(context, it) },
+                        onOpenAll = { vm.openAll(context, crew.id) },
                     )
                 crew != null -> CrewRecordPhase(crew)
 
@@ -157,9 +163,9 @@ fun CrewScreen(vm: CrewViewModel = viewModel()) {
         CrewSeatDialog(
             crew = vm.opens.first { it.id == crewId }.name,
             nightly = CrewRules.nightly(vm.running + 1),
-            onTake = {
+            onTake = { name, pkg, notes ->
                 taking = null
-                vm.takeSeat(crewId, it)
+                vm.takeSeat(context, name, pkg, notes)
             },
             onDismiss = { taking = null },
         )
@@ -280,15 +286,25 @@ fun CrewVerdictDialog(
     )
 }
 
-/** Taking the seat: which app is going in. */
+/**
+ * Taking the seat: which app is going in, and how the others get into it.
+ *
+ * The package name is here because everything that happens next is against it. Fourteen people
+ * are about to try to install this exact string, and a seat without one is a seat nobody can
+ * verify. The notes are read by all fourteen, which is why they are asked for as a throwaway.
+ */
 @Composable
 fun CrewSeatDialog(
     crew: String,
     nightly: Int,
-    onTake: (String) -> Unit,
+    onTake: (name: String, pkg: String, notes: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var name by remember { mutableStateOf("") }
+    var pkg by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+
+    val named = pkg.trim().contains('.') && pkg.trim().length > 3
     Ask(
         title = "Take a seat in $crew",
         body =
@@ -296,8 +312,8 @@ fun CrewSeatDialog(
                 "for ${CrewRules.RUN_DAYS} days, and they open yours. That puts you on " +
                 "$nightly apps a night.",
         confirm = "Take it",
-        confirmEnabled = name.isNotBlank(),
-        onConfirm = { onTake(name.trim()) },
+        confirmEnabled = name.isNotBlank() && named,
+        onConfirm = { onTake(name.trim(), pkg.trim(), notes.trim()) },
         onDismiss = onDismiss,
         content = {
             DialogField(
@@ -308,6 +324,28 @@ fun CrewSeatDialog(
                 supporting =
                     "Two members will install it before the seat counts toward the " +
                         "${CrewRules.SEATS}.",
+            )
+            Spacer(Modifier.height(14.dp))
+            DialogField(
+                value = pkg,
+                onValueChange = { pkg = it.take(200) },
+                label = "Package name",
+                placeholder = "com.eazyverse.nikosh",
+                error = if (pkg.isNotBlank() && !named) "That does not look like one." else null,
+                supporting = "What everybody installs. Copy it from Play Console.",
+            )
+            Spacer(Modifier.height(14.dp))
+            DialogField(
+                value = notes,
+                onValueChange = { notes = it.take(280) },
+                label = "Getting in (optional)",
+                placeholder = "Test account: demo@example.com / demo",
+                supporting =
+                    "A login or code if yours needs one. Fourteen strangers read this, so make " +
+                        "it a throwaway.",
+                singleLine = false,
+                minHeight = 72.dp,
+                maxLength = 280,
             )
         },
     )

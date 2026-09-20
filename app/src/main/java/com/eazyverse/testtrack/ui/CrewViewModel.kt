@@ -1,17 +1,26 @@
 package com.eazyverse.testtrack.ui
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.eazyverse.testtrack.data.Device
+import com.eazyverse.testtrack.net.Api
+import com.eazyverse.testtrack.net.ApiAuth
+import com.eazyverse.testtrack.net.ApiCrew
+import com.eazyverse.testtrack.net.ApiError
+import com.eazyverse.testtrack.net.SeatIn
+import kotlinx.coroutines.launch
+import java.util.TimeZone
 
 /**
- * The crew tab's state, held in memory and nowhere else.
+ * The crew tab, against the API.
  *
- * Every action below is the local half of something a backend will do: taking a seat, giving a
- * verdict, opening an app for the night. They are written as if the answer came back instantly and
- * always succeeded, which is exactly what an MVP wants and exactly what a real one must not
- * assume. When there is a backend each becomes a call and a result, and the screens do not change.
+ * Every rule here belongs to the server and none of it is decided twice. Which crew a seat goes
+ * into, whether a verdict counts, whose day it is: the phone asks and redraws whatever comes
+ * back. A client that works out for itself when a crew is full is a client somebody will edit.
  *
  * The shape that matters is [crews] being a list. A person is in several at once, so nothing here
  * is about "the crew": the tab's own screen is built out of [tonight] and [waiting], which are
@@ -20,29 +29,21 @@ import androidx.lifecycle.ViewModel
  */
 class CrewViewModel : ViewModel() {
     /** Every crew this account is in, at whatever point each has reached. */
-    var crews by mutableStateOf(SampleCrew.mine())
+    var crews by mutableStateOf<List<Crew>>(emptyList())
         private set
 
     /**
-     * The crews taking seats, nearest to starting first.
+     * The crew a new seat would go into.
      *
-     * A list rather than one, and ordered rather than chosen from at random: the crew with the
-     * fewest free seats starts soonest, so putting it at the top sends people to the one that most
-     * needs finishing. That ordering is what stops several open crews all filling slowly, which is
-     * the reason there used to be only one.
+     * A list of one, kept as a list because the screens were built to show several and may again.
+     * Which crew it is stays the server's answer: it sends back whichever is nearest to starting,
+     * so the crew that most needs finishing is the one that fills.
      */
-    val opens: List<Crew>
-        get() = openCrews.sortedBy { CrewRules.SEATS - it.seats.size }
+    var opens by mutableStateOf<List<Crew>>(emptyList())
+        private set
 
-    private var openCrews by mutableStateOf(SampleCrew.opens())
-
-    /**
-     * Which tab is showing.
-     *
-     * Opened on whichever has something owed rather than always on the same one: a run in progress
-     * beats a lobby, a lobby beats a record, and somebody in no crews at all is shown the way in.
-     */
-    var tab by mutableStateOf(CrewPhase.RUN)
+    /** Which tab is showing. */
+    var tab by mutableStateOf(CrewPhase.OPEN)
         private set
 
     /** Which crew's own page is showing, or null for the tab itself. */
@@ -53,15 +54,18 @@ class CrewViewModel : ViewModel() {
     var message by mutableStateOf<String?>(null)
         private set
 
-    init {
-        tab =
-            when {
-                crews.any { it.phase == CrewPhase.RUN } -> CrewPhase.RUN
-                crews.any { it.phase == CrewPhase.LOBBY } -> CrewPhase.LOBBY
-                crews.any { it.phase == CrewPhase.RECORD } -> CrewPhase.RECORD
-                else -> CrewPhase.OPEN
-            }
-    }
+    var loading by mutableStateOf(true)
+        private set
+
+    /** Set once the API has refused us for good, so the screen can say so rather than spin. */
+    var offline by mutableStateOf(false)
+        private set
+
+    /** The server's reason a seat cannot be taken, shown as it arrives. */
+    var blocked by mutableStateOf<String?>(null)
+        private set
+
+    private var settledTab = false
 
     fun clearMessage() {
         message = null
@@ -76,6 +80,48 @@ class CrewViewModel : ViewModel() {
         opened = null
     }
 
+    /** Everything the tab shows, in one call. Safe to run on every resume. */
+    fun load(context: Context) {
+        viewModelScope.launch {
+            try {
+                if (!ApiAuth.ensure(context)) {
+                    offline = true
+                    loading = false
+                    return@launch
+                }
+                apply(Api.crews())
+                offline = false
+            } catch (e: ApiError) {
+                message = e.message
+                offline = e.isAuth
+            } catch (_: Exception) {
+                offline = true
+            } finally {
+                loading = false
+            }
+        }
+    }
+
+    private fun apply(answer: com.eazyverse.testtrack.net.CrewList) {
+        crews = answer.mine.map(ApiCrew::toCrew)
+        opens = listOfNotNull(answer.open?.toCrew())
+        blocked = answer.blocked
+
+        // Opened on whichever has something owed rather than always the same one, and only the
+        // first time: moving somebody's tab under them after they have chosen is worse than
+        // opening on the wrong one.
+        if (!settledTab) {
+            settledTab = true
+            tab =
+                when {
+                    crews.any { it.phase == CrewPhase.RUN } -> CrewPhase.RUN
+                    crews.any { it.phase == CrewPhase.LOBBY } -> CrewPhase.LOBBY
+                    crews.any { it.phase == CrewPhase.RECORD } -> CrewPhase.RECORD
+                    else -> CrewPhase.OPEN
+                }
+        }
+    }
+
     /** What the pill for a tab counts, or zero where the tab has nothing outstanding. */
     fun badge(phase: CrewPhase) =
         when (phase) {
@@ -86,57 +132,40 @@ class CrewViewModel : ViewModel() {
         }
 
     /** Which crew a seat belongs to, since a merged list only carries the crew's name. */
-    fun crewIdOf(seat: CrewSeat) = crews.first { crew -> crew.seats.any { it.id == seat.id } }.id
+    fun crewIdOf(seat: CrewSeat) = (crews + opens).first { crew -> crew.seats.any { it.id == seat.id } }.id
 
     /** The crew being looked at, which may be the open one this account has not joined. */
     val current: Crew?
-        get() = opened?.let { id -> crews.firstOrNull { it.id == id } }
+        get() = opened?.let { id -> (crews + opens).firstOrNull { it.id == id } }
 
     /**
-     * Everything owed tonight, across every running crew, newest crew first.
+     * Everything owed tonight, across every running crew.
      *
      * One column rather than one per crew. Which crew an app belongs to is not the reason anybody
      * opens it, and a member with two runs going has one evening, not two.
      */
     val tonight: List<CrewApp>
-        get() =
-            crews
-                .filter { it.phase == CrewPhase.RUN }
-                .flatMap { crew -> crew.apps.filter { !it.done && !it.reported } }
+        get() = tonightIn(crews)
 
     /** Everything settled tonight, for the count under the list. */
     val doneTonight: Int
-        get() =
-            crews
-                .filter { it.phase == CrewPhase.RUN }
-                .sumOf { crew -> crew.apps.count { it.done || it.reported } }
+        get() = doneTonightIn(crews)
 
-    /** Seats in any filling crew this account has not given a verdict on. */
+    /** Seats in any crew still filling that this account has not answered on. */
     val waiting: List<CrewSeat>
-        get() =
-            crews
-                .filter { it.phase == CrewPhase.LOBBY }
-                .flatMap { crew ->
-                    crew.seats.filter { !it.judged && !it.mine && it.state == SeatState.CHECKING }
-                }
+        get() = waitingIn(crews)
 
     /**
-     * Whether this account holds a seat anywhere at all.
+     * Whether this account holds a seat anywhere that has not started.
      *
-     * One seat across every open crew, not one per crew. Somebody who has just joined has nothing
-     * to do in this tab but wait, and offering them a second seat in the crew next to it is
-     * offering them fourteen more apps a night before the first fourteen have started.
+     * The server decides this and sends the reason; the flag is only what the screen branches on.
      */
     val holdsSeat: Boolean
-        get() = holding != null
+        get() = blocked != null
 
-    /** The crew holding your one seat, by name, or null where you are free to take one. */
+    /** The crew holding your one unstarted seat, by name, or null where you are free. */
     val holding: String?
-        get() =
-            crews
-                .firstOrNull { crew ->
-                    crew.phase == CrewPhase.LOBBY && crew.seats.any { it.mine }
-                }?.name
+        get() = holdingIn(crews)
 
     /** How many runs are going, which is what the nightly figure is made of. */
     val running: Int
@@ -145,147 +174,138 @@ class CrewViewModel : ViewModel() {
     /**
      * Whether this account may reject anything in a given crew.
      *
-     * A red only counts from somebody who has already got one app working in that same crew,
-     * because a Play "not found" far more often means the reader is not set up than that the app
-     * is broken. One green is the proof that their own side works. See docs/crew.md.
+     * Asked of what the server already sent rather than of the server again. A red only counts
+     * from somebody who has already got one app in that same crew working, because a Play "not
+     * found" far more often means the reader is not set up than that the app is broken. The
+     * server refuses it either way; this is so the button can say so before it is pressed.
      */
-    fun mayJudge(crewId: String) = crews.firstOrNull { it.id == crewId }?.seats?.any { it.judged && !it.mine } == true
-
-    private fun replace(
-        crewId: String,
-        change: (Crew) -> Crew,
-    ) {
-        crews = crews.map { if (it.id == crewId) change(it) else it }
-        openCrews = openCrews.map { if (it.id == crewId) change(it) else it }
-    }
+    fun mayJudge(crewId: String) = mayJudgeIn(crews + opens, crewId)
 
     /** Say whether an app installed. */
     fun judge(
         crewId: String,
         seat: CrewSeat,
         installed: Boolean,
-    ) {
-        if (!installed && !mayJudge(crewId)) {
-            message = "Get one app in ${seat.crew} installed first, then your reports count."
-            return
-        }
-        replace(crewId) { crew ->
-            crew.copy(
-                seats =
-                    crew.seats.map {
-                        if (it.id != seat.id) {
-                            it
-                        } else {
-                            it.copy(
-                                greens = it.greens + if (installed) 1 else 0,
-                                reds = it.reds + if (installed) 0 else 1,
-                                judged = true,
-                            )
-                        }
-                    },
-            )
-        }
-        // Standing in for the rest of the crew, who in a real one would be judging your app while
-        // you judge theirs. Once you have nothing left to look at there, their verdicts land on
-        // yours, which is the only way to reach the countdown by hand.
-        if (waiting.none { it.crew == seat.crew }) {
-            replace(crewId) { crew ->
-                crew.copy(
-                    seats =
-                        crew.seats.map {
-                            if (it.mine && it.state == SeatState.CHECKING) {
-                                it.copy(greens = CrewRules.VERDICTS)
-                            } else {
-                                it
-                            }
-                        },
-                )
-            }
-        }
-
-        val now = crews.firstOrNull { it.id == crewId }?.seats?.firstOrNull { it.id == seat.id }
-        message =
-            when (now?.state) {
-                SeatState.CONFIRMED -> "${seat.appName} is in. Seat confirmed."
-                SeatState.REJECTED -> "${seat.appName} is out. ${seat.owner} has been told why."
-                else ->
-                    if (installed) {
-                        "Green sent. One more and ${seat.appName} is in."
-                    } else {
-                        "Reported. Somebody else will try it before anything happens."
-                    }
-            }
-    }
+    ) = call(
+        onDone = { answer ->
+            message =
+                when {
+                    answer.state == "confirmed" -> "${seat.appName} is in. Seat confirmed."
+                    answer.state == "rejected" ->
+                        "${seat.appName} is out. ${seat.owner} has been told why."
+                    installed -> "Green sent. One more and ${seat.appName} is in."
+                    else -> "Reported. Somebody else will try it before anything happens."
+                }
+        },
+    ) { Api.verdict(seat.id, installed) }
 
     /**
-     * Take a seat in the open crew with an app of your own.
+     * Take a seat with an app of your own.
      *
-     * Nothing refuses this on the grounds of being in too many already, which is the decision the
-     * product made rather than an omission. What the screen owes in exchange is the arithmetic,
-     * said before the seat is taken rather than discovered a fortnight later.
+     * The crew is not named. The server puts a seat into whichever is nearest to starting, and a
+     * client that picks its own crew is a client picking which fourteen people test its app.
      */
     fun takeSeat(
-        crewId: String,
+        context: Context,
         appName: String,
+        packageName: String,
+        notes: String = "",
     ) {
-        val crew = openCrews.firstOrNull { it.id == crewId } ?: return
-        val seat =
-            CrewSeat(
-                id = "seat-mine-$crewId",
-                appName = appName,
-                owner = "You",
-                crew = crew.name,
-                takenAt = System.currentTimeMillis(),
-                mine = true,
+        val fingerprint = Device.fingerprint(context)
+        if (fingerprint == null) {
+            message = "This phone will not identify itself, so it cannot hold a seat."
+            return
+        }
+        call(
+            context = context,
+            onDone = { message = "Seat taken. Two members have to install it before it counts." },
+        ) {
+            Api.takeSeat(
+                SeatIn(
+                    appName = appName,
+                    packageName = packageName,
+                    notes = notes,
+                    deviceFp = fingerprint,
+                    timezone = TimeZone.getDefault().id,
+                ),
             )
-        // Still the crew taking seats. It closes when it is full, not when you join it.
-        val joined = crew.copy(seats = listOf(seat) + crew.seats)
-        openCrews = openCrews.map { if (it.id == crewId) joined else it }
-        crews = listOf(joined.copy(phase = CrewPhase.LOBBY)) + crews
-        opened = null
-        tab = CrewPhase.LOBBY
-        message = "Seat taken in ${crew.name}. Two members have to install it before it counts."
+            opened = null
+            tab = CrewPhase.LOBBY
+        }
     }
+
+    /** Tonight's tap: the app was opened and the evening is one app shorter. */
+    fun openApp(
+        context: Context,
+        app: CrewApp,
+    ) = call(context = context) { Api.visit(app.id) }
 
     /**
      * Open everything still owed, in one press.
      *
-     * The night without the fourteen taps. TestTrack already knows how to launch an app, time the
-     * visit and come back, which is what [CaptureService] does, so asking somebody to do that by
-     * hand fourteen times a night is a choice rather than a limit. Here it simply marks them,
-     * because there is no service behind this screen yet; when there is, this becomes the call
-     * that starts it and nothing above changes.
+     * Recorded one at a time because that is what actually happened: fourteen separate opens, and
+     * a single call claiming all of them would be the client asserting work rather than reporting
+     * it. Failures are counted rather than raised, since a night that got thirteen through is
+     * thirteen better off than one that stopped at the first refusal.
      */
-    fun openAll(crewId: String? = null) {
-        val target = crews.filter { crewId == null || it.id == crewId }
-        if (target.none { it.owed > 0 }) return
-        crews =
-            crews.map { crew ->
-                if (crewId != null && crew.id != crewId) {
-                    crew
-                } else {
-                    crew.copy(apps = crew.apps.map { if (it.reported) it else it.copy(done = true) })
-                }
-            }
-        message = "Opened everything owed tonight."
-    }
+    fun openAll(
+        context: Context,
+        crewId: String? = null,
+    ) {
+        val owed =
+            crews
+                .filter { crewId == null || it.id == crewId }
+                .flatMap { crew -> crew.apps.filter { !it.done && !it.reported } }
+        if (owed.isEmpty()) return
 
-    /** Tonight's tap: the app was opened and the evening is one app shorter. */
-    fun openApp(app: CrewApp) {
-        crews =
-            crews.map { crew ->
-                crew.copy(apps = crew.apps.map { if (it.id == app.id) it.copy(done = true) else it })
+        viewModelScope.launch {
+            var done = 0
+            for (app in owed) {
+                if (runCatching { Api.visit(app.id) }.isSuccess) done++
             }
+            message =
+                if (done == owed.size) {
+                    "Opened everything owed tonight."
+                } else {
+                    "Opened $done of ${owed.size}. The rest can wait for a better connection."
+                }
+            load(context)
+        }
     }
 
     /** Excused rather than owed, for an app nobody in the crew can get into. */
-    fun report(app: CrewApp) {
-        crews =
-            crews.map { crew ->
-                crew.copy(
-                    apps = crew.apps.map { if (it.id == app.id) it.copy(reported = true) else it },
-                )
+    fun report(
+        context: Context,
+        app: CrewApp,
+    ) = call(
+        context = context,
+        onDone = { message = "Reported. It stops counting against you from today." },
+    ) { Api.verdict(app.id, ok = false, reason = "Could not open it during the run.") }
+
+    /**
+     * One call, one reload, one place failure is handled.
+     *
+     * Reloaded rather than patched in memory: the server's answer changes more than the one row
+     * that was touched, since a verdict can fill a crew and filling one starts a fortnight.
+     */
+    private fun <T> call(
+        context: Context? = null,
+        onDone: (T) -> Unit = {},
+        block: suspend () -> T,
+    ) {
+        viewModelScope.launch {
+            try {
+                onDone(block())
+                context?.let { load(it) } ?: reload()
+            } catch (e: ApiError) {
+                message = e.message
+            } catch (_: Exception) {
+                message = "We could not reach TestTrack. Check your connection."
             }
-        message = "Reported. It stops counting against you from today."
+        }
+    }
+
+    private suspend fun reload() {
+        runCatching { apply(Api.crews()) }
     }
 }

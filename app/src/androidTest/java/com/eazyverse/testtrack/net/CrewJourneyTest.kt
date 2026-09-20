@@ -1,0 +1,207 @@
+package com.eazyverse.testtrack.net
+
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.eazyverse.testtrack.data.Device
+import com.eazyverse.testtrack.ui.CrewPhase
+import com.eazyverse.testtrack.ui.CrewRules
+import com.eazyverse.testtrack.ui.crewPhase
+import com.eazyverse.testtrack.ui.toCrew
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.FixMethodOrder
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.MethodSorters
+
+/**
+ * Taking a seat, and everything that refuses one, from this phone against the real server.
+ *
+ * [com.eazyverse.testtrack.ui.CrewWireTest] covers what the app works out from an answer this
+ * repository wrote by hand. This runs the real Api object over the network and maps what actually
+ * comes back, so a renamed field or a changed refusal shows up here rather than on somebody's
+ * screen.
+ *
+ * Signing in works the way ReviewJourneyTest's does: the session is minted on the server by
+ * scripts/seed_e2e.py and arrives as instrumentation arguments. Without them every test skips.
+ * Run it through scripts/e2e.sh.
+ */
+@RunWith(AndroidJUnit4::class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+class CrewJourneyTest {
+    private val args = InstrumentationRegistry.getArguments()
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+    private val reviewerAccess = args.getString("reviewerAccess").orEmpty()
+    private val reviewerRefresh = args.getString("reviewerRefresh").orEmpty()
+    private val ownerAccess = args.getString("ownerAccess").orEmpty()
+    private val ownerRefresh = args.getString("ownerRefresh").orEmpty()
+
+    @Before
+    fun requireASeededWorld() {
+        assumeTrue(
+            "No seeded session. Run scripts/e2e.sh rather than this class on its own.",
+            reviewerAccess.isNotEmpty(),
+        )
+        ApiSession.load(context)
+        ApiSession.remember(Tokens(reviewerAccess, reviewerRefresh, 900))
+    }
+
+    private fun fingerprint() = requireNotNull(Device.fingerprint(context)) { "no ANDROID_ID" }
+
+    private fun uniquePackage() = "com.eazyverse.e2e.crew${System.currentTimeMillis()}"
+
+    // ------------------------------------------------------------------ the journey
+
+    @Test
+    fun t1_a_seat_goes_into_a_crew_and_waits_to_be_verified() =
+        runBlocking {
+            val before = Api.crews()
+            assertNull("A seeded account should start free to take a seat", before.blocked)
+
+            val seat =
+                Api.takeSeat(
+                    SeatIn(
+                        appName = "Nikosh Budget",
+                        packageName = uniquePackage(),
+                        notes = "Test account: demo@example.com / demo",
+                        deviceFp = fingerprint(),
+                        timezone = "Asia/Dhaka",
+                    ),
+                )
+
+            assertEquals("checking", seat.state)
+            assertEquals(0, seat.greens)
+            assertTrue(seat.mine)
+
+            // And the crew it landed in now says so.
+            val after = Api.crews()
+            assertEquals(1, after.mine.size)
+            val crew = after.mine.single()
+            assertEquals(CrewRules.SEATS, crew.seats)
+            assertEquals(CrewRules.RUN_DAYS, crew.runDays)
+            assertEquals(seat.id, crew.mySeatId)
+            assertEquals("filling", crew.state)
+            // Taken but not counted: a seat nobody has installed is somebody's intention.
+            assertEquals(1, crew.taken)
+            assertEquals(0, crew.filled)
+
+            // The screen's own reading of it.
+            val drawn = crew.toCrew()
+            assertEquals(CrewPhase.OPEN, drawn.phase)
+            assertEquals(0, drawn.day)
+            assertTrue("A crew that has not started owes nothing tonight", drawn.apps.isEmpty())
+
+            // Holding one now, so the server says why another cannot be taken.
+            assertNotNull("The screen has to be told why it cannot offer a seat", after.blocked)
+        }
+
+    @Test
+    fun t2_a_second_seat_before_the_first_starts_is_refused() =
+        runBlocking {
+            try {
+                Api.takeSeat(
+                    SeatIn(
+                        appName = "Another",
+                        packageName = uniquePackage(),
+                        deviceFp = fingerprint(),
+                        timezone = "Asia/Dhaka",
+                    ),
+                )
+                fail("Holding an unstarted seat should stop a second one.")
+            } catch (e: ApiError) {
+                assertEquals(409, e.status)
+                assertEquals("conflict", e.code)
+            }
+        }
+
+    @Test
+    fun t3_nobody_verifies_their_own_app() =
+        runBlocking {
+            val mine =
+                Api
+                    .crews()
+                    .mine
+                    .single()
+                    .members
+                    .first { it.mine }
+            try {
+                Api.verdict(mine.id, ok = true)
+                fail("Verifying your own seat should be refused.")
+            } catch (e: ApiError) {
+                assertEquals(403, e.status)
+            }
+        }
+
+    @Test
+    fun t4_the_crew_page_is_readable_from_inside_and_not_from_outside() =
+        runBlocking {
+            val crew = Api.crews().mine.single()
+
+            // A member sees the list, which carries package names and the notes that get a tester
+            // past a front door.
+            val inside = Api.crew(crew.id)
+            assertTrue(inside.members.isNotEmpty())
+            assertTrue(inside.members.any { it.mine })
+
+            // The seeded owner is not in this crew, so the same id is refused.
+            ApiSession.remember(Tokens(ownerAccess, ownerRefresh, 900))
+            try {
+                Api.crew(crew.id)
+                fail("A crew should not be readable by somebody outside it.")
+            } catch (e: ApiError) {
+                assertEquals(403, e.status)
+            } finally {
+                ApiSession.remember(Tokens(reviewerAccess, reviewerRefresh, 900))
+            }
+        }
+
+    @Test
+    fun t5_a_seat_can_be_given_up_and_the_place_reused() =
+        runBlocking {
+            val crew = Api.crews().mine.single()
+            val mine = crew.members.first { it.mine }
+
+            val gone = Api.withdraw(mine.id)
+            assertEquals("withdrawn", gone.state)
+
+            val after = Api.crews()
+            assertNull("Giving the seat up frees the account", after.blocked)
+
+            // And the same account may take another, which is exactly what somebody told to fix
+            // their listing is asked to do.
+            val again =
+                Api.takeSeat(
+                    SeatIn(
+                        appName = "Nikosh Budget",
+                        packageName = uniquePackage(),
+                        deviceFp = fingerprint(),
+                        timezone = "Asia/Dhaka",
+                    ),
+                )
+            assertEquals("checking", again.state)
+            assertFalse(again.id == mine.id)
+        }
+
+    @Test
+    fun t6_the_open_crew_the_server_offers_is_one_that_can_still_be_joined() =
+        runBlocking {
+            val answer = Api.crews()
+            val open = answer.open
+            if (open == null) {
+                // Legitimate: this account is already holding the only seat it may hold.
+                assertNotNull(answer.blocked)
+                return@runBlocking
+            }
+            assertEquals("filling", open.state)
+            assertTrue("An open crew has room in it", open.taken < open.seats)
+            assertEquals(CrewPhase.OPEN, crewPhase(open))
+        }
+}

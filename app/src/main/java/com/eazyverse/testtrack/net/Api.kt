@@ -109,10 +109,45 @@ object Api {
         forReviewer: Boolean,
     ): ApiDispute = post("/disputes/$disputeId/vote", VoteIn(forReviewer))
 
+    // ---------------------------------------------------------------- crews
+
+    suspend fun crews(): CrewList = get("/crews")
+
+    /** One crew and everybody in it. Members only; the API refuses anybody else. */
+    suspend fun crew(crewId: String): ApiCrew = get("/crews/$crewId")
+
+    /**
+     * Put an app into whichever crew is nearest to starting.
+     *
+     * Which crew that is stays the server's decision. A client that names its own crew is a
+     * client picking which fourteen people test its app.
+     */
+    suspend fun takeSeat(body: SeatIn): ApiSeat = post("/crews/seats", body)
+
+    suspend fun verdict(
+        seatId: String,
+        ok: Boolean,
+        reason: String = "",
+    ): ApiSeat = post("/crews/seats/$seatId/verdict", VerdictIn(ok, reason))
+
+    /**
+     * Note that this member opened somebody's app tonight.
+     *
+     * The one row the fortnight is actually made of. Sent when the other app comes to the
+     * foreground rather than when a button is pressed: a button records an intention, and what
+     * is owed is the opening.
+     */
+    suspend fun visit(seatId: String): ApiSeat = post("/crews/seats/$seatId/visit", Empty())
+
+    suspend fun withdraw(seatId: String): ApiSeat = delete("/crews/seats/$seatId")
+
     // ---------------------------------------------------------------- plumbing
 
     @PublishedApi
     internal suspend inline fun <reified T> get(path: String): T = send(Request.Builder().url(url(path)).get())
+
+    @PublishedApi
+    internal suspend inline fun <reified T> delete(path: String): T = send(Request.Builder().url(url(path)).delete())
 
     @PublishedApi
     internal suspend inline fun <reified In, reified Out> post(

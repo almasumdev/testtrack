@@ -26,7 +26,8 @@ VPS="${TESTTRACK_VPS:?set TESTTRACK_VPS to the host the backend runs on}"
 # Windows one is used when it is there. Override SSH to point at whichever works for you.
 SSH="${SSH:-$( [ -x /c/Windows/System32/OpenSSH/ssh.exe ] && echo /c/Windows/System32/OpenSSH/ssh.exe || echo ssh )}"
 REMOTE_DIR="${TESTTRACK_REMOTE_DIR:?set TESTTRACK_REMOTE_DIR to the backend checkout on that host}"
-CLASS="com.eazyverse.testtrack.net.ReviewJourneyTest"
+# Both journeys, since they share one seeded world and seeding is the slow part.
+PACKAGE="com.eazyverse.testtrack.net"
 KEEP="${1:-}"
 
 # The physical phone is never a test target. Naming the serial explicitly is the only thing that
@@ -65,9 +66,9 @@ OWNER_REFRESH="$(field "['owner']['refresh']")"
 LIVE_POST="$(field "['live_post']['id']")"
 CLOSED_POST="$(field "['closed_post']['id']")"
 
-echo "Running ${CLASS} on ${SERIAL}..."
+echo "Running ${PACKAGE} journeys on ${SERIAL}..."
 ANDROID_SERIAL="$SERIAL" ./gradlew connectedDebugAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.class="$CLASS" \
+  -Pandroid.testInstrumentationRunnerArguments.package="$PACKAGE" \
   -Pandroid.testInstrumentationRunnerArguments.reviewerAccess="$REVIEWER_ACCESS" \
   -Pandroid.testInstrumentationRunnerArguments.reviewerRefresh="$REVIEWER_REFRESH" \
   -Pandroid.testInstrumentationRunnerArguments.ownerAccess="$OWNER_ACCESS" \
