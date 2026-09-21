@@ -76,7 +76,10 @@ object Api {
      * the owner pasted goes up whole: picking the package out of a Play Console URL is work a
      * regular expression does perfectly and a person should not be asked to do.
      */
-    suspend fun lookupApp(query: String): Listing = post("/apps/lookup", LookupIn(query = query))
+    suspend fun lookupApp(
+        query: String,
+        closed: Boolean,
+    ): Listing = post("/apps/lookup", LookupIn(query = query, closed = closed))
 
     // ---------------------------------------------------------------- group
 

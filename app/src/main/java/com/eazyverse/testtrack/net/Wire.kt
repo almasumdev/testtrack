@@ -35,6 +35,8 @@ data class Tokens(
 @Serializable
 data class LookupIn(
     val query: String,
+    /** Only on a closed testing track, so only the signed-in browser can see it. */
+    val closed: Boolean = false,
 )
 
 /**

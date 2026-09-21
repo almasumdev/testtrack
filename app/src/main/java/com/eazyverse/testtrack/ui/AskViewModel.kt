@@ -25,6 +25,18 @@ class AskViewModel : ViewModel() {
     var found by mutableStateOf<Listing?>(null)
         private set
 
+    /**
+     * Where the app is, asked before anything else.
+     *
+     * Not guessed at, because the two are looked up differently and fail differently. A live app
+     * has a public page the server reads in under a second. A closed one is invisible to anybody
+     * who is not a tester, so it needs the signed-in browser, and "we cannot see it" then almost
+     * always means the testers group is not on the track. Telling somebody the wrong one of those
+     * sends them to fix the wrong thing.
+     */
+    var isLive by mutableStateOf(true)
+        private set
+
     var looking by mutableStateOf(false)
         private set
 
@@ -71,6 +83,14 @@ class AskViewModel : ViewModel() {
         message = null
     }
 
+    /** Changing where it is throws away anything found under the other answer. */
+    fun choose(next: Boolean) {
+        if (next == isLive) return
+        isLive = next
+        found = null
+        message = null
+    }
+
     /** Back to the first step, keeping what was typed so a wrong paste can be corrected. */
     fun startOver() {
         found = null
@@ -82,7 +102,7 @@ class AskViewModel : ViewModel() {
         looking = true
         message = null
         viewModelScope.launch {
-            runCatching { Api.lookupApp(query.trim()) }
+            runCatching { Api.lookupApp(query.trim(), closed = !isLive) }
                 .onSuccess { found = it }
                 .onFailure { message = whyNot(it) }
             looking = false
@@ -102,9 +122,7 @@ class AskViewModel : ViewModel() {
                         packageName = app.`package`,
                         ask = ask.trim(),
                         reward = reward,
-                        // Read off Play rather than asked. Somebody who has just pasted their own
-                        // closed track link should not then be asked which track it is on.
-                        isLive = false,
+                        isLive = isLive,
                     ),
                 )
             }.onSuccess { onDone() }
@@ -124,8 +142,11 @@ class AskViewModel : ViewModel() {
         when {
             error !is ApiError -> "Couldn't reach the server. Check your connection and try again."
             error.code == "listing_not_visible" ->
-                "Play won't show us that app. Check the closed testing track has the testers " +
-                    "group added, then try again."
+                "Play won't show us that app. The usual cause is a closed testing track without " +
+                    "the testers group on it. Add the group, then try again."
+            error.code == "listing_not_found" ->
+                "Play has no public app with that package name. Check it, or pick Closed " +
+                    "testing if it is not public yet."
             error.code == "package_unreadable" ->
                 "That doesn't look like a Play link or a package name. Paste the link from Play " +
                     "Console, or the package name like com.example.myapp."

@@ -23,107 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-
-/**
- * Putting one of your own apps in front of the community.
- *
- * Four things, and each is asked because something downstream cannot work without it.
- *
- * The package name is the one people forget is necessary. Every check a reviewer's phone makes is
- * against it: is this installed, did Play put it there, how long has it been open. Without it a
- * review is somebody's word.
- *
- * Whether the app is live is asked rather than detected, because nothing on a stranger's phone can
- * see which track an app is on and the owner is the only person who knows. It decides what a
- * reviewer is actually sent to do: leave a public review, or write notes here.
- *
- * The offer is last, and it is where the price appears, worked out as it is typed. A post buys
- * three reviews, so it costs three times what it pays for one. That is the last moment before
- * anything is spent and so the only moment the number has to be right by.
- */
-@Composable
-fun FeedPostDialog(
-    tix: Int,
-    onPost: (name: String, pkg: String, ask: String, reward: Int, isLive: Boolean) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var name by remember { mutableStateOf("") }
-    var pkg by remember { mutableStateOf("") }
-    var ask by remember { mutableStateOf("") }
-    var offer by remember { mutableStateOf(FeedRules.MIN_REWARD.toString()) }
-    var isLive by remember { mutableStateOf(false) }
-
-    val reward = offer.toIntOrNull() ?: 0
-    val cost = FeedRules.postCost(reward)
-    val inRange = reward in FeedRules.MIN_REWARD..FeedRules.MAX_REWARD
-    val affordable = inRange && cost <= tix
-    val named = pkg.trim().contains('.') && pkg.trim().length > 3
-
-    Ask(
-        title = "Ask for a review",
-        body = "Anyone can take it on. What you offer decides how fast they do.",
-        confirm = "Post",
-        confirmEnabled = name.isNotBlank() && ask.isNotBlank() && named && affordable,
-        onConfirm = { onPost(name.trim(), pkg.trim(), ask.trim(), reward, isLive) },
-        onDismiss = onDismiss,
-        content = {
-            DialogField(
-                value = name,
-                onValueChange = { name = it.take(FeedRules.APP_NAME_MAX) },
-                label = "App",
-                placeholder = "Nikosh Budget",
-            )
-            Spacer(Modifier.height(14.dp))
-            DialogField(
-                value = pkg,
-                onValueChange = { pkg = it.take(200) },
-                label = "Package name",
-                placeholder = "com.eazyverse.nikosh",
-                error =
-                    if (pkg.isNotBlank() && !named) {
-                        "That does not look like a package name."
-                    } else {
-                        null
-                    },
-                supporting =
-                    "Every check runs against this: whether a reviewer really installed it, and " +
-                        "whether Play put it there.",
-            )
-            Spacer(Modifier.height(14.dp))
-            DialogField(
-                value = ask,
-                onValueChange = { ask = it.take(FeedRules.ASK_MAX) },
-                label = "What should they look at",
-                placeholder = "Is the monthly total readable at a glance?",
-                supporting = "One thing, asked plainly. Broad asks come back broad.",
-                singleLine = false,
-                minHeight = 84.dp,
-                maxLength = FeedRules.ASK_MAX,
-            )
-            Spacer(Modifier.height(14.dp))
-            LiveChoice(isLive) { isLive = it }
-            Spacer(Modifier.height(14.dp))
-            DialogField(
-                value = offer,
-                onValueChange = { offer = it.filter(Char::isDigit).take(3) },
-                label = "What a review earns",
-                keyboardType = KeyboardType.Number,
-                error =
-                    when {
-                        !inRange ->
-                            "Between ${FeedRules.MIN_REWARD} and ${FeedRules.MAX_REWARD} tix."
-                        !affordable -> "That would cost $cost tix and you have $tix."
-                        else -> null
-                    },
-                supporting =
-                    "Costs $cost tix, which is ${FeedRules.REVIEWS_BOUGHT} reviews' worth. " +
-                        "You have $tix.",
-            )
-        },
-    )
-}
 
 /**
  * Live on Play, or still in closed testing.
@@ -132,7 +32,7 @@ fun FeedPostDialog(
  * knows what they did in Play Console and does not necessarily know what we call it.
  */
 @Composable
-private fun LiveChoice(
+fun LiveChoice(
     isLive: Boolean,
     onChange: (Boolean) -> Unit,
 ) {
