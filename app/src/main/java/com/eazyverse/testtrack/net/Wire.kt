@@ -33,6 +33,25 @@ data class Tokens(
 )
 
 @Serializable
+data class GroupIn(
+    val email: String,
+)
+
+/**
+ * What the server knows about this account's place on the Google Group.
+ *
+ * `added` is always false and is kept because the server still sends it. Nobody can be added to
+ * the group by us; joining is the tester's own tap. See docs/group-membership.md in the backend.
+ */
+@Serializable
+data class GroupOut(
+    val group: String,
+    val email: String,
+    @SerialName("is_member") val isMember: Boolean,
+    val added: Boolean = false,
+)
+
+@Serializable
 data class Me(
     val id: String,
     val email: String,
@@ -41,6 +60,9 @@ data class Me(
     val tix: Int,
     val timezone: String,
     @SerialName("is_admin") val isAdmin: Boolean,
+    // Whether this account is on the Google Group Play checks testers against. Answered from the
+    // server's own copy of the member list, so it costs nothing and is here on every launch.
+    @SerialName("in_group") val inGroup: Boolean = false,
     // Experience is the same number the board ranks by, which is the work this account has done.
     // Nothing spends it. Defaulted so a phone on this build still parses an older server's answer
     // rather than failing the whole call over four integers.

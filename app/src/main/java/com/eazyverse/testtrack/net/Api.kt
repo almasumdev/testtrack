@@ -66,6 +66,21 @@ object Api {
 
     suspend fun me(): Me = get("/me")
 
+    // ---------------------------------------------------------------- group
+
+    /**
+     * Whether this account is on the Google Group Play gates closed testing behind.
+     *
+     * Asked of our own server rather than of the Apps Script behind it. The server keeps a copy
+     * of the member list, so this is usually a database read; when it is not, the server refreshes
+     * the whole list and answers from that. The phone knowing the script's address at all was the
+     * older arrangement, and it put the group's name, the failure wording and the retry policy in
+     * two places.
+     *
+     * Only your own address is accepted, which is the server's rule, not a convenience here.
+     */
+    suspend fun groupCheck(email: String): GroupOut = post("/group/check", GroupIn(email = email))
+
     // ---------------------------------------------------------------- feed
 
     suspend fun posts(before: String? = null): PostPage = get("/feed/posts" + if (before == null) "" else "?before=$before")

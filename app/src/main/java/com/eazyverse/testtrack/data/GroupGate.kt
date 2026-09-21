@@ -7,17 +7,15 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.NoCredentialException
 import com.eazyverse.testtrack.Config
+import com.eazyverse.testtrack.net.Api
+import com.eazyverse.testtrack.net.ApiError
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -260,52 +258,33 @@ object GroupGate {
         error("Unexpected credential type: ${credential.type}")
     }
 
-    /** Asks the membership service. Network and parse failures are values, not exceptions. */
+    /**
+     * Asks our own server whether this account is on the group. Failures are values, never a "no".
+     *
+     * It used to post the Google ID token straight to the Apps Script, which meant the phone held
+     * the script's address, the group's name and the retry policy, and the server held its own
+     * copies of all three. The server now keeps a copy of the member list, so this is usually a
+     * database read on its side, and there is one place where any of it can be wrong.
+     *
+     * The token is still taken, because the caller has one and dropping the parameter would
+     * ripple through five call sites for no gain. It is no longer sent anywhere: the server knows
+     * who is asking from our own session, which is a stronger claim than a token the phone chose.
+     */
     suspend fun check(idToken: String): GateResult =
         withContext(Dispatchers.IO) {
             try {
-                val payload = JSONObject().put("idToken", idToken).toString()
-                val request =
-                    Request
-                        .Builder()
-                        .url(Config.GATE_URL)
-                        .post(payload.toRequestBody("application/json".toMediaType()))
-                        .build()
-
-                http.newCall(request).execute().use { response ->
-                    val raw = response.body?.string().orEmpty()
-                    if (!response.isSuccessful) return@withContext GateResult.Failed("HTTP ${response.code}")
-
-                    val json = JSONObject(raw)
-                    json.optString("error").takeIf { it.isNotEmpty() }?.let {
-                        return@withContext GateResult.Failed(it)
-                    }
-
-                    // A missing `isMember` is not a "no".
-                    //
-                    // optBoolean defaults to false, so every reply that did not explicitly say true
-                    // came back as "isn't in the group yet": a truncated body, a shape the script
-                    // changed, an error it phrased in a field this does not read. Telling somebody
-                    // who joined an hour ago that they are not a member is the answer most likely to
-                    // make them give up and least likely to be questioned, because it sounds like a
-                    // fact rather than a failure. An answer we cannot read now says so.
-                    if (!json.has("isMember")) {
-                        return@withContext GateResult.Failed(
-                            "The membership check gave an answer we couldn't read. " +
-                                "Try again in a moment. (${raw.take(100)})",
-                        )
-                    }
-
-                    val email = json.optString("email")
-                    if (json.getBoolean("isMember")) {
-                        GateResult.Member(email)
-                    } else {
-                        GateResult.NotMember(email)
-                    }
-                }
+                val me = Api.me()
+                val answer = Api.groupCheck(me.email)
+                if (answer.isMember) GateResult.Member(answer.email) else GateResult.NotMember(answer.email)
+            } catch (e: ApiError) {
+                // Never a negative. The server separates "could not ask" from "not a member" and
+                // this must not put them back together: telling somebody who joined an hour ago
+                // that they are not in the group sounds like a fact rather than an outage, and it
+                // is the answer most likely to make them give up.
+                GateResult.Failed(e.message)
             } catch (e: IOException) {
-                // A dropped connection is not a verdict, and OkHttp's message for one names a Google
-                // IP address, which reads like the deployment is broken rather than the network.
+                // A dropped connection is not a verdict, and OkHttp's message for one names an IP
+                // address, which reads like the deployment is broken rather than the network.
                 GateResult.Failed("Couldn't reach the membership service. Check your connection and try again.")
             } catch (e: Exception) {
                 GateResult.Failed(e.message ?: "Membership check failed")
