@@ -150,8 +150,10 @@ class AskViewModel : ViewModel() {
             error.code == "package_unreadable" ->
                 "That doesn't look like a Play link or a package name. Paste the link from Play " +
                     "Console, or the package name like com.example.myapp."
-            error.code == "listing_unavailable" ->
-                "We couldn't look that up just now. Try again in a moment."
+            // Not reworded. The server knows why it could not look, and the reasons differ:
+            // Play refusing us, Play unreachable, the closed testing lookup not being set up at
+            // all. Replacing all three with one cheerful line was how a real outage spent an
+            // evening looking like a network blip.
             else -> error.message
         }
 
