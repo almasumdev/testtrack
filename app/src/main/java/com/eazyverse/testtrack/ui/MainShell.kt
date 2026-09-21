@@ -98,6 +98,7 @@ enum class MainTab(
 fun MainShell(
     onOpenGroup: (String, String) -> Unit,
     onSubmitApp: () -> Unit,
+    onAskForFeedback: () -> Unit,
     onOpenSetup: () -> Unit,
     onSignOut: () -> Unit,
     homeVm: HomeViewModel = viewModel(),
@@ -207,6 +208,7 @@ fun MainShell(
             when (tab) {
                 MainTab.CIRCLE ->
                     FeedScreen(
+                        onAsk = onAskForFeedback,
                         onSignIn = {
                             asking =
                                 SignInReason(

@@ -68,6 +68,7 @@ private val ListTop = 8.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreen(
+    onAsk: () -> Unit = {},
     onSignIn: () -> Unit = {},
     vm: FeedViewModel = viewModel(),
 ) {
@@ -83,7 +84,6 @@ fun FeedScreen(
 
     /** The post being reviewed, which takes over the whole screen while it is open. */
     var reviewing by remember { mutableStateOf<ApiPost?>(null) }
-    var posting by remember { mutableStateOf(false) }
 
     /** The review being refused, which needs a reason before anything is charged. */
     var refusing by remember { mutableStateOf<Waiting?>(null) }
@@ -134,7 +134,7 @@ fun FeedScreen(
                 enter = fadeIn() + slideInVertically { it },
                 exit = fadeOut() + slideOutVertically { it },
             ) {
-                FeedAskBar { posting = true }
+                FeedAskBar(onAsk)
             }
         },
         // Two tabs at the left and a balance at the right, sitting on the page rather than in a
@@ -200,7 +200,7 @@ fun FeedScreen(
                             ),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        item(key = "ask") { FeedAskButton { posting = true } }
+                        item(key = "ask") { FeedAskButton(onPost = onAsk) }
                         if (vm.offline) {
                             item {
                                 // Not a sign in prompt any more. The posts come back for
@@ -262,17 +262,6 @@ fun FeedScreen(
                 vm.reject(context, review, reason)
             },
             onDismiss = { refusing = null },
-        )
-    }
-
-    if (posting) {
-        FeedPostDialog(
-            tix = vm.tix,
-            onPost = { name, pkg, ask, reward, isLive ->
-                posting = false
-                vm.post(context, name, pkg, ask, reward, isLive)
-            },
-            onDismiss = { posting = false },
         )
     }
 }

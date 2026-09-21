@@ -33,6 +33,27 @@ data class Tokens(
 )
 
 @Serializable
+data class LookupIn(
+    val query: String,
+)
+
+/**
+ * What Play shows for one app, read by the server through a signed-in browser.
+ *
+ * Scraped rather than fetched from an API, because a closed testing listing is invisible to
+ * anybody who is not on the tester group and Play publishes no API for it. So it is shown to the
+ * submitter to confirm rather than taken as fact: the page it came from can be restyled whenever
+ * Google likes.
+ */
+@Serializable
+data class Listing(
+    val `package`: String,
+    val name: String,
+    val icon: String = "",
+    val developer: String = "",
+)
+
+@Serializable
 data class GroupIn(
     val email: String,
 )

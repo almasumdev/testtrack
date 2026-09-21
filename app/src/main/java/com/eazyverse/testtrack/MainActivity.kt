@@ -54,6 +54,9 @@ object Routes {
     const val HOME = "home"
     const val SUBMIT = "submit"
 
+    /** Asking the circle to look at your app. A page, because finding the app is its own step. */
+    const val ASK = "ask"
+
     // The name is carried along, not looked up: whoever is navigating here almost always already
     // has it on screen (a row in Home, a row in Group), and showing that immediately in the app
     // bar beats leaving it blank for the gap before this screen's own load answers the same
@@ -311,6 +314,7 @@ fun AppNav(
             MainShell(
                 onOpenGroup = { groupId, name -> nav.push(Routes.group(groupId, name)) },
                 onSubmitApp = { nav.push(Routes.SUBMIT) },
+                onAskForFeedback = { nav.push(Routes.ASK) },
                 // Grants outlive the checklist: Drive access can be revoked from the account and
                 // usage access from Settings, and both leave a working install that quietly cannot
                 // report. Setup is where those are repaired, so it has to stay reachable.
@@ -328,6 +332,13 @@ fun AppNav(
                 },
                 // Pushed, not replaced: whoever asked was standing on a tab and wants to end up
                 // back on it with the thing they wanted finally on it.
+            )
+        }
+
+        composable(Routes.ASK) {
+            AskScreen(
+                onDone = { nav.popBackStack() },
+                onBack = { nav.popBackStack() },
             )
         }
 

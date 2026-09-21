@@ -66,6 +66,18 @@ object Api {
 
     suspend fun me(): Me = get("/me")
 
+    // ---------------------------------------------------------------- apps
+
+    /**
+     * What Play shows for a pasted package name or link.
+     *
+     * The server does the looking, through a browser signed in as an account that is on the
+     * tester group, because a closed testing listing is invisible to everybody else. Whatever
+     * the owner pasted goes up whole: picking the package out of a Play Console URL is work a
+     * regular expression does perfectly and a person should not be asked to do.
+     */
+    suspend fun lookupApp(query: String): Listing = post("/apps/lookup", LookupIn(query = query))
+
     // ---------------------------------------------------------------- group
 
     /**
