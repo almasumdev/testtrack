@@ -91,9 +91,9 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Play hands back an IntentSender rather than an Intent, so the update flow needs its own
-     * contract. Registered on the activity rather than in a composable because the blocked gate and
-     * the home banner both start the same flow, and the result is ignored either way: cancelling is
-     * an answer, and the offer returns on its own the next time Play has something to give.
+     * contract. Registered on the activity rather than in a composable because the blocked gate sits
+     * over every screen, and the result is ignored: cancelling is an answer, and the gate stays up
+     * with its button until the update is in.
      */
     private val updateLauncher =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { }

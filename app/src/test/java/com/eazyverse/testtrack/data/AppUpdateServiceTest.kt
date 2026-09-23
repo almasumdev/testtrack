@@ -1,6 +1,13 @@
 package com.eazyverse.testtrack.data
 
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityOptionsCompat
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -178,5 +185,29 @@ class AppUpdateServiceTest {
     @Test
     fun offline_cachedStalenessBelowThreshold_isNone() {
         assertEquals(UpdateTier.NONE, cachedTier(cachedStalenessDays = 1, cachedNudgeAfterDays = 3))
+    }
+
+    // --- The icon tap, the only way an optional update is offered. ---
+
+    @Test
+    fun iconTap_playCannotDownloadInApp_fallsBackToStore_andMarksTheTap() {
+        // Nothing from Play yet (an offline replay looks the same): no in-app download to start, so
+        // the caller opens the store listing. The tap still counts, so a download that lands later
+        // in this session earns its Restart banner.
+        val launcher =
+            object : ActivityResultLauncher<IntentSenderRequest>() {
+                override val contract: ActivityResultContract<IntentSenderRequest, *>
+                    get() = ActivityResultContracts.StartIntentSenderForResult()
+
+                override fun launch(
+                    input: IntentSenderRequest,
+                    options: ActivityOptionsCompat?,
+                ) = throw AssertionError("Play's flow must not start without an in-app download")
+
+                override fun unregister() {}
+            }
+        assertFalse(AppUpdateService.canDownloadInApp)
+        assertFalse(AppUpdateService.startUserUpdate(launcher))
+        assertTrue(AppUpdateService.userStartedUpdate.value)
     }
 }

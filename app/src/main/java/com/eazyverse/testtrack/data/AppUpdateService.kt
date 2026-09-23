@@ -40,12 +40,13 @@ enum class UpdateTier { NONE, NUDGE, BLOCKED }
  *
  * Otherwise everything fails open: no cache, a sideloaded build or a missing doc resolve to
  * [UpdateTier.NONE]. A gate that locks people out on a hiccup is far worse than one that misses an
- * update. Both nudge and blocked use Play's flexible (background) flow; only the UI differs.
+ * update. Both nudge and blocked use Play's flexible (background) flow; only the UI differs. The
+ * nudge never interrupts: it is the icon in home's app bar, and nothing starts until that is tapped.
  *
- * The one thing TestTrack changes: the per-build dismissal and the cached policy are kept in
- * [Session] rather than a room repo, because that is where this app keeps everything that survives a
- * restart. Session is loaded by the activity, after [init] has run, so the cached decision is applied
- * from there through [applyCachedDecision] rather than from [init].
+ * The one thing TestTrack changes: the cached policy is kept in [Session] rather than a room repo,
+ * because that is where this app keeps everything that survives a restart. Session is loaded by the
+ * activity, after [init] has run, so the cached decision is applied from there through
+ * [applyCachedDecision] rather than from [init].
  */
 object AppUpdateService {
     private const val TAG = "AppUpdateService"
@@ -58,6 +59,14 @@ object AppUpdateService {
     /** True once a flexible update finished downloading and only needs a restart to apply. */
     private val _isDownloaded = MutableStateFlow(false)
     val isDownloaded: StateFlow<Boolean> = _isDownloaded
+
+    /**
+     * True once somebody taps the app bar update icon in this process. Only then does a finished
+     * download earn the Restart banner; one left on disk from an earlier session waits behind the
+     * same icon instead of greeting them at launch.
+     */
+    private val _userStartedUpdate = MutableStateFlow(false)
+    val userStartedUpdate: StateFlow<Boolean> = _userStartedUpdate
 
     private var currentBuild = 0
     private var currentMajor = 0
@@ -74,9 +83,6 @@ object AppUpdateService {
     private var latestVersionName = ""
     private var minSupportedBuild = 0
     private var nudgeAfterDays = 0
-
-    /** The build Play would install now, for the per-build nudge throttle. */
-    val availableVersionCode: Int get() = availableBuild
 
     /** Whether Play will download in the background rather than sending the user to the store. */
     val canDownloadInApp: Boolean get() = playUpdateAvailable && flexibleAllowed
@@ -247,12 +253,16 @@ object AppUpdateService {
             )
     }
 
-    /** True when there's a nudge for a build we haven't dismissed yet (throttled per available build). */
-    fun hasPendingNudge(): Boolean = _tier.value == UpdateTier.NUDGE && availableBuild > Session.updatePromptedBuild
-
-    /** Records that the current available build's nudge has been dismissed, so it isn't shown again. */
-    fun markNudgeShown() {
-        if (availableBuild > 0) Session.updateUpdatePromptedBuild(availableBuild)
+    /**
+     * The app bar icon's tap, the only way an optional update is ever offered. Returns false when the
+     * caller should open the store listing instead: Play can't download in-app (an offline replay, or
+     * flexible not allowed) or the flow would not start.
+     */
+    fun startUserUpdate(launcher: ActivityResultLauncher<IntentSenderRequest>): Boolean {
+        _userStartedUpdate.value = true
+        // Already on disk: the Restart banner the tap just revealed is the whole answer.
+        if (_isDownloaded.value) return true
+        return startFlexibleUpdate(launcher)
     }
 
     /**

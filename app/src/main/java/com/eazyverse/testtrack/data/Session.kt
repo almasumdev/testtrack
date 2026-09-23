@@ -25,7 +25,6 @@ object Session {
         isGroupMember = prefs.getBoolean(KEY_MEMBER, false)
         driveConnected = prefs.getBoolean(KEY_DRIVE, false)
         remindersAsked = prefs.getBoolean(KEY_REMINDERS_ASKED, false)
-        updatePromptedBuild = prefs.getInt(KEY_UPDATE_PROMPTED, 0)
         cachedUpdateAvailableBuild = prefs.getInt(KEY_UPDATE_CACHE_AVAILABLE, 0)
         cachedUpdateStalenessDays = prefs.getInt(KEY_UPDATE_CACHE_STALENESS, 0)
         cachedUpdateLatestBuild = prefs.getInt(KEY_UPDATE_CACHE_LATEST, 0)
@@ -101,20 +100,6 @@ object Session {
      */
     val setupComplete: Boolean
         get() = signedIn && isGroupMember && driveConnected && usageAccessGranted && remindersSettled
-
-    /**
-     * The newest build an update prompt has already been dismissed for.
-     *
-     * Per build rather than a flag, so waving one offer away does not silence the next one. Read
-     * and written by [AppUpdateService], which is where the original keeps it in its room repo.
-     */
-    var updatePromptedBuild by mutableStateOf(0)
-        private set
-
-    fun updateUpdatePromptedBuild(value: Int) {
-        prefs.edit().putInt(KEY_UPDATE_PROMPTED, value).apply()
-        updatePromptedBuild = value
-    }
 
     /*
      * The inputs of the last update decision Play and Firestore agreed on, so it can be replayed
@@ -210,15 +195,14 @@ object Session {
 
     /**
      * Clears everything except onboarding — nobody wants to watch the intro twice — and except the
-     * update prompt and cached update policy, which are about this copy of the app rather than about
-     * whoever is signed into it. Signing out and back in is not a reason to be asked again.
+     * cached update policy, which is about this copy of the app rather than about whoever is signed
+     * into it.
      */
     fun signOut() {
         prefs
             .edit()
             .clear()
             .putBoolean(KEY_ONBOARDED, true)
-            .putInt(KEY_UPDATE_PROMPTED, updatePromptedBuild)
             .putInt(KEY_UPDATE_CACHE_AVAILABLE, cachedUpdateAvailableBuild)
             .putInt(KEY_UPDATE_CACHE_STALENESS, cachedUpdateStalenessDays)
             .putInt(KEY_UPDATE_CACHE_LATEST, cachedUpdateLatestBuild)
@@ -238,7 +222,6 @@ object Session {
     private const val KEY_MEMBER = "is_member"
     private const val KEY_DRIVE = "drive_connected"
     private const val KEY_REMINDERS_ASKED = "reminders_asked"
-    private const val KEY_UPDATE_PROMPTED = "update_prompted_build"
     private const val KEY_UPDATE_CACHE_AVAILABLE = "update_cache_available_build"
     private const val KEY_UPDATE_CACHE_STALENESS = "update_cache_staleness_days"
     private const val KEY_UPDATE_CACHE_LATEST = "update_cache_latest_build"

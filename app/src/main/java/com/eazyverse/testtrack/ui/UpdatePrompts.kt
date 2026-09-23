@@ -22,7 +22,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,35 +38,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.X
 
 /** Which in-content update banner Home should show. */
-enum class HomeUpdateBanner { NONE, NUDGE, DOWNLOADED }
+enum class HomeUpdateBanner { NONE, DOWNLOADED }
 
 /**
- * In-content update banner card (same look as the other things Home says to you). Used for the
- * optional NUDGE (dismissible, "Update") and the DOWNLOADED state ("Restart"). The blocked tier
- * uses the full-screen [ForceUpdateScreen] instead.
+ * In-content update banner card (same look as the other things Home says to you). Only the
+ * DOWNLOADED state ("Restart"), and only after somebody tapped the app bar update icon: the optional
+ * nudge itself is just that icon. The blocked tier uses the full-screen [ForceUpdateScreen] instead.
  */
 @Composable
 fun UpdateBannerCard(
     state: HomeUpdateBanner,
-    onUpdate: () -> Unit,
     onRestart: () -> Unit,
-    onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (state == HomeUpdateBanner.NONE) return
-    val downloaded = state == HomeUpdateBanner.DOWNLOADED
-    val title = if (downloaded) "The update is ready" else "A newer TestTrack is out"
-    val body =
-        if (downloaded) {
-            "It installs when TestTrack restarts. Nothing you have done today is lost."
-        } else {
-            "Your cohort and this copy of the app should agree about what a day looks like. " +
-                "Updating happens in the background."
-        }
-    val actionText = if (downloaded) "Restart now" else "Update"
+    val title = "The update is ready"
+    val body = "It installs when TestTrack restarts. Nothing you have done today is lost."
+    val actionText = "Restart now"
 
     Column(
         modifier =
@@ -94,17 +83,6 @@ fun UpdateBannerCard(
                         .weight(1f)
                         .padding(start = 10.dp),
             )
-            // Only the optional nudge is dismissible; a downloaded update stays until applied.
-            if (!downloaded) {
-                IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-                    Icon(
-                        Lucide.X,
-                        contentDescription = "Dismiss",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(15.dp),
-                    )
-                }
-            }
         }
         Text(
             text = body,
@@ -113,7 +91,7 @@ fun UpdateBannerCard(
             modifier = Modifier.padding(top = 8.dp),
         )
         Button(
-            onClick = if (downloaded) onRestart else onUpdate,
+            onClick = onRestart,
             shape = RoundedCornerShape(10.dp),
             colors =
                 ButtonDefaults.buttonColors(

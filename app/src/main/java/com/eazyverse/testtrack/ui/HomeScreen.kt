@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.CircleArrowDown
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.SlidersHorizontal
 import com.composables.icons.lucide.Users
@@ -56,26 +57,38 @@ fun HomeScreen(
         ) { vm.showNotices(context) }
 
     // Play hands back an IntentSender rather than an Intent, so the update flow needs its own
-    // contract. The result is ignored on purpose: cancelling is an answer, and the offer comes
-    // back on its own when Play next says there is something to fetch.
+    // contract. The result is ignored on purpose: cancelling is an answer, and the icon stays in
+    // the app bar for whenever they want it.
     val updateLauncher =
         rememberLauncherForActivityResult(
             ActivityResultContracts.StartIntentSenderForResult(),
         ) {}
 
-    // Dismissal for this visit. The durable half lives in Session, keyed to the build, so waving
-    // one offer away does not silence the next.
-    var updateNudgeDismissed by remember { mutableStateOf(false) }
-
+    /*
+     * An optional update never interrupts. It is the icon in the app bar and nothing else until
+     * somebody taps it; the Restart banner below follows only that tap, so a download left on disk
+     * from an earlier session waits behind the same icon rather than greeting them at launch.
+     */
     val updateTier by AppUpdateService.tier.collectAsState()
     val updateDownloaded by AppUpdateService.isDownloaded.collectAsState()
+    val userStartedUpdate by AppUpdateService.userStartedUpdate.collectAsState()
+    val showUpdateIcon = updateTier == UpdateTier.NUDGE || updateDownloaded
     val updateBanner =
-        when {
-            updateDownloaded -> HomeUpdateBanner.DOWNLOADED
-            updateTier == UpdateTier.NUDGE && !updateNudgeDismissed && AppUpdateService.hasPendingNudge() ->
-                HomeUpdateBanner.NUDGE
-            else -> HomeUpdateBanner.NONE
+        if (userStartedUpdate && updateDownloaded) HomeUpdateBanner.DOWNLOADED else HomeUpdateBanner.NONE
+    val onUpdateIconClick: () -> Unit = {
+        // An offline replay, or a Play that will not download in the background, has nothing to
+        // fetch in-app, so the store listing is the way to the update.
+        if (!AppUpdateService.startUserUpdate(updateLauncher)) {
+            runCatching {
+                context.startActivity(
+                    Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("market://details?id=${context.packageName}"),
+                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }
         }
+    }
 
     val askNotifications: () -> Unit = {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -137,6 +150,12 @@ fun HomeScreen(
                 // still on Setup as well, because that is the screen somebody lands on when they
                 // have signed in as the wrong person.
                 actions = {
+                    // The whole of the optional update: no banner, no sheet, just this until tapped.
+                    if (showUpdateIcon) {
+                        IconButton(onClick = onUpdateIconClick) {
+                            Icon(Lucide.CircleArrowDown, "Update available")
+                        }
+                    }
                     IconButton(onClick = onOpenSetup) {
                         Icon(Lucide.SlidersHorizontal, "Setup")
                     }
@@ -285,36 +304,17 @@ fun HomeScreen(
                     if (vm.askForNotifications) NotificationPrompt(onGrant = askNotifications)
 
                 /*
-                 * The soft half of the update gate. The hard half sits over the whole app.
+                 * The Restart half of an update somebody asked for from the app bar. The hard half
+                 * of the gate sits over the whole app.
                  *
                  * Here rather than anywhere else because home is the screen somebody arrives on
-                 * with nothing to do yet. An offer to update mid-round would be asking them to
+                 * with nothing to do yet. An offer to restart mid-round would be asking them to
                  * restart the app in the middle of the one thing the app is for.
                  */
                     if (updateBanner != HomeUpdateBanner.NONE) {
                         UpdateBannerCard(
                             state = updateBanner,
-                            onUpdate = {
-                                AppUpdateService.markNudgeShown()
-                                updateNudgeDismissed = true
-                                // An offline replay has nothing Play can download in-app, so the
-                                // store listing is the way to the update.
-                                if (!AppUpdateService.startFlexibleUpdate(updateLauncher)) {
-                                    runCatching {
-                                        context.startActivity(
-                                            Intent(
-                                                Intent.ACTION_VIEW,
-                                                Uri.parse("market://details?id=${context.packageName}"),
-                                            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                                        )
-                                    }
-                                }
-                            },
                             onRestart = { AppUpdateService.completeUpdate() },
-                            onDismiss = {
-                                AppUpdateService.markNudgeShown()
-                                updateNudgeDismissed = true
-                            },
                             modifier = Modifier.padding(horizontal = Gutter).padding(top = 18.dp),
                         )
                     }
