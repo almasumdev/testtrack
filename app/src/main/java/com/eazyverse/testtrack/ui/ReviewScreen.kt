@@ -221,19 +221,20 @@ fun ReviewBody(
                 item { CrewHeading("The steps") }
                 ReviewStep.entries.filter { it != ReviewStep.WAIT }.forEachIndexed { index, step ->
                     item {
-                        if (index > 0) RowDivider()
-                        StepRow(
-                            step = step,
-                            job = job,
-                            onAct = {
-                                // Writing happens here. Every other step hands the reviewer to
-                                // Play or to the app itself, which is somebody else's screen.
-                                val writing =
-                                    step == ReviewStep.PROVE ||
-                                        (step == ReviewStep.LEAVE && !post.isLive)
-                                if (writing) proving = true else onLeave(step)
-                            },
-                        )
+                        ListTile(index, ReviewStep.entries.count { it != ReviewStep.WAIT }) {
+                            StepRow(
+                                step = step,
+                                job = job,
+                                onAct = {
+                                    // Writing happens here. Every other step hands the reviewer to
+                                    // Play or to the app itself, which is somebody else's screen.
+                                    val writing =
+                                        step == ReviewStep.PROVE ||
+                                            (step == ReviewStep.LEAVE && !post.isLive)
+                                    if (writing) proving = true else onLeave(step)
+                                },
+                            )
+                        }
                     }
                 }
             }

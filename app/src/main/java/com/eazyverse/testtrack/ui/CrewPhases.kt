@@ -162,13 +162,14 @@ fun CrewLobbyPhase(
             }
         } else {
             itemsIndexed(toJudge, key = { _, seat -> seat.id }) { index, seat ->
-                if (index > 0) RowDivider()
-                CrewSeatRow(seat) {
-                    ActionChip(
-                        "Try it",
-                        MaterialTheme.colorScheme.onPrimaryContainer,
-                        MaterialTheme.colorScheme.primaryContainer,
-                    ) { onJudge(seat) }
+                ListTile(index, toJudge.size) {
+                    CrewSeatRow(seat) {
+                        ActionChip(
+                            "Try it",
+                            MaterialTheme.colorScheme.onPrimaryContainer,
+                            MaterialTheme.colorScheme.primaryContainer,
+                        ) { onJudge(seat) }
+                    }
                 }
             }
         }
@@ -178,8 +179,9 @@ fun CrewLobbyPhase(
             crew.seats.filter { !it.mine },
             key = { _, seat -> "all-${seat.id}" },
         ) { index, seat ->
-            if (index > 0) RowDivider()
-            CrewSeatRow(seat)
+            ListTile(index, crew.seats.count { !it.mine }) {
+                CrewSeatRow(seat)
+            }
         }
     }
 }
@@ -255,23 +257,26 @@ fun CrewRunPhase(
         if (owed.isNotEmpty()) {
             item { CrewHeading("Tonight", "${owed.size}") }
             itemsIndexed(owed, key = { _, app -> app.id }) { index, app ->
-                if (index > 0) RowDivider()
-                CrewAppRow(app, onOpen = { onOpen(app) }, onReport = { onReport(app) })
+                ListTile(index, owed.size) {
+                    CrewAppRow(app, onOpen = { onOpen(app) }, onReport = { onReport(app) })
+                }
             }
         }
 
         if (settled.isNotEmpty()) {
             item { CrewHeading("Done", "${settled.size}") }
             itemsIndexed(settled, key = { _, app -> "s-${app.id}" }) { index, app ->
-                if (index > 0) RowDivider()
-                CrewAppRow(app, onOpen = { onOpen(app) }, onReport = { onReport(app) })
+                ListTile(index, settled.size) {
+                    CrewAppRow(app, onOpen = { onOpen(app) }, onReport = { onReport(app) })
+                }
             }
         }
 
         item { CrewHeading("How everyone is doing", "${crew.members.size}") }
         itemsIndexed(crew.members, key = { _, m -> m.name }) { index, member ->
-            if (index > 0) RowDivider()
-            CrewMemberRow(member)
+            ListTile(index, crew.members.size) {
+                CrewMemberRow(member)
+            }
         }
     }
 }
@@ -318,8 +323,9 @@ fun CrewRecordPhase(crew: Crew) {
 
         item { CrewHeading("Everyone", "${crew.members.size}") }
         itemsIndexed(crew.members, key = { _, m -> "rec-${m.name}" }) { index, member ->
-            if (index > 0) RowDivider()
-            CrewMemberRow(member)
+            ListTile(index, crew.members.size) {
+                CrewMemberRow(member)
+            }
         }
     }
 }

@@ -101,8 +101,9 @@ fun CrewOpenTab(
 
         item { CrewHeading("How a crew works") }
         itemsIndexed(RULES) { index, rule ->
-            if (index > 0) RowDivider()
-            RuleRow(index + 1, rule)
+            ListTile(index, RULES.size) {
+                RuleRow(index + 1, rule)
+            }
         }
     }
 }

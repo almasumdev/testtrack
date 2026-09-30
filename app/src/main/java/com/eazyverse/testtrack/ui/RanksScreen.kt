@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,8 +35,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -102,7 +105,7 @@ private const val PODIUM = 3
 private const val HEADING_KEY = "heading"
 
 /** Room under the last row for the pinned bar, which is over the list and not beside it. */
-private val PinRoom = 78.dp
+private val PinRoom = 92.dp
 
 /**
  * The board, drawn.
@@ -187,15 +190,13 @@ fun RanksBody(
          * runs underneath it.
          */
         if (podium) {
-            Podium(rows.take(PODIUM).map { it.onThePodium(mine?.id) })
-            // A floor for them to stand on, edge to edge. Without it the blocks stop in mid air
-            // and the first row of the list reads as the ground.
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant),
-            )
+            // In a panel, because it is something to read: the dashed edge says so, and the names
+            // and scores stand on the panel's own ground instead of on the contour lines.
+            Box(Modifier.padding(start = Gutter, end = Gutter, top = 4.dp, bottom = 8.dp)) {
+                Panel(padding = PaddingValues(start = 10.dp, end = 10.dp, top = 6.dp, bottom = 0.dp)) {
+                    Podium(rows.take(PODIUM).map { it.onThePodium(mine?.id) })
+                }
+            }
         }
 
         Box(Modifier.weight(1f)) {
@@ -213,9 +214,19 @@ fun RanksBody(
                         CrewHeading("Standings", trailing = "Top ${rows.size}")
                     }
                 }
+                // Each person a tile of their own, three points apart, as Value Guard lists things:
+                // the gap separates them, and only the ends of the run are rounded.
                 itemsIndexed(rest, key = { _, row -> row.id }) { index, row ->
-                    if (index > 0) RowDivider()
-                    BoardRowView(row, mine = row.id == mine?.id, room = room)
+                    val place =
+                        when {
+                            rest.size == 1 -> TilePlace.ONLY
+                            index == 0 -> TilePlace.FIRST
+                            index == rest.lastIndex -> TilePlace.LAST
+                            else -> TilePlace.MIDDLE
+                        }
+                    Box(Modifier.padding(start = Gutter, end = Gutter, top = if (index > 0) 3.dp else 0.dp)) {
+                        BoardRowView(row, mine = row.id == mine?.id, room = room, shape = place.shape())
+                    }
                 }
             }
 
@@ -284,20 +295,16 @@ private fun PinnedMine(
     room: Dp,
     onJump: (() -> Unit)?,
 ) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .shadow(14.dp)
-            .background(MaterialTheme.colorScheme.surface)
-            .then(if (onJump == null) Modifier else Modifier.clickable(onClick = onJump)),
-    ) {
+    val t = Tt.colors
+    val shape = RoundedCornerShape(CardRadius)
+    Box(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, bottom = 10.dp)) {
         Box(
             Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant),
-        )
-        BoardRowView(row, mine = true, room = room, jump = onJump != null, washed = false)
+                .shadow(16.dp, shape, ambientColor = t.shadow.copy(alpha = 0.3f), spotColor = t.shadow.copy(alpha = 0.3f))
+                .then(if (onJump == null) Modifier else Modifier.clickable(onClick = onJump)),
+        ) {
+            BoardRowView(row, mine = true, room = room, jump = onJump != null, shape = shape)
+        }
     }
 }
 
@@ -313,7 +320,7 @@ private fun BoardRowView(
     mine: Boolean,
     room: Dp,
     jump: Boolean = false,
-    washed: Boolean = true,
+    shape: Shape = RoundedCornerShape(CardRadius),
 ) {
     /*
      * The face is exactly as tall as the two lines next to it.
@@ -332,16 +339,15 @@ private fun BoardRowView(
                 1.dp
         }
 
+    val t = Tt.colors
     Row(
         Modifier
             .fillMaxWidth()
-            .background(
-                if (mine && washed) {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
-                } else {
-                    Color.Transparent
-                },
-            ).padding(horizontal = Gutter, vertical = 11.dp),
+            .clip(shape)
+            // Yours in the accent's own container tone, everybody else on the card surface.
+            .background(if (mine) t.container else t.glass)
+            .border(1.dp, if (mine) t.accent.copy(alpha = 0.35f) else t.glassBorder, shape)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(

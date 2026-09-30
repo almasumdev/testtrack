@@ -65,7 +65,7 @@ data class PodiumPlace(
 @Composable
 fun Podium(top: List<PodiumPlace>) {
     val lit = Medal.gold
-    Box(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 8.dp)) {
+    Box(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp)) {
         // The winner stands in a little light. Radial and very faint, thrown from behind the
         // first face: it is what stops three columns of the same weight reading as a table.
         //

@@ -142,8 +142,9 @@ fun CrewRunTab(
 
         item { CrewHeading("Your runs", "${runs.size}") }
         itemsIndexed(runs, key = { _, crew -> crew.id }) { index, crew ->
-            if (index > 0) RowDivider()
-            CrewListRow(crew) { onOpenCrew(crew.id) }
+            ListTile(index, runs.size) {
+                CrewListRow(crew) { onOpenCrew(crew.id) }
+            }
         }
     }
 }
@@ -273,13 +274,14 @@ fun CrewLobbyTab(
             }
         } else {
             itemsIndexed(waiting, key = { _, seat -> seat.id }) { index, seat ->
-                if (index > 0) RowDivider()
-                CrewSeatRow(seat, showCrew = lobbies.size > 1) {
-                    ActionChip(
-                        "Try it",
-                        MaterialTheme.colorScheme.onPrimaryContainer,
-                        MaterialTheme.colorScheme.primaryContainer,
-                    ) { onJudge(vm.crewIdOf(seat), seat) }
+                ListTile(index, waiting.size) {
+                    CrewSeatRow(seat, showCrew = lobbies.size > 1) {
+                        ActionChip(
+                            "Try it",
+                            MaterialTheme.colorScheme.onPrimaryContainer,
+                            MaterialTheme.colorScheme.primaryContainer,
+                        ) { onJudge(vm.crewIdOf(seat), seat) }
+                    }
                 }
             }
         }
@@ -324,8 +326,9 @@ fun CrewRecordTab(
     ) {
         item { CrewHeading("Finished", "${finished.size}") }
         itemsIndexed(finished, key = { _, crew -> crew.id }) { index, crew ->
-            if (index > 0) RowDivider()
-            CrewRecordRow(crew) { onOpenCrew(crew.id) }
+            ListTile(index, finished.size) {
+                CrewRecordRow(crew) { onOpenCrew(crew.id) }
+            }
         }
     }
 }

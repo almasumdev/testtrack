@@ -260,7 +260,7 @@ val PanelRadius = 22.dp
 /** Where a tile sits in its group, which decides which of its corners are round. */
 enum class TilePlace { ONLY, FIRST, MIDDLE, LAST }
 
-private fun TilePlace.shape(): RoundedCornerShape {
+fun TilePlace.shape(): RoundedCornerShape {
     val outer = 22.dp
     val inner = 6.dp
     return when (this) {
@@ -424,5 +424,39 @@ fun Tally(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/**
+ * Row [index] of a list of [count], as a tile of its own.
+ *
+ * Every list that stands on the page ground is drawn this way, three points apart with only the
+ * ends of the run rounded, so nothing is ever read across a contour line and a list looks like
+ * Value Guard's rather than rows ruled off on the page.
+ */
+@Composable
+fun ListTile(
+    index: Int,
+    count: Int,
+    content: @Composable () -> Unit,
+) {
+    val t = Tt.colors
+    val place =
+        when {
+            count <= 1 -> TilePlace.ONLY
+            index == 0 -> TilePlace.FIRST
+            index == count - 1 -> TilePlace.LAST
+            else -> TilePlace.MIDDLE
+        }
+    val shape = place.shape()
+    Box(
+        Modifier
+            .padding(start = Gutter, end = Gutter, top = if (index > 0) 3.dp else 0.dp)
+            .fillMaxWidth()
+            .clip(shape)
+            .background(t.glass)
+            .border(1.dp, t.glassBorder, shape),
+    ) {
+        content()
     }
 }

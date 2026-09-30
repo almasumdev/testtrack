@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,7 +30,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.LayoutGrid
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.net.ApiMyApp
-import com.eazyverse.testtrack.ui.theme.tabular
 
 /**
  * Everything this account has put up, in one list.
@@ -120,9 +120,8 @@ fun AppsBody(
         }
         if (over.isNotEmpty()) {
             item { CrewHeading("Finished", trailing = "${over.size}") }
-            items(over, key = { it.id }) { app ->
-                if (app != over.first()) RowDivider()
-                MyAppRow(app)
+            itemsIndexed(over, key = { _, app -> app.id }) { index, app ->
+                ListTile(index, over.size) { MyAppRow(app) }
             }
         }
     }
@@ -189,7 +188,7 @@ fun MyAppCard(
             )
             Text(
                 stage.count,
-                style = MaterialTheme.typography.labelMedium.tabular(),
+                style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
