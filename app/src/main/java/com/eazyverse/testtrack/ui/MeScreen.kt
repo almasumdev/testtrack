@@ -10,11 +10,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
@@ -44,17 +44,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.ExternalLink
 import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.MessageSquareText
+import com.composables.icons.lucide.Moon
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.ShieldCheck
+import com.composables.icons.lucide.Smartphone
+import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.UserRound
+import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.net.ApiProfile
 import com.eazyverse.testtrack.ui.theme.Tt
-import com.eazyverse.testtrack.ui.theme.tabular
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
@@ -141,8 +146,8 @@ fun MeBody(
     ) {
         item { Who(profile, onEdit) }
         item { Spacer(Modifier.height(12.dp)) }
-        item { Record(profile) }
         item { Spacer(Modifier.height(6.dp)) }
+        item { Record(profile) }
         item { SectionTitle("Account") }
         item { Account(onEdit = onEdit, onSignOut = onSignOut) }
         item { Spacer(Modifier.height(24.dp)) }
@@ -281,87 +286,79 @@ private fun memberSince(joinedAt: String): String? =
     }.getOrNull()
 
 /**
- * What this account has done, as one panel of six figures.
+ * What this account has done: two short rows of stat tiles, the work and then the crews.
  *
- * Value Guard's detail grid: the figures in mono, labels under them, hairlines between the cells.
- * The work is the top row and the crews are the bottom one. An account that has done nothing is
- * told so plainly instead of being given a place it has not earned.
+ * It was one dashed panel with six figures in a grid, which read as a spreadsheet: six numbers of
+ * one weight in a mono face, ruled into cells, under a second dashed panel that looked the same. Now
+ * each figure is a solid tile with its own icon, so a glance finds "points" by its star rather than
+ * by counting columns, and the two rows each get a heading that says what they are.
  */
 @Composable
 private fun Record(profile: ApiProfile) {
-    Panel(padding = PaddingValues(vertical = 16.dp)) {
-        Text(
-            "Your record",
-            Modifier.padding(horizontal = 16.dp),
-            style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp),
-            fontWeight = FontWeight.Bold,
-        )
-        Spacer(Modifier.height(12.dp))
-        Figures(
-            Triple("${profile.opens}", "apps opened", true),
-            Triple("${profile.reviews}", "reviews given", true),
-            Triple("${profile.points}", "points", true),
-        )
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp)
-                .height(1.dp)
-                .background(Tt.colors.hair),
-        )
-        Figures(
-            Triple("${profile.crewsRunning}", "crews going on", false),
-            Triple("${profile.crewsFinished}", "crews finished", false),
-            Triple("${CrewRules.nightly(profile.crewsRunning)}", "apps a night", false),
-        )
+    Column {
+        SectionTitle("Your record")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Stat(Lucide.Smartphone, "${profile.opens}", "apps opened")
+            Stat(Lucide.MessageSquareText, "${profile.reviews}", "reviews given")
+            Stat(Lucide.Star, "${profile.points}", "points", lit = true)
+        }
         if (profile.points == 0) {
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(10.dp))
             Text(
                 "Open somebody's app on a testing night and this starts counting.",
-                Modifier.padding(horizontal = 16.dp),
                 style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.5.sp),
                 color = Tt.colors.text3,
             )
+        }
+        SectionTitle("Crews")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Stat(Lucide.Users, "${profile.crewsRunning}", "going on")
+            Stat(Lucide.CircleCheck, "${profile.crewsFinished}", "finished")
+            Stat(Lucide.Moon, "${CrewRules.nightly(profile.crewsRunning)}", "apps a night")
         }
     }
 }
 
 /**
- * Three figures in a row, with a hairline between each.
+ * One figure on its own tile: an icon, the number, and what it counts.
  *
- * The work is in the accent and the crews are in plain ink. They are both counts, but only the
- * first row is the score, and colouring all six the same said they were six equal numbers.
+ * The number is in Barlow with tabular digits rather than in mono; mono at this size read as code.
+ * [lit] puts the one that is the score in the accent's own container, so it stands out from the
+ * two that add up to it without a colour of its own.
  */
 @Composable
-private fun Figures(vararg figures: Triple<String, String, Boolean>) {
+private fun RowScope.Stat(
+    icon: ImageVector,
+    value: String,
+    label: String,
+    lit: Boolean = false,
+) {
     val t = Tt.colors
-    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-        figures.forEachIndexed { index, (value, label, accent) ->
-            if (index > 0) {
-                Box(
-                    Modifier
-                        .width(1.dp)
-                        .fillMaxHeight()
-                        .background(t.hair),
-                )
-            }
-            Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-                Text(
-                    value,
-                    style = MaterialTheme.typography.titleLarge.tabular(),
-                    fontWeight = FontWeight.Bold,
-                    color = if (accent) t.accentInk else t.text,
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    label,
-                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
-                    color = t.text3,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
+    val shape = RoundedCornerShape(CardRadius)
+    Column(
+        Modifier
+            .weight(1f)
+            .clip(shape)
+            .background(if (lit) t.container else t.glass)
+            .border(1.dp, if (lit) t.accent.copy(alpha = 0.28f) else t.glassBorder, shape)
+            .padding(start = 14.dp, end = 10.dp, top = 14.dp, bottom = 13.dp),
+    ) {
+        IconTile(icon, size = 30.dp)
+        Spacer(Modifier.height(12.dp))
+        Text(
+            value,
+            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp, fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.Bold,
+            color = if (lit) t.accentInk else t.text,
+            maxLines = 1,
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
+            color = t.text3,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
