@@ -1,5 +1,7 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -84,7 +87,7 @@ fun AppsBody(
         return
     }
     if (loading && apps.isEmpty()) {
-        Blank("Looking.")
+        AppsLoading()
         return
     }
     if (apps.isEmpty()) {
@@ -105,11 +108,13 @@ fun AppsBody(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 4.dp, bottom = Gutter),
     ) {
+        // Cards for what is running, rows for what is over. A running app has a stage and a
+        // count worth drawing, and the owner opens this tab to see how far it has got; a finished
+        // one has a single sentence left to say, and a card around it would be a box of nothing.
         if (running.isNotEmpty()) {
             item { CrewHeading("Going on", trailing = "${running.size}") }
             items(running, key = { it.id }) { app ->
-                if (app != running.first()) RowDivider()
-                MyAppRow(app)
+                MyAppCard(app, Modifier.padding(horizontal = Gutter, vertical = 5.dp))
             }
         }
         if (over.isNotEmpty()) {
@@ -117,6 +122,196 @@ fun AppsBody(
             items(over, key = { it.id }) { app ->
                 if (app != over.first()) RowDivider()
                 MyAppRow(app)
+            }
+        }
+    }
+}
+
+/**
+ * A running app, with how far it has got drawn rather than written.
+ *
+ * The row said "day 11 of 14" in the same small grey as everything else on it, which is the one
+ * figure the owner came here for set in the type used for footnotes. Here the stage is a line of
+ * its own with the count beside it, and the meter under them is the same one the crew screens use,
+ * so fourteen days reads as fourteen boxes wherever it appears.
+ */
+@Composable
+fun MyAppCard(
+    app: ApiMyApp,
+    modifier: Modifier = Modifier,
+) {
+    CrewCard(modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AppTile(app.appName)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    app.appName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    app.where,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.width(10.dp))
+            val (tone, background) = appTone(app.state)
+            Pill(appLabel(app.state), tone, background)
+        }
+
+        val stage = stageOf(app)
+        if (stage == null) {
+            // A state this build does not know. The sentence still says something sensible.
+            Spacer(Modifier.height(10.dp))
+            Text(
+                appStanding(app),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            return@CrewCard
+        }
+
+        Spacer(Modifier.height(16.dp))
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                stage.title,
+                Modifier.weight(1f),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                stage.count,
+                style = MaterialTheme.typography.labelMedium.tabular(),
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        // Counted boxes while there are few enough to count, a plain bar past that. Fifty reviews
+        // as fifty boxes is a stripe, not a meter.
+        if (stage.total <= COUNTABLE) {
+            Meter(done = stage.done, total = stage.total, height = 8.dp)
+        } else {
+            Meter(fraction = stage.done.toFloat() / stage.total, height = 8.dp)
+        }
+        if (stage.note != null) {
+            Spacer(Modifier.height(10.dp))
+            Text(
+                stage.note,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/** More boxes than this and a meter stops being something you can count. */
+private const val COUNTABLE = 20
+
+/** What a running card draws under the name: the stage, its count, and how full the meter is. */
+data class AppStage(
+    val title: String,
+    val count: String,
+    val done: Int,
+    val total: Int,
+    val note: String? = null,
+)
+
+/**
+ * The stage a running app is at, or null for one with nothing to count.
+ *
+ * Every figure is the server's. Nothing is worked out here except how many days are left, which is
+ * the subtraction the owner would otherwise do in their head.
+ */
+fun stageOf(app: ApiMyApp): AppStage? =
+    when (app.state) {
+        "waiting" ->
+            if (app.kind == "crew") {
+                AppStage(
+                    title = "Filling the crew",
+                    count = "${app.testers} of ${CrewRules.SEATS} seats",
+                    done = app.testers,
+                    total = CrewRules.SEATS,
+                )
+            } else {
+                null
+            }
+        "checking" ->
+            AppStage(
+                title = "Install check",
+                count = "${app.greens} of ${CrewRules.VERDICTS} installed",
+                done = app.greens,
+                total = CrewRules.VERDICTS,
+            )
+        "testing" -> {
+            val left = (app.runDays - app.day).coerceAtLeast(0)
+            AppStage(
+                title = "Day ${app.day} of ${app.runDays}",
+                count =
+                    if (left == 0) {
+                        "Last day"
+                    } else if (left == 1) {
+                        "1 day left"
+                    } else {
+                        "$left days left"
+                    },
+                done = app.day,
+                total = app.runDays,
+                note = if (app.testers == 1) "1 person testing it" else "${app.testers} people testing it",
+            )
+        }
+        "collecting" ->
+            AppStage(
+                title = "Reviews in",
+                count = "${app.testers} of ${app.reviewsBought}",
+                done = app.testers,
+                total = app.reviewsBought,
+            )
+        else -> null
+    }.takeIf { it == null || it.total > 0 }
+
+/**
+ * The tab before its apps have arrived: two cards in the shape of the ones on their way.
+ *
+ * Cards because what lands first is the running half, and a skeleton of rows would be describing
+ * the finished list underneath it.
+ */
+@Composable
+private fun AppsLoading() {
+    Column(
+        Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        repeat(2) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.outlineVariant,
+                        RoundedCornerShape(12.dp),
+                    ).padding(horizontal = 16.dp, vertical = 14.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Skeleton(width = 44.dp, height = 44.dp, corner = 13.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Skeleton(width = 120.dp, height = 13.dp)
+                        Spacer(Modifier.height(6.dp))
+                        Skeleton(width = 64.dp, height = 11.dp)
+                    }
+                }
+                Spacer(Modifier.height(18.dp))
+                Skeleton(width = 96.dp, height = 12.dp)
+                Spacer(Modifier.height(10.dp))
+                Skeleton(height = 8.dp, corner = 3.dp)
             }
         }
     }

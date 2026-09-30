@@ -245,7 +245,8 @@ class StandingScreensTest {
         }
         compose.onNodeWithText("Nikosh Budget").assertIsDisplayed()
         compose.onNodeWithText("Testing").assertIsDisplayed()
-        compose.onNodeWithText("day 6 of 14", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Day 6 of 14").assertIsDisplayed()
+        compose.onNodeWithText("8 days left").assertIsDisplayed()
     }
 
     @Test
