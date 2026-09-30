@@ -2,31 +2,29 @@ package com.eazyverse.testtrack.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.indication
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -38,11 +36,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -54,6 +55,7 @@ import com.composables.icons.lucide.Trophy
 import com.composables.icons.lucide.User
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.data.Session
+import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.HudViewModel
 
 /**
@@ -176,98 +178,101 @@ fun MainShell(
         onDispose { owner.lifecycle.removeObserver(watcher) }
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        // Above all five tabs rather than inside any of them, because it belongs to the account
-        // and not to a screen. The two tabbed screens keep their own controls and now sit under
-        // this rather than beside it.
-        topBar = {
-            TopHud(
-                level = hudVm.level,
-                intoLevel = hudVm.intoLevel,
-                forNext = hudVm.forNext,
-                tix = hudVm.tix,
-                openCrew = hudVm.openCrew,
-                openTaken = hudVm.openTaken,
-                openSeats = hudVm.openSeats,
-                onSignIn = { asking = StartReason },
-            )
-        },
-        bottomBar = { MainBar(tab, show) },
-    ) { padding ->
-        // The top inset is taken now that the shell has a bar of its own; each tab still handles
-        // whatever it puts under it.
-        Box(
-            Modifier
-                .fillMaxSize()
-                .padding(
-                    top = padding.calculateTopPadding(),
-                    bottom = padding.calculateBottomPadding(),
-                ),
-        ) {
-            when (tab) {
-                MainTab.CIRCLE ->
-                    FeedScreen(
-                        onAsk = onAskForFeedback,
-                        onSignIn = {
-                            asking =
-                                SignInReason(
-                                    title = "Sign in to see what is waiting",
-                                    why =
-                                        "Reviews of your apps and cases you are asked to decide " +
-                                            "are addressed to an account. The rest of Circle " +
-                                            "you can read without one.",
-                                )
-                        },
-                    )
+    Backdrop(scene = tab.scene) {
+        Scaffold(
+            // Clear, so the contour ground under the whole shell shows through; see [Backdrop].
+            containerColor = Color.Transparent,
+            // Above all five tabs rather than inside any of them, because it belongs to the account
+            // and not to a screen. The two tabbed screens keep their own controls and now sit under
+            // this rather than beside it.
+            topBar = {
+                TopHud(
+                    level = hudVm.level,
+                    intoLevel = hudVm.intoLevel,
+                    forNext = hudVm.forNext,
+                    tix = hudVm.tix,
+                    openCrew = hudVm.openCrew,
+                    openTaken = hudVm.openTaken,
+                    openSeats = hudVm.openSeats,
+                    onSignIn = { asking = StartReason },
+                )
+            },
+            bottomBar = { MainBar(tab, show) },
+        ) { padding ->
+            // The top inset is taken now that the shell has a bar of its own; each tab still handles
+            // whatever it puts under it.
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(
+                        top = padding.calculateTopPadding(),
+                        bottom = padding.calculateBottomPadding(),
+                    ),
+            ) {
+                when (tab) {
+                    MainTab.CIRCLE ->
+                        FeedScreen(
+                            onAsk = onAskForFeedback,
+                            onSignIn = {
+                                asking =
+                                    SignInReason(
+                                        title = "Sign in to see what is waiting",
+                                        why =
+                                            "Reviews of your apps and cases you are asked to decide " +
+                                                "are addressed to an account. The rest of Circle " +
+                                                "you can read without one.",
+                                    )
+                            },
+                        )
 
-                // The new crew screens, running on in-memory state. HomeScreen and the group
-                // screens it pushes are still on disk and still work; nothing points at them from
-                // the bar while this is being built. See docs/crew.md.
-                MainTab.GROUPS ->
-                    CrewScreen(
-                        onSignIn = {
-                            asking =
-                                SignInReason(
-                                    title = "Sign in to see your crews",
-                                    why =
-                                        "Which seats are yours, what you owe tonight and what " +
-                                            "you have finished all hang off the account. Open " +
-                                            "reads without one.",
-                                )
-                        },
-                    )
+                    // The new crew screens, running on in-memory state. HomeScreen and the group
+                    // screens it pushes are still on disk and still work; nothing points at them from
+                    // the bar while this is being built. See docs/crew.md.
+                    MainTab.GROUPS ->
+                        CrewScreen(
+                            onSignIn = {
+                                asking =
+                                    SignInReason(
+                                        title = "Sign in to see your crews",
+                                        why =
+                                            "Which seats are yours, what you owe tonight and what " +
+                                                "you have finished all hang off the account. Open " +
+                                                "reads without one.",
+                                    )
+                            },
+                        )
 
-                MainTab.RANKS -> RanksScreen()
+                    MainTab.RANKS -> RanksScreen()
 
-                MainTab.APPS ->
-                    AppsScreen(
-                        onSignIn = {
-                            asking =
-                                SignInReason(
-                                    title = "Sign in to see your apps",
-                                    why =
-                                        "This is the list of what you have put up, so it needs " +
-                                            "to know who you are. Everything else in TestTrack " +
-                                            "you can read without an account.",
-                                )
-                        },
-                    )
+                    MainTab.APPS ->
+                        AppsScreen(
+                            onSignIn = {
+                                asking =
+                                    SignInReason(
+                                        title = "Sign in to see your apps",
+                                        why =
+                                            "This is the list of what you have put up, so it needs " +
+                                                "to know who you are. Everything else in TestTrack " +
+                                                "you can read without an account.",
+                                    )
+                            },
+                        )
 
-                MainTab.PROFILE ->
-                    MeScreen(
-                        onSignOut = onSignOut,
-                        onSignIn = {
-                            asking =
-                                SignInReason(
-                                    title = "Sign in to see your record",
-                                    why =
-                                        "Your level, your tix and what you have done belong to " +
-                                            "the account. Everything else in TestTrack you can " +
-                                            "read without one.",
-                                )
-                        },
-                    )
+                    MainTab.PROFILE ->
+                        MeScreen(
+                            onSignOut = onSignOut,
+                            onSignIn = {
+                                asking =
+                                    SignInReason(
+                                        title = "Sign in to see your record",
+                                        why =
+                                            "Your level, your tix and what you have done belong to " +
+                                                "the account. Everything else in TestTrack you can " +
+                                                "read without one.",
+                                    )
+                            },
+                        )
+                }
             }
         }
     }
@@ -287,85 +292,46 @@ fun MainShell(
 }
 
 /**
- * The bar itself.
+ * The bar itself: Value Guard's floating dock.
  *
- * Painted in the page background with a hairline over it, rather than Material's own tonal
- * surface. The app has exactly one raised colour and it is the accent; a bar in a grey nothing
- * else here is painted in reads as a piece of another product bolted to the bottom, which is the
- * same reason [Ask] takes over the dialog container.
- *
- * Built by hand rather than from Material's NavigationBar, because the mark for the selected tab
- * is a rail along the top edge and Material's own is a pill behind the icon. There is no way to
- * move that pill, so using the component would have meant hiding its indicator and drawing over
- * it, which is more code than this and leaves a component fighting its own defaults.
- *
- * What the pill was doing wrong is worth keeping written down. It was filled in `primaryContainer`
- * on a `background` bar, two colours three percent apart in lightness, so the selected tab was
- * marked by a smudge nobody could see; and its icon took `onPrimaryContainer` while its label took
- * `primary`, so one tab wore two different accents.
- *
- * The rail is drawn here rather than inside the selected item, which is the whole reason the bar
- * needs its own width. One rail that slides is a bar with five places in it; a rail per item that
- * appears and disappears is five separate things blinking, and it read as a glitch rather than as
- * a movement.
+ * A pill that floats over the ground rather than a strip bolted to the bottom edge. Every tab but
+ * the current one is just its icon; the current one grows into a filled pill with its name beside
+ * the icon, so where you are is said once, in words, and the other four stay out of the way. In
+ * dark the selected pill is a wash rather than a fill, so it does not outshout the page.
  */
 @Composable
 private fun MainBar(
     selected: MainTab,
     onSelect: (MainTab) -> Unit,
 ) {
-    Column {
-        Box(
+    val t = Tt.colors
+    val shape = RoundedCornerShape(32.dp)
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(start = DockInset, end = DockInset, top = 6.dp, bottom = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
             Modifier
+                .widthIn(max = 480.dp)
                 .fillMaxWidth()
-                .height(1.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant),
-        )
-        BoxWithConstraints(
-            Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background)
-                .height(BarHeight),
+                .shadow(18.dp, shape, ambientColor = t.shadow.copy(alpha = 0.25f), spotColor = t.shadow.copy(alpha = 0.25f))
+                .clip(shape)
+                .background(t.dock)
+                .border(1.dp, t.glassBorder, shape)
+                .padding(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            val slot = maxWidth / MainTab.entries.size
-            val index = MainTab.entries.indexOf(selected)
-            val railX by animateDpAsState(
-                targetValue = slot * index + (slot - RailWidth) / 2,
-                animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
-                label = "rail",
-            )
-
-            Row(Modifier.fillMaxSize()) {
-                MainTab.entries.forEach { tab ->
-                    MainBarItem(tab, tab == selected) { onSelect(tab) }
-                }
+            MainTab.entries.forEach { tab ->
+                MainBarItem(tab, tab == selected) { onSelect(tab) }
             }
-
-            Box(
-                Modifier
-                    .offset(x = railX)
-                    .size(width = RailWidth, height = RailHeight)
-                    .clip(RoundedCornerShape(bottomStart = RailHeight, bottomEnd = RailHeight))
-                    .background(MaterialTheme.colorScheme.primary),
-            )
         }
     }
 }
 
-/*
- * Shorter than Material's eighty.
- *
- * That height is built for a bar with a filled pill behind the selected icon, and there is no pill
- * here: a rail along the top edge needs no room of its own. What the eighty was buying was space
- * around a shape that is gone, and on a phone the bar is the one piece of furniture that is on
- * screen the whole time, so what it does not need it should not take from the content above it.
- */
-private val BarHeight = 64.dp
-private val RailWidth = 30.dp
-private val RailHeight = 3.dp
-
-/** Wide enough to take a thumb, and the reason the touch target is not the ripple. */
-private val TapSize = 36.dp
+private val DockInset = 20.dp
 
 @Composable
 private fun RowScope.MainBarItem(
@@ -373,67 +339,53 @@ private fun RowScope.MainBarItem(
     current: Boolean,
     onSelect: () -> Unit,
 ) {
-    // Crossfaded rather than switched. The rail takes a quarter of a second to arrive and a colour
-    // that changed instantly would beat it there, which is what made the old switch look broken:
-    // two halves of one movement happening at different times.
-    val tint by animateColorAsState(
-        targetValue =
-            if (current) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-        animationSpec = tween(durationMillis = 220),
-        label = "tint",
+    val t = Tt.colors
+    val fill by animateColorAsState(
+        if (current) (if (t.isDark) t.leafAccentSoft else t.leafAccent) else Color.Transparent,
+        tween(250),
+        label = "fill",
     )
-
-    /*
-     * The press and what it draws are deliberately on different elements.
-     *
-     * The whole item is the touch target, because a thumb is wider than an icon and a tab that
-     * only answers a direct hit is a tab people miss. But letting the ripple fill that target
-     * flashes a rectangle nearly the height of the bar, square-cornered and running into its
-     * neighbours, which is the odd thing you see on a tap. Handing the same interaction source to
-     * a small round patch behind the icon keeps the large target and draws the circle somebody
-     * expects at the place they actually aimed.
-     */
-    val press = remember { MutableInteractionSource() }
-
-    Box(
+    val ink by animateColorAsState(
+        if (current) (if (t.isDark) t.onSelected else t.onSelected) else t.dockInk,
+        tween(250),
+        label = "ink",
+    )
+    Row(
         Modifier
-            .weight(1f)
-            .fillMaxHeight()
-            // `selectable` rather than `clickable`: it carries the selected state into the
-            // accessibility tree, which a coloured icon on its own does not, and Tab is the role
-            // a screen reader announces for one of a set of five.
-            .selectable(
-                selected = current,
-                interactionSource = press,
-                indication = null,
-                role = Role.Tab,
-                onClick = onSelect,
-            ),
-        contentAlignment = Alignment.Center,
+            // The current tab takes the room its label needs; the others share what is left.
+            .then(if (current) Modifier else Modifier.weight(1f))
+            .height(48.dp)
+            .clip(RoundedCornerShape(percent = 50))
+            .background(fill)
+            // `selectable` carries the selected state into the accessibility tree, and Tab is the
+            // role a screen reader announces for one of a set of five.
+            .selectable(selected = current, role = Role.Tab, onClick = onSelect)
+            .animateContentSize(tween(250))
+            .padding(horizontal = if (current) 16.dp else 0.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                Modifier
-                    .size(TapSize)
-                    .indication(press, ripple(bounded = false, radius = TapSize / 2)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(tab.icon, null, Modifier.size(21.dp), tint = tint)
-            }
+        Icon(tab.icon, if (current) null else tab.label, Modifier.size(22.dp), tint = ink)
+        if (current) {
+            Spacer(Modifier.width(8.dp))
             Text(
                 tab.label,
-                style = MaterialTheme.typography.labelSmall,
-                // One weight, for the same reason the tabs above have one: semi bold is
-                // wider than medium, so a weight that moved with the selection re-measured the
-                // word and nudged the icon above it off centre at the moment of the tap.
-                fontWeight = FontWeight.Medium,
-                color = tint,
+                style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                fontWeight = FontWeight.SemiBold,
+                color = ink,
                 maxLines = 1,
             )
         }
     }
 }
+
+/** The ground each tab stands on. */
+private val MainTab.scene: Scene
+    get() =
+        when (this) {
+            MainTab.CIRCLE -> Scene.CIRCLE
+            MainTab.GROUPS -> Scene.CREW
+            MainTab.RANKS -> Scene.RANKS
+            MainTab.APPS -> Scene.APPS
+            MainTab.PROFILE -> Scene.PROFILE
+        }

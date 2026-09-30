@@ -5,10 +5,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -17,6 +18,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
  * The one dialog shape this app uses.
@@ -46,12 +49,12 @@ fun Ask(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(18.dp),
-        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(26.dp),
+        containerColor = Tt.colors.glass,
         titleContentColor = MaterialTheme.colorScheme.onSurface,
         textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         title = {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(title, style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp), fontWeight = FontWeight.Bold)
         },
         text =
             if (body == null && content == null) {
@@ -59,7 +62,7 @@ fun Ask(
             } else {
                 {
                     Column {
-                        body?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                        body?.let { Text(it, style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp)) }
                         content?.let {
                             if (body != null) Spacer(Modifier.height(14.dp))
                             it()
@@ -67,25 +70,40 @@ fun Ask(
                     }
                 }
             },
+        // Pills, as Value Guard's dialogs have them: the answer filled, in red when it takes
+        // something away, and the way out a soft one beside it.
         confirmButton = {
-            TextButton(onClick = onConfirm, enabled = confirmEnabled) {
-                Text(
-                    confirm,
-                    fontWeight = FontWeight.SemiBold,
-                    color =
-                        when {
-                            !confirmEnabled -> MaterialTheme.colorScheme.onSurfaceVariant
-                            destructive -> MaterialTheme.colorScheme.error
-                            else -> MaterialTheme.colorScheme.primary
-                        },
-                )
+            val t = Tt.colors
+            Button(
+                onClick = onConfirm,
+                enabled = confirmEnabled,
+                shape = RoundedCornerShape(percent = 50),
+                elevation = null,
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = if (destructive) t.bad else t.accent,
+                        contentColor = if (destructive) t.onBad else t.onAccent,
+                    ),
+                modifier = Modifier.heightIn(min = 44.dp),
+            ) {
+                Text(confirm, fontSize = 14.5.sp, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton =
             dismiss?.let {
                 {
-                    TextButton(onClick = onDismiss) {
-                        Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Button(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(percent = 50),
+                        elevation = null,
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = Tt.colors.glass2,
+                                contentColor = Tt.colors.text,
+                            ),
+                        modifier = Modifier.heightIn(min = 44.dp),
+                    ) {
+                        Text(it, fontSize = 14.5.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             },

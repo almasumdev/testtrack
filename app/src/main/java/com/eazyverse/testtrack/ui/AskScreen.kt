@@ -34,6 +34,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Lucide
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
  * Asking the circle to look at your app.
@@ -214,7 +215,7 @@ private fun Found(vm: AskViewModel) {
         Text(
             "Change",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary,
+            color = Tt.colors.accentInk,
             fontWeight = FontWeight.Medium,
         )
     }

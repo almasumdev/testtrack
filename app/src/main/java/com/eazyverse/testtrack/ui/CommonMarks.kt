@@ -160,9 +160,9 @@ fun Pill(
     Text(
         text,
         Modifier
-            .clip(RoundedCornerShape(9.dp))
+            .clip(RoundedCornerShape(percent = 50))
             .background(background)
-            .padding(horizontal = 13.dp, vertical = 7.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         style = MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp),
         fontWeight = FontWeight.SemiBold,
         color = tone,

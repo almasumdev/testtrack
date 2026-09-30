@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /** Which in-content update banner Home should show. */
 enum class HomeUpdateBanner { NONE, DOWNLOADED }
@@ -71,7 +72,7 @@ fun UpdateBannerCard(
             Icon(
                 Lucide.Info,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = Tt.colors.accentInk,
                 modifier = Modifier.size(20.dp),
             )
             Text(
@@ -183,7 +184,7 @@ fun ForceUpdateScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.primary,
+                            color = Tt.colors.accentInk,
                             strokeWidth = 2.dp,
                             modifier = Modifier.size(18.dp),
                         )

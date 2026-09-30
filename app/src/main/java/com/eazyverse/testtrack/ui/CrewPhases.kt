@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /** The gutter every phase list opens on, matched to Circle so the two tabs sit level. */
 private val ListTop = 8.dp
@@ -62,7 +63,7 @@ fun CrewLobbyPhase(
                             Lucide.Clock,
                             null,
                             Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = Tt.colors.accentInk,
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(

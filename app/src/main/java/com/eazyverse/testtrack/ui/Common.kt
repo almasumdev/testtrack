@@ -1,18 +1,16 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -20,9 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.ui.theme.LocalStatusColors
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
  * The page gutter. Every screen, every row, no exceptions.
@@ -127,41 +124,32 @@ fun Rows(
 }
 
 /**
- * A dashed rule between rows.
+ * A hairline between rows, in the palette's own divider tone.
  *
- * Dashed rather than solid, which is a small thing that stops mattering the moment you see
- * fourteen of them: a solid rule between every row is fourteen hard lines competing with the
- * content they are meant to organise, and a dashed one recedes far enough to be structure rather
- * than furniture.
+ * Dashed edges now belong to panels, the things you only read, so a dashed rule between rows was
+ * saying "panel" in the middle of a list. The hair tone is pale enough to recede on its own.
  *
  * Inset by the gutter so it lines up with the text either side of it and never touches the screen
  * edge.
  */
 @Composable
 fun RowDivider() {
-    val ink = MaterialTheme.colorScheme.outlineVariant
-    Canvas(
+    Box(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = Gutter)
-            .height(1.dp),
-    ) {
-        drawLine(
-            color = ink,
-            start = Offset(0f, size.height / 2f),
-            end = Offset(size.width, size.height / 2f),
-            strokeWidth = size.height,
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.5.dp.toPx(), 3.dp.toPx())),
-        )
-    }
+            .height(1.dp)
+            .background(Tt.colors.hair),
+    )
 }
 
 /**
  * The other actions on a screen, beside its one [Primary].
  *
- * Outlined, and short enough to sit two to a row. Four of these stacked full width is four equally
- * loud invitations and half a phone of button, when what they actually are is the things you might
- * do before the one thing you came to do.
+ * A soft filled pill, never an outline: Value Guard's rule, because an outlined button beside a
+ * filled one reads as the same action switched off. Short enough to sit two to a row. A destructive
+ * one takes the red ground with red words rather than a red fill, which stays for the dialog that
+ * actually confirms it.
  */
 @Composable
 fun Secondary(
@@ -171,25 +159,27 @@ fun Secondary(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    OutlinedButton(
+    val t = Tt.colors
+    Button(
         onClick = onClick,
         enabled = enabled,
-        shape = RoundedCornerShape(10.dp),
-        contentPadding = PaddingValues(horizontal = 8.dp),
-        modifier = modifier.height(42.dp),
+        shape = RoundedCornerShape(percent = 50),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = if (destructive) t.badBg else t.glass2,
+                contentColor = if (destructive) t.bad else t.text,
+                disabledContainerColor = t.glass2.copy(alpha = 0.45f),
+                disabledContentColor = t.text.copy(alpha = 0.45f),
+            ),
+        elevation = null,
+        contentPadding = PaddingValues(horizontal = 14.dp),
+        modifier = modifier.height(44.dp),
     ) {
         Text(
             label,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.5.sp),
+            fontWeight = FontWeight.Bold,
             maxLines = 1,
-            // Dimmed rather than merely inert. A control that ignores taps while still looking
-            // pressable reads as the app having missed them.
-            color =
-                when {
-                    !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    destructive -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onSurface
-                },
         )
     }
 }
@@ -208,13 +198,13 @@ fun Chip(
     Text(
         label,
         Modifier
-            .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(7.dp))
+            .background(Tt.colors.glass2)
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 7.dp),
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.Medium,
-        color = MaterialTheme.colorScheme.primary,
+            .padding(horizontal = 13.dp, vertical = 8.dp),
+        style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.sp),
+        fontWeight = FontWeight.SemiBold,
+        color = Tt.colors.accentInk,
     )
 }
 
@@ -258,20 +248,7 @@ fun EmptyState(
         modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 36.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
-            Modifier
-                .size(56.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                icon,
-                null,
-                Modifier.size(26.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-        }
+        IconTile(icon, size = 56.dp)
         Spacer(Modifier.height(16.dp))
         Text(
             title,
@@ -337,8 +314,11 @@ fun Primary(
     Button(
         onClick = onClick,
         enabled = enabled && !busy,
-        shape = RoundedCornerShape(14.dp),
-        modifier = modifier.fillMaxWidth().height(if (tall) 52.dp else 46.dp),
+        // A full pill, Value Guard's main button: the one filled shape on a screen, so it is the
+        // one place the eye lands.
+        shape = RoundedCornerShape(percent = 50),
+        elevation = null,
+        modifier = modifier.fillMaxWidth().height(if (tall) 52.dp else 48.dp),
     ) {
         if (busy) {
             androidx.compose.material3.CircularProgressIndicator(
@@ -351,7 +331,7 @@ fun Primary(
             Icon(mark, null, Modifier.size(18.dp))
             Spacer(Modifier.width(10.dp))
         }
-        Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Text(label, style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp), fontWeight = FontWeight.Bold)
     }
 }
 

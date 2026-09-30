@@ -53,6 +53,7 @@ import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.UserRound
 import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.net.ApiProfile
+import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -322,7 +323,7 @@ private fun Figures(vararg figures: Triple<String, String, Boolean>) {
                     value,
                     style = MaterialTheme.typography.titleLarge.tabular(),
                     fontWeight = FontWeight.Bold,
-                    color = if (accent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                    color = if (accent) Tt.colors.accentInk else MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     label,

@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.eazyverse.testtrack.ui.theme.Tt
 import kotlinx.coroutines.launch
 import kotlin.math.hypot
 
@@ -126,7 +127,7 @@ private fun WordTab(
                 Modifier.inkRipple(
                     interactionSource = press,
                     resting = tint,
-                    lit = MaterialTheme.colorScheme.primary,
+                    lit = Tt.colors.accentInk,
                 ),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,

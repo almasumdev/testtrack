@@ -52,9 +52,9 @@ fun CrewCard(
     Column(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(CardRadius))
+            .background(Tt.colors.glass)
+            .border(1.dp, Tt.colors.glassBorder, RoundedCornerShape(CardRadius))
             .padding(padding),
         content = content,
     )
@@ -333,34 +333,6 @@ private fun AppMark(
     }
 }
 
-/** A heading inside a card, for the two or three groupings a phase screen needs. */
-@Composable
-fun CrewHeading(
-    text: String,
-    trailing: String? = null,
-) {
-    Row(
-        Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 20.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.weight(1f))
-        if (trailing != null) {
-            Text(
-                trailing,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
 /**
  * How much of the night is behind you, as one bar.
  *
@@ -437,28 +409,6 @@ fun CrewTallies(
             if (nightsLeft == 1) "night to go" else "nights to go",
         )
         Tally(Modifier.weight(1f), "$crews", if (crews == 1) "crew" else "crews")
-    }
-}
-
-/** One figure and what it counts. */
-@Composable
-fun Tally(
-    modifier: Modifier,
-    value: String,
-    label: String,
-) {
-    Column(modifier) {
-        Text(
-            value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 

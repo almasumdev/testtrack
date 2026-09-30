@@ -262,8 +262,8 @@ class StandingScreensTest {
                 )
             }
         }
-        compose.onNodeWithText("GOING ON").assertIsDisplayed()
-        compose.onNodeWithText("FINISHED").assertIsDisplayed()
+        compose.onNodeWithText("Going on").assertIsDisplayed()
+        compose.onNodeWithText("Finished").assertIsDisplayed()
         compose.onNodeWithText("Running One").assertIsDisplayed()
         compose.onNodeWithText("Old One").assertIsDisplayed()
     }

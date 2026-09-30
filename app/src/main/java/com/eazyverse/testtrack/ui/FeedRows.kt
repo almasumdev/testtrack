@@ -71,12 +71,12 @@ fun FeedCard(
     Column(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .clip(RoundedCornerShape(CardRadius))
+            .background(Tt.colors.glass)
             .border(
                 1.dp,
-                accent ?: MaterialTheme.colorScheme.outlineVariant,
-                RoundedCornerShape(12.dp),
+                accent ?: Tt.colors.glassBorder,
+                RoundedCornerShape(CardRadius),
             ).padding(padding),
         content = content,
     )

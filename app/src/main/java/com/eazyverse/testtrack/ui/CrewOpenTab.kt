@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
  * The crews taking seats, and what taking one means.
@@ -77,7 +78,7 @@ fun CrewOpenTab(
                                 "You are in this one. It is in your Lobby.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = Tt.colors.accentInk,
                             )
                         // One seat across every open crew rather than one per crew. Offering a
                         // second before the first has started is offering fourteen more apps a

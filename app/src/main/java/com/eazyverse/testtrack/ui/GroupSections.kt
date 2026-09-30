@@ -16,6 +16,7 @@ import com.composables.icons.lucide.Hourglass
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.data.*
+import com.eazyverse.testtrack.ui.theme.Tt
 import kotlinx.coroutines.delay
 import java.util.Date
 
@@ -149,7 +150,7 @@ private fun DayEndBlock(
             Lucide.Hourglass,
             contentDescription = null,
             modifier = Modifier.size(20.dp),
-            tint = MaterialTheme.colorScheme.primary,
+            tint = Tt.colors.accentInk,
         )
         Spacer(Modifier.width(12.dp))
         Column {
@@ -157,7 +158,7 @@ private fun DayEndBlock(
                 formatCountdown(remaining),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                color = Tt.colors.accentInk,
             )
             Text(
                 "Day ${day + 1} ends $clockTime",

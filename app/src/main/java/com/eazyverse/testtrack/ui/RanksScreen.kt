@@ -49,6 +49,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Trophy
 import com.eazyverse.testtrack.net.BoardRow
+import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
 import kotlinx.coroutines.launch
 
@@ -351,7 +352,7 @@ private fun BoardRowView(
             textAlign = TextAlign.End,
             color =
                 if (mine) {
-                    MaterialTheme.colorScheme.primary
+                    Tt.colors.accentInk
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },
@@ -382,11 +383,11 @@ private fun BoardRowView(
                 "Jump",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                color = Tt.colors.accentInk,
             )
             Spacer(Modifier.width(12.dp))
         }
-        Points(row.points, MaterialTheme.typography.titleSmall, MaterialTheme.colorScheme.primary)
+        Points(row.points, MaterialTheme.typography.titleSmall, Tt.colors.accentInk)
     }
 }
 

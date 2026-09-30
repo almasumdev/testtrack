@@ -27,6 +27,7 @@ import com.composables.icons.lucide.SlidersHorizontal
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.data.*
+import com.eazyverse.testtrack.ui.theme.Tt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,7 +123,7 @@ fun HomeScreen(
                             painterResource(R.drawable.ic_stat_name),
                             null,
                             modifier = Modifier.size(22.dp),
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = Tt.colors.accentInk,
                         )
                         Spacer(Modifier.width(8.dp))
                         Text("TestTrack", fontWeight = FontWeight.Bold)

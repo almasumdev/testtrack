@@ -153,7 +153,7 @@ private fun SignedOutHud(
                         "$openTaken",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = Tt.colors.accentInk,
                     )
                     Text(
                         " of $openSeats seats taken",
@@ -216,7 +216,7 @@ private fun SignInChip(onClick: () -> Unit) {
 @Composable
 private fun HudMark() {
     val ink = MaterialTheme.colorScheme.onPrimary
-    val tint = MaterialTheme.colorScheme.primary
+    val tint = Tt.colors.accentInk
 
     Box(
         Modifier
@@ -259,7 +259,7 @@ private fun LevelRing(
     forNext: Int,
 ) {
     val track = MaterialTheme.colorScheme.surfaceVariant
-    val accent = MaterialTheme.colorScheme.primary
+    val accent = Tt.colors.accentInk
 
     // Guarded rather than trusted. forNext is zero until the first answer arrives, and dividing by
     // it would put a NaN into the sweep, which draws nothing at all and looks like a broken ring.
@@ -344,7 +344,7 @@ private fun TixChip(
     tix: Int,
     modifier: Modifier = Modifier,
 ) {
-    val accent = MaterialTheme.colorScheme.primary
+    val accent = Tt.colors.accentInk
 
     // Long enough to read as counting, short enough not to be waited on.
     val shown by animateIntAsState(

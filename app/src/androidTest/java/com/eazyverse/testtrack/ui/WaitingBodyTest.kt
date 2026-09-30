@@ -135,8 +135,8 @@ class WaitingBodyTest {
                 WaitingBody(reviews = listOf(review()), disputes = listOf(dispute()))
             }
         }
-        compose.onNodeWithText("YOUR APPS").assertIsDisplayed()
-        compose.onNodeWithText("HELP DECIDE").assertIsDisplayed()
+        compose.onNodeWithText("Your apps").assertIsDisplayed()
+        compose.onNodeWithText("Help decide").assertIsDisplayed()
     }
 
     @Test

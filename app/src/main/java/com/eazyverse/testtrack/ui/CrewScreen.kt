@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -95,14 +95,13 @@ fun CrewScreen(
     BackHandler(enabled = crew != null) { vm.show(null) }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,
         snackbarHost = { SnackbarHost(snackbars) },
         topBar = {
             if (crew == null) {
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.background)
                         // Nothing of its own, the same as Circle's: the header above brings its
                         // space below itself and the tabs bring their own touch padding, and a
                         // third helping on top of those two is the gap that was here.
@@ -116,7 +115,6 @@ fun CrewScreen(
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.background)
                         .padding(start = 6.dp, end = Gutter, top = 8.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
