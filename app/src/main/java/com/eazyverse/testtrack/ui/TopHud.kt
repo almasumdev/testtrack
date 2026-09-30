@@ -34,7 +34,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -43,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Ticket
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
  * Level and balance, on every screen.
@@ -365,7 +365,7 @@ private fun TixChip(
         }
     }
 
-    val lit = lerp(accent, Color.White, 0.4f * flare.value)
+    val lit = lerp(accent, Tt.colors.onAccent, 0.4f * flare.value)
 
     Row(
         modifier

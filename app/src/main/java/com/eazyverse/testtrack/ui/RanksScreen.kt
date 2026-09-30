@@ -49,6 +49,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Trophy
 import com.eazyverse.testtrack.net.BoardRow
+import com.eazyverse.testtrack.ui.theme.tabular
 import kotlinx.coroutines.launch
 
 /**

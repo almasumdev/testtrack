@@ -37,6 +37,7 @@ LAYERS = {
 
 IMPORT = re.compile(r"^import com\.eazyverse\.testtrack\.([a-z]+)\.", re.M)
 ANDROID_IMPORT = re.compile(r"^import (android|androidx)\.", re.M)
+COLOR_LITERAL = re.compile(r"\bColor\((0x|red\s*=)|\bColor\.(hsl|hsv|White|Black|Red|Green|Blue|Yellow|Cyan|Magenta|Gray|LightGray|DarkGray)\b")
 
 
 def layer_of(path: Path) -> str | None:
@@ -65,6 +66,11 @@ def problems() -> list[str]:
         # A pure layer stops being pure the moment it needs a device to run.
         if layer == "domain" and ANDROID_IMPORT.search(text):
             found.append(f"{rel}: domain imports android")
+
+        # Colours live in ui/theme/Tokens.kt and nowhere else, so a palette is one file to change
+        # rather than a search through every screen. Value Guard enforces the same rule.
+        if not rel.startswith(f"{SRC.as_posix()}/ui/theme/") and COLOR_LITERAL.search(text):
+            found.append(f"{rel}: colour literal outside ui/theme")
 
     return found
 

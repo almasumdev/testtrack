@@ -49,6 +49,7 @@ import com.composables.icons.lucide.Megaphone
 import com.composables.icons.lucide.Rocket
 import com.composables.icons.lucide.UserPlus
 import com.eazyverse.testtrack.net.ApiPost
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
  * The feed's own container.
@@ -117,21 +118,21 @@ fun AppTile(
     name: String,
     size: Dp = 44.dp,
 ) {
-    val hue = (name.hashCode().rem(360) + 360).rem(360).toFloat()
+    val (fill, ink) = Tt.colors.nameTile((name.hashCode().rem(360) + 360).rem(360).toFloat())
     Box(
         Modifier
             .size(size)
             // The same corner ratio AppIcon rounds a real icon by, so nothing shifts when one
             // takes this one's place.
             .clip(RoundedCornerShape(size * 0.3f))
-            .background(Color.hsl(hue, 0.32f, 0.17f)),
+            .background(fill),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             name.take(1).uppercase(),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = Color.hsl(hue, 0.55f, 0.74f),
+            color = ink,
         )
     }
 }

@@ -53,6 +53,7 @@ import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.UserRound
 import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.net.ApiProfile
+import com.eazyverse.testtrack.ui.theme.tabular
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 

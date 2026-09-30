@@ -26,7 +26,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -35,6 +34,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Square
 import com.composables.icons.lucide.SquareCheck
 import com.composables.icons.lucide.TriangleAlert
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
  * The crew tab's card, which is Circle's card.
@@ -305,7 +305,7 @@ private fun AppMark(
     name: String,
     done: Boolean,
 ) {
-    val hue = (name.hashCode().rem(360) + 360).rem(360).toFloat()
+    val (fill, ink) = Tt.colors.nameTile((name.hashCode().rem(360) + 360).rem(360).toFloat())
     Box(
         Modifier
             .size(38.dp)
@@ -314,7 +314,7 @@ private fun AppMark(
                 if (done) {
                     MaterialTheme.colorScheme.surfaceVariant
                 } else {
-                    Color.hsl(hue, 0.32f, 0.17f)
+                    fill
                 },
             ),
         contentAlignment = Alignment.Center,
@@ -327,7 +327,7 @@ private fun AppMark(
                 if (done) {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 } else {
-                    Color.hsl(hue, 0.55f, 0.74f)
+                    ink
                 },
         )
     }
@@ -513,13 +513,13 @@ private fun SeatTile(
         )
         return
     }
-    val hue = (seat.appName.hashCode().rem(360) + 360).rem(360).toFloat()
+    val (fill, ink) = Tt.colors.nameTile((seat.appName.hashCode().rem(360) + 360).rem(360).toFloat())
     val checking = seat.state == SeatState.CHECKING
     Box(
         modifier
             .aspectRatio(1f)
             .clip(shape)
-            .background(Color.hsl(hue, 0.32f, 0.17f, alpha = if (checking) 0.45f else 1f))
+            .background(fill.copy(alpha = if (checking) 0.45f else 1f))
             .then(
                 if (checking) {
                     Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
@@ -533,7 +533,7 @@ private fun SeatTile(
             seat.appName.take(1).uppercase(),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
-            color = Color.hsl(hue, 0.55f, 0.74f, alpha = if (checking) 0.55f else 1f),
+            color = ink.copy(alpha = if (checking) 0.55f else 1f),
         )
     }
 }

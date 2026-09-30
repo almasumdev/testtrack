@@ -28,7 +28,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -37,6 +36,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Crown
 import com.composables.icons.lucide.Lucide
+import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.ui.theme.tabular
 
 /**
  * One of the three, as the podium needs them.
@@ -239,14 +240,6 @@ fun Points(
 }
 
 /**
- * Figures that line up.
- *
- * The default numerals are proportional, so a 1 is narrower than an 8 and a column of places or
- * scores wobbles down the screen. Tabular ones are all one width and stack into a straight edge.
- */
-fun TextStyle.tabular(): TextStyle = copy(fontFeatureSettings = "tnum")
-
-/**
  * The board, before it has arrived: three faces on three blocks, and rows under them.
  *
  * The same silhouette the podium will have, so nothing jumps when it lands. A sentence in the
@@ -312,22 +305,18 @@ private fun RowScope.LoadingStep(
 }
 
 /**
- * Gold, silver and bronze, and the one time this app reaches outside its own scheme.
+ * Gold, silver and bronze, and the one time this app reaches outside its own palette.
  *
- * A board with no gold on it is a list, and first place stops being worth anything. Darkened on
- * the light theme rather than reused: the dark values are mixed to sit on navy, and a bronze
- * nobody can read is worse than no bronze.
+ * A board with no gold on it is a list, and first place stops being worth anything. The values
+ * live in the tokens with everything else, darker on the light ground so bronze stays readable.
  */
 private object Medal {
-    private val pale: Boolean
-        @Composable get() = MaterialTheme.colorScheme.background.luminance() > 0.5f
-
     val gold: Color
-        @Composable get() = if (pale) Color(0xFF9A7B1F) else Color(0xFFE8B84B)
+        @Composable get() = Tt.colors.gold
 
     val silver: Color
-        @Composable get() = if (pale) Color(0xFF6B7488) else Color(0xFFAFB9D0)
+        @Composable get() = Tt.colors.silver
 
     val bronze: Color
-        @Composable get() = if (pale) Color(0xFF8A5A34) else Color(0xFFC58455)
+        @Composable get() = Tt.colors.bronze
 }
