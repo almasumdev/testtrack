@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,16 +36,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.ExternalLink
 import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.Lucide
@@ -137,117 +137,142 @@ fun MeBody(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 12.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = 28.dp),
     ) {
         item { Who(profile, onEdit) }
-        item { Spacer(Modifier.height(20.dp)) }
+        item { Spacer(Modifier.height(12.dp)) }
         item { Record(profile) }
-        item { CrewHeading("Account") }
+        item { Spacer(Modifier.height(6.dp)) }
+        item { SectionTitle("Account") }
         item { Account(onEdit = onEdit, onSignOut = onSignOut) }
         item { Spacer(Modifier.height(24.dp)) }
         item {
             Text(
                 "TestTrack ${BuildConfig.VERSION_NAME}",
                 Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline,
+                style = MaterialTheme.typography.labelMedium,
+                color = Tt.colors.text4,
                 textAlign = TextAlign.Center,
             )
         }
     }
 }
 
+/** A heading inside the page's own gutter, the list's padding already having taken it. */
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text,
+        Modifier.padding(top = 16.dp, bottom = 10.dp),
+        style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp),
+        fontWeight = FontWeight.Bold,
+    )
+}
+
 /**
- * The person, as the top of the page rather than as one card among three.
+ * The person, as a panel: Value Guard's profile card.
  *
- * The face is large and tappable, with the pencil on it saying so. The balance is not here: the
- * header over every tab already shows it, and a second copy two centimetres below the first was the
- * page repeating itself.
+ * Dashed because it is something you read rather than press; the face is the one part that does
+ * something, and the pencil on it says so. The balance is not here: the header over every tab
+ * already shows it.
  */
 @Composable
 private fun Who(
     profile: ApiProfile,
     onEdit: () -> Unit,
 ) {
-    Column(
-        Modifier.fillMaxWidth().padding(horizontal = Gutter),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        // The badge sits outside the clip. Clipping the whole stack to the circle cut the pencil
-        // in half, which is the one part of it that says the face can be pressed.
-        Box {
-            Box(
-                Modifier
-                    .size(FaceSize + 8.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onEdit)
-                    .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), CircleShape)
-                    .padding(4.dp),
-            ) {
-                Avatar(
-                    profile.photoUrl,
-                    profile.displayName
-                        .take(1)
-                        .uppercase()
-                        .ifBlank { "?" },
-                    size = FaceSize,
-                    letterStyle = MaterialTheme.typography.headlineMedium,
-                )
-            }
-            Box(
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(30.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onEdit)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(3.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Lucide.Pencil, "Edit profile", Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onPrimary)
-            }
-        }
-        Spacer(Modifier.height(14.dp))
-        Text(
-            profile.displayName.ifBlank { profile.email.substringBefore('@') },
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(3.dp))
-        Text(
-            profile.email,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        val since = memberSince(profile.joinedAt)
-        if (since != null || profile.points > 0) {
-            Spacer(Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (profile.points > 0) {
-                    Pill(
-                        "${ordinal(profile.place)} on the board",
-                        MaterialTheme.colorScheme.onPrimaryContainer,
-                        MaterialTheme.colorScheme.primaryContainer,
+    val t = Tt.colors
+    Panel {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // The badge sits outside the clip, or the circle cuts the pencil in half.
+            Box {
+                Box(
+                    Modifier
+                        .size(FaceSize)
+                        .clip(CircleShape)
+                        .clickable(onClick = onEdit)
+                        .background(t.glass)
+                        .border(1.dp, t.glassBorder, CircleShape)
+                        .padding(3.dp),
+                ) {
+                    Avatar(
+                        profile.photoUrl,
+                        profile.displayName
+                            .take(1)
+                            .uppercase()
+                            .ifBlank { "?" },
+                        size = FaceSize - 6.dp,
+                        letterStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 23.sp),
                     )
                 }
-                if (since != null && profile.points > 0) Spacer(Modifier.width(8.dp))
-                if (since != null) {
-                    Pill(since, MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft)
+                Box(
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .clickable(onClick = onEdit)
+                        .background(t.glass)
+                        .padding(2.dp)
+                        .clip(CircleShape)
+                        .background(t.accent),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Lucide.Pencil, "Edit profile", Modifier.size(11.dp), tint = t.onAccent)
+                }
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    profile.displayName.ifBlank { profile.email.substringBefore('@') },
+                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp),
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    profile.email,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                    color = t.text3,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                val since = memberSince(profile.joinedAt)
+                if (since != null || profile.points > 0) {
+                    Spacer(Modifier.height(10.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (profile.points > 0) {
+                            ProfileChip("${ordinal(profile.place)} on the board", lit = true)
+                        }
+                        if (since != null) ProfileChip(since)
+                    }
                 }
             }
         }
     }
 }
 
-private val FaceSize = 84.dp
+/** A small fact under the name. The board place is the one lit in the accent. */
+@Composable
+private fun ProfileChip(
+    text: String,
+    lit: Boolean = false,
+) {
+    val t = Tt.colors
+    Text(
+        text,
+        Modifier
+            .clip(RoundedCornerShape(percent = 50))
+            .background(if (lit) t.tile else t.glass2)
+            .padding(horizontal = 9.dp, vertical = 5.dp),
+        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
+        fontWeight = FontWeight.SemiBold,
+        color = if (lit) t.tileInk else t.text2,
+        maxLines = 1,
+    )
+}
+
+private val FaceSize = 64.dp
 
 /** "Since September 2026", from the server's timestamp, or null if it cannot be read. */
 private fun memberSince(joinedAt: String): String? =
@@ -256,46 +281,47 @@ private fun memberSince(joinedAt: String): String? =
     }.getOrNull()
 
 /**
- * What this account has done, as one card of six figures.
+ * What this account has done, as one panel of six figures.
  *
- * Two cards of three were two boxes of the same shape saying different kinds of thing, and nothing
- * in them said which was which but a heading. One card with the work on the top row and the crews
- * underneath reads as one record, and the rule between the rows is what separates them. An account
- * that has done nothing is told so plainly instead of being given a place it has not earned.
+ * Value Guard's detail grid: the figures in mono, labels under them, hairlines between the cells.
+ * The work is the top row and the crews are the bottom one. An account that has done nothing is
+ * told so plainly instead of being given a place it has not earned.
  */
 @Composable
 private fun Record(profile: ApiProfile) {
-    Box(Modifier.padding(horizontal = Gutter)) {
-        CrewCard(padding = PaddingValues(vertical = 16.dp)) {
+    Panel(padding = PaddingValues(vertical = 16.dp)) {
+        Text(
+            "Your record",
+            Modifier.padding(horizontal = 16.dp),
+            style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp),
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.height(12.dp))
+        Figures(
+            Triple("${profile.opens}", "apps opened", true),
+            Triple("${profile.reviews}", "reviews given", true),
+            Triple("${profile.points}", "points", true),
+        )
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp)
+                .height(1.dp)
+                .background(Tt.colors.hair),
+        )
+        Figures(
+            Triple("${profile.crewsRunning}", "crews going on", false),
+            Triple("${profile.crewsFinished}", "crews finished", false),
+            Triple("${CrewRules.nightly(profile.crewsRunning)}", "apps a night", false),
+        )
+        if (profile.points == 0) {
+            Spacer(Modifier.height(14.dp))
             Text(
-                "Your record",
+                "Open somebody's app on a testing night and this starts counting.",
                 Modifier.padding(horizontal = 16.dp),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.5.sp),
+                color = Tt.colors.text3,
             )
-            Spacer(Modifier.height(14.dp))
-            Figures(
-                Triple("${profile.opens}", "apps opened", true),
-                Triple("${profile.reviews}", "reviews given", true),
-                Triple("${profile.points}", "points", true),
-            )
-            Spacer(Modifier.height(14.dp))
-            CardRule()
-            Spacer(Modifier.height(14.dp))
-            Figures(
-                Triple("${profile.crewsRunning}", "crews going on", false),
-                Triple("${profile.crewsFinished}", "crews finished", false),
-                Triple("${CrewRules.nightly(profile.crewsRunning)}", "apps a night", false),
-            )
-            if (profile.points == 0) {
-                Spacer(Modifier.height(14.dp))
-                Text(
-                    "Open somebody's app on a testing night and this starts counting.",
-                    Modifier.padding(horizontal = 16.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
         }
     }
 }
@@ -308,6 +334,7 @@ private fun Record(profile: ApiProfile) {
  */
 @Composable
 private fun Figures(vararg figures: Triple<String, String, Boolean>) {
+    val t = Tt.colors
     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
         figures.forEachIndexed { index, (value, label, accent) ->
             if (index > 0) {
@@ -315,20 +342,21 @@ private fun Figures(vararg figures: Triple<String, String, Boolean>) {
                     Modifier
                         .width(1.dp)
                         .fillMaxHeight()
-                        .background(MaterialTheme.colorScheme.outlineVariant),
+                        .background(t.hair),
                 )
             }
-            Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
+            Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
                 Text(
                     value,
                     style = MaterialTheme.typography.titleLarge.tabular(),
                     fontWeight = FontWeight.Bold,
-                    color = if (accent) Tt.colors.accentInk else MaterialTheme.colorScheme.onSurface,
+                    color = if (accent) t.accentInk else t.text,
                 )
+                Spacer(Modifier.height(2.dp))
                 Text(
                     label,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
+                    color = t.text3,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -341,12 +369,11 @@ private fun Figures(vararg figures: Triple<String, String, Boolean>) {
 private const val SITE = "https://eazyverse.com/apps/testtrack"
 
 /**
- * Everything you can do to the account, as one list.
+ * Everything you can do to the account, as one group of tiles.
  *
- * Sign out was a full width outlined button in red on its own under the cards, the loudest thing
- * on the page for the action nobody comes here to take. In a list it is one row among the others,
- * still red, and the policy and the way to delete the account sit beside it where Play and the
- * person reading both expect to find them.
+ * Value Guard's settings group: each row its own tile with an icon tile at the front, three points
+ * apart, only the outer corners round. Sign out is the red one at the end, the policy and the way to
+ * delete the account sit beside it where Play and the person reading both expect to find them.
  */
 @Composable
 private fun Account(
@@ -354,55 +381,21 @@ private fun Account(
     onSignOut: () -> Unit,
 ) {
     val links = LocalUriHandler.current
-    Box(Modifier.padding(horizontal = Gutter)) {
-        CrewCard(padding = PaddingValues(0.dp)) {
-            AccountRow(Lucide.Pencil, "Edit profile", onClick = onEdit)
-            CardRule()
-            AccountRow(Lucide.ShieldCheck, "Privacy policy", external = true) {
-                links.openUri("$SITE/privacy")
-            }
-            CardRule()
-            AccountRow(Lucide.Trash2, "Delete account", external = true) {
-                links.openUri("$SITE/delete-account")
-            }
-            CardRule()
-            AccountRow(Lucide.LogOut, "Sign out", tone = MaterialTheme.colorScheme.error, onClick = onSignOut)
-        }
+    val out: @Composable () -> Unit = {
+        Icon(Lucide.ExternalLink, null, Modifier.size(17.dp), tint = Tt.colors.text4)
     }
-}
-
-/** One line of [Account]: an icon, what it does, and where it goes. */
-@Composable
-private fun AccountRow(
-    icon: ImageVector,
-    label: String,
-    tone: Color? = null,
-    external: Boolean = false,
-    onClick: () -> Unit,
-) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, null, Modifier.size(18.dp), tint = tone ?: MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.width(14.dp))
-        Text(
-            label,
-            Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-            color = tone ?: MaterialTheme.colorScheme.onSurface,
-        )
-        if (tone == null) {
-            Icon(
-                if (external) Lucide.ExternalLink else Lucide.ChevronRight,
-                null,
-                Modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.outline,
-            )
+    TileGroup(count = 4) { index, place ->
+        when (index) {
+            0 -> TileRow(Lucide.Pencil, "Edit profile", place, subtitle = "Your name and picture", onClick = onEdit)
+            1 ->
+                TileRow(Lucide.ShieldCheck, "Privacy policy", place, trailing = out) {
+                    links.openUri("$SITE/privacy")
+                }
+            2 ->
+                TileRow(Lucide.Trash2, "Delete account", place, subtitle = "And everything in it", trailing = out) {
+                    links.openUri("$SITE/delete-account")
+                }
+            else -> TileRow(Lucide.LogOut, "Sign out", place, danger = true, onClick = onSignOut)
         }
     }
 }
