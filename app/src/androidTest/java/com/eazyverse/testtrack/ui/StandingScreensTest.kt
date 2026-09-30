@@ -306,8 +306,7 @@ class StandingScreensTest {
         compose.setContent {
             TestTrackTheme { MeBody(profile = profile(opens = 12, reviews = 1, place = 11)) }
         }
-        compose.onNodeWithText("11th").assertIsDisplayed()
-        compose.onNodeWithText("on the board").assertIsDisplayed()
+        compose.onNodeWithText("Rank #11").assertIsDisplayed()
         compose.onNodeWithText("12").assertIsDisplayed()
     }
 

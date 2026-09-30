@@ -275,6 +275,7 @@ fun MainShell(
                         MainTab.PROFILE ->
                             MeScreen(
                                 onSignOut = onSignOut,
+                                onOpenRanks = { show(MainTab.RANKS) },
                                 onSignIn = {
                                     asking =
                                         SignInReason(

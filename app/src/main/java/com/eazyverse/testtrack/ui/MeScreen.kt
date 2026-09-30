@@ -75,6 +75,7 @@ import java.time.format.DateTimeFormatter
 fun MeScreen(
     onSignOut: () -> Unit,
     onSignIn: () -> Unit = {},
+    onOpenRanks: () -> Unit = {},
     vm: MeViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -89,6 +90,7 @@ fun MeScreen(
         onEdit = { editing = true },
         onSignOut = onSignOut,
         onSignIn = onSignIn,
+        onOpenRanks = onOpenRanks,
     )
 
     if (editing) {
@@ -111,6 +113,7 @@ fun MeBody(
     onEdit: () -> Unit = {},
     onSignOut: () -> Unit = {},
     onSignIn: () -> Unit = {},
+    onOpenRanks: () -> Unit = {},
 ) {
     if (signedOut) {
         Gated(
@@ -142,7 +145,7 @@ fun MeBody(
     ) {
         item { Who(profile, onEdit) }
         item { SectionTitle("Your record") }
-        item { PointsHero(profile.points, profile.place, profile.opens, profile.reviews) }
+        item { PointsHero(profile.points, profile.place, profile.opens, profile.reviews, onOpenRanks) }
         item { SectionTitle("Crews") }
         item { CrewStrip(profile.crewsRunning, profile.crewsFinished) }
         item { SectionTitle("Account") }

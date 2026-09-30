@@ -2,6 +2,7 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -27,6 +28,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Trophy
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -75,32 +79,34 @@ internal fun PointsHero(
     place: Int,
     opens: Int,
     reviews: Int,
+    onOpenRanks: () -> Unit = {},
 ) {
     val t = Tt.colors
     // Plain on the page, no box: the figure is large enough to hold the space on its own, and a
     // card round it with the place in a second card inside was a box in a box.
     Column(Modifier.fillMaxWidth().padding(horizontal = 2.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Row(Modifier.weight(1f), verticalAlignment = Alignment.Bottom) {
-                Text(
-                    "$points",
-                    Modifier.alignByBaseline(),
-                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 52.sp, fontFeatureSettings = "tnum"),
-                    fontWeight = FontWeight.Bold,
-                    color = t.accentInk,
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    "points",
-                    Modifier.alignByBaseline(),
-                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp),
-                    fontWeight = FontWeight.SemiBold,
-                    color = t.text2,
-                )
-            }
-            PlaceBadge(points, place)
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                "$points",
+                Modifier.alignByBaseline(),
+                style = MaterialTheme.typography.displayMedium.copy(fontSize = 52.sp, fontFeatureSettings = "tnum"),
+                fontWeight = FontWeight.Bold,
+                color = t.accentInk,
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                "points",
+                Modifier.alignByBaseline(),
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp),
+                fontWeight = FontWeight.SemiBold,
+                color = t.text2,
+            )
         }
-        Spacer(Modifier.height(10.dp))
+        if (points > 0) {
+            Spacer(Modifier.height(8.dp))
+            RankPill(place, onOpenRanks)
+        }
+        Spacer(Modifier.height(12.dp))
         if (points == 0) {
             Text(
                 "Open somebody's app on a testing night and this starts counting.",
@@ -119,26 +125,37 @@ internal fun PointsHero(
     }
 }
 
-/** Where the points put you, as plain words beside them. */
+/**
+ * Where the points put you, as a pill that goes there.
+ *
+ * "1st on the board" set off to the right read as a stray caption, and "board" is the app's word,
+ * not the reader's. This says Rank and the number, with the trophy the Ranks tab carries, and a tap
+ * opens that tab.
+ */
 @Composable
-private fun PlaceBadge(
-    points: Int,
+private fun RankPill(
     place: Int,
+    onOpen: () -> Unit,
 ) {
     val t = Tt.colors
-    val ranked = points > 0
-    Column(horizontalAlignment = Alignment.End) {
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(percent = 50))
+            .background(t.tile)
+            .clickable(onClick = onOpen)
+            .padding(start = 10.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Lucide.Trophy, null, Modifier.size(14.dp), tint = t.tileInk)
+        Spacer(Modifier.width(6.dp))
         Text(
-            if (ranked) ordinal(place) else "–",
-            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 26.sp, fontFeatureSettings = "tnum"),
+            "Rank #$place",
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.sp, fontFeatureSettings = "tnum"),
             fontWeight = FontWeight.Bold,
-            color = t.accentInk,
+            color = t.tileInk,
         )
-        Text(
-            if (ranked) "on the board" else "not ranked",
-            style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
-            color = t.text3,
-        )
+        Spacer(Modifier.width(2.dp))
+        Icon(Lucide.ChevronRight, "Open Ranks", Modifier.size(15.dp), tint = t.tileInk)
     }
 }
 
