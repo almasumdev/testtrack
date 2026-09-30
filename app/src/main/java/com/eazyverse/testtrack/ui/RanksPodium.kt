@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,10 +23,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,26 +67,33 @@ fun Podium(top: List<PodiumPlace>) {
     Box(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 8.dp)) {
         // The winner stands in a little light. Radial and very faint, thrown from behind the
         // first face: it is what stops three columns of the same weight reading as a table.
-        Canvas(Modifier.matchParentSize()) {
-            val heart = Offset(size.width / 2f, size.height * 0.26f)
-            val reach = size.width * 0.46f
-            drawCircle(
-                brush =
-                    Brush.radialGradient(
-                        colors = listOf(lit.copy(alpha = 0.17f), Color.Transparent),
-                        center = heart,
-                        radius = reach,
-                    ),
-                radius = reach,
-                center = heart,
-            )
+        //
+        // Clipped, and faded out before it reaches the top edge. A Canvas does not clip what it
+        // draws, and the light used to spill up over the header, where it read as a stain behind
+        // the level and the tix rather than as anything to do with the winner.
+        Canvas(Modifier.matchParentSize().clipToBounds()) {
+            val heart = Offset(size.width / 2f, size.height * 0.30f)
+            val reach = heart.y
+            // Wider than it is tall: a pool of light under three people, not a spotlight on one.
+            scale(scaleX = 2.1f, scaleY = 1f, pivot = heart) {
+                drawCircle(
+                    brush =
+                        Brush.radialGradient(
+                            colors = listOf(lit.copy(alpha = 0.16f), Color.Transparent),
+                            center = heart,
+                            radius = reach,
+                        ),
+                    radius = reach,
+                    center = heart,
+                )
+            }
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-            Step(top[1], Medal.silver, seat = 56.dp, face = 52.dp)
+            Step(top[1], Medal.silver, seat = 62.dp, face = 54.dp)
             Spacer(Modifier.width(8.dp))
-            Step(top[0], Medal.gold, seat = 78.dp, face = 66.dp, crowned = true)
+            Step(top[0], Medal.gold, seat = 88.dp, face = 68.dp, crowned = true)
             Spacer(Modifier.width(8.dp))
-            Step(top[2], Medal.bronze, seat = 42.dp, face = 52.dp)
+            Step(top[2], Medal.bronze, seat = 46.dp, face = 54.dp)
         }
     }
 }
@@ -113,17 +124,12 @@ private fun RowScope.Step(
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(1.dp))
-        Text(
-            "${row.points}",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = medal,
-        )
+        Points(row.points, MaterialTheme.typography.titleLarge, medal)
         Text(
             row.work,
             Modifier.padding(horizontal = 2.dp),
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.outline,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -146,17 +152,17 @@ private fun RowScope.Step(
                 .background(MaterialTheme.colorScheme.surface)
                 .background(
                     Brush.verticalGradient(
-                        listOf(medal.copy(alpha = 0.20f), Color.Transparent),
+                        listOf(medal.copy(alpha = 0.24f), Color.Transparent),
                     ),
                 ),
             contentAlignment = Alignment.TopCenter,
         ) {
-            Box(Modifier.fillMaxWidth().height(2.5.dp).background(medal))
+            Box(Modifier.fillMaxWidth().height(3.dp).background(medal))
             Text(
                 "${row.place}",
-                Modifier.padding(top = 10.dp),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                Modifier.padding(top = 9.dp),
+                style = MaterialTheme.typography.headlineSmall.tabular(),
+                fontWeight = FontWeight.Black,
                 color = medal,
             )
         }
@@ -194,6 +200,114 @@ private fun Face(
         } else {
             Avatar(row.photo, row.name.take(1).uppercase(), size = size - 7.dp)
         }
+    }
+}
+
+/**
+ * A score with its unit.
+ *
+ * A bare number at the end of a row was read as a count of something, and the line beside it
+ * already counted apps, so "18" next to "18 apps opened" looked like the same fact twice. The unit
+ * says it is the total, and the reviews folded into it are why the two can differ.
+ *
+ * The unit is smaller and quieter than the figure, and sits on its baseline, so the number is still
+ * the thing read first.
+ */
+@Composable
+fun Points(
+    value: Int,
+    style: TextStyle,
+    color: Color,
+) {
+    Row {
+        Text(
+            "$value",
+            Modifier.alignByBaseline(),
+            style = style.tabular(),
+            fontWeight = FontWeight.Bold,
+            color = color,
+        )
+        Spacer(Modifier.width(3.dp))
+        Text(
+            "pts",
+            Modifier.alignByBaseline(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * Figures that line up.
+ *
+ * The default numerals are proportional, so a 1 is narrower than an 8 and a column of places or
+ * scores wobbles down the screen. Tabular ones are all one width and stack into a straight edge.
+ */
+fun TextStyle.tabular(): TextStyle = copy(fontFeatureSettings = "tnum")
+
+/**
+ * The board, before it has arrived: three faces on three blocks, and rows under them.
+ *
+ * The same silhouette the podium will have, so nothing jumps when it lands. A sentence in the
+ * corner said the board was being counted and nothing about what was coming.
+ */
+@Composable
+fun RanksLoading() {
+    Column(Modifier.fillMaxSize()) {
+        Row(
+            Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 34.dp),
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            LoadingStep(face = 54.dp, seat = 62.dp)
+            Spacer(Modifier.width(8.dp))
+            LoadingStep(face = 68.dp, seat = 88.dp)
+            Spacer(Modifier.width(8.dp))
+            LoadingStep(face = 54.dp, seat = 46.dp)
+        }
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant),
+        )
+        Spacer(Modifier.height(30.dp))
+        repeat(SKELETON_ROWS) { i ->
+            if (i > 0) RowDivider()
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 13.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Skeleton(width = 12.dp, height = 12.dp, corner = 4.dp)
+                Spacer(Modifier.width(11.dp))
+                Skeleton(width = 36.dp, height = 36.dp, corner = 18.dp)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Skeleton(width = LoadingNames[i % LoadingNames.size].dp, height = 13.dp)
+                    Spacer(Modifier.height(6.dp))
+                    Skeleton(width = 104.dp, height = 11.dp)
+                }
+                Skeleton(width = 38.dp, height = 14.dp)
+            }
+        }
+    }
+}
+
+private val LoadingNames = listOf(84, 112, 70, 96, 122, 78, 104, 90)
+
+@Composable
+private fun RowScope.LoadingStep(
+    face: Dp,
+    seat: Dp,
+) {
+    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+        Skeleton(width = face, height = face, corner = face / 2)
+        Spacer(Modifier.height(10.dp))
+        Skeleton(width = 58.dp, height = 12.dp)
+        Spacer(Modifier.height(8.dp))
+        Skeleton(width = 40.dp, height = 20.dp)
+        Spacer(Modifier.height(12.dp))
+        Skeleton(height = seat, corner = 12.dp)
     }
 }
 

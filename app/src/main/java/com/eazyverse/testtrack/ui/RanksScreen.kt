@@ -126,7 +126,7 @@ fun RanksBody(
         return
     }
     if (loading && rows.isEmpty()) {
-        Blank("Counting.")
+        RanksLoading()
         return
     }
     if (rows.isEmpty()) {
@@ -204,10 +204,11 @@ fun RanksBody(
                     PaddingValues(top = 4.dp, bottom = if (mine == null) Gutter else PinRoom),
             ) {
                 if (rest.isNotEmpty()) {
+                    // Named for what it is rather than as a range of places. "4 to 40" was
+                    // arithmetic about the list; the count of how many are on it is the part worth
+                    // saying, and the places are already down the left of every row.
                     item(key = HEADING_KEY) {
-                        CrewHeading(
-                            if (podium) "${PODIUM + 1} to ${rows.size}" else "Top ${rows.size}",
-                        )
+                        CrewHeading("Standings", trailing = "Top ${rows.size}")
                     }
                 }
                 itemsIndexed(rest, key = { _, row -> row.id }) { index, row ->
@@ -344,7 +345,7 @@ private fun BoardRowView(
         Text(
             "${row.place}",
             Modifier.width(room),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelLarge.tabular(),
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.End,
             color =
@@ -384,12 +385,7 @@ private fun BoardRowView(
             )
             Spacer(Modifier.width(12.dp))
         }
-        Text(
-            "${row.points}",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
+        Points(row.points, MaterialTheme.typography.titleSmall, MaterialTheme.colorScheme.primary)
     }
 }
 
