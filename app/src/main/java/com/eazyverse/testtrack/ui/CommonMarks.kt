@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -88,6 +89,8 @@ fun AppIcon(
 fun Initial(
     letter: String,
     size: Dp = 34.dp,
+    /** Larger faces need a larger letter; a row-sized one in an 84dp circle reads as a dot. */
+    letterStyle: TextStyle? = null,
 ) {
     Box(
         Modifier.size(size).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
@@ -95,7 +98,7 @@ fun Initial(
     ) {
         Text(
             letter,
-            style = MaterialTheme.typography.labelLarge,
+            style = letterStyle ?: MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onPrimaryContainer,
         )
@@ -117,6 +120,7 @@ fun Avatar(
     letter: String,
     size: Dp = 34.dp,
     loading: Boolean = false,
+    letterStyle: TextStyle? = null,
 ) {
     // Nothing has been fetched yet, so there is no letter to show either — the name it would come
     // from is on the same document as the picture. A shimmer says "coming", where a letter would
@@ -128,7 +132,7 @@ fun Avatar(
 
     val bitmap = remember(photo) { Photo.decode(photo)?.asImageBitmap() }
     if (bitmap == null) {
-        Initial(letter, size)
+        Initial(letter, size, letterStyle)
     } else {
         ComposeImage(
             bitmap = bitmap,

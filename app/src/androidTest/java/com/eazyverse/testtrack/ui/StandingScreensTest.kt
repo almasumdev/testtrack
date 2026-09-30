@@ -315,7 +315,8 @@ class StandingScreensTest {
         compose.setContent { TestTrackTheme { MeBody(profile = profile(tix = 240)) } }
         compose.onNodeWithText("Rafiul").assertIsDisplayed()
         compose.onNodeWithText("rafiul@example.com").assertIsDisplayed()
-        compose.onNodeWithText("240 tix").assertIsDisplayed()
+        // The balance is the header's, over every tab, and is not repeated here.
+        compose.onNodeWithText("Since September 2026").assertIsDisplayed()
     }
 
     @Test
@@ -397,7 +398,7 @@ class MeEditDialogTest {
                 )
             }
         }
-        compose.onNodeWithText("Edit").performClick()
+        compose.onNodeWithText("Edit profile").performClick()
         assertEquals(1, edited)
     }
 

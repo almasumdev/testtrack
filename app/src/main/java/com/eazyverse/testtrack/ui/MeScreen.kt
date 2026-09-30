@@ -4,17 +4,25 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,14 +33,28 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.ExternalLink
+import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Pencil
+import com.composables.icons.lucide.ShieldCheck
+import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.UserRound
+import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.net.ApiProfile
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 
 /**
  * What this account is, and what it has done.
@@ -41,8 +63,10 @@ import com.eazyverse.testtrack.net.ApiProfile
  * been replaced rather than ported, because the thing it described no longer exists: crews form
  * themselves now, and what an account is worth is counted from work rather than from membership.
  *
- * Three cards, in the order somebody asks the questions: what have I got, what have I done, and
- * who am I signed in as.
+ * Who you are, what you have done, and the account itself, in the order somebody asks. It was three
+ * cards of the same size, which gave the name, the record and the crews equal weight and put the
+ * balance on screen twice, once here and once in the header above it. Now the person is the top of
+ * the page, the figures share one card, and everything you can do to the account is one list.
  */
 @Composable
 fun MeScreen(
@@ -111,87 +135,100 @@ fun MeBody(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 4.dp, bottom = Gutter),
+        contentPadding = PaddingValues(top = 12.dp, bottom = 28.dp),
     ) {
         item { Who(profile, onEdit) }
-        item { Spacer(Modifier.height(12.dp)) }
-        item { Record(profile) }
-        item { Spacer(Modifier.height(12.dp)) }
-        item { Crews(profile) }
         item { Spacer(Modifier.height(20.dp)) }
+        item { Record(profile) }
+        item { CrewHeading("Account") }
+        item { Account(onEdit = onEdit, onSignOut = onSignOut) }
+        item { Spacer(Modifier.height(24.dp)) }
         item {
-            Box(Modifier.padding(horizontal = Gutter)) {
-                Secondary("Sign out", Modifier.fillMaxWidth(), destructive = true) { onSignOut() }
-            }
-        }
-    }
-}
-
-/** Name, face and balance. The three things somebody checks without reading. */
-@Composable
-private fun Who(
-    profile: ApiProfile,
-    onEdit: () -> Unit,
-) {
-    Box(Modifier.padding(horizontal = Gutter)) {
-        CrewCard(padding = PaddingValues(16.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Initial(
-                    profile.displayName
-                        .take(1)
-                        .uppercase()
-                        .ifBlank { "?" },
-                    size = 48.dp,
-                )
-                Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        profile.displayName.ifBlank { profile.email.substringBefore('@') },
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        profile.email,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Spacer(Modifier.width(10.dp))
-                Pill(
-                    "${profile.tix} tix",
-                    MaterialTheme.colorScheme.onPrimaryContainer,
-                    MaterialTheme.colorScheme.primaryContainer,
-                )
-            }
-            Spacer(Modifier.height(12.dp))
-            Secondary("Edit", Modifier.fillMaxWidth(), onClick = onEdit)
+            Text(
+                "TestTrack ${BuildConfig.VERSION_NAME}",
+                Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
 
 /**
- * What this account has done, and where that puts it.
+ * The person, as the top of the page rather than as one card among three.
  *
- * The place is shown next to the work rather than on its own, because a rank without the figures
- * behind it is a number nobody can act on. An account that has done nothing is told so plainly
- * instead of being given a place it has not earned.
+ * The face is large and tappable, with the pencil on it saying so. The balance is not here: the
+ * header over every tab already shows it, and a second copy two centimetres below the first was the
+ * page repeating itself.
  */
 @Composable
-private fun Record(profile: ApiProfile) {
-    Box(Modifier.padding(horizontal = Gutter)) {
-        CrewCard(padding = PaddingValues(16.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "Your record",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
+private fun Who(
+    profile: ApiProfile,
+    onEdit: () -> Unit,
+) {
+    Column(
+        Modifier.fillMaxWidth().padding(horizontal = Gutter),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // The badge sits outside the clip. Clipping the whole stack to the circle cut the pencil
+        // in half, which is the one part of it that says the face can be pressed.
+        Box {
+            Box(
+                Modifier
+                    .size(FaceSize + 8.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onEdit)
+                    .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), CircleShape)
+                    .padding(4.dp),
+            ) {
+                Avatar(
+                    profile.photoUrl,
+                    profile.displayName
+                        .take(1)
+                        .uppercase()
+                        .ifBlank { "?" },
+                    size = FaceSize,
+                    letterStyle = MaterialTheme.typography.headlineMedium,
                 )
+            }
+            Box(
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onEdit)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(3.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Lucide.Pencil, "Edit profile", Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onPrimary)
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        Text(
+            profile.displayName.ifBlank { profile.email.substringBefore('@') },
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(3.dp))
+        Text(
+            profile.email,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        val since = memberSince(profile.joinedAt)
+        if (since != null || profile.points > 0) {
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 if (profile.points > 0) {
                     Pill(
                         "${ordinal(profile.place)} on the board",
@@ -199,17 +236,60 @@ private fun Record(profile: ApiProfile) {
                         MaterialTheme.colorScheme.primaryContainer,
                     )
                 }
+                if (since != null && profile.points > 0) Spacer(Modifier.width(8.dp))
+                if (since != null) {
+                    Pill(since, MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft)
+                }
             }
+        }
+    }
+}
+
+private val FaceSize = 84.dp
+
+/** "Since September 2026", from the server's timestamp, or null if it cannot be read. */
+private fun memberSince(joinedAt: String): String? =
+    runCatching {
+        "Since " + OffsetDateTime.parse(joinedAt).format(DateTimeFormatter.ofPattern("MMMM yyyy"))
+    }.getOrNull()
+
+/**
+ * What this account has done, as one card of six figures.
+ *
+ * Two cards of three were two boxes of the same shape saying different kinds of thing, and nothing
+ * in them said which was which but a heading. One card with the work on the top row and the crews
+ * underneath reads as one record, and the rule between the rows is what separates them. An account
+ * that has done nothing is told so plainly instead of being given a place it has not earned.
+ */
+@Composable
+private fun Record(profile: ApiProfile) {
+    Box(Modifier.padding(horizontal = Gutter)) {
+        CrewCard(padding = PaddingValues(vertical = 16.dp)) {
+            Text(
+                "Your record",
+                Modifier.padding(horizontal = 16.dp),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+            )
             Spacer(Modifier.height(14.dp))
-            Row(Modifier.fillMaxWidth()) {
-                Tally(Modifier.weight(1f), "${profile.opens}", "apps opened")
-                Tally(Modifier.weight(1f), "${profile.reviews}", "reviews given")
-                Tally(Modifier.weight(1f), "${profile.points}", "points")
-            }
+            Figures(
+                Triple("${profile.opens}", "apps opened", true),
+                Triple("${profile.reviews}", "reviews given", true),
+                Triple("${profile.points}", "points", true),
+            )
+            Spacer(Modifier.height(14.dp))
+            CardRule()
+            Spacer(Modifier.height(14.dp))
+            Figures(
+                Triple("${profile.crewsRunning}", "crews going on", false),
+                Triple("${profile.crewsFinished}", "crews finished", false),
+                Triple("${CrewRules.nightly(profile.crewsRunning)}", "apps a night", false),
+            )
             if (profile.points == 0) {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(14.dp))
                 Text(
                     "Open somebody's app on a testing night and this starts counting.",
+                    Modifier.padding(horizontal = 16.dp),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -218,26 +298,109 @@ private fun Record(profile: ApiProfile) {
     }
 }
 
-/** How many fortnights this account is in the middle of, and how many it has seen through. */
+/**
+ * Three figures in a row, with a hairline between each.
+ *
+ * The work is in the accent and the crews are in plain ink. They are both counts, but only the
+ * first row is the score, and colouring all six the same said they were six equal numbers.
+ */
 @Composable
-private fun Crews(profile: ApiProfile) {
-    Box(Modifier.padding(horizontal = Gutter)) {
-        CrewCard(padding = PaddingValues(16.dp)) {
-            Text(
-                "Crews",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(14.dp))
-            Row(Modifier.fillMaxWidth()) {
-                Tally(Modifier.weight(1f), "${profile.crewsRunning}", "going on")
-                Tally(Modifier.weight(1f), "${profile.crewsFinished}", "finished")
-                Tally(
-                    Modifier.weight(1f),
-                    "${CrewRules.nightly(profile.crewsRunning)}",
-                    "apps a night",
+private fun Figures(vararg figures: Triple<String, String, Boolean>) {
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+        figures.forEachIndexed { index, (value, label, accent) ->
+            if (index > 0) {
+                Box(
+                    Modifier
+                        .width(1.dp)
+                        .fillMaxHeight()
+                        .background(MaterialTheme.colorScheme.outlineVariant),
                 )
             }
+            Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
+                Text(
+                    value,
+                    style = MaterialTheme.typography.titleLarge.tabular(),
+                    fontWeight = FontWeight.Bold,
+                    color = if (accent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    label,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+/** Where the policy and the deletion request live. The site owns both pages. */
+private const val SITE = "https://eazyverse.com/apps/testtrack"
+
+/**
+ * Everything you can do to the account, as one list.
+ *
+ * Sign out was a full width outlined button in red on its own under the cards, the loudest thing
+ * on the page for the action nobody comes here to take. In a list it is one row among the others,
+ * still red, and the policy and the way to delete the account sit beside it where Play and the
+ * person reading both expect to find them.
+ */
+@Composable
+private fun Account(
+    onEdit: () -> Unit,
+    onSignOut: () -> Unit,
+) {
+    val links = LocalUriHandler.current
+    Box(Modifier.padding(horizontal = Gutter)) {
+        CrewCard(padding = PaddingValues(0.dp)) {
+            AccountRow(Lucide.Pencil, "Edit profile", onClick = onEdit)
+            CardRule()
+            AccountRow(Lucide.ShieldCheck, "Privacy policy", external = true) {
+                links.openUri("$SITE/privacy")
+            }
+            CardRule()
+            AccountRow(Lucide.Trash2, "Delete account", external = true) {
+                links.openUri("$SITE/delete-account")
+            }
+            CardRule()
+            AccountRow(Lucide.LogOut, "Sign out", tone = MaterialTheme.colorScheme.error, onClick = onSignOut)
+        }
+    }
+}
+
+/** One line of [Account]: an icon, what it does, and where it goes. */
+@Composable
+private fun AccountRow(
+    icon: ImageVector,
+    label: String,
+    tone: Color? = null,
+    external: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, null, Modifier.size(18.dp), tint = tone ?: MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(14.dp))
+        Text(
+            label,
+            Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = tone ?: MaterialTheme.colorScheme.onSurface,
+        )
+        if (tone == null) {
+            Icon(
+                if (external) Lucide.ExternalLink else Lucide.ChevronRight,
+                null,
+                Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.outline,
+            )
         }
     }
 }
