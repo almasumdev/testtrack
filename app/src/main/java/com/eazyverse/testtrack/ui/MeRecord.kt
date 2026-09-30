@@ -3,14 +3,12 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,13 +22,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.MessageSquareText
+import com.composables.icons.lucide.Moon
+import com.composables.icons.lucide.Smartphone
+import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.Trophy
+import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -67,166 +72,109 @@ internal fun ProfileChip(
 }
 
 /**
- * The score, as the one big thing on the page.
+ * What this account has done, as a two-column grid of small stat cards.
  *
- * Points are what the board ranks and what the level is built from, so they lead: one large figure
- * with the place beside it, and the two kinds of work that add up to it written small underneath.
- * An account that has done nothing is not given a place; it is told how to earn one.
+ * Each card is one fact read the same way: a tinted icon on the left, the figure and what it counts
+ * on the right. Six of them in three rows scan in one look, which a big number with a pill and a
+ * sentence under it did not; and the crews sit in the same grid instead of a second block of their
+ * own. The rank is in gold, the one medal colour, and opens the Ranks tab.
  */
 @Composable
-internal fun PointsHero(
+internal fun RecordGrid(
     points: Int,
     place: Int,
     opens: Int,
     reviews: Int,
+    crewsRunning: Int,
     onOpenRanks: () -> Unit = {},
 ) {
     val t = Tt.colors
-    // Plain on the page, no box: the figure is large enough to hold the space on its own, and a
-    // card round it with the place in a second card inside was a box in a box.
-    Column(Modifier.fillMaxWidth().padding(horizontal = 2.dp)) {
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                "$points",
-                Modifier.alignByBaseline(),
-                style = MaterialTheme.typography.displayMedium.copy(fontSize = 52.sp, fontFeatureSettings = "tnum"),
-                fontWeight = FontWeight.Bold,
-                color = t.accentInk,
+    val ranked = points > 0
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatCard(
+                Lucide.Trophy,
+                if (ranked) "#$place" else "–",
+                if (ranked) "Rank" else "Not ranked yet",
+                tint = t.gold,
+                onClick = if (ranked) onOpenRanks else null,
             )
-            Spacer(Modifier.width(6.dp))
-            Text(
-                "points",
-                Modifier.alignByBaseline(),
-                style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp),
-                fontWeight = FontWeight.SemiBold,
-                color = t.text2,
-            )
+            StatCard(Lucide.Star, "$points", "Points", tint = t.accentInk)
         }
-        if (points > 0) {
-            Spacer(Modifier.height(8.dp))
-            RankPill(place, onOpenRanks)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatCard(Lucide.Smartphone, "$opens", if (opens == 1) "App opened" else "Apps opened")
+            StatCard(Lucide.MessageSquareText, "$reviews", if (reviews == 1) "Review given" else "Reviews given")
         }
-        Spacer(Modifier.height(12.dp))
-        if (points == 0) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatCard(Lucide.Users, "$crewsRunning", if (crewsRunning == 1) "Crew going on" else "Crews going on")
+            StatCard(Lucide.Moon, "${CrewRules.nightly(crewsRunning)}", "Apps a night")
+        }
+        if (!ranked) {
             Text(
                 "Open somebody's app on a testing night and this starts counting.",
+                Modifier.padding(top = 4.dp, start = 2.dp),
                 style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.5.sp),
-                color = t.text2,
+                color = t.text3,
             )
-        } else {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Figure("$opens")
-                Words(if (opens == 1) " app opened" else " apps opened")
-                Words("  ·  ")
-                Figure("$reviews")
-                Words(if (reviews == 1) " review given" else " reviews given")
-            }
         }
     }
 }
 
 /**
- * Where the points put you, as a pill that goes there.
+ * One stat: a tinted icon, the figure, and its label, side by side on a card.
  *
- * "1st on the board" set off to the right read as a stray caption, and "board" is the app's word,
- * not the reader's. This says Rank and the number, with the trophy the Ranks tab carries, and a tap
- * opens that tab.
+ * [tint] colours the icon and its tile; left alone it is the palette's own tile blue. A card with
+ * [onClick] shows a chevron so it reads as something that goes somewhere.
  */
 @Composable
-private fun RankPill(
-    place: Int,
-    onOpen: () -> Unit,
-) {
-    val t = Tt.colors
-    Row(
-        Modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .background(t.tile)
-            .clickable(onClick = onOpen)
-            .padding(start = 10.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(Lucide.Trophy, null, Modifier.size(14.dp), tint = t.tileInk)
-        Spacer(Modifier.width(6.dp))
-        Text(
-            "Rank #$place",
-            style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.sp, fontFeatureSettings = "tnum"),
-            fontWeight = FontWeight.Bold,
-            color = t.tileInk,
-        )
-        Spacer(Modifier.width(2.dp))
-        Icon(Lucide.ChevronRight, "Open Ranks", Modifier.size(15.dp), tint = t.tileInk)
-    }
-}
-
-@Composable
-private fun Figure(value: String) {
-    Text(
-        value,
-        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, fontFeatureSettings = "tnum"),
-        fontWeight = FontWeight.Bold,
-        color = Tt.colors.text,
-    )
-}
-
-@Composable
-private fun Words(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-        color = Tt.colors.text2,
-    )
-}
-
-/**
- * The crews, as one card of three figures side by side.
- *
- * Quieter than the points above it on purpose: the same card surface as everything else, figures in
- * plain ink, hairlines between them.
- */
-@Composable
-internal fun CrewStrip(
-    running: Int,
-    finished: Int,
+private fun RowScope.StatCard(
+    icon: ImageVector,
+    value: String,
+    label: String,
+    tint: Color? = null,
+    onClick: (() -> Unit)? = null,
 ) {
     val t = Tt.colors
     val shape = RoundedCornerShape(CardRadius)
+    val ink = tint ?: t.tileInk
     Row(
         Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min)
+            .weight(1f)
             .clip(shape)
             .background(t.glass)
             .border(1.dp, t.glassBorder, shape)
-            .padding(vertical = 14.dp),
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(start = 12.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        listOf(
-            "$running" to "going on",
-            "$finished" to "finished",
-            "${CrewRules.nightly(running)}" to "apps a night",
-        ).forEachIndexed { index, (value, label) ->
-            if (index > 0) {
-                Box(
-                    Modifier
-                        .width(1.dp)
-                        .fillMaxHeight()
-                        .background(t.hair),
-                )
-            }
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    value,
-                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, fontFeatureSettings = "tnum"),
-                    fontWeight = FontWeight.Bold,
-                    color = t.text,
-                )
-                Text(
-                    label,
-                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
-                    color = t.text3,
-                    maxLines = 1,
-                )
-            }
+        Box(
+            Modifier
+                .size(38.dp)
+                .clip(RoundedCornerShape(11.dp))
+                .background(if (tint == null) t.tile else tint.copy(alpha = 0.16f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, null, Modifier.size(19.dp), tint = ink)
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                value,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, lineHeight = 22.sp, fontFeatureSettings = "tnum"),
+                fontWeight = FontWeight.Bold,
+                color = t.text,
+                maxLines = 1,
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
+                color = t.text3,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (onClick != null) {
+            Icon(Lucide.ChevronRight, "Open", Modifier.size(16.dp), tint = t.text4)
         }
     }
 }

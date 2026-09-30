@@ -52,7 +52,6 @@ import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.ShieldCheck
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.UserRound
-import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.net.ApiProfile
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -145,9 +144,16 @@ fun MeBody(
     ) {
         item { Who(profile, onEdit) }
         item { SectionTitle("Your record") }
-        item { PointsHero(profile.points, profile.place, profile.opens, profile.reviews, onOpenRanks) }
-        item { SectionTitle("Crews") }
-        item { CrewStrip(profile.crewsRunning, profile.crewsFinished) }
+        item {
+            RecordGrid(
+                points = profile.points,
+                place = profile.place,
+                opens = profile.opens,
+                reviews = profile.reviews,
+                crewsRunning = profile.crewsRunning,
+                onOpenRanks = onOpenRanks,
+            )
+        }
         item { SectionTitle("Account") }
         item { Account(onEdit = onEdit, onSignOut = onSignOut) }
         item { Spacer(Modifier.height(24.dp)) }
@@ -252,9 +258,6 @@ private fun Who(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            if (profile.crewsRunning > 0) {
-                ProfileChip(Lucide.Users, if (profile.crewsRunning == 1) "1 crew" else "${profile.crewsRunning} crews")
-            }
             memberSince(profile.joinedAt)?.let { ProfileChip(Lucide.CalendarDays, it) }
             localTime(profile.timezone)?.let { ProfileChip(Lucide.Clock, it) }
         }

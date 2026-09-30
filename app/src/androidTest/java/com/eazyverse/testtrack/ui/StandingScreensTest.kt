@@ -306,7 +306,7 @@ class StandingScreensTest {
         compose.setContent {
             TestTrackTheme { MeBody(profile = profile(opens = 12, reviews = 1, place = 11)) }
         }
-        compose.onNodeWithText("Rank #11").assertIsDisplayed()
+        compose.onNodeWithText("#11").assertIsDisplayed()
         compose.onNodeWithText("12").assertIsDisplayed()
     }
 
@@ -324,7 +324,7 @@ class StandingScreensTest {
         // Two runs is twenty-eight apps in one evening, and nobody is told that anywhere else.
         compose.setContent { TestTrackTheme { MeBody(profile = profile(running = 2)) } }
         compose.onNodeWithText("${CrewRules.nightly(2)}").assertIsDisplayed()
-        compose.onNodeWithText("apps a night").assertIsDisplayed()
+        compose.onNodeWithText("Apps a night").assertIsDisplayed()
     }
 
     @Test
