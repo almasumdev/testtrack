@@ -306,7 +306,8 @@ class StandingScreensTest {
         compose.setContent {
             TestTrackTheme { MeBody(profile = profile(opens = 12, reviews = 1, place = 11)) }
         }
-        compose.onNodeWithText("11th on the board").assertIsDisplayed()
+        compose.onNodeWithText("11th").assertIsDisplayed()
+        compose.onNodeWithText("on the board").assertIsDisplayed()
         compose.onNodeWithText("12").assertIsDisplayed()
     }
 
@@ -316,7 +317,7 @@ class StandingScreensTest {
         compose.onNodeWithText("Rafiul").assertIsDisplayed()
         compose.onNodeWithText("rafiul@example.com").assertIsDisplayed()
         // The balance is the header's, over every tab, and is not repeated here.
-        compose.onNodeWithText("Since September 2026").assertIsDisplayed()
+        compose.onNodeWithText("Since Sep 2026").assertIsDisplayed()
     }
 
     @Test

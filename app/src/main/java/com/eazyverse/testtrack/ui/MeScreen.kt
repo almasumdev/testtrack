@@ -10,10 +10,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,16 +47,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.CircleCheck
+import com.composables.icons.lucide.CalendarDays
+import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.ExternalLink
 import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.MessageSquareText
-import com.composables.icons.lucide.Moon
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.ShieldCheck
-import com.composables.icons.lucide.Smartphone
-import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.UserRound
 import com.composables.icons.lucide.Users
@@ -145,9 +145,10 @@ fun MeBody(
         contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = 28.dp + dockRoom()),
     ) {
         item { Who(profile, onEdit) }
-        item { Spacer(Modifier.height(12.dp)) }
-        item { Spacer(Modifier.height(6.dp)) }
-        item { Record(profile) }
+        item { Spacer(Modifier.height(16.dp)) }
+        item { PointsHero(profile) }
+        item { SectionTitle("Crews") }
+        item { CrewStrip(profile) }
         item { SectionTitle("Account") }
         item { Account(onEdit = onEdit, onSignOut = onSignOut) }
         item { Spacer(Modifier.height(24.dp)) }
@@ -175,19 +176,20 @@ private fun SectionTitle(text: String) {
 }
 
 /**
- * The person, as a panel: Value Guard's profile card.
+ * The person: the face on the left, the name and address beside it, the small facts under both.
  *
- * Dashed because it is something you read rather than press; the face is the one part that does
- * something, and the pencil on it says so. The balance is not here: the header over every tab
- * already shows it.
+ * Straight on the page rather than in a box, so the points under it are the one boxed thing at the
+ * top and the eye goes there next. The face is the part that does something, and the pencil on it
+ * says so. The balance is not here: the header over every tab already shows it.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Who(
     profile: ApiProfile,
     onEdit: () -> Unit,
 ) {
     val t = Tt.colors
-    Panel {
+    Column(Modifier.padding(horizontal = 2.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             // The badge sits outside the clip, or the circle cuts the pencil in half.
             Box {
@@ -242,123 +244,226 @@ private fun Who(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                val since = memberSince(profile.joinedAt)
-                if (since != null || profile.points > 0) {
-                    Spacer(Modifier.height(10.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        if (profile.points > 0) {
-                            ProfileChip("${ordinal(profile.place)} on the board", lit = true)
-                        }
-                        if (since != null) ProfileChip(since)
-                    }
-                }
+            }
+        }
+        // The facts on a row of their own under the name, full width and small, so the name and
+        // the address keep the column beside the face to themselves.
+        Spacer(Modifier.height(14.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            if (profile.crewsRunning > 0) {
+                ProfileChip(Lucide.Users, if (profile.crewsRunning == 1) "1 crew" else "${profile.crewsRunning} crews")
+            }
+            memberSince(profile.joinedAt)?.let { ProfileChip(Lucide.CalendarDays, it) }
+            localTime(profile.timezone)?.let { ProfileChip(Lucide.Clock, it) }
+        }
+    }
+}
+
+/** A small fact under the name: an icon and a few words. The board place is lit in the accent. */
+@Composable
+private fun ProfileChip(
+    icon: ImageVector,
+    text: String,
+    lit: Boolean = false,
+) {
+    val t = Tt.colors
+    val ink = if (lit) t.tileInk else t.text2
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(percent = 50))
+            .background(if (lit) t.tile else t.glass2)
+            .padding(start = 8.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, null, Modifier.size(12.dp), tint = ink)
+        Spacer(Modifier.width(5.dp))
+        Text(
+            text,
+            style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.5.sp),
+            fontWeight = FontWeight.SemiBold,
+            color = ink,
+            maxLines = 1,
+        )
+    }
+}
+
+private val FaceSize = 64.dp
+
+/** "Since Sep 2026", from the server's timestamp, or null if it cannot be read. */
+private fun memberSince(joinedAt: String): String? =
+    runCatching {
+        "Since " + OffsetDateTime.parse(joinedAt).format(DateTimeFormatter.ofPattern("MMM yyyy"))
+    }.getOrNull()
+
+/** "Dhaka time", from the account's zone id, which is when its testing nights fall. */
+private fun localTime(zone: String): String? =
+    zone
+        .substringAfterLast('/')
+        .replace('_', ' ')
+        .takeIf { it.isNotBlank() && zone.contains('/') }
+        ?.let { "$it time" }
+
+/**
+ * The score, as the one big thing on the page.
+ *
+ * Points are what the board ranks and what the level is built from, so they lead: one large figure
+ * with the place beside it, and the two kinds of work that add up to it written small underneath.
+ * An account that has done nothing is not given a place; it is told how to earn one.
+ */
+@Composable
+private fun PointsHero(profile: ApiProfile) {
+    val t = Tt.colors
+    val shape = RoundedCornerShape(PanelRadius)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(t.container)
+            .border(1.dp, t.accent.copy(alpha = 0.28f), shape)
+            .padding(18.dp),
+    ) {
+        Text(
+            "Your record",
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.sp),
+            fontWeight = FontWeight.SemiBold,
+            color = t.text3,
+        )
+        Spacer(Modifier.height(6.dp))
+        Row(verticalAlignment = Alignment.Top) {
+            Row(Modifier.weight(1f), verticalAlignment = Alignment.Bottom) {
+                Text(
+                    "${profile.points}",
+                    Modifier.alignByBaseline(),
+                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 52.sp, fontFeatureSettings = "tnum"),
+                    fontWeight = FontWeight.Bold,
+                    color = t.accentInk,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    "points",
+                    Modifier.alignByBaseline(),
+                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp),
+                    fontWeight = FontWeight.SemiBold,
+                    color = t.text2,
+                )
+            }
+            PlaceBadge(profile)
+        }
+        Spacer(Modifier.height(10.dp))
+        if (profile.points == 0) {
+            Text(
+                "Open somebody's app on a testing night and this starts counting.",
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.5.sp),
+                color = t.text2,
+            )
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Figure("${profile.opens}")
+                Words(if (profile.opens == 1) " app opened" else " apps opened")
+                Words("  ·  ")
+                Figure("${profile.reviews}")
+                Words(if (profile.reviews == 1) " review given" else " reviews given")
             }
         }
     }
 }
 
-/** A small fact under the name. The board place is the one lit in the accent. */
+/** Where the points put you, in a small tile of its own beside them. */
 @Composable
-private fun ProfileChip(
-    text: String,
-    lit: Boolean = false,
-) {
+private fun PlaceBadge(profile: ApiProfile) {
     val t = Tt.colors
-    Text(
-        text,
+    val ranked = profile.points > 0
+    Column(
         Modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .background(if (lit) t.tile else t.glass2)
-            .padding(horizontal = 9.dp, vertical = 5.dp),
-        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
-        fontWeight = FontWeight.SemiBold,
-        color = if (lit) t.tileInk else t.text2,
-        maxLines = 1,
-    )
-}
-
-private val FaceSize = 64.dp
-
-/** "Since September 2026", from the server's timestamp, or null if it cannot be read. */
-private fun memberSince(joinedAt: String): String? =
-    runCatching {
-        "Since " + OffsetDateTime.parse(joinedAt).format(DateTimeFormatter.ofPattern("MMMM yyyy"))
-    }.getOrNull()
-
-/**
- * What this account has done: two short rows of stat tiles, the work and then the crews.
- *
- * It was one dashed panel with six figures in a grid, which read as a spreadsheet: six numbers of
- * one weight in a mono face, ruled into cells, under a second dashed panel that looked the same. Now
- * each figure is a solid tile with its own icon, so a glance finds "points" by its star rather than
- * by counting columns, and the two rows each get a heading that says what they are.
- */
-@Composable
-private fun Record(profile: ApiProfile) {
-    Column {
-        SectionTitle("Your record")
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Stat(Lucide.Smartphone, "${profile.opens}", "apps opened")
-            Stat(Lucide.MessageSquareText, "${profile.reviews}", "reviews given")
-            Stat(Lucide.Star, "${profile.points}", "points", lit = true)
-        }
-        if (profile.points == 0) {
-            Spacer(Modifier.height(10.dp))
-            Text(
-                "Open somebody's app on a testing night and this starts counting.",
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.5.sp),
-                color = Tt.colors.text3,
-            )
-        }
-        SectionTitle("Crews")
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Stat(Lucide.Users, "${profile.crewsRunning}", "going on")
-            Stat(Lucide.CircleCheck, "${profile.crewsFinished}", "finished")
-            Stat(Lucide.Moon, "${CrewRules.nightly(profile.crewsRunning)}", "apps a night")
-        }
+            .clip(RoundedCornerShape(16.dp))
+            .background(t.glass)
+            .border(1.dp, t.glassBorder, RoundedCornerShape(16.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            if (ranked) ordinal(profile.place) else "–",
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.Bold,
+            color = t.accentInk,
+        )
+        Text(
+            if (ranked) "on the board" else "not ranked",
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+            color = t.text3,
+        )
     }
 }
 
+@Composable
+private fun Figure(value: String) {
+    Text(
+        value,
+        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, fontFeatureSettings = "tnum"),
+        fontWeight = FontWeight.Bold,
+        color = Tt.colors.text,
+    )
+}
+
+@Composable
+private fun Words(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+        color = Tt.colors.text2,
+    )
+}
+
 /**
- * One figure on its own tile: an icon, the number, and what it counts.
+ * The crews, as one card of three figures side by side.
  *
- * The number is in Barlow with tabular digits rather than in mono; mono at this size read as code.
- * [lit] puts the one that is the score in the accent's own container, so it stands out from the
- * two that add up to it without a colour of its own.
+ * Quieter than the points above it on purpose: the same card surface as everything else, figures in
+ * plain ink, hairlines between them.
  */
 @Composable
-private fun RowScope.Stat(
-    icon: ImageVector,
-    value: String,
-    label: String,
-    lit: Boolean = false,
-) {
+private fun CrewStrip(profile: ApiProfile) {
     val t = Tt.colors
     val shape = RoundedCornerShape(CardRadius)
-    Column(
+    Row(
         Modifier
-            .weight(1f)
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
             .clip(shape)
-            .background(if (lit) t.container else t.glass)
-            .border(1.dp, if (lit) t.accent.copy(alpha = 0.28f) else t.glassBorder, shape)
-            .padding(start = 14.dp, end = 10.dp, top = 14.dp, bottom = 13.dp),
+            .background(t.glass)
+            .border(1.dp, t.glassBorder, shape)
+            .padding(vertical = 14.dp),
     ) {
-        IconTile(icon, size = 30.dp)
-        Spacer(Modifier.height(12.dp))
-        Text(
-            value,
-            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp, fontFeatureSettings = "tnum"),
-            fontWeight = FontWeight.Bold,
-            color = if (lit) t.accentInk else t.text,
-            maxLines = 1,
-        )
-        Text(
-            label,
-            style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
-            color = t.text3,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        listOf(
+            "${profile.crewsRunning}" to "going on",
+            "${profile.crewsFinished}" to "finished",
+            "${CrewRules.nightly(profile.crewsRunning)}" to "apps a night",
+        ).forEachIndexed { index, (value, label) ->
+            if (index > 0) {
+                Box(
+                    Modifier
+                        .width(1.dp)
+                        .fillMaxHeight()
+                        .background(t.hair),
+                )
+            }
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    value,
+                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, fontFeatureSettings = "tnum"),
+                    fontWeight = FontWeight.Bold,
+                    color = t.text,
+                )
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
+                    color = t.text3,
+                    maxLines = 1,
+                )
+            }
+        }
     }
 }
 
