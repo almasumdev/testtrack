@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -460,3 +461,16 @@ fun ListTile(
         content()
     }
 }
+
+/**
+ * How much of the bottom of the screen the floating dock covers, system bar included.
+ *
+ * The page runs under the dock and the system bar rather than stopping above them, so a list scrolls
+ * behind both the way Value Guard's does. Every list on a tab adds this to its bottom padding so its
+ * last row can still be scrolled clear of them.
+ */
+val LocalDockRoom = compositionLocalOf { 0.dp }
+
+/** [LocalDockRoom], read. */
+@Composable
+fun dockRoom(): Dp = LocalDockRoom.current

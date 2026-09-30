@@ -202,7 +202,7 @@ fun RanksBody(
                 state = list,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding =
-                    PaddingValues(top = 4.dp, bottom = if (mine == null) Gutter else PinRoom),
+                    PaddingValues(top = 4.dp, bottom = (if (mine == null) Gutter else PinRoom) + dockRoom()),
             ) {
                 if (rest.isNotEmpty()) {
                     // Named for what it is rather than as a range of places. "4 to 40" was
@@ -295,7 +295,7 @@ private fun PinnedMine(
 ) {
     val t = Tt.colors
     val shape = RoundedCornerShape(CardRadius)
-    Box(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, bottom = 10.dp)) {
+    Box(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, bottom = 10.dp + dockRoom())) {
         Box(
             Modifier
                 .shadow(16.dp, shape, ambientColor = t.shadow.copy(alpha = 0.3f), spotColor = t.shadow.copy(alpha = 0.3f))

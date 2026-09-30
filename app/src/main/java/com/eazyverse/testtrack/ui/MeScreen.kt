@@ -137,7 +137,7 @@ fun MeBody(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = 28.dp + dockRoom()),
     ) {
         item { Who(profile, onEdit) }
         item { Spacer(Modifier.height(12.dp)) }

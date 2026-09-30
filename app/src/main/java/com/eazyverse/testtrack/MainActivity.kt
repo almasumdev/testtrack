@@ -7,7 +7,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -100,6 +102,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Both system bars fully clear, with no scrim Android would otherwise lay under the
+        // navigation bar: the page and the floating dock run to the bottom edge behind it.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT),
+        )
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
         Session.init(this)
         // The last update decision proven online, until Play answers in onStart. Here rather than in
         // App because it reads Session, which is only loaded now.
@@ -109,11 +120,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             TestTrackTheme {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    // Edge-to-edge is mandatory from Android 15, so every screen would otherwise
-                    // start underneath the status bar. One inset here rather than in each screen;
-                    // safeDrawing also covers the cutout, the nav bar and the keyboard.
-                    Box(Modifier.safeDrawingPadding()) {
-                        if (Config.isConfigured) AppNav(openGroup, openFeedbackFor) else NotConfigured()
+                    // Edge-to-edge is mandatory from Android 15. Every pushed screen takes the safe
+                    // drawing inset through [Inset] (status bar, cutout, nav bar and keyboard); the
+                    // tab shell takes only the top one, because its ground and its floating dock run
+                    // to the bottom edge under the system bar.
+                    Box {
+                        if (Config.isConfigured) AppNav(openGroup, openFeedbackFor) else Inset { NotConfigured() }
 
                         /*
                          * Over everything, including the nav host.
@@ -127,15 +139,17 @@ class MainActivity : ComponentActivity() {
                         val tier by AppUpdateService.tier.collectAsState()
                         val downloaded by AppUpdateService.isDownloaded.collectAsState()
                         if (tier == UpdateTier.BLOCKED) {
-                            ForceUpdateScreen(
-                                downloaded = downloaded,
-                                canDownloadInApp = AppUpdateService.canDownloadInApp,
-                                onUpdate = {
-                                    if (!AppUpdateService.startFlexibleUpdate(updateLauncher)) openPlayStoreListing()
-                                },
-                                onRestart = { AppUpdateService.completeUpdate() },
-                                onOpenStore = { openPlayStoreListing() },
-                            )
+                            Inset {
+                                ForceUpdateScreen(
+                                    downloaded = downloaded,
+                                    canDownloadInApp = AppUpdateService.canDownloadInApp,
+                                    onUpdate = {
+                                        if (!AppUpdateService.startFlexibleUpdate(updateLauncher)) openPlayStoreListing()
+                                    },
+                                    onRestart = { AppUpdateService.completeUpdate() },
+                                    onOpenStore = { openPlayStoreListing() },
+                                )
+                            }
                         }
                     }
                 }
@@ -286,28 +300,32 @@ fun AppNav(
 
     NavHost(navController = nav, startDestination = start) {
         composable(Routes.ONBOARDING) {
-            OnboardingScreen(onDone = {
-                Session.updateOnboardingDone()
-                nav.replace(Routes.HOME)
-            })
+            Inset {
+                OnboardingScreen(onDone = {
+                    Session.updateOnboardingDone()
+                    nav.replace(Routes.HOME)
+                })
+            }
         }
 
         composable(Routes.SETUP) {
-            SetupScreen(
-                onFinished = { nav.replace(Routes.HOME) },
-                // Same teardown as home. `replace` pops everything above the graph root, so
-                // signing out of setup takes the home screen underneath it too — this route is
-                // pushed from there, and leaving it on the stack would let Back return to a
-                // signed-out home.
-                onSignOut = {
-                    AuthRepo.signOut()
-                    Session.signOut()
-                    // Back to the app rather than out of it. There is something to look at
-                    // signed out now, so throwing somebody at a sign-in screen for choosing to
-                    // sign out would be taking the app away as a punishment.
-                    nav.replace(Routes.HOME)
-                },
-            )
+            Inset {
+                SetupScreen(
+                    onFinished = { nav.replace(Routes.HOME) },
+                    // Same teardown as home. `replace` pops everything above the graph root, so
+                    // signing out of setup takes the home screen underneath it too — this route is
+                    // pushed from there, and leaving it on the stack would let Back return to a
+                    // signed-out home.
+                    onSignOut = {
+                        AuthRepo.signOut()
+                        Session.signOut()
+                        // Back to the app rather than out of it. There is something to look at
+                        // signed out now, so throwing somebody at a sign-in screen for choosing to
+                        // sign out would be taking the app away as a punishment.
+                        nav.replace(Routes.HOME)
+                    },
+                )
+            }
         }
 
         composable(Routes.HOME) {
@@ -336,17 +354,21 @@ fun AppNav(
         }
 
         composable(Routes.ASK) {
-            AskScreen(
-                onDone = { nav.popBackStack() },
-                onBack = { nav.popBackStack() },
-            )
+            Inset {
+                AskScreen(
+                    onDone = { nav.popBackStack() },
+                    onBack = { nav.popBackStack() },
+                )
+            }
         }
 
         composable(Routes.SUBMIT) {
-            SubmitScreen(
-                onDone = { nav.popBackStack() },
-                onBack = { nav.popBackStack() },
-            )
+            Inset {
+                SubmitScreen(
+                    onDone = { nav.popBackStack() },
+                    onBack = { nav.popBackStack() },
+                )
+            }
         }
 
         composable(
@@ -364,13 +386,15 @@ fun AppNav(
                     },
                 ),
         ) { entry ->
-            GroupScreen(
-                groupId = entry.arguments?.getString("groupId").orEmpty(),
-                groupName = entry.arguments?.getString("name").orEmpty(),
-                feedbackForAppId = entry.arguments?.getString("feedbackFor").orEmpty(),
-                onOpenDashboard = { appId, name -> nav.push(Routes.dashboard(appId, name)) },
-                onBack = { nav.popBackStack() },
-            )
+            Inset {
+                GroupScreen(
+                    groupId = entry.arguments?.getString("groupId").orEmpty(),
+                    groupName = entry.arguments?.getString("name").orEmpty(),
+                    feedbackForAppId = entry.arguments?.getString("feedbackFor").orEmpty(),
+                    onOpenDashboard = { appId, name -> nav.push(Routes.dashboard(appId, name)) },
+                    onBack = { nav.popBackStack() },
+                )
+            }
         }
 
         composable(
@@ -384,11 +408,13 @@ fun AppNav(
                     },
                 ),
         ) { entry ->
-            DashboardScreen(
-                appId = entry.arguments?.getString("appId").orEmpty(),
-                appName = entry.arguments?.getString("name").orEmpty(),
-                onBack = { nav.popBackStack() },
-            )
+            Inset {
+                DashboardScreen(
+                    appId = entry.arguments?.getString("appId").orEmpty(),
+                    appName = entry.arguments?.getString("name").orEmpty(),
+                    onBack = { nav.popBackStack() },
+                )
+            }
         }
     }
 }
@@ -415,4 +441,10 @@ private fun NavHostController.replace(route: String) {
 /** Forward, keeping what is behind. Single-top so a double tap cannot stack the same screen. */
 private fun NavHostController.push(route: String) {
     navigate(route) { launchSingleTop = true }
+}
+
+/** The safe drawing inset, for every screen that is not the tab shell. */
+@Composable
+private fun Inset(content: @Composable () -> Unit) {
+    Box(Modifier.safeDrawingPadding()) { content() }
 }

@@ -107,7 +107,7 @@ fun AppsBody(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 4.dp, bottom = Gutter),
+        contentPadding = PaddingValues(top = 4.dp, bottom = Gutter + dockRoom()),
     ) {
         // Cards for what is running, rows for what is over. A running app has a stage and a
         // count worth drawing, and the owner opens this tab to see how far it has got; a finished

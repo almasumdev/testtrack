@@ -93,7 +93,7 @@ fun CrewRunTab(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter),
+        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
     ) {
         item {
             Box(Modifier.padding(horizontal = Gutter)) {
@@ -184,7 +184,7 @@ fun CrewLobbyTab(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter),
+        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
     ) {
         itemsIndexed(lobbies, key = { _, crew -> crew.id }) { _, crew ->
             val confirmed = CrewRules.filled(crew.seats)
@@ -322,7 +322,7 @@ fun CrewRecordTab(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter),
+        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
     ) {
         item { CrewHeading("Finished", "${finished.size}") }
         itemsIndexed(finished, key = { _, crew -> crew.id }) { index, crew ->

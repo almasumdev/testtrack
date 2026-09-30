@@ -6,9 +6,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -118,7 +120,8 @@ fun FeedScreen(
 
     Scaffold(
         containerColor = Color.Transparent,
-        snackbarHost = { SnackbarHost(snackbars) },
+        snackbarHost = { SnackbarHost(snackbars, Modifier.padding(bottom = dockRoom())) },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         // Scaffold's own slot rather than a Box over the list, so a snackbar is laid out above it
         // instead of across it. Only on Feedback: Activity is written by the app, and there is
         // nothing to post to it.
@@ -133,7 +136,7 @@ fun FeedScreen(
                 enter = fadeIn() + slideInVertically { it },
                 exit = fadeOut() + slideOutVertically { it },
             ) {
-                FeedAskBar(onAsk)
+                Box(Modifier.padding(bottom = dockRoom())) { FeedAskBar(onAsk) }
             }
         },
         // Two tabs at the left and a balance at the right, sitting on the page rather than in a
@@ -194,7 +197,7 @@ fun FeedScreen(
                                 start = Gutter,
                                 top = ListTop,
                                 end = Gutter,
-                                bottom = Gutter + 64.dp,
+                                bottom = Gutter + 64.dp + dockRoom(),
                             ),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
@@ -227,7 +230,7 @@ fun FeedScreen(
                                 start = Gutter,
                                 top = ListTop,
                                 end = Gutter,
-                                bottom = Gutter,
+                                bottom = Gutter + dockRoom(),
                             ),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {

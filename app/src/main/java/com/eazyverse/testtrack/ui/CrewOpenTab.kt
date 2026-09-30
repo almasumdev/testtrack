@@ -41,7 +41,7 @@ fun CrewOpenTab(
 ) {
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter),
+        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
     ) {
         itemsIndexed(vm.opens, key = { _, crew -> crew.id }) { index, crew ->
             val taken = crew.seats.size

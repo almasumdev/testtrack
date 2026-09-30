@@ -11,14 +11,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -26,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,7 +45,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -178,8 +186,16 @@ fun MainShell(
         onDispose { owner.lifecycle.removeObserver(watcher) }
     }
 
+    val density = LocalDensity.current
+    var dockHeight by remember { mutableStateOf(0.dp) }
     Backdrop(scene = tab.scene) {
         Scaffold(
+            // The status bar and the sides only. The bottom is left to the dock, which lifts itself
+            // over the navigation bar, so the page can run under both.
+            modifier =
+                Modifier.windowInsetsPadding(
+                    WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
+                ),
             // Clear, so the contour ground under the whole shell shows through; see [Backdrop].
             containerColor = Color.Transparent,
             // Above all five tabs rather than inside any of them, because it belongs to the account
@@ -197,84 +213,91 @@ fun MainShell(
                     onSignIn = { asking = StartReason },
                 )
             },
-            bottomBar = { MainBar(tab, show) },
+            // No bottom bar slot: the dock floats over the page below, and the page runs to the
+            // bottom edge under it and under the system bar. Lists make room with [dockRoom].
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
         ) { padding ->
-            // The top inset is taken now that the shell has a bar of its own; each tab still handles
-            // whatever it puts under it.
             Box(
                 Modifier
                     .fillMaxSize()
-                    .padding(
-                        top = padding.calculateTopPadding(),
-                        bottom = padding.calculateBottomPadding(),
-                    ),
+                    .padding(top = padding.calculateTopPadding()),
             ) {
-                when (tab) {
-                    MainTab.CIRCLE ->
-                        FeedScreen(
-                            onAsk = onAskForFeedback,
-                            onSignIn = {
-                                asking =
-                                    SignInReason(
-                                        title = "Sign in to see what is waiting",
-                                        why =
-                                            "Reviews of your apps and cases you are asked to decide " +
-                                                "are addressed to an account. The rest of Circle " +
-                                                "you can read without one.",
-                                    )
-                            },
-                        )
+                CompositionLocalProvider(LocalDockRoom provides dockHeight) {
+                    when (tab) {
+                        MainTab.CIRCLE ->
+                            FeedScreen(
+                                onAsk = onAskForFeedback,
+                                onSignIn = {
+                                    asking =
+                                        SignInReason(
+                                            title = "Sign in to see what is waiting",
+                                            why =
+                                                "Reviews of your apps and cases you are asked to decide " +
+                                                    "are addressed to an account. The rest of Circle " +
+                                                    "you can read without one.",
+                                        )
+                                },
+                            )
 
-                    // The new crew screens, running on in-memory state. HomeScreen and the group
-                    // screens it pushes are still on disk and still work; nothing points at them from
-                    // the bar while this is being built. See docs/crew.md.
-                    MainTab.GROUPS ->
-                        CrewScreen(
-                            onSignIn = {
-                                asking =
-                                    SignInReason(
-                                        title = "Sign in to see your crews",
-                                        why =
-                                            "Which seats are yours, what you owe tonight and what " +
-                                                "you have finished all hang off the account. Open " +
-                                                "reads without one.",
-                                    )
-                            },
-                        )
+                        // The new crew screens, running on in-memory state. HomeScreen and the group
+                        // screens it pushes are still on disk and still work; nothing points at them from
+                        // the bar while this is being built. See docs/crew.md.
+                        MainTab.GROUPS ->
+                            CrewScreen(
+                                onSignIn = {
+                                    asking =
+                                        SignInReason(
+                                            title = "Sign in to see your crews",
+                                            why =
+                                                "Which seats are yours, what you owe tonight and what " +
+                                                    "you have finished all hang off the account. Open " +
+                                                    "reads without one.",
+                                        )
+                                },
+                            )
 
-                    MainTab.RANKS -> RanksScreen()
+                        MainTab.RANKS -> RanksScreen()
 
-                    MainTab.APPS ->
-                        AppsScreen(
-                            onSignIn = {
-                                asking =
-                                    SignInReason(
-                                        title = "Sign in to see your apps",
-                                        why =
-                                            "This is the list of what you have put up, so it needs " +
-                                                "to know who you are. Everything else in TestTrack " +
-                                                "you can read without an account.",
-                                    )
-                            },
-                        )
+                        MainTab.APPS ->
+                            AppsScreen(
+                                onSignIn = {
+                                    asking =
+                                        SignInReason(
+                                            title = "Sign in to see your apps",
+                                            why =
+                                                "This is the list of what you have put up, so it needs " +
+                                                    "to know who you are. Everything else in TestTrack " +
+                                                    "you can read without an account.",
+                                        )
+                                },
+                            )
 
-                    MainTab.PROFILE ->
-                        MeScreen(
-                            onSignOut = onSignOut,
-                            onSignIn = {
-                                asking =
-                                    SignInReason(
-                                        title = "Sign in to see your record",
-                                        why =
-                                            "Your level, your tix and what you have done belong to " +
-                                                "the account. Everything else in TestTrack you can " +
-                                                "read without one.",
-                                    )
-                            },
-                        )
+                        MainTab.PROFILE ->
+                            MeScreen(
+                                onSignOut = onSignOut,
+                                onSignIn = {
+                                    asking =
+                                        SignInReason(
+                                            title = "Sign in to see your record",
+                                            why =
+                                                "Your level, your tix and what you have done belong to " +
+                                                    "the account. Everything else in TestTrack you can " +
+                                                    "read without one.",
+                                        )
+                                },
+                            )
+                    }
                 }
             }
         }
+
+        MainBar(
+            tab,
+            show,
+            Modifier
+                .align(Alignment.BottomCenter)
+                .onSizeChanged { dockHeight = with(density) { it.height.toDp() } },
+        )
     }
 
     asking?.let { reason ->
@@ -303,11 +326,12 @@ fun MainShell(
 private fun MainBar(
     selected: MainTab,
     onSelect: (MainTab) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val t = Tt.colors
     val shape = RoundedCornerShape(32.dp)
     Box(
-        Modifier
+        modifier
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(start = DockInset, end = DockInset, top = 6.dp, bottom = 12.dp),

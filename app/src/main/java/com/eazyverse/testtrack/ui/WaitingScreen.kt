@@ -91,7 +91,7 @@ fun WaitingBody(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 4.dp, bottom = Gutter),
+        contentPadding = PaddingValues(top = 4.dp, bottom = Gutter + dockRoom()),
     ) {
         if (reviews.isNotEmpty()) {
             item { CrewHeading("Your apps", trailing = "${reviews.size}") }

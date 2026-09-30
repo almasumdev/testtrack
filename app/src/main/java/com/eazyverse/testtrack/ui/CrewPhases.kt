@@ -53,7 +53,7 @@ fun CrewLobbyPhase(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = ListTop, bottom = Gutter),
+        contentPadding = PaddingValues(top = ListTop, bottom = Gutter + dockRoom()),
     ) {
         item {
             Box(Modifier.padding(horizontal = Gutter)) {
@@ -208,7 +208,7 @@ fun CrewRunPhase(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = ListTop, bottom = Gutter),
+        contentPadding = PaddingValues(top = ListTop, bottom = Gutter + dockRoom()),
     ) {
         item {
             Box(Modifier.padding(horizontal = Gutter)) {
@@ -294,7 +294,7 @@ fun CrewRecordPhase(crew: Crew) {
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = ListTop, bottom = Gutter),
+        contentPadding = PaddingValues(top = ListTop, bottom = Gutter + dockRoom()),
     ) {
         item {
             Box(Modifier.padding(horizontal = Gutter)) {
