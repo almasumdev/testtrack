@@ -12,11 +12,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,7 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
@@ -145,16 +141,16 @@ fun MeBody(
         contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = 28.dp + dockRoom()),
     ) {
         item { Who(profile, onEdit) }
-        item { Spacer(Modifier.height(16.dp)) }
-        item { PointsHero(profile) }
+        item { SectionTitle("Your record") }
+        item { PointsHero(profile.points, profile.place, profile.opens, profile.reviews) }
         item { SectionTitle("Crews") }
-        item { CrewStrip(profile) }
+        item { CrewStrip(profile.crewsRunning, profile.crewsFinished) }
         item { SectionTitle("Account") }
         item { Account(onEdit = onEdit, onSignOut = onSignOut) }
         item { Spacer(Modifier.height(24.dp)) }
         item {
             Text(
-                "TestTrack ${BuildConfig.VERSION_NAME}",
+                "v${BuildConfig.VERSION_NAME}",
                 Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.labelMedium,
                 color = Tt.colors.text4,
@@ -262,34 +258,6 @@ private fun Who(
     }
 }
 
-/** A small fact under the name: an icon and a few words. The board place is lit in the accent. */
-@Composable
-private fun ProfileChip(
-    icon: ImageVector,
-    text: String,
-    lit: Boolean = false,
-) {
-    val t = Tt.colors
-    val ink = if (lit) t.tileInk else t.text2
-    Row(
-        Modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .background(if (lit) t.tile else t.glass2)
-            .padding(start = 8.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, null, Modifier.size(12.dp), tint = ink)
-        Spacer(Modifier.width(5.dp))
-        Text(
-            text,
-            style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.5.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = ink,
-            maxLines = 1,
-        )
-    }
-}
-
 private val FaceSize = 64.dp
 
 /** "Since Sep 2026", from the server's timestamp, or null if it cannot be read. */
@@ -305,167 +273,6 @@ private fun localTime(zone: String): String? =
         .replace('_', ' ')
         .takeIf { it.isNotBlank() && zone.contains('/') }
         ?.let { "$it time" }
-
-/**
- * The score, as the one big thing on the page.
- *
- * Points are what the board ranks and what the level is built from, so they lead: one large figure
- * with the place beside it, and the two kinds of work that add up to it written small underneath.
- * An account that has done nothing is not given a place; it is told how to earn one.
- */
-@Composable
-private fun PointsHero(profile: ApiProfile) {
-    val t = Tt.colors
-    val shape = RoundedCornerShape(PanelRadius)
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(t.container)
-            .border(1.dp, t.accent.copy(alpha = 0.28f), shape)
-            .padding(18.dp),
-    ) {
-        Text(
-            "Your record",
-            style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = t.text3,
-        )
-        Spacer(Modifier.height(6.dp))
-        Row(verticalAlignment = Alignment.Top) {
-            Row(Modifier.weight(1f), verticalAlignment = Alignment.Bottom) {
-                Text(
-                    "${profile.points}",
-                    Modifier.alignByBaseline(),
-                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 52.sp, fontFeatureSettings = "tnum"),
-                    fontWeight = FontWeight.Bold,
-                    color = t.accentInk,
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    "points",
-                    Modifier.alignByBaseline(),
-                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp),
-                    fontWeight = FontWeight.SemiBold,
-                    color = t.text2,
-                )
-            }
-            PlaceBadge(profile)
-        }
-        Spacer(Modifier.height(10.dp))
-        if (profile.points == 0) {
-            Text(
-                "Open somebody's app on a testing night and this starts counting.",
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.5.sp),
-                color = t.text2,
-            )
-        } else {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Figure("${profile.opens}")
-                Words(if (profile.opens == 1) " app opened" else " apps opened")
-                Words("  ·  ")
-                Figure("${profile.reviews}")
-                Words(if (profile.reviews == 1) " review given" else " reviews given")
-            }
-        }
-    }
-}
-
-/** Where the points put you, in a small tile of its own beside them. */
-@Composable
-private fun PlaceBadge(profile: ApiProfile) {
-    val t = Tt.colors
-    val ranked = profile.points > 0
-    Column(
-        Modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(t.glass)
-            .border(1.dp, t.glassBorder, RoundedCornerShape(16.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            if (ranked) ordinal(profile.place) else "–",
-            style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, fontFeatureSettings = "tnum"),
-            fontWeight = FontWeight.Bold,
-            color = t.accentInk,
-        )
-        Text(
-            if (ranked) "on the board" else "not ranked",
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-            color = t.text3,
-        )
-    }
-}
-
-@Composable
-private fun Figure(value: String) {
-    Text(
-        value,
-        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, fontFeatureSettings = "tnum"),
-        fontWeight = FontWeight.Bold,
-        color = Tt.colors.text,
-    )
-}
-
-@Composable
-private fun Words(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-        color = Tt.colors.text2,
-    )
-}
-
-/**
- * The crews, as one card of three figures side by side.
- *
- * Quieter than the points above it on purpose: the same card surface as everything else, figures in
- * plain ink, hairlines between them.
- */
-@Composable
-private fun CrewStrip(profile: ApiProfile) {
-    val t = Tt.colors
-    val shape = RoundedCornerShape(CardRadius)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min)
-            .clip(shape)
-            .background(t.glass)
-            .border(1.dp, t.glassBorder, shape)
-            .padding(vertical = 14.dp),
-    ) {
-        listOf(
-            "${profile.crewsRunning}" to "going on",
-            "${profile.crewsFinished}" to "finished",
-            "${CrewRules.nightly(profile.crewsRunning)}" to "apps a night",
-        ).forEachIndexed { index, (value, label) ->
-            if (index > 0) {
-                Box(
-                    Modifier
-                        .width(1.dp)
-                        .fillMaxHeight()
-                        .background(t.hair),
-                )
-            }
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    value,
-                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, fontFeatureSettings = "tnum"),
-                    fontWeight = FontWeight.Bold,
-                    color = t.text,
-                )
-                Text(
-                    label,
-                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
-                    color = t.text3,
-                    maxLines = 1,
-                )
-            }
-        }
-    }
-}
 
 /** Where the policy and the deletion request live. The site owns both pages. */
 private const val SITE = "https://eazyverse.com/apps/testtrack"
