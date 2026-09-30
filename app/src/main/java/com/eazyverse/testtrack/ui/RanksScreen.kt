@@ -190,12 +190,10 @@ fun RanksBody(
          * runs underneath it.
          */
         if (podium) {
-            // In a panel, because it is something to read: the dashed edge says so, and the names
-            // and scores stand on the panel's own ground instead of on the contour lines.
+            // Straight on the page, with no box or light of its own: the podium is the top of the
+            // board, not a separate block sitting above it.
             Box(Modifier.padding(start = Gutter, end = Gutter, top = 4.dp, bottom = 8.dp)) {
-                Panel(padding = PaddingValues(start = 10.dp, end = 10.dp, top = 6.dp, bottom = 0.dp)) {
-                    Podium(rows.take(PODIUM).map { it.onThePodium(mine?.id) })
-                }
+                Podium(rows.take(PODIUM).map { it.onThePodium(mine?.id) })
             }
         }
 

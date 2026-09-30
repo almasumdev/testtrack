@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -23,11 +22,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -58,37 +54,13 @@ data class PodiumPlace(
  * The three at the top, on blocks.
  *
  * Second, first, third, because that is the shape a podium has and left to right is not how
- * anybody looks at one. The winner is raised, larger and crowned, standing in a wash of their own
- * colour, and the blocks are in proportion so the standing reads from the silhouette before a
- * number does.
+ * anybody looks at one. The winner is raised, larger and crowned, and the blocks are in proportion
+ * so the standing reads from the silhouette before a number does. No light or box behind it: it
+ * stands on the page like everything else.
  */
 @Composable
 fun Podium(top: List<PodiumPlace>) {
-    val lit = Medal.gold
-    Box(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp)) {
-        // The winner stands in a little light. Radial and very faint, thrown from behind the
-        // first face: it is what stops three columns of the same weight reading as a table.
-        //
-        // Clipped, and faded out before it reaches the top edge. A Canvas does not clip what it
-        // draws, and the light used to spill up over the header, where it read as a stain behind
-        // the level and the tix rather than as anything to do with the winner.
-        Canvas(Modifier.matchParentSize().clipToBounds()) {
-            val heart = Offset(size.width / 2f, size.height * 0.30f)
-            val reach = heart.y
-            // Wider than it is tall: a pool of light under three people, not a spotlight on one.
-            scale(scaleX = 2.1f, scaleY = 1f, pivot = heart) {
-                drawCircle(
-                    brush =
-                        Brush.radialGradient(
-                            colors = listOf(lit.copy(alpha = 0.16f), Color.Transparent),
-                            center = heart,
-                            radius = reach,
-                        ),
-                    radius = reach,
-                    center = heart,
-                )
-            }
-        }
+    Box(Modifier.fillMaxWidth().padding(top = 6.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Step(top[1], Medal.silver, seat = 62.dp, face = 54.dp)
             Spacer(Modifier.width(8.dp))
