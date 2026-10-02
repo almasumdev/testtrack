@@ -13,6 +13,8 @@ background or button color changes. Coral and mint are small, recurring illustra
 1. Testing together: the approved exchange robot with a circle of developers.
 2. Useful feedback: an app session, observation and response, with the same mascot.
 3. Daily progress: a testing calendar, check-ins and the mascot.
+4. Share your app: a Play link becomes an app listing, with the mascot and a lookup magnifier.
+5. Explore first: an open community window and compass introduce guest browsing before sign-in.
 
 The tour introduces the current Circle and Crew flows without promising automatic Play approval,
 public review rewards, or automatic proof collection without setup.
@@ -31,7 +33,8 @@ public review rewards, or automatic proof collection without setup.
 
 ## Editable assets
 
-`scripts/build_onboarding.py` builds `together.svg`, `feedback.svg`, `progress.svg`, and the matching
+`scripts/build_onboarding.py` builds `together.svg`, `feedback.svg`, `progress.svg`, `share.svg`,
+`explore.svg`, and the matching
 Android VectorDrawables. It reuses the canonical robot from `../logo/test-exchange.svg`, preserving
 the complete app cards and foreground arrow tips. The splash and onboarding robot now use the
 app's Ocean blue. The approved 900 ms splash animation is unchanged.
@@ -46,7 +49,7 @@ are documentation artifacts, not app resources. The launcher/store icon is a sep
 
 ## Verification (2026-10-03)
 
-- API 37 emulator: all three pages in light/dark, swipe, Next, Android Back, sign-in sheet and
+- API 37 emulator: the original three-page flow in light/dark, swipe, Next, Android Back, sign-in sheet and
   dismiss, completion and relaunch, Skip, and a cold-launch notification retained through the tour.
 - Compact 320 dp-wide display and 200% system font size: artwork adapts and slide content scrolls.
 - System animator duration scale 0: Next reaches the following page without a pager animation.
@@ -57,3 +60,15 @@ are documentation artifacts, not app resources. The launcher/store icon is a sep
 - Browser gallery: both themes load, all images resolve, and no JavaScript errors were reported.
 
 Only the emulator was used. Existing emulator session preferences were backed up and restored.
+
+## Five-page extension
+
+Pages four and five add app lookup/sharing and guest exploration. The page count, dots, Back
+behavior and final action are driven by the same page list. Existing completion flags remain valid;
+people who already finished the introduction are not shown it again just because it gained pages.
+The gallery now includes all five native screens in both themes.
+
+Validation: debug build and Kotlin lint pass, no new architecture violations. Manual emulator review
+checks all five progress indicators, Next on pages one through four, the final action on page five,
+Back through the new pages, and persisted completion. Existing emulator session data is restored.
+The earlier small-screen and large-text captures document the shared layout before this extension.

@@ -63,6 +63,18 @@ private val IntroPages =
             R.string.intro_progress_title,
             R.string.intro_progress_body,
         ),
+        IntroPage(
+            R.drawable.onboarding_share,
+            R.string.intro_share_label,
+            R.string.intro_share_title,
+            R.string.intro_share_body,
+        ),
+        IntroPage(
+            R.drawable.onboarding_explore,
+            R.string.intro_explore_label,
+            R.string.intro_explore_title,
+            R.string.intro_explore_body,
+        ),
     )
 
 /** Owns only the pager and the optional, existing Google sign-in sheet. */

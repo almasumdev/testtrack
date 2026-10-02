@@ -15,4 +15,10 @@
     <string name="intro_progress_label">ONE DAY AT A TIME</string>
     <string name="intro_progress_title">Keep your testing\non track.</string>
     <string name="intro_progress_body">Join a closed-testing crew, follow your daily tasks, and see your testing progress in one place.</string>
+    <string name="intro_share_label">YOUR APP, IN THE SPOTLIGHT</string>
+    <string name="intro_share_title">A simple link.\nA new audience.</string>
+    <string name="intro_share_body">Add your Play link or package name. We’ll look up your app details so you can ask the Circle for feedback.</string>
+    <string name="intro_explore_label">TAKE A LOOK AROUND</string>
+    <string name="intro_explore_title">Explore first.\nJoin when ready.</string>
+    <string name="intro_explore_body">Browse the Circle and Crew without an account. Sign in when you’re ready to take part.</string>
 </resources>
