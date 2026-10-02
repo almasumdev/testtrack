@@ -45,12 +45,6 @@
     </g>
     <path id="smile" stroke="#17253B" stroke-width="31" stroke-linecap="round" d="M576 594 C602 620 651 620 677 594"/>
     </g>
-    <g id="exchange_top" data-pivot-x="627" data-pivot-y="907">
-      <path id="top_arrow" fill="#1066EE" stroke="#FFFCF1" stroke-width="20" stroke-linejoin="round" d="M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z"/>
-    </g>
-    <g id="exchange_bottom" data-pivot-x="627" data-pivot-y="907">
-      <path id="bottom_arrow" fill="#1066EE" stroke="#FFFCF1" stroke-width="20" stroke-linejoin="round" d="M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z"/>
-    </g>
     <g id="card_left" data-pivot-x="440" data-pivot-y="911">
       <path id="card_left_shell" fill="url(#coral)" d="M362 766 L502 764 C532 764 550 785 553 814 L568 983 C571 1013 554 1036 524 1040 L388 1056 C356 1059 336 1044 332 1013 L310 819 C306 789 327 767 362 766 Z"/>
       <path id="card_left_screen" fill="#FFFCF1" d="M381 817 L496 813 C512 812 522 823 524 839 L536 966 C538 982 530 992 514 995 L399 1006 C383 1007 374 999 372 983 L358 842 C356 828 365 818 381 817 Z"/>
@@ -64,6 +58,12 @@
       <path id="check_right" stroke="#17253B" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" d="M768 916 L795 939 L854 873"/>
       <path id="card_right_hand_base" fill="url(#deepBlue)" d="M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z"/>
       <path id="card_right_hand_front" fill="url(#handBlue)" d="M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z"/>
+    </g>
+    <g id="exchange_top" data-pivot-x="627" data-pivot-y="907">
+      <path id="top_arrow" fill="#1066EE" stroke="#FFFCF1" stroke-width="20" stroke-linejoin="round" d="M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z"/>
+    </g>
+    <g id="exchange_bottom" data-pivot-x="627" data-pivot-y="907">
+      <path id="bottom_arrow" fill="#1066EE" stroke="#FFFCF1" stroke-width="20" stroke-linejoin="round" d="M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z"/>
     </g>
   </g>
 </svg>

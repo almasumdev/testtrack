@@ -61,8 +61,8 @@ delivery and timing; the Test Exchange choreography is our own design.
 - Browser preview: no JavaScript errors; reduced motion produces zero active animations.
 - Both card shells have continuous rounded edges; the arrow-position notches were removed.
 
-The interactive preview and `animation-v3-preview.gif` include the card-edge repair and final
-blink. Native MP4 recordings below predate these two small corrections.
+The interactive preview and `animation-v4-preview.gif` include the card-edge repair, final
+blink, and arrows layered in front of the cards. Native MP4 recordings below predate these corrections.
 
 Review files: [artwork and motion](preview.html), [animated SVG](test-exchange-animated.svg),
 [revised animation GIF](animation-v2-preview.gif), [revised native recording](native-exchange-light.mp4),
