@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TestTrack · Test Exchange</title>
+<style>
+* {box-sizing:border-box}
+body {margin:0;background:#f6f8fb;color:#17253b;font:16px/1.5 system-ui,sans-serif}
+main {max-width:1140px;margin:auto;padding:36px 28px}
+header {display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:24px}
+h1 {font-size:30px;letter-spacing:-1px;margin:0} p {margin:8px 0;color:#56647b}
+button {border:0;border-radius:14px;padding:12px 20px;background:#126cf5;color:white;font:600 15px system-ui;cursor:pointer}
+.grid {display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:18px;align-items:start}
+figure {margin:0;border:1px solid #dae3eb;border-radius:24px;overflow:hidden;background:white}
+.art {background:#e0f3ff;aspect-ratio:1;display:grid;place-items:center;padding:20px}
+.art svg {width:100%;height:100%;overflow:visible}
+figcaption {padding:16px 18px;font-size:14px;font-weight:600}
+.phone {position:relative;background:#e9f0f4;aspect-ratio:9/19.5;display:grid;place-items:center}
+.phone.dark {background:#0f1011}
+.phone .icon {width:76%;aspect-ratio:1;display:grid;place-items:center}
+.phone svg {width:100%;height:100%}
+.phone #robot {transform-origin:627px 627px}
+.phone .safe {transform:translate(137.94px,137.94px) scale(.78)}
+.status {position:absolute;top:15px;left:18px;right:18px;display:flex;justify-content:space-between;font-size:11px;color:#17253b;font-weight:600}
+.dark .status {color:#e9f0f4}
+.bar {position:absolute;bottom:10px;width:34%;height:4px;border-radius:8px;background:#17253b}
+.dark .bar {background:#e9f0f4}
+.note {font-size:14px;margin-top:20px;max-width:860px}
+.playing g {transform-box:view-box}
+{{MOTION}}
+@media (prefers-reduced-motion:reduce) {.playing g,.playing path {animation:none!important}.playing path {stroke-dashoffset:0!important}}
+@media (max-width:780px) {.grid {grid-template-columns:1fr 1fr}.grid figure:first-child {grid-column:span 2}.art {max-height:400px}header {align-items:start}}
+</style>
+<main>
+  <header><div><h1>Test Exchange</h1><p>Two apps. Two testers. Progress together.</p></div><button id="replay">Replay animation</button></header>
+  <div class="grid">
+    <figure><div class="art" id="art"></div><figcaption>Editable SVG · transparent background</figcaption></figure>
+    <figure><div class="phone" id="light"><div class="status"><span>9:41</span><span>● ▰</span></div><div class="icon"></div><div class="bar"></div></div><figcaption>Native splash · light</figcaption></figure>
+    <figure><div class="phone dark" id="dark"><div class="status"><span>9:41</span><span>● ▰</span></div><div class="icon"></div><div class="bar"></div></div><figcaption>Native splash · dark</figcaption></figure>
+  </div>
+  <p class="note">Gentle pop, antenna wobble, blink, card tilt, exchange arrows and two drawn checks. One 900 ms sequence. Android 12+ runs an AnimatedVectorDrawable; Android 8–11 use the finished static vector. This is an artwork and motion preview; actual launch timing is controlled by Android.</p>
+</main>
+<template id="mark">{{SVG}}</template>
+<script>
+const source = document.querySelector('#mark').innerHTML;
+document.querySelector('#art').innerHTML = source;
+for (const host of document.querySelectorAll('.icon')) {
+  host.innerHTML = source;
+  const svg = host.querySelector('svg');
+  const safe = document.createElementNS('http://www.w3.org/2000/svg','g');
+  safe.setAttribute('class','safe');
+  safe.append(svg.querySelector('#robot'));
+  svg.append(safe);
+}
+function replay() {
+  document.querySelectorAll('.art,.icon').forEach(el => {
+    el.classList.remove('playing');
+    void el.offsetWidth;
+    el.classList.add('playing');
+  });
+}
+document.querySelector('#replay').addEventListener('click',replay);
+const params = new URLSearchParams(location.search);
+if (params.get('motion') !== 'off') replay();
+</script>
+</html>

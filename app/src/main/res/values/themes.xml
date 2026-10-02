@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--
-      The window Android draws before Compose puts up a frame.
-
-      windowBackground has to match the app's own ground or every launch opens on a flash of the
-      wrong colour. This was Material.Light, so a dark app started white.
-
-      The two bar colours matter on Android 14 and below, where the system paints them itself and
-      Theme.Material leaves them black. Against a #080C16 ground that reads as a black band above
-      and below an almost-black app, which looks like a rendering fault rather than a choice. From
-      Android 15 the bars are transparent and these are ignored, so setting them costs nothing
-      there and fixes the seam everywhere else.
-    -->
+    <!-- Match Compose's OceanLight/OceanDark ground across the native-to-app transition. -->
     <style name="Theme.TestTrack" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/paper</item>
         <item name="android:statusBarColor">@color/paper</item>
         <item name="android:navigationBarColor">@color/paper</item>
+        <item name="android:windowLightStatusBar">@bool/light_system_bars</item>
+        <item name="android:windowLightNavigationBar">@bool/light_system_bars</item>
+    </style>
+
+    <!-- Android 12+ selects the animated drawable; older versions select its final pose. -->
+    <style name="Theme.TestTrack.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/paper</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/testtrack_splash_icon</item>
+        <item name="windowSplashScreenAnimationDuration">900</item>
+        <item name="postSplashScreenTheme">@style/Theme.TestTrack</item>
+        <item name="android:statusBarColor">@color/paper</item>
+        <item name="android:navigationBarColor">@color/paper</item>
+        <item name="android:windowLightStatusBar">@bool/light_system_bars</item>
+        <item name="android:windowLightNavigationBar">@bool/light_system_bars</item>
     </style>
 </resources>
