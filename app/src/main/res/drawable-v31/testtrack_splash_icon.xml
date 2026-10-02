@@ -263,6 +263,19 @@
             </set>
         </aapt:attr>
     </target>
+    <target android:name="eye_blink">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="scaleY" android:duration="120" android:startOffset="780" android:valueType="floatType" android:interpolator="@android:interpolator/linear">
+                    <propertyValuesHolder android:propertyName="scaleY" android:valueType="floatType">
+                        <keyframe android:fraction="0" android:value="1" android:interpolator="@interpolator/splash_flow" />
+                        <keyframe android:fraction="0.45" android:value="0.06" android:interpolator="@interpolator/splash_flow" />
+                        <keyframe android:fraction="1" android:value="1" android:interpolator="@interpolator/splash_flow" />
+                    </propertyValuesHolder>
+                </objectAnimator>
+            </set>
+        </aapt:attr>
+    </target>
     <target android:name="check_left">
         <aapt:attr name="android:animation">
             <set android:ordering="together">

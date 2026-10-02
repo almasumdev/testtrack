@@ -88,6 +88,7 @@ MOTION = [
     ("bottom_reveal", "pathData", 310, 340, REVEALS['exchange_bottom'][1], "linear"),
     ("eyes", "translateX", 140, 640, [(0, 0), (.25, -9), (.65, 9), (1, 0)], "flow"),
     ("eyes", "translateY", 140, 640, [(0, 0), (.25, 10), (.65, 10), (1, 0)], "flow"),
+    ("eye_blink", "scaleY", 780, 120, [(0, 1), (.45, .06), (1, 1)], "flow"),
     ("check_left", "trimPathEnd", 550, 180, [(0, 0), (1, 1)], "confirm"),
     ("check_right", "trimPathEnd", 650, 180, [(0, 0), (1, 1)], "confirm"),
     ("check_left", "strokeAlpha", 550, 60, [(0, 0), (1, 1)], "confirm"),

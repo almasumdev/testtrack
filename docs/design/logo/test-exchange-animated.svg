@@ -36,10 +36,12 @@
     <path id="head" fill="url(#blue)" d="M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z" />
     <path id="face" fill="#FFFCF1" d="M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z" />
     <g id="eyes" data-pivot-x="627" data-pivot-y="529">
+      <g id="eye_blink" data-pivot-x="627" data-pivot-y="529">
       <path fill="#17253B" d="M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z" />
       <path fill="#17253B" d="M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z" />
       <path fill="#FFFFFF" d="M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z" />
       <path fill="#FFFFFF" d="M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z" />
+      </g>
     </g>
     <path id="smile" stroke="#17253B" stroke-width="31" stroke-linecap="round" d="M576 594 C602 620 651 620 677 594" />
     </g>
@@ -50,14 +52,14 @@
       <path id="bottom_arrow" fill="#1066EE" stroke="#FFFCF1" stroke-width="20" stroke-linejoin="round" d="M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z" />
     </g>
     <g id="card_left" data-pivot-x="440" data-pivot-y="911">
-      <path id="card_left_shell" fill="url(#coral)" d="M362 766 L502 764 C532 764 550 785 553 814 L568 983 C571 1000 564 1010 546 1016 L503 1027 C490 1030 483 1037 481 1048 L388 1056 C356 1059 336 1044 332 1013 L310 819 C306 789 327 767 362 766 Z" />
+      <path id="card_left_shell" fill="url(#coral)" d="M362 766 L502 764 C532 764 550 785 553 814 L568 983 C571 1013 554 1036 524 1040 L388 1056 C356 1059 336 1044 332 1013 L310 819 C306 789 327 767 362 766 Z" />
       <path id="card_left_screen" fill="#FFFCF1" d="M381 817 L496 813 C512 812 522 823 524 839 L536 966 C538 982 530 992 514 995 L399 1006 C383 1007 374 999 372 983 L358 842 C356 828 365 818 381 817 Z" />
       <path id="check_left" stroke="#17253B" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" d="M405 918 L432 941 L488 871" pathLength="1" />
       <path id="card_left_hand_base" fill="url(#deepBlue)" d="M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z" />
       <path id="card_left_hand_front" fill="url(#handBlue)" d="M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z" />
     </g>
     <g id="card_right" data-pivot-x="814" data-pivot-y="911">
-      <path id="card_right_shell" fill="url(#mint)" d="M752 765 L894 767 C927 768 947 790 943 822 L922 1013 C918 1044 899 1059 866 1056 L731 1041 C701 1038 684 1018 687 987 L701 831 C702 815 710 807 725 801 L745 793 C755 789 761 782 762 770 Z" />
+      <path id="card_right_shell" fill="url(#mint)" d="M752 765 L894 767 C927 768 947 790 943 822 L922 1013 C918 1044 899 1059 866 1056 L731 1041 C701 1038 684 1018 687 987 L701 811 C704 782 724 764 752 765 Z" />
       <path id="card_right_screen" fill="#FFFCF1" d="M757 814 L869 817 C887 818 898 831 896 848 L880 984 C879 1000 869 1007 853 1005 L740 993 C726 992 719 981 721 966 L734 838 C736 823 743 814 757 814 Z" />
       <path id="check_right" stroke="#17253B" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" d="M768 916 L795 939 L854 873" pathLength="1" />
       <path id="card_right_hand_base" fill="url(#deepBlue)" d="M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z" />
@@ -78,6 +80,8 @@
 .playing #bottom_reveal {transform-origin:0px 0px; animation:bottom_reveal_pathData 340ms 310ms cubic-bezier(0, 0, 1, 1) both}
 @keyframes eyes_transform { 0% {transform:translate(0px,0px) rotate(0deg) scale(1,1)} 25% {transform:translate(-9px,10px) rotate(0deg) scale(1,1)} 65% {transform:translate(9px,10px) rotate(0deg) scale(1,1)} 100% {transform:translate(0px,0px) rotate(0deg) scale(1,1)} }
 .playing #eyes {transform-origin:627px 529px; animation:eyes_transform 640ms 140ms cubic-bezier(0.4, 0, 0.2, 1) both}
+@keyframes eye_blink_transform { 0% {transform:translate(0px,0px) rotate(0deg) scale(1,1)} 45% {transform:translate(0px,0px) rotate(0deg) scale(1,0.06)} 100% {transform:translate(0px,0px) rotate(0deg) scale(1,1)} }
+.playing #eye_blink {transform-origin:627px 529px; animation:eye_blink_transform 120ms 780ms cubic-bezier(0.4, 0, 0.2, 1) both}
 #check_left {stroke-dasharray:1; stroke-dashoffset:0}
 @keyframes check_left_trimPathEnd { 0% {stroke-dashoffset:1} 100% {stroke-dashoffset:0} }
 @keyframes check_left_strokeAlpha { 0% {stroke-opacity:0} 100% {stroke-opacity:1} }

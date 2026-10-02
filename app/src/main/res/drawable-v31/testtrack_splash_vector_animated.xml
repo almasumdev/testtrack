@@ -54,10 +54,12 @@
                 </path>
                 <path android:name="face" android:pathData="M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z" android:fillColor="#FFFCF1" />
                 <group android:name="eyes" android:pivotX="627" android:pivotY="529" android:translateX="0" android:translateY="0">
-                    <path android:name="part_11" android:pathData="M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z" android:fillColor="#17253B" />
-                    <path android:name="part_12" android:pathData="M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z" android:fillColor="#17253B" />
-                    <path android:name="part_13" android:pathData="M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z" android:fillColor="#FFFFFF" />
-                    <path android:name="part_14" android:pathData="M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z" android:fillColor="#FFFFFF" />
+                    <group android:name="eye_blink" android:pivotX="627" android:pivotY="529" android:scaleY="1">
+                        <path android:name="part_11" android:pathData="M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z" android:fillColor="#17253B" />
+                        <path android:name="part_12" android:pathData="M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z" android:fillColor="#17253B" />
+                        <path android:name="part_13" android:pathData="M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z" android:fillColor="#FFFFFF" />
+                        <path android:name="part_14" android:pathData="M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z" android:fillColor="#FFFFFF" />
+                    </group>
                 </group>
                 <path android:name="smile" android:pathData="M576 594 C602 620 651 620 677 594" android:strokeColor="#17253B" android:strokeWidth="31" android:strokeLineCap="round" android:fillColor="#00000000" />
             </group>
@@ -70,7 +72,7 @@
                 <path android:name="bottom_arrow" android:pathData="M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z" android:fillColor="#1066EE" android:strokeColor="#FFFCF1" android:strokeWidth="20" android:strokeLineJoin="round" />
             </group>
             <group android:name="card_left" android:pivotX="440" android:pivotY="911" android:translateX="-62" android:translateY="92" android:rotation="-14" android:scaleX="0.68" android:scaleY="0.68">
-                <path android:name="card_left_shell" android:pathData="M362 766 L502 764 C532 764 550 785 553 814 L568 983 C571 1000 564 1010 546 1016 L503 1027 C490 1030 483 1037 481 1048 L388 1056 C356 1059 336 1044 332 1013 L310 819 C306 789 327 767 362 766 Z" android:fillAlpha="0">
+                <path android:name="card_left_shell" android:pathData="M362 766 L502 764 C532 764 550 785 553 814 L568 983 C571 1013 554 1036 524 1040 L388 1056 C356 1059 336 1044 332 1013 L310 819 C306 789 327 767 362 766 Z" android:fillAlpha="0">
                     <aapt:attr name="android:fillColor">
                         <gradient android:type="linear" android:startX="310" android:startY="765" android:endX="568" android:endY="1056">
                             <item android:offset="0" android:color="#FF805F" />
@@ -98,7 +100,7 @@
                 </path>
             </group>
             <group android:name="card_right" android:pivotX="814" android:pivotY="911" android:translateX="62" android:translateY="92" android:rotation="14" android:scaleX="0.68" android:scaleY="0.68">
-                <path android:name="card_right_shell" android:pathData="M752 765 L894 767 C927 768 947 790 943 822 L922 1013 C918 1044 899 1059 866 1056 L731 1041 C701 1038 684 1018 687 987 L701 831 C702 815 710 807 725 801 L745 793 C755 789 761 782 762 770 Z" android:fillAlpha="0">
+                <path android:name="card_right_shell" android:pathData="M752 765 L894 767 C927 768 947 790 943 822 L922 1013 C918 1044 899 1059 866 1056 L731 1041 C701 1038 684 1018 687 987 L701 811 C704 782 724 764 752 765 Z" android:fillAlpha="0">
                     <aapt:attr name="android:fillColor">
                         <gradient android:type="linear" android:startX="710" android:startY="768" android:endX="921" android:endY="1055">
                             <item android:offset="0" android:color="#2ADDBB" />
