@@ -5,6 +5,7 @@
 # make the runner go and fetch a second one.
 gradle/gradle-daemon-jvm.properties
 .kotlin/
+__pycache__/
 /local.properties
 /.idea/
 .DS_Store
@@ -40,3 +41,10 @@ gate.gs
 
 # mkit: this app's secrets
 .env
+
+# Read-only snapshots of the existing Play listing.
+/store/backups/
+
+# Store art built by `mkit art build` (sources: store/art)
+/store/screenshots/
+/store/feature/

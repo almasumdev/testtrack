@@ -1,0 +1,2 @@
+# Preserve the official Data safety CSV template, whose help text has trailing spaces.
+store/datasafety.csv whitespace=-blank-at-eol

@@ -1,0 +1,56 @@
+# Captures are from the current release build on the emulator, signed out.
+# Barlow font copies use mkit's filenames; the app resources are the source.
+layout = "classic"
+reference = "en"
+font_dir = "store/art/fonts"
+font = "Barlow"
+mascot = "app/src/main/ic_launcher-playstore.png"
+decoration = "contour"
+
+[status_bar]
+mode = "clean"
+height = 100
+sample = [540, 60]
+
+[theme.light]
+bg1 = "#F5F9FB"
+bg2 = "#D3E4EF"
+line = "#ABCADD"
+line_op = 0.30
+ink = "#18242E"
+sub = "#4A5B68"
+accent = "#1D5C82"
+tile = "#D3E4EF"
+chip_border = "rgba(29,92,130,.24)"
+
+[theme.dark]
+bg1 = "#121C24"
+bg2 = "#1C2D3A"
+line = "#32729B"
+line_op = 0.30
+ink = "#EDF3F7"
+sub = "#B7C9D5"
+accent = "#9BCCE8"
+tile = "#253F50"
+chip_border = "rgba(155,204,232,.24)"
+
+[[slide]]
+id = "hero"
+kind = "landscape"
+shots = ["ranks", "circle", "circle_dark"]
+
+[[slide]]
+id = "circle"
+shot = "circle"
+
+[[slide]]
+id = "ranks"
+shot = "ranks"
+
+[[slide]]
+id = "circle_dark"
+shot = "circle_dark"
+dark = true
+
+[feature]
+shot = "circle"

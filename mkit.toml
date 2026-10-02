@@ -6,9 +6,8 @@
 # no longer builds anything: `mkit deploy` is the one path to Play and to the
 # config/app update document.
 #
-# Nothing runs the checks automatically any more either. Before pushing:
-#   python scripts/check_app.py && ./gradlew ktlintCheck testDebugUnitTest
-requires = ">=0.2"
+# The pre-deploy hook checks code and store files before mkit bumps or publishes.
+requires = ">=0.3.1"
 
 [app]
 name    = "TestTrack"
@@ -19,9 +18,90 @@ signing = "local.properties"
 
 [play]
 
+[store]
+listing_dir = "store/listing"
+art_dir = "store"
+icon = "app/src/main/ic_launcher-playstore.png"
+whatsnew_dir = "store/whatsnew"
+datasafety = "store/datasafety.csv"
+backup_dir = "store/backups"
+
+[store.locales]
+en = ["en-US"]
+
+[store.details]
+defaultLanguage = "en-US"
+contactEmail = "hello@eazyverse.com"
+contactWebsite = "https://eazyverse.com/apps/testtrack"
+
+[datasafety]
+collects = true
+encrypted_in_transit = true
+deletion = "yes"
+account_creation = "oauth"
+account_deletion_url = "https://eazyverse.com/apps/testtrack/delete-account"
+deletion_url = "https://eazyverse.com/apps/testtrack/delete-data"
+
+# Legacy cohort identity and proof records still ship, so these transfers to
+# other members remain declared alongside the new backend feedback flow.
+[datasafety.collected.name]
+purposes = ["app_functionality", "account_management"]
+shared = ["app_functionality"]
+
+[datasafety.collected.email_address]
+purposes = ["app_functionality", "account_management"]
+shared = ["app_functionality"]
+
+[datasafety.collected.user_ids]
+purposes = ["app_functionality", "account_management", "fraud_prevention"]
+shared = ["app_functionality"]
+
+[datasafety.collected.photos]
+purposes = ["app_functionality"]
+shared = ["app_functionality"]
+optional = true
+
+[datasafety.collected.other_user_generated_content]
+purposes = ["app_functionality"]
+shared = ["app_functionality"]
+optional = true
+
+[datasafety.collected.installed_apps]
+purposes = ["app_functionality", "fraud_prevention"]
+shared = ["app_functionality"]
+
+[datasafety.collected.in_app_search_history]
+purposes = ["app_functionality"]
+ephemeral = true
+optional = true
+
+[datasafety.collected.app_interactions]
+purposes = ["app_functionality", "analytics", "fraud_prevention"]
+shared = ["app_functionality"]
+
+[datasafety.collected.device_ids]
+purposes = ["app_functionality", "analytics", "fraud_prevention"]
+
+# Analytics derives coarse geography from IP addresses without a GPS grant.
+[datasafety.collected.approximate_location]
+purposes = ["analytics"]
+
+[datasafety.collected.crash_logs]
+purposes = ["app_functionality", "analytics"]
+
+[datasafety.collected.diagnostics]
+purposes = ["app_functionality", "analytics"]
+
+[hooks]
+pre_deploy = "python scripts/check_release.py"
+
 [firebase]
 project    = "test-track-ev"
 rules      = true
 update_doc = "config/app"
 
 [notify.telegram]
+
+[art]                         # store art: mkit art build
+dir = "store/art"
+out = "store"

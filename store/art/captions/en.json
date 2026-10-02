@@ -1,0 +1,28 @@
+{
+  "locale": "en-US",
+  "dir": "ltr",
+  "hero": {
+    "name": "TestTrack",
+    "title": "Find your [testing crew]",
+    "sub": "Android developers testing together. Illustrative screen content.",
+    "chips": ["Testing crews", "Daily visits", "Developer feedback"]
+  },
+  "circle": {
+    "title": "Make room for [feedback]",
+    "sub": "Browse feedback requests. Screen content is illustrative."
+  },
+  "ranks": {
+    "title": "See the [testing record]",
+    "sub": "Recorded work on the board. Screen content is illustrative."
+  },
+  "circle_dark": {
+    "title": "Clear in [light or dark]",
+    "sub": "Follows your phone's theme. Screen content is illustrative."
+  },
+  "feature": {
+    "name": "TestTrack",
+    "title": "Find your [testing crew]",
+    "sub": "Android closed testing. Illustrative screen content.",
+    "chips": ["Testing crews", "Daily visits", "Developer feedback"]
+  }
+}
