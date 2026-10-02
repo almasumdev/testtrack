@@ -35,6 +35,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.eazyverse.testtrack.data.AppUpdateService
@@ -43,6 +44,8 @@ import com.eazyverse.testtrack.data.CaptureService
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.data.UpdateTier
 import com.eazyverse.testtrack.data.leftRound
+import com.eazyverse.testtrack.domain.LaunchDestination
+import com.eazyverse.testtrack.domain.launchDestination
 import com.eazyverse.testtrack.ui.*
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import kotlinx.coroutines.launch
@@ -263,37 +266,21 @@ fun AppNav(
      */
     val start =
         remember {
-            when {
-                // Onboarding is deliberately skipped: it describes the product as it was before
-                // crews and Feedback, so showing it would be the app's first screen telling a
-                // new person something untrue. The screen is still in the tree and the route is
-                // still registered, so putting it back is this branch and nothing else.
-                //
-                // Sign-in is no longer a door either. The feed, the crews and the board all read
-                // without an account, so somebody who has just installed this can look at what is
-                // actually happening instead of being asked for a Gmail by a screen that has
-                // shown them nothing. The two tabs that need a name ask for one themselves, at
-                // the moment they cannot answer without it.
-                //
-                // Setup keeps its branch only for an account part-way through it. A stranger has
-                // nothing to set up, and the steps that remain are each attached to the action
-                // that needs them.
-                Session.signedIn && AuthRepo.uid != null && !Session.setupComplete -> Routes.SETUP
-                else -> Routes.HOME
+            when (launchDestination(Session.onboardingDone, Session.signedIn, AuthRepo.uid != null, Session.setupComplete)) {
+                LaunchDestination.INTRO -> Routes.ONBOARDING
+                LaunchDestination.SETUP -> Routes.SETUP
+                LaunchDestination.HOME -> Routes.HOME
             }
         }
 
-    /**
-     * A tapped reminder, honoured once.
-     *
-     * Only from [Routes.HOME]: a tester part-way through setup has no business being dropped into
-     * a group screen, and a round in progress should not be yanked out from under them. Cleared
-     * either way, so returning here later does not re-navigate.
-     */
+    // Keep the tapped reminder until onboarding/setup reaches home. A page change during
+    // onboarding must not consume it or navigate past the introduction.
+    val currentEntry by nav.currentBackStackEntryAsState()
+    val route = currentEntry?.destination?.route
     val pending = openGroup.value
-    LaunchedEffect(pending, start) {
-        if (pending != null) {
-            if (start == Routes.HOME) {
+    LaunchedEffect(pending, route) {
+        if (pending != null && route != null && route != Routes.ONBOARDING && route != Routes.SETUP) {
+            if (route == Routes.HOME) {
                 nav.push(Routes.group(pending, feedbackFor = openFeedbackFor.value.orEmpty()))
             }
             openGroup.value = null

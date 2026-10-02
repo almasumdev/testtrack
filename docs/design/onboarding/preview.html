@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TestTrack &middot; Onboarding</title>
+<style>
+@font-face{font-family:Barlow;src:url('../../../app/src/main/res/font/barlow_regular.ttf')}
+@font-face{font-family:Barlow;src:url('../../../app/src/main/res/font/barlow_semibold.ttf');font-weight:600}
+*{box-sizing:border-box}body{margin:0;background:#e9f0f4;color:#18242e;font-family:Barlow,system-ui,sans-serif}
+main{max-width:1180px;margin:auto;padding:32px 24px}header{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:26px}
+h1{font-size:32px;font-weight:600;margin:0 0 6px}p{margin:0;color:#4a5b68;line-height:1.5}
+.controls{display:flex;gap:6px;padding:5px;background:#d3e4ef;border-radius:30px;flex-shrink:0}
+button{font:600 15px Barlow,system-ui;border:0;background:transparent;color:#1d5c82;border-radius:24px;padding:12px 20px;cursor:pointer}
+button[aria-pressed=true]{background:#1d5c82;color:white}button:focus-visible,a:focus-visible{outline:3px solid #32729b;outline-offset:4px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+figure{margin:0}.phone{display:block;width:100%;border:5px solid #18242e;border-radius:30px;background:#e9f0f4;box-shadow:0 10px 26px #18242e14}
+figcaption{margin-top:16px;display:flex;gap:12px;align-items:baseline;color:#4a5b68;font-size:15px}figcaption strong{color:#1d5c82;font-size:19px;font-weight:600}
+footer{margin-top:28px;padding-top:18px;border-top:1px solid #ccdbe4;font-size:14px}a{color:#1d5c82}footer p+p{margin-top:8px}
+body.dark{background:#0f1011;color:#f7f8f8}.dark p,.dark figcaption{color:#b4b7bd}.dark figcaption strong,.dark a{color:#8bcbf7}.dark .controls{background:#1a2831}.dark button{color:#8bcbf7}.dark button[aria-pressed=true]{background:#2f7dad;color:white}
+@media(max-width:720px){header{align-items:start;flex-direction:column}.grid{grid-template-columns:1fr;max-width:380px;margin:auto}main{padding:24px 20px}}
+</style>
+<main>
+  <header>
+    <div><h1>A friendly start. One shared palette.</h1><p>TestTrack onboarding &middot; actual Android screens &middot; Ocean blue throughout</p></div>
+    <div class="controls" aria-label="Color theme"><button type="button" aria-pressed="true" data-theme="light">Light</button><button type="button" aria-pressed="false" data-theme="dark">Dark</button></div>
+  </header>
+  <section class="grid" aria-label="The three onboarding pages">
+    <figure><a href="native-light-1.png" class="capture"><img class="phone" src="native-light-1.png" alt="Testing together: robot exchanging checked apps with a circle of developers"></a><figcaption><strong>01</strong> Find your testing community</figcaption></figure>
+    <figure><a href="native-light-2.png" class="capture"><img class="phone" src="native-light-2.png" alt="Useful feedback: app screen and conversation bubbles beside the robot"></a><figcaption><strong>02</strong> Help each other improve</figcaption></figure>
+    <figure><a href="native-light-3.png" class="capture"><img class="phone" src="native-light-3.png" alt="Daily progress: checked calendar and the robot beside Explore TestTrack"></a><figcaption><strong>03</strong> Keep testing on track</figcaption></figure>
+  </section>
+  <footer>
+    <p>Swipe or Next to continue. Skip and Explore open the app. Sign in opens the existing Google sign-in sheet. The introduction is shown once for new guests.</p>
+    <p>Editable illustrations: <a href="together.svg">Together</a> &middot; <a href="feedback.svg">Feedback</a> &middot; <a href="progress.svg">Progress</a> &middot; <a href="../logo/preview.html">Matching animated splash</a></p>
+  </footer>
+</main>
+<script>
+for(const button of document.querySelectorAll('[data-theme]'))button.addEventListener('click',()=>{
+  const theme=button.dataset.theme;
+  document.body.classList.toggle('dark',theme==='dark');
+  for(const other of document.querySelectorAll('[data-theme]'))other.setAttribute('aria-pressed',String(other===button));
+  document.querySelectorAll('.capture').forEach((anchor,index)=>{
+    anchor.href=`native-${theme}-${index+1}.png`;
+    anchor.querySelector('img').src=anchor.href;
+  });
+});
+</script>
+</html>

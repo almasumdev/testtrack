@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <defs>
+    <linearGradient id="blue" gradientUnits="userSpaceOnUse" x1="350" y1="277" x2="910" y2="744">
+      <stop offset="0" stop-color="#32729B" />
+      <stop offset="1" stop-color="#1D5C82" />
+    </linearGradient>
+    <linearGradient id="deepBlue" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985">
+      <stop offset="0" stop-color="#245F84" />
+      <stop offset="1" stop-color="#174866" />
+    </linearGradient>
+    <linearGradient id="handBlue" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966">
+      <stop offset="0" stop-color="#80BCDE" />
+      <stop offset="1" stop-color="#5E9DC5" />
+    </linearGradient>
+    <linearGradient id="coral" gradientUnits="userSpaceOnUse" x1="310" y1="765" x2="568" y2="1056">
+      <stop offset="0" stop-color="#F99B80" />
+      <stop offset="1" stop-color="#EF806B" />
+    </linearGradient>
+    <linearGradient id="mint" gradientUnits="userSpaceOnUse" x1="710" y1="768" x2="921" y2="1055">
+      <stop offset="0" stop-color="#77D6C2" />
+      <stop offset="1" stop-color="#54C5AC" />
+    </linearGradient>
+    <clipPath id="top_tip_mask" clipPathUnits="userSpaceOnUse">
+      <path d="M710 652 L810 652 L810 870 L618 870 Z" />
+    </clipPath>
+    <clipPath id="bottom_tip_mask" clipPathUnits="userSpaceOnUse">
+      <path d="M607 997 L539 1180 L440 1180 L440 997 Z" />
+    </clipPath>
+  </defs>
+  <g id="progress">
+    <path d="M42 203 A158 152 0 1 0 358 203 A158 152 0 1 0 42 203 Z" fill="#32729B" opacity="0.08" />
+    <path d="M67 356 A133 12 0 1 0 333 356 A133 12 0 1 0 67 356 Z" fill="#1D5C82" opacity="0.1" />
+    <path d="M45 95 H55 M50 90 V100" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M345 242 H353 M349 238 V246" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M302 53 H308 M305 50 V56" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M336 104 A4 4 0 1 0 344 104 A4 4 0 1 0 336 104 Z" fill="#F58B73" />
+    <path d="M51 287 A3 3 0 1 0 57 287 A3 3 0 1 0 51 287 Z" fill="#F58B73" />
+    <path d="M99 48 A3 3 0 1 0 105 48 A3 3 0 1 0 99 48 Z" fill="#F58B73" />
+    <g id="progress_board" transform="rotate(5 214 191)">
+      <path d="M119 87 H310 Q331 87 331 108 V277 Q331 298 310 298 H119 Q98 298 98 277 V108 Q98 87 119 87 Z" fill="#B7D1E2" />
+      <path d="M113 78 H304 Q325 78 325 99 V268 Q325 289 304 289 H113 Q92 289 92 268 V99 Q92 78 113 78 Z" fill="#FFFCF1" />
+      <path d="M113 78 H304 Q325 78 325 99 V132 H92 V99 Q92 78 113 78Z" fill="#32729B" />
+      <path d="M121 64 H121 Q126 64 126 69 V91 Q126 96 121 96 H121 Q116 96 116 91 V69 Q116 64 121 64 Z" fill="#1D5C82" />
+      <path d="M294 64 H294 Q299 64 299 69 V91 Q299 96 294 96 H294 Q289 96 289 91 V69 Q289 64 294 64 Z" fill="#1D5C82" />
+      <path d="M141.5 101 H227.5 Q231 101 231 104.5 V104.5 Q231 108 227.5 108 H141.5 Q138 108 138 104.5 V104.5 Q138 101 141.5 101 Z" fill="#FFFCF1" />
+      <path d="M284 105 A8 8 0 1 0 300 105 A8 8 0 1 0 284 105 Z" fill="#64CBB6" />
+      <path d="M118 151 H130 Q138 151 138 159 V171 Q138 179 130 179 H118 Q110 179 110 171 V159 Q110 151 118 151 Z" fill="#C3E9DF" />
+      <path d="M117.7 164 L122.6 168.62 L131.0 158.4" fill="none" stroke="#1D5C82" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M158 151 H170 Q178 151 178 159 V171 Q178 179 170 179 H158 Q150 179 150 171 V159 Q150 151 158 151 Z" fill="#C3E9DF" />
+      <path d="M157.7 164 L162.6 168.62 L171.0 158.4" fill="none" stroke="#1D5C82" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M198 151 H210 Q218 151 218 159 V171 Q218 179 210 179 H198 Q190 179 190 171 V159 Q190 151 198 151 Z" fill="#C3E9DF" />
+      <path d="M197.7 164 L202.6 168.62 L211.0 158.4" fill="none" stroke="#1D5C82" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M238 151 H250 Q258 151 258 159 V171 Q258 179 250 179 H238 Q230 179 230 171 V159 Q230 151 238 151 Z" fill="#C3E9DF" />
+      <path d="M237.7 164 L242.6 168.62 L251.0 158.4" fill="none" stroke="#1D5C82" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M278 151 H290 Q298 151 298 159 V171 Q298 179 290 179 H278 Q270 179 270 171 V159 Q270 151 278 151 Z" fill="#C3E9DF" />
+      <path d="M277.7 164 L282.6 168.62 L291.0 158.4" fill="none" stroke="#1D5C82" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M118 191 H130 Q138 191 138 199 V211 Q138 219 130 219 H118 Q110 219 110 211 V199 Q110 191 118 191 Z" fill="#C3E9DF" />
+      <path d="M117.7 204 L122.6 208.62 L131.0 198.4" fill="none" stroke="#1D5C82" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M158 191 H170 Q178 191 178 199 V211 Q178 219 170 219 H158 Q150 219 150 211 V199 Q150 191 158 191 Z" fill="#C3E9DF" />
+      <path d="M157.7 204 L162.6 208.62 L171.0 198.4" fill="none" stroke="#1D5C82" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M198 191 H210 Q218 191 218 199 V211 Q218 219 210 219 H198 Q190 219 190 211 V199 Q190 191 198 191 Z" fill="#C3E9DF" />
+      <path d="M197.7 204 L202.6 208.62 L211.0 198.4" fill="none" stroke="#1D5C82" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M238 191 H250 Q258 191 258 199 V211 Q258 219 250 219 H238 Q230 219 230 211 V199 Q230 191 238 191 Z" fill="#C3E9DF" />
+      <path d="M237.7 204 L242.6 208.62 L251.0 198.4" fill="none" stroke="#1D5C82" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M278 191 H290 Q298 191 298 199 V211 Q298 219 290 219 H278 Q270 219 270 211 V199 Q270 191 278 191 Z" fill="#D3E4EF" />
+      <path d="M279 205 A5 5 0 1 0 289 205 A5 5 0 1 0 279 205 Z" fill="#F58B73" />
+      <path d="M118 231 H130 Q138 231 138 239 V251 Q138 259 130 259 H118 Q110 259 110 251 V239 Q110 231 118 231 Z" fill="#D3E4EF" />
+      <path d="M158 231 H170 Q178 231 178 239 V251 Q178 259 170 259 H158 Q150 259 150 251 V239 Q150 231 158 231 Z" fill="#D3E4EF" />
+      <path d="M198 231 H210 Q218 231 218 239 V251 Q218 259 210 259 H198 Q190 259 190 251 V239 Q190 231 198 231 Z" fill="#D3E4EF" />
+      <path d="M238 231 H250 Q258 231 258 239 V251 Q258 259 250 259 H238 Q230 259 230 251 V239 Q230 231 238 231 Z" fill="#D3E4EF" />
+      <path d="M278 231 H290 Q298 231 298 239 V251 Q298 259 290 259 H278 Q270 259 270 251 V239 Q270 231 278 231 Z" fill="#D3E4EF" />
+    </g>
+    <g id="mascot_pose" transform="translate(-2 181) scale(0.174)">
+      <g id="robot" data-pivot-x="627" data-pivot-y="627">
+        <path id="torso" fill="url(#deepBlue)" d="M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z" />
+        <g id="head_rig" data-pivot-x="627" data-pivot-y="530">
+          <g id="antenna" data-pivot-x="627" data-pivot-y="278">
+            <path fill="#1D5C82" d="M603 227 H650 V295 H603 Z" />
+            <path fill="url(#coral)" d="M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z" />
+            <path fill="#FFFFFF" d="M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z" />
+          </g>
+          <g id="ears">
+            <path fill="url(#deepBlue)" d="M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z" />
+            <path fill="url(#deepBlue)" d="M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z" />
+            <path fill="#6CA9CF" d="M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z" />
+            <path fill="#6CA9CF" d="M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z" />
+          </g>
+          <path id="head" fill="url(#blue)" d="M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z" />
+          <path id="face" fill="#FFFCF1" d="M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z" />
+          <g id="eyes" data-pivot-x="627" data-pivot-y="529">
+            <g id="eye_blink" data-pivot-x="627" data-pivot-y="529">
+              <path fill="#17253B" d="M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z" />
+              <path fill="#17253B" d="M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z" />
+              <path fill="#FFFFFF" d="M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z" />
+              <path fill="#FFFFFF" d="M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z" />
+            </g>
+          </g>
+          <path id="smile" stroke="#17253B" stroke-width="31" stroke-linecap="round" d="M576 594 C602 620 651 620 677 594" />
+        </g>
+        <path d="M513 876 A114 110 0 1 0 741 876 A114 110 0 1 0 513 876 Z" fill="#64CBB6" />
+        <path d="M570.3 878 L614.4 919.58 L690.0 827.6" fill="none" stroke="#FFFCF1" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M254 835 A81 92 0 1 0 416 835 A81 92 0 1 0 254 835 Z" fill="#32729B" />
+        <path d="M838 835 A81 92 0 1 0 1000 835 A81 92 0 1 0 838 835 Z" fill="#32729B" />
+        <path d="M258 819 A58 67 0 1 0 374 819 A58 67 0 1 0 258 819 Z" fill="#6CA9CF" />
+        <path d="M880 819 A58 67 0 1 0 996 819 A58 67 0 1 0 880 819 Z" fill="#6CA9CF" />
+      </g>
+    </g>
+    <path d="M229 293 H329 Q347 293 347 311 V324 Q347 342 329 342 H229 Q211 342 211 324 V311 Q211 293 229 293 Z" fill="#FFFCF1" />
+    <path d="M223 317 A14 14 0 1 0 251 317 A14 14 0 1 0 223 317 Z" fill="#64CBB6" />
+    <path d="M230.7 317 L235.6 321.62 L244.0 311.4" fill="none" stroke="#1D5C82" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M264 306 H324 Q327 306 327 309 V309 Q327 312 324 312 H264 Q261 312 261 309 V309 Q261 306 264 306 Z" fill="#32729B" />
+    <path d="M263.5 319 H309.5 Q312 319 312 321.5 V321.5 Q312 324 309.5 324 H263.5 Q261 324 261 321.5 V321.5 Q261 319 263.5 319 Z" fill="#A0B3C0" />
+  </g>
+</svg>

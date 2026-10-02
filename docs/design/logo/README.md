@@ -4,6 +4,10 @@ The selected robot redrawn as editable vector paths. The paired app cards, check
 represent reciprocal app testing. Geometry and gradients have one source, `test-exchange.svg`.
 The SVG has a transparent background and no embedded raster image.
 
+The robot now shares the app's Ocean blue (`#32729B` to `#1D5C82`), with softer coral/mint
+accents. The same source supplies the [onboarding illustrations](../onboarding/preview.html).
+This palette update preserves the approved geometry, arrow-tip layering and 900 ms motion.
+
 Open `preview.html` for a replayable artwork, light splash and dark splash comparison.
 `test-exchange-animated.svg` also plays the motion once when opened in a browser.
 
@@ -11,6 +15,7 @@ Regenerate the Android resources and browser assets after editing the source:
 
 ```powershell
 python scripts/build_splash.py
+python scripts/build_onboarding.py
 ```
 
 ## Native launch
@@ -55,17 +60,19 @@ delivery and timing; the Test Exchange choreography is our own design.
 - Android 17 / API 37 emulator: animated cold launch in light and dark modes, disabled
   system animations, and returning to an existing activity. No crash-buffer entries.
 - Android 10 / API 29 emulator: the complete static artwork appears before the app opens.
-- 87 unit tests pass, including missing/expired splash metadata and the maximum animation wait.
+- 90 unit tests pass, including missing/expired splash metadata, the maximum animation wait,
+  and first-run onboarding routing.
 - `ktlintCheck`, `assembleDebug`, `compileDebugAndroidTestKotlin` and the architecture checker pass.
   Instrumentation tests were compiled; they were not run.
 - Browser preview: no JavaScript errors; reduced motion produces zero active animations.
 - Both card shells have continuous rounded edges; the arrow-position notches were removed.
 
-The interactive preview and `animation-v5-preview.gif` include the card-edge repair and final
-blink. Only the arrowheads overlap the cards; the curved tails stay behind them. Native MP4
-recordings below predate these corrections.
+The interactive preview and `animation-ocean-preview.gif` show the current app-matched palette,
+card-edge repair and final blink. Only the arrowheads overlap the cards; the curved tails stay
+behind them. Versioned v2–v5 GIFs preserve earlier color reviews. Native MP4 recordings below
+predate the card/arrow corrections and the palette update.
 
 Review files: [artwork and motion](preview.html), [animated SVG](test-exchange-animated.svg),
-[revised animation GIF](animation-v2-preview.gif), [revised native recording](native-exchange-light.mp4),
+[current animation GIF](animation-ocean-preview.gif), [earlier native recording](native-exchange-light.mp4),
 [native light launch](native-splash-light.mp4), [native dark launch](native-splash-dark.mp4),
 [disabled animations](native-splash-reduced.mp4), [Android 10 fallback](native-splash-android10.mp4).

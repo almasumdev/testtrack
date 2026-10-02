@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="intro_brand">TestTrack</string>
+    <string name="intro_skip">Skip</string>
+    <string name="intro_next">Next</string>
+    <string name="intro_start">Explore TestTrack</string>
+    <string name="intro_sign_in">Already here? Sign in</string>
+    <string name="intro_page">Page %1$d of %2$d</string>
+    <string name="intro_together_label">BETTER TOGETHER</string>
+    <string name="intro_together_title">Your next tester.\nYour next teammate.</string>
+    <string name="intro_together_body">Meet developers who test each other’s apps. Find your crew and help good ideas grow.</string>
+    <string name="intro_feedback_label">FRESH EYES, BETTER APPS</string>
+    <string name="intro_feedback_title">Small feedback.\nBig improvements.</string>
+    <string name="intro_feedback_body">Ask the Circle to try your app. Share what works, spot what needs fixing, and help each other improve.</string>
+    <string name="intro_progress_label">ONE DAY AT A TIME</string>
+    <string name="intro_progress_title">Keep your testing\non track.</string>
+    <string name="intro_progress_body">Join a closed-testing crew, follow your daily tasks, and see your testing progress in one place.</string>
+</resources>

@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <defs>
+    <linearGradient id="blue" gradientUnits="userSpaceOnUse" x1="350" y1="277" x2="910" y2="744">
+      <stop offset="0" stop-color="#32729B" />
+      <stop offset="1" stop-color="#1D5C82" />
+    </linearGradient>
+    <linearGradient id="deepBlue" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985">
+      <stop offset="0" stop-color="#245F84" />
+      <stop offset="1" stop-color="#174866" />
+    </linearGradient>
+    <linearGradient id="handBlue" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966">
+      <stop offset="0" stop-color="#80BCDE" />
+      <stop offset="1" stop-color="#5E9DC5" />
+    </linearGradient>
+    <linearGradient id="coral" gradientUnits="userSpaceOnUse" x1="310" y1="765" x2="568" y2="1056">
+      <stop offset="0" stop-color="#F99B80" />
+      <stop offset="1" stop-color="#EF806B" />
+    </linearGradient>
+    <linearGradient id="mint" gradientUnits="userSpaceOnUse" x1="710" y1="768" x2="921" y2="1055">
+      <stop offset="0" stop-color="#77D6C2" />
+      <stop offset="1" stop-color="#54C5AC" />
+    </linearGradient>
+    <clipPath id="top_tip_mask" clipPathUnits="userSpaceOnUse">
+      <path d="M710 652 L810 652 L810 870 L618 870 Z" />
+    </clipPath>
+    <clipPath id="bottom_tip_mask" clipPathUnits="userSpaceOnUse">
+      <path d="M607 997 L539 1180 L440 1180 L440 997 Z" />
+    </clipPath>
+  </defs>
+  <g id="together">
+    <path d="M42 203 A158 152 0 1 0 358 203 A158 152 0 1 0 42 203 Z" fill="#32729B" opacity="0.08" />
+    <path d="M67 356 A133 12 0 1 0 333 356 A133 12 0 1 0 67 356 Z" fill="#1D5C82" opacity="0.1" />
+    <path d="M45 95 H55 M50 90 V100" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M345 242 H353 M349 238 V246" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M302 53 H308 M305 50 V56" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M336 104 A4 4 0 1 0 344 104 A4 4 0 1 0 336 104 Z" fill="#F58B73" />
+    <path d="M51 287 A3 3 0 1 0 57 287 A3 3 0 1 0 51 287 Z" fill="#F58B73" />
+    <path d="M99 48 A3 3 0 1 0 105 48 A3 3 0 1 0 99 48 Z" fill="#F58B73" />
+    <path d="M91 128 C71 226 94 304 172 325 M303 132 C342 222 311 297 247 324 M118 87 Q200 34 281 88" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.28" />
+    <g id="developer_left" transform="translate(81 122)">
+      <path d="M-31 0 A31 31 0 1 0 31 0 A31 31 0 1 0 -31 0 Z" fill="#FFFCF1" />
+      <path d="M-27 1 A27 27 0 1 0 27 1 A27 27 0 1 0 -27 1 Z" fill="#D3E4EF" />
+      <path d="M-23 19 Q-22 8 -9 8 H9 Q22 8 23 19 Q0 35 -23 19Z" fill="#F58B73" />
+      <path d="M-13 -5 A13 16 0 1 0 13 -5 A13 16 0 1 0 -13 -5 Z" fill="#F3C3A5" />
+      <path d="M-13 -5 Q-19 -23 0 -23 Q19 -23 13 -4 L9 -13 Q0 -8 -10 -13 Z" fill="#18242E" />
+      <path d="M-5.3 -4 A1.3 1.6 0 1 0 -2.7 -4 A1.3 1.6 0 1 0 -5.3 -4 Z" fill="#18242E" />
+      <path d="M3.7 -4 A1.3 1.6 0 1 0 6.3 -4 A1.3 1.6 0 1 0 3.7 -4 Z" fill="#18242E" />
+      <path d="M-3 2 Q1 6 5 2" fill="none" stroke="#18242E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+    <g id="developer_top" transform="translate(200 63)">
+      <path d="M-31 0 A31 31 0 1 0 31 0 A31 31 0 1 0 -31 0 Z" fill="#FFFCF1" />
+      <path d="M-27 1 A27 27 0 1 0 27 1 A27 27 0 1 0 -27 1 Z" fill="#D3E4EF" />
+      <path d="M-23 19 Q-22 8 -9 8 H9 Q22 8 23 19 Q0 35 -23 19Z" fill="#32729B" />
+      <path d="M-13 -5 A13 16 0 1 0 13 -5 A13 16 0 1 0 -13 -5 Z" fill="#F3C3A5" />
+      <path d="M-13 -5 Q-19 -23 0 -23 Q19 -23 13 -4 L9 -13 Q0 -8 -10 -13 Z" fill="#463D3A" />
+      <path d="M-5.3 -4 A1.3 1.6 0 1 0 -2.7 -4 A1.3 1.6 0 1 0 -5.3 -4 Z" fill="#18242E" />
+      <path d="M3.7 -4 A1.3 1.6 0 1 0 6.3 -4 A1.3 1.6 0 1 0 3.7 -4 Z" fill="#18242E" />
+      <path d="M-3 2 Q1 6 5 2" fill="none" stroke="#18242E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+    <g id="developer_right" transform="translate(320 129)">
+      <path d="M-31 0 A31 31 0 1 0 31 0 A31 31 0 1 0 -31 0 Z" fill="#FFFCF1" />
+      <path d="M-27 1 A27 27 0 1 0 27 1 A27 27 0 1 0 -27 1 Z" fill="#D3E4EF" />
+      <path d="M-23 19 Q-22 8 -9 8 H9 Q22 8 23 19 Q0 35 -23 19Z" fill="#64CBB6" />
+      <path d="M-13 -5 A13 16 0 1 0 13 -5 A13 16 0 1 0 -13 -5 Z" fill="#F3C3A5" />
+      <path d="M-13 -5 Q-19 -23 0 -23 Q19 -23 13 -4 L9 -13 Q0 -8 -10 -13 Z" fill="#18242E" />
+      <path d="M-5.3 -4 A1.3 1.6 0 1 0 -2.7 -4 A1.3 1.6 0 1 0 -5.3 -4 Z" fill="#18242E" />
+      <path d="M3.7 -4 A1.3 1.6 0 1 0 6.3 -4 A1.3 1.6 0 1 0 3.7 -4 Z" fill="#18242E" />
+      <path d="M-3 2 Q1 6 5 2" fill="none" stroke="#18242E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+    <g id="mascot_pose" transform="translate(18 52) scale(0.29)">
+      <g id="robot" data-pivot-x="627" data-pivot-y="627">
+        <path id="torso" fill="url(#deepBlue)" d="M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z" />
+        <g id="head_rig" data-pivot-x="627" data-pivot-y="530">
+          <g id="antenna" data-pivot-x="627" data-pivot-y="278">
+            <path fill="#1D5C82" d="M603 227 H650 V295 H603 Z" />
+            <path fill="url(#coral)" d="M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z" />
+            <path fill="#FFFFFF" d="M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z" />
+          </g>
+          <g id="ears">
+            <path fill="url(#deepBlue)" d="M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z" />
+            <path fill="url(#deepBlue)" d="M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z" />
+            <path fill="#6CA9CF" d="M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z" />
+            <path fill="#6CA9CF" d="M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z" />
+          </g>
+          <path id="head" fill="url(#blue)" d="M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z" />
+          <path id="face" fill="#FFFCF1" d="M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z" />
+          <g id="eyes" data-pivot-x="627" data-pivot-y="529">
+            <g id="eye_blink" data-pivot-x="627" data-pivot-y="529">
+              <path fill="#17253B" d="M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z" />
+              <path fill="#17253B" d="M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z" />
+              <path fill="#FFFFFF" d="M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z" />
+              <path fill="#FFFFFF" d="M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z" />
+            </g>
+          </g>
+          <path id="smile" stroke="#17253B" stroke-width="31" stroke-linecap="round" d="M576 594 C602 620 651 620 677 594" />
+        </g>
+        <g id="exchange_top" data-pivot-x="627" data-pivot-y="907">
+          <path id="top_arrow" fill="#32729B" stroke="#FFFCF1" stroke-width="20" stroke-linejoin="round" d="M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z" />
+        </g>
+        <g id="exchange_bottom" data-pivot-x="627" data-pivot-y="907">
+          <path id="bottom_arrow" fill="#32729B" stroke="#FFFCF1" stroke-width="20" stroke-linejoin="round" d="M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z" />
+        </g>
+        <g id="card_left" data-pivot-x="440" data-pivot-y="911">
+          <path id="card_left_shell" fill="url(#coral)" d="M362 766 L502 764 C532 764 550 785 553 814 L568 983 C571 1013 554 1036 524 1040 L388 1056 C356 1059 336 1044 332 1013 L310 819 C306 789 327 767 362 766 Z" />
+          <path id="card_left_screen" fill="#FFFCF1" d="M381 817 L496 813 C512 812 522 823 524 839 L536 966 C538 982 530 992 514 995 L399 1006 C383 1007 374 999 372 983 L358 842 C356 828 365 818 381 817 Z" />
+          <path id="check_left" stroke="#17253B" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" d="M405 918 L432 941 L488 871" />
+          <path id="card_left_hand_base" fill="url(#deepBlue)" d="M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z" />
+          <path id="card_left_hand_front" fill="url(#handBlue)" d="M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z" />
+        </g>
+        <g id="card_right" data-pivot-x="814" data-pivot-y="911">
+          <path id="card_right_shell" fill="url(#mint)" d="M752 765 L894 767 C927 768 947 790 943 822 L922 1013 C918 1044 899 1059 866 1056 L731 1041 C701 1038 684 1018 687 987 L701 811 C704 782 724 764 752 765 Z" />
+          <path id="card_right_screen" fill="#FFFCF1" d="M757 814 L869 817 C887 818 898 831 896 848 L880 984 C879 1000 869 1007 853 1005 L740 993 C726 992 719 981 721 966 L734 838 C736 823 743 814 757 814 Z" />
+          <path id="check_right" stroke="#17253B" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" d="M768 916 L795 939 L854 873" />
+          <path id="card_right_hand_base" fill="url(#deepBlue)" d="M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z" />
+          <path id="card_right_hand_front" fill="url(#handBlue)" d="M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z" />
+        </g>
+        <g id="exchange_top_front">
+          <g id="top_tip" clip-path="url(#top_tip_mask)">
+            <path id="top_arrow_tip" fill="#32729B" stroke="#FFFCF1" stroke-width="20" stroke-linejoin="round" d="M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z" />
+          </g>
+        </g>
+        <g id="exchange_bottom_front">
+          <g id="bottom_tip" clip-path="url(#bottom_tip_mask)">
+            <path id="bottom_arrow_tip" fill="#32729B" stroke="#FFFCF1" stroke-width="20" stroke-linejoin="round" d="M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z" />
+          </g>
+        </g>
+      </g>
+    </g>
+    <path d="M42 236 A15 15 0 1 0 72 236 A15 15 0 1 0 42 236 Z" fill="#FFFCF1" />
+    <path d="M50.7 236 L55.6 240.62 L64.0 230.4" fill="none" stroke="#32729B" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M330 295 A15 15 0 1 0 360 295 A15 15 0 1 0 330 295 Z" fill="#FFFCF1" />
+    <path d="M338.7 295 L343.6 299.62 L352.0 289.4" fill="none" stroke="#32729B" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>
