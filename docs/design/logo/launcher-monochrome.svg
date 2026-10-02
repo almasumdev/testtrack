@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1254 1254" fill="none" role="img" aria-labelledby="title desc" width="108" height="108">
+  <title id="title">TestTrack — Test Exchange</title>
+  <desc id="desc">A friendly blue robot holding two checked app cards, joined by exchange arrows.</desc>
+  <g id="monochrome_robot" transform="translate(163.02 163.02) scale(.74)">
+    <path fill="#FFFFFF" d="M603 227 H650 V295 H603 Z" />
+    <path fill="#FFFFFF" d="M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z" />
+    <path fill="#FFFFFF" d="M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z" />
+    <path fill="#FFFFFF" d="M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z" />
+    <path id="head" fill="#FFFFFF" d="M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z" fill-rule="evenodd" />
+    <path fill="#FFFFFF" d="M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z" />
+    <path fill="#FFFFFF" d="M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z" />
+    <path id="smile" stroke="#FFFFFF" stroke-width="31" stroke-linecap="round" d="M576 594 C602 620 651 620 677 594" />
+    <path id="card_left_shell" fill="#FFFFFF" d="M362 766 L502 764 C532 764 550 785 553 814 L568 983 C571 1013 554 1036 524 1040 L388 1056 C356 1059 336 1044 332 1013 L310 819 C306 789 327 767 362 766 Z M381 817 L496 813 C512 812 522 823 524 839 L536 966 C538 982 530 992 514 995 L399 1006 C383 1007 374 999 372 983 L358 842 C356 828 365 818 381 817 Z" fill-rule="evenodd" />
+    <path id="check_left" stroke="#FFFFFF" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" d="M405 918 L432 941 L488 871" />
+    <path id="card_left_hand_base" fill="#FFFFFF" d="M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z" />
+    <path id="card_right_shell" fill="#FFFFFF" d="M752 765 L894 767 C927 768 947 790 943 822 L922 1013 C918 1044 899 1059 866 1056 L731 1041 C701 1038 684 1018 687 987 L701 811 C704 782 724 764 752 765 Z M757 814 L869 817 C887 818 898 831 896 848 L880 984 C879 1000 869 1007 853 1005 L740 993 C726 992 719 981 721 966 L734 838 C736 823 743 814 757 814 Z" fill-rule="evenodd" />
+    <path id="check_right" stroke="#FFFFFF" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" d="M768 916 L795 939 L854 873" />
+    <path id="card_right_hand_base" fill="#FFFFFF" d="M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z" />
+    <path id="top_arrow" fill="#FFFFFF" stroke-width="20" stroke-linejoin="round" d="M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z" />
+    <path id="bottom_arrow" fill="#FFFFFF" stroke-width="20" stroke-linejoin="round" d="M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z" />
+  </g>
+</svg>

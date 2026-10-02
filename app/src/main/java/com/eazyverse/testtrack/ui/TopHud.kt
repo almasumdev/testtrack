@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,17 +32,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Ticket
+import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
@@ -212,36 +214,10 @@ private fun SignInChip(onClick: () -> Unit) {
     }
 }
 
-/** The app mark at header size: a run of days, most of them kept. */
+/** The same mascot as onboarding, framed for the compact header slot. */
 @Composable
 private fun HudMark() {
-    val ink = MaterialTheme.colorScheme.onPrimary
-    val tint = Tt.colors.accentInk
-
-    Box(
-        Modifier
-            .size(MarkSize)
-            .clip(RoundedCornerShape(12.dp))
-            .background(tint),
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(Modifier.size(19.dp)) {
-            val cell = size.width * 0.28f
-            val gap = size.width * 0.08f
-            repeat(3) { row ->
-                repeat(3) { col ->
-                    // The last cell is the day still to come.
-                    val pending = row == 2 && col == 2
-                    drawRoundRect(
-                        color = ink.copy(alpha = if (pending) 0.30f else 0.95f),
-                        topLeft = Offset(col * (cell + gap), row * (cell + gap)),
-                        size = Size(cell, cell),
-                        cornerRadius = CornerRadius(cell * 0.34f),
-                    )
-                }
-            }
-        }
-    }
+    Image(painterResource(R.drawable.onboarding_mascot), null, Modifier.size(MarkSize))
 }
 
 private val MarkSize = 38.dp

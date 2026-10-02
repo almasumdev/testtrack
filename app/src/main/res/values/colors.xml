@@ -3,6 +3,6 @@
     <!-- OceanLight background; values-night matches OceanDark. -->
     <color name="paper">#E9F0F4</color>
 
-    <!-- Iris, the app's one accent. The launcher icon wore the old green brand. -->
-    <color name="ic_launcher_background">#4F46E5</color>
+    <!-- Fixed Ocean background for the launcher, independent of system dark mode. -->
+    <color name="ic_launcher_background">#E9F0F4</color>
 </resources>

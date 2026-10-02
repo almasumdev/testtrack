@@ -35,7 +35,12 @@ python scripts/build_onboarding.py
 - Missing animation metadata, pre-Android-12 devices and disabled system animations skip
   the animation wait. Normal resumes do not create a second in-app splash.
 
-This change supplies the SVG and native splash. Launcher/store icon assets are separate.
+Launcher assets now use the same robot. Import `launcher-foreground.svg` and
+`launcher-monochrome.svg` for launcher layers; both include adaptive-icon padding.
+The monochrome SVG is white on transparent. The existing Android drawable XML files are
+already wired into both adaptive launcher icons. Regenerate with `python scripts/build_launcher.py`;
+add `--raster` with Playwright and Pillow installed to rebuild the legacy WebP sizes.
+The launcher background is fixed OceanLight `#E9F0F4`. Store publication is separate.
 
 Platform reference: [Android splash screen guidance](https://developer.android.com/develop/ui/views/launch/splash-screen).
 
