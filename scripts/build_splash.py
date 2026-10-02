@@ -5,6 +5,7 @@ Geometry and colours live in the SVG; motion is declared below. No raster conver
 """
 
 from pathlib import Path
+import math
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,20 +17,92 @@ SVG = "http://www.w3.org/2000/svg"
 ET.register_namespace("android", ANDROID)
 ET.register_namespace("aapt", AAPT)
 
-# target, property, delay, duration, [(fraction, value), ...]
-# Final frame is the unchanged SVG. Total duration: 900 ms, no loops.
+# target, property, delay, duration, [(fraction, value), ...], easing
+# Arrival -> reciprocal exchange -> verification. No generic logo bounce or antenna wobble.
+# Each segment uses its own easing in both Android and the browser. Total: 900 ms.
+EASING = {
+    "arrive": (.16, 1, .3, 1),
+    "flow": (.4, 0, .2, 1),
+    "confirm": (.2, 0, 0, 1),
+    "linear": (0, 0, 1, 1),
+}
+
+
+def flow_progress(t):
+    """Sample the Android fast-out-slow-in curve for the circular reveal rig."""
+    low, high = 0., 1.
+    for _ in range(18):
+        u = (low + high) / 2
+        x = 3 * (1-u)**2 * u * .4 + 3 * (1-u) * u*u * .2 + u**3
+        if x < t:
+            low = u
+        else:
+            high = u
+    return 3 * (1-u) * u*u + u**3
+
+
+def sector(start, sweep):
+    """Two compatible cubic arcs, so AVD path morphs sweep along the arrows."""
+    cx, cy, radius = 627, 907, 700
+    def point(angle):
+        return cx + radius * math.cos(angle), cy + radius * math.sin(angle)
+    def coords(p):
+        return f"{p[0]:.3f} {p[1]:.3f}"
+    a = math.radians(start)
+    step = math.radians(sweep / 2)
+    path = f"M{cx} {cy} L{coords(point(a))}"
+    for _ in range(2):
+        b = a + step
+        k = 4 / 3 * math.tan(step / 4)
+        p0, p1 = point(a), point(b)
+        c0 = p0[0] - radius * k * math.sin(a), p0[1] + radius * k * math.cos(a)
+        c1 = p1[0] + radius * k * math.sin(b), p1[1] - radius * k * math.cos(b)
+        path += f" C{coords(c0)} {coords(c1)} {coords(p1)}"
+        a = b
+    return path + f" L{cx} {cy} Z"
+
+
+def reveal_frames(start):
+    return [(i / 24, sector(start, 180 * flow_progress(i / 24))) for i in range(25)]
+
+
+REVEALS = {
+    "exchange_top": ("top_reveal", reveal_frames(180)),
+    "exchange_bottom": ("bottom_reveal", reveal_frames(0)),
+}
 MOTION = [
-    ("robot", "scaleX", 0, 380, [(0, .92), (.72, 1.025), (1, 1)]),
-    ("robot", "scaleY", 0, 380, [(0, .92), (.72, 1.025), (1, 1)]),
-    ("antenna", "rotation", 90, 510, [(0, 0), (.3, -7), (.65, 4), (1, 0)]),
-    ("eyes", "scaleY", 260, 220, [(0, 1), (.45, .08), (1, 1)]),
-    ("exchange_top", "rotation", 180, 480, [(0, -12), (1, 0)]),
-    ("exchange_bottom", "rotation", 250, 500, [(0, -12), (1, 0)]),
-    ("card_left", "rotation", 80, 520, [(0, 0), (.4, -5), (1, 0)]),
-    ("card_right", "rotation", 80, 520, [(0, 0), (.4, 5), (1, 0)]),
-    ("check_left", "trimPathEnd", 430, 320, [(0, 0), (1, 1)]),
-    ("check_right", "trimPathEnd", 540, 360, [(0, 0), (1, 1)]),
+    ("torso", "fillAlpha", 60, 180, [(0, 0), (1, 1)], "confirm"),
+    ("card_left", "translateX", 60, 350, [(0, -62), (1, 0)], "arrive"),
+    ("card_left", "translateY", 60, 350, [(0, 92), (1, 0)], "arrive"),
+    ("card_left", "rotation", 60, 350, [(0, -14), (1, 0)], "arrive"),
+    ("card_left", "scaleX", 60, 350, [(0, .68), (1, 1)], "arrive"),
+    ("card_left", "scaleY", 60, 350, [(0, .68), (1, 1)], "arrive"),
+    ("card_left", "opacity", 60, 140, [(0, 0), (1, 1)], "confirm"),
+    ("card_right", "translateX", 100, 350, [(0, 62), (1, 0)], "arrive"),
+    ("card_right", "translateY", 100, 350, [(0, 92), (1, 0)], "arrive"),
+    ("card_right", "rotation", 100, 350, [(0, 14), (1, 0)], "arrive"),
+    ("card_right", "scaleX", 100, 350, [(0, .68), (1, 1)], "arrive"),
+    ("card_right", "scaleY", 100, 350, [(0, .68), (1, 1)], "arrive"),
+    ("card_right", "opacity", 100, 140, [(0, 0), (1, 1)], "confirm"),
+    ("top_reveal", "pathData", 240, 340, REVEALS['exchange_top'][1], "linear"),
+    ("bottom_reveal", "pathData", 310, 340, REVEALS['exchange_bottom'][1], "linear"),
+    ("eyes", "translateX", 140, 640, [(0, 0), (.25, -9), (.65, 9), (1, 0)], "flow"),
+    ("eyes", "translateY", 140, 640, [(0, 0), (.25, 10), (.65, 10), (1, 0)], "flow"),
+    ("check_left", "trimPathEnd", 550, 180, [(0, 0), (1, 1)], "confirm"),
+    ("check_right", "trimPathEnd", 650, 180, [(0, 0), (1, 1)], "confirm"),
+    ("check_left", "strokeAlpha", 550, 60, [(0, 0), (1, 1)], "confirm"),
+    ("check_right", "strokeAlpha", 650, 60, [(0, 0), (1, 1)], "confirm"),
+    ("head_rig", "translateY", 630, 270, [(0, 0), (.4, 10), (1, 0)], "flow"),
 ]
+
+
+def native_motion():
+    for name, prop, delay, duration, frames, ease in MOTION:
+        if prop == "opacity":
+            for part in ["shell", "screen", "hand_base", "hand_front"]:
+                yield (f"{name}_{part}", "fillAlpha", delay, duration, frames, ease)
+        else:
+            yield name, prop, delay, duration, frames, ease
 
 
 def android_attrs(**attributes):
@@ -68,11 +141,14 @@ def build_vector(svg, animated=False):
                 value = node.get(f"data-pivot-{axis}")
                 if value is not None:
                     attrs[f"{{{ANDROID}}}pivot{axis.upper()}"] = value
-            if animated and node.get("id") == "robot":
-                attrs.update(android_attrs(scaleX=.92, scaleY=.92))
-            if animated and node.get("id", "").startswith("exchange_"):
-                attrs.update(android_attrs(rotation=-12))
+            if animated:
+                for name, prop, _, _, frames, _ in native_motion():
+                    if name == node.get("id"):
+                        attrs.update(android_attrs(**{prop: frames[0][1]}))
             group = ET.SubElement(parent, "group", attrs)
+            if animated and node.get("id") in REVEALS:
+                name, frames = REVEALS[node.get("id")]
+                ET.SubElement(group, "clip-path", android_attrs(name=name, pathData=frames[0][1]))
             for child in node:
                 convert(child, group)
         elif tag == "path":
@@ -88,8 +164,10 @@ def build_vector(svg, animated=False):
                     attrs[f"{{{ANDROID}}}{dest}"] = "#00000000" if value == "none" else value
             if "fill" not in node.attrib:
                 attrs.update(android_attrs(fillColor="#00000000"))
-            if animated and node.get("id", "").startswith("check_"):
-                attrs.update(android_attrs(trimPathEnd=0))
+            if animated:
+                for name, prop, _, _, frames, _ in native_motion():
+                    if name == node.get("id"):
+                        attrs.update(android_attrs(**{prop: frames[0][1]}))
             path = ET.SubElement(parent, "path", attrs)
             fill = node.get("fill", "")
             if fill.startswith("url("):
@@ -113,44 +191,82 @@ def build_vector(svg, animated=False):
 def build_animation():
     root = ET.Element("animated-vector", android_attrs(drawable="@drawable/testtrack_splash_vector_animated"))
     targets = {}
-    for name, prop, delay, duration, frames in MOTION:
+    for name, prop, delay, duration, frames, ease in native_motion():
         if name not in targets:
             target = ET.SubElement(root, "target", android_attrs(name=name))
             attr = ET.SubElement(target, f"{{{AAPT}}}attr", {"name": "android:animation"})
             targets[name] = ET.SubElement(attr, "set", android_attrs(ordering="together"))
+        if prop == "pathData":
+            # Android's AnimatorInflater only accepts numeric <keyframe> values.
+            # Export compatible path morphs with valueFrom/valueTo instead, as in Google's AVD.
+            for (f0, p0), (f1, p1) in zip(frames, frames[1:]):
+                begin, end = round(f0 * duration), round(f1 * duration)
+                ET.SubElement(targets[name], "objectAnimator", android_attrs(
+                    propertyName=prop, duration=end-begin, startOffset=delay+begin,
+                    valueType="pathType", valueFrom=p0, valueTo=p1,
+                    interpolator=f"@interpolator/splash_{ease}",
+                ))
+            continue
         animator = ET.SubElement(targets[name], "objectAnimator", android_attrs(
-            propertyName=prop, duration=duration, startOffset=delay, valueType="floatType",
-            interpolator="@android:interpolator/fast_out_slow_in",
+            propertyName=prop, duration=duration, startOffset=delay,
+            valueType="pathType" if prop == "pathData" else "floatType",
+            interpolator="@android:interpolator/linear",
         ))
-        holder = ET.SubElement(animator, "propertyValuesHolder", android_attrs(propertyName=prop, valueType="floatType"))
+        holder = ET.SubElement(animator, "propertyValuesHolder", android_attrs(
+            propertyName=prop, valueType="pathType" if prop == "pathData" else "floatType",
+        ))
         for fraction, value in frames:
-            ET.SubElement(holder, "keyframe", android_attrs(fraction=fraction, value=value))
+            ET.SubElement(holder, "keyframe", android_attrs(
+                fraction=fraction, value=value, interpolator=f"@interpolator/splash_{ease}",
+            ))
     return root
 
 
 def build_preview(svg):
     # Browser review uses the same geometry and motion keyframes. The phone runs the AVD.
     css = []
+    defs = svg.find(f"{{{SVG}}}defs")
+    for group, (name, frames) in REVEALS.items():
+        clip = ET.SubElement(defs, f"{{{SVG}}}clipPath", {"id": name + "_clip", "clipPathUnits": "userSpaceOnUse"})
+        ET.SubElement(clip, f"{{{SVG}}}path", {"id": name, "d": frames[-1][1]})
+        svg.find(f".//*[@id='{group}']").set("clip-path", f"url(#{name}_clip)")
     targets = {}
-    for name, prop, delay, duration, frames in MOTION:
-        targets.setdefault(name, []).append((prop, delay, duration, frames))
+    for name, prop, delay, duration, frames, ease in MOTION:
+        targets.setdefault(name, []).append((prop, delay, duration, frames, ease))
     for name, motions in targets.items():
         node = svg.find(f".//*[@id='{name}']")
-        if name.startswith("check_"):
-            node.set("pathLength", "1")
-            css.append(f".playing #{name} {{stroke-dasharray:1; stroke-dashoffset:1; animation:{name} 900ms linear forwards}}")
-            _, delay, duration, _ = motions[0]
-            css.append(f"@keyframes {name} {{0%, {delay / 9:g}% {{stroke-dashoffset:1}} {(delay + duration) / 9:g}%,100% {{stroke-dashoffset:0}}}}")
-            continue
-        # ScaleX/scaleY share a timeline. All other groups have a single rotation/scale.
-        _, delay, duration, frames = motions[0]
-        origin = f"{node.get('data-pivot-x')}px {node.get('data-pivot-y')}px"
-        css.append(f".playing #{name} {{transform-origin:{origin}; animation:{name} {duration}ms {delay}ms cubic-bezier(.4,0,.2,1) both}}")
-        keys = []
-        for fraction, value in frames:
-            transform = f"scale({value})" if name == "robot" else (f"scaleY({value})" if name == "eyes" else f"rotate({value}deg)")
-            keys.append(f"{fraction * 100:g}% {{transform:{transform}}}")
-        css.append(f"@keyframes {name} {{ {' '.join(keys)} }}")
+        animations = []
+        transforms = [m for m in motions if m[0] in ["translateX", "translateY", "rotation", "scaleX", "scaleY"]]
+        if transforms:
+            _, delay, duration, frames, ease = transforms[0]
+            keys = []
+            for i, (fraction, _) in enumerate(frames):
+                values = {p: f[i][1] for p, _, _, f, _ in transforms}
+                transform = f"translate({values.get('translateX', 0)}px,{values.get('translateY', 0)}px) rotate({values.get('rotation', 0)}deg) scale({values.get('scaleX', 1)},{values.get('scaleY', 1)})"
+                keys.append(f"{fraction * 100:g}% {{transform:{transform}}}")
+            css.append(f"@keyframes {name}_transform {{ {' '.join(keys)} }}")
+            animations.append(f"{name}_transform {duration}ms {delay}ms cubic-bezier{EASING[ease]} both")
+        for prop, delay, duration, frames, ease in motions:
+            if prop in [m[0] for m in transforms]:
+                continue
+            animation = f"{name}_{prop}"
+            if prop == "trimPathEnd":
+                node.set("pathLength", "1")
+                css.append(f"#{name} {{stroke-dasharray:1; stroke-dashoffset:0}}")
+            keys = []
+            for fraction, value in frames:
+                declaration = {
+                    "trimPathEnd": f"stroke-dashoffset:{1 - value}" if prop == "trimPathEnd" else "",
+                    "strokeAlpha": f"stroke-opacity:{value}",
+                    "fillAlpha": f"fill-opacity:{value}",
+                    "opacity": f"opacity:{value}",
+                    "pathData": f'd:path("{value}")',
+                }[prop]
+                keys.append(f"{fraction * 100:g}% {{{declaration}}}")
+            css.append(f"@keyframes {animation} {{ {' '.join(keys)} }}")
+            animations.append(f"{animation} {duration}ms {delay}ms cubic-bezier{EASING[ease]} both")
+        origin = f"{node.get('data-pivot-x', 0)}px {node.get('data-pivot-y', 0)}px"
+        css.append(f".playing #{name} {{transform-origin:{origin}; animation:{', '.join(animations)}}}")
     # Leave CSS pixels in source viewBox coordinates, including on nested groups.
     template = (DESIGN / "preview.template.html").read_text(encoding="utf-8")
     artwork = ET.tostring(svg, encoding="unicode").replace("ns0:", "").replace(":ns0", "")
@@ -167,6 +283,10 @@ def main():
     write_xml(RES / "drawable/testtrack_splash_icon.xml", build_vector(svg))
     write_xml(RES / "drawable-v31/testtrack_splash_vector_animated.xml", build_vector(svg, animated=True))
     write_xml(RES / "drawable-v31/testtrack_splash_icon.xml", build_animation())
+    for name, (x1, y1, x2, y2) in EASING.items():
+        write_xml(RES / f"interpolator/splash_{name}.xml", ET.Element("pathInterpolator", android_attrs(
+            controlX1=x1, controlY1=y1, controlX2=x2, controlY2=y2,
+        )))
     build_preview(svg)
     print("Exported static vector, Android 12+ animated vector (900ms), and browser preview.")
 
