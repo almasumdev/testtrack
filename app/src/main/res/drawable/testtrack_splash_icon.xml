@@ -63,6 +63,12 @@
                 </group>
                 <path android:name="smile" android:pathData="M576 594 C602 620 651 620 677 594" android:strokeColor="#17253B" android:strokeWidth="31" android:strokeLineCap="round" android:fillColor="#00000000" />
             </group>
+            <group android:name="exchange_top" android:pivotX="627" android:pivotY="907">
+                <path android:name="top_arrow" android:pathData="M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z" android:fillColor="#1066EE" android:strokeColor="#FFFCF1" android:strokeWidth="20" android:strokeLineJoin="round" />
+            </group>
+            <group android:name="exchange_bottom" android:pivotX="627" android:pivotY="907">
+                <path android:name="bottom_arrow" android:pathData="M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z" android:fillColor="#1066EE" android:strokeColor="#FFFCF1" android:strokeWidth="20" android:strokeLineJoin="round" />
+            </group>
             <group android:name="card_left" android:pivotX="440" android:pivotY="911">
                 <path android:name="card_left_shell" android:pathData="M362 766 L502 764 C532 764 550 785 553 814 L568 983 C571 1013 554 1036 524 1040 L388 1056 C356 1059 336 1044 332 1013 L310 819 C306 789 327 767 362 766 Z">
                     <aapt:attr name="android:fillColor">
@@ -119,11 +125,17 @@
                     </aapt:attr>
                 </path>
             </group>
-            <group android:name="exchange_top" android:pivotX="627" android:pivotY="907">
-                <path android:name="top_arrow" android:pathData="M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z" android:fillColor="#1066EE" android:strokeColor="#FFFCF1" android:strokeWidth="20" android:strokeLineJoin="round" />
+            <group android:name="exchange_top_front">
+                <group android:name="top_tip">
+                    <clip-path android:pathData="M710 652 L810 652 L810 870 L618 870 Z" />
+                    <path android:name="top_arrow_tip" android:pathData="M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z" android:fillColor="#1066EE" android:strokeColor="#FFFCF1" android:strokeWidth="20" android:strokeLineJoin="round" />
+                </group>
             </group>
-            <group android:name="exchange_bottom" android:pivotX="627" android:pivotY="907">
-                <path android:name="bottom_arrow" android:pathData="M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z" android:fillColor="#1066EE" android:strokeColor="#FFFCF1" android:strokeWidth="20" android:strokeLineJoin="round" />
+            <group android:name="exchange_bottom_front">
+                <group android:name="bottom_tip">
+                    <clip-path android:pathData="M607 997 L539 1180 L440 1180 L440 997 Z" />
+                    <path android:name="bottom_arrow_tip" android:pathData="M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z" android:fillColor="#1066EE" android:strokeColor="#FFFCF1" android:strokeWidth="20" android:strokeLineJoin="round" />
+                </group>
             </group>
         </group>
     </group>

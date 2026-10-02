@@ -69,6 +69,8 @@ def reveal_frames(start):
 REVEALS = {
     "exchange_top": ("top_reveal", reveal_frames(180)),
     "exchange_bottom": ("bottom_reveal", reveal_frames(0)),
+    "exchange_top_front": ("top_front_reveal", reveal_frames(180)),
+    "exchange_bottom_front": ("bottom_front_reveal", reveal_frames(0)),
 }
 MOTION = [
     ("torso", "fillAlpha", 60, 180, [(0, 0), (1, 1)], "confirm"),
@@ -86,6 +88,8 @@ MOTION = [
     ("card_right", "opacity", 100, 140, [(0, 0), (1, 1)], "confirm"),
     ("top_reveal", "pathData", 240, 340, REVEALS['exchange_top'][1], "linear"),
     ("bottom_reveal", "pathData", 310, 340, REVEALS['exchange_bottom'][1], "linear"),
+    ("top_front_reveal", "pathData", 240, 340, REVEALS['exchange_top_front'][1], "linear"),
+    ("bottom_front_reveal", "pathData", 310, 340, REVEALS['exchange_bottom_front'][1], "linear"),
     ("eyes", "translateX", 140, 640, [(0, 0), (.25, -9), (.65, 9), (1, 0)], "flow"),
     ("eyes", "translateY", 140, 640, [(0, 0), (.25, 10), (.65, 10), (1, 0)], "flow"),
     ("eye_blink", "scaleY", 780, 120, [(0, 1), (.45, .06), (1, 1)], "flow"),
@@ -123,6 +127,7 @@ def write_xml(path, root):
 
 def build_vector(svg, animated=False):
     gradients = {g.attrib["id"]: g for g in svg.findall(f".//{{{SVG}}}linearGradient")}
+    clips = {c.attrib["id"]: c for c in svg.findall(f".//{{{SVG}}}clipPath")}
     vector = ET.Element("vector", android_attrs(
         width="288dp", height="288dp", viewportWidth=1254, viewportHeight=1254,
     ))
@@ -147,6 +152,10 @@ def build_vector(svg, animated=False):
                     if name == node.get("id"):
                         attrs.update(android_attrs(**{prop: frames[0][1]}))
             group = ET.SubElement(parent, "group", attrs)
+            if node.get("clip-path"):
+                clip = clips[node.get("clip-path")[5:-1]]
+                for shape in clip:
+                    ET.SubElement(group, "clip-path", android_attrs(pathData=shape.attrib["d"]))
             if animated and node.get("id") in REVEALS:
                 name, frames = REVEALS[node.get("id")]
                 ET.SubElement(group, "clip-path", android_attrs(name=name, pathData=frames[0][1]))
