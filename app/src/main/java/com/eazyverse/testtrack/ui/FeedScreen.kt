@@ -208,8 +208,8 @@ fun FeedScreen(
                                 // anybody, so reaching here means the server could not be got at.
                                 Blank("Circle did not load. Pull to try again.")
                             }
-                        } else if (vm.loading) {
-                            item { Blank("Loading.") }
+                        } else if (vm.loading && vm.posts.isEmpty()) {
+                            items(3) { FeedLoadingCard() }
                         } else if (vm.posts.isEmpty()) {
                             item { Blank("Nobody is asking for anything just now.") }
                         }
@@ -234,6 +234,9 @@ fun FeedScreen(
                             ),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
+                        if (vm.loading && vm.events.isEmpty()) {
+                            items(4) { FeedLoadingCard(compact = true) }
+                        }
                         items(vm.events, key = { it.id }) { event -> FeedEventCard(event) }
                     }
 

@@ -75,7 +75,15 @@ fun WaitingBody(
         return
     }
     if (loading && reviews.isEmpty() && disputes.isEmpty()) {
-        Blank("Looking.")
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 8.dp, bottom = Gutter + dockRoom()),
+            verticalArrangement =
+                androidx.compose.foundation.layout.Arrangement
+                    .spacedBy(12.dp),
+        ) {
+            items(3) { FeedLoadingCard() }
+        }
         return
     }
     if (reviews.isEmpty() && disputes.isEmpty()) {
