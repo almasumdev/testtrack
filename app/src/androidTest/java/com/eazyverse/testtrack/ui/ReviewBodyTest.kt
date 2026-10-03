@@ -77,7 +77,7 @@ class ReviewBodyTest {
         leftReview: Boolean = false,
         sideloaded: Boolean = false,
         onLeave: (ReviewStep) -> Unit = {},
-        onSend: (android.net.Uri) -> Unit = {},
+        onSend: (android.net.Uri, String) -> Unit = { _, _ -> },
     ) {
         compose.setContent {
             TestTrackTheme {
@@ -236,14 +236,14 @@ class ReviewBodyTest {
     @Test
     fun the_proof_dialog_will_not_send_until_a_screenshot_is_chosen() {
         var sent = 0
-        open("used", leftReview = true, onSend = { sent++ })
+        open("used", leftReview = true, onSend = { _, _ -> sent++ })
 
         compose.onNodeWithText("Send the proof").performClick()
         compose.onNodeWithText("Prove you left it").assertIsDisplayed()
 
-        // Nothing chosen, so Send is not a thing that can be pressed. A dialog that accepts an
-        // empty proof sends the developer a rejection they cannot judge.
-        compose.onNodeWithText("Send").assertIsNotEnabled()
+        // Nothing chosen, so it cannot be used. A proof step that accepts an empty proof sends
+        // the developer a rejection they cannot judge.
+        compose.onNodeWithText("Use it").assertIsNotEnabled()
         assertEquals(0, sent)
 
         // And it says where the screenshot comes from, since nothing in the app takes one.

@@ -130,6 +130,12 @@
             android:exported="false"
             android:foregroundServiceType="mediaProjection|dataSync" />
 
+        <!-- The review's one screenshot: a floating camera button over Play, one frame on press. -->
+        <service
+            android:name=".data.ReviewCaptureService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
         <!--
           Push. Exported because Play services delivers to it from outside the app; the
           MESSAGING_EVENT action is the documented contract and is not something another app can

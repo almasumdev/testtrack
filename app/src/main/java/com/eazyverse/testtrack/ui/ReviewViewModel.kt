@@ -1,7 +1,9 @@
 package com.eazyverse.testtrack.ui
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.provider.Settings
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,6 +11,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.Device
 import com.eazyverse.testtrack.data.InstalledApps
+import com.eazyverse.testtrack.data.ReviewCaptureService
 import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
@@ -43,6 +46,69 @@ class ReviewViewModel : ViewModel() {
 
     /** Open the Usage access list so the reviewer can switch TestTrack on. */
     fun openUsageSettings(context: Context) = UsageRepo.openSettings(context)
+
+    /** The screenshot the floating button took, until it is sent. */
+    var proof by mutableStateOf<Uri?>(null)
+        private set
+
+    init {
+        viewModelScope.launch {
+            ReviewCaptureService.proof.collect { file ->
+                if (file != null) {
+                    proof = Uri.fromFile(file)
+                    // A picture from Play is as sure a sign as any that the review was left.
+                    job = job?.copy(leftReview = true)
+                }
+            }
+        }
+    }
+
+    /** Whether the one-time guide has been read. */
+    fun guideSeen(context: Context) = prefs(context).getBoolean(GUIDE_SEEN, false)
+
+    fun markGuideSeen(context: Context) = prefs(context).edit().putBoolean(GUIDE_SEEN, true).apply()
+
+    /** The camera button floats over Play, which needs "Display over other apps". */
+    fun canFloat(context: Context) = Settings.canDrawOverlays(context)
+
+    fun openOverlaySettings(context: Context) {
+        runCatching {
+            context.startActivity(
+                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+    }
+
+    /**
+     * Put the camera button up with the consent just given, then open Play. The proof step opens
+     * on the way out, so somebody who comes back without pressing it can still pick a screenshot.
+     */
+    fun startCapture(
+        context: Context,
+        code: Int,
+        data: Intent,
+        pkg: String,
+    ) {
+        ReviewCaptureService.start(context, code, data)
+        openPlay(context, pkg)
+        markLeft()
+    }
+
+    /** Back on the page without a picture: take the button off Play rather than leave it there. */
+    fun dropStrayButton(context: Context) {
+        if (ReviewCaptureService.running.value == ReviewCaptureService.State.WAITING) {
+            ReviewCaptureService.cancel(context)
+        }
+    }
+
+    /** Throw the screenshot away so another can be taken. */
+    fun clearProof() {
+        proof = null
+        ReviewCaptureService.takeProof()
+    }
+
+    private fun prefs(context: Context) = context.getSharedPreferences("review_prefs", Context.MODE_PRIVATE)
 
     /** True once the package is present but Play did not put it there. */
     var sideloaded by mutableStateOf(false)
@@ -132,11 +198,13 @@ class ReviewViewModel : ViewModel() {
     fun submit(
         context: Context,
         proof: Uri,
+        note: String,
     ) {
         val current = job ?: return
         run {
             val ref = upload(context, proof)
-            job = current.copy(review = Api.submit(current.review.id, ref))
+            job = current.copy(review = Api.submit(current.review.id, ref, note))
+            clearProof()
             message = "Sent. The developer has two days, then it approves itself."
         }
     }
@@ -227,6 +295,7 @@ class ReviewViewModel : ViewModel() {
 
     private companion object {
         const val PLAY = "com.android.vending"
+        const val GUIDE_SEEN = "guide_seen"
         const val CLAIMED = "claimed"
         const val INSTALLED = "installed"
         const val USED = "used"

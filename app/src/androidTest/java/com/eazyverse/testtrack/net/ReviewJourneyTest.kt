@@ -274,7 +274,7 @@ class ReviewJourneyTest {
                         snackbars = SnackbarHostState(),
                         onClose = {},
                         onLeave = {},
-                        onSend = {},
+                        onSend = { _, _ -> },
                     )
                 }
             }

@@ -1,6 +1,13 @@
 package com.eazyverse.testtrack.ui
 
+import android.app.Activity
+import android.content.Context
+import android.media.projection.MediaProjectionConfig
+import android.media.projection.MediaProjectionManager
 import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -87,7 +94,10 @@ fun ReviewScreen(
     DisposableEffect(owner) {
         val watcher =
             LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) vm.refresh(context)
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    vm.dropStrayButton(context)
+                    vm.refresh(context)
+                }
             }
         owner.lifecycle.addObserver(watcher)
         onDispose { owner.lifecycle.removeObserver(watcher) }
@@ -99,9 +109,46 @@ fun ReviewScreen(
         vm.clearMessage()
     }
 
+    // The leave step: the one-time guide, then "Display over other apps", then Android's own
+    // screen-capture consent, and only then Play with the camera button over it. Refusing the
+    // consent still opens Play; the screenshot can be picked from the gallery instead.
+    var guiding by remember { mutableStateOf(false) }
+    var askingOverlay by remember { mutableStateOf(false) }
+    val consent =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val data = result.data
+            if (result.resultCode == Activity.RESULT_OK && data != null) {
+                vm.startCapture(context, result.resultCode, data, post.packageName)
+            } else {
+                openPlay(context, post.packageName)
+                vm.markLeft()
+            }
+        }
+    val toPlay: () -> Unit = {
+        if (!vm.canFloat(context)) {
+            askingOverlay = true
+        } else {
+            val projections = context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+            // The whole screen, asked for by name: on Android 14 and later the default is "share one
+            // app", which adds an app picker to a one-tap screenshot.
+            val ask =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    projections.createScreenCaptureIntent(MediaProjectionConfig.createConfigForDefaultDisplay())
+                } else {
+                    projections.createScreenCaptureIntent()
+                }
+            consent.launch(ask)
+        }
+    }
+
     ReviewBody(
         post = post,
         job = vm.job,
+        proof = vm.proof,
+        onRetake = {
+            vm.clearProof()
+            toPlay()
+        },
         sideloaded = vm.sideloaded,
         busy = vm.busy,
         usageAccess = vm.usageAccess,
@@ -114,15 +161,33 @@ fun ReviewScreen(
                 ReviewStep.USE -> openApp(context, post.packageName)
                 // Going to Play is also the only signal that the review may now exist, so the
                 // proof step opens on the way out rather than waiting for a state that cannot come.
-                ReviewStep.LEAVE -> {
-                    openPlay(context, post.packageName)
-                    vm.markLeft()
-                }
+                ReviewStep.LEAVE -> if (vm.guideSeen(context)) toPlay() else guiding = true
                 else -> Unit
             }
         },
-        onSend = { proof -> vm.submit(context, proof) },
+        onSend = { proof, note -> vm.submit(context, proof, note) },
     )
+
+    if (guiding) {
+        ReviewGuideDialog(
+            live = post.isLive,
+            onOk = {
+                guiding = false
+                vm.markGuideSeen(context)
+                toPlay()
+            },
+            onDismiss = { guiding = false },
+        )
+    }
+    if (askingOverlay) {
+        OverlayPermissionDialog(
+            onOpen = {
+                askingOverlay = false
+                vm.openOverlaySettings(context)
+            },
+            onDismiss = { askingOverlay = false },
+        )
+    }
 }
 
 /**
@@ -149,9 +214,14 @@ fun ReviewBody(
     snackbars: SnackbarHostState,
     onClose: () -> Unit,
     onLeave: (ReviewStep) -> Unit,
-    onSend: (proof: Uri) -> Unit,
+    onSend: (proof: Uri, note: String) -> Unit,
+    proof: Uri? = null,
+    onRetake: () -> Unit = {},
 ) {
     var proving by remember { mutableStateOf(false) }
+    var picked by remember { mutableStateOf<Uri?>(null) }
+    var note by remember { mutableStateOf("") }
+    val shown = proof ?: picked
     val t = Tt.colors
 
     Scaffold(
@@ -183,7 +253,11 @@ fun ReviewBody(
                         // The proof is picked here. Every other step hands the reviewer to Play or
                         // to the app itself, which is somebody else's screen.
                         val step = job.step
-                        if (step == ReviewStep.PROVE) proving = true else onLeave(step)
+                        when {
+                            step != ReviewStep.PROVE -> onLeave(step)
+                            shown != null -> onSend(shown, note.trim())
+                            else -> proving = true
+                        }
                     }
                 }
             }
@@ -249,8 +323,20 @@ fun ReviewBody(
                             )
                         }
                     }
+                    if (!job.settled && job.step == ReviewStep.PROVE && shown != null) {
+                        Spacer(Modifier.height(gap))
+                        ProofForm(
+                            proof = shown,
+                            note = note,
+                            onNote = { note = it },
+                            onRetake = {
+                                picked = null
+                                onRetake()
+                            },
+                        )
+                    }
                     val asked = post.ask.trim()
-                    if (!job.settled && asked.isNotEmpty() && asked != GENERAL_ASK) {
+                    if (!job.settled && job.step != ReviewStep.PROVE && asked.isNotEmpty() && asked != GENERAL_ASK) {
                         Spacer(Modifier.height(gap))
                         DeveloperAsks(asked)
                     }
@@ -262,9 +348,9 @@ fun ReviewBody(
     if (proving) {
         ReviewProofDialog(
             busy = busy,
-            onSend = { proof ->
+            onSend = { chosen ->
                 proving = false
-                onSend(proof)
+                picked = chosen
             },
             onDismiss = { proving = false },
         )

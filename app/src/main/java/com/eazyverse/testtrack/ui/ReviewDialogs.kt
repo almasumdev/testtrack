@@ -48,8 +48,8 @@ fun ReviewProofDialog(
         body =
             "Take a screenshot of what you left on Play, then pick it here. The developer sees it " +
                 "and has two days to accept it.",
-        confirm = if (busy) "Sending" else "Send",
-        confirmEnabled = picked != null && !busy,
+        confirm = "Use it",
+        confirmEnabled = picked != null,
         onConfirm = { picked?.let(onSend) },
         onDismiss = onDismiss,
         content = {
