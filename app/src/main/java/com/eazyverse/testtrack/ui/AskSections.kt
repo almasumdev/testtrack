@@ -27,12 +27,12 @@ import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 
 @Composable
-internal fun AskIntro(found: Boolean) {
+internal fun AskIntro() {
     Column {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    if (found) "YOUR APP IS READY" else "A FRESH PERSPECTIVE",
+                    "A FRESH PERSPECTIVE",
                     style = MaterialTheme.typography.labelSmall,
                     letterSpacing = 1.5.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -40,7 +40,7 @@ internal fun AskIntro(found: Boolean) {
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    if (found) "Focus the feedback." else "Better apps start\nwith feedback.",
+                    "Better apps start\nwith feedback.",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Tt.colors.text,
@@ -51,11 +51,7 @@ internal fun AskIntro(found: Boolean) {
         }
         Spacer(Modifier.height(8.dp))
         Text(
-            if (found) {
-                "Choose your review budget and optionally suggest something to try."
-            } else {
-                "Find your app. Ask one clear question.\nHear what other developers think."
-            },
+            "Get useful feedback from other developers.",
             style = MaterialTheme.typography.bodyMedium,
             color = Tt.colors.text2,
         )

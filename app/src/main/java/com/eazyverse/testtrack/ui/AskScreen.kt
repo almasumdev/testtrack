@@ -89,7 +89,7 @@ fun AskScreen(
                 .padding(horizontal = Gutter),
         ) {
             Spacer(Modifier.height(8.dp))
-            AskIntro(found = vm.found != null)
+            AskIntro()
             Spacer(Modifier.height(20.dp))
             AskAvailability(vm.isLive, vm::choose)
             Spacer(Modifier.height(16.dp))
