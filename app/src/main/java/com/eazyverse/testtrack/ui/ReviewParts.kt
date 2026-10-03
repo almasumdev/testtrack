@@ -186,6 +186,6 @@ internal fun ReviewLoading(
         Modifier.fillMaxWidth().heightIn(min = room - 64.dp),
         contentAlignment = Alignment.Center,
     ) {
-        RobotLoader(size = dial * 0.62f, label = "Getting your review ready")
+        RobotLoader(size = dial * 0.95f, label = "Getting your review ready")
     }
 }

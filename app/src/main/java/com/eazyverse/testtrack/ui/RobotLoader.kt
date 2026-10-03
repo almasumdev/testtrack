@@ -143,19 +143,23 @@ fun RobotLoader(
                         scale(factor, factor, Offset.Zero)
                         translate(-185f, -110f)
                     }) {
-                        val center = Offset(627f, 900f)
-                        val glowR = 150f + shine * 22f
+                        // A light orb held between the hands, so the arrows read on the dark body in
+                        // either theme, with a halo that breathes behind it.
+                        val center = Offset(627f, 905f)
+                        val halo = 240f + shine * 30f
                         drawCircle(
                             Brush.radialGradient(
-                                listOf(t.accentInk.copy(alpha = 0.30f + shine * 0.15f), t.accentInk.copy(alpha = 0f)),
+                                listOf(t.accentInk.copy(alpha = 0.32f + shine * 0.18f), t.accentInk.copy(alpha = 0f)),
                                 center,
-                                glowR,
+                                halo,
                             ),
-                            glowR,
+                            halo,
                             center,
                         )
+                        drawCircle(t.glass, 172f, center)
+                        drawCircle(t.accentInk.copy(alpha = 0.35f), 172f, center, style = Stroke(10f))
                         rotate(turn, center) {
-                            repeat(2) { i -> arrow(center, 92f, i * 180f, t.accentInk) }
+                            repeat(2) { i -> arrow(center, 110f, i * 180f, t.accentInk) }
                         }
                     }
                 }
@@ -177,7 +181,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.arrow(
     color: androidx.compose.ui.graphics.Color,
 ) {
     val sweep = 125f
-    val stroke = 26f
+    val stroke = 30f
     drawArc(
         color = color,
         startAngle = start,
@@ -192,7 +196,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.arrow(
     // Tangent at the end of a clockwise arc, and the normal pointing outwards.
     val tangent = Offset(-sin(end).toFloat(), cos(end).toFloat())
     val normal = Offset(cos(end).toFloat(), sin(end).toFloat())
-    val head = 40f
+    val head = 46f
     val path =
         Path().apply {
             moveTo(tip.x + tangent.x * head * 0.9f, tip.y + tangent.y * head * 0.9f)
