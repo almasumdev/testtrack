@@ -88,7 +88,7 @@ internal fun LevelRobotBadge(
     val measure = remember(outline) { PathMeasure().apply { setPath(outline, false) } }
     val earned = remember { Path() }
     Box(
-        Modifier.size(56.dp, 64.dp).semantics(mergeDescendants = true) {
+        Modifier.size(44.dp, 50.dp).semantics(mergeDescendants = true) {
             contentDescription = "Level $level, $intoLevel of $forNext experience"
             progressBarRangeInfo = ProgressBarRangeInfo(target, 0f..1f)
         },
