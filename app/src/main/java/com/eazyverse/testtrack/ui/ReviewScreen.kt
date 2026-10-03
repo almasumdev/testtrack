@@ -3,22 +3,27 @@ package com.eazyverse.testtrack.ui
 import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,19 +44,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.ChevronLeft
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.MessageCircleQuestion
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.net.ApiPost
+import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.ui.theme.tabular
 
 /**
  * The guided review: what somebody actually does to earn the tix.
@@ -123,11 +138,16 @@ fun ReviewScreen(
 }
 
 /**
- * The review, drawn.
+ * The review, drawn: one step at a time around a dial.
  *
- * Takes what it shows rather than fetching it, so the screen a reviewer sees can be put in front
- * of a test at any step. [onLeave] covers only the steps that hand somebody to another app;
- * writing the proof opens a dialog this owns, because that is where the words are typed.
+ * The app at the top, the button at the bottom, and between them only the step you are on: a dial
+ * of four segments that says how far through you are (and is the thirty second clock while you
+ * use the app), what to do now, and what the developer asked. It is centred in the space between,
+ * and sized off the screen's height so a small phone shows all of it without scrolling.
+ *
+ * Takes what it shows rather than fetching it, so any step can be put in front of a test.
+ * [onLeave] covers the steps that hand somebody to another app; writing and the proof open a
+ * dialog this owns, because that is where the words and the picture are given.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -142,6 +162,7 @@ fun ReviewBody(
     onSend: (proof: Uri?, written: String) -> Unit,
 ) {
     var proving by remember { mutableStateOf(false) }
+    val t = Tt.colors
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -150,94 +171,84 @@ fun ReviewBody(
         topBar = {
             TopAppBar(
                 windowInsets = WindowInsets(0, 0, 0, 0),
-                title = {
-                    Text(
-                        post.appName,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    )
-                },
+                title = { Text("Review", fontWeight = FontWeight.Bold) },
                 navigationIcon = { IconButton(onClick = onClose) { Icon(Lucide.ChevronLeft, "Back") } },
                 actions = {
                     Box(Modifier.padding(end = Gutter)) {
-                        Pill("+${post.reward}", MaterialTheme.colorScheme.onPrimaryContainer, MaterialTheme.colorScheme.primaryContainer)
+                        Pill("+${post.reward} tix", t.tileInk, t.tile)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
             )
         },
-    ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
-            if (job == null) {
-                Blank("Getting this ready.")
-                return@Column
+        bottomBar = {
+            if (job != null && !job.settled) {
+                Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp)) {
+                    Primary(stepAction(job.step, job), tall = true) {
+                        // Writing happens here. Every other step hands the reviewer to Play or to
+                        // the app itself, which is somebody else's screen.
+                        val step = job.step
+                        val writing = step == ReviewStep.PROVE || (step == ReviewStep.LEAVE && !post.isLive)
+                        if (writing) proving = true else onLeave(step)
+                    }
+                }
             }
+        },
+    ) { padding ->
+        BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
+            // Everything scales off the height left, so the whole step fits on a small phone.
+            val room = maxHeight
+            val dial = (room * 0.30f).coerceIn(108.dp, 168.dp)
+            val gap = (room * 0.03f).coerceIn(10.dp, 22.dp)
 
-            LazyColumn(
-                Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 8.dp, bottom = Gutter),
+            Column(
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
             ) {
-                item {
-                    Box(Modifier.padding(horizontal = Gutter)) {
-                        CrewCard(padding = PaddingValues(16.dp)) {
+                ReviewAppRow(post)
+                if (job == null) {
+                    Blank("Getting this ready.")
+                    return@Column
+                }
+                // Centred in what is left under the app row; scrolls only if a phone is smaller
+                // than anything this was sized for.
+                Column(
+                    Modifier.fillMaxWidth().heightIn(min = room - 64.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    StepDial(job, dial)
+                    Spacer(Modifier.height(8.dp))
+                    StepLabels(job)
+                    Spacer(Modifier.height(gap))
+                    Text(
+                        if (job.settled) "Sent" else stepTitle(job),
+                        style = MaterialTheme.typography.headlineSmall.copy(fontSize = 23.sp, lineHeight = 27.sp),
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        if (job.settled) reviewOutcome(job.review.state) else stepLine(job),
+                        Modifier.widthIn(max = 300.dp),
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+                        color = t.text2,
+                        textAlign = TextAlign.Center,
+                    )
+                    if (sideloaded) {
+                        Spacer(Modifier.height(gap))
+                        Notice(Status.short, Lucide.TriangleAlert) {
                             Text(
-                                if (job.settled) "Sent" else job.step.label,
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
+                                "That copy did not come from Play, so it cannot count. " +
+                                    "Install it through the button below instead.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                if (job.settled) {
-                                    reviewOutcome(
-                                        job.review.state,
-                                    )
-                                } else {
-                                    post.ask.ifBlank { "Try the app and share what worked well and what could improve." }
-                                },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            if (!job.settled) {
-                                Spacer(Modifier.height(16.dp))
-                                StepTrack(job.step)
-                            }
                         }
                     }
-                }
-
-                if (sideloaded) {
-                    item {
-                        Box(Modifier.padding(horizontal = Gutter, vertical = 12.dp)) {
-                            Notice(Status.short, Lucide.TriangleAlert) {
-                                Text(
-                                    "That copy did not come from Play, so it cannot count. " +
-                                        "Install it through the button below instead.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                            }
-                        }
-                    }
-                }
-
-                item { CrewHeading("The steps") }
-                ReviewStep.entries.filter { it != ReviewStep.WAIT }.forEachIndexed { index, step ->
-                    item {
-                        ListTile(index, ReviewStep.entries.count { it != ReviewStep.WAIT }) {
-                            StepRow(
-                                step = step,
-                                job = job,
-                                onAct = {
-                                    // Writing happens here. Every other step hands the reviewer to
-                                    // Play or to the app itself, which is somebody else's screen.
-                                    val writing =
-                                        step == ReviewStep.PROVE ||
-                                            (step == ReviewStep.LEAVE && !post.isLive)
-                                    if (writing) proving = true else onLeave(step)
-                                },
-                            )
-                        }
+                    val asked = post.ask.trim()
+                    if (!job.settled && asked.isNotEmpty() && asked != GENERAL_ASK) {
+                        Spacer(Modifier.height(gap))
+                        DeveloperAsks(asked)
                     }
                 }
             }
@@ -257,172 +268,192 @@ fun ReviewBody(
     }
 }
 
-/**
- * How far along, as four marks.
- *
- * The same shape the crew screens use for a fortnight, at a different scale. One control learned
- * once.
- */
+/** What a post carries when the developer asked nothing in particular; not worth showing. */
+private const val GENERAL_ASK = "General feedback on the app experience."
+
+private val ReviewSteps = ReviewStep.entries.filter { it != ReviewStep.WAIT }
+
+/** The app under review: its mark, its name, and where it is. */
 @Composable
-private fun StepTrack(step: ReviewStep) {
-    val steps = ReviewStep.entries.filter { it != ReviewStep.WAIT }
-    val reached = steps.indexOf(step).coerceAtLeast(0)
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-        steps.forEachIndexed { index, _ ->
-            Box(
-                Modifier
-                    .weight(1f)
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(
-                        when {
-                            index < reached -> Status.posted
-                            index == reached -> MaterialTheme.colorScheme.primary
-                            else -> MaterialTheme.colorScheme.surfaceVariant
-                        },
-                    ),
+private fun ReviewAppRow(post: ApiPost) {
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        AppTile(post.appName, size = 44.dp)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                post.appName,
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp),
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                (if (post.isLive) "Live on Google Play" else "Closed testing") +
+                    if (post.ownerName.isNotBlank()) " · by ${post.ownerName}" else "",
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp),
+                color = Tt.colors.text3,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
 }
 
 /**
- * One step, and the only control on it.
+ * Four rounded segments round a ring, one per step.
  *
- * A step that is behind you shows a tick and nothing to press. A step that is ahead shows nothing
- * either: offering a button for something that cannot be done yet is how a stepper stops meaning
- * anything.
+ * Done steps fill in the accent, the current one is tinted, and while the app is being used its
+ * segment fills as the thirty seconds pass, so the dial is the clock as well as the progress.
  */
 @Composable
-private fun StepRow(
-    step: ReviewStep,
+private fun StepDial(
     job: ReviewJob,
-    onAct: () -> Unit,
+    size: Dp,
 ) {
-    val steps = ReviewStep.entries.filter { it != ReviewStep.WAIT }
-
-    // Where the reviewer is standing. WAIT is not in this list, so a settled or unrecognised
-    // state answers -1, and that floors to the first step rather than the last: offering somebody
-    // the final step is an invitation to skip the three before it.
-    val here = steps.indexOf(job.step).coerceAtLeast(0)
-    val mine = steps.indexOf(step)
-    val done = job.settled || mine < here
-    val current = !job.settled && mine == here
-
-    Column(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .size(26.dp)
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(
-                        if (done) Status.postedSoft else MaterialTheme.colorScheme.surfaceVariant,
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (done) {
-                    Icon(Lucide.Check, null, Modifier.size(15.dp), tint = Status.posted)
-                } else {
-                    Text(
-                        "${mine + 1}",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color =
-                            if (current) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
+    val t = Tt.colors
+    val here = if (job.settled) ReviewSteps.size else ReviewSteps.indexOf(job.step).coerceAtLeast(0)
+    val used by animateFloatAsState(job.usedFraction, tween(500), label = "used")
+    Box(Modifier.size(size), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            val stroke = size.toPx() * 0.072f
+            val inset = stroke / 2f
+            val ring = Size(this.size.width - stroke, this.size.height - stroke)
+            val gapDeg = 14f
+            val sweep = 90f - gapDeg
+            for (i in 0 until 4) {
+                val start = -90f + i * 90f + gapDeg / 2f
+                val segment: (Color, Float) -> Unit = { color, fraction ->
+                    drawArc(
+                        color = color,
+                        startAngle = start,
+                        sweepAngle = sweep * fraction,
+                        useCenter = false,
+                        topLeft = Offset(inset, inset),
+                        size = ring,
+                        style = Stroke(stroke, cap = StrokeCap.Round),
                     )
                 }
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    step.label,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = if (current) FontWeight.Bold else FontWeight.Medium,
-                    color =
-                        if (done || current) {
-                            MaterialTheme.colorScheme.onSurface
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    stepDetail(step, job),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                segment(t.glass2, 1f)
+                when {
+                    i < here -> segment(t.accent, 1f)
+                    i == here && ReviewSteps[i] == ReviewStep.USE -> if (used > 0f) segment(t.accent, used)
+                    i == here -> segment(t.accentInk.copy(alpha = 0.35f), 1f)
+                }
             }
         }
-
-        if (current) {
-            if (step == ReviewStep.USE) {
-                Spacer(Modifier.height(12.dp))
-                UseProgress(job)
-            }
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ActionChip(
-                    stepAction(step, job),
-                    MaterialTheme.colorScheme.onPrimaryContainer,
-                    MaterialTheme.colorScheme.primaryContainer,
-                    onAct,
-                )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            when {
+                job.review.state == "approved" -> {
+                    Text("+${job.post.reward}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = t.ok)
+                    Text("tix added", style = MaterialTheme.typography.labelMedium, color = t.text3)
+                }
+                job.settled -> {
+                    // A tick rather than the word: the title under the dial already says "Sent".
+                    Icon(Lucide.Check, null, Modifier.size(size * 0.2f), tint = t.accentInk)
+                    Text("with the developer", style = MaterialTheme.typography.labelMedium, color = t.text3)
+                }
+                job.step == ReviewStep.USE -> {
+                    val needed = (job.review.neededMs / 1000).toInt()
+                    Text(
+                        "${(needed - job.secondsLeft).coerceAtLeast(0)}",
+                        style =
+                            MaterialTheme.typography.headlineMedium
+                                .tabular()
+                                .copy(fontSize = (size.value * 0.24f).sp),
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text("of $needed seconds", style = MaterialTheme.typography.labelMedium, color = t.text3)
+                }
+                else -> {
+                    Text("Step ${here + 1}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("of ${ReviewSteps.size}", style = MaterialTheme.typography.labelMedium, color = t.text3)
+                }
             }
         }
     }
 }
 
-/** The thirty seconds, drawn, because a number counting up is the only thing that shows progress. */
+/** The four steps by name under the dial, ticked as they are done. */
 @Composable
-private fun UseProgress(job: ReviewJob) {
-    val fill by animateFloatAsState(job.usedFraction, tween(500), label = "used")
-    Column {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(7.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-        ) {
-            Box(
-                Modifier
-                    .fillMaxWidth(fill)
-                    .height(7.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(MaterialTheme.colorScheme.primary),
+private fun StepLabels(job: ReviewJob) {
+    val t = Tt.colors
+    val here = if (job.settled) ReviewSteps.size else ReviewSteps.indexOf(job.step).coerceAtLeast(0)
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        ReviewSteps.forEachIndexed { i, step ->
+            Text(
+                (if (i < here) "✓ " else "") + stepShort(step, job),
+                style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.5.sp),
+                fontWeight = FontWeight.SemiBold,
+                color =
+                    if (i < here) {
+                        t.text2
+                    } else if (i == here) {
+                        t.accentInk
+                    } else {
+                        t.text4
+                    },
             )
         }
-        Spacer(Modifier.height(6.dp))
-        Text(
-            if (job.secondsLeft == 0) {
-                "Long enough. Leave your review next."
-            } else {
-                "${job.secondsLeft} more seconds in the app"
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
-private fun stepDetail(
+/** The developer's question: an icon in line with the label, the question full width under it. */
+@Composable
+private fun DeveloperAsks(asked: String) {
+    val t = Tt.colors
+    val shape = RoundedCornerShape(16.dp)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(t.glass)
+            .border(1.dp, t.glassBorder, shape)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Lucide.MessageCircleQuestion, null, Modifier.size(15.dp), tint = t.accentInk)
+            Spacer(Modifier.width(6.dp))
+            Text(
+                "The developer asks",
+                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
+                fontWeight = FontWeight.SemiBold,
+                color = t.text3,
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(asked, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp))
+    }
+}
+
+private fun stepShort(
     step: ReviewStep,
     job: ReviewJob,
 ): String =
     when (step) {
-        ReviewStep.INSTALL -> "From Play, so it counts. A copy from anywhere else does not."
-        ReviewStep.USE -> "Stay as long as you like. We only check you were there."
+        ReviewStep.INSTALL -> "Install"
+        ReviewStep.USE -> "Use"
+        ReviewStep.LEAVE -> if (job.post.isLive) "Review" else "Write"
+        ReviewStep.PROVE -> "Prove"
+        ReviewStep.WAIT -> ""
+    }
+
+private fun stepTitle(job: ReviewJob): String =
+    when (job.step) {
+        ReviewStep.INSTALL -> "Install ${job.post.appName}"
+        ReviewStep.USE -> "Try the app"
+        ReviewStep.LEAVE -> if (job.post.isLive) "Review it on Play" else "Write your feedback"
+        ReviewStep.PROVE -> "Send your proof"
+        ReviewStep.WAIT -> "Sent"
+    }
+
+private fun stepLine(job: ReviewJob): String =
+    when (job.step) {
+        ReviewStep.INSTALL -> "Get it from Google Play so it counts."
+        ReviewStep.USE ->
+            if (job.secondsLeft == 0) "Long enough. Leave your review next." else "${job.secondsLeft} more seconds in the app"
         ReviewStep.LEAVE ->
-            if (job.post.isLive) {
-                "A public review on Play, which is the thing that actually helps."
-            } else {
-                "This one is still in closed testing, so write what you found."
-            }
-        ReviewStep.PROVE -> "A screenshot of what you left. Nobody else can see a Play review."
+            if (job.post.isLive) "Rate it on Play, then come back with a screenshot." else "Say what worked and what did not."
+        ReviewStep.PROVE -> "A screenshot of the review you left on Play."
         ReviewStep.WAIT -> ""
     }
 
