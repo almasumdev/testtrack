@@ -5,6 +5,7 @@ import android.graphics.Paint
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.*
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
@@ -39,6 +41,7 @@ internal fun LevelRobotBadge(
     level: Int?,
     intoLevel: Int,
     forNext: Int,
+    onSignIn: (() -> Unit)? = null,
 ) {
     val target = if (level != null && forNext > 0) (intoLevel.toFloat() / forNext).coerceIn(0f, 1f) else 0f
     val progress by animateFloatAsState(target, tween(700), label = "Robot XP")
@@ -59,6 +62,10 @@ internal fun LevelRobotBadge(
     var displayedLevel by remember { mutableStateOf(level) }
     LaunchedEffect(level) { if (level != null) displayedLevel = level }
     val colors = Tt.colors
+    val signInMark =
+        remember {
+            PathParser().parsePathString("M655 803 H727 V1007 H655 M510 905 H669 M610 846 L669 905 L610 964").toPath()
+        }
     val context = LocalContext.current
     val paint =
         remember(context) {
@@ -91,10 +98,25 @@ internal fun LevelRobotBadge(
     val measure = remember(outline) { PathMeasure().apply { setPath(outline, false) } }
     val earned = remember { Path() }
     Box(
-        Modifier.size(44.dp, 50.dp).semantics(mergeDescendants = true) {
-            contentDescription = if (level == null) "TestTrack robot" else "Level $level, $intoLevel of $forNext experience"
-            if (level != null) progressBarRangeInfo = ProgressBarRangeInfo(target, 0f..1f)
-        },
+        Modifier
+            .size(44.dp, 50.dp)
+            .then(
+                if (onSignIn != null) Modifier.clickable(role = Role.Button, onClickLabel = "Sign in", onClick = onSignIn) else Modifier,
+            ).semantics(mergeDescendants = true) {
+                contentDescription =
+                    if (onSignIn !=
+                        null
+                    ) {
+                        "Sign in to TestTrack"
+                    } else if (level ==
+                        null
+                    ) {
+                        "TestTrack robot"
+                    } else {
+                        "Level $level, $intoLevel of $forNext experience"
+                    }
+                if (level != null) progressBarRangeInfo = ProgressBarRangeInfo(target, 0f..1f)
+            },
     ) {
         Image(painterResource(R.drawable.level_robot_body), null, Modifier.matchParentSize())
         Image(
@@ -133,11 +155,7 @@ internal fun LevelRobotBadge(
                 earned.reset()
                 measure.getSegment(0f, measure.length * progress, earned)
                 drawPath(earned, colors.ok, alpha = badgeAlpha, style = Stroke(19f, cap = StrokeCap.Round))
-                paint.color = colors.accentInk.toArgb()
-                paint.alpha = (255 * (1f - badgeAlpha)).toInt()
-                paint.textSize = 150f
-                val brandBaseline = 910f - (paint.ascent() + paint.descent()) / 2f
-                drawContext.canvas.nativeCanvas.drawText("TT", 627f, brandBaseline, paint)
+                drawPath(signInMark, colors.accentInk, alpha = 1f - badgeAlpha, style = Stroke(27f, cap = StrokeCap.Round))
                 paint.color = colors.text.toArgb()
                 paint.alpha = (255 * badgeAlpha).toInt()
                 paint.textSize = if ((displayedLevel ?: 0) < 100) 186f else 150f
