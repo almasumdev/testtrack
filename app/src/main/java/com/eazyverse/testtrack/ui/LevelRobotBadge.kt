@@ -14,6 +14,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -64,7 +65,10 @@ internal fun LevelRobotBadge(
     val colors = Tt.colors
     val signInMark =
         remember {
-            PathParser().parsePathString("M655 803 H727 V1007 H655 M510 905 H669 M610 846 L669 905 L610 964").toPath()
+            PathParser()
+                .parsePathString(
+                    "M651 833 H699 Q717 833 717 851 V959 Q717 977 699 977 H651 M537 905 H657 M609 857 L657 905 L609 953",
+                ).toPath()
         }
     val context = LocalContext.current
     val paint =
@@ -155,7 +159,12 @@ internal fun LevelRobotBadge(
                 earned.reset()
                 measure.getSegment(0f, measure.length * progress, earned)
                 drawPath(earned, colors.ok, alpha = badgeAlpha, style = Stroke(19f, cap = StrokeCap.Round))
-                drawPath(signInMark, colors.accentInk, alpha = 1f - badgeAlpha, style = Stroke(27f, cap = StrokeCap.Round))
+                drawPath(
+                    signInMark,
+                    colors.accentInk,
+                    alpha = 1f - badgeAlpha,
+                    style = Stroke(22f, cap = StrokeCap.Round, join = StrokeJoin.Round),
+                )
                 paint.color = colors.text.toArgb()
                 paint.alpha = (255 * badgeAlpha).toInt()
                 paint.textSize = if ((displayedLevel ?: 0) < 100) 186f else 150f
