@@ -44,7 +44,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.net.Api
-import com.eazyverse.testtrack.net.ApiPost
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * What each list adds above its first card.
@@ -70,6 +71,7 @@ private val ListTop = 8.dp
 @Composable
 fun FeedScreen(
     onAsk: () -> Unit = {},
+    onReview: (String) -> Unit = {},
     onSignIn: () -> Unit = {},
     vm: FeedViewModel = viewModel(),
 ) {
@@ -83,9 +85,6 @@ fun FeedScreen(
         vm.clearMessage()
     }
 
-    /** The post being reviewed, which takes over the whole screen while it is open. */
-    var reviewing by remember { mutableStateOf<ApiPost?>(null) }
-
     /** The review being refused, which needs a reason before anything is charged. */
     var refusing by remember { mutableStateOf<Waiting?>(null) }
     val context = LocalContext.current
@@ -93,17 +92,6 @@ fun FeedScreen(
     // Reloaded on every arrival rather than once. Coming back from a review is the commonest way
     // to reach this screen, and the counts on it have just changed.
     LaunchedEffect(Unit) { vm.load(context) }
-
-    reviewing?.let { post ->
-        ReviewScreen(
-            post = post,
-            onClose = {
-                reviewing = null
-                vm.load(context)
-            },
-        )
-        return
-    }
 
     // One per tab rather than one shared between them. A single state carries its scroll position
     // across the switch, so Activity opened at whatever row Feedback happened to be resting on.
@@ -214,7 +202,7 @@ fun FeedScreen(
                             item { Blank("Nobody is asking for anything just now.") }
                         }
                         items(vm.posts, key = { it.id }) { post ->
-                            FeedRequestCard(post) { reviewing = post }
+                            FeedRequestCard(post) { onReview(Json.encodeToString(post)) }
                         }
                     }
 

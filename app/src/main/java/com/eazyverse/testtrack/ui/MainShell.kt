@@ -109,6 +109,7 @@ fun MainShell(
     onOpenGroup: (String, String) -> Unit,
     onSubmitApp: () -> Unit,
     onAskForFeedback: () -> Unit,
+    onReview: (String) -> Unit,
     onSignOut: () -> Unit,
     homeVm: HomeViewModel = viewModel(),
     hudVm: HudViewModel = viewModel(),
@@ -226,6 +227,7 @@ fun MainShell(
                     when (tab) {
                         MainTab.CIRCLE ->
                             FeedScreen(
+                                onReview = onReview,
                                 onAsk = onAskForFeedback,
                                 onSignIn = {
                                     asking =

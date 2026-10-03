@@ -4,13 +4,13 @@ import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,12 +19,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -43,8 +47,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.ChevronLeft
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.net.ApiPost
@@ -125,6 +129,7 @@ fun ReviewScreen(
  * of a test at any step. [onLeave] covers only the steps that hand somebody to another app;
  * writing the proof opens a dialog this owns, because that is where the words are typed.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReviewBody(
     post: ApiPost,
@@ -140,36 +145,27 @@ fun ReviewBody(
 
     Scaffold(
         containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbars) },
         topBar = {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(start = 6.dp, end = Gutter, top = 8.dp, bottom = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    Modifier
-                        .clip(RoundedCornerShape(percent = 50))
-                        .clickable(onClick = onClose)
-                        .padding(10.dp),
-                ) {
-                    Icon(Lucide.ArrowLeft, "Back", Modifier.size(20.dp))
-                }
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    post.appName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Spacer(Modifier.weight(1f))
-                Pill(
-                    "+${post.reward}",
-                    MaterialTheme.colorScheme.onPrimaryContainer,
-                    MaterialTheme.colorScheme.primaryContainer,
-                )
-            }
+            TopAppBar(
+                windowInsets = WindowInsets(0, 0, 0, 0),
+                title = {
+                    Text(
+                        post.appName,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
+                },
+                navigationIcon = { IconButton(onClick = onClose) { Icon(Lucide.ChevronLeft, "Back") } },
+                actions = {
+                    Box(Modifier.padding(end = Gutter)) {
+                        Pill("+${post.reward}", MaterialTheme.colorScheme.onPrimaryContainer, MaterialTheme.colorScheme.primaryContainer)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+            )
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {

@@ -46,10 +46,12 @@ import com.eazyverse.testtrack.data.UpdateTier
 import com.eazyverse.testtrack.data.leftRound
 import com.eazyverse.testtrack.domain.LaunchDestination
 import com.eazyverse.testtrack.domain.launchDestination
+import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.*
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 object Routes {
     const val ONBOARDING = "onboarding"
@@ -62,6 +64,9 @@ object Routes {
 
     /** Asking the circle to look at your app. A page, because finding the app is its own step. */
     const val ASK = "ask"
+    const val REVIEW = "review?post={post}"
+
+    fun review(post: String) = "review?post=${Uri.encode(post)}"
 
     // The name is carried along, not looked up: whoever is navigating here almost always already
     // has it on screen (a row in Home, a row in Group), and showing that immediately in the app
@@ -302,6 +307,7 @@ fun AppNav(
                 onOpenGroup = { groupId, name -> nav.push(Routes.group(groupId, name)) },
                 onSubmitApp = { nav.push(Routes.SUBMIT) },
                 onAskForFeedback = { nav.push(Routes.ASK) },
+                onReview = { nav.push(Routes.review(it)) },
                 // The same teardown the other two do, and for the same reason: `replace` pops
                 // everything above the graph root, so the shell does not survive underneath a
                 // signed-out profile for Back to land on.
@@ -316,6 +322,14 @@ fun AppNav(
                 // Pushed, not replaced: whoever asked was standing on a tab and wants to end up
                 // back on it with the thing they wanted finally on it.
             )
+        }
+
+        composable(Routes.REVIEW, arguments = listOf(navArgument("post") { type = NavType.StringType })) { entry ->
+            // The small post snapshot is saved in the back stack, including across process recreation.
+            val post = remember(entry) { Json.decodeFromString<ApiPost>(requireNotNull(entry.arguments?.getString("post"))) }
+            Inset {
+                ReviewScreen(post = post, onClose = { nav.popBackStack() })
+            }
         }
 
         composable(Routes.ASK) {
