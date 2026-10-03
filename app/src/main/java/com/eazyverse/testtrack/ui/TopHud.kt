@@ -1,11 +1,11 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,12 +31,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Ticket
-import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
@@ -69,118 +67,62 @@ fun TopHud(
     openSeats: Int = 0,
     onSignIn: () -> Unit = {},
 ) {
-    if (signedIn && level == null) {
-        Row(
-            modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 11.dp, bottom = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            HudMark()
-            Spacer(Modifier.width(11.dp))
+    val visibleLevel = level.takeIf { signedIn }
+    val title =
+        when {
+            visibleLevel != null -> "Level $visibleLevel"
+            signedIn -> "TestTrack"
+            openCrew != null && openSeats > 0 -> "$openCrew is filling"
+            else -> "TestTrack"
+        }
+    val subtitle =
+        when {
+            visibleLevel != null && forNext > 0 -> "${(forNext - intoLevel).coerceAtLeast(0)} exp to level ${visibleLevel + 1}"
+            visibleLevel != null -> "$intoLevel exp"
+            signedIn -> "Signed in"
+            openCrew != null && openSeats > 0 -> "$openTaken of $openSeats seats taken"
+            else -> ""
+        }
+    Row(
+        modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 10.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LevelRobotBadge(visibleLevel, intoLevel, forNext)
+        Spacer(Modifier.width(11.dp))
+        Crossfade(
+            targetState = title to subtitle,
+            modifier = Modifier.weight(1f),
+            animationSpec = tween(220),
+            label = "Header text",
+        ) { text ->
             Column {
-                Text("TestTrack", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
-                Text("Signed in", style = MaterialTheme.typography.labelSmall, color = Tt.colors.text2)
-            }
-        }
-        return
-    }
-    if (level == null) {
-        SignedOutHud(modifier, openCrew, openTaken, openSeats, onSignIn)
-        return
-    }
-    Row(
-        modifier
-            .fillMaxWidth()
-            .padding(start = Gutter, end = Gutter, top = 10.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        LevelRobotBadge(level, intoLevel, forNext)
-        Spacer(Modifier.width(11.dp))
-
-        Column(Modifier.weight(1f)) {
-            Text(
-                "Level $level",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.size(1.dp))
-            Text(
-                if (forNext <= 0) {
-                    "$intoLevel exp"
-                } else {
-                    "${forNext - intoLevel} exp to level ${level + 1}"
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        TixChip(tix)
-    }
-}
-
-/**
- * The header before anybody has signed in.
- *
- * It used to draw the level ring with a question mark in it, which is a progress ring with no
- * progress: a shape that answers nothing and asks nothing, taking the most valuable strip of the
- * screen to do it.
- *
- * So it says the one true thing a stranger can be told, which happens to be the only question they
- * have. Somebody who has just installed this wants to know whether anybody is actually in here,
- * and a crew with fourteen of its fifteen seats taken answers that better than any sentence could.
- * The figures are live and read without a token, which is what the crew list was opened up for.
- *
- * With no crew filling there is nothing true to say, so it says nothing: the mark, the name, and
- * the way in. An empty statistic would be worse than the ring it replaced.
- */
-@Composable
-private fun SignedOutHud(
-    modifier: Modifier,
-    openCrew: String?,
-    openTaken: Int,
-    openSeats: Int,
-    onSignIn: () -> Unit,
-) {
-    Row(
-        modifier
-            .fillMaxWidth()
-            .padding(start = Gutter, end = Gutter, top = 11.dp, bottom = 7.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        HudMark()
-        Spacer(Modifier.width(11.dp))
-
-        Column(Modifier.weight(1f)) {
-            if (openCrew != null && openSeats > 0) {
-                Text(
-                    "$openCrew is filling",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Spacer(Modifier.size(1.dp))
-                Row {
-                    Text(
-                        "$openTaken",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Tt.colors.accentInk,
-                    )
-                    Text(
-                        " of $openSeats seats taken",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                Text(text.first, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                if (text.second.isNotEmpty()) {
+                    Spacer(Modifier.size(1.dp))
+                    Text(text.second, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-            } else {
-                Text(
-                    "TestTrack",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
             }
         }
-
-        SignInChip(onSignIn)
+        Crossfade(
+            targetState =
+                if (visibleLevel !=
+                    null
+                ) {
+                    2
+                } else if (signedIn) {
+                    1
+                } else {
+                    0
+                },
+            animationSpec = tween(220),
+            label = "Header action",
+        ) { state ->
+            when (state) {
+                2 -> TixChip(tix)
+                0 -> SignInChip(onSignIn)
+                else -> Unit
+            }
+        }
     }
 }
 
@@ -221,14 +163,6 @@ private fun SignInChip(onClick: () -> Unit) {
         )
     }
 }
-
-/** The complete exchange robot, tightly framed for the app bar. */
-@Composable
-private fun HudMark() {
-    Image(painterResource(R.drawable.testtrack_robot), null, Modifier.size(MarkSize))
-}
-
-private val MarkSize = 44.dp
 
 /**
  * What this account has to spend, opposite [FeedTabs] at the top of Circle.

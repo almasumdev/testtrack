@@ -1,14 +1,17 @@
 package com.eazyverse.testtrack.viewmodel
 
+import android.app.Application
 import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiSession
+import com.eazyverse.testtrack.net.HeaderSnapshot
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -25,23 +28,31 @@ import kotlinx.coroutines.launch
  * per screen would mean five requests for the same two numbers and five chances for them to
  * disagree about the balance somebody is looking at.
  */
-class HudViewModel : ViewModel() {
-    /** Null until the first answer, which is what tells the header to show nothing yet. */
-    var level by mutableStateOf<Int?>(null)
+class HudViewModel(
+    application: Application,
+) : AndroidViewModel(application) {
+    private val restored =
+        run {
+            ApiSession.load(application)
+            ApiSession.cachedHeader(FirebaseAuth.getInstance().currentUser?.uid)
+        }
+
+    /** Restored synchronously before the first frame, then refreshed from the server. */
+    var level by mutableStateOf<Int?>(restored?.level)
         private set
 
-    var intoLevel by mutableStateOf(0)
+    var intoLevel by mutableStateOf(restored?.intoLevel ?: 0)
         private set
 
     /** How wide the current level is. Never drawn as a denominator until it is known to be above zero. */
-    var forNext by mutableStateOf(0)
+    var forNext by mutableStateOf(restored?.forNext ?: 0)
         private set
 
-    var tix by mutableStateOf(0)
+    var tix by mutableStateOf(restored?.tix ?: 0)
         private set
 
     /** Nobody is signed in, so there is no level and no balance to show. */
-    var signedOut by mutableStateOf(!ApiSession.signedIn)
+    var signedOut by mutableStateOf(!ApiSession.signedIn && FirebaseAuth.getInstance().currentUser == null)
         private set
 
     /**
@@ -73,7 +84,7 @@ class HudViewModel : ViewModel() {
     init {
         viewModelScope.launch {
             ApiSession.signedInState.collect { signedIn ->
-                signedOut = !signedIn
+                signedOut = !signedIn && FirebaseAuth.getInstance().currentUser == null
                 if (!signedIn) {
                     loadJob?.cancel()
                     level = null
@@ -100,8 +111,15 @@ class HudViewModel : ViewModel() {
                     }
                     signedOut = false
                     val generation = ApiSession.generation
+                    val account = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
                     val me = Api.me()
-                    if (generation != ApiSession.generation || !ApiSession.signedIn) return@launch
+                    if (generation != ApiSession.generation ||
+                        !ApiSession.signedIn ||
+                        FirebaseAuth.getInstance().currentUser?.uid != account
+                    ) {
+                        return@launch
+                    }
+                    ApiSession.rememberHeader(HeaderSnapshot(account, me.level, me.expIntoLevel, me.expForNext, me.tix), generation)
                     level = me.level
                     intoLevel = me.expIntoLevel
                     forNext = me.expForNext

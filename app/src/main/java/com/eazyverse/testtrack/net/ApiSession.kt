@@ -5,6 +5,9 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * The token pair, kept across launches.
@@ -23,6 +26,8 @@ object ApiSession {
     private const val FILE = "testtrack.api"
     private const val ACCESS = "access"
     private const val REFRESH = "refresh"
+    private const val HEADER = "header"
+    private var header: HeaderSnapshot? = null
 
     @Volatile private var prefs: SharedPreferences? = null
 
@@ -43,6 +48,7 @@ object ApiSession {
         prefs = store
         cachedAccess = store.getString(ACCESS, null)
         cachedRefresh = store.getString(REFRESH, null)
+        header = store.getString(HEADER, null)?.let { runCatching { Json.decodeFromString<HeaderSnapshot>(it) }.getOrNull() }
         ready.value = cachedAccess != null
     }
 
@@ -64,10 +70,25 @@ object ApiSession {
     }
 
     @Synchronized
+    fun cachedHeader(account: String?): HeaderSnapshot? = header?.takeIf { signedIn && it.account == account }
+
+    @Synchronized
+    fun rememberHeader(
+        snapshot: HeaderSnapshot,
+        expectedGeneration: Long,
+    ): Boolean {
+        if (expectedGeneration != generation || !signedIn) return false
+        header = snapshot
+        prefs?.edit { putString(HEADER, Json.encodeToString(snapshot)) }
+        return true
+    }
+
+    @Synchronized
     fun clear() {
         generation++
         cachedAccess = null
         cachedRefresh = null
+        header = null
         prefs?.edit { clear() }
         ready.value = false
     }
@@ -76,3 +97,13 @@ object ApiSession {
     val refresh: String? get() = cachedRefresh
     val signedIn: Boolean get() = cachedAccess != null
 }
+
+/** Display-only cache. Posting and spending still use server-authoritative balances. */
+@Serializable
+data class HeaderSnapshot(
+    val account: String,
+    val level: Int,
+    val intoLevel: Int,
+    val forNext: Int,
+    val tix: Int,
+)

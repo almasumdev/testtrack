@@ -36,25 +36,29 @@ import com.eazyverse.testtrack.ui.theme.Tt
 /** Original mascot, holding one level plaque. Only the upper robot moves at rest. */
 @Composable
 internal fun LevelRobotBadge(
-    level: Int,
+    level: Int?,
     intoLevel: Int,
     forNext: Int,
 ) {
-    val target = if (forNext > 0) (intoLevel.toFloat() / forNext).coerceIn(0f, 1f) else 0f
+    val target = if (level != null && forNext > 0) (intoLevel.toFloat() / forNext).coerceIn(0f, 1f) else 0f
     val progress by animateFloatAsState(target, tween(700), label = "Robot XP")
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateFlow
         .collectAsState()
     val motion = robotMotion(lifecycle.isAtLeast(Lifecycle.State.STARTED) && ValueAnimator.areAnimatorsEnabled())
     val celebration = remember { Animatable(0f) }
-    var previousLevel by remember { mutableIntStateOf(level) }
+    var previousLevel by remember { mutableStateOf(level) }
     LaunchedEffect(level) {
-        val leveledUp = level > previousLevel
+        val leveledUp = level != null && previousLevel != null && level > previousLevel!!
         previousLevel = level
         if (leveledUp && ValueAnimator.areAnimatorsEnabled()) {
             celebration.animateTo(1f, tween(180))
             celebration.animateTo(0f, tween(420))
         }
     }
+    val badgeAlpha by animateFloatAsState(if (level != null) 1f else 0f, tween(300), label = "Signed-in badge")
+    var displayedLevel by remember { mutableStateOf(level) }
+    LaunchedEffect(level) { if (level != null) displayedLevel = level }
+    val check = remember { PathParser().parsePathString("M525 908 L595 975 L736 835").toPath() }
     val colors = Tt.colors
     val context = LocalContext.current
     val paint =
@@ -89,8 +93,8 @@ internal fun LevelRobotBadge(
     val earned = remember { Path() }
     Box(
         Modifier.size(44.dp, 50.dp).semantics(mergeDescendants = true) {
-            contentDescription = "Level $level, $intoLevel of $forNext experience"
-            progressBarRangeInfo = ProgressBarRangeInfo(target, 0f..1f)
+            contentDescription = if (level == null) "TestTrack robot" else "Level $level, $intoLevel of $forNext experience"
+            if (level != null) progressBarRangeInfo = ProgressBarRangeInfo(target, 0f..1f)
         },
     ) {
         Image(painterResource(R.drawable.level_robot_body), null, Modifier.matchParentSize())
@@ -126,14 +130,16 @@ internal fun LevelRobotBadge(
             }) {
                 drawPath(frame, colors.badgeFill)
                 drawPath(face, colors.glass)
-                drawPath(outline, colors.glassBorderStrong, style = Stroke(19f))
+                drawPath(outline, colors.glassBorderStrong, alpha = badgeAlpha, style = Stroke(19f))
                 earned.reset()
                 measure.getSegment(0f, measure.length * progress, earned)
-                drawPath(earned, colors.ok, style = Stroke(19f, cap = StrokeCap.Round))
+                drawPath(earned, colors.ok, alpha = badgeAlpha, style = Stroke(19f, cap = StrokeCap.Round))
+                drawPath(check, colors.accentInk, alpha = 1f - badgeAlpha, style = Stroke(40f, cap = StrokeCap.Round))
                 paint.color = colors.text.toArgb()
-                paint.textSize = if (level < 100) 186f else 150f
+                paint.alpha = (255 * badgeAlpha).toInt()
+                paint.textSize = if ((displayedLevel ?: 0) < 100) 186f else 150f
                 val baseline = 910f - (paint.ascent() + paint.descent()) / 2f
-                drawContext.canvas.nativeCanvas.drawText(level.toString(), 627f, baseline, paint)
+                drawContext.canvas.nativeCanvas.drawText(displayedLevel?.toString().orEmpty(), 627f, baseline, paint)
             }
         }
         Image(painterResource(R.drawable.level_robot_hands), null, Modifier.matchParentSize())
