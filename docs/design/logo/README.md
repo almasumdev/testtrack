@@ -40,7 +40,9 @@ Launcher assets now use the same robot. Import `launcher-foreground.svg` and
 The monochrome SVG is white on transparent. The existing Android drawable XML files are
 already wired into both adaptive launcher icons. Regenerate with `python scripts/build_launcher.py`;
 add `--raster` with Playwright and Pillow installed to rebuild the legacy WebP sizes.
-The launcher background is fixed OceanLight `#E9F0F4`. Store publication is separate.
+The launcher background now uses a fixed Ocean gradient with app-card and exchange-arc accents.
+`app-icon.svg` is the complete icon with background and robot combined. Generate it with
+`python scripts/build_brand_background.py`. Store publication is separate.
 
 Platform reference: [Android splash screen guidance](https://developer.android.com/develop/ui/views/launch/splash-screen).
 

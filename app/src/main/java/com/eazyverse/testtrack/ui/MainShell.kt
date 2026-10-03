@@ -196,7 +196,7 @@ fun MainShell(
                 Modifier.windowInsetsPadding(
                     WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
                 ),
-            // Clear, so the contour ground under the whole shell shows through; see [Backdrop].
+            // Clear, so the exchange-pattern ground under the whole shell shows through; see [Backdrop].
             containerColor = Color.Transparent,
             // Above all five tabs rather than inside any of them, because it belongs to the account
             // and not to a screen. The two tabbed screens keep their own controls and now sit under

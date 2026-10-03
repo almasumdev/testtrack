@@ -1,8 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,10 +33,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -50,115 +44,30 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.ui.theme.exchangeBackground
 import com.eazyverse.testtrack.ui.theme.tabular
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.max
-import kotlin.math.sin
 
 /*
  * The pieces Value Guard is built from, drawn in Compose.
  *
  * Same shapes, same spacing and the same rules about where colour goes, so the two apps read as one
  * family: things you tap are solid tiles, things you only read are dashed panels, the accent is
- * spent on what you act on, and the ground under everything is a quiet contour map rather than a
- * flat fill.
+ * spent on what you act on, and the ground under everything is a quiet gradient with app cards and exchange arcs.
  */
 
 // ---- the ground ----------------------------------------------------------------------------
 
-/** Which layout of hills and light a page stands on. Each tab has its own. */
+/** Which arrangement of app-card accents a tab uses. */
 enum class Scene { CIRCLE, CREW, RANKS, APPS, PROFILE }
 
-private class Glow(
-    val x: Float,
-    val y: Float,
-    val radius: Float,
-)
-
-private class Hill(
-    val x: Float,
-    val y: Float,
-    val size: Float,
-    val seed: Int = 0,
-)
-
-private class SceneSpec(
-    val glows: List<Glow>,
-    val hills: List<Hill>,
-)
-
-// Value Guard's own layouts: rings low and to the sides where the margins are, clear of the text.
-private val Scenes =
-    mapOf(
-        Scene.CIRCLE to SceneSpec(listOf(Glow(1f, .08f, .7f)), listOf(Hill(1.04f, .86f, .46f), Hill(-.05f, .22f, .26f, 2))),
-        Scene.CREW to SceneSpec(listOf(Glow(0f, .9f, .65f)), listOf(Hill(1.04f, .1f, .36f, 1), Hill(-.04f, .9f, .34f, 3))),
-        Scene.RANKS to SceneSpec(listOf(Glow(.1f, .08f, .75f)), listOf(Hill(-.06f, .24f, .3f, 1), Hill(1.06f, .14f, .28f, 4))),
-        Scene.APPS to SceneSpec(listOf(Glow(1f, 0f, .8f)), listOf(Hill(1.05f, .52f, .3f, 4), Hill(-.05f, .95f, .28f, 1))),
-        Scene.PROFILE to SceneSpec(listOf(Glow(0f, .1f, .75f)), listOf(Hill(-.05f, .88f, .44f, 5), Hill(1.05f, .3f, .2f, 2))),
-    )
-
-private const val RINGS = 7
-private const val STEPS = 90
-
-/**
- * The page ground: the solid colour, a pool of light, and a couple of contour hills.
- *
- * Behind everything and under nothing: cards on top of it are opaque, so no line is ever read
- * through text. Changing tab crossfades to that tab's layout, so the ground moves with you instead
- * of snapping.
- */
+/** Shared TestTrack ground, replacing the old contour-map artwork. */
 @Composable
 fun Backdrop(
     scene: Scene,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val t = Tt.colors
-    Box(modifier.fillMaxSize().background(t.bg)) {
-        Crossfade(scene, animationSpec = tween(560), label = "backdrop") { current ->
-            val spec = Scenes.getValue(current)
-            Canvas(Modifier.fillMaxSize()) {
-                spec.glows.forEach { g ->
-                    val center = Offset(g.x * size.width, g.y * size.height)
-                    val radius = g.radius * size.width
-                    drawCircle(
-                        Brush.radialGradient(listOf(t.glow, t.glow.copy(alpha = 0f)), center, radius),
-                        radius,
-                        center,
-                    )
-                }
-                spec.hills.forEach { hill(it, t.contourDeep, t.contour) }
-            }
-        }
-        content()
-    }
-}
-
-private fun DrawScope.hill(
-    h: Hill,
-    line: Color,
-    peak: Color,
-) {
-    val center = Offset(h.x * size.width, h.y * size.height)
-    val extent = h.size * size.width
-    val stroke = max(1.4.dp.toPx(), extent * .012f)
-    repeat(RINGS) { r ->
-        val radius = extent * (.14f + r * .13f)
-        val path = Path()
-        for (k in 0..STEPS) {
-            val a = k.toFloat() / STEPS * PI.toFloat() * 2f
-            // Two slow waves round the ring, shifted per ring and per hill, so the lines drift like
-            // terrain instead of circling like a target.
-            val wobble = 1f + .07f * sin(a * 3 + h.seed * 1.7f + r * .5f) + .04f * sin(a * 5 + h.seed)
-            val x = center.x + cos(a) * radius * wobble
-            val y = center.y + sin(a) * radius * wobble
-            if (k == 0) path.moveTo(x, y) else path.lineTo(x, y)
-        }
-        // The outer rings fade, so a hill has no hard edge.
-        drawPath(path, line.copy(alpha = 1f - r / (RINGS + 1f)), style = Stroke(stroke))
-    }
-    drawCircle(peak, extent * .07f, center)
+    Box(modifier.fillMaxSize().exchangeBackground(variant = scene.ordinal), content = content)
 }
 
 // ---- marks -----------------------------------------------------------------------------------

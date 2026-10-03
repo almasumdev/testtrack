@@ -645,7 +645,7 @@ class CaptureService : Service() {
                 // The app's own mark, like every other notification it raises. This was Android's
                 // stock camera glyph, which is the one notification a tester sees while their screen
                 // is being recorded and the one that most needs to say who is doing it.
-                .setSmallIcon(R.drawable.ic_stat_name)
+                .setSmallIcon(R.drawable.ic_notification_robot)
                 .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -732,7 +732,7 @@ class CaptureService : Service() {
                 .Builder(this, CHANNEL)
                 .setContentTitle("TestTrack")
                 .setContentText("Saving today's proof")
-                .setSmallIcon(R.drawable.ic_stat_name)
+                .setSmallIcon(R.drawable.ic_notification_robot)
                 .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)

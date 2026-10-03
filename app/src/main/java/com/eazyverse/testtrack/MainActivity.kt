@@ -48,6 +48,7 @@ import com.eazyverse.testtrack.domain.LaunchDestination
 import com.eazyverse.testtrack.domain.launchDestination
 import com.eazyverse.testtrack.ui.*
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
+import com.eazyverse.testtrack.ui.theme.exchangeBackground
 import kotlinx.coroutines.launch
 
 object Routes {
@@ -130,7 +131,7 @@ class MainActivity : ComponentActivity() {
                     // drawing inset through [Inset] (status bar, cutout, nav bar and keyboard); the
                     // tab shell takes only the top one, because its ground and its floating dock run
                     // to the bottom edge under the system bar.
-                    Box {
+                    Box(Modifier.fillMaxSize().exchangeBackground()) {
                         if (Config.isConfigured) AppNav(openGroup, openFeedbackFor) else Inset { NotConfigured() }
 
                         /*

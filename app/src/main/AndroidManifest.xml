@@ -146,15 +146,15 @@
         <!--
           Fallbacks for a message that arrives with a `notification` block, which the system posts
           without ever calling PushService. TestTrack sends data-only so that path is not used, but
-          without these the system would fall back to the launcher icon — an iris square, drawn as
+          without these the system would fall back to the full launcher artwork, drawn as
           a solid white block once Android masks it to alpha.
         -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_stat_name" />
+            android:resource="@drawable/ic_notification_robot" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/ic_launcher_background" />
+            android:resource="@color/notification_accent" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="reminders" />

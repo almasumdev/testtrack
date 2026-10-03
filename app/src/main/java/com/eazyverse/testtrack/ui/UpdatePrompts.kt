@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.ui.theme.exchangeBackground
 
 /** Which in-content update banner Home should show. */
 enum class HomeUpdateBanner { NONE, DOWNLOADED }
@@ -132,7 +133,7 @@ fun ForceUpdateScreen(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+                .exchangeBackground()
                 .pointerInput(Unit) { detectTapGestures { } },
         contentAlignment = Alignment.Center,
     ) {

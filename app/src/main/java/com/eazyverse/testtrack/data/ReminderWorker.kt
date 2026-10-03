@@ -177,7 +177,7 @@ class ReminderWorker(
         val notification =
             NotificationCompat
                 .Builder(applicationContext, PushRepo.CHANNEL_REMINDERS)
-                .setSmallIcon(R.drawable.ic_stat_name)
+                .setSmallIcon(R.drawable.ic_notification_robot)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))
@@ -234,7 +234,7 @@ class ReminderWorker(
             val builder =
                 NotificationCompat
                     .Builder(context, PushRepo.CHANNEL_REMINDERS)
-                    .setSmallIcon(R.drawable.ic_stat_name)
+                    .setSmallIcon(R.drawable.ic_notification_robot)
                     .setContentTitle(title)
                     .setContentText(body)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(body))

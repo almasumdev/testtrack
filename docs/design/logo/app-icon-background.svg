@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1254 1254" fill="none" role="img" width="512" height="512">
+  <defs>
+    <radialGradient id="icon_ocean_wash" gradientUnits="userSpaceOnUse" cx="455" cy="365" r="1130">
+      <stop offset="0" stop-color="#F7FCFF" />
+      <stop offset="0.32" stop-color="#E7F4FC" />
+      <stop offset="0.72" stop-color="#B8D8EB" />
+      <stop offset="1" stop-color="#7FAAC7" />
+    </radialGradient>
+  </defs>
+  <g id="brand_background">
+    <path fill="url(#icon_ocean_wash)" d="M0 0H1254V1254H0Z" />
+    <g id="background_shape_0" transform="translate(75.24 100.32000000000001) rotate(-19 100.32000000000001 100.32000000000001)">
+      <path d="M50.160000000000004 0H150.48000000000002Q200.64000000000001 0 200.64000000000001 50.160000000000004V150.48000000000002Q200.64000000000001 200.64000000000001 150.48000000000002 200.64000000000001H50.160000000000004Q0 200.64000000000001 0 150.48000000000002V50.160000000000004Q0 0 50.160000000000004 0Z" fill="#FFFFFF" fill-opacity="0.23" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="3" />
+    </g>
+    <g id="background_shape_1" transform="translate(739.86 43.89000000000001) rotate(0 62.7 62.7)">
+      <path d="M62.7 0H62.7Q125.4 0 125.4 62.7V62.7Q125.4 125.4 62.7 125.4H62.7Q0 125.4 0 62.7V62.7Q0 0 62.7 0Z" fill="#FFFFFF" fill-opacity="0.23" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="3" />
+    </g>
+    <g id="background_shape_2" transform="translate(1078.44 250.8) rotate(24 137.94 137.94)">
+      <path d="M68.97 0H206.91Q275.88 0 275.88 68.97V206.91Q275.88 275.88 206.91 275.88H68.97Q0 275.88 0 206.91V68.97Q0 0 68.97 0Z" fill="#FFFFFF" fill-opacity="0.23" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="3" />
+    </g>
+    <g id="background_shape_3" transform="translate(463.98 300.96) rotate(-32 81.51 30.9738)">
+      <path d="M30.9738 0H132.0462Q163.02 0 163.02 30.9738V30.9738Q163.02 61.9476 132.0462 61.9476H30.9738Q0 61.9476 0 30.9738V30.9738Q0 0 30.9738 0Z" fill="#FFFFFF" fill-opacity="0.23" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="3" />
+    </g>
+    <g id="background_shape_4" transform="translate(-87.78000000000002 451.44) rotate(0 131.67 131.67)">
+      <path d="M131.67 0H131.67Q263.34 0 263.34 131.67V131.67Q263.34 263.34 131.67 263.34H131.67Q0 263.34 0 131.67V131.67Q0 0 131.67 0Z" fill="#FFFFFF" fill-opacity="0.23" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="3" />
+    </g>
+    <g id="background_shape_5" transform="translate(802.5600000000001 539.22) rotate(17 112.86 112.86)">
+      <path d="M56.43 0H169.29Q225.72 0 225.72 56.43V169.29Q225.72 225.72 169.29 225.72H56.43Q0 225.72 0 169.29V56.43Q0 0 56.43 0Z" fill="#FFFFFF" fill-opacity="0.23" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="3" />
+    </g>
+    <g id="background_shape_6" transform="translate(225.72 677.1600000000001) rotate(34 75.24 75.24)">
+      <path d="M37.62 0H112.85999999999999Q150.48 0 150.48 37.62V112.85999999999999Q150.48 150.48 112.85999999999999 150.48H37.62Q0 150.48 0 112.85999999999999V37.62Q0 0 37.62 0Z" fill="#FFFFFF" fill-opacity="0.23" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="3" />
+    </g>
+    <g id="background_shape_7" transform="translate(1141.14 739.86) rotate(-28 94.05 35.739)">
+      <path d="M35.739 0H152.361Q188.1 0 188.1 35.739V35.739Q188.1 71.478 152.361 71.478H35.739Q0 71.478 0 35.739V35.739Q0 0 35.739 0Z" fill="#FFFFFF" fill-opacity="0.23" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="3" />
+    </g>
+    <g id="background_shape_8" transform="translate(539.22 865.2599999999999) rotate(0 56.43 56.43)">
+      <path d="M56.43 0H56.43Q112.86 0 112.86 56.43V56.43Q112.86 112.86 56.43 112.86H56.43Q0 112.86 0 56.43V56.43Q0 0 56.43 0Z" fill="#FFFFFF" fill-opacity="0.23" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="3" />
+    </g>
+    <g id="background_shape_9" transform="translate(-50.160000000000004 978.12) rotate(-12 112.86 112.86)">
+      <path d="M56.43 0H169.29Q225.72 0 225.72 56.43V169.29Q225.72 225.72 169.29 225.72H56.43Q0 225.72 0 169.29V56.43Q0 0 56.43 0Z" fill="#FFFFFF" fill-opacity="0.23" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="3" />
+    </g>
+    <g id="background_shape_10" transform="translate(927.96 1053.36) rotate(29 125.4 125.4)">
+      <path d="M62.7 0H188.10000000000002Q250.8 0 250.8 62.7V188.10000000000002Q250.8 250.8 188.10000000000002 250.8H62.7Q0 250.8 0 188.10000000000002V62.7Q0 0 62.7 0Z" fill="#FFFFFF" fill-opacity="0.23" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="3" />
+    </g>
+    <g id="background_shape_11" transform="translate(363.65999999999997 1178.76) rotate(-23 100.32000000000001 38.1216)">
+      <path d="M38.1216 0H162.5184Q200.64000000000001 0 200.64000000000001 38.1216V38.1216Q200.64000000000001 76.2432 162.5184 76.2432H38.1216Q0 76.2432 0 38.1216V38.1216Q0 0 38.1216 0Z" fill="#FFFFFF" fill-opacity="0.23" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="3" />
+    </g>
+  </g>
+</svg>

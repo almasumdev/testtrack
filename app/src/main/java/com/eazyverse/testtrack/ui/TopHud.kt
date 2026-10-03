@@ -214,13 +214,13 @@ private fun SignInChip(onClick: () -> Unit) {
     }
 }
 
-/** The same mascot as onboarding, framed for the compact header slot. */
+/** The complete exchange robot, tightly framed for the app bar. */
 @Composable
 private fun HudMark() {
-    Image(painterResource(R.drawable.onboarding_mascot), null, Modifier.size(MarkSize))
+    Image(painterResource(R.drawable.testtrack_robot), null, Modifier.size(MarkSize))
 }
 
-private val MarkSize = 38.dp
+private val MarkSize = 44.dp
 
 /**
  * The level, with its progress as the ring around it.

@@ -3,6 +3,6 @@
     <!-- OceanLight background; values-night matches OceanDark. -->
     <color name="paper">#E9F0F4</color>
 
-    <!-- Fixed Ocean background for the launcher, independent of system dark mode. -->
-    <color name="ic_launcher_background">#E9F0F4</color>
+    <!-- Notification accent; launcher background lives in ic_launcher_background.xml. -->
+    <color name="notification_accent">#1D5C82</color>
 </resources>

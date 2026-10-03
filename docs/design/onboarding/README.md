@@ -1,7 +1,7 @@
 # TestTrack onboarding
 
-Open `preview.html` to compare actual Android captures in light and dark mode.
-`preview.png` and `preview-dark.png` are the side-by-side review sheets.
+Open `preview.html` for the live HTML design preview of the new gradient background in both themes.
+`preview.png` and `preview-dark.png` are earlier native review sheets, before the background update.
 
 The introduction follows ListKin and ValueGuard's illustrated pager structure: brand and Skip,
 large artwork, a short headline and explanation, progress dots, a primary action, and an
@@ -72,3 +72,8 @@ Validation: debug build and Kotlin lint pass, no new architecture violations. Ma
 checks all five progress indicators, Next on pages one through four, the final action on page five,
 Back through the new pages, and persisted completion. Existing emulator session data is restored.
 The earlier small-screen and large-text captures document the shared layout before this extension.
+
+The app now shares `ui/theme/ExchangeBackground.kt` across its main tabs, onboarding, forms
+and detail screens. A soft Ocean radial gradient replaces the old decorative shapes.
+The gradient palette stays consistent; cards and dialogs retain solid surfaces for readability.
+This update was build-checked only; visual review is left to the user.

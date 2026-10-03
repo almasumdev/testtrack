@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.ui.theme.exchangeBackground
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
@@ -125,14 +126,14 @@ fun OnboardingBody(
 ) {
     val c = Tt.colors
     Column(
-        Modifier.fillMaxSize().background(c.bg),
+        Modifier.fillMaxSize().exchangeBackground(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(
             Modifier.widthIn(max = 520.dp).fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Image(painterResource(R.drawable.onboarding_mascot), null, Modifier.size(40.dp))
+            Image(painterResource(R.drawable.testtrack_robot), null, Modifier.size(44.dp))
             Spacer(Modifier.width(8.dp))
             Text(
                 stringResource(R.string.intro_brand),

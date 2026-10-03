@@ -7,7 +7,6 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.rememberScrollState
@@ -29,6 +28,7 @@ import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.data.*
 import com.eazyverse.testtrack.findActivity
+import com.eazyverse.testtrack.ui.theme.exchangeBackground
 
 /** The answer to one step's button, shown under that button rather than at the foot of the page. */
 @Composable
@@ -188,7 +188,7 @@ fun SetupScreen(
      */
     val done = granted.runningFold(true) { above, step -> above && step }.drop(1)
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(Modifier.fillMaxSize().exchangeBackground()) {
         val outstanding = done.indexOfFirst { !it }
         var reopened by rememberSaveable { mutableStateOf<Int?>(null) }
 

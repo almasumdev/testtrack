@@ -91,9 +91,8 @@ def raster():
     from PIL import Image
     from playwright.sync_api import sync_playwright
 
-    svg = deepcopy(SOURCE)
-    # Legacy icons are already masked, unlike adaptive foreground layers.
-    svg.find(f"{{{SVG}}}g").set("transform", "translate(37.62 37.62) scale(.94)")
+    # Complete artwork includes the matching gradient and edge decorations.
+    svg = ET.parse(DESIGN / "app-icon.svg").getroot()
     ET.register_namespace("", SVG)
     artwork = ET.tostring(svg, encoding="unicode")
     edge = Path(os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)")) / "Microsoft/Edge/Application/msedge.exe"
@@ -118,9 +117,8 @@ if __name__ == "__main__":
     write("ic_launcher_foreground.xml", sized(SOURCE))
     write_svg("launcher-foreground.svg", SOURCE)
     write("ic_launcher_monochrome.xml", monochrome())
-    bg = ET.Element("shape", android_attrs(shape="rectangle"))
-    ET.SubElement(bg, "solid", android_attrs(color="@color/ic_launcher_background"))
-    write("ic_launcher_background.xml", bg)
+    from build_brand_background import main as build_background
+    build_background()
     if args.raster:
         raster()
     print("Updated launcher assets from the approved robot.")
