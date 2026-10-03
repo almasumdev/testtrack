@@ -360,7 +360,14 @@ class CrewViewModel : ViewModel() {
         away = null
 
         viewModelScope.launch {
-            val used = UsageRepo.foregroundMsSince(context, trip.packageName, trip.since)
+            val used =
+                UsageRepo.measure(
+                    context,
+                    trip.packageName,
+                    trip.since,
+                    needMs = CrewRules.VISIT_SECONDS * 1000L,
+                    source = "crew",
+                )
             val short = used < CrewRules.VISIT_SECONDS * 1000L
             try {
                 if (short) {

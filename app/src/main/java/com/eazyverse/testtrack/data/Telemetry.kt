@@ -53,6 +53,29 @@ object Telemetry {
         missed: Int,
     ) = log("round_finished", "captured" to captured.toLong(), "missed" to missed.toLong())
 
+    /**
+     * One usage reading at the end of a visit.
+     *
+     * [source] is a fixed string from the caller ("review", "crew"). [ms] is what was counted,
+     * [events] how many usage events the phone gave for the app, [access] whether usage access was
+     * on, [retried] whether a second reading was needed. Analytics adds the phone's make and model,
+     * so a phone that keeps reading short shows which of the known causes it is: no access, no
+     * events at all, or events that did not add up.
+     */
+    fun usageRead(
+        source: String,
+        ms: Long,
+        events: Int,
+        access: Boolean,
+        retried: Boolean,
+    ) = log(
+        "usage_read_$source",
+        "ms" to ms,
+        "events" to events.toLong(),
+        "access" to if (access) 1L else 0L,
+        "retried" to if (retried) 1L else 0L,
+    )
+
     /** One proof reached Drive and Firestore. */
     fun proofPosted() = log("proof_posted")
 

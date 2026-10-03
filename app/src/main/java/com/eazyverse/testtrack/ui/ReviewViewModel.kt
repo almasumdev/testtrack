@@ -97,7 +97,14 @@ class ReviewViewModel : ViewModel() {
                 review = Api.installed(review.id)
             }
             if (review.state == INSTALLED || review.state == USED) {
-                val used = UsageRepo.foregroundMsSince(context, current.post.packageName, windowStart(context, review))
+                val used =
+                    UsageRepo.measure(
+                        context,
+                        current.post.packageName,
+                        windowStart(context, review),
+                        needMs = review.neededMs,
+                        source = "review",
+                    )
                 if (used > review.usedMs) review = Api.used(review.id, used)
             }
             job = current.copy(review = review)
