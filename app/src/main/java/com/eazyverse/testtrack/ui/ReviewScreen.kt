@@ -1,11 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import android.net.Uri
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -22,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -43,31 +37,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.ChevronLeft
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.MessageCircleQuestion
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.theme.Tt
-import com.eazyverse.testtrack.ui.theme.tabular
 
 /**
  * The guided review: what somebody actually does to earn the tix.
@@ -183,6 +168,11 @@ fun ReviewBody(
             )
         },
         bottomBar = {
+            if (job == null) {
+                Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp)) {
+                    Skeleton(height = 52.dp, corner = 26.dp)
+                }
+            }
             if (job != null && !job.settled) {
                 Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp)) {
                     Primary(stepAction(job.step, job), tall = true) {
@@ -207,7 +197,7 @@ fun ReviewBody(
             ) {
                 ReviewAppRow(post)
                 if (job == null) {
-                    Blank("Getting this ready.")
+                    ReviewLoading(room, dial, gap)
                     return@Column
                 }
                 // Centred in what is left under the app row; scrolls only if a phone is smaller
@@ -272,7 +262,7 @@ fun ReviewBody(
 /** What a post carries when the developer asked nothing in particular; not worth showing. */
 private const val GENERAL_ASK = "General feedback on the app experience."
 
-private val ReviewSteps = ReviewStep.entries.filter { it != ReviewStep.WAIT }
+internal val ReviewSteps = ReviewStep.entries.filter { it != ReviewStep.WAIT }
 
 /** The app under review: its mark, its name, and where it is. */
 @Composable
@@ -300,133 +290,7 @@ private fun ReviewAppRow(post: ApiPost) {
     }
 }
 
-/**
- * Four rounded segments round a ring, one per step.
- *
- * Done steps fill in the accent, the current one is tinted, and while the app is being used its
- * segment fills as the thirty seconds pass, so the dial is the clock as well as the progress.
- */
-@Composable
-private fun StepDial(
-    job: ReviewJob,
-    size: Dp,
-) {
-    val t = Tt.colors
-    val here = if (job.settled) ReviewSteps.size else ReviewSteps.indexOf(job.step).coerceAtLeast(0)
-    val used by animateFloatAsState(job.usedFraction, tween(500), label = "used")
-    Box(Modifier.size(size), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize()) {
-            val stroke = size.toPx() * 0.072f
-            val inset = stroke / 2f
-            val ring = Size(this.size.width - stroke, this.size.height - stroke)
-            val gapDeg = 14f
-            val sweep = 90f - gapDeg
-            for (i in 0 until 4) {
-                val start = -90f + i * 90f + gapDeg / 2f
-                val segment: (Color, Float) -> Unit = { color, fraction ->
-                    drawArc(
-                        color = color,
-                        startAngle = start,
-                        sweepAngle = sweep * fraction,
-                        useCenter = false,
-                        topLeft = Offset(inset, inset),
-                        size = ring,
-                        style = Stroke(stroke, cap = StrokeCap.Round),
-                    )
-                }
-                segment(t.glass2, 1f)
-                when {
-                    i < here -> segment(t.accent, 1f)
-                    i == here && ReviewSteps[i] == ReviewStep.USE -> if (used > 0f) segment(t.accent, used)
-                    i == here -> segment(t.accentInk.copy(alpha = 0.35f), 1f)
-                }
-            }
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            when {
-                job.review.state == "approved" -> {
-                    Text("+${job.post.reward}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = t.ok)
-                    Text("tix added", style = MaterialTheme.typography.labelMedium, color = t.text3)
-                }
-                job.settled -> {
-                    // A tick rather than the word: the title under the dial already says "Sent".
-                    Icon(Lucide.Check, null, Modifier.size(size * 0.2f), tint = t.accentInk)
-                    Text("with the developer", style = MaterialTheme.typography.labelMedium, color = t.text3)
-                }
-                job.step == ReviewStep.USE -> {
-                    val needed = (job.review.neededMs / 1000).toInt()
-                    Text(
-                        "${(needed - job.secondsLeft).coerceAtLeast(0)}",
-                        style =
-                            MaterialTheme.typography.headlineMedium
-                                .tabular()
-                                .copy(fontSize = (size.value * 0.24f).sp),
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text("of $needed seconds", style = MaterialTheme.typography.labelMedium, color = t.text3)
-                }
-                else -> {
-                    Text("Step ${here + 1}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("of ${ReviewSteps.size}", style = MaterialTheme.typography.labelMedium, color = t.text3)
-                }
-            }
-        }
-    }
-}
-
-/** The four steps by name under the dial, ticked as they are done. */
-@Composable
-private fun StepLabels(job: ReviewJob) {
-    val t = Tt.colors
-    val here = if (job.settled) ReviewSteps.size else ReviewSteps.indexOf(job.step).coerceAtLeast(0)
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        ReviewSteps.forEachIndexed { i, step ->
-            Text(
-                (if (i < here) "✓ " else "") + stepShort(step, job),
-                style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.5.sp),
-                fontWeight = FontWeight.SemiBold,
-                color =
-                    if (i < here) {
-                        t.text2
-                    } else if (i == here) {
-                        t.accentInk
-                    } else {
-                        t.text4
-                    },
-            )
-        }
-    }
-}
-
-/** The developer's question: an icon in line with the label, the question full width under it. */
-@Composable
-private fun DeveloperAsks(asked: String) {
-    val t = Tt.colors
-    val shape = RoundedCornerShape(16.dp)
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(t.glass)
-            .border(1.dp, t.glassBorder, shape)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Lucide.MessageCircleQuestion, null, Modifier.size(15.dp), tint = t.accentInk)
-            Spacer(Modifier.width(6.dp))
-            Text(
-                "The developer asks",
-                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
-                fontWeight = FontWeight.SemiBold,
-                color = t.text3,
-            )
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(asked, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp))
-    }
-}
-
-private fun stepShort(
+internal fun stepShort(
     step: ReviewStep,
     job: ReviewJob,
 ): String =
