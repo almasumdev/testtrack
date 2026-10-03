@@ -168,11 +168,6 @@ fun ReviewBody(
             )
         },
         bottomBar = {
-            if (job == null) {
-                Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp)) {
-                    Skeleton(height = 52.dp, corner = 26.dp)
-                }
-            }
             if (job != null && !job.settled) {
                 Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp)) {
                     Primary(stepAction(job.step, job), tall = true) {

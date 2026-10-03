@@ -174,11 +174,7 @@ internal fun DeveloperAsks(asked: String) {
 }
 
 /**
- * The page before the review has arrived: the same dial, title, line and question, in shimmer.
- *
- * Laid out with the very sizes the real step uses and centred in the same space, so when the step
- * lands it fades into the places the eye is already looking at. A sentence where the step would be
- * sat in the corner and then jumped.
+ * The page before the review has arrived: the robot, waiting, centred where the step will be.
  */
 @Composable
 internal fun ReviewLoading(
@@ -186,19 +182,10 @@ internal fun ReviewLoading(
     dial: Dp,
     gap: Dp,
 ) {
-    Column(
+    Box(
         Modifier.fillMaxWidth().heightIn(min = room - 64.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        contentAlignment = Alignment.Center,
     ) {
-        Skeleton(width = dial, height = dial, corner = dial / 2)
-        Spacer(Modifier.height(8.dp))
-        Skeleton(width = 180.dp, height = 12.dp)
-        Spacer(Modifier.height(gap))
-        Skeleton(width = 200.dp, height = 24.dp, corner = 8.dp)
-        Spacer(Modifier.height(10.dp))
-        Skeleton(width = 240.dp, height = 13.dp)
-        Spacer(Modifier.height(gap))
-        Skeleton(height = 64.dp, corner = 16.dp)
+        RobotLoader(size = dial * 0.62f, label = "Getting your review ready")
     }
 }
