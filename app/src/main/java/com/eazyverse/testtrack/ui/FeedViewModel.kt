@@ -29,6 +29,16 @@ class FeedViewModel : ViewModel() {
     var posts by mutableStateOf<List<ApiPost>>(emptyList())
         private set
 
+    /**
+     * The Feedback list: open posts, less any this account has already sent a review for. A sent
+     * review is done from the reviewer's side, and it is followed from the Mine tab instead.
+     */
+    val openPosts: List<ApiPost> get() = posts.filter { it.myState !in SentStates }
+
+    /** This account's own reviews, for the Mine tab. */
+    var mine by mutableStateOf<List<MyReview>>(emptyList())
+        private set
+
     var tix by mutableStateOf(0)
         private set
 
@@ -90,12 +100,24 @@ class FeedViewModel : ViewModel() {
                 posts = Api.posts().posts
                 if (!named) {
                     tix = 0
+                    mine = emptyList()
                     waiting = emptyList()
                     disputes = emptyList()
                     offline = false
                     return@launch
                 }
                 tix = Api.me().tix
+                mine =
+                    Api.myReviews().map {
+                        MyReview(
+                            id = it.id,
+                            postId = it.postId,
+                            appName = it.appName.ifBlank { appNameFor(it.postId) },
+                            state = it.state,
+                            reward = it.reward,
+                            reason = it.reason,
+                        )
+                    }
                 // Both duties, fetched with the feed rather than when the tab is opened: the
                 // badge has to be right before anybody looks at it.
                 // Mapped here rather than drawn raw: a post id means nothing on a card, and

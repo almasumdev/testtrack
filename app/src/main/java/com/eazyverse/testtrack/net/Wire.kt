@@ -164,6 +164,11 @@ data class ApiReview(
     @SerialName("created_at") val createdAt: String,
     @SerialName("submitted_at") val submittedAt: String? = null,
     @SerialName("decided_at") val decidedAt: String? = null,
+    // Only on /reviews/mine: the app the review is for, so the list needs no second call.
+    @SerialName("app_name") val appName: String = "",
+    @SerialName("package_name") val packageName: String = "",
+    @SerialName("is_live") val isLive: Boolean = false,
+    val reward: Int = 0,
 )
 
 @Serializable

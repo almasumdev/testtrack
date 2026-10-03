@@ -198,10 +198,10 @@ fun FeedScreen(
                             }
                         } else if (vm.loading && vm.posts.isEmpty()) {
                             items(3) { FeedLoadingCard() }
-                        } else if (vm.posts.isEmpty()) {
+                        } else if (vm.openPosts.isEmpty()) {
                             item { Blank("Nobody is asking for anything just now.") }
                         }
-                        items(vm.posts, key = { it.id }) { post ->
+                        items(vm.openPosts, key = { it.id }) { post ->
                             FeedRequestCard(post) { onReview(Json.encodeToString(post)) }
                         }
                     }
@@ -227,6 +227,18 @@ fun FeedScreen(
                         }
                         items(vm.events, key = { it.id }) { event -> FeedEventCard(event) }
                     }
+
+                FeedTab.MINE ->
+                    MineBody(
+                        reviews = vm.mine,
+                        loading = vm.loading,
+                        signedOut = vm.signedOut,
+                        onSignIn = onSignIn,
+                        // Back into a review still in progress, when its post is still open.
+                        onOpen = { review ->
+                            vm.posts.firstOrNull { it.id == review.postId }?.let { onReview(Json.encodeToString(it)) }
+                        },
+                    )
 
                 FeedTab.WAITING ->
                     WaitingBody(
