@@ -1,10 +1,12 @@
 package com.eazyverse.testtrack.data
 
+import android.Manifest
 import android.app.AppOpsManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Process
@@ -45,7 +47,16 @@ object UsageRepo {
                 ops.checkOpNoThrow(op, uid, pkg)
             }
 
-        return mode == AppOpsManager.MODE_ALLOWED
+        // MODE_DEFAULT means the appop defers to the permission itself, and several makers ship
+        // exactly that state after the switch is turned on. Reading it as "no" told people with
+        // access that they had none and counted nothing, on every visit, forever.
+        return when (mode) {
+            AppOpsManager.MODE_ALLOWED -> true
+            AppOpsManager.MODE_DEFAULT ->
+                context.checkCallingOrSelfPermission(Manifest.permission.PACKAGE_USAGE_STATS) ==
+                    PackageManager.PERMISSION_GRANTED
+            else -> false
+        }
     }
 
     /**
@@ -69,26 +80,24 @@ object UsageRepo {
     }
 
     /**
-     * Foreground milliseconds for [pkg] since [since].
+     * Foreground milliseconds for [pkg] between [since] and now.
      *
-     * This used to measure the calendar day, from local midnight, and that was a second clock
-     * nobody had asked for. A run's day turns over at the hour its group started, not at midnight,
-     * so the two windows sat at an offset and time from yesterday's run-day was counted toward
-     * today's. It survived because at a thirty second bar an honest visit cleared it on its own.
-     * At ten it does not survive: one long session earlier the same calendar day passes the bar
-     * before the visit begins, and the visit then proves nothing that the screenshot did not.
+     * The window is the visit, handed in by the caller: one number, one meaning, no day boundary.
+     * Summed from raw events rather than `queryUsageStats`, whose daily buckets are written late
+     * and report a visit that ended seconds ago as zero.
      *
-     * So the window is the visit, handed in by the caller. One number, one meaning, no day
-     * boundary to line up with anything.
+     * How the events are read is what the earlier version got wrong on some phones:
      *
-     * Summed from raw events rather than read off `queryUsageStats`. The daily buckets that method
-     * returns are written periodically, so a visit that ended seconds ago is still reported as
-     * zero — which is exactly when we ask. Events are exact and include the session in progress,
-     * which matters because the reading is taken while the app under test is still on screen.
-     *
-     * No `queryUsageStats` cross-check any more either. That aggregate is only ever per day, so
-     * over a twenty second window it could only ever answer with somebody's whole day and win the
-     * `maxOf`, which would put the old behaviour straight back.
+     *  - **Per activity, not per app.** An app moving from its splash to its main screen can log
+     *    "main resumed" before "splash paused". Treating them as one switch closed the session at
+     *    the splash's pause and dropped everything the main screen was open for. The app is in
+     *    front while any of its activities is resumed.
+     *  - **A look back before the window.** An app already on screen when the window opens has
+     *    its "resumed" before [since]. Reading from [since] only saw a lone "paused" and dropped
+     *    that session. Events are read from [LOOK_BACK] earlier and every session is clipped to
+     *    the window, so time before [since] still never counts.
+     *  - **The screen going off ends it.** Some phones keep an activity "resumed" with the
+     *    screen off; a phone left on a table was counted as a visit.
      */
     fun foregroundMsSince(
         context: Context,
@@ -107,32 +116,53 @@ object UsageRepo {
     private fun sumSessions(
         manager: UsageStatsManager,
         pkg: String,
-        start: Long,
+        since: Long,
         now: Long,
     ): Long {
-        val events = manager.queryEvents(start, now)
+        val events = manager.queryEvents(since - LOOK_BACK, now)
         val event = UsageEvents.Event()
-        var total = 0L
+        val resumed = HashSet<String>()
         var openedAt = 0L
+        var total = 0L
+
+        fun close(at: Long) {
+            if (openedAt > 0L) {
+                val start = maxOf(openedAt, since)
+                if (at > start) total += at - start
+            }
+            openedAt = 0L
+            resumed.clear()
+        }
 
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
-            if (event.packageName != pkg) continue
             when (event.eventType) {
-                // ACTIVITY_RESUMED / ACTIVITY_PAUSED under their pre-29 names, which carry the
-                // same values and are the ones available at our minSdk.
-                UsageEvents.Event.MOVE_TO_FOREGROUND -> openedAt = event.timeStamp
-                UsageEvents.Event.MOVE_TO_BACKGROUND ->
-                    if (openedAt > 0L) {
-                        total += event.timeStamp - openedAt
-                        openedAt = 0L
+                // The screen went off or the phone locked: whatever is "in front" is not being used.
+                SCREEN_NON_INTERACTIVE, KEYGUARD_SHOWN, DEVICE_SHUTDOWN -> close(event.timeStamp)
+                UsageEvents.Event.MOVE_TO_FOREGROUND ->
+                    if (event.packageName == pkg) {
+                        if (resumed.isEmpty()) openedAt = event.timeStamp
+                        resumed.add(event.className ?: "")
+                    }
+                UsageEvents.Event.MOVE_TO_BACKGROUND, ACTIVITY_STOPPED ->
+                    if (event.packageName == pkg) {
+                        resumed.remove(event.className ?: "")
+                        if (resumed.isEmpty()) close(event.timeStamp)
                     }
             }
         }
 
-        // Still open. This is the normal case: the figure is read on the way out of a visit, while
-        // the app under test is on screen and has not been paused yet.
-        if (openedAt > 0L) total += now - openedAt
+        // Still open: the normal case, read while the app under test is on screen.
+        if (resumed.isNotEmpty()) close(now)
         return total
     }
+
+    /** How far before the window events are read, to catch a session already under way. */
+    private const val LOOK_BACK = 6 * 60 * 60 * 1000L
+
+    // Event types added after our minSdk; the values are fixed in the platform.
+    private const val SCREEN_NON_INTERACTIVE = 16
+    private const val KEYGUARD_SHOWN = 17
+    private const val ACTIVITY_STOPPED = 23
+    private const val DEVICE_SHUTDOWN = 26
 }
