@@ -86,3 +86,31 @@ than pretended to be enforced.
 - Copy avoids em dashes, arrows and icons, and says what the product does for the reader.
 - A number that both halves need lives in `core/rules.py` on the server and is mirrored once in
   the app, with a test that they agree.
+
+## Colours: one source, enforced on every build
+
+Edit `app/src/main/java/com/eazyverse/testtrack/ui/theme/Tokens.kt` only for app UI colours.
+`OceanLight` and `OceanDark` define both themes, including background gradients and shape fills.
+Components must use `Tt.colors`, `Status`, or `MaterialTheme.colorScheme`, with matching
+foreground/background roles. Use `accentInk` for custom accent text and `accent`/`onAccent`
+for filled controls. `Color.Transparent` and `Color.Unspecified` are structural exceptions.
+Do not construct colours, parse hex values, or use named colours in any other Kotlin file,
+including other files in `ui/theme`. This rule has no legacy baseline exceptions.
+
+Android builds run `sync_theme_colors.py` then `check_app.py --colors-only` automatically
+(Python 3 must be on PATH). Native splash, notification and floating timer colours are generated
+from the same tokens into `values/colors.xml` and `values-night/colors.xml`; never edit those
+outputs. The timer now follows system light/dark mode like the Compose app.
+
+Authored robot/Google logo illustrations, launcher artwork and design-only HTML/SVG previews
+retain their own artwork colours; they are not component theme palettes. Changing UI tokens
+does not recolour those assets. Launcher assets remain managed through Android Studio.
+
+## Permissions belong to the feature
+
+Startup has only onboarding (first-time guests) and Home. There is no Setup route or global
+setup-complete gate. Signing in, browsing and feedback do not request Drive, usage access,
+group membership or notifications. Crew testing requests usage access when opening a test;
+its participation dialogs link to the testers group. Notifications are an optional control
+inside active crews. The screenshot-proof testing flow requests Drive at the point of starting
+or uploading proof, retains pending screenshots if declined, and offers reconnection there.

@@ -170,7 +170,7 @@ object DriveRepo {
      *
      * The two that matter are told apart because the answers are opposites: a full Drive is
      * something only they can fix and retrying will never help, and a stale token fixes itself
-     * from Setup. Everything else keeps its status code, which is the one part of the raw body
+     * by reconnecting on the testing screen. Everything else keeps its status code, which is the one part of the raw body
      * worth carrying — it is what makes a report actionable when somebody sends a screenshot.
      */
     private fun refusal(
@@ -178,8 +178,10 @@ object DriveRepo {
         body: String,
     ): String =
         when {
-            code == 401 || code == 403 && body.contains("authError", true) ->
-                "Your Drive access has expired. Open Setup from the home screen and reconnect it."
+            code == 401 || code == 403 && body.contains("authError", true) -> {
+                Session.updateDriveConnected(false)
+                "Drive access has expired. Reconnect it on this testing screen to upload your saved proof."
+            }
             body.contains("storageQuota", true) || body.contains("quotaExceeded", true) ->
                 "Your Google Drive is full, so the screenshot couldn't be saved. Free some space and " +
                     "open the app again."

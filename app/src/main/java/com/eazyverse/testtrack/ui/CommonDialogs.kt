@@ -118,6 +118,7 @@ fun DialogField(
     label: String,
     placeholder: String? = null,
     error: String? = null,
+    isError: Boolean = error != null,
     supporting: String? = null,
     singleLine: Boolean = true,
     /** Which key the keyboard offers. Ignored where the field takes more than one line. */
@@ -146,7 +147,7 @@ fun DialogField(
                     { Text(it, style = MaterialTheme.typography.bodyMedium) }
                 },
             singleLine = singleLine,
-            isError = error != null,
+            isError = isError,
             shape = RoundedCornerShape(8.dp),
             // A keyboard that says Done and inserts a newline is lying about its own button, so a
             // field taking more than one line does not get to name the action.

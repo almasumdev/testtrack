@@ -127,8 +127,8 @@ object AuthRepo {
     /**
      * Signs in and exchanges the token for a Firebase session. Nothing else.
      *
-     * Deliberately only those two things. Setup exists to settle group membership, Drive, usage
-     * access and reminders, and it already asks each of them for itself. Sign-in used to answer
+     * Deliberately only those two things. Each testing feature requests group membership, Drive, usage
+     * access and reminders when needed. Sign-in used to answer
      * two of those a second time while a spinner sat over the screen saying "Signing in...", which
      * made the slowest question in the app, the group roster, the thing standing between a tester
      * and the rest of it. Getting a session is quick; everything after it belongs to the screen
@@ -258,6 +258,8 @@ object AuthRepo {
         }.getOrNull()
 
     fun signOut() {
+        com.eazyverse.testtrack.net.ApiAuth
+            .signOut()
         token = null
         tokenAt = 0L
         FirebaseAuth.getInstance().signOut()

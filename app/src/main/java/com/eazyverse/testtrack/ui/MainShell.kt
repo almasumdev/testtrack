@@ -109,7 +109,6 @@ fun MainShell(
     onOpenGroup: (String, String) -> Unit,
     onSubmitApp: () -> Unit,
     onAskForFeedback: () -> Unit,
-    onOpenSetup: () -> Unit,
     onSignOut: () -> Unit,
     homeVm: HomeViewModel = viewModel(),
     hudVm: HudViewModel = viewModel(),
@@ -175,7 +174,7 @@ fun MainShell(
     // Read again on every arrival at the shell, and on every return to it. Tix move while somebody
     // is inside another app being tested, so coming back to a stale balance would be the screen
     // telling them their last ten seconds did not count.
-    LaunchedEffect(tab) { hudVm.load(context) }
+    LaunchedEffect(tab, hudVm.signedOut) { hudVm.load(context) }
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner) {
         val watcher =
@@ -203,6 +202,7 @@ fun MainShell(
             // this rather than beside it.
             topBar = {
                 TopHud(
+                    signedIn = !hudVm.signedOut,
                     level = hudVm.level,
                     intoLevel = hudVm.intoLevel,
                     forNext = hudVm.forNext,
@@ -366,12 +366,12 @@ private fun RowScope.MainBarItem(
 ) {
     val t = Tt.colors
     val fill by animateColorAsState(
-        if (current) (if (t.isDark) t.leafAccentSoft else t.leafAccent) else Color.Transparent,
+        if (current) t.selectedFill else Color.Transparent,
         tween(250),
         label = "fill",
     )
     val ink by animateColorAsState(
-        if (current) (if (t.isDark) t.onSelected else t.onSelected) else t.dockInk,
+        if (current) t.onSelected else t.dockInk,
         tween(250),
         label = "ink",
     )

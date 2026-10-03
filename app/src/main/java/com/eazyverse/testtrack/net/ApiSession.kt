@@ -3,6 +3,8 @@ package com.eazyverse.testtrack.net
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * The token pair, kept across launches.
@@ -28,27 +30,46 @@ object ApiSession {
 
     @Volatile private var cachedRefresh: String? = null
 
+    private val ready = MutableStateFlow(false)
+    val signedInState = ready.asStateFlow()
+
+    @Volatile var generation: Long = 0
+        private set
+
+    @Synchronized
     fun load(context: Context) {
+        if (prefs != null) return
         val store = context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
         prefs = store
         cachedAccess = store.getString(ACCESS, null)
         cachedRefresh = store.getString(REFRESH, null)
+        ready.value = cachedAccess != null
     }
 
     /** Keep a freshly minted pair. Safe to call from anywhere once [load] has run. */
-    fun remember(tokens: Tokens) {
+    @Synchronized
+    fun remember(
+        tokens: Tokens,
+        expectedGeneration: Long = generation,
+    ): Boolean {
+        if (expectedGeneration != generation) return false
         cachedAccess = tokens.accessToken
         cachedRefresh = tokens.refreshToken
         prefs?.edit {
             putString(ACCESS, tokens.accessToken)
             putString(REFRESH, tokens.refreshToken)
         }
+        ready.value = true
+        return true
     }
 
+    @Synchronized
     fun clear() {
+        generation++
         cachedAccess = null
         cachedRefresh = null
         prefs?.edit { clear() }
+        ready.value = false
     }
 
     val access: String? get() = cachedAccess

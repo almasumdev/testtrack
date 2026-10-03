@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -38,11 +39,7 @@ import com.eazyverse.testtrack.findActivity
 @Composable
 fun GroupScreen(
     groupId: String,
-    /** What the caller already knew this group as, shown until [vm]'s own load answers the same
-     *  question — see Routes.GROUP. Blank for the rare entry with no row to read it from. */
     groupName: String,
-    /** An app to open the feedback prompt for as soon as it loads — see Routes.GROUP. Blank the
-     *  ordinary way in here, from every entry that isn't a tapped "ask for feedback" notification. */
     feedbackForAppId: String = "",
     onOpenDashboard: (String, String) -> Unit,
     onBack: () -> Unit,
@@ -51,26 +48,16 @@ fun GroupScreen(
     val context = LocalContext.current
     val activity = context.findActivity()
 
-    // Once per process. A visit whose capture failed before this screen was last open is still
-    // sitting in local storage, waiting on a picture — see CaptureService.missed — and this is
-    // what brings it back into CaptureService.missed after the app was closed or updated in the
-    // meantime.
     LaunchedEffect(Unit) { CaptureService.restorePending(context) }
 
     LaunchedEffect(groupId) { vm.load(groupId) }
 
     var canReturn by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
 
-    /** The app a tester is about to report as uninstallable, or null. */
     var reporting by remember { mutableStateOf<TestApp?>(null) }
 
-    /** The app a tester is about to leave a day-one note on, or null. */
     var givingFeedback by remember { mutableStateOf<TestApp?>(null) }
 
-    // Opened once, the moment the target of a tapped "ask for feedback" notification actually
-    // shows up in the list — vm.toTest starts empty every time this screen is composed fresh, so
-    // firing on the param alone would miss it. Guarded so a later reload (pull, resume) does not
-    // reopen a dialog the tester already dealt with.
     var feedbackAutoOpened by remember { mutableStateOf(false) }
     LaunchedEffect(vm.toTest) {
         if (!feedbackAutoOpened && feedbackForAppId.isNotBlank()) {
@@ -81,7 +68,6 @@ fun GroupScreen(
         }
     }
 
-    /** The owner's own app while its notes are being edited, or null. */
     var editingNotes by remember { mutableStateOf<TestApp?>(null) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -90,20 +76,12 @@ fun GroupScreen(
                 if (event == Lifecycle.Event.ON_RESUME) {
                     canReturn = Settings.canDrawOverlays(context)
                     Session.refreshUsageAccess(context)
-                    // Coming back from Play with the app now installed looks exactly like coming back
-                    // from anywhere else, so every resume re-asks. It is one call per row and it moves
-                    // nothing unless an answer changed.
                     InstalledApps.refresh(context)
                     vm.load(groupId)
                 }
             }
         lifecycleOwner.lifecycle.addObserver(observer)
 
-        // Resume alone is not enough. Play frequently finishes the download after the tester has
-        // already come back, so the row they are looking at would stay stale until they left and
-        // returned a second time, for no reason they could see. The system announces the install
-        // when it lands; a receiver that lives only as long as this screen is the cheap way to
-        // hear it, and needs no permission because these are protected broadcasts.
         val installs =
             object : BroadcastReceiver() {
                 override fun onReceive(
@@ -129,19 +107,6 @@ fun GroupScreen(
         }
     }
 
-    /*
-     * Screen sharing belongs to this page and is handed back on the way off it.
-     *
-     * Both guards are load bearing, because leaving composition is not the same thing as leaving
-     * the screen. A configuration change disposes and rebuilds this, and MainActivity declares no
-     * configChanges, so a landscape app under test tearing the activity down looks identical to
-     * somebody pressing back. And during a round the tester is inside somebody else's app rather
-     * than here, which is the one time a dispose certainly does not mean they left.
-     *
-     * What is left over is a dispose that happens mid-round and really was a departure. It cannot
-     * happen from this screen, and if it somehow does the session ends the next time the page is
-     * left or the app is closed.
-     */
     DisposableEffect(Unit) {
         onDispose {
             if (!activity.isChangingConfigurations && !CaptureService.roundActive) {
@@ -150,20 +115,6 @@ fun GroupScreen(
         }
     }
 
-    /*
-     * Nothing left owed today, so nothing left for the recording to be open for — ended here
-     * rather than the moment a round's own queue empties, which is CaptureService's call and
-     * deliberately not this: a round only covers what was outstanding when it started, and a
-     * tester opening rows one at a time instead of tapping Start reaches the same "done" a step
-     * at a time. Ending the session after the first of those would ask for a fresh consent
-     * before every single one after it — the exact cost the round-level version of this was
-     * built to avoid. Checked against every app owed, not just this round's queue, so it fires
-     * once regardless of which way the tester got there.
-     *
-     * Not gated on CaptureService.missed being empty: supplying a screenshot by hand for a visit
-     * that already ran is a gallery pick, not a new capture, and needs no live recording either
-     * way.
-     */
     LaunchedEffect(vm.doneToday, vm.toTest, CaptureService.roundActive) {
         if (vm.toTest.isNotEmpty() &&
             vm.doneToday.size == vm.toTest.size &&
@@ -173,9 +124,13 @@ fun GroupScreen(
         }
     }
 
-    // A round finishes with TestTrack back in front and several captures banked at once, so every
-    // pending result is drained here rather than one screen at a time.
-    LaunchedEffect(CaptureService.results.size, vm.toTest) {
+    var needsDrive by rememberSaveable { mutableStateOf(false) }
+    var pendingDrivePackages by rememberSaveable { mutableStateOf<List<String>>(emptyList()) }
+    LaunchedEffect(CaptureService.results.size, vm.toTest, Session.driveConnected) {
+        if (CaptureService.results.isNotEmpty() && !Session.driveConnected) {
+            needsDrive = true
+            return@LaunchedEffect
+        }
         CaptureService.results.forEach { (pkg, capture) ->
             vm.toTest.firstOrNull { it.packageName == pkg }?.let { vm.publish(activity, it, capture) }
         }
@@ -229,6 +184,11 @@ fun GroupScreen(
 
     fun run(packages: List<String>) {
         if (packages.isEmpty()) return
+        if (!Session.driveConnected) {
+            pendingDrivePackages = packages
+            needsDrive = true
+            return
+        }
         if (CaptureService.sessionActive) {
             CaptureService.startRound(context, packages, notesFor(packages))
             return
@@ -261,15 +221,25 @@ fun GroupScreen(
             }
         }
 
-    /**
-     * Only offered for a visit already in [CaptureService.missed] — a real, already-served
-     * twenty seconds whose automated frame did not save, not a way around actually opening the
-     * app. See CaptureService.supplyManualCapture for what happens to the picked image.
-     */
     fun pickScreenshot(pkg: String) {
         pickingScreenshotFor = pkg
         pickScreenshotLauncher.launch(
             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+        )
+    }
+
+    if (needsDrive) {
+        TestingDrivePrompt(
+            onConnected = {
+                needsDrive = false
+                val pending = pendingDrivePackages
+                pendingDrivePackages = emptyList()
+                run(pending)
+            },
+            onDismiss = {
+                needsDrive = false
+                pendingDrivePackages = emptyList()
+            },
         )
     }
 

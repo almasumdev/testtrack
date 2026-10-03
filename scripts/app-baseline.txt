@@ -17,7 +17,6 @@ app/src/main/java/com/eazyverse/testtrack/ui/FeedScreen.kt: ui imports net
 app/src/main/java/com/eazyverse/testtrack/ui/FeedViewModel.kt: ui imports net
 app/src/main/java/com/eazyverse/testtrack/ui/GroupDialogs.kt: ui imports data
 app/src/main/java/com/eazyverse/testtrack/ui/GroupRows.kt: ui imports data
-app/src/main/java/com/eazyverse/testtrack/ui/GroupScreen.kt: 522 lines, over 500
 app/src/main/java/com/eazyverse/testtrack/ui/GroupScreen.kt: ui imports data
 app/src/main/java/com/eazyverse/testtrack/ui/GroupSections.kt: ui imports data
 app/src/main/java/com/eazyverse/testtrack/ui/GroupTestRow.kt: ui imports data
@@ -35,8 +34,5 @@ app/src/main/java/com/eazyverse/testtrack/ui/ReviewModels.kt: ui imports net
 app/src/main/java/com/eazyverse/testtrack/ui/ReviewScreen.kt: ui imports net
 app/src/main/java/com/eazyverse/testtrack/ui/ReviewViewModel.kt: ui imports data
 app/src/main/java/com/eazyverse/testtrack/ui/ReviewViewModel.kt: ui imports net
-app/src/main/java/com/eazyverse/testtrack/ui/SetupScreen.kt: 552 lines, over 500
-app/src/main/java/com/eazyverse/testtrack/ui/SetupScreen.kt: ui imports data
-app/src/main/java/com/eazyverse/testtrack/ui/SetupViewModel.kt: ui imports data
 app/src/main/java/com/eazyverse/testtrack/ui/StandingViewModels.kt: ui imports net
 app/src/main/java/com/eazyverse/testtrack/ui/SubmitScreen.kt: ui imports data

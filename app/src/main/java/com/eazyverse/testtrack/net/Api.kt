@@ -49,6 +49,7 @@ object Api {
     suspend fun signIn(
         idToken: String,
         deviceFp: String,
+        generation: Long = ApiSession.generation,
     ): Tokens {
         val tokens =
             post<SessionIn, Tokens>(
@@ -56,7 +57,7 @@ object Api {
                 SessionIn(idToken = idToken, deviceFp = deviceFp, timezone = TimeZone.getDefault().id),
                 authed = false,
             )
-        ApiSession.remember(tokens)
+        if (!ApiSession.remember(tokens, generation)) throw kotlinx.coroutines.CancellationException("Session changed")
         return tokens
     }
 
@@ -99,6 +100,8 @@ object Api {
     // ---------------------------------------------------------------- feed
 
     suspend fun posts(before: String? = null): PostPage = get("/feed/posts" + if (before == null) "" else "?before=$before")
+
+    suspend fun feedbackOptions(): FeedbackOptions = get("/feed/options")
 
     suspend fun createPost(body: PostIn): ApiPost = post("/feed/posts", body)
 
@@ -282,6 +285,7 @@ object Api {
     /** Try the refresh token once. False means the session is really gone. */
     @PublishedApi
     internal fun refreshQuietly(): Boolean {
+        val generation = ApiSession.generation
         val token = ApiSession.refresh ?: return false
         return try {
             val (status, text) =
@@ -295,8 +299,7 @@ object Api {
             if (status !in 200..299) {
                 false
             } else {
-                ApiSession.remember(json.decodeFromString<Tokens>(text))
-                true
+                ApiSession.remember(json.decodeFromString<Tokens>(text), generation)
             }
         } catch (_: Exception) {
             false

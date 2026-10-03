@@ -192,7 +192,13 @@ fun ReviewBody(
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                if (job.settled) reviewOutcome(job.review.state) else post.ask,
+                                if (job.settled) {
+                                    reviewOutcome(
+                                        job.review.state,
+                                    )
+                                } else {
+                                    post.ask.ifBlank { "Try the app and share what worked well and what could improve." }
+                                },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

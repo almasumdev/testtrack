@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.CircleArrowDown
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.SlidersHorizontal
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.data.*
@@ -35,7 +34,6 @@ import com.eazyverse.testtrack.ui.theme.Tt
 fun HomeScreen(
     onOpenGroup: (String, String) -> Unit,
     onSubmitApp: () -> Unit,
-    onOpenSetup: () -> Unit,
     onOpenProfile: () -> Unit,
     vm: HomeViewModel = viewModel(),
 ) {
@@ -149,7 +147,7 @@ fun HomeScreen(
                 //
                 // Sign out used to be the second of them and now lives on the profile, which is
                 // where an account action belongs and what the face on the right leads to. It is
-                // still on Setup as well, because that is the screen somebody lands on when they
+                // available on the profile when somebody needs to change accounts after they
                 // have signed in as the wrong person.
                 actions = {
                     // The whole of the optional update: no banner, no sheet, just this until tapped.
@@ -157,9 +155,6 @@ fun HomeScreen(
                         IconButton(onClick = onUpdateIconClick) {
                             Icon(Lucide.CircleArrowDown, "Update available")
                         }
-                    }
-                    IconButton(onClick = onOpenSetup) {
-                        Icon(Lucide.SlidersHorizontal, "Setup")
                     }
                     IconButton(onClick = onOpenProfile) {
                         Avatar(vm.photo, vm.initial, size = 28.dp, loading = vm.me == null)

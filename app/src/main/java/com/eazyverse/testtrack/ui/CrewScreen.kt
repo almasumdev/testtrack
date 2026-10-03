@@ -150,6 +150,7 @@ fun CrewScreen(
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
+            if (vm.running > 0) TestingNotifications()
             when {
                 crew != null && crew.phase == CrewPhase.LOBBY ->
                     CrewLobbyPhase(
@@ -299,6 +300,7 @@ fun CrewVerdictDialog(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(12.dp))
+            TestingGroupLink()
             Secondary("Play could not find it", enabled = mayReject) { onVerdict(false) }
         },
     )
@@ -334,6 +336,8 @@ fun CrewSeatDialog(
         onConfirm = { onTake(name.trim(), pkg.trim(), notes.trim()) },
         onDismiss = onDismiss,
         content = {
+            TestingGroupLink()
+            Spacer(Modifier.height(12.dp))
             DialogField(
                 value = name,
                 onValueChange = { name = it.take(60) },

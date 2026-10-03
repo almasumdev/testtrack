@@ -55,7 +55,6 @@ object Routes {
     const val ONBOARDING = "onboarding"
 
     // There is no sign-in route. It is a sheet over whatever asked for it; see ui/SignInSheet.
-    const val SETUP = "setup"
 
     /** Not one screen: the five tabbed ones, held by [com.eazyverse.testtrack.ui.MainShell]. */
     const val HOME = "home"
@@ -267,20 +266,19 @@ fun AppNav(
      */
     val start =
         remember {
-            when (launchDestination(Session.onboardingDone, Session.signedIn, AuthRepo.uid != null, Session.setupComplete)) {
+            when (launchDestination(Session.onboardingDone, Session.signedIn, AuthRepo.uid != null)) {
                 LaunchDestination.INTRO -> Routes.ONBOARDING
-                LaunchDestination.SETUP -> Routes.SETUP
                 LaunchDestination.HOME -> Routes.HOME
             }
         }
 
-    // Keep the tapped reminder until onboarding/setup reaches home. A page change during
+    // Keep the tapped reminder until onboarding reaches home. A page change during
     // onboarding must not consume it or navigate past the introduction.
     val currentEntry by nav.currentBackStackEntryAsState()
     val route = currentEntry?.destination?.route
     val pending = openGroup.value
     LaunchedEffect(pending, route) {
-        if (pending != null && route != null && route != Routes.ONBOARDING && route != Routes.SETUP) {
+        if (pending != null && route != null && route != Routes.ONBOARDING) {
             if (route == Routes.HOME) {
                 nav.push(Routes.group(pending, feedbackFor = openFeedbackFor.value.orEmpty()))
             }
@@ -299,35 +297,11 @@ fun AppNav(
             }
         }
 
-        composable(Routes.SETUP) {
-            Inset {
-                SetupScreen(
-                    onFinished = { nav.replace(Routes.HOME) },
-                    // Same teardown as home. `replace` pops everything above the graph root, so
-                    // signing out of setup takes the home screen underneath it too — this route is
-                    // pushed from there, and leaving it on the stack would let Back return to a
-                    // signed-out home.
-                    onSignOut = {
-                        AuthRepo.signOut()
-                        Session.signOut()
-                        // Back to the app rather than out of it. There is something to look at
-                        // signed out now, so throwing somebody at a sign-in screen for choosing to
-                        // sign out would be taking the app away as a punishment.
-                        nav.replace(Routes.HOME)
-                    },
-                )
-            }
-        }
-
         composable(Routes.HOME) {
             MainShell(
                 onOpenGroup = { groupId, name -> nav.push(Routes.group(groupId, name)) },
                 onSubmitApp = { nav.push(Routes.SUBMIT) },
                 onAskForFeedback = { nav.push(Routes.ASK) },
-                // Grants outlive the checklist: Drive access can be revoked from the account and
-                // usage access from Settings, and both leave a working install that quietly cannot
-                // report. Setup is where those are repaired, so it has to stay reachable.
-                onOpenSetup = { nav.push(Routes.SETUP) },
                 // The same teardown the other two do, and for the same reason: `replace` pops
                 // everything above the graph root, so the shell does not survive underneath a
                 // signed-out profile for Back to land on.

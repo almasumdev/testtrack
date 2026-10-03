@@ -3,8 +3,8 @@ package com.eazyverse.testtrack.data
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PixelFormat
@@ -18,6 +18,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
+import com.eazyverse.testtrack.R
 import kotlin.math.abs
 
 /**
@@ -263,34 +264,34 @@ class VisitOverlay(
 
         private val ground =
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.parseColor("#E60B0F19")
+                color = context.getColor(R.color.overlay_surface)
             }
         private val track =
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 style = Paint.Style.STROKE
                 strokeWidth = 3f * density
-                color = Color.parseColor("#33FFFFFF")
+                color = context.getColor(R.color.overlay_track)
             }
         private val fill =
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 style = Paint.Style.STROKE
                 strokeWidth = 3f * density
                 strokeCap = Paint.Cap.ROUND
-                color = Color.parseColor("#A6A0FA")
+                color = context.getColor(R.color.overlay_accent)
             }
         private val glyph =
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.parseColor("#EEF1F8")
+                color = context.getColor(R.color.overlay_ink)
             }
         private val buttonGround =
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.parseColor("#33FFFFFF")
+                color = context.getColor(R.color.overlay_track)
             }
         private val copyStroke =
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 style = Paint.Style.STROKE
                 strokeWidth = 1.6f * density
-                color = Color.parseColor("#EEF1F8")
+                color = context.getColor(R.color.overlay_ink)
             }
 
         private val wedge = Path()
@@ -330,6 +331,17 @@ class VisitOverlay(
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                 Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        override fun onConfigurationChanged(newConfig: Configuration) {
+            super.onConfigurationChanged(newConfig)
+            ground.color = context.getColor(R.color.overlay_surface)
+            track.color = context.getColor(R.color.overlay_track)
+            buttonGround.color = track.color
+            fill.color = context.getColor(R.color.overlay_accent)
+            glyph.color = context.getColor(R.color.overlay_ink)
+            copyStroke.color = glyph.color
+            invalidate()
         }
 
         override fun onDraw(canvas: Canvas) {

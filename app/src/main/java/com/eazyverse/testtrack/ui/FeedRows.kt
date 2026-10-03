@@ -289,7 +289,7 @@ fun FeedRequestCard(
 
         Spacer(Modifier.height(11.dp))
         Text(
-            post.ask,
+            post.ask.ifBlank { "General feedback on the app experience." },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )

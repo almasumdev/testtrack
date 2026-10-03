@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from ui/theme/Tokens.kt. Do not edit. -->
 <resources>
-    <!-- OceanLight background; values-night matches OceanDark. -->
-    <color name="paper">#E9F0F4</color>
-
-    <!-- Notification accent; launcher background lives in ic_launcher_background.xml. -->
-    <color name="notification_accent">#1D5C82</color>
+    <color name="paper">#FFE9F0F4</color>
+    <color name="notification_accent">#FF1D5C82</color>
+    <color name="overlay_surface">#FFF2F9FD</color>
+    <color name="overlay_track">#FF789AAF</color>
+    <color name="overlay_accent">#FF123C56</color>
+    <color name="overlay_ink">#FF142F43</color>
 </resources>

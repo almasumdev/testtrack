@@ -7,7 +7,6 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -16,24 +15,9 @@ import androidx.compose.ui.unit.dp
 /** One soft Ocean light field, shared across the app and echoed by the launcher artwork. */
 @Composable
 fun Modifier.exchangeBackground(variant: Int = 0): Modifier {
-    val dark = Tt.colors.isDark
+    val t = Tt.colors
     return drawWithCache {
-        val colors =
-            if (dark) {
-                arrayOf(
-                    0f to Color(0xFF21394A),
-                    .32f to Color(0xFF182B39),
-                    .72f to Color(0xFF101A23),
-                    1f to Color(0xFF0F1011),
-                )
-            } else {
-                arrayOf(
-                    0f to Color(0xFFF7FCFF),
-                    .32f to Color(0xFFE7F4FC),
-                    .72f to Color(0xFFB8D8EB),
-                    1f to Color(0xFF7FAAC7),
-                )
-            }
+        val colors = arrayOf(0f to t.washTop, .32f to t.washMiddle, .72f to t.washLower, 1f to t.washBottom)
         val wash =
             Brush.radialGradient(
                 *colors,
@@ -41,8 +25,8 @@ fun Modifier.exchangeBackground(variant: Int = 0): Modifier {
                 radius = (maxOf(size.width, size.height) * .90f).coerceAtLeast(1f),
             )
         val unit = minOf(size.width, 600.dp.toPx())
-        val glass = if (dark) Color(0xFF8BCBF7).copy(alpha = .045f) else Color.White.copy(alpha = .23f)
-        val rim = if (dark) Color(0xFF8BCBF7).copy(alpha = .10f) else Color.White.copy(alpha = .48f)
+        val glass = t.shapeFill
+        val rim = t.shapeRim
         val outline = Stroke(1.dp.toPx())
         // Fixed irregular scatter, with no symbols or checks.
         val shapes =

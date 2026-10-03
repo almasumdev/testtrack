@@ -8,6 +8,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
+import com.eazyverse.testtrack.net.ApiSession
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
@@ -38,7 +41,7 @@ class HudViewModel : ViewModel() {
         private set
 
     /** Nobody is signed in, so there is no level and no balance to show. */
-    var signedOut by mutableStateOf(true)
+    var signedOut by mutableStateOf(!ApiSession.signedIn)
         private set
 
     /**
@@ -65,29 +68,49 @@ class HudViewModel : ViewModel() {
      * app being tested, and coming back to a stale balance is the screen telling them their last
      * ten seconds did not count.
      */
-    fun load(context: Context) {
+    private var loadJob: Job? = null
+
+    init {
         viewModelScope.launch {
-            try {
-                if (!ApiAuth.ensure(context)) {
-                    signedOut = true
-                    // The crew list reads without a token, so the header has something true to
-                    // put in the space the level would have taken.
-                    val open = Api.crews().open
-                    openCrew = open?.name
-                    openTaken = open?.taken ?: 0
-                    openSeats = open?.seats ?: 0
-                    return@launch
+            ApiSession.signedInState.collect { signedIn ->
+                signedOut = !signedIn
+                if (!signedIn) {
+                    loadJob?.cancel()
+                    level = null
+                    intoLevel = 0
+                    forNext = 0
+                    tix = 0
                 }
-                val me = Api.me()
-                level = me.level
-                intoLevel = me.expIntoLevel
-                forNext = me.expForNext
-                tix = me.tix
-                signedOut = false
-            } catch (_: Exception) {
-                // Silent. This is a header, not a screen: a member who is briefly offline should
-                // see the last figures it had rather than an error where their balance was.
             }
         }
+    }
+
+    fun load(context: Context) {
+        loadJob?.cancel()
+        loadJob =
+            viewModelScope.launch {
+                try {
+                    if (!ApiAuth.ensure(context)) {
+                        signedOut = true
+                        val open = Api.crews().open
+                        openCrew = open?.name
+                        openTaken = open?.taken ?: 0
+                        openSeats = open?.seats ?: 0
+                        return@launch
+                    }
+                    signedOut = false
+                    val generation = ApiSession.generation
+                    val me = Api.me()
+                    if (generation != ApiSession.generation || !ApiSession.signedIn) return@launch
+                    level = me.level
+                    intoLevel = me.expIntoLevel
+                    forNext = me.expForNext
+                    tix = me.tix
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (_: Exception) {
+                    // Keep cached profile data during a network failure; auth is a separate state.
+                }
+            }
     }
 }

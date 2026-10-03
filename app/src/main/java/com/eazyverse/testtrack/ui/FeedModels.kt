@@ -41,7 +41,7 @@ enum class FeedTab(
  * hurry, or asking about something tedious, can pay their way up the list.
  *
  * What stops everybody simply offering the maximum is that the cost follows the offer. A post buys
- * [REVIEWS_BOUGHT] reviews, so it is charged that many times what it is offering. At the floor
+ * the selected number of reviews, charged at the chosen reward per review. By default
  * that comes to sixty, which is what a post has always cost here; the old flat price turns out to
  * be this rule with the minimum plugged into it.
  */
@@ -54,12 +54,17 @@ object FeedRules {
 
     /** How many reviews a post is buying, and so the multiple its price is charged at. */
     const val REVIEWS_BOUGHT = 3
+    const val MIN_REVIEWS = 1
+    const val MAX_REVIEWS = 50
 
     /** Offered when nothing is chosen, and the figure the sample posts are seeded around. */
     const val REVIEW_REWARD = MIN_REWARD
 
     /** What going up costs, given what it is offering. */
-    fun postCost(reward: Int) = reward * REVIEWS_BOUGHT
+    fun postCost(
+        reward: Int,
+        reviews: Int = REVIEWS_BOUGHT,
+    ) = reward * reviews
 
     /** Under this it is a reaction, not feedback, and the confirm button stays off. */
     const val REVIEW_MIN = 40

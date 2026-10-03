@@ -104,6 +104,7 @@ data class PostIn(
     val ask: String,
     val reward: Int,
     @SerialName("is_live") val isLive: Boolean,
+    @SerialName("reviews_bought") val reviewsBought: Int = 3,
 )
 
 @Serializable
@@ -389,3 +390,10 @@ data class MyApps(
  */
 @Serializable
 class Empty
+
+@Serializable
+data class FeedbackOptions(
+    val version: Int,
+    @SerialName("min_reviews") val minReviews: Int,
+    @SerialName("max_reviews") val maxReviews: Int,
+)

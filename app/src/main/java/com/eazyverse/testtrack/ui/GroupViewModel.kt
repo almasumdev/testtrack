@@ -549,12 +549,12 @@ class GroupViewModel : ViewModel() {
                 uploadMutex.withLock {
                     val token = AuthRepo.driveTokenOrNull(activity)
                     if (token == null) {
-                        // The cached flag is now known to be wrong, and it is the only thing
-                        // standing between the tester and the step that fixes this. Left true,
-                        // Setup shows Drive as done and offers no way to reconnect.
+                        // Trigger the Drive prompt on this testing screen.
+                        // Keep the capture until access is restored and upload succeeds.
+                        // Other app features do not require this permission.
                         Session.updateDriveConnected(false)
-                        message = "Your Drive access has expired. Open Setup from the top of " +
-                            "the home screen and reconnect it, then try again."
+                        message = "Drive access is needed to upload this test proof. " +
+                            "Connect it here to continue; your screenshot has been kept."
                         false
                     } else {
                         val file = File(capture.path)

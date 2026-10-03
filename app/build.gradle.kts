@@ -254,3 +254,20 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
+
+// Tokens.kt is the only source for component colours, including native Android surfaces.
+val syncThemeColors =
+    tasks.register<Exec>("syncThemeColors") {
+        workingDir(rootProject.projectDir)
+        commandLine("python", "scripts/sync_theme_colors.py")
+        inputs.file("src/main/java/com/eazyverse/testtrack/ui/theme/Tokens.kt")
+        inputs.file(rootProject.file("scripts/sync_theme_colors.py"))
+        outputs.files("src/main/res/values/colors.xml", "src/main/res/values-night/colors.xml")
+    }
+val checkAppColors =
+    tasks.register<Exec>("checkAppColors") {
+        dependsOn(syncThemeColors)
+        workingDir(rootProject.projectDir)
+        commandLine("python", "scripts/check_app.py", "--colors-only")
+    }
+tasks.named("preBuild") { dependsOn(checkAppColors) }

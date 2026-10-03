@@ -9,9 +9,9 @@ import androidx.compose.ui.graphics.Color
 /**
  * Every colour this app draws, in one place.
  *
- * Taken from Value Guard's Ocean palette so the apps read as one family: a mist blue ground with
- * near white cards in light, a charcoal ground with one-step-up cards in dark, and one blue that is
- * spent only on things you can act on. Nothing outside this folder writes a colour literal; screens
+ * An Ocean palette matched to the app background: ice-blue cards in light, layered navy
+ * surfaces in dark, and one blue that is
+ * spent only on things you can act on. Nothing outside this file writes a colour literal; screens
  * read a role from here through [Tt.colors] or through the Material scheme mapped from it in
  * [TestTrackTheme]. scripts/check_app.py fails the build on a `Color(0x` anywhere else.
  *
@@ -23,6 +23,12 @@ data class TtTokens(
     val isDark: Boolean,
     /** The ground under everything. Cards sit on it and are lighter (light) or one step up (dark). */
     val bg: Color,
+    val washTop: Color,
+    val washMiddle: Color,
+    val washLower: Color,
+    val washBottom: Color,
+    val shapeFill: Color,
+    val shapeRim: Color,
     val text: Color,
     /** Secondary text: the line under a title. */
     val text2: Color,
@@ -91,6 +97,11 @@ data class TtTokens(
     val silver: Color,
     val bronze: Color,
 ) {
+    val primary: Color get() = if (isDark) accentInk else accent
+    val onPrimary: Color get() = if (isDark) bg else onAccent
+    val selectedFill: Color get() = if (isDark) leafAccentSoft else leafAccent
+    val onSecondary: Color get() = if (isDark) bg else onSelected
+
     /**
      * An app's letter tile, tinted from its name.
      *
@@ -108,10 +119,10 @@ data class TtTokens(
 
 private fun Color.alpha(value: Float) = copy(alpha = value)
 
-private val OkLight = Color(0xFF2E7040)
+private val OkLight = Color(0xFF246B59)
 private val WarnLight = Color(0xFF8A611C)
 private val BadLight = Color(0xFF9E3B2E)
-private val OkDark = Color(0xFFA5D69B)
+private val OkDark = Color(0xFF83D8C4)
 private val WarnDark = Color(0xFFD8B774)
 private val BadDark = Color(0xFFE4938A)
 
@@ -119,31 +130,37 @@ val OceanLight =
     TtTokens(
         isDark = false,
         bg = Color(0xFFE9F0F4),
-        text = Color(0xFF18242E),
-        text2 = Color(0xFF4A5B68),
-        text3 = Color(0xFF566875),
-        text4 = Color(0xFF8392A0),
-        glass = Color(0xFFFAFCFD),
-        glass2 = Color(0xFFDAE5EC),
-        glassBorder = Color(0xFFCCDBE4),
-        glassBorderStrong = Color(0xFFA0B3C0),
-        hair = Color(0xFFCCDBE4),
+        washTop = Color(0xFFF7FCFF),
+        washMiddle = Color(0xFFE7F4FC),
+        washLower = Color(0xFFB8D8EB),
+        washBottom = Color(0xFF7FAAC7),
+        shapeFill = Color.White.alpha(.23f),
+        shapeRim = Color.White.alpha(.48f),
+        text = Color(0xFF142F43),
+        text2 = Color(0xFF203A4E),
+        text3 = Color(0xFF223D50),
+        text4 = Color(0xFF59758A),
+        glass = Color(0xFFF2F9FD),
+        glass2 = Color(0xFFDFEDF6),
+        glassBorder = Color(0xFFB7D1E2),
+        glassBorderStrong = Color(0xFF789AAF),
+        hair = Color(0xFFB7D1E2),
         accent = Color(0xFF1D5C82),
         onAccent = Color(0xFFFFFFFF),
-        accentInk = Color(0xFF1D5C82),
-        badgeFill = Color(0xFF32729B),
-        tile = Color(0xFFD3E4EF),
+        accentInk = Color(0xFF123C56),
+        badgeFill = Color(0xFF1D5C82),
+        tile = Color(0xFFD5EAF7),
         tileInk = Color(0xFF1D5C82),
-        leafAccent = Color(0xFF32729B),
+        leafAccent = Color(0xFF1D5C82),
         leafAccentSoft = Color(0xFF32729B).alpha(0.16f),
         onSelected = Color(0xFFFFFFFF),
-        dock = Color(0xFFDAE5EC),
-        dockInk = Color(0xFF1F2B36),
+        dock = Color(0xFFE8F3FA),
+        dockInk = Color(0xFF304C60),
         contour = Color(0xFFC8DDEA),
         contourDeep = Color(0xFFABCADD),
         glow = Color(0xFFF5F9FB),
         ok = OkLight,
-        okBg = Color(0xFF4E9150).alpha(0.12f),
+        okBg = OkLight.alpha(0.12f),
         warn = WarnLight,
         warnBg = Color(0xFF9A6E24).alpha(0.12f),
         warnBorder = Color(0xFF9A6E24).alpha(0.24f),
@@ -152,19 +169,19 @@ val OceanLight =
         badBorder = BadLight.alpha(0.24f),
         onWarn = Color(0xFFFFFFFF),
         onBad = Color(0xFFFFFFFF),
-        field = Color(0xFFFAFCFD),
-        fieldBorder = Color(0xFFCCDBE4),
+        field = Color(0xFFF7FCFF),
+        fieldBorder = Color(0xFF789AAF),
         scrim = Color(0xFF142230).alpha(0.46f),
-        container = Color(0xFFD6E7F2),
-        onContainer = Color(0xFF12344B),
-        surface2 = Color(0xFFF0F5F8),
-        surface3 = Color(0xFFCBDAE4),
-        shadow = Color(0xFF0F1C26),
-        inverse = Color(0xFF223140),
-        onInverse = Color(0xFFECF2F6),
+        container = Color(0xFFD5EAF7),
+        onContainer = Color(0xFF174866),
+        surface2 = Color(0xFFEAF4FB),
+        surface3 = Color(0xFFC7DEED),
+        shadow = Color(0xFF102F46),
+        inverse = Color(0xFF172F42),
+        onInverse = Color(0xFFEFF7FC),
         inverseAccent = Color(0xFF9CCBEA),
-        panelTop = Color(0xFFFFFFFF),
-        panelBottom = Color(0xFFEEF5F9),
+        panelTop = Color(0xFFF7FCFF),
+        panelBottom = Color(0xFFE3F0F8),
         panelGlow = Color(0xFFB5D6EA).alpha(0.60f),
         panelLine = Color(0xFF32729B).alpha(0.22f),
         panelOutline = Color(0xFF94B8CF),
@@ -177,29 +194,35 @@ val OceanDark =
     TtTokens(
         isDark = true,
         bg = Color(0xFF0F1011),
-        text = Color(0xFFF7F8F8),
-        text2 = Color(0xFFB4B7BD),
-        text3 = Color(0xFF8F949C),
-        text4 = Color(0xFF7A7F87),
-        glass = Color(0xFF17181A),
-        glass2 = Color(0xFF1F2023),
-        glassBorder = Color(0xFF2A2C30),
-        glassBorderStrong = Color(0xFF3F4247),
-        hair = Color(0xFF2A2C30),
-        accent = Color(0xFF2F7DAD),
+        washTop = Color(0xFF21394A),
+        washMiddle = Color(0xFF182B39),
+        washLower = Color(0xFF101A23),
+        washBottom = Color(0xFF0F1011),
+        shapeFill = Color(0xFF8BCBF7).alpha(.045f),
+        shapeRim = Color(0xFF8BCBF7).alpha(.10f),
+        text = Color(0xFFEFF7FC),
+        text2 = Color(0xFFBDD1DF),
+        text3 = Color(0xFFA1BDCF),
+        text4 = Color(0xFF7F9EB3),
+        glass = Color(0xFF1B3040),
+        glass2 = Color(0xFF263F51),
+        glassBorder = Color(0xFF365568),
+        glassBorderStrong = Color(0xFF58788E),
+        hair = Color(0xFF365568),
+        accent = Color(0xFF32729B),
         onAccent = Color(0xFFFFFFFF),
         accentInk = Color(0xFF8BCBF7),
-        badgeFill = Color(0xFF2F7DAD),
-        tile = Color(0xFF1A2831),
+        badgeFill = Color(0xFF32729B),
+        tile = Color(0xFF24485F),
         tileInk = Color(0xFF8BCBF7),
         leafAccent = Color(0xFF8BCBF7),
         leafAccentSoft = Color(0xFF8BCBF7).alpha(0.12f),
         onSelected = Color(0xFF8BCBF7),
-        dock = Color(0xFF1F2023),
-        dockInk = Color(0xFFF7F8F8),
-        contour = Color(0xFF1B1D1F),
-        contourDeep = Color(0xFF232528),
-        glow = Color(0xFF141516),
+        dock = Color(0xFF172C3C),
+        dockInk = Color(0xFFBDD1DF),
+        contour = Color(0xFF1B3040),
+        contourDeep = Color(0xFF263F51),
+        glow = Color(0xFF21394A),
         ok = OkDark,
         okBg = OkDark.alpha(0.12f),
         warn = WarnDark,
@@ -210,22 +233,22 @@ val OceanDark =
         badBorder = BadDark.alpha(0.30f),
         onWarn = Color(0xFF2A1D04),
         onBad = Color(0xFF3F0D06),
-        field = Color(0xFF17181A),
-        fieldBorder = Color(0xFF2A2C30),
+        field = Color(0xFF152A39),
+        fieldBorder = Color(0xFF58788E),
         scrim = Color(0xFF000000).alpha(0.60f),
-        container = Color(0xFF1A2831),
-        onContainer = Color(0xFFF7F8F8),
-        surface2 = Color(0xFF1B1C1E),
-        surface3 = Color(0xFF2A2C30),
-        shadow = Color(0xFF000000),
-        inverse = Color(0xFFF7F8F8),
-        onInverse = Color(0xFF0F1011),
+        container = Color(0xFF24485F),
+        onContainer = Color(0xFFD8EEFC),
+        surface2 = Color(0xFF203849),
+        surface3 = Color(0xFF304D61),
+        shadow = Color(0xFF07131D),
+        inverse = Color(0xFFE8F3FA),
+        onInverse = Color(0xFF142F43),
         inverseAccent = Color(0xFF1D5C82),
-        panelTop = Color(0xFF1D1E21),
-        panelBottom = Color(0xFF17181A),
+        panelTop = Color(0xFF243F52),
+        panelBottom = Color(0xFF1B3040),
         panelGlow = Color(0xFF8BCBF7).alpha(0.08f),
         panelLine = Color(0xFF8BCBF7).alpha(0.10f),
-        panelOutline = Color(0xFF3F4247),
+        panelOutline = Color(0xFF42647A),
         gold = Color(0xFFE3A93C),
         silver = Color(0xFFB4BCCB),
         bronze = Color(0xFFC58455),

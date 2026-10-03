@@ -31,6 +31,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,6 +88,9 @@ fun SignInSheet(
     onSignedIn: () -> Unit,
     vm: AuthViewModel = viewModel(),
 ) {
+    DisposableEffect(vm) {
+        onDispose { vm.resetResult() }
+    }
     val activity = LocalContext.current.findActivity()
     val state = rememberModalBottomSheetState()
 

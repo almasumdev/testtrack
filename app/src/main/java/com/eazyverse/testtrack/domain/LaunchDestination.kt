@@ -1,16 +1,10 @@
 package com.eazyverse.testtrack.domain
 
-enum class LaunchDestination { INTRO, SETUP, HOME }
+enum class LaunchDestination { INTRO, HOME }
 
-/** Returning accounts keep their flow, even if they installed while the old intro was disabled. */
+/** Returning users go home. Feature permissions never decide the start destination. */
 fun launchDestination(
     onboardingDone: Boolean,
     hasSavedAccount: Boolean,
     authenticated: Boolean,
-    setupComplete: Boolean,
-): LaunchDestination =
-    when {
-        !onboardingDone && !hasSavedAccount && !authenticated -> LaunchDestination.INTRO
-        hasSavedAccount && authenticated && !setupComplete -> LaunchDestination.SETUP
-        else -> LaunchDestination.HOME
-    }
+): LaunchDestination = if (!onboardingDone && !hasSavedAccount && !authenticated) LaunchDestination.INTRO else LaunchDestination.HOME

@@ -87,20 +87,6 @@ object Session {
 
     val signedIn: Boolean get() = email != null
 
-    /** Answered, one way or the other. Granting counts as answering. */
-    val remindersSettled: Boolean get() = notificationsGranted || remindersAsked
-
-    /**
-     * Everything setup can settle.
-     *
-     * Submitting an app is deliberately not part of it — placement into a group is an admin's
-     * call and can take days, so apps live on their own screen rather than as a rung of a
-     * one-time checklist. Usage access *is* part of it: without it a daily report carries no
-     * proof anyone stayed, which is the whole point of the report.
-     */
-    val setupComplete: Boolean
-        get() = signedIn && isGroupMember && driveConnected && usageAccessGranted && remindersSettled
-
     /*
      * The inputs of the last update decision Play and Firestore agreed on, so it can be replayed
      * when either cannot be asked (docs/in-app-update-system.md, "Offline Protection Cache").

@@ -43,7 +43,7 @@ fun Throwable.friendly(
                 // is not there, which is a refusal rather than an empty answer.
                 Code.PERMISSION_DENIED -> denied
 
-                Code.UNAUTHENTICATED -> "Your sign-in expired. Open Setup and sign in again."
+                Code.UNAUTHENTICATED -> "Your sign-in expired. Sign in again from your profile."
 
                 Code.UNAVAILABLE, Code.DEADLINE_EXCEEDED, Code.ABORTED, Code.CANCELLED ->
                     "Can't reach TestTrack. Check your connection."

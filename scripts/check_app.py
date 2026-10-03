@@ -37,7 +37,10 @@ LAYERS = {
 
 IMPORT = re.compile(r"^import com\.eazyverse\.testtrack\.([a-z]+)\.", re.M)
 ANDROID_IMPORT = re.compile(r"^import (android|androidx)\.", re.M)
-COLOR_LITERAL = re.compile(r"\bColor\((0x|red\s*=)|\bColor\.(hsl|hsv|White|Black|Red|Green|Blue|Yellow|Cyan|Magenta|Gray|LightGray|DarkGray)\b")
+COLOR_LITERAL = re.compile(
+    r"\bColor\s*\(|\bColor\.(hsl|hsv|parseColor|rgb|argb|White|Black|Red|Green|Blue|Yellow|Cyan|Magenta|Gray|LightGray|DarkGray)\b"
+)
+
 
 
 def layer_of(path: Path) -> str | None:
@@ -69,8 +72,8 @@ def problems() -> list[str]:
 
         # Colours live in ui/theme/Tokens.kt and nowhere else, so a palette is one file to change
         # rather than a search through every screen. Value Guard enforces the same rule.
-        if not rel.startswith(f"{SRC.as_posix()}/ui/theme/") and COLOR_LITERAL.search(text):
-            found.append(f"{rel}: colour literal outside ui/theme")
+        if path != SRC / "ui/theme/Tokens.kt" and COLOR_LITERAL.search(text):
+            found.append(f"{rel}: colour literal outside ui/theme/Tokens.kt")
 
     return found
 
@@ -94,6 +97,7 @@ def main() -> int:
     parser.add_argument("--seed", action="store_true",
                         help="write the first baseline. Refused once one exists: after that the "
                              "only way the list changes is downwards.")
+    parser.add_argument("--colors-only", action="store_true", help="enforce the palette rule on every Android build")
     args = parser.parse_args()
 
     if not SRC.is_dir():
@@ -101,6 +105,18 @@ def main() -> int:
         return 2
 
     now = problems()
+    # Colour rules cannot be waived through the legacy architecture baseline.
+    colour_errors = [p for p in now if "colour literal" in p]
+    if colour_errors:
+        print("\n".join(colour_errors), file=sys.stderr)
+        return 1
+    from sync_theme_colors import sync
+    if not sync(check=True):
+        print("Native theme colours are stale; run python scripts/sync_theme_colors.py", file=sys.stderr)
+        return 1
+    if args.colors_only:
+        print("All component colours use Tokens.kt; native resources are current")
+        return 0
     was = (
         [l.strip() for l in BASELINE.read_text(encoding="utf-8").splitlines()
          if l.strip() and not l.startswith("#")]

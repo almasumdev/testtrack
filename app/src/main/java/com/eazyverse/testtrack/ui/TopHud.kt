@@ -70,11 +70,26 @@ fun TopHud(
     forNext: Int,
     tix: Int,
     modifier: Modifier = Modifier,
+    signedIn: Boolean = level != null,
     openCrew: String? = null,
     openTaken: Int = 0,
     openSeats: Int = 0,
     onSignIn: () -> Unit = {},
 ) {
+    if (signedIn && level == null) {
+        Row(
+            modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 11.dp, bottom = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            HudMark()
+            Spacer(Modifier.width(11.dp))
+            Column {
+                Text("TestTrack", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                Text("Signed in", style = MaterialTheme.typography.labelSmall, color = Tt.colors.text2)
+            }
+        }
+        return
+    }
     if (level == null) {
         SignedOutHud(modifier, openCrew, openTaken, openSeats, onSignIn)
         return
