@@ -58,7 +58,6 @@ internal fun LevelRobotBadge(
     val badgeAlpha by animateFloatAsState(if (level != null) 1f else 0f, tween(300), label = "Signed-in badge")
     var displayedLevel by remember { mutableStateOf(level) }
     LaunchedEffect(level) { if (level != null) displayedLevel = level }
-    val check = remember { PathParser().parsePathString("M525 908 L595 975 L736 835").toPath() }
     val colors = Tt.colors
     val context = LocalContext.current
     val paint =
@@ -134,7 +133,11 @@ internal fun LevelRobotBadge(
                 earned.reset()
                 measure.getSegment(0f, measure.length * progress, earned)
                 drawPath(earned, colors.ok, alpha = badgeAlpha, style = Stroke(19f, cap = StrokeCap.Round))
-                drawPath(check, colors.accentInk, alpha = 1f - badgeAlpha, style = Stroke(40f, cap = StrokeCap.Round))
+                paint.color = colors.accentInk.toArgb()
+                paint.alpha = (255 * (1f - badgeAlpha)).toInt()
+                paint.textSize = 150f
+                val brandBaseline = 910f - (paint.ascent() + paint.descent()) / 2f
+                drawContext.canvas.nativeCanvas.drawText("TT", 627f, brandBaseline, paint)
                 paint.color = colors.text.toArgb()
                 paint.alpha = (255 * badgeAlpha).toInt()
                 paint.textSize = if ((displayedLevel ?: 0) < 100) 186f else 150f
