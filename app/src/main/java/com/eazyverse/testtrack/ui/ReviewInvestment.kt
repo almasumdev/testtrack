@@ -1,6 +1,6 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -27,20 +27,24 @@ internal fun ReviewInvestment(
     Column {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Number of reviews", Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { onReviewsChange(reviews - 1) }, enabled = enabled && reviews > FeedRules.MIN_REVIEWS) {
-                        Icon(Lucide.Minus, "Fewer reviews", Modifier.size(20.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { onReviewsChange(reviews - 1) }, enabled = enabled && reviews > FeedRules.MIN_REVIEWS) {
+                    Box(
+                        Modifier.size(32.dp).background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(10.dp)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Lucide.Minus, "Fewer reviews", Modifier.size(18.dp))
                     }
-                    Box(Modifier.width(36.dp), contentAlignment = Alignment.Center) {
-                        Text("$reviews", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                    }
-                    IconButton(onClick = { onReviewsChange(reviews + 1) }, enabled = enabled && reviews < FeedRules.MAX_REVIEWS) {
-                        Icon(Lucide.Plus, "More reviews", Modifier.size(20.dp))
+                }
+                Box(Modifier.width(24.dp), contentAlignment = Alignment.Center) {
+                    Text("$reviews", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                }
+                IconButton(onClick = { onReviewsChange(reviews + 1) }, enabled = enabled && reviews < FeedRules.MAX_REVIEWS) {
+                    Box(
+                        Modifier.size(32.dp).background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(10.dp)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Lucide.Plus, "More reviews", Modifier.size(18.dp))
                     }
                 }
             }
