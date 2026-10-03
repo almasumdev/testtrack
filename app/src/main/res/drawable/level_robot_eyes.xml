@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="56dp" android:height="64dp" android:viewportWidth="880" android:viewportHeight="980">
+  <group android:translateX="-185" android:translateY="-110">
+    <group android:name="eyes" android:pivotX="627" android:pivotY="529">
+      <group android:name="eye_blink" android:pivotX="627" android:pivotY="529">
+        <path android:name="part_11" android:pathData="M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z" android:fillColor="#17253B" />
+        <path android:name="part_12" android:pathData="M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z" android:fillColor="#17253B" />
+        <path android:name="part_13" android:pathData="M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z" android:fillColor="#FFFFFF" />
+        <path android:name="part_14" android:pathData="M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z" android:fillColor="#FFFFFF" />
+      </group>
+    </group>
+  </group>
+</vector>

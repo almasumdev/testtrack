@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='utf-8'?>
+<vector xmlns:aapt="http://schemas.android.com/aapt" xmlns:android="http://schemas.android.com/apk/res/android" android:width="56dp" android:height="64dp" android:viewportWidth="880" android:viewportHeight="980">
+  <group android:translateX="-185" android:translateY="-110">
+    <path android:name="card_left_hand_base" android:pathData="M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z">
+      <aapt:attr name="android:fillColor">
+        <gradient android:type="linear" android:startX="230" android:startY="436" android:endX="1000" android:endY="985">
+          <item android:offset="0" android:color="#245F84" />
+          <item android:offset="1" android:color="#174866" />
+        </gradient>
+      </aapt:attr>
+    </path>
+    <path android:name="card_left_hand_front" android:pathData="M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z">
+      <aapt:attr name="android:fillColor">
+        <gradient android:type="linear" android:startX="270" android:startY="846" android:endX="960" android:endY="966">
+          <item android:offset="0" android:color="#80BCDE" />
+          <item android:offset="1" android:color="#5E9DC5" />
+        </gradient>
+      </aapt:attr>
+    </path>
+    <path android:name="card_right_hand_base" android:pathData="M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z">
+      <aapt:attr name="android:fillColor">
+        <gradient android:type="linear" android:startX="230" android:startY="436" android:endX="1000" android:endY="985">
+          <item android:offset="0" android:color="#245F84" />
+          <item android:offset="1" android:color="#174866" />
+        </gradient>
+      </aapt:attr>
+    </path>
+    <path android:name="card_right_hand_front" android:pathData="M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z">
+      <aapt:attr name="android:fillColor">
+        <gradient android:type="linear" android:startX="270" android:startY="846" android:endX="960" android:endY="966">
+          <item android:offset="0" android:color="#80BCDE" />
+          <item android:offset="1" android:color="#5E9DC5" />
+        </gradient>
+      </aapt:attr>
+    </path>
+  </group>
+</vector>

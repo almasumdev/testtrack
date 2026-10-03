@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<vector xmlns:aapt="http://schemas.android.com/aapt" xmlns:android="http://schemas.android.com/apk/res/android" android:width="56dp" android:height="64dp" android:viewportWidth="880" android:viewportHeight="980">
+  <group android:translateX="-185" android:translateY="-110">
+    <path android:name="torso" android:pathData="M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z">
+      <aapt:attr name="android:fillColor">
+        <gradient android:type="linear" android:startX="230" android:startY="436" android:endX="1000" android:endY="985">
+          <item android:offset="0" android:color="#245F84" />
+          <item android:offset="1" android:color="#174866" />
+        </gradient>
+      </aapt:attr>
+    </path>
+  </group>
+</vector>

@@ -3,15 +3,12 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,10 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.painterResource
@@ -100,7 +93,7 @@ fun TopHud(
             .padding(start = Gutter, end = Gutter, top = 10.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        LevelRing(level, intoLevel, forNext)
+        LevelRobotBadge(level, intoLevel, forNext)
         Spacer(Modifier.width(11.dp))
 
         Column(Modifier.weight(1f)) {
@@ -236,74 +229,6 @@ private fun HudMark() {
 }
 
 private val MarkSize = 44.dp
-
-/**
- * The level, with its progress as the ring around it.
- *
- * A ring rather than a bar because it belongs to the number in the middle of it: one object saying
- * one thing. A bar beside a number is two things the eye has to put together.
- */
-@Composable
-private fun LevelRing(
-    level: Int?,
-    intoLevel: Int,
-    forNext: Int,
-) {
-    val track = MaterialTheme.colorScheme.surfaceVariant
-    val accent = Tt.colors.accentInk
-
-    // Guarded rather than trusted. forNext is zero until the first answer arrives, and dividing by
-    // it would put a NaN into the sweep, which draws nothing at all and looks like a broken ring.
-    val target = if (forNext > 0) (intoLevel.toFloat() / forNext).coerceIn(0f, 1f) else 0f
-    val progress by animateFloatAsState(
-        targetValue = target,
-        animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
-        label = "exp",
-    )
-
-    Box(Modifier.size(RingSize), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.size(RingSize)) {
-            val width = RingStroke.toPx()
-            val inset = width / 2
-            val box = size.width - width
-            drawArc(
-                color = track,
-                startAngle = 0f,
-                sweepAngle = 360f,
-                useCenter = false,
-                topLeft = Offset(inset, inset),
-                size = Size(box, box),
-                style = Stroke(width),
-            )
-            if (progress > 0f) {
-                drawArc(
-                    color = accent,
-                    // Twelve o'clock, so a ring that has barely started still reads as started.
-                    startAngle = -90f,
-                    sweepAngle = 360f * progress,
-                    useCenter = false,
-                    topLeft = Offset(inset, inset),
-                    size = Size(box, box),
-                    style = Stroke(width, cap = StrokeCap.Round),
-                )
-            }
-        }
-        Text(
-            level?.toString() ?: "?",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color =
-                if (level == null) {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
-        )
-    }
-}
-
-private val RingSize = 42.dp
-private val RingStroke = 3.5.dp
 
 /**
  * What this account has to spend, opposite [FeedTabs] at the top of Circle.

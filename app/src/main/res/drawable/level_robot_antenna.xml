@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<vector xmlns:aapt="http://schemas.android.com/aapt" xmlns:android="http://schemas.android.com/apk/res/android" android:width="56dp" android:height="64dp" android:viewportWidth="880" android:viewportHeight="980">
+  <group android:translateX="-185" android:translateY="-110">
+    <group android:name="antenna" android:pivotX="627" android:pivotY="278">
+      <path android:name="part_2" android:pathData="M603 227 H650 V295 H603 Z" android:fillColor="#1D5C82" />
+      <path android:name="part_3" android:pathData="M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z">
+        <aapt:attr name="android:fillColor">
+          <gradient android:type="linear" android:startX="310" android:startY="765" android:endX="568" android:endY="1056">
+            <item android:offset="0" android:color="#F99B80" />
+            <item android:offset="1" android:color="#EF806B" />
+          </gradient>
+        </aapt:attr>
+      </path>
+      <path android:name="part_4" android:pathData="M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z" android:fillColor="#FFFFFF" />
+    </group>
+  </group>
+</vector>
