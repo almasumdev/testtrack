@@ -34,6 +34,16 @@ class ReviewViewModel : ViewModel() {
     var message by mutableStateOf<String?>(null)
         private set
 
+    /**
+     * Whether TestTrack may read usage time. Asked for here, at the step that needs it, rather than
+     * at sign-up, and read again on every return so switching it on moves the page straight on.
+     */
+    var usageAccess by mutableStateOf(true)
+        private set
+
+    /** Open the Usage access list so the reviewer can switch TestTrack on. */
+    fun openUsageSettings(context: Context) = UsageRepo.openSettings(context)
+
     /** True once the package is present but Play did not put it there. */
     var sideloaded by mutableStateOf(false)
         private set
@@ -72,6 +82,7 @@ class ReviewViewModel : ViewModel() {
     fun refresh(context: Context) {
         val current = job ?: return
         if (current.settled) return
+        usageAccess = UsageRepo.hasAccess(context)
 
         run {
             val info = InstalledApps.info(context, current.post.packageName)
@@ -86,7 +97,7 @@ class ReviewViewModel : ViewModel() {
                 review = Api.installed(review.id)
             }
             if (review.state == INSTALLED || review.state == USED) {
-                val used = UsageRepo.foregroundMsSince(context, current.post.packageName, claimedAt(review))
+                val used = UsageRepo.foregroundMsSince(context, current.post.packageName, windowStart(context, review))
                 if (used > review.usedMs) review = Api.used(review.id, used)
             }
             job = current.copy(review = review)
@@ -164,6 +175,27 @@ class ReviewViewModel : ViewModel() {
     private fun claimedAt(review: ApiReview): Long =
         runCatching { Instant.parse(review.createdAt).toEpochMilli() }
             .getOrDefault(System.currentTimeMillis() - 3_600_000L)
+
+    /**
+     * Where the usage window opens: the server's claim time or the moment this phone first saw the
+     * review, whichever is earlier on this phone's clock.
+     *
+     * The claim time alone is the server's clock. On a phone running a few minutes behind it, the
+     * window opened in the phone's future and every reading came back zero until the clocks
+     * caught up, which on some phones they never did. The first sighting is the phone's own clock,
+     * remembered across restarts, so the window can never open later than the reviewer started.
+     */
+    private fun windowStart(
+        context: Context,
+        review: ApiReview,
+    ): Long {
+        val prefs = context.getSharedPreferences("review_clock", Context.MODE_PRIVATE)
+        val key = "first_seen_${review.id}"
+        val seen =
+            prefs.getLong(key, 0L).takeIf { it > 0L }
+                ?: System.currentTimeMillis().also { prefs.edit().putLong(key, it).apply() }
+        return minOf(claimedAt(review), seen)
+    }
 
     /**
      * One place every call goes through, so no screen has to think about failure.

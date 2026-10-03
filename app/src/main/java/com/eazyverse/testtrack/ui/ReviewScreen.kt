@@ -104,6 +104,8 @@ fun ReviewScreen(
         job = vm.job,
         sideloaded = vm.sideloaded,
         busy = vm.busy,
+        usageAccess = vm.usageAccess,
+        onAllowUsage = { vm.openUsageSettings(context) },
         snackbars = snackbars,
         onClose = onClose,
         onLeave = { step ->
@@ -142,6 +144,8 @@ fun ReviewBody(
     job: ReviewJob?,
     sideloaded: Boolean,
     busy: Boolean = false,
+    usageAccess: Boolean = true,
+    onAllowUsage: () -> Unit = {},
     snackbars: SnackbarHostState,
     onClose: () -> Unit,
     onLeave: (ReviewStep) -> Unit,
@@ -170,7 +174,12 @@ fun ReviewBody(
         bottomBar = {
             if (job != null && !job.settled) {
                 Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp)) {
-                    Primary(stepAction(job.step, job), tall = true) {
+                    val asking = job.step == ReviewStep.USE && !usageAccess
+                    Primary(if (asking) "Allow usage access" else stepAction(job.step, job), tall = true) {
+                        if (asking) {
+                            onAllowUsage()
+                            return@Primary
+                        }
                         // Writing happens here. Every other step hands the reviewer to Play or to
                         // the app itself, which is somebody else's screen.
                         val step = job.step
@@ -207,14 +216,24 @@ fun ReviewBody(
                     StepLabels(job)
                     Spacer(Modifier.height(gap))
                     Text(
-                        if (job.settled) "Sent" else stepTitle(job),
+                        when {
+                            job.settled -> "Sent"
+                            job.step == ReviewStep.USE && !usageAccess -> "Allow usage time"
+                            else -> stepTitle(job)
+                        },
                         style = MaterialTheme.typography.headlineSmall.copy(fontSize = 23.sp, lineHeight = 27.sp),
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        if (job.settled) reviewOutcome(job.review.state) else stepLine(job),
+                        when {
+                            job.settled -> reviewOutcome(job.review.state)
+                            job.step == ReviewStep.USE && !usageAccess ->
+                                "TestTrack counts how long you use the app. Switch on Usage access for " +
+                                    "TestTrack, then come back. Time already spent still counts."
+                            else -> stepLine(job)
+                        },
                         Modifier.widthIn(max = 300.dp),
                         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
                         color = t.text2,
