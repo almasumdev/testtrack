@@ -21,20 +21,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 /**
- * The last step: what was left, and the evidence for it.
+ * The last step: the evidence that a review was left on Play.
  *
- * Two shapes behind one dialog. A live app needs a screenshot, because a Play review is the one
- * piece of this nobody outside Google can read. An app still in closed testing has no Play review
- * to point at, so what it needs is the words.
+ * Every review is left on Play, a public review for a live app and private tester feedback for one
+ * in closed testing, and nobody outside Google can read either. So the one thing asked for here is
+ * the screenshot of it.
  */
 @Composable
 fun ReviewProofDialog(
-    live: Boolean,
     busy: Boolean = false,
-    onSend: (proof: Uri?, written: String) -> Unit,
+    onSend: (proof: Uri) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var written by remember { mutableStateOf("") }
     var picked by remember { mutableStateOf<Uri?>(null) }
 
     // The system picker, which is permissionless: it hands back one item the person chose and
@@ -45,66 +43,39 @@ fun ReviewProofDialog(
             if (uri != null) picked = uri
         }
 
-    val ready = if (live) picked != null else written.trim().length >= 40
-
     Ask(
-        title = if (live) "Prove you left it" else "What did you find?",
+        title = "Prove you left it",
         body =
-            if (live) {
-                "Take a screenshot of your review on Play, then pick it here. The developer " +
-                    "sees it and has two days to accept it."
-            } else {
-                "This app is not on Play yet, so your words are the review."
-            },
+            "Take a screenshot of what you left on Play, then pick it here. The developer sees it " +
+                "and has two days to accept it.",
         confirm = if (busy) "Sending" else "Send",
-        confirmEnabled = ready && !busy,
-        onConfirm = { onSend(picked, written.trim()) },
+        confirmEnabled = picked != null && !busy,
+        onConfirm = { picked?.let(onSend) },
         onDismiss = onDismiss,
         content = {
-            if (live) {
-                Text(
-                    "Screenshot",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(6.dp))
-                Secondary(
-                    if (picked == null) "Choose the screenshot" else "Chosen. Pick another",
-                    Modifier.fillMaxWidth(),
-                ) {
-                    pick.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                    )
-                }
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    if (picked == null) {
-                        "Your phone's own screenshot, taken after the review is posted."
-                    } else {
-                        "Only the developer and, if they refuse it, the members deciding, " +
-                            "can see it."
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                DialogField(
-                    value = written,
-                    onValueChange = { written = it.take(600) },
-                    label = "What you found",
-                    placeholder = "The sign-up screen took three tries before it took my number.",
-                    supporting =
-                        if (written.trim().length < 40) {
-                            "A few more words. Say what you did and what happened."
-                        } else {
-                            "Good. Send it when you are ready."
-                        },
-                    singleLine = false,
-                    minHeight = 120.dp,
-                    maxLength = 600,
-                )
+            Text(
+                "Screenshot",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(6.dp))
+            Secondary(
+                if (picked == null) "Choose the screenshot" else "Chosen. Pick another",
+                Modifier.fillMaxWidth(),
+            ) {
+                pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                if (picked == null) {
+                    "Your phone's own screenshot, taken after the review is posted."
+                } else {
+                    "Only the developer and, if they refuse it, the members deciding, can see it."
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Spacer(Modifier.height(4.dp))
         },
     )

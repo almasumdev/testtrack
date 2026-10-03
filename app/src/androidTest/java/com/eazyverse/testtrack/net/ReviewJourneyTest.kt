@@ -215,23 +215,22 @@ class ReviewJourneyTest {
             }
         }
 
-    /** A closed test has no listing, so it wants words and refuses a screenshot on its own. */
+    /** A closed test is reviewed on Play as well, so it wants the screenshot and words alone are not proof. */
     @Test
-    fun t3_a_closed_test_is_submitted_with_words_not_a_screenshot() =
+    fun t3_a_closed_test_is_submitted_with_a_screenshot_not_words() =
         runBlocking {
             val claimed = Api.claim(closedPostId, fingerprint())
             Api.installed(claimed.id)
             Api.used(claimed.id, 31_000)
 
             try {
-                Api.submit(claimed.id, proofRef = "a-screenshot-of-nothing")
-                fail("A closed test has no Play review to screenshot, so this is not a review.")
+                Api.submit(claimed.id, written = "The keyboard covered the list.")
+                fail("Words alone are not proof any more; the feedback is left on Play.")
             } catch (e: ApiError) {
                 assertTrue("Wrong refusal: ${e.message}", e.status in 400..422)
             }
 
-            val words = "The stop search found my stop first try, but the keyboard covered the list."
-            assertEquals("submitted", Api.submit(claimed.id, written = words).state)
+            assertEquals("submitted", Api.submit(claimed.id, proofRef = "a-screenshot").state)
         }
 
     // ------------------------------------------------------------------ the screen, on real data
@@ -275,7 +274,7 @@ class ReviewJourneyTest {
                         snackbars = SnackbarHostState(),
                         onClose = {},
                         onLeave = {},
-                        onSend = { _, _ -> },
+                        onSend = {},
                     )
                 }
             }

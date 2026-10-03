@@ -2,21 +2,17 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.ApiReview
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -81,7 +77,7 @@ class ReviewBodyTest {
         leftReview: Boolean = false,
         sideloaded: Boolean = false,
         onLeave: (ReviewStep) -> Unit = {},
-        onSend: (android.net.Uri?, String) -> Unit = { _, _ -> },
+        onSend: (android.net.Uri) -> Unit = {},
     ) {
         compose.setContent {
             TestTrackTheme {
@@ -134,10 +130,9 @@ class ReviewBodyTest {
     fun every_step_is_listed_all_along_so_the_job_is_never_a_surprise() {
         // Steps ahead are visible but not actionable. Somebody deciding whether to take a post on
         // should be able to see the whole of what they are agreeing to.
+        // They are the short names under the dial.
         open("claimed")
-        for (label in listOf("Install it", "Use it", "Leave your review", "Prove it")) {
-            // The headline repeats whichever step is current, so the name of that one is on
-            // screen twice. Both are wanted; neither is the assertion.
+        for (label in listOf("Install", "Use", "Review", "Prove")) {
             compose.onAllNodesWithText(label).onFirst().assertIsDisplayed()
         }
     }
@@ -154,15 +149,20 @@ class ReviewBodyTest {
     }
 
     @Test
-    fun a_closed_test_asks_for_words_here_instead_of_sending_anybody_to_play() {
-        // There is no listing to review, so the button must not open Play. It opens the writing
-        // dialog, and nothing is handed out of the app.
+    fun a_closed_test_is_reviewed_on_play_too() {
+        // Closed-test feedback is left on Play as private tester feedback, so the button hands the
+        // reviewer to Play exactly as it does for a live app, and nothing is written in here.
         var left: ReviewStep? = null
         open("used", live = false, onLeave = { left = it })
 
-        compose.onNodeWithText("Write it").performClick()
-        assertNull("A closed test has no Play page to send anybody to", left)
-        compose.onNodeWithText("What did you find?").assertIsDisplayed()
+        compose.onNodeWithText("Open Play to review").performClick()
+        assertEquals(ReviewStep.LEAVE, left)
+    }
+
+    @Test
+    fun a_closed_test_can_be_finished_with_a_screenshot_once_play_has_been_opened() {
+        open("used", live = false, leftReview = true)
+        compose.onNodeWithText("Send the proof").assertIsDisplayed()
     }
 
     /*
@@ -236,7 +236,7 @@ class ReviewBodyTest {
     @Test
     fun the_proof_dialog_will_not_send_until_a_screenshot_is_chosen() {
         var sent = 0
-        open("used", leftReview = true, onSend = { _, _ -> sent++ })
+        open("used", leftReview = true, onSend = { sent++ })
 
         compose.onNodeWithText("Send the proof").performClick()
         compose.onNodeWithText("Prove you left it").assertIsDisplayed()
@@ -251,26 +251,5 @@ class ReviewBodyTest {
         compose
             .onNodeWithText("Your phone's own screenshot", substring = true)
             .assertIsDisplayed()
-    }
-
-    @Test
-    fun a_closed_test_holds_out_for_more_than_a_word() {
-        // The words are the whole review when there is no listing, so a one-word answer is not
-        // one. The floor is in the dialog because that is where somebody finds out.
-        // A closed test has no screenshot: the words are the whole review, so that is all the
-        // dialog collects and all this looks at.
-        var sent: String? = null
-        open("used", live = false, onSend = { _, written -> sent = written })
-
-        compose.onNodeWithText("Write it").performClick()
-        compose.onNode(hasSetTextAction()).performTextInput("Fine.")
-        compose.onNodeWithText("Send").assertIsNotEnabled()
-        assertNull(sent)
-
-        compose
-            .onNode(hasSetTextAction())
-            .performTextInput(" The sign-up screen took three tries before it took my number.")
-        compose.onNodeWithText("Send").assertIsEnabled().performClick()
-        assertEquals("Fine. The sign-up screen took three tries before it took my number.", sent)
     }
 }

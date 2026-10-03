@@ -131,13 +131,12 @@ class ReviewViewModel : ViewModel() {
      */
     fun submit(
         context: Context,
-        proof: Uri?,
-        written: String,
+        proof: Uri,
     ) {
         val current = job ?: return
         run {
-            val ref = if (proof == null) "" else upload(context, proof)
-            job = current.copy(review = Api.submit(current.review.id, ref, written))
+            val ref = upload(context, proof)
+            job = current.copy(review = Api.submit(current.review.id, ref))
             message = "Sent. The developer has two days, then it approves itself."
         }
     }

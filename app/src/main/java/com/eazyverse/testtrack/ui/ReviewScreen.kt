@@ -121,7 +121,7 @@ fun ReviewScreen(
                 else -> Unit
             }
         },
-        onSend = { proof, written -> vm.submit(context, proof, written) },
+        onSend = { proof -> vm.submit(context, proof) },
     )
 }
 
@@ -149,7 +149,7 @@ fun ReviewBody(
     snackbars: SnackbarHostState,
     onClose: () -> Unit,
     onLeave: (ReviewStep) -> Unit,
-    onSend: (proof: Uri?, written: String) -> Unit,
+    onSend: (proof: Uri) -> Unit,
 ) {
     var proving by remember { mutableStateOf(false) }
     val t = Tt.colors
@@ -180,11 +180,10 @@ fun ReviewBody(
                             onAllowUsage()
                             return@Primary
                         }
-                        // Writing happens here. Every other step hands the reviewer to Play or to
-                        // the app itself, which is somebody else's screen.
+                        // The proof is picked here. Every other step hands the reviewer to Play or
+                        // to the app itself, which is somebody else's screen.
                         val step = job.step
-                        val writing = step == ReviewStep.PROVE || (step == ReviewStep.LEAVE && !post.isLive)
-                        if (writing) proving = true else onLeave(step)
+                        if (step == ReviewStep.PROVE) proving = true else onLeave(step)
                     }
                 }
             }
@@ -262,11 +261,10 @@ fun ReviewBody(
 
     if (proving) {
         ReviewProofDialog(
-            live = post.isLive,
             busy = busy,
-            onSend = { proof, written ->
+            onSend = { proof ->
                 proving = false
-                onSend(proof, written)
+                onSend(proof)
             },
             onDismiss = { proving = false },
         )
@@ -311,7 +309,7 @@ internal fun stepShort(
     when (step) {
         ReviewStep.INSTALL -> "Install"
         ReviewStep.USE -> "Use"
-        ReviewStep.LEAVE -> if (job.post.isLive) "Review" else "Write"
+        ReviewStep.LEAVE -> "Review"
         ReviewStep.PROVE -> "Prove"
         ReviewStep.WAIT -> ""
     }
@@ -320,7 +318,7 @@ private fun stepTitle(job: ReviewJob): String =
     when (job.step) {
         ReviewStep.INSTALL -> "Install ${job.post.appName}"
         ReviewStep.USE -> "Try the app"
-        ReviewStep.LEAVE -> if (job.post.isLive) "Review it on Play" else "Write your feedback"
+        ReviewStep.LEAVE -> if (job.post.isLive) "Review it on Play" else "Send feedback on Play"
         ReviewStep.PROVE -> "Send your proof"
         ReviewStep.WAIT -> "Sent"
     }
@@ -331,8 +329,12 @@ private fun stepLine(job: ReviewJob): String =
         ReviewStep.USE ->
             if (job.secondsLeft == 0) "Long enough. Leave your review next." else "${job.secondsLeft} more seconds in the app"
         ReviewStep.LEAVE ->
-            if (job.post.isLive) "Rate it on Play, then come back with a screenshot." else "Say what worked and what did not."
-        ReviewStep.PROVE -> "A screenshot of the review you left on Play."
+            if (job.post.isLive) {
+                "Rate it on Play, then come back with a screenshot."
+            } else {
+                "Use “Send feedback” on its Play page, then come back with a screenshot."
+            }
+        ReviewStep.PROVE -> "A screenshot of what you left on Play."
         ReviewStep.WAIT -> ""
     }
 
@@ -343,7 +345,7 @@ private fun stepAction(
     when (step) {
         ReviewStep.INSTALL -> "Get it on Play"
         ReviewStep.USE -> "Open the app"
-        ReviewStep.LEAVE -> if (job.post.isLive) "Open Play to review" else "Write it"
+        ReviewStep.LEAVE -> "Open Play to review"
         ReviewStep.PROVE -> "Send the proof"
         ReviewStep.WAIT -> ""
     }

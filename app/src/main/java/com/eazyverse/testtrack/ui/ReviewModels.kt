@@ -21,7 +21,7 @@ enum class ReviewStep(
     /** Real foreground time. Nothing drags them back; they return when they are ready. */
     USE("Use it"),
 
-    /** Live app: leave a Play review. Closed testing: write it here. */
+    /** On Play: a public review for a live app, private tester feedback for a closed test. */
     LEAVE("Leave your review"),
 
     /** A screenshot of what they left, which is the only evidence anybody can produce. */
@@ -68,7 +68,7 @@ data class ReviewJob(
     val step: ReviewStep
         get() {
             val reached = ReviewStep.of(review)
-            val readyToProve = reached == ReviewStep.LEAVE && post.isLive && leftReview
+            val readyToProve = reached == ReviewStep.LEAVE && leftReview
             return if (readyToProve) ReviewStep.PROVE else reached
         }
 
