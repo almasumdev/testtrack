@@ -36,6 +36,8 @@ data class TtTokens(
     val text3: Color,
     /** The faintest ink: chevrons, placeholder glyphs. */
     val text4: Color,
+    val tabSelected: Color,
+    val tabUnselected: Color,
     /** A card or sheet. */
     val glass: Color,
     /** A control sitting on a card: a soft button, an unselected chip, a meter's empty track. */
@@ -140,6 +142,8 @@ val OceanLight =
         text2 = Color(0xFF203A4E),
         text3 = Color(0xFF223D50),
         text4 = Color(0xFF59758A),
+        tabSelected = Color(0xFF0C527D),
+        tabUnselected = Color(0xFF526B7D),
         glass = Color(0xFFF2F9FD),
         glass2 = Color(0xFFDFEDF6),
         glassBorder = Color(0xFFB7D1E2),
@@ -204,6 +208,8 @@ val OceanDark =
         text2 = Color(0xFFBDD1DF),
         text3 = Color(0xFFA1BDCF),
         text4 = Color(0xFF7F9EB3),
+        tabSelected = Color(0xFF9CD5FF),
+        tabUnselected = Color(0xFF93A7B6),
         glass = Color(0xFF1B3040),
         glass2 = Color(0xFF263F51),
         glassBorder = Color(0xFF365568),

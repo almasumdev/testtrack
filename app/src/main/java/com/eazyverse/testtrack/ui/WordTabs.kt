@@ -31,8 +31,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.ui.theme.Tt
 import kotlinx.coroutines.launch
@@ -47,9 +49,7 @@ import kotlin.math.hypot
  * a third of its row left empty when the balance moved up into the header, and neither of them
  * needed a container at all now that the header above is one.
  *
- * Weight is deliberately the same on all of them. Bold is wider than medium, so a weight that
- * changed with the selection re-measured the word and shoved every tab after it sideways at the
- * moment of the tap, which is what made switching look broken. Only the colour moves.
+ * Each label reserves its bold width, so selection can change weight without shifting its neighbours.
  *
  * Indexes rather than a type. Circle's three and Crew's four are different enums with nothing in
  * common but being a short list of words, and a generic over both would be more machinery than
@@ -90,14 +90,17 @@ private fun WordTab(
     val tint by animateColorAsState(
         targetValue =
             if (current) {
-                MaterialTheme.colorScheme.onSurface
+                Tt.colors.tabSelected
             } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
+                Tt.colors.tabUnselected
             },
         animationSpec = tween(durationMillis = 200),
         label = "tab",
     )
     val press = remember { MutableInteractionSource() }
+    val textStyle = MaterialTheme.typography.titleMedium
+    val measured = rememberTextMeasurer().measure(label, textStyle.copy(fontWeight = FontWeight.Bold))
+    val labelWidth = with(LocalDensity.current) { measured.size.width.toDp() }
 
     Row(
         Modifier
@@ -124,13 +127,13 @@ private fun WordTab(
             // Drawn on the letters and nowhere else. The count is left out on purpose: it is a
             // reading, not a button.
             modifier =
-                Modifier.inkRipple(
+                Modifier.width(labelWidth).inkRipple(
                     interactionSource = press,
                     resting = tint,
                     lit = Tt.colors.accentInk,
                 ),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = if (current) FontWeight.Bold else FontWeight.Medium,
             color = tint,
             maxLines = 1,
         )
