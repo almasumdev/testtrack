@@ -60,6 +60,12 @@ class MembershipViewModel : ViewModel() {
         ask()
     }
 
+    /** From the Me page: check now, in front of the person, whatever was remembered. */
+    fun show() {
+        pending = null
+        ask()
+    }
+
     /** On launch: a yes is remembered quietly, a no waits for the next action to say so. */
     fun quietly() {
         if (member || checking || !Session.signedIn) return

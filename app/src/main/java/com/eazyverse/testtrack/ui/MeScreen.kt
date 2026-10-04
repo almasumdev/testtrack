@@ -53,7 +53,9 @@ import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.ShieldCheck
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.UserRound
+import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.BuildConfig
+import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.net.ApiProfile
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -88,6 +90,7 @@ fun MeScreen(
     val activity = context.findActivity()
     val drive: TestingDriveViewModel = viewModel()
     LaunchedEffect(vm.signedOut) { if (!vm.signedOut) drive.check(activity) }
+    val membership = rememberMembership()
     val driveSheet =
         rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
             drive.consentResult(activity, it.data) {}
@@ -104,6 +107,9 @@ fun MeScreen(
         onSignIn = onSignIn,
         onOpenRanks = onOpenRanks,
         drive = if (drive.busy) null else drive.connected,
+        group = membership.member,
+        // Joined, it opens the group itself; otherwise the check, and the way to join.
+        onGroup = { if (membership.member) links.openUri(Config.GROUP_URL) else membership.show() },
         // Connected, it opens the account's own page, where the access can be seen and removed.
         onDrive = {
             if (drive.connected == true) {
@@ -137,6 +143,8 @@ fun MeBody(
     onOpenRanks: () -> Unit = {},
     drive: Boolean? = null,
     onDrive: () -> Unit = {},
+    group: Boolean = false,
+    onGroup: () -> Unit = {},
 ) {
     if (signedOut) {
         Gated(
@@ -179,7 +187,7 @@ fun MeBody(
             )
         }
         item { SectionTitle("Account") }
-        item { Account(onEdit = onEdit, onSignOut = onSignOut, drive = drive, onDrive = onDrive) }
+        item { Account(onEdit = onEdit, onSignOut = onSignOut, drive = drive, onDrive = onDrive, group = group, onGroup = onGroup) }
         item { Spacer(Modifier.height(24.dp)) }
         item {
             Text(
@@ -323,15 +331,26 @@ private fun Account(
     onSignOut: () -> Unit,
     drive: Boolean?,
     onDrive: () -> Unit,
+    group: Boolean,
+    onGroup: () -> Unit,
 ) {
     val links = LocalUriHandler.current
     val out: @Composable () -> Unit = {
         Icon(Lucide.ExternalLink, null, Modifier.size(17.dp), tint = Tt.colors.text4)
     }
-    TileGroup(count = 5) { index, place ->
+    TileGroup(count = 6) { index, place ->
         when (index) {
             0 -> TileRow(Lucide.Pencil, "Edit profile", place, subtitle = "Your name and picture", onClick = onEdit)
             1 ->
+                TileRow(
+                    Lucide.Users,
+                    "Testers group",
+                    place,
+                    subtitle = "Lets owners add you to closed tests",
+                    value = if (group) "Joined" else "Join",
+                    onClick = onGroup,
+                )
+            2 ->
                 TileRow(
                     Lucide.HardDrive,
                     "Google Drive",
@@ -345,11 +364,11 @@ private fun Account(
                         },
                     onClick = if (drive == null) null else onDrive,
                 )
-            2 ->
+            3 ->
                 TileRow(Lucide.ShieldCheck, "Privacy policy", place, trailing = out) {
                     links.openUri("$SITE/privacy")
                 }
-            3 ->
+            4 ->
                 TileRow(Lucide.Trash2, "Delete account", place, subtitle = "And everything in it", trailing = out) {
                     links.openUri("$SITE/delete-account")
                 }
