@@ -318,6 +318,13 @@ fun CrewHeading(
     }
 }
 
+/**
+ * The top of a list that opens with a [CrewHeading]. Other tabs' lists start 16dp under the tabs,
+ * at a card's edge; a heading's letters sit 4.5dp inside its line, so starting it 4.5dp higher
+ * puts the words themselves on that 16dp line, with the count centred on them.
+ */
+val HeadedListTop = 11.5.dp
+
 /** The corner a card gets. Value Guard's list cards, a step under its 22 panels. */
 val CardRadius = 18.dp
 

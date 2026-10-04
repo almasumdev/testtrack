@@ -79,7 +79,7 @@ fun WaitingBody(
     // most of a screen each.
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 16.dp, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(top = HeadedListTop, bottom = Gutter + dockRoom()),
     ) {
         val now = System.currentTimeMillis()
         if (reviews.isNotEmpty()) {
