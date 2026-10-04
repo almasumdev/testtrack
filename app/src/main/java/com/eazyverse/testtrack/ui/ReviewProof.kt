@@ -11,11 +11,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,10 +26,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,8 +34,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.composables.icons.lucide.Camera
 import com.composables.icons.lucide.CircleCheck
@@ -106,7 +98,6 @@ fun OverlayPermissionDialog(
 @Composable
 fun ProofArea(
     shown: Uri?,
-    captured: Boolean,
     note: String,
     onNote: (String) -> Unit,
     onCapture: () -> Unit,
@@ -121,21 +112,20 @@ fun ProofArea(
         if (picture == null) {
             ProofChoices(onCapture, onGallery)
         } else {
-            ProofForm(picture, captured, note, onNote, onCapture, onGallery)
+            ProofForm(picture, note, onNote, onCapture, onGallery)
         }
     }
 }
 
 /**
- * The screenshot that was got, how it was got, and an optional note.
+ * The screenshot that was got, and an optional note.
  *
- * Big enough to see it is the right picture, and tappable to see it whole. The note is not the
+ * Big enough to see it is the right picture, with the two ways to replace it. The note is not the
  * review (that is on Play); it is anything worth saying to the developer alongside it.
  */
 @Composable
 private fun ProofForm(
     proof: Uri,
-    captured: Boolean,
     note: String,
     onNote: (String) -> Unit,
     onCapture: () -> Unit,
@@ -144,7 +134,6 @@ private fun ProofForm(
     val t = Tt.colors
     val shape = RoundedCornerShape(CardRadius)
     val thumb = RoundedCornerShape(10.dp)
-    var viewing by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth()) {
         Row(
             Modifier
@@ -162,8 +151,7 @@ private fun ProofForm(
                     Modifier
                         .size(width = 62.dp, height = THUMB_HEIGHT)
                         .clip(thumb)
-                        .border(1.dp, t.glassBorder, thumb)
-                        .clickable { viewing = true },
+                        .border(1.dp, t.glassBorder, thumb),
                 contentScale = ContentScale.Crop,
             )
             Spacer(Modifier.width(14.dp))
@@ -176,7 +164,7 @@ private fun ProofForm(
                         Text("Screenshot added", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     }
                     Text(
-                        if (captured) "Captured on Play · tap to view" else "From your gallery · tap to view",
+                        "Not the right one? Take another below.",
                         style = MaterialTheme.typography.bodySmall,
                         color = t.text3,
                         modifier = Modifier.padding(top = 4.dp),
@@ -204,7 +192,6 @@ private fun ProofForm(
                 ),
         )
     }
-    if (viewing) ProofViewer(proof) { viewing = false }
 }
 
 /** A small way to replace the screenshot, one per source. */
@@ -234,27 +221,6 @@ private fun ProofAction(
             fontWeight = FontWeight.SemiBold,
             color = t.accentInk,
         )
-    }
-}
-
-/** The screenshot whole, over everything; any tap puts it away. */
-@Composable
-private fun ProofViewer(
-    proof: Uri,
-    onClose: () -> Unit,
-) {
-    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Box(
-            Modifier.fillMaxSize().clickable(onClick = onClose).padding(24.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            AsyncImage(
-                model = proof,
-                contentDescription = "Your review screenshot, full size",
-                modifier = Modifier.clip(RoundedCornerShape(14.dp)),
-                contentScale = ContentScale.Fit,
-            )
-        }
     }
 }
 

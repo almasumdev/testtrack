@@ -368,7 +368,6 @@ fun ReviewBody(
                             Spacer(Modifier.height(gap))
                             ProofArea(
                                 shown = shown,
-                                captured = shown == proof,
                                 note = note,
                                 onNote = { note = it },
                                 onCapture = onCapture,
