@@ -155,16 +155,19 @@ class FeedViewModel : ViewModel() {
                 // the screen should not have to know what the database calls things.
                 waiting =
                     Api.waiting().map {
+                        // From an older server these come blank; the post, when it is on the feed,
+                        // has them too.
+                        val post = posts.firstOrNull { p -> p.id == it.postId }
                         Waiting(
                             id = it.id,
                             appName = it.appName.ifBlank { appNameFor(it.postId) },
                             written = it.written,
                             proofRef = it.proofRef,
                             reviewerName = it.reviewerName,
-                            reward = it.reward,
-                            isLive = it.isLive,
+                            reward = it.reward.takeIf { r -> r > 0 } ?: post?.reward ?: 0,
+                            isLive = if (it.appName.isBlank()) post?.isLive ?: it.isLive else it.isLive,
                             decideBy = millis(it.decideBy) ?: millis(it.submittedAt)?.plus(TWO_DAYS),
-                            packageName = it.packageName,
+                            packageName = it.packageName.ifBlank { post?.packageName.orEmpty() },
                         )
                     }
                 disputes =

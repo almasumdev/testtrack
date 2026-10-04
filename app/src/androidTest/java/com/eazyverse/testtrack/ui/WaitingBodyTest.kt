@@ -1,9 +1,11 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -129,6 +131,17 @@ class WaitingBodyTest {
         }
         compose.onNodeWithText("Reviews of your apps").assertIsDisplayed()
         compose.onNodeWithText("Cases to decide").assertIsDisplayed()
+    }
+
+    @Test
+    fun a_reviewer_name_too_long_for_its_tile_shows_whole_on_a_tap() {
+        val long = "Mohammad Abdullah Al Mamun Chowdhury"
+        compose.setContent { TestTrackTheme { ReviewCheck(review().copy(reviewerName = long)) } }
+        // One line in the tile; the tooltip is a second copy of the same words.
+        compose.onAllNodesWithText(long).assertCountEquals(1)
+        compose.onNodeWithText(long).performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText(long).assertCountEquals(2)
     }
 
     @Test

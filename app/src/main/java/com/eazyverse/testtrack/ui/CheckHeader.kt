@@ -19,11 +19,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,6 +50,7 @@ import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Scale
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
+import kotlinx.coroutines.launch
 
 /*
  * The top of a To check page: which app this is, and the three numbers that matter.
@@ -69,6 +79,7 @@ fun AppHeader(
     name: String,
     packageName: String,
     kind: CheckKind,
+    trailing: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
@@ -82,11 +93,12 @@ fun AppHeader(
     ) {
         AppIcon(packageName, name, size = HEADER_ICON) { AppTile(name, HEADER_ICON) }
         Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f).height(HEADER_ICON), verticalArrangement = Arrangement.SpaceEvenly) {
+        // Two lines that add up to the icon's height: a 22dp name, 4dp, and a 22dp pill.
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 name,
                 Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp, lineHeight = 21.sp),
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp, lineHeight = 22.sp),
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
             )
@@ -106,7 +118,7 @@ fun AppHeader(
                             }.basicMarquee(iterations = Int.MAX_VALUE),
                         style =
                             MaterialTheme.typography.bodySmall
-                                .copy(fontSize = 12.sp)
+                                .copy(fontSize = 12.sp, lineHeight = 16.sp)
                                 .tabular(),
                         color = Tt.colors.text3,
                         maxLines = 1,
@@ -114,6 +126,7 @@ fun AppHeader(
                 }
             }
         }
+        trailing()
     }
 }
 
@@ -126,7 +139,8 @@ private fun KindPill(kind: CheckKind) {
         Modifier
             .clip(RoundedCornerShape(percent = 50))
             .background(ground)
-            .padding(start = 7.dp, end = 9.dp, top = 3.dp, bottom = 3.dp),
+            .height(22.dp)
+            .padding(start = 7.dp, end = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(kind.icon, null, Modifier.size(12.dp), tint = ink)
@@ -149,9 +163,40 @@ data class Stat(
 )
 
 /**
- * Three equal tiles. A long value (a long reviewer name) takes a second line and then ends in an
- * ellipsis, rather than pushing the others; labels are words only so they fit large text too.
+ * One value, on one line. When it does not fit it ends in an ellipsis, and a tap shows the whole
+ * of it in a tooltip; a value that fits does nothing when tapped.
  */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun StatValue(stat: Stat) {
+    val t = Tt.colors
+    var cut by remember { mutableStateOf(false) }
+    val tip = rememberTooltipState()
+    val scope = rememberCoroutineScope()
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        tooltip = { PlainTooltip { Text(stat.value) } },
+        state = tip,
+        enableUserInput = false,
+    ) {
+        Text(
+            stat.value,
+            Modifier.clickable(
+                enabled = cut,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) { scope.launch { tip.show() } },
+            style = MaterialTheme.typography.titleSmall.copy(fontSize = 14.5.sp, lineHeight = 18.sp),
+            fontWeight = FontWeight.Bold,
+            color = if (stat.warn) t.warn else t.text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            onTextLayout = { cut = it.hasVisualOverflow },
+        )
+    }
+}
+
+/** Three equal tiles; labels are words only, so they still fit with the system text turned up. */
 @Composable
 fun StatTiles(stats: List<Stat>) {
     val t = Tt.colors
@@ -176,17 +221,10 @@ fun StatTiles(stats: List<Stat>) {
                     overflow = TextOverflow.Ellipsis,
                 )
                 Spacer(Modifier.height(3.dp))
-                Text(
-                    stat.value,
-                    style = MaterialTheme.typography.titleSmall.copy(fontSize = 14.5.sp, lineHeight = 18.sp),
-                    fontWeight = FontWeight.Bold,
-                    color = if (stat.warn) t.warn else t.text,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                StatValue(stat)
             }
         }
     }
 }
 
-private val HEADER_ICON = 58.dp
+private val HEADER_ICON = 48.dp
