@@ -25,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -49,8 +50,10 @@ import com.eazyverse.testtrack.domain.LaunchDestination
 import com.eazyverse.testtrack.domain.launchDestination
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.*
+import com.eazyverse.testtrack.ui.JoinGroupDialog
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
+import com.eazyverse.testtrack.viewmodel.MembershipViewModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
@@ -143,6 +146,16 @@ class MainActivity : ComponentActivity() {
                     // to the bottom edge under the system bar.
                     Box(Modifier.fillMaxSize().exchangeBackground()) {
                         if (Config.isConfigured) AppNav(openGroup, openFeedbackFor) else Inset { NotConfigured() }
+
+                        // The testers group, checked in front of the person as soon as they sign
+                        // in, and quietly on every launch after. See [MembershipViewModel].
+                        val membership: MembershipViewModel = viewModel()
+                        var wasSignedIn by remember { mutableStateOf(Session.signedIn) }
+                        LaunchedEffect(Session.signedIn) {
+                            if (Session.signedIn && !wasSignedIn) membership.afterSignIn() else membership.quietly()
+                            wasSignedIn = Session.signedIn
+                        }
+                        JoinGroupDialog(membership)
 
                         /*
                          * Over everything, including the nav host.

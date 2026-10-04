@@ -181,6 +181,9 @@ fun GroupScreen(
             queued = emptyList()
         }
 
+    // Testing a crew's apps needs the testers group: their closed tests only let members in.
+    val membership = rememberMembership()
+
     fun run(packages: List<String>) {
         if (packages.isEmpty()) return
         if (!Session.driveConnected) {
@@ -300,7 +303,7 @@ fun GroupScreen(
                             uploading = vm.uploading,
                             usageGranted = Session.usageAccessGranted,
                             canReturn = canReturn,
-                            onStart = { run(outstanding.map { it.packageName }) },
+                            onStart = { membership.require { run(outstanding.map { it.packageName }) } },
                             onStop = { CaptureService.abortRound(context) },
                             onEndSession = { CaptureService.endSession(context) },
                             onGrantUsage = { UsageRepo.openSettings(activity) },
@@ -360,7 +363,7 @@ fun GroupScreen(
                                         sending = app.id in vm.sending,
                                         owner = vm.owners[app.ownerUid],
                                         skipped = app.id in vm.skipped,
-                                        onOpen = { run(listOf(app.packageName)) },
+                                        onOpen = { membership.require { run(listOf(app.packageName)) } },
                                         onInstall = { openInPlay(context, app) { vm.message = it } },
                                         onOpenStore = { openInPlay(context, app) { vm.message = it } },
                                         onReportProblem = { reporting = app },

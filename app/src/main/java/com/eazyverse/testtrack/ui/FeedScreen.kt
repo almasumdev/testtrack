@@ -76,6 +76,7 @@ fun FeedScreen(
     onCheck: (String) -> Unit = {},
     vm: FeedViewModel = viewModel(),
 ) {
+    val membership = rememberMembership()
     val context = LocalContext.current
 
     // Reloaded on every arrival rather than once. Coming back from a review is the commonest way
@@ -205,7 +206,9 @@ fun FeedScreen(
                                 items(3) { FeedLoadingCard() }
                             }
                             items(vm.openPosts, key = { it.id }) { post ->
-                                FeedRequestCard(post) { onReview(Json.encodeToString(post)) }
+                                // Taking a review on needs the testers group: Play only lets
+                                // the owner add somebody on it to a closed test.
+                                FeedRequestCard(post) { membership.require { onReview(Json.encodeToString(post)) } }
                             }
                         }
                     }

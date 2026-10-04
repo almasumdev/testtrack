@@ -148,6 +148,7 @@ fun ReviewScreen(
             drive.consentResult(activity, it.data, connected)
             if (!vm.driveConnected) sendAfterDrive = null
         }
+    val membership = rememberMembership()
     val atProof = vm.job?.step == ReviewStep.PROVE
     LaunchedEffect(atProof) { if (atProof) vm.checkDrive(activity) }
 
@@ -177,22 +178,28 @@ fun ReviewScreen(
         failure = vm.failure,
         onRetry = { vm.retry(context, post) },
         onClose = onClose,
+        // Every step and the submit need the testers group: a closed test cannot be installed
+        // from outside it, and an owner cannot rely on a review that was not.
         onLeave = { step ->
-            when (step) {
-                ReviewStep.INSTALL -> openPlay(context, post.packageName)
-                ReviewStep.USE -> openApp(context, post.packageName)
-                // Going to Play is also the only signal that the review may now exist, so the
-                // proof step opens on the way out rather than waiting for a state that cannot come.
-                ReviewStep.LEAVE -> if (vm.guideSeen(context)) toPlay() else guiding = true
-                else -> Unit
+            membership.require {
+                when (step) {
+                    ReviewStep.INSTALL -> openPlay(context, post.packageName)
+                    ReviewStep.USE -> openApp(context, post.packageName)
+                    // Going to Play is also the only signal that the review may now exist, so the
+                    // proof step opens on the way out rather than waiting for a state that cannot come.
+                    ReviewStep.LEAVE -> if (vm.guideSeen(context)) toPlay() else guiding = true
+                    else -> Unit
+                }
             }
         },
         onSend = { proof, note ->
-            if (vm.driveConnected) {
-                vm.submit(activity, proof, note)
-            } else {
-                sendAfterDrive = proof to note
-                drive.connect(activity, driveSheet::launch, connected)
+            membership.require {
+                if (vm.driveConnected) {
+                    vm.submit(activity, proof, note)
+                } else {
+                    sendAfterDrive = proof to note
+                    drive.connect(activity, driveSheet::launch, connected)
+                }
             }
         },
     )
