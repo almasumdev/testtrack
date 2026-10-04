@@ -184,7 +184,12 @@ private fun NoteField(
     BasicTextField(
         value = note,
         onValueChange = { onNote(it.take(NOTE_MAX)) },
-        modifier = modifier.padding(top = 2.dp),
+        // A shade apart from the card, with room inside, so it reads as the place to type.
+        modifier =
+            modifier
+                .clip(ThumbShape)
+                .background(t.glass2.copy(alpha = 0.55f))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
         textStyle = style,
         cursorBrush = SolidColor(t.accent),
         decorationBox = { field ->
