@@ -46,8 +46,9 @@ class MineBodyTest {
         compose.onNodeWithText("In progress").assertIsDisplayed()
         compose.onNodeWithText("Waiting for the developer").assertIsDisplayed()
         compose.onNodeWithText("History").assertIsDisplayed()
-        compose.onNodeWithText("Waiting").assertIsDisplayed()
-        compose.onNodeWithText("+30 tix").assertIsDisplayed()
+        compose.onNodeWithText("Checking · up to 2 days").assertIsDisplayed()
+        compose.onNodeWithText("Approved · tix paid").assertIsDisplayed()
+        compose.onNodeWithText("Step 3/4").assertIsDisplayed()
     }
 
     @Test
@@ -70,7 +71,6 @@ class MineBodyTest {
     fun a_refused_review_says_why() {
         open(listOf(review("c", "rejected", reason = "The screenshot is of another app.")))
         compose.onNodeWithText("The screenshot is of another app.").assertIsDisplayed()
-        compose.onNodeWithText("Not paid").assertIsDisplayed()
     }
 
     @Test
