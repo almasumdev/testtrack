@@ -20,7 +20,11 @@ object ProofStore {
     fun proof(
         context: Context,
         reviewId: String,
-    ): File? = file(context, reviewId).takeIf { it.isFile && it.length() > 0 }
+    ): File? =
+        prefs(context)
+            .getString("file_$reviewId", null)
+            ?.let { File(dir(context), it) }
+            ?.takeIf { it.isFile && it.length() > 0 }
 
     /** The kept screenshot's type, for the upload; the file alone does not say. */
     fun mime(
@@ -78,36 +82,44 @@ object ProofStore {
         context: Context,
         reviewId: String,
     ) {
-        file(context, reviewId).delete()
+        proof(context, reviewId)?.delete()
         prefs(context)
             .edit()
+            .remove("file_$reviewId")
             .remove("mime_$reviewId")
             .remove("note_$reviewId")
             .remove("left_$reviewId")
             .apply()
     }
 
-    /** Written beside the old one and swapped in, so a failed copy never costs the kept picture. */
+    /**
+     * Written as a new file beside the old one, which goes only once the new one is whole. A new
+     * name each time, too: the same name gave the page the same address for a different picture,
+     * and it kept showing the first one.
+     */
     private fun write(
         context: Context,
         reviewId: String,
         mime: String,
         copy: (java.io.OutputStream) -> Unit,
     ): File {
-        val target = file(context, reviewId)
-        val part = File(target.parentFile, "$reviewId.part")
-        part.outputStream().use(copy)
-        check(part.length() > 0) { "empty image" }
-        target.delete()
-        check(part.renameTo(target)) { "could not keep the image" }
-        prefs(context).edit().putString("mime_$reviewId", mime).apply()
+        val old = proof(context, reviewId)
+        val target = File(dir(context), "${reviewId}_${System.currentTimeMillis()}")
+        target.outputStream().use(copy)
+        if (target.length() == 0L) {
+            target.delete()
+            error("empty image")
+        }
+        prefs(context)
+            .edit()
+            .putString("file_$reviewId", target.name)
+            .putString("mime_$reviewId", mime)
+            .commit()
+        old?.delete()
         return target
     }
 
-    private fun file(
-        context: Context,
-        reviewId: String,
-    ) = File(File(context.filesDir, "review_proof").apply { mkdirs() }, reviewId)
+    private fun dir(context: Context) = File(context.filesDir, "review_proof").apply { mkdirs() }
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 }

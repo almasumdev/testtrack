@@ -7,6 +7,7 @@ import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -44,10 +45,16 @@ class ProofStoreTest {
     fun a_capture_moves_out_of_the_cache_and_a_new_one_replaces_the_old() {
         ProofStore.adopt(context, id, picture("one.jpg", byteArrayOf(1)))
         val second = picture("two.jpg", byteArrayOf(2, 2))
+
+        val first = ProofStore.proof(context, id)!!
         ProofStore.adopt(context, id, second)
+        val now = ProofStore.proof(context, id)!!
 
         assertFalse(second.exists())
-        assertArrayEquals(byteArrayOf(2, 2), ProofStore.proof(context, id)!!.readBytes())
+        assertArrayEquals(byteArrayOf(2, 2), now.readBytes())
+        // A different file, so the page sees a different picture rather than the one it had.
+        assertNotEquals(first.path, now.path)
+        assertFalse(first.exists())
         assertEquals("image/jpeg", ProofStore.mime(context, id))
     }
 
