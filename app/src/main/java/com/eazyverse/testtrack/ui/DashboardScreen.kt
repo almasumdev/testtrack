@@ -10,12 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
-import com.composables.icons.lucide.ArrowLeft
-import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.data.*
 
 /** How a tester's day reads. Five states, each with a shape of its own — see [Cell]. */
@@ -36,22 +33,10 @@ fun DashboardScreen(
 
     Scaffold(
         containerColor = Color.Transparent,
+        // The route already insets the page; the bar and content add nothing of their own.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            TopAppBar(
-                title = {
-                    val label = vm.app?.label?.ifBlank { null } ?: appName.ifBlank { null }
-                    if (label != null) Text(label, fontWeight = FontWeight.SemiBold)
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Lucide.ArrowLeft, "Back")
-                    }
-                },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                    ),
-            )
+            PageBar(vm.app?.label?.ifBlank { null } ?: appName, onBack)
         },
     ) { padding ->
         RefreshBox(

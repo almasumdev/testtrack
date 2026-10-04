@@ -31,13 +31,9 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -57,7 +53,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.ChevronLeft
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.net.ApiPost
@@ -247,24 +242,16 @@ fun ReviewBody(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             Column {
-                TopAppBar(
-                    windowInsets = WindowInsets(0, 0, 0, 0),
-                    title = { Text("Review", fontWeight = FontWeight.Bold) },
-                    navigationIcon = { IconButton(onClick = onClose) { Icon(Lucide.ChevronLeft, "Back") } },
-                    actions = {
-                        Box(Modifier.padding(end = Gutter)) {
-                            Pill("+${post.reward} tix", t.tileInk, t.tile)
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-                )
+                PageBar("Review", onClose) {
+                    Pill("+${post.reward} tix", t.tileInk, t.tile)
+                }
                 PageMessage(message, onMessageDone)
             }
         },
         bottomBar = {
             // Always there, even while loading and once sent, so the space the page is centred in
             // never changes size under it.
-            Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp)) {
+            Box(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 12.dp, bottom = 18.dp)) {
                 if (job == null && failure != null) {
                     Primary("Try again", tall = true, busy = spinning, onClick = onRetry)
                 } else if (job == null) {
@@ -305,7 +292,7 @@ fun ReviewBody(
             val gap = (room * 0.03f).coerceIn(10.dp, 22.dp)
 
             Column(
-                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Gutter),
             ) {
                 ReviewAppRow(post.appName, post.isLive, post.ownerName, offline)
                 // Which page this is, rather than the job itself: keyed on the job, every answer

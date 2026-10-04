@@ -23,14 +23,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Hourglass
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.data.*
@@ -248,30 +246,14 @@ fun GroupScreen(
 
     Scaffold(
         containerColor = Color.Transparent,
+        // The route already insets the page; the bar and content add nothing of their own.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             // A confirmation like "Report cleared" and a failure both open under the bar, where they
             // are seen the moment they happen, rather than as red text at the foot of a long list.
             Column {
-                TopAppBar(
-                    title = {
-                        // The name the caller already had, shown immediately — see Routes.GROUP —
-                        // and swapped for the loaded group's own once that answers, which is almost
-                        // always the same word appearing twice rather than a visible pop. Blank only
-                        // for the rare entry with neither: a placeholder here would be telling the
-                        // tester something they didn't ask to be told twice, or that isn't true yet.
-                        val label = group?.name?.ifBlank { null } ?: groupName.ifBlank { null }
-                        if (label != null) Text(label, fontWeight = FontWeight.SemiBold)
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(Lucide.ArrowLeft, "Back")
-                        }
-                    },
-                    colors =
-                        TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color.Transparent,
-                        ),
-                )
+                // The name the caller already had, shown at once, then the loaded group's own.
+                PageBar(group?.name?.ifBlank { null } ?: groupName, onBack)
                 PageMessage(if (group != null) vm.message else null, { vm.message = null })
             }
         },

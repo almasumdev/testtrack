@@ -15,8 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.ArrowLeft
-import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.data.*
 import kotlinx.coroutines.launch
 
@@ -159,19 +157,10 @@ fun SubmitScreen(
 ) {
     Scaffold(
         containerColor = Color.Transparent,
+        // The route already insets the page; the bar and content add nothing of their own.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            TopAppBar(
-                title = { Text("Submit an app", fontWeight = FontWeight.SemiBold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Lucide.ArrowLeft, "Back")
-                    }
-                },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                    ),
-            )
+            PageBar("Submit an app", onBack)
         },
     ) { padding ->
         Column(
