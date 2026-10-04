@@ -85,11 +85,14 @@ fun MineBody(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 4.dp, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
     ) {
-        section("In progress", going, onOpen)
-        section("Waiting for the developer", pending, null)
-        section("History", history, null)
+        // The first heading sits where the other tabs' first card does; the gap above a heading
+        // is for separating it from the section before, and the first has none.
+        val first = listOf(going, pending, history).firstOrNull { it.isNotEmpty() }
+        section("In progress", going, onOpen, first === going)
+        section("Waiting for the developer", pending, null, first === pending)
+        section("History", history, null, first === history)
     }
 }
 
@@ -97,9 +100,10 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
     title: String,
     rows: List<MyReview>,
     onOpen: ((MyReview) -> Unit)?,
+    first: Boolean,
 ) {
     if (rows.isEmpty()) return
-    item(key = "h-$title") { CrewHeading(title, "${rows.size}") }
+    item(key = "h-$title") { CrewHeading(title, "${rows.size}", top = if (first) 2.dp else 20.dp) }
     itemsIndexed(rows, key = { _, r -> r.id }) { index, review ->
         ListTile(index, rows.size) { MyReviewRow(review, onOpen) }
     }

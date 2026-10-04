@@ -285,9 +285,10 @@ fun TileRow(
 fun CrewHeading(
     text: String,
     trailing: String? = null,
+    top: Dp = 20.dp,
 ) {
     Row(
-        Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 20.dp, bottom = 10.dp),
+        Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = top, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
