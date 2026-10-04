@@ -159,15 +159,19 @@ private fun ProofForm(
             Column(Modifier.weight(1f).height(THUMB_HEIGHT), verticalArrangement = Arrangement.SpaceBetween) {
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Lucide.CircleCheck, null, Modifier.size(17.dp), tint = t.ok)
-                        Spacer(Modifier.width(6.dp))
-                        Text("Screenshot added", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Icon(Lucide.CircleCheck, null, Modifier.size(19.dp), tint = t.ok)
+                        Spacer(Modifier.width(7.dp))
+                        Text(
+                            "Screenshot added",
+                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp, lineHeight = 22.sp),
+                            fontWeight = FontWeight.Bold,
+                        )
                     }
                     Text(
-                        "Not the right one? Take another below.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = t.text3,
-                        modifier = Modifier.padding(top = 4.dp),
+                        "Not the right one?\nTake another below.",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.5.sp, lineHeight = 20.sp),
+                        color = t.text2,
+                        modifier = Modifier.padding(top = 5.dp),
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
