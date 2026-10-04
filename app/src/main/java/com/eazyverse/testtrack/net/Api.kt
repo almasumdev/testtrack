@@ -52,6 +52,17 @@ object Api {
         http
             .newBuilder()
             .addInterceptor { chain ->
+                // Our token is for our server only. A proof kept in Drive loads through this
+                // client too, and Google has no business being handed it.
+                if (!chain
+                        .request()
+                        .url
+                        .toString()
+                        .startsWith(BuildConfig.API_BASE)
+                ) {
+                    return@addInterceptor chain.proceed(chain.request())
+                }
+
                 fun withToken(token: String?) =
                     chain
                         .request()

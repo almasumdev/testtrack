@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.composables.icons.lucide.Camera
+import com.composables.icons.lucide.HardDrive
+import com.composables.icons.lucide.HardDriveUpload
 import com.composables.icons.lucide.Image
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -229,6 +231,51 @@ private fun ProofAction(
             color = t.accentInk,
             maxLines = 1,
         )
+    }
+}
+
+/**
+ * Drive is not connected yet. Said under the screenshot, before Send is tapped, with the one
+ * button that fixes it: the screenshot is kept in the reviewer's own Drive and the owner sees it
+ * by link, so nothing can be sent without it.
+ */
+@Composable
+fun DriveConnectCard(
+    busy: Boolean,
+    onConnect: () -> Unit,
+) {
+    val t = Tt.colors
+    val shape = RoundedCornerShape(CardRadius)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(t.glass)
+            .border(1.dp, t.glassBorder, shape)
+            .padding(start = 14.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(t.glass2),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Lucide.HardDriveUpload, null, Modifier.size(18.dp), tint = t.accentInk)
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                "Connect Google Drive",
+                style = MaterialTheme.typography.titleSmall.copy(fontSize = 14.5.sp, lineHeight = 19.sp),
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                "Your screenshot is saved to your Drive and shared with the owner by link.",
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
+                color = t.text2,
+            )
+        }
+        Spacer(Modifier.width(10.dp))
+        ProofAction(Lucide.HardDrive, if (busy) "Connecting" else "Connect", onClick = { if (!busy) onConnect() })
     }
 }
 

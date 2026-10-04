@@ -48,6 +48,10 @@ class TestingDriveViewModel : ViewModel() {
         }
     }
 
+    fun clearMessage() {
+        message = null
+    }
+
     fun consentResult(
         activity: Activity,
         data: Intent?,

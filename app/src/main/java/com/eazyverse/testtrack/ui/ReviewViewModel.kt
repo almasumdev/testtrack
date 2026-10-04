@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -9,11 +10,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.Device
+import com.eazyverse.testtrack.data.DriveFile
+import com.eazyverse.testtrack.data.DriveRepo
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.ProofStore
 import com.eazyverse.testtrack.data.ReviewCaptureService
 import com.eazyverse.testtrack.data.ReviewKeep
+import com.eazyverse.testtrack.data.Session
+import com.eazyverse.testtrack.data.UploadResult
 import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
@@ -314,24 +320,36 @@ class ReviewViewModel : ViewModel() {
         job = current.copy(leftReview = true)
     }
 
+    /** Whether the reviewer's Drive can take the screenshot. */
+    val driveConnected: Boolean get() = Session.driveConnected
+
+    /** Whether Drive is connected, asked of Google without showing anything. */
+    fun checkDrive(activity: Activity) {
+        viewModelScope.launch { Session.updateDriveConnected(AuthRepo.hasDriveAccess(activity)) }
+    }
+
     /**
      * The evidence, and the end of the reviewer's part.
      *
-     * Two calls, in this order, because the second needs what the first gives back: the image
-     * goes up and answers with a reference, and the review is submitted carrying it. Uploading
-     * first also means a submit that fails leaves an orphan file rather than a review claiming
-     * proof that was never stored.
+     * Two steps, in this order, because the second needs what the first gives back: the
+     * screenshot goes to the reviewer's Drive and answers with its id, and the review is
+     * submitted carrying it. Uploading first means a submit that fails leaves a spare file in
+     * their Drive rather than a review claiming proof that was never stored, and the id is kept
+     * so trying again does not upload it twice.
      */
     fun submit(
-        context: Context,
+        activity: Activity,
         proof: Uri,
         note: String,
     ) {
         val current = job ?: return
+        val context = activity.applicationContext
         // No message on success: the page itself turns into the sent screen.
         run(onOffline = { message = "You're offline. Your screenshot and note are saved; send them once you're back." }) {
-            val ref = upload(context, proof, ProofStore.mime(context, current.review.id))
-            keep(current.copy(review = Api.submit(current.review.id, ref, note)))
+            val id = current.review.id
+            val ref =
+                ProofStore.uploaded(context, id) ?: toDrive(activity, current, proof).also { ProofStore.markUploaded(context, id, it) }
+            keep(current.copy(review = Api.submit(id, ref, note)))
             offline = false
             ProofStore.forget(context, current.review.id)
             this.proof = null
@@ -340,23 +358,34 @@ class ReviewViewModel : ViewModel() {
     }
 
     /**
-     * Read the chosen image and send it.
+     * Put the screenshot in the reviewer's own Drive, shared by link, and return the reference
+     * the review is sent with: the same way a crew test's proof is kept. The picture is theirs,
+     * and only where it is reaches our server. See [proofSource].
      *
-     * Read through the resolver rather than as a file path: what the picker hands back is a grant
-     * to one item, not a location on disk, and on a modern Android there is no path behind it to
-     * open. The type comes from the resolver too, since the server checks it and a guess from the
-     * file extension is a guess.
+     * Without a Drive grant nothing is sent. The page shows how to connect, and the screenshot
+     * and note stay kept.
      */
-    private suspend fun upload(
-        context: Context,
+    private suspend fun toDrive(
+        activity: Activity,
+        current: ReviewJob,
         uri: Uri,
-        kept: String,
     ): String {
-        val resolver = context.contentResolver
-        val bytes =
-            resolver.openInputStream(uri)?.use { it.readBytes() }
+        val context = activity.applicationContext
+        val token = AuthRepo.driveTokenOrNull(activity)
+        if (token == null) {
+            Session.updateDriveConnected(false)
+            throw ApiError(0, "drive", "Connect Google Drive to send. Your screenshot is saved there and shared with the owner by link.")
+        }
+        val mime = context.contentResolver.getType(uri) ?: ProofStore.mime(context, current.review.id)
+        val name = "review_${current.post.packageName}_${current.review.id.take(8)}.${if (mime == "image/png") "png" else "jpg"}"
+        val read = {
+            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
                 ?: throw ApiError(400, "unreadable", "That image could not be read.")
-        return Api.upload(bytes, resolver.getType(uri) ?: kept).id
+        }
+        return when (val result = DriveRepo.upload(token, name, mime, read)) {
+            is UploadResult.Ok -> DRIVE_PREFIX + result.file.id
+            is UploadResult.Failed -> throw ApiError(0, "drive", result.reason)
+        }
     }
 
     /** Give the slot back so somebody else can take it. */
@@ -437,3 +466,13 @@ class ReviewViewModel : ViewModel() {
         const val USED = "used"
     }
 }
+
+/** A proof kept in the reviewer's own Drive is sent as this followed by the file's id. */
+const val DRIVE_PREFIX = "drive:"
+
+/**
+ * Where a proof's picture is fetched from. Drive, shared by link, for every proof sent now; our
+ * own server, behind the session, for the older ones that were uploaded there.
+ */
+fun proofSource(ref: String): String =
+    if (ref.startsWith(DRIVE_PREFIX)) DriveFile(ref.removePrefix(DRIVE_PREFIX), "").thumbUrl else Api.proofUrl(ref)

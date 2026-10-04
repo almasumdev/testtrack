@@ -55,6 +55,22 @@ object ProofStore {
                 .also { captured.delete() }
         }.getOrNull()
 
+    /**
+     * The kept screenshot's copy in the reviewer's Drive, once it is there. Sending can fail after
+     * the upload, offline for instance, and trying again then reuses this rather than putting a
+     * second copy in their Drive. A new screenshot clears it.
+     */
+    fun uploaded(
+        context: Context,
+        reviewId: String,
+    ): String? = prefs(context).getString("ref_$reviewId", null)
+
+    fun markUploaded(
+        context: Context,
+        reviewId: String,
+        ref: String,
+    ) = prefs(context).edit().putString("ref_$reviewId", ref).apply()
+
     fun note(
         context: Context,
         reviewId: String,
@@ -89,6 +105,7 @@ object ProofStore {
             .remove("mime_$reviewId")
             .remove("note_$reviewId")
             .remove("left_$reviewId")
+            .remove("ref_$reviewId")
             .apply()
     }
 
@@ -114,6 +131,7 @@ object ProofStore {
             .edit()
             .putString("file_$reviewId", target.name)
             .putString("mime_$reviewId", mime)
+            .remove("ref_$reviewId")
             .commit()
         old?.delete()
         return target

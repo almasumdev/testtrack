@@ -120,6 +120,17 @@ object DriveRepo {
         accessToken: String,
         file: File,
         fileName: String,
+    ): UploadResult = upload(accessToken, fileName, "image/jpeg") { file.readBytes() }
+
+    /**
+     * Uploads one image of any type, read only once Drive is reachable. A review's proof can be a
+     * PNG from the gallery as well as the camera button's JPEG.
+     */
+    suspend fun upload(
+        accessToken: String,
+        fileName: String,
+        mime: String,
+        bytes: () -> ByteArray,
     ): UploadResult =
         withContext(Dispatchers.IO) {
             try {
@@ -135,7 +146,7 @@ object DriveRepo {
                         .Builder()
                         .setType("multipart/related".toMediaType())
                         .addPart(metadata.toString().toRequestBody("application/json; charset=UTF-8".toMediaType()))
-                        .addPart(file.readBytes().toRequestBody("image/jpeg".toMediaType()))
+                        .addPart(bytes().toRequestBody(mime.toMediaType()))
                         .build()
 
                 val request =
@@ -180,7 +191,7 @@ object DriveRepo {
         when {
             code == 401 || code == 403 && body.contains("authError", true) -> {
                 Session.updateDriveConnected(false)
-                "Drive access has expired. Reconnect it on this testing screen to upload your saved proof."
+                "Drive access has expired. Connect Drive again to upload your saved proof."
             }
             body.contains("storageQuota", true) || body.contains("quotaExceeded", true) ->
                 "Your Google Drive is full, so the screenshot couldn't be saved. Free some space and " +

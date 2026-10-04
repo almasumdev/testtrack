@@ -288,13 +288,14 @@ fun ProofImage(
 ) {
     val context = LocalContext.current
     // The token-carrying client, and one loader rather than a new one on every recomposition.
+    // Drive needs no token: the file is shared by link.
     val loader = remember { ImageLoader.Builder(context).okHttpClient { Api.images }.build() }
 
     AsyncImage(
         model =
             ImageRequest
                 .Builder(context)
-                .data(Api.proofUrl(ref))
+                .data(proofSource(ref))
                 .crossfade(true)
                 .build(),
         contentDescription = "The screenshot sent as proof",

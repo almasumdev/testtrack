@@ -55,8 +55,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
+import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.TestingDriveViewModel
 import kotlinx.coroutines.delay
 
 /**
@@ -132,6 +134,23 @@ fun ReviewScreen(
         }
     }
 
+    // The proof goes to the reviewer's own Drive. Asked of Google quietly once step four is up;
+    // connecting is one sheet, and a Send that was waiting on it goes ahead as soon as it is done.
+    val activity = context.findActivity()
+    val drive: TestingDriveViewModel = viewModel()
+    var sendAfterDrive by remember { mutableStateOf<Pair<Uri, String>?>(null) }
+    val connected = {
+        sendAfterDrive?.let { (proof, note) -> vm.submit(activity, proof, note) }
+        sendAfterDrive = null
+    }
+    val driveSheet =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+            drive.consentResult(activity, it.data, connected)
+            if (!vm.driveConnected) sendAfterDrive = null
+        }
+    val atProof = vm.job?.step == ReviewStep.PROVE
+    LaunchedEffect(atProof) { if (atProof) vm.checkDrive(activity) }
+
     ReviewBody(
         post = post,
         job = vm.job,
@@ -146,8 +165,14 @@ fun ReviewScreen(
         busy = vm.busy,
         usageAccess = vm.usageAccess,
         onAllowUsage = { vm.openUsageSettings(context) },
-        message = vm.message,
-        onMessageDone = vm::clearMessage,
+        message = drive.message ?: vm.message,
+        onMessageDone = {
+            drive.clearMessage()
+            vm.clearMessage()
+        },
+        driveConnected = vm.driveConnected,
+        connectingDrive = drive.busy,
+        onConnectDrive = { drive.connect(activity, driveSheet::launch, connected) },
         offline = vm.offline,
         failure = vm.failure,
         onRetry = { vm.retry(context, post) },
@@ -162,7 +187,14 @@ fun ReviewScreen(
                 else -> Unit
             }
         },
-        onSend = { proof, note -> vm.submit(context, proof, note) },
+        onSend = { proof, note ->
+            if (vm.driveConnected) {
+                vm.submit(activity, proof, note)
+            } else {
+                sendAfterDrive = proof to note
+                drive.connect(activity, driveSheet::launch, connected)
+            }
+        },
     )
 
     if (guiding) {
@@ -221,6 +253,9 @@ fun ReviewBody(
     onPicked: (Uri) -> Unit = {},
     note: String = "",
     onNote: (String) -> Unit = {},
+    driveConnected: Boolean = true,
+    connectingDrive: Boolean = false,
+    onConnectDrive: () -> Unit = {},
 ) {
     // The system picker: permissionless, it hands back the one picture somebody chose. Whatever
     // comes back replaces the screenshot there was, whichever way that one came.
@@ -262,8 +297,13 @@ fun ReviewBody(
                     val asking = job.step == ReviewStep.USE && !usageAccess
                     // Step four cannot send until there is a screenshot to send.
                     val waitingForProof = job.step == ReviewStep.PROVE && shown == null
+                    val needsDrive = job.step == ReviewStep.PROVE && !driveConnected
                     Primary(
-                        if (asking) "Allow usage access" else stepAction(job.step, job),
+                        when {
+                            asking -> "Allow usage access"
+                            needsDrive -> "Connect Drive and send"
+                            else -> stepAction(job.step, job)
+                        },
                         tall = true,
                         busy = spinning,
                         enabled = !waitingForProof,
@@ -384,6 +424,10 @@ fun ReviewBody(
                                     pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                                 },
                             )
+                            if (!driveConnected) {
+                                Spacer(Modifier.height(12.dp))
+                                DriveConnectCard(connectingDrive, onConnectDrive)
+                            }
                         }
                         val asked = post.ask.trim()
                         if (!job.settled && job.step != ReviewStep.PROVE && asked.isNotEmpty() && asked != GENERAL_ASK) {
