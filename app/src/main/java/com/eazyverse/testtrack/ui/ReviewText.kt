@@ -20,11 +20,17 @@ internal fun ReviewAppRow(
     name: String,
     packageName: String,
     live: Boolean,
+    owner: String,
     offline: Boolean = false,
 ) {
     // The same header as the To check pages: one app looks the same wherever it is shown.
     Box(Modifier.padding(top = 4.dp)) {
-        AppHeader(name, packageName, if (live) CheckKind.PLAY else CheckKind.CLOSED) {
+        AppHeader(
+            name,
+            packageName,
+            if (live) CheckKind.PLAY else CheckKind.CLOSED,
+            detail = if (owner.isNotBlank()) "by $owner" else "",
+        ) {
             // Showing the last saved answer: still usable, just not this minute's.
             if (offline) {
                 Spacer(Modifier.width(8.dp))

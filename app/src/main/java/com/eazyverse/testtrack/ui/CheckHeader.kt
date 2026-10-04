@@ -1,7 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import android.os.Build
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
@@ -37,9 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -49,7 +45,6 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Scale
 import com.eazyverse.testtrack.ui.theme.Tt
-import com.eazyverse.testtrack.ui.theme.tabular
 import kotlinx.coroutines.launch
 
 /*
@@ -68,22 +63,22 @@ enum class CheckKind(
 
 /**
  * The app, exactly as tall as its icon: the name on one line, and under it the kind of review
- * and the package, also on one line. Either scrolls sideways when it does not fit rather than
- * wrapping and making the header taller than the icon.
+ * and an optional detail, also on one line. Either scrolls sideways when it does not fit rather
+ * than wrapping and making the header taller than the icon.
  *
- * Tapping the app opens it on Play. Tapping the package copies it, with no ripple; Android 13
- * and later announce a copy themselves, so the toast is only for older ones.
+ * The package is used, not shown: it finds the installed app's icon and opens its Play page when
+ * the app is tapped. Shown, it was the longest and least useful words on the page.
  */
 @Composable
 fun AppHeader(
     name: String,
     packageName: String,
     kind: CheckKind,
+    /** A short line after the pill, such as who posted it; nothing when blank. */
+    detail: String = "",
     trailing: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
-    val clipboard = LocalClipboardManager.current
-    val quiet = remember { MutableInteractionSource() }
     Row(
         Modifier
             .fillMaxWidth()
@@ -104,22 +99,12 @@ fun AppHeader(
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 KindPill(kind)
-                if (packageName.isNotBlank()) {
+                if (detail.isNotBlank()) {
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        packageName,
-                        Modifier
-                            .weight(1f, fill = false)
-                            .clickable(interactionSource = quiet, indication = null) {
-                                clipboard.setText(AnnotatedString(packageName))
-                                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                                    Toast.makeText(context, "Package name copied", Toast.LENGTH_SHORT).show()
-                                }
-                            }.basicMarquee(iterations = Int.MAX_VALUE),
-                        style =
-                            MaterialTheme.typography.bodySmall
-                                .copy(fontSize = 12.sp, lineHeight = 16.sp)
-                                .tabular(),
+                        detail,
+                        Modifier.weight(1f, fill = false).basicMarquee(iterations = Int.MAX_VALUE),
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 16.sp),
                         color = Tt.colors.text3,
                         maxLines = 1,
                     )
