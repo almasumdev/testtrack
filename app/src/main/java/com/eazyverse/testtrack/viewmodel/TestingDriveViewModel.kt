@@ -21,6 +21,19 @@ class TestingDriveViewModel : ViewModel() {
     var message by mutableStateOf<String?>(null)
         private set
 
+    /** Whether proof can go to Drive. Null until Google has been asked. */
+    var connected by mutableStateOf<Boolean?>(null)
+        private set
+
+    /** Ask Google without showing anything. The grant lives on the account, not on this phone. */
+    fun check(activity: Activity) {
+        viewModelScope.launch {
+            val granted = AuthRepo.hasDriveAccess(activity)
+            Session.updateDriveConnected(granted)
+            connected = granted
+        }
+    }
+
     fun connect(
         activity: Activity,
         launch: (IntentSenderRequest) -> Unit,
@@ -65,6 +78,7 @@ class TestingDriveViewModel : ViewModel() {
         onConnected: () -> Unit,
     ) {
         Session.updateDriveConnected(granted)
+        connected = granted
         if (granted) onConnected() else message = "Drive access wasn't granted. Your pending proof is kept so you can try again."
     }
 }

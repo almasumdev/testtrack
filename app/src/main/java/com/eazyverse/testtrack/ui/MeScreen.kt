@@ -46,6 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.CalendarDays
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.ExternalLink
+import com.composables.icons.lucide.HardDrive
 import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
@@ -53,8 +54,10 @@ import com.composables.icons.lucide.ShieldCheck
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.UserRound
 import com.eazyverse.testtrack.BuildConfig
+import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.net.ApiProfile
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.TestingDriveViewModel
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
@@ -81,6 +84,16 @@ fun MeScreen(
     var editing by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { vm.load(context) }
 
+    // Whether review and test proof can go to Drive, asked of Google each time the page opens.
+    val activity = context.findActivity()
+    val drive: TestingDriveViewModel = viewModel()
+    LaunchedEffect(vm.signedOut) { if (!vm.signedOut) drive.check(activity) }
+    val driveSheet =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+            drive.consentResult(activity, it.data) {}
+        }
+    val links = LocalUriHandler.current
+
     MeBody(
         profile = vm.profile,
         loading = vm.loading,
@@ -90,6 +103,15 @@ fun MeScreen(
         onSignOut = onSignOut,
         onSignIn = onSignIn,
         onOpenRanks = onOpenRanks,
+        drive = if (drive.busy) null else drive.connected,
+        // Connected, it opens the account's own page, where the access can be seen and removed.
+        onDrive = {
+            if (drive.connected == true) {
+                links.openUri(GOOGLE_CONNECTIONS)
+            } else {
+                drive.connect(activity, driveSheet::launch) {}
+            }
+        },
     )
 
     if (editing) {
@@ -113,6 +135,8 @@ fun MeBody(
     onSignOut: () -> Unit = {},
     onSignIn: () -> Unit = {},
     onOpenRanks: () -> Unit = {},
+    drive: Boolean? = null,
+    onDrive: () -> Unit = {},
 ) {
     if (signedOut) {
         Gated(
@@ -155,7 +179,7 @@ fun MeBody(
             )
         }
         item { SectionTitle("Account") }
-        item { Account(onEdit = onEdit, onSignOut = onSignOut) }
+        item { Account(onEdit = onEdit, onSignOut = onSignOut, drive = drive, onDrive = onDrive) }
         item { Spacer(Modifier.height(24.dp)) }
         item {
             Text(
@@ -283,6 +307,9 @@ private fun localTime(zone: String): String? =
 /** Where the policy and the deletion request live. The site owns both pages. */
 private const val SITE = "https://eazyverse.com/apps/testtrack"
 
+/** Google's list of apps with access to the account, where Drive access can be removed. */
+private const val GOOGLE_CONNECTIONS = "https://myaccount.google.com/connections"
+
 /**
  * Everything you can do to the account, as one group of tiles.
  *
@@ -294,19 +321,35 @@ private const val SITE = "https://eazyverse.com/apps/testtrack"
 private fun Account(
     onEdit: () -> Unit,
     onSignOut: () -> Unit,
+    drive: Boolean?,
+    onDrive: () -> Unit,
 ) {
     val links = LocalUriHandler.current
     val out: @Composable () -> Unit = {
         Icon(Lucide.ExternalLink, null, Modifier.size(17.dp), tint = Tt.colors.text4)
     }
-    TileGroup(count = 4) { index, place ->
+    TileGroup(count = 5) { index, place ->
         when (index) {
             0 -> TileRow(Lucide.Pencil, "Edit profile", place, subtitle = "Your name and picture", onClick = onEdit)
             1 ->
+                TileRow(
+                    Lucide.HardDrive,
+                    "Google Drive",
+                    place,
+                    subtitle = "Keeps your proof screenshots",
+                    value =
+                        when (drive) {
+                            true -> "Connected"
+                            false -> "Connect"
+                            null -> "Checking"
+                        },
+                    onClick = if (drive == null) null else onDrive,
+                )
+            2 ->
                 TileRow(Lucide.ShieldCheck, "Privacy policy", place, trailing = out) {
                     links.openUri("$SITE/privacy")
                 }
-            2 ->
+            3 ->
                 TileRow(Lucide.Trash2, "Delete account", place, subtitle = "And everything in it", trailing = out) {
                     links.openUri("$SITE/delete-account")
                 }
