@@ -28,14 +28,7 @@
     </clipPath>
   </defs>
   <g id="share">
-    <path d="M42 203 A158 152 0 1 0 358 203 A158 152 0 1 0 42 203 Z" fill="#32729B" opacity="0.08" />
     <path d="M67 356 A133 12 0 1 0 333 356 A133 12 0 1 0 67 356 Z" fill="#1D5C82" opacity="0.1" />
-    <path d="M45 95 H55 M50 90 V100" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M345 242 H353 M349 238 V246" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M302 53 H308 M305 50 V56" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M336 104 A4 4 0 1 0 344 104 A4 4 0 1 0 336 104 Z" fill="#F58B73" />
-    <path d="M51 287 A3 3 0 1 0 57 287 A3 3 0 1 0 51 287 Z" fill="#F58B73" />
-    <path d="M99 48 A3 3 0 1 0 105 48 A3 3 0 1 0 99 48 Z" fill="#F58B73" />
     <g id="app_listing" transform="rotate(5 225 199)">
       <path d="M132 93 H298 Q320 93 320 115 V310 Q320 332 298 332 H132 Q110 332 110 310 V115 Q110 93 132 93 Z" fill="#B7D1E2" />
       <path d="M126 85 H292 Q314 85 314 107 V302 Q314 324 292 324 H126 Q104 324 104 302 V107 Q104 85 126 85 Z" fill="#FFFCF1" />

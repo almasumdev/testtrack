@@ -53,17 +53,20 @@ def group(parent, name, transform=None):
     return ET.SubElement(parent, f"{{{SVG}}}g", attrs)
 
 
-def scene(name):
+def scene(name, orbit=False):
+    """A scene on the page itself: a soft ground shadow and nothing else behind it.
+
+    The pale disc that sat behind every scene was cut through by the phone, the cards and the
+    calendar, so it read as clutter rather than as ground; so did the scattered plus signs and
+    dots. Only the first page keeps a disc, because there it is the circle the three people
+    stand on.
+    """
     svg = ET.Element(f"{{{SVG}}}svg", {"viewBox": "0 0 400 400", "fill": "none"})
     svg.append(deepcopy(ROBOT.find(f"{{{SVG}}}defs")))
     root = group(svg, name)
-    root.append(ellipse(200, 203, 158, 152, BLUE, .08))
+    if orbit:
+        root.append(ellipse(200, 203, 158, 152, BLUE, .08))
     root.append(ellipse(200, 356, 133, 12, DEEP, .10))
-    # A restrained, shared decoration system on all three pages.
-    for x, y, s in [(50, 95, 5), (349, 242, 4), (305, 53, 3)]:
-        root.append(path(f"M{x-s} {y} H{x+s} M{x} {y-s} V{y+s}", stroke=BLUE, width=2))
-    for x, y, r in [(340, 104, 4), (54, 287, 3), (102, 48, 3)]:
-        root.append(ellipse(x, y, r, r, CORAL))
     return svg, root
 
 
@@ -95,7 +98,7 @@ def avatar(parent, name, x, y, shirt, hair):
 
 
 def together():
-    svg, g = scene("together")
+    svg, g = scene("together", orbit=True)
     g.append(path("M91 128 C71 226 94 304 172 325 M303 132 C342 222 311 297 247 324 "
                   "M118 87 Q200 34 281 88", stroke=BLUE, width=2, opacity=.28))
     avatar(g, "developer_left", 81, 122, CORAL, INK)

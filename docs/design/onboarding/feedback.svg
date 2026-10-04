@@ -28,14 +28,7 @@
     </clipPath>
   </defs>
   <g id="feedback">
-    <path d="M42 203 A158 152 0 1 0 358 203 A158 152 0 1 0 42 203 Z" fill="#32729B" opacity="0.08" />
     <path d="M67 356 A133 12 0 1 0 333 356 A133 12 0 1 0 67 356 Z" fill="#1D5C82" opacity="0.1" />
-    <path d="M45 95 H55 M50 90 V100" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M345 242 H353 M349 238 V246" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M302 53 H308 M305 50 V56" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M336 104 A4 4 0 1 0 344 104 A4 4 0 1 0 336 104 Z" fill="#F58B73" />
-    <path d="M51 287 A3 3 0 1 0 57 287 A3 3 0 1 0 51 287 Z" fill="#F58B73" />
-    <path d="M99 48 A3 3 0 1 0 105 48 A3 3 0 1 0 99 48 Z" fill="#F58B73" />
     <g id="test_phone" transform="translate(4 0)">
       <path d="M116 80 H234 Q261 80 261 107 V320 Q261 347 234 347 H116 Q89 347 89 320 V107 Q89 80 116 80 Z" fill="#B7D1E2" />
       <path d="M110 74 H228 Q255 74 255 101 V314 Q255 341 228 341 H110 Q83 341 83 314 V101 Q83 74 110 74 Z" fill="#1D5C82" />

@@ -30,12 +30,6 @@
   <g id="together">
     <path d="M42 203 A158 152 0 1 0 358 203 A158 152 0 1 0 42 203 Z" fill="#32729B" opacity="0.08" />
     <path d="M67 356 A133 12 0 1 0 333 356 A133 12 0 1 0 67 356 Z" fill="#1D5C82" opacity="0.1" />
-    <path d="M45 95 H55 M50 90 V100" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M345 242 H353 M349 238 V246" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M302 53 H308 M305 50 V56" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M336 104 A4 4 0 1 0 344 104 A4 4 0 1 0 336 104 Z" fill="#F58B73" />
-    <path d="M51 287 A3 3 0 1 0 57 287 A3 3 0 1 0 51 287 Z" fill="#F58B73" />
-    <path d="M99 48 A3 3 0 1 0 105 48 A3 3 0 1 0 99 48 Z" fill="#F58B73" />
     <path d="M91 128 C71 226 94 304 172 325 M303 132 C342 222 311 297 247 324 M118 87 Q200 34 281 88" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.28" />
     <g id="developer_left" transform="translate(81 122)">
       <path d="M-31 0 A31 31 0 1 0 31 0 A31 31 0 1 0 -31 0 Z" fill="#FFFCF1" />

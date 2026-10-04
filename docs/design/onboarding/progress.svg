@@ -28,14 +28,7 @@
     </clipPath>
   </defs>
   <g id="progress">
-    <path d="M42 203 A158 152 0 1 0 358 203 A158 152 0 1 0 42 203 Z" fill="#32729B" opacity="0.08" />
     <path d="M67 356 A133 12 0 1 0 333 356 A133 12 0 1 0 67 356 Z" fill="#1D5C82" opacity="0.1" />
-    <path d="M45 95 H55 M50 90 V100" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M345 242 H353 M349 238 V246" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M302 53 H308 M305 50 V56" fill="none" stroke="#32729B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M336 104 A4 4 0 1 0 344 104 A4 4 0 1 0 336 104 Z" fill="#F58B73" />
-    <path d="M51 287 A3 3 0 1 0 57 287 A3 3 0 1 0 51 287 Z" fill="#F58B73" />
-    <path d="M99 48 A3 3 0 1 0 105 48 A3 3 0 1 0 99 48 Z" fill="#F58B73" />
     <g id="progress_board" transform="rotate(5 214 191)">
       <path d="M119 87 H310 Q331 87 331 108 V277 Q331 298 310 298 H119 Q98 298 98 277 V108 Q98 87 119 87 Z" fill="#B7D1E2" />
       <path d="M113 78 H304 Q325 78 325 99 V268 Q325 289 304 289 H113 Q92 289 92 268 V99 Q92 78 113 78 Z" fill="#FFFCF1" />
