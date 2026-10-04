@@ -164,6 +164,7 @@ class FeedViewModel : ViewModel() {
                             reward = it.reward,
                             isLive = it.isLive,
                             decideBy = millis(it.decideBy) ?: millis(it.submittedAt)?.plus(TWO_DAYS),
+                            packageName = it.packageName,
                         )
                     }
                 disputes =
@@ -177,6 +178,9 @@ class FeedViewModel : ViewModel() {
                             stake = it.stake,
                             votesCast = it.votesCast,
                             votesNeeded = it.votesNeeded,
+                            packageName = it.packageName,
+                            reward = it.reward,
+                            isLive = it.isLive,
                         )
                     }
                 offline = false

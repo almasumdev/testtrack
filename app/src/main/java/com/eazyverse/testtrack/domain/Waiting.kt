@@ -28,6 +28,8 @@ data class Waiting(
     val isLive: Boolean = true,
     /** When it accepts itself if nobody answers, in epoch milliseconds; null when unknown. */
     val decideBy: Long? = null,
+    /** The app's package, for its icon and its Play page. Blank from an older server. */
+    val packageName: String = "",
 )
 
 private const val HOUR = 3_600_000L
@@ -73,4 +75,8 @@ data class Case(
     val stake: Int = 0,
     val votesCast: Int = 0,
     val votesNeeded: Int = 0,
+    val packageName: String = "",
+    /** What the review in dispute would pay. */
+    val reward: Int = 0,
+    val isLive: Boolean = true,
 )

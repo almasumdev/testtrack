@@ -223,10 +223,19 @@ fun ReviewCheck(
             Secondary("Refuse", Modifier.weight(1f).height(48.dp), destructive = true, enabled = !busy, onClick = onReject)
         },
     ) {
-        CheckHeader(
-            review.appName,
-            "by ${review.reviewerName.ifBlank { "a reviewer" }} · ${if (review.isLive) "Play review" else "Closed test"}",
-        ) { if (until != null) TimeChip(timeLeft(until, now), closeTo(until, now)) }
+        AppHeader(review.appName, review.packageName, if (review.isLive) CheckKind.PLAY else CheckKind.CLOSED)
+        Spacer(Modifier.height(12.dp))
+        StatTiles(
+            listOf(
+                Stat("Reviewer", review.reviewerName.ifBlank { "Unknown" }),
+                if (until != null) {
+                    Stat("Time left", timeLeft(until, now), warn = closeTo(until, now))
+                } else {
+                    Stat("Time left", "2 days")
+                },
+                Stat("Pays", if (review.reward > 0) "${review.reward} tix" else "-"),
+            ),
+        )
         if (review.written.isNotBlank()) Said("Their note", review.written)
         if (review.proofRef.isNotBlank()) {
             Spacer(Modifier.height(14.dp))
@@ -268,9 +277,15 @@ fun CaseCheck(
             Secondary("The review stands", Modifier.weight(1f).height(48.dp), enabled = !busy) { onVote(true) }
         },
     ) {
-        CheckHeader(case.appName, "Disputed review") {
-            Pill("${case.votesCast} of ${case.votesNeeded}", Tt.colors.warn, Tt.colors.warnBg)
-        }
+        AppHeader(case.appName, case.packageName, CheckKind.DISPUTED)
+        Spacer(Modifier.height(12.dp))
+        StatTiles(
+            listOf(
+                Stat("Votes", "${case.votesCast} of ${case.votesNeeded}"),
+                Stat("Stake", "${case.stake} tix"),
+                Stat("Review pays", if (case.reward > 0) "${case.reward} tix" else "-"),
+            ),
+        )
         Said("The developer says", case.reason)
         if (case.written.isNotBlank()) Said("The reviewer's note", case.written)
         if (case.proofRef.isNotBlank()) {
@@ -309,36 +324,6 @@ private fun CheckPage(
             verticalAlignment = Alignment.CenterVertically,
             content = actions,
         )
-    }
-}
-
-@Composable
-private fun CheckHeader(
-    appName: String,
-    detail: String,
-    chip: @Composable () -> Unit,
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        AppTile(appName, size = 48.dp)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f).height(48.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                appName,
-                style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, lineHeight = 20.sp),
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                detail,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 17.sp),
-                color = Tt.colors.text3,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.width(8.dp))
-        chip()
     }
 }
 

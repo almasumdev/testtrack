@@ -52,6 +52,8 @@ fun AppIcon(
      * text beside it came out at, and [size] is then only the corner radius it is rounded by.
      */
     modifier: Modifier = Modifier.size(size),
+    /** Drawn when the app is not on the phone; the grey lettered square when not given. */
+    fallback: (@Composable () -> Unit)? = null,
 ) {
     val context = LocalContext.current
     // The revision is a key here too. An app that was absent cached a null icon, and without this
@@ -69,6 +71,8 @@ fun AppIcon(
             contentScale = ContentScale.Crop,
             modifier = modifier.clip(shape),
         )
+    } else if (fallback != null) {
+        fallback()
     } else {
         Box(
             modifier.clip(shape).background(Status.neutralSoft),

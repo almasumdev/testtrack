@@ -188,6 +188,8 @@ data class ApiDispute(
     @SerialName("votes_cast") val votesCast: Int,
     @SerialName("votes_needed") val votesNeeded: Int,
     val outcome: String,
+    @SerialName("package_name") val packageName: String = "",
+    val reward: Int = 0,
 )
 
 @Serializable

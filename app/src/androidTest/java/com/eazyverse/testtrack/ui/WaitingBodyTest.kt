@@ -99,7 +99,7 @@ class WaitingBodyTest {
         }
 
         compose.onNodeWithText("Chalo Transit").assertIsDisplayed()
-        compose.onNodeWithText("15 tix", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("15 tix").assertIsDisplayed()
         compose.onNodeWithText("1 of 3").assertIsDisplayed()
 
         compose.onNodeWithText("The review stands").performClick()
