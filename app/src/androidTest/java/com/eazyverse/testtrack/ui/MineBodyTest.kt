@@ -59,6 +59,14 @@ class MineBodyTest {
     }
 
     @Test
+    fun a_sent_review_opens_too_to_see_where_it_stands() {
+        var opened: String? = null
+        open(listOf(review("b", "submitted", "Porua")), onOpen = { opened = it.id })
+        compose.onNodeWithText("Porua").performClick()
+        assertEquals("b", opened)
+    }
+
+    @Test
     fun a_refused_review_says_why() {
         open(listOf(review("c", "rejected", reason = "The screenshot is of another app.")))
         compose.onNodeWithText("The screenshot is of another app.").assertIsDisplayed()

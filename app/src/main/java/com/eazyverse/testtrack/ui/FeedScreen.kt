@@ -224,10 +224,7 @@ fun FeedScreen(
                         loading = vm.loading,
                         signedOut = vm.signedOut,
                         onSignIn = onSignIn,
-                        // Back into a review still in progress, when its post is still open.
-                        onOpen = { review ->
-                            vm.posts.firstOrNull { it.id == review.postId }?.let { onReview(Json.encodeToString(it)) }
-                        },
+                        onOpen = { review -> onReview(Json.encodeToString(vm.postFor(review))) },
                     )
 
                 FeedTab.WAITING ->

@@ -35,6 +35,30 @@ class FeedViewModel : ViewModel() {
      */
     val openPosts: List<ApiPost> get() = posts.filter { it.myState !in SentStates }
 
+    /**
+     * The post to open one of my reviews through. The live one when it is still on the feed;
+     * otherwise rebuilt from the review itself, since a post that has had all its reviews is gone
+     * from the feed but its reviews still need opening. Either way it names the review, so the
+     * page opens that one rather than claiming a new one.
+     */
+    fun postFor(review: MyReview): ApiPost =
+        posts.firstOrNull { it.id == review.postId }?.copy(myReviewId = review.id, myState = review.state)
+            ?: ApiPost(
+                id = review.postId,
+                appName = review.appName,
+                packageName = review.packageName,
+                ask = "",
+                isLive = review.isLive,
+                reward = review.reward,
+                reviewsBought = 0,
+                reviewsDone = 0,
+                ownerName = "",
+                mine = false,
+                myReviewId = review.id,
+                myState = review.state,
+                createdAt = "",
+            )
+
     /** This account's own reviews, for the Mine tab. */
     var mine by mutableStateOf<List<MyReview>>(emptyList())
         private set
@@ -116,6 +140,8 @@ class FeedViewModel : ViewModel() {
                             state = it.state,
                             reward = it.reward,
                             reason = it.reason,
+                            packageName = it.packageName,
+                            isLive = it.isLive,
                         )
                     }
                 // Both duties, fetched with the feed rather than when the tab is opened: the

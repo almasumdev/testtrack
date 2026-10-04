@@ -39,9 +39,11 @@ data class MyReview(
     val state: String,
     val reward: Int,
     val reason: String,
+    val packageName: String = "",
+    val isLive: Boolean = false,
 )
 
-/** States a review is still being worked on in; tapping one goes back to it. */
+/** States a review is still being worked on in. Tapping any row opens its review page. */
 val InProgressStates = setOf("claimed", "installed", "used")
 
 /** Sent, and with the developer (or the members deciding a dispute). */
@@ -91,8 +93,9 @@ fun MineBody(
         // is for separating it from the section before, and the first has none.
         val first = listOf(going, pending, history).firstOrNull { it.isNotEmpty() }
         section("In progress", going, onOpen, first === going)
-        section("Waiting for the developer", pending, null, first === pending)
-        section("History", history, null, first === history)
+        // Every row opens its review: one in progress at its step, a sent one at its outcome.
+        section("Waiting for the developer", pending, onOpen, first === pending)
+        section("History", history, onOpen, first === history)
     }
 }
 
