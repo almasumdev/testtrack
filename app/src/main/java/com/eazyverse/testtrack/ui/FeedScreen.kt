@@ -288,7 +288,8 @@ fun ProofImage(
     whole: Boolean = false,
 ) {
     val context = LocalContext.current
-    val loader = ImageLoader.Builder(context).okHttpClient { Api.http }.build()
+    // The token-carrying client, and one loader rather than a new one on every recomposition.
+    val loader = remember { ImageLoader.Builder(context).okHttpClient { Api.images }.build() }
 
     AsyncImage(
         model =

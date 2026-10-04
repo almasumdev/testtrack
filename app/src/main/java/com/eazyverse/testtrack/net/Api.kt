@@ -31,8 +31,8 @@ object Api {
     /**
      * Shared, because an image loader needs the same client and the same token.
      *
-     * A proof screenshot is served by this API and refused without a session, so the only way to
-     * put one on screen is to fetch it the way everything else is fetched. See [ProofImage].
+     * A proof screenshot is served by this API and refused without a session, so it is fetched
+     * through [images], which puts the session on it. See [ProofImage].
      */
     val http =
         OkHttpClient
@@ -40,6 +40,29 @@ object Api {
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
+
+    /**
+     * The client for proof screenshots: [http] with the session's token added to every request,
+     * and refreshed once on a 401, the same as [send] does for JSON.
+     *
+     * The image loader used to be handed [http] itself, which carries no token, so every proof
+     * request was refused and no screenshot ever showed.
+     */
+    val images: OkHttpClient =
+        http
+            .newBuilder()
+            .addInterceptor { chain ->
+                fun withToken() =
+                    chain
+                        .request()
+                        .newBuilder()
+                        .apply { ApiSession.access?.let { header("Authorization", "Bearer $it") } }
+                        .build()
+                val first = chain.proceed(withToken())
+                if (first.code != 401 || !refreshQuietly()) return@addInterceptor first
+                first.close()
+                chain.proceed(withToken())
+            }.build()
 
     @PublishedApi internal fun url(path: String) = BuildConfig.API_BASE + path
 
