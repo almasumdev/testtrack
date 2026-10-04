@@ -137,7 +137,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
     first: Boolean,
 ) {
     if (rows.isEmpty()) return
-    item(key = "h-$title") { CrewHeading(title, "${rows.size}", top = if (first) 2.dp else 20.dp) }
+    item(key = "h-$title") { CrewHeading(title, "${rows.size}", top = if (first) 0.dp else 20.dp) }
     if (rows.first().state in InProgressStates) {
         items(rows, key = { it.id }) { review ->
             Box(Modifier.padding(horizontal = Gutter, vertical = 4.dp)) {

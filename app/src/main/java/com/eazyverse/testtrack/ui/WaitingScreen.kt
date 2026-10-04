@@ -83,7 +83,7 @@ fun WaitingBody(
     ) {
         val now = System.currentTimeMillis()
         if (reviews.isNotEmpty()) {
-            item(key = "h-reviews") { CrewHeading("Reviews of your apps", "${reviews.size}", top = 2.dp) }
+            item(key = "h-reviews") { CrewHeading("Reviews of your apps", "${reviews.size}", top = 0.dp) }
             item(key = "reviews") {
                 CheckGroup(reviews.size) { index ->
                     val review = reviews[index]
@@ -105,7 +105,7 @@ fun WaitingBody(
         }
         if (disputes.isNotEmpty()) {
             item(key = "h-cases") {
-                CrewHeading("Cases to decide", "${disputes.size}", top = if (reviews.isEmpty()) 2.dp else 20.dp)
+                CrewHeading("Cases to decide", "${disputes.size}", top = if (reviews.isEmpty()) 0.dp else 20.dp)
             }
             item(key = "cases") {
                 CheckGroup(disputes.size) { index ->

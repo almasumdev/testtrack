@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -289,7 +291,7 @@ fun CrewHeading(
 ) {
     Row(
         Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = top, bottom = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
     ) {
         Text(
             text,
@@ -299,8 +301,12 @@ fun CrewHeading(
         )
         val count = trailing?.toIntOrNull()
         if (count != null) {
-            Spacer(Modifier.width(8.dp))
-            CountBadge(count)
+            Spacer(Modifier.width(5.dp))
+            // Raised beside the word and given no height of its own, so the heading is exactly as
+            // tall as its words and starts where the first card on any other tab starts.
+            Box(Modifier.height(19.dp).wrapContentHeight(Alignment.Top, unbounded = true).offset(y = (-7).dp)) {
+                CountBadge(count)
+            }
         }
         Spacer(Modifier.weight(1f))
         if (trailing != null && count == null) {
