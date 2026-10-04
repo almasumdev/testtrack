@@ -234,22 +234,17 @@ class ReviewBodyTest {
     }
 
     @Test
-    fun the_proof_dialog_will_not_send_until_a_screenshot_is_chosen() {
+    fun without_a_screenshot_step_four_offers_both_ways_and_will_not_send() {
         var sent = 0
         open("used", leftReview = true, onSend = { _, _ -> sent++ })
 
-        compose.onNodeWithText("Send the proof").performClick()
-        compose.onNodeWithText("Prove you left it").assertIsDisplayed()
+        // Both ways to get one are on the page itself, not behind a dialog.
+        compose.onNodeWithText("Capture on Play").assertIsDisplayed()
+        compose.onNodeWithText("Choose from gallery").assertIsDisplayed()
 
-        // Nothing chosen, so it cannot be used. A proof step that accepts an empty proof sends
-        // the developer a rejection they cannot judge.
-        compose.onNodeWithText("Use it").assertIsNotEnabled()
+        // Nothing to send yet. A proof step that accepts an empty proof sends the developer a
+        // rejection they cannot judge.
+        compose.onNodeWithText("Send the proof").assertIsNotEnabled()
         assertEquals(0, sent)
-
-        // And it says where the screenshot comes from, since nothing in the app takes one.
-        compose.onNodeWithText("Choose the screenshot").assertIsDisplayed()
-        compose
-            .onNodeWithText("Your phone's own screenshot", substring = true)
-            .assertIsDisplayed()
     }
 }

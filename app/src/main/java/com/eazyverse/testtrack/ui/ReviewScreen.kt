@@ -7,6 +7,7 @@ import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -218,8 +219,12 @@ fun ReviewBody(
     proof: Uri? = null,
     onRetake: () -> Unit = {},
 ) {
-    var proving by remember { mutableStateOf(false) }
     var picked by remember { mutableStateOf<Uri?>(null) }
+    // The system picker: permissionless, it hands back the one picture somebody chose.
+    val pick =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) picked = uri
+        }
     var note by remember { mutableStateOf("") }
     val shown = proof ?: picked
     val t = Tt.colors
@@ -245,7 +250,13 @@ fun ReviewBody(
             if (job != null && !job.settled) {
                 Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp)) {
                     val asking = job.step == ReviewStep.USE && !usageAccess
-                    Primary(if (asking) "Allow usage access" else stepAction(job.step, job), tall = true) {
+                    // Step four cannot send until there is a screenshot to send.
+                    val waitingForProof = job.step == ReviewStep.PROVE && shown == null
+                    Primary(
+                        if (asking) "Allow usage access" else stepAction(job.step, job),
+                        tall = true,
+                        enabled = !waitingForProof,
+                    ) {
                         if (asking) {
                             onAllowUsage()
                             return@Primary
@@ -256,7 +267,7 @@ fun ReviewBody(
                         when {
                             step != ReviewStep.PROVE -> onLeave(step)
                             shown != null -> onSend(shown, note.trim())
-                            else -> proving = true
+                            else -> Unit
                         }
                     }
                 }
@@ -323,6 +334,15 @@ fun ReviewBody(
                             )
                         }
                     }
+                    if (!job.settled && job.step == ReviewStep.PROVE && shown == null) {
+                        Spacer(Modifier.height(gap))
+                        ProofChoices(
+                            onCapture = onRetake,
+                            onGallery = {
+                                pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            },
+                        )
+                    }
                     if (!job.settled && job.step == ReviewStep.PROVE && shown != null) {
                         Spacer(Modifier.height(gap))
                         ProofForm(
@@ -343,17 +363,6 @@ fun ReviewBody(
                 }
             }
         }
-    }
-
-    if (proving) {
-        ReviewProofDialog(
-            busy = busy,
-            onSend = { chosen ->
-                proving = false
-                picked = chosen
-            },
-            onDismiss = { proving = false },
-        )
     }
 }
 
@@ -420,7 +429,7 @@ private fun stepLine(job: ReviewJob): String =
             } else {
                 "Use “Send feedback” on its Play page, then come back with a screenshot."
             }
-        ReviewStep.PROVE -> "A screenshot of what you left on Play."
+        ReviewStep.PROVE -> "Add a screenshot of what you left on Play."
         ReviewStep.WAIT -> ""
     }
 

@@ -25,6 +25,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.composables.icons.lucide.Camera
+import com.composables.icons.lucide.Image
+import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -136,3 +139,36 @@ fun ProofForm(
 }
 
 private const val NOTE_MAX = 600
+
+/**
+ * Step four with no screenshot yet: the two ways to get one, right on the page.
+ *
+ * Coming back from Play without pressing the camera button (or after saying no to screen capture)
+ * lands here. The automatic way is offered first because it is one tap on Play; the gallery is for
+ * a screenshot taken by hand.
+ */
+@Composable
+fun ProofChoices(
+    onCapture: () -> Unit,
+    onGallery: () -> Unit,
+) {
+    TileGroup(count = 2) { index, place ->
+        if (index == 0) {
+            TileRow(
+                Lucide.Camera,
+                "Capture on Play",
+                place,
+                subtitle = "Opens Play with the camera button",
+                onClick = onCapture,
+            )
+        } else {
+            TileRow(
+                Lucide.Image,
+                "Choose from gallery",
+                place,
+                subtitle = "A screenshot you took yourself",
+                onClick = onGallery,
+            )
+        }
+    }
+}
