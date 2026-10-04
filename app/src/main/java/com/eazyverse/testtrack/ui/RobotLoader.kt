@@ -25,13 +25,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -57,6 +63,73 @@ fun RobotLoader(
     modifier: Modifier = Modifier,
     size: Dp = 96.dp,
     label: String? = null,
+) {
+    val t = Tt.colors
+    RobotFigure(modifier, size, label ?: "Loading", label) { center, shine, turn ->
+        // A light orb held between the hands, so the arrows read on the dark body in either
+        // theme, with a halo that breathes behind it.
+        orb(center, shine, t.accentInk, t.glass)
+        rotate(turn, center) {
+            repeat(2) { i -> arrow(center, 110f, i * 180f, t.accentInk) }
+        }
+    }
+}
+
+/**
+ * The robot holding something that says how a review stands, in place of the app icon's check
+ * cards and arrows: an hourglass that turns over now and then while it waits, a tick once it is
+ * approved. Same hover and blink as the loader, so it is plainly the same robot.
+ */
+@Composable
+fun RobotHolding(
+    icon: ImageVector,
+    tone: Color,
+    modifier: Modifier = Modifier,
+    size: Dp = 96.dp,
+    turning: Boolean = false,
+    description: String? = null,
+) {
+    val t = Tt.colors
+    val painter = rememberVectorPainter(icon)
+    val loop = rememberInfiniteTransition(label = "Robot holding")
+    // Still for a while, then over in half a second: an hourglass being turned, not a spinner.
+    val over by loop.animateFloat(
+        0f,
+        180f,
+        infiniteRepeatable(
+            keyframes {
+                durationMillis = 3200
+                0f at 0
+                0f at 2500
+                180f at 3100 using FastOutSlowInEasing
+                180f at 3200
+            },
+        ),
+        label = "turn over",
+    )
+    val flip = if (turning && ValueAnimator.areAnimatorsEnabled()) over else 0f
+    RobotFigure(modifier, size, description ?: "", null) { center, shine, _ ->
+        orb(center, shine, tone, t.glass)
+        rotate(flip, center) {
+            val side = 190f
+            translate(center.x - side / 2f, center.y - side / 2f) {
+                with(painter) { draw(Size(side, side), colorFilter = ColorFilter.tint(tone)) }
+            }
+        }
+    }
+}
+
+/**
+ * The robot itself: body, breathing head, blinking eyes, swaying antenna, hovering over its
+ * shadow, with [held] drawn between its hands in the badge's own 880 by 980 space.
+ */
+@Composable
+private fun RobotFigure(
+    modifier: Modifier,
+    size: Dp,
+    description: String,
+    label: String?,
+    held: DrawScope.(center: Offset, shine: Float, turn: Float) -> Unit,
 ) {
     val t = Tt.colors
     val moving = ValueAnimator.areAnimatorsEnabled()
@@ -96,7 +169,7 @@ fun RobotLoader(
     val height = size * (980f / 880f)
 
     Column(
-        modifier.semantics(mergeDescendants = true) { contentDescription = label ?: "Loading" },
+        modifier.semantics(mergeDescendants = true) { contentDescription = description },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(Modifier.size(size, height + size * 0.16f), contentAlignment = Alignment.BottomCenter) {
@@ -135,7 +208,7 @@ fun RobotLoader(
                         rotationZ = (lift - 0.5f) * 8f
                     },
                 )
-                // The magic: two arrows circling where the badge's plaque sits, in a soft glow.
+                // Whatever it holds, where the badge's plaque sits.
                 Canvas(Modifier.matchParentSize()) {
                     val factor = minOf(this.size.width / 880f, this.size.height / 980f)
                     withTransform({
@@ -143,24 +216,7 @@ fun RobotLoader(
                         scale(factor, factor, Offset.Zero)
                         translate(-185f, -110f)
                     }) {
-                        // A light orb held between the hands, so the arrows read on the dark body in
-                        // either theme, with a halo that breathes behind it.
-                        val center = Offset(627f, 905f)
-                        val halo = 240f + shine * 30f
-                        drawCircle(
-                            Brush.radialGradient(
-                                listOf(t.accentInk.copy(alpha = 0.32f + shine * 0.18f), t.accentInk.copy(alpha = 0f)),
-                                center,
-                                halo,
-                            ),
-                            halo,
-                            center,
-                        )
-                        drawCircle(t.glass, 172f, center)
-                        drawCircle(t.accentInk.copy(alpha = 0.35f), 172f, center, style = Stroke(10f))
-                        rotate(turn, center) {
-                            repeat(2) { i -> arrow(center, 110f, i * 180f, t.accentInk) }
-                        }
+                        held(Offset(627f, 905f), shine, turn)
                     }
                 }
                 Image(painterResource(R.drawable.level_robot_hands), null, Modifier.matchParentSize())
@@ -173,12 +229,29 @@ fun RobotLoader(
     }
 }
 
+/** The light orb the robot holds things in, with a halo in [tone] that breathes behind it. */
+private fun DrawScope.orb(
+    center: Offset,
+    shine: Float,
+    tone: Color,
+    fill: Color,
+) {
+    val halo = 240f + shine * 30f
+    drawCircle(
+        Brush.radialGradient(listOf(tone.copy(alpha = 0.32f + shine * 0.18f), tone.copy(alpha = 0f)), center, halo),
+        halo,
+        center,
+    )
+    drawCircle(fill, 172f, center)
+    drawCircle(tone.copy(alpha = 0.35f), 172f, center, style = Stroke(10f))
+}
+
 /** One curved arrow: an arc of a circle from [start] degrees, with its head at the leading end. */
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.arrow(
+private fun DrawScope.arrow(
     center: Offset,
     radius: Float,
     start: Float,
-    color: androidx.compose.ui.graphics.Color,
+    color: Color,
 ) {
     val sweep = 125f
     val stroke = 30f

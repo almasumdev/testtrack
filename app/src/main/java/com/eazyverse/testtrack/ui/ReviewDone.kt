@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -23,11 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -39,13 +34,12 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Users
 import com.composables.icons.lucide.WifiOff
 import com.composables.icons.lucide.X
-import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * The review page's two ends that are not a step: the review sent and out of the reviewer's hands,
  * and the first load that could not happen. Both are the TestTrack robot with a badge saying how
- * things stand.
+ * things stand, held between its hands.
  */
 
 /** Where one stage of a sent review has got to. */
@@ -70,14 +64,20 @@ internal fun ReviewDone(
             "approved" -> Triple(Lucide.Check, t.ok, "Approved")
             "disputed" -> Triple(Lucide.Users, t.warn, "Being decided")
             "rejected" -> Triple(Lucide.X, t.bad, "Not paid")
-            else -> Triple(Lucide.Check, t.ok, "Sent to the developer")
+            else -> Triple(Lucide.Hourglass, t.accentInk, "Sent to the developer")
         }
     Column(
         Modifier.fillMaxWidth().heightIn(min = room - 64.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        RobotWithBadge(badge, tone, size = (room * 0.22f).coerceIn(104.dp, 144.dp))
+        RobotHolding(
+            badge,
+            tone,
+            size = (room * 0.2f).coerceIn(96.dp, 132.dp),
+            turning = state == "submitted",
+            description = title,
+        )
         Spacer(Modifier.height(18.dp))
         Text(
             title,
@@ -142,7 +142,7 @@ internal fun ReviewFailed(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        RobotWithBadge(Lucide.WifiOff, t.text3, size = (room * 0.2f).coerceIn(96.dp, 132.dp), dim = true)
+        RobotHolding(Lucide.WifiOff, t.text3, size = (room * 0.18f).coerceIn(88.dp, 120.dp))
         Spacer(Modifier.height(18.dp))
         Text("Can't open this review", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(6.dp))
@@ -153,37 +153,6 @@ internal fun ReviewFailed(
             color = t.text2,
             textAlign = TextAlign.Center,
         )
-    }
-}
-
-/** The app's robot, with a round badge on its shoulder saying how things stand. */
-@Composable
-private fun RobotWithBadge(
-    icon: ImageVector,
-    tone: Color,
-    size: Dp,
-    dim: Boolean = false,
-) {
-    val t = Tt.colors
-    Box(Modifier.size(size)) {
-        Image(
-            painterResource(R.drawable.testtrack_robot),
-            contentDescription = null,
-            modifier = Modifier.size(size).alpha(if (dim) 0.55f else 1f),
-        )
-        Box(
-            Modifier
-                .align(Alignment.BottomEnd)
-                .size(size * 0.32f)
-                .clip(CircleShape)
-                .background(t.bg)
-                .padding(3.dp)
-                .clip(CircleShape)
-                .background(tone),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, null, Modifier.size(size * 0.17f), tint = t.bg)
-        }
     }
 }
 
