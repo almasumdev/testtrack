@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -67,6 +68,11 @@ object Routes {
     const val REVIEW = "review?post={post}"
 
     fun review(post: String) = "review?post=${Uri.encode(post)}"
+
+    /** A review of your app, or a case to decide, on its own page. */
+    const val CHECK = "check/{id}"
+
+    fun check(id: String) = "check/${Uri.encode(id)}"
 
     // The name is carried along, not looked up: whoever is navigating here almost always already
     // has it on screen (a row in Home, a row in Group), and showing that immediately in the app
@@ -308,6 +314,7 @@ fun AppNav(
                 onSubmitApp = { nav.push(Routes.SUBMIT) },
                 onAskForFeedback = { nav.push(Routes.ASK) },
                 onReview = { nav.push(Routes.review(it)) },
+                onCheck = { nav.push(Routes.check(it)) },
                 // The same teardown the other two do, and for the same reason: `replace` pops
                 // everything above the graph root, so the shell does not survive underneath a
                 // signed-out profile for Back to land on.
@@ -329,6 +336,16 @@ fun AppNav(
             val post = remember(entry) { Json.decodeFromString<ApiPost>(requireNotNull(entry.arguments?.getString("post"))) }
             Inset {
                 ReviewScreen(post = post, onClose = { nav.popBackStack() })
+            }
+        }
+
+        composable(Routes.CHECK, arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
+            // The Circle tab's own view model, borrowed from the home entry underneath: the review
+            // is already loaded there, and deciding it there reloads the list this goes back to.
+            val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
+            val feed: FeedViewModel = viewModel(home)
+            Inset {
+                CheckScreen(feed, requireNotNull(entry.arguments?.getString("id")), onClose = { nav.popBackStack() })
             }
         }
 

@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -27,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,7 +42,6 @@ import coil.request.ImageRequest
 import com.composables.icons.lucide.Activity
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Megaphone
-import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.net.Api
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -75,10 +72,10 @@ fun FeedScreen(
     onAsk: () -> Unit = {},
     onReview: (String) -> Unit = {},
     onSignIn: () -> Unit = {},
+    /** Open a review of your app, or a case, on a page of its own, by id. */
+    onCheck: (String) -> Unit = {},
     vm: FeedViewModel = viewModel(),
 ) {
-    /** The review being refused, which needs a reason before anything is charged. */
-    var refusing by remember { mutableStateOf<Waiting?>(null) }
     val context = LocalContext.current
 
     // Reloaded on every arrival rather than once. Coming back from a review is the commonest way
@@ -97,45 +94,6 @@ fun FeedScreen(
      * every frame of the scroll that produced it.
      */
     val askOffScreen by remember { derivedStateOf { feedbackList.firstVisibleItemIndex > 0 } }
-
-    // A review or case open on its own page takes the whole tab until it is decided or backed out of.
-    val checkingReview = vm.waiting.firstOrNull { it.id == vm.checking }
-    val checkingCase = vm.disputes.firstOrNull { it.id == vm.checking }
-    BackHandler(enabled = vm.checking != null) { vm.closeCheck() }
-    if (checkingReview != null || checkingCase != null) {
-        Column(Modifier.fillMaxSize()) {
-            PageMessage(vm.message, vm::clearMessage)
-            if (checkingReview != null) {
-                ReviewCheck(
-                    checkingReview,
-                    busy = vm.busy,
-                    proof = { ref -> ProofImage(ref, whole = true) },
-                    onBack = vm::closeCheck,
-                    onApprove = { vm.approve(context, checkingReview) },
-                    onReject = { refusing = checkingReview },
-                )
-            } else if (checkingCase != null) {
-                CaseCheck(
-                    checkingCase,
-                    busy = vm.busy,
-                    proof = { ref -> ProofImage(ref, whole = true) },
-                    onBack = vm::closeCheck,
-                    onVote = { forReviewer -> vm.vote(context, checkingCase, forReviewer) },
-                )
-            }
-        }
-        refusing?.let { review ->
-            FeedRefuseDialog(
-                appName = review.appName,
-                onRefuse = { reason ->
-                    refusing = null
-                    vm.reject(context, review, reason)
-                },
-                onDismiss = { refusing = null },
-            )
-        }
-        return
-    }
 
     // Mine and Waiting are this account's own; signed out there is no account, so no tabs for them.
     val shownTabs = if (vm.signedOut) listOf(FeedTab.FEEDBACK, FeedTab.ACTIVITY) else FeedTab.entries
@@ -202,6 +160,7 @@ fun FeedScreen(
                         labels = shownTabs.map { it.label },
                         selected = shownTabs.indexOf(tab),
                         counts = shownTabs.map { if (it == FeedTab.WAITING) owed else 0 },
+                        gap = 14,
                     ) { vm.show(shownTabs[it]) }
                 }
                 PageMessage(vm.message, vm::clearMessage)
@@ -307,23 +266,12 @@ fun FeedScreen(
                         offline = vm.offline,
                         onRetry = { vm.load(context) },
                         signedOut = vm.signedOut,
-                        onOpenReview = { vm.openCheck(it.id) },
-                        onOpenCase = { vm.openCheck(it.id) },
+                        onOpenReview = { onCheck(it.id) },
+                        onOpenCase = { onCheck(it.id) },
                         onSignIn = onSignIn,
                     )
             }
         }
-    }
-
-    refusing?.let { review ->
-        FeedRefuseDialog(
-            appName = review.appName,
-            onRefuse = { reason ->
-                refusing = null
-                vm.reject(context, review, reason)
-            },
-            onDismiss = { refusing = null },
-        )
     }
 }
 

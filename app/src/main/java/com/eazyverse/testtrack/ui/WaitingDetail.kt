@@ -23,9 +23,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,6 +52,60 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * or a case between two other people to decide. The page is where the screenshot is seen at full
  * size, which is the evidence the decision rests on.
  */
+
+/**
+ * A review or case on its own page, from the Circle tab's view model.
+ *
+ * Closes itself once it is decided, and also if it is no longer there to decide: answered on
+ * another phone, or accepted by the clock while the list was open.
+ */
+@Composable
+fun CheckScreen(
+    feed: FeedViewModel,
+    id: String,
+    onClose: () -> Unit,
+) {
+    val context = LocalContext.current
+    val review = feed.waiting.firstOrNull { it.id == id }
+    val case = feed.disputes.firstOrNull { it.id == id }
+    var refusing by remember { mutableStateOf(false) }
+    LaunchedEffect(feed.decided) { if (feed.decided == id) onClose() }
+    LaunchedEffect(review == null && case == null, feed.loading) {
+        if (review == null && case == null && !feed.loading) onClose()
+    }
+    Column(Modifier.fillMaxSize()) {
+        PageMessage(feed.message, feed::clearMessage)
+        when {
+            review != null ->
+                ReviewCheck(
+                    review,
+                    busy = feed.busy,
+                    proof = { ref -> ProofImage(ref, whole = true) },
+                    onBack = onClose,
+                    onApprove = { feed.approve(context, review) },
+                    onReject = { refusing = true },
+                )
+            case != null ->
+                CaseCheck(
+                    case,
+                    busy = feed.busy,
+                    proof = { ref -> ProofImage(ref, whole = true) },
+                    onBack = onClose,
+                    onVote = { forReviewer -> feed.vote(context, case, forReviewer) },
+                )
+        }
+    }
+    if (refusing && review != null) {
+        FeedRefuseDialog(
+            appName = review.appName,
+            onRefuse = { reason ->
+                refusing = false
+                feed.reject(context, review, reason)
+            },
+            onDismiss = { refusing = false },
+        )
+    }
+}
 
 /** Rows in one card with hairlines between, like Mine's. */
 @Composable

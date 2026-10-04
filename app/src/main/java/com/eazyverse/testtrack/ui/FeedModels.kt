@@ -18,11 +18,11 @@ enum class FeedTab(
     /** Developers asking the community to try an app and write something useful back. */
     FEEDBACK("Feedback"),
 
-    /** Every review this account has taken on: in progress, waiting on the developer, decided. */
-    MINE("Mine"),
-
     /** Nobody writes these. They are posted by things happening: a ship, a finished cohort. */
     ACTIVITY("Activity"),
+
+    /** Every review this account has taken on: in progress, waiting on the developer, decided. */
+    MINE("My reviews"),
 
     /**
      * Anything waiting on a decision from this account.

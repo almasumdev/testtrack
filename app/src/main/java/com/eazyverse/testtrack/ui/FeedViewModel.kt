@@ -92,17 +92,9 @@ class FeedViewModel : ViewModel() {
         tab = next
     }
 
-    /** The review or case open on its own page, by id; null on the list. */
-    var checking by mutableStateOf<String?>(null)
+    /** The review or case last decided, by id, so its page knows to close. */
+    var decided by mutableStateOf<String?>(null)
         private set
-
-    fun openCheck(id: String) {
-        checking = id
-    }
-
-    fun closeCheck() {
-        checking = null
-    }
 
     /** Reviews of this account's apps, waiting to be accepted or refused. */
     var waiting by mutableStateOf<List<Waiting>>(emptyList())
@@ -227,7 +219,7 @@ class FeedViewModel : ViewModel() {
     fun approve(
         context: Context,
         review: Waiting,
-    ) = decide(context, "Accepted. The reviewer has been paid.") { Api.approve(review.id) }
+    ) = decide(context, review.id, "Accepted. The reviewer has been paid.") { Api.approve(review.id) }
 
     /**
      * Refuse one, which is not free.
@@ -239,14 +231,14 @@ class FeedViewModel : ViewModel() {
         context: Context,
         review: Waiting,
         reason: String,
-    ) = decide(context, "Refused. Three members will decide it.") { Api.reject(review.id, reason) }
+    ) = decide(context, review.id, "Refused. Three members will decide it.") { Api.reject(review.id, reason) }
 
     /** Come down on one side of a case between two other people. */
     fun vote(
         context: Context,
         dispute: Case,
         forReviewer: Boolean,
-    ) = decide(context, "Counted. Thank you.") { Api.vote(dispute.id, forReviewer) }
+    ) = decide(context, dispute.id, "Counted. Thank you.") { Api.vote(dispute.id, forReviewer) }
 
     /**
      * One decision, one reload, one place failure is handled.
@@ -256,6 +248,7 @@ class FeedViewModel : ViewModel() {
      */
     private fun decide(
         context: Context,
+        id: String,
         done: String,
         block: suspend () -> Unit,
     ) {
@@ -265,8 +258,8 @@ class FeedViewModel : ViewModel() {
             try {
                 block()
                 message = done
-                // Decided, so its page has nothing left to ask; back to the list.
-                checking = null
+                // Decided, so its page has nothing left to ask; it closes on this.
+                decided = id
                 load(context)
             } catch (e: ApiError) {
                 message = e.message

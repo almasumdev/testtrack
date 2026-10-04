@@ -6,6 +6,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +37,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -68,17 +73,27 @@ fun WordTabs(
     gap: Int = 20,
     onSelect: (Int) -> Unit,
 ) {
+    // Scrolls sideways when the words do not all fit, which four of them with a count do not on
+    // a narrow phone. Squeezed instead, the last tab was cut off and its count crushed to a sliver.
+    val scroll = rememberScrollState()
+    val starts = remember { mutableStateMapOf<Int, Int>() }
+    LaunchedEffect(selected, starts[selected]) {
+        val x = starts[selected] ?: return@LaunchedEffect
+        scroll.animateScrollTo((x - 24).coerceAtLeast(0))
+    }
     Row(
-        modifier,
+        modifier.horizontalScroll(scroll),
         horizontalArrangement = Arrangement.spacedBy(gap.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         labels.forEachIndexed { index, label ->
-            WordTab(
-                label = label,
-                count = counts.getOrElse(index) { 0 },
-                current = index == selected,
-            ) { onSelect(index) }
+            Box(Modifier.onGloballyPositioned { starts[index] = it.positionInParent().x.toInt() }) {
+                WordTab(
+                    label = label,
+                    count = counts.getOrElse(index) { 0 },
+                    current = index == selected,
+                ) { onSelect(index) }
+            }
         }
     }
 }
@@ -128,34 +143,40 @@ private fun WordTab(
         // The current tab is underlined as well as bold: weight alone was a quiet way to say
         // which one you are on. The line grows out from the middle as a tab is chosen.
         val line by animateFloatAsState(if (current) 1f else 0f, tween(220), label = "underline")
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                label,
-                // Drawn on the letters and nowhere else. The count is left out on purpose: it is a
-                // reading, not a button.
-                modifier =
-                    Modifier.width(labelWidth).inkRipple(
-                        interactionSource = press,
-                        resting = tint,
-                        lit = Tt.colors.accentInk,
-                    ),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = if (current) FontWeight.Bold else FontWeight.Medium,
-                color = tint,
-                maxLines = 1,
-            )
+        // The count sits in the label's own row, so it centres on the word and not on the word
+        // plus the underline under it, which had it sitting low.
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    label,
+                    // Drawn on the letters and nowhere else. The count is left out on purpose: it is
+                    // a reading, not a button.
+                    modifier =
+                        Modifier.width(labelWidth).inkRipple(
+                            interactionSource = press,
+                            resting = tint,
+                            lit = Tt.colors.accentInk,
+                        ),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = if (current) FontWeight.Bold else FontWeight.Medium,
+                    color = tint,
+                    maxLines = 1,
+                )
+                if (count > 0) {
+                    Spacer(Modifier.width(6.dp))
+                    TabCount(count)
+                }
+            }
             Spacer(Modifier.height(4.dp))
+            // Under the word only, growing from its middle.
             Box(
                 Modifier
+                    .padding(start = labelWidth * (1f - line) / 2f)
                     .width(labelWidth * line)
                     .height(2.5.dp)
                     .clip(RoundedCornerShape(percent = 50))
                     .background(Tt.colors.accent),
             )
-        }
-        if (count > 0) {
-            Spacer(Modifier.width(6.dp))
-            TabCount(count)
         }
     }
 }
