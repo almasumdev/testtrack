@@ -6,19 +6,18 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,10 +35,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
@@ -73,36 +70,46 @@ fun WordTabs(
     gap: Int = 20,
     onSelect: (Int) -> Unit,
 ) {
-    // Scrolls sideways when the words do not all fit, which four of them with a count do not on
-    // a narrow phone. Squeezed instead, the last tab was cut off and its count crushed to a sliver.
-    val scroll = rememberScrollState()
-    val starts = remember { mutableStateMapOf<Int, Int>() }
-    LaunchedEffect(selected, starts[selected]) {
-        val x = starts[selected] ?: return@LaunchedEffect
-        scroll.animateScrollTo((x - 24).coerceAtLeast(0))
-    }
-    Row(
-        modifier.horizontalScroll(scroll),
-        horizontalArrangement = Arrangement.spacedBy(gap.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        labels.forEachIndexed { index, label ->
-            Box(Modifier.onGloballyPositioned { starts[index] = it.positionInParent().x.toInt() }) {
+    // Every tab stays on screen. When the words do not fit at full size, the gaps close up first
+    // and then the words come down a little, rather than the row scrolling and cutting off the
+    // first tab or hiding the last one and its count.
+    BoxWithConstraints(modifier) {
+        val base = MaterialTheme.typography.titleMedium
+        val measurer = rememberTextMeasurer()
+        val density = LocalDensity.current
+        val words = labels.sumOf { measurer.measure(it, base.copy(fontWeight = FontWeight.Bold)).size.width }
+        // Each tab's touch padding, and its count when it has one.
+        val chrome = labels.indices.sumOf { 8 + if (counts.getOrElse(it) { 0 } > 0) 6 + 22 else 0 }
+
+        fun room(space: Int) = constraints.maxWidth - with(density) { (chrome + space * (labels.size - 1)).dp.roundToPx() }
+        val space = if (words <= room(gap)) gap else minOf(gap, TIGHT_GAP)
+        val scale = (room(space).toFloat() / words).coerceIn(MIN_SCALE, 1f)
+        val style = base.copy(fontSize = base.fontSize * scale)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(space.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            labels.forEachIndexed { index, label ->
                 WordTab(
                     label = label,
                     count = counts.getOrElse(index) { 0 },
                     current = index == selected,
+                    style = style,
                 ) { onSelect(index) }
             }
         }
     }
 }
 
+private const val TIGHT_GAP = 8
+private const val MIN_SCALE = 0.7f
+
 @Composable
 private fun WordTab(
     label: String,
     count: Int,
     current: Boolean,
+    style: TextStyle,
     onSelect: () -> Unit,
 ) {
     val tint by animateColorAsState(
@@ -116,8 +123,7 @@ private fun WordTab(
         label = "tab",
     )
     val press = remember { MutableInteractionSource() }
-    val textStyle = MaterialTheme.typography.titleMedium
-    val measured = rememberTextMeasurer().measure(label, textStyle.copy(fontWeight = FontWeight.Bold))
+    val measured = rememberTextMeasurer().measure(label, style.copy(fontWeight = FontWeight.Bold))
     val labelWidth = with(LocalDensity.current) { measured.size.width.toDp() }
 
     Row(
@@ -157,7 +163,7 @@ private fun WordTab(
                             resting = tint,
                             lit = Tt.colors.accentInk,
                         ),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = style,
                     fontWeight = if (current) FontWeight.Bold else FontWeight.Medium,
                     color = tint,
                     maxLines = 1,
