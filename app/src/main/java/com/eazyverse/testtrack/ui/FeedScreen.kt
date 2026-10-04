@@ -53,7 +53,7 @@ import kotlinx.serialization.json.Json
  * its own space below the pill, and the two together are the single gutter that shows on screen.
  * Both tabs use it, so switching between them does not move the first card.
  */
-private val ListTop = 8.dp
+private val ListTop = 16.dp
 
 /**
  * Circle: the community front page.

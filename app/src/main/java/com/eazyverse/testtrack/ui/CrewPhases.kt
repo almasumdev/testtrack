@@ -30,7 +30,7 @@ import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /** The gutter every phase list opens on, matched to Circle so the two tabs sit level. */
-private val ListTop = 8.dp
+private val ListTop = 16.dp
 
 /**
  * Your seat is taken and the crew is filling. The one screen in the product with shared work in it.

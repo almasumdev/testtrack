@@ -114,7 +114,7 @@ fun MineBody(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(top = 16.dp, bottom = Gutter + dockRoom()),
     ) {
         // The first heading sits where the other tabs' first card does; the gap above a heading
         // is for separating it from the section before, and the first has none.

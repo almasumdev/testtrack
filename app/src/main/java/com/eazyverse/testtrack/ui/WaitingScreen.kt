@@ -56,7 +56,7 @@ fun WaitingBody(
     if (loading && reviews.isEmpty() && disputes.isEmpty()) {
         LazyColumn(
             Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 8.dp, bottom = Gutter + dockRoom()),
+            contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 16.dp, bottom = Gutter + dockRoom()),
             verticalArrangement =
                 androidx.compose.foundation.layout.Arrangement
                     .spacedBy(12.dp),
@@ -79,7 +79,7 @@ fun WaitingBody(
     // most of a screen each.
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(top = 16.dp, bottom = Gutter + dockRoom()),
     ) {
         val now = System.currentTimeMillis()
         if (reviews.isNotEmpty()) {
