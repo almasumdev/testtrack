@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Material's arrow_back_ios_new: the one back mark every page uses (see ui/PageBar.kt). Drawn
+     here rather than taken from material-icons-extended, which the app leaves out on purpose. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:autoMirrored="true"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M17.77,3.77L16,2L6,12l10,10l1.77,-1.77L9.54,12z" />
+</vector>
