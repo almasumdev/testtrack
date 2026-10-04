@@ -169,81 +169,80 @@ fun FeedScreen(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             when (tab) {
-                FeedTab.FEEDBACK ->
-                    LazyColumn(
-                        Modifier.fillMaxSize(),
-                        state = feedbackList,
-                        // Room under the last card for the floating button, which is only ever
-                        // on screen once you are far enough down for this to be the padding
-                        // that matters.
-                        contentPadding =
-                            PaddingValues(
-                                start = Gutter,
-                                top = ListTop,
-                                end = Gutter,
-                                bottom = Gutter + 64.dp + dockRoom(),
-                            ),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        // Not a sign in prompt. The posts come back for anybody, so nothing here
-                        // and offline means the server could not be got at.
-                        val unreached = vm.offline && vm.posts.isEmpty()
-                        val none = !vm.loading && !unreached && vm.openPosts.isEmpty()
-                        // The empty page carries its own ask button, so the top one stands down.
-                        if (!unreached && !none) item(key = "ask") { FeedAskButton(onPost = onAsk) }
-                        if (unreached) {
-                            item { RobotOffline("Circle didn't load", onRetry = { vm.load(context) }) }
-                        } else if (vm.loading && vm.posts.isEmpty()) {
-                            items(3) { FeedLoadingCard() }
-                        } else if (none) {
-                            item {
-                                RobotState(
-                                    Lucide.Megaphone,
-                                    "Nobody's asking right now",
-                                    "When someone wants feedback on their app, it shows up here. " +
-                                        "You can ask for some yourself.",
-                                    action = "Ask for feedback",
-                                    onAction = onAsk,
-                                )
+                FeedTab.FEEDBACK -> {
+                    // Not a sign in prompt. The posts come back for anybody, so nothing here and
+                    // offline means the server could not be got at.
+                    val unreached = vm.offline && vm.posts.isEmpty()
+                    val none = !vm.loading && !unreached && vm.openPosts.isEmpty()
+                    if (unreached) {
+                        RobotOffline("Circle didn't load", onRetry = { vm.load(context) })
+                    } else if (none) {
+                        RobotState(
+                            Lucide.Megaphone,
+                            "Nobody's asking right now",
+                            "When someone wants feedback on their app, it shows up here. You can ask for some yourself.",
+                            action = "Ask for feedback",
+                            onAction = onAsk,
+                        )
+                    } else {
+                        LazyColumn(
+                            Modifier.fillMaxSize(),
+                            state = feedbackList,
+                            // Room under the last card for the floating button, which is only ever
+                            // on screen once you are far enough down for this to be the padding
+                            // that matters.
+                            contentPadding =
+                                PaddingValues(
+                                    start = Gutter,
+                                    top = ListTop,
+                                    end = Gutter,
+                                    bottom = Gutter + 64.dp + dockRoom(),
+                                ),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            item(key = "ask") { FeedAskButton(onPost = onAsk) }
+                            if (vm.loading && vm.posts.isEmpty()) {
+                                items(3) { FeedLoadingCard() }
+                            }
+                            items(vm.openPosts, key = { it.id }) { post ->
+                                FeedRequestCard(post) { onReview(Json.encodeToString(post)) }
                             }
                         }
-                        items(vm.openPosts, key = { it.id }) { post ->
-                            FeedRequestCard(post) { onReview(Json.encodeToString(post)) }
-                        }
                     }
+                }
 
                 // The same gutter, the same edge and the same air between cards as Feedback.
                 // Nothing about this tab is a different kind of list, so nothing about it is
                 // measured differently: what tells the two apart is what is inside a card.
                 FeedTab.ACTIVITY ->
-                    LazyColumn(
-                        Modifier.fillMaxSize(),
-                        state = activityList,
-                        contentPadding =
-                            PaddingValues(
-                                start = Gutter,
-                                top = ListTop,
-                                end = Gutter,
-                                bottom = Gutter + dockRoom(),
-                            ),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        if (vm.loading && vm.events.isEmpty()) {
-                            items(4) { FeedLoadingCard(compact = true) }
-                        } else if (vm.events.isEmpty()) {
-                            item {
-                                if (vm.offline) {
-                                    RobotOffline("Activity didn't load", onRetry = { vm.load(context) })
-                                } else {
-                                    RobotState(
-                                        Lucide.Activity,
-                                        "Nothing has happened yet",
-                                        "New posts, reviews and payouts in your circle show up here as they happen.",
-                                    )
-                                }
-                            }
+                    if (!vm.loading && vm.events.isEmpty()) {
+                        if (vm.offline) {
+                            RobotOffline("Activity didn't load", onRetry = { vm.load(context) })
+                        } else {
+                            RobotState(
+                                Lucide.Activity,
+                                "Nothing has happened yet",
+                                "New posts, reviews and payouts in your circle show up here as they happen.",
+                            )
                         }
-                        items(vm.events, key = { it.id }) { event -> FeedEventCard(event) }
+                    } else {
+                        LazyColumn(
+                            Modifier.fillMaxSize(),
+                            state = activityList,
+                            contentPadding =
+                                PaddingValues(
+                                    start = Gutter,
+                                    top = ListTop,
+                                    end = Gutter,
+                                    bottom = Gutter + dockRoom(),
+                                ),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            if (vm.loading && vm.events.isEmpty()) {
+                                items(4) { FeedLoadingCard(compact = true) }
+                            }
+                            items(vm.events, key = { it.id }) { event -> FeedEventCard(event) }
+                        }
                     }
 
                 FeedTab.MINE ->

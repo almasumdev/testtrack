@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -44,8 +44,13 @@ fun RobotState(
     failed: Boolean = false,
 ) {
     val t = Tt.colors
+    // Fills the page and sits in the middle of what is visible: between the tabs and the dock that
+    // floats over the bottom of the page.
     Column(
-        modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 28.dp),
+        modifier
+            .fillMaxSize()
+            .padding(bottom = dockRoom())
+            .padding(horizontal = Gutter, vertical = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
