@@ -40,6 +40,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.composables.icons.lucide.Activity
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Megaphone
 import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.net.Api
 import kotlinx.serialization.encodeToString
@@ -93,6 +96,10 @@ fun FeedScreen(
      * every frame of the scroll that produced it.
      */
     val askOffScreen by remember { derivedStateOf { feedbackList.firstVisibleItemIndex > 0 } }
+
+    // Mine and Waiting are this account's own; signed out there is no account, so no tabs for them.
+    val shownTabs = if (vm.signedOut) listOf(FeedTab.FEEDBACK, FeedTab.ACTIVITY) else FeedTab.entries
+    val tab = if (vm.tab in shownTabs) vm.tab else FeedTab.FEEDBACK
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -152,17 +159,17 @@ fun FeedScreen(
                     // have to go looking for is not one.
                     val owed = vm.waiting.size + vm.disputes.size
                     WordTabs(
-                        labels = FeedTab.entries.map { it.label },
-                        selected = FeedTab.entries.indexOf(vm.tab),
-                        counts = FeedTab.entries.map { if (it == FeedTab.WAITING) owed else 0 },
-                    ) { vm.show(FeedTab.entries[it]) }
+                        labels = shownTabs.map { it.label },
+                        selected = shownTabs.indexOf(tab),
+                        counts = shownTabs.map { if (it == FeedTab.WAITING) owed else 0 },
+                    ) { vm.show(shownTabs[it]) }
                 }
                 PageMessage(vm.message, vm::clearMessage)
             }
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            when (vm.tab) {
+            when (tab) {
                 FeedTab.FEEDBACK ->
                     LazyColumn(
                         Modifier.fillMaxSize(),
@@ -179,17 +186,27 @@ fun FeedScreen(
                             ),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        item(key = "ask") { FeedAskButton(onPost = onAsk) }
-                        if (vm.offline) {
-                            item {
-                                // Not a sign in prompt any more. The posts come back for
-                                // anybody, so reaching here means the server could not be got at.
-                                Blank("Circle did not load. Pull to try again.")
-                            }
+                        // Not a sign in prompt. The posts come back for anybody, so nothing here
+                        // and offline means the server could not be got at.
+                        val unreached = vm.offline && vm.posts.isEmpty()
+                        val none = !vm.loading && !unreached && vm.openPosts.isEmpty()
+                        // The empty page carries its own ask button, so the top one stands down.
+                        if (!unreached && !none) item(key = "ask") { FeedAskButton(onPost = onAsk) }
+                        if (unreached) {
+                            item { RobotOffline("Circle didn't load", onRetry = { vm.load(context) }) }
                         } else if (vm.loading && vm.posts.isEmpty()) {
                             items(3) { FeedLoadingCard() }
-                        } else if (vm.openPosts.isEmpty()) {
-                            item { Blank("Nobody is asking for anything just now.") }
+                        } else if (none) {
+                            item {
+                                RobotState(
+                                    Lucide.Megaphone,
+                                    "Nobody's asking right now",
+                                    "When someone wants feedback on their app, it shows up here. " +
+                                        "You can ask for some yourself.",
+                                    action = "Ask for feedback",
+                                    onAction = onAsk,
+                                )
+                            }
                         }
                         items(vm.openPosts, key = { it.id }) { post ->
                             FeedRequestCard(post) { onReview(Json.encodeToString(post)) }
@@ -214,6 +231,18 @@ fun FeedScreen(
                     ) {
                         if (vm.loading && vm.events.isEmpty()) {
                             items(4) { FeedLoadingCard(compact = true) }
+                        } else if (vm.events.isEmpty()) {
+                            item {
+                                if (vm.offline) {
+                                    RobotOffline("Activity didn't load", onRetry = { vm.load(context) })
+                                } else {
+                                    RobotState(
+                                        Lucide.Activity,
+                                        "Nothing has happened yet",
+                                        "New posts, reviews and payouts in your circle show up here as they happen.",
+                                    )
+                                }
+                            }
                         }
                         items(vm.events, key = { it.id }) { event -> FeedEventCard(event) }
                     }
@@ -224,6 +253,9 @@ fun FeedScreen(
                         loading = vm.loading,
                         signedOut = vm.signedOut,
                         onSignIn = onSignIn,
+                        offline = vm.offline,
+                        onRetry = { vm.load(context) },
+                        onFind = { vm.show(FeedTab.FEEDBACK) },
                         onOpen = { review -> onReview(Json.encodeToString(vm.postFor(review))) },
                     )
 
@@ -233,6 +265,7 @@ fun FeedScreen(
                         disputes = vm.disputes,
                         loading = vm.loading,
                         offline = vm.offline,
+                        onRetry = { vm.load(context) },
                         signedOut = vm.signedOut,
                         busy = vm.busy,
                         proof = { ref -> ProofImage(ref) },

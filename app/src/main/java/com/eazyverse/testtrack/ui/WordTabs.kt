@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.InteractionSource
@@ -10,8 +11,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
@@ -119,24 +122,37 @@ private fun WordTab(
                 indication = null,
                 role = Role.Tab,
                 onClick = onSelect,
-            ).padding(horizontal = 4.dp, vertical = 10.dp),
+            ).padding(start = 4.dp, end = 4.dp, top = 10.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            label,
-            // Drawn on the letters and nowhere else. The count is left out on purpose: it is a
-            // reading, not a button.
-            modifier =
-                Modifier.width(labelWidth).inkRipple(
-                    interactionSource = press,
-                    resting = tint,
-                    lit = Tt.colors.accentInk,
-                ),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = if (current) FontWeight.Bold else FontWeight.Medium,
-            color = tint,
-            maxLines = 1,
-        )
+        // The current tab is underlined as well as bold: weight alone was a quiet way to say
+        // which one you are on. The line grows out from the middle as a tab is chosen.
+        val line by animateFloatAsState(if (current) 1f else 0f, tween(220), label = "underline")
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                label,
+                // Drawn on the letters and nowhere else. The count is left out on purpose: it is a
+                // reading, not a button.
+                modifier =
+                    Modifier.width(labelWidth).inkRipple(
+                        interactionSource = press,
+                        resting = tint,
+                        lit = Tt.colors.accentInk,
+                    ),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = if (current) FontWeight.Bold else FontWeight.Medium,
+                color = tint,
+                maxLines = 1,
+            )
+            Spacer(Modifier.height(4.dp))
+            Box(
+                Modifier
+                    .width(labelWidth * line)
+                    .height(2.5.dp)
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(Tt.colors.accent),
+            )
+        }
         if (count > 0) {
             Spacer(Modifier.width(6.dp))
             TabCount(count)

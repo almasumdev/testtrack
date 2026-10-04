@@ -37,6 +37,7 @@ import com.composables.icons.lucide.CircleX
 import com.composables.icons.lucide.ClipboardCheck
 import com.composables.icons.lucide.Hourglass
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.User
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
@@ -79,25 +80,34 @@ fun MineBody(
     signedOut: Boolean,
     onSignIn: () -> Unit,
     onOpen: (MyReview) -> Unit,
+    offline: Boolean = false,
+    onRetry: () -> Unit = {},
+    onFind: () -> Unit = {},
 ) {
     if (signedOut) {
-        EmptyState(
-            icon = Lucide.ClipboardCheck,
-            title = "Your reviews live here",
-            subtitle = "Sign in, review an app from Feedback, and you can follow it from here.",
-            actionLabel = "Sign in",
+        RobotState(
+            Lucide.User,
+            "Your reviews live here",
+            "Sign in to review apps and follow each one until it is paid.",
+            action = "Sign in",
             onAction = onSignIn,
         )
+        return
+    }
+    if (offline && reviews.isEmpty()) {
+        RobotOffline("Couldn't load your reviews", onRetry)
         return
     }
     val going = reviews.filter { it.state in InProgressStates }
     val pending = reviews.filter { it.state in PendingStates }
     val history = reviews.filter { it.state in HistoryStates }
     if (!loading && going.isEmpty() && pending.isEmpty() && history.isEmpty()) {
-        EmptyState(
-            icon = Lucide.ClipboardCheck,
-            title = "No reviews yet",
-            subtitle = "Pick an app from Feedback. Once you send the review, it waits here for the developer.",
+        RobotState(
+            Lucide.ClipboardCheck,
+            "No reviews yet",
+            "Pick an app from Feedback. Every review you take on is followed here.",
+            action = "Find an app to review",
+            onAction = onFind,
         )
         return
     }

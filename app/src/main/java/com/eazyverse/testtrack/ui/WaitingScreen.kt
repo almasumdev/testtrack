@@ -53,6 +53,7 @@ fun WaitingBody(
     onReject: (Waiting) -> Unit = {},
     onVote: (Case, Boolean) -> Unit = { _, _ -> },
     onSignIn: () -> Unit = {},
+    onRetry: () -> Unit = {},
 ) {
     // Asked before the network is blamed. This branch used to be the offline one and it was
     // titled "Sign in to see what is waiting", so a dropped connection told the reader they were
@@ -67,11 +68,7 @@ fun WaitingBody(
         return
     }
     if (offline) {
-        EmptyState(
-            icon = Lucide.Inbox,
-            title = "What is waiting did not load",
-            subtitle = "Check your connection and pull to try again.",
-        )
+        RobotOffline("What's waiting didn't load", onRetry)
         return
     }
     if (loading && reviews.isEmpty() && disputes.isEmpty()) {
@@ -87,12 +84,10 @@ fun WaitingBody(
         return
     }
     if (reviews.isEmpty() && disputes.isEmpty()) {
-        EmptyState(
-            icon = Lucide.Inbox,
-            title = "Nothing waiting on you",
-            subtitle =
-                "When somebody reviews one of your apps it lands here, and so does any case " +
-                    "you are asked to help decide.",
+        RobotState(
+            Lucide.Inbox,
+            "Nothing waiting on you",
+            "Reviews of your apps land here, and so does any case you are asked to help decide.",
         )
         return
     }
