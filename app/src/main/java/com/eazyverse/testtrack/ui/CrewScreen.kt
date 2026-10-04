@@ -18,8 +18,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -80,16 +78,9 @@ fun CrewScreen(
         owner.lifecycle.addObserver(watcher)
         onDispose { owner.lifecycle.removeObserver(watcher) }
     }
-    val snackbars = remember { SnackbarHostState() }
     var judging by remember { mutableStateOf<Pair<String, CrewSeat>?>(null) }
     var taking by remember { mutableStateOf<String?>(null) }
     val crew = vm.current
-
-    LaunchedEffect(vm.message) {
-        val message = vm.message ?: return@LaunchedEffect
-        snackbars.showSnackbar(message)
-        vm.clearMessage()
-    }
 
     // Opening a crew is a push, so back should pop it rather than leaving the tab. Registered only
     // while one is open, so the bar's own handler still gets it on the tabs themselves.
@@ -97,55 +88,57 @@ fun CrewScreen(
 
     Scaffold(
         containerColor = Color.Transparent,
-        snackbarHost = { SnackbarHost(snackbars, Modifier.padding(bottom = dockRoom())) },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            if (crew == null) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        // Nothing of its own, the same as Circle's: the header above brings its
-                        // space below itself and the tabs bring their own touch padding, and a
-                        // third helping on top of those two is the gap that was here.
-                        .padding(start = Gutter, end = Gutter),
-                ) {
-                    PhaseTabs(vm.tab, { vm.badge(it) }) { vm.showTab(it) }
-                }
-            } else {
-                // A crew that has been opened gets its name and where it has got to, because that
-                // is the only thing on the screen saying which of four you are looking at.
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(start = 6.dp, end = Gutter, top = 8.dp, bottom = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+            Column {
+                if (crew == null) {
                     Box(
                         Modifier
-                            .clip(RoundedCornerShape(percent = 50))
-                            .clickable { vm.show(null) }
-                            .padding(10.dp),
+                            .fillMaxWidth()
+                            // Nothing of its own, the same as Circle's: the header above brings its
+                            // space below itself and the tabs bring their own touch padding, and a
+                            // third helping on top of those two is the gap that was here.
+                            .padding(start = Gutter, end = Gutter),
                     ) {
-                        Icon(
-                            Lucide.ArrowLeft,
-                            "Back",
-                            Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurface,
+                        PhaseTabs(vm.tab, { vm.badge(it) }) { vm.showTab(it) }
+                    }
+                } else {
+                    // A crew that has been opened gets its name and where it has got to, because that
+                    // is the only thing on the screen saying which of four you are looking at.
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(start = 6.dp, end = Gutter, top = 8.dp, bottom = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            Modifier
+                                .clip(RoundedCornerShape(percent = 50))
+                                .clickable { vm.show(null) }
+                                .padding(10.dp),
+                        ) {
+                            Icon(
+                                Lucide.ArrowLeft,
+                                "Back",
+                                Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            crew.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Spacer(Modifier.weight(1f))
+                        Text(
+                            crew.standing,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        crew.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        crew.standing,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                 }
+                PageMessage(vm.message, vm::clearMessage)
             }
         },
     ) { padding ->

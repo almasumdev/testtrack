@@ -21,5 +21,6 @@ suspend fun releaseSession(context: Context) {
     // Otherwise the next account's first sweep reads this one's cohort as thirteen apps that have
     // all just vanished, and says so.
     Enforcement.clear(context)
+    ReviewKeep.clear(context)
     PushRepo.clear(context, uid)
 }

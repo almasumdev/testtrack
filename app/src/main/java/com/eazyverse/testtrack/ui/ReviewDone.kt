@@ -1,0 +1,237 @@
+package com.eazyverse.testtrack.ui
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.Hourglass
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Users
+import com.composables.icons.lucide.WifiOff
+import com.composables.icons.lucide.X
+import com.eazyverse.testtrack.R
+import com.eazyverse.testtrack.ui.theme.Tt
+
+/*
+ * The review page's two ends that are not a step: the review sent and out of the reviewer's hands,
+ * and the first load that could not happen. Both are the TestTrack robot with a badge saying how
+ * things stand.
+ */
+
+/** Where one stage of a sent review has got to. */
+private enum class Stage { DONE, NOW, LATER, FAILED }
+
+/**
+ * The review is with the developer, or decided.
+ *
+ * The robot with a badge for the outcome, one line on what that means, and the three stages a
+ * sent review goes through, so "what happens now" is answered on the page rather than guessed.
+ */
+@Composable
+internal fun ReviewDone(
+    job: ReviewJob,
+    room: Dp,
+) {
+    val t = Tt.colors
+    val state = job.review.state
+    val reward = job.post.reward
+    val (badge, tone, title) =
+        when (state) {
+            "approved" -> Triple(Lucide.Check, t.ok, "Approved")
+            "disputed" -> Triple(Lucide.Users, t.warn, "Being decided")
+            "rejected" -> Triple(Lucide.X, t.bad, "Not paid")
+            else -> Triple(Lucide.Check, t.ok, "Sent to the developer")
+        }
+    Column(
+        Modifier.fillMaxWidth().heightIn(min = room - 64.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        RobotWithBadge(badge, tone, size = (room * 0.22f).coerceIn(104.dp, 144.dp))
+        Spacer(Modifier.height(18.dp))
+        Text(
+            title,
+            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp, lineHeight = 28.sp),
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            // The stages below say what happens next, so the line above them does not repeat it.
+            if (state == "submitted") "Thanks for reviewing. Here's what happens next." else reviewOutcome(state),
+            Modifier.widthIn(max = 300.dp),
+            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+            color = t.text2,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(22.dp))
+        val shape = RoundedCornerShape(CardRadius)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .background(t.glass)
+                .border(1.dp, t.glassBorder, shape)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+        ) {
+            StageRow(Stage.DONE, "Sent with your screenshot", "Your part is done")
+            StageGap()
+            when (state) {
+                "submitted" -> StageRow(Stage.NOW, "The developer checks it", "Up to two days, then it approves itself")
+                "disputed" -> StageRow(Stage.NOW, "Three members decide", "The developer disputed it")
+                "rejected" ->
+                    StageRow(
+                        Stage.FAILED,
+                        "Decided against",
+                        job.review.reason.ifBlank { "The members sided with the developer" },
+                    )
+                else -> StageRow(Stage.DONE, "The developer approved it", "Your review counts")
+            }
+            StageGap()
+            when (state) {
+                "approved" -> StageRow(Stage.DONE, "+$reward tix", "Paid to you")
+                "rejected" -> StageRow(Stage.FAILED, "+$reward tix", "Not paid")
+                else -> StageRow(Stage.LATER, "+$reward tix", "Paid when it is approved")
+            }
+        }
+    }
+}
+
+/**
+ * The first load failed and nothing was saved to show instead. The robot, why, and the page's
+ * button tries again.
+ */
+@Composable
+internal fun ReviewFailed(
+    reason: String,
+    room: Dp,
+) {
+    val t = Tt.colors
+    Column(
+        Modifier.fillMaxWidth().heightIn(min = room - 64.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        RobotWithBadge(Lucide.WifiOff, t.text3, size = (room * 0.2f).coerceIn(96.dp, 132.dp), dim = true)
+        Spacer(Modifier.height(18.dp))
+        Text("Can't open this review", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(6.dp))
+        Text(
+            reason,
+            Modifier.widthIn(max = 280.dp),
+            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+            color = t.text2,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+/** The app's robot, with a round badge on its shoulder saying how things stand. */
+@Composable
+private fun RobotWithBadge(
+    icon: ImageVector,
+    tone: Color,
+    size: Dp,
+    dim: Boolean = false,
+) {
+    val t = Tt.colors
+    Box(Modifier.size(size)) {
+        Image(
+            painterResource(R.drawable.testtrack_robot),
+            contentDescription = null,
+            modifier = Modifier.size(size).alpha(if (dim) 0.55f else 1f),
+        )
+        Box(
+            Modifier
+                .align(Alignment.BottomEnd)
+                .size(size * 0.32f)
+                .clip(CircleShape)
+                .background(t.bg)
+                .padding(3.dp)
+                .clip(CircleShape)
+                .background(tone),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, null, Modifier.size(size * 0.17f), tint = t.bg)
+        }
+    }
+}
+
+@Composable
+private fun StageRow(
+    stage: Stage,
+    title: String,
+    detail: String,
+) {
+    val t = Tt.colors
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        val (fill, ink) =
+            when (stage) {
+                Stage.DONE -> t.ok to t.bg
+                Stage.NOW -> t.accent to t.bg
+                Stage.LATER -> t.glass2 to t.text3
+                Stage.FAILED -> t.bad to t.bg
+            }
+        Box(Modifier.size(STAGE_DOT).clip(CircleShape).background(fill), contentAlignment = Alignment.Center) {
+            when (stage) {
+                Stage.DONE -> Icon(Lucide.Check, null, Modifier.size(14.dp), tint = ink)
+                Stage.NOW -> Icon(Lucide.Hourglass, null, Modifier.size(13.dp), tint = ink)
+                Stage.FAILED -> Icon(Lucide.X, null, Modifier.size(14.dp), tint = ink)
+                Stage.LATER -> Unit
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp),
+                fontWeight = FontWeight.SemiBold,
+                color = if (stage == Stage.LATER) t.text2 else t.text,
+            )
+            Text(detail, style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp), color = t.text3)
+        }
+    }
+}
+
+/** The thread between two stages. */
+@Composable
+private fun StageGap() {
+    Box(
+        Modifier
+            .padding(start = STAGE_DOT / 2 - 1.dp, top = 3.dp, bottom = 3.dp)
+            .size(width = 2.dp, height = 12.dp)
+            .background(Tt.colors.glassBorder),
+    )
+}
+
+private val STAGE_DOT = 28.dp

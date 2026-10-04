@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -81,14 +80,20 @@ class ReviewBodyTest {
         onSend: (android.net.Uri, String) -> Unit = { _, _ -> },
         proof: android.net.Uri? = null,
         onCapture: () -> Unit = {},
+        job: ReviewJob? = ReviewJob(post(live), review(state, used), leftReview),
+        message: String? = null,
+        offline: Boolean = false,
+        failure: String? = null,
     ) {
         compose.setContent {
             TestTrackTheme {
                 ReviewBody(
                     post = post(live),
-                    job = ReviewJob(post(live), review(state, used), leftReview),
+                    job = job,
+                    message = message,
+                    offline = offline,
+                    failure = failure,
                     sideloaded = sideloaded,
-                    snackbars = remembered,
                     onClose = {},
                     onLeave = onLeave,
                     onSend = onSend,
@@ -98,8 +103,6 @@ class ReviewBodyTest {
             }
         }
     }
-
-    private val remembered = SnackbarHostState()
 
     // ------------------------------------------------------------------ one step at a time
 
@@ -213,9 +216,10 @@ class ReviewBodyTest {
     fun a_sent_review_stops_offering_anything_to_press() {
         open("submitted")
 
-        compose.onNodeWithText("Sent").assertIsDisplayed()
+        compose.onNodeWithText("Sent to the developer").assertIsDisplayed()
+        compose.onNodeWithText("Sent with your screenshot").assertIsDisplayed()
         compose
-            .onNodeWithText("With the developer. They have two days, then it approves itself.")
+            .onNodeWithText("Up to two days, then it approves itself")
             .assertIsDisplayed()
         for (action in listOf("Get it on Play", "Open the app", "Send the proof")) {
             compose.onNodeWithText(action).assertDoesNotExist()
@@ -268,6 +272,33 @@ class ReviewBodyTest {
 
         compose.onNodeWithText("Send the proof").performClick()
         assertEquals(shot, sent)
+    }
+
+    @Test
+    fun an_approved_review_says_the_tix_were_paid() {
+        open("approved")
+        compose.onNodeWithText("Approved").assertIsDisplayed()
+        compose.onNodeWithText("Paid to you").assertIsDisplayed()
+    }
+
+    @Test
+    fun offline_the_saved_step_still_shows_and_says_so() {
+        open("used", offline = true)
+        compose.onNodeWithText("Offline").assertIsDisplayed()
+        compose.onNodeWithText("Open Play to review").assertIsDisplayed()
+    }
+
+    @Test
+    fun nothing_to_show_offers_a_retry_instead_of_a_spinner_forever() {
+        open("claimed", job = null, failure = "TestTrack could not be reached. Check your connection.")
+        compose.onNodeWithText("Can't open this review").assertIsDisplayed()
+        compose.onNodeWithText("Try again").assertIsDisplayed()
+    }
+
+    @Test
+    fun a_message_is_shown_in_the_page() {
+        open("used", message = "That image could not be read. Try another.")
+        compose.onNodeWithText("That image could not be read. Try another.").assertIsDisplayed()
     }
 
     @Test

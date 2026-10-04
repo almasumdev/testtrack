@@ -22,8 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -75,16 +73,6 @@ fun FeedScreen(
     onSignIn: () -> Unit = {},
     vm: FeedViewModel = viewModel(),
 ) {
-    val snackbars = remember { SnackbarHostState() }
-
-    // Cleared here rather than on a timer in the view model, so a message cannot be spent by a
-    // rotation that happens between the action and the snackbar appearing.
-    LaunchedEffect(vm.message) {
-        val message = vm.message ?: return@LaunchedEffect
-        snackbars.showSnackbar(message)
-        vm.clearMessage()
-    }
-
     /** The review being refused, which needs a reason before anything is charged. */
     var refusing by remember { mutableStateOf<Waiting?>(null) }
     val context = LocalContext.current
@@ -108,9 +96,8 @@ fun FeedScreen(
 
     Scaffold(
         containerColor = Color.Transparent,
-        snackbarHost = { SnackbarHost(snackbars, Modifier.padding(bottom = dockRoom())) },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        // Scaffold's own slot rather than a Box over the list, so a snackbar is laid out above it
+        // Scaffold's own slot rather than a Box over the list, so it is laid out above the list
         // instead of across it. Only on Feedback: Activity is written by the app, and there is
         // nothing to post to it.
         //
@@ -137,37 +124,40 @@ fun FeedScreen(
         // gone. The ground it paints is load bearing for that: without it the cards would scroll
         // through the words.
         topBar = {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    // The row keeps its own space below the pill rather than sitting flush on its
-                    // own bottom edge. What comes off to hold the total to one gutter is the
-                    // list's inset above the first card. See [ListTop].
-                    // Two of these three used to be the top of the screen. The header above now
-                    // brings its own space below itself and the tabs bring their own touch
-                    // padding, so this row adds almost nothing of its own or the three stack into
-                    // a gap the size of a card.
-                    // Nothing of its own. The header above brings its space below itself and
-                    // the tabs bring their own, which is their touch target and cannot be given
-                    // up; anything here is a third helping on top of those two.
-                    .padding(start = Gutter, end = Gutter),
-                // The control takes only the width its two words need and the space between the
-                // two of them does the rest, so neither is given a weight to stretch into.
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // The balance used to sit here. It is in the shell's header now, where it is on
-                // every screen rather than on this one, so what is left is the control.
-                // The count is the one thing on this screen genuinely owed: reviews of this
-                // account's apps, and cases it can help decide. It shows from whichever tab you
-                // are on rather than only from Waiting, because it is an alert, and an alert you
-                // have to go looking for is not one.
-                val owed = vm.waiting.size + vm.disputes.size
-                WordTabs(
-                    labels = FeedTab.entries.map { it.label },
-                    selected = FeedTab.entries.indexOf(vm.tab),
-                    counts = FeedTab.entries.map { if (it == FeedTab.WAITING) owed else 0 },
-                ) { vm.show(FeedTab.entries[it]) }
+            Column {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        // The row keeps its own space below the pill rather than sitting flush on its
+                        // own bottom edge. What comes off to hold the total to one gutter is the
+                        // list's inset above the first card. See [ListTop].
+                        // Two of these three used to be the top of the screen. The header above now
+                        // brings its own space below itself and the tabs bring their own touch
+                        // padding, so this row adds almost nothing of its own or the three stack into
+                        // a gap the size of a card.
+                        // Nothing of its own. The header above brings its space below itself and
+                        // the tabs bring their own, which is their touch target and cannot be given
+                        // up; anything here is a third helping on top of those two.
+                        .padding(start = Gutter, end = Gutter),
+                    // The control takes only the width its two words need and the space between the
+                    // two of them does the rest, so neither is given a weight to stretch into.
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // The balance used to sit here. It is in the shell's header now, where it is on
+                    // every screen rather than on this one, so what is left is the control.
+                    // The count is the one thing on this screen genuinely owed: reviews of this
+                    // account's apps, and cases it can help decide. It shows from whichever tab you
+                    // are on rather than only from Waiting, because it is an alert, and an alert you
+                    // have to go looking for is not one.
+                    val owed = vm.waiting.size + vm.disputes.size
+                    WordTabs(
+                        labels = FeedTab.entries.map { it.label },
+                        selected = FeedTab.entries.indexOf(vm.tab),
+                        counts = FeedTab.entries.map { if (it == FeedTab.WAITING) owed else 0 },
+                    ) { vm.show(FeedTab.entries[it]) }
+                }
+                PageMessage(vm.message, vm::clearMessage)
             }
         },
     ) { padding ->

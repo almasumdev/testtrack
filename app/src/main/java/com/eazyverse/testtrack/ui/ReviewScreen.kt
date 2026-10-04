@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,8 +27,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -38,8 +35,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -56,7 +51,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -68,6 +62,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.theme.Tt
+import kotlinx.coroutines.delay
 
 /**
  * The guided review: what somebody actually does to earn the tix.
@@ -92,7 +87,6 @@ fun ReviewScreen(
     vm: ReviewViewModel = viewModel(),
 ) {
     val context = LocalContext.current
-    val snackbars = remember { SnackbarHostState() }
 
     LaunchedEffect(post.id) { vm.start(context, post) }
 
@@ -109,12 +103,6 @@ fun ReviewScreen(
             }
         owner.lifecycle.addObserver(watcher)
         onDispose { owner.lifecycle.removeObserver(watcher) }
-    }
-
-    LaunchedEffect(vm.message) {
-        val message = vm.message ?: return@LaunchedEffect
-        snackbars.showSnackbar(message)
-        vm.clearMessage()
     }
 
     // The leave step: the one-time guide, then "Display over other apps", then Android's own
@@ -163,7 +151,11 @@ fun ReviewScreen(
         busy = vm.busy,
         usageAccess = vm.usageAccess,
         onAllowUsage = { vm.openUsageSettings(context) },
-        snackbars = snackbars,
+        message = vm.message,
+        onMessageDone = vm::clearMessage,
+        offline = vm.offline,
+        failure = vm.failure,
+        onRetry = { vm.retry(context, post) },
         onClose = onClose,
         onLeave = { step ->
             when (step) {
@@ -221,7 +213,11 @@ fun ReviewBody(
     busy: Boolean = false,
     usageAccess: Boolean = true,
     onAllowUsage: () -> Unit = {},
-    snackbars: SnackbarHostState,
+    message: String? = null,
+    onMessageDone: () -> Unit = {},
+    offline: Boolean = false,
+    failure: String? = null,
+    onRetry: () -> Unit = {},
     onClose: () -> Unit,
     onLeave: (ReviewStep) -> Unit,
     onSend: (proof: Uri, note: String) -> Unit,
@@ -239,29 +235,39 @@ fun ReviewBody(
         }
     val shown = proof
     val t = Tt.colors
+    // A spinner only for work that takes a moment: a quick check on coming back stays still.
+    var spinning by remember { mutableStateOf(false) }
+    LaunchedEffect(busy) {
+        if (busy) delay(SPIN_AFTER_MS)
+        spinning = busy
+    }
 
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        snackbarHost = { SnackbarHost(snackbars) },
         topBar = {
-            TopAppBar(
-                windowInsets = WindowInsets(0, 0, 0, 0),
-                title = { Text("Review", fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = onClose) { Icon(Lucide.ChevronLeft, "Back") } },
-                actions = {
-                    Box(Modifier.padding(end = Gutter)) {
-                        Pill("+${post.reward} tix", t.tileInk, t.tile)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-            )
+            Column {
+                TopAppBar(
+                    windowInsets = WindowInsets(0, 0, 0, 0),
+                    title = { Text("Review", fontWeight = FontWeight.Bold) },
+                    navigationIcon = { IconButton(onClick = onClose) { Icon(Lucide.ChevronLeft, "Back") } },
+                    actions = {
+                        Box(Modifier.padding(end = Gutter)) {
+                            Pill("+${post.reward} tix", t.tileInk, t.tile)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                )
+                PageMessage(message, onMessageDone)
+            }
         },
         bottomBar = {
             // Always there, even while loading and once sent, so the space the page is centred in
             // never changes size under it.
             Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp)) {
-                if (job == null) {
+                if (job == null && failure != null) {
+                    Primary("Try again", tall = true, busy = spinning, onClick = onRetry)
+                } else if (job == null) {
                     Spacer(Modifier.height(52.dp))
                 } else if (job.settled) {
                     Primary("Done", tall = true, onClick = onClose)
@@ -272,6 +278,7 @@ fun ReviewBody(
                     Primary(
                         if (asking) "Allow usage access" else stepAction(job.step, job),
                         tall = true,
+                        busy = spinning,
                         enabled = !waitingForProof,
                     ) {
                         if (asking) {
@@ -300,11 +307,28 @@ fun ReviewBody(
             Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
             ) {
-                ReviewAppRow(post)
-                // The loader fades into the page rather than being swapped for it.
-                Crossfade(job, label = "review") { job ->
-                    if (job == null) {
+                ReviewAppRow(post.appName, post.isLive, post.ownerName, offline)
+                // Which page this is, rather than the job itself: keyed on the job, every answer
+                // from the server faded the whole page out and back in. Now only a real change of
+                // page does: loading to the step, the step to sent.
+                val page =
+                    when {
+                        job == null && failure != null -> ReviewPage.FAILED
+                        job == null -> ReviewPage.LOADING
+                        job.settled -> ReviewPage.DONE
+                        else -> ReviewPage.STEP
+                    }
+                Crossfade(page, label = "review") { shownPage ->
+                    if (shownPage == ReviewPage.FAILED) {
+                        ReviewFailed(failure.orEmpty(), room)
+                        return@Crossfade
+                    }
+                    if (job == null || shownPage == ReviewPage.LOADING) {
                         ReviewLoading(room, dial, gap)
+                        return@Crossfade
+                    }
+                    if (shownPage == ReviewPage.DONE) {
+                        ReviewDone(job, room)
                         return@Crossfade
                     }
                     // Centred in what is left under the app row; scrolls only if a phone is smaller
@@ -386,81 +410,11 @@ fun ReviewBody(
     }
 }
 
+private enum class ReviewPage { LOADING, FAILED, STEP, DONE }
+
+private const val SPIN_AFTER_MS = 250L
+
 /** What a post carries when the developer asked nothing in particular; not worth showing. */
 private const val GENERAL_ASK = "General feedback on the app experience."
 
 internal val ReviewSteps = ReviewStep.entries.filter { it != ReviewStep.WAIT }
-
-/** The app under review: its mark, its name, and where it is. */
-@Composable
-private fun ReviewAppRow(post: ApiPost) {
-    Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        AppTile(post.appName, size = 44.dp)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                post.appName,
-                style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp),
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                (if (post.isLive) "Live on Google Play" else "Closed testing") +
-                    if (post.ownerName.isNotBlank()) " · by ${post.ownerName}" else "",
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp),
-                color = Tt.colors.text3,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-internal fun stepShort(
-    step: ReviewStep,
-    job: ReviewJob,
-): String =
-    when (step) {
-        ReviewStep.INSTALL -> "Install"
-        ReviewStep.USE -> "Use"
-        ReviewStep.LEAVE -> "Review"
-        ReviewStep.PROVE -> "Prove"
-        ReviewStep.WAIT -> ""
-    }
-
-private fun stepTitle(job: ReviewJob): String =
-    when (job.step) {
-        ReviewStep.INSTALL -> "Install ${job.post.appName}"
-        ReviewStep.USE -> "Try the app"
-        ReviewStep.LEAVE -> if (job.post.isLive) "Review it on Play" else "Send feedback on Play"
-        ReviewStep.PROVE -> "Send your proof"
-        ReviewStep.WAIT -> "Sent"
-    }
-
-private fun stepLine(job: ReviewJob): String =
-    when (job.step) {
-        ReviewStep.INSTALL -> "Get it from Google Play so it counts."
-        ReviewStep.USE ->
-            if (job.secondsLeft == 0) "Long enough. Leave your review next." else "${job.secondsLeft} more seconds in the app"
-        ReviewStep.LEAVE ->
-            if (job.post.isLive) {
-                "Rate it on Play, then come back with a screenshot."
-            } else {
-                "Use “Send feedback” on its Play page, then come back with a screenshot."
-            }
-        ReviewStep.PROVE -> "Add a screenshot of what you left on Play."
-        ReviewStep.WAIT -> ""
-    }
-
-private fun stepAction(
-    step: ReviewStep,
-    job: ReviewJob,
-): String =
-    when (step) {
-        ReviewStep.INSTALL -> "Get it on Play"
-        ReviewStep.USE -> "Open the app"
-        ReviewStep.LEAVE -> "Open Play to review"
-        ReviewStep.PROVE -> "Send the proof"
-        ReviewStep.WAIT -> ""
-    }

@@ -13,6 +13,7 @@ import com.eazyverse.testtrack.data.Device
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.ProofStore
 import com.eazyverse.testtrack.data.ReviewCaptureService
+import com.eazyverse.testtrack.data.ReviewKeep
 import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
@@ -39,6 +40,17 @@ class ReviewViewModel : ViewModel() {
         private set
 
     var message by mutableStateOf<String?>(null)
+        private set
+
+    /**
+     * The last call could not reach TestTrack. The page goes on showing the last saved answer
+     * (see [ReviewKeep]) and says it is offline, rather than an error over a page that still works.
+     */
+    var offline by mutableStateOf(false)
+        private set
+
+    /** Why there is nothing to show at all: no saved review and no way to fetch one. */
+    var failure by mutableStateOf<String?>(null)
         private set
 
     /**
@@ -177,25 +189,59 @@ class ReviewViewModel : ViewModel() {
     fun start(
         context: Context,
         post: ApiPost,
-    ) = run {
+    ) {
         app = context.applicationContext
-        val existing = post.myReviewId
-        val mine = if (existing == null) null else Api.myReviews().firstOrNull { it.id == existing }
-        val fingerprint = if (mine == null) Device.fingerprint(context) else null
-        if (mine == null && fingerprint == null) {
-            message = "This phone will not identify itself, so a review from it cannot count."
-            return@run
+        failure = null
+        // The last saved answer, drawn at once. The fetch below then brings it up to date, or
+        // leaves it standing, marked offline, when there is no connection.
+        val saved = if (job == null) ReviewKeep.get(context, post.id) else null
+        if (saved != null) {
+            job = ReviewJob(post, saved, leftReview = leftFor(context, saved.id))
+            restore(context, saved.id)
         }
-        val review = mine ?: Api.claim(post.id, fingerprint!!)
-        // Looked at before it is drawn, so the page opens on the step the phone is really at.
-        // Drawing the server's last word first and then the phone's moved the page under the
-        // reviewer a moment after it appeared.
-        val kept = ProofStore.proof(context, review.id)
-        val left = kept != null || ProofStore.left(context, review.id)
-        job = look(context, ReviewJob(post, review, leftReview = left), settle = false)
-        if (kept != null) proof = Uri.fromFile(kept)
-        note = ProofStore.note(context, review.id)
-        adoptPending()
+        run(onOffline = { if (job == null) failure = "TestTrack could not be reached. Check your connection." }) {
+            val existing = post.myReviewId ?: saved?.id
+            val mine = if (existing == null) null else Api.myReviews().firstOrNull { it.id == existing }
+            offline = false
+            val fingerprint = if (mine == null) Device.fingerprint(context) else null
+            if (mine == null && fingerprint == null) {
+                failure = "This phone will not identify itself, so a review from it cannot count."
+                return@run
+            }
+            val review = mine ?: Api.claim(post.id, fingerprint!!)
+            // Looked at before it is drawn, so the page opens on the step the phone is really at.
+            // Drawing the server's last word first and then the phone's moved the page under the
+            // reviewer a moment after it appeared.
+            keep(look(context, ReviewJob(post, review, leftReview = leftFor(context, review.id)), settle = false))
+            restore(context, review.id)
+            adoptPending()
+        }
+    }
+
+    /** Try the first load again, from the page shown when it failed. */
+    fun retry(
+        context: Context,
+        post: ApiPost,
+    ) = start(context, post)
+
+    /** Step four's own saved work for this review: the screenshot and the note. */
+    private fun restore(
+        context: Context,
+        id: String,
+    ) {
+        ProofStore.proof(context, id)?.let { proof = Uri.fromFile(it) }
+        note = ProofStore.note(context, id)
+    }
+
+    private fun leftFor(
+        context: Context,
+        id: String,
+    ) = ProofStore.proof(context, id) != null || ProofStore.left(context, id)
+
+    /** Show a job the server has just confirmed, and save it as the last word. */
+    private fun keep(next: ReviewJob) {
+        job = next
+        app?.let { ReviewKeep.put(it, next.post.id, next.review) }
     }
 
     /**
@@ -211,7 +257,7 @@ class ReviewViewModel : ViewModel() {
         run {
             val next = look(context, current, settle = true)
             // A screenshot may have landed while this was looking; keep what it said.
-            job = next.copy(leftReview = next.leftReview || job?.leftReview == true)
+            keep(next.copy(leftReview = next.leftReview || job?.leftReview == true))
         }
     }
 
@@ -236,6 +282,7 @@ class ReviewViewModel : ViewModel() {
         var review = current.review
         if (review.state == CLAIMED && info.installed && !sideloaded) {
             review = Api.installed(review.id)
+            offline = false
         }
         if (review.state == INSTALLED || review.state == USED) {
             val used =
@@ -247,7 +294,10 @@ class ReviewViewModel : ViewModel() {
                     source = "review",
                     settle = settle,
                 )
-            if (used > review.usedMs) review = Api.used(review.id, used)
+            if (used > review.usedMs) {
+                review = Api.used(review.id, used)
+                offline = false
+            }
         }
         return current.copy(review = review)
     }
@@ -278,13 +328,14 @@ class ReviewViewModel : ViewModel() {
         note: String,
     ) {
         val current = job ?: return
-        run {
+        // No message on success: the page itself turns into the sent screen.
+        run(onOffline = { message = "You're offline. Your screenshot and note are saved; send them once you're back." }) {
             val ref = upload(context, proof, ProofStore.mime(context, current.review.id))
-            job = current.copy(review = Api.submit(current.review.id, ref, note))
+            keep(current.copy(review = Api.submit(current.review.id, ref, note)))
+            offline = false
             ProofStore.forget(context, current.review.id)
             this.proof = null
             this.note = ""
-            message = "Sent. The developer has two days, then it approves itself."
         }
     }
 
@@ -357,16 +408,21 @@ class ReviewViewModel : ViewModel() {
      * The API's message is written for a person and is shown as it arrives. Nothing here reads it;
      * where a particular refusal needs particular handling, it matches on the code instead.
      */
-    private fun run(block: suspend () -> Unit) {
+    private fun run(
+        onOffline: () -> Unit = {},
+        block: suspend () -> Unit,
+    ) {
         if (busy) return
         busy = true
         viewModelScope.launch {
             try {
                 block()
             } catch (e: ApiError) {
-                message = e.message
+                if (job == null) failure = e.message else message = e.message
             } catch (_: Exception) {
-                message = "We could not reach TestTrack. Check your connection."
+                // Not an error to show: the page carries on from what it saved, marked offline.
+                offline = true
+                onOffline()
             } finally {
                 busy = false
             }

@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.net
 
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -271,7 +270,6 @@ class ReviewJourneyTest {
                         post = post,
                         job = job,
                         sideloaded = false,
-                        snackbars = SnackbarHostState(),
                         onClose = {},
                         onLeave = {},
                         onSend = { _, _ -> },

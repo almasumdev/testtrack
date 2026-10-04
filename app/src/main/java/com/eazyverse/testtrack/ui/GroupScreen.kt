@@ -14,6 +14,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -245,45 +246,34 @@ fun GroupScreen(
 
     val group = vm.group
 
-    // A confirmation like "Report cleared" is not the same fact as "we couldn't reach the
-    // server" — the first is good news about something that just finished, the second is a
-    // standing problem worth reading carefully. Routing both through the same red inline text at
-    // the bottom of a thirteen-row list meant the good news looked like an error and needed a
-    // scroll to ever be seen. A Snackbar surfaces the instant it happens and clears itself; the
-    // other screens' inline [Failure] text is left as-is for now, only this one moves.
-    val snackbarHostState = remember { SnackbarHostState() }
-    LaunchedEffect(vm.message) {
-        val text = vm.message
-        if (text != null && group != null) {
-            snackbarHostState.showSnackbar(text)
-            if (vm.message == text) vm.message = null
-        }
-    }
-
     Scaffold(
         containerColor = Color.Transparent,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = {
-                    // The name the caller already had, shown immediately — see Routes.GROUP —
-                    // and swapped for the loaded group's own once that answers, which is almost
-                    // always the same word appearing twice rather than a visible pop. Blank only
-                    // for the rare entry with neither: a placeholder here would be telling the
-                    // tester something they didn't ask to be told twice, or that isn't true yet.
-                    val label = group?.name?.ifBlank { null } ?: groupName.ifBlank { null }
-                    if (label != null) Text(label, fontWeight = FontWeight.SemiBold)
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Lucide.ArrowLeft, "Back")
-                    }
-                },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                    ),
-            )
+            // A confirmation like "Report cleared" and a failure both open under the bar, where they
+            // are seen the moment they happen, rather than as red text at the foot of a long list.
+            Column {
+                TopAppBar(
+                    title = {
+                        // The name the caller already had, shown immediately — see Routes.GROUP —
+                        // and swapped for the loaded group's own once that answers, which is almost
+                        // always the same word appearing twice rather than a visible pop. Blank only
+                        // for the rare entry with neither: a placeholder here would be telling the
+                        // tester something they didn't ask to be told twice, or that isn't true yet.
+                        val label = group?.name?.ifBlank { null } ?: groupName.ifBlank { null }
+                        if (label != null) Text(label, fontWeight = FontWeight.SemiBold)
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Lucide.ArrowLeft, "Back")
+                        }
+                    },
+                    colors =
+                        TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                        ),
+                )
+                PageMessage(if (group != null) vm.message else null, { vm.message = null })
+            }
         },
     ) { padding ->
         RefreshBox(
