@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -96,6 +97,45 @@ fun FeedScreen(
      * every frame of the scroll that produced it.
      */
     val askOffScreen by remember { derivedStateOf { feedbackList.firstVisibleItemIndex > 0 } }
+
+    // A review or case open on its own page takes the whole tab until it is decided or backed out of.
+    val checkingReview = vm.waiting.firstOrNull { it.id == vm.checking }
+    val checkingCase = vm.disputes.firstOrNull { it.id == vm.checking }
+    BackHandler(enabled = vm.checking != null) { vm.closeCheck() }
+    if (checkingReview != null || checkingCase != null) {
+        Column(Modifier.fillMaxSize()) {
+            PageMessage(vm.message, vm::clearMessage)
+            if (checkingReview != null) {
+                ReviewCheck(
+                    checkingReview,
+                    busy = vm.busy,
+                    proof = { ref -> ProofImage(ref, whole = true) },
+                    onBack = vm::closeCheck,
+                    onApprove = { vm.approve(context, checkingReview) },
+                    onReject = { refusing = checkingReview },
+                )
+            } else if (checkingCase != null) {
+                CaseCheck(
+                    checkingCase,
+                    busy = vm.busy,
+                    proof = { ref -> ProofImage(ref, whole = true) },
+                    onBack = vm::closeCheck,
+                    onVote = { forReviewer -> vm.vote(context, checkingCase, forReviewer) },
+                )
+            }
+        }
+        refusing?.let { review ->
+            FeedRefuseDialog(
+                appName = review.appName,
+                onRefuse = { reason ->
+                    refusing = null
+                    vm.reject(context, review, reason)
+                },
+                onDismiss = { refusing = null },
+            )
+        }
+        return
+    }
 
     // Mine and Waiting are this account's own; signed out there is no account, so no tabs for them.
     val shownTabs = if (vm.signedOut) listOf(FeedTab.FEEDBACK, FeedTab.ACTIVITY) else FeedTab.entries
@@ -267,11 +307,8 @@ fun FeedScreen(
                         offline = vm.offline,
                         onRetry = { vm.load(context) },
                         signedOut = vm.signedOut,
-                        busy = vm.busy,
-                        proof = { ref -> ProofImage(ref) },
-                        onApprove = { vm.approve(context, it) },
-                        onReject = { refusing = it },
-                        onVote = { dispute, forReviewer -> vm.vote(context, dispute, forReviewer) },
+                        onOpenReview = { vm.openCheck(it.id) },
+                        onOpenCase = { vm.openCheck(it.id) },
                         onSignIn = onSignIn,
                     )
             }
@@ -298,7 +335,10 @@ fun FeedScreen(
  * the request and refreshes it when it has expired.
  */
 @Composable
-fun ProofImage(ref: String) {
+fun ProofImage(
+    ref: String,
+    whole: Boolean = false,
+) {
     val context = LocalContext.current
     val loader = ImageLoader.Builder(context).okHttpClient { Api.http }.build()
 
@@ -311,13 +351,18 @@ fun ProofImage(ref: String) {
                 .build(),
         contentDescription = "The screenshot sent as proof",
         imageLoader = loader,
-        // Tall, because a phone screenshot is. Cropped rather than letterboxed: the part that
-        // matters is the review at the top, and a shrunk-to-fit screenshot is unreadable.
+        // On a review's own page it is shown whole, at the width of the page. Anywhere smaller it
+        // is cropped to its top, where the review is, since a shrunk-to-fit screenshot is
+        // unreadable.
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .aspectRatio(3f / 4f)
-                .clip(RoundedCornerShape(10.dp)),
-        contentScale = ContentScale.Crop,
+            if (whole) {
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+            } else {
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(3f / 4f)
+                    .clip(RoundedCornerShape(10.dp))
+            },
+        contentScale = if (whole) ContentScale.FillWidth else ContentScale.Crop,
     )
 }

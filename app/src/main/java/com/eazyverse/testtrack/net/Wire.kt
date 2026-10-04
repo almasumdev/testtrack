@@ -169,6 +169,9 @@ data class ApiReview(
     @SerialName("package_name") val packageName: String = "",
     @SerialName("is_live") val isLive: Boolean = false,
     val reward: Int = 0,
+    // Only on /reviews/waiting: who sent it, and when it accepts itself.
+    @SerialName("reviewer_name") val reviewerName: String = "",
+    @SerialName("decide_by") val decideBy: String? = null,
 )
 
 @Serializable

@@ -63,12 +63,8 @@ class WaitingBodyTest {
         var refused: Waiting? = null
         compose.setContent {
             TestTrackTheme {
-                WaitingBody(
-                    reviews = listOf(review(written = "The total is readable.")),
-                    disputes = emptyList(),
-                    onApprove = { approved = it },
-                    onReject = { refused = it },
-                )
+                val shown = review(written = "The total is readable.")
+                ReviewCheck(shown, onApprove = { approved = shown }, onReject = { refused = shown })
             }
         }
 
@@ -88,7 +84,7 @@ class WaitingBodyTest {
         // The owner's real choice is between deciding and letting the clock decide, so the clock
         // is on the card rather than left to be discovered.
         compose.setContent {
-            TestTrackTheme { WaitingBody(reviews = listOf(review()), disputes = emptyList()) }
+            TestTrackTheme { ReviewCheck(review()) }
         }
         compose.onNodeWithText("accepts itself", substring = true).assertIsDisplayed()
     }
@@ -98,11 +94,7 @@ class WaitingBodyTest {
         var voted: Boolean? = null
         compose.setContent {
             TestTrackTheme {
-                WaitingBody(
-                    reviews = emptyList(),
-                    disputes = listOf(dispute()),
-                    onVote = { _, forReviewer -> voted = forReviewer },
-                )
+                CaseCheck(dispute(), onVote = { voted = it })
             }
         }
 
@@ -121,7 +113,7 @@ class WaitingBodyTest {
     fun a_case_shows_what_the_developer_actually_said() {
         // Three strangers decide it on this sentence, so hiding it would be asking them to guess.
         compose.setContent {
-            TestTrackTheme { WaitingBody(reviews = emptyList(), disputes = listOf(dispute())) }
+            TestTrackTheme { CaseCheck(dispute()) }
         }
         compose
             .onNodeWithText("The screenshot is of a different app.", substring = true)
@@ -135,15 +127,35 @@ class WaitingBodyTest {
                 WaitingBody(reviews = listOf(review()), disputes = listOf(dispute()))
             }
         }
-        compose.onNodeWithText("Your apps").assertIsDisplayed()
-        compose.onNodeWithText("Help decide").assertIsDisplayed()
+        compose.onNodeWithText("Reviews of your apps").assertIsDisplayed()
+        compose.onNodeWithText("Cases to decide").assertIsDisplayed()
+    }
+
+    @Test
+    fun a_row_opens_its_own_page_rather_than_deciding_in_the_list() {
+        var opened: String? = null
+        compose.setContent {
+            TestTrackTheme {
+                WaitingBody(
+                    reviews = listOf(review().copy(reviewerName = "Tanvir Hasan", decideBy = System.currentTimeMillis() + 30 * 3_600_000L)),
+                    disputes = emptyList(),
+                    onOpenReview = { opened = it.id },
+                )
+            }
+        }
+        // Who sent it and how long is left, on the row; no buttons until it is opened.
+        compose.onNodeWithText("Tanvir Hasan · Play review").assertIsDisplayed()
+        compose.onNodeWithText("1d 5h").assertIsDisplayed()
+        compose.onNodeWithText("Accept").assertDoesNotExist()
+        compose.onNodeWithText("Nikosh Budget").performClick()
+        assertEquals("r1", opened)
     }
 
     @Test
     fun nothing_can_be_pressed_twice_while_the_first_press_is_in_flight() {
         compose.setContent {
             TestTrackTheme {
-                WaitingBody(reviews = listOf(review()), disputes = emptyList(), busy = true)
+                ReviewCheck(review(), busy = true)
             }
         }
         compose.onNodeWithText("Accept").assertIsNotEnabled()

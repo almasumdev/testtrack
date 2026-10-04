@@ -14,6 +14,7 @@ import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.PostIn
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 /**
  * Circle, against the API.
@@ -91,6 +92,18 @@ class FeedViewModel : ViewModel() {
         tab = next
     }
 
+    /** The review or case open on its own page, by id; null on the list. */
+    var checking by mutableStateOf<String?>(null)
+        private set
+
+    fun openCheck(id: String) {
+        checking = id
+    }
+
+    fun closeCheck() {
+        checking = null
+    }
+
     /** Reviews of this account's apps, waiting to be accepted or refused. */
     var waiting by mutableStateOf<List<Waiting>>(emptyList())
         private set
@@ -152,9 +165,13 @@ class FeedViewModel : ViewModel() {
                     Api.waiting().map {
                         Waiting(
                             id = it.id,
-                            appName = appNameFor(it.postId),
+                            appName = it.appName.ifBlank { appNameFor(it.postId) },
                             written = it.written,
                             proofRef = it.proofRef,
+                            reviewerName = it.reviewerName,
+                            reward = it.reward,
+                            isLive = it.isLive,
+                            decideBy = millis(it.decideBy) ?: millis(it.submittedAt)?.plus(TWO_DAYS),
                         )
                     }
                 disputes =
@@ -248,6 +265,8 @@ class FeedViewModel : ViewModel() {
             try {
                 block()
                 message = done
+                // Decided, so its page has nothing left to ask; back to the list.
+                checking = null
                 load(context)
             } catch (e: ApiError) {
                 message = e.message
@@ -259,3 +278,9 @@ class FeedViewModel : ViewModel() {
         }
     }
 }
+
+/** An ISO time from the server as epoch milliseconds, or null when absent or unreadable. */
+private fun millis(iso: String?): Long? = iso?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() }
+
+/** How long an owner has to answer, as the server's rule; only used when it did not say. */
+private const val TWO_DAYS = 48 * 3_600_000L

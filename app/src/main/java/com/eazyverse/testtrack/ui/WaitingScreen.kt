@@ -1,26 +1,18 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Inbox
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.domain.Case
 import com.eazyverse.testtrack.domain.Waiting
+import com.eazyverse.testtrack.domain.closeTo
+import com.eazyverse.testtrack.domain.timeLeft
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
  * Everything waiting on a decision from this account.
@@ -40,18 +32,8 @@ fun WaitingBody(
     loading: Boolean = false,
     offline: Boolean = false,
     signedOut: Boolean = false,
-    busy: Boolean = false,
-    /**
-     * How a screenshot gets on screen.
-     *
-     * Passed in rather than fetched here: proof is served by our API and refused without a
-     * session, so putting one up means holding the token, and a screen that holds the token is a
-     * screen no test can open.
-     */
-    proof: @Composable (String) -> Unit = {},
-    onApprove: (Waiting) -> Unit = {},
-    onReject: (Waiting) -> Unit = {},
-    onVote: (Case, Boolean) -> Unit = { _, _ -> },
+    onOpenReview: (Waiting) -> Unit = {},
+    onOpenCase: (Case) -> Unit = {},
     onSignIn: () -> Unit = {},
     onRetry: () -> Unit = {},
 ) {
@@ -92,146 +74,47 @@ fun WaitingBody(
         return
     }
 
+    // A list like Mine: one row each, and the deciding is done on the row's own page, where the
+    // screenshot can be seen at full size. Cards with the screenshot and both buttons inline took
+    // most of a screen each.
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 4.dp, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
     ) {
+        val now = System.currentTimeMillis()
         if (reviews.isNotEmpty()) {
-            item { CrewHeading("Your apps", trailing = "${reviews.size}") }
-            items(reviews, key = { it.id }) { review ->
-                WaitingReview(
-                    review = review,
-                    busy = busy,
-                    proof = proof,
-                    onApprove = { onApprove(review) },
-                    onReject = { onReject(review) },
-                )
+            item(key = "h-reviews") { CrewHeading("Reviews of your apps", "${reviews.size}", top = 2.dp) }
+            item(key = "reviews") {
+                CheckGroup(reviews.size) { index ->
+                    val review = reviews[index]
+                    CheckRow(
+                        review.appName,
+                        listOf(
+                            review.reviewerName.ifBlank { "A reviewer" },
+                            if (review.isLive) "Play review" else "Closed test",
+                        ).joinToString(" · "),
+                        onClick = { onOpenReview(review) },
+                    ) {
+                        val until = review.decideBy
+                        if (until != null) {
+                            TimeChip(timeLeft(until, now), closeTo(until, now))
+                        }
+                    }
+                }
             }
         }
         if (disputes.isNotEmpty()) {
-            item { CrewHeading("Help decide", trailing = "${disputes.size}") }
-            items(disputes, key = { it.id }) { dispute ->
-                WaitingDispute(dispute, busy = busy, proof = proof) { forReviewer ->
-                    onVote(dispute, forReviewer)
-                }
+            item(key = "h-cases") {
+                CrewHeading("Cases to decide", "${disputes.size}", top = if (reviews.isEmpty()) 2.dp else 20.dp)
             }
-        }
-    }
-}
-
-/**
- * One review of your app, and the two things you can do about it.
- *
- * The proof is shown rather than described. Asking somebody to accept or refuse a review while
- * hiding the evidence would be asking them to guess, and refusing costs them a stake.
- */
-@Composable
-private fun WaitingReview(
-    review: Waiting,
-    busy: Boolean,
-    proof: @Composable (String) -> Unit,
-    onApprove: () -> Unit,
-    onReject: () -> Unit,
-) {
-    Box(Modifier.padding(horizontal = Gutter, vertical = 6.dp)) {
-        CrewCard(padding = PaddingValues(14.dp)) {
-            Text(
-                review.appName,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "A review is waiting. Two days from when it was sent and it accepts itself.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            if (review.written.isNotBlank()) {
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    review.written,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-            if (review.proofRef.isNotBlank()) {
-                Spacer(Modifier.height(12.dp))
-                proof(review.proofRef)
-            }
-
-            Spacer(Modifier.height(14.dp))
-            Row(Modifier.fillMaxWidth()) {
-                Primary("Accept", Modifier.weight(1f), enabled = !busy) { onApprove() }
-                Spacer(Modifier.width(10.dp))
-                // Refusing opens a case that three members decide, and the loser funds them. The
-                // button says so on the next screen rather than pretending this is free.
-                Secondary("Refuse", Modifier.weight(1f), destructive = true, enabled = !busy) {
-                    onReject()
-                }
-            }
-        }
-    }
-}
-
-/** One case between two other people, and the side this account comes down on. */
-@Composable
-private fun WaitingDispute(
-    dispute: Case,
-    busy: Boolean,
-    proof: @Composable (String) -> Unit,
-    onVote: (Boolean) -> Unit,
-) {
-    Box(Modifier.padding(horizontal = Gutter, vertical = 6.dp)) {
-        CrewCard(padding = PaddingValues(14.dp)) {
-            Row(Modifier.fillMaxWidth()) {
-                Text(
-                    dispute.appName,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                )
-                Pill(
-                    "${dispute.votesCast} of ${dispute.votesNeeded}",
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                    Status.neutralSoft,
-                )
-            }
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "The developer refused this review. They said: ${dispute.reason}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            if (dispute.written.isNotBlank()) {
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    dispute.written,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-            if (dispute.proofRef.isNotBlank()) {
-                Spacer(Modifier.height(12.dp))
-                proof(dispute.proofRef)
-            }
-
-            Spacer(Modifier.height(10.dp))
-            Text(
-                "Whoever you decide against pays the ${dispute.stake} tix that goes to the " +
-                    "three of you deciding.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(12.dp))
-            Row(Modifier.fillMaxWidth()) {
-                Secondary("The review stands", Modifier.weight(1f), enabled = !busy) {
-                    onVote(true)
-                }
-                Spacer(Modifier.width(10.dp))
-                Secondary("The developer is right", Modifier.weight(1f), enabled = !busy) {
-                    onVote(false)
+            item(key = "cases") {
+                CheckGroup(disputes.size) { index ->
+                    val case = disputes[index]
+                    CheckRow(
+                        case.appName,
+                        "Disputed · ${case.votesCast} of ${case.votesNeeded} votes",
+                        onClick = { onOpenCase(case) },
+                    ) { Pill("${case.stake} tix", Tt.colors.accentInk, Tt.colors.glass2) }
                 }
             }
         }
