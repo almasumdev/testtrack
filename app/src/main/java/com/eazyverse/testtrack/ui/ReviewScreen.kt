@@ -156,7 +156,9 @@ fun ReviewScreen(
         // The screenshot already got stays until a new one arrives, so a capture abandoned half
         // way does not cost the one there was.
         onCapture = toPlay,
-        onDropProof = vm::clearProof,
+        onPicked = { vm.keepPicked(context, it) },
+        note = vm.note,
+        onNote = vm::editNote,
         sideloaded = vm.sideloaded,
         busy = vm.busy,
         usageAccess = vm.usageAccess,
@@ -225,21 +227,17 @@ fun ReviewBody(
     onSend: (proof: Uri, note: String) -> Unit,
     proof: Uri? = null,
     onCapture: () -> Unit = {},
-    onDropProof: () -> Unit = {},
+    onPicked: (Uri) -> Unit = {},
+    note: String = "",
+    onNote: (String) -> Unit = {},
 ) {
-    var picked by remember { mutableStateOf<Uri?>(null) }
-    // The system picker: permissionless, it hands back the one picture somebody chose. The newest
-    // picture wins, whichever way it came.
+    // The system picker: permissionless, it hands back the one picture somebody chose. Whatever
+    // comes back replaces the screenshot there was, whichever way that one came.
     val pick =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) {
-                picked = uri
-                onDropProof()
-            }
+            if (uri != null) onPicked(uri)
         }
-    LaunchedEffect(proof) { if (proof != null) picked = null }
-    var note by remember { mutableStateOf("") }
-    val shown = picked ?: proof
+    val shown = proof
     val t = Tt.colors
 
     Scaffold(
@@ -369,7 +367,7 @@ fun ReviewBody(
                             ProofArea(
                                 shown = shown,
                                 note = note,
-                                onNote = { note = it },
+                                onNote = onNote,
                                 onCapture = onCapture,
                                 onGallery = {
                                     pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))

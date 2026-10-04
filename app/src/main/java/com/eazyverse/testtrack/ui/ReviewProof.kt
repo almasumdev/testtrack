@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -155,8 +156,9 @@ private fun ProofForm(
                 contentScale = ContentScale.Crop,
             )
             Spacer(Modifier.width(14.dp))
-            // As tall as the screenshot: the words at its top edge, the buttons at its bottom.
-            Column(Modifier.weight(1f).height(THUMB_HEIGHT), verticalArrangement = Arrangement.SpaceBetween) {
+            // At least as tall as the screenshot: the words at its top edge, the buttons at its
+            // bottom, and never less than a clear gap between them on a larger font.
+            Column(Modifier.weight(1f).heightIn(min = THUMB_HEIGHT), verticalArrangement = Arrangement.SpaceBetween) {
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Lucide.CircleCheck, null, Modifier.size(19.dp), tint = t.ok)
@@ -174,7 +176,7 @@ private fun ProofForm(
                         modifier = Modifier.padding(top = 5.dp),
                     )
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ProofAction(Lucide.Camera, "Capture", onCapture, Modifier.weight(1f))
                     ProofAction(Lucide.Image, "Gallery", onGallery, Modifier.weight(1f))
                 }
@@ -230,7 +232,7 @@ private fun ProofAction(
 
 private const val NOTE_MAX = 600
 
-private val THUMB_HEIGHT = 110.dp
+private val THUMB_HEIGHT = 124.dp
 
 /**
  * Step four with no screenshot yet: the two ways to get one, right on the page.

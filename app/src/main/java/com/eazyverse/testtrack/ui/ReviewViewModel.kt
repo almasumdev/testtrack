@@ -11,13 +11,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.Device
 import com.eazyverse.testtrack.data.InstalledApps
+import com.eazyverse.testtrack.data.ProofStore
 import com.eazyverse.testtrack.data.ReviewCaptureService
 import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.ApiReview
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 import java.time.Instant
 
 /**
@@ -47,20 +51,77 @@ class ReviewViewModel : ViewModel() {
     /** Open the Usage access list so the reviewer can switch TestTrack on. */
     fun openUsageSettings(context: Context) = UsageRepo.openSettings(context)
 
-    /** The screenshot the floating button took, until it is sent. */
+    /**
+     * The screenshot for step four, however it came, kept on the phone until it is sent. See
+     * [ProofStore]: leaving the page and coming back finds it, and the note, where they were.
+     */
     var proof by mutableStateOf<Uri?>(null)
         private set
+
+    /** The optional note that goes with the proof, kept as it is typed. */
+    var note by mutableStateOf("")
+        private set
+
+    /** The application, for keeping files from a collector that has no screen to ask. */
+    private var app: Context? = null
+
+    /** A capture that landed before the review was known; kept once it is. */
+    private var pending: File? = null
 
     init {
         viewModelScope.launch {
             ReviewCaptureService.proof.collect { file ->
                 if (file != null) {
-                    proof = Uri.fromFile(file)
-                    // A picture from Play is as sure a sign as any that the review was left.
-                    job = job?.copy(leftReview = true)
+                    ReviewCaptureService.takeProof()
+                    pending = file
+                    adoptPending()
                 }
             }
         }
+    }
+
+    /** Move a capture from the cache into the review's keeping. */
+    private suspend fun adoptPending() {
+        val file = pending ?: return
+        val context = app ?: return
+        val id = job?.review?.id ?: return
+        pending = null
+        val kept = withContext(Dispatchers.IO) { ProofStore.adopt(context, id, file) } ?: return
+        showProof(context, id, kept)
+    }
+
+    private fun showProof(
+        context: Context,
+        id: String,
+        file: File,
+    ) {
+        proof = Uri.fromFile(file)
+        // A picture from Play is as sure a sign as any that the review was left.
+        ProofStore.markLeft(context, id)
+        job = job?.copy(leftReview = true)
+    }
+
+    /** A screenshot chosen from the gallery: copied in, so it outlasts the picker's grant. */
+    fun keepPicked(
+        context: Context,
+        uri: Uri,
+    ) {
+        val id = job?.review?.id ?: return
+        val appContext = context.applicationContext
+        viewModelScope.launch {
+            val kept = withContext(Dispatchers.IO) { ProofStore.keep(appContext, id, uri) }
+            if (kept == null) {
+                message = "That image could not be read. Try another."
+            } else {
+                showProof(appContext, id, kept)
+            }
+        }
+    }
+
+    fun editNote(text: String) {
+        note = text
+        val id = job?.review?.id ?: return
+        app?.let { ProofStore.saveNote(it, id, text) }
     }
 
     /** Whether the one-time guide has been read. */
@@ -102,12 +163,6 @@ class ReviewViewModel : ViewModel() {
         }
     }
 
-    /** Throw the screenshot away so another can be taken. */
-    fun clearProof() {
-        proof = null
-        ReviewCaptureService.takeProof()
-    }
-
     private fun prefs(context: Context) = context.getSharedPreferences("review_prefs", Context.MODE_PRIVATE)
 
     /** True once the package is present but Play did not put it there. */
@@ -123,6 +178,7 @@ class ReviewViewModel : ViewModel() {
         context: Context,
         post: ApiPost,
     ) = run {
+        app = context.applicationContext
         val existing = post.myReviewId
         val mine = if (existing == null) null else Api.myReviews().firstOrNull { it.id == existing }
         val fingerprint = if (mine == null) Device.fingerprint(context) else null
@@ -134,7 +190,12 @@ class ReviewViewModel : ViewModel() {
         // Looked at before it is drawn, so the page opens on the step the phone is really at.
         // Drawing the server's last word first and then the phone's moved the page under the
         // reviewer a moment after it appeared.
-        job = look(context, ReviewJob(post, review), settle = false)
+        val kept = ProofStore.proof(context, review.id)
+        val left = kept != null || ProofStore.left(context, review.id)
+        job = look(context, ReviewJob(post, review, leftReview = left), settle = false)
+        if (kept != null) proof = Uri.fromFile(kept)
+        note = ProofStore.note(context, review.id)
+        adoptPending()
     }
 
     /**
@@ -198,7 +259,9 @@ class ReviewViewModel : ViewModel() {
      * proof step opens. What gets judged is the screenshot.
      */
     fun markLeft() {
-        job = job?.copy(leftReview = true)
+        val current = job ?: return
+        app?.let { ProofStore.markLeft(it, current.review.id) }
+        job = current.copy(leftReview = true)
     }
 
     /**
@@ -216,9 +279,11 @@ class ReviewViewModel : ViewModel() {
     ) {
         val current = job ?: return
         run {
-            val ref = upload(context, proof)
+            val ref = upload(context, proof, ProofStore.mime(context, current.review.id))
             job = current.copy(review = Api.submit(current.review.id, ref, note))
-            clearProof()
+            ProofStore.forget(context, current.review.id)
+            this.proof = null
+            this.note = ""
             message = "Sent. The developer has two days, then it approves itself."
         }
     }
@@ -234,12 +299,13 @@ class ReviewViewModel : ViewModel() {
     private suspend fun upload(
         context: Context,
         uri: Uri,
+        kept: String,
     ): String {
         val resolver = context.contentResolver
         val bytes =
             resolver.openInputStream(uri)?.use { it.readBytes() }
                 ?: throw ApiError(400, "unreadable", "That image could not be read.")
-        return Api.upload(bytes, resolver.getType(uri) ?: "image/jpeg").id
+        return Api.upload(bytes, resolver.getType(uri) ?: kept).id
     }
 
     /** Give the slot back so somebody else can take it. */
