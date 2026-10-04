@@ -52,16 +52,17 @@ object Api {
         http
             .newBuilder()
             .addInterceptor { chain ->
-                fun withToken() =
+                fun withToken(token: String?) =
                     chain
                         .request()
                         .newBuilder()
-                        .apply { ApiSession.access?.let { header("Authorization", "Bearer $it") } }
+                        .apply { token?.let { header("Authorization", "Bearer $it") } }
                         .build()
-                val first = chain.proceed(withToken())
-                if (first.code != 401 || !refreshQuietly()) return@addInterceptor first
+                val used = ApiSession.access
+                val first = chain.proceed(withToken(used))
+                if (first.code != 401 || !refreshQuietly(used)) return@addInterceptor first
                 first.close()
-                chain.proceed(withToken())
+                chain.proceed(withToken(ApiSession.access))
             }.build()
 
     @PublishedApi internal fun url(path: String) = BuildConfig.API_BASE + path
@@ -283,9 +284,10 @@ object Api {
         authed: Boolean = true,
     ): T =
         withContext(Dispatchers.IO) {
-            var attempt = call(builder, authed)
-            if (attempt.first == 401 && authed && refreshQuietly()) {
-                attempt = call(builder, true)
+            val used = if (authed) ApiSession.access else null
+            var attempt = call(builder, used)
+            if (attempt.first == 401 && authed && refreshQuietly(used)) {
+                attempt = call(builder, ApiSession.access)
             }
             val (status, text) = attempt
             if (status !in 200..299) throw failure(status, text)
@@ -295,19 +297,35 @@ object Api {
     @PublishedApi
     internal fun call(
         builder: Request.Builder,
-        authed: Boolean,
+        token: String?,
     ): Pair<Int, String> {
-        if (authed) {
-            ApiSession.access?.let { builder.header("Authorization", "Bearer $it") }
-        }
+        if (token != null) builder.header("Authorization", "Bearer $token") else builder.removeHeader("Authorization")
         http.newCall(builder.build()).execute().use { response ->
             return response.code to (response.body?.string().orEmpty())
         }
     }
 
-    /** Try the refresh token once. False means the session is really gone. */
+    private val refreshing = Any()
+
+    /**
+     * Try the refresh token once. False means the session is really gone.
+     *
+     * One at a time, and only for the token that was refused. The server retires a refresh token
+     * the moment it is used, so when a launch after the access token has lapsed sends five
+     * requests at once and all five come back 401, five refreshes with the same token meant one
+     * won and four were told to sign in again: the screen said the session had ended, and the next
+     * launch, holding the winner's pair, worked. Now the first refreshes, and the rest find the
+     * token they were refused with has already been replaced and simply retry with the new one.
+     */
     @PublishedApi
-    internal fun refreshQuietly(): Boolean {
+    internal fun refreshQuietly(refused: String?): Boolean =
+        synchronized(refreshing) {
+            val current = ApiSession.access
+            if (current != null && current != refused) return true
+            refreshNow()
+        }
+
+    private fun refreshNow(): Boolean {
         val generation = ApiSession.generation
         val token = ApiSession.refresh ?: return false
         return try {
@@ -317,7 +335,7 @@ object Api {
                         .Builder()
                         .url(url("/auth/refresh"))
                         .post(json.encodeToString(RefreshIn(token)).toRequestBody(JSON)),
-                    authed = false,
+                    null,
                 )
             if (status !in 200..299) {
                 false
