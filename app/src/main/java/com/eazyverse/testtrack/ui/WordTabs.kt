@@ -15,9 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -46,7 +44,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.ui.theme.Tt
 import kotlinx.coroutines.launch
 import kotlin.math.hypot
@@ -146,11 +143,10 @@ private fun WordTab(
         // The current tab is underlined as well as bold: weight alone was a quiet way to say
         // which one you are on. The line grows out from the middle as a tab is chosen.
         val line by animateFloatAsState(if (current) 1f else 0f, tween(220), label = "underline")
-        // The count is a superscript at the word's top right. Laid out from the top and lifted, it
-        // takes no part in the row's height, so every tab's word sits on the same line whether it
-        // has a count or not.
+        // The count sits in the label's own row, so it centres on the word and not on the word
+        // plus the underline under it, which had it sitting low.
         Column {
-            Row(verticalAlignment = Alignment.Top) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     label,
                     // Drawn on the letters and nowhere else. The count is left out on purpose: it is
@@ -167,8 +163,8 @@ private fun WordTab(
                     maxLines = 1,
                 )
                 if (count > 0) {
-                    Spacer(Modifier.width(3.dp))
-                    Box(Modifier.offset(y = (-6).dp)) { TabCount(count) }
+                    Spacer(Modifier.width(6.dp))
+                    TabCount(count)
                 }
             }
             Spacer(Modifier.height(4.dp))
@@ -190,15 +186,14 @@ private fun WordTab(
 private fun TabCount(count: Int) {
     Box(
         Modifier
-            .defaultMinSize(minWidth = 17.dp, minHeight = 17.dp)
             .clip(RoundedCornerShape(percent = 50))
             .background(MaterialTheme.colorScheme.primary)
-            .padding(horizontal = 5.dp),
+            .padding(horizontal = 6.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             "$count",
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.5.sp, lineHeight = 12.sp),
+            style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onPrimary,
         )
