@@ -78,6 +78,8 @@ class ReviewBodyTest {
         sideloaded: Boolean = false,
         onLeave: (ReviewStep) -> Unit = {},
         onSend: (android.net.Uri, String) -> Unit = { _, _ -> },
+        proof: android.net.Uri? = null,
+        onCapture: () -> Unit = {},
     ) {
         compose.setContent {
             TestTrackTheme {
@@ -89,6 +91,8 @@ class ReviewBodyTest {
                     onClose = {},
                     onLeave = onLeave,
                     onSend = onSend,
+                    proof = proof,
+                    onCapture = onCapture,
                 )
             }
         }
@@ -246,5 +250,28 @@ class ReviewBodyTest {
         // rejection they cannot judge.
         compose.onNodeWithText("Send the proof").assertIsNotEnabled()
         assertEquals(0, sent)
+    }
+
+    @Test
+    fun with_a_screenshot_both_ways_to_replace_it_stay_and_it_sends() {
+        val shot = android.net.Uri.parse("file:///nowhere/proof.jpg")
+        var sent: android.net.Uri? = null
+        var captures = 0
+        open("used", leftReview = true, proof = shot, onSend = { uri, _ -> sent = uri }, onCapture = { captures++ })
+
+        compose.onNodeWithText("Screenshot added").assertIsDisplayed()
+        // Replacing it is not only a screen capture: the gallery is right beside it.
+        compose.onNodeWithText("Gallery").assertIsDisplayed()
+        compose.onNodeWithText("Capture").performClick()
+        assertEquals(1, captures)
+
+        compose.onNodeWithText("Send the proof").performClick()
+        assertEquals(shot, sent)
+    }
+
+    @Test
+    fun a_sent_review_ends_on_a_done_button_so_the_page_never_resizes() {
+        open("submitted")
+        compose.onNodeWithText("Done").assertIsDisplayed()
     }
 }

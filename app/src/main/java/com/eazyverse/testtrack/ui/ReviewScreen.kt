@@ -9,6 +9,13 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -146,10 +153,10 @@ fun ReviewScreen(
         post = post,
         job = vm.job,
         proof = vm.proof,
-        onRetake = {
-            vm.clearProof()
-            toPlay()
-        },
+        // The screenshot already got stays until a new one arrives, so a capture abandoned half
+        // way does not cost the one there was.
+        onCapture = toPlay,
+        onDropProof = vm::clearProof,
         sideloaded = vm.sideloaded,
         busy = vm.busy,
         usageAccess = vm.usageAccess,
@@ -217,16 +224,22 @@ fun ReviewBody(
     onLeave: (ReviewStep) -> Unit,
     onSend: (proof: Uri, note: String) -> Unit,
     proof: Uri? = null,
-    onRetake: () -> Unit = {},
+    onCapture: () -> Unit = {},
+    onDropProof: () -> Unit = {},
 ) {
     var picked by remember { mutableStateOf<Uri?>(null) }
-    // The system picker: permissionless, it hands back the one picture somebody chose.
+    // The system picker: permissionless, it hands back the one picture somebody chose. The newest
+    // picture wins, whichever way it came.
     val pick =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) picked = uri
+            if (uri != null) {
+                picked = uri
+                onDropProof()
+            }
         }
+    LaunchedEffect(proof) { if (proof != null) picked = null }
     var note by remember { mutableStateOf("") }
-    val shown = proof ?: picked
+    val shown = picked ?: proof
     val t = Tt.colors
 
     Scaffold(
@@ -247,8 +260,14 @@ fun ReviewBody(
             )
         },
         bottomBar = {
-            if (job != null && !job.settled) {
-                Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp)) {
+            // Always there, even while loading and once sent, so the space the page is centred in
+            // never changes size under it.
+            Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp)) {
+                if (job == null) {
+                    Spacer(Modifier.height(52.dp))
+                } else if (job.settled) {
+                    Primary("Done", tall = true, onClick = onClose)
+                } else {
                     val asking = job.step == ReviewStep.USE && !usageAccess
                     // Step four cannot send until there is a screenshot to send.
                     val waitingForProof = job.step == ReviewStep.PROVE && shown == null
@@ -284,81 +303,85 @@ fun ReviewBody(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
             ) {
                 ReviewAppRow(post)
-                if (job == null) {
-                    ReviewLoading(room, dial, gap)
-                    return@Column
-                }
-                // Centred in what is left under the app row; scrolls only if a phone is smaller
-                // than anything this was sized for.
-                Column(
-                    Modifier.fillMaxWidth().heightIn(min = room - 64.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    StepDial(job, dial)
-                    Spacer(Modifier.height(8.dp))
-                    StepLabels(job)
-                    Spacer(Modifier.height(gap))
-                    Text(
-                        when {
-                            job.settled -> "Sent"
-                            job.step == ReviewStep.USE && !usageAccess -> "Allow usage time"
-                            else -> stepTitle(job)
-                        },
-                        style = MaterialTheme.typography.headlineSmall.copy(fontSize = 23.sp, lineHeight = 27.sp),
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        when {
-                            job.settled -> reviewOutcome(job.review.state)
-                            job.step == ReviewStep.USE && !usageAccess ->
-                                "TestTrack counts how long you use the app. Switch on Usage access for " +
-                                    "TestTrack, then come back. Time already spent still counts."
-                            else -> stepLine(job)
-                        },
-                        Modifier.widthIn(max = 300.dp),
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
-                        color = t.text2,
-                        textAlign = TextAlign.Center,
-                    )
-                    if (sideloaded) {
+                // The loader fades into the page rather than being swapped for it.
+                Crossfade(job, label = "review") { job ->
+                    if (job == null) {
+                        ReviewLoading(room, dial, gap)
+                        return@Crossfade
+                    }
+                    // Centred in what is left under the app row; scrolls only if a phone is smaller
+                    // than anything this was sized for.
+                    Column(
+                        Modifier.fillMaxWidth().heightIn(min = room - 64.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        StepDial(job, dial)
+                        Spacer(Modifier.height(8.dp))
+                        StepLabels(job)
                         Spacer(Modifier.height(gap))
-                        Notice(Status.short, Lucide.TriangleAlert) {
-                            Text(
-                                "That copy did not come from Play, so it cannot count. " +
-                                    "Install it through the button below instead.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface,
+                        AnimatedContent(
+                            targetState = listOf(job.step, job.settled, usageAccess, shown == null),
+                            transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(160)) using SizeTransform(clip = false) },
+                            label = "step",
+                        ) { _ ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    when {
+                                        job.settled -> "Sent"
+                                        job.step == ReviewStep.USE && !usageAccess -> "Allow usage time"
+                                        else -> stepTitle(job)
+                                    },
+                                    style = MaterialTheme.typography.headlineSmall.copy(fontSize = 23.sp, lineHeight = 27.sp),
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                )
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    when {
+                                        job.settled -> reviewOutcome(job.review.state)
+                                        job.step == ReviewStep.USE && !usageAccess ->
+                                            "TestTrack counts how long you use the app. Switch on Usage access for " +
+                                                "TestTrack, then come back. Time already spent still counts."
+                                        job.step == ReviewStep.PROVE && shown != null -> "Check it shows what you left, then send it."
+                                        else -> stepLine(job)
+                                    },
+                                    Modifier.widthIn(max = 300.dp),
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+                                    color = t.text2,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                        }
+                        if (sideloaded) {
+                            Spacer(Modifier.height(gap))
+                            Notice(Status.short, Lucide.TriangleAlert) {
+                                Text(
+                                    "That copy did not come from Play, so it cannot count. " +
+                                        "Install it through the button below instead.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                            }
+                        }
+                        if (!job.settled && job.step == ReviewStep.PROVE) {
+                            Spacer(Modifier.height(gap))
+                            ProofArea(
+                                shown = shown,
+                                captured = shown == proof,
+                                note = note,
+                                onNote = { note = it },
+                                onCapture = onCapture,
+                                onGallery = {
+                                    pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                },
                             )
                         }
-                    }
-                    if (!job.settled && job.step == ReviewStep.PROVE && shown == null) {
-                        Spacer(Modifier.height(gap))
-                        ProofChoices(
-                            onCapture = onRetake,
-                            onGallery = {
-                                pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            },
-                        )
-                    }
-                    if (!job.settled && job.step == ReviewStep.PROVE && shown != null) {
-                        Spacer(Modifier.height(gap))
-                        ProofForm(
-                            proof = shown,
-                            note = note,
-                            onNote = { note = it },
-                            onRetake = {
-                                picked = null
-                                onRetake()
-                            },
-                        )
-                    }
-                    val asked = post.ask.trim()
-                    if (!job.settled && job.step != ReviewStep.PROVE && asked.isNotEmpty() && asked != GENERAL_ASK) {
-                        Spacer(Modifier.height(gap))
-                        DeveloperAsks(asked)
+                        val asked = post.ask.trim()
+                        if (!job.settled && job.step != ReviewStep.PROVE && asked.isNotEmpty() && asked != GENERAL_ASK) {
+                            Spacer(Modifier.height(gap))
+                            DeveloperAsks(asked)
+                        }
                     }
                 }
             }

@@ -110,10 +110,11 @@ object UsageRepo {
         since: Long,
         needMs: Long,
         source: String,
+        settle: Boolean = true,
     ): Long {
         var reading = read(context, pkg, since)
         var retried = false
-        if (reading.ms < needMs && reading.access) {
+        if (settle && reading.ms < needMs && reading.access) {
             delay(SETTLE_MS)
             val again = read(context, pkg, since)
             if (again.ms > reading.ms) reading = again

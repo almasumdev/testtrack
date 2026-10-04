@@ -125,17 +125,16 @@ class ReviewViewModel : ViewModel() {
     ) = run {
         val existing = post.myReviewId
         val mine = if (existing == null) null else Api.myReviews().firstOrNull { it.id == existing }
-        if (mine != null) {
-            job = ReviewJob(post, mine)
-            return@run
-        }
-
-        val fingerprint = Device.fingerprint(context)
-        if (fingerprint == null) {
+        val fingerprint = if (mine == null) Device.fingerprint(context) else null
+        if (mine == null && fingerprint == null) {
             message = "This phone will not identify itself, so a review from it cannot count."
             return@run
         }
-        job = ReviewJob(post, Api.claim(post.id, fingerprint))
+        val review = mine ?: Api.claim(post.id, fingerprint!!)
+        // Looked at before it is drawn, so the page opens on the step the phone is really at.
+        // Drawing the server's last word first and then the phone's moved the page under the
+        // reviewer a moment after it appeared.
+        job = look(context, ReviewJob(post, review), settle = false)
     }
 
     /**
@@ -148,33 +147,48 @@ class ReviewViewModel : ViewModel() {
     fun refresh(context: Context) {
         val current = job ?: return
         if (current.settled) return
-        usageAccess = UsageRepo.hasAccess(context)
-
         run {
-            val info = InstalledApps.info(context, current.post.packageName)
-
-            // Present, but sideloaded. Worth saying rather than silently not advancing, because
-            // the reviewer can see the app on their own home screen and would otherwise think
-            // the check was broken.
-            sideloaded = info.installed && info.installer != PLAY
-
-            var review = current.review
-            if (review.state == CLAIMED && info.installed && !sideloaded) {
-                review = Api.installed(review.id)
-            }
-            if (review.state == INSTALLED || review.state == USED) {
-                val used =
-                    UsageRepo.measure(
-                        context,
-                        current.post.packageName,
-                        windowStart(context, review),
-                        needMs = review.neededMs,
-                        source = "review",
-                    )
-                if (used > review.usedMs) review = Api.used(review.id, used)
-            }
-            job = current.copy(review = review)
+            val next = look(context, current, settle = true)
+            // A screenshot may have landed while this was looking; keep what it said.
+            job = next.copy(leftReview = next.leftReview || job?.leftReview == true)
         }
+    }
+
+    /**
+     * What the phone sees for [current], reported to the server. [settle] waits a moment for usage
+     * events still being written, which matters on a return from the app and not on first open.
+     */
+    private suspend fun look(
+        context: Context,
+        current: ReviewJob,
+        settle: Boolean,
+    ): ReviewJob {
+        if (current.settled) return current
+        usageAccess = UsageRepo.hasAccess(context)
+        val info = InstalledApps.info(context, current.post.packageName)
+
+        // Present, but sideloaded. Worth saying rather than silently not advancing, because the
+        // reviewer can see the app on their own home screen and would otherwise think the check
+        // was broken.
+        sideloaded = info.installed && info.installer != PLAY
+
+        var review = current.review
+        if (review.state == CLAIMED && info.installed && !sideloaded) {
+            review = Api.installed(review.id)
+        }
+        if (review.state == INSTALLED || review.state == USED) {
+            val used =
+                UsageRepo.measure(
+                    context,
+                    current.post.packageName,
+                    windowStart(context, review),
+                    needMs = review.neededMs,
+                    source = "review",
+                    settle = settle,
+                )
+            if (used > review.usedMs) review = Api.used(review.id, used)
+        }
+        return current.copy(review = review)
     }
 
     /**
