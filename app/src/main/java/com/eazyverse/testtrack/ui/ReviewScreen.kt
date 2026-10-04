@@ -251,7 +251,7 @@ fun ReviewBody(
         bottomBar = {
             // Always there, even while loading and once sent, so the space the page is centred in
             // never changes size under it.
-            Box(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 12.dp, bottom = 18.dp)) {
+            Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp)) {
                 if (job == null && failure != null) {
                     Primary("Try again", tall = true, busy = spinning, onClick = onRetry)
                 } else if (job == null) {
@@ -292,7 +292,7 @@ fun ReviewBody(
             val gap = (room * 0.03f).coerceIn(10.dp, 22.dp)
 
             Column(
-                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Gutter),
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
             ) {
                 ReviewAppRow(post.appName, post.isLive, post.ownerName, offline)
                 // Which page this is, rather than the job itself: keyed on the job, every answer
