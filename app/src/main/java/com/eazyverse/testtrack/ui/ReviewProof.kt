@@ -160,28 +160,31 @@ private fun ProofForm(
                 contentDescription = "Your review screenshot",
                 modifier =
                     Modifier
-                        .size(width = 62.dp, height = 110.dp)
+                        .size(width = 62.dp, height = THUMB_HEIGHT)
                         .clip(thumb)
                         .border(1.dp, t.glassBorder, thumb)
                         .clickable { viewing = true },
                 contentScale = ContentScale.Crop,
             )
             Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Lucide.CircleCheck, null, Modifier.size(17.dp), tint = t.ok)
-                    Spacer(Modifier.width(6.dp))
-                    Text("Screenshot added", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            // As tall as the screenshot: the words at its top edge, the buttons at its bottom.
+            Column(Modifier.weight(1f).height(THUMB_HEIGHT), verticalArrangement = Arrangement.SpaceBetween) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Lucide.CircleCheck, null, Modifier.size(17.dp), tint = t.ok)
+                        Spacer(Modifier.width(6.dp))
+                        Text("Screenshot added", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        if (captured) "Captured on Play · tap to view" else "From your gallery · tap to view",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = t.text3,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
                 }
-                Text(
-                    if (captured) "Captured on Play · tap to view" else "From your gallery · tap to view",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = t.text3,
-                )
-                Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ProofAction(Lucide.Camera, "Capture", onCapture)
-                    ProofAction(Lucide.Image, "Gallery", onGallery)
+                    ProofAction(Lucide.Camera, "Capture", onCapture, Modifier.weight(1f))
+                    ProofAction(Lucide.Image, "Gallery", onGallery, Modifier.weight(1f))
                 }
             }
         }
@@ -210,14 +213,17 @@ private fun ProofAction(
     icon: ImageVector,
     label: String,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val t = Tt.colors
     Row(
-        Modifier
+        modifier
+            .height(40.dp)
             .clip(RoundedCornerShape(percent = 50))
             .background(t.glass2)
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 7.dp),
+            .padding(horizontal = 10.dp),
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(icon, null, Modifier.size(15.dp), tint = t.accentInk)
@@ -253,6 +259,8 @@ private fun ProofViewer(
 }
 
 private const val NOTE_MAX = 600
+
+private val THUMB_HEIGHT = 110.dp
 
 /**
  * Step four with no screenshot yet: the two ways to get one, right on the page.
