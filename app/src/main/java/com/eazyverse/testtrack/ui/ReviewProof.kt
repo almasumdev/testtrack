@@ -1,35 +1,34 @@
 package com.eazyverse.testtrack.ui
 
 import android.net.Uri
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -37,14 +36,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.composables.icons.lucide.Camera
-import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Image
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * The capture half of the review: the one-time guide, the ask for "Display over other apps", and
- * step four: the ways to a screenshot, the screenshot, and its optional note.
+ * step four: the screenshot with its note, and the two ways to get one.
  */
 
 /**
@@ -91,10 +89,11 @@ fun OverlayPermissionDialog(
 }
 
 /**
- * Step four, both halves: the two ways to get a screenshot, or the one that was got.
+ * Step four: the screenshot and its note as one card, the way a photo and its caption go
+ * together, with the two ways to get or replace the screenshot in one row under it.
  *
- * The two swap with a fade rather than a jump, since one replaces the other in the same place.
- * Either way the reviewer can still go the other way: capture again, or pick from the gallery.
+ * The same shape with or without a screenshot: without one the picture's place is a dashed
+ * frame, so adding one changes what is in the frame and nothing on the page moves.
  */
 @Composable
 fun ProofArea(
@@ -104,37 +103,8 @@ fun ProofArea(
     onCapture: () -> Unit,
     onGallery: () -> Unit,
 ) {
-    AnimatedContent(
-        targetState = shown,
-        transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(160)) using SizeTransform(clip = false) },
-        contentKey = { it == null },
-        label = "proof",
-    ) { picture ->
-        if (picture == null) {
-            ProofChoices(onCapture, onGallery)
-        } else {
-            ProofForm(picture, note, onNote, onCapture, onGallery)
-        }
-    }
-}
-
-/**
- * The screenshot that was got, and an optional note.
- *
- * Big enough to see it is the right picture, with the two ways to replace it. The note is not the
- * review (that is on Play); it is anything worth saying to the developer alongside it.
- */
-@Composable
-private fun ProofForm(
-    proof: Uri,
-    note: String,
-    onNote: (String) -> Unit,
-    onCapture: () -> Unit,
-    onGallery: () -> Unit,
-) {
     val t = Tt.colors
     val shape = RoundedCornerShape(CardRadius)
-    val thumb = RoundedCornerShape(10.dp)
     Column(Modifier.fillMaxWidth()) {
         Row(
             Modifier
@@ -143,64 +113,90 @@ private fun ProofForm(
                 .background(t.glass)
                 .border(1.dp, t.glassBorder, shape)
                 .padding(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
         ) {
-            AsyncImage(
-                model = proof,
-                contentDescription = "Your review screenshot",
-                modifier =
-                    Modifier
-                        .size(width = 62.dp, height = THUMB_HEIGHT)
-                        .clip(thumb)
-                        .border(1.dp, t.glassBorder, thumb),
-                contentScale = ContentScale.Crop,
-            )
-            Spacer(Modifier.width(14.dp))
-            // At least as tall as the screenshot: the words at its top edge, the buttons at its
-            // bottom, and never less than a clear gap between them on a larger font.
-            Column(Modifier.weight(1f).heightIn(min = THUMB_HEIGHT), verticalArrangement = Arrangement.SpaceBetween) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Lucide.CircleCheck, null, Modifier.size(19.dp), tint = t.ok)
-                        Spacer(Modifier.width(7.dp))
-                        Text(
-                            "Screenshot added",
-                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp, lineHeight = 22.sp),
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                    Text(
-                        "Not the right one?\nTake another below.",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.5.sp, lineHeight = 20.sp),
-                        color = t.text2,
-                        modifier = Modifier.padding(top = 5.dp),
-                    )
-                }
-                Row(Modifier.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ProofAction(Lucide.Camera, "Capture", onCapture, Modifier.weight(1f))
-                    ProofAction(Lucide.Image, "Gallery", onGallery, Modifier.weight(1f))
-                }
+            Crossfade(shown, label = "proof") { picture ->
+                if (picture == null) EmptyShot() else Shot(picture)
             }
+            Spacer(Modifier.width(12.dp))
+            NoteField(note, onNote, Modifier.weight(1f).height(THUMB_HEIGHT))
         }
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(
-            value = note,
-            onValueChange = { onNote(it.take(NOTE_MAX)) },
-            modifier = Modifier.fillMaxWidth().height(88.dp),
-            placeholder = { Text("Anything else for the developer? (optional)", fontSize = 14.sp) },
-            textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-            shape = RoundedCornerShape(CardRadius),
-            colors =
-                OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = t.glass,
-                    focusedContainerColor = t.glass,
-                    unfocusedBorderColor = t.glassBorder,
-                ),
-        )
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ProofAction(
+                Lucide.Camera,
+                if (shown == null) "Capture on Play" else "Capture again",
+                onCapture,
+                Modifier.weight(1f),
+            )
+            ProofAction(Lucide.Image, "Gallery", onGallery, Modifier.weight(1f))
+        }
     }
 }
 
-/** A small way to replace the screenshot, one per source. */
+@Composable
+private fun Shot(picture: Uri) {
+    val t = Tt.colors
+    AsyncImage(
+        model = picture,
+        contentDescription = "Your review screenshot",
+        modifier =
+            Modifier
+                .size(width = THUMB_WIDTH, height = THUMB_HEIGHT)
+                .clip(ThumbShape)
+                .border(1.dp, t.glassBorder, ThumbShape),
+        contentScale = ContentScale.Crop,
+    )
+}
+
+/** Where the screenshot will go: a dashed frame, read rather than pressed; the buttons do that. */
+@Composable
+private fun EmptyShot() {
+    val t = Tt.colors
+    Box(
+        Modifier
+            .size(width = THUMB_WIDTH, height = THUMB_HEIGHT)
+            .drawBehind {
+                drawRoundRect(
+                    color = t.glassBorder,
+                    cornerRadius = CornerRadius(10.dp.toPx()),
+                    style =
+                        Stroke(
+                            width = 1.5.dp.toPx(),
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx())),
+                        ),
+                )
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Lucide.Image, contentDescription = "No screenshot yet", Modifier.size(22.dp), tint = t.text4)
+    }
+}
+
+/** The note, typed straight into the card beside the picture rather than into a box of its own. */
+@Composable
+private fun NoteField(
+    note: String,
+    onNote: (String) -> Unit,
+    modifier: Modifier,
+) {
+    val t = Tt.colors
+    val style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.5.sp, lineHeight = 20.sp, color = t.text)
+    BasicTextField(
+        value = note,
+        onValueChange = { onNote(it.take(NOTE_MAX)) },
+        modifier = modifier.padding(top = 2.dp),
+        textStyle = style,
+        cursorBrush = SolidColor(t.accent),
+        decorationBox = { field ->
+            Box {
+                if (note.isEmpty()) Text("Add a note for the developer (optional)", style = style.copy(color = t.text3))
+                field()
+            }
+        },
+    )
+}
+
+/** One of the two ways to a screenshot. */
 @Composable
 private fun ProofAction(
     icon: ImageVector,
@@ -211,7 +207,7 @@ private fun ProofAction(
     val t = Tt.colors
     Row(
         modifier
-            .height(40.dp)
+            .height(44.dp)
             .clip(RoundedCornerShape(percent = 50))
             .background(t.glass2)
             .clickable(onClick = onClick)
@@ -219,50 +215,20 @@ private fun ProofAction(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, null, Modifier.size(15.dp), tint = t.accentInk)
-        Spacer(Modifier.width(6.dp))
+        Icon(icon, null, Modifier.size(16.dp), tint = t.accentInk)
+        Spacer(Modifier.width(7.dp))
         Text(
             label,
-            style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.sp),
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.5.sp),
             fontWeight = FontWeight.SemiBold,
             color = t.accentInk,
+            maxLines = 1,
         )
     }
 }
 
 private const val NOTE_MAX = 600
 
-private val THUMB_HEIGHT = 124.dp
-
-/**
- * Step four with no screenshot yet: the two ways to get one, right on the page.
- *
- * Coming back from Play without pressing the camera button (or after saying no to screen capture)
- * lands here. The automatic way is offered first because it is one tap on Play; the gallery is for
- * a screenshot taken by hand.
- */
-@Composable
-private fun ProofChoices(
-    onCapture: () -> Unit,
-    onGallery: () -> Unit,
-) {
-    TileGroup(count = 2) { index, place ->
-        if (index == 0) {
-            TileRow(
-                Lucide.Camera,
-                "Capture on Play",
-                place,
-                subtitle = "Opens Play with the camera button",
-                onClick = onCapture,
-            )
-        } else {
-            TileRow(
-                Lucide.Image,
-                "Choose from gallery",
-                place,
-                subtitle = "A screenshot you took yourself",
-                onClick = onGallery,
-            )
-        }
-    }
-}
+private val THUMB_WIDTH = 72.dp
+private val THUMB_HEIGHT = 128.dp
+private val ThumbShape = RoundedCornerShape(10.dp)

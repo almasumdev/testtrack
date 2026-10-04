@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -244,7 +245,7 @@ class ReviewBodyTest {
 
         // Both ways to get one are on the page itself, not behind a dialog.
         compose.onNodeWithText("Capture on Play").assertIsDisplayed()
-        compose.onNodeWithText("Choose from gallery").assertIsDisplayed()
+        compose.onNodeWithText("Gallery").assertIsDisplayed()
 
         // Nothing to send yet. A proof step that accepts an empty proof sends the developer a
         // rejection they cannot judge.
@@ -259,10 +260,10 @@ class ReviewBodyTest {
         var captures = 0
         open("used", leftReview = true, proof = shot, onSend = { uri, _ -> sent = uri }, onCapture = { captures++ })
 
-        compose.onNodeWithText("Screenshot added").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Your review screenshot").assertIsDisplayed()
         // Replacing it is not only a screen capture: the gallery is right beside it.
         compose.onNodeWithText("Gallery").assertIsDisplayed()
-        compose.onNodeWithText("Capture").performClick()
+        compose.onNodeWithText("Capture again").performClick()
         assertEquals(1, captures)
 
         compose.onNodeWithText("Send the proof").performClick()
