@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.GateResult
 import com.eazyverse.testtrack.data.GroupGate
 import com.eazyverse.testtrack.data.Session
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
@@ -16,9 +17,9 @@ import kotlinx.coroutines.launch
  * Being on the group is what lets an owner add somebody to a closed test, so a review or a crew
  * test from outside it cannot be done properly. It is checked straight after signing in, and
  * again in front of every action that needs it: taking a review on, each of its steps and the
- * submit, and running a crew's apps. Once the server says yes it is remembered on the phone and
- * nobody is asked again; a no is never remembered, so joining takes effect the next time anything
- * is tapped.
+ * submit, and running a crew's apps. Once the server says yes it is remembered on the phone, the
+ * dialog says so and waits for Continue, and nobody is asked again; a no is never remembered, so
+ * joining takes effect the next time anything is tapped.
  *
  * One per activity, so the dialog the sign-in opens and the one a button opens are the same.
  */
@@ -39,8 +40,17 @@ class MembershipViewModel : ViewModel() {
     /** The server could not be asked. Never treated as a no. */
     var failure by mutableStateOf<String?>(null)
         private set
+
+    /** The server said yes. The dialog says so and stays until Continue. */
+    var confirmed by mutableStateOf(false)
+        private set
+
+    /** Checked again after a no, and the answer was still no. */
+    var stillOut by mutableStateOf(false)
+        private set
     private var openedGroup = false
     private var pending: (() -> Unit)? = null
+    private var job: Job? = null
 
     /** Run [action] if this account is on the group; otherwise check, and run it once it is. */
     fun require(action: () -> Unit) {
@@ -78,22 +88,30 @@ class MembershipViewModel : ViewModel() {
         if (checking) return
         checking = true
         failure = null
-        viewModelScope.launch {
-            when (val answer = GroupGate.check("")) {
-                is GateResult.Member -> {
-                    Session.updateMember(true)
-                    val then = pending
-                    close()
-                    then?.invoke()
+        val again = outside
+        job =
+            viewModelScope.launch {
+                when (val answer = GroupGate.check("")) {
+                    is GateResult.Member -> {
+                        Session.updateMember(true)
+                        confirmed = true
+                    }
+                    is GateResult.NotMember -> {
+                        Session.updateMember(false)
+                        stillOut = again
+                        outside = true
+                    }
+                    is GateResult.Failed -> failure = answer.reason
                 }
-                is GateResult.NotMember -> {
-                    Session.updateMember(false)
-                    outside = true
-                }
-                is GateResult.Failed -> failure = answer.reason
+                checking = false
             }
-            checking = false
-        }
+    }
+
+    /** Continue, from "you're all set": whatever was waiting on the check goes ahead. */
+    fun proceed() {
+        val then = pending
+        close()
+        then?.invoke()
     }
 
     fun openedGroup() {
@@ -102,10 +120,20 @@ class MembershipViewModel : ViewModel() {
 
     /** Back from the group page: look again without waiting to be asked. */
     fun returned() {
-        if (asking && openedGroup && outside) check()
+        if (asking && openedGroup && outside && !checking) check()
     }
 
+    /**
+     * Closed, by Cancel, Not now or Back. A check still running is dropped, so nothing it would
+     * have said is remembered: the account stays unverified until it is checked again, from the
+     * next action that needs it or from the Me page.
+     */
     fun close() {
+        job?.cancel()
+        job = null
+        checking = false
+        confirmed = false
+        stillOut = false
         asking = false
         outside = false
         failure = null
@@ -116,6 +144,8 @@ class MembershipViewModel : ViewModel() {
     private fun ask() {
         asking = true
         outside = false
+        confirmed = false
+        stillOut = false
         check()
     }
 }

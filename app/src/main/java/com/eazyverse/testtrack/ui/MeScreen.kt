@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
@@ -43,7 +45,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.composables.icons.lucide.CalendarDays
+import com.composables.icons.lucide.Camera
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.ExternalLink
 import com.composables.icons.lucide.HardDrive
@@ -123,6 +127,7 @@ fun MeScreen(
     if (editing) {
         MeEditDialog(
             name = vm.profile?.displayName.orEmpty(),
+            photo = vm.profile?.photoUrl.orEmpty(),
             busy = vm.busy,
             onSave = { name, photo -> vm.save(context, name, photo) { editing = false } },
             onDismiss = { editing = false },
@@ -409,54 +414,82 @@ fun ordinal(place: Int): String {
 @Composable
 fun MeEditDialog(
     name: String,
+    /** The picture there is now, as the profile carries it; blank for none. */
+    photo: String = "",
     busy: Boolean = false,
     onSave: (String, Uri?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var typed by remember { mutableStateOf(name) }
-    var photo by remember { mutableStateOf<Uri?>(null) }
+    var picked by remember { mutableStateOf<Uri?>(null) }
+    val t = Tt.colors
 
     val pick =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) photo = uri
+            if (uri != null) picked = uri
         }
 
+    val choose = { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
     Ask(
-        title = "How you appear",
-        body = "Your name and picture are what the other fourteen people in a crew see.",
+        title = "Edit profile",
+        body = "Your name and picture are what people in your crews see.",
         confirm = if (busy) "Saving" else "Save",
         confirmEnabled = typed.trim().isNotBlank() && !busy,
-        onConfirm = { onSave(typed, photo) },
+        onConfirm = { onSave(typed, picked) },
         onDismiss = onDismiss,
-        content = {
-            DialogField(
-                value = typed,
-                onValueChange = { typed = it.take(120) },
-                label = "Name",
-                placeholder = "Rafiul",
-                error = if (typed.isNotEmpty() && typed.isBlank()) "That is only spaces." else null,
-                supporting = "However you want to be known. It does not have to be your real one.",
-            )
-            Spacer(Modifier.height(14.dp))
-            Text(
-                "Picture",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(6.dp))
-            Secondary(
-                if (photo == null) "Choose a picture" else "Chosen. Pick another",
-                Modifier.fillMaxWidth(),
-                enabled = !busy,
-            ) {
-                pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    ) {
+        // The picture in the middle with its camera badge, and the one thing to do with it under it.
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.size(72.dp).clickable(enabled = !busy, onClick = choose)) {
+                val chosen = picked
+                if (chosen != null) {
+                    AsyncImage(chosen, null, Modifier.size(72.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+                } else {
+                    Avatar(
+                        photo,
+                        typed
+                            .trim()
+                            .take(1)
+                            .uppercase()
+                            .ifBlank { "?" },
+                        size = 72.dp,
+                        letterStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 28.sp),
+                    )
+                }
+                Box(
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(t.glass)
+                        .padding(2.dp)
+                        .clip(CircleShape)
+                        .background(t.accent),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Lucide.Camera, null, Modifier.size(12.dp), tint = t.onAccent)
+                }
             }
             Spacer(Modifier.height(6.dp))
             Text(
-                "Optional. Without one your initial is used.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                "Change photo",
+                Modifier.clip(RoundedCornerShape(6.dp)).clickable(enabled = !busy, onClick = choose).padding(4.dp),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = t.accent,
             )
-        },
-    )
+        }
+        Spacer(Modifier.height(10.dp))
+        DialogField(
+            value = typed,
+            onValueChange = { typed = it.take(NAME_MAX) },
+            label = "Name",
+            placeholder = "Rafiul",
+            error = if (typed.isNotEmpty() && typed.isBlank()) "That is only spaces." else null,
+            supporting = "It doesn't have to be your real name.",
+            maxLength = NAME_MAX,
+        )
+    }
 }
+
+private const val NAME_MAX = 40

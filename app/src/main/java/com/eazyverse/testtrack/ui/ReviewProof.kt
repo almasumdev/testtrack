@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,17 +61,22 @@ fun ReviewGuideDialog(
 ) {
     Ask(
         title = "How to leave your review",
-        body =
-            "1. Play opens on the app's page.\n" +
-                (if (live) "2. Rate it and write your review.\n" else "2. Tap “Send feedback” and write it.\n") +
-                "3. Tap the blue camera button at the bottom right.\n" +
-                "4. You come straight back here with the screenshot.\n\n" +
-                "Android will ask to allow screen capture. It is only for that one screenshot.",
         confirm = "Got it",
         dismiss = null,
         onConfirm = onOk,
         onDismiss = onDismiss,
-    )
+    ) {
+        DialogSteps(
+            listOf(
+                "Play opens on the app's page.",
+                if (live) "Rate it and write your review." else "Tap “Send feedback” and write it.",
+                "Tap the blue camera button.",
+                "You come straight back with the screenshot.",
+            ).map { AnnotatedString(it) },
+        )
+        Spacer(Modifier.height(8.dp))
+        DialogNote("Android asks to allow screen capture, only for that one screenshot.")
+    }
 }
 
 /** The camera button floats over Play, which needs the one grant Android only gives in Settings. */
