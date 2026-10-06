@@ -105,8 +105,8 @@ enum class FeedEventKind(
     /** Somebody passed a mark in accepted reviews, counted across every request they reviewed. */
     HELPED("Helped"),
 
-    /** Somebody asked the community for feedback on their app. */
-    ASKED("Asking"),
+    /** Somebody's first review of somebody else's app was accepted. Once a person. */
+    FIRST_REVIEW("First review"),
 
     /**
      * The one thing here a person wrote: an admin posting to everybody from the console.
@@ -129,7 +129,7 @@ enum class FeedEventKind(
                 "streak" -> STREAK
                 "joined" -> JOINED
                 "helped" -> HELPED
-                "asked" -> ASKED
+                "first_review" -> FIRST_REVIEW
                 "announcement" -> ANNOUNCEMENT
                 else -> null
             }

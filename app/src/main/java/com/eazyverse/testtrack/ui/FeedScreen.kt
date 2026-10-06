@@ -261,7 +261,7 @@ fun FeedScreen(
                             RobotState(
                                 Lucide.Activity,
                                 "Nothing has happened yet",
-                                "Crews starting and finishing, first apps, streaks and requests for feedback show up here.",
+                                "Crews starting and finishing, first apps, streaks and first reviews show up here.",
                             )
                         }
                     } else {

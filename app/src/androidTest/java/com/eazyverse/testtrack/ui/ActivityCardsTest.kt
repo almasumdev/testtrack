@@ -24,7 +24,7 @@ class ActivityCardsTest {
 
     @Test
     fun every_kind_the_server_sends_draws_a_card() {
-        val wire = listOf("started", "halfway", "milestone", "streak", "joined", "helped", "asked", "announcement")
+        val wire = listOf("started", "halfway", "milestone", "streak", "joined", "helped", "first_review", "announcement")
         val events =
             wire.mapIndexed { i, kind ->
                 FeedEvent(
@@ -42,7 +42,7 @@ class ActivityCardsTest {
             }
         }
         events.indices.forEach { compose.onNodeWithText("Headline $it").performScrollTo().assertIsDisplayed() }
-        assertEquals(FeedEventKind.ASKED, FeedEventKind.of("asked"))
+        assertEquals(FeedEventKind.FIRST_REVIEW, FeedEventKind.of("first_review"))
         assertNull(FeedEventKind.of("something-new"))
     }
 }

@@ -392,7 +392,7 @@ fun FeedEventCard(event: FeedEvent) {
     val tone =
         when (event.kind) {
             FeedEventKind.MILESTONE -> Status.posted
-            FeedEventKind.STARTED, FeedEventKind.JOINED, FeedEventKind.ASKED, FeedEventKind.ANNOUNCEMENT ->
+            FeedEventKind.STARTED, FeedEventKind.JOINED, FeedEventKind.FIRST_REVIEW, FeedEventKind.ANNOUNCEMENT ->
                 MaterialTheme.colorScheme.primary
             FeedEventKind.STREAK, FeedEventKind.HELPED -> Status.short
             FeedEventKind.HALFWAY -> MaterialTheme.colorScheme.onSurfaceVariant
@@ -402,7 +402,7 @@ fun FeedEventCard(event: FeedEvent) {
             FeedEventKind.STARTED -> Lucide.Rocket
             FeedEventKind.HALFWAY -> Lucide.Gauge
             FeedEventKind.MILESTONE -> Lucide.Flag
-            FeedEventKind.ASKED -> Lucide.MessageSquareText
+            FeedEventKind.FIRST_REVIEW -> Lucide.MessageSquareText
             FeedEventKind.STREAK -> Lucide.Flame
             FeedEventKind.JOINED -> Lucide.UserPlus
             FeedEventKind.HELPED -> Lucide.HeartHandshake
