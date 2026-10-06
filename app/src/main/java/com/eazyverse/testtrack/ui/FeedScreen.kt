@@ -255,13 +255,13 @@ fun FeedScreen(
                 // measured differently: what tells the two apart is what is inside a card.
                 FeedTab.ACTIVITY ->
                     if (!vm.loading && vm.events.isEmpty()) {
-                        if (vm.offline) {
+                        if (vm.offline || vm.activityFailed) {
                             RobotOffline("Activity didn't load", onRetry = { vm.load(context) })
                         } else {
                             RobotState(
                                 Lucide.Activity,
                                 "Nothing has happened yet",
-                                "New posts, reviews and payouts in your circle show up here as they happen.",
+                                "Crews starting and finishing, first apps, streaks and requests for feedback show up here.",
                             )
                         }
                     } else {

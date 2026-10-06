@@ -39,13 +39,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Flag
 import com.composables.icons.lucide.Flame
 import com.composables.icons.lucide.Gauge
 import com.composables.icons.lucide.HeartHandshake
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Megaphone
+import com.composables.icons.lucide.MessageSquareText
 import com.composables.icons.lucide.Rocket
 import com.composables.icons.lucide.UserPlus
 import com.eazyverse.testtrack.net.ApiPost
@@ -391,8 +391,8 @@ fun FeedEventCard(event: FeedEvent) {
     // a group opening, somebody arriving, and the one message a person actually wrote.
     val tone =
         when (event.kind) {
-            FeedEventKind.SHIPPED, FeedEventKind.MILESTONE -> Status.posted
-            FeedEventKind.STARTED, FeedEventKind.JOINED, FeedEventKind.ANNOUNCEMENT ->
+            FeedEventKind.MILESTONE -> Status.posted
+            FeedEventKind.STARTED, FeedEventKind.JOINED, FeedEventKind.ASKED, FeedEventKind.ANNOUNCEMENT ->
                 MaterialTheme.colorScheme.primary
             FeedEventKind.STREAK, FeedEventKind.HELPED -> Status.short
             FeedEventKind.HALFWAY -> MaterialTheme.colorScheme.onSurfaceVariant
@@ -402,7 +402,7 @@ fun FeedEventCard(event: FeedEvent) {
             FeedEventKind.STARTED -> Lucide.Rocket
             FeedEventKind.HALFWAY -> Lucide.Gauge
             FeedEventKind.MILESTONE -> Lucide.Flag
-            FeedEventKind.SHIPPED -> Lucide.CircleCheck
+            FeedEventKind.ASKED -> Lucide.MessageSquareText
             FeedEventKind.STREAK -> Lucide.Flame
             FeedEventKind.JOINED -> Lucide.UserPlus
             FeedEventKind.HELPED -> Lucide.HeartHandshake

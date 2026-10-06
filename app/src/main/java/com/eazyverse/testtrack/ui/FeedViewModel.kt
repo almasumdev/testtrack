@@ -11,6 +11,7 @@ import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.RequestReview
 import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.net.Api
+import com.eazyverse.testtrack.net.ApiActivityEvent
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiDispute
 import com.eazyverse.testtrack.net.ApiError
@@ -90,7 +91,13 @@ class FeedViewModel : ViewModel() {
     var signedOut by mutableStateOf(false)
         private set
 
-    val events = SampleFeed.events()
+    /** The Activity tab: what happened in the community lately, from the server. */
+    var events by mutableStateOf<List<FeedEvent>>(emptyList())
+        private set
+
+    /** The Activity tab's own load failed, whatever happened to the rest. */
+    var activityFailed by mutableStateOf(false)
+        private set
 
     fun show(next: FeedTab) {
         tab = next
@@ -141,6 +148,15 @@ class FeedViewModel : ViewModel() {
                 val page = Api.posts()
                 posts = page.posts
                 cursor = page.nextCursor
+                // Readable signed out too, like the posts. Its own failure is its own.
+                try {
+                    events = Api.activity().events.mapNotNull(::eventOf)
+                    activityFailed = false
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    activityFailed = true
+                }
                 if (!named) {
                     tix = 0
                     mine = emptyList()
@@ -228,6 +244,20 @@ class FeedViewModel : ViewModel() {
         } catch (_: Exception) {
             // Kept as it was; the next load tries again.
         }
+    }
+
+    private fun eventOf(it: ApiActivityEvent): FeedEvent? {
+        val kind = FeedEventKind.of(it.kind) ?: return null
+        return FeedEvent(
+            id = it.id,
+            kind = kind,
+            headline = it.headline,
+            detail = it.detail,
+            happenedAt = millis(it.happenedAt) ?: return null,
+            faces = it.faces,
+            moreFaces = it.moreFaces,
+            tix = it.tix,
+        )
     }
 
     private fun myReview(it: ApiReview) =

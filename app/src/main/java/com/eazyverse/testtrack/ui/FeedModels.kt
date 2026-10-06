@@ -3,12 +3,8 @@ package com.eazyverse.testtrack.ui
 /*
  * The community half of TestTrack, in the shape the screen needs it.
  *
- * Nothing here touches Firestore yet, deliberately. The feed is a new product surface rather than
- * a new view of data the app already holds, and settling how it reads and what it costs is the
- * part worth getting wrong cheaply — collections, rules and indexes can only be designed once the
- * screen has stopped moving. Every type below is a plain value the FeedViewModel holds in memory;
- * swapping the seed in SampleFeed for a query later changes that one object and nothing on the
- * screen.
+ * Plain values the FeedViewModel holds, mapped from what the API sends. The Activity tab's events
+ * are worked out by the server from what happened (see /feed/activity); nothing here is seeded.
  */
 
 /** The two halves of the feed: what people are asking for, and what the app noticed by itself. */
@@ -104,9 +100,6 @@ enum class FeedEventKind(
     /** A whole cohort finished together, which is the thing no single person can do alone. */
     MILESTONE("Milestone"),
 
-    /** Somebody's app cleared its fortnight and went live. */
-    SHIPPED("Shipped"),
-
     /**
      * Seven days without missing one, and again at the end where one member per group is picked.
      *
@@ -119,8 +112,11 @@ enum class FeedEventKind(
     /** Somebody new got their first app placed into a cohort. */
     JOINED("New here"),
 
-    /** Somebody passed a total worth marking, counted across every cohort they have been in. */
+    /** Somebody passed a mark in accepted reviews, counted across every request they reviewed. */
     HELPED("Helped"),
+
+    /** Somebody asked the community for feedback on their app. */
+    ASKED("Asking"),
 
     /**
      * The one thing here a person wrote: an admin posting to everybody from the console.
@@ -131,6 +127,23 @@ enum class FeedEventKind(
      * is not in the channel never hears them.
      */
     ANNOUNCEMENT("Notice"),
+    ;
+
+    companion object {
+        /** The server's word for a kind; null for one this build does not know, which is skipped. */
+        fun of(wire: String): FeedEventKind? =
+            when (wire) {
+                "started" -> STARTED
+                "halfway" -> HALFWAY
+                "milestone" -> MILESTONE
+                "streak" -> STREAK
+                "joined" -> JOINED
+                "helped" -> HELPED
+                "asked" -> ASKED
+                "announcement" -> ANNOUNCEMENT
+                else -> null
+            }
+    }
 }
 
 /**
@@ -183,98 +196,4 @@ fun feedAge(
         days < 2L -> "yesterday"
         else -> "${days}d ago"
     }
-}
-
-/**
- * Stand-in content, until the feed has a database behind it.
- *
- * Seeded relative to now rather than with fixed dates, so the ages on screen stay believable
- * however long this build sits on a phone, and so a post made during a session is visibly newer
- * than everything under it.
- */
-object SampleFeed {
-    private const val HOUR = 3_600_000L
-    private const val DAY = 24L * HOUR
-
-    fun events(now: Long = System.currentTimeMillis()) =
-        listOf(
-            FeedEvent(
-                id = "ev-shipped",
-                kind = FeedEventKind.SHIPPED,
-                headline = "Doctorbari is live on Play Store",
-                detail = "Fourteen days, thirteen testers, and it cleared closed testing today.",
-                happenedAt = now - 2L * HOUR,
-                faces = listOf("J", "R", "S"),
-                moreFaces = 10,
-            ),
-            FeedEvent(
-                id = "ev-notice",
-                kind = FeedEventKind.ANNOUNCEMENT,
-                headline = "Crews now fill on Sunday nights",
-                detail = "Submit by Saturday and you are in the next one. Posted by the team.",
-                happenedAt = now - 4L * HOUR,
-            ),
-            FeedEvent(
-                id = "ev-milestone",
-                kind = FeedEventKind.MILESTONE,
-                headline = "Crew 05 finished its 14 days together",
-                detail = "Every app in the crew cleared the full fortnight. Nobody dropped.",
-                happenedAt = now - 1L * DAY,
-                faces = listOf("J", "R", "S"),
-                moreFaces = 11,
-            ),
-            FeedEvent(
-                id = "ev-halfway",
-                kind = FeedEventKind.HALFWAY,
-                headline = "Crew 06 is halfway with all fourteen still in",
-                detail = "Day 7 of 14, and not one missed day between them.",
-                happenedAt = now - 1L * DAY - 6L * HOUR,
-                faces = listOf("T", "H", "N"),
-                moreFaces = 11,
-            ),
-            FeedEvent(
-                id = "ev-streak-end",
-                kind = FeedEventKind.STREAK,
-                headline = "Sumaiya is Crew 07's streak of the run",
-                detail = "One per crew at the end, and this one missed nothing at all.",
-                happenedAt = now - 2L * DAY,
-                faces = listOf("S"),
-                tix = 15,
-            ),
-            FeedEvent(
-                id = "ev-streak-seven",
-                kind = FeedEventKind.STREAK,
-                headline = "Nadia has seven days in a row in Crew 08",
-                detail = "Half the run, no gaps. Seven more and the crew's pick is hers.",
-                happenedAt = now - 2L * DAY - 9L * HOUR,
-                faces = listOf("N"),
-                tix = 15,
-            ),
-            FeedEvent(
-                id = "ev-started",
-                kind = FeedEventKind.STARTED,
-                headline = "Crew 08 filled up and started today",
-                detail = "Fifteen apps, fourteen days. First reports are due tonight.",
-                happenedAt = now - 3L * DAY,
-                faces = listOf("R", "M", "A"),
-                moreFaces = 11,
-            ),
-            FeedEvent(
-                id = "ev-joined",
-                kind = FeedEventKind.JOINED,
-                headline = "Rafiul placed his first app",
-                detail = "Nikosh Budget went into Crew 08. Say hello by opening it tonight.",
-                happenedAt = now - 3L * DAY - 4L * HOUR,
-                faces = listOf("R"),
-            ),
-            FeedEvent(
-                id = "ev-helped",
-                kind = FeedEventKind.HELPED,
-                headline = "Habib has helped ten apps reach production",
-                detail = "Ten fortnights, one evening at a time.",
-                happenedAt = now - 4L * DAY,
-                faces = listOf("H"),
-                tix = 50,
-            ),
-        )
 }

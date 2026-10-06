@@ -140,6 +140,9 @@ object Api {
 
     suspend fun createPost(body: PostIn): ApiPost = post("/feed/posts", body)
 
+    /** What happened in the community over the last month, newest first. Readable signed out. */
+    suspend fun activity(): ApiActivity = get("/feed/activity")
+
     /** The reader's own requests, open or closed, each with every review it has had. */
     suspend fun myPosts(): List<ApiMyPost> = get("/feed/posts/mine")
 
