@@ -56,23 +56,13 @@ object FeedRules {
     const val MIN_REVIEWS = 1
     const val MAX_REVIEWS = 50
 
-    /** Offered when nothing is chosen, and the figure the sample posts are seeded around. */
-    const val REVIEW_REWARD = MIN_REWARD
-
     /** What going up costs, given what it is offering. */
     fun postCost(
         reward: Int,
         reviews: Int = REVIEWS_BOUGHT,
     ) = reward * reviews
 
-    /** Under this it is a reaction, not feedback, and the confirm button stays off. */
-    const val REVIEW_MIN = 40
-
-    /** Long enough for a paragraph about one screen. */
-    const val REVIEW_MAX = 600
-
-    /** Both fields on the post form. Names are short, asks are a sentence. */
-    const val APP_NAME_MAX = 60
+    /** The focus question on the post form: a sentence. */
     const val ASK_MAX = 200
 }
 
