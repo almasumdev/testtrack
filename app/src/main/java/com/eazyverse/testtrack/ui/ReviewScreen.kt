@@ -16,6 +16,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -29,6 +30,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -43,10 +45,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -107,6 +111,7 @@ fun ReviewScreen(
     // consent still opens Play; the screenshot can be picked from the gallery instead.
     var guiding by remember { mutableStateOf(false) }
     var askingOverlay by remember { mutableStateOf(false) }
+    var givingUp by remember { mutableStateOf(false) }
     val consent =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             val data = result.data
@@ -192,6 +197,7 @@ fun ReviewScreen(
                 }
             }
         },
+        onGiveUp = { givingUp = true },
         onSend = { proof, note ->
             membership.require {
                 if (vm.driveConnected) {
@@ -203,6 +209,20 @@ fun ReviewScreen(
             }
         },
     )
+
+    if (givingUp) {
+        Ask(
+            title = "Give this review up?",
+            body = "The slot goes back for somebody else, and you can't take this one again.",
+            confirm = "Give it up",
+            destructive = true,
+            onConfirm = {
+                givingUp = false
+                vm.abandon(onClose)
+            },
+            onDismiss = { givingUp = false },
+        )
+    }
 
     if (guiding) {
         ReviewGuideDialog(
@@ -263,6 +283,7 @@ fun ReviewBody(
     driveConnected: Boolean = true,
     connectingDrive: Boolean = false,
     onConnectDrive: () -> Unit = {},
+    onGiveUp: (() -> Unit)? = null,
 ) {
     // The system picker: permissionless, it hands back the one picture somebody chose. Whatever
     // comes back replaces the screenshot there was, whichever way that one came.
@@ -440,6 +461,22 @@ fun ReviewBody(
                         if (!job.settled && job.step != ReviewStep.PROVE && asked.isNotEmpty() && asked != GENERAL_ASK) {
                             Spacer(Modifier.height(gap))
                             DeveloperAsks(asked)
+                        }
+                        // The way out, quiet and at the end: somebody who cannot finish gives the
+                        // slot back rather than holding it until it runs out.
+                        if (!job.settled && onGiveUp != null) {
+                            Spacer(Modifier.height(gap))
+                            Text(
+                                "Can't finish? Give this review up",
+                                Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable(onClick = onGiveUp)
+                                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+                                color = t.text3,
+                                textDecoration = TextDecoration.Underline,
+                            )
                         }
                     }
                 }

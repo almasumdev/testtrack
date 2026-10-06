@@ -85,7 +85,7 @@ data class ReviewJob(
         get() = (((review.neededMs - review.usedMs) / 1000).coerceAtLeast(0)).toInt()
 
     val settled: Boolean
-        get() = review.state in setOf("submitted", "approved", "rejected", "disputed")
+        get() = review.state in setOf("submitted", "approved", "rejected", "disputed", "abandoned", "expired")
 }
 
 /** What a review is worth saying about itself once it is out of the reviewer's hands. */
@@ -94,6 +94,8 @@ fun reviewOutcome(state: String): String =
         "submitted" -> "With the developer. They have two days, then it approves itself."
         "approved" -> "Approved. The tix are yours."
         "disputed" -> "The developer disputed it. Three members are deciding."
-        "rejected" -> "The dispute went against you. Nothing was paid."
+        "rejected" -> "The members sided with the developer. Nothing was paid, and their fee came from your tix."
+        "abandoned" -> "You gave this one up. The slot went to somebody else."
+        "expired" -> "It sat unfinished for a day, so the slot went back."
         else -> ""
     }

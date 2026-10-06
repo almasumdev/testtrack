@@ -43,6 +43,7 @@ import androidx.navigation.navArgument
 import com.eazyverse.testtrack.data.AppUpdateService
 import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.CaptureService
+import com.eazyverse.testtrack.data.FeedbackWatch
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.data.UpdateTier
 import com.eazyverse.testtrack.data.leftRound
@@ -152,6 +153,8 @@ class MainActivity : ComponentActivity() {
                         val membership: MembershipViewModel = viewModel()
                         var wasSignedIn by remember { mutableStateOf(Session.signedIn) }
                         LaunchedEffect(Session.signedIn) {
+                            // Feedback news while the app is closed. See [FeedbackWatch].
+                            if (Session.signedIn) FeedbackWatch.schedule(this@MainActivity)
                             if (Session.signedIn && !wasSignedIn) membership.afterSignIn() else membership.quietly()
                             wasSignedIn = Session.signedIn
                         }
@@ -358,7 +361,12 @@ fun AppNav(
             val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
             val feed: FeedViewModel = viewModel(home)
             Inset {
-                CheckScreen(feed, requireNotNull(entry.arguments?.getString("id")), onClose = { nav.popBackStack() })
+                CheckScreen(
+                    feed,
+                    requireNotNull(entry.arguments?.getString("id")),
+                    onClose = { nav.popBackStack() },
+                    onOpen = { nav.push(Routes.check(it)) },
+                )
             }
         }
 

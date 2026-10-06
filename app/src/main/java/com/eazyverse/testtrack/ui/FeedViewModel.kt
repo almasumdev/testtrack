@@ -7,12 +7,16 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.domain.Case
+import com.eazyverse.testtrack.domain.Request
+import com.eazyverse.testtrack.domain.RequestReview
 import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
+import com.eazyverse.testtrack.net.ApiDispute
 import com.eazyverse.testtrack.net.ApiError
+import com.eazyverse.testtrack.net.ApiMyPost
 import com.eazyverse.testtrack.net.ApiPost
-import com.eazyverse.testtrack.net.PostIn
+import com.eazyverse.testtrack.net.ApiReview
 import kotlinx.coroutines.launch
 import java.time.Instant
 
@@ -117,6 +121,14 @@ class FeedViewModel : ViewModel() {
         message = null
     }
 
+    /** This account's own requests for feedback, with what each has had. */
+    var requests by mutableStateOf<List<Request>>(emptyList())
+        private set
+
+    /** Where the next page of posts starts, or null when there is none. */
+    private var cursor: String? = null
+    private var paging = false
+
     /** Everything the tab shows, fetched together. Safe to call on every resume. */
     fun load(context: Context) {
         viewModelScope.launch {
@@ -126,66 +138,27 @@ class FeedViewModel : ViewModel() {
                 // content the server was perfectly willing to hand over.
                 val named = ApiAuth.ensure(context)
                 signedOut = !named
-                posts = Api.posts().posts
+                val page = Api.posts()
+                posts = page.posts
+                cursor = page.nextCursor
                 if (!named) {
                     tix = 0
                     mine = emptyList()
                     waiting = emptyList()
                     disputes = emptyList()
+                    requests = emptyList()
                     offline = false
                     return@launch
                 }
                 tix = Api.me().tix
-                mine =
-                    Api.myReviews().map {
-                        MyReview(
-                            id = it.id,
-                            postId = it.postId,
-                            appName = it.appName.ifBlank { appNameFor(it.postId) },
-                            state = it.state,
-                            reward = it.reward,
-                            reason = it.reason,
-                            packageName = it.packageName,
-                            isLive = it.isLive,
-                        )
-                    }
+                // Each part on its own: one that fails keeps what it had, rather than turning the
+                // whole tab into an offline page when the rest came back fine.
+                part { mine = Api.myReviews().map(::myReview) }
                 // Both duties, fetched with the feed rather than when the tab is opened: the
                 // badge has to be right before anybody looks at it.
-                // Mapped here rather than drawn raw: a post id means nothing on a card, and
-                // the screen should not have to know what the database calls things.
-                waiting =
-                    Api.waiting().map {
-                        // From an older server these come blank; the post, when it is on the feed,
-                        // has them too.
-                        val post = posts.firstOrNull { p -> p.id == it.postId }
-                        Waiting(
-                            id = it.id,
-                            appName = it.appName.ifBlank { appNameFor(it.postId) },
-                            written = it.written,
-                            proofRef = it.proofRef,
-                            reviewerName = it.reviewerName,
-                            reward = it.reward.takeIf { r -> r > 0 } ?: post?.reward ?: 0,
-                            isLive = if (it.appName.isBlank()) post?.isLive ?: it.isLive else it.isLive,
-                            decideBy = millis(it.decideBy) ?: millis(it.submittedAt)?.plus(TWO_DAYS),
-                            packageName = it.packageName.ifBlank { post?.packageName.orEmpty() },
-                        )
-                    }
-                disputes =
-                    Api.disputes().map {
-                        Case(
-                            id = it.id,
-                            appName = it.appName,
-                            reason = it.reason,
-                            written = it.written,
-                            proofRef = it.proofRef,
-                            stake = it.stake,
-                            votesCast = it.votesCast,
-                            votesNeeded = it.votesNeeded,
-                            packageName = it.packageName,
-                            reward = it.reward,
-                            isLive = it.isLive,
-                        )
-                    }
+                part { waiting = Api.waiting().map(::waitingOf) }
+                part { disputes = Api.disputes().map(::caseOf) }
+                part { requests = Api.myPosts().map(::requestOf) }
                 offline = false
             } catch (e: ApiError) {
                 message = e.message
@@ -198,29 +171,136 @@ class FeedViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Put an app up. The price is the server's to decide, so nothing here works it out.
-     */
-    fun post(
-        context: Context,
-        appName: String,
-        packageName: String,
-        ask: String,
-        reward: Int,
-        isLive: Boolean,
-    ) {
+    /** The next page of posts, when the list reaches its end. */
+    fun loadMore() {
+        val from = cursor ?: return
+        if (paging) return
+        paging = true
         viewModelScope.launch {
             try {
-                Api.createPost(PostIn(appName, packageName, ask, reward, isLive))
-                message = "Up. Reviewers can take it now."
+                val page = Api.posts(before = from)
+                val seen = posts.map { it.id }.toSet()
+                posts = posts + page.posts.filter { it.id !in seen }
+                cursor = page.nextCursor
+            } catch (_: Exception) {
+                // The next scroll to the end asks again.
+            } finally {
+                paging = false
+            }
+        }
+    }
+
+    /** Close one of your requests and take back what was held for the slots nobody took. */
+    fun closeRequest(
+        context: Context,
+        id: String,
+    ) {
+        if (busy) return
+        busy = true
+        viewModelScope.launch {
+            try {
+                val closed = Api.closePost(id)
+                message =
+                    if (closed.refunded > 0) {
+                        "Closed. ${closed.refunded} tix came back to you."
+                    } else {
+                        "Closed. Reviews already under way can still finish."
+                    }
                 load(context)
             } catch (e: ApiError) {
                 message = e.message
             } catch (_: Exception) {
                 message = "We could not reach TestTrack. Check your connection."
+            } finally {
+                busy = false
             }
         }
     }
+
+    /** One personal part of the load. An auth refusal still ends the whole load. */
+    private suspend fun part(block: suspend () -> Unit) {
+        try {
+            block()
+        } catch (e: ApiError) {
+            if (e.isAuth) throw e
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // Kept as it was; the next load tries again.
+        }
+    }
+
+    private fun myReview(it: ApiReview) =
+        MyReview(
+            id = it.id,
+            postId = it.postId,
+            appName = it.appName.ifBlank { appNameFor(it.postId) },
+            state = it.state,
+            reward = it.reward,
+            reason = it.reason,
+            packageName = it.packageName,
+            isLive = it.isLive,
+        )
+
+    // Mapped here rather than drawn raw: a post id means nothing on a card, and the screen should
+    // not have to know what the database calls things.
+    private fun waitingOf(it: ApiReview): Waiting {
+        // From an older server these come blank; the post, when it is on the feed, has them too.
+        val post = posts.firstOrNull { p -> p.id == it.postId }
+        return Waiting(
+            id = it.id,
+            appName = it.appName.ifBlank { appNameFor(it.postId) },
+            written = it.written,
+            proofRef = it.proofRef,
+            reviewerName = it.reviewerName,
+            reward = it.reward.takeIf { r -> r > 0 } ?: post?.reward ?: 0,
+            isLive = if (it.appName.isBlank()) post?.isLive ?: it.isLive else it.isLive,
+            decideBy = millis(it.decideBy) ?: millis(it.submittedAt)?.plus(TWO_DAYS),
+            packageName = it.packageName.ifBlank { post?.packageName.orEmpty() },
+        )
+    }
+
+    private fun caseOf(it: ApiDispute) =
+        Case(
+            id = it.id,
+            appName = it.appName,
+            reason = it.reason,
+            written = it.written,
+            proofRef = it.proofRef,
+            stake = it.stake,
+            votesCast = it.votesCast,
+            votesNeeded = it.votesNeeded,
+            packageName = it.packageName,
+            reward = it.reward,
+            isLive = it.isLive,
+        )
+
+    private fun requestOf(it: ApiMyPost) =
+        Request(
+            id = it.id,
+            appName = it.appName,
+            packageName = it.packageName,
+            isLive = it.isLive,
+            reward = it.reward,
+            bought = it.reviewsBought,
+            done = it.reviewsDone,
+            open = it.slotsOpen,
+            closed = it.closed,
+            refundable = it.refundable,
+            reviews =
+                it.reviews.map { r ->
+                    RequestReview(
+                        id = r.id,
+                        state = r.state,
+                        reviewerName = r.reviewerName,
+                        proofRef = r.proofRef,
+                        written = r.written,
+                        reason = r.reason,
+                        outcome = r.outcome,
+                        decideBy = millis(r.decideBy),
+                    )
+                },
+        )
 
     /** Accept a review of your app. The reviewer is paid and the post is one closer to done. */
     fun approve(

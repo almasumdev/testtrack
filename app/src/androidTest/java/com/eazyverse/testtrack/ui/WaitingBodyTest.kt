@@ -11,6 +11,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.eazyverse.testtrack.domain.Case
+import com.eazyverse.testtrack.domain.Request
+import com.eazyverse.testtrack.domain.RequestReview
 import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import org.junit.Assert.assertEquals
@@ -50,6 +52,62 @@ class WaitingBodyTest {
         votesCast = cast,
         votesNeeded = 3,
     )
+
+    @Test
+    fun your_own_requests_are_listed_and_open_their_page() {
+        var opened: String? = null
+        compose.setContent {
+            TestTrackTheme {
+                WaitingBody(
+                    reviews = emptyList(),
+                    disputes = emptyList(),
+                    requests =
+                        listOf(
+                            Request(id = "p1", appName = "Porua", bought = 3, done = 1, open = 1),
+                            Request(id = "p2", appName = "Bluefy", bought = 2, done = 2, closed = true),
+                        ),
+                    onOpenRequest = { opened = it.id },
+                )
+            }
+        }
+        compose.onNodeWithText("Your requests").assertIsDisplayed()
+        compose.onNodeWithText("1 open").assertIsDisplayed()
+        compose.onNodeWithText("Closed").assertIsDisplayed()
+        compose.onNodeWithText("Porua").performClick()
+        assertEquals("p1", opened)
+    }
+
+    @Test
+    fun a_request_page_shows_each_review_and_offers_to_close_with_the_refund() {
+        var closed = 0
+        compose.setContent {
+            TestTrackTheme {
+                RequestCheck(
+                    Request(
+                        id = "p1",
+                        appName = "Porua",
+                        bought = 3,
+                        done = 1,
+                        open = 1,
+                        reward = 40,
+                        refundable = 40,
+                        reviews =
+                            listOf(
+                                RequestReview(id = "r1", state = "approved", reviewerName = "Tanvir"),
+                                RequestReview(id = "r2", state = "rejected", reviewerName = "Mitu", reason = "Wrong app."),
+                            ),
+                    ),
+                    onClose = { closed++ },
+                )
+            }
+        }
+        compose.onNodeWithText("Tanvir").assertIsDisplayed()
+        compose.onNodeWithText("Accepted").assertIsDisplayed()
+        compose.onNodeWithText("Refused · upheld").assertIsDisplayed()
+        compose.onNodeWithText("Close and get 40 tix back").performClick()
+        compose.onNodeWithText("Close it").performClick()
+        assertEquals(1, closed)
+    }
 
     @Test
     fun an_account_with_nothing_owed_is_told_what_would_land_here() {
@@ -192,8 +250,9 @@ class WaitingBodyTest {
 
         compose.onNodeWithText("Refuse it").assertIsNotEnabled()
         assertNull(reason)
+        // What refusing holds, said before it is held.
         compose
-            .onNodeWithText("whoever it goes against pays them", substring = true)
+            .onNodeWithText("Refusing holds 15 tix", substring = true)
             .assertIsDisplayed()
 
         compose.onNode(hasSetTextAction()).performTextInput("Too short")

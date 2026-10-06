@@ -195,9 +195,9 @@ object DriveRepo {
             }
             body.contains("storageQuota", true) || body.contains("quotaExceeded", true) ->
                 "Your Google Drive is full, so the screenshot couldn't be saved. Free some space and " +
-                    "open the app again."
+                    "try again."
             code == 429 || code >= 500 ->
-                "Drive is busy. Try opening the app again in a minute. ($code)"
+                "Drive is busy. Try again in a minute. ($code)"
             else -> "Drive wouldn't take the screenshot. ($code)"
         }
 

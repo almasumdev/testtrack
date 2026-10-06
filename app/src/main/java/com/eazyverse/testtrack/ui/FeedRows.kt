@@ -302,7 +302,11 @@ fun FeedRequestCard(
                 when {
                     post.mine -> "${post.reviewsDone} of ${post.reviewsBought} done"
                     post.myState != null -> "You are part way through this one"
-                    else -> "${post.reviewsBought - post.reviewsDone} still going"
+                    else -> {
+                        // In progress and waiting count as taken: the server says what is left.
+                        val open = post.slotsOpen ?: (post.reviewsBought - post.reviewsDone)
+                        if (open == 1) "1 slot open" else "$open slots open"
+                    }
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

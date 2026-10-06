@@ -140,6 +140,12 @@ object Api {
 
     suspend fun createPost(body: PostIn): ApiPost = post("/feed/posts", body)
 
+    /** The reader's own requests, open or closed, each with every review it has had. */
+    suspend fun myPosts(): List<ApiMyPost> = get("/feed/posts/mine")
+
+    /** Stop taking reviews; the tix held for slots nobody took come back. */
+    suspend fun closePost(postId: String): ClosedPost = post("/feed/posts/$postId/close", Empty())
+
     // ---------------------------------------------------------------- the guided review
 
     suspend fun claim(

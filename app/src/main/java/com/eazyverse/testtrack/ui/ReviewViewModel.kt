@@ -388,11 +388,14 @@ class ReviewViewModel : ViewModel() {
         }
     }
 
-    /** Give the slot back so somebody else can take it. */
+    /** Give the slot back so somebody else can take it. Whatever was kept for it goes too. */
     fun abandon(onDone: () -> Unit) {
         val current = job ?: return
         run {
-            Api.abandon(current.review.id)
+            keep(current.copy(review = Api.abandon(current.review.id)))
+            app?.let { ProofStore.forget(it, current.review.id) }
+            proof = null
+            note = ""
             onDone()
         }
     }

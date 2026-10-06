@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.ApiReview
@@ -86,6 +87,7 @@ class ReviewBodyTest {
         failure: String? = null,
         driveConnected: Boolean = true,
         onConnectDrive: () -> Unit = {},
+        onGiveUp: (() -> Unit)? = null,
     ) {
         compose.setContent {
             TestTrackTheme {
@@ -103,6 +105,7 @@ class ReviewBodyTest {
                     onCapture = onCapture,
                     driveConnected = driveConnected,
                     onConnectDrive = onConnectDrive,
+                    onGiveUp = onGiveUp,
                 )
             }
         }
@@ -305,6 +308,26 @@ class ReviewBodyTest {
     fun with_drive_connected_there_is_nothing_to_connect() {
         open("used", leftReview = true, proof = android.net.Uri.parse("file:///nowhere/proof.jpg"))
         compose.onNodeWithText("Connect Google Drive").assertDoesNotExist()
+    }
+
+    @Test
+    fun an_unfinished_review_can_be_given_up_and_a_sent_one_cannot() {
+        var gaveUp = 0
+        open("installed", onGiveUp = { gaveUp++ })
+        compose.onNodeWithText("Can't finish? Give this review up").performScrollTo().performClick()
+        assertEquals(1, gaveUp)
+    }
+
+    @Test
+    fun a_sent_review_has_no_way_to_give_it_up() {
+        open("submitted", onGiveUp = {})
+        compose.onNodeWithText("Can't finish? Give this review up").assertDoesNotExist()
+    }
+
+    @Test
+    fun a_claim_that_ran_out_says_so() {
+        open("expired")
+        compose.onNodeWithText("Ran out").assertIsDisplayed()
     }
 
     @Test

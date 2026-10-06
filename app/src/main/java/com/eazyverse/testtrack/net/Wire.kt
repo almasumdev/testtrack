@@ -117,11 +117,48 @@ data class ApiPost(
     val reward: Int,
     @SerialName("reviews_bought") val reviewsBought: Int,
     @SerialName("reviews_done") val reviewsDone: Int,
+    /** Still there to take; null from an older server, where bought less done stands in. */
+    @SerialName("slots_open") val slotsOpen: Int? = null,
     @SerialName("owner_name") val ownerName: String,
     val mine: Boolean,
     @SerialName("my_review_id") val myReviewId: String? = null,
     @SerialName("my_state") val myState: String? = null,
     @SerialName("created_at") val createdAt: String,
+)
+
+/** A review of one of the reader's own requests, as its owner sees it afterwards. */
+@Serializable
+data class ApiOwnerReview(
+    val id: String,
+    val state: String,
+    @SerialName("proof_ref") val proofRef: String = "",
+    val written: String = "",
+    val reason: String = "",
+    @SerialName("reviewer_name") val reviewerName: String = "",
+    val outcome: String? = null,
+    @SerialName("decide_by") val decideBy: String? = null,
+)
+
+/** One of the reader's own requests, with every review it has had. */
+@Serializable
+data class ApiMyPost(
+    val id: String,
+    @SerialName("app_name") val appName: String,
+    @SerialName("package_name") val packageName: String = "",
+    @SerialName("is_live") val isLive: Boolean = true,
+    val reward: Int = 0,
+    @SerialName("reviews_bought") val reviewsBought: Int = 0,
+    @SerialName("reviews_done") val reviewsDone: Int = 0,
+    @SerialName("slots_open") val slotsOpen: Int = 0,
+    val closed: Boolean = false,
+    val refundable: Int = 0,
+    val reviews: List<ApiOwnerReview> = emptyList(),
+)
+
+@Serializable
+data class ClosedPost(
+    val post: ApiMyPost,
+    val refunded: Int,
 )
 
 @Serializable

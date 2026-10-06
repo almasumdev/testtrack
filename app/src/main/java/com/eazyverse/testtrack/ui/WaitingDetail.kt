@@ -62,14 +62,17 @@ fun CheckScreen(
     feed: FeedViewModel,
     id: String,
     onClose: () -> Unit,
+    /** Open another of these pages, by id: a request's review that is waiting on its owner. */
+    onOpen: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
     val review = feed.waiting.firstOrNull { it.id == id }
     val case = feed.disputes.firstOrNull { it.id == id }
+    val request = feed.requests.firstOrNull { it.id == id }
     var refusing by remember { mutableStateOf(false) }
     LaunchedEffect(feed.decided) { if (feed.decided == id) onClose() }
-    LaunchedEffect(review == null && case == null, feed.loading) {
-        if (review == null && case == null && !feed.loading) onClose()
+    LaunchedEffect(review == null && case == null && request == null, feed.loading) {
+        if (review == null && case == null && request == null && !feed.loading) onClose()
     }
     Column(Modifier.fillMaxSize()) {
         PageMessage(feed.message, feed::clearMessage)
@@ -82,6 +85,15 @@ fun CheckScreen(
                     onBack = onClose,
                     onApprove = { feed.approve(context, review) },
                     onReject = { refusing = true },
+                )
+            request != null ->
+                RequestCheck(
+                    request,
+                    busy = feed.busy,
+                    proof = { ref -> ProofImage(ref, whole = true) },
+                    onBack = onClose,
+                    onClose = { feed.closeRequest(context, request.id) },
+                    onOpenWaiting = onOpen,
                 )
             case != null ->
                 CaseCheck(
@@ -303,7 +315,7 @@ fun CaseCheck(
 
 /** A back arrow and a title, the page scrolling under it, and the answers pinned above the dock. */
 @Composable
-private fun CheckPage(
+internal fun CheckPage(
     title: String,
     onBack: () -> Unit,
     actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit,
@@ -329,7 +341,7 @@ private fun CheckPage(
 
 /** Something somebody said, under who said it. */
 @Composable
-private fun Said(
+internal fun Said(
     who: String,
     words: String,
 ) {

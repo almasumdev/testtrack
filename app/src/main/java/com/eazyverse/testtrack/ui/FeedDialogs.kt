@@ -3,12 +3,8 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,41 +20,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
-/**
- * Live on Play, or still in closed testing.
- *
- * Written as the owner would say it rather than as two track names, because the person answering
- * knows what they did in Play Console and does not necessarily know what we call it.
- */
-@Composable
-fun LiveChoice(
-    isLive: Boolean,
-    onChange: (Boolean) -> Unit,
-) {
-    Column(Modifier.fillMaxWidth()) {
-        Text(
-            "Where is it?",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ChoicePill("Live on Play", isLive) { onChange(true) }
-            ChoicePill("Closed testing", !isLive) { onChange(false) }
-        }
-        Spacer(Modifier.height(6.dp))
-        Text(
-            if (isLive) {
-                "Reviewers will be sent to leave a public review."
-            } else {
-                "Reviewers will write feedback here instead, since there is no listing yet."
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
 
 @Composable
 private fun ChoicePill(
@@ -105,6 +66,8 @@ fun FeedRefuseDialog(
     appName: String,
     onRefuse: (String) -> Unit,
     onDismiss: () -> Unit,
+    /** What refusing holds from the owner until the members decide. */
+    stake: Int = REFUSE_STAKE,
 ) {
     var reason by remember { mutableStateOf("") }
     val enough = reason.trim().length >= 15
@@ -112,8 +75,9 @@ fun FeedRefuseDialog(
     Ask(
         title = "Refuse this review?",
         body =
-            "Three members will decide it, and whoever it goes against pays them. Say what is " +
-                "wrong with it so they have something to go on.",
+            "Three members check it. Refusing holds $stake tix from you until they decide: if " +
+                "they agree, you get them back and the slot reopens; if not, the reviewer is paid " +
+                "and your $stake tix pay the members.",
         confirm = "Refuse it",
         destructive = true,
         confirmEnabled = enough,
@@ -137,10 +101,13 @@ fun FeedRefuseDialog(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Accepting $appName's review instead costs nothing.",
+                "Accepting $appName's review instead costs nothing more.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
     )
 }
+
+/** Three members at five tix each: what a refusal holds, as the server has it. */
+const val REFUSE_STAKE = 15

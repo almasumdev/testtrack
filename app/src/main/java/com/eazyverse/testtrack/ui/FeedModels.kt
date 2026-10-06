@@ -80,23 +80,6 @@ object FeedRules {
     const val ASK_MAX = 200
 }
 
-/** A developer asking the community to open their app and say something useful about it. */
-data class FeedRequest(
-    val id: String,
-    val appName: String,
-    /** Display name of whoever posted it. Blank is never shown, so seed it. */
-    val author: String,
-    /** What they want looked at. The reason this post is worth answering rather than scrolling. */
-    val ask: String,
-    val postedAt: Long,
-    val reviews: Int = 0,
-    val reward: Int = FeedRules.REVIEW_REWARD,
-    /** This account has already answered it, so it is settled rather than actionable. */
-    val reviewed: Boolean = false,
-    /** This account posted it, so the card reports rather than asks. */
-    val mine: Boolean = false,
-)
-
 /**
  * Which thing happened.
  *
@@ -210,53 +193,8 @@ fun feedAge(
  * than everything under it.
  */
 object SampleFeed {
-    /** What the header chip starts at. Enough to post twice, so the economy can be tried out. */
-    const val STARTING_TIX = 340
-
     private const val HOUR = 3_600_000L
     private const val DAY = 24L * HOUR
-
-    fun requests(now: Long = System.currentTimeMillis()) =
-        listOf(
-            FeedRequest(
-                id = "req-bazar",
-                appName = "Local Bazar",
-                author = "Tanvir",
-                ask = "The cart empties itself if you background the app. Does it for you too?",
-                postedAt = now - 2L * HOUR,
-                reviews = 3,
-                reward = 40,
-            ),
-            FeedRequest(
-                id = "req-weather",
-                appName = "Barisal Weather",
-                author = "Habib",
-                ask = "Looking for a read on the home screen before I put it in front of a crew.",
-                postedAt = now - 5L * HOUR,
-                reviews = 6,
-                reward = 20,
-            ),
-            FeedRequest(
-                id = "req-rickshaw",
-                appName = "Rickshaw Fare Calc",
-                author = "You",
-                ask = "Is the fare breakdown clear without reading the help text?",
-                postedAt = now - 3L * DAY,
-                reviews = 6,
-                reward = 60,
-                mine = true,
-            ),
-            FeedRequest(
-                id = "req-nikosh",
-                appName = "Nikosh Budget",
-                author = "Rafiul",
-                ask = "Second opinion on the Bangla numerals in the monthly total.",
-                postedAt = now - 4L * DAY,
-                reviews = 11,
-                reward = 25,
-                reviewed = true,
-            ),
-        )
 
     fun events(now: Long = System.currentTimeMillis()) =
         listOf(

@@ -22,5 +22,6 @@ suspend fun releaseSession(context: Context) {
     // all just vanished, and says so.
     Enforcement.clear(context)
     ReviewKeep.clear(context)
+    FeedbackWatch.cancel(context)
     PushRepo.clear(context, uid)
 }

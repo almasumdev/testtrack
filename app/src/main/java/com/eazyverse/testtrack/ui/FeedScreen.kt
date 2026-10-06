@@ -1,5 +1,11 @@
 package com.eazyverse.testtrack.ui
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -35,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
 import coil.compose.AsyncImage
@@ -95,6 +102,32 @@ fun FeedScreen(
      * every frame of the scroll that produced it.
      */
     val askOffScreen by remember { derivedStateOf { feedbackList.firstVisibleItemIndex > 0 } }
+    // Near the end of the list, the next page: the first twenty were all there ever was.
+    val nearEnd by remember {
+        derivedStateOf {
+            val info = feedbackList.layoutInfo
+            val last = info.visibleItemsInfo.lastOrNull()?.index ?: 0
+            info.totalItemsCount > 0 && last >= info.totalItemsCount - 3
+        }
+    }
+    LaunchedEffect(nearEnd) { if (nearEnd) vm.loadMore() }
+
+    // Notifications, asked for once and only once there is something of this account's in
+    // Feedback to hear about: a request out, or a review taken on. Asked any earlier it is a
+    // permission for nothing in particular, which is the one people refuse.
+    val notify = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    val involved = vm.requests.isNotEmpty() || vm.mine.isNotEmpty()
+    LaunchedEffect(involved) {
+        if (!involved || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return@LaunchedEffect
+        val prefs = context.getSharedPreferences("feedback_notify", Context.MODE_PRIVATE)
+        val granted =
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+        if (!granted && !prefs.getBoolean("asked", false)) {
+            prefs.edit().putBoolean("asked", true).apply()
+            notify.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     // Mine and Waiting are this account's own; signed out there is no account, so no tabs for them.
     val shownTabs = if (vm.signedOut) listOf(FeedTab.FEEDBACK, FeedTab.ACTIVITY) else FeedTab.entries
@@ -208,7 +241,10 @@ fun FeedScreen(
                             items(vm.openPosts, key = { it.id }) { post ->
                                 // Taking a review on needs the testers group: Play only lets
                                 // the owner add somebody on it to a closed test.
-                                FeedRequestCard(post) { membership.require { onReview(Json.encodeToString(post)) } }
+                                FeedRequestCard(post) {
+                                    // Signed out, a review cannot be claimed: ask for the account first.
+                                    if (vm.signedOut) onSignIn() else membership.require { onReview(Json.encodeToString(post)) }
+                                }
                             }
                         }
                     }
@@ -271,6 +307,8 @@ fun FeedScreen(
                         onOpenReview = { onCheck(it.id) },
                         onOpenCase = { onCheck(it.id) },
                         onSignIn = onSignIn,
+                        requests = vm.requests,
+                        onOpenRequest = { onCheck(it.id) },
                     )
             }
         }

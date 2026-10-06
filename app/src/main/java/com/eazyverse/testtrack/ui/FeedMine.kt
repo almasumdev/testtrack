@@ -68,7 +68,7 @@ val InProgressStates = setOf("claimed", "installed", "used")
 val PendingStates = setOf("submitted", "disputed")
 
 /** Decided, one way or the other. */
-val HistoryStates = setOf("approved", "rejected")
+val HistoryStates = setOf("approved", "rejected", "abandoned", "expired")
 
 /** Anything past the reviewer's own part: off the Feedback list for good. */
 val SentStates = PendingStates + HistoryStates
@@ -253,7 +253,7 @@ private fun Tix(review: MyReview) {
                 .tabular(),
         fontWeight = FontWeight.SemiBold,
         color = tone,
-        textDecoration = if (review.state == "rejected") TextDecoration.LineThrough else null,
+        textDecoration = if (review.state != "approved") TextDecoration.LineThrough else null,
     )
 }
 
@@ -266,6 +266,8 @@ private fun mineLine(review: MyReview): String =
         "disputed" -> "Disputed · members deciding"
         "approved" -> "Approved · tix paid"
         "rejected" -> review.reason.ifBlank { "Not paid" }
+        "abandoned" -> "Given up"
+        "expired" -> "Ran out after a day"
         else -> ""
     }
 
@@ -278,6 +280,7 @@ private fun mineMark(review: MyReview): Pair<ImageVector?, Color> {
         "disputed" -> Lucide.Users to t.warn
         "approved" -> Lucide.CircleCheck to t.ok
         "rejected" -> Lucide.CircleX to t.bad
+        "abandoned", "expired" -> Lucide.CircleX to t.text4
         else -> null to t.text3
     }
 }

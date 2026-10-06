@@ -73,12 +73,12 @@ class ReviewStepTest {
     }
 
     @Test
-    fun a_closed_test_never_jumps_to_proof_because_there_is_no_play_page_to_leave() {
-        // Its review is written in the app, so being sent to Play is not a thing that happens and
-        // the flag must not move the step even if it somehow gets set.
+    fun a_closed_test_reaches_proof_the_same_way_as_a_live_one() {
+        // Closed tests are reviewed on Play too, as private tester feedback, and proved with a
+        // screenshot of it; so having gone to Play opens the proof step for them as well.
         val closed = post.copy(isLive = false)
-        val job = ReviewJob(closed, review("used"), leftReview = true)
-        assertEquals(ReviewStep.LEAVE, job.step)
+        assertEquals(ReviewStep.LEAVE, ReviewJob(closed, review("used")).step)
+        assertEquals(ReviewStep.PROVE, ReviewJob(closed, review("used"), leftReview = true).step)
     }
 
     @Test

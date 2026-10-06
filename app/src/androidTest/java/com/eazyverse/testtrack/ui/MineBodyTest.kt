@@ -84,4 +84,11 @@ class MineBodyTest {
         open(emptyList(), signedOut = true)
         compose.onNodeWithText("Sign in").assertIsDisplayed()
     }
+
+    @Test
+    fun a_review_given_up_or_run_out_stays_in_history_and_says_so() {
+        open(listOf(review("x", "abandoned", "Porua"), review("y", "expired", "Bluefy")))
+        compose.onNodeWithText("Given up").assertIsDisplayed()
+        compose.onNodeWithText("Ran out after a day").assertIsDisplayed()
+    }
 }

@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Inbox
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.domain.Case
+import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.domain.closeTo
 import com.eazyverse.testtrack.domain.timeLeft
@@ -36,6 +37,8 @@ fun WaitingBody(
     onOpenCase: (Case) -> Unit = {},
     onSignIn: () -> Unit = {},
     onRetry: () -> Unit = {},
+    requests: List<Request> = emptyList(),
+    onOpenRequest: (Request) -> Unit = {},
 ) {
     // Asked before the network is blamed. This branch used to be the offline one and it was
     // titled "Sign in to see what is waiting", so a dropped connection told the reader they were
@@ -65,7 +68,7 @@ fun WaitingBody(
         }
         return
     }
-    if (reviews.isEmpty() && disputes.isEmpty()) {
+    if (reviews.isEmpty() && disputes.isEmpty() && requests.isEmpty()) {
         RobotState(
             Lucide.Inbox,
             "Nothing waiting on you",
@@ -115,6 +118,36 @@ fun WaitingBody(
                         "Disputed · ${case.votesCast} of ${case.votesNeeded} votes",
                         onClick = { onOpenCase(case) },
                     ) { Pill("${case.stake} tix", Tt.colors.accentInk, Tt.colors.glass2) }
+                }
+            }
+        }
+        // Your own requests: what each has had, and the way to close one. Below what is owed,
+        // because that is the errand; this is the record.
+        if (requests.isNotEmpty()) {
+            item(key = "h-requests") {
+                CrewHeading(
+                    "Your requests",
+                    "${requests.size}",
+                    top = if (reviews.isEmpty() && disputes.isEmpty()) 0.dp else 20.dp,
+                )
+            }
+            item(key = "requests") {
+                CheckGroup(requests.size) { index ->
+                    val request = requests[index]
+                    CheckRow(
+                        request.appName,
+                        buildList {
+                            add("${request.done} of ${request.bought} done")
+                            if (request.underWay > 0) add("${request.underWay} under way")
+                        }.joinToString(" · "),
+                        onClick = { onOpenRequest(request) },
+                    ) {
+                        if (request.closed) {
+                            Pill("Closed", Tt.colors.text3, Tt.colors.glass2)
+                        } else {
+                            Pill("${request.open} open", Tt.colors.accentInk, Tt.colors.glass2)
+                        }
+                    }
                 }
             }
         }

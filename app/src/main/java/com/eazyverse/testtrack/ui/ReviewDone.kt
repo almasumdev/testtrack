@@ -29,8 +29,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Hourglass
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Undo2
 import com.composables.icons.lucide.Users
 import com.composables.icons.lucide.WifiOff
 import com.composables.icons.lucide.X
@@ -64,6 +66,8 @@ internal fun ReviewDone(
             "approved" -> Triple(Lucide.Check, t.ok, "Approved")
             "disputed" -> Triple(Lucide.Users, t.warn, "Being decided")
             "rejected" -> Triple(Lucide.X, t.bad, "Not paid")
+            "abandoned" -> Triple(Lucide.Undo2, t.text3, "Given up")
+            "expired" -> Triple(Lucide.Clock, t.text3, "Ran out")
             else -> Triple(Lucide.Hourglass, t.accentInk, "Sent to the developer")
         }
     Column(
@@ -104,6 +108,16 @@ internal fun ReviewDone(
                 .border(1.dp, t.glassBorder, shape)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
         ) {
+            if (state == "abandoned" || state == "expired") {
+                StageRow(
+                    Stage.FAILED,
+                    if (state == "abandoned") "You gave it up" else "Not finished within a day",
+                    "The slot went back for somebody else",
+                )
+                StageGap()
+                StageRow(Stage.FAILED, "+$reward tix", "Not paid")
+                return@Column
+            }
             StageRow(Stage.DONE, "Sent with your screenshot", "Your part is done")
             StageGap()
             when (state) {
