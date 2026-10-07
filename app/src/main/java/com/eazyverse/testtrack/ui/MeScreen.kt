@@ -193,6 +193,7 @@ fun MeBody(
         }
         item { SectionTitle("Account") }
         item { Account(onEdit = onEdit, onSignOut = onSignOut, drive = drive, onDrive = onDrive, group = group, onGroup = onGroup) }
+        item { AdminTools() }
         item { Spacer(Modifier.height(24.dp)) }
         item {
             Text(
@@ -208,7 +209,7 @@ fun MeBody(
 
 /** A heading inside the page's own gutter, the list's padding already having taken it. */
 @Composable
-private fun SectionTitle(text: String) {
+internal fun SectionTitle(text: String) {
     Text(
         text,
         Modifier.padding(top = 16.dp, bottom = 10.dp),

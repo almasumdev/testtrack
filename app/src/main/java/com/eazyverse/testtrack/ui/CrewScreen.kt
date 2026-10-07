@@ -29,6 +29,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.findActivity
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
  * Crew: one cohort, at whatever point it has reached.
@@ -38,8 +39,7 @@ import com.eazyverse.testtrack.findActivity
  * what happened have almost nothing in common except the fifteen people, and a single screen that
  * tried to be all of them is what the old one was.
  *
- * Everything runs against [CrewViewModel]'s in-memory state. See its note, and docs/crew.md for
- * the rules underneath.
+ * Everything runs against [CrewViewModel], which asks the API. See docs/crew.md for the rules.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,11 +48,16 @@ fun CrewScreen(
     vm: CrewViewModel = viewModel(),
 ) {
     val context = LocalContext.current
+    val membership = rememberMembership()
 
     /** The seat being given up, which is confirmed first: it is a place fourteen people share. */
     var leaving by remember { mutableStateOf<CrewSeat?>(null) }
 
-    // Reloaded on every arrival: a crew fills, a verdict lands and a fortnight starts while
+    /** The app being reported: its seat id, name and owner. */
+    var reporting by remember { mutableStateOf<CrewSeat?>(null) }
+    var taking by remember { mutableStateOf(false) }
+
+    // Reloaded on every arrival: a crew fills, an app is sent back and a fortnight starts while
     // somebody is on another screen.
     LaunchedEffect(Unit) { vm.load(context) }
 
@@ -67,13 +72,21 @@ fun CrewScreen(
         owner.lifecycle.addObserver(watcher)
         onDispose { owner.lifecycle.removeObserver(watcher) }
     }
-    var judging by remember { mutableStateOf<Pair<String, CrewSeat>?>(null) }
-    var taking by remember { mutableStateOf<String?>(null) }
     val crew = vm.current
 
     // Opening a crew is a push, so back should pop it rather than leaving the tab. Registered only
     // while one is open, so the bar's own handler still gets it on the tabs themselves.
     BackHandler(enabled = crew != null) { vm.show(null) }
+
+    val actions =
+        CrewActions(
+            onOpen = { app -> membership.require { vm.openApp(context, app) } },
+            onOpenAll = { id -> membership.require { vm.openAll(context, id) } },
+            onInstall = { seat -> membership.require { vm.openOnPlay(context, seat.packageName) } },
+            onReport = { reporting = it },
+            onLeave = { leaving = it },
+            onTakeSeat = { if (vm.signedOut) onSignIn() else membership.require { taking = true } },
+        )
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -85,8 +98,7 @@ fun CrewScreen(
                         Modifier
                             .fillMaxWidth()
                             // Nothing of its own, the same as Circle's: the header above brings its
-                            // space below itself and the tabs bring their own touch padding, and a
-                            // third helping on top of those two is the gap that was here.
+                            // space below itself and the tabs bring their own touch padding.
                             .padding(start = Gutter, end = Gutter),
                     ) {
                         PhaseTabs(vm.tab, { vm.badge(it) }) { vm.showTab(it) }
@@ -109,39 +121,27 @@ fun CrewScreen(
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (vm.running > 0) TestingNotifications()
             when {
-                crew != null && crew.phase == CrewPhase.LOBBY ->
-                    CrewLobbyPhase(
-                        crew = crew,
-                        onJudge = { judging = crew.id to it },
-                        onLeave = { leaving = crew.seats.firstOrNull { seat -> seat.mine } },
-                    )
-                crew != null && crew.phase == CrewPhase.RUN ->
-                    CrewRunPhase(
-                        crew = crew,
-                        onOpen = { vm.openApp(context, it) },
-                        onReport = { vm.report(context, it) },
-                        onOpenAll = { vm.openAll(context, crew.id) },
-                    )
+                crew != null && crew.phase == CrewPhase.LOBBY -> CrewLobbyPhase(crew, actions)
+                crew != null && crew.phase == CrewPhase.RUN -> CrewRunPhase(crew, actions)
                 crew != null -> CrewRecordPhase(crew)
-
-                vm.tab == CrewPhase.RUN -> CrewRunTab(vm, onSignIn) { vm.show(it) }
-                vm.tab == CrewPhase.LOBBY ->
-                    CrewLobbyTab(vm, onSignIn) { id, seat -> judging = id to seat }
+                vm.loading && vm.crews.isEmpty() && vm.open == null -> CrewLoading()
+                vm.offline && vm.crews.isEmpty() -> RobotOffline("Crews didn't load", onRetry = { vm.load(context) })
+                vm.tab == CrewPhase.RUN -> CrewRunTab(vm, onSignIn, actions) { vm.show(it) }
+                vm.tab == CrewPhase.LOBBY -> CrewLobbyTab(vm, onSignIn, actions) { vm.show(it) }
                 vm.tab == CrewPhase.RECORD -> CrewRecordTab(vm, onSignIn) { vm.show(it) }
-                else -> CrewOpenTab(vm) { taking = it }
+                else -> CrewOpenTab(vm, actions)
             }
         }
     }
 
-    judging?.let { (id, seat) ->
-        CrewVerdictDialog(
+    reporting?.let { seat ->
+        CrewReportDialog(
             seat = seat,
-            mayReject = vm.mayJudge(id),
-            onVerdict = { installed ->
-                judging = null
-                vm.judge(id, seat, installed)
+            onReport = { reason ->
+                reporting = null
+                vm.report(context, seat.id, seat.appName, reason)
             },
-            onDismiss = { judging = null },
+            onDismiss = { reporting = null },
         )
     }
 
@@ -150,7 +150,7 @@ fun CrewScreen(
             title = "Take ${seat.appName} back out?",
             body =
                 "The seat is freed for somebody else and this crew goes back to waiting. You " +
-                    "can take another one straight away.",
+                    "can put an app in again straight away.",
             confirm = "Take it out",
             destructive = true,
             onConfirm = {
@@ -162,14 +162,9 @@ fun CrewScreen(
     }
 
     /*
-     * The one permission the crew flow cannot do without, asked at the first app somebody opens.
-     *
-     * It used to be the fourth rung of a checklist walked before they had seen a crew at all,
-     * which is the worst moment to send anybody into Settings: nothing on screen explained what
-     * the switch was for. Here the app they were opening is named in the question.
-     *
-     * Dismissing is allowed. Refusing means tonight does not count, which is theirs to choose,
-     * and the ask returns the next time they try.
+     * The one permission the crew flow cannot do without, asked at the first app somebody opens,
+     * with the app they were opening named in the question. Dismissing is allowed: refusing means
+     * tonight does not count, which is theirs to choose, and the ask returns the next time.
      */
     vm.needsUsageFor?.let { label ->
         Ask(
@@ -184,25 +179,36 @@ fun CrewScreen(
         )
     }
 
-    taking?.let { crewId ->
+    if (taking) {
         CrewSeatDialog(
-            crew = vm.opens.first { it.id == crewId }.name,
+            crew = vm.open?.name,
             nightly = CrewRules.nightly(vm.running + 1),
-            onTake = { name, pkg, notes ->
-                taking = null
-                vm.takeSeat(context, name, pkg, notes)
+            busy = vm.seating,
+            error = vm.seatError,
+            onEdit = vm::clearSeatError,
+            onTake = { pkg, name, notes -> vm.takeSeat(context, pkg, name, notes) { taking = false } },
+            onDismiss = {
+                if (!vm.seating) {
+                    taking = false
+                    vm.clearSeatError()
+                }
             },
-            onDismiss = { taking = null },
         )
     }
 }
 
+/** What a crew's rows can ask for, passed down as one value rather than six lambdas each. */
+class CrewActions(
+    val onOpen: (CrewApp) -> Unit,
+    val onOpenAll: (String?) -> Unit,
+    val onInstall: (CrewSeat) -> Unit,
+    val onReport: (CrewSeat) -> Unit,
+    val onLeave: (CrewSeat) -> Unit,
+    val onTakeSeat: () -> Unit,
+)
+
 /**
- * Crew's four, drawn by the same row Circle's three use.
- *
- * It was a second copy of the pill, with the same container sized to its own words and the same
- * near invisible fill on the selected one. Sharing it means a change to how a tab looks happens
- * once; see [WordTabs].
+ * Crew's four, drawn by the same row Circle's three use. See [WordTabs].
  */
 @Composable
 private fun PhaseTabs(
@@ -220,98 +226,59 @@ private fun PhaseTabs(
 }
 
 /**
- * Did it install?
- *
- * Two answers and no free text, because the question has two answers. What the dialog spends its
- * words on instead is the thing that makes the answer trustworthy: a "not found" on Play usually
- * means the reader is not in the testers group yet, not that the app is broken, so somebody who
- * has never got an app working is told to fix their own side first rather than having their report
- * quietly thrown away.
- */
-@Composable
-fun CrewVerdictDialog(
-    seat: CrewSeat,
-    mayReject: Boolean,
-    onVerdict: (Boolean) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    Ask(
-        title = "Did ${seat.appName} install?",
-        body =
-            "Open ${seat.owner}'s Play listing and try it. Two members have to get it working " +
-                "before the seat counts.",
-        confirm = "It installed",
-        onConfirm = { onVerdict(true) },
-        onDismiss = onDismiss,
-        content = {
-            Text(
-                if (mayReject) {
-                    "If Play says it cannot find it, report that instead. Nothing happens on " +
-                        "one report: somebody else tries it before the seat is refused."
-                } else {
-                    "Reports only count once you have one app of your own working. Play hides " +
-                        "closed tests from anybody outside the testers group, so a \"not found\" " +
-                        "before then is usually about your account rather than their app."
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(12.dp))
-            TestingGroupLink()
-            Secondary("Play could not find it", enabled = mayReject) { onVerdict(false) }
-        },
-    )
-}
-
-/**
  * Taking the seat: which app is going in, and how the others get into it.
  *
- * The package name is here because everything that happens next is against it. Fourteen people
- * are about to try to install this exact string, and a seat without one is a seat nobody can
- * verify. The notes are read by all fourteen, which is why they are asked for as a throwaway.
+ * The Play link or package is the whole of it: the server looks it up on Play as a member of the
+ * testers group sees it, takes the name from there, and only lets it in if it is visible. That
+ * look-up is a real page load, so the dialog stays up and the robot looks while it runs, and a
+ * refusal is said here, next to the field it is about.
  */
 @Composable
 fun CrewSeatDialog(
-    crew: String,
+    crew: String?,
     nightly: Int,
-    onTake: (name: String, pkg: String, notes: String) -> Unit,
+    busy: Boolean,
+    error: String?,
+    onEdit: () -> Unit,
+    onTake: (pkg: String, name: String, notes: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var name by remember { mutableStateOf("") }
     var pkg by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
 
-    val named = pkg.trim().contains('.') && pkg.trim().length > 3
+    val ready = pkg.trim().contains('.') && pkg.trim().length > 3
     Ask(
-        title = "Take a seat in $crew",
+        title = if (crew != null) "Take a seat in $crew" else "Start a new crew",
         body =
-            "Your app goes in with ${CrewRules.SEATS - 1} others. You open theirs every night " +
-                "for ${CrewRules.RUN_DAYS} days, and they open yours. That puts you on " +
-                "$nightly apps a night.",
-        confirm = "Take it",
-        confirmEnabled = name.isNotBlank() && named,
-        onConfirm = { onTake(name.trim(), pkg.trim(), notes.trim()) },
+            "Your app goes in with ${CrewRules.SEATS - 1} others. You open theirs every day for " +
+                "${CrewRules.RUN_DAYS} days, and they open yours. That puts you on $nightly apps a day.",
+        confirm = if (busy) "Checking…" else "Take it",
+        confirmEnabled = ready && !busy,
+        dismiss = if (busy) null else "Cancel",
+        looking = busy,
+        onConfirm = { onTake(pkg.trim(), name.trim(), notes.trim()) },
         onDismiss = onDismiss,
         content = {
-            TestingGroupLink()
-            Spacer(Modifier.height(12.dp))
             DialogField(
-                value = name,
-                onValueChange = { name = it.take(60) },
-                label = "App",
-                placeholder = "Nikosh Budget",
+                value = pkg,
+                onValueChange = {
+                    pkg = it.take(2048)
+                    onEdit()
+                },
+                label = "Play link or package name",
+                placeholder = "com.eazyverse.nikosh",
+                error = error,
                 supporting =
-                    "Two members will install it before the seat counts toward the " +
-                        "${CrewRules.SEATS}.",
+                    "We check it on Play the way the crew will see it. Your closed test needs " +
+                        "the testers group added.",
             )
             Spacer(Modifier.height(14.dp))
             DialogField(
-                value = pkg,
-                onValueChange = { pkg = it.take(200) },
-                label = "Package name",
-                placeholder = "com.eazyverse.nikosh",
-                error = if (pkg.isNotBlank() && !named) "That does not look like one." else null,
-                supporting = "What everybody installs. Copy it from Play Console.",
+                value = name,
+                onValueChange = { name = it.take(60) },
+                label = "Name (optional)",
+                placeholder = "Taken from Play",
             )
             Spacer(Modifier.height(14.dp))
             DialogField(
@@ -325,6 +292,59 @@ fun CrewSeatDialog(
                 singleLine = false,
                 minHeight = 72.dp,
                 maxLength = 280,
+            )
+            if (busy) {
+                Spacer(Modifier.height(10.dp))
+                DialogNote("Looking it up on Play. This can take half a minute.")
+            }
+        },
+    )
+}
+
+/**
+ * Reporting an app: what went wrong, in words its owner can act on.
+ *
+ * A reason is required, because a report is a message to the owner about what to fix and the
+ * owner is told straight away. Who sent it is not.
+ */
+@Composable
+fun CrewReportDialog(
+    seat: CrewSeat,
+    onReport: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var reason by remember { mutableStateOf("") }
+    val enough = reason.trim().length >= CrewRules.REPORT_MIN_CHARS
+    Ask(
+        title = "Report ${seat.appName}?",
+        body =
+            "${seat.owner} is told what you write, without your name. Before the run starts, " +
+                "${CrewRules.REPORTS_TO_RETURN} reports send an app back to be fixed.",
+        confirm = "Report",
+        confirmEnabled = enough,
+        onConfirm = { onReport(reason.trim()) },
+        onDismiss = onDismiss,
+        content = {
+            DialogField(
+                value = reason,
+                onValueChange = { reason = it.take(280) },
+                label = "What went wrong",
+                placeholder = "Play says the item was not found",
+                singleLine = false,
+                minHeight = 72.dp,
+                maxLength = 280,
+                error =
+                    if (reason.isNotBlank() && !enough) {
+                        "A little more, so they know what to fix."
+                    } else {
+                        null
+                    },
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "It also stops counting against you if you cannot open it.",
+                style = DialogBody,
+                color = Tt.colors.text4,
             )
         },
     )

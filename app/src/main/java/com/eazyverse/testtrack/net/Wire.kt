@@ -273,7 +273,9 @@ data class ApiErrorOut(
 
 @Serializable
 data class SeatIn(
-    @SerialName("app_name") val appName: String,
+    /** Optional. Empty takes the name Play shows for the app. */
+    @SerialName("app_name") val appName: String = "",
+    /** A package name or a Play link carrying one. The server reads either. */
     @SerialName("package_name") val packageName: String,
     val notes: String = "",
     @SerialName("device_fp") val deviceFp: String,
@@ -302,9 +304,37 @@ data class VisitIn(
 )
 
 @Serializable
-data class VerdictIn(
-    val ok: Boolean,
+data class ReportIn(
+    /** What went wrong, for the app's owner. Required. */
+    val reason: String,
+)
+
+/** Whether the server's Play-check browser is signed in to Google, and if not, why. */
+@Serializable
+data class PlaySession(
+    @SerialName("signed_in") val signedIn: Boolean = false,
     val reason: String = "",
+)
+
+@Serializable
+data class PlayPoint(
+    val x: Int,
+    val y: Int,
+)
+
+@Serializable
+data class PlayText(
+    val text: String,
+)
+
+@Serializable
+data class PlayKey(
+    val name: String,
+)
+
+@Serializable
+data class PushTokenIn(
+    val token: String,
 )
 
 @Serializable
@@ -315,25 +345,30 @@ data class ApiSeat(
     @SerialName("package_name") val packageName: String,
     val notes: String = "",
     @SerialName("owner_name") val ownerName: String,
+    /** checking, confirmed, rejected, withdrawn or removed. */
     val state: String,
-    val greens: Int,
-    val reds: Int,
     val mine: Boolean,
-    /** This account's own answer, or null while it is still theirs to give. */
-    @SerialName("my_verdict") val myVerdict: Boolean? = null,
-    /** Why it was turned down. Only ever sent to the seat's owner. */
+    /** Reports filed against it so far. */
+    val reports: Int = 0,
+    /** This account reported it, which excuses this account from it. */
+    val reported: Boolean = false,
+    /** What the reports said. Only ever sent to the seat's owner, without who said it. */
     val reasons: List<String> = emptyList(),
-    /**
-     * Opened by this account on its current day.
-     *
-     * On somebody else's seat it means "I have done this one tonight". On your own it means your
-     * whole night is finished, which is the same question asked of everything you owe.
-     */
+    /** Why it left the crew. Only ever sent to the seat's owner. */
+    @SerialName("out_reason") val outReason: String = "",
+    /** Opened by this account on its own current day. */
     @SerialName("opened_today") val openedToday: Boolean = false,
-    /** Days already let go by unfinished. Only ever filled in on your own seat. */
+    /** The owner's own day of the fortnight, in their calendar. Zero before their midnight. */
+    val day: Int = 0,
+    /** What the owner has opened today, out of what they owe today. */
+    @SerialName("done_today") val doneToday: Int = 0,
+    @SerialName("owed_today") val owedToday: Int = 0,
+    /** The owner has opened everything they owe today. */
+    @SerialName("night_done") val nightDone: Boolean = false,
+    /** Finished days the owner left short. */
     val missed: Int = 0,
-    /** Which day of the fortnight this account is on. */
-    @SerialName("days_done") val daysDone: Int = 0,
+    /** The owner's yesterday was one of them: one more and their app is out. */
+    @SerialName("missed_yesterday") val missedYesterday: Boolean = false,
     @SerialName("created_at") val createdAt: String,
 )
 

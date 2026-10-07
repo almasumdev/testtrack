@@ -79,24 +79,36 @@ class CrewJourneyTest {
     // ------------------------------------------------------------------ the journey
 
     @Test
-    fun t1_a_seat_goes_into_a_crew_and_waits_to_be_verified() =
+    fun t1_a_seat_goes_into_a_crew_once_play_shows_it() =
         runBlocking {
             val before = Api.crews()
             assertNull("A seeded account should start free to take a seat", before.blocked)
 
+            // The server looks the app up on Play as the testers group sees it. A package nobody
+            // published is refused with how to fix it; the rest of this journey needs a real
+            // closed test, named by the e2e script, to go any further.
+            val pkg = args.getString("crewPackage").orEmpty()
+            if (pkg.isEmpty()) {
+                try {
+                    Api.takeSeat(SeatIn(packageName = uniquePackage(), deviceFp = fingerprint(), timezone = "Asia/Dhaka"))
+                    fail("A package Play does not show should be refused.")
+                } catch (e: ApiError) {
+                    assertEquals("listing_not_visible", e.code)
+                }
+                assumeTrue("No crewPackage argument: nothing on Play to take a seat with.", false)
+            }
+
             val seat =
                 Api.takeSeat(
                     SeatIn(
-                        appName = "Nikosh Budget",
-                        packageName = uniquePackage(),
+                        packageName = pkg,
                         notes = "Test account: demo@example.com / demo",
                         deviceFp = fingerprint(),
                         timezone = "Asia/Dhaka",
                     ),
                 )
 
-            assertEquals("checking", seat.state)
-            assertEquals(0, seat.greens)
+            assertTrue(seat.state == "confirmed" || seat.state == "checking")
             assertTrue(seat.mine)
 
             // And the crew it landed in now says so.
@@ -111,12 +123,11 @@ class CrewJourneyTest {
             // Taken but not counted: a seat nobody has installed is somebody's intention.
             assertTrue("The new seat is in the taken count", crew.taken >= 1)
             assertTrue("A crew cannot hold more than its seats", crew.taken <= crew.seats)
-            assertTrue("An unconfirmed seat is not a filled one", crew.filled < crew.taken)
             assertTrue(crew.members.any { it.id == seat.id && it.mine })
 
             // The screen's own reading of it.
             val drawn = crew.toCrew()
-            assertEquals(CrewPhase.OPEN, drawn.phase)
+            assertEquals(CrewPhase.LOBBY, drawn.phase)
             assertEquals(0, drawn.day)
             assertTrue("A crew that has not started owes nothing tonight", drawn.apps.isEmpty())
 
@@ -147,12 +158,12 @@ class CrewJourneyTest {
         }
 
     @Test
-    fun t3_nobody_verifies_their_own_app() =
+    fun t3_nobody_reports_their_own_app() =
         runBlocking {
             val mine = myOwnSeat()
             try {
-                Api.verdict(mine.id, ok = true)
-                fail("Verifying your own seat should be refused.")
+                Api.report(mine.id, "It does not install for me.")
+                fail("Reporting your own app should be refused.")
             } catch (e: ApiError) {
                 assertEquals(403, e.status)
             }
@@ -197,13 +208,12 @@ class CrewJourneyTest {
             val again =
                 Api.takeSeat(
                     SeatIn(
-                        appName = "Nikosh Budget",
-                        packageName = uniquePackage(),
+                        packageName = mine.packageName,
                         deviceFp = fingerprint(),
                         timezone = "Asia/Dhaka",
                     ),
                 )
-            assertEquals("checking", again.state)
+            assertTrue(again.state == "confirmed" || again.state == "checking")
             assertFalse(again.id == mine.id)
         }
 
@@ -219,6 +229,6 @@ class CrewJourneyTest {
             }
             assertEquals("filling", open.state)
             assertTrue("An open crew has room in it", open.taken < open.seats)
-            assertEquals(CrewPhase.OPEN, crewPhase(open))
+            assertEquals(CrewPhase.OPEN, crewPhase(open, member = false))
         }
 }

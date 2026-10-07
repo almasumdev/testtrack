@@ -25,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +45,7 @@ import com.eazyverse.testtrack.data.AppUpdateService
 import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.CaptureService
 import com.eazyverse.testtrack.data.FeedbackWatch
+import com.eazyverse.testtrack.data.PushRepo
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.data.UpdateTier
 import com.eazyverse.testtrack.data.leftRound
@@ -110,6 +112,9 @@ class MainActivity : ComponentActivity() {
     /** Set alongside [openGroup] when the tap was specifically an ask for feedback about one app. */
     private val openFeedbackFor = mutableStateOf<String?>(null)
 
+    /** Set when a crew notification was tapped, until the shell has switched to the Crew tab. */
+    private val openCrew = mutableStateOf(false)
+
     /**
      * Play hands back an IntentSender rather than an Intent, so the update flow needs its own
      * contract. Registered on the activity rather than in a composable because the blocked gate sits
@@ -138,6 +143,7 @@ class MainActivity : ComponentActivity() {
         AppUpdateService.applyCachedDecision()
         openGroup.value = intent?.getStringExtra(EXTRA_GROUP_ID)
         openFeedbackFor.value = intent?.getStringExtra(EXTRA_FEEDBACK_APP_ID)
+        openCrew.value = intent?.getBooleanExtra(EXTRA_OPEN_CREW, false) == true
         setContent {
             TestTrackTheme {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -146,7 +152,7 @@ class MainActivity : ComponentActivity() {
                     // tab shell takes only the top one, because its ground and its floating dock run
                     // to the bottom edge under the system bar.
                     Box(Modifier.fillMaxSize().exchangeBackground()) {
-                        if (Config.isConfigured) AppNav(openGroup, openFeedbackFor) else Inset { NotConfigured() }
+                        if (Config.isConfigured) AppNav(openGroup, openFeedbackFor, openCrew) else Inset { NotConfigured() }
 
                         // The testers group, checked in front of the person as soon as they sign
                         // in, and quietly on every launch after. See [MembershipViewModel].
@@ -155,6 +161,8 @@ class MainActivity : ComponentActivity() {
                         LaunchedEffect(Session.signedIn) {
                             // Feedback news while the app is closed. See [FeedbackWatch].
                             if (Session.signedIn) FeedbackWatch.schedule(this@MainActivity)
+                            // Where our server can reach this phone. See [PushRepo.toServer].
+                            if (Session.signedIn) PushRepo.toServer()
                             if (Session.signedIn && !wasSignedIn) membership.afterSignIn() else membership.quietly()
                             wasSignedIn = Session.signedIn
                         }
@@ -242,9 +250,12 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         intent.getStringExtra(EXTRA_GROUP_ID)?.let { openGroup.value = it }
         intent.getStringExtra(EXTRA_FEEDBACK_APP_ID)?.let { openFeedbackFor.value = it }
+        if (intent.getBooleanExtra(EXTRA_OPEN_CREW, false)) openCrew.value = true
     }
 
     companion object {
+        /** A crew notification was tapped: open the Crew tab. */
+        const val EXTRA_OPEN_CREW = "openCrew"
         const val EXTRA_GROUP_ID = "groupId"
         const val EXTRA_FEEDBACK_APP_ID = "feedbackAppId"
     }
@@ -277,8 +288,10 @@ private fun NotConfigured() {
 fun AppNav(
     openGroup: MutableState<String?> = remember { mutableStateOf(null) },
     openFeedbackFor: MutableState<String?> = remember { mutableStateOf(null) },
+    openCrew: MutableState<Boolean> = remember { mutableStateOf(false) },
 ) {
     val nav = rememberNavController()
+    val scope = rememberCoroutineScope()
 
     /**
      * Where the app opens, decided once.
@@ -331,16 +344,21 @@ fun AppNav(
                 onAskForFeedback = { nav.push(Routes.ASK) },
                 onReview = { nav.push(Routes.review(it)) },
                 onCheck = { nav.push(Routes.check(it)) },
+                openCrew = openCrew,
                 // The same teardown the other two do, and for the same reason: `replace` pops
                 // everything above the graph root, so the shell does not survive underneath a
                 // signed-out profile for Back to land on.
                 onSignOut = {
-                    AuthRepo.signOut()
-                    Session.signOut()
-                    // Back to the app rather than out of it. There is something worth looking at
-                    // signed out now, so sending somebody to a sign-in screen for choosing to
-                    // sign out would be taking the app away as a punishment.
-                    nav.replace(Routes.HOME)
+                    scope.launch {
+                        // Before the session goes: the request needs it.
+                        PushRepo.forgetOnServer()
+                        AuthRepo.signOut()
+                        Session.signOut()
+                        // Back to the app rather than out of it. There is something worth looking at
+                        // signed out now, so sending somebody to a sign-in screen for choosing to
+                        // sign out would be taking the app away as a punishment.
+                        nav.replace(Routes.HOME)
+                    }
                 },
                 // Pushed, not replaced: whoever asked was standing on a tab and wants to end up
                 // back on it with the thing they wanted finally on it.

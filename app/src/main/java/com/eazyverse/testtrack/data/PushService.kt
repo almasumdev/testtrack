@@ -27,7 +27,9 @@ import kotlinx.coroutines.launch
  * ```
  * title    headline. Required; a message without one is dropped rather than posted blank.
  * body     supporting line.
- * groupId  optional. Tapping opens that group instead of home.
+ * kind     what it is about, from our server: "crew" opens the Crew tab.
+ * ref      the id of the thing, so two notes about one crew replace each other.
+ * groupId  optional, from the old service. Tapping opens that group instead of home.
  * ```
  */
 class PushService : FirebaseMessagingService() {
@@ -36,12 +38,12 @@ class PushService : FirebaseMessagingService() {
     /**
      * A token can be reissued at any time, unprompted.
      *
-     * Written straight back to Firestore, because until it is, this device is unreachable and
-     * nothing else in the app has a reason to notice.
+     * Sent straight to our server, because until it is, this device is unreachable and nothing
+     * else in the app has a reason to notice.
      */
     override fun onNewToken(token: String) {
-        val uid = AuthRepo.uid ?: return
-        scope.launch { PushRepo.save(applicationContext, uid, token) }
+        AuthRepo.uid ?: return
+        scope.launch { PushRepo.toServer(token) }
     }
 
     // See ReminderWorker.post: the notify at the end is inside runCatching, which lint cannot see
@@ -63,13 +65,17 @@ class PushService : FirebaseMessagingService() {
             Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 data["groupId"]?.let { putExtra(MainActivity.EXTRA_GROUP_ID, it) }
+                if (data["kind"] == "crew") putExtra(MainActivity.EXTRA_OPEN_CREW, true)
             }
+        // One slot per thing it is about, so a note about one crew replaces the last one about
+        // it rather than stacking, and does not overwrite one about another.
+        val slot = data["groupId"] ?: listOfNotNull(data["kind"], data["ref"]).joinToString(":")
         val pending =
             PendingIntent.getActivity(
                 this,
                 // One slot per group, so a nudge about Group A does not overwrite the intent of a
                 // nudge about Group C that is still on screen.
-                (data["groupId"] ?: "").hashCode(),
+                slot.hashCode(),
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
@@ -91,7 +97,7 @@ class PushService : FirebaseMessagingService() {
         runCatching {
             NotificationManagerCompat
                 .from(this)
-                .notify((data["groupId"] ?: "general").hashCode(), notification)
+                .notify(slot.ifEmpty { "general" }.hashCode(), notification)
         }
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -47,6 +47,7 @@ import com.eazyverse.testtrack.ui.theme.Tt
 fun CrewCard(
     modifier: Modifier = Modifier,
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+    onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
@@ -55,47 +56,10 @@ fun CrewCard(
             .clip(RoundedCornerShape(CardRadius))
             .background(Tt.colors.glass)
             .border(1.dp, Tt.colors.glassBorder, RoundedCornerShape(CardRadius))
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(padding),
         content = content,
     )
-}
-
-/**
- * How full the crew is, as one bar and one sentence.
- *
- * Confirmed seats only. Seats still being checked are drawn behind the fill in a fainter tone
- * rather than counted into it, because a crew that started on unchecked seats would start with
- * apps nobody can install, and the whole point of the bar is that it says when the run begins.
- *
- * Fifteen ticks rather than a smooth bar. A crew is a countable number of people and the number is
- * small enough to see, so counting the gaps answers "how many more" without reading the sentence.
- */
-@Composable
-fun SeatMeter(
-    confirmed: Int,
-    checking: Int,
-    modifier: Modifier = Modifier,
-) {
-    val lit by animateFloatAsState(confirmed.toFloat(), tween(450), label = "seats")
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        repeat(CrewRules.SEATS) { index ->
-            val filled = index < lit
-            val held = !filled && index < confirmed + checking
-            Box(
-                Modifier
-                    .weight(1f)
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(
-                        when {
-                            filled -> MaterialTheme.colorScheme.primary
-                            held -> MaterialTheme.colorScheme.primaryContainer
-                            else -> MaterialTheme.colorScheme.surfaceVariant
-                        },
-                    ),
-            )
-        }
-    }
 }
 
 /** The state of one seat, said in a word rather than a colour nobody can name. */
@@ -104,50 +68,76 @@ fun SeatPill(state: SeatState) {
     when (state) {
         SeatState.CONFIRMED -> Pill("In", Status.posted, Status.postedSoft)
         SeatState.CHECKING -> Pill("Checking", MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft)
-        SeatState.REJECTED -> Pill("Out", Status.missed, Status.missedSoft)
+        SeatState.REJECTED -> Pill("Sent back", Status.short, Status.shortSoft)
+        SeatState.REMOVED -> Pill("Out", Status.missed, Status.missedSoft)
     }
 }
 
 /**
- * One app that has taken a seat.
+ * One app that has taken a seat, and what you can do about it before the run.
  *
  * The owner's initial leads, not the app's icon: in a crew the person is the thing you are about
- * to spend a fortnight with, and the app is what they brought. Circle is the other way round,
- * because there the post is the app and the person is who to thank.
+ * to spend a fortnight with, and the app is what they brought. Their notes (a test login, a code)
+ * are under the name, because they are what gets you past the front door once it is installed.
  */
 @Composable
 fun CrewSeatRow(
     seat: CrewSeat,
     /** Only where the list mixes crews. Inside one crew's page it would be on every row. */
     showCrew: Boolean = false,
-    trailing: @Composable () -> Unit = { SeatPill(seat.state) },
+    onInstall: (() -> Unit)? = null,
+    onReport: (() -> Unit)? = null,
 ) {
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Initial(seat.owner.take(1).uppercase(), size = 34.dp)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 12.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Initial(seat.owner.take(1).uppercase(), size = 34.dp)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    seat.appName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    listOfNotNull(
+                        if (seat.mine) "Yours" else seat.owner,
+                        seat.crew.takeIf { showCrew && it.isNotBlank() },
+                    ).joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.width(10.dp))
+            if (seat.reported) Pill("Reported", Status.short, Status.shortSoft) else SeatPill(seat.state)
+        }
+        if (seat.notes.isNotBlank()) {
+            Spacer(Modifier.height(8.dp))
             Text(
-                seat.appName,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                listOfNotNull(
-                    if (seat.mine) "Yours" else seat.owner,
-                    seat.crew.takeIf { showCrew && it.isNotBlank() },
-                ).joinToString(" · "),
+                seat.notes,
+                Modifier.padding(start = 46.dp),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
-        Spacer(Modifier.width(10.dp))
-        trailing()
+        if (onInstall != null || (onReport != null && !seat.reported)) {
+            Spacer(Modifier.height(10.dp))
+            Row(Modifier.padding(start = 46.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                onInstall?.let {
+                    ActionChip(
+                        "Get it on Play",
+                        MaterialTheme.colorScheme.onPrimaryContainer,
+                        MaterialTheme.colorScheme.primaryContainer,
+                        it,
+                    )
+                }
+                if (onReport != null && !seat.reported) {
+                    ActionChip("Report", MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft, onReport)
+                }
+            }
+        }
     }
 }
 
@@ -176,17 +166,15 @@ fun CrewMemberRow(member: CrewMember) {
             )
             Spacer(Modifier.height(1.dp))
             Text(
-                run {
-                    // Written out rather than an s glued on a count: day one of a fortnight is
-                    // the day this line is read most, and "1 days" on it is the first thing
-                    // anybody notices.
-                    val days = if (member.days == 1) "1 day" else "${member.days} days"
-                    when {
-                        member.out -> "Left on day ${member.days}"
-                        member.missed > 0 -> "$days · ${member.missed} missed"
-                        else -> "$days, no gaps"
-                    }
-                },
+                // Their day, in their calendar: somebody three hours behind is "3 of 14 so far",
+                // not missing.
+                when {
+                    member.out -> "Out of the run"
+                    member.day < 1 -> "Starts at their midnight"
+                    member.day > CrewRules.RUN_DAYS -> "Finished all ${CrewRules.RUN_DAYS} days"
+                    member.nightDone -> "Day ${member.day} · done today"
+                    else -> "Day ${member.day} · ${member.doneToday} of ${member.owedToday} so far"
+                } + if (member.missed > 0 && !member.out) " · ${member.missed} missed" else "",
                 style = MaterialTheme.typography.bodySmall,
                 color = faded,
             )
@@ -194,14 +182,9 @@ fun CrewMemberRow(member: CrewMember) {
         Spacer(Modifier.width(10.dp))
         when {
             member.out -> Unit
-            member.today -> Icon(Lucide.Check, null, Modifier.size(18.dp), tint = Status.posted)
-            else ->
-                Icon(
-                    Lucide.TriangleAlert,
-                    null,
-                    Modifier.size(17.dp),
-                    tint = Status.short,
-                )
+            member.nightDone -> Icon(Lucide.Check, null, Modifier.size(18.dp), tint = Status.posted)
+            member.missedYesterday -> Icon(Lucide.TriangleAlert, null, Modifier.size(17.dp), tint = Status.short)
+            else -> Unit
         }
     }
 }
@@ -275,7 +258,7 @@ fun CrewAppRow(
                     onOpen,
                 )
                 ActionChip(
-                    "It will not install",
+                    "Report",
                     MaterialTheme.colorScheme.onSurfaceVariant,
                     Status.neutralSoft,
                     onReport,
@@ -284,7 +267,7 @@ fun CrewAppRow(
         } else if (app.reported) {
             Spacer(Modifier.height(10.dp))
             Text(
-                "Excused. It stopped counting against you from today.",
+                "Reported. It no longer counts against you.",
                 style = MaterialTheme.typography.bodySmall,
                 color = Status.short,
             )
@@ -409,81 +392,5 @@ fun CrewTallies(
             if (nightsLeft == 1) "night to go" else "nights to go",
         )
         Tally(Modifier.weight(1f), "$crews", if (crews == 1) "crew" else "crews")
-    }
-}
-
-/**
- * The crew as fifteen boxes, filled by the apps that have taken them.
- *
- * A bar said how full a crew was; this says who is in it. The difference matters more than it
- * sounds, because the thing somebody is deciding on this screen is whether to spend a fortnight
- * with these people, and eleven coloured marks with letters in them read as eleven different apps
- * where eleven bar segments read as a quantity.
- *
- * Eight to a row rather than fifteen, which at a phone's width would leave each tile under twenty
- * points and the letter in it unreadable. Two rows of eight and seven is the only split that keeps
- * them thumbnail sized.
- *
- * A seat still being checked is drawn faintly with an outline rather than solid. It is somebody's
- * intention, not yet a member, and the crew does not start on intentions.
- */
-@Composable
-fun SeatTiles(
-    seats: List<CrewSeat>,
-    modifier: Modifier = Modifier,
-) {
-    val slots = CrewRules.SEATS
-    val perRow = 8
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-        (0 until slots).chunked(perRow).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                row.forEach { index ->
-                    SeatTile(Modifier.weight(1f), seats.getOrNull(index))
-                }
-                // Holds the short second row to the same tile size as the first rather than
-                // stretching seven boxes across the whole width.
-                repeat(perRow - row.size) { Spacer(Modifier.weight(1f)) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SeatTile(
-    modifier: Modifier,
-    seat: CrewSeat?,
-) {
-    val shape = RoundedCornerShape(9.dp)
-    if (seat == null || seat.state == SeatState.REJECTED) {
-        Box(
-            modifier
-                .aspectRatio(1f)
-                .clip(shape)
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)),
-        )
-        return
-    }
-    val (fill, ink) = Tt.colors.nameTile((seat.appName.hashCode().rem(360) + 360).rem(360).toFloat())
-    val checking = seat.state == SeatState.CHECKING
-    Box(
-        modifier
-            .aspectRatio(1f)
-            .clip(shape)
-            .background(fill.copy(alpha = if (checking) 0.45f else 1f))
-            .then(
-                if (checking) {
-                    Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
-                } else {
-                    Modifier
-                },
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            seat.appName.take(1).uppercase(),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = ink.copy(alpha = if (checking) 0.55f else 1f),
-        )
     }
 }

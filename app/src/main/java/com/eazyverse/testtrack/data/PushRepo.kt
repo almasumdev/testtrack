@@ -8,10 +8,12 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.eazyverse.testtrack.net.Api
 import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -143,6 +145,34 @@ object PushRepo {
                     ),
             )
         }
+    }
+
+    // ---- the API -------------------------------------------------------------------------
+
+    /**
+     * Tells our server where this phone is, for whoever is signed in on it.
+     *
+     * The server is what sends now: a crew filling, a report on your app, a missed day, the
+     * evening reminder. Safe on every launch; the server keys on the token and moves it to whoever
+     * registered it last. A failure only means no push until the next launch.
+     */
+    suspend fun toServer() {
+        val token = runCatching { await(FirebaseMessaging.getInstance().token) }.getOrNull() ?: return
+        runCatching { Api.keepPushToken(token) }
+    }
+
+    /** The same, for a token FCM hands over unasked. */
+    suspend fun toServer(token: String) {
+        runCatching { Api.keepPushToken(token) }
+    }
+
+    /**
+     * Stop our server sending to this phone. **Await this before the session is dropped**: the
+     * request needs the very credentials sign-out is about to throw away.
+     */
+    suspend fun forgetOnServer() {
+        val token = runCatching { await(FirebaseMessaging.getInstance().token) }.getOrNull() ?: return
+        runCatching { withTimeoutOrNull(4_000) { Api.dropPushToken(token) } }
     }
 
     // ---- topics --------------------------------------------------------------------------

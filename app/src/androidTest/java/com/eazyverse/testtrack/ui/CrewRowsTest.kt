@@ -1,11 +1,12 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import org.junit.Assert.assertEquals
@@ -15,12 +16,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * The crew rows, as a member meets them.
+ * The crew rows and dialogs, as a member meets them.
  *
  * [CrewWireTest] covers what the app works out from the server's answer. This covers what is then
  * drawn, which is a different question: a row that computes the right thing and offers the wrong
- * button is still a bug, and the last time these screens went untested the review stepper shipped
- * with every step ticked.
+ * button is still a bug.
  *
  * The rows take plain values rather than a view model, which is what makes this possible without
  * an account or a network.
@@ -43,25 +43,24 @@ class CrewRowsTest {
     )
 
     private fun seat(
-        greens: Int = 0,
-        reds: Int = 0,
         mine: Boolean = false,
-        judged: Boolean = false,
+        reported: Boolean = false,
+        notes: String = "",
     ) = CrewSeat(
         id = "s1",
         appName = "Nikosh Budget",
         owner = "Rafiul",
+        packageName = "com.example.nikosh",
+        notes = notes,
         crew = "Crew 07",
-        greens = greens,
-        reds = reds,
         mine = mine,
-        judged = judged,
+        reported = reported,
     )
 
     // ------------------------------------------------------------------ tonight's row
 
     @Test
-    fun an_app_owed_tonight_offers_both_answers() {
+    fun an_app_owed_tonight_offers_open_and_report() {
         var opened = 0
         var reported = 0
         compose.setContent {
@@ -73,147 +72,166 @@ class CrewRowsTest {
         compose.onNodeWithText("Nikosh Budget").assertIsDisplayed()
         compose.onNodeWithText("Open").assertIsDisplayed().performClick()
         assertEquals(1, opened)
-
-        compose.onNodeWithText("It will not install").assertIsDisplayed().performClick()
+        compose.onNodeWithText("Report").assertIsDisplayed().performClick()
         assertEquals(1, reported)
     }
 
     @Test
     fun an_app_already_opened_stops_asking() {
-        // Offering the button again is how somebody ends up opening the same app twice and
-        // thinking they have done two.
         compose.setContent {
             TestTrackTheme { CrewAppRow(app(done = true), onOpen = {}, onReport = {}) }
         }
         compose.onNodeWithText("Open").assertDoesNotExist()
-        compose.onNodeWithText("It will not install").assertDoesNotExist()
+        compose.onNodeWithText("Report").assertDoesNotExist()
     }
 
     @Test
-    fun an_app_you_reported_is_shown_as_settled_rather_than_owed() {
+    fun an_app_you_reported_is_shown_as_excused() {
         compose.setContent {
             TestTrackTheme { CrewAppRow(app(reported = true), onOpen = {}, onReport = {}) }
         }
         compose.onNodeWithText("Open").assertDoesNotExist()
+        compose.onNodeWithText("no longer counts against you", substring = true).assertIsDisplayed()
     }
 
-    // ------------------------------------------------------------------ seats
+    // ------------------------------------------------------------------ seats in the lobby
 
     @Test
-    fun a_seat_shows_the_app_and_who_put_it_in() {
-        compose.setContent {
-            TestTrackTheme { CrewSeatRow(seat()) }
-        }
-        compose.onNodeWithText("Nikosh Budget").assertIsDisplayed()
-        compose.onNodeWithText("Rafiul", substring = true).assertIsDisplayed()
-    }
-
-    @Test
-    fun a_seat_carries_whatever_control_the_list_around_it_needs() {
-        // The trailing slot is how one row serves the lobby, where it is answered on, and a
-        // crew's own page, where it only reports its state.
-        var answered = 0
+    fun a_seat_in_the_lobby_offers_play_and_a_report_and_shows_the_notes() {
+        var installed = 0
+        var reported = 0
         compose.setContent {
             TestTrackTheme {
                 CrewSeatRow(
-                    seat(),
-                    trailing = {
-                        ActionChip(
-                            "Try it",
-                            MaterialTheme.colorScheme.onPrimaryContainer,
-                            MaterialTheme.colorScheme.primaryContainer,
-                        ) { answered++ }
-                    },
+                    seat(notes = "Test account: demo / demo"),
+                    onInstall = { installed++ },
+                    onReport = { reported++ },
                 )
             }
         }
-        compose.onNodeWithText("Try it").performClick()
-        assertEquals(1, answered)
-    }
-
-    // ------------------------------------------------------------------ the verdict dialog
-
-    @Test
-    fun the_reject_button_is_held_back_until_you_have_one_working() {
-        // Play answers "not found" to any tester whose own setup is unfinished, so a brand new
-        // member's first evening would otherwise be fourteen reds that mean nothing.
-        var answer: Boolean? = null
-        compose.setContent {
-            TestTrackTheme {
-                CrewVerdictDialog(
-                    seat = seat(),
-                    mayReject = false,
-                    onVerdict = { answer = it },
-                    onDismiss = {},
-                )
-            }
-        }
-
-        compose.onNodeWithText("Play could not find it").assertIsNotEnabled()
-        assertNull(answer)
-
-        compose.onNodeWithText("It installed").performClick()
-        assertEquals(true, answer)
+        compose.onNodeWithText("Rafiul", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Test account: demo / demo").assertIsDisplayed()
+        compose.onNodeWithText("Get it on Play").performClick()
+        compose.onNodeWithText("Report").performClick()
+        assertEquals(1, installed)
+        assertEquals(1, reported)
     }
 
     @Test
-    fun once_you_have_one_working_a_report_is_allowed() {
-        var answer: Boolean? = null
+    fun a_seat_you_reported_says_so_and_does_not_ask_again() {
         compose.setContent {
-            TestTrackTheme {
-                CrewVerdictDialog(
-                    seat = seat(),
-                    mayReject = true,
-                    onVerdict = { answer = it },
-                    onDismiss = {},
-                )
-            }
+            TestTrackTheme { CrewSeatRow(seat(reported = true), onInstall = {}, onReport = {}) }
         }
-        compose.onNodeWithText("Play could not find it").performClick()
-        assertEquals(false, answer)
+        compose.onNodeWithText("Reported").assertIsDisplayed()
+        compose.onNodeWithText("Report").assertDoesNotExist()
+    }
+
+    // ------------------------------------------------------------------ the report dialog
+
+    @Test
+    fun a_report_needs_a_reason_the_owner_can_act_on() {
+        var sent: String? = null
+        compose.setContent {
+            TestTrackTheme { CrewReportDialog(seat(), onReport = { sent = it }, onDismiss = {}) }
+        }
+        compose.onNodeWithText("Report").assertIsNotEnabled()
+        compose.onNodeWithText("Play says the item was not found").performTextInput("broken")
+        compose.onNodeWithText("Report").assertIsNotEnabled()
+        assertNull(sent)
+    }
+
+    @Test
+    fun a_proper_reason_can_be_sent() {
+        var sent: String? = null
+        compose.setContent {
+            TestTrackTheme { CrewReportDialog(seat(), onReport = { sent = it }, onDismiss = {}) }
+        }
+        compose.onNodeWithText("Play says the item was not found").performTextInput("Install fails on Android 14")
+        compose.onNodeWithText("Report").assertIsEnabled().performClick()
+        assertEquals("Install fails on Android 14", sent)
     }
 
     // ------------------------------------------------------------------ taking a seat
 
     @Test
-    fun a_seat_cannot_be_taken_without_a_package_name() {
-        // Fourteen people are about to try to install this exact string. A seat without one is a
-        // seat nobody can verify, so the button stays down rather than failing at the server.
+    fun a_seat_cannot_be_taken_without_a_package_or_link() {
         var taken: Triple<String, String, String>? = null
         compose.setContent {
             TestTrackTheme {
                 CrewSeatDialog(
                     crew = "Crew 07",
                     nightly = CrewRules.NIGHTLY,
-                    onTake = { name, pkg, notes -> taken = Triple(name, pkg, notes) },
+                    busy = false,
+                    error = null,
+                    onEdit = {},
+                    onTake = { pkg, name, notes -> taken = Triple(pkg, name, notes) },
                     onDismiss = {},
                 )
             }
         }
-
         compose.onNodeWithText("Take it").assertIsNotEnabled()
         assertNull(taken)
-        compose.onNodeWithText("Package name").assertIsDisplayed()
+        compose.onNodeWithText("Play link or package name").assertIsDisplayed()
     }
 
     @Test
-    fun the_dialog_says_what_the_fortnight_will_cost_before_anybody_agrees_to_it() {
-        // The product puts no limit on how many crews somebody joins, so saying the figure out
-        // loud beforehand is the whole of its defence against people taking on too much.
+    fun while_play_is_checked_the_dialog_waits_and_says_why() {
         compose.setContent {
             TestTrackTheme {
                 CrewSeatDialog(
                     crew = "Crew 07",
-                    nightly = 28,
+                    nightly = CrewRules.NIGHTLY,
+                    busy = true,
+                    error = null,
+                    onEdit = {},
                     onTake = { _, _, _ -> },
                     onDismiss = {},
                 )
             }
         }
-        compose.onNodeWithText("28 apps a night", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Checking…").assertIsNotEnabled()
+        compose.onNodeWithText("Cancel").assertDoesNotExist()
+        compose.onNodeWithText("Looking it up on Play", substring = true).assertIsDisplayed()
     }
 
-    // ------------------------------------------------------------------ the counts
+    @Test
+    fun a_refusal_is_said_next_to_the_field() {
+        compose.setContent {
+            TestTrackTheme {
+                CrewSeatDialog(
+                    crew = null,
+                    nightly = CrewRules.NIGHTLY,
+                    busy = false,
+                    error = "Play will not show us that app.",
+                    onEdit = {},
+                    onTake = { _, _, _ -> },
+                    onDismiss = {},
+                )
+            }
+        }
+        compose.onNodeWithText("Start a new crew").assertIsDisplayed()
+        compose.onNodeWithText("Play will not show us that app.").assertIsDisplayed()
+    }
+
+    @Test
+    fun the_dialog_says_what_the_fortnight_will_cost_before_anybody_agrees_to_it() {
+        compose.setContent {
+            TestTrackTheme {
+                CrewSeatDialog(
+                    crew = "Crew 07",
+                    nightly = 28,
+                    busy = false,
+                    error = null,
+                    onEdit = {},
+                    onTake = { _, _, _ -> },
+                    onDismiss = {},
+                )
+            }
+        }
+        compose.onNodeWithText("28 apps a day", substring = true).assertIsDisplayed()
+    }
+
+    // ------------------------------------------------------------------ members
 
     @Test
     fun the_tallies_say_what_tonight_costs_and_how_much_is_left() {
@@ -229,9 +247,7 @@ class CrewRowsTest {
     fun your_own_row_says_you_rather_than_your_name() {
         compose.setContent {
             TestTrackTheme {
-                CrewMemberRow(
-                    CrewMember(name = "Rafiul", appName = "Nikosh Budget", days = 6, mine = true),
-                )
+                CrewMemberRow(CrewMember(id = "m", name = "Rafiul", appName = "Nikosh", day = 6, mine = true))
             }
         }
         compose.onNodeWithText("You").assertIsDisplayed()
@@ -239,92 +255,110 @@ class CrewRowsTest {
     }
 
     @Test
-    fun a_members_row_says_how_their_fortnight_is_going() {
+    fun a_members_row_is_their_own_day_and_progress() {
         compose.setContent {
             TestTrackTheme {
                 CrewMemberRow(
-                    CrewMember(name = "Rafiul", appName = "Nikosh Budget", days = 6, missed = 1),
+                    CrewMember(id = "k", name = "Kenji", appName = "Chala", day = 6, doneToday = 3, owedToday = 14, missed = 1),
                 )
             }
         }
-        compose.onNodeWithText("Rafiul").assertIsDisplayed()
-        compose.onNodeWithText("6 days · 1 missed").assertIsDisplayed()
+        compose.onNodeWithText("Day 6 · 3 of 14 so far · 1 missed").assertIsDisplayed()
     }
 
     @Test
-    fun day_one_is_written_out_rather_than_having_an_s_glued_on() {
-        // The day this line is read most, and "1 days" on it is the first thing anybody notices.
+    fun a_member_who_finished_today_says_so() {
         compose.setContent {
             TestTrackTheme {
-                CrewMemberRow(CrewMember(name = "Nadia", appName = "Chala", days = 1))
+                CrewMemberRow(CrewMember(id = "n", name = "Nadia", appName = "Chala", day = 2, nightDone = true))
             }
         }
-        compose.onNodeWithText("1 day, no gaps").assertIsDisplayed()
+        compose.onNodeWithText("Day 2 · done today").assertIsDisplayed()
     }
 
     @Test
-    fun somebody_who_left_is_kept_on_the_list_and_said_so() {
+    fun somebody_taken_out_is_kept_on_the_list_and_said_so() {
         compose.setContent {
             TestTrackTheme {
-                CrewMemberRow(CrewMember(name = "Imran", appName = "Fare Calc", days = 4, out = true))
+                CrewMemberRow(CrewMember(id = "i", name = "Imran", appName = "Fare Calc", day = 4, out = true))
             }
         }
-        compose.onNodeWithText("Left on day 4").assertIsDisplayed()
+        compose.onNodeWithText("Out of the run").assertIsDisplayed()
     }
 }
 
 /**
- * Giving a seat back.
+ * Your own app in the lobby: leaving while it fills, and putting it in again once sent back.
  *
- * The API has supported it since crews shipped and nothing in the app called it, so somebody who
- * put the wrong app in was stuck with it until the crew filled. The rule that matters is when the
- * offer disappears: once a crew is running, fourteen people are relying on that seat.
+ * The rule that matters is when leaving disappears: once a crew is full, fourteen people are
+ * relying on that seat and the server refuses it.
  */
 @RunWith(AndroidJUnit4::class)
 class CrewLeaveTest {
     @get:Rule
     val compose = createComposeRule()
 
-    private fun crewWith(phase: CrewPhase): Crew {
+    private var left = 0
+    private var again = 0
+
+    private val actions =
+        CrewActions(
+            onOpen = {},
+            onOpenAll = {},
+            onInstall = {},
+            onReport = {},
+            onLeave = { left++ },
+            onTakeSeat = { again++ },
+        )
+
+    private fun crewWith(
+        filling: Boolean,
+        state: SeatState = SeatState.CONFIRMED,
+        outReason: String = "",
+    ): Crew {
         val mine =
             CrewSeat(
                 id = "mine",
                 appName = "Nikosh Budget",
                 owner = "You",
                 crew = "Crew 07",
-                greens = 1,
+                state = state,
                 mine = true,
+                outReason = outReason,
             )
-        return Crew(id = "c1", name = "Crew 07", phase = phase, seats = listOf(mine))
+        return Crew(id = "c1", name = "Crew 07", phase = CrewPhase.LOBBY, filling = filling, seats = listOf(mine))
     }
 
     @Test
-    fun a_seat_can_be_taken_back_out_before_the_crew_starts() {
-        var left = 0
+    fun a_seat_can_be_taken_back_out_while_the_crew_fills() {
         compose.setContent {
-            TestTrackTheme {
-                CrewLobbyPhase(crewWith(CrewPhase.LOBBY), onJudge = {}, onLeave = { left++ })
-            }
+            TestTrackTheme { CrewLobbyPhase(crewWith(filling = true), actions) }
         }
         compose.onNodeWithText("Take it back out").assertIsDisplayed().performClick()
         assertEquals(1, left)
     }
 
     @Test
-    fun once_the_run_has_started_it_is_not_offered() {
-        // The server refuses it then, and a button that is going to be refused is worse than no
-        // button: it reads as something the product allows and then does not.
+    fun once_the_crew_is_full_it_is_not_offered() {
         compose.setContent {
-            TestTrackTheme { CrewLobbyPhase(crewWith(CrewPhase.RUN), onJudge = {}) }
+            TestTrackTheme { CrewLobbyPhase(crewWith(filling = false), actions) }
         }
         compose.onNodeWithText("Take it back out").assertDoesNotExist()
     }
 
     @Test
-    fun a_finished_crew_is_a_record_and_nothing_can_be_withdrawn_from_it() {
+    fun an_app_sent_back_says_why_and_offers_to_go_in_again() {
         compose.setContent {
-            TestTrackTheme { CrewLobbyPhase(crewWith(CrewPhase.RECORD), onJudge = {}) }
+            TestTrackTheme {
+                CrewLobbyPhase(
+                    crewWith(filling = true, state = SeatState.REJECTED, outReason = "Two members could not install it."),
+                    actions,
+                )
+            }
         }
+        compose.onNodeWithText("Two members could not install it.").assertIsDisplayed()
+        compose.onNodeWithText("Put it in again").performClick()
+        assertEquals(1, again)
         compose.onNodeWithText("Take it back out").assertDoesNotExist()
     }
 }

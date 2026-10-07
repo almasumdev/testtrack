@@ -2,6 +2,8 @@ package com.eazyverse.testtrack.ui
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,7 +13,6 @@ import com.eazyverse.testtrack.data.Device
 import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
-import com.eazyverse.testtrack.net.ApiCrew
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.SeatIn
 import kotlinx.coroutines.launch
@@ -21,13 +22,13 @@ import java.util.TimeZone
  * The crew tab, against the API.
  *
  * Every rule here belongs to the server and none of it is decided twice. Which crew a seat goes
- * into, whether a verdict counts, whose day it is: the phone asks and redraws whatever comes
- * back. A client that works out for itself when a crew is full is a client somebody will edit.
+ * into, whether an app is on Play, what a report does, whose day it is: the phone asks and redraws
+ * whatever comes back. A client that works out for itself when a crew is full is a client
+ * somebody will edit.
  *
  * The shape that matters is [crews] being a list. A person is in several at once, so nothing here
- * is about "the crew": the tab's own screen is built out of [tonight] and [waiting], which are
- * every crew's work in one column, and a single crew is something you open rather than something
- * you are in.
+ * is about "the crew": the Run tab is built out of [tonight], which is every crew's work in one
+ * column, and a single crew is something you open rather than something you are in.
  */
 class CrewViewModel : ViewModel() {
     /** Every crew this account is in, at whatever point each has reached. */
@@ -35,14 +36,24 @@ class CrewViewModel : ViewModel() {
         private set
 
     /**
-     * The crew a new seat would go into.
-     *
-     * A list of one, kept as a list because the screens were built to show several and may again.
-     * Which crew it is stays the server's answer: it sends back whichever is nearest to starting,
-     * so the crew that most needs finishing is the one that fills.
+     * The crew a new seat would go into, or null when none is filling and the next seat starts
+     * one. Which crew it is stays the server's answer: it sends back whichever is nearest to
+     * starting, so the crew that most needs finishing is the one that fills.
      */
-    var opens by mutableStateOf<List<Crew>>(emptyList())
+    var open by mutableStateOf<Crew?>(null)
         private set
+
+    /** A seat is being taken: the server is looking the app up on Play, which takes a while. */
+    var seating by mutableStateOf(false)
+        private set
+
+    /** Why the last seat was not taken, said inside the dialog that asked. */
+    var seatError by mutableStateOf<String?>(null)
+        private set
+
+    fun clearSeatError() {
+        seatError = null
+    }
 
     /** Which tab is showing. */
     var tab by mutableStateOf(CrewPhase.OPEN)
@@ -139,8 +150,8 @@ class CrewViewModel : ViewModel() {
     }
 
     private fun apply(answer: com.eazyverse.testtrack.net.CrewList) {
-        crews = answer.mine.map(ApiCrew::toCrew)
-        opens = listOfNotNull(answer.open?.toCrew())
+        crews = answer.mine.map { it.toCrew() }
+        open = answer.open?.toCrew(member = false)
         blocked = answer.blocked
 
         // Opened on whichever has something owed rather than always the same one, and only the
@@ -162,17 +173,18 @@ class CrewViewModel : ViewModel() {
     fun badge(phase: CrewPhase) =
         when (phase) {
             CrewPhase.RUN -> tonight.size
-            CrewPhase.LOBBY -> waiting.size
+            CrewPhase.LOBBY -> sentBack.size
             CrewPhase.OPEN -> 0
             CrewPhase.RECORD -> 0
         }
 
-    /** Which crew a seat belongs to, since a merged list only carries the crew's name. */
-    fun crewIdOf(seat: CrewSeat) = (crews + opens).first { crew -> crew.seats.any { it.id == seat.id } }.id
-
-    /** The crew being looked at, which may be the open one this account has not joined. */
+    /** The crew being looked at. Only ever one of yours. */
     val current: Crew?
-        get() = opened?.let { id -> (crews + opens).firstOrNull { it.id == id } }
+        get() = opened?.let { id -> crews.firstOrNull { it.id == id } }
+
+    /** Whether the open crew is one you already have an app in. */
+    val inOpen: Boolean
+        get() = open?.let { o -> crews.any { it.id == o.id && !it.out } } == true
 
     /**
      * Everything owed tonight, across every running crew.
@@ -187,9 +199,9 @@ class CrewViewModel : ViewModel() {
     val doneTonight: Int
         get() = doneTonightIn(crews)
 
-    /** Seats in any crew still filling that this account has not answered on. */
-    val waiting: List<CrewSeat>
-        get() = waitingIn(crews)
+    /** Your apps sent back before a run, to fix and put in again. */
+    val sentBack: List<CrewSeat>
+        get() = sentBackIn(crews)
 
     /**
      * Whether this account holds a seat anywhere that has not started.
@@ -199,7 +211,7 @@ class CrewViewModel : ViewModel() {
     val holdsSeat: Boolean
         get() = blocked != null
 
-    /** The crew holding your one unstarted seat, by name, or null where you are free. */
+    /** The crew holding your one waiting app, by name, or null where you are free. */
     val holding: String?
         get() = holdingIn(crews)
 
@@ -208,66 +220,97 @@ class CrewViewModel : ViewModel() {
         get() = crews.count { it.phase == CrewPhase.RUN }
 
     /**
-     * Whether this account may reject anything in a given crew.
-     *
-     * Asked of what the server already sent rather than of the server again. A red only counts
-     * from somebody who has already got one app in that same crew working, because a Play "not
-     * found" far more often means the reader is not set up than that the app is broken. The
-     * server refuses it either way; this is so the button can say so before it is pressed.
-     */
-    fun mayJudge(crewId: String) = mayJudgeIn(crews + opens, crewId)
-
-    /** Say whether an app installed. */
-    fun judge(
-        crewId: String,
-        seat: CrewSeat,
-        installed: Boolean,
-    ) = call(
-        onDone = { answer ->
-            message =
-                when {
-                    answer.state == "confirmed" -> "${seat.appName} is in. Seat confirmed."
-                    answer.state == "rejected" ->
-                        "${seat.appName} is out. ${seat.owner} has been told why."
-                    installed -> "Green sent. One more and ${seat.appName} is in."
-                    else -> "Reported. Somebody else will try it before anything happens."
-                }
-        },
-    ) { Api.verdict(seat.id, installed) }
-
-    /**
      * Take a seat with an app of your own.
      *
-     * The crew is not named. The server puts a seat into whichever is nearest to starting, and a
-     * client that picks its own crew is a client picking which fourteen people test its app.
+     * The crew is not named. The server checks the app on Play for the testers group and puts it
+     * into whichever crew is nearest to starting; a client that picks its own crew is a client
+     * picking which fourteen people test its app. The dialog stays up while that happens, and a
+     * refusal is said inside it, where the fix is: usually the testers group missing from the
+     * track.
      */
     fun takeSeat(
         context: Context,
-        appName: String,
         packageName: String,
-        notes: String = "",
+        appName: String,
+        notes: String,
+        onDone: () -> Unit,
     ) {
         val fingerprint = Device.fingerprint(context)
         if (fingerprint == null) {
-            message = "This phone will not identify itself, so it cannot hold a seat."
+            seatError = "This phone will not identify itself, so it cannot hold a seat."
             return
         }
-        call(
-            context = context,
-            onDone = { message = "Seat taken. Two members have to install it before it counts." },
-        ) {
-            Api.takeSeat(
-                SeatIn(
-                    appName = appName,
-                    packageName = packageName,
-                    notes = notes,
-                    deviceFp = fingerprint,
-                    timezone = TimeZone.getDefault().id,
-                ),
-            )
-            opened = null
-            tab = CrewPhase.LOBBY
+        if (seating) return
+        seating = true
+        seatError = null
+        viewModelScope.launch {
+            try {
+                val seat =
+                    Api.takeSeat(
+                        SeatIn(
+                            appName = appName,
+                            packageName = packageName,
+                            notes = notes,
+                            deviceFp = fingerprint,
+                            timezone = TimeZone.getDefault().id,
+                        ),
+                    )
+                message =
+                    if (seat.state == "confirmed") {
+                        "${seat.appName} is in. Play shows it to the testers group."
+                    } else {
+                        "${seat.appName} is waiting. We could not reach Play just now and will " +
+                            "check it again shortly."
+                    }
+                opened = null
+                tab = CrewPhase.LOBBY
+                onDone()
+                load(context)
+            } catch (e: ApiError) {
+                seatError = e.message
+            } catch (_: Exception) {
+                seatError = "We could not reach TestTrack. Check your connection."
+            } finally {
+                seating = false
+            }
         }
+    }
+
+    /**
+     * Tell an app's owner it will not install for you, and why.
+     *
+     * The owner hears about it, without your name. Before the run, a second report from somebody
+     * else sends it back; during the run it only tells them, and excuses you from that app.
+     */
+    fun report(
+        context: Context,
+        seatId: String,
+        appName: String,
+        reason: String,
+    ) = call(
+        context = context,
+        onDone = { seat ->
+            message =
+                if (seat.state == "rejected") {
+                    "$appName went back to its owner to fix."
+                } else {
+                    "Reported. ${seat.ownerName} has been told, and it no longer counts against you."
+                }
+        },
+    ) { Api.report(seatId, reason) }
+
+    /**
+     * The app's closed test on Play: the page where a tester joins it and then installs.
+     *
+     * The opt-in page rather than the listing, because a closed test has to be joined before Play
+     * will offer the install, and the listing on its own says "not found" until then.
+     */
+    fun openOnPlay(
+        context: Context,
+        packageName: String,
+    ) {
+        val page = Uri.parse("https://play.google.com/apps/testing/$packageName")
+        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, page).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
     }
 
     /**
@@ -408,23 +451,14 @@ class CrewViewModel : ViewModel() {
         seat: CrewSeat,
     ) = call(
         context = context,
-        onDone = { message = "Taken back out. You are free to take another seat." },
+        onDone = { message = "Taken back out. You can put an app in again." },
     ) { Api.withdraw(seat.id) }
-
-    /** Excused rather than owed, for an app nobody in the crew can get into. */
-    fun report(
-        context: Context,
-        app: CrewApp,
-    ) = call(
-        context = context,
-        onDone = { message = "Reported. It stops counting against you from today." },
-    ) { Api.verdict(app.id, ok = false, reason = "Could not open it during the run.") }
 
     /**
      * One call, one reload, one place failure is handled.
      *
      * Reloaded rather than patched in memory: the server's answer changes more than the one row
-     * that was touched, since a verdict can fill a crew and filling one starts a fortnight.
+     * that was touched, since a report can send an app back and reopen a crew.
      */
     private fun <T> call(
         context: Context? = null,

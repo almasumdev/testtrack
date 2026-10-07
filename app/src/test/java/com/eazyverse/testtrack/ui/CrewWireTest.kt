@@ -26,12 +26,15 @@ class CrewWireTest {
         owner: String = "Rafiul",
         state: String = "confirmed",
         mine: Boolean = false,
-        greens: Int = 2,
-        reds: Int = 0,
-        verdict: Boolean? = null,
+        reported: Boolean = false,
         opened: Boolean = false,
+        day: Int = 0,
+        done: Int = 0,
+        owed: Int = 0,
+        nightDone: Boolean = false,
         missed: Int = 0,
-        days: Int = 0,
+        missedYesterday: Boolean = false,
+        outReason: String = "",
     ) = ApiSeat(
         id = id,
         crewId = "c1",
@@ -39,13 +42,16 @@ class CrewWireTest {
         packageName = "com.example.$id",
         ownerName = owner,
         state = state,
-        greens = greens,
-        reds = reds,
         mine = mine,
-        myVerdict = verdict,
+        reported = reported,
+        outReason = outReason,
         openedToday = opened,
+        day = day,
+        doneToday = done,
+        owedToday = owed,
+        nightDone = nightDone,
         missed = missed,
-        daysDone = days,
+        missedYesterday = missedYesterday,
         createdAt = "2026-09-20T00:00:00+00:00",
     )
 
@@ -60,7 +66,7 @@ class CrewWireTest {
         name = "Crew 07",
         state = state,
         filled = members.count { it.state == "confirmed" },
-        taken = members.size,
+        taken = members.count { it.state == "confirmed" || it.state == "checking" },
         seats = 15,
         runDays = 14,
         day = day,
@@ -70,267 +76,161 @@ class CrewWireTest {
         members = members,
     )
 
-    // ------------------------------------------------------------------ which screen
+    // ------------------------------------------------------------------------- phase
 
     @Test
-    fun a_crew_still_taking_seats_is_open() {
-        assertEquals(CrewPhase.OPEN, crewPhase(crew(state = "filling")))
+    fun a_crew_of_yours_still_filling_is_a_lobby() {
+        assertEquals(CrewPhase.LOBBY, crewPhase(crew(state = "filling")))
     }
 
     @Test
-    fun a_full_crew_before_your_own_midnight_is_a_lobby() {
-        // The gap between filling and starting is the setup window, not the run.
-        assertEquals(CrewPhase.LOBBY, crewPhase(crew(state = "full", day = 0)))
+    fun the_open_crew_seen_from_outside_is_open_whatever_its_state() {
+        assertEquals(CrewPhase.OPEN, crewPhase(crew(state = "filling"), member = false))
     }
 
     @Test
-    fun the_same_crew_once_your_day_has_begun_is_a_run() {
+    fun a_full_crew_before_your_midnight_is_still_a_lobby() {
+        assertEquals(CrewPhase.LOBBY, crewPhase(crew(state = "full", day = 0, startsIn = 3_600_000)))
+    }
+
+    @Test
+    fun a_full_crew_after_your_midnight_is_a_run() {
         assertEquals(CrewPhase.RUN, crewPhase(crew(state = "full", day = 1)))
     }
 
     @Test
     fun a_finished_crew_is_a_record() {
-        assertEquals(CrewPhase.RECORD, crewPhase(crew(state = "done", day = 14)))
+        assertEquals(CrewPhase.RECORD, crewPhase(crew(state = "done", day = 15)))
     }
 
     @Test
-    fun a_state_this_build_does_not_know_does_not_become_a_run() {
-        // A server ahead of the app. Anything but "full" with a day on it must not put somebody
-        // on the screen that asks them to start opening apps.
-        assertEquals(CrewPhase.LOBBY, crewPhase(crew(state = "something_new", day = 0)))
+    fun an_app_sent_back_stays_in_the_lobby_even_if_its_crew_started() {
+        val back = crew(state = "full", day = 2, members = listOf(seat("me", state = "rejected", mine = true)))
+        val mapped = back.toCrew()
+        assertEquals(CrewPhase.LOBBY, mapped.phase)
+        assertTrue(mapped.out)
+        assertEquals(listOf("me"), sentBackIn(listOf(mapped)).map { it.id })
     }
 
-    // ------------------------------------------------------------------ tonight's list
+    // ------------------------------------------------------------------------- seats
 
     @Test
-    fun tonight_is_everybody_elses_confirmed_apps() {
-        val mine = seat(id = "mine", mine = true)
-        val theirs = seat(id = "theirs")
-        val unchecked = seat(id = "unchecked", state = "checking", greens = 1)
-
-        val apps = crew(state = "full", day = 3, members = listOf(mine, theirs, unchecked)).toCrew().apps
-
-        // Not your own, and not one two people could not install.
-        assertEquals(listOf("theirs"), apps.map { it.id })
-    }
-
-    @Test
-    fun a_crew_that_has_not_started_owes_nothing_tonight() {
-        val apps = crew(state = "full", day = 0, members = listOf(seat(), seat(id = "s2"))).toCrew().apps
-        assertTrue("A lobby is not an evening's work", apps.isEmpty())
+    fun the_server_state_is_the_seat_state() {
+        assertEquals(SeatState.CONFIRMED, SeatState.of("confirmed"))
+        assertEquals(SeatState.CHECKING, SeatState.of("checking"))
+        assertEquals(SeatState.REJECTED, SeatState.of("rejected"))
+        assertEquals(SeatState.REMOVED, SeatState.of("removed"))
     }
 
     @Test
-    fun an_app_already_opened_tonight_is_marked_done() {
-        val done = seat(id = "done", opened = true)
-        val app = crew(state = "full", day = 2, members = listOf(done)).toCrew().apps.single()
-        assertTrue(app.done)
-        assertFalse(app.reported)
+    fun the_counts_come_from_the_server_not_from_the_list() {
+        // The open crew carries no members at all; its counts are all the screen has.
+        val open = crew(state = "filling").copy(filled = 9, taken = 11).toCrew(member = false)
+        assertEquals(9, open.filled)
+        assertEquals(11, open.taken)
+        assertEquals("4 seats left", open.standing)
     }
 
     @Test
-    fun an_app_you_reported_is_excused_rather_than_owed() {
-        val broken = seat(id = "broken", verdict = false)
-        val app = crew(state = "full", day = 2, members = listOf(broken)).toCrew().apps.single()
-        assertTrue(app.reported)
+    fun a_lobby_says_how_many_more_or_how_long_to_midnight() {
+        val filling = crew(state = "filling", members = listOf(seat("a"), seat("b", mine = true))).toCrew()
+        assertEquals("Filling · 2 of 15", filling.standing)
+        val waiting = crew(state = "full", startsIn = 2 * 3_600_000L + 5 * 60_000L).toCrew()
+        assertEquals("Starts in 2h 5m", waiting.standing)
     }
 
-    // ------------------------------------------------------------------ seats and members
+    // ------------------------------------------------------------------------- the run
 
     @Test
-    fun a_seat_you_have_answered_on_is_off_your_list() {
-        assertTrue(seat(verdict = true).toSeat().judged)
-        assertTrue("A red is an answer too", seat(verdict = false).toSeat().judged)
-        assertFalse(seat(verdict = null).toSeat().judged)
-    }
-
-    @Test
-    fun a_seats_state_follows_the_counts_the_server_sent() {
-        assertEquals(SeatState.CONFIRMED, seat(greens = 2, reds = 0).toSeat().state)
-        assertEquals(SeatState.REJECTED, seat(greens = 0, reds = 2).toSeat().state)
-        assertEquals(SeatState.CHECKING, seat(greens = 1, reds = 1).toSeat().state)
-    }
-
-    @Test
-    fun a_rejected_seat_shows_its_member_as_out() {
-        assertTrue(seat(state = "rejected").toMember().out)
-        assertFalse(seat(state = "confirmed").toMember().out)
-    }
-
-    @Test
-    fun your_own_row_carries_your_days_and_your_misses() {
-        val mine = seat(id = "mine", mine = true, days = 6, missed = 2, opened = true).toMember()
-        assertTrue(mine.mine)
-        assertEquals(6, mine.days)
-        assertEquals(2, mine.missed)
-        assertTrue("Opened on your own row means the night is finished", mine.today)
-    }
-
-    // ------------------------------------------------------------------ the whole crew
-
-    @Test
-    fun a_crew_carries_the_countdown_and_the_day_the_server_worked_out() {
-        val c = crew(state = "full", day = 0, startsIn = 9 * 3_600_000L).toCrew()
-        assertEquals(CrewPhase.LOBBY, c.phase)
-        assertEquals(9 * 3_600_000L, c.startsIn)
-        assertEquals(0, c.day)
-    }
-
-    @Test
-    fun a_finished_crew_never_reports_more_days_than_the_fortnight_has() {
-        // Long after the run, the server's day count keeps climbing. What it came to is capped.
-        val c = crew(state = "done", day = 90).toCrew()
-        assertEquals(CrewRules.RUN_DAYS, c.finishedDays)
-    }
-
-    @Test
-    fun the_standing_line_says_what_the_crew_is_doing() {
-        val open = crew(state = "filling", members = listOf(seat(), seat(id = "s2"))).toCrew()
-        assertEquals("${CrewRules.SEATS - 2} seats left", open.standing)
-
-        val running = crew(state = "full", day = 4).toCrew()
-        assertEquals("Day 4 of ${CrewRules.RUN_DAYS}", running.standing)
-    }
-
-    @Test
-    fun checkable_is_every_seat_across_every_filling_crew_you_have_not_answered_on() {
-        val filling =
+    fun only_other_peoples_apps_still_in_the_run_are_owed() {
+        val running =
             crew(
-                state = "filling",
+                state = "full",
+                day = 3,
                 members =
                     listOf(
-                        seat(id = "mine", mine = true, state = "checking"),
-                        seat(id = "todo", state = "checking", greens = 0, verdict = null),
-                        seat(id = "answered", state = "checking", greens = 1, verdict = true),
+                        seat("me", mine = true),
+                        seat("a"),
+                        seat("b", state = "removed"),
+                        seat("c", opened = true),
                     ),
-            )
-        val running = crew(state = "full", day = 2, members = listOf(seat(id = "elsewhere")))
-
-        assertEquals(listOf("todo"), checkable(listOf(filling, running)).map { it.id })
-    }
-}
-
-/**
- * What the tab is made of, across several crews at once.
- *
- * The case that matters is a person in more than one: two runs is twenty-eight apps in one
- * evening, and the screens are built around that being ordinary rather than extreme. A test with
- * a single crew in it would let every one of these pass while merged lists stayed broken.
- */
-class CrewTabArithmeticTest {
-    private fun app(
-        id: String,
-        done: Boolean = false,
-        reported: Boolean = false,
-    ) = CrewApp(id = id, label = "App $id", owner = "Rafiul", crew = "Crew 07", done = done, reported = reported)
-
-    private fun seat(
-        id: String,
-        mine: Boolean = false,
-        judged: Boolean = false,
-        greens: Int = 0,
-        reds: Int = 0,
-    ) = CrewSeat(id = id, appName = "App $id", owner = "Rafiul", greens = greens, reds = reds, mine = mine, judged = judged)
-
-    private fun crew(
-        id: String,
-        phase: CrewPhase,
-        apps: List<CrewApp> = emptyList(),
-        seats: List<CrewSeat> = emptyList(),
-        name: String = "Crew $id",
-    ) = Crew(id = id, name = name, phase = phase, apps = apps, seats = seats)
-
-    @Test
-    fun tonight_merges_every_running_crew_into_one_evening() {
-        val a = crew("a", CrewPhase.RUN, apps = listOf(app("a1"), app("a2", done = true)))
-        val b = crew("b", CrewPhase.RUN, apps = listOf(app("b1")))
-        val lobby = crew("c", CrewPhase.LOBBY, apps = listOf(app("c1")))
-
-        assertEquals(listOf("a1", "b1"), tonightIn(listOf(a, b, lobby)).map { it.id })
+            ).toCrew()
+        assertEquals(listOf("a", "c"), running.apps.map { it.id })
+        assertEquals(1, running.owed)
+        assertEquals(listOf("a"), tonightIn(listOf(running)).map { it.id })
+        assertEquals(1, doneTonightIn(listOf(running)))
     }
 
     @Test
-    fun an_app_already_opened_or_reported_is_not_still_owed() {
-        val c = crew("a", CrewPhase.RUN, apps = listOf(app("x", done = true), app("y", reported = true), app("z")))
-        assertEquals(listOf("z"), tonightIn(listOf(c)).map { it.id })
-        assertEquals(2, doneTonightIn(listOf(c)))
+    fun a_reported_app_is_excused_not_owed() {
+        val running =
+            crew(state = "full", day = 3, members = listOf(seat("me", mine = true), seat("a", reported = true))).toCrew()
+        assertTrue(running.apps.single().reported)
+        assertEquals(0, running.owed)
+        assertTrue(tonightIn(listOf(running)).isEmpty())
     }
 
     @Test
-    fun waiting_is_everybody_elses_unanswered_seats_before_a_run_starts() {
-        val lobby =
+    fun once_your_app_is_out_nothing_is_owed_by_you() {
+        val out =
+            crew(state = "full", day = 5, members = listOf(seat("me", state = "removed", mine = true), seat("a"))).toCrew()
+        assertTrue(out.out)
+        assertTrue(out.apps.isEmpty())
+        assertEquals("Your app is out", out.standing)
+    }
+
+    @Test
+    fun each_member_row_is_that_members_own_day() {
+        val running =
             crew(
-                "a",
-                CrewPhase.LOBBY,
-                seats = listOf(seat("mine", mine = true), seat("todo"), seat("answered", judged = true)),
-            )
-        // A decided seat is not waiting on anybody, whoever answered.
-        val settled = crew("b", CrewPhase.OPEN, seats = listOf(seat("in", greens = CrewRules.VERDICTS)))
-        val running = crew("c", CrewPhase.RUN, seats = listOf(seat("elsewhere")))
-
-        assertEquals(listOf("todo"), waitingIn(listOf(lobby, settled, running)).map { it.id })
+                state = "full",
+                day = 4,
+                members =
+                    listOf(
+                        seat("me", mine = true, day = 4, done = 14, owed = 14, nightDone = true),
+                        // Three hours behind: still on the day before, partway through.
+                        seat("k", owner = "Kenji", day = 3, done = 5, owed = 14),
+                    ),
+            ).toCrew()
+        val kenji = running.members.first { it.name == "Kenji" }
+        assertEquals(3, kenji.day)
+        assertEquals(5, kenji.doneToday)
+        assertFalse(kenji.nightDone)
+        assertTrue(running.members.first { it.mine }.nightDone)
     }
 
     @Test
-    fun holding_names_the_crew_with_your_seat_that_has_not_started() {
-        val running = crew("a", CrewPhase.RUN, seats = listOf(seat("mine", mine = true)), name = "Crew 01")
-        val lobby = crew("b", CrewPhase.LOBBY, seats = listOf(seat("also-mine", mine = true)), name = "Crew 02")
+    fun at_risk_means_yesterday_was_missed_not_any_miss_ever() {
+        val once =
+            crew(state = "full", day = 6, members = listOf(seat("me", mine = true, missed = 1))).toCrew()
+        assertFalse(once.atRisk)
+        val yesterday =
+            crew(state = "full", day = 6, members = listOf(seat("me", mine = true, missed = 1, missedYesterday = true)))
+                .toCrew()
+        assertTrue(yesterday.atRisk)
+    }
 
-        // A seat in a run is not holding anybody back; the one in the lobby is.
-        assertEquals("Crew 02", holdingIn(listOf(running, lobby)))
+    @Test
+    fun a_member_taken_out_is_kept_and_marked_out() {
+        val running =
+            crew(state = "full", day = 6, members = listOf(seat("me", mine = true), seat("x", state = "removed"))).toCrew()
+        assertTrue(running.members.first { it.id == "x" }.out)
+        assertEquals(1, running.stayed)
+    }
+
+    // ------------------------------------------------------------------------- holding
+
+    @Test
+    fun the_waiting_app_is_named_and_a_running_crew_holds_nothing() {
+        val filling = crew(state = "filling", members = listOf(seat("me", mine = true))).toCrew()
+        val running = crew(state = "full", day = 2, members = listOf(seat("me2", mine = true))).toCrew()
+        assertEquals("Crew 07", holdingIn(listOf(filling, running)))
         assertNull(holdingIn(listOf(running)))
     }
 
     @Test
-    fun a_red_needs_a_green_of_your_own_in_that_same_crew_first() {
-        val nothingYet = crew("a", CrewPhase.LOBBY, seats = listOf(seat("theirs")))
-        assertFalse(mayJudgeIn(listOf(nothingYet), "a"))
-
-        val oneWorking = crew("a", CrewPhase.LOBBY, seats = listOf(seat("theirs", judged = true)))
-        assertTrue(mayJudgeIn(listOf(oneWorking), "a"))
-
-        // Your own seat being settled proves nothing about your setup.
-        val onlyMine = crew("a", CrewPhase.LOBBY, seats = listOf(seat("mine", mine = true, judged = true)))
-        assertFalse(mayJudgeIn(listOf(onlyMine), "a"))
-    }
-
-    @Test
-    fun a_crew_you_are_not_in_is_not_a_crew_you_may_judge() {
-        assertFalse(mayJudgeIn(emptyList(), "nowhere"))
-    }
-}
-
-/**
- * The rule a night's open has to clear.
- *
- * Small arithmetic guarding the product's one factual claim: that somebody opened an app today.
- * For a while nothing checked it at all, and a single button press credited a whole night.
- */
-class VisitRuleTest {
-    @Test
-    fun a_night_open_is_ten_seconds_not_the_thirty_a_review_needs() {
-        // A crew visit is "you opened it today", which is what Google asks of a tester. A review
-        // is somebody forming an opinion, and that is a different length of time.
-        assertEquals(10, CrewRules.VISIT_SECONDS)
-        assertTrue(CrewRules.VISIT_SECONDS < 30)
-    }
-
-    @Test
-    fun an_app_row_carries_what_is_needed_to_open_it() {
-        // A row without a package name can only be claimed, never opened. That was the bug.
-        val seat =
-            ApiSeat(
-                id = "s1",
-                crewId = "c1",
-                appName = "Nikosh Budget",
-                packageName = "com.example.nikosh",
-                ownerName = "Rafiul",
-                state = "confirmed",
-                greens = 2,
-                reds = 0,
-                mine = false,
-                createdAt = "2026-09-20T00:00:00+00:00",
-            )
-        assertEquals("com.example.nikosh", seat.toApp().packageName)
+    fun a_record_counts_the_fortnight_not_how_long_ago_it_filled() {
+        val done = crew(state = "done", day = 20, members = listOf(seat("me", mine = true))).toCrew()
+        assertEquals(14, done.finishedDays)
     }
 }

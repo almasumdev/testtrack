@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -112,6 +113,8 @@ fun MainShell(
     onReview: (String) -> Unit,
     onSignOut: () -> Unit,
     onCheck: (String) -> Unit = {},
+    /** Set by a tapped crew notification; cleared once the Crew tab is showing. */
+    openCrew: MutableState<Boolean> = remember { mutableStateOf(false) },
     homeVm: HomeViewModel = viewModel(),
     hudVm: HudViewModel = viewModel(),
 ) {
@@ -132,6 +135,13 @@ fun MainShell(
     val show: (MainTab) -> Unit = { next ->
         if (next != tab) cameFrom = tab
         tab = next
+    }
+
+    LaunchedEffect(openCrew.value) {
+        if (openCrew.value) {
+            show(MainTab.GROUPS)
+            openCrew.value = false
+        }
     }
 
     /*

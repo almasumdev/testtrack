@@ -27,160 +27,142 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /** The gutter every phase list opens on, matched to Circle so the two tabs sit level. */
 private val ListTop = 16.dp
 
 /**
- * Your seat is taken and the crew is filling. The one screen in the product with shared work in it.
+ * Your app is in and the crew has not started: still filling, or full and waiting for midnight.
  *
- * Two things are happening at once and the screen is in that order: what is owed of you, then what
- * is owed to you. Judging other people's apps comes first because it is the thing that moves, and
- * because a member who does it is a member whose own setup is finished.
+ * What is owed of you comes first: your own app's state, and if it was sent back, why. Then the
+ * crew, every app with a way to install it before day 1 and a way to say it will not.
  */
 @Composable
 fun CrewLobbyPhase(
     crew: Crew,
-    onJudge: (CrewSeat) -> Unit,
-    onLeave: () -> Unit = {},
+    actions: CrewActions,
 ) {
-    val confirmed = CrewRules.filled(crew.seats)
-    val checking = crew.seats.count { it.state == SeatState.CHECKING }
-    val mine = crew.seats.firstOrNull { it.mine }
-    val toJudge =
-        crew.seats.filter { !it.judged && !it.mine && it.state == SeatState.CHECKING }
+    val mine = crew.mine
+    val others = crew.seats.filter { !it.mine && it.state != SeatState.REJECTED }
 
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = ListTop, bottom = Gutter + dockRoom()),
     ) {
-        item {
-            Box(Modifier.padding(horizontal = Gutter)) {
-                CrewCard(padding = PaddingValues(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Lucide.Clock,
-                            null,
-                            Modifier.size(16.dp),
-                            tint = Tt.colors.accentInk,
-                        )
-                        Spacer(Modifier.width(8.dp))
+        if (!crew.out) {
+            item {
+                Box(Modifier.padding(horizontal = Gutter)) {
+                    CrewCard(padding = PaddingValues(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Lucide.Clock, null, Modifier.size(16.dp), tint = Tt.colors.accentInk)
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                if (crew.filling) {
+                                    "${CrewRules.SEATS - crew.filled} more and it starts"
+                                } else {
+                                    "Starts in ${untilStart(crew.startsIn)}"
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                        Spacer(Modifier.height(4.dp))
                         Text(
-                            if (confirmed >= CrewRules.SEATS) {
-                                "Starts in ${untilStart(crew.startsIn)}"
+                            if (crew.filling) {
+                                "${crew.name} starts at midnight the day it is full. Install the " +
+                                    "others meanwhile, so day 1 is only opening them."
                             } else {
-                                "${CrewRules.SEATS - confirmed} more and it starts"
+                                "Day 1 begins at midnight, your time. Install the other " +
+                                    "${others.size} before then and no day counts against you."
                             },
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        Spacer(Modifier.height(16.dp))
+                        SeatMeter(crew.filled, crew.taken - crew.filled)
                     }
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        if (confirmed >= CrewRules.SEATS) {
-                            "Day 1 begins at 12:01 tonight, your time. Anything left to set " +
-                                "up, do it before then and no day counts against you."
-                        } else {
-                            "${crew.name} runs the moment it is full. Nothing counts until it is."
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    SeatMeter(confirmed, checking)
                 }
             }
         }
 
         if (mine != null) {
             item { CrewHeading("Your app") }
-            item {
-                Box(Modifier.padding(horizontal = Gutter)) {
-                    CrewCard {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    mine.appName,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                                Spacer(Modifier.height(2.dp))
-                                Text(
-                                    when (mine.state) {
-                                        SeatState.CONFIRMED ->
-                                            "Both members got it installed. You are in."
-                                        SeatState.REJECTED ->
-                                            "Two members could not install it. Fix it and " +
-                                                "take a seat in the next crew."
-                                        SeatState.CHECKING ->
-                                            "${mine.greens} of ${CrewRules.VERDICTS} " +
-                                                "installed it so far."
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            Spacer(Modifier.width(10.dp))
-                            SeatPill(mine.state)
-                        }
+            item { Box(Modifier.padding(horizontal = Gutter)) { YourSeat(crew, mine, actions) } }
+        }
 
-                        // Leaving is only offered before the crew starts. Fourteen people are
-                        // relying on it after that, and the server refuses it anyway; a button
-                        // that is going to be refused is worse than no button.
-                        if (crew.phase != CrewPhase.RUN && crew.phase != CrewPhase.RECORD) {
-                            Spacer(Modifier.height(12.dp))
-                            CardRule()
-                            Spacer(Modifier.height(12.dp))
-                            Secondary(
-                                "Take it back out",
-                                Modifier.fillMaxWidth(),
-                                destructive = true,
-                                onClick = onLeave,
-                            )
-                        }
-                    }
+        if (!crew.out && others.isNotEmpty()) {
+            item { CrewHeading("Install these", "${others.size}") }
+            itemsIndexed(others, key = { _, seat -> seat.id }) { index, seat ->
+                ListTile(index, others.size) {
+                    CrewSeatRow(seat, onInstall = { actions.onInstall(seat) }, onReport = { actions.onReport(seat) })
                 }
             }
         }
+    }
+}
 
-        item {
-            CrewHeading(
-                if (toJudge.isEmpty()) "Nothing waiting on you" else "Waiting on you",
-                if (toJudge.isEmpty()) null else "${toJudge.size}",
-            )
-        }
-        if (toJudge.isEmpty()) {
-            item {
+/** Your own app's place, and the one thing you can do about it at this point. */
+@Composable
+private fun YourSeat(
+    crew: Crew,
+    mine: CrewSeat,
+    actions: CrewActions,
+) {
+    CrewCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(mine.appName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(2.dp))
                 Text(
-                    "You have tried everything that needed a second pair of eyes. New arrivals " +
-                        "will show up here.",
-                    Modifier.padding(horizontal = Gutter, vertical = 4.dp),
-                    style = MaterialTheme.typography.bodyMedium,
+                    when (mine.state) {
+                        SeatState.CONFIRMED ->
+                            if (mine.reports > 0) {
+                                "In. ${mine.reports} of ${CrewRules.REPORTS_TO_RETURN} reports so far."
+                            } else {
+                                "In. Play shows it to the testers group."
+                            }
+                        SeatState.CHECKING -> "Waiting for Play. We check it again every few minutes."
+                        SeatState.REJECTED, SeatState.REMOVED -> mine.outReason.ifBlank { "It came back to you." }
+                    },
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        } else {
-            itemsIndexed(toJudge, key = { _, seat -> seat.id }) { index, seat ->
-                ListTile(index, toJudge.size) {
-                    CrewSeatRow(seat) {
-                        ActionChip(
-                            "Try it",
-                            MaterialTheme.colorScheme.onPrimaryContainer,
-                            MaterialTheme.colorScheme.primaryContainer,
-                        ) { onJudge(seat) }
-                    }
-                }
+            Spacer(Modifier.width(10.dp))
+            SeatPill(mine.state)
+        }
+
+        // What reports said, for the owner only, without who said it.
+        if (mine.reasons.isNotEmpty()) {
+            Spacer(Modifier.height(12.dp))
+            Notice(Status.short, Lucide.TriangleAlert) {
+                Text(
+                    mine.reasons.joinToString("\n") { "\u201C$it\u201D" },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
             }
         }
 
-        item { CrewHeading("The crew", "$confirmed of ${CrewRules.SEATS}") }
-        itemsIndexed(
-            crew.seats.filter { !it.mine },
-            key = { _, seat -> "all-${seat.id}" },
-        ) { index, seat ->
-            ListTile(index, crew.seats.count { !it.mine }) {
-                CrewSeatRow(seat)
+        when {
+            mine.state == SeatState.REJECTED -> {
+                Spacer(Modifier.height(12.dp))
+                Primary("Put it in again", Modifier.fillMaxWidth(), onClick = actions.onTakeSeat)
+            }
+            // Leaving is only offered while it is filling. Once it is full fourteen people are
+            // counting on it, and the server refuses it anyway.
+            crew.filling -> {
+                Spacer(Modifier.height(12.dp))
+                CardRule()
+                Spacer(Modifier.height(12.dp))
+                Secondary(
+                    "Take it back out",
+                    Modifier.fillMaxWidth(),
+                    destructive = true,
+                    onClick = { actions.onLeave(mine) },
+                )
             }
         }
     }
@@ -199,10 +181,9 @@ fun CrewLobbyPhase(
 @Composable
 fun CrewRunPhase(
     crew: Crew,
-    onOpen: (CrewApp) -> Unit,
-    onReport: (CrewApp) -> Unit,
-    onOpenAll: () -> Unit,
+    actions: CrewActions,
 ) {
+    val seatOf = { app: CrewApp -> crew.seats.first { it.id == app.id } }
     val owed = crew.apps.filter { !it.done && !it.reported }
     val settled = crew.apps.filter { it.done || it.reported }
 
@@ -210,45 +191,61 @@ fun CrewRunPhase(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = ListTop, bottom = Gutter + dockRoom()),
     ) {
-        item {
-            Box(Modifier.padding(horizontal = Gutter)) {
-                CrewCard(padding = PaddingValues(16.dp)) {
-                    Text(
-                        if (owed.isEmpty()) "Tonight is done" else "${owed.size} left tonight",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        if (owed.isEmpty()) {
-                            "All ${crew.apps.size} opened. Day ${crew.day + 1} begins at " +
-                                "midnight, your time."
-                        } else {
-                            "Day ${crew.day} of ${CrewRules.RUN_DAYS}" +
-                                if (crew.atRisk) {
-                                    " · ${crew.myMisses} " +
-                                        if (crew.myMisses == 1) "day missed" else "days missed"
-                                } else {
-                                    " · no gaps"
-                                }
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color =
-                            when {
-                                owed.isEmpty() -> MaterialTheme.colorScheme.onSurfaceVariant
-                                crew.atRisk -> Status.short
-                                else -> MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    DayTrack(crew.day)
-                    if (crew.atRisk && owed.isNotEmpty()) {
-                        Spacer(Modifier.height(14.dp))
-                        RiskNote(listOf(crew.name))
+        if (crew.out) {
+            item {
+                Box(Modifier.padding(horizontal = Gutter)) {
+                    Notice(Status.missed, Lucide.TriangleAlert) {
+                        Text(
+                            "Your app left this run. ${crew.mine?.outReason.orEmpty()} Nobody opens it now, and " +
+                                "you have nothing more to open here.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
                     }
-                    if (owed.isNotEmpty()) {
+                }
+            }
+        }
+        if (!crew.out) {
+            item {
+                Box(Modifier.padding(horizontal = Gutter)) {
+                    CrewCard(padding = PaddingValues(16.dp)) {
+                        Text(
+                            if (owed.isEmpty()) "Tonight is done" else "${owed.size} left tonight",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            if (owed.isEmpty()) {
+                                "All ${crew.apps.size} opened. Day ${crew.day + 1} begins at " +
+                                    "midnight, your time."
+                            } else {
+                                "Day ${crew.day} of ${CrewRules.RUN_DAYS}" +
+                                    if (crew.atRisk) {
+                                        " · ${crew.myMisses} " +
+                                            if (crew.myMisses == 1) "day missed" else "days missed"
+                                    } else {
+                                        " · no gaps"
+                                    }
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color =
+                                when {
+                                    owed.isEmpty() -> MaterialTheme.colorScheme.onSurfaceVariant
+                                    crew.atRisk -> Status.short
+                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                        )
                         Spacer(Modifier.height(16.dp))
-                        Primary("Open all ${owed.size}", onClick = onOpenAll)
+                        DayTrack(crew.day)
+                        if (crew.atRisk && owed.isNotEmpty()) {
+                            Spacer(Modifier.height(14.dp))
+                            RiskNote(listOf(crew.name))
+                        }
+                        if (owed.isNotEmpty()) {
+                            Spacer(Modifier.height(16.dp))
+                            Primary("Open all ${owed.size}") { actions.onOpenAll(crew.id) }
+                        }
                     }
                 }
             }
@@ -258,7 +255,7 @@ fun CrewRunPhase(
             item { CrewHeading("Tonight", "${owed.size}") }
             itemsIndexed(owed, key = { _, app -> app.id }) { index, app ->
                 ListTile(index, owed.size) {
-                    CrewAppRow(app, onOpen = { onOpen(app) }, onReport = { onReport(app) })
+                    CrewAppRow(app, onOpen = { actions.onOpen(app) }, onReport = { actions.onReport(seatOf(app)) })
                 }
             }
         }
@@ -267,13 +264,13 @@ fun CrewRunPhase(
             item { CrewHeading("Done", "${settled.size}") }
             itemsIndexed(settled, key = { _, app -> "s-${app.id}" }) { index, app ->
                 ListTile(index, settled.size) {
-                    CrewAppRow(app, onOpen = { onOpen(app) }, onReport = { onReport(app) })
+                    CrewAppRow(app, onOpen = { actions.onOpen(app) }, onReport = { actions.onReport(seatOf(app)) })
                 }
             }
         }
 
         item { CrewHeading("How everyone is doing", "${crew.members.size}") }
-        itemsIndexed(crew.members, key = { _, m -> m.name }) { index, member ->
+        itemsIndexed(crew.members, key = { _, m -> m.id }) { index, member ->
             ListTile(index, crew.members.size) {
                 CrewMemberRow(member)
             }
@@ -290,7 +287,7 @@ fun CrewRunPhase(
  */
 @Composable
 fun CrewRecordPhase(crew: Crew) {
-    val stayed = crew.members.count { !it.out }
+    val stayed = crew.stayed
 
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -306,8 +303,12 @@ fun CrewRecordPhase(crew: Crew) {
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "$stayed of ${crew.members.size} went the distance, which is over " +
-                            "Google's ${CrewRules.FLOOR}.",
+                        "$stayed of ${crew.members.size} went the distance" +
+                            if (stayed >= CrewRules.FLOOR) {
+                                ", which is Google's ${CrewRules.FLOOR} or more."
+                            } else {
+                                ". Google asks for ${CrewRules.FLOOR}."
+                            },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -315,14 +316,14 @@ fun CrewRecordPhase(crew: Crew) {
                     Row(Modifier.fillMaxWidth()) {
                         Tally(Modifier.weight(1f), "${crew.finishedDays}", "days tested")
                         Tally(Modifier.weight(1f), "$stayed", "still in")
-                        Tally(Modifier.weight(1f), "${crew.tixEarned}", "tix earned")
+                        Tally(Modifier.weight(1f), "${crew.myMisses}", "you missed")
                     }
                 }
             }
         }
 
         item { CrewHeading("Everyone", "${crew.members.size}") }
-        itemsIndexed(crew.members, key = { _, m -> "rec-${m.name}" }) { index, member ->
+        itemsIndexed(crew.members, key = { _, m -> "rec-${m.id}" }) { index, member ->
             ListTile(index, crew.members.size) {
                 CrewMemberRow(member)
             }

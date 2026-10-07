@@ -23,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.ChevronRight
@@ -60,10 +59,11 @@ import com.eazyverse.testtrack.ui.theme.Tt
 fun CrewRunTab(
     vm: CrewViewModel,
     onSignIn: () -> Unit,
+    actions: CrewActions,
     onOpenCrew: (String) -> Unit,
 ) {
-    val here = LocalContext.current
     val runs = vm.crews.filter { it.phase == CrewPhase.RUN }
+    val going = runs.filter { !it.out }
 
     // Before the empty case, not after it. Whether anything is running is a question about an
     // account, and answering it with "Nothing running" to somebody the app cannot identify is a
@@ -89,7 +89,7 @@ fun CrewRunTab(
     val done = vm.doneTonight
     val total = left + done
     val risky = runs.filter { it.atRisk }.map { it.name }
-    val nightsLeft = runs.maxOf { CrewRules.RUN_DAYS - it.day + 1 }
+    val nightsLeft = (going.ifEmpty { runs }).maxOf { (CrewRules.RUN_DAYS - it.day + 1).coerceAtLeast(0) }
 
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -109,11 +109,11 @@ fun CrewRunTab(
                             // The payoff. Nothing else in a fortnight of opening apps says a
                             // night went right, and a zero does not feel like one.
                             "All $total opened, across " +
-                                "${runs.size} ${if (runs.size == 1) "crew" else "crews"}. " +
+                                "${going.size} ${if (going.size == 1) "crew" else "crews"}. " +
                                 "Nothing counts against you."
                         } else {
                             "$done of $total done, across " +
-                                "${runs.size} ${if (runs.size == 1) "crew" else "crews"}."
+                                "${going.size} ${if (going.size == 1) "crew" else "crews"}."
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -122,9 +122,9 @@ fun CrewRunTab(
                     NightProgress(done, total)
                     Spacer(Modifier.height(18.dp))
                     CrewTallies(
-                        nightly = CrewRules.nightly(runs.size),
+                        nightly = CrewRules.nightly(going.size),
                         nightsLeft = nightsLeft,
-                        crews = runs.size,
+                        crews = going.size,
                     )
                     if (risky.isNotEmpty() && left > 0) {
                         Spacer(Modifier.height(14.dp))
@@ -134,7 +134,7 @@ fun CrewRunTab(
                         // The whole night, across every crew, in one press. A member with two runs
                         // going came here to finish an evening, not to visit two screens first.
                         Spacer(Modifier.height(16.dp))
-                        Primary("Open all $left") { vm.openAll(here) }
+                        Primary("Open all $left") { actions.onOpenAll(null) }
                     }
                 }
             }
@@ -150,25 +150,24 @@ fun CrewRunTab(
 }
 
 /**
- * Every crew of yours that has not started.
+ * Every crew of yours that has not started, and any app of yours sent back to fix.
  *
- * The verification list is merged across them for the same reason tonight's is: it is work owed by
- * one person in one sitting. What is not merged is the crews themselves, because each has its own
- * fill and its own midnight, and those are the numbers somebody came here to see.
+ * Each crew is a card you open. What is on the card is the two numbers somebody came here for:
+ * how full it is, or how long until their midnight, and where their own app stands.
  */
 @Composable
 fun CrewLobbyTab(
     vm: CrewViewModel,
     onSignIn: () -> Unit,
-    onJudge: (String, CrewSeat) -> Unit,
+    actions: CrewActions,
+    onOpenCrew: (String) -> Unit,
 ) {
     val lobbies = vm.crews.filter { it.phase == CrewPhase.LOBBY }
-    val waiting = vm.waiting
 
     if (vm.signedOut) {
         Gated(
             heading = "No seat held",
-            body = "A crew you have joined waits here until all fifteen seats are confirmed.",
+            body = "A crew you have joined waits here until all fifteen apps are in.",
             onSignIn = onSignIn,
             mark = { SeatsMark() },
         )
@@ -177,7 +176,7 @@ fun CrewLobbyTab(
     if (lobbies.isEmpty()) {
         TabBlank(
             "No crew waiting to start",
-            "Take a seat in the open crew and it will sit here until it fills.",
+            "Put an app in the open crew and it waits here until the crew is full.",
         )
         return
     }
@@ -187,12 +186,9 @@ fun CrewLobbyTab(
         contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
     ) {
         itemsIndexed(lobbies, key = { _, crew -> crew.id }) { _, crew ->
-            val confirmed = CrewRules.filled(crew.seats)
-            val checking = crew.seats.count { it.state == SeatState.CHECKING }
-            val mine = crew.seats.firstOrNull { it.mine }
-
+            val mine = crew.mine
             Box(Modifier.padding(start = Gutter, end = Gutter, bottom = 12.dp)) {
-                CrewCard(padding = PaddingValues(16.dp)) {
+                CrewCard(padding = PaddingValues(16.dp), onClick = { onOpenCrew(crew.id) }) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Lucide.Clock,
@@ -202,52 +198,45 @@ fun CrewLobbyTab(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            if (confirmed >= CrewRules.SEATS) {
-                                "${crew.name} starts in ${untilStart(crew.startsIn)}"
-                            } else {
-                                "${crew.name} needs ${CrewRules.SEATS - confirmed} more"
+                            when {
+                                crew.out -> "${crew.name} sent your app back"
+                                crew.filling -> "${crew.name} needs ${CrewRules.SEATS - crew.filled} more"
+                                else -> "${crew.name} starts in ${untilStart(crew.startsIn)}"
                             },
+                            Modifier.weight(1f),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
+                        )
+                        Icon(
+                            Lucide.ChevronRight,
+                            null,
+                            Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        if (confirmed >= CrewRules.SEATS) {
-                            "Day 1 begins at 12:01 tonight, your time. Anything left to set up, " +
-                                "do it before then and no day counts against you."
-                        } else {
-                            "It runs the moment it is full. Nothing counts until it is."
+                        when {
+                            crew.out -> "Open it to see why, then fix it and put it in again."
+                            crew.filling -> "It starts at midnight the day it is full. Install the others meanwhile."
+                            else -> "Day 1 begins at midnight, your time. Install the others before then."
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(Modifier.height(16.dp))
-                    SeatTiles(crew.seats)
+                    if (!crew.out) {
+                        Spacer(Modifier.height(16.dp))
+                        SeatTiles(crew.seats)
+                    }
                     if (mine != null) {
                         Spacer(Modifier.height(14.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    mine.appName,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                                Spacer(Modifier.height(2.dp))
-                                Text(
-                                    when (mine.state) {
-                                        SeatState.CONFIRMED -> "Your seat is confirmed."
-                                        SeatState.REJECTED ->
-                                            "Two members could not install it. Fix it and take " +
-                                                "a seat in the next crew."
-                                        SeatState.CHECKING ->
-                                            "${mine.greens} of ${CrewRules.VERDICTS} " +
-                                                "installed yours so far."
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
+                            Text(
+                                mine.appName,
+                                Modifier.weight(1f),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                            )
                             Spacer(Modifier.width(10.dp))
                             SeatPill(mine.state)
                         }
@@ -255,33 +244,10 @@ fun CrewLobbyTab(
                 }
             }
         }
-
-        item {
-            CrewHeading(
-                if (waiting.isEmpty()) "Nothing waiting on you" else "Waiting on you",
-                if (waiting.isEmpty()) null else "${waiting.size}",
-            )
-        }
-        if (waiting.isEmpty()) {
+        if (vm.sentBack.isNotEmpty() && vm.blocked == null) {
             item {
-                Text(
-                    "You have tried everything that needed a second pair of eyes. New arrivals " +
-                        "show up here.",
-                    Modifier.padding(horizontal = Gutter, vertical = 4.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        } else {
-            itemsIndexed(waiting, key = { _, seat -> seat.id }) { index, seat ->
-                ListTile(index, waiting.size) {
-                    CrewSeatRow(seat, showCrew = lobbies.size > 1) {
-                        ActionChip(
-                            "Try it",
-                            MaterialTheme.colorScheme.onPrimaryContainer,
-                            MaterialTheme.colorScheme.primaryContainer,
-                        ) { onJudge(vm.crewIdOf(seat), seat) }
-                    }
+                Box(Modifier.padding(horizontal = Gutter)) {
+                    Primary("Put an app in again", onClick = actions.onTakeSeat)
                 }
             }
         }
@@ -339,7 +305,7 @@ private fun CrewRecordRow(
     crew: Crew,
     onOpen: () -> Unit,
 ) {
-    val stayed = crew.members.count { !it.out }
+    val stayed = crew.stayed
     Row(
         Modifier
             .fillMaxWidth()
@@ -367,7 +333,7 @@ private fun CrewRecordRow(
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                "$stayed of ${crew.members.size} stayed · ${crew.tixEarned} tix",
+                "$stayed of ${crew.members.size} stayed the whole run",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -426,7 +392,7 @@ fun CrewListRow(
                 listOfNotNull(
                     crew.standing,
                     "${crew.owed} left".takeIf { crew.owed > 0 },
-                    "1 day missed".takeIf { crew.atRisk },
+                    "missed yesterday".takeIf { crew.atRisk },
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (crew.atRisk) Status.short else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -438,6 +404,14 @@ fun CrewListRow(
             Modifier.size(18.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/** The tab's first load, before there is anything to say. */
+@Composable
+fun CrewLoading() {
+    Box(Modifier.fillMaxWidth().padding(top = 48.dp), contentAlignment = Alignment.Center) {
+        RobotLoader(label = "Loading crews")
     }
 }
 

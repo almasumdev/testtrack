@@ -76,16 +76,16 @@ class StandingTest {
     }
 
     @Test
-    fun an_app_being_checked_says_how_close_it_is_to_counting() {
-        val line = appStanding(app("checking", greens = 1))
-        assertTrue(line, line.contains("1 of ${CrewRules.VERDICTS}"))
+    fun an_app_being_checked_says_it_is_waiting_for_play() {
+        val line = appStanding(app("checking"))
+        assertTrue(line, line.contains("waiting for Play"))
     }
 
     @Test
     fun a_rejected_app_says_what_to_do_rather_than_only_that_it_failed() {
         // The owner can fix this and send it back to the same crew, so the row says so.
         val line = appStanding(app("rejected"))
-        assertTrue(line, line.contains("Fix the listing"))
+        assertTrue(line, line.contains("Fix it"))
         assertEquals("Fix it", appLabel("rejected"))
     }
 

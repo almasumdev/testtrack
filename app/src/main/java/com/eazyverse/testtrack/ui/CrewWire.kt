@@ -6,10 +6,9 @@ import com.eazyverse.testtrack.net.ApiSeat
 /*
  * The server's crews, in the shape the screens already speak.
  *
- * A translation layer rather than a rewrite. The crew screens were designed and agreed against
- * the types in CrewModels.kt, and those types say what the screen is about; the wire types say
- * what the database holds. Mapping between them here keeps one change from becoming two, and
- * means every screen stayed exactly as it was drawn.
+ * A translation layer rather than a rewrite. The crew screens were designed against the types in
+ * CrewModels.kt, and those types say what the screen is about; the wire types say what the
+ * database holds. Mapping between them here keeps one change from becoming two.
  *
  * Pure functions over values, so all of this is tested without a device, a network or an account.
  */
@@ -20,12 +19,17 @@ import com.eazyverse.testtrack.net.ApiSeat
  * The server has three states and the app has four, because "full" is two different situations
  * for the person looking at it: a crew that has filled but whose own midnight has not arrived is
  * a lobby, and the same crew an hour later is a run. Which one it is depends on the reader, which
- * is why the day comes from the server per member rather than being worked out here.
+ * is why the day comes from the server per member rather than being worked out here. A crew the
+ * reader is not in is the open one, whatever its state.
  */
-fun crewPhase(crew: ApiCrew): CrewPhase =
+fun crewPhase(
+    crew: ApiCrew,
+    member: Boolean = true,
+): CrewPhase =
     when {
+        !member -> CrewPhase.OPEN
         crew.state == "done" -> CrewPhase.RECORD
-        crew.state == "filling" -> CrewPhase.OPEN
+        crew.state == "filling" -> CrewPhase.LOBBY
         crew.day >= 1 -> CrewPhase.RUN
         else -> CrewPhase.LOBBY
     }
@@ -36,37 +40,38 @@ fun ApiSeat.toSeat(crewName: String = "") =
         id = id,
         appName = appName,
         owner = ownerName,
+        packageName = packageName,
+        notes = notes,
         crew = crewName,
-        greens = greens,
-        reds = reds,
+        state = SeatState.of(state),
         mine = mine,
-        // Answered already, either way, so it is off this member's list of things to do.
-        judged = myVerdict != null,
+        reports = reports,
+        reported = reported,
+        reasons = reasons,
+        outReason = outReason,
     )
 
-/**
- * One member, as the run screen lists them.
- *
- * [CrewMember.out] is a rejected seat and nothing else. Missing days does not put somebody out of
- * a crew on its own; the run keeps going with whoever is still opening things, and Google's floor
- * of twelve is what decides whether it was worth it.
- */
+/** One member, as the run screen lists them, in their own calendar. */
 fun ApiSeat.toMember() =
     CrewMember(
+        id = id,
         name = ownerName,
         appName = appName,
-        days = daysDone,
-        today = openedToday,
+        day = day,
+        doneToday = doneToday,
+        owedToday = owedToday,
+        nightDone = nightDone,
         missed = missed,
+        missedYesterday = missedYesterday,
         mine = mine,
-        out = state == "rejected",
+        out = state == "removed" || state == "rejected",
     )
 
 /**
  * One app owed tonight.
  *
- * Only confirmed seats, and never your own. An app two people could not install is not something
- * to ask a third to open, and nobody tests their own.
+ * Only apps still in the run, and never your own. An app sent back is not something to ask
+ * anybody to open, and nobody tests their own.
  */
 fun ApiSeat.toApp(crewName: String = "") =
     CrewApp(
@@ -76,9 +81,9 @@ fun ApiSeat.toApp(crewName: String = "") =
         owner = ownerName,
         crew = crewName,
         done = openedToday,
-        // A red from this account is a report, not a refusal to do the work, so the app is
-        // excused rather than still owed.
-        reported = myVerdict == false,
+        // A report from this account excuses it from this app: something that will not install
+        // is not something anybody can open.
+        reported = reported,
     )
 
 /**
@@ -88,17 +93,25 @@ fun ApiSeat.toApp(crewName: String = "") =
  * CrewModels.kt is built: one type across all four phases, because the phases are the same crew
  * getting older.
  */
-fun ApiCrew.toCrew(): Crew {
-    val phase = crewPhase(this)
+fun ApiCrew.toCrew(member: Boolean = true): Crew {
+    val mine = members.firstOrNull { it.mine }
+    // An app sent back before its run stays in the Lobby for its owner, whatever the crew did
+    // next: what they have to do about it is fix it and take a seat again, not watch a run.
+    val phase = if (member && mine?.state == "rejected") CrewPhase.LOBBY else crewPhase(this, member)
+    val stillIn = mine != null && mine.state == "confirmed"
     val owed = members.filter { !it.mine && it.state == "confirmed" }
 
     return Crew(
         id = id,
         name = name,
         phase = phase,
+        filling = state == "filling",
+        taken = taken,
+        filled = filled,
         seats = members.map { it.toSeat(name) },
-        members = members.map { it.toMember() },
-        apps = if (phase == CrewPhase.RUN) owed.map { it.toApp(name) } else emptyList(),
+        // Rejected seats never ran, so they are not members; only the reader sees their own.
+        members = members.filter { it.state != "rejected" }.map { it.toMember() },
+        apps = if (phase == CrewPhase.RUN && stillIn) owed.map { it.toApp(name) } else emptyList(),
         day = day,
         startsIn = startsInMs,
         // What it came to. Only meaningful once it is over, and the server's own day count is
@@ -106,16 +119,6 @@ fun ApiCrew.toCrew(): Crew {
         finishedDays = if (phase == CrewPhase.RECORD) minOf(day, runDays) else 0,
     )
 }
-
-/** Every seat in every crew this account is in that is still waiting on somebody to try it. */
-fun checkable(crews: List<ApiCrew>): List<CrewSeat> =
-    crews
-        .filter { it.state == "filling" }
-        .flatMap { crew ->
-            crew.members
-                .filter { !it.mine && it.state == "checking" && it.myVerdict == null }
-                .map { it.toSeat(crew.name) }
-        }
 
 /*
  * What the tab is made of.
@@ -142,35 +145,11 @@ fun doneTonightIn(crews: List<Crew>): Int =
         .filter { it.phase == CrewPhase.RUN }
         .sumOf { crew -> crew.apps.count { it.done || it.reported } }
 
-/** Seats in any crew not yet running that this account has not answered on. */
-fun waitingIn(crews: List<Crew>): List<CrewSeat> =
-    crews
-        .filter { it.phase == CrewPhase.LOBBY || it.phase == CrewPhase.OPEN }
-        .flatMap { crew ->
-            crew.seats.filter { !it.judged && !it.mine && it.state == SeatState.CHECKING }
-        }
-
-/** The crew holding your one seat that has not started, by name, or null where you are free. */
+/** The crew holding your one waiting app, by name, or null where you are free. */
 fun holdingIn(crews: List<Crew>): String? =
     crews
-        .firstOrNull { crew ->
-            crew.phase != CrewPhase.RUN &&
-                crew.phase != CrewPhase.RECORD &&
-                crew.seats.any { it.mine }
-        }?.name
+        .firstOrNull { crew -> crew.filling && crew.mine?.state.let { it == SeatState.CONFIRMED || it == SeatState.CHECKING } }
+        ?.name
 
-/**
- * Whether this account may reject anything in a given crew.
- *
- * A red only counts from somebody who has already got one app in that same crew working, because
- * a Play "not found" far more often means the reader is not set up than that the app is broken.
- * The server refuses it either way; this is so the button can say so before it is pressed.
- */
-fun mayJudgeIn(
-    crews: List<Crew>,
-    crewId: String,
-): Boolean =
-    crews
-        .firstOrNull { it.id == crewId }
-        ?.seats
-        ?.any { it.judged && !it.mine } == true
+/** Your apps sent back before a run, to fix and take a seat with again. */
+fun sentBackIn(crews: List<Crew>): List<CrewSeat> = crews.mapNotNull { crew -> crew.mine?.takeIf { it.state == SeatState.REJECTED } }

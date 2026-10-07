@@ -245,10 +245,10 @@ fun stageOf(app: ApiMyApp): AppStage? =
             }
         "checking" ->
             AppStage(
-                title = "Install check",
-                count = "${app.greens} of ${CrewRules.VERDICTS} installed",
-                done = app.greens,
-                total = CrewRules.VERDICTS,
+                title = "Play check",
+                count = "Waiting for Play",
+                done = 0,
+                total = 1,
             )
         "testing" -> {
             val left = (app.runDays - app.day).coerceAtLeast(0)
@@ -367,6 +367,7 @@ fun appLabel(state: String): String =
         "finished" -> "Done"
         "rejected" -> "Fix it"
         "withdrawn" -> "Pulled"
+        "removed" -> "Out"
         "collecting" -> "Open"
         "done" -> "Done"
         else -> "Up"
@@ -386,10 +387,11 @@ fun appStanding(app: ApiMyApp): String =
             } else {
                 app.where
             }
-        "checking" -> "${app.where} · ${app.greens} of ${CrewRules.VERDICTS} have installed it"
+        "checking" -> "${app.where} · waiting for Play to show it to the testers group"
         "testing" -> "${app.where} · day ${app.day} of ${app.runDays}, ${app.testers} testing"
         "finished" -> "${app.where} · ${app.testers} tested it for ${app.runDays} days"
-        "rejected" -> "${app.where} · nobody could install it. Fix the listing and send it again."
+        "rejected" -> "${app.where} · it came back to you. Fix it and put it in again."
+        "removed" -> "${app.where} · out of the run after missed days"
         "withdrawn" -> "${app.where} · you took it back"
         "collecting" -> "Circle · ${app.testers} of ${app.reviewsBought} reviews in"
         "done" -> "Circle · all ${app.reviewsBought} reviews in"
@@ -407,6 +409,7 @@ fun appStanding(app: ApiMyApp): String =
 fun appTone(state: String): Pair<Color, Color> =
     when (state) {
         "rejected" -> Status.short to Status.shortSoft
+        "removed" -> Status.missed to Status.missedSoft
         "testing" -> Status.posted to Status.postedSoft
         else -> MaterialTheme.colorScheme.onSurfaceVariant to Status.neutralSoft
     }

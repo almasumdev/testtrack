@@ -3,10 +3,8 @@ package com.eazyverse.testtrack.ui
 /*
  * Crews, in the shape the screen needs them.
  *
- * Nothing here touches Firestore, deliberately and for the same reason Circle does not: the rules
- * below are new, and settling how they read is the part worth getting wrong cheaply. A crew that
- * forms itself and is gatekept by its own members is a different product from one an admin fills,
- * and no collection should be designed until the screen has stopped moving.
+ * Plain values mapped from what the API sends (see CrewWire.kt). Every rule is the server's:
+ * whether an app is in, what a report does, whose day it is. The screen only says so.
  *
  * The thing that shapes every type below is that a person is in several crews at once. Nothing
  * here is "the crew"; there is a list of them, each at its own point in its own fortnight, and the
@@ -15,10 +13,10 @@ package com.eazyverse.testtrack.ui
 
 /** What a crew is doing, which is also which of the four screens its own page shows. */
 enum class CrewPhase {
-    /** Taking seats. Nobody has committed a fortnight yet and anybody may join. */
+    /** Taking seats, and not yours. The one a new seat would go into. */
     OPEN,
 
-    /** Full, or nearly, and waiting for midnight. The window where setup gets finished. */
+    /** Yours, and not started: still filling, or full and waiting for your midnight. */
     LOBBY,
 
     /** The fourteen days. The part of the app that was already worth using. */
@@ -28,20 +26,34 @@ enum class CrewPhase {
     RECORD,
 }
 
-/** Where one seat has got to, from taken to counted. */
+/** Where one seat has got to. */
 enum class SeatState {
-    /** Taken, waiting on members to try installing it. Does not count toward the fifteen. */
+    /** Taken while the Play check could not run. The server tries again; it does not count yet. */
     CHECKING,
 
-    /** Two greens. Counts. */
+    /** Seen on Play through the testers group. Counts. */
     CONFIRMED,
 
-    /** Two reds. The owner has something to fix, and the seat is gone. */
+    /** Sent back before the run: two reports, or Play would not show it. The owner can fix it. */
     REJECTED,
+
+    /** Out of a running crew: two missed days in a row, or the team took it out. */
+    REMOVED,
+    ;
+
+    companion object {
+        fun of(wire: String) =
+            when (wire) {
+                "confirmed" -> CONFIRMED
+                "rejected", "withdrawn" -> REJECTED
+                "removed" -> REMOVED
+                else -> CHECKING
+            }
+    }
 }
 
 /**
- * The numbers, in one place.
+ * The numbers, in one place. Mirrored from the server's app/core/rules.py, which decides.
  *
  * Fifteen rather than fourteen, which costs every member one more app a night: nobody tests their
  * own, so a crew of fifteen is fourteen apps to open. What it buys is slack. Google wants twelve
@@ -64,8 +76,11 @@ object CrewRules {
 
     const val RUN_DAYS = 14
 
-    /** Agreeing verdicts needed either way. Two, so no single member decides anything. */
-    const val VERDICTS = 2
+    /** Reports from different members that send an app back before the run starts. */
+    const val REPORTS_TO_RETURN = 2
+
+    /** The shortest reason a report may give. The server refuses anything shorter. */
+    const val REPORT_MIN_CHARS = 10
 
     /**
      * Real foreground seconds before a night's open counts.
@@ -76,68 +91,55 @@ object CrewRules {
      */
     const val VISIT_SECONDS = 10
 
-    /**
-     * Seats filled, out of [SEATS].
-     *
-     * Only confirmed ones. A seat still being checked is somebody's intention, and a crew that
-     * started on intentions would start with apps nobody can install.
-     */
-    fun filled(seats: List<CrewSeat>) = seats.count { it.state == SeatState.CONFIRMED }
-
     /** What being in this many crews costs every evening, which is the only honest warning. */
     fun nightly(crews: Int) = crews * NIGHTLY
 }
 
 /**
- * One app's place in a crew, and how far along its check is.
+ * One app's place in a crew.
  *
- * The two verdict counts are kept rather than a list of who said what, because the screen never
- * shows who said what. Publishing that a named member failed to install your app turns a check
- * into an accusation, and the fix is the same either way.
+ * [reasons] and [outReason] are only ever filled in on your own seat: what reports said, and why
+ * it left, are for its owner and nobody else.
  */
 data class CrewSeat(
     val id: String,
     val appName: String,
     val owner: String,
-    /** Which crew it is in. Carried on the seat because verification is listed across crews. */
+    val packageName: String = "",
+    /** How a tester gets past the front door: a test login or a code. Read by the whole crew. */
+    val notes: String = "",
+    /** Which crew it is in. Carried on the seat because some lists span crews. */
     val crew: String = "",
-    val takenAt: Long = 0L,
-    val greens: Int = 0,
-    val reds: Int = 0,
-    /** This account's app. The one seat on the screen that is reported rather than judged. */
+    val state: SeatState = SeatState.CONFIRMED,
+    /** This account's app. */
     val mine: Boolean = false,
-    /**
-     * This account has already given a verdict on it, so it is off the list of things to do.
-     *
-     * Held per seat rather than as one flag, since a member works through the crew one app at a
-     * time and the screen has to know which ones are left.
-     */
-    val judged: Boolean = false,
-) {
-    val state: SeatState
-        get() =
-            when {
-                reds >= CrewRules.VERDICTS -> SeatState.REJECTED
-                greens >= CrewRules.VERDICTS -> SeatState.CONFIRMED
-                else -> SeatState.CHECKING
-            }
-}
+    val reports: Int = 0,
+    /** This account reported it. */
+    val reported: Boolean = false,
+    val reasons: List<String> = emptyList(),
+    val outReason: String = "",
+)
 
 /**
- * One member's fourteen days, from the outside.
+ * One member's fortnight, from the outside, in their own calendar.
  *
- * [today] is whether they have opened everything owed today, which is the only fact the run screen
- * is really about. [days] is how many they have completed, and it can differ between members of
- * one crew by a day, because a day is each member's own local one. See docs/crew.md.
+ * [day] is theirs, not the reader's: members keep their own midnights, so two people in one crew
+ * can be a day apart and both be on time. See docs/crew.md.
  */
 data class CrewMember(
+    val id: String,
     val name: String,
     val appName: String,
-    val days: Int = 0,
-    val today: Boolean = false,
+    val day: Int = 0,
+    val doneToday: Int = 0,
+    val owedToday: Int = 0,
+    /** Everything they owe today is opened. */
+    val nightDone: Boolean = false,
     val missed: Int = 0,
+    /** Yesterday was short: one more and their app leaves. */
+    val missedYesterday: Boolean = false,
     val mine: Boolean = false,
-    /** Gone. Two missed days in a row, or an app pulled. Kept on the list, greyed. */
+    /** Out of the run: two missed days in a row, or the team took the app out. */
     val out: Boolean = false,
 )
 
@@ -156,7 +158,7 @@ data class CrewApp(
     val owner: String,
     val crew: String = "",
     val done: Boolean = false,
-    /** Reported as broken by this account, so it is excused rather than owed. */
+    /** Reported by this account as not installing, so it is excused rather than owed. */
     val reported: Boolean = false,
 )
 
@@ -170,21 +172,31 @@ data class Crew(
     val id: String,
     val name: String,
     val phase: CrewPhase,
+    /** Still taking seats, on the server. A lobby can also be full and waiting for midnight. */
+    val filling: Boolean = false,
+    /** Seats holding a place, and those of them seen on Play. From the server, not the list. */
+    val taken: Int = 0,
+    val filled: Int = 0,
     val seats: List<CrewSeat> = emptyList(),
     val members: List<CrewMember> = emptyList(),
     val apps: List<CrewApp> = emptyList(),
     /** Which day of the run, in this account's own calendar. Zero before it starts. */
     val day: Int = 0,
-    /** Milliseconds until 12:01, once it is full. Zero when it is not waiting on anything. */
+    /** Milliseconds until this account's midnight, once it is full. */
     val startsIn: Long = 0L,
     /** How the fortnight went, once there is a fortnight to talk about. */
     val finishedDays: Int = 0,
-    val tixEarned: Int = 0,
 ) {
+    /** This account's seat in it, in whatever state. */
+    val mine: CrewSeat? get() = seats.firstOrNull { it.mine }
+
+    /** This account's app is no longer part of it. */
+    val out: Boolean get() = mine?.state == SeatState.REJECTED || mine?.state == SeatState.REMOVED
+
     /** Owed tonight, in this crew alone. */
     val owed: Int get() = apps.count { !it.done && !it.reported }
 
-    /** Days this account has already missed here. Two in a row and the app leaves. */
+    /** Days this account has already missed here. */
     val myMisses: Int get() = members.firstOrNull { it.mine }?.missed ?: 0
 
     /**
@@ -194,17 +206,21 @@ data class Crew(
      * gets through twenty of forty-two apps has chosen, without being told, which crews to lose;
      * the list can make that choice a good one by putting the costly rows first.
      */
-    val atRisk: Boolean get() = phase == CrewPhase.RUN && myMisses > 0
+    val atRisk: Boolean get() = phase == CrewPhase.RUN && members.firstOrNull { it.mine }?.missedYesterday == true
+
+    /** Members still in the run. */
+    val stayed: Int get() = members.count { !it.out }
 
     /** What the crew row says about itself, in one line. */
     val standing: String
         get() =
-            when (phase) {
-                CrewPhase.OPEN -> "${CrewRules.SEATS - CrewRules.filled(seats)} seats left"
-                CrewPhase.LOBBY ->
-                    "Filling · ${CrewRules.filled(seats)} of ${CrewRules.SEATS}"
-                CrewPhase.RUN -> "Day $day of ${CrewRules.RUN_DAYS}"
-                CrewPhase.RECORD -> "Finished · $finishedDays days"
+            when {
+                out && phase != CrewPhase.RECORD -> "Your app is out"
+                phase == CrewPhase.OPEN -> "${CrewRules.SEATS - taken} seats left"
+                phase == CrewPhase.LOBBY && filling -> "Filling · $filled of ${CrewRules.SEATS}"
+                phase == CrewPhase.LOBBY -> "Starts in ${untilStart(startsIn)}"
+                phase == CrewPhase.RUN -> "Day $day of ${CrewRules.RUN_DAYS}"
+                else -> "Finished · $finishedDays days"
             }
 }
 
