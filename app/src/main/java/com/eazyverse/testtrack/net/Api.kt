@@ -254,6 +254,9 @@ object Api {
 
     suspend fun playSession(): PlaySession = get("/play-console/session")
 
+    /** Lift the worker's stop and let it sign itself in once more. */
+    suspend fun playRetry(): PlaySession = post("/play-console/retry", JsonObject(emptyMap()))
+
     suspend fun playOpen(): JsonObject = post("/play-console/open", JsonObject(emptyMap()))
 
     /** The server browser's page, as a PNG. */

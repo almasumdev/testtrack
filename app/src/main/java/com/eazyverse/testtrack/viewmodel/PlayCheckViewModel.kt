@@ -71,6 +71,24 @@ class PlayCheckViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Let the server sign itself in again, with the password and authenticator code it holds.
+     * For after Google's extra question has been switched off for a few minutes in the
+     * Workspace admin console.
+     */
+    fun retry() =
+        act {
+            val after = Api.playRetry()
+            signedIn = after.signedIn
+            reason = after.reason
+            message =
+                if (after.signedIn) {
+                    "Signed in. Crew apps are checked on Play again."
+                } else {
+                    "Still signed out (${after.reason}). Turn off the login challenge for the account, then try again."
+                }
+        }
+
     /** Put the server's browser on Google's sign-in, and start showing it. */
     fun start() =
         act {

@@ -114,8 +114,18 @@ private fun PlayCheckSheet(
             Spacer(Modifier.height(14.dp))
 
             if (!vm.open) {
+                if (vm.signedIn != true) {
+                    Text(
+                        "To sign it in: in the Google Admin console open the account, Security, Login " +
+                            "challenge, and turn it off for 10 minutes. Then Try again here.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Primary(if (vm.busy) "Opening…" else "Open sign-in", enabled = !vm.busy) { vm.start() }
+                    Primary(if (vm.busy) "Trying…" else "Try again", enabled = !vm.busy) { vm.retry() }
+                    Secondary("Open sign-in", enabled = !vm.busy) { vm.start() }
                     Secondary("Close", onClick = onClose)
                 }
                 return@Column
