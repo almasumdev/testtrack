@@ -86,8 +86,12 @@ The owner reads `GET /reviews/waiting` and answers `/approve` or `/reject`.
 A rejection opens a dispute: `GET /disputes`, `POST /disputes/{id}/vote`.
 
 **Crew** — `GET /crews` (the tab, with members), `GET /crews/{id}` (members only),
-`POST /crews/seats`, `DELETE /crews/seats/{id}`, `POST /crews/seats/{id}/verdict`,
-`POST /crews/seats/{id}/visit`.
+`POST /crews/seats` (checks the app on Play first), `DELETE /crews/seats/{id}`,
+`POST /crews/seats/{id}/report`, `POST /crews/seats/{id}/visit`. Admins:
+`POST /crews/admin/{id}/start`, `POST /crews/admin/seats/{id}/remove`, and `/play-console/*` for
+the Play check's Google sign-in.
+
+**Push** — `PUT /me/push-token`, `DELETE /me/push-token?token=…`.
 
 The full schema is served live at `/api/v1/openapi.json`, and an instrumented test
 (`ApiContractTest`) reads it from a device and fails if a field the Kotlin models expect has
@@ -129,11 +133,19 @@ Publishing happens *inside* the writing transaction, so the number a change take
 against every other change on that channel. An event published after the commit can overtake one
 published before it, which is how a client ends up applying yesterday's state over today's.
 
+Push, separately, is how a phone hears about something while the app is closed. Services queue a
+note with `app/services/notify.py`; it goes out over Firebase Cloud Messaging (HTTP v1, the
+service account in `FCM_CREDENTIALS_B64`) only after the commit, data-only, to every token the
+person has registered. Crew notes: the crew is full, a report on your app, an app sent back, a
+missed day, out of the run, the evening reminder, the crew finished. Feedback notes: a review to
+check, accepted, refused, settled, ran out; the app's half-hourly `FeedbackWatch` is kept as a
+backstop and is told what push already said.
+
 Events currently published:
 
 ```
 post.created  post.changed   review.submitted  review.approved  review.disputed
-seat.taken    seat.judged    seat.left         seat.mine        crew.changed
+seat.taken    seat.left      seat.mine         crew.changed
 crew.filled   visit.recorded dispute.opened    dispute.changed  tix.changed
 ```
 
@@ -144,7 +156,8 @@ app mirrors it in `ui/CrewModels.kt` as `CrewRules`, which an endpoint test chec
 
 ```
 REVIEWS_BOUGHT 3    USE_SECONDS 30   APPROVE_WINDOW_HOURS 48   JURORS 3
-SEATS 15            RUN_DAYS 14      VERDICTS 2                CONFIRM_FLOOR 3
+SEATS 15            RUN_DAYS 14      REPORTS_TO_RETURN 2       MISSES_IN_A_ROW 2
+REMIND_HOUR 20      UNCHECKED_AFTER_HOURS 12
 OPEN_POINTS 1       REVIEW_POINTS 5
 ```
 
@@ -207,10 +220,6 @@ Honest list, so this file does not become another one that lies.
   while you watch shows the old count until you leave and come back.
 - **Login and setup.** Sign-in works, but the setup checklist behind it is still the Firestore-era
   flow built on Drive and an Apps Script endpoint. Being replaced.
-- **An unresolved contradiction.** `held_before_start` refuses a new seat while you hold one in a
-  crew that is `FILLING` *or* `FULL`. `FULL` means running, so the backend permits one crew at a
-  time, ever — while the app's own copy assumes several ("two crews is twenty-eight apps a
-  night"). One of the two is wrong and it has not been decided which.
 - **The old half.** Roughly 7,900 lines of Firestore screens still ship: Home, Group, Dashboard,
   Setup, Submit, and the services under them. Largely untested, and the reason `data/` has almost
   no coverage.
@@ -220,6 +229,18 @@ Honest list, so this file does not become another one that lies.
 ### Recently closed
 
 Worth naming, because each was a journey that could not complete:
+
+- Crews could fill but never finish, and a member could never join a second one. The sweep now
+  closes a crew after its last member's day 14, and only a crew still *filling* holds your next
+  seat; any number of running crews is fine.
+- Seats were confirmed by members' votes, which a quiet crew never cast. The server now checks
+  the app's closed test on Play through a browser signed in as a testers-group account, and
+  members report rather than vote.
+- Missed days were counted and nothing happened. One gets a warning, two in a row take the app
+  out of the run.
+- The Play check's browser could not sign itself back in once Google ended its session; it never
+  went to the sign-in page. It does now, and answers "verify it's you" with the account's own
+  authenticator where Google offers it.
 
 - A crew visit was recorded on a button press and opened nothing, so one tap credited a night.
   It now launches the app and measures real foreground time, and the server holds it to ten

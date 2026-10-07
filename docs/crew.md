@@ -1,6 +1,6 @@
 # Crews
 
-> **This is the plan, not the state.** Written before any of it was built and kept as the record of what was decided and why. For what actually runs and how the app talks to it, see [architecture.md](architecture.md).
+> **This is the plan, not the state.** Written before any of it was built and kept as the record of what was decided and why. For what actually runs and how the app talks to it, see [architecture.md](architecture.md). Where the plan changed in October 2026, it says so below.
 
 Replaces admin-assigned groups. Decided September 2026.
 
@@ -28,13 +28,24 @@ copy decision, not a schema one.
   for fourteen nights. Google requires twelve testers, so fifteen carries three dropouts of slack.
 - **A crew starts when it reaches fifteen and not before.** There is no automatic start at a lower
   number. A crew that stalls at thirteen is an admin problem, handled from the console.
-- **One app per crew, and a person may be in several crews at once.** A developer with three apps
+- **One app per crew, and a person may be in several crews at once.** Built: only a crew still
+  *filling* holds your next seat, so one app waits at a time and any number run. A developer with three apps
   can have all three in flight. What that costs is nightly: each crew is fourteen apps, so two
   crews is twenty-eight a night and three is forty-two. The number of crews somebody is in is the
   single biggest predictor of whether they miss a day, so the count needs a cap and the app has to
   say the nightly total out loud before somebody takes a second seat.
 
 ## Verification, in place of the admin
+
+> **Changed, October 2026: the server checks Play; members report instead of voting.** Taking a
+> seat makes the server open the app's closed-testing listing in a browser signed in as an
+> account on the testers group, which is exactly what a member will see. Visible: the app is in at
+> once. Not visible: the seat is refused with how to fix it (usually the testers group missing from
+> the track). Checker down: the seat waits, is retried by the sweep, and goes in unchecked after
+> 12 hours. Members can **report** an app with a written reason; the owner is told at once without
+> the reporter's name; two reports before the run starts send it back (a full crew goes back to
+> filling); during the run a report only tells the owner and the team, and excuses the reporter
+> from that app. The rest of this section is the voting design it replaced.
 
 A seat counts toward the fifteen only once other members confirm the app installs.
 
@@ -100,9 +111,14 @@ The lobby is the new screen and the interesting one. It is the only place in the
 members do something together before the run, and it is what makes a crew feel like a crew rather
 than a queue.
 
+## Missed days
+
+Decided October 2026, from the rule the app had always shown: miss a day (anything owed left
+unopened at your own midnight) and you get a warning; miss two in a row and your app leaves the
+run, nobody opens it any more and you owe nothing more there. An app you reported is not counted
+against you. Every member gets an evening reminder at 20:00 their time while anything is left.
+
 ## Still open
 
-- The admin console needs a force-start action for stalled crews, and still says "group" throughout
-  its own UI.
-- Nothing here is wired to Firestore. The UI is being built against in-memory state first, the same
-  way Circle was.
+- No admin console page yet. Force-start and taking an app out are admin endpoints
+  (`/crews/admin/...`), logged with who and why.
