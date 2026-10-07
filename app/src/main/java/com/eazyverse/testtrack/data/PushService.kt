@@ -61,6 +61,12 @@ class PushService : FirebaseMessagingService() {
         PushRepo.ensureChannel(this)
         if (!PushRepo.granted(this)) return
 
+        // Feedback has its own channel and its own memory of what it has already said.
+        if (data["kind"] == "feedback") {
+            FeedbackWatch.fromPush(this, title, body, data["event"].orEmpty(), data["ref"].orEmpty())
+            return
+        }
+
         val intent =
             Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP

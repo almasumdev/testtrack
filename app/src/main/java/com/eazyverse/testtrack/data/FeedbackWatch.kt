@@ -25,9 +25,10 @@ import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 /**
- * Feedback news, on the phone, without a push service.
+ * Feedback news, as a backstop for push.
  *
- * Every half hour, with a connection, it asks the server what the To check and My reviews tabs
+ * The server pushes each of these the moment it happens (see [fromPush]); this catches anything a
+ * push missed. Every half hour, with a connection, it asks the server what the To check and My reviews tabs
  * would show and compares that with what it saw last time. Anything new becomes a notification:
  * a review of your app to check, one about to accept itself, your own review accepted, refused,
  * settled or run out, and cases waiting on a juror. The server sends nothing; the phone notices.
@@ -148,6 +149,40 @@ class FeedbackWatch(
                     .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                     .build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, work)
+        }
+
+        /**
+         * A push about feedback arrived from the server: draw it on this channel, and remember it
+         * was said, so the next half-hourly pass does not say it again.
+         */
+        fun fromPush(
+            context: Context,
+            title: String,
+            body: String,
+            event: String,
+            ref: String,
+        ) {
+            val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            if (ref.isNotEmpty()) {
+                prefs.edit {
+                    when (event) {
+                        "new_review" ->
+                            putStringSet(KEY_WAITING, prefs.getStringSet(KEY_WAITING, emptySet()).orEmpty() + ref)
+                        "approved", "disputed", "rejected", "expired" ->
+                            putStringSet(
+                                KEY_STATES,
+                                prefs
+                                    .getStringSet(KEY_STATES, emptySet())
+                                    .orEmpty()
+                                    .filterNot { it.startsWith("$ref=") }
+                                    .toSet() +
+                                    "$ref=$event",
+                            )
+                    }
+                }
+            }
+            ensureChannel(context)
+            post(context, title, body)
         }
 
         /** On sign-out: stop, and forget what was seen, so the next account starts fresh. */
