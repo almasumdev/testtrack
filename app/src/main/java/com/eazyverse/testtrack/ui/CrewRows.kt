@@ -111,7 +111,11 @@ fun CrewSeatRow(
                 )
             }
             Spacer(Modifier.width(10.dp))
-            if (seat.reported) Pill("Reported", Status.short, Status.shortSoft) else SeatPill(seat.state)
+            // Only where it says something: every app on this list is in, so "In" on each is noise.
+            when {
+                seat.reported -> Pill("Reported", Status.short, Status.shortSoft)
+                seat.state != SeatState.CONFIRMED -> SeatPill(seat.state)
+            }
         }
         if (seat.notes.isNotBlank()) {
             Spacer(Modifier.height(8.dp))

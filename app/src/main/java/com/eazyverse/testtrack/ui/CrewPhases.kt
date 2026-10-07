@@ -119,9 +119,9 @@ private fun YourSeat(
                     when (mine.state) {
                         SeatState.CONFIRMED ->
                             if (mine.reports > 0) {
-                                "In. ${mine.reports} of ${CrewRules.REPORTS_TO_RETURN} reports so far."
+                                "Play shows it to the testers group. ${mine.reports} of ${CrewRules.REPORTS_TO_RETURN} reports so far."
                             } else {
-                                "In. Play shows it to the testers group."
+                                "Play shows it to the testers group."
                             }
                         SeatState.CHECKING -> "Waiting for Play. We check it again every few minutes."
                         SeatState.REJECTED, SeatState.REMOVED -> mine.outReason.ifBlank { "It came back to you." }
