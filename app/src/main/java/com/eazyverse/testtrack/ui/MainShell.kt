@@ -1,35 +1,21 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -42,17 +28,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -64,7 +45,6 @@ import com.composables.icons.lucide.Trophy
 import com.composables.icons.lucide.User
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.data.Session
-import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.HudViewModel
 
 /**
@@ -235,72 +215,80 @@ fun MainShell(
                     .padding(top = padding.calculateTopPadding()),
             ) {
                 CompositionLocalProvider(LocalDockRoom provides dockHeight) {
-                    when (tab) {
-                        MainTab.CIRCLE ->
-                            FeedScreen(
-                                onReview = onReview,
-                                onCheck = onCheck,
-                                onAsk = onAskForFeedback,
-                                onSignIn = {
-                                    asking =
-                                        SignInReason(
-                                            title = "Sign in to see what is waiting",
-                                            why =
-                                                "Reviews of your apps and cases you are asked to decide " +
-                                                    "are addressed to an account. The rest of Circle " +
-                                                    "you can read without one.",
-                                        )
-                                },
-                            )
+                    // Fade through rather than cut or cross-fade: the old page goes first, then the new
+                    // one comes in, so two pages' tabs and headings never sit on top of each other.
+                    AnimatedContent(
+                        tab,
+                        transitionSpec = { fadeIn(tween(160, delayMillis = 80)) togetherWith fadeOut(tween(80)) },
+                        label = "page",
+                    ) { page ->
+                        when (page) {
+                            MainTab.CIRCLE ->
+                                FeedScreen(
+                                    onReview = onReview,
+                                    onCheck = onCheck,
+                                    onAsk = onAskForFeedback,
+                                    onSignIn = {
+                                        asking =
+                                            SignInReason(
+                                                title = "Sign in to see what is waiting",
+                                                why =
+                                                    "Reviews of your apps and cases you are asked to decide " +
+                                                        "are addressed to an account. The rest of Circle " +
+                                                        "you can read without one.",
+                                            )
+                                    },
+                                )
 
-                        // The new crew screens, running on in-memory state. HomeScreen and the group
-                        // screens it pushes are still on disk and still work; nothing points at them from
-                        // the bar while this is being built. See docs/crew.md.
-                        MainTab.GROUPS ->
-                            CrewScreen(
-                                onSignIn = {
-                                    asking =
-                                        SignInReason(
-                                            title = "Sign in to see your crews",
-                                            why =
-                                                "Which seats are yours, what you owe tonight and what " +
-                                                    "you have finished all hang off the account. Open " +
-                                                    "reads without one.",
-                                        )
-                                },
-                            )
+                            // The new crew screens, running on in-memory state. HomeScreen and the group
+                            // screens it pushes are still on disk and still work; nothing points at them from
+                            // the bar while this is being built. See docs/crew.md.
+                            MainTab.GROUPS ->
+                                CrewScreen(
+                                    onSignIn = {
+                                        asking =
+                                            SignInReason(
+                                                title = "Sign in to see your crews",
+                                                why =
+                                                    "Which seats are yours, what you owe tonight and what " +
+                                                        "you have finished all hang off the account. Open " +
+                                                        "reads without one.",
+                                            )
+                                    },
+                                )
 
-                        MainTab.RANKS -> RanksScreen()
+                            MainTab.RANKS -> RanksScreen()
 
-                        MainTab.APPS ->
-                            AppsScreen(
-                                onSignIn = {
-                                    asking =
-                                        SignInReason(
-                                            title = "Sign in to see your apps",
-                                            why =
-                                                "This is the list of what you have put up, so it needs " +
-                                                    "to know who you are. Everything else in TestTrack " +
-                                                    "you can read without an account.",
-                                        )
-                                },
-                            )
+                            MainTab.APPS ->
+                                AppsScreen(
+                                    onSignIn = {
+                                        asking =
+                                            SignInReason(
+                                                title = "Sign in to see your apps",
+                                                why =
+                                                    "This is the list of what you have put up, so it needs " +
+                                                        "to know who you are. Everything else in TestTrack " +
+                                                        "you can read without an account.",
+                                            )
+                                    },
+                                )
 
-                        MainTab.PROFILE ->
-                            MeScreen(
-                                onSignOut = onSignOut,
-                                onOpenRanks = { show(MainTab.RANKS) },
-                                onSignIn = {
-                                    asking =
-                                        SignInReason(
-                                            title = "Sign in to see your record",
-                                            why =
-                                                "Your level, your tix and what you have done belong to " +
-                                                    "the account. Everything else in TestTrack you can " +
-                                                    "read without one.",
-                                        )
-                                },
-                            )
+                            MainTab.PROFILE ->
+                                MeScreen(
+                                    onSignOut = onSignOut,
+                                    onOpenRanks = { show(MainTab.RANKS) },
+                                    onSignIn = {
+                                        asking =
+                                            SignInReason(
+                                                title = "Sign in to see your record",
+                                                why =
+                                                    "Your level, your tix and what you have done belong to " +
+                                                        "the account. Everything else in TestTrack you can " +
+                                                        "read without one.",
+                                            )
+                                    },
+                                )
+                        }
                     }
                 }
             }
@@ -326,95 +314,6 @@ fun MainShell(
                 hudVm.load(context)
             },
         )
-    }
-}
-
-/**
- * The bar itself: Value Guard's floating dock.
- *
- * A pill that floats over the ground rather than a strip bolted to the bottom edge. Every tab but
- * the current one is just its icon; the current one grows into a filled pill with its name beside
- * the icon, so where you are is said once, in words, and the other four stay out of the way. In
- * dark the selected pill is a wash rather than a fill, so it does not outshout the page.
- */
-@Composable
-private fun MainBar(
-    selected: MainTab,
-    onSelect: (MainTab) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val t = Tt.colors
-    val shape = RoundedCornerShape(32.dp)
-    Box(
-        modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(start = DockInset, end = DockInset, top = 6.dp, bottom = 12.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Row(
-            Modifier
-                .widthIn(max = 480.dp)
-                .fillMaxWidth()
-                .shadow(18.dp, shape, ambientColor = t.shadow.copy(alpha = 0.25f), spotColor = t.shadow.copy(alpha = 0.25f))
-                .clip(shape)
-                .background(t.dock)
-                .border(1.dp, t.glassBorder, shape)
-                .padding(4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            MainTab.entries.forEach { tab ->
-                MainBarItem(tab, tab == selected) { onSelect(tab) }
-            }
-        }
-    }
-}
-
-private val DockInset = 20.dp
-
-@Composable
-private fun RowScope.MainBarItem(
-    tab: MainTab,
-    current: Boolean,
-    onSelect: () -> Unit,
-) {
-    val t = Tt.colors
-    val fill by animateColorAsState(
-        if (current) t.selectedFill else Color.Transparent,
-        tween(250),
-        label = "fill",
-    )
-    val ink by animateColorAsState(
-        if (current) t.onSelected else t.dockInk,
-        tween(250),
-        label = "ink",
-    )
-    Row(
-        Modifier
-            // The current tab takes the room its label needs; the others share what is left.
-            .then(if (current) Modifier else Modifier.weight(1f))
-            .height(48.dp)
-            .clip(RoundedCornerShape(percent = 50))
-            .background(fill)
-            // `selectable` carries the selected state into the accessibility tree, and Tab is the
-            // role a screen reader announces for one of a set of five.
-            .selectable(selected = current, role = Role.Tab, onClick = onSelect)
-            .animateContentSize(tween(250))
-            .padding(horizontal = if (current) 16.dp else 0.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(tab.icon, if (current) null else tab.label, Modifier.size(22.dp), tint = ink)
-        if (current) {
-            Spacer(Modifier.width(8.dp))
-            Text(
-                tab.label,
-                style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
-                fontWeight = FontWeight.SemiBold,
-                color = ink,
-                maxLines = 1,
-            )
-        }
     }
 }
 
