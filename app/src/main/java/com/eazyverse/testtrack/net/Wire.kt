@@ -309,29 +309,6 @@ data class ReportIn(
     val reason: String,
 )
 
-/** Whether the server's Play-check browser is signed in to Google, and if not, why. */
-@Serializable
-data class PlaySession(
-    @SerialName("signed_in") val signedIn: Boolean = false,
-    val reason: String = "",
-)
-
-@Serializable
-data class PlayPoint(
-    val x: Int,
-    val y: Int,
-)
-
-@Serializable
-data class PlayText(
-    val text: String,
-)
-
-@Serializable
-data class PlayKey(
-    val name: String,
-)
-
 @Serializable
 data class PushTokenIn(
     val token: String,

@@ -215,9 +215,12 @@ server is by definition not what was reviewed.
 
 Honest list, so this file does not become another one that lies.
 
-- **Realtime in the app.** The server publishes correctly and nothing listens: there is no socket
-  client, not even the URL. Screens refetch on arrival and after each action, so a crew filling
-  while you watch shows the old count until you leave and come back.
+- **Realtime beyond Crew.** The Crew tab listens (`net/Live.kt`): it opens the socket while it is
+  showing, asks for its crews' channels, and refetches a moment after anything arrives. Circle and
+  the rest still refetch only on arrival and after each action.
+- **The admin panel.** Admin actions (force-start a crew, take an app out, the Play check's Google
+  sign-in) exist as admin endpoints; the panel that calls them is not built, and the app has no
+  admin screens on purpose.
 - **Login and setup.** Sign-in works, but the setup checklist behind it is still the Firestore-era
   flow built on Drive and an Apps Script endpoint. Being replaced.
 - **The old half.** Roughly 7,900 lines of Firestore screens still ship: Home, Group, Dashboard,

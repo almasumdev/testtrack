@@ -2,8 +2,6 @@ package com.eazyverse.testtrack.ui
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,7 +12,10 @@ import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
+import com.eazyverse.testtrack.net.Live
 import com.eazyverse.testtrack.net.SeatIn
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.TimeZone
 
@@ -153,6 +154,7 @@ class CrewViewModel : ViewModel() {
         crews = answer.mine.map { it.toCrew() }
         open = answer.open?.toCrew(member = false)
         blocked = answer.blocked
+        if (live?.isActive == true && !signedOut) Live.watch(crews.map { "crew:${it.id}" }.toSet())
 
         // Opened on whichever has something owed rather than always the same one, and only the
         // first time: moving somebody's tab under them after they have chosen is worse than
@@ -298,20 +300,6 @@ class CrewViewModel : ViewModel() {
                 }
         },
     ) { Api.report(seatId, reason) }
-
-    /**
-     * The app's closed test on Play: the page where a tester joins it and then installs.
-     *
-     * The opt-in page rather than the listing, because a closed test has to be joined before Play
-     * will offer the install, and the listing on its own says "not found" until then.
-     */
-    fun openOnPlay(
-        context: Context,
-        packageName: String,
-    ) {
-        val page = Uri.parse("https://play.google.com/apps/testing/$packageName")
-        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, page).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-    }
 
     /**
      * The app somebody was sent to, and when. Null when nothing is in flight.
@@ -475,6 +463,31 @@ class CrewViewModel : ViewModel() {
                 message = "We could not reach TestTrack. Check your connection."
             }
         }
+    }
+
+    private var live: Job? = null
+
+    /** Redraw when anything in your crews changes while showing; a burst of events is one fetch. */
+    fun startLive(context: Context) {
+        live?.cancel()
+        live =
+            viewModelScope.launch {
+                var pending: Job? = null
+                Live.events.collect {
+                    pending?.cancel()
+                    pending =
+                        launch {
+                            delay(700)
+                            load(context)
+                        }
+                }
+            }
+        if (!signedOut) Live.watch(crews.map { "crew:${it.id}" }.toSet())
+    }
+
+    fun stopLive() {
+        live?.cancel()
+        Live.stop()
     }
 
     private suspend fun reload() {

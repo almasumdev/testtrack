@@ -1,5 +1,8 @@
 package com.eazyverse.testtrack.ui
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,10 +70,20 @@ fun CrewScreen(
     DisposableEffect(owner) {
         val watcher =
             LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) vm.settle(context)
+                when (event) {
+                    Lifecycle.Event.ON_RESUME -> {
+                        vm.settle(context)
+                        vm.startLive(context)
+                    }
+                    Lifecycle.Event.ON_PAUSE -> vm.stopLive()
+                    else -> Unit
+                }
             }
         owner.lifecycle.addObserver(watcher)
-        onDispose { owner.lifecycle.removeObserver(watcher) }
+        onDispose {
+            owner.lifecycle.removeObserver(watcher)
+            vm.stopLive()
+        }
     }
     val crew = vm.current
 
@@ -82,7 +95,7 @@ fun CrewScreen(
         CrewActions(
             onOpen = { app -> membership.require { vm.openApp(context, app) } },
             onOpenAll = { id -> membership.require { vm.openAll(context, id) } },
-            onInstall = { seat -> membership.require { vm.openOnPlay(context, seat.packageName) } },
+            onInstall = { seat -> membership.require { openOnPlay(context, seat.packageName) } },
             onReport = { reporting = it },
             onLeave = { leaving = it },
             onTakeSeat = { if (vm.signedOut) onSignIn() else membership.require { taking = true } },
@@ -348,4 +361,18 @@ fun CrewReportDialog(
             )
         },
     )
+}
+
+/**
+ * The app's closed test on Play: the page where a tester joins it and then installs.
+ *
+ * The opt-in page rather than the listing, because a closed test has to be joined before Play
+ * will offer the install, and the listing on its own says "not found" until then.
+ */
+private fun openOnPlay(
+    context: Context,
+    packageName: String,
+) {
+    val page = Uri.parse("https://play.google.com/apps/testing/$packageName")
+    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, page).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
 }

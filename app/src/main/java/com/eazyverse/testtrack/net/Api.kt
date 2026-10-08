@@ -4,7 +4,6 @@ import com.eazyverse.testtrack.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -249,45 +248,6 @@ object Api {
                 .url(url("/me/push-token?token=" + java.net.URLEncoder.encode(token, "UTF-8")))
                 .delete(),
         )
-
-    // ---------------------------------------------------------------- the Play check (admins)
-
-    suspend fun playSession(): PlaySession = get("/play-console/session")
-
-    /** Lift the worker's stop and let it sign itself in once more. */
-    suspend fun playRetry(): PlaySession = post("/play-console/retry", JsonObject(emptyMap()))
-
-    suspend fun playOpen(): JsonObject = post("/play-console/open", JsonObject(emptyMap()))
-
-    /** The server browser's page, as a PNG. */
-    suspend fun playScreen(): ByteArray =
-        withContext(Dispatchers.IO) {
-            val builder = Request.Builder().url(url("/play-console/screen")).get()
-            var token = ApiSession.access
-            var response = http.newCall(builder.header("Authorization", "Bearer $token").build()).execute()
-            if (response.code == 401 && refreshQuietly(token)) {
-                response.close()
-                token = ApiSession.access
-                response = http.newCall(builder.header("Authorization", "Bearer $token").build()).execute()
-            }
-            response.use {
-                if (it.code !in 200..299) throw failure(it.code, it.body?.string().orEmpty())
-                it.body?.bytes() ?: ByteArray(0)
-            }
-        }
-
-    suspend fun playClick(
-        x: Int,
-        y: Int,
-    ): JsonObject = post("/play-console/click", PlayPoint(x, y))
-
-    suspend fun playType(text: String): JsonObject = post("/play-console/type", PlayText(text))
-
-    suspend fun playKey(name: String): JsonObject = post("/play-console/key", PlayKey(name))
-
-    suspend fun playFinish(): PlaySession = post("/play-console/finish", JsonObject(emptyMap()))
-
-    suspend fun playCancel(): PlaySession = post("/play-console/cancel", JsonObject(emptyMap()))
 
     // ------------------------------------------- standing, apps and the profile
 
