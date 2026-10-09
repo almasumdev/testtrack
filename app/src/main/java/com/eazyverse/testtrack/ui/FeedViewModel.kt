@@ -144,8 +144,9 @@ class FeedViewModel : ViewModel() {
      * the session anyway.
      */
     private suspend fun seedFromPhone() {
-        // A kept answer counts as answered, even an empty one: no requests last time shows as none.
-        Api.lastPosts()?.let {
+        // Kept requests show at once. None kept means the tab waits for the server, so it never
+        // says "nobody's asking" from memory and then has a card arrive under the words.
+        Api.lastPosts()?.takeIf { it.posts.isNotEmpty() }?.let {
             posts = it.posts
             cursor = it.nextCursor
             loading = false

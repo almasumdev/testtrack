@@ -93,9 +93,9 @@ class RanksViewModel : ViewModel() {
             val startedAt = System.currentTimeMillis()
             if (fromPull) pulling = true
             if (rows.isEmpty()) {
-                // Kept answers count as answered, so an empty board kept from last time shows as empty
-                // rather than as still loading.
-                Api.lastBoard()?.let {
+                // Only a kept board with people on it. An empty one waits for the server: "nobody yet"
+                // is a claim about now, and saying it from last time could be wrong by the next frame.
+                Api.lastBoard()?.takeIf { it.rows.isNotEmpty() }?.let {
                     rows = it.rows
                     mine = it.mine
                     loading = false
@@ -156,7 +156,7 @@ class AppsViewModel : ViewModel() {
     fun load(context: Context) {
         viewModelScope.launch {
             if (apps.isEmpty()) {
-                Api.lastMyApps()?.let {
+                Api.lastMyApps()?.takeIf { it.apps.isNotEmpty() }?.let {
                     apps = it.apps
                     loading = false
                 }

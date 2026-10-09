@@ -140,7 +140,9 @@ class CrewViewModel : ViewModel() {
     fun load(context: Context) {
         viewModelScope.launch {
             if (crews.isEmpty() && open == null) {
-                Api.lastCrews()?.let {
+                // Kept crews show at once; with none kept, the tabs wait for the server rather than
+                // say "nothing running" from memory.
+                Api.lastCrews()?.takeIf { it.mine.isNotEmpty() }?.let {
                     apply(it)
                     loading = false
                 }
