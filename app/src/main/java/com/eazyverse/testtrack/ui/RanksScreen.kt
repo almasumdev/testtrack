@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Trophy
+import com.composables.icons.lucide.WifiOff
 import com.eazyverse.testtrack.net.BoardRow
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
@@ -123,10 +124,12 @@ fun RanksBody(
     // Not the signed-out case. The board reads without an account, and somebody deciding whether
     // this is worth joining is exactly who most needs to see that people are doing the work.
     if (offline) {
-        EmptyState(
-            icon = Lucide.Trophy,
-            title = "The board did not load",
-            subtitle = "Check your connection and pull to try again.",
+        // The robot, like every other screen that has nothing to show, rather than a lone tile.
+        RobotState(
+            Lucide.WifiOff,
+            "The board did not load",
+            "Check your connection and pull to try again.",
+            failed = true,
         )
         return
     }
@@ -135,12 +138,11 @@ fun RanksBody(
         return
     }
     if (rows.isEmpty()) {
-        EmptyState(
-            icon = Lucide.Trophy,
-            title = "Nobody has started yet",
-            subtitle =
-                "Open the apps in your crew, or get a review accepted in Circle, and you'll be " +
-                    "the first one here.",
+        RobotState(
+            Lucide.Trophy,
+            "Nobody has started yet",
+            "Open the apps in your crew, or get a review accepted in Circle, and you'll be the " +
+                "first one here.",
         )
         return
     }
