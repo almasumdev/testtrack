@@ -76,12 +76,6 @@ class StandingTest {
     }
 
     @Test
-    fun an_app_being_checked_says_it_is_waiting_for_play() {
-        val line = appStanding(app("checking"))
-        assertTrue(line, line.contains("waiting for Play"))
-    }
-
-    @Test
     fun a_rejected_app_says_what_to_do_rather_than_only_that_it_failed() {
         // The owner can fix this and send it back to the same crew, so the row says so.
         val line = appStanding(app("rejected"))
@@ -107,5 +101,26 @@ class StandingTest {
         // A server ahead of the app. The row has to stay readable rather than go blank.
         assertEquals("Crew 07", appStanding(app("some_new_state")))
         assertEquals("Up", appLabel("some_new_state"))
+    }
+
+    @Test
+    fun a_full_crew_waiting_for_midnight_says_so_rather_than_filling() {
+        assertEquals("Starting", appLabel("starting"))
+        assertTrue(appStanding(app("starting")).contains("midnight"))
+        assertEquals("Crew full", stageOf(app("starting"))?.title)
+    }
+
+    @Test
+    fun an_app_waiting_on_members_shows_their_answers() {
+        val line = appStanding(app("checking", greens = 1))
+        assertTrue(line, line.contains("1 Yes"))
+        assertEquals("Members are trying it", stageOf(app("checking", greens = 1))?.title)
+    }
+
+    @Test
+    fun a_request_closed_early_is_over_and_says_how_far_it_got() {
+        assertEquals("Closed", appLabel("closed"))
+        val line = appStanding(app("closed", kind = "post", where = "Circle", testers = 1))
+        assertTrue(line, line.contains("1 of 3"))
     }
 }

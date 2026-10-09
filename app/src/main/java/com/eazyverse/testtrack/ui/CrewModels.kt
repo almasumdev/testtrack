@@ -79,6 +79,9 @@ object CrewRules {
     /** Reports from different members that send an app back before the run starts. */
     const val REPORTS_TO_RETURN = 2
 
+    /** Members' answers, either way, that decide an app the Play check could not look at. */
+    const val VOTES_TO_DECIDE = 2
+
     /** The shortest reason a report may give. The server refuses anything shorter. */
     const val REPORT_MIN_CHARS = 10
 

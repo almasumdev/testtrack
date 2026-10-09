@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -44,6 +45,10 @@ import com.eazyverse.testtrack.net.ApiMyApp
 @Composable
 fun AppsScreen(
     onSignIn: () -> Unit = {},
+    /** A crew app: its crew, on the Crew tab. */
+    onOpenCrew: (String) -> Unit = {},
+    /** A Circle request: its page, with the reviews it has had. */
+    onOpenRequest: (String) -> Unit = {},
     vm: AppsViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -55,6 +60,10 @@ fun AppsScreen(
         offline = vm.offline,
         signedOut = vm.signedOut,
         onSignIn = onSignIn,
+        onRetry = { vm.load(context) },
+        onOpen = { app ->
+            if (app.kind == "crew") app.crewId?.let(onOpenCrew) else onOpenRequest(app.id)
+        },
     )
 }
 
@@ -66,6 +75,8 @@ fun AppsBody(
     offline: Boolean = false,
     signedOut: Boolean = false,
     onSignIn: () -> Unit = {},
+    onRetry: () -> Unit = {},
+    onOpen: (ApiMyApp) -> Unit = {},
 ) {
     // Asked for here rather than at the door. Somebody can read the feed, the crews and the board
     // without an account; this is the first screen that cannot answer without knowing who they
@@ -80,11 +91,7 @@ fun AppsBody(
         return
     }
     if (offline) {
-        EmptyState(
-            icon = Lucide.LayoutGrid,
-            title = "Your apps did not load",
-            subtitle = "Check your connection and try again.",
-        )
+        RobotOffline("Your apps did not load", onRetry = onRetry)
         return
     }
     if (loading && apps.isEmpty()) {
@@ -92,12 +99,12 @@ fun AppsBody(
         return
     }
     if (apps.isEmpty()) {
-        EmptyState(
-            icon = Lucide.LayoutGrid,
-            title = "Nothing up yet",
-            subtitle =
-                "Put an app into a crew to get a fortnight of testing, or ask Circle for a " +
-                    "review. Whatever you send lands here.",
+        // The robot, like every other tab with nothing to show.
+        RobotState(
+            Lucide.LayoutGrid,
+            "Nothing up yet",
+            "Put an app into a crew to get a fortnight of testing, or ask Circle for a review. " +
+                "Whatever you send lands here.",
         )
         return
     }
@@ -115,13 +122,13 @@ fun AppsBody(
         if (running.isNotEmpty()) {
             item { CrewHeading("Going on", trailing = "${running.size}") }
             items(running, key = { it.id }) { app ->
-                MyAppCard(app, Modifier.padding(horizontal = Gutter, vertical = 5.dp))
+                MyAppCard(app, Modifier.padding(horizontal = Gutter, vertical = 5.dp), onOpen = { onOpen(app) })
             }
         }
         if (over.isNotEmpty()) {
             item { CrewHeading("Finished", trailing = "${over.size}") }
             itemsIndexed(over, key = { _, app -> app.id }) { index, app ->
-                ListTile(index, over.size) { MyAppRow(app) }
+                ListTile(index, over.size) { MyAppRow(app, onOpen = { onOpen(app) }) }
             }
         }
     }
@@ -139,8 +146,9 @@ fun AppsBody(
 fun MyAppCard(
     app: ApiMyApp,
     modifier: Modifier = Modifier,
+    onOpen: (() -> Unit)? = null,
 ) {
-    CrewCard(modifier) {
+    CrewCard(modifier, onClick = onOpen) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             AppTile(app.appName)
             Spacer(Modifier.width(12.dp))
@@ -234,21 +242,30 @@ fun stageOf(app: ApiMyApp): AppStage? =
     when (app.state) {
         "waiting" ->
             if (app.kind == "crew") {
+                // The others in it so far: the count does not include this app.
                 AppStage(
                     title = "Filling the crew",
-                    count = "${app.testers} of ${CrewRules.SEATS} seats",
-                    done = app.testers,
+                    count = "${app.testers + 1} of ${CrewRules.SEATS} seats",
+                    done = app.testers + 1,
                     total = CrewRules.SEATS,
                 )
             } else {
                 null
             }
-        "checking" ->
+        "starting" ->
             AppStage(
-                title = "Play check",
-                count = "Waiting for Play",
-                done = 0,
-                total = 1,
+                title = "Crew full",
+                count = "Day 1 at midnight",
+                done = CrewRules.SEATS,
+                total = CrewRules.SEATS,
+            )
+        "checking" ->
+            // Play could not look at it, so members decide: two answers either way.
+            AppStage(
+                title = "Members are trying it",
+                count = "${app.greens} Yes, ${app.reds} No",
+                done = app.greens,
+                total = CrewRules.VOTES_TO_DECIDE,
             )
         "testing" -> {
             val left = (app.runDays - app.day).coerceAtLeast(0)
@@ -318,7 +335,7 @@ private fun AppsLoading() {
 }
 
 /** States where something is still happening, which is what splits the list in two. */
-private val LIVE_APP_STATES = setOf("waiting", "checking", "testing", "collecting")
+private val LIVE_APP_STATES = setOf("waiting", "starting", "checking", "testing", "collecting")
 
 /**
  * One app of yours.
@@ -328,9 +345,15 @@ private val LIVE_APP_STATES = setOf("waiting", "checking", "testing", "collectin
  * what has to be fixed.
  */
 @Composable
-fun MyAppRow(app: ApiMyApp) {
+fun MyAppRow(
+    app: ApiMyApp,
+    onOpen: (() -> Unit)? = null,
+) {
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 12.dp),
+        Modifier
+            .fillMaxWidth()
+            .then(if (onOpen != null) Modifier.clickable(onClick = onOpen) else Modifier)
+            .padding(horizontal = Gutter, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AppTile(app.appName)
@@ -362,6 +385,7 @@ fun MyAppRow(app: ApiMyApp) {
 fun appLabel(state: String): String =
     when (state) {
         "waiting" -> "Waiting"
+        "starting" -> "Starting"
         "checking" -> "Checking"
         "testing" -> "Testing"
         "finished" -> "Done"
@@ -370,6 +394,7 @@ fun appLabel(state: String): String =
         "removed" -> "Out"
         "collecting" -> "Open"
         "done" -> "Done"
+        "closed" -> "Closed"
         else -> "Up"
     }
 
@@ -387,7 +412,8 @@ fun appStanding(app: ApiMyApp): String =
             } else {
                 app.where
             }
-        "checking" -> "${app.where} · waiting for Play to show it to the testers group"
+        "starting" -> "${app.where} · full, day 1 starts at midnight"
+        "checking" -> "${app.where} · members are trying it: ${app.greens} Yes, ${app.reds} No"
         "testing" -> "${app.where} · day ${app.day} of ${app.runDays}, ${app.testers} testing"
         "finished" -> "${app.where} · ${app.testers} tested it for ${app.runDays} days"
         "rejected" -> "${app.where} · it came back to you. Fix it and put it in again."
@@ -395,6 +421,7 @@ fun appStanding(app: ApiMyApp): String =
         "withdrawn" -> "${app.where} · you took it back"
         "collecting" -> "Circle · ${app.testers} of ${app.reviewsBought} reviews in"
         "done" -> "Circle · all ${app.reviewsBought} reviews in"
+        "closed" -> "Circle · closed with ${app.testers} of ${app.reviewsBought} reviews"
         else -> app.where
     }
 

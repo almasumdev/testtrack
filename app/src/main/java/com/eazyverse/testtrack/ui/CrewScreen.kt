@@ -50,6 +50,9 @@ import com.eazyverse.testtrack.viewmodel.vote
 @Composable
 fun CrewScreen(
     onSignIn: () -> Unit = {},
+    /** A crew to open as soon as the list has it, from a tap on its app in My apps. */
+    openCrew: String? = null,
+    onOpened: () -> Unit = {},
     vm: CrewViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -91,6 +94,12 @@ fun CrewScreen(
         }
     }
     val crew = vm.current
+    LaunchedEffect(openCrew, vm.crews) {
+        if (openCrew != null && vm.crews.any { it.id == openCrew }) {
+            vm.show(openCrew)
+            onOpened()
+        }
+    }
 
     // Opening a crew is a push, so back should pop it rather than leaving the tab. Registered only
     // while one is open, so the bar's own handler still gets it on the tabs themselves.

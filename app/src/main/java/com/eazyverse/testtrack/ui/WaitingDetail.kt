@@ -70,6 +70,8 @@ fun CheckScreen(
     val case = feed.disputes.firstOrNull { it.id == id }
     val request = feed.requests.firstOrNull { it.id == id }
     var refusing by remember { mutableStateOf(false) }
+    // Arrived from My apps, perhaps before Circle has ever loaded: fetch, rather than find nothing.
+    LaunchedEffect(Unit) { if (review == null && case == null && request == null) feed.load(context) }
     LaunchedEffect(feed.decided) { if (feed.decided == id) onClose() }
     LaunchedEffect(review == null && case == null && request == null, feed.loading) {
         if (review == null && case == null && request == null && !feed.loading) onClose()

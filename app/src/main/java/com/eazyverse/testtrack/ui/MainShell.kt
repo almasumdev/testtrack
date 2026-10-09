@@ -101,6 +101,9 @@ fun MainShell(
     val context = LocalContext.current
     var tab by rememberSaveable { mutableStateOf(MainTab.CIRCLE) }
 
+    /** A crew to open on the Crew tab, from a tap on its app in My apps. Cleared once open. */
+    var crewToOpen by remember { mutableStateOf<String?>(null) }
+
     /** Where Back from the profile goes, so it lands where you actually came from. */
     var cameFrom by rememberSaveable { mutableStateOf(MainTab.CIRCLE) }
 
@@ -245,6 +248,8 @@ fun MainShell(
                             // the bar while this is being built. See docs/crew.md.
                             MainTab.GROUPS ->
                                 CrewScreen(
+                                    openCrew = crewToOpen,
+                                    onOpened = { crewToOpen = null },
                                     onSignIn = {
                                         asking =
                                             SignInReason(
@@ -261,6 +266,11 @@ fun MainShell(
 
                             MainTab.APPS ->
                                 AppsScreen(
+                                    onOpenCrew = { id ->
+                                        crewToOpen = id
+                                        show(MainTab.GROUPS)
+                                    },
+                                    onOpenRequest = onCheck,
                                     onSignIn = {
                                         asking =
                                             SignInReason(

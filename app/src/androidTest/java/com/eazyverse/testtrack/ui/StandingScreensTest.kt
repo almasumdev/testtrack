@@ -212,13 +212,13 @@ class StandingScreensTest {
     }
 
     @Test
-    fun the_rest_of_the_board_starts_at_four() {
+    fun the_rest_of_the_board_is_headed_standings() {
         val board = (1..6).map { row("id$it", "Name $it", it, opens = 10 - it) }
         compose.setContent { TestTrackTheme { RanksBody(rows = board, mine = null) } }
 
-        // Not "Top 6". Three of them are on the podium above, and a heading that counts them
-        // twice is a heading that lies about what is under it.
-        compose.onNodeWithText("4 TO 6").assertIsDisplayed()
+        // The list under the podium is named for what it is, and counts the whole board.
+        compose.onNodeWithText("Standings").assertIsDisplayed()
+        compose.onNodeWithText("Top 6").assertIsDisplayed()
     }
 
     @Test
@@ -272,7 +272,7 @@ class StandingScreensTest {
     fun a_rejected_app_is_the_one_row_that_asks_for_something() {
         compose.setContent { TestTrackTheme { AppsBody(apps = listOf(myApp("rejected"))) } }
         compose.onNodeWithText("Fix it").assertIsDisplayed()
-        compose.onNodeWithText("Fix the listing", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Fix it and put it in again", substring = true).assertIsDisplayed()
     }
 
     @Test
