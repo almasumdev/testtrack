@@ -88,6 +88,7 @@ fun MeScreen(
     val context = LocalContext.current
     var editing by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { vm.load(context) }
+    WhileShown(onShow = { vm.startLive(context) }, onHide = vm::stopLive)
 
     // Whether review and test proof can go to Drive, asked of Google each time the page opens.
     val activity = context.findActivity()

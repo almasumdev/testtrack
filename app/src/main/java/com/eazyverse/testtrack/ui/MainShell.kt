@@ -143,6 +143,8 @@ fun MainShell(
     // is inside another app being tested, so coming back to a stale balance would be the screen
     // telling them their last ten seconds did not count.
     LaunchedEffect(tab, hudVm.signedOut) { hudVm.load(context) }
+    // And while the app is in front, whenever the server says the balance or the exp moved.
+    WhileShown(onShow = { hudVm.startLive(context) }, onHide = hudVm::stopLive)
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner) {
         val watcher =

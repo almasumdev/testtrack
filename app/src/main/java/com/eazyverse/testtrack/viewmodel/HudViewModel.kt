@@ -96,6 +96,22 @@ class HudViewModel(
         }
     }
 
+    /*
+     * Level, exp and tix are only ever the server's arithmetic; nothing on the phone moves them.
+     * So the header listens for the three things that do: a balance moving (earned, spent,
+     * refunded, paid out by a sweep or a dispute), an app open being counted, and a review being
+     * accepted. Any of them, and it reads itself again, which is what plays the tix count up.
+     */
+    private val live =
+        LiveReload("hud", viewModelScope) { it.channel.startsWith("user:") && it.type in MOVES }
+
+    /** While the app is in front: the header is on every screen, so it listens on every screen. */
+    fun startLive(context: Context) {
+        if (!signedOut) live.start { load(context) }
+    }
+
+    fun stopLive() = live.stop()
+
     fun load(context: Context) {
         loadJob?.cancel()
         loadJob =
@@ -132,3 +148,6 @@ class HudViewModel(
             }
     }
 }
+
+/** The server's events that change what the header shows. */
+private val MOVES = setOf("tix.changed", "visit.recorded", "review.approved")

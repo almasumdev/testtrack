@@ -204,6 +204,16 @@ class MeViewModel : ViewModel() {
         message = null
     }
 
+    // Everything on the record is the server's: points, opens, reviews, crews. Anything said on
+    // your own channel (tix, a counted open, a review accepted, your seat) can move one of them.
+    private val live = LiveReload("me", viewModelScope) { it.channel.startsWith("user:") }
+
+    fun startLive(context: Context) {
+        if (!signedOut) live.start { load(context) }
+    }
+
+    fun stopLive() = live.stop()
+
     /**
      * Change the name, and the face if a new one was chosen.
      *
