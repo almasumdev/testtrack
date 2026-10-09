@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -124,12 +125,15 @@ fun CrewSeatRow(
         }
         if (seat.notes.isNotBlank()) {
             Spacer(Modifier.height(8.dp))
-            Text(
-                seat.notes,
-                Modifier.padding(start = 46.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
+            // Selectable: a test login here gets typed into the app's sign-in, so long press copies it.
+            SelectionContainer {
+                Text(
+                    seat.notes,
+                    Modifier.padding(start = 46.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
         }
         if (waiting) {
             Spacer(Modifier.height(8.dp))

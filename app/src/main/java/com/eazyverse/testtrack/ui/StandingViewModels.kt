@@ -14,6 +14,7 @@ import com.eazyverse.testtrack.net.ApiMyApp
 import com.eazyverse.testtrack.net.ApiProfile
 import com.eazyverse.testtrack.net.BoardRow
 import com.eazyverse.testtrack.net.MeIn
+import com.eazyverse.testtrack.viewmodel.LiveReload
 import kotlinx.coroutines.launch
 
 /*
@@ -63,6 +64,19 @@ class RanksViewModel : ViewModel() {
 
     var offline by mutableStateOf(false)
         private set
+
+    // Points move when a review is approved or a dispute settles, and on your own channel. Crew
+    // visits move them too and are not announced one by one, so the minute covers those.
+    private val live =
+        LiveReload("ranks", viewModelScope, every = 60_000) {
+            it.channel.startsWith("user:") ||
+                it.type == "post.changed" ||
+                it.type == "dispute.changed"
+        }
+
+    fun startLive(context: Context) = live.start { load(context) }
+
+    fun stopLive() = live.stop()
 
     /**
      * The board, signed in or not.
@@ -116,6 +130,20 @@ class AppsViewModel : ViewModel() {
     var signedOut by mutableStateOf(false)
         private set
 
+    // The crews your apps are in, your own channel (reviews coming in), and changes to your posts.
+    private val live =
+        LiveReload("apps", viewModelScope) { event ->
+            event.channel.startsWith("crew:") ||
+                event.channel.startsWith("user:") ||
+                (event.type == "post.changed" && apps.any { it.kind == "post" && it.id == event.ref })
+        }
+
+    fun startLive(context: Context) {
+        if (!signedOut) live.start { load(context) }
+    }
+
+    fun stopLive() = live.stop()
+
     fun load(context: Context) {
         viewModelScope.launch {
             try {
@@ -125,6 +153,7 @@ class AppsViewModel : ViewModel() {
                 }
                 signedOut = false
                 apps = Api.myApps().apps
+                live.channels(apps.mapNotNull { it.crewId }.map { "crew:$it" }.toSet())
                 offline = false
             } catch (e: ApiError) {
                 if (e.isAuth) signedOut = true else offline = true

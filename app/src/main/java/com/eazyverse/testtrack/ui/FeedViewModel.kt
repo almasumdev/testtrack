@@ -18,6 +18,7 @@ import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiMyPost
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.ApiReview
+import com.eazyverse.testtrack.viewmodel.LiveReload
 import kotlinx.coroutines.launch
 import java.time.Instant
 
@@ -148,6 +149,7 @@ class FeedViewModel : ViewModel() {
                 val page = Api.posts()
                 posts = page.posts
                 cursor = page.nextCursor
+                pagedPast = false
                 // Readable signed out too, like the posts. Its own failure is its own.
                 try {
                     events = Api.activity().events.mapNotNull(::eventOf)
@@ -187,8 +189,23 @@ class FeedViewModel : ViewModel() {
         }
     }
 
+    // The feed's own events, and yours: reviews of your posts, verdicts on yours, tix.
+    private val live =
+        LiveReload("circle", viewModelScope) { it.channel == "feed" || it.channel.startsWith("user:") }
+
+    /** Somebody scrolled past the first page; a live refetch would cut the list back under them. */
+    private var pagedPast = false
+
+    fun startLive(context: Context) =
+        live.start {
+            if (!pagedPast) load(context)
+        }
+
+    fun stopLive() = live.stop()
+
     /** The next page of posts, when the list reaches its end. */
     fun loadMore() {
+        pagedPast = true
         val from = cursor ?: return
         if (paging) return
         paging = true

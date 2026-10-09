@@ -89,6 +89,8 @@ fun FeedScreen(
     // Reloaded on every arrival rather than once. Coming back from a review is the commonest way
     // to reach this screen, and the counts on it have just changed.
     LaunchedEffect(Unit) { vm.load(context) }
+    // New requests, reviews of yours and verdicts arrive while the tab is open.
+    WhileShown(onShow = { vm.startLive(context) }, onHide = vm::stopLive)
 
     // One per tab rather than one shared between them. A single state carries its scroll position
     // across the switch, so Activity opened at whatever row Feedback happened to be resting on.

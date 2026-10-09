@@ -27,7 +27,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -45,9 +44,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Trophy
@@ -75,15 +71,14 @@ fun RanksScreen(vm: RanksViewModel = viewModel()) {
     // Counted afresh on every return, not once when the tab was first opened. A board read at
     // breakfast and still on screen at midnight was this app answering "how am I doing", and it
     // took closing the whole thing to get a newer answer.
-    val owner = LocalLifecycleOwner.current
-    DisposableEffect(owner) {
-        val watcher =
-            LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) vm.load(context)
-            }
-        owner.lifecycle.addObserver(watcher)
-        onDispose { owner.lifecycle.removeObserver(watcher) }
-    }
+    // And while it shows, whenever points move. See RanksViewModel.
+    WhileShown(
+        onShow = {
+            vm.load(context)
+            vm.startLive(context)
+        },
+        onHide = vm::stopLive,
+    )
 
     RefreshBox(
         // Bound to the pull alone. A resume refreshes too, and playing the gesture's arc for one

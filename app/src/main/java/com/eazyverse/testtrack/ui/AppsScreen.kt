@@ -53,6 +53,8 @@ fun AppsScreen(
 ) {
     val context = LocalContext.current
     LaunchedEffect(Unit) { vm.load(context) }
+    // A crew filling or a review arriving shows up without leaving the tab.
+    WhileShown(onShow = { vm.startLive(context) }, onHide = vm::stopLive)
 
     AppsBody(
         apps = vm.apps,

@@ -26,20 +26,22 @@ import okhttp3.WebSocketListener
 /**
  * The server's live events, for whichever screen is showing.
  *
- * One socket at a time. A screen says which channels it wants with [watch] and stops with [stop];
- * everything that arrives on them comes out of [events] as the event's type, and the screen
- * decides what to do, which today is always "fetch again". The event carries the change, but a
+ * One socket, shared. Each screen that is showing says which channels it wants with [watch], under
+ * its own name, and lets go with [stop]; the socket carries all of them together and closes when
+ * nobody is left. Everything that arrives comes out of [events] to every screen, and each decides
+ * what concerns it, which today is always "fetch again". The event carries the change, but a
  * refetch is the one answer that cannot drift from what the server holds.
  *
  * The server keeps a connection while it hears from it, so this sends a ping frame every half
  * minute, and comes back after a drop with a growing pause rather than hammering. Your own channel
- * and the feed's are added by the server; only crew channels are asked for here.
+ * and the feed's are added by the server, so a screen that only needs those watches no channels.
  */
 object Live {
-    /** One event: which channel, and what happened on it. */
+    /** One event: which channel, what happened on it, and the id of what it happened to, if any. */
     data class Event(
         val channel: String,
         val type: String,
+        val ref: String? = null,
     )
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -48,28 +50,45 @@ object Live {
     val events: SharedFlow<Event> = flow.asSharedFlow()
 
     private var socket: WebSocket? = null
+    private val wants = mutableMapOf<String, Set<String>>()
     private var wanted: Set<String> = emptySet()
     private var running: Job? = null
     private var pinging: Job? = null
 
-    /** Listen to these channels until [stop]. Asking again with the same set changes nothing. */
+    /** [who] listens to these channels until [stop]. Asking again with the same set changes nothing. */
     @Synchronized
-    fun watch(channels: Set<String>) {
-        if (channels == wanted && running?.isActive == true) return
-        wanted = channels
-        running?.cancel()
-        socket?.close(1000, null)
-        running = scope.launch { stay() }
+    fun watch(
+        who: String,
+        channels: Set<String> = emptySet(),
+    ) {
+        wants[who] = channels
+        connect()
     }
 
+    /** [who] is done; the socket closes once nobody is watching. */
     @Synchronized
-    fun stop() {
+    fun stop(who: String) {
+        if (wants.remove(who) == null) return
+        if (wants.isNotEmpty()) {
+            connect()
+            return
+        }
         wanted = emptySet()
         running?.cancel()
         running = null
         pinging?.cancel()
         socket?.close(1000, null)
         socket = null
+    }
+
+    /** Open the socket for everybody's channels together; reopened only when that set changes. */
+    private fun connect() {
+        val all = wants.values.flatten().toSet()
+        if (all == wanted && running?.isActive == true) return
+        wanted = all
+        running?.cancel()
+        socket?.close(1000, null)
+        running = scope.launch { stay() }
     }
 
     /** Connect, and connect again after a drop, for as long as somebody is watching. */
@@ -101,7 +120,8 @@ object Live {
                         val event = runCatching { Api.json.parseToJsonElement(text).jsonObject }.getOrNull() ?: return
                         val type = event.text("type") ?: return
                         if (type == "subscribed") return
-                        flow.tryEmit(Event(event.text("ch").orEmpty(), type))
+                        val ref = (event["data"] as? JsonObject)?.text("id")
+                        flow.tryEmit(Event(event.text("ch").orEmpty(), type, ref))
                     }
 
                     override fun onClosed(

@@ -12,10 +12,8 @@ import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
-import com.eazyverse.testtrack.net.Live
 import com.eazyverse.testtrack.net.SeatIn
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import com.eazyverse.testtrack.viewmodel.LiveReload
 import kotlinx.coroutines.launch
 import java.util.TimeZone
 
@@ -159,7 +157,7 @@ class CrewViewModel : ViewModel() {
         crews = answer.mine.map { it.toCrew() }
         open = answer.open?.toCrew(member = false)
         blocked = answer.blocked
-        if (live?.isActive == true && !signedOut) Live.watch(crews.map { "crew:${it.id}" }.toSet())
+        live.channels(crews.map { "crew:${it.id}" }.toSet())
 
         // Opened on whichever has something owed rather than always the same one, and only the
         // first time: moving somebody's tab under them after they have chosen is worse than
@@ -451,30 +449,18 @@ class CrewViewModel : ViewModel() {
         }
     }
 
-    private var live: Job? = null
+    // Your crews' own channels, and the two events about your seats that come on yours.
+    private val live =
+        LiveReload("crew", viewModelScope) {
+            it.channel.startsWith("crew:") || it.type == "seat.mine" || it.type == "visit.recorded"
+        }
 
     /** Redraw when anything in your crews changes while showing; a burst of events is one fetch. */
     fun startLive(context: Context) {
-        live?.cancel()
-        live =
-            viewModelScope.launch {
-                var pending: Job? = null
-                Live.events.collect {
-                    pending?.cancel()
-                    pending =
-                        launch {
-                            delay(700)
-                            load(context)
-                        }
-                }
-            }
-        if (!signedOut) Live.watch(crews.map { "crew:${it.id}" }.toSet())
+        if (!signedOut) live.start { load(context) }
     }
 
-    fun stopLive() {
-        live?.cancel()
-        Live.stop()
-    }
+    fun stopLive() = live.stop()
 
     private suspend fun reload() {
         runCatching { apply(Api.crews()) }
