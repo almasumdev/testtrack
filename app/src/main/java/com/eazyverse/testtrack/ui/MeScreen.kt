@@ -105,8 +105,7 @@ fun MeScreen(
         loading = vm.loading,
         offline = vm.offline,
         signedOut = vm.signedOut,
-        // Not before the profile has arrived: the dialog edits the name it is given, and an empty
-        // one saved over the real name would be a loss nobody asked for.
+        // Not before the profile arrives, or an empty name could be saved over the real one.
         onEdit = { if (vm.profile != null) editing = true },
         onSignOut = onSignOut,
         onSignIn = onSignIn,
@@ -170,9 +169,7 @@ fun MeBody(
         RobotOffline("Your record did not load", onRetry = onRetry)
         return
     }
-    // Until the record arrives the page is already the page: the account rows and the version
-    // are the app's own and are there from the first frame, and only the person and their figures
-    // shimmer, in the shapes they will land in.
+    // Until it arrives the account rows are already there; only the person and figures shimmer.
     val shown = profile.takeUnless { DebugLooks.holdLoading }
 
     LazyColumn(
@@ -306,38 +303,7 @@ private fun Who(
     }
 }
 
-/** [Who] before the profile has arrived: the face's ring, then the name, address and facts as bars. */
-@Composable
-private fun WhoLoading() {
-    val t = Tt.colors
-    Column(Modifier.padding(horizontal = 2.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .size(FaceSize)
-                    .clip(CircleShape)
-                    .background(t.glass)
-                    .border(1.dp, t.glassBorder, CircleShape)
-                    .padding(3.dp),
-            ) {
-                Skeleton(width = FaceSize - 6.dp, height = FaceSize - 6.dp, corner = FaceSize / 2)
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                Skeleton(width = 140.dp, height = 18.dp)
-                Spacer(Modifier.height(8.dp))
-                Skeleton(width = 190.dp, height = 12.dp)
-            }
-        }
-        Spacer(Modifier.height(14.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Skeleton(width = 104.dp, height = 22.dp, corner = 11.dp)
-            Skeleton(width = 92.dp, height = 22.dp, corner = 11.dp)
-        }
-    }
-}
-
-private val FaceSize = 64.dp
+internal val FaceSize = 64.dp
 
 /** "Since Sep 2026", from the server's timestamp, or null if it cannot be read. */
 private fun memberSince(joinedAt: String): String? =

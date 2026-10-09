@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -214,6 +215,37 @@ private fun RowScope.StatCard(
         }
         if (onClick != null) {
             Icon(Lucide.ChevronRight, "Open", Modifier.size(16.dp), tint = t.text4)
+        }
+    }
+}
+
+/** [Who] before the profile has arrived: the face's ring, then the name, address and facts as bars. */
+@Composable
+internal fun WhoLoading() {
+    val t = Tt.colors
+    Column(Modifier.padding(horizontal = 2.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .size(FaceSize)
+                    .clip(CircleShape)
+                    .background(t.glass)
+                    .border(1.dp, t.glassBorder, CircleShape)
+                    .padding(3.dp),
+            ) {
+                Skeleton(width = FaceSize - 6.dp, height = FaceSize - 6.dp, corner = FaceSize / 2)
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Skeleton(width = 140.dp, height = 18.dp)
+                Spacer(Modifier.height(8.dp))
+                Skeleton(width = 190.dp, height = 12.dp)
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Skeleton(width = 104.dp, height = 22.dp, corner = 11.dp)
+            Skeleton(width = 92.dp, height = 22.dp, corner = 11.dp)
         }
     }
 }
