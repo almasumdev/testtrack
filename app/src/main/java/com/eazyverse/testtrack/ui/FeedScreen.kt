@@ -205,8 +205,9 @@ fun FeedScreen(
                 FeedTab.FEEDBACK -> {
                     // Not a sign in prompt. The posts come back for anybody, so nothing here and
                     // offline means the server could not be got at.
-                    val unreached = vm.offline && vm.posts.isEmpty()
-                    val none = !vm.loading && !unreached && vm.openPosts.isEmpty()
+                    val hold = DebugLooks.holdLoading
+                    val unreached = !hold && vm.offline && vm.posts.isEmpty()
+                    val none = !hold && !vm.loading && !unreached && vm.openPosts.isEmpty()
                     if (unreached) {
                         RobotOffline("Circle didn't load", onRetry = { vm.load(context) })
                     } else if (none) {
@@ -234,10 +235,10 @@ fun FeedScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             item(key = "ask") { FeedAskButton(onPost = onAsk) }
-                            if (vm.loading && vm.posts.isEmpty()) {
+                            if (hold || (vm.loading && vm.posts.isEmpty())) {
                                 items(3) { FeedLoadingCard() }
                             }
-                            items(vm.openPosts, key = { it.id }) { post ->
+                            items(if (hold) emptyList() else vm.openPosts, key = { it.id }) { post ->
                                 // Taking a review on needs the testers group: Play only lets
                                 // the owner add somebody on it to a closed test.
                                 FeedRequestCard(post) {
@@ -253,7 +254,7 @@ fun FeedScreen(
                 // Nothing about this tab is a different kind of list, so nothing about it is
                 // measured differently: what tells the two apart is what is inside a card.
                 FeedTab.ACTIVITY ->
-                    if (!vm.loading && vm.events.isEmpty()) {
+                    if (!DebugLooks.holdLoading && !vm.loading && vm.events.isEmpty()) {
                         if (vm.offline || vm.activityFailed) {
                             RobotOffline("Activity didn't load", onRetry = { vm.load(context) })
                         } else {
@@ -276,10 +277,12 @@ fun FeedScreen(
                                 ),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            if (vm.loading && vm.events.isEmpty()) {
+                            if (DebugLooks.holdLoading || (vm.loading && vm.events.isEmpty())) {
                                 items(4) { FeedLoadingCard(compact = true) }
                             }
-                            items(vm.events, key = { it.id }) { event -> FeedEventCard(event) }
+                            items(if (DebugLooks.holdLoading) emptyList() else vm.events, key = { it.id }) { event ->
+                                FeedEventCard(event)
+                            }
                         }
                     }
 

@@ -91,7 +91,7 @@ fun AppsBody(
         RobotOffline("Your apps did not load", onRetry = onRetry)
         return
     }
-    if (loading && apps.isEmpty()) {
+    if (DebugLooks.holdLoading || (loading && apps.isEmpty())) {
         AppsLoading()
         return
     }

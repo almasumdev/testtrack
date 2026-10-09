@@ -168,7 +168,7 @@ fun MeBody(
         RobotOffline("Your record did not load", onRetry = onRetry)
         return
     }
-    if (profile == null) {
+    if (profile == null || DebugLooks.holdLoading) {
         Box(Modifier.fillMaxWidth().padding(top = 48.dp), contentAlignment = Alignment.Center) {
             RobotLoader(label = "Getting your record")
         }

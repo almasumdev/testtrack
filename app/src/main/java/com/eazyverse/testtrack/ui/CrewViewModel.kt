@@ -71,7 +71,7 @@ class CrewViewModel : ViewModel() {
 
     /** The first answer has not come yet, so the tabs show where it will go rather than nothing. */
     val firstLoad: Boolean
-        get() = loading && crews.isEmpty() && open == null
+        get() = DebugLooks.holdLoading || (loading && crews.isEmpty() && open == null)
 
     /** Set once the API has refused us for good, so the screen can say so rather than spin. */
     var offline by mutableStateOf(false)

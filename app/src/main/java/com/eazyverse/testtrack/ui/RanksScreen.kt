@@ -125,7 +125,7 @@ fun RanksBody(
         )
         return
     }
-    if (loading && rows.isEmpty()) {
+    if (DebugLooks.holdLoading || (loading && rows.isEmpty())) {
         RanksLoading()
         return
     }

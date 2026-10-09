@@ -54,7 +54,7 @@ fun WaitingBody(
         RobotOffline("What's waiting didn't load", onRetry)
         return
     }
-    if (loading && reviews.isEmpty() && disputes.isEmpty()) {
+    if (DebugLooks.holdLoading || (loading && reviews.isEmpty() && disputes.isEmpty())) {
         LazyColumn(
             Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 16.dp, bottom = Gutter + dockRoom()),
