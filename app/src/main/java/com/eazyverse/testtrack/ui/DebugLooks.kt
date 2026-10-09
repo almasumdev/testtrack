@@ -12,7 +12,7 @@ object DebugLooks {
      * Hold every tab on its loading state, as if the answer never came, so the shimmer (and the
      * robot on Profile) can be looked at for as long as needed. Set back to false when done.
      */
-    private const val HOLD_LOADING = true
+    private const val HOLD_LOADING = false
 
     val holdLoading: Boolean get() = BuildConfig.DEBUG && HOLD_LOADING
 }
