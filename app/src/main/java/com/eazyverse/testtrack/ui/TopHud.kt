@@ -1,14 +1,18 @@
 package com.eazyverse.testtrack.ui
 
+import android.animation.ValueAnimator
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,13 +32,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Ticket
+import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
+import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.sin
 
 /**
  * Level and balance, on every screen.
@@ -152,36 +161,26 @@ private fun SignInChip(onClick: () -> Unit) {
 }
 
 /**
- * What this account has to spend, opposite [FeedTabs] at the top of Circle.
+ * What this account has to spend, as a game would show it: a gold ticket over the end of a
+ * raised navy pill, with the balance in white.
  *
- * A filled shape with no border, one step off the page. Bare it read as unfinished beside a solid
- * pill; bordered and matched to that pill it took more of the row than the number was worth. Fill
- * without an outline is the middle: it has an edge, and the edge costs a tone rather than a line.
+ * The ticket hangs off the pill's left end rather than sitting inside it, the way a coin counter
+ * in a game wears its coin, and it is drawn in the robot's cartoon style so the two belong to the
+ * same app. The pill stands on a darker edge a few points below it, which is what makes it read
+ * as a thing rather than a label.
  *
- * The fill is [ColorScheme.surfaceVariant] and not the primary container, which was the other
- * candidate and is the wrong one for a reason worth writing down: the selected tab beside it is
- * already painted in the primary container. Two things on one row in the same fill would say they
- * are the same kind of thing, and one of them is a state you chose while the other is a number
- * you were given.
- *
- * A resting glow was tried here and taken out. Anything drawn outside the digits gets cut by the
- * bounds of the row it sits in, and the whole point of a halo is that it has no edge, so a halo
- * with a straight line through it is worse than none. Light that is always on says nothing anyway.
- *
- * What replaced it happens at the only moment worth marking: the balance changing. The digits roll
- * from the old figure to the new one rather than swapping, so twenty tix earned is twenty
- * tix seen going in, and the ticket pops and both brighten for a beat and settle. All of it is
- * inside the type and the icon, so there is nothing to clip.
- *
- * Nothing animates on arrival. The first composition sets the figure and stops, because a balance
- * that counts itself up every time you open the tab is a slot machine.
+ * Nothing moves at rest, and nothing animates on arrival: the first composition sets the figure
+ * and stops, because a balance that counts itself up every time a tab opens is a slot machine.
+ * The one moment worth marking is the balance changing. Then the digits roll from the old figure
+ * to the new one, the ticket hops and turns over once, and the amount floats up off the pill and
+ * fades, green for tix earned and quiet for tix spent.
  */
 @Composable
 private fun TixChip(
     tix: Int,
     modifier: Modifier = Modifier,
 ) {
-    val accent = Tt.colors.accentInk
+    val t = Tt.colors
 
     // Long enough to read as counting, short enough not to be waited on.
     val shown by animateIntAsState(
@@ -190,47 +189,90 @@ private fun TixChip(
         label = "tix",
     )
 
-    // Full the instant the number moves, then decaying. Compared against the last value seen
-    // rather than keyed on the first composition, so opening the screen is not a change.
-    val flare = remember { Animatable(0f) }
+    // Compared against the last value seen rather than keyed on the first composition, so
+    // opening the screen is not a change.
+    val hop = remember { Animatable(1f) }
+    val rise = remember { Animatable(1f) }
     var seen by remember { mutableStateOf(tix) }
+    var change by remember { mutableStateOf(0) }
     LaunchedEffect(tix) {
         if (tix != seen) {
+            change = tix - seen
             seen = tix
-            flare.snapTo(1f)
-            flare.animateTo(0f, tween(durationMillis = 900, easing = LinearOutSlowInEasing))
+            if (ValueAnimator.areAnimatorsEnabled()) {
+                launch {
+                    hop.snapTo(0f)
+                    hop.animateTo(1f, tween(800, easing = LinearEasing))
+                }
+                rise.snapTo(0f)
+                rise.animateTo(1f, tween(1100, easing = LinearOutSlowInEasing))
+            }
         }
     }
 
-    val lit = lerp(accent, Tt.colors.onAccent, 0.4f * flare.value)
-
-    Row(
-        modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(horizontal = 13.dp, vertical = 7.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            Lucide.Ticket,
+    val shape = RoundedCornerShape(percent = 50)
+    Box(modifier, contentAlignment = Alignment.CenterStart) {
+        Row(
+            Modifier
+                .padding(start = 16.dp, bottom = 3.dp)
+                // The edge it stands on, drawn under the pill and 3dp lower.
+                .drawBehind {
+                    drawRoundRect(
+                        t.tixEdge,
+                        topLeft = Offset(0f, 3.dp.toPx()),
+                        size = size,
+                        cornerRadius = CornerRadius(size.height / 2f),
+                    )
+                }.clip(shape)
+                .background(Brush.verticalGradient(listOf(t.tixTop, t.tixBottom)))
+                .border(2.dp, t.tixEdge, shape)
+                .padding(start = 27.dp, end = 13.dp, top = 5.dp, bottom = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "$shown",
+                Modifier.graphicsLayer {
+                    // A little swell while it counts, settling as the roll ends.
+                    val swell = 1f + 0.16f * sin(PI.toFloat() * (1f - hop.value).coerceIn(0f, 1f)).coerceAtLeast(0f)
+                    scaleX = swell
+                    scaleY = swell
+                },
+                style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
+                fontWeight = FontWeight.ExtraBold,
+                color = t.onAccent,
+            )
+        }
+        Image(
+            painterResource(R.drawable.tix_ticket),
             null,
             Modifier
-                .size(13.dp)
-                // Scaled from its own centre, so the pop stays inside the line height the text
-                // beside it already sets and the fill never has to grow to hold it.
+                .padding(bottom = 3.dp)
+                .size(width = 38.dp, height = 26.dp)
                 .graphicsLayer {
-                    val pop = 1f + 0.4f * flare.value
+                    // Up, over once and back down onto the pill.
+                    val p = hop.value
+                    translationY = -10.dp.toPx() * sin(PI.toFloat() * (p / 0.55f).coerceAtMost(1f))
+                    rotationZ = -12f + 360f * FastOutSlowInEasing.transform(((p - 0.15f) / 0.6f).coerceIn(0f, 1f))
+                    val pop = 1f + 0.15f * sin(PI.toFloat() * (p / 0.4f).coerceAtMost(1f))
                     scaleX = pop
                     scaleY = pop
                 },
-            tint = lit,
         )
-        Spacer(Modifier.width(5.dp))
-        Text(
-            "$shown",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = lit,
-        )
+        if (rise.value < 1f && change != 0) {
+            Text(
+                if (change > 0) "+$change" else "$change",
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(end = 8.dp)
+                    .graphicsLayer {
+                        val p = rise.value
+                        translationY = -6.dp.toPx() - 22.dp.toPx() * p
+                        alpha = if (p < 0.2f) p / 0.2f else 1f - (p - 0.2f) / 0.8f
+                    },
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.ExtraBold,
+                color = if (change > 0) t.ok else t.text3,
+            )
+        }
     }
 }

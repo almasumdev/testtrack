@@ -98,6 +98,10 @@ data class TtTokens(
     val gold: Color,
     val silver: Color,
     val bronze: Color,
+    /** The tix counter: a raised navy pill, lighter at the top, standing on a darker edge. */
+    val tixTop: Color,
+    val tixBottom: Color,
+    val tixEdge: Color,
 ) {
     val primary: Color get() = if (isDark) accentInk else accent
     val onPrimary: Color get() = if (isDark) bg else onAccent
@@ -192,6 +196,9 @@ val OceanLight =
         gold = Color(0xFF9A7B1F),
         silver = Color(0xFF6B7488),
         bronze = Color(0xFF8A5A34),
+        tixTop = Color(0xFF2B6F99),
+        tixBottom = Color(0xFF1B4F70),
+        tixEdge = Color(0xFF143A55),
     )
 
 val OceanDark =
@@ -258,6 +265,9 @@ val OceanDark =
         gold = Color(0xFFE3A93C),
         silver = Color(0xFFB4BCCB),
         bronze = Color(0xFFC58455),
+        tixTop = Color(0xFF3A7FAA),
+        tixBottom = Color(0xFF235C80),
+        tixEdge = Color(0xFF0E2A3F),
     )
 
 val LocalTokens = staticCompositionLocalOf { OceanDark }

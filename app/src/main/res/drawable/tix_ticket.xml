@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The tix counter's ticket: gold, notched both sides, a tear line and a star, in the robot props' cartoon style. -->
+<vector xmlns:aapt="http://schemas.android.com/aapt" xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp" android:height="44dp" android:viewportWidth="64" android:viewportHeight="44">
+  <path android:pathData="M8 3 H56 Q61 3 61 8 V16 A6 6 0 0 0 61 28 V36 Q61 41 56 41 H8 Q3 41 3 36 V28 A6 6 0 0 0 3 16 V8 Q3 3 8 3 Z"
+      android:strokeColor="#17405E" android:strokeWidth="3.5" android:strokeLineJoin="round">
+    <aapt:attr name="android:fillColor">
+      <gradient android:type="linear" android:startX="3" android:startY="3" android:endX="61" android:endY="41">
+        <item android:offset="0" android:color="#FFE07A" />
+        <item android:offset="1" android:color="#F2A92E" />
+      </gradient>
+    </aapt:attr>
+  </path>
+  <path android:pathData="M18 9 V12 M18 15 V18 M18 21 V24 M18 27 V30 M18 33 V36" android:strokeColor="#B97A1E" android:strokeWidth="2.5" android:strokeLineCap="round" />
+  <path android:pathData="M39 12 l3.2 6.6 7.2 1 -5.2 5 1.3 7.2 -6.5 -3.4 -6.5 3.4 1.3 -7.2 -5.2 -5 7.2 -1 Z"
+      android:fillColor="#FFF8E1" android:strokeColor="#17405E" android:strokeWidth="2" android:strokeLineJoin="round" />
+  <path android:pathData="M8 8 Q9 6 12 6" android:strokeColor="#FFFFFF" android:strokeAlpha="0.8"
+      android:strokeWidth="2.5" android:strokeLineCap="round" />
+</vector>
