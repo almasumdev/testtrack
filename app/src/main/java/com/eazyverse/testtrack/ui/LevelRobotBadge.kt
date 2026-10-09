@@ -184,27 +184,9 @@ private data class RobotMotion(
 @Composable
 private fun robotMotion(active: Boolean): RobotMotion {
     if (!active) return RobotMotion()
-    val idle = rememberInfiniteTransition(label = "Robot idle")
-    val breathe by idle.animateFloat(
-        -1f,
-        1f,
-        infiniteRepeatable(tween(2400, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "Robot breathing",
-    )
-    val blink by idle.animateFloat(
-        1f,
-        1f,
-        infiniteRepeatable(
-            keyframes {
-                durationMillis = 5600
-                1f at 0
-                1f at 4400
-                0.08f at 4510
-                1f at 4630
-                1f at 5600
-            },
-        ),
-        label = "Robot blink",
-    )
+    // On the robots' shared clock, so the header robot does not start over on every tab.
+    val ms = robotTime().longValue
+    val breathe = -1f + 2f * pingPong(ms, 2400)
+    val blink = blinkAt(ms, 5600, 4400)
     return RobotMotion(breathe, blink)
 }

@@ -1,14 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import android.animation.ValueAnimator
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.keyframes
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -20,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -76,36 +67,11 @@ private fun RobotFigure(
 ) {
     val t = Tt.colors
     val moving = ValueAnimator.areAnimatorsEnabled()
-    val loop = rememberInfiniteTransition(label = "Robot loader")
-    val hover by loop.animateFloat(
-        0f,
-        1f,
-        infiniteRepeatable(tween(1400, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "hover",
-    )
-    val clock by loop.animateFloat(
-        0f,
-        PROP_CYCLE,
-        infiniteRepeatable(tween(PROP_CYCLE.toInt(), easing = LinearEasing)),
-        label = "prop",
-    )
-    val blink by loop.animateFloat(
-        1f,
-        1f,
-        infiniteRepeatable(
-            keyframes {
-                durationMillis = 4200
-                1f at 0
-                1f at 3300
-                0.08f at 3410
-                1f at 3530
-                1f at 4200
-            },
-        ),
-        label = "blink",
-    )
-    val lift = if (moving) hover else 0f
-    val lids = if (moving) blink else 1f
+    // Read only while drawing, so the robot is redrawn each frame without being recomposed.
+    val time = robotTime(moving)
+    val lift = { if (moving) pingPong(time.longValue, 1400) else 0f }
+    val lids = { if (moving) blinkAt(time.longValue, 4200, 3300) else 1f }
+    val clock = { if (moving) (time.longValue % PROP_CYCLE.toLong()).toFloat() else 0f }
     val height = size * (980f / 880f)
 
     Column(
@@ -115,9 +81,10 @@ private fun RobotFigure(
         Box(Modifier.size(size, height + size * 0.16f), contentAlignment = Alignment.BottomCenter) {
             // The shadow on the ground: smaller and fainter the higher the robot floats.
             Canvas(Modifier.size(size * 0.6f, size * 0.1f)) {
-                val scale = 1f - lift * 0.3f
+                val up = lift()
+                val scale = 1f - up * 0.3f
                 drawOval(
-                    color = t.shadow.copy(alpha = 0.18f - lift * 0.08f),
+                    color = t.shadow.copy(alpha = 0.18f - up * 0.08f),
                     topLeft = Offset(this.size.width * (1 - scale) / 2f, 0f),
                     size = Size(this.size.width * scale, this.size.height),
                 )
@@ -126,16 +93,16 @@ private fun RobotFigure(
                 Modifier
                     .size(size, height)
                     .graphicsLayer {
-                        translationY = -(size * 0.1f).toPx() - lift * (size * 0.08f).toPx()
+                        translationY = -(size * 0.1f).toPx() - lift() * (size * 0.08f).toPx()
                     },
             ) {
                 Image(painterResource(R.drawable.level_robot_body), null, Modifier.matchParentSize())
                 // The head breathes, and nods along when the scene asks it to, about the neck.
                 Box(
                     Modifier.matchParentSize().graphicsLayer {
-                        translationY = -lift * (size * 0.012f).toPx()
+                        translationY = -lift() * (size * 0.012f).toPx()
                         transformOrigin = TransformOrigin(0.5f, (720f - 110f) / 980f)
-                        prop.nod?.run { at(if (moving) clock else 0f, this@graphicsLayer.size.width / 880f) }
+                        prop.nod?.run { at(clock(), this@graphicsLayer.size.width / 880f) }
                     },
                 ) {
                     Image(painterResource(R.drawable.level_robot_head), null, Modifier.matchParentSize())
@@ -148,7 +115,7 @@ private fun RobotFigure(
                             null,
                             Modifier.matchParentSize().graphicsLayer {
                                 transformOrigin = TransformOrigin(0.5f, (529f - 110f) / 980f)
-                                scaleY = lids
+                                scaleY = lids()
                             },
                         )
                     }
@@ -157,13 +124,13 @@ private fun RobotFigure(
                         null,
                         Modifier.matchParentSize().graphicsLayer {
                             transformOrigin = TransformOrigin((627f - 185f) / 880f, (278f - 110f) / 980f)
-                            rotationZ = (lift - 0.5f) * 8f
+                            rotationZ = (lift() - 0.5f) * 8f
                         },
                     )
-                    prop.head.forEach { PropImage(it, moving) { clock } }
+                    prop.head.forEach { PropImage(it, clock) }
                 }
                 // What it holds, between the head and the hands so the hands close over it.
-                prop.layers.forEach { PropImage(it, moving) { clock } }
+                prop.layers.forEach { PropImage(it, clock) }
                 Image(painterResource(R.drawable.level_robot_hands), null, Modifier.matchParentSize())
             }
         }
@@ -178,13 +145,12 @@ private fun RobotFigure(
 @Composable
 private fun BoxScope.PropImage(
     layer: PropLayer,
-    moving: Boolean,
     clock: () -> Float,
 ) = Image(
     painterResource(layer.res),
     null,
     Modifier.matchParentSize().graphicsLayer {
         transformOrigin = TransformOrigin((layer.px - 185f) / 880f, (layer.py - 110f) / 980f)
-        layer.motion?.run { at(if (moving) clock() else 0f, this@graphicsLayer.size.width / 880f) }
+        layer.motion?.run { at(clock(), this@graphicsLayer.size.width / 880f) }
     },
 )
