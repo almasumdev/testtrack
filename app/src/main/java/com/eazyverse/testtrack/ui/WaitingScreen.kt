@@ -68,7 +68,7 @@ fun WaitingBody(
     }
     if (reviews.isEmpty() && disputes.isEmpty() && requests.isEmpty()) {
         RobotState(
-            Prop.Box,
+            Prop.IceCream,
             "Nothing waiting on you",
             "Reviews of your apps land here, and so does any case you are asked to help decide.",
         )

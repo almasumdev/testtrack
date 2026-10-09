@@ -243,17 +243,80 @@ def key():
     return {'key': body, 'key_spark': [flat(sparkle(712, 820, 34), '#FFD96B'), flat(sparkle(712, 820, 11), '#FFFFFF')]}
 
 
-def clipboard():
-    body = [
-        shape(rr(372, 758, 510, 304, 30), WOOD, (372, 758, 882, 1062)),
-        shape(rr(410, 790, 434, 246, 14), WHITE, (410, 790, 844, 1036), sw=8),
-        shape(rr(555, 732, 144, 62, 18), SILVER, (555, 732, 699, 794)),
-        flat(rr(595, 746, 64, 16, 8), '#7F92A3'),
+def cover_smile():
+    return flat(rr(552, 578, 150, 56, 20), FACE)
+
+
+def cheeks():
+    return [flat(ellipse(404, 604, 36, 19), '#F9A99A', 0.65), flat(ellipse(850, 604, 36, 19), '#F9A99A', 0.65)]
+
+
+def popcorn():
+    """Activity, nothing yet: settled in with popcorn, eyes up on the show."""
+    face = []
+    for cx in (481, 772):
+        face += [flat(circle(cx, 518, 56), DARK), flat(circle(cx - 16, 498, 19), '#FFFFFF'),
+                 flat(circle(cx + 20, 536, 9), '#FFFFFF')]
+    face += [
+        cover_smile(),
+        shape('M578 588 Q627 652 676 588 Z', (DARK, DARK), (578, 588, 676, 642), sw=6),
+        flat('M598 616 Q627 642 656 616 Q627 604 598 616 Z', '#F27B6A'),
+        *cheeks(),
     ]
-    for i, y in enumerate((848, 912, 976)):
-        body.append(shape(rr(442, y - 22, 44, 44, 11), ('#FFFFFF', '#F1F6FA'), (442, y - 22, 486, y + 22), stroke='#8FB3CC', sw=7))
-        body.append(flat(rr(510, y - 9, 250 - i * 60, 18, 9), '#D3E3EE'))
-    # A pencil resting on the page, drawn flat and turned to lie across it.
+    puff = ('#FFF7D6', '#F6DD8E')
+    puffs = [shape(circle(x, y, r), puff, (x - r, y - r, x + r, y + r), sw=8) for x, y, r in (
+        (500, 792, 34), (556, 770, 38), (618, 760, 40), (682, 770, 38), (744, 788, 34), (590, 726, 30), (662, 722, 30))]
+    puffs.append(flat(circle(612, 744, 9), '#FFFFFF', 0.9))
+    bucket = [shape('M462 812 L792 812 L756 1056 L498 1056 Z', WHITE, (462, 812, 792, 1056))]
+    for i in range(5):
+        x0, b0 = 492 + i * 66, 508 + i * 52
+        bucket.append(flat(poly((x0, 816), (x0 + 30, 816), (b0 + 26, 1052), (b0, 1052)), '#E9574A'))
+    bucket += [
+        ink('M462 812 L792 812 L756 1056 L498 1056 Z', INK, SW),
+        shape(rr(450, 798, 354, 32, 13), ('#FF7A6A', '#E04E40'), (450, 798, 804, 830)),
+        shape(star5(627, 948, 40, 18), GOLD, (587, 908, 667, 988), sw=8),
+        shine('M486 846 L514 1030', 12, 0.55),
+    ]
+
+    def kernel(x, y):
+        return [shape(circle(x, y, 22), puff, (x - 22, y - 22, x + 22, y + 22), sw=7),
+                shape(circle(x + 18, y - 10, 16), puff, (x, y - 26, x + 34, y + 6), sw=7)]
+    return {
+        'popcorn_face': face,
+        'popcorn_puffs': puffs,
+        'popcorn_bucket': bucket,
+        'popcorn_pop1': kernel(560, 716),
+        'popcorn_pop2': kernel(690, 712),
+        'popcorn_pop3': kernel(626, 700),
+    }
+
+
+def notes():
+    """My reviews, none yet: glasses on, notepad out, ready to write one. Its own eyes still blink."""
+    glasses = [
+        ink('M420 438 Q481 418 540 438', DARK, 14),
+        ink('M713 438 Q772 418 833 438', DARK, 14),
+        flat(circle(481, 529, 76), '#FFFFFF', 0.18),
+        flat(circle(772, 529, 76), '#FFFFFF', 0.18),
+        ink(circle(481, 529, 82), INK, 30),
+        ink(circle(772, 529, 82), INK, 30),
+        ink(circle(481, 529, 82), '#F2A92E', 14),
+        ink(circle(772, 529, 82), '#F2A92E', 14),
+        ink('M563 520 Q627 494 690 520', INK, 28),
+        ink('M563 520 Q627 494 690 520', '#F2A92E', 12),
+        ink('M399 516 L330 492 M854 516 L923 492', INK, 14),
+        shine('M428 498 Q438 474 460 466', 10, 0.9),
+        shine('M719 498 Q729 474 751 466', 10, 0.9),
+    ]
+    pad = [
+        shape(rr(440, 816, 374, 236, 18), ('#FFF4B8', '#F6DF7E'), (440, 816, 814, 1052)),
+        flat(rr(447, 823, 360, 34, 10), '#E9574A'),
+        ink('M440 860 H814', INK, 8),
+        *(flat(circle(x, 840, 7), '#FFFFFF', 0.8) for x in (500, 580, 660, 740)),
+    ]
+    for i, y in enumerate((900, 942, 984, 1024)):
+        pad.append(ink(f'M{500 if i == 0 else 470} {y} H{780 - i * 50}', '#D9B95A', 7))
+    pad.append(ink('M462 896 L478 912 L500 884', '#3FA46A', 10))
     pencil = [
         shape(poly((640, 1000), (684, 983), (684, 1017)), ('#F6D7AE', '#E2B47E'), (640, 983, 684, 1017), sw=9),
         flat(poly((640, 1000), (655, 994), (655, 1006)), '#30475A'),
@@ -261,39 +324,41 @@ def clipboard():
         shape(rr(824, 983, 22, 34, 3), SILVER, (824, 983, 846, 1017), sw=9),
         shape(rr(846, 983, 30, 34, 10), CORAL, (846, 983, 876, 1017), sw=9),
     ]
-    return {'clipboard': body, 'clipboard_pencil': [Group(pencil, rotate=-38, px=640, py=1000)]}
+    return {'notes_glasses': glasses, 'notes_pad': pad,
+            'notes_pencil': [Group(pencil, rotate=-38, px=640, py=1000)]}
 
 
-def bell():
-    body = [
-        shape(circle(627, 734, 22), GOLD, (605, 712, 649, 756)),
-        shape(circle(627, 1022, 27), (GOLD_D, '#C87A1E'), (600, 995, 654, 1049)),
-        shape('M627 752 C540 752 516 812 511 880 C506 930 482 950 452 972 L802 972 C772 950 748 930 743 880 '
-              'C738 812 714 752 627 752 Z', GOLD, (452, 752, 802, 972)),
-        shape(rr(432, 962, 390, 40, 20), ('#FFD25A', GOLD_D), (432, 962, 822, 1002)),
-        ink('M516 884 Q627 906 738 884', GOLD_D, 12),
-        shine('M562 800 Q540 860 546 930', 16),
+def icecream():
+    """To check, nothing waiting: licking a double scoop with a cherry on top."""
+    face = [
+        ink('M428 548 Q481 488 534 548', DARK, 24),
+        ink('M719 548 Q772 488 825 548', DARK, 24),
+        cover_smile(),
+        ink('M584 596 Q627 626 670 596', DARK, 16),
+        shape('M610 610 Q627 652 644 610 Z', CORAL, (610, 606, 644, 652), sw=6),
+        *cheeks(),
     ]
-    rings = [ink(d, CORAL[1], 15) for d in (
-        'M456 792 Q430 836 442 882', 'M412 768 Q376 836 394 904',
-        'M798 792 Q824 836 812 882', 'M842 768 Q878 836 860 904')]
-    return {'bell': body, 'bell_rings': rings}
-
-
-def box():
-    body = [
-        shape('M436 822 L470 724 L784 724 L818 822 Z', ('#E7B47A', '#C98B4E'), (436, 724, 818, 822)),
-        shape('M398 838 L312 766 L346 728 L436 822 Z', ('#E7B47A', '#C98B4E'), (312, 728, 436, 838)),
-        shape('M856 838 L942 766 L908 728 L818 822 Z', ('#E7B47A', '#C98B4E'), (818, 728, 942, 838)),
-        shape('M398 818 L856 818 L874 856 L380 856 Z', ('#7A4C2A', '#5A341B'), (380, 818, 874, 856)),
-        shape('M380 852 L874 852 L858 1062 L396 1062 Z', ('#EDB679', '#C98B4E'), (380, 852, 874, 1062)),
-        flat(rr(598, 852, 58, 84, 4), '#F6DDB4', 0.85),
-        shape(rr(452, 962, 132, 64, 12), WHITE, (452, 962, 584, 1026), sw=7),
-        flat(rr(472, 980, 86, 10, 5), '#C9D6E0'),
-        flat(rr(472, 1000, 56, 10, 5), '#C9D6E0'),
+    cone = [
+        shape('M532 900 L722 900 L627 1072 Z', ('#F2C27A', '#D69A4A'), (532, 900, 722, 1072)),
+        ink('M560 930 L680 1010 M600 910 L700 970 M694 930 L574 1010 M654 910 L554 970', '#B07A35', 7),
     ]
-    motes = [flat(circle(x, y, r), '#BFD8E8', 0.95) for x, y, r in ((586, 786, 11), (662, 752, 8), (712, 792, 13), (540, 742, 7))]
-    return {'box': body, 'box_motes': motes}
+    mint = ('#A6EBCB', '#5FCB9A')
+    sprinkles = (('M580 770 l14 -6', '#FFD96B'), ('M664 762 l10 10', '#5FCB9A'), ('M612 792 l-12 6', '#7CC0E6'),
+                 ('M690 790 l12 -4', '#FFD96B'), ('M560 860 l10 8', '#F06BA0'), ('M690 860 l-12 6', '#7CC0E6'))
+    scoops = [
+        shape('M520 900 Q506 800 627 800 Q748 800 734 900 Q700 920 680 900 Q650 924 627 900 Q600 924 574 900 '
+              'Q550 922 520 900 Z', mint, (506, 800, 748, 924)),
+        shape('M540 806 Q536 720 627 716 Q718 720 714 806 Q690 822 660 806 Q627 826 594 806 Q564 822 540 806 Z',
+              ('#FF9EC4', '#F06BA0'), (536, 716, 718, 826)),
+        ink('M627 672 Q640 640 664 632', '#3FA46A', 7),
+        shape(circle(627, 694, 26), ('#FF5A5A', '#C73636'), (601, 668, 653, 720), sw=8),
+        shine('M614 684 Q618 676 626 674', 6, 0.9),
+        shine('M560 780 Q570 750 600 742', 10, 0.8),
+        shine('M536 870 Q544 836 572 824', 10, 0.7),
+        *(ink(d, c, 8) for d, c in sprinkles),
+    ]
+    drip = [shape('M716 884 Q730 904 730 932 A14 14 0 0 1 702 932 Q702 904 716 884 Z', mint, (702, 884, 730, 946), sw=7)]
+    return {'icecream_face': face, 'icecream_cone': cone, 'icecream_scoops': scoops, 'icecream_drip': drip}
 
 
 def plug():
@@ -439,7 +504,7 @@ def clock():
     return {'clock': body, 'clock_lines': lines}
 
 
-PROPS = [music, trophy, phone, key, clipboard, bell, box, plug, gears, hourglass, seal, scales, wallet, flag, clock]
+PROPS = [music, popcorn, notes, icecream, trophy, phone, key, plug, gears, hourglass, seal, scales, wallet, flag, clock]
 
 
 # ---------------------------------------------------------------- emit

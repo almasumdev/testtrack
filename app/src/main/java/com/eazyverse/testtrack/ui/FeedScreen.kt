@@ -258,7 +258,7 @@ fun FeedScreen(
                             RobotOffline("Activity didn't load", onRetry = { vm.load(context) })
                         } else {
                             RobotState(
-                                Prop.Bell,
+                                Prop.Popcorn,
                                 "Nothing has happened yet",
                                 "Crews starting and finishing, first apps, streaks and first reviews show up here.",
                             )

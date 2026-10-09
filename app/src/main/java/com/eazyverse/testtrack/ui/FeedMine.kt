@@ -101,7 +101,7 @@ fun MineBody(
     val history = reviews.filter { it.state in HistoryStates }
     if (!loading && going.isEmpty() && pending.isEmpty() && history.isEmpty()) {
         RobotState(
-            Prop.Clipboard,
+            Prop.Notes,
             "No reviews yet",
             "Pick an app from Feedback. Every review you take on is followed here.",
             action = "Find an app to review",

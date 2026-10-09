@@ -59,22 +59,31 @@ enum class Prop(
         PropLayer(R.drawable.robot_prop_key_spark, Pulse(0f, 1600f)),
     ),
 
-    /** No reviews taken on: a blank checklist, the pencil tapping. */
-    Clipboard(
-        PropLayer(R.drawable.robot_prop_clipboard),
-        PropLayer(R.drawable.robot_prop_clipboard_pencil, Rock(deg = 6f, period = 800f), px = 640f, py = 1000f),
+    /** No reviews taken on yet: glasses on, notepad out, the pencil tapping, ready to write one. */
+    Notes(
+        PropLayer(R.drawable.robot_prop_notes_pad),
+        PropLayer(R.drawable.robot_prop_notes_pencil, Rock(deg = 6f, period = 800f), px = 640f, py = 1000f),
+        head = listOf(PropLayer(R.drawable.robot_prop_notes_glasses)),
     ),
 
-    /** Nothing has happened yet. */
-    Bell(
-        PropLayer(R.drawable.robot_prop_bell, Shake(12f), px = 627f, py = 734f),
-        PropLayer(R.drawable.robot_prop_bell_rings, Pulse(0.05f, 2400f)),
+    /** Nothing has happened yet: settled in with popcorn, waiting for the show; kernels hop out of the bucket. */
+    Popcorn(
+        PropLayer(R.drawable.robot_prop_popcorn_puffs),
+        PropLayer(R.drawable.robot_prop_popcorn_pop1, Rise(dx = -70f, dy = -70f, delay = 0f, period = 1600f), px = 570f, py = 710f),
+        PropLayer(R.drawable.robot_prop_popcorn_pop2, Rise(dx = 70f, dy = -80f, delay = 0.33f, period = 1600f), px = 700f, py = 706f),
+        PropLayer(R.drawable.robot_prop_popcorn_pop3, Rise(dx = 20f, dy = -60f, delay = 0.66f, period = 1600f), px = 636f, py = 694f),
+        PropLayer(R.drawable.robot_prop_popcorn_bucket),
+        face = R.drawable.robot_prop_popcorn_face,
+        nod = Rock(deg = 3f),
     ),
 
-    /** Nothing waiting: an empty box with dust in it. */
-    Box(
-        PropLayer(R.drawable.robot_prop_box),
-        PropLayer(R.drawable.robot_prop_box_motes, Rock(dy = -14f, period = 1600f)),
+    /** Nothing waiting: licking a double scoop with a cherry on top; a drip slides down. */
+    IceCream(
+        PropLayer(R.drawable.robot_prop_icecream_cone),
+        PropLayer(R.drawable.robot_prop_icecream_scoops, Rock(deg = 3f), px = 627f, py = 900f),
+        PropLayer(R.drawable.robot_prop_icecream_drip, Rise(dx = 0f, dy = 60f, delay = 0f), px = 716f, py = 915f),
+        face = R.drawable.robot_prop_icecream_face,
+        nod = Rock(deg = 2f, period = 1200f),
     ),
 
     /** Did not load: the two ends of a cable, not quite meeting. */
