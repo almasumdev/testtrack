@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -124,7 +127,34 @@ internal fun RecordGrid(
 }
 
 /**
- * One stat: a tinted icon, the figure, and its label, side by side on a card.
+ * [RecordGrid] before the figures have arrived. The cards, their icons and what each one counts
+ * are the same for everybody, so they are drawn for real; only the figures shimmer.
+ */
+@Composable
+internal fun RecordGridLoading() {
+    val t = Tt.colors
+    Column(
+        Modifier.semantics(mergeDescendants = true) { contentDescription = "Loading your record" },
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatCard(Lucide.Trophy, null, "Rank", tint = t.gold)
+            StatCard(Lucide.Star, null, "Points", tint = t.accentInk)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatCard(Lucide.Smartphone, null, "Apps opened")
+            StatCard(Lucide.MessageSquareText, null, "Reviews accepted")
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatCard(Lucide.Users, null, "Crews going on")
+            StatCard(Lucide.Moon, null, "Apps a night")
+        }
+    }
+}
+
+/**
+ * One stat: a tinted icon, the figure, and its label, side by side on a card. A null [value] is
+ * one still on its way, drawn as a bar the figure's height.
  *
  * [tint] colours the icon and its tile; left alone it is the palette's own tile blue. A card with
  * [onClick] shows a chevron so it reads as something that goes somewhere.
@@ -132,7 +162,7 @@ internal fun RecordGrid(
 @Composable
 private fun RowScope.StatCard(
     icon: ImageVector,
-    value: String,
+    value: String?,
     label: String,
     tint: Color? = null,
     onClick: (() -> Unit)? = null,
@@ -161,13 +191,19 @@ private fun RowScope.StatCard(
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(
-                value,
-                style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, lineHeight = 22.sp, fontFeatureSettings = "tnum"),
-                fontWeight = FontWeight.Bold,
-                color = t.text,
-                maxLines = 1,
-            )
+            if (value == null) {
+                Box(Modifier.height(22.dp), contentAlignment = Alignment.CenterStart) {
+                    Skeleton(width = 44.dp, height = 18.dp)
+                }
+            } else {
+                Text(
+                    value,
+                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, lineHeight = 22.sp, fontFeatureSettings = "tnum"),
+                    fontWeight = FontWeight.Bold,
+                    color = t.text,
+                    maxLines = 1,
+                )
+            }
             Text(
                 label,
                 style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),

@@ -105,7 +105,9 @@ fun MeScreen(
         loading = vm.loading,
         offline = vm.offline,
         signedOut = vm.signedOut,
-        onEdit = { editing = true },
+        // Not before the profile has arrived: the dialog edits the name it is given, and an empty
+        // one saved over the real name would be a loss nobody asked for.
+        onEdit = { if (vm.profile != null) editing = true },
         onSignOut = onSignOut,
         onSignIn = onSignIn,
         onOpenRanks = onOpenRanks,
@@ -168,29 +170,31 @@ fun MeBody(
         RobotOffline("Your record did not load", onRetry = onRetry)
         return
     }
-    if (profile == null || DebugLooks.holdLoading) {
-        Box(Modifier.fillMaxWidth().padding(top = 48.dp), contentAlignment = Alignment.Center) {
-            RobotLoader(label = "Getting your record")
-        }
-        return
-    }
+    // Until the record arrives the page is already the page: the account rows and the version
+    // are the app's own and are there from the first frame, and only the person and their figures
+    // shimmer, in the shapes they will land in.
+    val shown = profile.takeUnless { DebugLooks.holdLoading }
 
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = 28.dp + dockRoom()),
     ) {
-        item { Who(profile, onEdit) }
+        item { if (shown == null) WhoLoading() else Who(shown, onEdit) }
         item { SectionTitle("Your record") }
         item {
-            RecordGrid(
-                points = profile.points,
-                place = profile.place,
-                opens = profile.opens,
-                reviews = profile.reviews,
-                crewsRunning = profile.crewsRunning,
-                crewsFilled = profile.crewsFilled,
-                onOpenRanks = onOpenRanks,
-            )
+            if (shown == null) {
+                RecordGridLoading()
+            } else {
+                RecordGrid(
+                    points = shown.points,
+                    place = shown.place,
+                    opens = shown.opens,
+                    reviews = shown.reviews,
+                    crewsRunning = shown.crewsRunning,
+                    crewsFilled = shown.crewsFilled,
+                    onOpenRanks = onOpenRanks,
+                )
+            }
         }
         item { SectionTitle("Account") }
         item { Account(onEdit = onEdit, onSignOut = onSignOut, drive = drive, onDrive = onDrive, group = group, onGroup = onGroup) }
@@ -298,6 +302,37 @@ private fun Who(
         ) {
             memberSince(profile.joinedAt)?.let { ProfileChip(Lucide.CalendarDays, it) }
             localTime(profile.timezone)?.let { ProfileChip(Lucide.Clock, it) }
+        }
+    }
+}
+
+/** [Who] before the profile has arrived: the face's ring, then the name, address and facts as bars. */
+@Composable
+private fun WhoLoading() {
+    val t = Tt.colors
+    Column(Modifier.padding(horizontal = 2.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .size(FaceSize)
+                    .clip(CircleShape)
+                    .background(t.glass)
+                    .border(1.dp, t.glassBorder, CircleShape)
+                    .padding(3.dp),
+            ) {
+                Skeleton(width = FaceSize - 6.dp, height = FaceSize - 6.dp, corner = FaceSize / 2)
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Skeleton(width = 140.dp, height = 18.dp)
+                Spacer(Modifier.height(8.dp))
+                Skeleton(width = 190.dp, height = 12.dp)
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Skeleton(width = 104.dp, height = 22.dp, corner = 11.dp)
+            Skeleton(width = 92.dp, height = 22.dp, corner = 11.dp)
         }
     }
 }
