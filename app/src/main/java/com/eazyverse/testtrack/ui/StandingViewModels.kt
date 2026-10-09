@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
@@ -82,7 +81,7 @@ class RanksViewModel : ViewModel() {
             try {
                 ApiAuth.ensure(context)
                 val answer = Api.board()
-                rows = SampleBoard.pad(answer.rows)
+                rows = answer.rows
                 mine = answer.mine
                 offline = false
             } catch (_: ApiError) {
@@ -219,75 +218,5 @@ class MeViewModel : ViewModel() {
                 loading = false
             }
         }
-    }
-}
-
-/**
- * People to look at, while there are almost none.
- *
- * Debug builds only, and it returns the server's answer untouched in a release one. The board has
- * two members on it at the moment, so every screen built for it — the podium, a hundred rows, a
- * line pinned to the bottom because yours is somewhere far below — is a screen nobody can see.
- * That is not a thing to find out after it ships.
- *
- * The real rows are not altered and keep their places and their scores. These slot in underneath
- * the last of them, with scores that only ever go down, so the board still reads as a board. Ids
- * are prefixed so that nothing here can ever be mistaken for somebody.
- */
-private object SampleBoard {
-    private val names =
-        listOf(
-            "Tanvir",
-            "Nadia",
-            "Shafin",
-            "Imran",
-            "Farzana",
-            "Mahin",
-            "Sadia",
-            "Rakib",
-            "Arif",
-            "Nusrat",
-            "Hasan",
-            "Prottoy",
-            "Labiba",
-            "Zayed",
-            "Kabir",
-            "Jarin",
-            "Omar",
-            "Sabbir",
-            "Tahmid",
-            "Ruhul",
-            "Afsana",
-            "Bashir",
-            "Munira",
-            "Dipu",
-        )
-
-    /** How long a board has to be before every state of the screen has somewhere to happen. */
-    private const val ENOUGH = 40
-
-    fun pad(real: List<BoardRow>): List<BoardRow> {
-        if (!BuildConfig.DEBUG || real.size >= ENOUGH) return real
-
-        val floor = real.lastOrNull()?.points ?: 30
-        val span = ENOUGH - real.size
-        val drop = ((floor - 1) / span).coerceAtLeast(1)
-
-        return real +
-            (0 until span).map { step ->
-                val place = real.size + step + 1
-                val points = (floor - 1 - step * drop).coerceAtLeast(1)
-                // Split back into the two things that earned it, so the line under the name is
-                // arithmetic somebody could check rather than a number made up beside it.
-                val reviews = if (place % 6 == 0 && points > 5) 1 else 0
-                BoardRow(
-                    id = "sample-$place",
-                    name = names[step % names.size],
-                    place = place,
-                    opens = points - reviews * 5,
-                    reviews = reviews,
-                    points = points,
-                )
-            }
     }
 }

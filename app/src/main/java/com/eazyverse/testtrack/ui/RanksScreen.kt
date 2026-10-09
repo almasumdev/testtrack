@@ -138,7 +138,9 @@ fun RanksBody(
         EmptyState(
             icon = Lucide.Trophy,
             title = "Nobody has started yet",
-            subtitle = "The first night anybody tests, this fills up.",
+            subtitle =
+                "Open the apps in your crew, or get a review accepted in Circle, and you'll be " +
+                    "the first one here.",
         )
         return
     }
@@ -349,7 +351,8 @@ private fun BoardRowView(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            "${row.place}",
+            // Zero is somebody who has not earned a point yet: not on the board, not first of one.
+            if (row.place > 0) "${row.place}" else "–",
             Modifier.width(room),
             style = MaterialTheme.typography.labelLarge.tabular(),
             fontWeight = FontWeight.Bold,
@@ -374,7 +377,7 @@ private fun BoardRowView(
             )
             Spacer(Modifier.height(1.dp))
             Text(
-                work(row),
+                if (row.place > 0) work(row) else "Not on the board yet",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
