@@ -45,9 +45,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Trophy
-import com.composables.icons.lucide.WifiOff
 import com.eazyverse.testtrack.net.BoardRow
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
@@ -121,7 +118,7 @@ fun RanksBody(
     if (offline) {
         // The robot, like every other screen that has nothing to show, rather than a lone tile.
         RobotState(
-            Lucide.WifiOff,
+            Prop.Plug,
             "The board did not load",
             "Check your connection and pull to try again.",
             failed = true,
@@ -134,7 +131,7 @@ fun RanksBody(
     }
     if (rows.isEmpty()) {
         RobotState(
-            Lucide.Trophy,
+            Prop.Trophy,
             "Nobody has started yet",
             "Open the apps in your crew, or get a review accepted in Circle, and you'll be the " +
                 "first one here.",

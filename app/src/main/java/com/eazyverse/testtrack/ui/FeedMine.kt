@@ -34,10 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.CircleX
-import com.composables.icons.lucide.ClipboardCheck
 import com.composables.icons.lucide.Hourglass
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.User
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
@@ -86,7 +84,7 @@ fun MineBody(
 ) {
     if (signedOut) {
         RobotState(
-            Lucide.User,
+            Prop.Key,
             "Your reviews live here",
             "Sign in to review apps and follow each one until it is paid.",
             action = "Sign in",
@@ -103,7 +101,7 @@ fun MineBody(
     val history = reviews.filter { it.state in HistoryStates }
     if (!loading && going.isEmpty() && pending.isEmpty() && history.isEmpty()) {
         RobotState(
-            Lucide.ClipboardCheck,
+            Prop.Clipboard,
             "No reviews yet",
             "Pick an app from Feedback. Every review you take on is followed here.",
             action = "Find an app to review",

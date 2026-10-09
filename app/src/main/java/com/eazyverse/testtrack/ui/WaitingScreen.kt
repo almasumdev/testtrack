@@ -6,8 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Inbox
-import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.domain.Case
 import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.Waiting
@@ -70,7 +68,7 @@ fun WaitingBody(
     }
     if (reviews.isEmpty() && disputes.isEmpty() && requests.isEmpty()) {
         RobotState(
-            Lucide.Inbox,
+            Prop.Box,
             "Nothing waiting on you",
             "Reviews of your apps land here, and so does any case you are asked to help decide.",
         )

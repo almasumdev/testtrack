@@ -28,8 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.LayoutGrid
-import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.net.ApiMyApp
 
 /**
@@ -103,7 +101,7 @@ fun AppsBody(
     if (apps.isEmpty()) {
         // The robot, like every other tab with nothing to show.
         RobotState(
-            Lucide.LayoutGrid,
+            Prop.Phone,
             "Nothing up yet",
             "Put an app into a crew to get a fortnight of testing, or ask Circle for a review. " +
                 "Whatever you send lands here.",

@@ -29,19 +29,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Hourglass
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Undo2
-import com.composables.icons.lucide.Users
-import com.composables.icons.lucide.WifiOff
 import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * The review page's two ends that are not a step: the review sent and out of the reviewer's hands,
- * and the first load that could not happen. Both are the TestTrack robot with a badge saying how
- * things stand, held between its hands.
+ * and the first load that could not happen. Both are the TestTrack robot holding a cartoon thing
+ * that says how things stand.
  */
 
 /** Where one stage of a sent review has got to. */
@@ -50,7 +46,7 @@ private enum class Stage { DONE, NOW, LATER, FAILED }
 /**
  * The review is with the developer, or decided.
  *
- * The robot with a badge for the outcome, one line on what that means, and the three stages a
+ * The robot holding the outcome, one line on what that means, and the three stages a
  * sent review goes through, so "what happens now" is answered on the page rather than guessed.
  */
 @Composable
@@ -61,27 +57,21 @@ internal fun ReviewDone(
     val t = Tt.colors
     val state = job.review.state
     val reward = job.post.reward
-    val (badge, tone, title) =
+    val (prop, title) =
         when (state) {
-            "approved" -> Triple(Lucide.Check, t.ok, "Approved")
-            "disputed" -> Triple(Lucide.Users, t.warn, "Being decided")
-            "rejected" -> Triple(Lucide.X, t.bad, "Not paid")
-            "abandoned" -> Triple(Lucide.Undo2, t.text3, "Given up")
-            "expired" -> Triple(Lucide.Clock, t.text3, "Ran out")
-            else -> Triple(Lucide.Hourglass, t.accentInk, "Sent to the developer")
+            "approved" -> Prop.Seal to "Approved"
+            "disputed" -> Prop.Scales to "Being decided"
+            "rejected" -> Prop.Wallet to "Not paid"
+            "abandoned" -> Prop.Flag to "Given up"
+            "expired" -> Prop.Clock to "Ran out"
+            else -> Prop.Hourglass to "Sent to the developer"
         }
     Column(
         Modifier.fillMaxWidth().heightIn(min = room - 64.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        RobotHolding(
-            badge,
-            tone,
-            size = (room * 0.2f).coerceIn(96.dp, 132.dp),
-            turning = state == "submitted",
-            description = title,
-        )
+        RobotHolding(prop, size = (room * 0.2f).coerceIn(96.dp, 132.dp), description = title)
         Spacer(Modifier.height(18.dp))
         Text(
             title,
@@ -156,7 +146,7 @@ internal fun ReviewFailed(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        RobotHolding(Lucide.WifiOff, t.text3, size = (room * 0.18f).coerceIn(88.dp, 120.dp))
+        RobotHolding(Prop.Plug, size = (room * 0.18f).coerceIn(88.dp, 120.dp))
         Spacer(Modifier.height(18.dp))
         Text("Can't open this review", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(6.dp))

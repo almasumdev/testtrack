@@ -46,9 +46,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.composables.icons.lucide.Activity
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Megaphone
 import com.eazyverse.testtrack.net.Api
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -214,7 +211,7 @@ fun FeedScreen(
                         RobotOffline("Circle didn't load", onRetry = { vm.load(context) })
                     } else if (none) {
                         RobotState(
-                            Lucide.Megaphone,
+                            Prop.Megaphone,
                             "Nobody's asking right now",
                             "When someone wants feedback on their app, it shows up here. You can ask for some yourself.",
                             action = "Ask for feedback",
@@ -261,7 +258,7 @@ fun FeedScreen(
                             RobotOffline("Activity didn't load", onRetry = { vm.load(context) })
                         } else {
                             RobotState(
-                                Lucide.Activity,
+                                Prop.Bell,
                                 "Nothing has happened yet",
                                 "Crews starting and finishing, first apps, streaks and first reviews show up here.",
                             )

@@ -16,18 +16,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.WifiOff
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
- * A page with nothing to list: empty, or not loaded. The robot holds that case's symbol, with a
- * title, one line, and the way out.
+ * A page with nothing to list: empty, or not loaded. The robot holds that case's cartoon
+ * [Prop], with a title, one line, and the way out.
  *
  * Empty pages are in the accent with a filled button, since there is something to go and do.
  * A page that did not load is grey with an outlined "Try again", so it reads as a pause rather
@@ -35,7 +32,7 @@ import com.eazyverse.testtrack.ui.theme.Tt
  */
 @Composable
 fun RobotState(
-    icon: ImageVector,
+    prop: Prop,
     title: String,
     line: String,
     modifier: Modifier = Modifier,
@@ -54,7 +51,7 @@ fun RobotState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        RobotHolding(icon, if (failed) t.text3 else t.accentInk, size = 104.dp, description = title)
+        RobotHolding(prop, size = 112.dp, description = title)
         Spacer(Modifier.height(14.dp))
         Text(
             title,
@@ -96,7 +93,7 @@ fun RobotOffline(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) = RobotState(
-    Lucide.WifiOff,
+    Prop.Plug,
     title,
     "Check your connection, then try again.",
     modifier,
