@@ -205,45 +205,45 @@ fun FeedScreen(
                 FeedTab.FEEDBACK -> {
                     // Not a sign in prompt. The posts come back for anybody, so nothing here and
                     // offline means the server could not be got at.
-                    val hold = DebugLooks.holdLoading
-                    val unreached = !hold && vm.offline && vm.posts.isEmpty()
-                    val none = !hold && !vm.loading && !unreached && vm.openPosts.isEmpty()
-                    if (unreached) {
-                        RobotOffline("Circle didn't load", onRetry = { vm.load(context) })
-                    } else if (none) {
-                        RobotState(
-                            Prop.Music,
-                            "Nobody's asking right now",
-                            "When someone wants feedback on their app, it shows up here. You can ask for some yourself.",
-                            action = "Ask for feedback",
-                            onAction = onAsk,
-                        )
-                    } else {
-                        LazyColumn(
-                            Modifier.fillMaxSize(),
-                            state = feedbackList,
-                            // Room under the last card for the floating button, which is only ever
-                            // on screen once you are far enough down for this to be the padding
-                            // that matters.
-                            contentPadding =
-                                PaddingValues(
-                                    start = Gutter,
-                                    top = ListTop,
-                                    end = Gutter,
-                                    bottom = Gutter + 64.dp + dockRoom(),
-                                ),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            item(key = "ask") { FeedAskButton(onPost = onAsk) }
-                            if (hold || (vm.loading && vm.posts.isEmpty())) {
-                                items(3) { FeedLoadingCard() }
-                            }
-                            items(if (hold) emptyList() else vm.openPosts, key = { it.id }) { post ->
-                                // Taking a review on needs the testers group: Play only lets
-                                // the owner add somebody on it to a closed test.
-                                FeedRequestCard(post) {
-                                    // Signed out, a review cannot be claimed: ask for the account first.
-                                    if (vm.signedOut) onSignIn() else membership.require { onReview(Json.encodeToString(post)) }
+                    val waiting = DebugLooks.holdLoading || (vm.loading && vm.posts.isEmpty())
+                    LoadSwap(waiting) { hold ->
+                        val unreached = !hold && vm.offline && vm.posts.isEmpty()
+                        val none = !hold && !vm.loading && !unreached && vm.openPosts.isEmpty()
+                        if (unreached) {
+                            RobotOffline("Circle didn't load", onRetry = { vm.load(context) })
+                        } else if (none) {
+                            RobotState(
+                                Prop.Music,
+                                "Nobody's asking right now",
+                                "When someone wants feedback on their app, it shows up here. You can ask for some yourself.",
+                                action = "Ask for feedback",
+                                onAction = onAsk,
+                            )
+                        } else {
+                            LazyColumn(
+                                Modifier.fillMaxSize(),
+                                state = if (hold) rememberLazyListState() else feedbackList,
+                                // Room under the last card for the floating button, which is only ever
+                                // on screen once you are far enough down for this to be the padding
+                                // that matters.
+                                contentPadding =
+                                    PaddingValues(
+                                        start = Gutter,
+                                        top = ListTop,
+                                        end = Gutter,
+                                        bottom = Gutter + 64.dp + dockRoom(),
+                                    ),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                item(key = "ask") { FeedAskButton(onPost = onAsk) }
+                                if (hold) items(3) { FeedLoadingCard() }
+                                items(if (hold) emptyList() else vm.openPosts, key = { it.id }) { post ->
+                                    // Taking a review on needs the testers group: Play only lets
+                                    // the owner add somebody on it to a closed test.
+                                    FeedRequestCard(post) {
+                                        // Signed out, a review cannot be claimed: ask for the account first.
+                                        if (vm.signedOut) onSignIn() else membership.require { onReview(Json.encodeToString(post)) }
+                                    }
                                 }
                             }
                         }
@@ -254,64 +254,79 @@ fun FeedScreen(
                 // Nothing about this tab is a different kind of list, so nothing about it is
                 // measured differently: what tells the two apart is what is inside a card.
                 FeedTab.ACTIVITY ->
-                    if (!DebugLooks.holdLoading && !vm.loading && vm.events.isEmpty()) {
-                        if (vm.offline || vm.activityFailed) {
-                            RobotOffline("Activity didn't load", onRetry = { vm.load(context) })
-                        } else {
-                            RobotState(
-                                Prop.Popcorn,
-                                "Nothing has happened yet",
-                                "Crews starting and finishing, first apps, streaks and first reviews show up here.",
-                            )
-                        }
-                    } else {
-                        LazyColumn(
-                            Modifier.fillMaxSize(),
-                            state = activityList,
-                            contentPadding =
-                                PaddingValues(
-                                    start = Gutter,
-                                    top = ListTop,
-                                    end = Gutter,
-                                    bottom = Gutter + dockRoom(),
-                                ),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            if (DebugLooks.holdLoading || (vm.loading && vm.events.isEmpty())) {
-                                items(4) { FeedLoadingCard(compact = true) }
+                    LoadSwap(DebugLooks.holdLoading || (vm.loading && vm.events.isEmpty())) { hold ->
+                        if (!hold && !vm.loading && vm.events.isEmpty()) {
+                            if (vm.offline || vm.activityFailed) {
+                                RobotOffline("Activity didn't load", onRetry = { vm.load(context) })
+                            } else {
+                                RobotState(
+                                    Prop.Popcorn,
+                                    "Nothing has happened yet",
+                                    "Crews starting and finishing, first apps, streaks and first reviews show up here.",
+                                )
                             }
-                            items(if (DebugLooks.holdLoading) emptyList() else vm.events, key = { it.id }) { event ->
-                                FeedEventCard(event)
+                        } else {
+                            LazyColumn(
+                                Modifier.fillMaxSize(),
+                                state = if (hold) rememberLazyListState() else activityList,
+                                contentPadding =
+                                    PaddingValues(
+                                        start = Gutter,
+                                        top = ListTop,
+                                        end = Gutter,
+                                        bottom = Gutter + dockRoom(),
+                                    ),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                if (hold) items(4) { FeedLoadingCard(compact = true) }
+                                items(if (hold) emptyList() else vm.events, key = { it.id }) { event ->
+                                    FeedEventCard(event)
+                                }
                             }
                         }
                     }
 
                 FeedTab.MINE ->
-                    MineBody(
-                        reviews = vm.mine,
-                        loading = vm.loading,
-                        signedOut = vm.signedOut,
-                        onSignIn = onSignIn,
-                        offline = vm.offline,
-                        onRetry = { vm.load(context) },
-                        onFind = { vm.show(FeedTab.FEEDBACK) },
-                        onOpen = { review -> onReview(Json.encodeToString(vm.postFor(review))) },
-                    )
+                    LoadSwap(DebugLooks.holdLoading || (vm.loading && vm.mine.isEmpty() && !vm.signedOut)) { waiting ->
+                        if (waiting) {
+                            FeedLoadingList()
+                            return@LoadSwap
+                        }
+                        MineBody(
+                            reviews = vm.mine,
+                            loading = vm.loading,
+                            signedOut = vm.signedOut,
+                            onSignIn = onSignIn,
+                            offline = vm.offline,
+                            onRetry = { vm.load(context) },
+                            onFind = { vm.show(FeedTab.FEEDBACK) },
+                            onOpen = { review -> onReview(Json.encodeToString(vm.postFor(review))) },
+                        )
+                    }
 
                 FeedTab.WAITING ->
-                    WaitingBody(
-                        reviews = vm.waiting,
-                        disputes = vm.disputes,
-                        loading = vm.loading,
-                        offline = vm.offline,
-                        onRetry = { vm.load(context) },
-                        signedOut = vm.signedOut,
-                        onOpenReview = { onCheck(it.id) },
-                        onOpenCase = { onCheck(it.id) },
-                        onSignIn = onSignIn,
-                        requests = vm.requests,
-                        onOpenRequest = { onCheck(it.id) },
-                    )
+                    LoadSwap(
+                        DebugLooks.holdLoading ||
+                            (vm.loading && vm.waiting.isEmpty() && vm.disputes.isEmpty() && !vm.signedOut),
+                    ) { waiting ->
+                        if (waiting) {
+                            FeedLoadingList()
+                            return@LoadSwap
+                        }
+                        WaitingBody(
+                            reviews = vm.waiting,
+                            disputes = vm.disputes,
+                            loading = vm.loading,
+                            offline = vm.offline,
+                            onRetry = { vm.load(context) },
+                            signedOut = vm.signedOut,
+                            onOpenReview = { onCheck(it.id) },
+                            onOpenCase = { onCheck(it.id) },
+                            onSignIn = onSignIn,
+                            requests = vm.requests,
+                            onOpenRequest = { onCheck(it.id) },
+                        )
+                    }
             }
         }
     }

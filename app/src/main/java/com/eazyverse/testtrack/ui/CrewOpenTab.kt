@@ -42,10 +42,12 @@ fun CrewOpenTab(
         contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
     ) {
         // The rules below are the app's own and need nothing from the server; only the card waits.
-        if (vm.firstLoad) {
-            item { CrewOpenCardLoading() }
-        } else {
-            item {
+        item {
+            LoadSwap(vm.firstLoad) { waiting ->
+                if (waiting) {
+                    CrewOpenCardLoading()
+                    return@LoadSwap
+                }
                 Box(Modifier.padding(start = Gutter, end = Gutter, bottom = 12.dp)) {
                     CrewCard(padding = PaddingValues(16.dp)) {
                         val free = CrewRules.SEATS - (crew?.taken ?: 0)

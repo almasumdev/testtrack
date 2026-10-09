@@ -177,12 +177,11 @@ fun MeBody(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = 28.dp + dockRoom()),
     ) {
-        item { if (shown == null) WhoLoading() else Who(shown, onEdit) }
+        item { LoadSwap(shown == null) { if (it) WhoLoading() else shown?.let { p -> Who(p, onEdit) } } }
         item { SectionTitle("Your record") }
         item {
-            if (shown == null) {
-                RecordGridLoading()
-            } else {
+            LoadSwap(shown == null) { waiting ->
+                if (waiting || shown == null) return@LoadSwap RecordGridLoading()
                 RecordGrid(
                     points = shown.points,
                     place = shown.place,

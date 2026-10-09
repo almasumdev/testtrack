@@ -51,9 +51,22 @@ fun AppsScreen(
     // A crew filling or a review arriving shows up without leaving the tab.
     WhileShown(onShow = { vm.startLive(context) }, onHide = vm::stopLive)
 
+    LoadSwap(DebugLooks.holdLoading || (vm.loading && vm.apps.isEmpty() && !vm.offline && !vm.signedOut)) { waiting ->
+        if (waiting) AppsLoading() else AppsLoaded(vm, onSignIn, onOpenCrew, onOpenRequest)
+    }
+}
+
+/** The tab once it has its answer, whatever the answer was. */
+@Composable
+private fun AppsLoaded(
+    vm: AppsViewModel,
+    onSignIn: () -> Unit,
+    onOpenCrew: (String) -> Unit,
+    onOpenRequest: (String) -> Unit,
+) {
+    val context = LocalContext.current
     AppsBody(
         apps = vm.apps,
-        loading = vm.loading,
         offline = vm.offline,
         signedOut = vm.signedOut,
         onSignIn = onSignIn,

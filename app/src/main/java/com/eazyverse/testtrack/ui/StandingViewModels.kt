@@ -78,6 +78,16 @@ class RanksViewModel : ViewModel() {
 
     fun stopLive() = live.stop()
 
+    // The kept board, before the first frame. Only one with people on it: an empty one waits for
+    // the server, since "nobody yet" is a claim about now and could be wrong by the next frame.
+    init {
+        Api.lastBoard()?.takeIf { it.rows.isNotEmpty() }?.let {
+            rows = it.rows
+            mine = it.mine
+            loading = false
+        }
+    }
+
     /**
      * The board, signed in or not.
      *
@@ -92,15 +102,6 @@ class RanksViewModel : ViewModel() {
         viewModelScope.launch {
             val startedAt = System.currentTimeMillis()
             if (fromPull) pulling = true
-            if (rows.isEmpty()) {
-                // Only a kept board with people on it. An empty one waits for the server: "nobody yet"
-                // is a claim about now, and saying it from last time could be wrong by the next frame.
-                Api.lastBoard()?.takeIf { it.rows.isNotEmpty() }?.let {
-                    rows = it.rows
-                    mine = it.mine
-                    loading = false
-                }
-            }
             try {
                 ApiAuth.ensure(context)
                 val answer = Api.board()
@@ -153,14 +154,16 @@ class AppsViewModel : ViewModel() {
 
     fun stopLive() = live.stop()
 
+    // Your kept apps, before the first frame; none kept waits for the server rather than say so.
+    init {
+        Api.lastMyApps()?.takeIf { it.apps.isNotEmpty() }?.let {
+            apps = it.apps
+            loading = false
+        }
+    }
+
     fun load(context: Context) {
         viewModelScope.launch {
-            if (apps.isEmpty()) {
-                Api.lastMyApps()?.takeIf { it.apps.isNotEmpty() }?.let {
-                    apps = it.apps
-                    loading = false
-                }
-            }
             try {
                 if (!ApiAuth.ensure(context)) {
                     signedOut = true
@@ -254,14 +257,16 @@ class MeViewModel : ViewModel() {
         }
     }
 
+    // The kept profile, before the first frame.
+    init {
+        Api.lastProfile()?.let {
+            profile = it
+            loading = false
+        }
+    }
+
     fun load(context: Context) {
         viewModelScope.launch {
-            if (profile == null) {
-                Api.lastProfile()?.let {
-                    profile = it
-                    loading = false
-                }
-            }
             try {
                 if (!ApiAuth.ensure(context)) {
                     signedOut = true

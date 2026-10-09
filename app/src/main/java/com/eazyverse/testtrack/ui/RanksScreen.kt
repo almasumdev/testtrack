@@ -84,12 +84,13 @@ fun RanksScreen(vm: RanksViewModel = viewModel()) {
         onRefresh = { vm.load(context, fromPull = true) },
         modifier = Modifier.fillMaxSize(),
     ) {
-        RanksBody(
-            rows = vm.rows,
-            mine = vm.mine,
-            loading = vm.loading,
-            offline = vm.offline,
-        )
+        LoadSwap(DebugLooks.holdLoading || (vm.loading && vm.rows.isEmpty() && !vm.offline)) { waiting ->
+            if (waiting) {
+                RanksLoading()
+            } else {
+                RanksBody(rows = vm.rows, mine = vm.mine, offline = vm.offline)
+            }
+        }
     }
 }
 

@@ -300,25 +300,28 @@ object Api {
 
     // What each screen's main question returned last time, read back from the phone, or null when
     // nothing is kept. A screen shows this while the fresh answer is on its way. See [ApiCache].
-    suspend fun lastPosts(): PostPage? = last(POSTS)
+    // Plain reads, not suspending: a view model takes them as it is made, so a screen's very first
+    // frame is already the kept answer rather than a placeholder for the moment a read takes. The
+    // files are a few kilobytes of JSON.
+    fun lastPosts(): PostPage? = last(POSTS)
 
-    suspend fun lastActivity(): ApiActivity? = last(ACTIVITY)
+    fun lastActivity(): ApiActivity? = last(ACTIVITY)
 
-    suspend fun lastMyPosts(): List<ApiMyPost>? = last(MY_POSTS)
+    fun lastMyPosts(): List<ApiMyPost>? = last(MY_POSTS)
 
-    suspend fun lastMyReviews(): List<ApiReview>? = last(MY_REVIEWS)
+    fun lastMyReviews(): List<ApiReview>? = last(MY_REVIEWS)
 
-    suspend fun lastWaiting(): List<ApiReview>? = last(WAITING)
+    fun lastWaiting(): List<ApiReview>? = last(WAITING)
 
-    suspend fun lastDisputes(): List<ApiDispute>? = last(DISPUTES)
+    fun lastDisputes(): List<ApiDispute>? = last(DISPUTES)
 
-    suspend fun lastCrews(): CrewList? = last(CREWS)
+    fun lastCrews(): CrewList? = last(CREWS)
 
-    suspend fun lastBoard(): ApiBoard? = last(BOARD)
+    fun lastBoard(): ApiBoard? = last(BOARD)
 
-    suspend fun lastProfile(): ApiProfile? = last(PROFILE)
+    fun lastProfile(): ApiProfile? = last(PROFILE)
 
-    suspend fun lastMyApps(): MyApps? = last(MY_APPS)
+    fun lastMyApps(): MyApps? = last(MY_APPS)
 
     private const val POSTS = "/feed/posts"
     private const val ACTIVITY = "/feed/activity"
@@ -342,10 +345,8 @@ object Api {
 
     /** What [kept] last stored for [path], or null if there is none or it no longer reads. */
     @PublishedApi
-    internal suspend inline fun <reified T> last(path: String): T? =
-        withContext(Dispatchers.IO) {
-            ApiCache.read(path)?.let { runCatching { json.decodeFromString<T>(it) }.getOrNull() }
-        }
+    internal inline fun <reified T> last(path: String): T? =
+        ApiCache.read(path)?.let { runCatching { json.decodeFromString<T>(it) }.getOrNull() }
 
     // ---------------------------------------------------------------- plumbing
 

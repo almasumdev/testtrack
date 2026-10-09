@@ -139,14 +139,6 @@ class CrewViewModel : ViewModel() {
     /** Everything the tab shows, in one call. Safe to run on every resume. */
     fun load(context: Context) {
         viewModelScope.launch {
-            if (crews.isEmpty() && open == null) {
-                // Kept crews show at once; with none kept, the tabs wait for the server rather than
-                // say "nothing running" from memory.
-                Api.lastCrews()?.takeIf { it.mine.isNotEmpty() }?.let {
-                    apply(it)
-                    loading = false
-                }
-            }
             try {
                 // No guard. The crew list reads without an account and answers a stranger with
                 // the one that is filling and its seat count, which is the only evidence anywhere
@@ -466,6 +458,15 @@ class CrewViewModel : ViewModel() {
         LiveReload("crew", viewModelScope) {
             it.channel.startsWith("crew:") || it.type == "seat.mine" || it.type == "visit.recorded"
         }
+
+    // The kept crews, before the first frame. With none kept the tabs wait for the server rather
+    // than say "nothing running" from memory.
+    init {
+        Api.lastCrews()?.takeIf { it.mine.isNotEmpty() }?.let {
+            apply(it)
+            loading = false
+        }
+    }
 
     /** Redraw when anything in your crews changes while showing; a burst of events is one fetch. */
     fun startLive(context: Context) {

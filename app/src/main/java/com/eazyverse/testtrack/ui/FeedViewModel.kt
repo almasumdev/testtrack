@@ -143,7 +143,7 @@ class FeedViewModel : ViewModel() {
      * placeholders. The account's own parts only while somebody is signed in; they are wiped with
      * the session anyway.
      */
-    private suspend fun seedFromPhone() {
+    private fun seedFromPhone() {
         // Kept requests show at once. None kept means the tab waits for the server, so it never
         // says "nobody's asking" from memory and then has a card arrive under the words.
         Api.lastPosts()?.takeIf { it.posts.isNotEmpty() }?.let {
@@ -159,10 +159,13 @@ class FeedViewModel : ViewModel() {
         Api.lastMyPosts()?.let { requests = it.map(::requestOf) }
     }
 
+    init {
+        seedFromPhone()
+    }
+
     /** Everything the tab shows, fetched together. Safe to call on every resume. */
     fun load(context: Context) {
         viewModelScope.launch {
-            if (posts.isEmpty()) seedFromPhone()
             try {
                 // The posts come either way. Everything after them is about one account, so a
                 // stranger gets the feed and nothing else, rather than an error page in front of

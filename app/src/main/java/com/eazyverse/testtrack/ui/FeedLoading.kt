@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,5 +33,18 @@ internal fun FeedLoadingCard(compact: Boolean = false) {
                 Skeleton(width = 88.dp, height = 32.dp, corner = 16.dp)
             }
         }
+    }
+}
+
+/** A Circle tab before its list has arrived: three placeholder cards where the first will land. */
+@Composable
+internal fun FeedLoadingList() {
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 16.dp, bottom = Gutter + dockRoom()),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        userScrollEnabled = false,
+    ) {
+        items(3) { FeedLoadingCard() }
     }
 }

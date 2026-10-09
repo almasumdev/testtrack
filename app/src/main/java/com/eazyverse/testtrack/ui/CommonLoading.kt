@@ -1,6 +1,8 @@
 package com.eazyverse.testtrack.ui
 
 import android.animation.ValueAnimator
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -116,3 +118,20 @@ fun SkeletonMeter(
         }
     }
 }
+
+/**
+ * A page's placeholder giving way to the page, as a short fade rather than a cut.
+ *
+ * [content] is told which of the two it is drawing, and must draw from that rather than from the
+ * screen's own flags: for the length of the fade both are on screen, and the one leaving has to go
+ * on being the placeholder it was, not jump to the answer that has just arrived.
+ */
+@Composable
+fun LoadSwap(
+    loading: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable (loading: Boolean) -> Unit,
+) = Crossfade(loading, modifier, animationSpec = tween(LOAD_SWAP_MS), label = "load swap") { content(it) }
+
+/** Long enough to read as a change of state, short enough not to hold anything up. */
+private const val LOAD_SWAP_MS = 320
