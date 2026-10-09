@@ -92,6 +92,15 @@ class RanksViewModel : ViewModel() {
         viewModelScope.launch {
             val startedAt = System.currentTimeMillis()
             if (fromPull) pulling = true
+            if (rows.isEmpty()) {
+                // Kept answers count as answered, so an empty board kept from last time shows as empty
+                // rather than as still loading.
+                Api.lastBoard()?.let {
+                    rows = it.rows
+                    mine = it.mine
+                    loading = false
+                }
+            }
             try {
                 ApiAuth.ensure(context)
                 val answer = Api.board()
@@ -146,6 +155,12 @@ class AppsViewModel : ViewModel() {
 
     fun load(context: Context) {
         viewModelScope.launch {
+            if (apps.isEmpty()) {
+                Api.lastMyApps()?.let {
+                    apps = it.apps
+                    loading = false
+                }
+            }
             try {
                 if (!ApiAuth.ensure(context)) {
                     signedOut = true
@@ -231,6 +246,12 @@ class MeViewModel : ViewModel() {
 
     fun load(context: Context) {
         viewModelScope.launch {
+            if (profile == null) {
+                Api.lastProfile()?.let {
+                    profile = it
+                    loading = false
+                }
+            }
             try {
                 if (!ApiAuth.ensure(context)) {
                     signedOut = true

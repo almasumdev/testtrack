@@ -115,7 +115,7 @@ fun RanksBody(
 ) {
     // Not the signed-out case. The board reads without an account, and somebody deciding whether
     // this is worth joining is exactly who most needs to see that people are doing the work.
-    if (offline) {
+    if (offline && rows.isEmpty()) {
         // The robot, like every other screen that has nothing to show, rather than a lone tile.
         RobotState(
             Prop.Plug,

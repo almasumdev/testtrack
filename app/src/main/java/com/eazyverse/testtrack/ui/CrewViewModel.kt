@@ -139,6 +139,12 @@ class CrewViewModel : ViewModel() {
     /** Everything the tab shows, in one call. Safe to run on every resume. */
     fun load(context: Context) {
         viewModelScope.launch {
+            if (crews.isEmpty() && open == null) {
+                Api.lastCrews()?.let {
+                    apply(it)
+                    loading = false
+                }
+            }
             try {
                 // No guard. The crew list reads without an account and answers a stranger with
                 // the one that is filling and its seat count, which is the only evidence anywhere

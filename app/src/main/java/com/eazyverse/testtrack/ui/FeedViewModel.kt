@@ -18,6 +18,7 @@ import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiMyPost
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.ApiReview
+import com.eazyverse.testtrack.net.ApiSession
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -137,9 +138,30 @@ class FeedViewModel : ViewModel() {
     private var cursor: String? = null
     private var paging = false
 
+    /**
+     * What every tab showed last time, from the phone, so Circle opens on it rather than on
+     * placeholders. The account's own parts only while somebody is signed in; they are wiped with
+     * the session anyway.
+     */
+    private suspend fun seedFromPhone() {
+        // A kept answer counts as answered, even an empty one: no requests last time shows as none.
+        Api.lastPosts()?.let {
+            posts = it.posts
+            cursor = it.nextCursor
+            loading = false
+        }
+        Api.lastActivity()?.let { events = it.events.mapNotNull(::eventOf) }
+        if (!ApiSession.signedIn) return
+        Api.lastMyReviews()?.let { mine = it.map(::myReview) }
+        Api.lastWaiting()?.let { waiting = it.map(::waitingOf) }
+        Api.lastDisputes()?.let { disputes = it.map(::caseOf) }
+        Api.lastMyPosts()?.let { requests = it.map(::requestOf) }
+    }
+
     /** Everything the tab shows, fetched together. Safe to call on every resume. */
     fun load(context: Context) {
         viewModelScope.launch {
+            if (posts.isEmpty()) seedFromPhone()
             try {
                 // The posts come either way. Everything after them is about one account, so a
                 // stranger gets the feed and nothing else, rather than an error page in front of

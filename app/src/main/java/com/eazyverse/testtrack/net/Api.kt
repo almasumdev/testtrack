@@ -134,17 +134,18 @@ object Api {
 
     // ---------------------------------------------------------------- feed
 
-    suspend fun posts(before: String? = null): PostPage = get("/feed/posts" + if (before == null) "" else "?before=$before")
+    /** The first page is kept on the phone (see [lastPosts]); later pages are not. */
+    suspend fun posts(before: String? = null): PostPage = if (before == null) kept(POSTS) else get("$POSTS?before=$before")
 
     suspend fun feedbackOptions(): FeedbackOptions = get("/feed/options")
 
     suspend fun createPost(body: PostIn): ApiPost = post("/feed/posts", body)
 
     /** What happened in the community over the last month, newest first. Readable signed out. */
-    suspend fun activity(): ApiActivity = get("/feed/activity")
+    suspend fun activity(): ApiActivity = kept(ACTIVITY)
 
     /** The reader's own requests, open or closed, each with every review it has had. */
-    suspend fun myPosts(): List<ApiMyPost> = get("/feed/posts/mine")
+    suspend fun myPosts(): List<ApiMyPost> = kept(MY_POSTS)
 
     /** Stop taking reviews; the tix held for slots nobody took come back. */
     suspend fun closePost(postId: String): ClosedPost = post("/feed/posts/$postId/close", Empty())
@@ -171,11 +172,11 @@ object Api {
 
     suspend fun abandon(reviewId: String): ApiReview = post("/reviews/$reviewId/abandon", Empty())
 
-    suspend fun myReviews(): List<ApiReview> = get("/reviews/mine")
+    suspend fun myReviews(): List<ApiReview> = kept(MY_REVIEWS)
 
     // ---------------------------------------------------------------- the owner's side
 
-    suspend fun waiting(): List<ApiReview> = get("/reviews/waiting")
+    suspend fun waiting(): List<ApiReview> = kept(WAITING)
 
     suspend fun approve(reviewId: String): ApiReview = post("/reviews/$reviewId/approve", Empty())
 
@@ -186,7 +187,7 @@ object Api {
 
     // ---------------------------------------------------------------- disputes
 
-    suspend fun disputes(): List<ApiDispute> = get("/disputes")
+    suspend fun disputes(): List<ApiDispute> = kept(DISPUTES)
 
     suspend fun vote(
         disputeId: String,
@@ -195,7 +196,7 @@ object Api {
 
     // ---------------------------------------------------------------- crews
 
-    suspend fun crews(): CrewList = get("/crews")
+    suspend fun crews(): CrewList = kept(CREWS)
 
     /** One crew and everybody in it. Members only; the API refuses anybody else. */
     suspend fun crew(crewId: String): ApiCrew = get("/crews/$crewId")
@@ -258,14 +259,14 @@ object Api {
 
     // ------------------------------------------- standing, apps and the profile
 
-    suspend fun board(): ApiBoard = get("/board")
+    suspend fun board(): ApiBoard = kept(BOARD)
 
-    suspend fun profile(): ApiProfile = get("/me/profile")
+    suspend fun profile(): ApiProfile = kept(PROFILE)
 
     /** Change this account's name or face. Nothing else about it is ours to set. */
     suspend fun updateMe(body: MeIn): Me = patch("/me", body)
 
-    suspend fun myApps(): MyApps = get("/me/apps")
+    suspend fun myApps(): MyApps = kept(MY_APPS)
 
     /** Where a piece of proof lives. Needs the token, so it is fetched, never linked. */
     fun proofUrl(ref: String): String = url("/uploads/$ref")
@@ -294,6 +295,57 @@ object Api {
                 ).build()
         return send(Request.Builder().url(url("/uploads")).post(body))
     }
+
+    // ---------------------------------------------------------------- kept on the phone
+
+    // What each screen's main question returned last time, read back from the phone, or null when
+    // nothing is kept. A screen shows this while the fresh answer is on its way. See [ApiCache].
+    suspend fun lastPosts(): PostPage? = last(POSTS)
+
+    suspend fun lastActivity(): ApiActivity? = last(ACTIVITY)
+
+    suspend fun lastMyPosts(): List<ApiMyPost>? = last(MY_POSTS)
+
+    suspend fun lastMyReviews(): List<ApiReview>? = last(MY_REVIEWS)
+
+    suspend fun lastWaiting(): List<ApiReview>? = last(WAITING)
+
+    suspend fun lastDisputes(): List<ApiDispute>? = last(DISPUTES)
+
+    suspend fun lastCrews(): CrewList? = last(CREWS)
+
+    suspend fun lastBoard(): ApiBoard? = last(BOARD)
+
+    suspend fun lastProfile(): ApiProfile? = last(PROFILE)
+
+    suspend fun lastMyApps(): MyApps? = last(MY_APPS)
+
+    private const val POSTS = "/feed/posts"
+    private const val ACTIVITY = "/feed/activity"
+    private const val MY_POSTS = "/feed/posts/mine"
+    private const val MY_REVIEWS = "/reviews/mine"
+    private const val WAITING = "/reviews/waiting"
+    private const val DISPUTES = "/disputes"
+    private const val CREWS = "/crews"
+    private const val BOARD = "/board"
+    private const val PROFILE = "/me/profile"
+    private const val MY_APPS = "/me/apps"
+
+    /** A GET whose answer is also kept on the phone, for [last] to hand back next time. */
+    @PublishedApi
+    internal suspend inline fun <reified T> kept(path: String): T {
+        val generation = ApiSession.generation
+        val text = sendText(Request.Builder().url(url(path)).get())
+        ApiCache.write(path, text, generation)
+        return json.decodeFromString<T>(text)
+    }
+
+    /** What [kept] last stored for [path], or null if there is none or it no longer reads. */
+    @PublishedApi
+    internal suspend inline fun <reified T> last(path: String): T? =
+        withContext(Dispatchers.IO) {
+            ApiCache.read(path)?.let { runCatching { json.decodeFromString<T>(it) }.getOrNull() }
+        }
 
     // ---------------------------------------------------------------- plumbing
 
@@ -330,7 +382,14 @@ object Api {
     internal suspend inline fun <reified T> send(
         builder: Request.Builder,
         authed: Boolean = true,
-    ): T =
+    ): T = json.decodeFromString<T>(sendText(builder, authed))
+
+    /** [send], up to the body: the answer's text, for a caller that keeps it as well as reads it. */
+    @PublishedApi
+    internal suspend fun sendText(
+        builder: Request.Builder,
+        authed: Boolean = true,
+    ): String =
         withContext(Dispatchers.IO) {
             val used = if (authed) ApiSession.access else null
             var attempt = call(builder, used)
@@ -339,7 +398,7 @@ object Api {
             }
             val (status, text) = attempt
             if (status !in 200..299) throw failure(status, text)
-            json.decodeFromString<T>(text)
+            text
         }
 
     /** A request answered with 204 and no body. Refreshed once on a 401, like [send]. */

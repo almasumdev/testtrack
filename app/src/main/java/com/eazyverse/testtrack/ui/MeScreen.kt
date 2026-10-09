@@ -164,7 +164,7 @@ fun MeBody(
         )
         return
     }
-    if (offline) {
+    if (offline && profile == null) {
         // The robot, like every other tab that could not load.
         RobotOffline("Your record did not load", onRetry = onRetry)
         return

@@ -87,7 +87,7 @@ fun AppsBody(
         )
         return
     }
-    if (offline) {
+    if (offline && apps.isEmpty()) {
         RobotOffline("Your apps did not load", onRetry = onRetry)
         return
     }

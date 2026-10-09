@@ -46,6 +46,7 @@ object ApiSession {
         if (prefs != null) return
         val store = context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
         prefs = store
+        ApiCache.load(context)
         cachedAccess = store.getString(ACCESS, null)
         cachedRefresh = store.getString(REFRESH, null)
         header = store.getString(HEADER, null)?.let { runCatching { Json.decodeFromString<HeaderSnapshot>(it) }.getOrNull() }
@@ -90,6 +91,7 @@ object ApiSession {
         cachedRefresh = null
         header = null
         prefs?.edit { clear() }
+        ApiCache.clear()
         ready.value = false
     }
 

@@ -50,7 +50,7 @@ fun WaitingBody(
         )
         return
     }
-    if (offline) {
+    if (offline && reviews.isEmpty() && disputes.isEmpty() && requests.isEmpty()) {
         RobotOffline("What's waiting didn't load", onRetry)
         return
     }
