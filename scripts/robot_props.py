@@ -134,23 +134,64 @@ def shine(d, w=14, alpha=0.75):
 
 # ---------------------------------------------------------------- props
 
-def megaphone():
-    body = [
-        shape(rr(395, 868, 72, 64, 20), SILVER, (395, 868, 467, 932)),
-        Group(tube('M492 935 L478 1015', NAVY[1], 34)),
-        shape('M455 860 L820 768 Q866 900 820 1032 L455 940 Z', WHITE, (455, 768, 860, 1032)),
-        flat('M762 783 L798 774 Q838 900 798 1026 L762 1017 Q796 900 762 783 Z', CORAL[0]),
-        shape(ellipse(832, 900, 44, 134), CORAL, (788, 766, 876, 1034)),
-        flat(ellipse(838, 900, 26, 108), '#1D4E6E'),
-        shine('M492 878 L735 818'),
+FACE = '#FFFCF1'
+DARK = '#17253B'
+
+
+def music():
+    """Feedback, nobody asking: headphones on, grooving to a cassette. Face and headphones go on the head."""
+    face = [
+        ink('M428 548 Q481 488 534 548', DARK, 24),
+        ink('M719 548 Q772 488 825 548', DARK, 24),
+        flat(rr(552, 578, 150, 56, 20), FACE),
+        shape('M578 588 Q627 652 676 588 Z', (DARK, DARK), (578, 588, 676, 642), sw=6),
+        flat('M598 616 Q627 642 656 616 Q627 604 598 616 Z', '#F27B6A'),
+        flat(ellipse(404, 604, 36, 19), '#F9A99A', 0.65),
+        flat(ellipse(850, 604, 36, 19), '#F9A99A', 0.65),
     ]
-    waves = [[ink(arc(832, 900, r, -32, 32), CORAL[1], 17)] for r in (100, 145, 190)]
-    rot = dict(rotate=-20, px=627, py=900, dx=-28, dy=-6)
+    phones = [
+        *tube('M240 500 C240 150 1014 150 1014 500', CORAL[1], 30),
+        shine('M300 330 C360 250 450 214 540 206', 9, 0.6),
+        shape(rr(194, 436, 92, 190, 40), CORAL, (194, 436, 286, 626)),
+        shape(rr(968, 436, 92, 190, 40), CORAL, (968, 436, 1060, 626)),
+        flat(rr(264, 470, 22, 122, 10), '#1D4E6E'),
+        flat(rr(968, 470, 22, 122, 10), '#1D4E6E'),
+        shine('M216 470 V540', 10, 0.7),
+        shine('M990 470 V540', 10, 0.7),
+    ]
+    tape = [
+        shape(rr(424, 846, 406, 200, 30), GOLD, (424, 846, 830, 1046)),
+        flat(rr(452, 866, 350, 34, 12), CORAL[1]),
+        flat(rr(476, 878, 120, 10, 5), '#FFFFFF', 0.8),
+        shape(rr(482, 912, 290, 82, 22), ('#2C4B63', '#1A3346'), (482, 912, 772, 994), sw=9),
+        flat(rr(560, 966, 134, 14, 7), '#7A4A28'),
+        shape(poly((500, 1046), (530, 1006), (724, 1006), (754, 1046)), ('#F6BF45', GOLD_D), (500, 1006, 754, 1046), sw=9),
+        *(flat(circle(x, y, 7), '#B7791F') for x, y in ((446, 868), (808, 868), (446, 1024), (808, 1024))),
+        shine('M444 900 V1000', 10, 0.5),
+    ]
+
+    def reel(cx):
+        spokes = ' '.join(
+            f'M{f(cx)} {f(953)} L{f(cx + 24 * math.cos(math.radians(a)))} {f(953 + 24 * math.sin(math.radians(a)))}'
+            for a in (0, 60, 120, 180, 240, 300))
+        return [shape(circle(cx, 953, 33), WHITE, (cx - 33, 920, cx + 33, 986), sw=8), ink(spokes, '#7F92A3', 7),
+                flat(circle(cx, 953, 9), '#1A3346')]
+
+    def note(x, y, color, size=1.0):
+        s = size
+        return [flat(ellipse(x, y, 21 * s, 16 * s), color),
+                ink(f'M{f(x + 18 * s)} {f(y)} V{f(y - 74 * s)} Q{f(x + 52 * s)} {f(y - 60 * s)} {f(x + 48 * s)} {f(y - 28 * s)}', color, 10 * s)]
+
     return {
-        'megaphone': [Group(body, **rot)],
-        'megaphone_wave1': [Group(waves[0], **rot)],
-        'megaphone_wave2': [Group(waves[1], **rot)],
-        'megaphone_wave3': [Group(waves[2], **rot)],
+        'music_face': face,
+        'music_headphones': phones,
+        'music_tape': tape,
+        'music_reel_left': reel(562),
+        'music_reel_right': reel(692),
+        'music_note1': note(236, 380, CORAL[1]),
+        'music_note2': note(980, 330, '#1D5C82', 1.1),
+        'music_note3': note(260, 230, '#1D5C82', 0.85),
+        'music_note4': note(960, 196, CORAL[1], 0.9),
     }
 
 
@@ -398,7 +439,7 @@ def clock():
     return {'clock': body, 'clock_lines': lines}
 
 
-PROPS = [megaphone, trophy, phone, key, clipboard, bell, box, plug, gears, hourglass, seal, scales, wallet, flag, clock]
+PROPS = [music, trophy, phone, key, clipboard, bell, box, plug, gears, hourglass, seal, scales, wallet, flag, clock]
 
 
 # ---------------------------------------------------------------- emit
@@ -524,10 +565,12 @@ def main():
     groups = {}
     for name in made:
         groups.setdefault(re.split(r'_', name)[0], []).append(name)
-    robot = ['level_robot_body', 'level_robot_head', 'level_robot_eyes', 'level_robot_antenna']
     cells = ''
     for prop, layers in groups.items():
         defs, body = '', ''
+        # A prop with its own face draws it in place of the usual eyes.
+        eyes = [] if f'{prop}_face' in layers else ['level_robot_eyes']
+        robot = ['level_robot_body', 'level_robot_head', *eyes, 'level_robot_antenna']
         for r in robot + [f'robot_prop_{n}' for n in layers] + ['level_robot_hands']:
             d, b = svg_from_vector(RES + r + '.xml')
             defs += d

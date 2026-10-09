@@ -12,6 +12,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -128,36 +129,41 @@ private fun RobotFigure(
                         translationY = -(size * 0.1f).toPx() - lift * (size * 0.08f).toPx()
                     },
             ) {
-                val headLift = Modifier.graphicsLayer { translationY = -lift * (size * 0.012f).toPx() }
                 Image(painterResource(R.drawable.level_robot_body), null, Modifier.matchParentSize())
-                Image(painterResource(R.drawable.level_robot_head), null, Modifier.matchParentSize().then(headLift))
-                Image(
-                    painterResource(R.drawable.level_robot_eyes),
-                    null,
-                    Modifier.matchParentSize().then(headLift).graphicsLayer {
-                        transformOrigin = TransformOrigin(0.5f, (529f - 110f) / 980f)
-                        scaleY = lids
+                // The head breathes, and nods along when the scene asks it to, about the neck.
+                Box(
+                    Modifier.matchParentSize().graphicsLayer {
+                        translationY = -lift * (size * 0.012f).toPx()
+                        transformOrigin = TransformOrigin(0.5f, (720f - 110f) / 980f)
+                        prop.nod?.run { at(if (moving) clock else 0f, this@graphicsLayer.size.width / 880f) }
                     },
-                )
-                Image(
-                    painterResource(R.drawable.level_robot_antenna),
-                    null,
-                    Modifier.matchParentSize().then(headLift).graphicsLayer {
-                        transformOrigin = TransformOrigin((627f - 185f) / 880f, (278f - 110f) / 980f)
-                        rotationZ = (lift - 0.5f) * 8f
-                    },
-                )
-                // What it holds, between the head and the hands so the hands close over it.
-                prop.layers.forEach { layer ->
+                ) {
+                    Image(painterResource(R.drawable.level_robot_head), null, Modifier.matchParentSize())
+                    val face = prop.face
+                    if (face != null) {
+                        Image(painterResource(face), null, Modifier.matchParentSize())
+                    } else {
+                        Image(
+                            painterResource(R.drawable.level_robot_eyes),
+                            null,
+                            Modifier.matchParentSize().graphicsLayer {
+                                transformOrigin = TransformOrigin(0.5f, (529f - 110f) / 980f)
+                                scaleY = lids
+                            },
+                        )
+                    }
                     Image(
-                        painterResource(layer.res),
+                        painterResource(R.drawable.level_robot_antenna),
                         null,
                         Modifier.matchParentSize().graphicsLayer {
-                            transformOrigin = TransformOrigin((layer.px - 185f) / 880f, (layer.py - 110f) / 980f)
-                            layer.motion?.run { at(if (moving) clock else 0f, this@graphicsLayer.size.width / 880f) }
+                            transformOrigin = TransformOrigin((627f - 185f) / 880f, (278f - 110f) / 980f)
+                            rotationZ = (lift - 0.5f) * 8f
                         },
                     )
+                    prop.head.forEach { PropImage(it, moving) { clock } }
                 }
+                // What it holds, between the head and the hands so the hands close over it.
+                prop.layers.forEach { PropImage(it, moving) { clock } }
                 Image(painterResource(R.drawable.level_robot_hands), null, Modifier.matchParentSize())
             }
         }
@@ -167,3 +173,18 @@ private fun RobotFigure(
         }
     }
 }
+
+/** One layer of a prop, filling the robot's box, moving on [clock] (read only while drawing). */
+@Composable
+private fun BoxScope.PropImage(
+    layer: PropLayer,
+    moving: Boolean,
+    clock: () -> Float,
+) = Image(
+    painterResource(layer.res),
+    null,
+    Modifier.matchParentSize().graphicsLayer {
+        transformOrigin = TransformOrigin((layer.px - 185f) / 880f, (layer.py - 110f) / 980f)
+        layer.motion?.run { at(if (moving) clock() else 0f, this@graphicsLayer.size.width / 880f) }
+    },
+)

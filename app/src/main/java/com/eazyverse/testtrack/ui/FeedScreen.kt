@@ -211,7 +211,7 @@ fun FeedScreen(
                         RobotOffline("Circle didn't load", onRetry = { vm.load(context) })
                     } else if (none) {
                         RobotState(
-                            Prop.Megaphone,
+                            Prop.Music,
                             "Nobody's asking right now",
                             "When someone wants feedback on their app, it shows up here. You can ask for some yourself.",
                             action = "Ask for feedback",

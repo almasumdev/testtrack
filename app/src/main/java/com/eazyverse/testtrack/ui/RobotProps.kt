@@ -13,18 +13,31 @@ import kotlin.math.sin
  * in place of an icon on a disc.
  *
  * Each is one or more drawables (`robot_prop_*`, drawn in the robot layers' own 880 by 980 space,
- * so they sit in its hands as they are) and each layer moves its own way: the megaphone's waves
- * go out, the gears turn, the bell rings, the plug's two ends almost meet.
+ * so they sit in its hands as they are) and each layer moves its own way: the tape's reels turn,
+ * the gears turn, the bell rings, the plug's two ends almost meet. Some scenes give the robot its
+ * own face and something on its head too, like the headphones it bops along in.
  */
 enum class Prop(
     vararg layers: PropLayer,
+    /** Its own eyes and mouth, drawn over the face in place of the blinking eyes. */
+    @DrawableRes internal val face: Int? = null,
+    /** Worn on the head, so it moves with it. */
+    internal val head: List<PropLayer> = emptyList(),
+    /** How the whole head moves, about the neck. */
+    internal val nod: Motion? = null,
 ) {
-    /** Nobody is asking for feedback. */
-    Megaphone(
-        PropLayer(R.drawable.robot_prop_megaphone),
-        PropLayer(R.drawable.robot_prop_megaphone_wave1, Pulse(0f, 1200f)),
-        PropLayer(R.drawable.robot_prop_megaphone_wave2, Pulse(0.15f, 1200f)),
-        PropLayer(R.drawable.robot_prop_megaphone_wave3, Pulse(0.3f, 1200f)),
+    /** Nobody is asking for feedback: headphones on, grooving to a cassette while it waits. */
+    Music(
+        PropLayer(R.drawable.robot_prop_music_tape),
+        PropLayer(R.drawable.robot_prop_music_reel_left, Spin(3f), px = 562f, py = 953f),
+        PropLayer(R.drawable.robot_prop_music_reel_right, Spin(3f), px = 692f, py = 953f),
+        PropLayer(R.drawable.robot_prop_music_note1, Rise(dx = -20f, dy = -90f, delay = 0f), px = 250f, py = 340f),
+        PropLayer(R.drawable.robot_prop_music_note2, Rise(dx = 20f, dy = -90f, delay = 0.25f), px = 1000f, py = 290f),
+        PropLayer(R.drawable.robot_prop_music_note3, Rise(dx = -16f, dy = -70f, delay = 0.5f), px = 270f, py = 200f),
+        PropLayer(R.drawable.robot_prop_music_note4, Rise(dx = 16f, dy = -70f, delay = 0.75f), px = 975f, py = 165f),
+        face = R.drawable.robot_prop_music_face,
+        head = listOf(PropLayer(R.drawable.robot_prop_music_headphones)),
+        nod = Rock(deg = 5f, period = 960f),
     ),
 
     /** Nobody on the board yet. */
@@ -167,6 +180,30 @@ private class Rock(
         rotationZ = deg * s
         translationX = dx * s * unit
         translationY = dy * s * unit
+    }
+}
+
+/**
+ * Floats up from its place by ([dx], [dy]) while growing in and fading out, once each [period];
+ * [delay] is the fraction of a period it runs ahead, so several of them take turns.
+ */
+private class Rise(
+    private val dx: Float,
+    private val dy: Float,
+    private val delay: Float,
+    private val period: Float = 2400f,
+) : Motion {
+    override fun GraphicsLayerScope.at(
+        ms: Float,
+        unit: Float,
+    ) {
+        val p = (ms / period + delay) % 1f
+        val out = 1f - (1f - p) * (1f - p)
+        alpha = if (p < 0.25f) p / 0.25f else (1f - p) / 0.75f
+        scaleX = 0.6f + 0.45f * out
+        scaleY = scaleX
+        translationX = dx * out * unit
+        translationY = (30f + (dy - 30f) * out) * unit
     }
 }
 
