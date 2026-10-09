@@ -50,8 +50,10 @@ fun CrewOpenTab(
                     CrewCard(padding = PaddingValues(16.dp)) {
                         val free = CrewRules.SEATS - (crew?.taken ?: 0)
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            // The app's own words, so they are there before the answer is; the crew's
+                            // name is news and goes in the line under the seats.
                             Text(
-                                crew?.name ?: "A new crew",
+                                "Open crew",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                             )
@@ -68,7 +70,7 @@ fun CrewOpenTab(
                             if (crew == null) {
                                 "No crew is filling right now. The next app starts one."
                             } else {
-                                "$free of ${CrewRules.SEATS} seats left"
+                                "${crew.name} · $free of ${CrewRules.SEATS} seats left"
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,

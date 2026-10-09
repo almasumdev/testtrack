@@ -13,11 +13,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 /*
@@ -33,8 +36,8 @@ import androidx.compose.ui.unit.dp
 fun CrewOpenCardLoading() {
     Box(Modifier.padding(start = Gutter, end = Gutter, bottom = 12.dp)) {
         CrewCard(Modifier.loading("Loading the open crew"), padding = PaddingValues(16.dp)) {
-            Skeleton(width = 132.dp, height = 18.dp)
-            Spacer(Modifier.height(14.dp))
+            Text("Open crew", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(12.dp))
             SkeletonSeats()
             Spacer(Modifier.height(13.dp))
             Skeleton(width = 150.dp, height = 13.dp)

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,8 +22,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -82,19 +91,23 @@ fun SeatCountTiles(
         (0 until CrewRules.SEATS).chunked(perRow).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                 row.forEach { index ->
-                    Box(
-                        Modifier
-                            .weight(1f)
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(9.dp))
-                            .background(
-                                when {
-                                    index < filled -> MaterialTheme.colorScheme.primary
-                                    index < taken -> MaterialTheme.colorScheme.primaryContainer
-                                    else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
-                                },
-                            ),
-                    )
+                    if (index >= taken) {
+                        EmptySeat(Modifier.weight(1f), next = index == taken)
+                    } else {
+                        Box(
+                            Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(9.dp))
+                                .background(
+                                    if (index < filled) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    },
+                                ),
+                        )
+                    }
                 }
                 repeat(perRow - row.size) { Spacer(Modifier.weight(1f)) }
             }
@@ -145,12 +158,7 @@ private fun SeatTile(
 ) {
     val shape = RoundedCornerShape(9.dp)
     if (seat == null || seat.state == SeatState.REJECTED || seat.state == SeatState.REMOVED) {
-        Box(
-            modifier
-                .aspectRatio(1f)
-                .clip(shape)
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)),
-        )
+        EmptySeat(modifier)
         return
     }
     val (fill, ink) = Tt.colors.nameTile((seat.appName.hashCode().rem(360) + 360).rem(360).toFloat())
@@ -175,5 +183,38 @@ private fun SeatTile(
             fontWeight = FontWeight.Bold,
             color = ink.copy(alpha = if (checking) 0.55f else 1f),
         )
+    }
+}
+
+/**
+ * A seat nobody has taken: a dashed outline, like a space marked out on the floor.
+ *
+ * It was a faint filled box, which is what a loading placeholder looks like, so a crew with free
+ * seats read as a crew still loading. [next] is the one the next app would take, marked with a
+ * plus so it reads as an invitation rather than a gap.
+ */
+@Composable
+private fun EmptySeat(
+    modifier: Modifier,
+    next: Boolean = false,
+) {
+    val tone = Tt.colors.accentInk
+    Box(
+        modifier
+            .aspectRatio(1f)
+            .drawBehind {
+                val stroke = 1.5.dp.toPx()
+                val corner = 9.dp.toPx()
+                drawRoundRect(
+                    color = tone.copy(alpha = if (next) 0.55f else 0.28f),
+                    topLeft = Offset(stroke / 2f, stroke / 2f),
+                    size = Size(size.width - stroke, size.height - stroke),
+                    cornerRadius = CornerRadius(corner - stroke / 2f),
+                    style = Stroke(stroke, pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx()))),
+                )
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        if (next) Icon(Lucide.Plus, null, Modifier.size(14.dp), tint = tone.copy(alpha = 0.7f))
     }
 }
