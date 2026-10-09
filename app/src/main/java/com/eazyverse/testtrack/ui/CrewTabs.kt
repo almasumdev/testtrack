@@ -82,7 +82,8 @@ fun CrewRunTab(
         return
     }
     if (runs.isEmpty()) {
-        TabBlank(
+        RobotState(
+            Prop.Kite,
             "Nothing running",
             "When a crew of yours fills up it starts that night, and what you owe shows up here.",
         )
@@ -182,7 +183,8 @@ fun CrewLobbyTab(
         return
     }
     if (lobbies.isEmpty()) {
-        TabBlank(
+        RobotState(
+            Prop.Blocks,
             "No crew waiting to start",
             "Put an app in the open crew and it waits here until the crew is full.",
         )
@@ -291,7 +293,8 @@ fun CrewRecordTab(
         return
     }
     if (finished.isEmpty()) {
-        TabBlank(
+        RobotState(
+            Prop.Calendar,
             "Nothing finished yet",
             "A crew lands here the day its fourteen are up, and stays.",
         )
@@ -415,23 +418,6 @@ fun CrewListRow(
             null,
             Modifier.size(18.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-/** A tab with nothing in it, said as a state the product expected rather than as a failure. */
-@Composable
-private fun TabBlank(
-    title: String,
-    body: String,
-) {
-    Column(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 28.dp)) {
-        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(6.dp))
-        Text(
-            body,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

@@ -86,6 +86,26 @@ enum class Prop(
         nod = Rock(deg = 2f, period = 1200f),
     ),
 
+    /** No crew waiting to start: stacking blocks one by one, the way a crew fills; the top one drops in. */
+    Blocks(
+        PropLayer(R.drawable.robot_prop_blocks_low),
+        PropLayer(R.drawable.robot_prop_blocks_top, Drop),
+        face = R.drawable.robot_prop_blocks_face,
+    ),
+
+    /** Nothing running: flying a kite from one hand while it waits; the kite sways in the wind. */
+    Kite(
+        PropLayer(R.drawable.robot_prop_kite_kite, Rock(deg = 5f), px = 953f, py = 900f),
+        face = R.drawable.robot_prop_kite_face,
+    ),
+
+    /** Nothing finished: day 13 flips over to 14, the day a crew lands in the record. */
+    Calendar(
+        PropLayer(R.drawable.robot_prop_calendar_base),
+        PropLayer(R.drawable.robot_prop_calendar_page, FlipUp, py = 870f),
+        face = R.drawable.robot_prop_calendar_face,
+    ),
+
     /** Did not load: the two ends of a cable, not quite meeting. */
     Plug(
         PropLayer(R.drawable.robot_prop_plug_left, Rock(dx = 10f, period = 1200f)),
@@ -213,6 +233,54 @@ private class Rise(
         scaleY = scaleX
         translationX = dx * out * unit
         translationY = (30f + (dy - 30f) * out) * unit
+    }
+}
+
+/** Falls in from above, lands with a small bounce, sits, then fades for the next one. */
+private object Drop : Motion {
+    override fun GraphicsLayerScope.at(
+        ms: Float,
+        unit: Float,
+    ) {
+        val p = (ms % 2400f) / 2400f
+        val fall = (p / 0.45f).coerceAtMost(1f)
+        translationY =
+            when {
+                p < 0.45f -> -220f * (1f - fall * fall) * unit
+                p < 0.6f -> -24f * sin(PI * (p - 0.45f) / 0.15f).toFloat() * unit
+                else -> 0f
+            }
+        alpha =
+            when {
+                p < 0.15f -> p / 0.15f
+                p > 0.9f -> (1f - p) / 0.1f
+                else -> 1f
+            }
+    }
+}
+
+/**
+ * A calendar page folding up about its top edge and gone once edge-on, so its back (which would
+ * show the number mirrored) is never seen; the next page fades in at the start of the cycle.
+ */
+private object FlipUp : Motion {
+    override fun GraphicsLayerScope.at(
+        ms: Float,
+        unit: Float,
+    ) {
+        val p = (ms % 2400f) / 2400f
+        scaleY =
+            when {
+                p < 0.55f -> 1f
+                p < 0.75f -> 1f - FastOutSlowInEasing.transform((p - 0.55f) / 0.2f)
+                else -> 0f
+            }
+        alpha =
+            when {
+                p < 0.08f -> p / 0.08f
+                p < 0.75f -> 1f
+                else -> 0f
+            }
     }
 }
 

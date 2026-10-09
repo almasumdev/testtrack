@@ -361,6 +361,86 @@ def icecream():
     return {'icecream_face': face, 'icecream_cone': cone, 'icecream_scoops': scoops, 'icecream_drip': drip}
 
 
+def eyes(dx=0, dy=0, r=52):
+    """The robot's own round eyes, looking off by (dx, dy), with two catch-lights each."""
+    out = []
+    for cx in (481, 772):
+        x, y = cx + dx, 529 + dy
+        out += [flat(circle(x, y, r), DARK), flat(circle(x - 14, y - 16, r * 0.3), '#FFFFFF'),
+                flat(circle(x + r * 0.35, y + r * 0.35, r * 0.13), '#FFFFFF')]
+    return out
+
+
+def blocks():
+    """Crew lobby, nothing waiting: stacking blocks one by one, the way a crew fills."""
+    sky = ('#A8D8F2', '#5E9DC5')
+    green = ('#7BD69C', '#3FA46A')
+    low = [
+        shape(rr(450, 940, 160, 120, 18), sky, (450, 940, 610, 1060)),
+        shape(rr(644, 940, 160, 120, 18), green, (644, 940, 804, 1060)),
+        shine('M470 960 V1036', 10, 0.6),
+        shine('M664 960 V1036', 10, 0.6),
+        flat(star5(530, 1000, 30, 13), '#FFFFFF', 0.85),
+        flat(circle(724, 1000, 26), '#FFFFFF', 0.85),
+    ]
+    top = [
+        shape(rr(547, 812, 160, 124, 18), GOLD, (547, 812, 707, 936)),
+        shine('M567 832 V912', 10, 0.6),
+        flat('M627 842 l14 30 l30 4 l-22 20 l6 30 l-28 -14 l-28 14 l6 -30 l-22 -20 l30 -4 Z', '#FFFFFF', 0.85),
+    ]
+    return {'blocks_face': eyes(0, -14) + cheeks(), 'blocks_low': low, 'blocks_top': top}
+
+
+def kite():
+    """Crew run, nothing running: flying a kite from one hand while it waits for a crew to start."""
+    sky = ('#A8D8F2', '#5E9DC5')
+    bow = 'M0 0 L-20 -14 L-20 14 Z M0 0 L20 -14 L20 14 Z'
+    body = [
+        ink('M953 900 Q984 600 930 420', '#F4F8FB', 5),
+        ink('M930 420 Q900 480 940 520 Q980 560 950 610', '#F4F8FB', 5),
+        shape(poly((930, 160), (1040, 290), (930, 420), (820, 290)), GOLD, (820, 160, 1040, 420)),
+        flat(poly((930, 160), (1040, 290), (930, 290)), CORAL[1]),
+        flat(poly((930, 290), (930, 420), (820, 290)), CORAL[1]),
+        ink('M930 160 V420 M820 290 H1040', INK, 8),
+        ink(poly((930, 160), (1040, 290), (930, 420), (820, 290)), INK, SW),
+        shine('M902 214 L860 266', 9, 0.8),
+        Group([shape(bow, ('#FF9EC4', '#F06BA0'), (-20, -14, 20, 14), sw=6)], dx=940, dy=520),
+        Group([shape(bow, sky, (-20, -14, 20, 14), sw=6)], dx=952, dy=604),
+    ]
+    return {'kite_face': eyes(16, -16) + cheeks(), 'kite_kite': body}
+
+
+def digits(text, x, y, color, w=16):
+    """Day numbers drawn as strokes: each glyph 64 wide and 132 tall from (x, y), 22 apart."""
+    glyphs = {
+        '1': 'M{a} {b} L{c} {d} V{e} M{a} {e} H{f}',
+        '3': 'M{a} {g} Q{a} {d} {m} {d} Q{f} {d} {f} {h} Q{f} {i} {m} {i} Q{f} {i} {f} {j} Q{f} {e} {m} {e} Q{a} {e} {a} {k}',
+        '4': 'M{n} {e} V{d} L{a} {o} H{f}',
+    }
+    out = []
+    for k, ch in enumerate(text):
+        a = x + k * 86
+        v = dict(a=a, b=y + 18, c=a + 30, d=y, e=y + 132, f=a + 64, g=y + 24, h=y + 32, i=y + 62, j=y + 96,
+                 k=y + 108, m=a + 32, n=a + 46, o=y + 92)
+        out.append(ink(glyphs[ch].format(**v), color, w))
+    return out
+
+
+def calendar():
+    """Crew record, nothing finished: day 13 flips over to 14, the day a crew lands here."""
+    base = [
+        shape(rr(450, 790, 354, 270, 26), WHITE, (450, 790, 804, 1060)),
+        shape('M450 816 Q450 790 476 790 H778 Q804 790 804 816 V870 H450 Z', CORAL, (450, 790, 804, 870)),
+        *(shape(rr(x, 768, 18, 46, 9), SILVER, (x, 768, x + 18, 814), sw=7) for x in (520, 718)),
+        *digits('14', 548, 896, '#1D4E6E'),
+    ]
+    page = [
+        shape('M450 870 H804 V1060 H450 Z', ('#FFFFFF', '#EEF4F9'), (450, 870, 804, 1060), sw=9),
+        *digits('13', 548, 896, '#9FB2C2', 14),
+    ]
+    return {'calendar_face': eyes(0, 14, 50) + cheeks(), 'calendar_base': base, 'calendar_page': page}
+
+
 def plug():
     left = [
         *tube('M402 940 C440 946 452 906 496 906', '#DDE7EF', 24),
@@ -504,7 +584,7 @@ def clock():
     return {'clock': body, 'clock_lines': lines}
 
 
-PROPS = [music, popcorn, notes, icecream, trophy, phone, key, plug, gears, hourglass, seal, scales, wallet, flag, clock]
+PROPS = [music, popcorn, notes, icecream, blocks, kite, calendar, trophy, phone, key, plug, gears, hourglass, seal, scales, wallet, flag, clock]
 
 
 # ---------------------------------------------------------------- emit
