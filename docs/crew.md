@@ -45,7 +45,14 @@ copy decision, not a schema one.
 > 12 hours. Members can **report** an app with a written reason; the owner is told at once without
 > the reporter's name; two reports before the run starts send it back (a full crew goes back to
 > filling); during the run a report only tells the owner and the team, and excuses the reporter
-> from that app. The rest of this section is the voting design it replaced.
+> from that app.
+>
+> **Voting is back as the fallback (October 2026).** When the checker cannot run, instead of the
+> app going in unchecked after 12 hours, members decide it: those whose own app is already in the
+> crew are asked to try it, two Yes put it in, two No (with a reason) send it back. Nothing is
+> decided below three members. The sweep keeps trying Play, and whichever answers first decides.
+> A waiting app is answered, not reported. The rest of this section is the original voting design
+> this is drawn from.
 
 A seat counts toward the fifteen only once other members confirm the app installs.
 

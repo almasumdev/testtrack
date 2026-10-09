@@ -233,4 +233,15 @@ class CrewWireTest {
         val done = crew(state = "done", day = 20, members = listOf(seat("me", mine = true))).toCrew()
         assertEquals(14, done.finishedDays)
     }
+
+    @Test
+    fun only_a_member_whose_app_is_in_may_answer_and_only_while_filling() {
+        val waiting = seat("w", state = "checking")
+        val inCrew = crew(state = "filling", members = listOf(seat("me", mine = true), waiting)).toCrew()
+        assertTrue(inCrew.mayVote)
+        val stillWaiting = crew(state = "filling", members = listOf(seat("me", state = "checking", mine = true), waiting)).toCrew()
+        assertFalse(stillWaiting.mayVote)
+        val full = crew(state = "full", members = listOf(seat("me", mine = true), waiting)).toCrew()
+        assertFalse(full.mayVote)
+    }
 }

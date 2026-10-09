@@ -118,6 +118,11 @@ data class CrewSeat(
     val reported: Boolean = false,
     val reasons: List<String> = emptyList(),
     val outReason: String = "",
+    /** An app the Play check could not look at is decided by members: answers so far. */
+    val yes: Int = 0,
+    val no: Int = 0,
+    /** This account's answer on it, or null if it has not answered. */
+    val myVote: Boolean? = null,
 )
 
 /**
@@ -189,6 +194,12 @@ data class Crew(
 ) {
     /** This account's seat in it, in whatever state. */
     val mine: CrewSeat? get() = seats.firstOrNull { it.mine }
+
+    /**
+     * This account may answer for apps waiting on members: its own app is in, which is what shows
+     * its setup works, and the crew is still filling.
+     */
+    val mayVote: Boolean get() = filling && mine?.state == SeatState.CONFIRMED
 
     /** This account's app is no longer part of it. */
     val out: Boolean get() = mine?.state == SeatState.REJECTED || mine?.state == SeatState.REMOVED

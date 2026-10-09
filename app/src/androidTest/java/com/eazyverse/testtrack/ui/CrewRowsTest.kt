@@ -126,6 +126,47 @@ class CrewRowsTest {
         compose.onNodeWithText("Report").assertDoesNotExist()
     }
 
+    // ------------------------------------------------------------------ an app waiting on members
+
+    @Test
+    fun a_waiting_app_asks_a_member_who_may_answer() {
+        var answer: Boolean? = null
+        compose.setContent {
+            TestTrackTheme {
+                CrewSeatRow(
+                    seat().copy(state = SeatState.CHECKING, yes = 1),
+                    onInstall = {},
+                    onReport = {},
+                    onVote = { answer = it },
+                )
+            }
+        }
+        compose.onNodeWithText("Members decide: 1 Yes, 0 No so far", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Report").assertDoesNotExist()
+        compose.onNodeWithText("It installed").performClick()
+        assertEquals(true, answer)
+    }
+
+    @Test
+    fun once_answered_it_says_what_you_said_and_asks_no_more() {
+        compose.setContent {
+            TestTrackTheme {
+                CrewSeatRow(seat().copy(state = SeatState.CHECKING, myVote = false, no = 1), onVote = {})
+            }
+        }
+        compose.onNodeWithText("You: No").assertIsDisplayed()
+        compose.onNodeWithText("It installed").assertDoesNotExist()
+    }
+
+    @Test
+    fun without_your_own_app_in_you_see_the_count_but_cannot_answer() {
+        compose.setContent {
+            TestTrackTheme { CrewSeatRow(seat().copy(state = SeatState.CHECKING), onInstall = {}, onVote = null) }
+        }
+        compose.onNodeWithText("Members decide", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("It installed").assertDoesNotExist()
+    }
+
     // ------------------------------------------------------------------ the report dialog
 
     @Test

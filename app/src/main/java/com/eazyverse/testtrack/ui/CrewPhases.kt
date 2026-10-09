@@ -96,7 +96,12 @@ fun CrewLobbyPhase(
             item { CrewHeading("Install these", "${others.size}") }
             itemsIndexed(others, key = { _, seat -> seat.id }) { index, seat ->
                 ListTile(index, others.size) {
-                    CrewSeatRow(seat, onInstall = { actions.onInstall(seat) }, onReport = { actions.onReport(seat) })
+                    CrewSeatRow(
+                        seat,
+                        onInstall = { actions.onInstall(seat) },
+                        onReport = { actions.onReport(seat) },
+                        onVote = if (crew.mayVote) ({ yes -> actions.onVote(seat, yes) }) else null,
+                    )
                 }
             }
         }
@@ -123,7 +128,9 @@ private fun YourSeat(
                             } else {
                                 "Play shows it to the testers group."
                             }
-                        SeatState.CHECKING -> "Waiting for Play. We check it again every few minutes."
+                        SeatState.CHECKING ->
+                            "Play could not check it, so members are trying it: ${mine.yes} Yes, " +
+                                "${mine.no} No so far. Two answers decide."
                         SeatState.REJECTED, SeatState.REMOVED -> mine.outReason.ifBlank { "It came back to you." }
                     },
                     style = MaterialTheme.typography.bodySmall,

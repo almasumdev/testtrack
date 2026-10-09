@@ -209,6 +209,13 @@ object Api {
      */
     suspend fun takeSeat(body: SeatIn): ApiSeat = post("/crews/seats", body)
 
+    /** Say whether an app the Play check could not look at installed for you. */
+    suspend fun vote(
+        seatId: String,
+        installed: Boolean,
+        reason: String = "",
+    ): ApiSeat = post("/crews/seats/$seatId/vote", SeatVoteIn(installed, reason))
+
     /** Tell an app's owner it will not install, and why. */
     suspend fun report(
         seatId: String,

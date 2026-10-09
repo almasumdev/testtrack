@@ -304,6 +304,12 @@ data class VisitIn(
 )
 
 @Serializable
+data class SeatVoteIn(
+    val installed: Boolean,
+    val reason: String = "",
+)
+
+@Serializable
 data class ReportIn(
     /** What went wrong, for the app's owner. Required. */
     val reason: String,
@@ -329,6 +335,10 @@ data class ApiSeat(
     val reports: Int = 0,
     /** This account reported it, which excuses this account from it. */
     val reported: Boolean = false,
+    /** For an app the Play check could not look at: members' answers so far, and this account's. */
+    val yes: Int = 0,
+    val no: Int = 0,
+    @SerialName("my_vote") val myVote: Boolean? = null,
     /** What the reports said. Only ever sent to the seat's owner, without who said it. */
     val reasons: List<String> = emptyList(),
     /** Why it left the crew. Only ever sent to the seat's owner. */

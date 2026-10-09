@@ -33,6 +33,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.report
+import com.eazyverse.testtrack.viewmodel.vote
 
 /**
  * Crew: one cohort, at whatever point it has reached.
@@ -58,6 +60,9 @@ fun CrewScreen(
 
     /** The app being reported: its seat id, name and owner. */
     var reporting by remember { mutableStateOf<CrewSeat?>(null) }
+
+    /** The app being answered "it didn't install" for, which asks why first. */
+    var refusing by remember { mutableStateOf<CrewSeat?>(null) }
     var taking by remember { mutableStateOf(false) }
 
     // Reloaded on every arrival: a crew fills, an app is sent back and a fortnight starts while
@@ -98,6 +103,7 @@ fun CrewScreen(
             onInstall = { seat -> membership.require { openOnPlay(context, seat.packageName) } },
             onReport = { reporting = it },
             onLeave = { leaving = it },
+            onVote = { seat, yes -> if (yes) vm.vote(context, seat, installed = true) else refusing = seat },
             onTakeSeat = { if (vm.signedOut) onSignIn() else membership.require { taking = true } },
         )
 
@@ -155,6 +161,18 @@ fun CrewScreen(
                 vm.report(context, seat.id, seat.appName, reason)
             },
             onDismiss = { reporting = null },
+        )
+    }
+
+    refusing?.let { seat ->
+        CrewReportDialog(
+            seat = seat,
+            answering = true,
+            onReport = { reason ->
+                refusing = null
+                vm.vote(context, seat, installed = false, reason = reason)
+            },
+            onDismiss = { refusing = null },
         )
     }
 
@@ -218,6 +236,8 @@ class CrewActions(
     val onReport: (CrewSeat) -> Unit,
     val onLeave: (CrewSeat) -> Unit,
     val onTakeSeat: () -> Unit,
+    /** An answer for an app waiting on members. */
+    val onVote: (CrewSeat, Boolean) -> Unit = { _, _ -> },
 )
 
 /**
@@ -325,15 +345,22 @@ fun CrewReportDialog(
     seat: CrewSeat,
     onReport: (String) -> Unit,
     onDismiss: () -> Unit,
+    /** An answer for an app waiting on members, rather than a report on one already in. */
+    answering: Boolean = false,
 ) {
     var reason by remember { mutableStateOf("") }
     val enough = reason.trim().length >= CrewRules.REPORT_MIN_CHARS
     Ask(
-        title = "Report ${seat.appName}?",
+        title = if (answering) "${seat.appName} didn't install?" else "Report ${seat.appName}?",
         body =
-            "${seat.owner} is told what you write, without your name. Before the run starts, " +
-                "${CrewRules.REPORTS_TO_RETURN} reports send an app back to be fixed.",
-        confirm = "Report",
+            if (answering) {
+                "${seat.owner} is told what you write, without your name. Two members saying it " +
+                    "didn't install send it back to be fixed."
+            } else {
+                "${seat.owner} is told what you write, without your name. Before the run starts, " +
+                    "${CrewRules.REPORTS_TO_RETURN} reports send an app back to be fixed."
+            },
+        confirm = if (answering) "Send" else "Report",
         confirmEnabled = enough,
         onConfirm = { onReport(reason.trim()) },
         onDismiss = onDismiss,
@@ -353,12 +380,14 @@ fun CrewReportDialog(
                         null
                     },
             )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "It also stops counting against you if you cannot open it.",
-                style = DialogBody,
-                color = Tt.colors.text4,
-            )
+            if (!answering) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "It also stops counting against you if you cannot open it.",
+                    style = DialogBody,
+                    color = Tt.colors.text4,
+                )
+            }
         },
     )
 }

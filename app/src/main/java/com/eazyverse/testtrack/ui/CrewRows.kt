@@ -87,7 +87,10 @@ fun CrewSeatRow(
     showCrew: Boolean = false,
     onInstall: (() -> Unit)? = null,
     onReport: (() -> Unit)? = null,
+    /** For an app waiting on members, where this account may answer: Yes or No. */
+    onVote: ((Boolean) -> Unit)? = null,
 ) {
+    val waiting = seat.state == SeatState.CHECKING
     Column(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Initial(seat.owner.take(1).uppercase(), size = 34.dp)
@@ -113,6 +116,8 @@ fun CrewSeatRow(
             Spacer(Modifier.width(10.dp))
             // Only where it says something: every app on this list is in, so "In" on each is noise.
             when {
+                waiting && seat.myVote != null ->
+                    Pill(if (seat.myVote) "You: Yes" else "You: No", Status.short, Status.shortSoft)
                 seat.reported -> Pill("Reported", Status.short, Status.shortSoft)
                 seat.state != SeatState.CONFIRMED -> SeatPill(seat.state)
             }
@@ -126,7 +131,29 @@ fun CrewSeatRow(
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
-        if (onInstall != null || (onReport != null && !seat.reported)) {
+        if (waiting) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Play could not check it. Members decide: ${seat.yes} Yes, ${seat.no} No so far.",
+                Modifier.padding(start = 46.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = Status.short,
+            )
+        }
+        if (waiting && onVote != null && seat.myVote == null) {
+            Spacer(Modifier.height(10.dp))
+            Row(Modifier.padding(start = 46.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                onInstall?.let {
+                    ActionChip("Get it on Play", MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft, it)
+                }
+                ActionChip(
+                    "It installed",
+                    MaterialTheme.colorScheme.onPrimaryContainer,
+                    MaterialTheme.colorScheme.primaryContainer,
+                ) { onVote(true) }
+                ActionChip("It didn't", MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft) { onVote(false) }
+            }
+        } else if (onInstall != null || (onReport != null && !seat.reported && !waiting)) {
             Spacer(Modifier.height(10.dp))
             Row(Modifier.padding(start = 46.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 onInstall?.let {
@@ -137,7 +164,7 @@ fun CrewSeatRow(
                         it,
                     )
                 }
-                if (onReport != null && !seat.reported) {
+                if (onReport != null && !seat.reported && !waiting) {
                     ActionChip("Report", MaterialTheme.colorScheme.onSurfaceVariant, Status.neutralSoft, onReport)
                 }
             }

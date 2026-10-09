@@ -120,6 +120,11 @@ class CrewViewModel : ViewModel() {
         message = null
     }
 
+    /** Say something once, from an action defined beside this class. */
+    internal fun say(text: String) {
+        message = text
+    }
+
     fun show(id: String?) {
         opened = id
     }
@@ -175,7 +180,7 @@ class CrewViewModel : ViewModel() {
     fun badge(phase: CrewPhase) =
         when (phase) {
             CrewPhase.RUN -> tonight.size
-            CrewPhase.LOBBY -> sentBack.size
+            CrewPhase.LOBBY -> sentBack.size + toAnswer
             CrewPhase.OPEN -> 0
             CrewPhase.RECORD -> 0
         }
@@ -200,6 +205,10 @@ class CrewViewModel : ViewModel() {
     /** Everything settled tonight, for the count under the list. */
     val doneTonight: Int
         get() = doneTonightIn(crews)
+
+    /** Apps waiting on members that this account may answer for and has not. */
+    val toAnswer: Int
+        get() = crews.filter { it.mayVote }.sumOf { c -> c.seats.count { it.state == SeatState.CHECKING && !it.mine && it.myVote == null } }
 
     /** Your apps sent back before a run, to fix and put in again. */
     val sentBack: List<CrewSeat>
@@ -277,29 +286,6 @@ class CrewViewModel : ViewModel() {
             }
         }
     }
-
-    /**
-     * Tell an app's owner it will not install for you, and why.
-     *
-     * The owner hears about it, without your name. Before the run, a second report from somebody
-     * else sends it back; during the run it only tells them, and excuses you from that app.
-     */
-    fun report(
-        context: Context,
-        seatId: String,
-        appName: String,
-        reason: String,
-    ) = call(
-        context = context,
-        onDone = { seat ->
-            message =
-                if (seat.state == "rejected") {
-                    "$appName went back to its owner to fix."
-                } else {
-                    "Reported. ${seat.ownerName} has been told, and it no longer counts against you."
-                }
-        },
-    ) { Api.report(seatId, reason) }
 
     /**
      * The app somebody was sent to, and when. Null when nothing is in flight.
@@ -448,7 +434,7 @@ class CrewViewModel : ViewModel() {
      * Reloaded rather than patched in memory: the server's answer changes more than the one row
      * that was touched, since a report can send an app back and reopen a crew.
      */
-    private fun <T> call(
+    internal fun <T> call(
         context: Context? = null,
         onDone: (T) -> Unit = {},
         block: suspend () -> T,
