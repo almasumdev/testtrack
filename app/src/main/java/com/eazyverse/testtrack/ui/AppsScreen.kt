@@ -1,8 +1,6 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -293,46 +290,6 @@ fun stageOf(app: ApiMyApp): AppStage? =
             )
         else -> null
     }.takeIf { it == null || it.total > 0 }
-
-/**
- * The tab before its apps have arrived: two cards in the shape of the ones on their way.
- *
- * Cards because what lands first is the running half, and a skeleton of rows would be describing
- * the finished list underneath it.
- */
-@Composable
-private fun AppsLoading() {
-    Column(
-        Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        repeat(2) {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.outlineVariant,
-                        RoundedCornerShape(12.dp),
-                    ).padding(horizontal = 16.dp, vertical = 14.dp),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Skeleton(width = 44.dp, height = 44.dp, corner = 13.dp)
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Skeleton(width = 120.dp, height = 13.dp)
-                        Spacer(Modifier.height(6.dp))
-                        Skeleton(width = 64.dp, height = 11.dp)
-                    }
-                }
-                Spacer(Modifier.height(18.dp))
-                Skeleton(width = 96.dp, height = 12.dp)
-                Spacer(Modifier.height(10.dp))
-                Skeleton(height = 8.dp, corner = 3.dp)
-            }
-        }
-    }
-}
 
 /** States where something is still happening, which is what splits the list in two. */
 private val LIVE_APP_STATES = setOf("waiting", "starting", "checking", "testing", "collecting")

@@ -24,6 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -212,47 +215,69 @@ fun Points(
 }
 
 /**
- * The board, before it has arrived: three faces on three blocks, and rows under them.
+ * The board, before it has arrived: the podium and the standings as they will be, with only the
+ * people on them still to come.
  *
- * The same silhouette the podium will have, so nothing jumps when it lands. A sentence in the
- * corner said the board was being counted and nothing about what was coming.
+ * The blocks, their medals and their numbers are the same whoever stands on them, and so are the
+ * places down the side of the list, so those are drawn for real from the first frame. Only the
+ * faces, names and points shimmer, which is all the answer is going to fill in.
  */
 @Composable
 fun RanksLoading() {
-    Column(Modifier.fillMaxSize()) {
-        Row(
-            Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 34.dp),
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            LoadingStep(face = 54.dp, seat = 62.dp)
-            Spacer(Modifier.width(8.dp))
-            LoadingStep(face = 68.dp, seat = 88.dp)
-            Spacer(Modifier.width(8.dp))
-            LoadingStep(face = 54.dp, seat = 46.dp)
+    val face =
+        with(LocalDensity.current) {
+            MaterialTheme.typography.bodyMedium.lineHeight
+                .toDp() +
+                MaterialTheme.typography.bodySmall.lineHeight
+                    .toDp() + 1.dp
         }
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant),
-        )
-        Spacer(Modifier.height(30.dp))
+    Column(Modifier.fillMaxSize().semantics(mergeDescendants = true) { contentDescription = "Loading the board" }) {
+        Box(Modifier.padding(start = Gutter, end = Gutter, top = 4.dp, bottom = 8.dp)) {
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.Bottom) {
+                LoadingStep(2, Medal.silver, seat = 62.dp, face = 54.dp)
+                Spacer(Modifier.width(8.dp))
+                LoadingStep(1, Medal.gold, seat = 88.dp, face = 68.dp, crowned = true)
+                Spacer(Modifier.width(8.dp))
+                LoadingStep(3, Medal.bronze, seat = 46.dp, face = 54.dp)
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        CrewHeading("Standings")
+        val t = Tt.colors
         repeat(SKELETON_ROWS) { i ->
-            if (i > 0) RowDivider()
+            val shape =
+                when (i) {
+                    0 -> TilePlace.FIRST
+                    SKELETON_ROWS - 1 -> TilePlace.LAST
+                    else -> TilePlace.MIDDLE
+                }.shape()
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 13.dp),
+                Modifier
+                    .padding(start = Gutter, end = Gutter, top = if (i > 0) 3.dp else 0.dp)
+                    .fillMaxWidth()
+                    .clip(shape)
+                    .background(t.glass)
+                    .border(1.dp, t.glassBorder, shape)
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Skeleton(width = 12.dp, height = 12.dp, corner = 4.dp)
+                Text(
+                    "${4 + i}",
+                    Modifier.width(19.dp),
+                    style = MaterialTheme.typography.labelLarge.tabular(),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.End,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 Spacer(Modifier.width(11.dp))
-                Skeleton(width = 36.dp, height = 36.dp, corner = 18.dp)
+                Skeleton(width = face, height = face, corner = face / 2)
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Skeleton(width = LoadingNames[i % LoadingNames.size].dp, height = 13.dp)
-                    Spacer(Modifier.height(6.dp))
-                    Skeleton(width = 104.dp, height = 11.dp)
+                    Spacer(Modifier.height(7.dp))
+                    Skeleton(width = 104.dp, height = 10.dp)
                 }
-                Skeleton(width = 38.dp, height = 14.dp)
+                Skeleton(width = 46.dp, height = 16.dp)
             }
         }
     }
@@ -260,19 +285,55 @@ fun RanksLoading() {
 
 private val LoadingNames = listOf(84, 112, 70, 96, 122, 78, 104, 90)
 
+/** One place on the podium as [Step] draws it, with the person on it still to come. */
 @Composable
 private fun RowScope.LoadingStep(
-    face: Dp,
+    place: Int,
+    medal: Color,
     seat: Dp,
+    face: Dp,
+    crowned: Boolean = false,
 ) {
     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-        Skeleton(width = face, height = face, corner = face / 2)
+        if (crowned) {
+            Icon(Lucide.Crown, null, Modifier.size(18.dp), tint = medal.copy(alpha = 0.5f))
+            Spacer(Modifier.height(5.dp))
+        }
+        Box(
+            Modifier
+                .size(face)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surface)
+                .border(2.5.dp, medal.copy(alpha = 0.5f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Skeleton(width = face - 9.dp, height = face - 9.dp, corner = face / 2)
+        }
         Spacer(Modifier.height(10.dp))
         Skeleton(width = 58.dp, height = 12.dp)
         Spacer(Modifier.height(8.dp))
-        Skeleton(width = 40.dp, height = 20.dp)
-        Spacer(Modifier.height(12.dp))
-        Skeleton(height = seat, corner = 12.dp)
+        Skeleton(width = 42.dp, height = 20.dp)
+        Spacer(Modifier.height(6.dp))
+        Skeleton(width = 64.dp, height = 9.dp)
+        Spacer(Modifier.height(10.dp))
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(seat)
+                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .background(Brush.verticalGradient(listOf(medal.copy(alpha = 0.24f), Color.Transparent))),
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            Box(Modifier.fillMaxWidth().height(3.dp).background(medal))
+            Text(
+                "$place",
+                Modifier.padding(top = 9.dp),
+                style = MaterialTheme.typography.headlineSmall.tabular(),
+                fontWeight = FontWeight.Black,
+                color = medal,
+            )
+        }
     }
 }
 
