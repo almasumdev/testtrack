@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
@@ -30,12 +28,6 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -119,52 +111,6 @@ fun CountBadge(count: Int) {
 }
 
 // ---- surfaces --------------------------------------------------------------------------------
-
-/**
- * Something to read, not to press: a soft gradient, a light in one corner, a dashed edge.
- *
- * The dashed edge is the whole point. Solid tiles in this app are things you tap; a panel says
- * "this is information" before anybody tries it and finds nothing happens.
- */
-@Composable
-fun Panel(
-    modifier: Modifier = Modifier,
-    padding: PaddingValues = PaddingValues(16.dp),
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    val t = Tt.colors
-    val shape = RoundedCornerShape(PanelRadius)
-    Column(
-        modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(Brush.linearGradient(listOf(t.panelTop, t.panelBottom)))
-            .drawBehind {
-                val center = Offset(size.width - 50.dp.toPx(), 40.dp.toPx())
-                val radius = size.width * .5f
-                drawCircle(
-                    Brush.radialGradient(listOf(t.panelGlow, t.panelGlow.copy(alpha = 0f)), center, radius),
-                    radius,
-                    center,
-                )
-                val inset = .75.dp.toPx()
-                drawRoundRect(
-                    color = t.panelOutline,
-                    topLeft = Offset(inset, inset),
-                    size =
-                        androidx.compose.ui.geometry
-                            .Size(size.width - inset * 2, size.height - inset * 2),
-                    cornerRadius = CornerRadius(PanelRadius.toPx() - inset),
-                    style =
-                        Stroke(
-                            width = 1.5.dp.toPx(),
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())),
-                        ),
-                )
-            }.padding(padding),
-        content = content,
-    )
-}
 
 val PanelRadius = 22.dp
 

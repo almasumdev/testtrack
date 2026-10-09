@@ -2,13 +2,11 @@ package com.eazyverse.testtrack.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,8 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -43,76 +39,6 @@ import com.eazyverse.testtrack.ui.theme.exchangeBackground
 
 /** Which in-content update banner Home should show. */
 enum class HomeUpdateBanner { NONE, DOWNLOADED }
-
-/**
- * In-content update banner card (same look as the other things Home says to you). Only the
- * DOWNLOADED state ("Restart"), and only after somebody tapped the app bar update icon: the optional
- * nudge itself is just that icon. The blocked tier uses the full-screen [ForceUpdateScreen] instead.
- */
-@Composable
-fun UpdateBannerCard(
-    state: HomeUpdateBanner,
-    onRestart: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    if (state == HomeUpdateBanner.NONE) return
-    val title = "The update is ready"
-    val body = "It installs when TestTrack restarts. Nothing you have done today is lost."
-    val actionText = "Restart now"
-
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(Status.neutralSoft)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
-                .padding(14.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Lucide.Info,
-                contentDescription = null,
-                tint = Tt.colors.accentInk,
-                modifier = Modifier.size(20.dp),
-            )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .padding(start = 10.dp),
-            )
-        }
-        Text(
-            text = body,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-        Button(
-            onClick = onRestart,
-            shape = RoundedCornerShape(10.dp),
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                ),
-            contentPadding = PaddingValues(horizontal = 18.dp, vertical = 8.dp),
-            modifier =
-                Modifier
-                    .align(Alignment.End)
-                    .padding(top = 12.dp),
-        ) {
-            Text(
-                text = actionText,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-    }
-}
 
 /**
  * The blocked tier: a non-dismissible full-screen gate. Back is swallowed and stray taps can't reach

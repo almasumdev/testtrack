@@ -4,18 +4,14 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.gms.common.api.ApiException
-import com.google.firebase.firestore.FirebaseFirestoreException
-import com.google.firebase.firestore.FirebaseFirestoreException.Code
 import java.io.IOException
 
 /**
  * Turns a thrown thing into a sentence worth showing someone.
  *
  * This exists because `it.message ?: "something friendly"` does not work, and reads as though it
- * does. The fallback only applies when the message is *null*, and a Firestore exception always has
- * one — so every screen written that way showed
- * `PERMISSION_DENIED: Missing or insufficient permissions.` and the carefully written sentence
- * beside it was never once displayed.
+ * does. The fallback only applies when the message is *null*, and a library exception always has
+ * one, so a screen written that way shows the library's text and never the sentence beside it.
  *
  * A raw code is worse than useless to a tester. It names a database they have never heard of,
  * implies they did something wrong, and gives them nothing to do about it.
@@ -27,31 +23,10 @@ import java.io.IOException
  *
  * Our own exceptions keep their text. They were written for this.
  */
-fun Throwable.friendly(
-    fallback: String,
-    denied: String = "You're not in this group any more, or it was dissolved.",
-): String =
+fun Throwable.friendly(fallback: String): String =
     when {
-        this is AppTakenException ||
-            this is BlockedException ||
-            this is StalledException ||
-            this is AppClosedException -> message ?: fallback
-
-        this is FirebaseFirestoreException ->
-            when (code) {
-                // Also what a deleted document looks like: the read rule tests fields on a document that
-                // is not there, which is a refusal rather than an empty answer.
-                Code.PERMISSION_DENIED -> denied
-
-                Code.UNAUTHENTICATED -> "Your sign-in expired. Sign in again from your profile."
-
-                Code.UNAVAILABLE, Code.DEADLINE_EXCEEDED, Code.ABORTED, Code.CANCELLED ->
-                    "Can't reach TestTrack. Check your connection."
-
-                Code.RESOURCE_EXHAUSTED -> "TestTrack is busy. Try again in a minute."
-
-                else -> fallback
-            }
+        // The testers-group check's own refusal, already written for a person.
+        this is StalledException -> message ?: fallback
 
         this is IOException -> "Can't reach TestTrack. Check your connection."
 

@@ -93,30 +93,6 @@ fun normalizeAddress(email: String): String {
 }
 
 /**
- * Whether this verdict is about somebody other than the account we believe we are signed in as.
- *
- * A phone can hold several Google accounts, and the token for a re-check comes from Credential
- * Manager, not from the session. When more than one is authorised it picks — sometimes by auto
- * select, sometimes by showing a sheet — and it can hand back the other one. The verdict is
- * then perfectly correct about an address the tester is not using, which is how the group step
- * could say "you are in" to somebody who is not and "you are not" to somebody who is, differently
- * on different launches.
- *
- * Compared after [normalizeAddress], because the first version of this compared raw strings and
- * accused every tester with a dot in their Gmail of being a different person. A third of the
- * group writes their address that way. A guard against the wrong account is worth nothing if it
- * cannot tell one account from two.
- *
- * Deliberately only ever rejects a verdict that names a *different* address. A blank one means the
- * service did not say, and treating silence as a mismatch would make the whole gate inert.
- */
-fun GateResult.isAboutSomeoneElse(signedInAs: String?): Boolean {
-    val said = address()
-    if (said.isBlank() || signedInAs.isNullOrBlank()) return false
-    return normalizeAddress(said) != normalizeAddress(signedInAs)
-}
-
-/**
  * Membership verification.
  *
  * Google publishes no API for reading a consumer `@googlegroups.com` roster — the Admin SDK and

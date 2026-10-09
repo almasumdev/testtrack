@@ -87,15 +87,12 @@ enum class MainTab(
  */
 @Composable
 fun MainShell(
-    onOpenGroup: (String, String) -> Unit,
-    onSubmitApp: () -> Unit,
     onAskForFeedback: () -> Unit,
     onReview: (String) -> Unit,
     onSignOut: () -> Unit,
     onCheck: (String) -> Unit = {},
     /** Set by a tapped crew notification; cleared once the Crew tab is showing. */
     openCrew: MutableState<Boolean> = remember { mutableStateOf(false) },
-    homeVm: HomeViewModel = viewModel(),
     hudVm: HudViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -127,40 +124,16 @@ fun MainShell(
         }
     }
 
-    /*
-     * Home's own work, lifted up here.
-     *
-     * All of it used to sit inside HomeScreen, which was the whole of this route and so was always
-     * composed. It is not any more: a tester reading the feed or their profile would otherwise not
-     * be registered for push, would not catch up a round the service left half finished, and would
-     * not see a notice about being dropped from a cohort until they happened to tap Groups. None
-     * of these are about the group list; they are about the app being open.
-     */
+    // Whether notifications are allowed can change in Settings while the app is away.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer =
             LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) {
-                    homeVm.load()
-                    Session.refreshNotifications(context)
-                }
+                if (event == Lifecycle.Event.ON_RESUME) Session.refreshNotifications(context)
             }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-
-    // Keyed on the group list, so placement into a new cohort subscribes to it without waiting for
-    // the next cold start.
-    LaunchedEffect(homeVm.ready, homeVm.groups) { if (homeVm.ready) homeVm.registerForPush(context) }
-
-    LaunchedEffect(Unit) { homeVm.catchUp(context) }
-
-    // Anything a background sweep parked while the app was shut.
-    LaunchedEffect(homeVm.ready) { if (homeVm.ready) homeVm.showNotices(context) }
-
-    // Whatever this account's own apps look like installed here, if any are — see
-    // HomeViewModel.syncMyVersions for why only a Play-sourced install counts.
-    LaunchedEffect(homeVm.ready) { if (homeVm.ready) homeVm.syncMyVersions(context) }
 
     // Back from a tab returns to the first one rather than closing the app, which is what a bottom
     // bar has taught everybody to expect. Off on the first tab, so Back there still leaves.

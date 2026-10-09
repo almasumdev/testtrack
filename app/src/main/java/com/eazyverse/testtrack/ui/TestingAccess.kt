@@ -2,14 +2,11 @@ package com.eazyverse.testtrack.ui
 
 import android.Manifest
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,22 +22,6 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.eazyverse.testtrack.Config
-
-@Composable
-fun TestingGroupLink() {
-    val context = LocalContext.current
-    Column {
-        Text(
-            "Join the testers group with your Play Store account to install the crew's closed-test apps.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Config.GROUP_URL))) }) {
-            Text("Open testers group")
-        }
-    }
-}
 
 /** An opt-in control inside an active crew, never a launch or sign-in requirement. */
 @Composable

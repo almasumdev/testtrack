@@ -14,33 +14,27 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
-import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 /**
- * Push registration.
+ * Push: whether a notification would show, where it lands, and telling our server where to send.
  *
- * Two halves that answer different questions:
+ * Our server sends every push (see app/services/notify.py in the backend): crew news, reminders,
+ * feedback. This phone's Firebase token goes to it after sign-in and is taken back at sign-out.
  *
- *  - **A token per device**, so a message can reach one person — "you have four apps left today".
- *    Stored at `users/{uid}/tokens/{installId}`.
- *  - **A topic per group**, so a message can reach a cohort without the sender first reading
- *    thirteen tokens — "Group A is short a member". Subscription happens on the device, so nothing
- *    server-side needs to keep a roster in step with `memberUids`.
- *
- * Keyed by a stable install id rather than by the token itself. FCM rotates tokens — on restore, on
- * app data clear, on its own schedule — and a token-keyed document would leave the old one behind
- * every time, so every send would go to a growing pile of dead addresses.
+ * The version before this one registered with the old Firestore system instead: a token document
+ * under the user and a topic per group. That version is still out there for people who have not
+ * updated, and its sender may still be running, so a phone that has updated leaves it once, on its
+ * first run here ([leaveOldSystem]), and PushService ignores anything that is not ours.
  */
 object PushRepo {
     private const val PREFS = "testtrack.push"
     private const val KEY_INSTALL_ID = "install_id"
     private const val KEY_TOPICS = "topics"
+    private const val KEY_LEFT_OLD = "left_old_system"
 
     const val CHANNEL_REMINDERS = "reminders"
-
-    private val db get() = FirebaseFirestore.getInstance()
 
     private suspend fun <T> await(task: Task<T>): T =
         suspendCancellableCoroutine { cont ->
@@ -50,20 +44,6 @@ object PushRepo {
         }
 
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-
-    /**
-     * This install, named once and for good.
-     *
-     * Not the Firebase installation id: that one is reset by the same events that rotate the token,
-     * which would defeat the point of keying on something stable.
-     */
-    private fun installId(context: Context): String {
-        val store = prefs(context)
-        store.getString(KEY_INSTALL_ID, null)?.let { return it }
-        val fresh = UUID.randomUUID().toString()
-        store.edit().putString(KEY_INSTALL_ID, fresh).apply()
-        return fresh
-    }
 
     // ---- permission ----------------------------------------------------------------------
 
@@ -83,7 +63,8 @@ object PushRepo {
         }
 
     /**
-     * The channel a reminder lands on.
+     * The channel crew news lands on. The id is the one the old version created, so a phone that
+     * updated keeps whatever the person chose for it in system settings.
      *
      * Created before the permission is asked for, deliberately: Android shows the channel's name in
      * the system settings the tester is about to be sent to, and a channel that appears only after
@@ -96,55 +77,12 @@ object PushRepo {
         manager.createNotificationChannel(
             NotificationChannel(
                 CHANNEL_REMINDERS,
-                "Daily reminders",
+                "Crews",
                 NotificationManager.IMPORTANCE_DEFAULT,
             ).apply {
-                description = "Nudges when apps in your groups are still waiting on you today."
+                description = "Your crews: filling, starting, apps to open tonight, reports and missed days."
             },
         )
-    }
-
-    // ---- token ---------------------------------------------------------------------------
-
-    /**
-     * Publishes this device's address for [uid].
-     *
-     * Safe to call on every launch: the document id is the install, so this overwrites rather than
-     * accumulating. Failure is not surfaced — a tester who cannot be reached by push has lost a
-     * convenience, not the ability to test, and an error banner over that would be noise.
-     */
-    suspend fun register(
-        context: Context,
-        uid: String,
-    ) {
-        val token =
-            runCatching { await(FirebaseMessaging.getInstance().token) }.getOrNull()
-                ?: return
-        save(context, uid, token)
-    }
-
-    /** Called from [PushService.onNewToken] as well, where the token arrives unasked. */
-    suspend fun save(
-        context: Context,
-        uid: String,
-        token: String,
-    ) {
-        runCatching {
-            await(
-                db
-                    .collection("users")
-                    .document(uid)
-                    .collection("tokens")
-                    .document(installId(context))
-                    .set(
-                        mapOf(
-                            "token" to token,
-                            "platform" to "android",
-                            "updatedAt" to System.currentTimeMillis(),
-                        ),
-                    ),
-            )
-        }
     }
 
     // ---- the API -------------------------------------------------------------------------
@@ -152,9 +90,8 @@ object PushRepo {
     /**
      * Tells our server where this phone is, for whoever is signed in on it.
      *
-     * The server is what sends now: a crew filling, a report on your app, a missed day, the
-     * evening reminder. Safe on every launch; the server keys on the token and moves it to whoever
-     * registered it last. A failure only means no push until the next launch.
+     * Safe on every launch; the server keys on the token and moves it to whoever registered it
+     * last. A failure only means no push until the next launch.
      */
     suspend fun toServer() {
         val token = runCatching { await(FirebaseMessaging.getInstance().token) }.getOrNull() ?: return
@@ -175,78 +112,54 @@ object PushRepo {
         runCatching { withTimeoutOrNull(4_000) { Api.dropPushToken(token) } }
     }
 
-    // ---- topics --------------------------------------------------------------------------
-
-    /** Firestore ids allow characters an FCM topic does not. Same input, same topic, always. */
-    fun topic(groupId: String) = "group_" + groupId.replace(Regex("[^a-zA-Z0-9-_.~%]"), "_")
+    // ---- leaving the old version's push --------------------------------------------------
 
     /**
-     * Brings subscriptions in line with the groups this tester is actually in.
+     * Once per install: stop hearing from the old Firestore-era system.
      *
-     * A diff rather than a blanket re-subscribe: FCM keeps a subscription until it is revoked, so
-     * leaving an old group would otherwise mean hearing about it for good. The set of what we are
-     * subscribed to is kept locally because there is no API to ask FCM what a device is on.
+     * Unsubscribes from the group topics the old version joined, which FCM keeps until told
+     * otherwise, and deletes the token document it wrote under the user, which its sender reads.
+     * Best effort: a failure is tried again next launch, and PushService ignores old messages
+     * anyway.
      */
-    suspend fun syncTopics(
-        context: Context,
-        groupIds: Collection<String>,
-    ) {
-        val wanted = groupIds.map(::topic).toSet()
-        val store = prefs(context)
-        val held = store.getStringSet(KEY_TOPICS, emptySet()).orEmpty()
-        if (wanted == held) return
-
-        val messaging = FirebaseMessaging.getInstance()
-        val settled = mutableSetOf<String>()
-
-        (wanted - held).forEach { name ->
-            if (runCatching { await(messaging.subscribeToTopic(name)) }.isSuccess) settled += name
-        }
-        (held - wanted).forEach { name ->
-            // A failed unsubscribe stays in the held set, so the next sync tries it again rather
-            // than quietly leaving the device on a group it has left.
-            if (runCatching { await(messaging.unsubscribeFromTopic(name)) }.isFailure) settled += name
-        }
-
-        store.edit().putStringSet(KEY_TOPICS, settled + (wanted intersect held)).apply()
-    }
-
-    // ---- sign-out ------------------------------------------------------------------------
-
-    /**
-     * Stops this device hearing anything for the account that is leaving.
-     *
-     * Both halves matter and for different reasons: the token document would keep a signed-out
-     * phone on the reminder list, and a topic subscription lives in FCM rather than in our data,
-     * so it would survive not just sign-out but a reinstall.
-     *
-     * **Await this before signing out.** The delete is a Firestore write and goes out under
-     * whatever credentials are current when it is sent — fired off next to `AuthRepo.signOut()` it
-     * would race, reach the server unauthenticated, and come back PERMISSION_DENIED, leaving the
-     * token behind for good.
-     */
-    suspend fun clear(
+    suspend fun leaveOldSystem(
         context: Context,
         uid: String?,
     ) {
         val store = prefs(context)
+        if (store.getBoolean(KEY_LEFT_OLD, false)) return
         val messaging = FirebaseMessaging.getInstance()
+        var clean = true
         store.getStringSet(KEY_TOPICS, emptySet()).orEmpty().forEach { name ->
-            runCatching { await(messaging.unsubscribeFromTopic(name)) }
+            if (runCatching { await(messaging.unsubscribeFromTopic(name)) }.isFailure) clean = false
         }
-        store.edit().remove(KEY_TOPICS).apply()
-
-        if (uid != null) {
-            runCatching {
-                await(
-                    db
-                        .collection("users")
-                        .document(uid)
-                        .collection("tokens")
-                        .document(installId(context))
-                        .delete(),
-                )
-            }
+        val install = store.getString(KEY_INSTALL_ID, null)
+        if (uid != null && install != null) {
+            val gone =
+                runCatching {
+                    withTimeoutOrNull(20_000) {
+                        await(
+                            FirebaseFirestore
+                                .getInstance()
+                                .collection("users")
+                                .document(uid)
+                                .collection("tokens")
+                                .document(install)
+                                .delete(),
+                        )
+                        // delete() resolves to null, so mark success; null below means it timed out.
+                        true
+                    }
+                }
+            if (gone.getOrNull() != true) clean = false
+        }
+        if (clean) {
+            store
+                .edit()
+                .remove(KEY_TOPICS)
+                .remove(KEY_INSTALL_ID)
+                .putBoolean(KEY_LEFT_OLD, true)
+                .apply()
         }
     }
 }

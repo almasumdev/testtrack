@@ -2,7 +2,6 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,7 +21,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.ui.theme.LocalStatusColors
@@ -75,33 +73,6 @@ fun RefreshBox(
 }
 
 // ---- structure ---------------------------------------------------------------------------
-
-@Composable
-fun SectionLabel(
-    text: String,
-    trailing: String? = null,
-) {
-    Row(
-        Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 22.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 1.2.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        trailing?.let {
-            Spacer(Modifier.weight(1f))
-            Text(
-                it,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
 
 /**
  * A group of rows, on the page rather than on a card.
@@ -185,30 +156,6 @@ fun Secondary(
 }
 
 /**
- * A small bordered action, for the handful that are neither the screen's one primary nor a row.
- *
- * As full width text links stacked one above the other they read as a menu of equally weighted
- * choices while pushing the list, which is the reason the screen exists, below the fold.
- */
-@Composable
-fun Chip(
-    label: String,
-    onClick: () -> Unit,
-) {
-    Text(
-        label,
-        Modifier
-            .clip(RoundedCornerShape(7.dp))
-            .background(Tt.colors.glass2)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 13.dp, vertical = 8.dp),
-        style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.sp),
-        fontWeight = FontWeight.SemiBold,
-        color = Tt.colors.accentInk,
-    )
-}
-
-/**
  * Long enough to be seen, short enough not to be waited on.
  *
  * A pull that finishes in eighty milliseconds flashes the skeleton and puts it away again, which
@@ -220,76 +167,6 @@ const val MIN_REFRESH = 550L
 suspend fun holdShimmer(startedAt: Long) {
     val left = MIN_REFRESH - (System.currentTimeMillis() - startedAt)
     if (left > 0) kotlinx.coroutines.delay(left)
-}
-
-/**
- * Nothing here yet, said properly.
- *
- * A bare sentence in the middle of a screen reads like a failure. An icon, a title and a line of
- * explanation reads like a state the product expected.
- */
-@Composable
-fun EmptyState(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    modifier: Modifier = Modifier,
-    /**
-     * The way out, where there is one.
-     *
-     * Added for the screens a signed-out reader can now reach. "Sign in to see your apps" with
-     * nothing to press is a dead end, and the reader has to work out for themselves that the
-     * answer is on a different tab.
-     */
-    actionLabel: String = "",
-    onAction: () -> Unit = {},
-) {
-    Column(
-        modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 36.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        IconTile(icon, size = 56.dp)
-        Spacer(Modifier.height(16.dp))
-        Text(
-            title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
-            subtitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        if (actionLabel.isNotBlank()) {
-            Spacer(Modifier.height(20.dp))
-            Primary(actionLabel, onClick = onAction)
-        }
-    }
-}
-
-/** A sentence where content would be, when a full empty state would be too much. */
-@Composable
-fun Blank(text: String) {
-    Text(
-        text,
-        Modifier.padding(horizontal = Gutter, vertical = 14.dp),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
-/** Inline, in the error colour. Dialogs are for destructive confirmation only. */
-@Composable
-fun Failure(text: String) {
-    Text(
-        text,
-        Modifier.padding(horizontal = Gutter, vertical = 14.dp),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.error,
-    )
 }
 
 /**

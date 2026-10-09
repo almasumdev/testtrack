@@ -215,8 +215,12 @@ dependencies {
     implementation(libs.play.services.auth)
 
     implementation(platform(libs.firebase.bom))
+    // Sign-in: the Google account becomes a Firebase session, whose token our server accepts.
     implementation(libs.firebase.auth)
+    // Firestore for one thing only now: the in-app update gate's config/app document, which mkit
+    // writes. Everything else the app shows comes from our own server.
     implementation(libs.firebase.firestore)
+    // Push from our server.
     implementation(libs.firebase.messaging)
     // Crash reports and the handful of automatic events. Both are opt-out for the tester through
     // Play, and neither is given anything about who they are beyond what Firebase collects itself.
@@ -231,22 +235,16 @@ dependencies {
     // it with suspendCancellableCoroutine; this one file is kept identical to the original.
     implementation(libs.coroutines.play.services)
 
-    implementation(libs.okhttp)
     implementation(libs.coil.compose)
 
-    // Reminders are computed and raised on the phone, not sent to it.
+    // The half-hourly feedback check, kept as the backstop for push. See data/FeedbackWatch.
     implementation(libs.androidx.work.runtime)
 
-    // Compliance is duplicated in firestore.rules and the two have to agree, so the sums are
-    // worth pinning somewhere that runs without a device.
     testImplementation(libs.junit)
 
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
-    // Lets the reminder worker be run on demand. Its real schedule is an evening delay, so
-    // without this the only way to see it work is to wait for one.
-    androidTestImplementation(libs.androidx.work.testing)
     // The screens themselves, opened on a device. Everything else here checks what the app
     // computes; this is the only thing that checks what somebody is actually shown.
     androidTestImplementation(platform(libs.androidx.compose.bom))

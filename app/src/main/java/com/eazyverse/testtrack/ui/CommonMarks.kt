@@ -1,8 +1,8 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,16 +14,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -174,47 +169,6 @@ fun Pill(
 }
 
 /**
- * A [Pill] for a row that is busy, saying which kind of busy it is.
- *
- * Where an action would sit, and shaped like the states beside it, so a list mid round reads as one
- * list rather than a column of buttons with holes punched in it. Sized the same as [Pill], for the
- * same reason.
- *
- * The word is the point. A bare spinner says something is happening and leaves which row is
- * capturing and which is uploading to be worked out from position, which is exactly the thing
- * somebody watching a round wants to know.
- */
-@Composable
-fun Working(text: String) {
-    Row(
-        Modifier
-            .clip(RoundedCornerShape(9.dp))
-            .background(Status.neutralSoft)
-            .padding(horizontal = 13.dp, vertical = 7.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        androidx.compose.material3.CircularProgressIndicator(
-            Modifier.size(14.dp),
-            strokeWidth = 1.5.dp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-/** A cooldown in whole hours, or in days once it is a day or more — nobody needs the minutes. */
-fun formatWait(ms: Long): String {
-    val hours = (ms / 3_600_000L).coerceAtLeast(1L)
-    return if (hours < 24) "${hours}h" else "${(hours + 23) / 24}d"
-}
-
-/**
  * Progress as a fixed number of boxes, one per thing to be done.
  *
  * The console's meter, and the same reasoning: five steps is a small enough number to be counted,
@@ -255,63 +209,6 @@ fun Meter(
     }
 }
 
-/**
- * [Meter]'s own reasoning, drawn as a ring instead of a row of boxes.
- *
- * Meant for a spot too small for a row to sit comfortably in — a hero number, the leading mark on
- * a row that already has a name and a chevron to fit beside it. Still one tick per thing to be
- * done and not a swept fraction, for the same reason [Meter] counts rather than fills: a handful
- * of apps reads as a handful of ticks, not sixty percent of a circle.
- */
-@Composable
-fun SegmentedRing(
-    done: Int,
-    total: Int,
-    modifier: Modifier = Modifier,
-    strokeWidth: Dp = 6.dp,
-    // A physical size rather than a fixed number of degrees. Degrees alone read fine on a large
-    // ring and vanish on a small one — the same angle sweeps far less actual arc length once the
-    // radius shrinks, which is what made a 44dp ring's gaps disappear into a solid-looking circle
-    // even though the math said they were there.
-    gap: Dp = 3.dp,
-    fillColor: Color = MaterialTheme.colorScheme.primary,
-    trackColor: Color = MaterialTheme.colorScheme.surfaceVariant,
-) {
-    if (total <= 0) return
-    val strokePx = with(LocalDensity.current) { strokeWidth.toPx() }
-    val gapPx = with(LocalDensity.current) { gap.toPx() }
-
-    Canvas(modifier) {
-        val radius = (size.minDimension - strokePx) / 2f
-        val topLeft = Offset((size.width - radius * 2) / 2f, (size.height - radius * 2) / 2f)
-        val arcSize = Size(radius * 2, radius * 2)
-        val anglePerSegment = 360f / total
-        // This ring's own radius decides how many degrees that physical gap needs, capped so a
-        // very large count can't demand a gap wider than the segment it is supposed to separate.
-        val gapDegrees =
-            Math
-                .toDegrees((gapPx / radius).toDouble())
-                .toFloat()
-                .coerceAtMost(anglePerSegment * 0.6f)
-        val sweep = anglePerSegment - gapDegrees
-        repeat(total) { index ->
-            drawArc(
-                color = if (index < done) fillColor else trackColor,
-                startAngle = -90f + index * anglePerSegment + gapDegrees / 2f,
-                sweepAngle = sweep,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                // Butt, not round — a round cap protrudes past its own path endpoint by about
-                // half the stroke width, which is what was quietly eating the gap above back
-                // down to nothing: two rounded ends meeting across a few dp of empty path left
-                // no empty pixels between them. Butt paints exactly the sweep it is given.
-                style = Stroke(width = strokePx, cap = StrokeCap.Butt),
-            )
-        }
-    }
-}
-
 /** A horizontal proportion bar. Iris, because progress is something you act on. */
 @Composable
 fun Meter(
@@ -335,5 +232,35 @@ fun Meter(
                     .background(MaterialTheme.colorScheme.primary),
             )
         }
+    }
+}
+
+/**
+ * A [TextButton] enforces Material's ~40dp minimum touch height no matter what contentPadding
+ * says, which is too tall for a row meant to hold five or six of these side by side. Built on a
+ * plain clickable [Box] instead — the same shape the [reportDetails]-reading "Reported" chip
+ * already used — so the padding below is the actual, final size.
+ */
+@Composable
+fun ActionChip(
+    text: String,
+    tone: Color,
+    background: Color,
+    onClick: () -> Unit,
+) {
+    Box(
+        Modifier
+            .clip(RoundedCornerShape(9.dp))
+            .background(background)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 13.dp, vertical = 7.dp),
+    ) {
+        Text(
+            text,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp),
+            fontWeight = FontWeight.SemiBold,
+            color = tone,
+            maxLines = 1,
+        )
     }
 }

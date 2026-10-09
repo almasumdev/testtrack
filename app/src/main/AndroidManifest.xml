@@ -16,11 +16,9 @@
       choice it sounds like: since Android 15, Enhanced Confirmation Mode greys out usage access
       for anything a browser installed, and usage access is what the proof is made of.
 
-      Every app in a cohort is a consumer app in closed testing, so every one has a launcher
-      entry and this query reaches all of them. One that does not is invisible here and reads as
-      not installed — but it was never testable anyway, because getLaunchIntentForPackage returns
-      null for it and a round cannot open what it cannot launch. Those are rejected at placement
-      rather than left to hold a slot.
+      Every app in a crew is a consumer app in closed testing, so every one has a launcher entry
+      and this query reaches all of them. One that does not reads as not installed, and could not
+      be opened from tonight's list anyway, since getLaunchIntentForPackage returns null for it.
     -->
     <queries>
         <intent>
@@ -41,55 +39,26 @@
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
 
-    <!-- MediaProjection only runs from a foreground service of this type since Android 14. -->
+    <!-- The review screenshot: MediaProjection only runs from a foreground service of this type. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!--
-      The same service stays foreground a little longer under this type once a round ends, only
-      long enough to see that round's captures actually reach Drive and Firestore before the
-      process loses the standing that was protecting them — see CaptureService.beginDrainingThenStop.
-    -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
 
     <!--
-      Keeps the screen on for a round's duration. A round switches between other apps on a timer
-      with nobody touching the screen in between, which is exactly what a normal screen timeout
-      does not expect — losing the display mid-round mid-visit corrupts both the screenshot and
-      the usage figure it is paired with. Held only while a round is actually running; see
-      CaptureService.acquireScreenWakeLock.
-    -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-    <!--
-      Returning to TestTrack after capturing someone else's app is a background activity launch,
-      which Android refuses outright (BAL_BLOCK). Holding this is the documented exemption.
-      Optional: without it capture still works and the tester switches back by hand.
+      The review's floating camera button, drawn over Play while the reviewer takes the one
+      screenshot that proves their review. See data/ReviewCaptureService.
     -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-    <!--
-      The Uninstall button beside an app that has been taken out of testing.
-
-      Granted at install and never prompted for, because it does not grant the power to remove
-      anything: it only buys the right to ask. The system still puts up its own confirmation and
-      the tester still has to agree to it, which is the whole point of sending them there rather
-      than doing it quietly.
-
-      Without it the request is not refused out loud. The system uninstaller starts, sees a caller
-      that never declared this, and finishes before it draws, so the button looks broken rather
-      than blocked.
-    -->
-    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
     <!--
-      Backup off on purpose. Everything the app keeps locally is either a cache of Firestore or a
-      flag about a grant, and Android restores SharedPreferences onto a fresh install while the
-      Firebase session and the usage-access appop do not come back with them. A restored "signed
-      in, set up" state over no session sends the app straight past sign-in into a string of
-      PERMISSION_DENIEDs. Nothing here is worth carrying across devices: sign in and it all
-      returns from the account.
+      Backup off on purpose. Everything the app keeps locally is either a cache of what the server
+      holds or a flag about a grant, and Android restores SharedPreferences onto a fresh install
+      while the session and the usage-access appop do not come back with them. A restored "signed
+      in" state over no session sends the app past sign-in into a string of refusals. Nothing here
+      is worth carrying across devices: sign in and it all returns from the account.
     -->
     <application
         android:name=".App"
@@ -125,10 +94,6 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name=".data.CaptureService"
-            android:exported="false"
-            android:foregroundServiceType="mediaProjection|dataSync" />
 
         <!-- The review's one screenshot: a floating camera button over Play, one frame on press. -->
         <service

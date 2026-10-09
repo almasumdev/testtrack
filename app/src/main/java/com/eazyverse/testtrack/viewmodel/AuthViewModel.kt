@@ -7,20 +7,14 @@ import androidx.compose.runtime.setValue
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.eazyverse.testtrack.data.AdminEvents
 import com.eazyverse.testtrack.data.AuthRepo
-import com.eazyverse.testtrack.data.Device
-import com.eazyverse.testtrack.data.Repo
 import com.eazyverse.testtrack.data.Session
-import com.eazyverse.testtrack.data.claimDevice
 import com.eazyverse.testtrack.data.friendly
-import com.eazyverse.testtrack.data.upsertUser
 import com.eazyverse.testtrack.domain.completeSignIn
 import com.eazyverse.testtrack.net.ApiAuth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Signing in, without a screen around it.
@@ -56,47 +50,18 @@ class AuthViewModel : ViewModel() {
         signInJob =
             viewModelScope.launch {
                 try {
-                    val account =
-                        completeSignIn(
-                            authenticate = {
-                                AuthRepo.signIn(activity).also {
-                                    if (AuthRepo.firebaseError != null) error("Sign-in could not be completed. Please try again.")
-                                }
-                            },
-                            establishSession = { ApiAuth.authenticate(activity.applicationContext) },
-                            publish = {
-                                Session.updateEmail(it.email)
-                                signedInAs = it.email
-                            },
-                        )
-
-                    // Everything that happened before this moment is history, not news. Without this
-                    // a returning tester is greeted by every placement decision ever made about them.
-                    AdminEvents.markCaughtUp(activity)
-
-                    // Bounded rather than unawaited. A Firestore write does not report done until
-                    // the server acknowledges it, so waiting without a limit is how this screen
-                    // hangs; but launching it and walking away is worse, because navigating clears
-                    // this ViewModel and cancels the scope, and the row quietly never gets written.
-                    // It is the tester's name in twelve other people's grids, so it is worth six
-                    // seconds and worth being sure about.
-                    viewModelScope.launch {
-                        AuthRepo.uid?.let { uid ->
-                            withTimeoutOrNull(6_000) {
-                                runCatching {
-                                    Repo.upsertUser(uid, account.email, account.name)
-                                }
+                    completeSignIn(
+                        authenticate = {
+                            AuthRepo.signIn(activity).also {
+                                if (AuthRepo.firebaseError != null) error("Sign-in could not be completed. Please try again.")
                             }
-
-                            // Alongside it, and just as quietly. Nothing on this screen depends on the
-                            // answer: it is a fact an admin reads later, not a gate anybody passes.
-                            Device.fingerprint(activity)?.let { phone ->
-                                withTimeoutOrNull(6_000) {
-                                    runCatching { Repo.claimDevice(uid, phone) }
-                                }
-                            }
-                        }
-                    }
+                        },
+                        establishSession = { ApiAuth.authenticate(activity.applicationContext) },
+                        publish = {
+                            Session.updateEmail(it.email)
+                            signedInAs = it.email
+                        },
+                    )
                 } catch (_: GetCredentialCancellationException) {
                     // Somebody shut the account picker. That is an answer, not a fault, and it was
                     // being reported back to them as "you closed the sign-in", which is the app

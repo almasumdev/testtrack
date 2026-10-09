@@ -29,7 +29,6 @@ import kotlinx.coroutines.launch
  * body     supporting line.
  * kind     what it is about, from our server: "crew" opens the Crew tab.
  * ref      the id of the thing, so two notes about one crew replace each other.
- * groupId  optional, from the old service. Tapping opens that group instead of home.
  * ```
  */
 class PushService : FirebaseMessagingService() {
@@ -54,9 +53,12 @@ class PushService : FirebaseMessagingService() {
         val title = data["title"] ?: message.notification?.title ?: return
         val body = data["body"] ?: message.notification?.body.orEmpty()
 
-        // Nothing to show and nowhere to send them: a tester who has signed out has no groups, and
-        // a notification about someone else's cohort would be worse than silence.
+        // Nothing to show and nowhere to send them: a tester who has signed out has no crews.
         if (AuthRepo.uid == null) return
+
+        // Ours carry a kind. Anything without one is the old Firestore-era version's sender, which
+        // may still be running for people who have not updated, about groups that no longer exist.
+        if (data["kind"].isNullOrEmpty()) return
 
         PushRepo.ensureChannel(this)
         if (!PushRepo.granted(this)) return
@@ -70,12 +72,11 @@ class PushService : FirebaseMessagingService() {
         val intent =
             Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                data["groupId"]?.let { putExtra(MainActivity.EXTRA_GROUP_ID, it) }
                 if (data["kind"] == "crew") putExtra(MainActivity.EXTRA_OPEN_CREW, true)
             }
         // One slot per thing it is about, so a note about one crew replaces the last one about
         // it rather than stacking, and does not overwrite one about another.
-        val slot = data["groupId"] ?: listOfNotNull(data["kind"], data["ref"]).joinToString(":")
+        val slot = listOfNotNull(data["kind"], data["ref"]).joinToString(":")
         val pending =
             PendingIntent.getActivity(
                 this,

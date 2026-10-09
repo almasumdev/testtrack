@@ -38,17 +38,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.eazyverse.testtrack.data.AppUpdateService
 import com.eazyverse.testtrack.data.AuthRepo
-import com.eazyverse.testtrack.data.CaptureService
 import com.eazyverse.testtrack.data.FeedbackWatch
 import com.eazyverse.testtrack.data.PushRepo
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.data.UpdateTier
-import com.eazyverse.testtrack.data.leftRound
 import com.eazyverse.testtrack.domain.LaunchDestination
 import com.eazyverse.testtrack.domain.launchDestination
 import com.eazyverse.testtrack.net.ApiPost
@@ -67,7 +64,6 @@ object Routes {
 
     /** Not one screen: the five tabbed ones, held by [com.eazyverse.testtrack.ui.MainShell]. */
     const val HOME = "home"
-    const val SUBMIT = "submit"
 
     /** Asking the circle to look at your app. A page, because finding the app is its own step. */
     const val ASK = "ask"
@@ -79,39 +75,9 @@ object Routes {
     const val CHECK = "check/{id}"
 
     fun check(id: String) = "check/${Uri.encode(id)}"
-
-    // The name is carried along, not looked up: whoever is navigating here almost always already
-    // has it on screen (a row in Home, a row in Group), and showing that immediately in the app
-    // bar beats leaving it blank for the gap before this screen's own load answers the same
-    // question. Optional — the notification-tap path has no row to read a name from, and falls
-    // back to the ordinary blank-then-populate the screen already does without one.
-    // feedbackFor is the same idea again: a notification asking for feedback about one specific
-    // app carries that app's id along, so the group screen underneath can open straight to its
-    // feedback prompt instead of leaving the tester to find the right row themselves.
-    const val GROUP = "group/{groupId}?name={name}&feedbackFor={feedbackFor}"
-
-    fun group(
-        groupId: String,
-        name: String = "",
-        feedbackFor: String = "",
-    ) = "group/$groupId?name=${Uri.encode(name)}&feedbackFor=${Uri.encode(feedbackFor)}"
-
-    /** Your own app's 14-day picture. */
-    const val DASHBOARD = "dashboard/{appId}?name={name}"
-
-    fun dashboard(
-        appId: String,
-        name: String = "",
-    ) = "dashboard/$appId?name=${Uri.encode(name)}"
 }
 
 class MainActivity : ComponentActivity() {
-    /** Set on the launch intent when a reminder is tapped. */
-    private val openGroup = mutableStateOf<String?>(null)
-
-    /** Set alongside [openGroup] when the tap was specifically an ask for feedback about one app. */
-    private val openFeedbackFor = mutableStateOf<String?>(null)
-
     /** Set when a crew notification was tapped, until the shell has switched to the Crew tab. */
     private val openCrew = mutableStateOf(false)
 
@@ -141,8 +107,6 @@ class MainActivity : ComponentActivity() {
         // The last update decision proven online, until Play answers in onStart. Here rather than in
         // App because it reads Session, which is only loaded now.
         AppUpdateService.applyCachedDecision()
-        openGroup.value = intent?.getStringExtra(EXTRA_GROUP_ID)
-        openFeedbackFor.value = intent?.getStringExtra(EXTRA_FEEDBACK_APP_ID)
         openCrew.value = intent?.getBooleanExtra(EXTRA_OPEN_CREW, false) == true
         setContent {
             TestTrackTheme {
@@ -152,7 +116,7 @@ class MainActivity : ComponentActivity() {
                     // tab shell takes only the top one, because its ground and its floating dock run
                     // to the bottom edge under the system bar.
                     Box(Modifier.fillMaxSize().exchangeBackground()) {
-                        if (Config.isConfigured) AppNav(openGroup, openFeedbackFor, openCrew) else Inset { NotConfigured() }
+                        if (Config.isConfigured) AppNav(openCrew) else Inset { NotConfigured() }
 
                         // The testers group, checked in front of the person as soon as they sign
                         // in, and quietly on every launch after. See [MembershipViewModel].
@@ -167,6 +131,10 @@ class MainActivity : ComponentActivity() {
                             wasSignedIn = Session.signedIn
                         }
                         JoinGroupDialog(membership)
+
+                        // Once per install: stop hearing from the old version's push. On its own, so
+                        // a slow first Firestore connection never holds up anything above.
+                        LaunchedEffect(Session.signedIn) { PushRepo.leaveOldSystem(this@MainActivity, AuthRepo.uid) }
 
                         /*
                          * Over everything, including the nav host.
@@ -196,23 +164,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    /**
-     * Coming back here in the middle of a round ends the round.
-     *
-     * The service opens the next app on a timer and does not care where the tester is, so without
-     * this a round carried on after somebody had walked away from it: they would arrive back at
-     * TestTrack, get a few seconds, and be taken into the next app again.
-     *
-     * Here rather than on a screen, so it holds however they got back — recents, the launcher, the
-     * notification, the back gesture out of the app under test. A round that ended on its own has
-     * already cleared itself before it brings the app forward, so this cannot fire on the normal
-     * path.
-     */
-    override fun onResume() {
-        super.onResume()
-        CaptureService.leftRound(this)
     }
 
     override fun onStart() {
@@ -248,16 +199,12 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        intent.getStringExtra(EXTRA_GROUP_ID)?.let { openGroup.value = it }
-        intent.getStringExtra(EXTRA_FEEDBACK_APP_ID)?.let { openFeedbackFor.value = it }
         if (intent.getBooleanExtra(EXTRA_OPEN_CREW, false)) openCrew.value = true
     }
 
     companion object {
         /** A crew notification was tapped: open the Crew tab. */
         const val EXTRA_OPEN_CREW = "openCrew"
-        const val EXTRA_GROUP_ID = "groupId"
-        const val EXTRA_FEEDBACK_APP_ID = "feedbackAppId"
     }
 }
 
@@ -285,11 +232,7 @@ private fun NotConfigured() {
 }
 
 @Composable
-fun AppNav(
-    openGroup: MutableState<String?> = remember { mutableStateOf(null) },
-    openFeedbackFor: MutableState<String?> = remember { mutableStateOf(null) },
-    openCrew: MutableState<Boolean> = remember { mutableStateOf(false) },
-) {
+fun AppNav(openCrew: MutableState<Boolean> = remember { mutableStateOf(false) }) {
     val nav = rememberNavController()
     val scope = rememberCoroutineScope()
 
@@ -312,21 +255,6 @@ fun AppNav(
             }
         }
 
-    // Keep the tapped reminder until onboarding reaches home. A page change during
-    // onboarding must not consume it or navigate past the introduction.
-    val currentEntry by nav.currentBackStackEntryAsState()
-    val route = currentEntry?.destination?.route
-    val pending = openGroup.value
-    LaunchedEffect(pending, route) {
-        if (pending != null && route != null && route != Routes.ONBOARDING) {
-            if (route == Routes.HOME) {
-                nav.push(Routes.group(pending, feedbackFor = openFeedbackFor.value.orEmpty()))
-            }
-            openGroup.value = null
-            openFeedbackFor.value = null
-        }
-    }
-
     NavHost(navController = nav, startDestination = start) {
         composable(Routes.ONBOARDING) {
             Inset {
@@ -339,8 +267,6 @@ fun AppNav(
 
         composable(Routes.HOME) {
             MainShell(
-                onOpenGroup = { groupId, name -> nav.push(Routes.group(groupId, name)) },
-                onSubmitApp = { nav.push(Routes.SUBMIT) },
                 onAskForFeedback = { nav.push(Routes.ASK) },
                 onReview = { nav.push(Routes.review(it)) },
                 onCheck = { nav.push(Routes.check(it)) },
@@ -392,61 +318,6 @@ fun AppNav(
             Inset {
                 AskScreen(
                     onDone = { nav.popBackStack() },
-                    onBack = { nav.popBackStack() },
-                )
-            }
-        }
-
-        composable(Routes.SUBMIT) {
-            Inset {
-                SubmitScreen(
-                    onDone = { nav.popBackStack() },
-                    onBack = { nav.popBackStack() },
-                )
-            }
-        }
-
-        composable(
-            Routes.GROUP,
-            arguments =
-                listOf(
-                    navArgument("groupId") { type = NavType.StringType },
-                    navArgument("name") {
-                        type = NavType.StringType
-                        defaultValue = ""
-                    },
-                    navArgument("feedbackFor") {
-                        type = NavType.StringType
-                        defaultValue = ""
-                    },
-                ),
-        ) { entry ->
-            Inset {
-                GroupScreen(
-                    groupId = entry.arguments?.getString("groupId").orEmpty(),
-                    groupName = entry.arguments?.getString("name").orEmpty(),
-                    feedbackForAppId = entry.arguments?.getString("feedbackFor").orEmpty(),
-                    onOpenDashboard = { appId, name -> nav.push(Routes.dashboard(appId, name)) },
-                    onBack = { nav.popBackStack() },
-                )
-            }
-        }
-
-        composable(
-            Routes.DASHBOARD,
-            arguments =
-                listOf(
-                    navArgument("appId") { type = NavType.StringType },
-                    navArgument("name") {
-                        type = NavType.StringType
-                        defaultValue = ""
-                    },
-                ),
-        ) { entry ->
-            Inset {
-                DashboardScreen(
-                    appId = entry.arguments?.getString("appId").orEmpty(),
-                    appName = entry.arguments?.getString("name").orEmpty(),
                     onBack = { nav.popBackStack() },
                 )
             }
