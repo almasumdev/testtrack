@@ -86,6 +86,8 @@ internal fun RecordGrid(
     opens: Int,
     reviews: Int,
     crewsRunning: Int,
+    /** Crews that have filled: a crew still filling owes nothing a night yet. */
+    crewsFilled: Int = crewsRunning,
     onOpenRanks: () -> Unit = {},
 ) {
     val t = Tt.colors
@@ -103,15 +105,16 @@ internal fun RecordGrid(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatCard(Lucide.Smartphone, "$opens", if (opens == 1) "App opened" else "Apps opened")
-            StatCard(Lucide.MessageSquareText, "$reviews", if (reviews == 1) "Review given" else "Reviews given")
+            StatCard(Lucide.MessageSquareText, "$reviews", if (reviews == 1) "Review accepted" else "Reviews accepted")
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatCard(Lucide.Users, "$crewsRunning", if (crewsRunning == 1) "Crew going on" else "Crews going on")
-            StatCard(Lucide.Moon, "${CrewRules.nightly(crewsRunning)}", "Apps a night")
+            StatCard(Lucide.Moon, "${CrewRules.nightly(crewsFilled)}", "Apps a night")
         }
         if (!ranked) {
             Text(
-                "Open somebody's app on a testing night and this starts counting.",
+                "Open the apps in your crew, or get a review accepted in Circle, and this starts " +
+                    "counting.",
                 Modifier.padding(top = 4.dp, start = 2.dp),
                 style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.5.sp),
                 color = t.text3,

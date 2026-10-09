@@ -58,6 +58,7 @@ class StandingScreensTest {
         place: Int = 0,
         tix: Int = 0,
         running: Int = 0,
+        filled: Int = running,
         finished: Int = 0,
         name: String = "Rafiul",
     ) = ApiProfile(
@@ -71,6 +72,7 @@ class StandingScreensTest {
         points = opens + reviews * 5,
         place = place,
         crewsRunning = running,
+        crewsFilled = filled,
         crewsFinished = finished,
         joinedAt = "2026-09-01T00:00:00+00:00",
     )
@@ -291,7 +293,7 @@ class StandingScreensTest {
         compose.setContent { TestTrackTheme { MeBody(profile = profile()) } }
 
         compose.onNodeWithText("Your record").assertIsDisplayed()
-        compose.onNodeWithText("Open somebody's app", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Open the apps in your crew", substring = true).assertIsDisplayed()
         assertTrue(
             "An unranked account must not be given a place",
             compose
@@ -325,6 +327,12 @@ class StandingScreensTest {
         compose.setContent { TestTrackTheme { MeBody(profile = profile(running = 2)) } }
         compose.onNodeWithText("${CrewRules.nightly(2)}").assertIsDisplayed()
         compose.onNodeWithText("Apps a night").assertIsDisplayed()
+    }
+
+    @Test
+    fun a_crew_still_filling_costs_nothing_a_night_yet() {
+        compose.setContent { TestTrackTheme { MeBody(profile = profile(running = 2, filled = 1)) } }
+        compose.onNodeWithText("${CrewRules.nightly(1)}").assertIsDisplayed()
     }
 
     @Test

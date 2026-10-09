@@ -436,6 +436,8 @@ data class ApiProfile(
     /** Zero before this account has done anything, since nobody is ranked before they start. */
     val place: Int,
     @SerialName("crews_running") val crewsRunning: Int,
+    /** Of those, the ones that have filled, which is what the nightly work is counted from. */
+    @SerialName("crews_filled") val crewsFilled: Int = 0,
     @SerialName("crews_finished") val crewsFinished: Int,
     @SerialName("joined_at") val joinedAt: String,
 )

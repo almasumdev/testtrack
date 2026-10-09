@@ -56,7 +56,6 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.ShieldCheck
 import com.composables.icons.lucide.Trash2
-import com.composables.icons.lucide.UserRound
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.Config
@@ -110,6 +109,7 @@ fun MeScreen(
         onSignOut = onSignOut,
         onSignIn = onSignIn,
         onOpenRanks = onOpenRanks,
+        onRetry = { vm.load(context) },
         drive = if (drive.busy) null else drive.connected,
         group = membership.member,
         // Joined, it opens the group itself; otherwise the check, and the way to join.
@@ -150,6 +150,7 @@ fun MeBody(
     onDrive: () -> Unit = {},
     group: Boolean = false,
     onGroup: () -> Unit = {},
+    onRetry: () -> Unit = {},
 ) {
     if (signedOut) {
         Gated(
@@ -163,15 +164,14 @@ fun MeBody(
         return
     }
     if (offline) {
-        EmptyState(
-            icon = Lucide.UserRound,
-            title = "Your record did not load",
-            subtitle = "Check your connection and try again.",
-        )
+        // The robot, like every other tab that could not load.
+        RobotOffline("Your record did not load", onRetry = onRetry)
         return
     }
     if (profile == null) {
-        Blank(if (loading) "Getting your record." else "Nothing to show yet.")
+        Box(Modifier.fillMaxWidth().padding(top = 48.dp), contentAlignment = Alignment.Center) {
+            RobotLoader(label = "Getting your record")
+        }
         return
     }
 
@@ -188,6 +188,7 @@ fun MeBody(
                 opens = profile.opens,
                 reviews = profile.reviews,
                 crewsRunning = profile.crewsRunning,
+                crewsFilled = profile.crewsFilled,
                 onOpenRanks = onOpenRanks,
             )
         }
