@@ -278,8 +278,7 @@ fun FeedRequestCard(
                 )
             }
             Spacer(Modifier.width(8.dp))
-            // Live on Play means a public review, which is a different job from writing notes on
-            // something still in closed testing, so the card says which before anybody starts.
+            // This changes installation eligibility. Both kinds receive private feedback.
             Pill(
                 if (post.isLive) "On Play" else "Closed test",
                 MaterialTheme.colorScheme.onSurfaceVariant,

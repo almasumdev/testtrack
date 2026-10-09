@@ -37,6 +37,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -92,6 +93,38 @@ fun TopHud(
             openCrew != null && openSeats > 0 -> "$openTaken of $openSeats seats taken"
             else -> ""
         }
+    if (LocalDensity.current.fontScale > 1.2f) {
+        Column(modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LevelRobotBadge(visibleLevel, intoLevel, forNext, onSignIn = onSignIn.takeIf { !signedIn })
+                Spacer(Modifier.width(11.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        title,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                    if (subtitle.isNotEmpty()) {
+                        Text(
+                            subtitle,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+            Box(Modifier.align(Alignment.End).padding(top = 4.dp)) {
+                if (visibleLevel != null) {
+                    TixChip(tix)
+                } else if (!signedIn) {
+                    SignInChip(onSignIn)
+                }
+            }
+        }
+        return
+    }
     Row(
         modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 10.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,

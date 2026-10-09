@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -60,7 +61,7 @@ fun ReviewGuideDialog(
     onDismiss: () -> Unit,
 ) {
     Ask(
-        title = "How to leave your review",
+        title = "Capture proof from the app",
         confirm = "Got it",
         dismiss = null,
         onConfirm = onOk,
@@ -68,8 +69,8 @@ fun ReviewGuideDialog(
     ) {
         DialogSteps(
             listOf(
-                "Play opens on the app's page.",
-                if (live) "Rate it and write your review." else "Tap “Send feedback” and write it.",
+                "The app you tested opens.",
+                "Choose a screen that supports your private feedback.",
                 "Tap the blue camera button.",
                 "You come straight back with the screenshot.",
             ).map { AnnotatedString(it) },
@@ -88,8 +89,8 @@ fun OverlayPermissionDialog(
     Ask(
         title = "Allow the camera button",
         body =
-            "The button floats over Play, so TestTrack needs “Display over other apps”. Switch it " +
-                "on for TestTrack, then come back and tap Open Play again.",
+            "The camera button floats over the app you tested. Allow “Display over other " +
+                "apps” for TestTrack, then return and tap Capture app.",
         confirm = "Open settings",
         onConfirm = onOpen,
         onDismiss = onDismiss,
@@ -110,6 +111,7 @@ fun ProofArea(
     onNote: (String) -> Unit,
     onCapture: () -> Unit,
     onGallery: () -> Unit,
+    onInspect: (Uri) -> Unit = {},
 ) {
     val t = Tt.colors
     val shape = RoundedCornerShape(CardRadius)
@@ -123,7 +125,7 @@ fun ProofArea(
                 .padding(10.dp),
         ) {
             Crossfade(shown, label = "proof") { picture ->
-                if (picture == null) EmptyShot() else Shot(picture)
+                if (picture == null) EmptyShot() else Shot(picture) { onInspect(picture) }
             }
             Spacer(Modifier.width(12.dp))
             NoteField(note, onNote, Modifier.weight(1f).height(THUMB_HEIGHT))
@@ -132,17 +134,36 @@ fun ProofArea(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ProofAction(
                 Lucide.Camera,
-                if (shown == null) "Capture on Play" else "Capture again",
+                if (shown == null) "Capture app" else "Capture again",
                 onCapture,
                 Modifier.weight(1f),
             )
             ProofAction(Lucide.Image, "Gallery", onGallery, Modifier.weight(1f))
         }
+        if (shown != null) {
+            Text(
+                "Inspect and hide personal details",
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onInspect(shown) }
+                    .padding(vertical = 12.dp),
+                color = t.accentInk,
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
+        Text(
+            "Saved in your Drive. Anyone with the link can view it. The developer and authorized dispute jurors receive the link.",
+            style = MaterialTheme.typography.bodySmall,
+            color = t.text2,
+        )
     }
 }
 
 @Composable
-private fun Shot(picture: Uri) {
+private fun Shot(
+    picture: Uri,
+    onClick: () -> Unit,
+) {
     val t = Tt.colors
     AsyncImage(
         model = picture,
@@ -151,6 +172,7 @@ private fun Shot(picture: Uri) {
             Modifier
                 .size(width = THUMB_WIDTH, height = THUMB_HEIGHT)
                 .clip(ThumbShape)
+                .clickable(onClick = onClick)
                 .border(1.dp, t.glassBorder, ThumbShape),
         contentScale = ContentScale.Crop,
     )
@@ -202,7 +224,7 @@ private fun NoteField(
         cursorBrush = SolidColor(t.accent),
         decorationBox = { field ->
             Box {
-                if (note.isEmpty()) Text("Add a note for the developer (optional)", style = style.copy(color = t.text3))
+                if (note.isEmpty()) Text("Your private feedback (required)", style = style.copy(color = t.text3))
                 field()
             }
         },
@@ -220,7 +242,7 @@ private fun ProofAction(
     val t = Tt.colors
     Row(
         modifier
-            .height(44.dp)
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(percent = 50))
             .background(t.glass2)
             .clickable(onClick = onClick)
@@ -275,7 +297,7 @@ fun DriveConnectCard(
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                "Your screenshot is saved to your Drive and shared with the owner by link.",
+                "Saved in your Drive. Anyone with the link can view it, including the developer and authorized dispute jurors.",
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
                 color = t.text2,
             )

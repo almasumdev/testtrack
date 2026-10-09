@@ -5,7 +5,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -38,7 +37,8 @@ object Api {
         OkHttpClient
             .Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .callTimeout(90, TimeUnit.SECONDS)
             .build()
 
     /**
@@ -96,7 +96,21 @@ object Api {
         return tokens
     }
 
-    fun signOut() = ApiSession.clear()
+    fun signOut() {
+        ApiSession.queueRevocation()
+        ApiSession.clear()
+        Live.reset()
+    }
+
+    internal suspend fun revoke(refresh: String) {
+        sendText(
+            Request
+                .Builder()
+                .url(url("/auth/logout"))
+                .post(json.encodeToString(RefreshIn(refresh)).toRequestBody(JSON)),
+            authed = false,
+        )
+    }
 
     // ---------------------------------------------------------------- me
 
@@ -168,7 +182,8 @@ object Api {
         reviewId: String,
         proofRef: String = "",
         written: String = "",
-    ): ApiReview = post("/reviews/$reviewId/submit", SubmitIn(proofRef, written))
+        driveToken: String = "",
+    ): ApiReview = post("/reviews/$reviewId/submit", SubmitIn(proofRef, written, driveToken))
 
     suspend fun abandon(reviewId: String): ApiReview = post("/reviews/$reviewId/abandon", Empty())
 
@@ -270,31 +285,6 @@ object Api {
 
     /** Where a piece of proof lives. Needs the token, so it is fetched, never linked. */
     fun proofUrl(ref: String): String = url("/uploads/$ref")
-
-    // ---------------------------------------------------------------- files
-
-    /**
-     * Send a screenshot, and get back the reference a review is submitted with.
-     *
-     * Multipart rather than JSON: the bytes are the payload, and base64 in a body would be a
-     * third larger on the wire for nothing. The filename is deliberately fixed — the server names
-     * the file by its own id, and whatever the picker called it is not ours to pass on.
-     */
-    suspend fun upload(
-        bytes: ByteArray,
-        mediaType: String,
-    ): ApiUpload {
-        val body =
-            MultipartBody
-                .Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart(
-                    "file",
-                    "proof",
-                    bytes.toRequestBody(mediaType.toMediaType(), 0, bytes.size),
-                ).build()
-        return send(Request.Builder().url(url("/uploads")).post(body))
-    }
 
     // ---------------------------------------------------------------- kept on the phone
 

@@ -1,13 +1,13 @@
 # Data safety evidence
 
-Audited against the app and backend checkout on 2026-10-03. Declarations cover
+Evidence refreshed for the local app/backend audit fixes on 2026-10-10. Declarations cover
 release builds, including the old Firestore screens and services that still
 ship. The CSV is generated from `mkit.toml`; nothing has been uploaded.
 
 | Declared type | Evidence and purpose |
 | --- | --- |
 | Name, email and user IDs | Google/Firebase sign-in, API accounts, public names and legacy cohort identity/member rows. Account management and functionality; account/device comparisons prevent duplicate testing. |
-| Photos | Optional chosen profile/feedback images through `Api.upload`, and legacy `CaptureService` proofs through Drive. Owners and eligible jurors can read feedback evidence. |
+| Photos | Optional profile/feedback images upload directly to the user's Drive. The backend verifies transient-grant metadata and stores references only. Legacy Drive and historical backend images remain readable. Owners and eligible jurors can read feedback evidence; new Drive images are explicitly shared with anyone who has the link. |
 | Other user-generated content | Written feedback, rejection reasons, crew entry notes and disputes, displayed to the people handling that work. |
 | Installed apps | Named package install/source/version checks through `InstalledApps`, review milestones and legacy version/proof records. The whole installed-package inventory is not uploaded. |
 | In-app search history | `AskViewModel` sends lookup queries to `/apps/lookup`; the lookup service does not persist them. Optional, ephemeral collection. |
@@ -16,9 +16,10 @@ ship. The CSV is generated from `mkit.toml`; nothing has been uploaded.
 | Approximate location | Firebase Analytics derives coarse geography from masked IP addresses. The app has no location permission and does not read GPS. |
 | Crash logs and diagnostics | Release builds enable Crashlytics and Analytics; `Telemetry` records caught failures and counts. |
 
-Names, addresses, IDs, photos, testing signals and written content are declared
-as shared for app functionality because the legacy screens and current feedback
-features expose them to other users. Google excludes some expected user-initiated
+The existing declarations include sharing of identity, photos, testing signals and written
+content. Retained private account email fields now have owner/admin Firestore access;
+current account identity uses the backend. Reconcile the coordinated release and any remaining
+legacy clients before narrowing a published declaration. Google excludes some expected user-initiated
 transfers from mandatory sharing disclosure; the mixed legacy/backend flows do
 not provide one consent boundary covering every transfer, so these transfers
 are included. Firebase and hosting are service providers. Transfers to them
@@ -31,8 +32,9 @@ optional because release collection has no in-app opt-out control.
 
 The deletion URLs point at the existing request forms. `deletion = "yes"`
 means users can request deletion, not that an in-app deletion endpoint exists.
-The privacy page still needs to cover backend records/uploads, and the missing
-in-app account deletion flow is a separate release issue.
+The privacy page must cover backend records, historical uploads and publicly linked Drive images.
+The app describes a manual request rather than instant deletion; the operator procedure in the
+backend operations guide still requires a cross-store rehearsal and retention-policy review.
 
 References:
 

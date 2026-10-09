@@ -67,16 +67,7 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
 /**
- * What this account is, and what it has done.
- *
- * The old version of this screen read Firestore and talked about cohorts an admin filled. It has
- * been replaced rather than ported, because the thing it described no longer exists: crews form
- * themselves now, and what an account is worth is counted from work rather than from membership.
- *
- * Who you are, what you have done, and the account itself, in the order somebody asks. It was three
- * cards of the same size, which gave the name, the record and the crews equal weight and put the
- * balance on screen twice, once here and once in the header above it. Now the person is the top of
- * the page, the figures share one card, and everything you can do to the account is one list.
+ * Current account identity, activity figures and settings, backed by the API.
  */
 @Composable
 fun MeScreen(
@@ -90,7 +81,7 @@ fun MeScreen(
     LaunchedEffect(Unit) { vm.load(context) }
     WhileShown(onShow = { vm.startLive(context) }, onHide = vm::stopLive)
 
-    // Whether review and test proof can go to Drive, asked of Google each time the page opens.
+    // Whether feedback proof/profile images can go to Drive, checked when the page opens.
     val activity = context.findActivity()
     val drive: TestingDriveViewModel = viewModel()
     LaunchedEffect(vm.signedOut) { if (!vm.signedOut) drive.check(activity) }
@@ -131,7 +122,7 @@ fun MeScreen(
             name = vm.profile?.displayName.orEmpty(),
             photo = vm.profile?.photoUrl.orEmpty(),
             busy = vm.busy,
-            onSave = { name, photo -> vm.save(context, name, photo) { editing = false } },
+            onSave = { name, photo -> vm.save(activity, name, photo) { editing = false } },
             onDismiss = { editing = false },
         )
     }
@@ -156,7 +147,7 @@ fun MeBody(
 ) {
     if (signedOut) {
         Gated(
-            heading = "Level one, waiting",
+            heading = "Sign in to see your profile",
             body =
                 "Every night you open somebody's app moves this ring. Sign in and it starts " +
                     "counting.",
@@ -376,7 +367,13 @@ private fun Account(
                     links.openUri("$SITE/privacy")
                 }
             4 ->
-                TileRow(Lucide.Trash2, "Delete account", place, subtitle = "And everything in it", trailing = out) {
+                TileRow(
+                    Lucide.Trash2,
+                    "Request account deletion",
+                    place,
+                    subtitle = "Review processing and retention details",
+                    trailing = out,
+                ) {
                     links.openUri("$SITE/delete-account")
                 }
             else -> TileRow(Lucide.LogOut, "Sign out", place, danger = true, onClick = onSignOut)
@@ -434,7 +431,9 @@ fun MeEditDialog(
     val choose = { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
     Ask(
         title = "Edit profile",
-        body = "Your name and picture are what people in your crews see.",
+        body =
+            "Your name and picture are visible to the community. New photos are saved in " +
+                "your Drive; anyone with the link can view them.",
         confirm = if (busy) "Saving" else "Save",
         confirmEnabled = typed.trim().isNotBlank() && !busy,
         onConfirm = { onSave(typed, picked) },

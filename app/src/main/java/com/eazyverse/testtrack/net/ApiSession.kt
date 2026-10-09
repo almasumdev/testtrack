@@ -27,6 +27,8 @@ object ApiSession {
     private const val ACCESS = "access"
     private const val REFRESH = "refresh"
     private const val HEADER = "header"
+    private const val REVOCATIONS = "pending_revocations"
+    private var app: Context? = null
     private var header: HeaderSnapshot? = null
 
     @Volatile private var prefs: SharedPreferences? = null
@@ -46,11 +48,13 @@ object ApiSession {
         if (prefs != null) return
         val store = context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
         prefs = store
+        app = context.applicationContext
         ApiCache.load(context)
         cachedAccess = store.getString(ACCESS, null)
         cachedRefresh = store.getString(REFRESH, null)
         header = store.getString(HEADER, null)?.let { runCatching { Json.decodeFromString<HeaderSnapshot>(it) }.getOrNull() }
         ready.value = cachedAccess != null
+        if (pendingRevocations().isNotEmpty()) SessionLogout.enqueue(context)
     }
 
     /** Keep a freshly minted pair. Safe to call from anywhere once [load] has run. */
@@ -90,7 +94,11 @@ object ApiSession {
         cachedAccess = null
         cachedRefresh = null
         header = null
-        prefs?.edit { clear() }
+        prefs?.edit {
+            remove(ACCESS)
+            remove(REFRESH)
+            remove(HEADER)
+        }
         ApiCache.clear()
         ready.value = false
     }
@@ -98,6 +106,22 @@ object ApiSession {
     val access: String? get() = cachedAccess
     val refresh: String? get() = cachedRefresh
     val signedIn: Boolean get() = cachedAccess != null
+
+    @Synchronized
+    fun queueRevocation() {
+        val token = cachedRefresh ?: return
+        val pending = pendingRevocations() + token
+        prefs?.edit(commit = true) { putStringSet(REVOCATIONS, pending) }
+        app?.let(SessionLogout::enqueue)
+    }
+
+    @Synchronized
+    fun pendingRevocations(): Set<String> = prefs?.getStringSet(REVOCATIONS, emptySet())?.toSet().orEmpty()
+
+    @Synchronized
+    fun revoked(token: String) {
+        prefs?.edit(commit = true) { putStringSet(REVOCATIONS, pendingRevocations() - token) }
+    }
 }
 
 /** Display-only cache. Posting and spending still use server-authoritative balances. */

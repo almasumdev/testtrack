@@ -56,7 +56,7 @@ enum class CheckKind(
     val label: String,
     val icon: ImageVector,
 ) {
-    PLAY("Play review", Lucide.Play),
+    PLAY("Live app", Lucide.Play),
     CLOSED("Closed test", Lucide.FlaskConical),
     DISPUTED("Disputed", Lucide.Scale),
 }

@@ -43,7 +43,7 @@ fun WaitingBody(
     // the problem, and a reader without an account was never told anything at all.
     if (signedOut) {
         Gated(
-            heading = "Nothing addressed to you",
+            heading = "Sign in to see your feedback",
             body = "Reviews of your apps, and cases you are asked to decide, arrive here.",
             onSignIn = onSignIn,
             mark = { NoteMark() },
@@ -92,7 +92,7 @@ fun WaitingBody(
                         review.appName,
                         listOf(
                             review.reviewerName.ifBlank { "A reviewer" },
-                            if (review.isLive) "Play review" else "Closed test",
+                            if (review.isLive) "Live app" else "Closed test",
                         ).joinToString(" · "),
                         onClick = { onOpenReview(review) },
                     ) {

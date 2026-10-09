@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -67,11 +68,7 @@ fun Gated(
     modifier: Modifier = Modifier,
     mark: @Composable () -> Unit,
 ) {
-    Column(
-        modifier.fillMaxSize().padding(horizontal = 30.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
+    CenteredState(modifier) {
         mark()
         Spacer(Modifier.height(26.dp))
         Text(
@@ -101,10 +98,10 @@ fun Gated(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
-            modifier = Modifier.height(44.dp),
+            modifier = Modifier.heightIn(min = 48.dp),
         ) {
             Text(
-                "Get started",
+                "Sign in",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
             )

@@ -1,20 +1,16 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -43,14 +39,7 @@ fun RobotState(
     val t = Tt.colors
     // Fills the page and sits in the middle of what is visible: between the tabs and the dock that
     // floats over the bottom of the page.
-    Column(
-        modifier
-            .fillMaxSize()
-            .padding(bottom = dockRoom())
-            .padding(horizontal = Gutter, vertical = 28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
+    CenteredState(modifier) {
         RobotHolding(prop, size = 112.dp, description = title)
         Spacer(Modifier.height(14.dp))
         Text(
@@ -75,7 +64,7 @@ fun RobotState(
                     shape = RoundedCornerShape(percent = 50),
                     border = BorderStroke(1.5.dp, t.accentInk),
                     contentPadding = PaddingValues(horizontal = 22.dp),
-                    modifier = Modifier.height(44.dp),
+                    modifier = Modifier.heightIn(min = 48.dp),
                 ) {
                     Text(action, fontWeight = FontWeight.Bold, color = t.accentInk, fontSize = 14.5.sp)
                 }

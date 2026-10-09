@@ -179,6 +179,8 @@ class AskViewModel : ViewModel() {
             }
     }
 
+    private var pendingRequest: PostIn? = null
+
     fun post(onDone: () -> Unit) {
         val app = found
         if (app == null || !canPost) return
@@ -191,6 +193,15 @@ class AskViewModel : ViewModel() {
                 reviewsBought = reviewCount,
                 isLive = isLive,
             )
+        val operation =
+            pendingRequest?.takeIf { it.copy(requestId = null) == request }
+                ?: request
+                    .copy(
+                        requestId =
+                            java.util.UUID
+                                .randomUUID()
+                                .toString(),
+                    ).also { pendingRequest = it }
         posting = true
         failure = null
         viewModelScope.launch {
@@ -208,30 +219,32 @@ class AskViewModel : ViewModel() {
                         "Custom review counts aren't available yet. Choose 3 reviews to post now."
                     }
                     // The previous API requires a question, even for general feedback.
-                    Api.createPost(request.copy(ask = request.ask.ifBlank { "General feedback on the app experience." }))
+                    Api.createPost(operation.copy(ask = request.ask.ifBlank { "General feedback on the app experience." }))
                 } else {
                     check(options.version >= 2 && request.reviewsBought in options.minReviews..options.maxReviews) {
                         "This review count isn't supported yet. Choose between ${options.minReviews} and ${options.maxReviews} reviews."
                     }
-                    Api.createPost(request)
+                    Api.createPost(operation)
                 }
-            }.onSuccess { onDone() }
-                .onFailure {
-                    if (it is CancellationException) throw it
-                    if (it is ApiError && it.isAuth) {
-                        requestSignIn(lookup = false)
-                    } else {
-                        failure =
-                            AskFailure(
-                                "Couldn't post your request",
-                                if (it is IllegalStateException) {
-                                    it.message.orEmpty()
-                                } else {
-                                    whyNot(it)
-                                },
-                            )
-                    }
+            }.onSuccess {
+                pendingRequest = null
+                onDone()
+            }.onFailure {
+                if (it is CancellationException) throw it
+                if (it is ApiError && it.isAuth) {
+                    requestSignIn(lookup = false)
+                } else {
+                    failure =
+                        AskFailure(
+                            "Couldn't post your request",
+                            if (it is IllegalStateException) {
+                                it.message.orEmpty()
+                            } else {
+                                whyNot(it)
+                            },
+                        )
                 }
+            }
             posting = false
         }
     }

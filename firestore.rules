@@ -264,17 +264,9 @@ service cloud.firestore {
       allow list, write: if false;
     }
 
-    /**
-     * Names shown in grids.
-     *
-     * Open to any signed-in account, deliberately and knowingly: a grid needs to turn a uid into
-     * a name, and the queries that do it are `whereIn` over uid lists that rules cannot correlate
-     * back to a cohort without a reverse index the admin would then have to maintain. What is
-     * exposed is an address and a display name — not proof, not group structure. If that stops
-     * being an acceptable trade, the fix is an admin-written `groupIds` array here.
-     */
+    /** Private account fields, including email. Names for grids belong in publicProfiles. */
     match /users/{uid} {
-      allow read: if signedIn();
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
 
       /**
        * An account writes its own row, but only the fields that are its own business.
@@ -323,6 +315,19 @@ service cloud.firestore {
      */
     match /users/{uid}/tokens/{installId} {
       allow read, write: if isAdmin() || (signedIn() && request.auth.uid == uid);
+    }
+
+    /** Public identity only. Legacy account documents must never be used as a directory. */
+    match /publicProfiles/{uid} {
+      allow read: if signedIn();
+      allow create, update: if (isAdmin() || (signedIn() && request.auth.uid == uid))
+        && request.resource.data.keys().hasOnly(['uid', 'displayName', 'photo', 'updatedAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 80
+        && (!('photo' in request.resource.data)
+            || (request.resource.data.photo is string && request.resource.data.photo.size() <= 8000));
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
     }
 
     /**

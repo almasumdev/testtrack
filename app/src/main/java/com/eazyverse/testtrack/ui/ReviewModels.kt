@@ -21,8 +21,8 @@ enum class ReviewStep(
     /** Real foreground time. Nothing drags them back; they return when they are ready. */
     USE("Use it"),
 
-    /** On Play: a public review for a live app, private tester feedback for a closed test. */
-    LEAVE("Leave your review"),
+    /** Private feedback for the developer, regardless of Play visibility. */
+    LEAVE("Write feedback"),
 
     /** A screenshot of what they left, which is the only evidence anybody can produce. */
     PROVE("Prove it"),
@@ -52,17 +52,7 @@ enum class ReviewStep(
 data class ReviewJob(
     val post: ApiPost,
     val review: ApiReview,
-    /**
-     * Whether this sitting has already sent the reviewer to the Play review page.
-     *
-     * The one part of the job with no server state behind it, and it cannot have one: nobody
-     * outside Google can see that a review was left, which is the whole reason a screenshot is
-     * asked for. So the server's states run out at [ReviewStep.LEAVE], and without this the proof
-     * step is unreachable and a live app can never be submitted at all.
-     *
-     * It is not evidence and nothing is paid on it. It only opens the dialog. Losing it to a
-     * restart costs one more tap on a button that was going to be tapped anyway.
-     */
+    /** Whether the reviewer has opened the private feedback and proof step. */
     val leftReview: Boolean = false,
 ) {
     val step: ReviewStep

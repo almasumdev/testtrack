@@ -50,7 +50,7 @@ def main() -> int:
     run([sys.executable, "scripts/check_app.py"])
     gradle = ROOT / ("gradlew.bat" if os.name == "nt" else "gradlew")
     run([str(gradle), "ktlintCheck", "testDebugUnitTest", "assembleDebug",
-         "compileDebugAndroidTestKotlin"])
+         "compileDebugAndroidTestKotlin", "lintDebug"])
 
     notes = mkit(executable, "whatsnew", "check")
     if not notes["notes"] or notes["missing"]:

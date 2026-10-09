@@ -12,8 +12,12 @@
 # This repository is public, so where the backend lives is not written down here. Point these at
 # your own checkout before running:
 #
-#   TESTTRACK_VPS         ssh host or alias the backend runs on
+#   TESTTRACK_VPS         ssh host or alias the isolated staging backend runs on
 #   TESTTRACK_REMOTE_DIR  the directory holding its docker-compose.yml
+#   TESTTRACK_STAGING_ACK  isolated-staging (required acknowledgment; never use production)
+#   TESTTRACK_REVIEWER_EMAIL  Google account that owns both Drive fixture images
+#   TESTTRACK_DRIVE_TOKEN     transient drive.file grant, never commit or print
+#   TESTTRACK_LIVE_DRIVE_PROOF / TESTTRACK_CLOSED_DRIVE_PROOF  distinct drive:<file-id> refs
 #
 #   scripts/e2e.sh                 seed, run, clean
 #   scripts/e2e.sh --keep          leave the seeded world in place to poke at by hand
@@ -21,6 +25,14 @@
 set -euo pipefail
 
 SERIAL="${ANDROID_SERIAL:-emulator-5554}"
+[[ "$SERIAL" == "emulator-5554" ]] || { echo 'Only emulator-5554 is allowed.' >&2; exit 2; }
+[[ "${TESTTRACK_STAGING_ACK:-}" == "isolated-staging" ]] || { echo 'Set TESTTRACK_STAGING_ACK=isolated-staging for an isolated test backend.' >&2; exit 2; }
+REVIEWER_EMAIL="${TESTTRACK_REVIEWER_EMAIL:?set the isolated Drive fixture account email}"
+[[ "$REVIEWER_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]] || exit 2
+DRIVE_TOKEN="${TESTTRACK_DRIVE_TOKEN:?set a transient Drive grant}"
+LIVE_PROOF="${TESTTRACK_LIVE_DRIVE_PROOF:?set an owned live proof reference}"
+CLOSED_PROOF="${TESTTRACK_CLOSED_DRIVE_PROOF:?set a different owned closed proof reference}"
+[[ "$LIVE_PROOF" =~ ^drive:[a-zA-Z0-9_-]+$ && "$CLOSED_PROOF" =~ ^drive:[a-zA-Z0-9_-]+$ && "$LIVE_PROOF" != "$CLOSED_PROOF" ]] || exit 2
 VPS="${TESTTRACK_VPS:?set TESTTRACK_VPS to the host the backend runs on}"
 # Git Bash ships an OpenSSH that cannot read a modern ed25519 key on this machine, so the
 # Windows one is used when it is there. Override SSH to point at whichever works for you.
@@ -38,7 +50,7 @@ if ! adb devices | grep -q "^${SERIAL}[[:space:]]*device$"; then
 fi
 
 seed() {
-  "$SSH" "$VPS" "cd $REMOTE_DIR && docker compose exec -T api python -m scripts.seed_e2e"
+  "$SSH" "$VPS" "cd $REMOTE_DIR && docker compose exec -T api python -m scripts.seed_e2e --reviewer-email '$REVIEWER_EMAIL'"
 }
 
 # Only ever this run's world. Seeding by hand to look at the app is a normal thing to be doing
@@ -74,4 +86,7 @@ ANDROID_SERIAL="$SERIAL" ./gradlew connectedDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.ownerAccess="$OWNER_ACCESS" \
   -Pandroid.testInstrumentationRunnerArguments.ownerRefresh="$OWNER_REFRESH" \
   -Pandroid.testInstrumentationRunnerArguments.livePostId="$LIVE_POST" \
-  -Pandroid.testInstrumentationRunnerArguments.closedPostId="$CLOSED_POST"
+  -Pandroid.testInstrumentationRunnerArguments.closedPostId="$CLOSED_POST" \
+  -Pandroid.testInstrumentationRunnerArguments.liveDriveProof="$LIVE_PROOF" \
+  -Pandroid.testInstrumentationRunnerArguments.closedDriveProof="$CLOSED_PROOF" \
+  -Pandroid.testInstrumentationRunnerArguments.driveToken="$DRIVE_TOKEN"

@@ -259,7 +259,7 @@ private fun mineLine(review: MyReview): String =
     when (review.state) {
         "claimed" -> "Install it from Play"
         "installed" -> "Use it for 30 seconds"
-        "used" -> "Review it on Play"
+        "used" -> "Write private feedback"
         "submitted" -> "Checking · up to 2 days"
         "disputed" -> "Disputed · members deciding"
         "approved" -> "Approved · tix paid"

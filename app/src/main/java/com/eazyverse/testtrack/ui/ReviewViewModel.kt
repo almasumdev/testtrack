@@ -114,7 +114,7 @@ class ReviewViewModel : ViewModel() {
         file: File,
     ) {
         proof = Uri.fromFile(file)
-        // A picture from Play is as sure a sign as any that the review was left.
+        // Picking proof opens the private-feedback submission step; acceptance is server-owned.
         ProofStore.markLeft(context, id)
         job = job?.copy(leftReview = true)
     }
@@ -147,7 +147,7 @@ class ReviewViewModel : ViewModel() {
 
     fun markGuideSeen(context: Context) = prefs(context).edit().putBoolean(GUIDE_SEEN, true).apply()
 
-    /** The camera button floats over Play, which needs "Display over other apps". */
+    /** The camera button floats over the tested app, requiring "Display over other apps". */
     fun canFloat(context: Context) = Settings.canDrawOverlays(context)
 
     fun openOverlaySettings(context: Context) {
@@ -160,7 +160,7 @@ class ReviewViewModel : ViewModel() {
     }
 
     /**
-     * Put the camera button up with the consent just given, then open Play. The proof step opens
+     * Put the camera button up with the consent just given, then open the tested app. Proof opens
      * on the way out, so somebody who comes back without pressing it can still pick a screenshot.
      */
     fun startCapture(
@@ -170,11 +170,11 @@ class ReviewViewModel : ViewModel() {
         pkg: String,
     ) {
         ReviewCaptureService.start(context, code, data)
-        openPlay(context, pkg)
+        openApp(context, pkg)
         markLeft()
     }
 
-    /** Back on the page without a picture: take the button off Play rather than leave it there. */
+    /** Remove a waiting capture button when returning without a picture. */
     fun dropStrayButton(context: Context) {
         if (ReviewCaptureService.running.value == ReviewCaptureService.State.WAITING) {
             ReviewCaptureService.cancel(context)
@@ -309,10 +309,7 @@ class ReviewViewModel : ViewModel() {
     }
 
     /**
-     * Note that the reviewer has been handed to the Play review page.
-     *
-     * Which is as much as the app can ever know about a Play review, and all it is used for: the
-     * proof step opens. What gets judged is the screenshot.
+     * Open private feedback and proof. This state makes no claim about a public Play review.
      */
     fun markLeft() {
         val current = job ?: return
@@ -346,10 +343,14 @@ class ReviewViewModel : ViewModel() {
         val context = activity.applicationContext
         // No message on success: the page itself turns into the sent screen.
         run(onOffline = { message = "You're offline. Your screenshot and note are saved; send them once you're back." }) {
+            if (note.isBlank()) throw ApiError(400, "feedback", "Write private feedback for the developer first.")
+            val token =
+                AuthRepo.driveTokenOrNull(activity)
+                    ?: throw ApiError(400, "drive", "Connect Google Drive to send your saved feedback.")
             val id = current.review.id
             val ref =
                 ProofStore.uploaded(context, id) ?: toDrive(activity, current, proof).also { ProofStore.markUploaded(context, id, it) }
-            keep(current.copy(review = Api.submit(id, ref, note)))
+            keep(current.copy(review = Api.submit(id, ref, note, driveToken = token)))
             offline = false
             ProofStore.forget(context, current.review.id)
             this.proof = null
@@ -359,8 +360,8 @@ class ReviewViewModel : ViewModel() {
 
     /**
      * Put the screenshot in the reviewer's own Drive, shared by link, and return the reference
-     * the review is sent with: the same way a crew test's proof is kept. The picture is theirs,
-     * and only where it is reaches our server. See [proofSource].
+     * the review is sent with. The picture belongs to its uploader; only its reference and a
+     * transient metadata-verification grant reach our server. Crew visits send usage records.
      *
      * Without a Drive grant nothing is sent. The page shows how to connect, and the screenshot
      * and note stay kept.
@@ -382,7 +383,10 @@ class ReviewViewModel : ViewModel() {
             context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
                 ?: throw ApiError(400, "unreadable", "That image could not be read.")
         }
-        return when (val result = DriveRepo.upload(token, name, mime, read)) {
+        val fileId =
+            ProofStore.reserved(context, current.review.id)
+                ?: DriveRepo.reserveId(token).also { ProofStore.reserve(context, current.review.id, it) }
+        return when (val result = DriveRepo.upload(token, name, mime, fileId = fileId, bytes = read)) {
             is UploadResult.Ok -> DRIVE_PREFIX + result.file.id
             is UploadResult.Failed -> throw ApiError(0, "drive", result.reason)
         }

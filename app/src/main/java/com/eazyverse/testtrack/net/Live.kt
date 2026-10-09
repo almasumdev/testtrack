@@ -42,6 +42,8 @@ object Live {
         val channel: String,
         val type: String,
         val ref: String? = null,
+        val seq: Long? = null,
+        val reconcile: Boolean = false,
     )
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -54,6 +56,18 @@ object Live {
     private var wanted: Set<String> = emptySet()
     private var running: Job? = null
     private var pinging: Job? = null
+    private val sequences = mutableMapOf<String, Long>()
+
+    @Synchronized
+    fun reset() {
+        running?.cancel()
+        running = null
+        pinging?.cancel()
+        socket?.close(1000, null)
+        socket = null
+        sequences.clear()
+        flow.tryEmit(Event("", "live.reset", reconcile = true))
+    }
 
     /** [who] listens to these channels until [stop]. Asking again with the same set changes nothing. */
     @Synchronized
@@ -119,9 +133,21 @@ object Live {
                     ) {
                         val event = runCatching { Api.json.parseToJsonElement(text).jsonObject }.getOrNull() ?: return
                         val type = event.text("type") ?: return
-                        if (type == "subscribed") return
+                        if (type == "subscribed") {
+                            synchronized(this@Live) { sequences.clear() }
+                            flow.tryEmit(Event("", "live.reconnected", reconcile = true))
+                            return
+                        }
+                        val channel = event.text("ch").orEmpty()
+                        val seq = event.text("seq")?.toLongOrNull()
+                        val gap =
+                            synchronized(this@Live) {
+                                val previous = sequences[channel]
+                                if (seq != null) sequences[channel] = seq
+                                seq != null && previous != null && seq != previous + 1
+                            }
                         val ref = (event["data"] as? JsonObject)?.text("id")
-                        flow.tryEmit(Event(event.text("ch").orEmpty(), type, ref))
+                        flow.tryEmit(Event(channel, type, ref, seq, reconcile = gap))
                     }
 
                     override fun onClosed(

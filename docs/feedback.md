@@ -2,6 +2,11 @@
 
 > **This is the plan, not the state.** Written before any of it was built and kept as the record of what was decided and why. For what actually runs and how the app talks to it, see [architecture.md](architecture.md).
 
+> **Superseded on 10 October 2026:** paid work now means private written feedback and screenshots
+> from the tested app for both live and closed apps. Rewarded public Play ratings/reviews are removed.
+> Images upload directly to the user's Drive; the backend verifies and stores references/metadata only.
+> The public-rating flow and open storage question below are historical, not current instructions.
+
 Circle's paid half, redesigned. Decided September 2026.
 
 ## What it is for

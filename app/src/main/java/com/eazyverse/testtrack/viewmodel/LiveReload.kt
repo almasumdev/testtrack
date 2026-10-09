@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 class LiveReload(
     private val who: String,
     private val scope: CoroutineScope,
-    private val every: Long? = null,
+    private val every: Long? = 60_000L,
     private val matters: (Live.Event) -> Boolean,
 ) {
     private var job: Job? = null
@@ -30,7 +30,7 @@ class LiveReload(
             scope.launch {
                 var pending: Job? = null
                 launch {
-                    Live.events.filter(matters).collect {
+                    Live.events.filter { it.reconcile || matters(it) }.collect {
                         pending?.cancel()
                         pending =
                             launch {

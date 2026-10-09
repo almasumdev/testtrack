@@ -105,6 +105,7 @@ data class PostIn(
     val reward: Int,
     @SerialName("is_live") val isLive: Boolean,
     @SerialName("reviews_bought") val reviewsBought: Int = 3,
+    @SerialName("request_id") val requestId: String? = null,
 )
 
 @Serializable
@@ -199,6 +200,7 @@ data class UsedIn(
 data class SubmitIn(
     @SerialName("proof_ref") val proofRef: String = "",
     val written: String = "",
+    @SerialName("drive_token") val driveToken: String = "",
 )
 
 @Serializable
@@ -287,6 +289,7 @@ data class MeIn(
     @SerialName("display_name") val displayName: String,
     /** An uploaded image by its reference. Empty clears it back to the initial. */
     @SerialName("photo_ref") val photoRef: String = "",
+    @SerialName("drive_token") val driveToken: String = "",
 )
 
 @Serializable

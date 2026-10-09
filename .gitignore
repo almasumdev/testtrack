@@ -24,8 +24,8 @@ google-services.json
 
 # Rules tests pull their own toolchain; nothing in it belongs in the repo.
 firestore-tests/node_modules/
-firestore-tests/package-lock.json
 firestore-debug.log
+firebase-debug.log
 
 # The Apps Script behind the membership check. Deliberately not tracked: the copy that decides
 # anything is the one deployed at /exec, and a second copy in here is one more thing to drift.

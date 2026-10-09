@@ -63,12 +63,19 @@ class ReviewJourneyTest {
     private val ownerRefresh = args.getString("ownerRefresh").orEmpty()
     private val livePostId = args.getString("livePostId").orEmpty()
     private val closedPostId = args.getString("closedPostId").orEmpty()
+    private val liveProof = args.getString("liveDriveProof").orEmpty()
+    private val closedProof = args.getString("closedDriveProof").orEmpty()
+    private val driveToken = args.getString("driveToken").orEmpty()
 
     @Before
     fun requireASeededWorld() {
         assumeTrue(
-            "No seeded session. Run scripts/e2e.sh rather than this class on its own.",
-            reviewerAccess.isNotEmpty() && livePostId.isNotEmpty(),
+            "No seeded session and owned Drive fixtures. See docs/verification.md.",
+            reviewerAccess.isNotEmpty() &&
+                livePostId.isNotEmpty() &&
+                liveProof.startsWith("drive:") &&
+                closedProof.startsWith("drive:") &&
+                driveToken.isNotEmpty(),
         )
         ApiSession.load(context)
         beReviewer()
@@ -79,58 +86,6 @@ class ReviewJourneyTest {
     private fun beOwner() = ApiSession.remember(Tokens(ownerAccess, ownerRefresh, 900))
 
     private fun fingerprint() = requireNotNull(Device.fingerprint(context)) { "no ANDROID_ID" }
-
-    /**
-     * A real PNG, built here rather than shipped as a test asset.
-     *
-     * The server checks the type it was told and stores the bytes it was given, so the bytes
-     * ought to be an image: a test that uploads the word "proof" proves only that nothing looks.
-     */
-    private fun onePixelPng(): ByteArray {
-        fun crc(bytes: ByteArray): Int {
-            var c = 0xFFFFFFFFu
-            for (b in bytes) {
-                c = c xor (b.toUInt() and 0xFFu)
-                repeat(8) { c = if (c and 1u != 0u) (c shr 1) xor 0xEDB88320u else c shr 1 }
-            }
-            return (c xor 0xFFFFFFFFu).toInt()
-        }
-
-        fun chunk(
-            type: String,
-            data: ByteArray,
-        ): ByteArray {
-            val body = type.toByteArray() + data
-            return java.nio.ByteBuffer
-                .allocate(12 + data.size)
-                .putInt(data.size)
-                .put(body)
-                .putInt(crc(body))
-                .array()
-        }
-
-        val header = byteArrayOf(-119, 80, 78, 71, 13, 10, 26, 10)
-        val ihdr =
-            java.nio.ByteBuffer
-                .allocate(13)
-                .putInt(1)
-                .putInt(1)
-                .put(8)
-                .put(2)
-                .put(0)
-                .put(0)
-                .put(0)
-                .array()
-        val pixel =
-            java.util.zip.Deflater().let { d ->
-                d.setInput(byteArrayOf(0, -1, -1, -1))
-                d.finish()
-                val out = ByteArray(64)
-                val n = d.deflate(out)
-                out.copyOf(n)
-            }
-        return header + chunk("IHDR", ihdr) + chunk("IDAT", pixel) + chunk("IEND", ByteArray(0))
-    }
 
     // ------------------------------------------------------------------ the journey
 
@@ -156,6 +111,7 @@ class ReviewJourneyTest {
 
             // Short of the thirty seconds. The server has to hold the line here or the whole
             // measurement is decoration.
+            kotlinx.coroutines.delay(11_100)
             val partly = Api.used(claimed.id, 11_000)
             assertEquals("installed", partly.state)
             assertEquals(11_000L, partly.usedMs)
@@ -166,6 +122,7 @@ class ReviewJourneyTest {
                 assertEquals(409, e.status)
             }
 
+            kotlinx.coroutines.delay(20_100)
             val used = Api.used(claimed.id, 31_000)
             assertEquals("used", used.state)
 
@@ -180,10 +137,13 @@ class ReviewJourneyTest {
             // The proof is a real file this time, sent the way the app sends it. Until there was
             // an upload endpoint the dialog asked for a screenshot with nowhere to put one, so a
             // live review could be worked all the way through and never submitted.
-            val shot = Api.upload(onePixelPng(), "image/png")
-            assertTrue("An upload answers with what it stored", shot.size > 0)
-
-            val submitted = Api.submit(claimed.id, proofRef = shot.id)
+            val submitted =
+                Api.submit(
+                    claimed.id,
+                    proofRef = liveProof,
+                    written = "The monthly total was readable.",
+                    driveToken = driveToken,
+                )
             assertEquals("submitted", submitted.state)
             assertNotNull(submitted.submittedAt)
 
@@ -220,16 +180,26 @@ class ReviewJourneyTest {
         runBlocking {
             val claimed = Api.claim(closedPostId, fingerprint())
             Api.installed(claimed.id)
+            kotlinx.coroutines.delay(31_100)
             Api.used(claimed.id, 31_000)
 
             try {
                 Api.submit(claimed.id, written = "The keyboard covered the list.")
-                fail("Words alone are not proof any more; the feedback is left on Play.")
+                fail("Private feedback still requires proof from the tested app.")
             } catch (e: ApiError) {
                 assertTrue("Wrong refusal: ${e.message}", e.status in 400..422)
             }
 
-            assertEquals("submitted", Api.submit(claimed.id, proofRef = "a-screenshot").state)
+            assertEquals(
+                "submitted",
+                Api
+                    .submit(
+                        claimed.id,
+                        proofRef = closedProof,
+                        written = "The keyboard covered the list.",
+                        driveToken = driveToken,
+                    ).state,
+            )
         }
 
     // ------------------------------------------------------------------ the screen, on real data

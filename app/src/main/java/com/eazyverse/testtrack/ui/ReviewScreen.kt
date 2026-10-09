@@ -66,20 +66,8 @@ import com.eazyverse.testtrack.viewmodel.TestingDriveViewModel
 import kotlinx.coroutines.delay
 
 /**
- * The guided review: what somebody actually does to earn the tix.
- *
- * A stepper rather than a text box, because the job is not writing a paragraph. It is installing
- * the app from Play, spending real time in it, leaving a review where it counts, and proving it.
- * Each of those is a different claim the phone can check, so each gets its own step. See
- * docs/feedback.md.
- *
- * Nothing here decides whether a step is done. The phone reports what it sees and the server says
- * what that adds up to, which is why the screen simply redraws whatever comes back.
- *
- * This half is the wiring: the view model, the lifecycle, the intents. Everything drawn lives in
- * [ReviewBody], which is handed plain values and so can be opened by a test at any step, without
- * an account, a network or Play. That split is not tidiness. The stepper shipped once with every
- * step but the last already ticked, for want of a test that could open it.
+ * Guided installation, app usage, private feedback and proof. The server accepts transitions.
+ * [ReviewBody] draws supplied state independently of account/network services.
  */
 @Composable
 fun ReviewScreen(
@@ -106,9 +94,6 @@ fun ReviewScreen(
         onDispose { owner.lifecycle.removeObserver(watcher) }
     }
 
-    // The leave step: the one-time guide, then "Display over other apps", then Android's own
-    // screen-capture consent, and only then Play with the camera button over it. Refusing the
-    // consent still opens Play; the screenshot can be picked from the gallery instead.
     var guiding by remember { mutableStateOf(false) }
     var askingOverlay by remember { mutableStateOf(false) }
     var givingUp by remember { mutableStateOf(false) }
@@ -118,11 +103,10 @@ fun ReviewScreen(
             if (result.resultCode == Activity.RESULT_OK && data != null) {
                 vm.startCapture(context, result.resultCode, data, post.packageName)
             } else {
-                openPlay(context, post.packageName)
-                vm.markLeft()
+                openApp(context, post.packageName)
             }
         }
-    val toPlay: () -> Unit = {
+    val toCapture: () -> Unit = {
         if (!vm.canFloat(context)) {
             askingOverlay = true
         } else {
@@ -154,6 +138,9 @@ fun ReviewScreen(
             if (!vm.driveConnected) sendAfterDrive = null
         }
     val membership = rememberMembership()
+    val requireMembership: (() -> Unit) -> Unit = { action ->
+        if (post.isLive) action() else membership.require(action)
+    }
     val atProof = vm.job?.step == ReviewStep.PROVE
     LaunchedEffect(atProof) { if (atProof) vm.checkDrive(activity) }
 
@@ -163,7 +150,7 @@ fun ReviewScreen(
         proof = vm.proof,
         // The screenshot already got stays until a new one arrives, so a capture abandoned half
         // way does not cost the one there was.
-        onCapture = toPlay,
+        onCapture = { if (vm.guideSeen(context)) toCapture() else guiding = true },
         onPicked = { vm.keepPicked(context, it) },
         note = vm.note,
         onNote = vm::editNote,
@@ -183,23 +170,20 @@ fun ReviewScreen(
         failure = vm.failure,
         onRetry = { vm.retry(context, post) },
         onClose = onClose,
-        // Every step and the submit need the testers group: a closed test cannot be installed
-        // from outside it, and an owner cannot rely on a review that was not.
+        // Closed tests need group membership; publicly available apps do not.
         onLeave = { step ->
-            membership.require {
+            requireMembership {
                 when (step) {
                     ReviewStep.INSTALL -> openPlay(context, post.packageName)
                     ReviewStep.USE -> openApp(context, post.packageName)
-                    // Going to Play is also the only signal that the review may now exist, so the
-                    // proof step opens on the way out rather than waiting for a state that cannot come.
-                    ReviewStep.LEAVE -> if (vm.guideSeen(context)) toPlay() else guiding = true
+                    ReviewStep.LEAVE -> vm.markLeft()
                     else -> Unit
                 }
             }
         },
         onGiveUp = { givingUp = true },
         onSend = { proof, note ->
-            membership.require {
+            requireMembership {
                 if (vm.driveConnected) {
                     vm.submit(activity, proof, note)
                 } else {
@@ -230,7 +214,7 @@ fun ReviewScreen(
             onOk = {
                 guiding = false
                 vm.markGuideSeen(context)
-                toPlay()
+                toCapture()
             },
             onDismiss = { guiding = false },
         )
@@ -285,11 +269,10 @@ fun ReviewBody(
     onConnectDrive: () -> Unit = {},
     onGiveUp: (() -> Unit)? = null,
 ) {
-    // The system picker: permissionless, it hands back the one picture somebody chose. Whatever
-    // comes back replaces the screenshot there was, whichever way that one came.
+    var editingProof by remember { mutableStateOf<Uri?>(null) }
     val pick =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) onPicked(uri)
+            if (uri != null) editingProof = uri
         }
     val shown = proof
     val t = Tt.colors
@@ -324,7 +307,7 @@ fun ReviewBody(
                 } else {
                     val asking = job.step == ReviewStep.USE && !usageAccess
                     // Step four cannot send until there is a screenshot to send.
-                    val waitingForProof = job.step == ReviewStep.PROVE && shown == null
+                    val waitingForProof = job.step == ReviewStep.PROVE && (shown == null || note.isBlank())
                     val needsDrive = job.step == ReviewStep.PROVE && !driveConnected
                     Primary(
                         when {
@@ -397,34 +380,41 @@ fun ReviewBody(
                         Spacer(Modifier.height(8.dp))
                         StepLabels(job)
                         Spacer(Modifier.height(gap))
+                        val stepCopy =
+                            (
+                                when {
+                                    job.settled -> "Sent"
+                                    job.step == ReviewStep.USE && !usageAccess -> "Allow usage time"
+                                    else -> stepTitle(job)
+                                }
+                            ) to (
+                                when {
+                                    job.settled -> reviewOutcome(job.review.state)
+                                    job.step == ReviewStep.USE && !usageAccess ->
+                                        "Allow Usage access for TestTrack, then return. Time already spent still counts."
+                                    job.step == ReviewStep.PROVE && shown != null ->
+                                        "Check the screenshot and hide personal details before " +
+                                            "sending."
+                                    else -> stepLine(job)
+                                }
+                            )
                         AnimatedContent(
-                            targetState = listOf(job.step, job.settled, usageAccess, shown == null),
+                            targetState = stepCopy,
                             transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(160)) using SizeTransform(clip = false) },
                             label = "step",
-                        ) { _ ->
+                        ) { copy ->
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    when {
-                                        job.settled -> "Sent"
-                                        job.step == ReviewStep.USE && !usageAccess -> "Allow usage time"
-                                        else -> stepTitle(job)
-                                    },
-                                    style = MaterialTheme.typography.headlineSmall.copy(fontSize = 23.sp, lineHeight = 27.sp),
+                                    copy.first,
+                                    style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center,
                                 )
                                 Spacer(Modifier.height(6.dp))
                                 Text(
-                                    when {
-                                        job.settled -> reviewOutcome(job.review.state)
-                                        job.step == ReviewStep.USE && !usageAccess ->
-                                            "TestTrack counts how long you use the app. Switch on Usage access for " +
-                                                "TestTrack, then come back. Time already spent still counts."
-                                        job.step == ReviewStep.PROVE && shown != null -> "Check it shows what you left, then send it."
-                                        else -> stepLine(job)
-                                    },
+                                    copy.second,
                                     Modifier.widthIn(max = 300.dp),
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+                                    style = MaterialTheme.typography.bodyMedium,
                                     color = t.text2,
                                     textAlign = TextAlign.Center,
                                 )
@@ -451,6 +441,7 @@ fun ReviewBody(
                                 onGallery = {
                                     pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                                 },
+                                onInspect = { editingProof = it },
                             )
                             if (!driveConnected) {
                                 Spacer(Modifier.height(12.dp))
@@ -482,6 +473,9 @@ fun ReviewBody(
                 }
             }
         }
+    }
+    editingProof?.let { uri ->
+        ProofEditor(uri, onKeep = onPicked, onClose = { editingProof = null })
     }
 }
 

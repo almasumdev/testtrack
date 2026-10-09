@@ -238,11 +238,16 @@ fun FeedScreen(
                                 item(key = "ask") { FeedAskButton(onPost = onAsk) }
                                 if (hold) items(3) { FeedLoadingCard() }
                                 items(if (hold) emptyList() else vm.openPosts, key = { it.id }) { post ->
-                                    // Taking a review on needs the testers group: Play only lets
-                                    // the owner add somebody on it to a closed test.
+                                    // Group membership is required for closed testing only.
                                     FeedRequestCard(post) {
                                         // Signed out, a review cannot be claimed: ask for the account first.
-                                        if (vm.signedOut) onSignIn() else membership.require { onReview(Json.encodeToString(post)) }
+                                        if (vm.signedOut) {
+                                            onSignIn()
+                                        } else if (post.isLive) {
+                                            onReview(Json.encodeToString(post))
+                                        } else {
+                                            membership.require { onReview(Json.encodeToString(post)) }
+                                        }
                                     }
                                 }
                             }

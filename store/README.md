@@ -9,7 +9,7 @@ covers the current tabbed app rather than the old cohorts.
 
 Run `python scripts/check_release.py`. mkit also runs it through `pre_deploy`
 before changing the version. It checks architecture, Kotlin formatting, unit
-tests, debug assembly, instrumented-test compilation, release notes, listing
+tests, debug assembly, instrumented-test compilation, Android lint, release notes, listing
 validity/Play access, Data safety and artwork, then rebuilds the CSV and local
 images. Listing differences are expected; only validation failures block it.
 It never runs device tests.
@@ -62,10 +62,11 @@ its release commits. Configuring these steps does not authorize running them.
 
 ## Product work still needed before publishing the new app
 
-The privacy page describes Firestore-only records and Drive proofs. It needs
-to cover the FastAPI backend and protected uploads. Account deletion is still
-a manually handled website request; there is no backend deletion endpoint.
-Activity contains sample events, and review auto-approval and crew closure
-have no scheduler. The signed-out Crew card reports all 15 seats as available
-even when the header says seats are taken, so Crew is excluded from the art
-until its public count is fixed. These issues are separate from mkit setup.
+Confirm the public privacy/deletion pages cover current API records and user-owned Drive images.
+Account deletion remains a processed website request with documented retention, not an instant
+self-service backend delete. Activity uses stored records; the backend sweeper handles review
+deadlines and crew closure. Those features are implemented. Guest crew counts come from the API.
+The audit fixes replace rewarded public-rating instructions with private feedback and require
+transient Drive verification. Release the matching backend/migration and app together, and check
+real Google/Drive, capture consent, recovery, signed builds and current Play declarations before
+publication. Local checks do not establish production behavior. See docs/verification.md.

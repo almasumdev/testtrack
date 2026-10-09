@@ -9,9 +9,11 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -103,6 +105,10 @@ fun MainBar(
                 .border(1.dp, t.glassBorder, shape)
                 .padding(4.dp),
         ) {
+            if (maxWidth < Wide + 48.dp * 4 || LocalDensity.current.fontScale > 1.2f) {
+                CompactBar(selected, onSelect)
+                return@BoxWithConstraints
+            }
             val slots = remember(maxWidth) { Slots(maxWidth, MainTab.entries.size) }
             val values = shares.map(State<Float>::value)
             val widths = values.map { slots.width(it) }
@@ -137,6 +143,42 @@ fun MainBar(
                     .clearAndSetSemantics {},
             ) {
                 BarRow(values, widths, t.onSelected, selected = null, onSelect = null)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompactBar(
+    selected: MainTab,
+    onSelect: (MainTab) -> Unit,
+) {
+    val t = Tt.colors
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            selected.label,
+            Modifier.padding(top = 6.dp, bottom = 2.dp),
+            style = MaterialTheme.typography.labelLarge,
+            color = t.dockInk,
+        )
+        Row(Modifier.fillMaxWidth()) {
+            MainTab.entries.forEach { tab ->
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .heightIn(min = 48.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(if (tab == selected) t.selectedFill else t.dock)
+                        .selectable(tab == selected, role = Role.Tab, onClick = { onSelect(tab) }),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        tab.icon,
+                        tab.label,
+                        Modifier.size(22.dp),
+                        tint = if (tab == selected) t.onSelected else t.dockInk,
+                    )
+                }
             }
         }
     }

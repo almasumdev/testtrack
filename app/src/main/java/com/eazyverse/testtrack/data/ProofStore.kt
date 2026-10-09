@@ -39,9 +39,8 @@ object ProofStore {
         source: Uri,
     ): File? =
         runCatching {
-            val input = context.contentResolver.openInputStream(source) ?: return null
-            val mime = context.contentResolver.getType(source) ?: "image/jpeg"
-            write(context, reviewId, mime) { out -> input.use { it.copyTo(out) } }
+            val bytes = ProofImages.bytes(context, source)
+            write(context, reviewId, "image/jpeg") { out -> out.write(bytes) }
         }.getOrNull()
 
     /** Take over a screenshot the camera button saved in the cache. Blocking. */
@@ -51,7 +50,8 @@ object ProofStore {
         captured: File,
     ): File? =
         runCatching {
-            write(context, reviewId, "image/jpeg") { out -> captured.inputStream().use { it.copyTo(out) } }
+            val bytes = ProofImages.bytes(context, Uri.fromFile(captured))
+            write(context, reviewId, "image/jpeg") { out -> out.write(bytes) }
                 .also { captured.delete() }
         }.getOrNull()
 
@@ -70,6 +70,19 @@ object ProofStore {
         reviewId: String,
         ref: String,
     ) = prefs(context).edit().putString("ref_$reviewId", ref).apply()
+
+    fun reserved(
+        context: Context,
+        reviewId: String,
+    ): String? = prefs(context).getString("drive_id_$reviewId", null)
+
+    fun reserve(
+        context: Context,
+        reviewId: String,
+        fileId: String,
+    ) {
+        check(prefs(context).edit().putString("drive_id_$reviewId", fileId).commit())
+    }
 
     fun note(
         context: Context,
@@ -106,6 +119,7 @@ object ProofStore {
             .remove("note_$reviewId")
             .remove("left_$reviewId")
             .remove("ref_$reviewId")
+            .remove("drive_id_$reviewId")
             .apply()
     }
 
@@ -132,6 +146,7 @@ object ProofStore {
             .putString("file_$reviewId", target.name)
             .putString("mime_$reviewId", mime)
             .remove("ref_$reviewId")
+            .remove("drive_id_$reviewId")
             .commit()
         old?.delete()
         return target

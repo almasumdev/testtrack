@@ -3,7 +3,7 @@
 The rules the Android app is built under. The backend has had rules since before its first line
 and they held; the app predates that decision and never got them, so this is the app catching up.
 
-Every rule here is enforced by `scripts/check_app.py` in CI, or it is written as a note and not as
+Every enforceable rule here is checked locally by `scripts/check_app.py` and the release hook, or it is written as a note and not as
 a rule. A rule that depends on somebody remembering is not a rule.
 
 ## Layers
@@ -65,8 +65,8 @@ The third needs a signed-in session, which a test cannot get from Google, so it 
 band by `scripts/e2e.sh`. Without the seed those tests skip rather than fail: a red suite that
 only means "you did not seed" teaches people to ignore red suites.
 
-**CI runs the first two on every push.** It did not until now, which meant 154 tests that only ran
-when somebody remembered.
+**There is no Android push CI workflow.** Local and release checks run unit tests and compile
+instrumented Kotlin; they do not execute device tests. See [verification.md](verification.md).
 
 ## The baseline
 
@@ -109,8 +109,9 @@ does not recolour those assets. Launcher assets remain managed through Android S
 ## Permissions belong to the feature
 
 Startup has only onboarding (first-time guests) and Home. There is no Setup route or global
-setup-complete gate. Signing in, browsing and feedback do not request Drive, usage access,
-group membership or notifications. Crew testing requests usage access when opening a test;
+setup-complete gate. Signing in and browsing do not request Drive, usage access,
+group membership or notifications. Feedback requests usage access for measurement and Drive
+when attaching proof; only closed feedback requires group membership. Crew testing requests usage access when opening a test;
 its participation dialogs link to the testers group. Notifications are an optional control
 inside active crews. The screenshot-proof testing flow requests Drive at the point of starting
 or uploading proof, retains pending screenshots if declined, and offers reconnection there.

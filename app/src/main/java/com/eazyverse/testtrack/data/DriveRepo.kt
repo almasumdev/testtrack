@@ -38,16 +38,29 @@ sealed interface UploadResult {
 
 /**
  * Uploads proof screenshots to the signed-in tester's own Google Drive using the narrow
- * `drive.file` scope, which only ever grants access to files this app created. Non-sensitive, so
- * no CASA assessment and no paid verification — unlike `drive` or `drive.readonly`.
+ * `drive.file` scope, limited to files created by or explicitly selected for this app.
  *
  * Trade-off to remember: the tester owns these files. They can delete one or revoke access, so
- * the file id is stored in Firestore and a missing image shows as a broken cell rather than
- * silently passing.
+ * the backend stores a reference and validates ownership and sharing before accepting new proof.
  */
 object DriveRepo {
     private const val UPLOAD_URL = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart"
     private const val FILES_URL = "https://www.googleapis.com/drive/v3/files"
+
+    /** Reserve before reading/uploading bytes. Persist this ID so timeouts cannot create duplicates. */
+    suspend fun reserveId(token: String): String =
+        withContext(Dispatchers.IO) {
+            val request =
+                Request
+                    .Builder()
+                    .url("$FILES_URL/generateIds?count=1&space=drive&type=files")
+                    .header("Authorization", "Bearer $token")
+                    .build()
+            GroupGate.http.newCall(request).execute().use { response ->
+                check(response.isSuccessful) { "Drive could not prepare the upload." }
+                JSONObject(response.body?.string().orEmpty()).getJSONArray("ids").getString(0)
+            }
+        }
 
     /** Finds or creates the app's folder. `drive.file` can see folders this app made. */
     private fun folderId(accessToken: String): String {
@@ -130,6 +143,7 @@ object DriveRepo {
         accessToken: String,
         fileName: String,
         mime: String,
+        fileId: String? = null,
         bytes: () -> ByteArray,
     ): UploadResult =
         withContext(Dispatchers.IO) {
@@ -140,6 +154,7 @@ object DriveRepo {
                     JSONObject()
                         .put("name", fileName)
                         .put("parents", JSONArray().put(parent))
+                if (fileId != null) metadata.put("id", fileId)
 
                 val multipart =
                     MultipartBody
@@ -159,12 +174,17 @@ object DriveRepo {
 
                 GroupGate.http.newCall(request).execute().use { response ->
                     val body = response.body?.string().orEmpty()
-                    if (!response.isSuccessful) {
+                    if (!response.isSuccessful && !(response.code == 409 && fileId != null)) {
                         return@withContext UploadResult.Failed(refusal(response.code, body))
                     }
 
-                    val json = JSONObject(body)
-                    val uploaded = DriveFile(json.getString("id"), json.optString("name", fileName))
+                    val uploaded =
+                        if (response.code == 409 && fileId != null) {
+                            DriveFile(fileId, fileName)
+                        } else {
+                            val json = JSONObject(body)
+                            DriveFile(json.getString("id"), json.optString("name", fileName))
+                        }
                     makeLinkReadable(accessToken, uploaded.id)
                     UploadResult.Ok(uploaded)
                 }

@@ -70,7 +70,7 @@ fun CrewRunTab(
     // result it never got back.
     if (vm.signedOut) {
         Gated(
-            heading = "No apps to open tonight",
+            heading = "Sign in to see tonight’s apps",
             body = "Hold a seat and fourteen nights of testing start here, one night at a time.",
             onSignIn = onSignIn,
             mark = { NightsMark() },
@@ -171,7 +171,7 @@ fun CrewLobbyTab(
 
     if (vm.signedOut) {
         Gated(
-            heading = "No seat held",
+            heading = "Sign in to see your crew",
             body = "A crew you have joined waits here until all fifteen apps are in.",
             onSignIn = onSignIn,
             mark = { SeatsMark() },
@@ -281,7 +281,7 @@ fun CrewRecordTab(
 
     if (vm.signedOut) {
         Gated(
-            heading = "Nothing to look back on",
+            heading = "Sign in to see your record",
             body = "A crew lands here the day its fourteen nights are up, and stays for good.",
             onSignIn = onSignIn,
             mark = { RecordMark() },

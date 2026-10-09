@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import android.app.Activity
 import android.content.Context
 import android.net.Uri
 import androidx.compose.runtime.getValue
@@ -15,6 +16,7 @@ import com.eazyverse.testtrack.net.ApiProfile
 import com.eazyverse.testtrack.net.BoardRow
 import com.eazyverse.testtrack.net.MeIn
 import com.eazyverse.testtrack.viewmodel.LiveReload
+import com.eazyverse.testtrack.viewmodel.ProfileUpload
 import kotlinx.coroutines.launch
 
 /*
@@ -225,7 +227,7 @@ class MeViewModel : ViewModel() {
      * missing one would read as "clear it".
      */
     fun save(
-        context: Context,
+        context: Activity,
         name: String,
         photo: Uri?,
         onDone: () -> Unit,
@@ -234,17 +236,13 @@ class MeViewModel : ViewModel() {
         busy = true
         viewModelScope.launch {
             try {
-                val ref =
+                val (ref, token) =
                     if (photo == null) {
-                        profile?.photoUrl.orEmpty()
+                        profile?.photoUrl.orEmpty() to ""
                     } else {
-                        val resolver = context.contentResolver
-                        val bytes =
-                            resolver.openInputStream(photo)?.use { it.readBytes() }
-                                ?: throw ApiError(400, "unreadable", "That image could not be read.")
-                        Api.upload(bytes, resolver.getType(photo) ?: "image/jpeg").id
+                        ProfileUpload.photo(context, photo)
                     }
-                Api.updateMe(MeIn(displayName = name.trim(), photoRef = ref))
+                Api.updateMe(MeIn(displayName = name.trim(), photoRef = ref, driveToken = token))
                 load(context)
                 onDone()
             } catch (e: ApiError) {

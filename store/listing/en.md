@@ -25,7 +25,7 @@ The nightly list shows the other apps you need to open and what you have already
 
 CIRCLE
 
-Browse apps that developers want feedback on. For closed testing apps, a guided flow checks installation and usage before you submit written feedback. Owners can accept feedback or explain a rejection, and disputed submissions can be reviewed by other members.
+Browse apps that developers want feedback on. A guided flow checks installation and usage before you submit private written feedback and a screenshot of the tested app. Owners can accept feedback or explain a rejection, and disputed submissions can be reviewed by eligible members.
 
 YOUR RECORD
 
@@ -35,9 +35,9 @@ PERMISSIONS AND DATA
 
 Usage access is needed to measure visits to the apps you test. TestTrack checks named packages rather than uploading a list of every app on your phone.
 
-You choose images when a submission needs evidence or when editing your profile picture. Legacy testing rounds also use screen capture, with Android's consent prompt, and save proof images in your own Google Drive.
+Chosen proof and profile images upload directly to your connected Google Drive. Screen capture uses Android's consent prompt. Inspect your screenshot and hide personal details before uploading. Anyone with the shared image link can view it; you control the file in Drive.
 
-Account information, testing records, feedback and uploaded evidence are stored by TestTrack's services. Relevant feedback and evidence are visible to the people reviewing that work. Firebase provides sign-in, notifications, analytics and crash reporting.
+TestTrack's backend stores account information, testing records, private feedback and image references. Crew visits record usage without uploading screenshots. Developers and eligible dispute reviewers receive relevant feedback and evidence links. Firebase provides sign-in, notifications, analytics and crash reporting.
 
 TestTrack helps you organize and record testing. Google Play decides production access; joining a crew does not guarantee approval.
 ```

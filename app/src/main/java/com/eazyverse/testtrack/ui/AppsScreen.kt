@@ -93,7 +93,7 @@ fun AppsBody(
     // are, so this is where the question belongs, with the way out attached to it.
     if (signedOut) {
         Gated(
-            heading = "Nothing up yet",
+            heading = "Sign in to see your apps",
             body = "Your apps, and how each one is getting on, belong to your account.",
             onSignIn = onSignIn,
             mark = { AppsMark() },
