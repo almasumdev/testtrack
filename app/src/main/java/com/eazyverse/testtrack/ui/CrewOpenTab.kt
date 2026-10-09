@@ -41,54 +41,59 @@ fun CrewOpenTab(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
     ) {
-        item {
-            Box(Modifier.padding(start = Gutter, end = Gutter, bottom = 12.dp)) {
-                CrewCard(padding = PaddingValues(16.dp)) {
-                    val free = CrewRules.SEATS - (crew?.taken ?: 0)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            crew?.name ?: "A new crew",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(Modifier.weight(1f))
-                        // Only while it is genuinely close. A badge on every card is a badge on nothing.
-                        if (crew != null && free <= 3) {
-                            Pill("Starts soonest", Status.posted, Status.postedSoft)
+        // The rules below are the app's own and need nothing from the server; only the card waits.
+        if (vm.firstLoad) {
+            item { CrewOpenCardLoading() }
+        } else {
+            item {
+                Box(Modifier.padding(start = Gutter, end = Gutter, bottom = 12.dp)) {
+                    CrewCard(padding = PaddingValues(16.dp)) {
+                        val free = CrewRules.SEATS - (crew?.taken ?: 0)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                crew?.name ?: "A new crew",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Spacer(Modifier.weight(1f))
+                            // Only while it is genuinely close. A badge on every card is a badge on nothing.
+                            if (crew != null && free <= 3) {
+                                Pill("Starts soonest", Status.posted, Status.postedSoft)
+                            }
                         }
-                    }
-                    Spacer(Modifier.height(12.dp))
-                    SeatCountTiles(filled = crew?.filled ?: 0, taken = crew?.taken ?: 0)
-                    Spacer(Modifier.height(11.dp))
-                    Text(
-                        if (crew == null) {
-                            "No crew is filling right now. The next app starts one."
-                        } else {
-                            "$free of ${CrewRules.SEATS} seats left"
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    when {
-                        vm.inOpen ->
-                            Text(
-                                "You are in this one. It is in your Lobby.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Tt.colors.accentInk,
-                            )
-                        // One waiting app at a time. Offering a second before the first crew is
-                        // full is offering fourteen more apps a day for a fortnight that has not
-                        // been set.
-                        vm.blocked != null ->
-                            Text(
-                                vm.blocked.orEmpty(),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        vm.signedOut -> Primary("Sign in to take a seat", onClick = actions.onTakeSeat)
-                        else -> Primary("Take a seat", onClick = actions.onTakeSeat)
+                        Spacer(Modifier.height(12.dp))
+                        SeatCountTiles(filled = crew?.filled ?: 0, taken = crew?.taken ?: 0)
+                        Spacer(Modifier.height(11.dp))
+                        Text(
+                            if (crew == null) {
+                                "No crew is filling right now. The next app starts one."
+                            } else {
+                                "$free of ${CrewRules.SEATS} seats left"
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        when {
+                            vm.inOpen ->
+                                Text(
+                                    "You are in this one. It is in your Lobby.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Tt.colors.accentInk,
+                                )
+                            // One waiting app at a time. Offering a second before the first crew is
+                            // full is offering fourteen more apps a day for a fortnight that has not
+                            // been set.
+                            vm.blocked != null ->
+                                Text(
+                                    vm.blocked.orEmpty(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            vm.signedOut -> Primary("Sign in to take a seat", onClick = actions.onTakeSeat)
+                            else -> Primary("Take a seat", onClick = actions.onTakeSeat)
+                        }
                     }
                 }
             }

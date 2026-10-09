@@ -152,7 +152,6 @@ fun CrewScreen(
                 crew != null && crew.phase == CrewPhase.LOBBY -> CrewLobbyPhase(crew, actions)
                 crew != null && crew.phase == CrewPhase.RUN -> CrewRunPhase(crew, actions)
                 crew != null -> CrewRecordPhase(crew)
-                vm.loading && vm.crews.isEmpty() && vm.open == null -> CrewLoading()
                 vm.offline && vm.crews.isEmpty() -> RobotOffline("Crews didn't load", onRetry = { vm.load(context) })
                 vm.tab == CrewPhase.RUN -> CrewRunTab(vm, onSignIn, actions) { vm.show(it) }
                 vm.tab == CrewPhase.LOBBY -> CrewLobbyTab(vm, onSignIn, actions) { vm.show(it) }

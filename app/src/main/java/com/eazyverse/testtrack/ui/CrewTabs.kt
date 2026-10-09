@@ -77,6 +77,10 @@ fun CrewRunTab(
         )
         return
     }
+    if (vm.firstLoad) {
+        CrewRunLoading()
+        return
+    }
     if (runs.isEmpty()) {
         TabBlank(
             "Nothing running",
@@ -171,6 +175,10 @@ fun CrewLobbyTab(
             onSignIn = onSignIn,
             mark = { SeatsMark() },
         )
+        return
+    }
+    if (vm.firstLoad) {
+        CrewLobbyLoading()
         return
     }
     if (lobbies.isEmpty()) {
@@ -276,6 +284,10 @@ fun CrewRecordTab(
             onSignIn = onSignIn,
             mark = { RecordMark() },
         )
+        return
+    }
+    if (vm.firstLoad) {
+        CrewRecordLoading()
         return
     }
     if (finished.isEmpty()) {
@@ -404,14 +416,6 @@ fun CrewListRow(
             Modifier.size(18.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-    }
-}
-
-/** The tab's first load, before there is anything to say. */
-@Composable
-fun CrewLoading() {
-    Box(Modifier.fillMaxWidth().padding(top = 48.dp), contentAlignment = Alignment.Center) {
-        RobotLoader(label = "Loading crews")
     }
 }
 
