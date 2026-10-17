@@ -315,7 +315,9 @@ private fun Filled(
     icon: @Composable () -> Unit,
     onClick: () -> Unit,
 ) {
-    val t = Tt.colors
+    // The button's own text colour, as [Primary] uses: white on the light ground's navy, dark on
+    // the dark ground's light blue. White here was unreadable in dark mode.
+    val ink = MaterialTheme.colorScheme.onPrimary
     Button(
         onClick = onClick,
         modifier = modifier.height(48.dp),
@@ -325,11 +327,11 @@ private fun Filled(
     ) {
         Box(Modifier.size(18.dp), contentAlignment = Alignment.Center) {
             androidx.compose.runtime.CompositionLocalProvider(
-                androidx.compose.material3.LocalContentColor provides t.onAccent,
+                androidx.compose.material3.LocalContentColor provides ink,
             ) { icon() }
         }
         Spacer(Modifier.width(8.dp))
-        Text(label, fontWeight = FontWeight.Bold, color = t.onAccent, fontSize = 14.5.sp, maxLines = 1)
+        Text(label, fontWeight = FontWeight.Bold, color = ink, fontSize = 14.5.sp, maxLines = 1)
     }
 }
 
