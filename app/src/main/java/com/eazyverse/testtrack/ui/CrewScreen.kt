@@ -26,6 +26,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -312,6 +314,8 @@ fun CrewSeatDialog(
                 },
                 label = "Play link or package name",
                 placeholder = "com.eazyverse.nikosh",
+                keyboardType = KeyboardType.Uri,
+                imeAction = ImeAction.Next,
                 error = error,
                 supporting =
                     "We check it on Play the way the crew will see it. Your closed test needs " +
@@ -323,6 +327,7 @@ fun CrewSeatDialog(
                 onValueChange = { name = it.take(60) },
                 label = "Name (optional)",
                 placeholder = "Taken from Play",
+                imeAction = ImeAction.Next,
             )
             Spacer(Modifier.height(14.dp))
             DialogField(

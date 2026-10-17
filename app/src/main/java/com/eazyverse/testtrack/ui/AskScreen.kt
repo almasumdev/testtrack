@@ -57,6 +57,7 @@ fun AskScreen(
     vm: AskViewModel = viewModel(),
 ) {
     WhileShown(onShow = vm::startLive, onHide = vm::stopLive)
+    val dismissKeyboard = rememberDismissKeyboard()
     Scaffold(
         containerColor = Color.Transparent,
         // The navigation route already applies safeDrawingPadding.
@@ -69,6 +70,7 @@ fun AskScreen(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .dismissKeyboardOnTap(dismissKeyboard)
                 .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = Gutter),
@@ -159,6 +161,7 @@ private fun Finding(vm: AskViewModel) {
         singleLine = true,
         keyboardType = KeyboardType.Uri,
         imeAction = ImeAction.Search,
+        onImeAction = vm::look,
     )
     vm.failure?.let {
         Spacer(Modifier.height(14.dp))

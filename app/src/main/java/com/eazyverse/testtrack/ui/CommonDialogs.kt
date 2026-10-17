@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -35,9 +36,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -155,6 +158,11 @@ fun DialogButton(
     onClick: () -> Unit,
 ) {
     val t = Tt.colors
+    val dismissKeyboard = rememberDismissKeyboard()
+    val click = {
+        dismissKeyboard()
+        onClick()
+    }
     val shape = RoundedCornerShape(8.dp)
     val padding = PaddingValues(horizontal = 12.dp)
     val inner: @Composable RowScope.() -> Unit = {
@@ -166,7 +174,7 @@ fun DialogButton(
     }
     if (kind == DialogButtonKind.OUTLINE) {
         OutlinedButton(
-            onClick = onClick,
+            onClick = click,
             enabled = enabled,
             shape = shape,
             border = BorderStroke(1.dp, t.hair),
@@ -178,7 +186,7 @@ fun DialogButton(
     } else {
         val fill = if (kind == DialogButtonKind.DANGER) t.bad else t.accent
         Button(
-            onClick = onClick,
+            onClick = click,
             enabled = enabled,
             shape = shape,
             elevation = null,
@@ -278,7 +286,19 @@ fun DialogField(
     /** The field's own cap, shown as "used/max" under it. Not enforced here — the caller already
      * has to hold typing to the limit, since this only draws what that number already is. */
     maxLength: Int? = null,
+    /**
+     * What the keyboard's own key does. Search, Go and Send mean nothing without it; Done puts the
+     * keyboard away and then runs it if given; Next moves to the field below unless it is given.
+     */
+    onImeAction: (() -> Unit)? = null,
 ) {
+    val focus = LocalFocusManager.current
+    val dismissKeyboard = rememberDismissKeyboard()
+    val finish = {
+        dismissKeyboard()
+        onImeAction?.invoke()
+        Unit
+    }
     Column(Modifier.fillMaxWidth()) {
         Text(
             label,
@@ -304,6 +324,14 @@ fun DialogField(
                 KeyboardOptions(
                     keyboardType = keyboardType,
                     imeAction = if (singleLine) imeAction else ImeAction.Default,
+                ),
+            keyboardActions =
+                KeyboardActions(
+                    onDone = { finish() },
+                    onSearch = { finish() },
+                    onGo = { finish() },
+                    onSend = { finish() },
+                    onNext = { onImeAction?.invoke() ?: focus.moveFocus(FocusDirection.Down) },
                 ),
             modifier = Modifier.fillMaxWidth().heightIn(min = minHeight),
         )

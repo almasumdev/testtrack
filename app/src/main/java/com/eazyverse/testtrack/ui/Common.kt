@@ -131,8 +131,12 @@ fun Secondary(
     onClick: () -> Unit,
 ) {
     val t = Tt.colors
+    val dismissKeyboard = rememberDismissKeyboard()
     Button(
-        onClick = onClick,
+        onClick = {
+            dismissKeyboard()
+            onClick()
+        },
         enabled = enabled,
         shape = RoundedCornerShape(percent = 50),
         colors =
@@ -188,8 +192,12 @@ fun Primary(
     mark: Painter? = null,
     onClick: () -> Unit,
 ) {
+    val dismissKeyboard = rememberDismissKeyboard()
     Button(
-        onClick = onClick,
+        onClick = {
+            dismissKeyboard()
+            onClick()
+        },
         enabled = enabled && !busy,
         // A full pill, Value Guard's main button: the one filled shape on a screen, so it is the
         // one place the eye lands.

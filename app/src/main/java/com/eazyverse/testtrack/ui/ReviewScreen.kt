@@ -337,7 +337,9 @@ fun ReviewBody(
             }
         },
     ) { padding ->
-        BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
+        // A tap on the page, away from the note, puts the keyboard away.
+        val dismissKeyboard = rememberDismissKeyboard()
+        BoxWithConstraints(Modifier.fillMaxSize().padding(padding).dismissKeyboardOnTap(dismissKeyboard)) {
             // Everything scales off the height left, so the whole step fits on a small phone.
             val room = maxHeight
             val dial = (room * 0.30f).coerceIn(108.dp, 168.dp)
