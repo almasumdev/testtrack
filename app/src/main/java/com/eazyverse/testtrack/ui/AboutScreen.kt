@@ -51,7 +51,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.edit
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Globe
 import com.composables.icons.lucide.Lucide
@@ -119,13 +118,6 @@ fun AboutScreen(onBack: () -> Unit) {
                 lowStar = 0
             },
             onLater = { lowStar = 0 },
-            onNever = {
-                lowStar = 0
-                reviewPrefs(context).edit {
-                    putBoolean(KEY_ASKED, true)
-                    putBoolean(KEY_OPTED_OUT, true)
-                }
-            },
         )
     }
 }
@@ -400,34 +392,22 @@ private fun Outlined(
 }
 
 /**
- * The low-star ask: one dialog, three answers, and only `Send feedback` opens anything. The words
- * are the studio's, from mkit docs/in-app-review.md.
+ * The low-star ask: two answers, and only `Send feedback` opens anything. No `Never` here: this
+ * dialog only ever follows a star the person pressed themselves, so there is nothing to opt out of.
+ * `Never` belongs to the ask that arrives unbidden after a value moment (mkit docs/in-app-review.md).
  */
 @Composable
 private fun FeedbackAsk(
     onSend: () -> Unit,
     onLater: () -> Unit,
-    onNever: () -> Unit,
-) {
-    Ask(
-        title = "Tell us what could be better",
-        body = "We read every message, and it is the fastest way to get it fixed.",
-        confirm = null,
-        onConfirm = {},
-        dismiss = null,
-        onDismiss = onLater,
-    ) {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            DialogButton("Never", DialogButtonKind.OUTLINE, onClick = onNever)
-            DialogButton("Not now", DialogButtonKind.OUTLINE, onClick = onLater)
-            DialogButton("Send feedback", DialogButtonKind.FILL, onClick = onSend)
-        }
-    }
-}
+) = Ask(
+    title = "Tell us what could be better",
+    body = "We read every message, and it is the fastest way to get it fixed.",
+    confirm = "Send feedback",
+    onConfirm = onSend,
+    dismiss = "Not now",
+    onDismiss = onLater,
+)
 
 private val ICON_MARK = 84.dp
 

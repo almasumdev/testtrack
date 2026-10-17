@@ -99,4 +99,3 @@ internal fun openUrl(
 internal fun reviewPrefs(context: Context) = context.getSharedPreferences("testtrack.review", Context.MODE_PRIVATE)
 
 internal const val KEY_ASKED = "review_asked"
-internal const val KEY_OPTED_OUT = "review_opted_out"
