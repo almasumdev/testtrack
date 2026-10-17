@@ -95,13 +95,16 @@ fun CrewLobbyPhase(
         if (!crew.out && others.isNotEmpty()) {
             item { CrewHeading("Install these", "${others.size}") }
             itemsIndexed(others, key = { _, seat -> seat.id }) { index, seat ->
-                ListTile(index, others.size) {
-                    CrewSeatRow(
-                        seat,
-                        onInstall = { actions.onInstall(seat) },
-                        onReport = { actions.onReport(seat) },
-                        onVote = if (crew.mayVote) ({ yes -> actions.onVote(seat, yes) }) else null,
-                    )
+                // Fades in, fades out and glides to its new place when the list changes.
+                Box(Modifier.animateItem()) {
+                    ListTile(index, others.size) {
+                        CrewSeatRow(
+                            seat,
+                            onInstall = { actions.onInstall(seat) },
+                            onReport = { actions.onReport(seat) },
+                            onVote = if (crew.mayVote) ({ yes -> actions.onVote(seat, yes) }) else null,
+                        )
+                    }
                 }
             }
         }
@@ -261,8 +264,11 @@ fun CrewRunPhase(
         if (owed.isNotEmpty()) {
             item { CrewHeading("Tonight", "${owed.size}") }
             itemsIndexed(owed, key = { _, app -> app.id }) { index, app ->
-                ListTile(index, owed.size) {
-                    CrewAppRow(app, onOpen = { actions.onOpen(app) }, onReport = { actions.onReport(seatOf(app)) })
+                // Fades in, fades out and glides to its new place when the list changes.
+                Box(Modifier.animateItem()) {
+                    ListTile(index, owed.size) {
+                        CrewAppRow(app, onOpen = { actions.onOpen(app) }, onReport = { actions.onReport(seatOf(app)) })
+                    }
                 }
             }
         }
@@ -270,16 +276,22 @@ fun CrewRunPhase(
         if (settled.isNotEmpty()) {
             item { CrewHeading("Done", "${settled.size}") }
             itemsIndexed(settled, key = { _, app -> "s-${app.id}" }) { index, app ->
-                ListTile(index, settled.size) {
-                    CrewAppRow(app, onOpen = { actions.onOpen(app) }, onReport = { actions.onReport(seatOf(app)) })
+                // Fades in, fades out and glides to its new place when the list changes.
+                Box(Modifier.animateItem()) {
+                    ListTile(index, settled.size) {
+                        CrewAppRow(app, onOpen = { actions.onOpen(app) }, onReport = { actions.onReport(seatOf(app)) })
+                    }
                 }
             }
         }
 
         item { CrewHeading("How everyone is doing", "${crew.members.size}") }
         itemsIndexed(crew.members, key = { _, m -> m.id }) { index, member ->
-            ListTile(index, crew.members.size) {
-                CrewMemberRow(member)
+            // Fades in, fades out and glides to its new place when the list changes.
+            Box(Modifier.animateItem()) {
+                ListTile(index, crew.members.size) {
+                    CrewMemberRow(member)
+                }
             }
         }
     }
@@ -331,8 +343,11 @@ fun CrewRecordPhase(crew: Crew) {
 
         item { CrewHeading("Everyone", "${crew.members.size}") }
         itemsIndexed(crew.members, key = { _, m -> "rec-${m.id}" }) { index, member ->
-            ListTile(index, crew.members.size) {
-                CrewMemberRow(member)
+            // Fades in, fades out and glides to its new place when the list changes.
+            Box(Modifier.animateItem()) {
+                ListTile(index, crew.members.size) {
+                    CrewMemberRow(member)
+                }
             }
         }
     }

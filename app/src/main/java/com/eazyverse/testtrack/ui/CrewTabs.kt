@@ -147,8 +147,11 @@ fun CrewRunTab(
 
         item { CrewHeading("Your runs", "${runs.size}") }
         itemsIndexed(runs, key = { _, crew -> crew.id }) { index, crew ->
-            ListTile(index, runs.size) {
-                CrewListRow(crew) { onOpenCrew(crew.id) }
+            // Fades in, fades out and glides to its new place when the list changes.
+            Box(Modifier.animateItem()) {
+                ListTile(index, runs.size) {
+                    CrewListRow(crew) { onOpenCrew(crew.id) }
+                }
             }
         }
     }
@@ -196,59 +199,62 @@ fun CrewLobbyTab(
         contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
     ) {
         itemsIndexed(lobbies, key = { _, crew -> crew.id }) { _, crew ->
-            val mine = crew.mine
-            Box(Modifier.padding(start = Gutter, end = Gutter, bottom = 12.dp)) {
-                CrewCard(padding = PaddingValues(16.dp), onClick = { onOpenCrew(crew.id) }) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Lucide.Clock,
-                            null,
-                            Modifier.size(16.dp),
-                            tint = Tt.colors.accentInk,
-                        )
-                        Spacer(Modifier.width(8.dp))
+            // Fades in, fades out and glides to its new place when the list changes.
+            Box(Modifier.animateItem()) {
+                val mine = crew.mine
+                Box(Modifier.padding(start = Gutter, end = Gutter, bottom = 12.dp)) {
+                    CrewCard(padding = PaddingValues(16.dp), onClick = { onOpenCrew(crew.id) }) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Lucide.Clock,
+                                null,
+                                Modifier.size(16.dp),
+                                tint = Tt.colors.accentInk,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                when {
+                                    crew.out -> "${crew.name} sent your app back"
+                                    crew.filling -> "${crew.name} needs ${CrewRules.SEATS - crew.filled} more"
+                                    else -> "${crew.name} starts in ${untilStart(crew.startsIn)}"
+                                },
+                                Modifier.weight(1f),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Icon(
+                                Lucide.ChevronRight,
+                                null,
+                                Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Spacer(Modifier.height(4.dp))
                         Text(
                             when {
-                                crew.out -> "${crew.name} sent your app back"
-                                crew.filling -> "${crew.name} needs ${CrewRules.SEATS - crew.filled} more"
-                                else -> "${crew.name} starts in ${untilStart(crew.startsIn)}"
+                                crew.out -> "Open it to see why, then fix it and put it in again."
+                                crew.filling -> "It starts at midnight the day it is full. Install the others meanwhile."
+                                else -> "Day 1 begins at midnight, your time. Install the others before then."
                             },
-                            Modifier.weight(1f),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Icon(
-                            Lucide.ChevronRight,
-                            null,
-                            Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        when {
-                            crew.out -> "Open it to see why, then fix it and put it in again."
-                            crew.filling -> "It starts at midnight the day it is full. Install the others meanwhile."
-                            else -> "Day 1 begins at midnight, your time. Install the others before then."
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    if (!crew.out) {
-                        Spacer(Modifier.height(16.dp))
-                        SeatTiles(crew.seats)
-                    }
-                    if (mine != null) {
-                        Spacer(Modifier.height(14.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                mine.appName,
-                                Modifier.weight(1f),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Spacer(Modifier.width(10.dp))
-                            SeatPill(mine.state)
+                        if (!crew.out) {
+                            Spacer(Modifier.height(16.dp))
+                            SeatTiles(crew.seats)
+                        }
+                        if (mine != null) {
+                            Spacer(Modifier.height(14.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    mine.appName,
+                                    Modifier.weight(1f),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Spacer(Modifier.width(10.dp))
+                                SeatPill(mine.state)
+                            }
                         }
                     }
                 }
@@ -307,8 +313,11 @@ fun CrewRecordTab(
     ) {
         item { CrewHeading("Finished", "${finished.size}") }
         itemsIndexed(finished, key = { _, crew -> crew.id }) { index, crew ->
-            ListTile(index, finished.size) {
-                CrewRecordRow(crew) { onOpenCrew(crew.id) }
+            // Fades in, fades out and glides to its new place when the list changes.
+            Box(Modifier.animateItem()) {
+                ListTile(index, finished.size) {
+                    CrewRecordRow(crew) { onOpenCrew(crew.id) }
+                }
             }
         }
     }

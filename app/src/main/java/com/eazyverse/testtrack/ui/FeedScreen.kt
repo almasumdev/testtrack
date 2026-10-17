@@ -238,15 +238,18 @@ fun FeedScreen(
                                 item(key = "ask") { FeedAskButton(onPost = onAsk) }
                                 if (hold) items(3) { FeedLoadingCard() }
                                 items(if (hold) emptyList() else vm.openPosts, key = { it.id }) { post ->
-                                    // Group membership is required for closed testing only.
-                                    FeedRequestCard(post) {
-                                        // Signed out, a review cannot be claimed: ask for the account first.
-                                        if (vm.signedOut) {
-                                            onSignIn()
-                                        } else if (post.isLive) {
-                                            onReview(Json.encodeToString(post))
-                                        } else {
-                                            membership.require { onReview(Json.encodeToString(post)) }
+                                    // Fades in, fades out and glides to its new place when the list changes.
+                                    Box(Modifier.animateItem()) {
+                                        // Group membership is required for closed testing only.
+                                        FeedRequestCard(post) {
+                                            // Signed out, a review cannot be claimed: ask for the account first.
+                                            if (vm.signedOut) {
+                                                onSignIn()
+                                            } else if (post.isLive) {
+                                                onReview(Json.encodeToString(post))
+                                            } else {
+                                                membership.require { onReview(Json.encodeToString(post)) }
+                                            }
                                         }
                                     }
                                 }
@@ -285,7 +288,10 @@ fun FeedScreen(
                             ) {
                                 if (hold) items(4) { FeedLoadingCard(compact = true) }
                                 items(if (hold) emptyList() else vm.events, key = { it.id }) { event ->
-                                    FeedEventCard(event)
+                                    // Fades in, fades out and glides to its new place when the list changes.
+                                    Box(Modifier.animateItem()) {
+                                        FeedEventCard(event)
+                                    }
                                 }
                             }
                         }

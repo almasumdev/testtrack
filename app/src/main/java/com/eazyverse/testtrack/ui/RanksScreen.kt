@@ -212,15 +212,18 @@ fun RanksBody(
                 // Each person a tile of their own, three points apart, as Value Guard lists things:
                 // the gap separates them, and only the ends of the run are rounded.
                 itemsIndexed(rest, key = { _, row -> row.id }) { index, row ->
-                    val place =
-                        when {
-                            rest.size == 1 -> TilePlace.ONLY
-                            index == 0 -> TilePlace.FIRST
-                            index == rest.lastIndex -> TilePlace.LAST
-                            else -> TilePlace.MIDDLE
+                    // Fades in, fades out and glides to its new place when the list changes.
+                    Box(Modifier.animateItem()) {
+                        val place =
+                            when {
+                                rest.size == 1 -> TilePlace.ONLY
+                                index == 0 -> TilePlace.FIRST
+                                index == rest.lastIndex -> TilePlace.LAST
+                                else -> TilePlace.MIDDLE
+                            }
+                        Box(Modifier.padding(start = Gutter, end = Gutter, top = if (index > 0) 3.dp else 0.dp)) {
+                            BoardRowView(row, mine = row.id == mine?.id, room = room, shape = place.shape())
                         }
-                    Box(Modifier.padding(start = Gutter, end = Gutter, top = if (index > 0) 3.dp else 0.dp)) {
-                        BoardRowView(row, mine = row.id == mine?.id, room = room, shape = place.shape())
                     }
                 }
             }

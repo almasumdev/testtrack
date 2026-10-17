@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -132,13 +133,19 @@ fun AppsBody(
         if (running.isNotEmpty()) {
             item { CrewHeading("Going on", trailing = "${running.size}") }
             items(running, key = { it.id }) { app ->
-                MyAppCard(app, Modifier.padding(horizontal = Gutter, vertical = 5.dp), onOpen = { onOpen(app) })
+                // Fades in, fades out and glides to its new place when the list changes.
+                Box(Modifier.animateItem()) {
+                    MyAppCard(app, Modifier.padding(horizontal = Gutter, vertical = 5.dp), onOpen = { onOpen(app) })
+                }
             }
         }
         if (over.isNotEmpty()) {
             item { CrewHeading("Finished", trailing = "${over.size}") }
             itemsIndexed(over, key = { _, app -> app.id }) { index, app ->
-                ListTile(index, over.size) { MyAppRow(app, onOpen = { onOpen(app) }) }
+                // Fades in, fades out and glides to its new place when the list changes.
+                Box(Modifier.animateItem()) {
+                    ListTile(index, over.size) { MyAppRow(app, onOpen = { onOpen(app) }) }
+                }
             }
         }
     }
