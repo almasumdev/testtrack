@@ -259,7 +259,7 @@ fun FeedScreen(
                 // Nothing about this tab is a different kind of list, so nothing about it is
                 // measured differently: what tells the two apart is what is inside a card.
                 FeedTab.ACTIVITY ->
-                    LoadSwap(DebugLooks.holdLoading || (vm.loading && vm.events.isEmpty())) { hold ->
+                    LoadSwap(DebugLooks.holdLoading || (!vm.answered && vm.events.isEmpty())) { hold ->
                         if (!hold && !vm.loading && vm.events.isEmpty()) {
                             if (vm.offline || vm.activityFailed) {
                                 RobotOffline("Activity didn't load", onRetry = { vm.load(context) })
@@ -292,7 +292,7 @@ fun FeedScreen(
                     }
 
                 FeedTab.MINE ->
-                    LoadSwap(DebugLooks.holdLoading || (vm.loading && vm.mine.isEmpty() && !vm.signedOut)) { waiting ->
+                    LoadSwap(DebugLooks.holdLoading || (!vm.answered && vm.mine.isEmpty() && !vm.signedOut)) { waiting ->
                         if (waiting) {
                             FeedLoadingList()
                             return@LoadSwap
@@ -312,7 +312,7 @@ fun FeedScreen(
                 FeedTab.WAITING ->
                     LoadSwap(
                         DebugLooks.holdLoading ||
-                            (vm.loading && vm.waiting.isEmpty() && vm.disputes.isEmpty() && !vm.signedOut),
+                            (!vm.answered && vm.waiting.isEmpty() && vm.disputes.isEmpty() && !vm.signedOut),
                     ) { waiting ->
                         if (waiting) {
                             FeedLoadingList()

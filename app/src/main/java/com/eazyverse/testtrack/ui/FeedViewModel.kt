@@ -77,6 +77,16 @@ class FeedViewModel : ViewModel() {
     var loading by mutableStateOf(true)
         private set
 
+    /**
+     * Whether a fetch from the server has finished since the app started, answered or failed.
+     *
+     * Saved data with something in it shows at once, but saved data that is empty is only last
+     * time's answer: each tab waits for this before it says it has nothing, so "nothing has
+     * happened yet" is never shown from memory and then contradicted.
+     */
+    var answered by mutableStateOf(false)
+        private set
+
     var message by mutableStateOf<String?>(null)
         private set
 
@@ -211,6 +221,7 @@ class FeedViewModel : ViewModel() {
                 offline = true
             } finally {
                 loading = false
+                answered = true
             }
         }
     }
