@@ -266,6 +266,13 @@ val DialogBody: TextStyle
 
 private val DialogShape = RoundedCornerShape(18.dp)
 
+/**
+ * What is typed in a field, and its hint at the same size. Larger than a dialog's words and, once
+ * typed, a step heavier: at the body's size and weight it read as thin and faint inside the box.
+ */
+private val FieldText: TextStyle
+    @Composable get() = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp, lineHeight = 21.sp)
+
 /** A field inside [Ask], matching the shape the rest of the app uses for one. */
 @Composable
 fun DialogField(
@@ -314,11 +321,11 @@ fun DialogField(
             onValueChange = onValueChange,
             placeholder =
                 placeholder?.let {
-                    { Text(it, style = DialogBody, color = Tt.colors.text4.copy(alpha = 0.8f)) }
+                    { Text(it, style = FieldText, color = Tt.colors.text4.copy(alpha = 0.8f)) }
                 },
             singleLine = singleLine,
             isError = isError,
-            textStyle = DialogBody.copy(color = Tt.colors.text),
+            textStyle = FieldText.copy(color = Tt.colors.text, fontWeight = FontWeight.Medium),
             shape = RoundedCornerShape(8.dp),
             // A keyboard that says Done and inserts a newline is lying about its own button, so a
             // field taking more than one line does not get to name the action.
