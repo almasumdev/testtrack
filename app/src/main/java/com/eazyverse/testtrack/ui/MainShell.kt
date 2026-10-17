@@ -91,6 +91,7 @@ fun MainShell(
     onReview: (String) -> Unit,
     onSignOut: () -> Unit,
     onCheck: (String) -> Unit = {},
+    onOpenAbout: () -> Unit = {},
     /** Set by a tapped crew notification; cleared once the Crew tab is showing. */
     openCrew: MutableState<Boolean> = remember { mutableStateOf(false) },
     hudVm: HudViewModel = viewModel(),
@@ -262,6 +263,8 @@ fun MainShell(
                                 MeScreen(
                                     onSignOut = onSignOut,
                                     onOpenRanks = { show(MainTab.RANKS) },
+                                    notifications = Session.notificationsGranted,
+                                    onAbout = onOpenAbout,
                                     onSignIn = {
                                         asking =
                                             SignInReason(

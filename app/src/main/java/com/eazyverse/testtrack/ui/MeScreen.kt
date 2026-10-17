@@ -40,7 +40,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,15 +48,8 @@ import coil.compose.AsyncImage
 import com.composables.icons.lucide.CalendarDays
 import com.composables.icons.lucide.Camera
 import com.composables.icons.lucide.Clock
-import com.composables.icons.lucide.ExternalLink
-import com.composables.icons.lucide.HardDrive
-import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
-import com.composables.icons.lucide.ShieldCheck
-import com.composables.icons.lucide.Trash2
-import com.composables.icons.lucide.Users
-import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.net.ApiProfile
@@ -74,6 +66,9 @@ fun MeScreen(
     onSignOut: () -> Unit,
     onSignIn: () -> Unit = {},
     onOpenRanks: () -> Unit = {},
+    /** Whether notifications are allowed, read live by the shell; shown on the Notifications row. */
+    notifications: Boolean = false,
+    onAbout: () -> Unit = {},
     vm: MeViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -102,6 +97,8 @@ fun MeScreen(
         onSignOut = onSignOut,
         onSignIn = onSignIn,
         onOpenRanks = onOpenRanks,
+        notifications = notifications,
+        onAbout = onAbout,
         onRetry = { vm.load(context) },
         drive = if (drive.busy) null else drive.connected,
         group = membership.member,
@@ -139,6 +136,8 @@ fun MeBody(
     onSignOut: () -> Unit = {},
     onSignIn: () -> Unit = {},
     onOpenRanks: () -> Unit = {},
+    notifications: Boolean = false,
+    onAbout: () -> Unit = {},
     drive: Boolean? = null,
     onDrive: () -> Unit = {},
     group: Boolean = false,
@@ -184,16 +183,17 @@ fun MeBody(
                 )
             }
         }
-        item { SectionTitle("Account") }
-        item { Account(onEdit = onEdit, onSignOut = onSignOut, drive = drive, onDrive = onDrive, group = group, onGroup = onGroup) }
-        item { Spacer(Modifier.height(24.dp)) }
+        // The version moved to About, which is where somebody looks for it.
         item {
-            Text(
-                "v${BuildConfig.VERSION_NAME}",
-                Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.labelMedium,
-                color = Tt.colors.text4,
-                textAlign = TextAlign.Center,
+            MeSettings(
+                onEdit = onEdit,
+                onSignOut = onSignOut,
+                drive = drive,
+                onDrive = onDrive,
+                group = group,
+                onGroup = onGroup,
+                notifications = notifications,
+                onAbout = onAbout,
             )
         }
     }
@@ -201,7 +201,7 @@ fun MeBody(
 
 /** A heading inside the page's own gutter, the list's padding already having taken it. */
 @Composable
-private fun SectionTitle(text: String) {
+internal fun SectionTitle(text: String) {
     Text(
         text,
         Modifier.padding(top = 16.dp, bottom = 10.dp),
@@ -309,77 +309,6 @@ private fun localTime(zone: String): String? =
         .replace('_', ' ')
         .takeIf { it.isNotBlank() && zone.contains('/') }
         ?.let { "$it time" }
-
-/** Where the policy and the deletion request live. The site owns both pages. */
-private const val SITE = "https://eazyverse.com/apps/testtrack"
-
-/** Google's list of apps with access to the account, where Drive access can be removed. */
-private const val GOOGLE_CONNECTIONS = "https://myaccount.google.com/connections"
-
-/**
- * Everything you can do to the account, as one group of tiles.
- *
- * Value Guard's settings group: each row its own tile with an icon tile at the front, three points
- * apart, only the outer corners round. Sign out is the red one at the end, the policy and the way to
- * delete the account sit beside it where Play and the person reading both expect to find them.
- */
-@Composable
-private fun Account(
-    onEdit: () -> Unit,
-    onSignOut: () -> Unit,
-    drive: Boolean?,
-    onDrive: () -> Unit,
-    group: Boolean,
-    onGroup: () -> Unit,
-) {
-    val links = LocalUriHandler.current
-    val out: @Composable () -> Unit = {
-        Icon(Lucide.ExternalLink, null, Modifier.size(17.dp), tint = Tt.colors.text4)
-    }
-    TileGroup(count = 6) { index, place ->
-        when (index) {
-            0 -> TileRow(Lucide.Pencil, "Edit profile", place, subtitle = "Your name and picture", onClick = onEdit)
-            1 ->
-                TileRow(
-                    Lucide.Users,
-                    "Testers group",
-                    place,
-                    subtitle = "Lets owners add you to closed tests",
-                    value = if (group) "Joined" else "Join",
-                    onClick = onGroup,
-                )
-            2 ->
-                TileRow(
-                    Lucide.HardDrive,
-                    "Google Drive",
-                    place,
-                    subtitle = "Keeps your proof screenshots",
-                    value =
-                        when (drive) {
-                            true -> "Connected"
-                            false -> "Connect"
-                            null -> "Checking"
-                        },
-                    onClick = if (drive == null) null else onDrive,
-                )
-            3 ->
-                TileRow(Lucide.ShieldCheck, "Privacy policy", place, trailing = out) {
-                    links.openUri("$SITE/privacy")
-                }
-            4 ->
-                TileRow(
-                    Lucide.Trash2,
-                    "Request account deletion",
-                    place,
-                    subtitle = "Review processing and retention details",
-                    trailing = out,
-                ) {
-                    links.openUri("$SITE/delete-account")
-                }
-            else -> TileRow(Lucide.LogOut, "Sign out", place, danger = true, onClick = onSignOut)
-        }
-    }
-}
 
 /**
  * "1st", "2nd", "3rd".

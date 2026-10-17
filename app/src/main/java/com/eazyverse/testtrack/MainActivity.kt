@@ -67,6 +67,7 @@ object Routes {
 
     /** Asking the circle to look at your app. A page, because finding the app is its own step. */
     const val ASK = "ask"
+    const val ABOUT = "about"
     const val REVIEW = "review?post={post}"
 
     fun review(post: String) = "review?post=${Uri.encode(post)}"
@@ -270,6 +271,7 @@ fun AppNav(openCrew: MutableState<Boolean> = remember { mutableStateOf(false) })
                 onAskForFeedback = { nav.push(Routes.ASK) },
                 onReview = { nav.push(Routes.review(it)) },
                 onCheck = { nav.push(Routes.check(it)) },
+                onOpenAbout = { nav.push(Routes.ABOUT) },
                 openCrew = openCrew,
                 // The same teardown the other two do, and for the same reason: `replace` pops
                 // everything above the graph root, so the shell does not survive underneath a
@@ -312,6 +314,10 @@ fun AppNav(openCrew: MutableState<Boolean> = remember { mutableStateOf(false) })
                     onOpen = { nav.push(Routes.check(it)) },
                 )
             }
+        }
+
+        composable(Routes.ABOUT) {
+            Inset { AboutScreen(onBack = { nav.popBackStack() }) }
         }
 
         composable(Routes.ASK) {

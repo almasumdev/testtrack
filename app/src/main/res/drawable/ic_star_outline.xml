@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The rating star: five points, hollow, stroked.
+
+  Hollow on purpose. A filled star is how an app states the rating it already has; these
+  state nothing, they ask. No app of ours draws a partial or a filled star on an About page.
+
+  Stroked inside its own bounds - outer radius 9.5 plus half the 1.8 pen stays inside the
+  24dp box - so the points never clip against the edge of a touch target. Tint it with the
+  app's own gold/amber at the call site; nothing here carries a colour.
+
+  Copy into res/drawable/ic_star_outline.xml. Drawn at 28-30dp inside a 48dp target.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.8"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="M12,2.5L14.57,8.46L21.04,9.06L16.16,13.35L17.58,19.69L12,16.37L6.42,19.69L7.84,13.35L2.96,9.06L9.43,8.46z" />
+</vector>

@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -172,6 +173,8 @@ fun TileRow(
     value: String? = null,
     danger: Boolean = false,
     trailing: (@Composable () -> Unit)? = null,
+    /** A subtitle with styling in it, such as the gold stars in the rating row. Wins over [subtitle]. */
+    subtitleRich: AnnotatedString? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val t = Tt.colors
@@ -190,20 +193,25 @@ fun TileRow(
         IconTile(icon, danger = danger)
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
+            // Title and subtitle together are exactly as tall as the 36dp icon tile beside them: a
+            // 20sp line and a 16sp one, with nothing between. Every row lines up the same way, and a
+            // subtitle never runs to a second line and pushes its row taller than the others.
             Text(
                 title,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp),
+                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
                 fontWeight = FontWeight.SemiBold,
                 color = if (danger) t.bad else t.text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (subtitle != null) {
-                Spacer(Modifier.height(3.dp))
+            val sub = subtitleRich ?: subtitle?.let { AnnotatedString(it) }
+            if (sub != null) {
                 Text(
-                    subtitle,
+                    sub,
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
                     color = t.text3,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }

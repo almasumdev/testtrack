@@ -729,4 +729,5 @@ def main():
     print(len(made), 'drawables;', ' '.join(groups))
 
 
-main()
+if __name__ == "__main__":
+    main()
