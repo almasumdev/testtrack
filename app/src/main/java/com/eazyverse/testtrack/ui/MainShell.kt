@@ -69,7 +69,7 @@ enum class MainTab(
     GROUPS("Crew", Lucide.Users),
     RANKS("Ranks", Lucide.Trophy),
     APPS("My apps", Lucide.LayoutGrid),
-    PROFILE("Profile", Lucide.User),
+    PROFILE("You", Lucide.User),
 }
 
 /**
