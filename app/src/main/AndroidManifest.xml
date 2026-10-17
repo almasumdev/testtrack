@@ -92,6 +92,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:configChanges="uiMode"
             android:theme="@style/Theme.TestTrack.Starting"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>

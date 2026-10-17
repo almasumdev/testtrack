@@ -107,10 +107,11 @@ private fun TtTokens.scheme(): ColorScheme {
 }
 
 /**
- * TestTrack in Value Guard's Ocean blue, light or dark with the phone.
+ * TestTrack in Value Guard's Ocean blue, light or dark.
  *
  * It was always dark, which suited a tool opened at the same hour every evening and nobody else.
- * The palette it follows now was built and checked in both, so the phone's own setting decides.
+ * The palette it follows now was built and checked in both: the phone's own setting decides,
+ * unless Light or Dark was chosen on the You page (see ThemeChoice).
  */
 @Composable
 fun TestTrackTheme(

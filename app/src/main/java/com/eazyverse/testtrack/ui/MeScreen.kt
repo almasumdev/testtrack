@@ -164,6 +164,7 @@ fun MeBody(
                     )
                 }
             }
+            item { AppearanceGroup() }
             item { SupportGroup(onAbout) }
             item { VersionLine() }
         }

@@ -36,8 +36,8 @@ private const val SITE = "https://eazyverse.com/apps/testtrack"
 internal const val GOOGLE_CONNECTIONS = "https://myaccount.google.com/connections"
 
 /**
- * Everything on Profile that is a setting rather than your record, in three groups by what it is
- * for: what testing needs, where to get help and say something, and the account itself.
+ * Everything on Profile that is a setting rather than your record, in groups by what it is for:
+ * what testing needs, how the app looks, where to get help and say something, and the account.
  *
  * It was one group called Account holding all of it, so the testers group, the privacy policy and
  * Sign out read as the same kind of thing. Now each heading says what is under it, the account's
@@ -97,6 +97,8 @@ internal fun MeSettings(
                     )
             }
         }
+
+        AppearanceGroup()
 
         SupportGroup(onAbout)
 

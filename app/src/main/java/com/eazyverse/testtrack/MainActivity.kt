@@ -11,6 +11,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -54,6 +55,7 @@ import com.eazyverse.testtrack.ui.JoinGroupDialog
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
 import com.eazyverse.testtrack.viewmodel.MembershipViewModel
+import com.eazyverse.testtrack.viewmodel.ThemeChoice
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
@@ -110,7 +112,8 @@ class MainActivity : ComponentActivity() {
         AppUpdateService.applyCachedDecision()
         openCrew.value = intent?.getBooleanExtra(EXTRA_OPEN_CREW, false) == true
         setContent {
-            TestTrackTheme {
+            // The theme chosen on the You page, or the phone's own. See [ThemeChoice].
+            TestTrackTheme(darkTheme = ThemeChoice.isDark(isSystemInDarkTheme())) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     // Edge-to-edge is mandatory from Android 15. Every pushed screen takes the safe
                     // drawing inset through [Inset] (status bar, cutout, nav bar and keyboard); the

@@ -4,6 +4,7 @@ import android.app.Application
 import com.eazyverse.testtrack.data.AppUpdateService
 import com.eazyverse.testtrack.data.Telemetry
 import com.eazyverse.testtrack.viewmodel.ReviewMoment
+import com.eazyverse.testtrack.viewmodel.ThemeChoice
 
 /**
  * Process start, which is not the same thing as the app being opened.
@@ -23,5 +24,6 @@ class App : Application() {
         AppUpdateService.init(this)
         Telemetry.init(this)
         ReviewMoment.onSessionStart(this)
+        ThemeChoice.init(this)
     }
 }
