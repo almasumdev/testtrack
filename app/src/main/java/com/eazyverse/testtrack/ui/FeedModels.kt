@@ -64,6 +64,9 @@ object FeedRules {
 
     /** The focus question on the post form: a sentence. */
     const val ASK_MAX = 200
+
+    /** An app's name on a post, as the server takes it (PostIn.app_name). */
+    const val APP_NAME_MAX = 60
 }
 
 /**

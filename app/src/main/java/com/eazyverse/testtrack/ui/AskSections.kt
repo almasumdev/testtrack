@@ -140,11 +140,13 @@ internal fun AskMessage(failure: AskFailure) {
         Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Icon(Lucide.CircleAlert, "Error", Modifier.size(20.dp), tint = Tt.colors.bad)
+        // Amber when the fault is ours and there is a way on; red when something needs fixing.
+        val tone = if (failure.ours) Tt.colors.warn else Tt.colors.bad
+        Icon(Lucide.CircleAlert, "Error", Modifier.size(20.dp), tint = tone)
         Column {
-            Text(failure.title, color = Tt.colors.bad, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(failure.title, color = tone, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(4.dp))
-            Text(failure.detail, color = Tt.colors.bad, style = MaterialTheme.typography.bodySmall)
+            Text(failure.detail, color = tone, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

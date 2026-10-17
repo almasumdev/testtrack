@@ -16,6 +16,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.net.URI
+import java.net.URLDecoder
 
 /**
  * Two steps: find the app, then say what you want looked at.
@@ -50,6 +52,22 @@ class AskViewModel : ViewModel() {
         private set
 
     var failure by mutableStateOf<AskFailure?>(null)
+        private set
+
+    /**
+     * The closed testing lookup could not run on our side: the signed-in browser is signed out,
+     * down or not set up. Nothing is wrong with the app, and the server never needed the lookup to
+     * accept a post (it is how a typo is caught, not a gate), so the name is typed instead.
+     */
+    var byHand by mutableStateOf(false)
+        private set
+
+    /** The app's name, typed while the lookup is down. */
+    var handName by mutableStateOf("")
+        private set
+
+    /** What was found came from the person, not from Play. Said on the page so nobody forgets. */
+    var unchecked by mutableStateOf(false)
         private set
     var needsSignIn by mutableStateOf(false)
         private set
@@ -127,6 +145,7 @@ class AskViewModel : ViewModel() {
         lookupJob?.cancel()
         looking = false
         failure = null
+        byHand = false
     }
 
     val cost: Int get() = FeedRules.postCost(reward, reviewCount)
@@ -156,12 +175,37 @@ class AskViewModel : ViewModel() {
         clearLookup()
         isLive = next
         found = null
+        unchecked = false
     }
 
     /** Back to the first step, keeping what was typed so a wrong paste can be corrected. */
     fun startOver() {
         clearLookup()
         found = null
+        unchecked = false
+    }
+
+    /** The package in the link, read the way the server reads it. */
+    val typedPackage: String? get() = packageFrom(query)
+
+    val canUseByHand: Boolean get() = typedPackage != null && handName.isNotBlank()
+
+    fun enterByHand() {
+        failure = null
+        byHand = true
+    }
+
+    fun typeName(next: String) {
+        handName = next.take(FeedRules.APP_NAME_MAX)
+    }
+
+    /** Carry on to the request with what was typed, as though Play had answered with it. */
+    fun useByHand() {
+        val pkg = typedPackage ?: return
+        if (handName.isBlank()) return
+        found = Listing(`package` = pkg, name = handName.trim())
+        unchecked = true
+        byHand = false
     }
 
     fun look() {
@@ -175,6 +219,9 @@ class AskViewModel : ViewModel() {
         lookupJob =
             viewModelScope.launch {
                 try {
+                    if (DebugLooks.failClosedLookup && !isLive) {
+                        throw ApiError(503, "listing_unavailable", "Debug: closed testing lookup is off in DebugLooks.")
+                    }
                     found = Api.lookupApp(query.trim(), closed = !isLive)
                 } catch (error: CancellationException) {
                     throw error
@@ -182,7 +229,7 @@ class AskViewModel : ViewModel() {
                     if (error is ApiError && error.isAuth) {
                         requestSignIn(lookup = true)
                     } else {
-                        failure = lookupFailure(error)
+                        failure = lookupFailure(error, closed = !isLive)
                     }
                 } finally {
                     if (isActive) looking = false
@@ -297,9 +344,16 @@ data class AskFailure(
     val title: String,
     val detail: String,
     val invalidLink: Boolean = false,
+    /** Typing the details instead is offered: our lookup is down, or Play is slow to show it. */
+    val byHand: Boolean = false,
+    /** The fault is ours, not their app's, so it is said in amber rather than red. */
+    val ours: Boolean = byHand,
 )
 
-internal fun lookupFailure(error: Throwable): AskFailure =
+internal fun lookupFailure(
+    error: Throwable,
+    closed: Boolean = false,
+): AskFailure =
     when {
         error !is ApiError -> AskFailure("Couldn't connect", "Check your internet connection, then try again. Your app link is still here.")
         error.code == "package_unreadable" ->
@@ -314,11 +368,45 @@ internal fun lookupFailure(error: Throwable): AskFailure =
                 "Check the package name. If your app isn't public yet, choose Closed testing.",
                 invalidLink = true,
             )
+        // Usually the testers group missing from the track, but Play can take hours to show a
+        // closed track once the group is added, so the owner can still go on, warned.
         error.code == "listing_not_visible" ->
             AskFailure(
                 "We can't access this listing",
-                "Check that the testers group is added to your closed track and the release is available.",
+                "Check that the testers group is added to your closed track and the release is available. " +
+                    "Just added it? Play can take a few hours; you can enter the details yourself.",
+                byHand = true,
+                ours = false,
+            )
+        error.code == "listing_unavailable" && closed ->
+            AskFailure(
+                "Play check is down on our side",
+                "Your app is fine. Try again, or enter its details yourself and post now.",
+                byHand = true,
             )
         error.code == "listing_unavailable" -> AskFailure("App lookup is unavailable", error.message)
         else -> AskFailure("Couldn't find your app", error.message)
     }
+
+private val PACKAGE_NAME = Regex("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+")
+
+/**
+ * The package name in what was pasted, accepted exactly as the server's app/services/packages.py
+ * accepts it: a bare package name, or a play.google.com or market link carrying `?id=`.
+ */
+internal fun packageFrom(query: String): String? {
+    val text = query.trim()
+    if (PACKAGE_NAME.matches(text) && text.length <= 255) return text
+    val uri = runCatching { URI(if ("//" in text) text else "https://$text") }.getOrNull() ?: return null
+    if (uri.host !in setOf("play.google.com", "market.android.com") && uri.scheme != "market") return null
+    val id =
+        uri.rawQuery
+            .orEmpty()
+            .split('&')
+            .firstOrNull { it.startsWith("id=") }
+            ?.removePrefix("id=")
+            ?.let { URLDecoder.decode(it, "UTF-8") }
+            ?.trim()
+            .orEmpty()
+    return id.takeIf { PACKAGE_NAME.matches(it) && it.length <= 255 }
+}

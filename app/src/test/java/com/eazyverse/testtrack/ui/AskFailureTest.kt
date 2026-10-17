@@ -37,4 +37,31 @@ class AskFailureTest {
         assertFalse(failure.invalidLink)
         assertEquals(detail, failure.detail)
     }
+
+    @Test
+    fun aClosedLookupThatCannotRunOffersTypingTheDetailsInAmber() {
+        val failure = lookupFailure(ApiError(503, "listing_unavailable", "x"), closed = true)
+        assertTrue(failure.byHand)
+        assertTrue(failure.ours)
+        assertFalse(lookupFailure(ApiError(503, "listing_unavailable", "x"), closed = false).byHand)
+    }
+
+    @Test
+    fun aHiddenClosedListingOffersTypingTheDetailsButStaysRed() {
+        val failure = lookupFailure(ApiError(404, "listing_not_visible", "x"), closed = true)
+        assertTrue(failure.byHand)
+        assertFalse(failure.ours)
+        assertFalse(lookupFailure(ApiError(404, "listing_not_found", "x"), closed = true).byHand)
+    }
+
+    @Test
+    fun thePackageIsReadFromALinkAsTheServerReadsIt() {
+        assertEquals("com.example.app", packageFrom(" com.example.app "))
+        assertEquals("com.example.app", packageFrom("https://play.google.com/store/apps/details?id=com.example.app&hl=en"))
+        assertEquals("com.example.app", packageFrom("play.google.com/store/apps/details?hl=en&id=com.example.app"))
+        assertEquals("com.example.app", packageFrom("market://details?id=com.example.app"))
+        assertEquals(null, packageFrom("https://example.com/?id=com.example.app"))
+        assertEquals(null, packageFrom("not a package"))
+        assertEquals(null, packageFrom("com"))
+    }
 }

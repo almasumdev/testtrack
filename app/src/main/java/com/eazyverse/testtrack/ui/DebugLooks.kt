@@ -23,4 +23,13 @@ object DebugLooks {
     private const val SHOW_RATING_ASK = false
 
     val showRatingAsk: Boolean get() = BuildConfig.DEBUG && SHOW_RATING_ASK
+
+    /**
+     * Answer every closed testing lookup as though our Play check were down (the signed-in browser
+     * signed out), so Ask for feedback offers "Enter details yourself" ([ByHandForm]). Live apps
+     * still look up as normal. Set back to false when done.
+     */
+    private const val FAIL_CLOSED_LOOKUP = false
+
+    val failClosedLookup: Boolean get() = BuildConfig.DEBUG && FAIL_CLOSED_LOOKUP
 }

@@ -164,7 +164,17 @@ private fun Finding(vm: AskViewModel) {
         Spacer(Modifier.height(14.dp))
         AskMessage(it)
     }
+    if (vm.byHand) {
+        Spacer(Modifier.height(18.dp))
+        ByHandForm(vm)
+        return
+    }
     Spacer(Modifier.height(16.dp))
+    // Our check is down, not their app: the way on that does not need it.
+    if (vm.failure?.byHand == true) {
+        Secondary("Enter details yourself", Modifier.fillMaxWidth(), onClick = vm::enterByHand)
+        Spacer(Modifier.height(10.dp))
+    }
     Primary(
         if (vm.looking) {
             "Finding your app..."
@@ -219,5 +229,9 @@ private fun Found(vm: AskViewModel) {
             color = Tt.colors.accentInk,
             fontWeight = FontWeight.Medium,
         )
+    }
+    if (vm.unchecked) {
+        Spacer(Modifier.height(8.dp))
+        UncheckedNote()
     }
 }
