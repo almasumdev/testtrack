@@ -84,7 +84,7 @@ fun MineBody(
 ) {
     if (signedOut) {
         RobotState(
-            Prop.Key,
+            Prop.Lock,
             "Your reviews live here",
             "Sign in to review apps and follow each one until it is paid.",
             action = "Sign in",

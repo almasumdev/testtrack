@@ -108,7 +108,13 @@ private fun RobotFigure(
                     Image(painterResource(R.drawable.level_robot_head), null, Modifier.matchParentSize())
                     val face = prop.face
                     if (face != null) {
-                        Image(painterResource(face), null, Modifier.matchParentSize())
+                        Image(
+                            painterResource(face),
+                            null,
+                            Modifier.matchParentSize().graphicsLayer {
+                                prop.faceMotion?.run { at(clock(), this@graphicsLayer.size.width / 880f) }
+                            },
+                        )
                     } else {
                         Image(
                             painterResource(R.drawable.level_robot_eyes),
@@ -119,14 +125,16 @@ private fun RobotFigure(
                             },
                         )
                     }
-                    Image(
-                        painterResource(R.drawable.level_robot_antenna),
-                        null,
-                        Modifier.matchParentSize().graphicsLayer {
-                            transformOrigin = TransformOrigin((627f - 185f) / 880f, (278f - 110f) / 980f)
-                            rotationZ = (lift() - 0.5f) * 8f
-                        },
-                    )
+                    if (prop.antenna) {
+                        Image(
+                            painterResource(R.drawable.level_robot_antenna),
+                            null,
+                            Modifier.matchParentSize().graphicsLayer {
+                                transformOrigin = TransformOrigin((627f - 185f) / 880f, (278f - 110f) / 980f)
+                                rotationZ = (lift() - 0.5f) * 8f
+                            },
+                        )
+                    }
                     prop.head.forEach { PropImage(it, clock) }
                 }
                 // What it holds, between the head and the hands so the hands close over it.

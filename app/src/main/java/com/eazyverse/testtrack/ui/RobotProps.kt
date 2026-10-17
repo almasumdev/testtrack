@@ -25,6 +25,10 @@ enum class Prop(
     internal val head: List<PropLayer> = emptyList(),
     /** How the whole head moves, about the neck. */
     internal val nod: Motion? = null,
+    /** How the face alone moves, such as eyes glancing side to side. */
+    internal val faceMotion: Motion? = null,
+    /** False where something worn on the head, a hard hat or a cloud, takes the antenna's place. */
+    internal val antenna: Boolean = true,
 ) {
     /** Nobody is asking for feedback: headphones on, grooving to a cassette while it waits. */
     Music(
@@ -40,23 +44,29 @@ enum class Prop(
         nod = Rock(deg = 5f, period = 960f),
     ),
 
-    /** Nobody on the board yet. */
+    /** Nobody on the board yet: holding the trophy, its eyes glancing round for anybody else. */
     Trophy(
         PropLayer(R.drawable.robot_prop_trophy),
         PropLayer(R.drawable.robot_prop_trophy_spark1, Pulse(0f, 1600f)),
         PropLayer(R.drawable.robot_prop_trophy_spark2, Pulse(0.5f, 1600f)),
+        face = R.drawable.robot_prop_trophy_face,
+        faceMotion = Rock(dx = 22f),
+        head = listOf(PropLayer(R.drawable.robot_prop_trophy_cheeks)),
     ),
 
-    /** No apps sent yet: a phone with empty slots and one to fill. */
+    /** No apps sent yet: a phone with empty slots and one to fill, looked at hopefully. */
     Phone(
         PropLayer(R.drawable.robot_prop_phone),
         PropLayer(R.drawable.robot_prop_phone_plus, Rock(dy = 7f, period = 1600f)),
+        face = R.drawable.robot_prop_phone_face,
     ),
 
-    /** Sign in first. */
-    Key(
-        PropLayer(R.drawable.robot_prop_key, Rock(deg = 3f), px = 627f, py = 905f),
-        PropLayer(R.drawable.robot_prop_key_spark, Pulse(0f, 1600f)),
+    /** Signed out: a padlock on your reviews, the key in the other hand nudging toward its keyhole. */
+    Lock(
+        PropLayer(R.drawable.robot_prop_lock_padlock),
+        PropLayer(R.drawable.robot_prop_lock_key, Rock(dx = -18f, period = 1600f)),
+        PropLayer(R.drawable.robot_prop_lock_glint, Pulse(0f, 1600f)),
+        face = R.drawable.robot_prop_lock_face,
     ),
 
     /** No reviews taken on yet: glasses on, notepad out, the pencil tapping, ready to write one. */
@@ -106,56 +116,94 @@ enum class Prop(
         face = R.drawable.robot_prop_calendar_face,
     ),
 
-    /** Did not load: the two ends of a cable, not quite meeting. */
+    /** Did not load: the two ends of a cable, not quite meeting; worried brows and an "oh". */
     Plug(
         PropLayer(R.drawable.robot_prop_plug_left, Rock(dx = 10f, period = 1200f)),
         PropLayer(R.drawable.robot_prop_plug_right, Rock(dx = -10f, period = 1200f)),
         PropLayer(R.drawable.robot_prop_plug_spark, Pulse(0.25f, 1200f)),
+        face = R.drawable.robot_prop_plug_face,
     ),
 
-    /** Loading. */
+    /** Loading: hard hat on, tongue out in concentration, the gears turning. */
     Gears(
         PropLayer(R.drawable.robot_prop_gear_big, Spin(2f), px = 545f, py = 902f),
         PropLayer(R.drawable.robot_prop_gear_small, Spin(-3f), px = 715f, py = 797f),
+        face = R.drawable.robot_prop_gear_face,
+        head = listOf(PropLayer(R.drawable.robot_prop_gear_hat)),
+        antenna = false,
     ),
 
-    /** Waiting on someone: turned over now and then. */
-    Hourglass(
-        PropLayer(R.drawable.robot_prop_hourglass, Turn, px = 627f, py = 872f),
+    /** Sent: a sealed letter with a heart floats up out of its hands, off to the developer. */
+    Letter(
+        PropLayer(R.drawable.robot_prop_letter_whoosh, Pulse(0f, 1200f)),
+        PropLayer(R.drawable.robot_prop_letter_letter, Rise(dx = 120f, dy = -260f, delay = 0.2f), px = 627f, py = 920f),
+        face = R.drawable.robot_prop_letter_face,
     ),
 
-    /** Approved. */
+    /** Approved: the green seal, and eyes squeezed shut with a big smile. */
     Seal(
         PropLayer(R.drawable.robot_prop_seal, Rock(deg = 4f), px = 627f, py = 870f),
         PropLayer(R.drawable.robot_prop_seal_spark1, Pulse(0f, 1600f)),
         PropLayer(R.drawable.robot_prop_seal_spark2, Pulse(0.5f, 1600f)),
+        face = R.drawable.robot_prop_seal_face,
     ),
 
-    /** Being decided. */
+    /** Being decided: the scales tipping, looked up at with one brow raised. */
     Scales(
         PropLayer(R.drawable.robot_prop_scales_stand),
         PropLayer(R.drawable.robot_prop_scales_beam, Rock(deg = 7f), px = 627f, py = 786f),
         // The beam's ends rise and fall by its half-length times sin 7°.
         PropLayer(R.drawable.robot_prop_scales_pan_left, Rock(dy = -23f)),
         PropLayer(R.drawable.robot_prop_scales_pan_right, Rock(dy = 23f)),
+        face = R.drawable.robot_prop_scales_face,
     ),
 
-    /** Not paid: an empty wallet with a moth flying out. */
+    /** Not paid: teary under its own little rain cloud, the wallet empty and a moth flying out. */
     Wallet(
         PropLayer(R.drawable.robot_prop_wallet),
         PropLayer(R.drawable.robot_prop_wallet_moth, Rock(deg = 10f, dy = -16f, period = 1200f), px = 627f, py = 768f),
+        face = R.drawable.robot_prop_wallet_face,
+        head =
+            listOf(
+                PropLayer(R.drawable.robot_prop_wallet_cloud),
+                PropLayer(R.drawable.robot_prop_wallet_drop1, Rise(dx = 0f, dy = 140f, delay = 0f, period = 1200f), px = 540f, py = 280f),
+                PropLayer(
+                    R.drawable.robot_prop_wallet_drop2,
+                    Rise(dx = 0f, dy = 140f, delay = 0.33f, period = 1200f),
+                    px = 627f,
+                    py = 280f,
+                ),
+                PropLayer(
+                    R.drawable.robot_prop_wallet_drop3,
+                    Rise(dx = 0f, dy = 140f, delay = 0.66f, period = 1200f),
+                    px = 714f,
+                    py = 280f,
+                ),
+            ),
+        antenna = false,
     ),
 
-    /** Given up: a white flag. */
+    /** Given up: an awkward grin and a sweat drop, the white flag fluttering. */
     Flag(
         PropLayer(R.drawable.robot_prop_flag_pole),
-        PropLayer(R.drawable.robot_prop_flag_cloth, Rock(deg = 4f, period = 1600f), px = 492f, py = 782f),
+        PropLayer(R.drawable.robot_prop_flag_cloth, Rock(deg = 6f, period = 1200f), px = 492f, py = 782f),
+        face = R.drawable.robot_prop_flag_face,
+        head =
+            listOf(
+                PropLayer(R.drawable.robot_prop_flag_sweat, Rise(dx = 0f, dy = 60f, delay = 0f, period = 1600f), px = 905f, py = 330f),
+            ),
     ),
 
-    /** Ran out of time. */
+    /** Ran out: fast asleep while the alarm clock rattles away in its hands. */
     Clock(
-        PropLayer(R.drawable.robot_prop_clock, Shake(8f), px = 627f, py = 1040f),
-        PropLayer(R.drawable.robot_prop_clock_lines, Pulse(0.05f, 2400f)),
+        PropLayer(R.drawable.robot_prop_clock, Shake(10f), px = 627f, py = 1040f),
+        PropLayer(R.drawable.robot_prop_clock_lines, Pulse(0.05f, 1200f)),
+        face = R.drawable.robot_prop_clock_face,
+        head =
+            listOf(
+                PropLayer(R.drawable.robot_prop_clock_z1, Rise(dx = 26f, dy = -50f, delay = 0f), px = 900f, py = 440f),
+                PropLayer(R.drawable.robot_prop_clock_z2, Rise(dx = 26f, dy = -50f, delay = 0.5f), px = 955f, py = 375f),
+            ),
     ),
     ;
 
@@ -306,18 +354,5 @@ private class Shake(
     ) {
         val t = ms % 2400f
         rotationZ = if (t < 700f) deg * sin(2 * PI * t / 140f).toFloat() * (1f - t / 700f) else 0f
-    }
-}
-
-/** Still, then over in 0.6 seconds, twice a cycle, so it ends a full turn round and never jumps. */
-private object Turn : Motion {
-    override fun GraphicsLayerScope.at(
-        ms: Float,
-        unit: Float,
-    ) {
-        val half = PROP_CYCLE / 2f
-        val t = ms % half
-        val over = if (t < half - 600f) 0f else 180f * FastOutSlowInEasing.transform((t - (half - 600f)) / 600f)
-        rotationZ = (if (ms >= half) 180f else 0f) + over
     }
 }

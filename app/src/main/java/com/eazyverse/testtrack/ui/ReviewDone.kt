@@ -64,7 +64,7 @@ internal fun ReviewDone(
             "rejected" -> Prop.Wallet to "Not paid"
             "abandoned" -> Prop.Flag to "Given up"
             "expired" -> Prop.Clock to "Ran out"
-            else -> Prop.Hourglass to "Sent to the developer"
+            else -> Prop.Letter to "Sent to the developer"
         }
     Column(
         Modifier.fillMaxWidth().heightIn(min = room - 64.dp),

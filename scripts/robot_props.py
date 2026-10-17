@@ -231,18 +231,6 @@ def phone():
     return {'phone': body, 'phone_plus': plus}
 
 
-def key():
-    body = [
-        shape(rr(540, 884, 344, 42, 21), GOLD, (540, 884, 884, 926)),
-        shape('M774 915 L774 982 L812 982 L812 950 L838 950 L838 982 L874 982 L874 915 Z', GOLD, (774, 915, 874, 982)),
-        shape(circle(468, 905, 92) + ' ' + circle(468, 905, 36), GOLD, (376, 813, 560, 997), even=True),
-        ink(circle(468, 905, 64), GOLD_D, 8, 0.6),
-        shine(arc(468, 905, 74, 200, 260), 13, 0.85),
-        shine('M600 896 H760', 10, 0.7),
-    ]
-    return {'key': body, 'key_spark': [flat(sparkle(712, 820, 34), '#FFD96B'), flat(sparkle(712, 820, 11), '#FFFFFF')]}
-
-
 def cover_smile():
     return flat(rr(552, 578, 150, 56, 20), FACE)
 
@@ -478,22 +466,6 @@ def gears():
     return {'gear_big': big, 'gear_small': small}
 
 
-def hourglass():
-    body = [
-        shape(rr(538, 768, 18, 260, 9), WOOD, (538, 768, 556, 1028), sw=9),
-        shape(rr(698, 768, 18, 260, 9), WOOD, (698, 768, 716, 1028), sw=9),
-        shape('M566 772 C566 850 608 872 614 898 C608 924 566 946 566 1024 L688 1024 C688 946 646 924 640 898 '
-              'C646 872 688 850 688 772 Z', ('#F4FBFF', '#D3EAF7'), (566, 772, 688, 1024), sw=10),
-        flat('M584 836 C598 866 614 882 627 892 C640 882 656 866 670 836 Z', '#F5C062'),
-        flat('M574 1020 C590 980 614 968 627 968 C640 968 664 980 680 1020 Z', '#F5C062'),
-        flat(rr(624, 892, 6, 80, 3), '#F5C062'),
-        shine('M582 790 C584 830 596 852 606 866', 9, 0.9),
-        shape(rr(508, 734, 238, 40, 16), WOOD, (508, 734, 746, 774)),
-        shape(rr(508, 1022, 238, 40, 16), WOOD, (508, 1022, 746, 1062)),
-    ]
-    return {'hourglass': [Group(body, scale=1.22, px=627, py=898, dy=-26)]}
-
-
 def seal():
     body = [
         shape('M566 930 L528 1062 L572 1040 L600 1072 L632 950 Z', ('#3FA874', '#24784F'), (528, 930, 632, 1072)),
@@ -584,7 +556,137 @@ def clock():
     return {'clock': body, 'clock_lines': lines}
 
 
-PROPS = [music, popcorn, notes, icecream, blocks, kite, calendar, trophy, phone, key, plug, gears, hourglass, seal, scales, wallet, flag, clock]
+
+
+# ---------------------------------------------------------------- faces for the older props
+# The first props were the robot holding a thing with its own face. Each now gets the face that
+# fits its moment, and some a scene on or round the head, drawn here so the app takes them as is.
+
+HAPPY = [ink('M428 548 Q481 488 534 548', DARK, 24), ink('M719 548 Q772 488 825 548', DARK, 24)]
+SLEEPY = [ink('M430 528 Q481 560 532 528', DARK, 22), ink('M721 528 Q772 560 823 528', DARK, 22)]
+
+
+def mouth_open():
+    return [cover_smile(), shape('M578 588 Q627 652 676 588 Z', (DARK, DARK), (578, 588, 676, 642), sw=6),
+            flat('M598 616 Q627 642 656 616 Q627 604 598 616 Z', '#F27B6A')]
+
+
+def mouth_o(r=16):
+    return [cover_smile(), flat(ellipse(627, 606, r, r * 1.15), DARK)]
+
+
+def frown():
+    return [cover_smile(), ink('M584 612 Q627 584 670 612', DARK, 16)]
+
+
+def wobble():
+    return [cover_smile(), ink('M580 600 Q600 588 616 600 Q632 612 648 600 Q664 588 676 600', DARK, 13)]
+
+
+def worried_eyes():
+    # Inner ends raised: worry. Lowered, the same lines read as anger.
+    return eyes(0, 6, 48) + [ink('M424 470 Q470 462 524 446', DARK, 14), ink('M829 470 Q783 462 729 446', DARK, 14)]
+
+
+def sad_eyes():
+    return [flat(circle(481, 540, 44), DARK), flat(circle(772, 540, 44), DARK),
+            flat(circle(468, 524, 13), '#FFFFFF'), flat(circle(759, 524, 13), '#FFFFFF'),
+            ink('M424 470 L520 448', DARK, 14), ink('M829 470 L733 448', DARK, 14)]
+
+
+def thinking_face():
+    return eyes(-14, -14, 50) + [ink('M420 440 Q481 410 540 438', DARK, 14), cover_smile(), ink('M600 604 H654', DARK, 14)]
+
+
+def water_drop(x, y, s=1.0):
+    return shape(f'M{f(x)} {f(y)} Q{f(x + 22 * s)} {f(y + 36 * s)} {f(x + 22 * s)} {f(y + 52 * s)} A{f(22 * s)} {f(22 * s)} 0 0 1 '
+                 f'{f(x - 22 * s)} {f(y + 52 * s)} Q{f(x - 22 * s)} {f(y + 36 * s)} {f(x)} {f(y)} Z',
+                 ('#BFE7FF', '#7CC0E6'), (x - 22 * s, y, x + 22 * s, y + 74 * s), sw=7)
+
+
+def cloud(cx, cy, s=1.0):
+    d = (f'M{f(cx - 120 * s)} {f(cy + 40 * s)} Q{f(cx - 160 * s)} {f(cy + 40 * s)} {f(cx - 150 * s)} {f(cy)} '
+         f'Q{f(cx - 140 * s)} {f(cy - 40 * s)} {f(cx - 90 * s)} {f(cy - 30 * s)} Q{f(cx - 70 * s)} {f(cy - 90 * s)} {f(cx)} {f(cy - 80 * s)} '
+         f'Q{f(cx + 60 * s)} {f(cy - 90 * s)} {f(cx + 80 * s)} {f(cy - 30 * s)} Q{f(cx + 140 * s)} {f(cy - 40 * s)} {f(cx + 150 * s)} {f(cy)} '
+         f'Q{f(cx + 160 * s)} {f(cy + 40 * s)} {f(cx + 120 * s)} {f(cy + 40 * s)} Z')
+    return shape(d, ('#E9EEF3', '#B9C6D2'), (cx - 160 * s, cy - 90 * s, cx + 160 * s, cy + 40 * s), sw=10)
+
+
+def zee(x, y, size):
+    return [ink(f'M{x} {y} h{size} l-{size} {size} h{size}', '#1D5C82', 12)]
+
+
+def faces():
+    """Faces, hats and weather for the props that came before the scenes."""
+    hat = [shape('M360 400 Q370 240 627 232 Q884 240 894 400 Z', GOLD, (360, 232, 894, 400)),
+           shape(rr(330, 384, 594, 44, 20), ('#FFC93D', GOLD_D), (330, 384, 924, 428)),
+           ink('M627 236 V384', GOLD_D, 18), shine('M440 330 Q480 270 560 254', 12, 0.7)]
+    working = ([flat(circle(481, 548, 46), DARK), flat(circle(772, 548, 46), DARK),
+                flat(rr(408, 452, 148, 74, 20), FACE), flat(rr(699, 452, 148, 74, 20), FACE),
+                ink('M422 526 Q481 534 540 526', DARK, 12), ink('M713 526 Q772 534 831 526', DARK, 12),
+                cover_smile(), ink('M584 596 Q627 626 670 596', DARK, 16),
+                shape('M640 606 Q668 604 670 628 Q668 650 646 646 Q632 640 634 616 Z', CORAL, (632, 604, 670, 650), sw=6)])
+    tear = water_drop(500, 580, 0.8)
+    return {
+        'phone_face': eyes(0, 16, 50) + cheeks(),
+        'plug_face': worried_eyes() + mouth_o(12),
+        'gear_face': working,
+        'gear_hat': hat,
+        'seal_face': HAPPY + mouth_open() + cheeks(),
+        'scales_face': thinking_face(),
+        'wallet_face': sad_eyes() + frown() + [tear],
+        'wallet_cloud': [cloud(627, 200, 0.95)],
+        'wallet_drop1': [water_drop(540, 250, 0.6)],
+        'wallet_drop2': [water_drop(627, 250, 0.6)],
+        'wallet_drop3': [water_drop(714, 250, 0.6)],
+        'flag_face': HAPPY + wobble() + cheeks(),
+        'flag_sweat': [water_drop(905, 300, 0.7)],
+        'clock_face': SLEEPY + mouth_o(12) + cheeks(),
+        'clock_z1': zee(880, 420, 36),
+        'clock_z2': zee(930, 350, 46),
+        # The eyes glance side to side on their own; the cheeks stay put.
+        'trophy_face': eyes(0, 0, 50),
+        'trophy_cheeks': cheeks(),
+    }
+
+
+def letter():
+    """Review sent: a sealed letter with a heart floats up out of its hands, off to the developer."""
+    env = [shape(rr(470, 820, 314, 200, 16), ('#FFFFFF', '#E6EDF3'), (470, 820, 784, 1020)),
+           ink('M478 828 L627 940 L776 828', '#B8CCDB', 9),
+           shape('M627 960 C612 944 592 948 594 964 C596 978 616 988 627 996 C638 988 658 978 660 964 C662 948 642 944 627 960 Z',
+                 CORAL, (592, 944, 662, 996), sw=6)]
+    whoosh = [ink(d, '#FFFFFF', 10, 0.9) for d in ('M380 980 H440', 'M360 940 H430', 'M390 900 H440')]
+    return {'letter_face': HAPPY + mouth_open() + cheeks(), 'letter_letter': env, 'letter_whoosh': whoosh}
+
+
+def lock():
+    """Signed out: a padlock on your reviews, the key in the other hand nudging toward its keyhole."""
+    padlock = [ink('M560 860 V800 Q560 730 627 730 Q694 730 694 800 V860', INK, 40),
+               ink('M560 860 V800 Q560 730 627 730 Q694 730 694 800 V860', '#B8C6D2', 22),
+               shape(rr(520, 850, 214, 190, 30), ('#9FD0EC', '#4C8DB7'), (520, 850, 734, 1040)),
+               shine('M546 880 V1010', 12, 0.6),
+               flat(circle(627, 930, 20), '#16354B'), flat(rr(619, 936, 16, 46, 6), '#16354B')]
+    # Mirrored, not turned over: the bow in the right hand, the tip pointing left into the lock and
+    # the teeth hanging down, as a key is held.
+    mirrored = [
+        shape(rr(468, 884, 344, 42, 21), GOLD, (468, 884, 812, 926)),
+        shape('M578 915 L578 982 L540 982 L540 950 L514 950 L514 982 L478 982 L478 915 Z', GOLD, (478, 915, 578, 982)),
+        shape(circle(884, 905, 92) + ' ' + circle(884, 905, 36), GOLD, (792, 813, 976, 997), even=True),
+        ink(circle(884, 905, 64), GOLD_D, 8, 0.6),
+        shine(arc(884, 905, 74, 280, 340), 13, 0.85),
+        shine('M592 896 H752', 10, 0.7),
+    ]
+    return {
+        'lock_face': eyes(-10, 14, 50) + cheeks(),
+        'lock_padlock': padlock,
+        'lock_key': [Group(mirrored, scale=0.55, px=676, py=905, dx=82, dy=25)],
+        'lock_glint': [flat(sparkle(600, 880, 24), '#FFD96B'), flat(sparkle(600, 880, 8), '#FFFFFF')],
+    }
+
+
+PROPS = [music, popcorn, notes, icecream, blocks, kite, calendar, trophy, phone, lock, plug, gears, letter, seal, scales, wallet,
+         flag, clock, faces]
 
 
 # ---------------------------------------------------------------- emit
