@@ -147,14 +147,26 @@ fun MeBody(
     onRetry: () -> Unit = {},
 ) {
     if (signedOut) {
-        Gated(
-            heading = "Sign in to see your profile",
-            body =
-                "Every night you open somebody's app moves this ring. Sign in and it starts " +
-                    "counting.",
-            onSignIn = onSignIn,
-            mark = { LevelMark() },
-        )
+        // The sign-in ask, then what needs no account: About, rating and feedback, and the version.
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = Gutter, end = Gutter, bottom = 28.dp + dockRoom()),
+        ) {
+            item {
+                Box(Modifier.fillParentMaxHeight(0.6f)) {
+                    Gated(
+                        heading = "Sign in to see your profile",
+                        body =
+                            "Every night you open somebody's app moves this ring. Sign in and it starts " +
+                                "counting.",
+                        onSignIn = onSignIn,
+                        mark = { LevelMark() },
+                    )
+                }
+            }
+            item { SupportGroup(onAbout) }
+            item { VersionLine() }
+        }
         return
     }
     if (offline && profile == null) {
@@ -197,18 +209,7 @@ fun MeBody(
                 onAbout = onAbout,
             )
         }
-        // The running version, quietly, at the foot, as Listkin and Value Guard have it: the short
-        // form only, the build number being detail for nobody but the developer.
-        item {
-            Text(
-                "v${BuildConfig.VERSION_NAME}",
-                Modifier.fillMaxWidth().padding(top = 24.dp),
-                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
-                fontWeight = FontWeight.Medium,
-                color = Tt.colors.text4,
-                textAlign = TextAlign.Center,
-            )
-        }
+        item { VersionLine() }
     }
 }
 
@@ -436,3 +437,16 @@ fun MeEditDialog(
 }
 
 private const val NAME_MAX = 40
+
+/** The running version, quietly, at the foot, as Listkin and Value Guard have it: the short form only. */
+@Composable
+private fun VersionLine() {
+    Text(
+        "v${BuildConfig.VERSION_NAME}",
+        Modifier.fillMaxWidth().padding(top = 24.dp),
+        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
+        fontWeight = FontWeight.Medium,
+        color = Tt.colors.text4,
+        textAlign = TextAlign.Center,
+    )
+}

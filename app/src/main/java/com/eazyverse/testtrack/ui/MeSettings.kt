@@ -97,6 +97,36 @@ internal fun MeSettings(
             }
         }
 
+        SupportGroup(onAbout)
+
+        SectionTitle("Account")
+        TileGroup(count = 3) { index, place ->
+            when (index) {
+                0 -> TileRow(Lucide.Pencil, "Edit profile", place, subtitle = "Your name and picture", onClick = onEdit)
+                1 ->
+                    TileRow(
+                        Lucide.Trash2,
+                        "Request account deletion",
+                        place,
+                        subtitle = "What is removed, and what is kept",
+                        trailing = out,
+                    ) { links.openUri("$SITE/delete-account") }
+                else -> TileRow(Lucide.LogOut, "Sign out", place, danger = true, onClick = onSignOut)
+            }
+        }
+    }
+}
+
+/**
+ * About, rating and feedback: the one group that needs no account, so it is on the You page
+ * whether or not anybody is signed in.
+ */
+@Composable
+internal fun SupportGroup(onAbout: () -> Unit) {
+    val context = LocalContext.current
+    val out: @Composable () -> Unit = { Icon(Lucide.ExternalLink, null, Modifier.size(17.dp), tint = Tt.colors.text4) }
+    val gold = Tt.colors.gold
+    Column {
         SectionTitle("Support")
         // Left out on a phone with no mail app, where it could only open a dead end.
         val mailable = remember { canMail(context) }
@@ -137,22 +167,6 @@ internal fun MeSettings(
                         subtitle = "Something broken, or missing",
                         trailing = out,
                     ) { sendFeedback(context) }
-            }
-        }
-
-        SectionTitle("Account")
-        TileGroup(count = 3) { index, place ->
-            when (index) {
-                0 -> TileRow(Lucide.Pencil, "Edit profile", place, subtitle = "Your name and picture", onClick = onEdit)
-                1 ->
-                    TileRow(
-                        Lucide.Trash2,
-                        "Request account deletion",
-                        place,
-                        subtitle = "What is removed, and what is kept",
-                        trailing = out,
-                    ) { links.openUri("$SITE/delete-account") }
-                else -> TileRow(Lucide.LogOut, "Sign out", place, danger = true, onClick = onSignOut)
             }
         }
     }
