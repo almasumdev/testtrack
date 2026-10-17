@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,12 +19,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.net.ApiMyApp
@@ -45,6 +51,10 @@ fun AppsScreen(
     onOpenCrew: (String) -> Unit = {},
     /** A Circle request: its page, with the reviews it has had. */
     onOpenRequest: (String) -> Unit = {},
+    /** Add an app as a crew seat: the Crew tab, with its seat dialog open. */
+    onAddToCrew: () -> Unit = {},
+    /** Add an app as a Circle request: Ask for feedback. */
+    onAskForFeedback: () -> Unit = {},
     vm: AppsViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -53,7 +63,7 @@ fun AppsScreen(
     WhileShown(onShow = { vm.startLive(context) }, onHide = vm::stopLive)
 
     LoadSwap(DebugLooks.holdLoading || (vm.loading && vm.apps.isEmpty() && !vm.offline && !vm.signedOut)) { waiting ->
-        if (waiting) AppsLoading() else AppsLoaded(vm, onSignIn, onOpenCrew, onOpenRequest)
+        if (waiting) AppsLoading() else AppsLoaded(vm, onSignIn, onOpenCrew, onOpenRequest, onAddToCrew, onAskForFeedback)
     }
 }
 
@@ -64,19 +74,45 @@ private fun AppsLoaded(
     onSignIn: () -> Unit,
     onOpenCrew: (String) -> Unit,
     onOpenRequest: (String) -> Unit,
+    onAddToCrew: () -> Unit,
+    onAskForFeedback: () -> Unit,
 ) {
     val context = LocalContext.current
-    AppsBody(
-        apps = vm.apps,
-        offline = vm.offline,
-        signedOut = vm.signedOut,
-        onSignIn = onSignIn,
-        onRetry = { vm.load(context) },
-        onOpen = { app ->
-            if (app.kind == "crew") app.crewId?.let(onOpenCrew) else onOpenRequest(app.id)
-        },
-    )
+    var adding by remember { mutableStateOf(false) }
+    val apps = vm.apps
+    val canAdd = !vm.signedOut && !(vm.offline && apps.isEmpty())
+    Box(Modifier.fillMaxSize()) {
+        AppsBody(
+            apps = apps,
+            offline = vm.offline,
+            signedOut = vm.signedOut,
+            onSignIn = onSignIn,
+            onRetry = { vm.load(context) },
+            onOpen = { app ->
+                if (app.kind == "crew") app.crewId?.let(onOpenCrew) else onOpenRequest(app.id)
+            },
+            onAdd = { adding = true },
+            addRoom = if (canAdd && apps.isNotEmpty()) AddRoom else 0.dp,
+        )
+        // Over the list, never over the empty state, which has its own button in the middle.
+        if (canAdd && apps.isNotEmpty()) {
+            AddAppButton(
+                onClick = { adding = true },
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = Gutter, bottom = dockRoom() + 12.dp)
+                        .width(IntrinsicSize.Max),
+            )
+        }
+    }
+    if (adding) {
+        AddAppSheet(onCrew = onAddToCrew, onFeedback = onAskForFeedback, onDismiss = { adding = false })
+    }
 }
+
+/** What the list keeps clear at its foot so its last row can scroll out from under the button. */
+private val AddRoom = 64.dp
 
 /** The list, drawn. Handed its values so every state it has can be put in front of a test. */
 @Composable
@@ -88,6 +124,10 @@ fun AppsBody(
     onSignIn: () -> Unit = {},
     onRetry: () -> Unit = {},
     onOpen: (ApiMyApp) -> Unit = {},
+    /** Putting an app up; the empty state's button. Not offered where there is none. */
+    onAdd: (() -> Unit)? = null,
+    /** Room kept at the foot for a button floating over the list. */
+    addRoom: Dp = 0.dp,
 ) {
     // Asked for here rather than at the door. Somebody can read the feed, the crews and the board
     // without an account; this is the first screen that cannot answer without knowing who they
@@ -116,6 +156,8 @@ fun AppsBody(
             "Nothing up yet",
             "Put an app into a crew to get a fortnight of testing, or ask Circle for a review. " +
                 "Whatever you send lands here.",
+            action = if (onAdd != null) "Add an app" else "",
+            onAction = { onAdd?.invoke() },
         )
         return
     }
@@ -125,7 +167,7 @@ fun AppsBody(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 4.dp, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(top = 4.dp, bottom = Gutter + dockRoom() + addRoom),
     ) {
         // Cards for what is running, rows for what is over. A running app has a stage and a
         // count worth drawing, and the owner opens this tab to see how far it has got; a finished

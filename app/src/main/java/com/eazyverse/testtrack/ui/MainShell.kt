@@ -105,6 +105,9 @@ fun MainShell(
     /** A crew to open on the Crew tab, from a tap on its app in My apps. Cleared once open. */
     var crewToOpen by remember { mutableStateOf<String?>(null) }
 
+    /** Add an app from My apps as a crew seat: the Crew tab opens on its seat dialog. */
+    var seatToStart by remember { mutableStateOf(false) }
+
     /** Where Back from the profile goes, so it lands where you actually came from. */
     var cameFrom by rememberSaveable { mutableStateOf(MainTab.CIRCLE) }
 
@@ -245,6 +248,8 @@ fun MainShell(
                                 CrewScreen(
                                     openCrew = crewToOpen,
                                     onOpened = { crewToOpen = null },
+                                    startSeat = seatToStart,
+                                    onSeatStarted = { seatToStart = false },
                                     onSignIn = {
                                         asking =
                                             SignInReason(
@@ -266,6 +271,11 @@ fun MainShell(
                                         show(MainTab.GROUPS)
                                     },
                                     onOpenRequest = onCheck,
+                                    onAddToCrew = {
+                                        seatToStart = true
+                                        show(MainTab.GROUPS)
+                                    },
+                                    onAskForFeedback = onAskForFeedback,
                                     onSignIn = {
                                         asking =
                                             SignInReason(

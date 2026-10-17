@@ -55,6 +55,9 @@ fun CrewScreen(
     /** A crew to open as soon as the list has it, from a tap on its app in My apps. */
     openCrew: String? = null,
     onOpened: () -> Unit = {},
+    /** Open on the seat dialog, from Add app on My apps. */
+    startSeat: Boolean = false,
+    onSeatStarted: () -> Unit = {},
     vm: CrewViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -101,6 +104,14 @@ fun CrewScreen(
             vm.show(openCrew)
             onOpened()
         }
+    }
+
+    // Add app on My apps, choosing a crew: the same way in as Take a seat, sign-in and the testers
+    // group first.
+    LaunchedEffect(startSeat) {
+        if (!startSeat) return@LaunchedEffect
+        onSeatStarted()
+        if (vm.signedOut) onSignIn() else membership.require { taking = true }
     }
 
     // Opening a crew is a push, so back should pop it rather than leaving the tab. Registered only
