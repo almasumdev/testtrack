@@ -7,6 +7,7 @@ import com.eazyverse.testtrack.data.Session
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.remoteConfigSettings
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
@@ -131,7 +132,11 @@ object ReviewMoment {
             manager.launchReviewFlow(activity, manager.requestReviewFlow().await()).await()
             markAsked(activity)
             true
-        }.getOrElse { false }
+        }.getOrElse {
+            // Leaving the screen is not "no card": let the cancellation through.
+            if (it is CancellationException) throw it
+            false
+        }
     }
 
     /**

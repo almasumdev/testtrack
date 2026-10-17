@@ -21,7 +21,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -153,12 +152,16 @@ fun MainShell(
 
     // A value moment earned an ask (mkit docs/in-app-review.md): a beat for the screen to settle,
     // then Play's own card, and only if Play has none to show, the app's own dialog.
-    val askDue by ReviewMoment.askDue.collectAsState()
+    // Collected rather than keyed on: asking clears the flag, and a key change would cancel the very
+    // ask that cleared it.
     val activity = context.findActivity()
-    LaunchedEffect(askDue) {
-        if (!askDue || activity == null) return@LaunchedEffect
-        delay(1_500)
-        if (!ReviewMoment.askWithCard(activity)) ratingAsk = true
+    LaunchedEffect(activity) {
+        if (activity == null) return@LaunchedEffect
+        ReviewMoment.askDue.collect { due ->
+            if (!due) return@collect
+            delay(1_500)
+            if (!ReviewMoment.askWithCard(activity)) ratingAsk = true
+        }
     }
     // And while the app is in front, whenever the server says the balance or the exp moved.
     WhileShown(onShow = { hudVm.startLive(context) }, onHide = hudVm::stopLive)
