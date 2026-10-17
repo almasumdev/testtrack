@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -39,7 +40,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -78,7 +78,7 @@ import java.util.Calendar
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-    var lowStar by remember { mutableStateOf(false) }
+    var lowStar by remember { mutableIntStateOf(0) }
     Scaffold(
         containerColor = Color.Transparent,
         topBar = { PageBar("About", onBack = onBack) },
@@ -97,11 +97,12 @@ fun AboutScreen(onBack: () -> Unit) {
                 onRate = { stars ->
                     // Only the fifth reaches Play. The first four ask before anything opens: see
                     // mkit docs/in-app-review.md, which settled this and why.
-                    if (stars == 5) {
-                        reviewPrefs(context).edit { putBoolean(KEY_ASKED, true) }
+                    // With no mail app on the phone the low stars have nowhere to go but Play.
+                    if (stars == 5 || !canMail(context)) {
+                        markAsked(context)
                         openPlayListing(context)
                     } else {
-                        lowStar = true
+                        lowStar = stars
                     }
                 },
             )
@@ -115,16 +116,16 @@ fun AboutScreen(onBack: () -> Unit) {
         }
     }
 
-    if (lowStar) {
+    if (lowStar > 0) {
         FeedbackAsk(
             onSend = {
-                lowStar = false
-                reviewPrefs(context).edit { putBoolean(KEY_ASKED, true) }
-                sendFeedback(context)
+                markAsked(context)
+                sendFeedback(context, stars = lowStar)
+                lowStar = 0
             },
-            onLater = { lowStar = false },
+            onLater = { lowStar = 0 },
             onNever = {
-                lowStar = false
+                lowStar = 0
                 reviewPrefs(context).edit {
                     putBoolean(KEY_ASKED, true)
                     putBoolean(KEY_OPTED_OUT, true)
@@ -264,7 +265,7 @@ private fun ColumnScope.MakerBank() {
     Spacer(Modifier.height(16.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Filled("Start a project", Modifier.weight(1f), icon = { Icon(Lucide.Mail, null, Modifier.size(17.dp)) }) {
-            openUrl(context, "mailto:$STUDIO_MAIL?subject=" + Uri.encode("A project, from TestTrack"))
+            mail(context, "A project, from TestTrack")
         }
         Outlined("eazyverse.com", Modifier.weight(1f), icon = { Icon(Lucide.Globe, null, Modifier.size(17.dp)) }) {
             openUrl(context, STUDIO_SITE)
@@ -456,9 +457,53 @@ private fun openDeveloperPage(context: Context) {
     }
 }
 
-/** The feedback mail, the same from every door: to the studio, the app named, the body left blank. */
-internal fun sendFeedback(context: Context) {
-    openUrl(context, "mailto:$STUDIO_MAIL?subject=" + Uri.encode("TestTrack feedback"))
+/**
+ * The feedback mail, the same from every door (mkit docs/in-app-review.md): to the studio, the app
+ * named, a blank line to write in, then the three facts we would otherwise have to ask for, and the
+ * star that was tapped when it came from a low one. Nothing else: no logs, no account details.
+ */
+internal fun sendFeedback(
+    context: Context,
+    stars: Int? = null,
+) {
+    val body =
+        buildString {
+            append("\n\n---\n")
+            append("TestTrack ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n")
+            append("Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})\n")
+            append("${Build.MANUFACTURER} ${Build.MODEL}")
+            stars?.let { append("\nRating tapped: $it/5") }
+        }
+    mail(context, "TestTrack feedback", body)
+}
+
+/** Whether anything on the phone can write an email; needs the manifest's mailto query. */
+internal fun canMail(context: Context): Boolean =
+    Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")).resolveActivity(context.packageManager) != null
+
+/**
+ * A mail to the studio, through the chooser every time. Handed straight to the system it goes to
+ * whatever default was saved, usually Gmail and usually not the account somebody meant to write
+ * from; the mailto filter keeps the sheet to mail apps only, and the extras survive it.
+ */
+private fun mail(
+    context: Context,
+    subject: String,
+    body: String? = null,
+) {
+    val write =
+        Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$STUDIO_MAIL")).apply {
+            putExtra(Intent.EXTRA_SUBJECT, subject)
+            body?.let { putExtra(Intent.EXTRA_TEXT, it) }
+        }
+    runCatching {
+        context.startActivity(Intent.createChooser(write, "Send with").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+}
+
+/** A rating was asked for: every manual path counts (the Rate row, the fifth star, a low-star mail). */
+internal fun markAsked(context: Context) {
+    reviewPrefs(context).edit { putBoolean(KEY_ASKED, true) }
 }
 
 /** False when nothing on the phone can open it; the caller decides whether there is a fallback. */

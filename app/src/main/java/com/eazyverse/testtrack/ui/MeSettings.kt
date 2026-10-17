@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -98,10 +99,20 @@ internal fun MeSettings(
         }
 
         SectionTitle("Support")
-        TileGroup(count = 4) { index, place ->
-            when (index) {
-                0 -> TileRow(Lucide.Info, "About TestTrack", place, subtitle = "Who made it, and more apps", onClick = onAbout)
-                1 ->
+        // Left out on a phone with no mail app, where it could only open a dead end.
+        val mailable = remember { canMail(context) }
+        val support = if (mailable) SUPPORT else SUPPORT - SupportRow.FEEDBACK
+        TileGroup(count = support.size) { index, place ->
+            when (support[index]) {
+                SupportRow.ABOUT ->
+                    TileRow(
+                        Lucide.Info,
+                        "About TestTrack",
+                        place,
+                        subtitle = "Who made it, and more apps",
+                        onClick = onAbout,
+                    )
+                SupportRow.RATE ->
                     // The stars are drawn in the sentence, not beside it, and are not a control: the
                     // whole row goes to the listing, always (mkit docs/in-app-review.md).
                     TileRow(
@@ -115,8 +126,11 @@ internal fun MeSettings(
                                 append(" on Google Play")
                             },
                         trailing = out,
-                    ) { openPlayListing(context) }
-                2 ->
+                    ) {
+                        markAsked(context)
+                        openPlayListing(context)
+                    }
+                SupportRow.FEEDBACK ->
                     TileRow(
                         Lucide.MessageSquare,
                         "Send feedback",
@@ -124,7 +138,8 @@ internal fun MeSettings(
                         subtitle = "Something broken, or missing",
                         trailing = out,
                     ) { sendFeedback(context) }
-                else -> TileRow(Lucide.ShieldCheck, "Privacy policy", place, trailing = out) { links.openUri("$SITE/privacy") }
+                SupportRow.PRIVACY ->
+                    TileRow(Lucide.ShieldCheck, "Privacy policy", place, trailing = out) { links.openUri("$SITE/privacy") }
             }
         }
 
@@ -145,6 +160,10 @@ internal fun MeSettings(
         }
     }
 }
+
+private enum class SupportRow { ABOUT, RATE, FEEDBACK, PRIVACY }
+
+private val SUPPORT = SupportRow.entries.toList()
 
 /** This app's page in the system's notification settings, where its channel can be turned on or off. */
 private fun openNotificationSettings(context: Context) {

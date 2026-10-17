@@ -25,6 +25,12 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- Whether any app can write an email, so Send feedback is shown only where it can work
+             and the mail chooser never opens onto "No apps can perform this action". -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
     </queries>
 
     <!--
