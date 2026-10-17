@@ -314,7 +314,7 @@ private fun SignedIn(account: String) {
         }
         Spacer(Modifier.height(16.dp))
         Text(
-            "Your crews and balance are loading. Eligible accounts receive 60 starter tix once per account and installation. " +
+            "Your crews and balance are loading. Eligible accounts receive 120 starter tix once per account and installation. " +
                 "Use them to request private feedback, or earn more by helping another developer.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
