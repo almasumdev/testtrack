@@ -68,7 +68,7 @@ internal fun MeSettings(
                         "Testers group",
                         place,
                         subtitle = "So owners can add you to tests",
-                        status = if (group) RowStatus.Done("Joined") else RowStatus.Todo("Join"),
+                        value = if (group) "Joined" else "Join",
                         onClick = onGroup,
                     )
                 1 ->
@@ -77,11 +77,11 @@ internal fun MeSettings(
                         "Google Drive",
                         place,
                         subtitle = "Keeps your proof screenshots",
-                        status =
+                        value =
                             when (drive) {
-                                true -> RowStatus.Done("Connected")
-                                false -> RowStatus.Todo("Connect")
-                                null -> RowStatus.Checking
+                                true -> "Connected"
+                                false -> "Connect"
+                                null -> "Checking"
                             },
                         onClick = if (drive == null) null else onDrive,
                     )
@@ -91,7 +91,7 @@ internal fun MeSettings(
                         "Notifications",
                         place,
                         subtitle = "Crew news and nightly reminders",
-                        status = if (notifications) RowStatus.Done("On") else RowStatus.Todo("Turn on"),
+                        value = if (notifications) "On" else "Off",
                         onClick = { openNotificationSettings(context) },
                     )
             }

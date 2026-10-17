@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,15 +29,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -179,8 +175,6 @@ fun TileRow(
     trailing: (@Composable () -> Unit)? = null,
     /** A subtitle with styling in it, such as the gold stars in the rating row. Wins over [subtitle]. */
     subtitleRich: AnnotatedString? = null,
-    /** Where the thing the row controls stands, drawn as a mark rather than a word. See [RowStatus]. */
-    status: RowStatus? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val t = Tt.colors
@@ -224,10 +218,6 @@ fun TileRow(
         if (value != null) {
             Spacer(Modifier.width(8.dp))
             Text(value, style = MaterialTheme.typography.bodyMedium, color = t.text3)
-        }
-        if (status != null) {
-            Spacer(Modifier.width(8.dp))
-            StatusMark(status)
         }
         if (trailing != null) {
             Spacer(Modifier.width(6.dp))
@@ -360,63 +350,3 @@ val LocalDockRoom = compositionLocalOf { 0.dp }
 /** [LocalDockRoom], read. */
 @Composable
 fun dockRoom(): Dp = LocalDockRoom.current
-
-/**
- * Where a setting stands, at the end of its row.
- *
- * It was a grey word, "Joined" or "Connect", in the same type as the subtitle, so a row that was
- * done and a row that still needed doing read alike. Now done is a green tick and nothing else,
- * and not done is the action itself in a small pill, which is what somebody scanning the list for
- * the thing left to do is looking for.
- */
-sealed interface RowStatus {
-    /** All set: a green tick, with [label] for a screen reader. */
-    data class Done(
-        val label: String,
-    ) : RowStatus
-
-    /** Still to do: [label] is the action, "Join" or "Turn on". */
-    data class Todo(
-        val label: String,
-    ) : RowStatus
-
-    /** Not known yet, while it is being asked. */
-    data object Checking : RowStatus
-}
-
-@Composable
-private fun StatusMark(status: RowStatus) {
-    val t = Tt.colors
-    when (status) {
-        is RowStatus.Done ->
-            Box(
-                Modifier
-                    .size(22.dp)
-                    .clip(CircleShape)
-                    .background(t.ok)
-                    .semantics { contentDescription = status.label },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Lucide.Check, null, Modifier.size(13.dp), tint = t.bg)
-            }
-        is RowStatus.Todo ->
-            Text(
-                status.label,
-                Modifier
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(t.container)
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
-                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp, lineHeight = 15.sp),
-                fontWeight = FontWeight.SemiBold,
-                color = t.onContainer,
-            )
-        RowStatus.Checking ->
-            CircularProgressIndicator(
-                Modifier
-                    .size(16.dp)
-                    .semantics { contentDescription = "Checking" },
-                strokeWidth = 2.dp,
-                color = t.text4,
-            )
-    }
-}
