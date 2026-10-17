@@ -201,13 +201,18 @@ private fun Found(vm: AskViewModel) {
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SubcomposeAsyncImage(
-            model = app.icon,
-            contentDescription = null,
-            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(11.dp)),
-            loading = { AskAppPlaceholder() },
-            error = { AskAppPlaceholder() },
-        )
+        if (app.icon.isBlank()) {
+            // Typed by hand: no Play icon, so the one on this phone, as the feed will draw it.
+            AppIcon(app.`package`, app.name, size = 48.dp)
+        } else {
+            SubcomposeAsyncImage(
+                model = app.icon,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(11.dp)),
+                loading = { AskAppPlaceholder() },
+                error = { AskAppPlaceholder() },
+            )
+        }
         Spacer(Modifier.width(13.dp))
         Column(Modifier.weight(1f)) {
             Text(

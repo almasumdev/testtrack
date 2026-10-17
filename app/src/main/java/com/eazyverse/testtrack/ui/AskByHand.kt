@@ -12,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -31,26 +32,44 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * read the way the server reads it, so the one thing reviewers install by cannot be mistyped.
  */
 
-/** The package from the link, the name typed, and on to the request. */
+/**
+ * The package from the link, the name typed, and on to the request.
+ *
+ * An owner usually has their own app on the phone, and when it is there its launcher name fills
+ * the field (theirs to change) and its icon stands beside the package. The icon is not stored
+ * anywhere: every icon in TestTrack is drawn from the viewer's own phone, so this is the same
+ * picture the feed will show.
+ */
 @Composable
 internal fun ByHandForm(vm: AskViewModel) {
     val pkg = vm.typedPackage
+    val label = pkg?.let { installedLabel(it) }
+    LaunchedEffect(pkg, label) {
+        if (label != null && vm.handName.isBlank()) vm.typeName(label)
+    }
     Column(Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                "Package",
-                style = MaterialTheme.typography.labelMedium,
-                color = Tt.colors.text3,
-                modifier = Modifier.width(72.dp),
-            )
-            Text(
-                pkg ?: "Not in this link",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = if (pkg == null) Tt.colors.bad else Tt.colors.text,
-                modifier = Modifier.weight(1f),
-            )
-            if (pkg != null) Icon(Lucide.Check, null, Modifier.size(18.dp), tint = Tt.colors.ok)
+            if (pkg != null) {
+                AppIcon(pkg, vm.handName.ifBlank { pkg.substringAfterLast('.') }, size = 48.dp)
+                Spacer(Modifier.width(13.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(
+                    pkg ?: "No package in this link",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (pkg == null) Tt.colors.bad else Tt.colors.text,
+                )
+                if (pkg != null) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        if (label != null) "Found on this phone" else "Not on this phone",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Tt.colors.text3,
+                    )
+                }
+            }
+            if (label != null) Icon(Lucide.Check, null, Modifier.size(18.dp), tint = Tt.colors.ok)
         }
         Spacer(Modifier.height(14.dp))
         DialogField(
@@ -58,6 +77,7 @@ internal fun ByHandForm(vm: AskViewModel) {
             onValueChange = vm::typeName,
             label = "App name",
             placeholder = "As it appears on Google Play",
+            supporting = if (label != null) "From the app on this phone. You can change it." else null,
             singleLine = true,
             imeAction = ImeAction.Done,
             maxLength = FeedRules.APP_NAME_MAX,

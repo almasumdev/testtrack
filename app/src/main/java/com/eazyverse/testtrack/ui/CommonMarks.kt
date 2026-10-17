@@ -83,6 +83,13 @@ fun AppIcon(
     }
 }
 
+/** The name this phone's launcher shows for an app, or null when it is not installed here. */
+@Composable
+fun installedLabel(pkg: String): String? {
+    val context = LocalContext.current
+    return remember(pkg, InstalledApps.revision) { InstalledApps.cachedInfo(context, pkg).label }
+}
+
 /** A tester's initial in a tinted disc — the only stand-in for an avatar we have. */
 @Composable
 fun Initial(
