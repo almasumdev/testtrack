@@ -40,6 +40,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,6 +51,7 @@ import com.composables.icons.lucide.Camera
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
+import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.net.ApiProfile
@@ -183,7 +185,6 @@ fun MeBody(
                 )
             }
         }
-        // The version moved to About, which is where somebody looks for it.
         item {
             MeSettings(
                 onEdit = onEdit,
@@ -194,6 +195,18 @@ fun MeBody(
                 onGroup = onGroup,
                 notifications = notifications,
                 onAbout = onAbout,
+            )
+        }
+        // The running version, quietly, at the foot, as Listkin and Value Guard have it: the short
+        // form only, the build number being detail for nobody but the developer.
+        item {
+            Text(
+                "v${BuildConfig.VERSION_NAME}",
+                Modifier.fillMaxWidth().padding(top = 24.dp),
+                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
+                fontWeight = FontWeight.Medium,
+                color = Tt.colors.text4,
+                textAlign = TextAlign.Center,
             )
         }
     }
