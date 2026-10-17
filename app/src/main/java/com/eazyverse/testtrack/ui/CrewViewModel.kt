@@ -14,6 +14,7 @@ import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.SeatIn
 import com.eazyverse.testtrack.viewmodel.LiveReload
+import com.eazyverse.testtrack.viewmodel.ReviewMoment
 import kotlinx.coroutines.launch
 import java.util.TimeZone
 
@@ -145,6 +146,8 @@ class CrewViewModel : ViewModel() {
                 // in the app that there are real people waiting to test each other's work.
                 signedOut = !ApiAuth.ensure(context)
                 apply(Api.crews())
+                // A test cycle completed is TestTrack's value moment; only fresh answers count.
+                ReviewMoment.noteFinished(context, crews.filter { it.phase == CrewPhase.RECORD && !it.out }.map { it.id }.toSet())
                 offline = false
             } catch (e: ApiError) {
                 message = e.message

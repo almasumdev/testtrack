@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import androidx.core.content.edit
 import com.eazyverse.testtrack.BuildConfig
 
 /*
@@ -78,11 +77,6 @@ internal fun mail(
     }
 }
 
-/** A rating was asked for: every manual path counts (the Rate row, the fifth star, a low-star mail). */
-internal fun markAsked(context: Context) {
-    reviewPrefs(context).edit { putBoolean(KEY_ASKED, true) }
-}
-
 /** False when nothing on the phone can open it; the caller decides whether there is a fallback. */
 internal fun openUrl(
     context: Context,
@@ -94,9 +88,3 @@ internal fun openUrl(
     } catch (_: ActivityNotFoundException) {
         false
     }
-
-/** Whether a rating has been asked for or declined, as mkit docs/in-app-review.md names them. */
-internal fun reviewPrefs(context: Context) = context.getSharedPreferences("testtrack.review", Context.MODE_PRIVATE)
-
-internal const val KEY_ASKED = "review_asked"
-internal const val KEY_OPTED_OUT = "review_opted_out"

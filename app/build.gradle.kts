@@ -226,11 +226,15 @@ dependencies {
     // Play, and neither is given anything about who they are beyond what Firebase collects itself.
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
+    // The rating ask's limits, tunable without a release; defaults are compiled in.
+    implementation(libs.firebase.config)
 
     // Play's in-app update flow. It answers whether *this* install can update right now, which is
     // a question only Play can answer: it knows the track the copy came from and the rollout it
     // sits in.
     implementation(libs.play.app.update)
+    // Play's own rating card, asked for after a value moment (mkit docs/in-app-review.md).
+    implementation(libs.play.review)
     // Task.await(), which the update service is written against. The rest of this app hand-rolls
     // it with suspendCancellableCoroutine; this one file is kept identical to the original.
     implementation(libs.coroutines.play.services)

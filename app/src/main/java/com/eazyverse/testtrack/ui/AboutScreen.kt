@@ -53,6 +53,7 @@ import com.composables.icons.lucide.Mail
 import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.ReviewMoment
 import java.util.Calendar
 
 /**
@@ -88,7 +89,7 @@ fun AboutScreen(onBack: () -> Unit) {
                     // mkit docs/in-app-review.md, which settled this and why.
                     // With no mail app on the phone the low stars have nowhere to go but Play.
                     if (stars == 5 || !canMail(context)) {
-                        markAsked(context)
+                        ReviewMoment.markRated(context)
                         openPlayListing(context)
                     } else {
                         lowStar = stars
@@ -108,7 +109,7 @@ fun AboutScreen(onBack: () -> Unit) {
     if (lowStar > 0) {
         FeedbackAsk(
             onSend = {
-                markAsked(context)
+                ReviewMoment.markAsked(context)
                 sendFeedback(context, stars = lowStar)
                 lowStar = 0
             },

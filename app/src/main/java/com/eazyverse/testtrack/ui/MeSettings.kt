@@ -27,6 +27,7 @@ import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.ReviewMoment
 
 /** Where the policy and the deletion request live. The site owns both pages. */
 private const val SITE = "https://eazyverse.com/apps/testtrack"
@@ -156,7 +157,7 @@ internal fun SupportGroup(onAbout: () -> Unit) {
                             },
                         trailing = out,
                     ) {
-                        markAsked(context)
+                        ReviewMoment.markRated(context)
                         openPlayListing(context)
                     }
                 SupportRow.FEEDBACK ->

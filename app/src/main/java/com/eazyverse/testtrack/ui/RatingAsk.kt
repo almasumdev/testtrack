@@ -23,9 +23,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.edit
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.ReviewMoment
 
 /**
  * The five stars, the one rating control in the app: the About page's bank and the fallback ask
@@ -81,15 +81,12 @@ fun RatingAsk(onClose: () -> Unit) {
     var low by remember { mutableIntStateOf(0) }
 
     fun never() {
-        reviewPrefs(context).edit {
-            putBoolean(KEY_ASKED, true)
-            putBoolean(KEY_OPTED_OUT, true)
-        }
+        ReviewMoment.optOut(context)
         onClose()
     }
 
     fun later() {
-        markAsked(context)
+        ReviewMoment.markAsked(context)
         onClose()
     }
 
@@ -104,7 +101,7 @@ fun RatingAsk(onClose: () -> Unit) {
         ) {
             RatingStars(Modifier.align(Alignment.CenterHorizontally)) { stars ->
                 if (stars == 5 || !canMail(context)) {
-                    markAsked(context)
+                    ReviewMoment.markRated(context)
                     openPlayListing(context)
                     onClose()
                 } else {
@@ -130,7 +127,7 @@ fun RatingAsk(onClose: () -> Unit) {
                 DialogButton("Never", DialogButtonKind.OUTLINE, onClick = ::never)
                 DialogButton("Not now", DialogButtonKind.OUTLINE, onClick = ::later)
                 DialogButton("Send feedback", DialogButtonKind.FILL) {
-                    markAsked(context)
+                    ReviewMoment.markAsked(context)
                     sendFeedback(context, stars = low)
                     onClose()
                 }

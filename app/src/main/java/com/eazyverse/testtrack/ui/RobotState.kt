@@ -11,12 +11,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.ReviewMoment
 
 /**
  * A page with nothing to list: empty, or not loaded. The robot holds that case's cartoon
@@ -81,6 +83,17 @@ fun RobotOffline(
     title: String,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+) {
+    // Something did not load: no moment to ask for a rating for the rest of this session.
+    LaunchedEffect(Unit) { ReviewMoment.noteTrouble() }
+    RobotOfflineState(title, onRetry, modifier)
+}
+
+@Composable
+private fun RobotOfflineState(
+    title: String,
+    onRetry: () -> Unit,
+    modifier: Modifier,
 ) = RobotState(
     Prop.Plug,
     title,
