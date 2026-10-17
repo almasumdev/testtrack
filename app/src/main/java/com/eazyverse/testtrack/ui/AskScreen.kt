@@ -56,6 +56,7 @@ fun AskScreen(
     onBack: () -> Unit,
     vm: AskViewModel = viewModel(),
 ) {
+    WhileShown(onShow = vm::startLive, onHide = vm::stopLive)
     Scaffold(
         containerColor = Color.Transparent,
         // The navigation route already applies safeDrawingPadding.

@@ -78,6 +78,7 @@ fun ReviewScreen(
     val context = LocalContext.current
 
     LaunchedEffect(post.id) { vm.start(context, post) }
+    WhileShown(onShow = vm::startLive, onHide = vm::stopLive)
 
     // Every return to this screen is a measurement. Coming back from the app under review is the
     // whole interaction, so resume is where the stepper moves rather than a button.

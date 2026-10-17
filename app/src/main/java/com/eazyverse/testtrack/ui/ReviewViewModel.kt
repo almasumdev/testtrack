@@ -25,6 +25,7 @@ import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.ApiReview
+import com.eazyverse.testtrack.viewmodel.LiveReload
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -244,8 +245,20 @@ class ReviewViewModel : ViewModel() {
         id: String,
     ) = ProofStore.proof(context, id) != null || ProofStore.left(context, id)
 
+    // While the page shows: the review's own news and its post's changes, read back into the page.
+    private val live =
+        LiveReload("review", viewModelScope) {
+            (it.channel.startsWith("user:") && it.type.startsWith("review.")) || (it.type == "post.changed" && it.ref == job?.post?.id)
+        }
+
+    fun startLive() = live.start { reloadReview() }
+
+    internal suspend fun fetchReview(id: String) = runCatching { Api.myReviews().firstOrNull { it.id == id } }.getOrNull()
+
+    fun stopLive() = live.stop()
+
     /** Show a job the server has just confirmed, and save it as the last word. */
-    private fun keep(next: ReviewJob) {
+    internal fun keep(next: ReviewJob) {
         job = next
         app?.let { ReviewKeep.put(it, next.post.id, next.review) }
     }

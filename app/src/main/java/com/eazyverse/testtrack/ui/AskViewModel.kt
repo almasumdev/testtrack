@@ -11,6 +11,7 @@ import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiSession
 import com.eazyverse.testtrack.net.Listing
 import com.eazyverse.testtrack.net.PostIn
+import com.eazyverse.testtrack.viewmodel.LiveReload
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
@@ -83,6 +84,16 @@ class AskViewModel : ViewModel() {
     init {
         refreshBalance()
     }
+
+    // The balance is the server's: a payout or a refund while this page is open shows at once.
+    private val live =
+        LiveReload("ask", viewModelScope) { it.channel.startsWith("user:") && it.type == "tix.changed" }
+
+    fun startLive() {
+        if (ApiSession.signedIn) live.start { refreshBalance() }
+    }
+
+    fun stopLive() = live.stop()
 
     private fun refreshBalance() {
         if (ApiSession.signedIn) viewModelScope.launch { runCatching { tix = Api.me().tix } }

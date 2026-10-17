@@ -230,6 +230,20 @@ class FeedViewModel : ViewModel() {
     private val live =
         LiveReload("circle", viewModelScope) { it.channel == "feed" || it.channel.startsWith("user:") }
 
+    /**
+     * The same news for a review, case or request opened on its own page, which borrows this
+     * model. Its own listener rather than Circle's, so leaving one page and arriving at the other
+     * cannot stop the one that has just started.
+     */
+    private val pageLive =
+        LiveReload("check", viewModelScope) { it.channel == "feed" || it.channel.startsWith("user:") }
+
+    fun startPageLive(context: Context) {
+        if (!signedOut) pageLive.start { load(context) }
+    }
+
+    fun stopPageLive() = pageLive.stop()
+
     /** Somebody scrolled past the first page; a live refetch would cut the list back under them. */
     private var pagedPast = false
 

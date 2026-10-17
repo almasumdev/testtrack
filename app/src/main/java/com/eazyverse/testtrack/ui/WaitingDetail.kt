@@ -73,6 +73,8 @@ fun CheckScreen(
     // Arrived from My apps, perhaps before Circle has ever loaded: fetch, rather than find nothing.
     LaunchedEffect(Unit) { if (review == null && case == null && request == null) feed.load(context) }
     LaunchedEffect(feed.decided) { if (feed.decided == id) onClose() }
+    // A review arriving, a vote landing or the case being decided shows on this page as it happens.
+    WhileShown(onShow = { feed.startPageLive(context) }, onHide = feed::stopPageLive)
     LaunchedEffect(review == null && case == null && request == null, feed.loading) {
         if (review == null && case == null && request == null && !feed.loading) onClose()
     }
