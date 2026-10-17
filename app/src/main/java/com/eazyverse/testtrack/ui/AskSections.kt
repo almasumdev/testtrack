@@ -62,17 +62,27 @@ internal fun AskIntro() {
 internal fun AskAvailability(
     isLive: Boolean,
     onChange: (Boolean) -> Unit,
+) = TwoChoice("Where can people try your app?", "Live on Play", "Closed testing", isLive, onChange)
+
+/** A question with two answers side by side, the one chosen filled. True is the first answer. */
+@Composable
+internal fun TwoChoice(
+    question: String,
+    first: String,
+    second: String,
+    firstChosen: Boolean,
+    onChange: (Boolean) -> Unit,
 ) {
     Text(
-        "Where can people try your app?",
+        question,
         style = MaterialTheme.typography.labelLarge,
         fontWeight = FontWeight.SemiBold,
         color = Tt.colors.text,
     )
     Spacer(Modifier.height(8.dp))
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf(true to "Live on Play", false to "Closed testing").forEach { (live, label) ->
-            val selected = isLive == live
+        listOf(true to first, false to second).forEach { (isFirst, label) ->
+            val selected = firstChosen == isFirst
             val shape = RoundedCornerShape(10.dp)
             Box(
                 Modifier
@@ -80,7 +90,7 @@ internal fun AskAvailability(
                     .clip(shape)
                     .background(if (selected) Tt.colors.tile else androidx.compose.ui.graphics.Color.Transparent)
                     .border(1.dp, if (selected) Tt.colors.tileInk else Tt.colors.glassBorderStrong, shape)
-                    .selectable(selected = selected, role = Role.RadioButton, onClick = { onChange(live) })
+                    .selectable(selected = selected, role = Role.RadioButton, onClick = { onChange(isFirst) })
                     .heightIn(min = 48.dp)
                     .padding(horizontal = 8.dp, vertical = 12.dp),
                 contentAlignment = Alignment.Center,

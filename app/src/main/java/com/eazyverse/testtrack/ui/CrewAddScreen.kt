@@ -84,18 +84,16 @@ fun CrewAddScreen(
                     imeAction = ImeAction.Next,
                     maxLength = FeedRules.APP_NAME_MAX,
                 )
-                Spacer(Modifier.height(14.dp))
-                DialogField(
-                    value = vm.notes,
-                    onValueChange = vm::typeNotes,
-                    label = "Getting in (optional)",
-                    placeholder = "Test account: demo@example.com / demo",
-                    supporting =
-                        "A login or code if yours needs one. Fourteen strangers read this, so make " +
-                            "it a throwaway.",
-                    singleLine = false,
-                    minHeight = 72.dp,
-                    maxLength = 280,
+                Spacer(Modifier.height(20.dp))
+                SignInFields(
+                    needed = vm.needsSignIn,
+                    onNeeded = vm::chooseSignIn,
+                    username = vm.username,
+                    onUsername = vm::typeUsername,
+                    password = vm.password,
+                    onPassword = vm::typePassword,
+                    also = vm.also,
+                    onAlso = vm::typeAlso,
                 )
                 crews.seatError?.let {
                     Spacer(Modifier.height(14.dp))
@@ -109,7 +107,7 @@ fun CrewAddScreen(
                 Primary(
                     "Take a seat",
                     busy = crews.seating,
-                    enabled = vm.name.isNotBlank(),
+                    enabled = vm.name.isNotBlank() && vm.signInReady,
                     tall = true,
                 ) {
                     crews.takeSeat(context, app.pkg, vm.name.trim(), vm.notes.trim(), onDone)

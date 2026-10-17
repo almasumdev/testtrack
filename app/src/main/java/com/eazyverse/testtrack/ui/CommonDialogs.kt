@@ -307,12 +307,14 @@ fun DialogField(
             color = Tt.colors.text4,
         )
         Spacer(Modifier.height(4.dp))
+        // The hint is in the faintest ink, well apart from typed text: a hint that looked typed was
+        // being read as a value already filled in.
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             placeholder =
                 placeholder?.let {
-                    { Text(it, style = DialogBody) }
+                    { Text(it, style = DialogBody, color = Tt.colors.text4.copy(alpha = 0.8f)) }
                 },
             singleLine = singleLine,
             isError = isError,

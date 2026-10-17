@@ -12,6 +12,7 @@ import com.eazyverse.testtrack.ui.FeedRules
 import com.eazyverse.testtrack.ui.HandEntry
 import com.eazyverse.testtrack.ui.lookupFailure
 import com.eazyverse.testtrack.ui.packageFrom
+import com.eazyverse.testtrack.ui.signInNotes
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
@@ -55,8 +56,22 @@ class CrewAddViewModel :
     var name by mutableStateOf("")
         private set
 
-    var notes by mutableStateOf("")
+    /** Whether the app needs a sign-in, and the test account the crew uses for it. */
+    var needsSignIn by mutableStateOf(false)
         private set
+    var username by mutableStateOf("")
+        private set
+    var password by mutableStateOf("")
+        private set
+    var also by mutableStateOf("")
+        private set
+
+    /** What the seat carries for the crew: the sign-in as labelled lines, or nothing. */
+    val notes: String get() = if (needsSignIn) signInNotes(username, password, also) else ""
+
+    /** No sign-in, or one the crew can actually use: a username and password, or instructions. */
+    val signInReady: Boolean
+        get() = !needsSignIn || (username.isNotBlank() && password.isNotBlank()) || also.isNotBlank()
 
     private var lookupJob: Job? = null
 
@@ -80,8 +95,20 @@ class CrewAddViewModel :
         query = next.take(QUERY_MAX)
     }
 
-    fun typeNotes(next: String) {
-        notes = next.take(NOTES_MAX)
+    fun chooseSignIn(needed: Boolean) {
+        needsSignIn = needed
+    }
+
+    fun typeUsername(next: String) {
+        username = next
+    }
+
+    fun typePassword(next: String) {
+        password = next
+    }
+
+    fun typeAlso(next: String) {
+        also = next
     }
 
     fun rename(next: String) {
@@ -140,7 +167,6 @@ class CrewAddViewModel :
 
     private companion object {
         const val QUERY_MAX = 2048
-        const val NOTES_MAX = 280
     }
 }
 

@@ -146,6 +146,12 @@ private fun YourSeat(
             SeatPill(mine.state)
         }
 
+        // The sign-in the crew was given, as they see it, so a typo is caught by its owner first.
+        if (mine.notes.isNotBlank()) {
+            Spacer(Modifier.height(10.dp))
+            SignInDetails(mine.notes, Modifier.padding(start = 56.dp))
+        }
+
         // What reports said, for the owner only, without who said it.
         if (mine.reasons.isNotEmpty()) {
             Spacer(Modifier.height(12.dp))
