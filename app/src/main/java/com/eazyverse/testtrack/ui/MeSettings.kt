@@ -23,7 +23,6 @@ import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageSquare
 import com.composables.icons.lucide.Pencil
-import com.composables.icons.lucide.ShieldCheck
 import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.Users
@@ -138,8 +137,6 @@ internal fun MeSettings(
                         subtitle = "Something broken, or missing",
                         trailing = out,
                     ) { sendFeedback(context) }
-                SupportRow.PRIVACY ->
-                    TileRow(Lucide.ShieldCheck, "Privacy policy", place, trailing = out) { links.openUri("$SITE/privacy") }
             }
         }
 
@@ -161,7 +158,8 @@ internal fun MeSettings(
     }
 }
 
-private enum class SupportRow { ABOUT, RATE, FEEDBACK, PRIVACY }
+// No privacy row: the About page carries the policy, in its footer.
+private enum class SupportRow { ABOUT, RATE, FEEDBACK }
 
 private val SUPPORT = SupportRow.entries.toList()
 
