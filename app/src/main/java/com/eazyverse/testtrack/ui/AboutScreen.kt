@@ -3,9 +3,6 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,8 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -170,39 +165,11 @@ private fun ColumnScope.AppPlate() {
  */
 @Composable
 private fun ColumnScope.RatingBank(onRate: (Int) -> Unit) {
-    val t = Tt.colors
     BankHeading("Enjoying TestTrack?")
     Spacer(Modifier.height(HEAD_GAP))
     BankLine("Rate it on Google Play and support our work.")
     Spacer(Modifier.height(10.dp))
-    var held by remember { mutableIntStateOf(0) }
-    Row(Modifier.align(Alignment.CenterHorizontally), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        for (star in 1..5) {
-            Box(
-                Modifier
-                    .size(TOUCH_MIN)
-                    .pointerInput(star) {
-                        // Fill while pressed, rate on release over the same star, nothing if the
-                        // finger slid off: a rating is a deliberate press, not a brush past.
-                        awaitEachGesture {
-                            awaitFirstDown()
-                            held = star
-                            val up = waitForUpOrCancellation()
-                            held = 0
-                            if (up != null) onRate(star)
-                        }
-                    },
-                contentAlignment = Alignment.Center,
-            ) {
-                Image(
-                    painterResource(if (star <= held) R.drawable.ic_star_filled else R.drawable.ic_star_outline),
-                    "$star of 5 stars",
-                    Modifier.size(30.dp),
-                    colorFilter = ColorFilter.tint(t.gold),
-                )
-            }
-        }
-    }
+    RatingStars(Modifier.align(Alignment.CenterHorizontally), onRate = onRate)
 }
 
 /** Who made it, then the studio's ask and its two ways of answering it. */

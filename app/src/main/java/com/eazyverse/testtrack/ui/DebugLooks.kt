@@ -15,4 +15,12 @@ object DebugLooks {
     private const val HOLD_LOADING = false
 
     val holdLoading: Boolean get() = BuildConfig.DEBUG && HOLD_LOADING
+
+    /**
+     * Open the after-a-value-moment rating ask ([RatingAsk]) as soon as the app starts, so it can be
+     * looked at before the moment that really triggers it is built. Set back to false when done.
+     */
+    private const val SHOW_RATING_ASK = true
+
+    val showRatingAsk: Boolean get() = BuildConfig.DEBUG && SHOW_RATING_ASK
 }
