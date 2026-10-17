@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -16,9 +18,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -100,6 +104,8 @@ fun CrewAddScreen(
                     AskMessage(AskFailure("Couldn't take the seat", it))
                 }
                 Spacer(Modifier.height(18.dp))
+                SeatPrice(vm.tix)
+                Spacer(Modifier.height(14.dp))
                 if (crews.seating) {
                     DialogNote("Checking it on Play the way the crew will see it. This can take half a minute.")
                     Spacer(Modifier.height(12.dp))
@@ -107,7 +113,7 @@ fun CrewAddScreen(
                 Primary(
                     "Take a seat",
                     busy = crews.seating,
-                    enabled = vm.name.isNotBlank() && vm.signInReady,
+                    enabled = vm.name.isNotBlank() && vm.signInReady && !vm.short,
                     tall = true,
                 ) {
                     crews.takeSeat(context, app.pkg, vm.name.trim(), vm.notes.trim(), onDone)
@@ -115,6 +121,43 @@ fun CrewAddScreen(
             }
             Spacer(Modifier.height(24.dp))
         }
+    }
+}
+
+/**
+ * What the seat costs and what there is to pay it from, said before the button rather than as a
+ * refusal after it. Short of it, the way to more: reviews are what earn tix.
+ */
+@Composable
+private fun SeatPrice(tix: Int?) {
+    val short = tix != null && tix < CrewRules.SEAT_COST
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text("A seat costs", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Tt.colors.text)
+            Spacer(Modifier.height(2.dp))
+            Text(
+                if (tix ==
+                    null
+                ) {
+                    "Back in full if your app leaves before the run."
+                } else {
+                    "You have $tix tix. Back in full if your app leaves before the run."
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = if (short) Tt.colors.bad else Tt.colors.text3,
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(
+            "${CrewRules.SEAT_COST} tix",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Tt.colors.accentInk,
+        )
+    }
+    if (short) {
+        Spacer(Modifier.height(10.dp))
+        AskMessage(AskFailure("Not enough tix yet", "Review somebody's app in Circle to earn the rest."))
     }
 }
 

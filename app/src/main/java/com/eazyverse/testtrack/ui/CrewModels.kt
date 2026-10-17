@@ -76,6 +76,12 @@ object CrewRules {
 
     const val RUN_DAYS = 14
 
+    /**
+     * What a seat costs, as the server charges it (rules.SEAT_COST). Back in full if the app
+     * leaves before its run; kept once the run has it. The server's answer is the one that counts.
+     */
+    const val SEAT_COST = 100
+
     /** Reports from different members that send an app back before the run starts. */
     const val REPORTS_TO_RETURN = 2
 

@@ -3,11 +3,13 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -103,6 +105,9 @@ class StandingScreensTest {
 
     @Test
     fun an_empty_board_invites_rather_than_apologises() {
+        // The robot moves for as long as it is on screen, so the clock is held: left to run, the
+        // test would wait for an animation that never ends.
+        compose.mainClock.autoAdvance = false
         compose.setContent {
             TestTrackTheme {
                 RanksBody(rows = emptyList(), mine = null)
@@ -175,6 +180,9 @@ class StandingScreensTest {
 
     @Test
     fun a_board_that_could_not_be_reached_blames_the_network_and_not_the_reader() {
+        // The robot moves for as long as it is on screen, so the clock is held: left to run, the
+        // test would wait for an animation that never ends.
+        compose.mainClock.autoAdvance = false
         compose.setContent {
             TestTrackTheme {
                 RanksBody(
@@ -265,7 +273,7 @@ class StandingScreensTest {
             }
         }
         compose.onNodeWithText("Going on").assertIsDisplayed()
-        compose.onNodeWithText("Finished").assertIsDisplayed()
+        compose.onNodeWithText("Ended").assertIsDisplayed()
         compose.onNodeWithText("Running One").assertIsDisplayed()
         compose.onNodeWithText("Old One").assertIsDisplayed()
     }
@@ -279,6 +287,9 @@ class StandingScreensTest {
 
     @Test
     fun somebody_with_nothing_up_is_told_how_to_start() {
+        // The robot moves for as long as it is on screen, so the clock is held: left to run, the
+        // test would wait for an animation that never ends.
+        compose.mainClock.autoAdvance = false
         compose.setContent { TestTrackTheme { AppsBody(apps = emptyList()) } }
         compose.onNodeWithText("Nothing up yet").assertIsDisplayed()
         compose.onNodeWithText("Put an app into a crew", substring = true).assertIsDisplayed()
@@ -341,6 +352,8 @@ class StandingScreensTest {
         compose.setContent {
             TestTrackTheme { MeBody(profile = profile(), onSignOut = { signedOut++ }) }
         }
+        // At the foot of the page, under the settings, so it is scrolled to before it is pressed.
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Sign out"))
         compose.onNodeWithText("Sign out").performClick()
         assertEquals(1, signedOut)
     }
@@ -358,12 +371,15 @@ class StandingScreensTest {
     @Test
     fun signed_out_the_profile_shows_where_everybody_starts() {
         compose.setContent { TestTrackTheme { MeBody(profile = null, signedOut = true) } }
-        compose.onNodeWithText("Level one, waiting").assertIsDisplayed()
-        compose.onNodeWithText("Get started").assertIsDisplayed()
+        compose.onNodeWithText("Sign in to see your profile").assertIsDisplayed()
+        compose.onNodeWithText("Sign in").assertIsDisplayed()
     }
 
     @Test
     fun a_profile_that_could_not_be_reached_blames_the_network() {
+        // The robot moves for as long as it is on screen, so the clock is held: left to run, the
+        // test would wait for an animation that never ends.
+        compose.mainClock.autoAdvance = false
         compose.setContent { TestTrackTheme { MeBody(profile = null, offline = true) } }
         compose.onNodeWithText("Your record did not load").assertIsDisplayed()
     }

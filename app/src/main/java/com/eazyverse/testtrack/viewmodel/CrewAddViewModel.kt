@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.ui.AskFailure
+import com.eazyverse.testtrack.ui.CrewRules
 import com.eazyverse.testtrack.ui.FeedRules
 import com.eazyverse.testtrack.ui.HandEntry
 import com.eazyverse.testtrack.ui.lookupFailure
@@ -74,6 +75,17 @@ class CrewAddViewModel :
         get() = !needsSignIn || (username.isNotBlank() && password.isNotBlank()) || also.isNotBlank()
 
     private var lookupJob: Job? = null
+
+    /** The balance a seat is paid from, once the server has said; null until then. */
+    var tix by mutableStateOf<Int?>(null)
+        private set
+
+    /** Known to be short of a seat's price. Unknown is not short: the server has the last word. */
+    val short: Boolean get() = tix?.let { it < CrewRules.SEAT_COST } ?: false
+
+    init {
+        viewModelScope.launch { runCatching { tix = Api.me().tix } }
+    }
 
     data class Found(
         val pkg: String,

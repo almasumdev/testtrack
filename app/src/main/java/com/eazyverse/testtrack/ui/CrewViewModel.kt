@@ -432,7 +432,7 @@ class CrewViewModel : ViewModel() {
     ) = call(
         context = context,
         onDone = {
-            message = "Taken back out. You can put an app in again."
+            message = "Taken back out, and its ${CrewRules.SEAT_COST} tix are back. You can put an app in again."
             MyAppsChanged.tell()
         },
     ) { Api.withdraw(seat.id) }

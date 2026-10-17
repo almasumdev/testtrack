@@ -46,6 +46,16 @@ fun CrewPage(
     val dialogs = rememberCrewDialogs()
     val crew = vm.crews.firstOrNull { it.id == id }
     LaunchedEffect(id) { if (crew == null) vm.load(context) }
+    // Shown once and then gone from your crews: you took your app out, or it was sent back. The
+    // page has nothing left to show, so it closes rather than waiting for a crew that is not coming.
+    var seen by remember { mutableStateOf(false) }
+    LaunchedEffect(crew != null) {
+        if (crew != null) {
+            seen = true
+        } else if (seen) {
+            onBack()
+        }
+    }
     CrewLifecycle(vm)
     val actions = crewActions(vm, dialogs, onSignIn, onAddToCrew)
 
@@ -71,6 +81,14 @@ fun CrewPage(
         Column(Modifier.fillMaxSize().padding(padding)) {
             when {
                 crew == null && vm.offline -> RobotOffline("This crew didn't load", onRetry = { vm.load(context) })
+                crew == null && !vm.loading ->
+                    RobotState(
+                        Prop.Notes,
+                        "You're not in this crew",
+                        "Your app was taken out or sent back, so this crew is no longer yours to see.",
+                        action = "Back",
+                        onAction = onBack,
+                    )
                 crew == null -> CrewLobbyLoading()
                 crew.phase == CrewPhase.LOBBY -> CrewLobbyPhase(crew, actions)
                 crew.phase == CrewPhase.RUN -> CrewRunPhase(crew, actions)

@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -115,6 +116,25 @@ class CrewRowsTest {
         compose.onNodeWithText("Report").performClick()
         assertEquals(1, installed)
         assertEquals(1, reported)
+    }
+
+    @Test
+    fun a_sign_in_is_shown_as_rows_to_copy() {
+        compose.setContent {
+            TestTrackTheme {
+                CrewSeatRow(
+                    seat(notes = signInNotes("tester@example.com", "hunter2", "Tap Skip on the first screen")),
+                    onInstall = {},
+                    onReport = {},
+                )
+            }
+        }
+        compose.onNodeWithText("tester@example.com").assertIsDisplayed()
+        compose.onNodeWithText("hunter2").assertIsDisplayed()
+        compose.onNodeWithText("Tap Skip on the first screen").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Copy Username").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Copy Password").assertIsDisplayed()
+        compose.onNodeWithText("Username: tester@example.com").assertDoesNotExist()
     }
 
     @Test

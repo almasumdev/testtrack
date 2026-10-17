@@ -182,7 +182,8 @@ fun AppsBody(
             }
         }
         if (over.isNotEmpty()) {
-            item { CrewHeading("Finished", trailing = "${over.size}") }
+            // Ended rather than finished: a run done, a request complete, and an app sent back.
+            item { CrewHeading("Ended", trailing = "${over.size}") }
             itemsIndexed(over, key = { _, app -> app.id }) { index, app ->
                 // Fades in, fades out and glides to its new place when the list changes.
                 Box(Modifier.animateItem()) {

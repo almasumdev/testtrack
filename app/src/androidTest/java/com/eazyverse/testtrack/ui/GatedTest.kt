@@ -60,7 +60,7 @@ class GatedTest {
             }
         }
         compose.onNodeWithText(heading).assertIsDisplayed()
-        compose.onNodeWithText("Get started").assertIsDisplayed()
+        compose.onNodeWithText("Sign in").assertIsDisplayed()
         keep(name, compose.onRoot().captureToImage().asAndroidBitmap())
     }
 
