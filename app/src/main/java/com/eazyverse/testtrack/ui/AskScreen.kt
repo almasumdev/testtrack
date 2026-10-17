@@ -1,8 +1,6 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,32 +8,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.SubcomposeAsyncImage
-import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
  * Asking the circle to look at your app.
@@ -197,49 +185,5 @@ private fun Finding(vm: AskViewModel) {
 @Composable
 private fun Found(vm: AskViewModel) {
     val app = vm.found ?: return
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClick = vm::startOver)
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (app.icon.isBlank()) {
-            // Typed by hand: no Play icon, so the one on this phone, as the feed will draw it.
-            AppIcon(app.`package`, app.name, size = 48.dp)
-        } else {
-            SubcomposeAsyncImage(
-                model = app.icon,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(11.dp)),
-                loading = { AskAppPlaceholder() },
-                error = { AskAppPlaceholder() },
-            )
-        }
-        Spacer(Modifier.width(13.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                app.name,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                app.developer.ifBlank { app.`package` },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Spacer(Modifier.width(10.dp))
-        Text(
-            "Change",
-            style = MaterialTheme.typography.bodySmall,
-            color = Tt.colors.accentInk,
-            fontWeight = FontWeight.Medium,
-        )
-    }
-    if (vm.unchecked) {
-        Spacer(Modifier.height(8.dp))
-        UncheckedNote()
-    }
+    FoundApp(app.`package`, app.name, app.icon, app.developer, unchecked = vm.unchecked, onChange = vm::startOver)
 }

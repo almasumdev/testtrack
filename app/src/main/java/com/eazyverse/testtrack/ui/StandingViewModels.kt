@@ -156,15 +156,23 @@ class AppsViewModel : ViewModel() {
 
     fun stopLive() = live.stop()
 
+    /** The application context from the first load, for reading again on news from elsewhere. */
+    private var app: Context? = null
+
     // Your kept apps, before the first frame; none kept waits for the server rather than say so.
     init {
         Api.lastMyApps()?.takeIf { it.apps.isNotEmpty() }?.let {
             apps = it.apps
             loading = false
         }
+        // An app put up or taken down on another screen: read again, whether or not this tab shows.
+        viewModelScope.launch { MyAppsChanged.events.collect { app?.let(::load) } }
     }
 
     fun load(context: Context) {
+        app = context.applicationContext
+        // Nothing shown yet: the shimmer while it comes, not "Nothing up yet" over an app just added.
+        if (apps.isEmpty()) loading = true
         viewModelScope.launch {
             try {
                 if (!ApiAuth.ensure(context)) {

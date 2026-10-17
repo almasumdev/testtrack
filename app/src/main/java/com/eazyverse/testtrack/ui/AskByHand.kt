@@ -32,6 +32,18 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * read the way the server reads it, so the one thing reviewers install by cannot be mistyped.
  */
 
+/** What typing an app's details needs from the screen it is on. */
+interface HandEntry {
+    /** The package in the link, read the way the server reads it; null when there is none. */
+    val typedPackage: String?
+    val handName: String
+    val canUseByHand: Boolean
+
+    fun typeName(next: String)
+
+    fun useByHand()
+}
+
 /**
  * The package from the link, the name typed, and on to the request.
  *
@@ -41,7 +53,7 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * picture the feed will show.
  */
 @Composable
-internal fun ByHandForm(vm: AskViewModel) {
+internal fun ByHandForm(vm: HandEntry) {
     val pkg = vm.typedPackage
     val label = pkg?.let { installedLabel(it) }
     LaunchedEffect(pkg, label) {

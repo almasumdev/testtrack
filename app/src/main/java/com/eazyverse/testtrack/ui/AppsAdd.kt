@@ -21,6 +21,8 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageSquare
 import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.Users
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 /*
@@ -31,6 +33,22 @@ import kotlinx.coroutines.launch
  * named after your apps was the one place you could not add one. This asks which way, once, and
  * hands over to the screen that already does it.
  */
+
+/**
+ * Something you put up, or took down, from another screen: a seat taken or given up on Crew, a
+ * request posted on Ask for feedback. My apps hears it and reads its list again, so by the time
+ * somebody switches to it the app is already there. The server's own news only reaches My apps
+ * for crews it already knew about, which a brand new seat is not.
+ */
+object MyAppsChanged {
+    private val changes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    val events = changes.asSharedFlow()
+
+    fun tell() {
+        changes.tryEmit(Unit)
+    }
+}
 
 /** The two ways an app goes up, each in a line, and on to the one picked. */
 @OptIn(ExperimentalMaterial3Api::class)

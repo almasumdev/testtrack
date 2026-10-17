@@ -282,6 +282,7 @@ class CrewViewModel : ViewModel() {
                 tab = CrewPhase.LOBBY
                 onDone()
                 load(context)
+                MyAppsChanged.tell()
             } catch (e: ApiError) {
                 seatError = e.message
             } catch (_: Exception) {
@@ -430,7 +431,10 @@ class CrewViewModel : ViewModel() {
         seat: CrewSeat,
     ) = call(
         context = context,
-        onDone = { message = "Taken back out. You can put an app in again." },
+        onDone = {
+            message = "Taken back out. You can put an app in again."
+            MyAppsChanged.tell()
+        },
     ) { Api.withdraw(seat.id) }
 
     /**

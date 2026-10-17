@@ -26,7 +26,9 @@ import java.net.URLDecoder
  * the tester group. That is the only way to see a closed testing listing at all, and it is why
  * the first step can fail for a reason worth explaining rather than just "not found".
  */
-class AskViewModel : ViewModel() {
+class AskViewModel :
+    ViewModel(),
+    HandEntry {
     var query by mutableStateOf(if (BuildConfig.DEBUG) "com.eazyverse." else "")
         private set
 
@@ -63,7 +65,7 @@ class AskViewModel : ViewModel() {
         private set
 
     /** The app's name, typed while the lookup is down. */
-    var handName by mutableStateOf("")
+    override var handName by mutableStateOf("")
         private set
 
     /** What was found came from the person, not from Play. Said on the page so nobody forgets. */
@@ -186,21 +188,21 @@ class AskViewModel : ViewModel() {
     }
 
     /** The package in the link, read the way the server reads it. */
-    val typedPackage: String? get() = packageFrom(query)
+    override val typedPackage: String? get() = packageFrom(query)
 
-    val canUseByHand: Boolean get() = typedPackage != null && handName.isNotBlank()
+    override val canUseByHand: Boolean get() = typedPackage != null && handName.isNotBlank()
 
     fun enterByHand() {
         failure = null
         byHand = true
     }
 
-    fun typeName(next: String) {
+    override fun typeName(next: String) {
         handName = next.take(FeedRules.APP_NAME_MAX)
     }
 
     /** Carry on to the request with what was typed, as though Play had answered with it. */
-    fun useByHand() {
+    override fun useByHand() {
         val pkg = typedPackage ?: return
         if (handName.isBlank()) return
         found = Listing(`package` = pkg, name = handName.trim())
@@ -286,6 +288,7 @@ class AskViewModel : ViewModel() {
                 }
             }.onSuccess {
                 pendingRequest = null
+                MyAppsChanged.tell()
                 onDone()
             }.onFailure {
                 if (it is CancellationException) throw it

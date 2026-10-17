@@ -78,6 +78,14 @@ object Routes {
     const val CHECK = "check/{id}"
 
     fun check(id: String) = "check/${Uri.encode(id)}"
+
+    /** One crew on its own page. */
+    const val CREW = "crew/{id}"
+
+    fun crew(id: String) = "crew/${Uri.encode(id)}"
+
+    /** Putting an app into a crew: find it, confirm it, take the seat. */
+    const val CREW_ADD = "crew-add"
 }
 
 class MainActivity : ComponentActivity() {
@@ -275,6 +283,8 @@ fun AppNav(openCrew: MutableState<Boolean> = remember { mutableStateOf(false) })
                 onReview = { nav.push(Routes.review(it)) },
                 onCheck = { nav.push(Routes.check(it)) },
                 onOpenAbout = { nav.push(Routes.ABOUT) },
+                onOpenCrew = { nav.push(Routes.crew(it)) },
+                onAddToCrew = { nav.push(Routes.CREW_ADD) },
                 openCrew = openCrew,
                 // The same teardown the other two do, and for the same reason: `replace` pops
                 // everything above the graph root, so the shell does not survive underneath a
@@ -316,6 +326,31 @@ fun AppNav(openCrew: MutableState<Boolean> = remember { mutableStateOf(false) })
                     onClose = { nav.popBackStack() },
                     onOpen = { nav.push(Routes.check(it)) },
                 )
+            }
+        }
+
+        composable(Routes.CREW, arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
+            // The Crew tab's own view model, borrowed from the home entry underneath, as a case
+            // borrows Circle's: the crew is already loaded there and opens on the first frame.
+            val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
+            val crews: CrewViewModel = viewModel(home)
+            Inset {
+                CrewPage(
+                    crews,
+                    requireNotNull(entry.arguments?.getString("id")),
+                    onBack = { nav.popBackStack() },
+                    onSignIn = { nav.popBackStack() },
+                    onAddToCrew = { nav.push(Routes.CREW_ADD) },
+                )
+            }
+        }
+
+        composable(Routes.CREW_ADD) { entry ->
+            // Taken on the Crew tab's model, so the seat is already there on the way back.
+            val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
+            val crews: CrewViewModel = viewModel(home)
+            Inset {
+                CrewAddScreen(crews, onDone = { nav.popBackStack() }, onBack = { nav.popBackStack() })
             }
         }
 

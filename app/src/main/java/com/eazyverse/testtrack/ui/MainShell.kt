@@ -95,6 +95,10 @@ fun MainShell(
     onSignOut: () -> Unit,
     onCheck: (String) -> Unit = {},
     onOpenAbout: () -> Unit = {},
+    /** A crew's own page. */
+    onOpenCrew: (String) -> Unit = {},
+    /** The page that puts an app into a crew. */
+    onAddToCrew: () -> Unit = {},
     /** Set by a tapped crew notification; cleared once the Crew tab is showing. */
     openCrew: MutableState<Boolean> = remember { mutableStateOf(false) },
     hudVm: HudViewModel = viewModel(),
@@ -102,11 +106,8 @@ fun MainShell(
     val context = LocalContext.current
     var tab by rememberSaveable { mutableStateOf(MainTab.CIRCLE) }
 
-    /** A crew to open on the Crew tab, from a tap on its app in My apps. Cleared once open. */
-    var crewToOpen by remember { mutableStateOf<String?>(null) }
-
-    /** Add an app from My apps as a crew seat: the Crew tab opens on its seat dialog. */
-    var seatToStart by remember { mutableStateOf(false) }
+    // Putting an app into a crew from My apps: on the testers group first, as Crew's own button.
+    val membership = rememberMembership()
 
     /** Where Back from the profile goes, so it lands where you actually came from. */
     var cameFrom by rememberSaveable { mutableStateOf(MainTab.CIRCLE) }
@@ -246,10 +247,8 @@ fun MainShell(
                             // the bar while this is being built. See docs/crew.md.
                             MainTab.GROUPS ->
                                 CrewScreen(
-                                    openCrew = crewToOpen,
-                                    onOpened = { crewToOpen = null },
-                                    startSeat = seatToStart,
-                                    onSeatStarted = { seatToStart = false },
+                                    onOpenCrew = onOpenCrew,
+                                    onAddToCrew = onAddToCrew,
                                     onSignIn = {
                                         asking =
                                             SignInReason(
@@ -266,15 +265,9 @@ fun MainShell(
 
                             MainTab.APPS ->
                                 AppsScreen(
-                                    onOpenCrew = { id ->
-                                        crewToOpen = id
-                                        show(MainTab.GROUPS)
-                                    },
+                                    onOpenCrew = onOpenCrew,
                                     onOpenRequest = onCheck,
-                                    onAddToCrew = {
-                                        seatToStart = true
-                                        show(MainTab.GROUPS)
-                                    },
+                                    onAddToCrew = { membership.require { onAddToCrew() } },
                                     onAskForFeedback = onAskForFeedback,
                                     onSignIn = {
                                         asking =

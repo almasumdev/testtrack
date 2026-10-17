@@ -120,6 +120,8 @@ private fun YourSeat(
 ) {
     CrewCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            AppIcon(mine.packageName, mine.appName) { AppTile(mine.appName) }
+            Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(mine.appName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(2.dp))

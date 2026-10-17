@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -156,13 +157,30 @@ private fun SeatTile(
     modifier: Modifier,
     seat: CrewSeat?,
 ) {
-    val shape = RoundedCornerShape(9.dp)
     if (seat == null || seat.state == SeatState.REJECTED || seat.state == SeatState.REMOVED) {
         EmptySeat(modifier)
         return
     }
-    val (fill, ink) = Tt.colors.nameTile((seat.appName.hashCode().rem(360) + 360).rem(360).toFloat())
     val checking = seat.state == SeatState.CHECKING
+    // The app's own icon where this phone has it, so your own seat and the ones you have installed
+    // read as themselves; a lettered tile for the rest. Faded while the app is still being checked.
+    AppIcon(
+        seat.packageName,
+        seat.appName,
+        size = 30.dp,
+        modifier = modifier.aspectRatio(1f).alpha(if (checking) 0.45f else 1f),
+    ) { LetterSeat(modifier, seat, checking) }
+}
+
+/** A taken seat as its app's initial on a tile tinted from its name. */
+@Composable
+private fun LetterSeat(
+    modifier: Modifier,
+    seat: CrewSeat,
+    checking: Boolean,
+) {
+    val shape = RoundedCornerShape(9.dp)
+    val (fill, ink) = Tt.colors.nameTile((seat.appName.hashCode().rem(360) + 360).rem(360).toFloat())
     Box(
         modifier
             .aspectRatio(1f)

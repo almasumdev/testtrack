@@ -209,7 +209,7 @@ fun MyAppCard(
 ) {
     CrewCard(modifier, onClick = onOpen) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            AppTile(app.appName)
+            AppIcon(app.packageName, app.appName) { AppTile(app.appName) }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
@@ -375,7 +375,7 @@ fun MyAppRow(
             .padding(horizontal = Gutter, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppTile(app.appName)
+        AppIcon(app.packageName, app.appName) { AppTile(app.appName) }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(

@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -245,7 +246,12 @@ fun CrewAppRow(
     val settled = app.done || app.reported
     Column(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            AppMark(app.label, done = settled)
+            AppIcon(
+                app.packageName,
+                app.label,
+                size = 38.dp,
+                modifier = Modifier.size(38.dp).alpha(if (settled) 0.45f else 1f),
+            ) { AppMark(app.label, done = settled) }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
