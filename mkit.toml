@@ -101,3 +101,6 @@ update_doc = "config/app"
 [art]                         # store art: mkit art build
 dir = "store/art"
 out = "store"
+
+[aso]
+keywords = "console/aso/keywords.toml"

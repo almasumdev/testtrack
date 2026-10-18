@@ -53,3 +53,6 @@ gate.gs
 .commandcode/
 # Built locally from the gitignored store art.
 /store/preview.html
+
+# Store keyword research (mkit aso): the maintainer's working data.
+/console/
