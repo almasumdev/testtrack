@@ -368,6 +368,14 @@ class CrewViewModel : ViewModel() {
         NightRound.start(context, stops, float = true)
     }
 
+    /** Both switches a round needs: usage access for the proof, drawing over apps for the timer. */
+    fun permissionsReady(context: Context) = UsageRepo.hasAccess(context) && NightRound.canFloat(context)
+
+    /** The guide's Allow: whichever of the two is still off, usage access first. */
+    fun allowPermissions(activity: Activity) {
+        if (!UsageRepo.hasAccess(activity)) UsageRepo.openSettings(activity) else allowOverlay(activity)
+    }
+
     /** "Allow": to Android's switch; the round starts when TestTrack is back in front. */
     fun allowOverlay(context: Context) {
         runCatching {

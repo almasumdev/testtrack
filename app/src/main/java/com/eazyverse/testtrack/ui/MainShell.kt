@@ -266,9 +266,14 @@ fun MainShell(
                             // The new crew screens, running on in-memory state. HomeScreen and the group
                             // screens it pushes are still on disk and still work; nothing points at them from
                             // the bar while this is being built. See docs/crew.md.
-                            MainTab.GROUPS ->
+                            MainTab.GROUPS -> {
+                                // Get ready asks whether an app is set for a crew, so My apps is read here too.
+                                LaunchedEffect(Unit) { apps.load(context) }
                                 CrewScreen(
                                     onOpenCrew = onOpenCrew,
+                                    myApps = apps.apps.takeIf { it.isNotEmpty() || !apps.loading },
+                                    onAddApp = onAddApp,
+                                    onOpenApp = onOpenApp,
                                     // Signed in and on the testers group already: which app goes in.
                                     onAddToCrew = {
                                         apps.load(context)
@@ -285,7 +290,7 @@ fun MainShell(
                                             )
                                     },
                                 )
-
+                            }
                             MainTab.RANKS -> RanksScreen()
 
                             MainTab.APPS ->

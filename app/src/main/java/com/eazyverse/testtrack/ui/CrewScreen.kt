@@ -19,8 +19,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -28,7 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
@@ -49,6 +55,10 @@ fun CrewScreen(
     onOpenCrew: (String) -> Unit = {},
     /** The page that puts an app into a crew. */
     onAddToCrew: () -> Unit = {},
+    /** My apps as it stands, for the Open tab's Get ready; null until it has answered. */
+    myApps: List<AppEntry>? = null,
+    onAddApp: () -> Unit = {},
+    onOpenApp: (String) -> Unit = {},
     vm: CrewViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -88,11 +98,44 @@ fun CrewScreen(
                     LoadSwap(vm.firstLoad) { if (it) CrewLobbyLoading() else CrewLobbyTab(vm, onSignIn, actions, onOpenCrew) }
                 vm.tab == CrewPhase.RECORD ->
                     LoadSwap(vm.firstLoad) { if (it) CrewRecordLoading() else CrewRecordTab(vm, onSignIn, onOpenCrew) }
-                else -> CrewOpenTab(vm, actions)
+                else -> CrewOpenTab(vm, actions, rememberCrewGuide(vm, myApps, onAddApp, onOpenApp))
             }
         }
     }
     CrewDialogsHost(vm, dialogs)
+}
+
+/**
+ * The Open tab's Get ready, read again on every return to TestTrack: the switches are turned on
+ * in Android's settings and the group joined in a browser, and coming back should show the tick.
+ */
+@Composable
+private fun rememberCrewGuide(
+    vm: CrewViewModel,
+    myApps: List<AppEntry>?,
+    onAddApp: () -> Unit,
+    onOpenApp: (String) -> Unit,
+): CrewGuide {
+    val context = LocalContext.current
+    val membership = rememberMembership()
+    var resumes by remember { mutableIntStateOf(0) }
+    val owner = LocalLifecycleOwner.current
+    DisposableEffect(owner) {
+        val watcher = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) resumes++ }
+        owner.lifecycle.addObserver(watcher)
+        onDispose { owner.lifecycle.removeObserver(watcher) }
+    }
+    val permissions = remember(resumes) { vm.permissionsReady(context) }
+    // Ready for a crew: checked on Play and still in closed testing. A live app goes to Feedback.
+    val waiting = myApps?.filter { !it.live }
+    val app = waiting?.let { list -> list.any { it.verified } }
+    return CrewGuide(
+        ready = CrewReady(app = if (vm.signedOut) false else app, member = membership.member, permissions = permissions),
+        hasApps = !waiting.isNullOrEmpty(),
+        onApp = { waiting?.firstOrNull { !it.verified }?.let { onOpenApp(it.id) } ?: onAddApp() },
+        onJoin = { membership.show() },
+        onAllow = { vm.allowPermissions(context.findActivity()) },
+    )
 }
 
 /** What a crew's rows can ask for, passed down as one value rather than six lambdas each. */

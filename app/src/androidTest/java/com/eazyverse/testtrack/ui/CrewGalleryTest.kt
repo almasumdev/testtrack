@@ -13,6 +13,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.test.espresso.Espresso
@@ -523,5 +524,33 @@ class CrewGalleryTest {
             settle()
         }
         shoot("32-members-run-end")
+    }
+
+    /** Open's guide under the filling crew, top to bottom, with one thing still to set up. */
+    @Test
+    fun draw_the_open_guide() {
+        compose.mainClock.autoAdvance = false
+        compose.setContent { screen?.invoke() }
+        val vm = CrewViewModel()
+        vm.preview(emptyList(), open = open(taken = 12), tab = CrewPhase.OPEN)
+        val guide = CrewGuide(CrewReady(app = true, member = true, permissions = false))
+        screen =
+            {
+                key(
+                    "g",
+                ) { TestTrackTheme { Backdrop(Scene.CREW) { CrewOpenTab(vm, CrewActions({}, {}, {}, {}, {}, {}, { _, _ -> }), guide) } } }
+            }
+        settle()
+        val shoot = { name: String ->
+            val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+            File(out, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        }
+        shoot("40-open-guide-1")
+        // By position: a swipe on the hand-driven clock flings straight to the end.
+        listOf(2, 3, 4).forEach { index ->
+            compose.onAllNodes(hasScrollToIndexAction())[0].performScrollToIndex(index)
+            settle()
+            shoot("40-open-guide-$index")
+        }
     }
 }
