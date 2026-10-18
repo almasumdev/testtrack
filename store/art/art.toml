@@ -2,8 +2,9 @@
 # Paths are relative to the app folder (where mkit.toml is).
 #
 # mkit's "pop" layout in TestTrack's own look: the Ocean blue of the app, short bold white
-# titles with a gold underline (the tix ticket's gold), big phones, pills naming what is on
-# each capture, and the testers' app icons popping out around them. The robot is the mascot.
+# titles with one word in gold (the tix ticket's gold), big phones, pills naming what is on
+# each capture, the testers' app icons popping out around them, and the app's own glass shapes on the ground
+# (the same scatter the app draws behind its screens). The robot is the mascot.
 #
 # Captures: the real app on an emulator at 1080x2340 with gesture navigation, signed in to a
 # demo account on a seeded server (demo developers, a crew on day 6, feedback posts), with the
@@ -11,6 +12,8 @@
 # pixels (left, top), laid out for English.
 
 layout = "pop"
+ornament = "scatter"          # the app's own glass shapes over the ground, no dots
+underline_style = "colour"    # the [word] itself in gold, no line under it
 reference = "en"
 
 font_dir = "store/art/fonts"
