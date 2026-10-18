@@ -2,6 +2,7 @@ package com.eazyverse.testtrack.ui
 
 import android.app.Activity
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -144,8 +145,35 @@ class CrewViewModel : ViewModel() {
     var reloading by mutableStateOf(false)
         private set
 
+    /** Set by [preview]: the crews were put in by hand, and asking the server would replace them. */
+    private var previewing = false
+
+    /**
+     * Crews put in directly, for the screen gallery in androidTest: every state drawn by the real
+     * screens without a server. Nothing in the app calls this.
+     */
+    @VisibleForTesting
+    internal fun preview(
+        mine: List<Crew>,
+        open: Crew? = null,
+        blocked: String? = null,
+        signedOut: Boolean = false,
+        tab: CrewPhase = CrewPhase.OPEN,
+    ) {
+        previewing = true
+        crews = mine
+        this.open = open
+        this.blocked = blocked
+        this.signedOut = signedOut
+        this.tab = tab
+        opened = null
+        loading = false
+        offline = false
+    }
+
     /** Everything the tab shows, in one call. Safe to run on every resume. */
     fun load(context: Context) {
+        if (previewing) return
         val mine = ++loads
         reloading = true
         viewModelScope.launch {
