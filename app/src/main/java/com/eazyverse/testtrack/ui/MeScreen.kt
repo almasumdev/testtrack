@@ -150,7 +150,7 @@ fun MeBody(
         // The sign-in ask, then what needs no account: About, rating and feedback, and the version.
         LazyColumn(
             Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = Gutter, end = Gutter, bottom = 28.dp + dockRoom()),
+            contentPadding = PaddingValues(start = Gutter, end = Gutter, bottom = Gutter + dockRoom()),
         ) {
             item {
                 Box(Modifier.fillParentMaxHeight(0.6f)) {
@@ -180,7 +180,7 @@ fun MeBody(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = 28.dp + dockRoom()),
+        contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = Gutter + dockRoom()),
     ) {
         item { LoadSwap(shown == null) { if (it) WhoLoading() else shown?.let { p -> Who(p, onEdit) } } }
         item { SectionTitle("Your record") }
@@ -444,7 +444,7 @@ private const val NAME_MAX = 40
 private fun VersionLine() {
     Text(
         "v${BuildConfig.VERSION_NAME}",
-        Modifier.fillMaxWidth().padding(top = 24.dp),
+        Modifier.fillMaxWidth().padding(top = 12.dp),
         style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
         fontWeight = FontWeight.Medium,
         color = Tt.colors.text4,

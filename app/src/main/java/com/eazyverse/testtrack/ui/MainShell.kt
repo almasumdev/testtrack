@@ -338,7 +338,7 @@ fun MainShell(
             show,
             Modifier
                 .align(Alignment.BottomCenter)
-                .onSizeChanged { dockHeight = with(density) { it.height.toDp() } },
+                .onSizeChanged { dockHeight = with(density) { it.height.toDp() } - DockTop },
         )
     }
 

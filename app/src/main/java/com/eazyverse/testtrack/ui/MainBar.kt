@@ -51,6 +51,12 @@ import com.eazyverse.testtrack.ui.theme.Tt
 import kotlin.math.roundToInt
 
 /**
+ * The clear strip above the dock's pill, inside what the shell measures. Left out of
+ * [LocalDockRoom], so a list's last [Gutter] is measured from the pill a person can see.
+ */
+internal val DockTop = 6.dp
+
+/**
  * The bar: Value Guard's floating dock.
  *
  * A pill that floats over the ground rather than a strip bolted to the bottom edge. Every tab but
@@ -92,7 +98,7 @@ fun MainBar(
         modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(start = DockInset, end = DockInset, top = 6.dp, bottom = 12.dp),
+            .padding(start = DockInset, end = DockInset, top = DockTop, bottom = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
         BoxWithConstraints(

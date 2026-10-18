@@ -122,6 +122,8 @@ android {
          */
         debug {
             applicationIdSuffix = ".debug"
+            // Said on the version line, so a screenshot of a debug build is never taken for a release.
+            versionNameSuffix = "-debug"
 
             /*
              * The same API, still over HTTPS. Pointing a debug build at a plain HTTP address
