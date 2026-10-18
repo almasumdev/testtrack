@@ -158,6 +158,8 @@ internal fun CheckRow(
     appName: String,
     detail: String,
     onClick: () -> Unit,
+    /** The app's package, so an installed one shows its own icon rather than a lettered tile. */
+    packageName: String = "",
     chip: @Composable () -> Unit,
 ) {
     val t = Tt.colors
@@ -168,7 +170,7 @@ internal fun CheckRow(
             .padding(start = 14.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppTile(appName, size = ROW_TILE)
+        AppIcon(packageName, appName, size = ROW_TILE) { AppTile(appName, size = ROW_TILE) }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f).height(ROW_TILE), verticalArrangement = Arrangement.SpaceBetween) {
             Text(

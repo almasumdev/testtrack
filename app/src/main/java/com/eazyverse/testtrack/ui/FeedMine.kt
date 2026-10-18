@@ -194,7 +194,7 @@ private fun MineRow(
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppTile(review.appName, size = MINE_TILE)
+        AppIcon(review.packageName, review.appName, size = MINE_TILE) { AppTile(review.appName, size = MINE_TILE) }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f).height(MINE_TILE), verticalArrangement = Arrangement.SpaceBetween) {
             Text(

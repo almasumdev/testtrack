@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiSession
@@ -34,7 +35,7 @@ class HudViewModel(
     private val restored =
         run {
             ApiSession.load(application)
-            ApiSession.cachedHeader(FirebaseAuth.getInstance().currentUser?.uid)
+            ApiSession.cachedHeader(account())
         }
 
     /** Restored synchronously before the first frame, then refreshed from the server. */
@@ -127,11 +128,11 @@ class HudViewModel(
                     }
                     signedOut = false
                     val generation = ApiSession.generation
-                    val account = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
+                    val account = account() ?: return@launch
                     val me = Api.me()
                     if (generation != ApiSession.generation ||
                         !ApiSession.signedIn ||
-                        FirebaseAuth.getInstance().currentUser?.uid != account
+                        account() != account
                     ) {
                         return@launch
                     }
@@ -147,6 +148,13 @@ class HudViewModel(
                 }
             }
     }
+
+    /**
+     * Whose header this is: the Firebase account, or the signed-in address when the API session
+     * outlives a Firebase session that has lapsed. The header comes from our own server, so it
+     * should not go blank only because the Google side needs signing in again.
+     */
+    private fun account(): String? = FirebaseAuth.getInstance().currentUser?.uid ?: Session.email
 }
 
 /** The server's events that change what the header shows. */

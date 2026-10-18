@@ -258,7 +258,7 @@ fun FeedRequestCard(
 ) {
     FeedCard {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            AppTile(post.appName)
+            AppIcon(post.packageName, post.appName) { AppTile(post.appName) }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(

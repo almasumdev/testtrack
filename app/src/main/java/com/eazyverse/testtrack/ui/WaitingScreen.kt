@@ -95,6 +95,7 @@ fun WaitingBody(
                             if (review.isLive) "Live app" else "Closed test",
                         ).joinToString(" · "),
                         onClick = { onOpenReview(review) },
+                        packageName = review.packageName,
                     ) {
                         val until = review.decideBy
                         if (until != null) {
@@ -115,6 +116,7 @@ fun WaitingBody(
                         case.appName,
                         "Disputed · ${case.votesCast} of ${case.votesNeeded} votes",
                         onClick = { onOpenCase(case) },
+                        packageName = case.packageName,
                     ) { Pill("${case.stake} tix", Tt.colors.accentInk, Tt.colors.glass2) }
                 }
             }
@@ -139,6 +141,7 @@ fun WaitingBody(
                             if (request.underWay > 0) add("${request.underWay} under way")
                         }.joinToString(" · "),
                         onClick = { onOpenRequest(request) },
+                        packageName = request.packageName,
                     ) {
                         if (request.closed) {
                             Pill("Closed", Tt.colors.text3, Tt.colors.glass2)
