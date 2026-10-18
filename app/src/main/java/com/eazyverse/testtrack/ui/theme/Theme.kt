@@ -125,7 +125,9 @@ fun TestTrackTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
+            // Not every view lives in an activity: the testing control floats in a window of its
+            // own over other apps, and those bars are the other app's to set.
+            val window = (view.context as? Activity)?.window ?: return@SideEffect
             WindowCompat.getInsetsController(window, view).apply {
                 isAppearanceLightStatusBars = !darkTheme
                 isAppearanceLightNavigationBars = !darkTheme

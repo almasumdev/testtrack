@@ -216,6 +216,22 @@ internal fun CrewDialogsHost(
         )
     }
 
+    // Asked once, at the first open: the control that floats over each app needs Android's
+    // "display over other apps". Not now still runs the round, the old way.
+    vm.needsOverlayFor?.let {
+        Ask(
+            title = "Keep the timer on screen?",
+            body =
+                "TestTrack can float a small timer over each app, with its sign-in to copy, so you " +
+                    "know when 10 seconds are in and can go straight to the next. Android calls this " +
+                    "“Display over other apps”.",
+            confirm = "Allow",
+            dismiss = "Not now",
+            onConfirm = { vm.allowOverlay(context) },
+            onDismiss = { vm.skipOverlay(context) },
+        )
+    }
+
     /*
      * The one permission the crew flow cannot do without, asked at the first app somebody opens,
      * with the app they were opening named in the question. Dismissing is allowed: refusing means

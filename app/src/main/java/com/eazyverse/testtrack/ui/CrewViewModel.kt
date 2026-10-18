@@ -2,6 +2,9 @@ package com.eazyverse.testtrack.ui
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,12 +13,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.Device
 import com.eazyverse.testtrack.data.InstalledApps
+import com.eazyverse.testtrack.data.RoundStore
 import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.SeatIn
 import com.eazyverse.testtrack.viewmodel.LiveReload
+import com.eazyverse.testtrack.viewmodel.NightRound
 import com.eazyverse.testtrack.viewmodel.ReviewMoment
 import kotlinx.coroutines.launch
 import java.util.TimeZone
@@ -303,131 +308,96 @@ class CrewViewModel : ViewModel() {
     }
 
     /**
-     * The app somebody was sent to, and when. Null when nothing is in flight.
-     *
-     * Held because the measurement cannot be taken at the moment of leaving. It is taken on the
-     * way back, from what UsageStatsManager saw while this app was not on screen.
-     */
-    private data class Away(
-        val seatId: String,
-        val packageName: String,
-        val label: String,
-        val since: Long,
-    )
-
-    private var away: Away? = null
-
-    /** What is left of a round, so the night can be walked without fourteen returns to this list. */
-    private var round: List<CrewApp> = emptyList()
-
-    /**
      * Tonight's open: go to the app, stay a moment, come back.
      *
-     * The whole obligation is opening somebody's app, so this launches it. It used to post the
-     * visit immediately and launch nothing, which meant one press credited an app nobody had
-     * seen, and the button that did fourteen of them credited a night nobody had spent. Every
-     * figure the product reports about testing rested on that.
+     * The whole obligation is opening somebody's app, so this launches it, through the round:
+     * with the testing control floating over it when "display over other apps" is allowed.
      */
     fun openApp(
         context: Context,
         app: CrewApp,
-    ) {
-        round = emptyList()
-        sendTo(context, app)
-    }
+    ) = round(context, listOf(app))
 
     /**
-     * Walk the whole night, one app at a time.
-     *
-     * A queue rather than a loop: each app has to actually be on screen for its seconds, and only
-     * one app can be on screen at once. Every return lands in [settle], which records the one
-     * just visited and opens the next.
+     * Walk the whole night, one app at a time: only what is on this phone, since the rest is
+     * installed first from its own row.
      */
     fun openAll(
         context: Context,
         crewId: String? = null,
-    ) {
-        val owed =
-            crews
-                .filter { crewId == null || it.id == crewId }
-                .flatMap { crew -> crew.apps.filter { !it.done && !it.reported } }
-                // Only what is on this phone: the rest is installed first, from its own row.
-                .filter { isInstalled(context, it.packageName) }
-        if (owed.isEmpty()) return
+    ) = round(
+        context,
+        crews
+            .filter { crewId == null || it.id == crewId }
+            .flatMap { crew -> crew.apps.filter { !it.done && !it.reported } }
+            .filter { isInstalled(context, it.packageName) },
+    )
 
-        round = owed.drop(1)
-        sendTo(context, owed.first())
+    /** A round asked for while the control may not float yet: started once the ask is answered. */
+    var needsOverlayFor by mutableStateOf<List<RoundStore.Stop>?>(null)
+        private set
+
+    /** Asked once a session: somebody who said Not now is not asked at every app. */
+    private var overlayAsked = false
+
+    private fun round(
+        context: Context,
+        apps: List<CrewApp>,
+    ) {
+        val first = apps.firstOrNull() ?: return
+        if (apps.any { it.packageName.isBlank() }) {
+            message = "${first.label} did not come with a package name, so it cannot be opened."
+            return
+        }
+        // Asked at the first app somebody opens: without it the phone reads no time in the app,
+        // the server refuses the visit, and the evening silently does not count.
+        if (!UsageRepo.hasAccess(context)) {
+            needsUsageFor = first.label
+            return
+        }
+        val stops =
+            apps.map { app ->
+                val notes = crews.firstNotNullOfOrNull { c -> c.seats.firstOrNull { it.id == app.id } }?.notes.orEmpty()
+                RoundStore.Stop(app.id, app.packageName, app.label, notes)
+            }
+        if (!NightRound.canFloat(context) && !overlayAsked) {
+            overlayAsked = true
+            needsOverlayFor = stops
+            return
+        }
+        NightRound.start(context, stops, float = true)
     }
 
-    private fun sendTo(
-        context: Context,
-        app: CrewApp,
-    ) {
-        if (app.packageName.isBlank()) {
-            message = "${app.label} did not come with a package name, so it cannot be opened."
-            return
+    /** "Allow": to Android's switch; the round starts when TestTrack is back in front. */
+    fun allowOverlay(context: Context) {
+        runCatching {
+            context.startActivity(
+                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
         }
-        // Asked for here, at the first app somebody tries to open, rather than on a checklist
-        // they walked before they had seen a crew. Without the grant [settle] reads zero
-        // foreground milliseconds, the server refuses the visit for being under its floor, and
-        // the evening silently does not count. A permission whose absence looks like a bug
-        // belongs at the moment it is needed, where the reason for it is on screen.
-        if (!UsageRepo.hasAccess(context)) {
-            round = emptyList()
-            needsUsageFor = app.label
-            return
-        }
-        away = Away(app.id, app.packageName, app.label, System.currentTimeMillis())
-        message = "Stay in ${app.label} for ${CrewRules.VISIT_SECONDS} seconds."
-        openApp(context, app.packageName)
+    }
+
+    /** "Not now": the round runs without the control, coming back to TestTrack between apps. */
+    fun skipOverlay(context: Context) {
+        val stops = needsOverlayFor ?: return
+        needsOverlayFor = null
+        NightRound.start(context, stops, float = false)
     }
 
     /**
-     * Back from an app. Measure what happened and report it.
-     *
-     * Called on every resume, and does nothing unless somebody was actually sent somewhere. The
-     * reading is of real foreground time, which is the only thing here the phone cannot be talked
-     * into inventing, and the server refuses anything under its own floor regardless.
+     * Back in front. A round waiting on the overlay switch starts now, either way; otherwise the
+     * app last visited is measured and recorded, and the round says how it went.
      */
     fun settle(context: Context) {
-        val trip = away ?: return
-        away = null
-
-        viewModelScope.launch {
-            val used =
-                UsageRepo.measure(
-                    context,
-                    trip.packageName,
-                    trip.since,
-                    needMs = CrewRules.VISIT_SECONDS * 1000L,
-                    source = "crew",
-                )
-            val short = used < CrewRules.VISIT_SECONDS * 1000L
-            try {
-                if (short) {
-                    round = emptyList()
-                    message =
-                        "That was ${used / 1000}s in ${trip.label}. " +
-                        "It needs ${CrewRules.VISIT_SECONDS}, so it has not counted yet."
-                } else {
-                    Api.visit(trip.seatId, used)
-                }
-            } catch (e: ApiError) {
-                round = emptyList()
-                message = e.message
-            } catch (_: Exception) {
-                round = emptyList()
-                message = "We could not reach TestTrack. Check your connection."
-            }
-
-            val next = round.firstOrNull()
-            if (!short && next != null) {
-                round = round.drop(1)
-                sendTo(context, next)
-            } else {
-                if (!short && round.isEmpty()) message = "That is tonight done."
-                load(context)
-            }
+        needsOverlayFor?.let { stops ->
+            needsOverlayFor = null
+            NightRound.start(context, stops, float = NightRound.canFloat(context))
+            return
+        }
+        NightRound.onTestTrackInFront(context) { said ->
+            said?.let { message = it }
+            load(context)
         }
     }
 
