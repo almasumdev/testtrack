@@ -1,56 +1,279 @@
-# Captures are from the current release build on the emulator, signed out.
-# Barlow font copies use mkit's filenames; the app resources are the source.
-layout = "classic"
+# TestTrack store art, built by `mkit art build`.
+# Paths are relative to the app folder (where mkit.toml is).
+#
+# mkit's "pop" layout in TestTrack's own look: the Ocean blue of the app, short bold white
+# titles with a gold underline (the tix ticket's gold), big phones, pills naming what is on
+# each capture, and the testers' app icons popping out around them. The robot is the mascot.
+#
+# Captures: the real app on an emulator at 1080x2340 with gesture navigation, signed in to a
+# demo account on a seeded server (demo developers, a crew on day 6, feedback posts), with the
+# demo apps installed so every row shows a real icon. Pill and picture positions are page
+# pixels (left, top), laid out for English.
+
+layout = "pop"
 reference = "en"
+
 font_dir = "store/art/fonts"
 font = "Barlow"
-mascot = "app/src/main/ic_launcher-playstore.png"
-decoration = "contour"
+mascot = "docs/design/logo/test-exchange.svg"
 
+# The capture keeps its own status bar: painted over in the colour at `sample`, with a neat
+# 9:41, signal and battery drawn in ink to suit it. Capture pixels.
 [status_bar]
 mode = "clean"
-height = 100
+height = 96
 sample = [540, 60]
 
 [theme.light]
-bg1 = "#F5F9FB"
-bg2 = "#D3E4EF"
-line = "#ABCADD"
-line_op = 0.30
-ink = "#18242E"
-sub = "#4A5B68"
-accent = "#1D5C82"
-tile = "#D3E4EF"
-chip_border = "rgba(29,92,130,.24)"
+bg1 = "#5BA9D6"           # a glow from the top...
+bg2 = "#2F7FA8"
+bg3 = "#174C6E"           # ...to the deep ocean at the bottom
+accent = "#1D5C82"        # the app's blue: ticks, the go pill
+underline = "#FFC94A"     # the tix gold, under the [word]
 
 [theme.dark]
-bg1 = "#121C24"
-bg2 = "#1C2D3A"
-line = "#32729B"
-line_op = 0.30
-ink = "#EDF3F7"
-sub = "#B7C9D5"
-accent = "#9BCCE8"
-tile = "#253F50"
-chip_border = "rgba(155,204,232,.24)"
+bg1 = "#1F3A4D"
+bg2 = "#122634"
+bg3 = "#0A1620"
+
+# ---- The slides, in Play order. Literal pill `text` names something on the capture and is
+# ---- never translated; `key` pills and every other word come from captions/<code>.json.
 
 [[slide]]
 id = "hero"
 kind = "landscape"
-shots = ["ranks", "circle", "circle_dark"]
+shots = ["circle", "tonight"]     # back left, front right
+
+[[slide.art]]
+src = "store/art/icon_recipes.png"
+x = 70
+y = 120
+height = 130
+rotate = -12
+
+[[slide.art]]
+src = "store/art/icon_steps.png"
+x = 880
+y = 760
+height = 120
+rotate = 10
+z = 6
+
+[[slide.pill]]
+text = "9 of 14 opened tonight"
+x = 520
+y = 860
+size = 34
+rotate = -3
+
+[[slide]]
+id = "tonight"
+shot = "tonight"
+
+[[slide.art]]
+src = "store/art/icon_recipes.png"
+x = 840
+y = 400
+height = 170
+rotate = 12
+z = 6
+
+[[slide.art]]
+src = "store/art/icon_tasks.png"
+x = 40
+y = 1480
+height = 190
+rotate = -14
+
+[[slide.pill]]
+text = "Day 6 of 14"
+x = 50
+y = 980
+size = 48
+rotate = -5
+
+[[slide.pill]]
+key = "open"                     # captions: tonight.pills.open
+go = true
+x = 560
+y = 1420
+size = 52
+rotate = 3
+
+[[slide]]
+id = "timer"
+shot = "timer"
+
+[[slide.art]]
+src = "store/art/icon_tasks.png"
+x = 820
+y = 390
+height = 170
+rotate = 10
+z = 6
+
+[[slide.pill]]
+text = "8s to go"
+x = 60
+y = 1180
+size = 50
+rotate = -5
+
+[[slide.pill]]
+key = "copy"
+go = true
+x = 420
+y = 1720
+size = 50
+rotate = -2
+
+[[slide]]
+id = "members"
+shot = "members"
+
+[[slide.art]]
+src = "store/art/icon_focus.png"
+x = 830
+y = 400
+height = 180
+rotate = 12
+z = 6
+
+[[slide.pill]]
+text = "9 of 14 opened"
+x = 40
+y = 1080
+size = 50
+rotate = -5
+
+[[slide.pill]]
+text = "Opened at 9:28 pm"
+x = 500
+y = 1480
+size = 44
+rotate = 4
+
+[[slide]]
+id = "crew"
+shot = "crew_open"
+
+[[slide.art]]
+src = "store/art/icon_lingo.png"
+x = 840
+y = 420
+height = 160
+rotate = 12
+z = 6
+
+[[slide.art]]
+src = "store/art/icon_habit.png"
+x = 50
+y = 1500
+height = 170
+rotate = -12
+
+[[slide.pill]]
+text = "4 of 15 seats left"
+x = 40
+y = 1010
+size = 48
+rotate = -5
+
+[[slide.pill]]
+key = "seat"
+go = true
+x = 520
+y = 1480
+size = 52
+rotate = 3
 
 [[slide]]
 id = "circle"
 shot = "circle"
 
-[[slide]]
-id = "ranks"
-shot = "ranks"
+[[slide.art]]
+src = "store/art/icon_weather.png"
+x = 830
+y = 400
+height = 170
+rotate = 10
+z = 6
+
+[[slide.art]]
+src = "store/art/icon_lift.png"
+x = 40
+y = 1520
+height = 180
+rotate = -14
+
+[[slide.pill]]
+text = "Review · +50"
+x = 540
+y = 1300
+size = 50
+rotate = 4
 
 [[slide]]
-id = "circle_dark"
-shot = "circle_dark"
+id = "review"
+shot = "review"
+
+[[slide.art]]
+src = "store/art/icon_recipes.png"
+x = 840
+y = 390
+height = 170
+rotate = 12
+z = 6
+
+[[slide.pill]]
+text = "18 of 30 seconds"
+x = 60
+y = 1180
+size = 48
+rotate = -4
+
+[[slide.pill]]
+key = "tix"
+go = true
+x = 560
+y = 1720
+size = 50
+rotate = -2
+
+[[slide]]
+id = "dark"
+shot = "tonight_dark"
 dark = true
 
-[feature]
-shot = "circle"
+[[slide.art]]
+src = "store/art/icon_lingo.png"
+x = 840
+y = 400
+height = 170
+rotate = 12
+z = 6
+
+[[slide.pill]]
+text = "Day 6 of 14"
+x = 50
+y = 980
+size = 48
+rotate = -5
+
+[feature]                        # the 1024x500 feature graphic
+shots = ["circle", "tonight"]    # back left, front right
+
+[[feature.art]]
+src = "store/art/icon_recipes.png"
+x = 930
+y = 20
+height = 70
+rotate = 12
+z = 6
+
+[[feature.pill]]
+text = "9 of 14 opened tonight"
+x = 560
+y = 400
+size = 22
+rotate = -4

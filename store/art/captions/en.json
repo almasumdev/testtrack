@@ -3,26 +3,48 @@
   "dir": "ltr",
   "hero": {
     "name": "TestTrack",
-    "title": "Find your [testing crew]",
-    "sub": "Android developers testing together. Illustrative screen content.",
-    "chips": ["Testing crews", "Daily visits", "Developer feedback"]
+    "title": "Closed testing, done [together]",
+    "chips": [
+      "12 testers, 14 days",
+      "Free, nothing to buy",
+      "Real feedback"
+    ]
+  },
+  "tonight": {
+    "title": "Testers who\n[show up]",
+    "pills": {
+      "open": "Open all 9"
+    }
+  },
+  "timer": {
+    "title": "A timer on\n[every app]",
+    "pills": {
+      "copy": "Sign-in, one tap"
+    }
+  },
+  "members": {
+    "title": "See who\n[opened it]"
+  },
+  "crew": {
+    "title": "Join a crew\nof [15]",
+    "pills": {
+      "seat": "Take a seat"
+    }
   },
   "circle": {
-    "title": "Make room for [feedback]",
-    "sub": "Browse feedback requests. Screen content is illustrative."
+    "title": "Real\n[feedback]"
   },
-  "ranks": {
-    "title": "See the [testing record]",
-    "sub": "Recorded work on the board. Screen content is illustrative."
+  "review": {
+    "title": "Test apps,\nearn [tix]",
+    "pills": {
+      "tix": "+40 tix"
+    }
   },
-  "circle_dark": {
-    "title": "Clear in [light or dark]",
-    "sub": "Follows your phone's theme. Screen content is illustrative."
+  "dark": {
+    "title": "Dark\n[mode]"
   },
   "feature": {
     "name": "TestTrack",
-    "title": "Find your [testing crew]",
-    "sub": "Android closed testing. Illustrative screen content.",
-    "chips": ["Testing crews", "Daily visits", "Developer feedback"]
+    "title": "Get [12 testers]\nfor 14 days"
   }
 }
