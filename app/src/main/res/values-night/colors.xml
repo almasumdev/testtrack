@@ -3,8 +3,4 @@
 <resources>
     <color name="paper">#FF0F1011</color>
     <color name="notification_accent">#FF32729B</color>
-    <color name="overlay_surface">#FF1B3040</color>
-    <color name="overlay_track">#FF58788E</color>
-    <color name="overlay_accent">#FF8BCBF7</color>
-    <color name="overlay_ink">#FFEFF7FC</color>
 </resources>

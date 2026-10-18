@@ -37,9 +37,6 @@ import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
 
-/** Which in-content update banner Home should show. */
-enum class HomeUpdateBanner { NONE, DOWNLOADED }
-
 /**
  * The blocked tier: a non-dismissible full-screen gate. Back is swallowed and stray taps can't reach
  * the UI behind it, so the only way forward is to update. Fails safe — the caller only shows this

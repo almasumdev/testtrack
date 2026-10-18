@@ -426,6 +426,8 @@ class MeEditDialogTest {
                 )
             }
         }
+        // It is in the Account group, under the fold on a phone.
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Edit profile"))
         compose.onNodeWithText("Edit profile").performClick()
         assertEquals(1, edited)
     }

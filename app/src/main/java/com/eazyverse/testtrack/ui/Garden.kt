@@ -113,8 +113,6 @@ fun CountBadge(count: Int) {
 
 // ---- surfaces --------------------------------------------------------------------------------
 
-val PanelRadius = 22.dp
-
 /** Where a tile sits in its group, which decides which of its corners are round. */
 enum class TilePlace { ONLY, FIRST, MIDDLE, LAST }
 
@@ -283,28 +281,6 @@ val HeadedListTop = 11.5.dp
 
 /** The corner a card gets. Value Guard's list cards, a step under its 22 panels. */
 val CardRadius = 18.dp
-
-/** One figure and what it counts. */
-@Composable
-fun Tally(
-    modifier: Modifier,
-    value: String,
-    label: String,
-) {
-    Column(modifier) {
-        Text(
-            value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = Tt.colors.accentInk,
-        )
-        Text(
-            label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
 
 /**
  * Row [index] of a list of [count], as a tile of its own.

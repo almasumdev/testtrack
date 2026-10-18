@@ -1,13 +1,7 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,43 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
-@Composable
-private fun ChoicePill(
-    label: String,
-    on: Boolean,
-    onClick: () -> Unit,
-) {
-    val shape = RoundedCornerShape(10.dp)
-    Box(
-        Modifier
-            .clip(shape)
-            .background(
-                if (on) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-            ).border(
-                1.dp,
-                if (on) Color.Transparent else MaterialTheme.colorScheme.outlineVariant,
-                shape,
-            ).clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
-    ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = if (on) FontWeight.Bold else FontWeight.Medium,
-            color =
-                if (on) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-        )
-    }
-}
 
 /**
  * Refusing a review, which costs something.

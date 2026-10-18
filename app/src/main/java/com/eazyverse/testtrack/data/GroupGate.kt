@@ -67,32 +67,6 @@ fun GateResult.address(): String =
     }
 
 /**
- * The one form of an address that two systems can agree on.
- *
- * Gmail treats dots and `+suffixes` in the local part as decoration: `md.billamaruf@gmail.com`
- * and `mdbillamaruf@gmail.com` are one account, and Google will hand back either spelling
- * depending on who is asked. The membership service already folds them before it looks anybody
- * up, so it answers about the dotless form while the phone holds whatever the account sheet
- * reported, and a comparison between the two strings says "different person" about one person.
- *
- * Deliberately identical to `norm()` in gate.gs. The two run in different languages on different
- * machines and have to agree, so if one changes the other has to change with it.
- */
-fun normalizeAddress(email: String): String {
-    val lower = email.trim().lowercase()
-    val at = lower.lastIndexOf('@')
-    if (at <= 0 || at == lower.length - 1) return lower
-
-    val domain = lower.substring(at + 1)
-    if (domain != "gmail.com" && domain != "googlemail.com") return lower
-
-    // Only Gmail. Every other provider is entitled to treat a dot as part of the name, and
-    // stripping one there would merge two genuinely different people.
-    val user = lower.substring(0, at).substringBefore('+').replace(".", "")
-    return "$user@gmail.com"
-}
-
-/**
  * Membership verification.
  *
  * Google publishes no API for reading a consumer `@googlegroups.com` roster — the Admin SDK and

@@ -53,8 +53,9 @@
 
 
     <!--
-      The review's floating camera button, drawn over Play while the reviewer takes the one
-      screenshot that proves their review. See data/ReviewCaptureService.
+      Drawing over other apps, for two things: the review's floating camera button, over Play while
+      the reviewer takes the one screenshot that proves their review (data/ReviewCaptureService),
+      and the testing control over each app in a crew round (viewmodel/VisitDockWindow).
     -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 

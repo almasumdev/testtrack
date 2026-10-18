@@ -71,7 +71,6 @@ object PushRepo {
      * the grant is a channel they cannot find when they go looking for it.
      */
     fun ensureChannel(context: Context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         if (manager.getNotificationChannel(CHANNEL_REMINDERS) != null) return
         manager.createNotificationChannel(

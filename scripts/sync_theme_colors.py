@@ -1,7 +1,8 @@
 """Export native UI colours from Tokens.kt. Called automatically before Android builds.
 
 SVG/vector artwork retains its authored brand colours; these resources control native
-surfaces, the splash ground, notification accent and the floating visit controls.
+surfaces, the splash ground and the notification accent. The floating testing control is
+Compose, and reads Tokens.kt itself.
 """
 from pathlib import Path
 import re
@@ -12,10 +13,6 @@ SOURCE = ROOT / 'app/src/main/java/com/eazyverse/testtrack/ui/theme/Tokens.kt'
 ROLES = {
     'paper': 'bg',
     'notification_accent': 'accent',
-    'overlay_surface': 'glass',
-    'overlay_track': 'glassBorderStrong',
-    'overlay_accent': 'accentInk',
-    'overlay_ink': 'text',
 }
 
 

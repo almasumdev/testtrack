@@ -92,32 +92,8 @@ private const val SWEEP_MS = 1600L
 const val SKELETON_ROWS = 8
 
 private val Titles = listOf(118, 92, 140, 104, 126, 86, 132)
-private val Metas = listOf(168, 132, 190, 150, 118, 176, 142)
 
 private fun title(i: Int) = Titles[i % Titles.size].dp
-
-private fun meta(i: Int) = Metas[i % Metas.size].dp
-
-/**
- * A meter's placeholder, in the meter's own shape.
- *
- * [Meter] is boxes with gaps between them, so a single long bar standing in for it is a skeleton
- * describing a different component. The count is a guess because the real one is not known yet,
- * which is fine: what a skeleton owes is the shape, and a row of boxes is unmistakably the shape.
- *
- * Same 4dp gap and 3dp corner as the real one, so nothing shifts sideways when it lands.
- */
-@Composable
-fun SkeletonMeter(
-    boxes: Int = 12,
-    height: Dp = 10.dp,
-) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        repeat(boxes) {
-            Skeleton(height = height, corner = 3.dp, modifier = Modifier.weight(1f))
-        }
-    }
-}
 
 /**
  * A page's placeholder giving way to the page, as a short fade rather than a cut.

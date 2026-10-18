@@ -215,7 +215,7 @@ class WaitingBodyTest {
             }
         }
         // Who sent it and how long is left, on the row; no buttons until it is opened.
-        compose.onNodeWithText("Tanvir Hasan · Play review").assertIsDisplayed()
+        compose.onNodeWithText("Tanvir Hasan · Live app").assertIsDisplayed()
         compose.onNodeWithText("1d 5h").assertIsDisplayed()
         compose.onNodeWithText("Accept").assertDoesNotExist()
         compose.onNodeWithText("Nikosh Budget").performClick()

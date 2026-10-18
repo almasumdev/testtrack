@@ -238,9 +238,7 @@ class ReviewCaptureService : Service() {
 
     private fun goForeground() {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            nm.createNotificationChannel(NotificationChannel(CHANNEL, "Review screenshot", NotificationManager.IMPORTANCE_LOW))
-        }
+        nm.createNotificationChannel(NotificationChannel(CHANNEL, "Review screenshot", NotificationManager.IMPORTANCE_LOW))
         val notification: Notification =
             Notification
                 .Builder(this, CHANNEL)
@@ -313,11 +311,7 @@ class ReviewCaptureService : Service() {
                     .setAction(ACTION_START)
                     .putExtra(EXTRA_CODE, code)
                     .putExtra(EXTRA_DATA, data)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
+            context.startForegroundService(intent)
         }
 
         /** Take the button away without a picture, when somebody came back on their own. */

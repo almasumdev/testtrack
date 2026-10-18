@@ -295,14 +295,6 @@ data class MeIn(
 )
 
 @Serializable
-data class ApiUpload(
-    /** What a review carries as its proof. Opaque to the app. */
-    val id: String,
-    @SerialName("media_type") val mediaType: String,
-    val size: Int,
-)
-
-@Serializable
 data class VisitIn(
     /** Real foreground milliseconds, measured on this phone. The server holds it to its floor. */
     @SerialName("used_ms") val usedMs: Long,

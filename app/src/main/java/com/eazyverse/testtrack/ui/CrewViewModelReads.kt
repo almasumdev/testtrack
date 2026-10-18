@@ -44,14 +44,6 @@ val CrewViewModel.toAnswer: Int
 val CrewViewModel.sentBack: List<CrewSeat>
     get() = sentBackIn(crews)
 
-/**
- * Whether this account holds a seat anywhere that has not started.
- *
- * The server decides this and sends the reason; the flag is only what the screen branches on.
- */
-val CrewViewModel.holdsSeat: Boolean
-    get() = blocked != null
-
 /** The crew holding your one waiting app, by name, or null where you are free. */
 val CrewViewModel.holding: String?
     get() = holdingIn(crews)

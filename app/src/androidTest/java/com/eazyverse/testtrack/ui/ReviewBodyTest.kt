@@ -80,6 +80,7 @@ class ReviewBodyTest {
         onLeave: (ReviewStep) -> Unit = {},
         onSend: (android.net.Uri, String) -> Unit = { _, _ -> },
         proof: android.net.Uri? = null,
+        note: String = "",
         onCapture: () -> Unit = {},
         job: ReviewJob? = ReviewJob(post(live), review(state, used), leftReview),
         message: String? = null,
@@ -102,6 +103,7 @@ class ReviewBodyTest {
                     onLeave = onLeave,
                     onSend = onSend,
                     proof = proof,
+                    note = note,
                     onCapture = onCapture,
                     driveConnected = driveConnected,
                     onConnectDrive = onConnectDrive,
@@ -120,7 +122,7 @@ class ReviewBodyTest {
         compose.onNodeWithText("Get it on Play").assertIsDisplayed()
         // The three that regressed. Their buttons appearing here is the bug this file exists for.
         compose.onNodeWithText("Open the app").assertDoesNotExist()
-        compose.onNodeWithText("Open Play to review").assertDoesNotExist()
+        compose.onNodeWithText("Write private feedback").assertDoesNotExist()
         compose.onNodeWithText("Send the proof").assertDoesNotExist()
     }
 
@@ -137,7 +139,7 @@ class ReviewBodyTest {
     fun once_it_has_been_used_the_review_itself_is_next() {
         open("used")
 
-        compose.onNodeWithText("Open Play to review").assertIsDisplayed()
+        compose.onNodeWithText("Write private feedback").assertIsDisplayed()
         compose.onNodeWithText("Open the app").assertDoesNotExist()
     }
 
@@ -147,7 +149,7 @@ class ReviewBodyTest {
         // should be able to see the whole of what they are agreeing to.
         // They are the short names under the dial.
         open("claimed")
-        for (label in listOf("Install", "Use", "Review", "Prove")) {
+        for (label in listOf("Install", "Use", "Feedback", "Prove")) {
             compose.onAllNodesWithText(label).onFirst().assertIsDisplayed()
         }
     }
@@ -170,7 +172,7 @@ class ReviewBodyTest {
         var left: ReviewStep? = null
         open("used", live = false, onLeave = { left = it })
 
-        compose.onNodeWithText("Open Play to review").performClick()
+        compose.onNodeWithText("Write private feedback").performClick()
         assertEquals(ReviewStep.LEAVE, left)
     }
 
@@ -193,7 +195,7 @@ class ReviewBodyTest {
     @Test
     fun a_live_post_offers_no_way_to_send_proof_before_play_has_been_opened() {
         open("used", leftReview = false)
-        compose.onNodeWithText("Open Play to review").assertIsDisplayed()
+        compose.onNodeWithText("Write private feedback").assertIsDisplayed()
         compose.onNodeWithText("Send the proof").assertDoesNotExist()
     }
 
@@ -214,7 +216,7 @@ class ReviewBodyTest {
     @Test
     fun staying_longer_than_asked_never_reads_as_a_negative_countdown() {
         open("installed", used = 600_000)
-        compose.onNodeWithText("Long enough. Leave your review next.").assertIsDisplayed()
+        compose.onNodeWithText("Long enough. Write your private feedback next.").assertIsDisplayed()
     }
 
     // ------------------------------------------------------------------ settled, and warnings
@@ -255,7 +257,7 @@ class ReviewBodyTest {
         open("used", leftReview = true, onSend = { _, _ -> sent++ })
 
         // Both ways to get one are on the page itself, not behind a dialog.
-        compose.onNodeWithText("Capture on Play").assertIsDisplayed()
+        compose.onNodeWithText("Capture app").assertIsDisplayed()
         compose.onNodeWithText("Gallery").assertIsDisplayed()
 
         // Nothing to send yet. A proof step that accepts an empty proof sends the developer a
@@ -269,7 +271,12 @@ class ReviewBodyTest {
         val shot = android.net.Uri.parse("file:///nowhere/proof.jpg")
         var sent: android.net.Uri? = null
         var captures = 0
-        open("used", leftReview = true, proof = shot, onSend = { uri, _ -> sent = uri }, onCapture = { captures++ })
+        open("used", leftReview = true, proof = shot, note = "Totals read well", onSend = {
+            uri,
+            _,
+            ->
+            sent = uri
+        }, onCapture = { captures++ })
 
         compose.onNodeWithContentDescription("Your review screenshot").assertIsDisplayed()
         // Replacing it is not only a screen capture: the gallery is right beside it.
@@ -292,6 +299,7 @@ class ReviewBodyTest {
             "used",
             leftReview = true,
             proof = shot,
+            note = "Totals read well",
             driveConnected = false,
             onConnectDrive = { connects++ },
             onSend = { uri, _ -> sent = uri },
@@ -341,7 +349,7 @@ class ReviewBodyTest {
     fun offline_the_saved_step_still_shows_and_says_so() {
         open("used", offline = true)
         compose.onNodeWithText("Offline").assertIsDisplayed()
-        compose.onNodeWithText("Open Play to review").assertIsDisplayed()
+        compose.onNodeWithText("Write private feedback").assertIsDisplayed()
     }
 
     @Test

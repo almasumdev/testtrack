@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -64,22 +63,6 @@ internal fun AppMark(
             )
         }
     }
-}
-
-/** Where people find it: on a closed test, or live on Play. */
-@Composable
-internal fun SourceTag(live: Boolean) {
-    val shape = RoundedCornerShape(percent = 50)
-    Text(
-        if (live) "Live" else "Closed test",
-        Modifier
-            .clip(shape)
-            .border(1.dp, Tt.colors.glassBorderStrong, shape)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
-        style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
-        fontWeight = FontWeight.SemiBold,
-        color = Tt.colors.text2,
-    )
 }
 
 /** A badge's colours: running in the accent, done green, needing a look amber, a problem red. */
