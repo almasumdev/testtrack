@@ -123,7 +123,7 @@ private fun MemberRow(
             finished -> Triple("Opened yours on $days of ${crew.finishedDays} days", "Stayed", Tone.OK)
             member.missedYesterday ->
                 Triple(
-                    "Missed yesterday · opened yours on $days ${plural(days, "day")}",
+                    "Missed yesterday · yours on $days ${plural(days, "day")}",
                     "${member.missed} missed",
                     Tone.WARN,
                 )
