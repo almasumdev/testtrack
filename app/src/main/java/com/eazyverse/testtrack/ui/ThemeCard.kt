@@ -48,8 +48,8 @@ import com.eazyverse.testtrack.viewmodel.ThemeChoice
 import com.eazyverse.testtrack.viewmodel.ThemeMode
 
 /**
- * Appearance on the You page: the theme card Value Guard and ListKin have, here without their
- * colour row, because TestTrack has the one palette.
+ * Appearance on the You page: a theme card without a colour row, because TestTrack has the one
+ * palette.
  *
  * The app in miniature in each theme, its name under it, and a ring with a tick round the one in
  * use. System shows both, split corner to corner, because it is both depending on the phone. It

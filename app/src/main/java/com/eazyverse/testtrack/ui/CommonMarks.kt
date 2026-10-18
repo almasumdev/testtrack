@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -173,73 +172,6 @@ fun Pill(
         fontWeight = FontWeight.SemiBold,
         color = tone,
     )
-}
-
-/**
- * Progress as a fixed number of boxes, one per thing to be done.
- *
- * The console's meter, and the same reasoning: five steps is a small enough number to be counted,
- * and a bar filling by fifths says less than five boxes with two of them lit. A proportion bar is
- * for quantities nobody counts, which is what the overload below is for.
- *
- * Every box carries its own edge, drawn inside its bounds, and a filled one is painted inside that
- * edge rather than over it. So all of them sit on one grid at one size whether they are done or
- * not, and nothing grows by a pixel as it fills.
- */
-@Composable
-fun Meter(
-    done: Int,
-    total: Int,
-    modifier: Modifier = Modifier,
-    height: Dp = 10.dp,
-) {
-    if (total <= 0) return
-    val box = RoundedCornerShape(3.dp)
-    val filled = MaterialTheme.colorScheme.primary
-    val edge = MaterialTheme.colorScheme.outlineVariant
-
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        repeat(total) { index ->
-            val on = index < done
-            Box(
-                Modifier
-                    .weight(1f)
-                    .height(height)
-                    .border(1.dp, if (on) filled else edge, box)
-                    // Inside the edge, not across it. The border is the box; the fill is what is
-                    // in it.
-                    .padding(1.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(if (on) filled else Color.Transparent),
-            )
-        }
-    }
-}
-
-/** A horizontal proportion bar. Iris, because progress is something you act on. */
-@Composable
-fun Meter(
-    fraction: Float,
-    modifier: Modifier = Modifier,
-    height: Dp = 6.dp,
-) {
-    Box(
-        modifier
-            .fillMaxWidth()
-            .height(height)
-            .clip(CircleShape)
-            .background(Status.upcoming),
-    ) {
-        if (fraction > 0f) {
-            Box(
-                Modifier
-                    .fillMaxWidth(fraction.coerceIn(0f, 1f))
-                    .fillMaxHeight()
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-            )
-        }
-    }
 }
 
 /**

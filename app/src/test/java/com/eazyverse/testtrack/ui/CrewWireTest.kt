@@ -4,7 +4,6 @@ import com.eazyverse.testtrack.net.ApiCrew
 import com.eazyverse.testtrack.net.ApiSeat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -216,16 +215,6 @@ class CrewWireTest {
             crew(state = "full", day = 6, members = listOf(seat("me", mine = true), seat("x", state = "removed"))).toCrew()
         assertTrue(running.members.first { it.id == "x" }.out)
         assertEquals(1, running.stayed)
-    }
-
-    // ------------------------------------------------------------------------- holding
-
-    @Test
-    fun the_waiting_app_is_named_and_a_running_crew_holds_nothing() {
-        val filling = crew(state = "filling", members = listOf(seat("me", mine = true))).toCrew()
-        val running = crew(state = "full", day = 2, members = listOf(seat("me2", mine = true))).toCrew()
-        assertEquals("Crew 07", holdingIn(listOf(filling, running)))
-        assertNull(holdingIn(listOf(running)))
     }
 
     @Test

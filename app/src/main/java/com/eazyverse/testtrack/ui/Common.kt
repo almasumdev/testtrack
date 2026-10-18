@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.PaddingValues
@@ -75,49 +74,9 @@ fun RefreshBox(
 // ---- structure ---------------------------------------------------------------------------
 
 /**
- * A group of rows, on the page rather than on a card.
- *
- * This used to be a raised surface with rounded corners, and the surface was doing the organising:
- * rows inside were separated by their own padding and the panel edge drew the boundary once. It
- * worked, and it made every list on the screen a floating slab, indented from both margins, with
- * the page showing through between them.
- *
- * The console went the other way and it reads better: rows sit on the page ground at the full
- * width, and what separates them is [RowDivider]. Nothing is raised, so nothing has to be aligned
- * against anything else, and a list that runs to fourteen apps has one less edge in it.
- */
-@Composable
-fun Rows(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(modifier.fillMaxWidth(), content = content)
-}
-
-/**
- * A hairline between rows, in the palette's own divider tone.
- *
- * Dashed edges now belong to panels, the things you only read, so a dashed rule between rows was
- * saying "panel" in the middle of a list. The hair tone is pale enough to recede on its own.
- *
- * Inset by the gutter so it lines up with the text either side of it and never touches the screen
- * edge.
- */
-@Composable
-fun RowDivider() {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Gutter)
-            .height(1.dp)
-            .background(Tt.colors.hair),
-    )
-}
-
-/**
  * The other actions on a screen, beside its one [Primary].
  *
- * A soft filled pill, never an outline: Value Guard's rule, because an outlined button beside a
+ * A soft filled pill, never an outline, because an outlined button beside a
  * filled one reads as the same action switched off. Short enough to sit two to a row. A destructive
  * one takes the red ground with red words rather than a red fill, which stays for the dialog that
  * actually confirms it.
@@ -199,7 +158,7 @@ fun Primary(
             onClick()
         },
         enabled = enabled && !busy,
-        // A full pill, Value Guard's main button: the one filled shape on a screen, so it is the
+        // A full pill, the main button: the one filled shape on a screen, so it is the
         // one place the eye lands.
         shape = RoundedCornerShape(percent = 50),
         elevation = null,

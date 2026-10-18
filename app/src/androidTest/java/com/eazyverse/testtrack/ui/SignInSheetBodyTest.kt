@@ -75,12 +75,12 @@ class SignInSheetBodyTest {
     fun the_account_is_named_once_it_has_worked() {
         compose.setContent {
             TestTrackTheme {
-                SignInSheetBody(reason = reason, signedInAs = "nam.bd88@gmail.com")
+                SignInSheetBody(reason = reason, signedInAs = "tester@example.com")
             }
         }
 
         compose.onNodeWithText("Signed in").assertIsDisplayed()
-        compose.onNodeWithText("nam.bd88@gmail.com").assertIsDisplayed()
+        compose.onNodeWithText("tester@example.com").assertIsDisplayed()
     }
 
     /**
@@ -102,7 +102,7 @@ class SignInSheetBodyTest {
         val before = compose.onRoot().captureToImage().asAndroidBitmap()
         keep("00-before", before)
 
-        account = "nam.bd88@gmail.com"
+        account = "tester@example.com"
         compose.mainClock.advanceTimeBy(16)
 
         val middle = mutableListOf<Bitmap>()

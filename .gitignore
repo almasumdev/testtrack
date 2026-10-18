@@ -48,3 +48,8 @@ gate.gs
 # Store art built by `mkit art build` (sources: store/art)
 /store/screenshots/
 /store/feature/
+
+# Local tool notes, not part of the project.
+.commandcode/
+# Built locally from the gitignored store art.
+/store/preview.html

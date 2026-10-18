@@ -250,7 +250,7 @@ service cloud.firestore {
      * itself on a build the cohort has moved past.
      *
      * `get` rather than `read`: there is one document here and nothing to list. Readable without
-     * signing in, per the shared update rules (bluefy docs/in-app-update-system.md): the gate asks
+     * signing in, per the update rules: the gate asks
      * Play first and reads this in onStart, often before sign-in, and a retired build must not get a
      * usable session just because its first read came too early. Four numbers, nothing personal.
      */

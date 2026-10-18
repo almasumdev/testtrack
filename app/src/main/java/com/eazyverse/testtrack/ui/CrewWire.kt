@@ -151,11 +151,5 @@ fun doneTonightIn(crews: List<Crew>): Int =
         .filter { it.phase == CrewPhase.RUN }
         .sumOf { crew -> crew.apps.count { it.done || it.reported } }
 
-/** The crew holding your one waiting app, by name, or null where you are free. */
-fun holdingIn(crews: List<Crew>): String? =
-    crews
-        .firstOrNull { crew -> crew.filling && crew.mine?.state.let { it == SeatState.CONFIRMED || it == SeatState.CHECKING } }
-        ?.name
-
 /** Your apps sent back before a run, to fix and take a seat with again. */
 fun sentBackIn(crews: List<Crew>): List<CrewSeat> = crews.mapNotNull { crew -> crew.mine?.takeIf { it.state == SeatState.REJECTED } }

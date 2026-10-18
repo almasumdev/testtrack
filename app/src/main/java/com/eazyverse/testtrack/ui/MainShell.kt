@@ -167,7 +167,7 @@ fun MainShell(
     var ratingAsk by remember { mutableStateOf(DebugLooks.showRatingAsk) }
     if (ratingAsk) RatingAsk(onClose = { ratingAsk = false })
 
-    // A value moment earned an ask (mkit docs/in-app-review.md): a beat for the screen to settle,
+    // A value moment earned an ask: a beat for the screen to settle,
     // then Play's own card, and only if Play has none to show, the app's own dialog.
     // Collected rather than keyed on: asking clears the flag, and a key change would cancel the very
     // ask that cleared it.
@@ -263,9 +263,6 @@ fun MainShell(
                                     },
                                 )
 
-                            // The new crew screens, running on in-memory state. HomeScreen and the group
-                            // screens it pushes are still on disk and still work; nothing points at them from
-                            // the bar while this is being built. See docs/crew.md.
                             MainTab.GROUPS -> {
                                 // Get ready asks whether an app is set for a crew, so My apps is read here too.
                                 LaunchedEffect(Unit) { apps.load(context) }

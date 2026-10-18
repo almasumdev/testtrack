@@ -24,7 +24,6 @@ object Session {
         email = prefs.getString(KEY_EMAIL, null)
         isGroupMember = prefs.getBoolean(KEY_MEMBER, false)
         driveConnected = prefs.getBoolean(KEY_DRIVE, false)
-        remindersAsked = prefs.getBoolean(KEY_REMINDERS_ASKED, false)
         cachedUpdateAvailableBuild = prefs.getInt(KEY_UPDATE_CACHE_AVAILABLE, 0)
         cachedUpdateStalenessDays = prefs.getInt(KEY_UPDATE_CACHE_STALENESS, 0)
         cachedUpdateLatestBuild = prefs.getInt(KEY_UPDATE_CACHE_LATEST, 0)
@@ -65,31 +64,15 @@ object Session {
     var notificationsGranted by mutableStateOf(false)
         private set
 
-    /**
-     * The tester has been asked about reminders and answered, either way.
-     *
-     * Persisted, unlike the grant itself. Reminders are the one thing on the checklist that is
-     * genuinely optional — a tester who declines can still do every part of the job — so setup has
-     * to be able to finish without them. What it must not do is finish without *asking*: a missed
-     * day costs fourteen other people their run, and silence is a poor reason for it.
-     */
-    var remindersAsked by mutableStateOf(false)
-        private set
-
     fun refreshNotifications(context: Context) {
         notificationsGranted = PushRepo.granted(context)
-    }
-
-    fun updateRemindersAsked() {
-        prefs.edit().putBoolean(KEY_REMINDERS_ASKED, true).apply()
-        remindersAsked = true
     }
 
     val signedIn: Boolean get() = email != null
 
     /*
      * The inputs of the last update decision Play and Firestore agreed on, so it can be replayed
-     * when either cannot be asked (docs/in-app-update-system.md, "Offline Protection Cache").
+     * when either cannot be asked.
      *
      * Inputs, never the verdict: once the installed build reaches [cachedUpdateAvailableBuild] the
      * same inputs resolve to nothing, so an update installed offline releases its own prompt. Plain
@@ -199,7 +182,6 @@ object Session {
         email = null
         isGroupMember = false
         driveConnected = false
-        remindersAsked = false
         onboardingDone = true
     }
 
@@ -207,7 +189,6 @@ object Session {
     private const val KEY_EMAIL = "email"
     private const val KEY_MEMBER = "is_member"
     private const val KEY_DRIVE = "drive_connected"
-    private const val KEY_REMINDERS_ASKED = "reminders_asked"
     private const val KEY_UPDATE_CACHE_AVAILABLE = "update_cache_available_build"
     private const val KEY_UPDATE_CACHE_STALENESS = "update_cache_staleness_days"
     private const val KEY_UPDATE_CACHE_LATEST = "update_cache_latest_build"

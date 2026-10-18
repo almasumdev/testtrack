@@ -1,8 +1,7 @@
 # Current architecture
 
-Implemented in the Android/backend checkouts as of 10 October 2026. This describes source behavior;
-it is not a claim that the matching backend, app or legacy Firestore rules have been deployed.
-The older backend/crew/feedback planning files preserve design history and are not operational truth.
+How the app is built and how it talks to the TestTrack API. The crew and feedback planning files
+next to this one record design history; where they disagree with this page, this page is right.
 
 ## App and API
 
@@ -67,13 +66,8 @@ screen is in the foreground; events are invalidations, not an ordered source of 
 
 ## Checks and release
 
-The Android app has no push CI workflow. Local/release checks run the architecture/theme checker,
-ktlint, unit tests, debug assembly, instrumented Kotlin compilation and lint. Instrumented execution
-requires separate authorization and an emulator; a connected physical phone is not a target. The
-architecture baseline currently holds 17 known violations and may only shrink. Backend CI checks
-its layers, types, formatting, routes, files, migrations and real PostgreSQL tests.
-
-See verification.md and store/README.md for current commands and release limits. No deployment,
-publication, real Google/Drive end-to-end pass or production privacy/deletion certification is implied
-by passing local checks. The private backend repository owns its coordinated migration, readiness,
-backup, retention and historical-proof rollout procedures.
+Local checks run the architecture and theme checker, ktlint, unit tests, a debug build,
+instrumented-test compilation and lint; instrumented tests run on an emulator. The architecture
+baseline (`scripts/app-baseline.txt`) lists the known violations and may only shrink. See
+[verification.md](verification.md) for the commands. The API lives in a separate, private
+repository.

@@ -10,7 +10,7 @@ import com.eazyverse.testtrack.BuildConfig
 object DebugLooks {
     /**
      * Hold every tab on its loading state, as if the answer never came, so the shimmer (and the
-     * robot on Profile) can be looked at for as long as needed. Set back to false when done.
+     * robot on Profile) can be looked at for as long as needed.
      */
     private const val HOLD_LOADING = false
 
@@ -18,7 +18,7 @@ object DebugLooks {
 
     /**
      * Open the after-a-value-moment rating ask ([RatingAsk]) as soon as the app starts, so it can be
-     * looked at before the moment that really triggers it is built. Set back to false when done.
+     * looked at without waiting for the moment that really triggers it.
      */
     private const val SHOW_RATING_ASK = false
 
@@ -27,7 +27,7 @@ object DebugLooks {
     /**
      * Answer every closed testing lookup as though our Play check were down (the signed-in browser
      * signed out), so Ask for feedback offers "Enter details yourself" ([ByHandForm]). Live apps
-     * still look up as normal. Set back to false when done.
+     * still look up as normal.
      */
     private const val FAIL_CLOSED_LOOKUP = false
 

@@ -439,7 +439,7 @@ fun MeEditDialog(
 
 private const val NAME_MAX = 40
 
-/** The running version, quietly, at the foot, as Listkin and Value Guard have it: the short form only. */
+/** The running version, quietly, at the foot: the short form only. */
 @Composable
 private fun VersionLine() {
     Text(

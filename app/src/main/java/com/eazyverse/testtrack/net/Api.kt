@@ -281,8 +281,6 @@ object Api {
     /** Change this account's name or face. Nothing else about it is ours to set. */
     suspend fun updateMe(body: MeIn): Me = patch("/me", body)
 
-    suspend fun myApps(): MyApps = kept(MY_APPS)
-
     /** Every app added to My apps, and where each is with crews and feedback. */
     suspend fun apps(): AppsOut = kept(APPS)
 
@@ -322,8 +320,6 @@ object Api {
 
     fun lastProfile(): ApiProfile? = last(PROFILE)
 
-    fun lastMyApps(): MyApps? = last(MY_APPS)
-
     fun lastApps(): AppsOut? = last(APPS)
 
     private const val POSTS = "/feed/posts"
@@ -335,7 +331,6 @@ object Api {
     private const val CREWS = "/crews"
     private const val BOARD = "/board"
     private const val PROFILE = "/me/profile"
-    private const val MY_APPS = "/me/apps"
     private const val APPS = "/apps"
 
     /** A GET whose answer is also kept on the phone, for [last] to hand back next time. */

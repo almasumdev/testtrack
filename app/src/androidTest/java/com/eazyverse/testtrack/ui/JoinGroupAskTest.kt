@@ -39,7 +39,7 @@ class JoinGroupAskTest {
     ) = compose.setContent {
         TestTrackTheme {
             JoinGroupAsk(
-                email = "rafiul@gmail.com",
+                email = "rafiul@example.com",
                 checking = checking,
                 outside = outside,
                 failure = failure,
@@ -58,7 +58,7 @@ class JoinGroupAskTest {
         open(checking = true)
         compose.onNodeWithText("Checking your tester access").assertIsDisplayed()
         compose.onNodeWithText("Looking you up in the group").assertIsDisplayed()
-        compose.onNodeWithText("rafiul@gmail.com").assertIsDisplayed()
+        compose.onNodeWithText("rafiul@example.com").assertIsDisplayed()
         compose.onNodeWithText("Cancel").performClick()
         assertEquals(1, closes)
     }
@@ -67,7 +67,7 @@ class JoinGroupAskTest {
     fun outside_the_group_it_names_the_account_and_leads_to_the_group() {
         open(outside = true)
         compose.onNodeWithText("Join the testers group").assertIsDisplayed()
-        compose.onNodeWithText("rafiul@gmail.com").assertIsDisplayed()
+        compose.onNodeWithText("rafiul@example.com").assertIsDisplayed()
         compose.onNodeWithText("Not joined").assertIsDisplayed()
         compose.onNodeWithText("Open group").performClick()
         assertEquals(1, opens)

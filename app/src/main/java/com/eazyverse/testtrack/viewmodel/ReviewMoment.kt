@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
 
 /**
- * When TestTrack asks for a rating, by mkit docs/in-app-review.md: only after a value moment, and
+ * When TestTrack asks for a rating: only after a value moment, and
  * only when every limit allows it. Play decides whether a card is shown and whether it counts; this
  * decides only when it is worth spending the one chance we get.
  *

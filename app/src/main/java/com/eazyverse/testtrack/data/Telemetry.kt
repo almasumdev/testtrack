@@ -40,19 +40,6 @@ object Telemetry {
         }
     }
 
-    /** A round was started from a group screen. [size] is how many apps it covers. */
-    fun roundStarted(size: Int) = log("round_started", "apps" to size.toLong())
-
-    /**
-     * A round ended. [captured] and [missed] add up to the round, and the pair is the whole point:
-     * a run of rounds ending with misses is the shape the five-lost-captures bug made, and it was
-     * invisible from here at the time.
-     */
-    fun roundFinished(
-        captured: Int,
-        missed: Int,
-    ) = log("round_finished", "captured" to captured.toLong(), "missed" to missed.toLong())
-
     /**
      * One usage reading at the end of a visit.
      *
@@ -75,12 +62,6 @@ object Telemetry {
         "access" to if (access) 1L else 0L,
         "retried" to if (retried) 1L else 0L,
     )
-
-    /** One proof reached Drive and Firestore. */
-    fun proofPosted() = log("proof_posted")
-
-    /** An app was put forward for placement. */
-    fun appSubmitted() = log("app_submitted")
 
     /**
      * Something went wrong that the tester was told about in their own words and nobody else would

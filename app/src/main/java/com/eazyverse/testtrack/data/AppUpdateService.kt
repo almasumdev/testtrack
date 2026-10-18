@@ -24,7 +24,7 @@ enum class UpdateTier { NONE, NUDGE, BLOCKED }
 
 /**
  * In-app update gate, ported from Sound Scheduler's AppUpdateService. Follows
- * docs/in-app-update-system.md, the same flow Bluefy uses:
+ * The update flow:
  *
  *  - **Google Play** ([AppUpdateManager]) decides whether this device can install an update. It is
  *    resolved on device against the track this install actually came from, so it accounts for staged

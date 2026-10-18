@@ -8,7 +8,7 @@ import android.os.Build
 import com.eazyverse.testtrack.BuildConfig
 
 /*
- * Where the About page and the Support rows send people: Play, the studio, and a mail to it.
+ * Where the About page and the Support rows send people: Play, the studio, the source, and a mail.
  * Every one hands the reader to an app this one does not own, so every one fails in silence.
  */
 
@@ -19,6 +19,7 @@ internal const val STUDIO_SITE = "https://eazyverse.com"
 internal const val STUDIO_TERMS = "https://eazyverse.com/terms"
 internal const val APP_PRIVACY = "https://eazyverse.com/apps/testtrack/privacy"
 internal const val PORTFOLIO = "https://almasum.dev"
+internal const val SOURCE_REPO = "https://github.com/almasumdev/testtrack"
 
 /** The app's own listing: Play first, the web second, nothing if the phone has neither. */
 internal fun openPlayListing(context: Context) {
@@ -34,7 +35,7 @@ internal fun openDeveloperPage(context: Context) {
 }
 
 /**
- * The feedback mail, the same from every door (mkit docs/in-app-review.md): to the studio, the app
+ * The feedback mail, the same from every door: to the studio, the app
  * named, a blank line to write in, then the three facts we would otherwise have to ask for, and the
  * star that was tapped when it came from a low one. Nothing else: no logs, no account details.
  */

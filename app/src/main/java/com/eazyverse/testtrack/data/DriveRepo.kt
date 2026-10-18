@@ -19,9 +19,6 @@ data class DriveFile(
     val id: String,
     val name: String,
 ) {
-    /** Viewable by anyone with the link, once [DriveRepo.makeLinkReadable] has run. */
-    val viewUrl: String get() = "https://drive.google.com/file/d/$id/view"
-
     /** Direct image bytes — what Coil should load in the grid. */
     val thumbUrl: String get() = "https://drive.google.com/thumbnail?id=$id&sz=w1200"
 }

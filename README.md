@@ -1,48 +1,96 @@
 # TestTrack
 
-TestTrack helps Android developers run closed testing crews and exchange private app feedback.
-The Android app is built with Kotlin and Compose. Records live in the TestTrack API; Firebase is
-used for Google sign-in, push and app configuration. The Firestore rules in this repository protect
-retained legacy records.
+TestTrack helps Android developers get through Google Play's closed testing and trade real feedback
+on each other's apps.
 
-Circle contains feedback requests, owner approvals/disputes and community activity. Crew contains
-open crews, your lobby, nightly testing and completed runs. Ranks shows community standing; My apps
-and Profile show the signed-in account's records. Guests can browse public screens before signing in.
+New personal developer accounts must run a closed test with at least 12 testers for 14 days before
+they can publish to production. TestTrack puts 15 developers in a **crew**: each one opens the other
+14 apps every day for 14 days, and the phone's own usage records prove every visit. In the
+**Circle**, developers ask for written feedback on their apps and pay for it in **tix**, the app's
+own credit, earned by giving feedback to others.
 
-Feedback is private for both live apps and closed tests. A reviewer installs through Play, uses the
-app, writes feedback in TestTrack, and submits a screenshot from the tested app. Tix reward accepted
-private feedback; the flow does not ask for a rewarded public Play rating. Eligible accounts receive
-60 starter tix once per verified account and reported installation.
+<p align="center">
+  <img src="store/art/shots/circle.png" width="260" alt="Circle">
+  <img src="store/art/shots/circle_dark.png" width="260" alt="Circle in dark mode">
+  <img src="store/art/shots/ranks.png" width="260" alt="Ranks">
+</p>
 
-Proof and custom profile images upload directly to the signed-in user's connected Google Drive.
-The API keeps references/metadata, not new image bytes. **Anyone with a proof link can view it.**
-The developer and authorized dispute jurors receive that link. Inspect screenshots and hide personal
-details locally before sending. You own the files and can remove them or their public-link permission
-in Drive; disconnecting Drive alone does not remove public access. Pending proof and notes stay on
-this device until sent or abandoned. Crew visits send testing records and usage duration, not images.
+[Get it on Google Play](https://play.google.com/store/apps/details?id=com.eazyverse.testtrack)
 
-The phone reports installation and UsageStats measurements; these are not hardware-attested facts.
-The server enforces elapsed-time limits, membership, permissions, state transitions and payments.
-Historical backend-upload proof remains readable through its access-controlled compatibility route.
+## What's in the app
 
-Read [current architecture](docs/architecture.md), [app rules](docs/app-rules.md) and
-[verification](docs/verification.md) before changing the app. Historical planning documents are
-labelled as plans and may describe superseded behavior. Never commit local credentials, signing
-keys, tokens or private backend configuration to this public repository.
+- **Circle**: feedback requests, a reviewer's step-by-step flow (install from Play, use the app,
+  write private feedback, attach a screenshot), owner approval and community-judged disputes.
+- **Crew**: open crews to join, the lobby where members check each other's apps install, the nightly
+  round with a floating timer over each app, and a record of finished runs.
+- **Ranks**: community standing from opens and accepted feedback.
+- **My apps** and **Profile**: your apps, your crews and requests, and account settings.
 
-Local checks:
+Guests can browse the public screens before signing in.
+
+## Privacy
+
+Proof screenshots and profile pictures upload to the signed-in user's own Google Drive; the server
+keeps references, not images. **Anyone with a proof link can view it**, so the app asks people to
+check a screenshot and hide personal details before sending. Crew visits send usage durations,
+never images. Installs and usage are reported by the phone; the server enforces the rules on time,
+membership, permissions and payments.
+
+[Privacy policy](https://eazyverse.com/apps/testtrack/privacy) ·
+[Request account deletion](https://eazyverse.com/apps/testtrack/delete-account)
+
+## Building
+
+Requirements: Android Studio with JDK 17 or newer, and the Android SDK (compile SDK 37, min SDK 26).
+
+1. Copy `local.properties.example` to `local.properties` and fill in the values it lists: the SDK
+   path, a Google OAuth web client ID, the membership check URL and the testers group URL.
+2. Add `app/google-services.json` from your own Firebase project, with an Android app registered for
+   `com.eazyverse.testtrack.debug` and your debug signing SHA-1. Google sign-in fails without it.
+3. Build and install a debug build:
+
+```powershell
+.\gradlew.bat installDebug
+```
+
+Debug builds talk to the production API by default (`API_BASE` in `app/build.gradle.kts`). The API
+itself lives in a separate, private repository.
+
+## Project layout
+
+| Path | What it holds |
+|---|---|
+| `app/src/main/java/.../ui` | Compose screens and their view models |
+| `app/src/main/java/.../viewmodel` | State shared across screens, such as the nightly round |
+| `app/src/main/java/.../domain` | Pure rules with no Android dependencies |
+| `app/src/main/java/.../data` | Device, Firebase, Drive and usage access |
+| `app/src/main/java/.../net` | The API client and its wire types |
+| `docs/` | Architecture, code rules, verification and design sources |
+| `firestore.rules`, `firestore-tests/` | Rules for the legacy Firestore records, and their tests |
+| `store/` | The Play listing, release notes and store art sources |
+
+Read [architecture](docs/architecture.md) and [app rules](docs/app-rules.md) before changing the
+app. The layering rules are enforced by `scripts/check_app.py`.
+
+## Checks
 
 ```powershell
 python scripts/check_app.py
 .\gradlew.bat ktlintCheck testDebugUnitTest assembleDebug compileDebugAndroidTestKotlin lintDebug
 ```
 
-These compile instrumented tests; they do not execute them. The release hook also checks store
-assets, notes, Data safety and Play access through mkit. See [store instructions](store/README.md).
-Push, deployment, Firebase writes and Play publication require explicit authorization.
+Instrumented tests run on an emulator; see [verification](docs/verification.md).
 
-[Privacy](https://eazyverse.com/apps/testtrack/privacy) ·
-[Request account deletion](https://eazyverse.com/apps/testtrack/delete-account)
+## Contributing
 
-Account deletion is a processed request with retention details, not an instant delete-everything
-button. Review the current policy and request page before submitting a request.
+Issues and pull requests are welcome. Keep each change focused, run the checks above, and describe
+what you tested. Never commit credentials, signing keys, tokens or `google-services.json`; the
+`.gitignore` already excludes them.
+
+To report a security problem, email [hello@eazyverse.com](mailto:hello@eazyverse.com) rather than
+opening a public issue.
+
+## License
+
+[MIT](LICENSE) © EazyVerse. The bundled Barlow and IBM Plex Mono fonts are under the SIL Open Font
+License; see [docs/licenses](docs/licenses).

@@ -219,8 +219,8 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     // Sign-in: the Google account becomes a Firebase session, whose token our server accepts.
     implementation(libs.firebase.auth)
-    // Firestore for one thing only now: the in-app update gate's config/app document, which mkit
-    // writes. Everything else the app shows comes from our own server.
+    // Firestore for one thing only now: the in-app update gate's config/app document, written at
+    // release time. Everything else the app shows comes from our own server.
     implementation(libs.firebase.firestore)
     // Push from our server.
     implementation(libs.firebase.messaging)
@@ -235,7 +235,7 @@ dependencies {
     // a question only Play can answer: it knows the track the copy came from and the rollout it
     // sits in.
     implementation(libs.play.app.update)
-    // Play's own rating card, asked for after a value moment (mkit docs/in-app-review.md).
+    // Play's own rating card, asked for after a value moment.
     implementation(libs.play.review)
     // Task.await(), which the update service is written against. The rest of this app hand-rolls
     // it with suspendCancellableCoroutine; this one file is kept identical to the original.

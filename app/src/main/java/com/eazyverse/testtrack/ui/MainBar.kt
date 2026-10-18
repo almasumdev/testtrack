@@ -57,7 +57,7 @@ import kotlin.math.roundToInt
 internal val DockTop = 6.dp
 
 /**
- * The bar: Value Guard's floating dock.
+ * The bar: a floating dock.
  *
  * A pill that floats over the ground rather than a strip bolted to the bottom edge. Every tab but
  * the current one is just its icon; the current one is wider, with its name beside the icon, so

@@ -1,9 +1,9 @@
-"""Checks mkit must finish before changing a version or publishing a release.
+"""Checks that must pass before a version change or a release.
 
-The app no longer has CI. Putting its checks in mkit's pre-deploy hook makes
+Run as the release tool's pre-deploy hook (mkit, the maintainer's own tooling), which makes
 them part of the release path rather than a comment somebody has to remember.
 Each command keeps its real exit code; a failure stops before the next one.
-Device tests remain the user's job. This only compiles their Kotlin sources.
+Device tests are run by hand. This only compiles their Kotlin sources.
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ def mkit(executable: str, *command: str, allow_drift: bool = False) -> dict:
 def main() -> int:
     executable = shutil.which("mkit.exe" if os.name == "nt" else "mkit")
     if executable is None:
-        print("mkit is not installed. See H:/tools/mkit/README.md.", file=sys.stderr)
+        print("mkit is not installed. It is the maintainer's release tool; building the app does not need it.", file=sys.stderr)
         return 1
 
     run([sys.executable, "scripts/check_app.py"])

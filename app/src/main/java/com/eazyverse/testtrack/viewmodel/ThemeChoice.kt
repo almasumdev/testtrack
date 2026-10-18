@@ -12,7 +12,7 @@ import androidx.core.content.edit
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 /**
- * The theme somebody chose, kept on the phone, as Value Guard and ListKin keep theirs.
+ * The theme somebody chose, kept on the phone.
  *
  * From Android 12 the choice is also handed to the system as this app's own night mode, so the
  * splash and the window under the first frame are already in it, and the phone's dark setting

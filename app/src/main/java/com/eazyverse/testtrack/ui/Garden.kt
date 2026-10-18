@@ -42,7 +42,7 @@ import com.eazyverse.testtrack.ui.theme.exchangeBackground
 import com.eazyverse.testtrack.ui.theme.tabular
 
 /*
- * The pieces Value Guard is built from, drawn in Compose.
+ * The shared pieces the screens are built from.
  *
  * Same shapes, same spacing and the same rules about where colour goes, so the two apps read as one
  * family: things you tap are solid tiles, things you only read are dashed panels, the accent is
@@ -67,7 +67,7 @@ fun Backdrop(
 // ---- marks -----------------------------------------------------------------------------------
 
 /**
- * An icon on its own tinted tile: the mark every row and header in Value Guard leads with.
+ * An icon on its own tinted tile: the mark every row and header leads with.
  *
  * A rounded square rather than a circle, the glyph at about half the tile. The danger version
  * swaps to the red ground so a destructive row says so before its words are read.
@@ -130,7 +130,7 @@ fun TilePlace.shape(): RoundedCornerShape {
 /**
  * A run of tiles, three points apart, with no rules between them.
  *
- * Value Guard's settings groups. Each row is its own tile, only the outer corners of the run are
+ * Settings groups. Each row is its own tile, only the outer corners of the run are
  * round, and the gap is what separates them; a divider inside a group was a line doing a job the
  * gap already does.
  */
@@ -233,8 +233,7 @@ fun TileRow(
  * A section's heading: sentence case, one step under a title, with its count in a badge beside it.
  *
  * It was small grey capitals, which is a label, and a label over a list says "form" rather than
- * "here are your things". A count sits in a badge next to the words it counts, as Value Guard's
- * "Needs attention" does; anything that is not a count stays quiet text at the far end.
+ * "here are your things". A count sits in a badge next to the words it counts; anything that is not a count stays quiet text at the far end.
  */
 @Composable
 fun CrewHeading(
@@ -279,15 +278,15 @@ fun CrewHeading(
  */
 val HeadedListTop = 11.5.dp
 
-/** The corner a card gets. Value Guard's list cards, a step under its 22 panels. */
+/** The corner a card gets: a step under the 22dp panels. */
 val CardRadius = 18.dp
 
 /**
  * Row [index] of a list of [count], as a tile of its own.
  *
  * Every list that stands on the page ground is drawn this way, three points apart with only the
- * ends of the run rounded, so nothing is ever read across a contour line and a list looks like
- * Value Guard's rather than rows ruled off on the page.
+ * ends of the run rounded, so nothing is ever read across a contour line and a list reads as a
+ * set of tiles rather than rows ruled off on the page.
  */
 @Composable
 fun ListTile(
@@ -320,7 +319,7 @@ fun ListTile(
  * How much of the bottom of the screen the floating dock covers, system bar included.
  *
  * The page runs under the dock and the system bar rather than stopping above them, so a list scrolls
- * behind both the way Value Guard's does. Every list on a tab adds this to its bottom padding so its
+ * behind both. Every list on a tab adds this to its bottom padding so its
  * last row can still be scrolled clear of them.
  */
 val LocalDockRoom = compositionLocalOf { 0.dp }

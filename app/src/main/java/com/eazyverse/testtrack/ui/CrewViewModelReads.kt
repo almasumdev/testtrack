@@ -44,10 +44,6 @@ val CrewViewModel.toAnswer: Int
 val CrewViewModel.sentBack: List<CrewSeat>
     get() = sentBackIn(crews)
 
-/** The crew holding your one waiting app, by name, or null where you are free. */
-val CrewViewModel.holding: String?
-    get() = holdingIn(crews)
-
 /** How many runs are going, which is what the nightly figure is made of. */
 val CrewViewModel.running: Int
     get() = crews.count { it.phase == CrewPhase.RUN }

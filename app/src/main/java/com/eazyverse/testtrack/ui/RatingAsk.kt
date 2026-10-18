@@ -29,7 +29,7 @@ import com.eazyverse.testtrack.viewmodel.ReviewMoment
 
 /**
  * The five stars, the one rating control in the app: the About page's bank and the fallback ask
- * both use this, so it is learned once (mkit docs/in-app-review.md).
+ * both use this, so it is learned once.
  *
  * Hollow at rest, filling to the star under the finger, and rating on release over the same star.
  * A finger that slides off rates nothing: a rating is a deliberate press, not a brush past.

@@ -71,7 +71,7 @@ def problems() -> list[str]:
             found.append(f"{rel}: domain imports android")
 
         # Colours live in ui/theme/Tokens.kt and nowhere else, so a palette is one file to change
-        # rather than a search through every screen. Value Guard enforces the same rule.
+        # rather than a search through every screen.
         if path != SRC / "ui/theme/Tokens.kt" and COLOR_LITERAL.search(text):
             found.append(f"{rel}: colour literal outside ui/theme/Tokens.kt")
 

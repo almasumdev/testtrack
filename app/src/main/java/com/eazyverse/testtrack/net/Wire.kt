@@ -6,11 +6,8 @@ import kotlinx.serialization.Serializable
 /*
  * What the API sends and expects, as Kotlin.
  *
- * Hand written for now. The agreed plan is to generate these from the API's own OpenAPI document
- * so the two sides cannot drift, and that is still the plan; what stopped it today is that the
- * generator is a build plugin and a pile of generated source, and none of that is worth landing
- * before the endpoints have settled. Until then these are checked against the real API by the
- * tests in ApiWireTest, which is the same promise made a cheaper way.
+ * Hand written, and checked against the real API by ApiContractTest so the two sides cannot
+ * drift apart unnoticed.
  */
 
 @Serializable
@@ -442,34 +439,6 @@ data class ApiProfile(
     @SerialName("crews_filled") val crewsFilled: Int = 0,
     @SerialName("crews_finished") val crewsFinished: Int,
     @SerialName("joined_at") val joinedAt: String,
-)
-
-@Serializable
-data class ApiMyApp(
-    val id: String,
-    /** "crew" or "post". One list, both halves of the product. */
-    val kind: String,
-    @SerialName("app_name") val appName: String,
-    @SerialName("package_name") val packageName: String,
-    /** waiting, checking, testing, finished, rejected, withdrawn, collecting, done. */
-    val state: String,
-    /** The crew's name, or Circle. */
-    val where: String,
-    @SerialName("crew_id") val crewId: String? = null,
-    val day: Int = 0,
-    @SerialName("run_days") val runDays: Int = 0,
-    /** People testing it, or reviews collected so far. */
-    val testers: Int = 0,
-    val greens: Int = 0,
-    val reds: Int = 0,
-    @SerialName("reviews_bought") val reviewsBought: Int = 0,
-    val reward: Int = 0,
-    @SerialName("created_at") val createdAt: String,
-)
-
-@Serializable
-data class MyApps(
-    val apps: List<ApiMyApp> = emptyList(),
 )
 
 /**

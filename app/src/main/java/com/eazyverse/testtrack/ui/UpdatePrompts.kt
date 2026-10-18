@@ -91,8 +91,8 @@ fun ForceUpdateScreen(
             )
             Text(
                 text =
-                    "This version of TestTrack no longer counts a day the way your cohort " +
-                        "does. Carrying on with it would show you a record nobody else can see.",
+                    "This version of TestTrack no longer works with the server. Update to keep " +
+                        "your crews, feedback and tix in step with everyone else.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

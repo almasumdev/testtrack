@@ -8,7 +8,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.eazyverse.testtrack.R
 
 /**
- * Barlow for words, IBM Plex Mono for figures. Value Guard's pairing, bundled rather than fetched,
+ * Barlow for words, IBM Plex Mono for figures. Bundled rather than fetched,
  * so the first launch on a slow connection looks the same as every other.
  *
  * Nothing is heavier than bold. The hierarchy comes from size and from weight steps of one, not
@@ -34,7 +34,7 @@ private val Base = Typography()
 
 private fun TextStyle.barlow(weight: FontWeight? = null) = copy(fontFamily = Barlow, fontWeight = weight ?: fontWeight)
 
-/** Material's 2021 sizes in Barlow, with headings one weight up as Value Guard sets them. */
+/** Material's 2021 sizes in Barlow, with headings one weight up. */
 val TtTypography =
     Typography(
         displayLarge = Base.displayLarge.barlow(FontWeight.SemiBold),

@@ -155,14 +155,6 @@ class AskViewModel :
     private val inRange: Boolean get() = reward in FeedRules.MIN_REWARD..FeedRules.MAX_REWARD
     private val affordable: Boolean get() = inRange && cost <= tix
 
-    val rewardError: String?
-        get() =
-            when {
-                !inRange -> "Between ${FeedRules.MIN_REWARD} and ${FeedRules.MAX_REWARD} tix."
-                !affordable -> "That would cost $cost tix and you have $tix."
-                else -> null
-            }
-
     val canLook: Boolean get() = query.trim().length >= 3 && !looking
     val canPost: Boolean get() = found != null && affordable && !posting
 

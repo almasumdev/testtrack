@@ -42,51 +42,7 @@ object InstalledApps {
         /** From the same [android.content.pm.PackageInfo] read as everything else here — no extra cost. */
         val versionCode: Long = 0L,
         val versionName: String? = null,
-    ) {
-        /** Whole days the app has been continuously installed. */
-        val streakDays: Int
-            get() =
-                if (!installed) {
-                    0
-                } else {
-                    ((System.currentTimeMillis() - firstInstall) / 86_400_000L).toInt()
-                }
-
-        /**
-         * The streak, said in a way that isn't nonsense.
-         *
-         * A preinstalled app reports an epoch `firstInstallTime`, which comes out as "6426 days" —
-         * true, useless, and it makes the row look broken. Anything past a year is just "installed";
-         * the number only matters while it is comparable to the fourteen-day run.
-         */
-        val streakLabel: String
-            get() =
-                when {
-                    !installed -> "Not installed"
-                    streakDays >= 365 -> "Installed"
-                    streakDays <= 0 -> "Installed today"
-                    streakDays == 1 -> "1 day installed"
-                    else -> "$streakDays days installed"
-                }
-
-        /**
-         * The same streak, short enough to sit on the corner of a 44dp icon.
-         *
-         * Null where a number would be noise rather than information: nothing to count for an app
-         * that is not there, and nothing worth counting once it is past a year, which is the case
-         * [streakLabel] already answers with a flat "Installed". "new" rather than "0d" for the
-         * first day, because a badge reading zero looks like a count that failed.
-         */
-        val streakBadge: String?
-            get() =
-                when {
-                    !installed || streakDays >= 365 -> null
-                    streakDays <= 0 -> "new"
-                    else -> "${streakDays}d"
-                }
-
-        val fromPlay: Boolean get() = installer == "com.android.vending"
-    }
+    )
 
     /**
      * Cached because a list of fourteen rows asks for this on every recomposition.

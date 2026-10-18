@@ -1,8 +1,7 @@
 # Data safety evidence
 
-Evidence refreshed for the local app/backend audit fixes on 2026-10-10. Declarations cover
-release builds, including the old Firestore screens and services that still
-ship. The CSV is generated from `mkit.toml`; nothing has been uploaded.
+What the app collects, why, and the code that backs each Play Data safety answer. The answers cover
+release builds. `datasafety.csv` is generated from the declaration in `../mkit.toml`.
 
 | Declared type | Evidence and purpose |
 | --- | --- |

@@ -146,7 +146,7 @@ internal fun SupportGroup(onAbout: () -> Unit) {
                     )
                 SupportRow.RATE ->
                     // The stars are drawn in the sentence, not beside it, and are not a control: the
-                    // whole row goes to the listing, always (mkit docs/in-app-review.md).
+                    // whole row goes to the listing, always.
                     TileRow(
                         Lucide.Star,
                         "Enjoying TestTrack?",

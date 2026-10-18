@@ -171,8 +171,8 @@ class MainActivity : ComponentActivity() {
                         /*
                          * Over everything, including the nav host.
                          *
-                         * A build that no longer counts a day the way its cohort does is not one
-                         * screen out of date, it is wrong everywhere, so this cannot be something
+                         * A build the server has moved past is not one screen out of date, it is
+                         * wrong everywhere, so this cannot be something
                          * a screen opts into. See [UpdateGate] for why the tier is resolved
                          * against Play first: this only ever appears when there is genuinely an
                          * update to be had.

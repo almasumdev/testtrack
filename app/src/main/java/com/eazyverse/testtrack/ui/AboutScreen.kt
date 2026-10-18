@@ -47,6 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.Github
 import com.composables.icons.lucide.Globe
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Mail
@@ -57,8 +58,8 @@ import com.eazyverse.testtrack.viewmodel.ReviewMoment
 import java.util.Calendar
 
 /**
- * What TestTrack is, who made it, and how to reach them: the studio's shared About spine (mkit
- * docs/about-screen.md), in this app's own colours, type and buttons.
+ * What TestTrack is, who made it, and how to reach them: the studio's shared About layout, in
+ * this app's own colours, type and buttons.
  *
  * No cards, though every other screen here is made of them. Groups are made by space alone:
  * [HEAD_GAP] under a heading against [BANK_GAP] under a bank, and [PLATE_GAP] where the page
@@ -86,8 +87,7 @@ fun AboutScreen(onBack: () -> Unit) {
             Spacer(Modifier.height(PLATE_GAP))
             RatingBank(
                 onRate = { stars ->
-                    // Only the fifth reaches Play. The first four ask before anything opens: see
-                    // mkit docs/in-app-review.md, which settled this and why.
+                    // Only the fifth reaches Play. The first four ask before anything opens.
                     // With no mail app on the phone the low stars have nowhere to go but Play.
                     if (stars == 5 || !canMail(context)) {
                         ReviewMoment.markRated(context)
@@ -101,6 +101,8 @@ fun AboutScreen(onBack: () -> Unit) {
             MakerBank()
             Spacer(Modifier.height(BANK_GAP))
             MoreAppsBank()
+            Spacer(Modifier.height(BANK_GAP))
+            SourceBank()
             Spacer(Modifier.height(PLATE_GAP))
             LegalBank()
             Spacer(Modifier.height(28.dp))
@@ -245,6 +247,21 @@ private fun ColumnScope.MoreAppsBank() {
     ) { openDeveloperPage(context) }
 }
 
+/** TestTrack is open source: where the code is, and the two things a reader there can do. */
+@Composable
+private fun ColumnScope.SourceBank() {
+    val context = LocalContext.current
+    BankHeading("Open source")
+    Spacer(Modifier.height(HEAD_GAP))
+    BankLine("The app's code is public on GitHub under the MIT licence. Read it, report a problem, or send a fix.")
+    Spacer(Modifier.height(16.dp))
+    Outlined(
+        "View on GitHub",
+        Modifier.fillMaxWidth(),
+        icon = { Icon(Lucide.Github, null, Modifier.size(17.dp)) },
+    ) { openUrl(context, SOURCE_REPO) }
+}
+
 /**
  * The two documents and the line that says who stands behind the app. The privacy link is
  * TestTrack's own policy rather than the studio's, because this app has accounts and keeps data the
@@ -365,7 +382,7 @@ private fun Outlined(
 /**
  * The low-star ask: two answers, and only `Send feedback` opens anything. No `Never` here: this
  * dialog only ever follows a star the person pressed themselves, so there is nothing to opt out of.
- * `Never` belongs to the ask that arrives unbidden after a value moment (mkit docs/in-app-review.md).
+ * `Never` belongs to the ask that arrives unbidden after a value moment.
  */
 @Composable
 private fun FeedbackAsk(

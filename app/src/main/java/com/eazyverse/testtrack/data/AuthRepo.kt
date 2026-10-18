@@ -72,31 +72,6 @@ object AuthRepo {
     val uid: String? get() = FirebaseAuth.getInstance().currentUser?.uid
 
     /**
-     * The ID token from the last sign-in, held only in memory.
-     *
-     * Without it every membership re-check would put the Google account sheet in front of a
-     * tester who signed in a minute ago, purely to mint a token identical to the one we already
-     * had. Google's expire after an hour; this is retired early so a check never races the edge.
-     */
-    private var token: String? = null
-    private var tokenAt = 0L
-    private const val TOKEN_LIFETIME = 45 * 60 * 1000L
-
-    /**
-     * Google will not re-issue a token without being asked out loud.
-     *
-     * Not the same as being signed out, and worth keeping the two apart. The Firebase session
-     * persists and refreshes itself, so the account, its uid and its Drive are all still here and
-     * everything else in the app carries on working. What has aged out is the Google ID token the
-     * membership service verifies, which is a thing only Google can mint and only for somebody
-     * standing in front of the phone.
-     *
-     * So the answer is not to sign anybody out. It is to ask Google once, from a control that
-     * says so.
-     */
-    const val NEEDS_GOOGLE = "needs-google"
-
-    /**
      * How long each half of signing in may take before the app stops waiting.
      *
      * Neither half has a limit of its own, which is the whole reason for these. Credential Manager
@@ -110,9 +85,6 @@ object AuthRepo {
      */
     private const val GOOGLE_LIMIT = 120_000L
     private const val FIREBASE_LIMIT = 20_000L
-
-    private val liveToken: String?
-        get() = token?.takeIf { System.currentTimeMillis() - tokenAt < TOKEN_LIFETIME }
 
     /**
      * Set when the ID token could not be exchanged for a Firebase session.
@@ -146,8 +118,6 @@ object AuthRepo {
                         "restart the phone. It is Play services that has stalled, not your account.",
                 )
 
-        token = account.idToken
-        tokenAt = System.currentTimeMillis()
         firebaseError =
             try {
                 withTimeout(FIREBASE_LIMIT) { signInToFirebase(account.idToken) }
@@ -164,44 +134,6 @@ object AuthRepo {
                     "Firebase Authentication, in Sign-in method. (${e.message})"
             }
         return account
-    }
-
-    /**
-     * The verdict for the token we already hold, or null when we do not hold one.
-     *
-     * The quiet counterpart of [recheckGroup], for the background check the setup screen runs on
-     * its own initiative. It asks Credential Manager for nothing, which is the whole point: the
-     * interactive path can put an account sheet on screen, and a check nobody requested must never
-     * do that. Null means there are no credentials to ask with, which is a reason to leave the
-     * last known answer alone rather than guess at a new one.
-     *
-     * Using only the sign-in token also settles *whose* membership is being reported: it is the
-     * account that signed in, and cannot be some other Gmail on the same phone.
-     */
-    suspend fun recheckGroupSilently(): GateResult? = liveToken?.let { GroupGate.check(it) }
-
-    /**
-     * Asks the membership service again — after the tester has gone off and joined the group.
-     *
-     * Reuses the sign-in token while it is still good. Without one it goes back to Google for a
-     * fresh token, which can show the account sheet, so this belongs behind a button somebody
-     * pressed. Returns the account only when one was actually chosen, which is the sole case where
-     * the address the verdict is about can differ from the one we signed in as.
-     */
-    suspend fun recheckGroup(activity: Activity): Pair<GoogleAccount?, GateResult> {
-        liveToken?.let { return null to GroupGate.check(it) }
-
-        // Silently or not at all. Google re-issues without showing anything for an account that
-        // has used this app before, which is every account that reaches this screen. When it
-        // cannot, the honest answer is that the sign-in has expired, not a list of every Google
-        // account on the phone attached to a button that asked about one of them.
-        val account =
-            runCatching { GroupGate.refresh(activity) }.getOrNull()
-                ?: return null to GateResult.Failed(NEEDS_GOOGLE)
-
-        token = account.idToken
-        tokenAt = System.currentTimeMillis()
-        return account to GroupGate.check(account.idToken)
     }
 
     private suspend fun signInToFirebase(idToken: String) =
@@ -260,8 +192,6 @@ object AuthRepo {
     fun signOut() {
         com.eazyverse.testtrack.net.ApiAuth
             .signOut()
-        token = null
-        tokenAt = 0L
         FirebaseAuth.getInstance().signOut()
     }
 }

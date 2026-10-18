@@ -209,7 +209,7 @@ fun RanksBody(
                         CrewHeading("Standings", trailing = "Top ${rows.size}")
                     }
                 }
-                // Each person a tile of their own, three points apart, as Value Guard lists things:
+                // Each person a tile of their own, three points apart:
                 // the gap separates them, and only the ends of the run are rounded.
                 itemsIndexed(rest, key = { _, row -> row.id }) { index, row ->
                     // Fades in, fades out and glides to its new place when the list changes.

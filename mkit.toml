@@ -1,12 +1,8 @@
-# mkit settings for TestTrack. The engine lives in H:\tools\mkit (almasumdev/mkit);
-# this file only says what TestTrack is and which features it uses.
-# Secrets live in .env (this app) and ~/.mkit/.env (all apps). `mkit doctor` checks it.
+# Release settings for mkit, the maintainer's release tool. Building or running the app does not
+# need it; this file only says what TestTrack is and which release features it uses.
+# Secrets stay out of the repository, in .env files that are gitignored.
 #
-# Releases go through mkit. The GitHub Actions workflows were removed, so a push
-# no longer builds anything: `mkit deploy` is the one path to Play and to the
-# config/app update document.
-#
-# The pre-deploy hook checks code and store files before mkit bumps or publishes.
+# The pre-deploy hook (scripts/check_release.py) checks code and store files before a release.
 requires = ">=0.3.1"
 
 [app]
