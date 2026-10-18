@@ -63,6 +63,9 @@ class AppsViewModel : ViewModel() {
 
     fun stopLive() = live.stop()
 
+    /** Whether the server has said what the list is, even if it said there is nothing in it. */
+    private var answered = false
+
     /** The application context from the first load, for reading again on news from elsewhere. */
     private var context: Context? = null
 
@@ -78,8 +81,9 @@ class AppsViewModel : ViewModel() {
 
     fun load(context: Context) {
         this.context = context.applicationContext
-        // Nothing shown yet: the shimmer while it comes, not "Nothing up yet" over an app just added.
-        if (apps.isEmpty()) loading = true
+        // Only before the first answer. An empty list is an answer too: shimmering again on every
+        // live update or return to the tab made "Nothing added yet" flicker in and out.
+        if (!answered) loading = true
         viewModelScope.launch {
             try {
                 if (!ApiAuth.ensure(context)) {
@@ -88,6 +92,7 @@ class AppsViewModel : ViewModel() {
                 }
                 signedOut = false
                 apps = Api.apps().apps.map(ApiApp::toEntry)
+                answered = true
                 live.channels(apps.mapNotNull { it.crew?.crewId }.map { "crew:$it" }.toSet())
                 offline = false
             } catch (e: ApiError) {
