@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** What an app on My apps says about itself: its badges, and the sentences on its page. */
@@ -52,12 +51,13 @@ class AppModelsTest {
 
     @Test
     fun the_page_says_what_each_part_is_doing() {
-        assertTrue(crewLine(app()).contains("Not in a crew yet"))
-        assertTrue(crewLine(app(live = true)).contains("Live apps take feedback"))
-        assertTrue(crewLine(app(crew = AppCrewStatus("rejected", "c", "Crew 01"))).contains("sent it back"))
-        assertEquals("No feedback asked for yet.", feedbackLine(app()))
-        assertTrue(feedbackLine(app(feedback = AppFeedbackStatus("done", "p", 3, 3))).contains("You can ask again"))
-        assertTrue(verifiedLine(app(verifiedBy = "crew")).contains("crew members"))
-        assertTrue(verifiedLine(app(verifiedBy = null)).startsWith("Not verified yet"))
+        assertEquals("Not in a crew yet", crewStatus(app()))
+        assertEquals("Live apps take feedback, not crews", crewStatus(app(live = true)))
+        assertEquals("Crew 01 sent it back", crewStatus(app(crew = AppCrewStatus("rejected", "c", "Crew 01"))))
+        assertEquals("Day 6 of 14 in Crew 01", crewStatus(app(crew = AppCrewStatus("testing", "c", "Crew 01", day = 6, runDays = 14))))
+        assertEquals("No feedback asked for yet", feedbackStatus(app()))
+        assertEquals("All 3 reviews in", feedbackStatus(app(feedback = AppFeedbackStatus("done", "p", 3, 3))))
+        assertEquals("Verified by its crew", verifiedChip(app(verifiedBy = "crew")))
+        assertEquals("Not verified", verifiedChip(app(verifiedBy = null)))
     }
 }

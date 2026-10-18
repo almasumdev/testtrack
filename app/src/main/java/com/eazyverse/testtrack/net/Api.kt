@@ -290,6 +290,8 @@ object Api {
 
     suspend fun goLive(appId: String): ApiApp = post("/apps/$appId/live", Empty())
 
+    suspend fun verifyApp(appId: String): ApiApp = post("/apps/$appId/verify", Empty())
+
     suspend fun deleteApp(appId: String) = sendEmpty(Request.Builder().url(url("/apps/$appId")).delete())
 
     /** Where a piece of proof lives. Needs the token, so it is fetched, never linked. */

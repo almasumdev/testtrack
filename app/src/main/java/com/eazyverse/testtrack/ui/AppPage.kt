@@ -1,5 +1,8 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -25,22 +29,34 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.ArrowUpRight
 import com.composables.icons.lucide.BadgeCheck
+import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.CircleAlert
+import com.composables.icons.lucide.FlaskConical
+import com.composables.icons.lucide.Globe
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.MessageSquare
+import com.composables.icons.lucide.Trash2
+import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 
 /**
- * One app on its own page: what it is, how it is known to be real, and everything done with it.
+ * One app on its own page: the app itself up top, then what is being done with it, then managing it.
  *
- * Crews and feedback start here and nowhere else, so the app is never typed twice. Going live and
- * deleting are here too, each asked once: one ends crews for the app for good, the other removes
- * it, and an app tested in a crew or reviewed cannot be removed at all.
+ * Crews and feedback start here and nowhere else, so the app is never typed twice. An app nothing
+ * has verified says so first, with a way to ask Play again now. Going live and deleting are asked
+ * once each: one ends crews for the app for good, the other removes it, and an app tested in a
+ * crew or reviewed cannot be removed at all.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,7 +83,8 @@ fun AppPage(
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = { PageBar(app?.name ?: "App", onBack) },
+        // The name is the page's own heading, so the bar is only the way back.
+        topBar = { PageBar("", onBack) },
     ) { padding ->
         val scroll = rememberScrollState()
         Column(
@@ -90,50 +107,20 @@ fun AppPage(
                         onAction = onBack,
                     )
                 else -> {
-                    Spacer(Modifier.height(8.dp))
-                    Head(app)
-                    Spacer(Modifier.height(20.dp))
-                    Section("Crew test", crewLine(app)) {
-                        app.crew?.let { crew ->
-                            if (crew.state != "rejected" && crew.state != "removed") {
-                                Secondary("Open ${crew.crewName}", Modifier.fillMaxWidth()) { onOpenCrew(crew.crewId) }
-                                Spacer(Modifier.height(10.dp))
-                            }
-                        }
-                        if (app.canCrew) {
-                            Primary("Put in a crew · ${CrewRules.SEAT_COST} tix", tall = true) { onCrew(app.id) }
-                        }
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    Section("Feedback", feedbackLine(app)) {
-                        app.feedback?.let { feedback ->
-                            Secondary("Open the request", Modifier.fillMaxWidth()) { onOpenRequest(feedback.postId) }
-                            Spacer(Modifier.height(10.dp))
-                        }
-                        if (app.canFeedback) {
-                            Primary("Ask for feedback", tall = true) { onFeedback(app.id) }
-                        }
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    vm.actionError?.let {
-                        AskMessage(AskFailure("That didn't work", it))
-                        Spacer(Modifier.height(12.dp))
-                    }
                     val busy = vm.acting == app.id
-                    if (!app.live) {
-                        Secondary("It's live on Google Play now", Modifier.fillMaxWidth(), enabled = !busy) { askLive = true }
+                    Hero(app)
+                    Spacer(Modifier.height(20.dp))
+                    if (!app.verified) {
+                        VerifyCallout(busy) { vm.verify(context, app.id) }
+                        Spacer(Modifier.height(4.dp))
+                    }
+                    vm.actionError?.let {
                         Spacer(Modifier.height(10.dp))
+                        AskMessage(AskFailure("That didn't work", it))
                     }
-                    if (app.canDelete) {
-                        Secondary("Delete app", Modifier.fillMaxWidth(), destructive = true, enabled = !busy) { askDelete = true }
-                    } else if (app.whyNotDelete.isNotBlank()) {
-                        Text(
-                            "Can't be deleted. ${app.whyNotDelete}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Tt.colors.text3,
-                        )
-                    }
-                    Spacer(Modifier.height(24.dp))
+                    Testing(app, onOpenCrew, onOpenRequest, onCrew, onFeedback)
+                    Manage(app, busy, onLive = { askLive = true }, onDelete = { askDelete = true })
+                    Spacer(Modifier.height(28.dp))
                 }
             }
         }
@@ -171,45 +158,195 @@ fun AppPage(
     }
 }
 
-/** The app: its icon and name, where it is found, and how it is known to be real. */
+/** The app, centred: its icon, name and package, and chips for where it is found and whether it's real. */
 @Composable
-private fun Head(app: AppEntry) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        AppMark(app.pkg, app.name, app.icon, size = 56.dp)
-        Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f)) {
-            Text(app.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(2.dp))
-            Text(
-                if (app.developer.isBlank()) app.pkg else "${app.developer} · ${app.pkg}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+private fun Hero(app: AppEntry) {
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        AppMark(app.pkg, app.name, app.icon, size = 88.dp)
+        Spacer(Modifier.height(12.dp))
+        Text(
+            app.name,
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp, lineHeight = 26.sp),
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            app.pkg,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Chip(
+                if (app.live) Lucide.Globe else Lucide.FlaskConical,
+                if (app.live) "Live" else "Closed test",
+                MaterialTheme.colorScheme.onSurfaceVariant,
+                Status.neutralSoft,
             )
+            if (app.verified) {
+                Chip(Lucide.BadgeCheck, verifiedChip(app), Status.posted, Status.postedSoft)
+            } else {
+                Chip(Lucide.CircleAlert, verifiedChip(app), Status.short, Status.shortSoft)
+            }
         }
-        Spacer(Modifier.width(10.dp))
-        SourceTag(app.live)
-    }
-    Spacer(Modifier.height(12.dp))
-    Row(verticalAlignment = Alignment.Top) {
-        val tone = if (app.verified) Status.posted else Status.short
-        Icon(if (app.verified) Lucide.BadgeCheck else Lucide.CircleAlert, null, Modifier.size(18.dp), tint = tone)
-        Spacer(Modifier.width(8.dp))
-        Text(verifiedLine(app), style = MaterialTheme.typography.bodySmall, color = Tt.colors.text2)
     }
 }
 
-/** A part of the page: its title, where things stand in a sentence, then what can be done. */
 @Composable
-private fun Section(
-    title: String,
-    line: String,
-    actions: @Composable () -> Unit,
+private fun Chip(
+    icon: ImageVector,
+    text: String,
+    tone: Color,
+    background: Color,
 ) {
-    CrewCard {
-        Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Tt.colors.text)
-        Spacer(Modifier.height(4.dp))
-        Text(line, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text2)
-        Spacer(Modifier.height(14.dp))
-        actions()
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(percent = 50))
+            .background(background)
+            .padding(horizontal = 11.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, null, Modifier.size(14.dp), tint = tone)
+        Spacer(Modifier.width(6.dp))
+        Text(text, style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp), fontWeight = FontWeight.SemiBold, color = tone)
+    }
+}
+
+/** An app nothing has verified: why, the way to ask Play again now, and the other ways it gets verified. */
+@Composable
+private fun VerifyCallout(
+    busy: Boolean,
+    onVerify: () -> Unit,
+) {
+    val shape = RoundedCornerShape(18.dp)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(Status.shortSoft)
+            .border(1.dp, Status.short.copy(alpha = 0.28f), shape)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Lucide.CircleAlert, null, Modifier.size(18.dp), tint = Status.short)
+            Spacer(Modifier.width(8.dp))
+            Text("Not verified yet", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Status.short)
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "Play couldn't show it to us when you added it. Add the testers group to your closed " +
+                "track, then check again.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Tt.colors.text2,
+        )
+        Spacer(Modifier.height(12.dp))
+        Primary(if (busy) "Asking Play..." else "Verify now", busy = busy, onClick = onVerify)
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "It's also verified when two crew members install it, or you accept a review.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Tt.colors.text4,
+        )
+    }
+}
+
+/** Crew test and feedback as two rows: where each stands, and tapping goes on to the next step. */
+@Composable
+private fun Testing(
+    app: AppEntry,
+    onOpenCrew: (String) -> Unit,
+    onOpenRequest: (String) -> Unit,
+    onCrew: (String) -> Unit,
+    onFeedback: (String) -> Unit,
+) {
+    val crewRow = !app.live || app.crew != null
+    SectionTitle("Testing")
+    TileGroup(count = if (crewRow) 2 else 1) { index, place ->
+        if (crewRow && index == 0) {
+            val crew = app.crew
+            TileRow(
+                Lucide.Users,
+                "Crew test",
+                place,
+                subtitle = crewStatus(app),
+                trailing = if (!app.crewOpen && app.canCrew) ({ Cta("Put in · ${CrewRules.SEAT_COST} tix") }) else null,
+                onClick =
+                    when {
+                        crew != null && app.crewOpen -> ({ onOpenCrew(crew.crewId) })
+                        app.canCrew -> ({ onCrew(app.id) })
+                        else -> null
+                    },
+            )
+        } else {
+            val feedback = app.feedback
+            TileRow(
+                Lucide.MessageSquare,
+                "Feedback",
+                place,
+                subtitle = feedbackStatus(app),
+                trailing = if (app.canFeedback) ({ Cta(if (feedback == null) "Ask" else "Ask again") }) else null,
+                onClick =
+                    when {
+                        feedback != null && app.collecting -> ({ onOpenRequest(feedback.postId) })
+                        app.canFeedback -> ({ onFeedback(app.id) })
+                        feedback != null -> ({ onOpenRequest(feedback.postId) })
+                        else -> null
+                    },
+            )
+        }
+    }
+}
+
+/** What a row starts, in the accent, before its chevron. */
+@Composable
+private fun Cta(text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text,
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+            fontWeight = FontWeight.Bold,
+            color = Tt.colors.accent,
+        )
+        Spacer(Modifier.width(2.dp))
+        Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = Tt.colors.accent)
+    }
+}
+
+/** Going live and deleting, each behind its own question; an app that can't go says why. */
+@Composable
+private fun Manage(
+    app: AppEntry,
+    busy: Boolean,
+    onLive: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val rows = listOfNotNull("live".takeIf { !app.live }, "delete".takeIf { app.canDelete })
+    if (rows.isEmpty() && app.whyNotDelete.isBlank()) return
+    SectionTitle("Manage")
+    if (rows.isNotEmpty()) {
+        TileGroup(count = rows.size) { index, place ->
+            if (rows[index] == "live") {
+                TileRow(
+                    Lucide.ArrowUpRight,
+                    "It's live on Google Play now",
+                    place,
+                    subtitle = "Moves it to feedback only",
+                    onClick = if (busy) null else onLive,
+                )
+            } else {
+                TileRow(Lucide.Trash2, "Delete app", place, danger = true, onClick = if (busy) null else onDelete)
+            }
+        }
+    }
+    if (!app.canDelete && app.whyNotDelete.isNotBlank()) {
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "Can't be deleted. ${app.whyNotDelete}",
+            Modifier.padding(horizontal = 4.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = Tt.colors.text4,
+        )
     }
 }

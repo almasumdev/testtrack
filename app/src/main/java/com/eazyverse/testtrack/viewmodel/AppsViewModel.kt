@@ -106,6 +106,12 @@ class AppsViewModel : ViewModel() {
         id: String,
     ) = act(context, id) { Api.goLive(id) }
 
+    /** Ask Play about an unverified app now. Play's refusal says what is still missing. */
+    fun verify(
+        context: Context,
+        id: String,
+    ) = act(context, id) { Api.verifyApp(id) }
+
     fun delete(
         context: Context,
         id: String,

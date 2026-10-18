@@ -100,41 +100,41 @@ fun feedbackBadge(feedback: AppFeedbackStatus): AppBadge =
         else -> AppBadge("Feedback closed · ${feedback.done} of ${feedback.bought}", BadgeTone.QUIET, BadgeKind.FEEDBACK)
     }
 
-/** How the app is known to be real, said on its page. */
-fun verifiedLine(app: AppEntry): String =
+/** How the app is known to be real, in the chip under its name. */
+fun verifiedChip(app: AppEntry): String =
     when (app.verifiedBy) {
-        "play" -> "Verified on Google Play."
-        "crew" -> "Verified by crew members who installed it."
-        "review" -> "Verified by a reviewer who installed it."
-        else ->
-            "Not verified yet: Play couldn't be checked when you added it. It's verified once Play " +
-                "shows it, two crew members install it, or you accept a review of it."
+        "play" -> "Verified on Play"
+        "crew" -> "Verified by its crew"
+        "review" -> "Verified by a review"
+        else -> "Not verified"
     }
 
-/** What a crew is doing for this app, in a sentence for its page. */
-fun crewLine(app: AppEntry): String {
+/** Whether the crew row opens a crew rather than starting one. */
+val AppEntry.crewOpen: Boolean get() = crew?.state.let { it != null && it != "rejected" && it != "removed" }
+
+/** Where the app is with crews, short enough for one line of its row. */
+fun crewStatus(app: AppEntry): String {
     val crew = app.crew
-    val done = if (app.crewsDone > 1) " ${app.crewsDone} crew tests done so far." else ""
     return when {
-        app.live && crew == null -> "Live apps take feedback, not crews."
-        crew == null -> "Not in a crew yet. A crew is 14 testers opening it every day for 14 days."
-        crew.state == "waiting" -> "In ${crew.crewName}, waiting for it to fill.$done"
-        crew.state == "checking" -> "In ${crew.crewName}. Members are trying to install it.$done"
-        crew.state == "starting" -> "${crew.crewName} is full. Day 1 starts at midnight.$done"
-        crew.state == "testing" -> "Day ${crew.day} of ${crew.runDays} in ${crew.crewName}.$done"
-        crew.state == "finished" -> "Its crew test is done.$done"
-        crew.state == "rejected" -> "${crew.crewName} sent it back. Fix it and put it in again."
-        crew.state == "removed" -> "It left ${crew.crewName} after missed days."
+        crew == null && app.live -> "Live apps take feedback, not crews"
+        crew == null -> "Not in a crew yet"
+        crew.state == "waiting" -> "In ${crew.crewName}, filling up"
+        crew.state == "checking" -> "In ${crew.crewName}, members checking"
+        crew.state == "starting" -> "${crew.crewName} starts at midnight"
+        crew.state == "testing" -> "Day ${crew.day} of ${crew.runDays} in ${crew.crewName}"
+        crew.state == "finished" -> if (app.crewsDone > 1) "${app.crewsDone} crew tests done" else "Crew test done"
+        crew.state == "rejected" -> "${crew.crewName} sent it back"
+        crew.state == "removed" -> "Left ${crew.crewName} after missed days"
         else -> crew.crewName
     }
 }
 
-/** What feedback is doing for this app, in a sentence for its page. */
-fun feedbackLine(app: AppEntry): String {
-    val feedback = app.feedback ?: return "No feedback asked for yet."
+/** Where the app is with feedback, short enough for one line of its row. */
+fun feedbackStatus(app: AppEntry): String {
+    val feedback = app.feedback ?: return "No feedback asked for yet"
     return when (feedback.state) {
-        "collecting" -> "${feedback.done} of ${feedback.bought} reviews in."
-        "done" -> "All ${feedback.bought} reviews in. You can ask again."
-        else -> "Closed with ${feedback.done} of ${feedback.bought} reviews. You can ask again."
+        "collecting" -> "${feedback.done} of ${feedback.bought} reviews in"
+        "done" -> "All ${feedback.bought} reviews in"
+        else -> "Closed with ${feedback.done} of ${feedback.bought} reviews"
     }
 }
