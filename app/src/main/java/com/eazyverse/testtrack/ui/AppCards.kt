@@ -3,10 +3,10 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,12 +23,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
+import com.composables.icons.lucide.FlaskConical
+import com.composables.icons.lucide.Globe
+import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -112,18 +117,24 @@ internal fun AppCard(
     modifier: Modifier = Modifier,
     onOpen: () -> Unit,
 ) {
-    CrewCard(modifier, onClick = onOpen) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    CrewCard(modifier, padding = PaddingValues(0.dp), onClick = onOpen) {
+        Row(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             AppMark(app.pkg, app.name, app.icon)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(
-                    app.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                val title = MaterialTheme.typography.titleSmall
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        app.name,
+                        Modifier.weight(1f, fill = false),
+                        style = title,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    SourceIcon(app.live, size = with(LocalDensity.current) { title.fontSize.toDp() })
+                }
                 Spacer(Modifier.height(2.dp))
                 Text(
                     app.developer.ifBlank { app.pkg },
@@ -134,17 +145,30 @@ internal fun AppCard(
                 )
             }
         }
-        // The badges on a row of their own, under a line: where it's found, then what's happening.
-        Spacer(Modifier.height(12.dp))
-        Box(Modifier.fillMaxWidth().height(1.dp).background(Tt.colors.glassBorder))
-        Spacer(Modifier.height(12.dp))
+        // What's happening, on a tinted band along the card's foot: set apart by colour, not a line.
         FlowRow(
+            Modifier
+                .fillMaxWidth()
+                .background(Tt.colors.tile.copy(alpha = 0.55f))
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
-            itemVerticalAlignment = Alignment.CenterVertically,
         ) {
-            SourceTag(app.live)
             app.tileBadges().forEach { Badge(it) }
         }
     }
+}
+
+/** Where people find it, as a mark beside the title: a flask for a closed test, a globe for live. */
+@Composable
+private fun SourceIcon(
+    live: Boolean,
+    size: Dp,
+) {
+    Icon(
+        if (live) Lucide.Globe else Lucide.FlaskConical,
+        contentDescription = if (live) "Live" else "Closed test",
+        modifier = Modifier.size(size),
+        tint = Tt.colors.text4,
+    )
 }

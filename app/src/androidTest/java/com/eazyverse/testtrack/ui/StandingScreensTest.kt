@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
@@ -254,7 +255,7 @@ class StandingScreensTest {
             }
         }
         compose.onNodeWithText("Nikosh Budget").assertIsDisplayed()
-        compose.onNodeWithText("Closed test").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Closed test").assertIsDisplayed()
         compose.onNodeWithText("Day 6 of 14 · Crew 07").assertIsDisplayed()
         compose.onNodeWithText("Feedback 2 of 3").assertIsDisplayed()
     }
