@@ -95,6 +95,10 @@ class VisitDockWindow(
             )
     }
 
+    /** Where the control is on screen now, as left, top, right, bottom: for the device test. */
+    internal val bounds: IntArray?
+        get() = view?.let { intArrayOf(params.x, params.y, params.x + it.width, params.y + it.height) }
+
     @SuppressLint("ClickableViewAccessibility")
     fun show() {
         if (view != null) return
@@ -152,6 +156,12 @@ class VisitDockWindow(
         val screen = screen()
         spot = stickTo(params.x + v.width / 2f, params.y + v.height / 2f, screen)
         RoundStore.keepSpot(context, spot)
+        // Closed once it is let go, not while it moves: shrinking under the finger would lose the
+        // drag. The edge is where it was dropped; its small size is placed on it when laid out.
+        if (open) {
+            open = false
+            return
+        }
         place(v, animate = true)
     }
 

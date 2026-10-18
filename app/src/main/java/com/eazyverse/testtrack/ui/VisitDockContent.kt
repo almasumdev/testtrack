@@ -177,7 +177,7 @@ private fun OpenUpright(
     onCopy: (String) -> Unit,
 ) {
     Column(
-        Modifier.width(156.dp).padding(10.dp),
+        Modifier.width(232.dp).padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
