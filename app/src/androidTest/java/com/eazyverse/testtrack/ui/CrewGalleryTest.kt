@@ -10,7 +10,9 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -73,7 +75,7 @@ class CrewGalleryTest {
         appName = "Time Lapse: Stopwatch & Timer",
         owner = "You",
         packageName = "com.eazyverse.timelapse",
-        notes = "Username: demo@timelapse.app | Password: demo1234",
+        notes = "Username: demo@timelapse.app\nPassword: demo1234",
         crew = crew,
         state = state,
         mine = true,
@@ -237,6 +239,29 @@ class CrewGalleryTest {
         File(out, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
+    /** Taps [button] on the screen showing, saves the dialog it opens, then closes it with [close]. */
+    private fun dialog(
+        name: String,
+        button: String,
+        close: String = "Cancel",
+    ) {
+        compose.onAllNodesWithText(button)[0].performClick()
+        settle()
+        // The whole screen: a dialog is a window of its own, which a capture of one node misses.
+        val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        File(out, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        compose.onAllNodesWithText(close)[0].performClick()
+        settle()
+    }
+
+    /** Animations run out on the test clock, then the real screen is given time to draw them. */
+    private fun settle() {
+        repeat(4) {
+            compose.mainClock.advanceTimeBy(500)
+            Thread.sleep(250)
+        }
+    }
+
     private fun shot(
         name: String,
         scrolled: Boolean = false,
@@ -290,6 +315,29 @@ class CrewGalleryTest {
                 ),
                 9,
             )
+        val reportedOut =
+            lobby(
+                "Crew 12",
+                mine(
+                    "Crew 12",
+                    SeatState.REJECTED,
+                    reports = 2,
+                    reasons = listOf("The login screen says the password is wrong.", "Stuck on a blank screen after sign in."),
+                    outReason = "Two members reported it before the run.",
+                ),
+                9,
+            )
+        val playOut =
+            lobby(
+                "Crew 13",
+                mine("Crew 13", SeatState.REJECTED, outReason = "Play stopped showing it to the testers group."),
+                9,
+            )
+        val asking =
+            filling.copy(
+                id = "Crew 14",
+                seats = listOf(mine("Crew 14"), seat("Crew 14", 4, SeatState.CHECKING, yes = 1), seat("Crew 14", 3)),
+            )
         val running = run("Crew 02", day = 6, doneCount = 4)
         val risky = run("Crew 03", day = 9, doneCount = 11, missedYesterday = true, myMisses = 1)
         val doneTonight = run("Crew 10", day = 11, doneCount = 14)
@@ -331,13 +379,37 @@ class CrewGalleryTest {
         tab("14-run-tab-signed-out", vm)
 
         // A crew's own page, at every point a crew of yours can reach.
-        val all = listOf(filling, checking, reported, full, sentBack, running, risky, doneTonight, removed, finished, short)
+        val all =
+            listOf(
+                asking,
+                filling,
+                checking,
+                reported,
+                full,
+                sentBack,
+                reportedOut,
+                playOut,
+                running,
+                risky,
+                doneTonight,
+                removed,
+                finished,
+                short,
+            )
         vm.preview(all, tab = CrewPhase.LOBBY)
         page("21-page-lobby-filling", vm, filling.id, scrolled = true)
         page("22-page-lobby-your-app-checking", vm, checking.id)
         page("23-page-lobby-your-app-reported", vm, reported.id)
         page("24-page-lobby-full-waiting", vm, full.id, scrolled = true)
         page("25-page-lobby-sent-back", vm, sentBack.id)
+        page("25b-page-lobby-sent-back-reports", vm, reportedOut.id)
+        page("25c-page-lobby-sent-back-play", vm, playOut.id)
+
+        // The three questions a crew's page asks, over the page that asks them.
+        page("40-dialogs-base", vm, asking.id)
+        dialog("41-dialog-report", "Report")
+        dialog("42-dialog-it-didnt", "It didn't")
+        dialog("43-dialog-take-it-out", "Take it back out")
         page("26-page-run", vm, running.id, scrolled = true)
         page("27-page-run-at-risk", vm, risky.id)
         page("28-page-run-tonight-done", vm, doneTonight.id)
