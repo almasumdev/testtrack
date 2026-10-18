@@ -130,7 +130,7 @@ class GatedTest {
             }
         }
 
-        compose.onNodeWithText("Get started").performClick()
+        compose.onNodeWithText("Sign in").performClick()
 
         assertEquals(1, asked)
     }

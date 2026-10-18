@@ -137,15 +137,28 @@ class CrewViewModel : ViewModel() {
         opened = null
     }
 
+    /** Which load is the latest: an older answer arriving after a newer one is dropped. */
+    private var loads = 0
+
+    /** A load is on its way, first or not. A crew's page waits for it before calling a crew gone. */
+    var reloading by mutableStateOf(false)
+        private set
+
     /** Everything the tab shows, in one call. Safe to run on every resume. */
     fun load(context: Context) {
+        val mine = ++loads
+        reloading = true
         viewModelScope.launch {
             try {
                 // No guard. The crew list reads without an account and answers a stranger with
                 // the one that is filling and its seat count, which is the only evidence anywhere
                 // in the app that there are real people waiting to test each other's work.
                 signedOut = !ApiAuth.ensure(context)
-                apply(Api.crews())
+                val answer = Api.crews()
+                // Asked before a seat was taken and answered after: it would take the new crew
+                // away again, and a crew's page reads that as the crew being gone.
+                if (mine != loads) return@launch
+                apply(answer)
                 // A test cycle completed is TestTrack's value moment; only fresh answers count.
                 ReviewMoment.noteFinished(context, crews.filter { it.phase == CrewPhase.RECORD && !it.out }.map { it.id }.toSet())
                 offline = false
@@ -156,6 +169,7 @@ class CrewViewModel : ViewModel() {
                 offline = true
             } finally {
                 loading = false
+                if (mine == loads) reloading = false
             }
         }
     }

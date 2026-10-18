@@ -49,10 +49,14 @@ fun CrewPage(
     // Shown once and then gone from your crews: you took your app out, or it was sent back. The
     // page has nothing left to show, so it closes rather than waiting for a crew that is not coming.
     var seen by remember { mutableStateOf(false) }
-    LaunchedEffect(crew != null) {
+    var closed by remember { mutableStateOf(false) }
+    // Gone only once a load has finished without it, and closed once: a list caught mid-reload
+    // must not close the page, and closing twice would take the page under it away too.
+    LaunchedEffect(crew != null, vm.reloading) {
         if (crew != null) {
             seen = true
-        } else if (seen) {
+        } else if (seen && !vm.reloading && !closed) {
+            closed = true
             onBack()
         }
     }
