@@ -83,8 +83,11 @@ object Routes {
 
     /** One crew on its own page. */
     const val CREW = "crew/{id}"
+    const val CREW_MEMBERS = "crew/{id}/members"
 
     fun crew(id: String) = "crew/${Uri.encode(id)}"
+
+    fun crewMembers(id: String) = "crew/${Uri.encode(id)}/members"
 
     /** Putting an app from My apps into a crew: its name for the crew, its sign-in, the seat. */
     const val CREW_ADD = "crew-add/{app}"
@@ -372,8 +375,15 @@ fun AppNav(openCrew: MutableState<Boolean> = remember { mutableStateOf(false) })
                         val app = apps.apps.firstOrNull { it.pkg == pkg }
                         nav.push(if (app != null) Routes.crewAdd(app.id) else Routes.APP_ADD)
                     },
+                    onMembers = { nav.push(Routes.crewMembers(id)) },
                 )
             }
+        }
+
+        composable(Routes.CREW_MEMBERS, arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
+            val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
+            val crews: CrewViewModel = viewModel(home)
+            Inset { CrewMembersPage(crews, requireNotNull(entry.arguments?.getString("id")), onBack = { nav.popBackStack() }) }
         }
 
         composable(Routes.CREW_ADD, arguments = listOf(navArgument("app") { type = NavType.StringType })) { entry ->

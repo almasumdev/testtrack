@@ -3,8 +3,11 @@ package com.eazyverse.testtrack.ui
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -101,6 +105,10 @@ class CrewActions(
     val onTakeSeat: () -> Unit,
     /** An answer for an app waiting on members. */
     val onVote: (CrewSeat, Boolean) -> Unit = { _, _ -> },
+    /** Whether an app is on this phone, which decides whether its row offers Install or Open. */
+    val isInstalled: (String) -> Boolean = { true },
+    /** A crew's members page, from the button in its bar or its Your app card. */
+    val onMembers: () -> Unit = {},
 )
 
 /**
@@ -127,6 +135,7 @@ private fun PhaseTabs(
  * A reason is required, because a report is a message to the owner about what to fix and the
  * owner is told straight away. Who sent it is not.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CrewReportDialog(
     seat: CrewSeat,
@@ -152,6 +161,24 @@ fun CrewReportDialog(
         onConfirm = { onReport(reason.trim()) },
         onDismiss = onDismiss,
         content = {
+            // The usual reasons, one tap each; the field below takes anything else.
+            val quick =
+                if (answering) {
+                    listOf("Play says it isn't available", "The testers link shows nothing", "It needs a newer Android")
+                } else {
+                    listOf("It won't install from Play", "It crashes when it opens", "The sign-in doesn't work")
+                }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                quick.forEach { text ->
+                    val picked = reason.trim() == text
+                    ActionChip(
+                        text,
+                        if (picked) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                        if (picked) MaterialTheme.colorScheme.primaryContainer else Status.neutralSoft,
+                    ) { reason = text }
+                }
+            }
+            Spacer(Modifier.height(12.dp))
             DialogField(
                 value = reason,
                 onValueChange = { reason = it.take(280) },

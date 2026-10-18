@@ -155,6 +155,11 @@ data class CrewMember(
     val mine: Boolean = false,
     /** Out of the run: two missed days in a row, or the team took the app out. */
     val out: Boolean = false,
+    /** Opened the reader's own app on their current day, and when (an ISO time, or blank). */
+    val openedMineToday: Boolean = false,
+    val openedMineAt: String = "",
+    /** On how many of their days they have opened the reader's app. */
+    val openedMineDays: Int = 0,
 )
 
 /**
@@ -230,6 +235,15 @@ data class Crew(
 
     /** Members still in the run. */
     val stayed: Int get() = members.count { !it.out }
+
+    /** The others still in the run: the people testing this account's app. */
+    val testers: List<CrewMember> get() = members.filter { !it.mine && !it.out }
+
+    /** Of [testers], those who have opened this account's app on their current day. */
+    val openedMineTonight: Int get() = testers.count { it.openedMineToday }
+
+    /** Of [testers], those who opened this account's app on every day of a finished run. */
+    val testedEveryDay: Int get() = testers.count { it.openedMineDays >= finishedDays && finishedDays > 0 }
 
     /** What the crew row says about itself, in one line. */
     val standing: String

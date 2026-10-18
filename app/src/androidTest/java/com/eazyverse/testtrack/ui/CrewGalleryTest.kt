@@ -15,6 +15,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
+import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
@@ -92,6 +93,7 @@ class CrewGalleryTest {
         reported: Boolean = false,
         notes: String = "",
         yes: Int = 0,
+        myVote: Boolean? = null,
     ): CrewSeat {
         val (app, owner) = others[i]
         return CrewSeat(
@@ -104,6 +106,8 @@ class CrewGalleryTest {
             state = state,
             reported = reported,
             yes = yes,
+            no = if (myVote == false) 1 else 0,
+            myVote = myVote,
         )
     }
 
@@ -188,6 +192,16 @@ class CrewGalleryTest {
                         missed = if (i == 7) 1 else 0,
                         missedYesterday = i == 7,
                         out = i == 11,
+                        openedMineToday = i % 4 != 1 && i != 11,
+                        openedMineAt = "2026-10-18T${18 + i % 5}:${10 + i * 3}:00+06:00",
+                        openedMineDays =
+                            if (i == 11) {
+                                3
+                            } else if (i == 7) {
+                                day - 2
+                            } else {
+                                day - if (i % 4 == 1) 1 else 0
+                            },
                     )
                 }
         return Crew(
@@ -211,7 +225,22 @@ class CrewGalleryTest {
             listOf(CrewMember("me", "You", "Time Lapse: Stopwatch & Timer", day = 14, mine = true, missed = 1)) +
                 others.indices.map { i ->
                     val (app, owner) = others[i]
-                    CrewMember("m$i", owner, app, day = 14, missed = if (i < outCount) 2 else i % 2, out = i < outCount)
+                    CrewMember(
+                        "m$i",
+                        owner,
+                        app,
+                        day = 14,
+                        missed = if (i < outCount) 2 else i % 2,
+                        out = i < outCount,
+                        openedMineDays =
+                            if (i < outCount) {
+                                4 + i
+                            } else if (i % 6 == 5) {
+                                13
+                            } else {
+                                14
+                            },
+                    )
                 }
         return Crew(
             id = name,
@@ -251,6 +280,38 @@ class CrewGalleryTest {
         val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
         File(out, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
         compose.onAllNodesWithText(close)[0].performClick()
+        settle()
+    }
+
+    /** Taps [text], first swiping the list up until it is fully on screen. */
+    private fun tap(text: String) {
+        val screenHeight =
+            compose
+                .onRoot()
+                .fetchSemanticsNode()
+                .size.height
+        repeat(6) {
+            val found = compose.onAllNodesWithText(text).fetchSemanticsNodes()
+            if (found.isNotEmpty() && found[0].boundsInRoot.bottom < screenHeight - 200) {
+                compose.onAllNodesWithText(text)[0].performClick()
+                settle()
+                return
+            }
+            compose.onAllNodes(hasScrollToIndexAction())[0].performTouchInput { swipeUp(startY = centerY, endY = top + 50f) }
+            settle()
+        }
+        error("$text never came on screen")
+    }
+
+    /** Taps a row, saves the sheet it opens, then closes it with Back. */
+    private fun sheet(
+        name: String,
+        row: String,
+    ) {
+        tap(row)
+        val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        File(out, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        Espresso.pressBack()
         settle()
     }
 
@@ -336,7 +397,17 @@ class CrewGalleryTest {
         val asking =
             filling.copy(
                 id = "Crew 14",
-                seats = listOf(mine("Crew 14"), seat("Crew 14", 4, SeatState.CHECKING, yes = 1), seat("Crew 14", 3)),
+                seats =
+                    listOf(
+                        mine("Crew 14"),
+                        seat("Crew 14", 4, SeatState.CHECKING, yes = 1, notes = "Username: test@calmbreath.app\nPassword: breathe24"),
+                        seat("Crew 14", 5, SeatState.CHECKING, yes = 1),
+                        seat("Crew 14", 6, SeatState.CHECKING, yes = 2, myVote = true),
+                        seat("Crew 14", 7, SeatState.CHECKING, yes = 1, myVote = false),
+                        seat("Crew 14", 2, notes = "Code: TESTER-2026"),
+                        seat("Crew 14", 3),
+                        seat("Crew 14", 1),
+                    ),
             )
         val running = run("Crew 02", day = 6, doneCount = 4)
         val risky = run("Crew 03", day = 9, doneCount = 11, missedYesterday = true, myMisses = 1)
@@ -347,6 +418,10 @@ class CrewGalleryTest {
         val short = record("Crew 00", outCount = 5)
 
         val vm = CrewViewModel()
+        val pkg = { i: Int -> "com.example.${others[i].first.lowercase().replace(" ", "")}" }
+        // In the lobby, Habit Garden is installed and so is one asked app; in a run, all but Weather Lite.
+        val lobbyPhone = setOf(pkg(1), pkg(5), "com.eazyverse.timelapse")
+        val runPhone = others.indices.map(pkg).toSet() - pkg(12) + "com.eazyverse.timelapse"
 
         // The Crew tab, each of its four, in each of their states.
         vm.preview(emptyList(), open = open(taken = 9))
@@ -396,7 +471,7 @@ class CrewGalleryTest {
                 finished,
                 short,
             )
-        vm.preview(all, tab = CrewPhase.LOBBY)
+        vm.preview(all, tab = CrewPhase.LOBBY, installed = lobbyPhone)
         page("21-page-lobby-filling", vm, filling.id, scrolled = true)
         page("22-page-lobby-your-app-checking", vm, checking.id)
         page("23-page-lobby-your-app-reported", vm, reported.id)
@@ -406,15 +481,25 @@ class CrewGalleryTest {
         page("25c-page-lobby-sent-back-play", vm, playOut.id)
 
         // The three questions a crew's page asks, over the page that asks them.
+        page("40-page-lobby-asked-steps", vm, asking.id, scrolled = true)
         page("40-dialogs-base", vm, asking.id)
-        dialog("41-dialog-report", "Report")
-        dialog("42-dialog-it-didnt", "It didn't")
-        dialog("43-dialog-take-it-out", "Take it back out")
+        sheet("44-sheet-with-sign-in", "Tiny Tasks")
+        sheet("45-sheet-asked", "Calm Breath")
+        tap("Calm Breath")
+        dialog("42-dialog-it-didnt", "It won't install")
+        tap("Pocket Recipes")
+        dialog("41-dialog-report", "Report a problem")
+        dialog("43-dialog-take-it-out", "Take it back out", close = "Keep it in")
+        vm.preview(all, tab = CrewPhase.RUN, installed = runPhone)
         page("26-page-run", vm, running.id, scrolled = true)
         page("27-page-run-at-risk", vm, risky.id)
         page("28-page-run-tonight-done", vm, doneTonight.id)
         page("29-page-run-your-app-out", vm, removed.id)
         page("30-page-record", vm, finished.id, scrolled = true)
         page("31-page-record-below-twelve", vm, short.id)
+        shot("32-members-run") { CrewMembersPage(vm, running.id, onBack = {}) }
+        shot("33-members-record") { CrewMembersPage(vm, finished.id, onBack = {}) }
+        page("34-sheet-tonight-base", vm, running.id)
+        sheet("34-sheet-tonight", "Quick Notes")
     }
 }

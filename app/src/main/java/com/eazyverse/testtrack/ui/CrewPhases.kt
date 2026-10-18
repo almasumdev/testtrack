@@ -1,43 +1,78 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.CircleCheck
+import com.composables.icons.lucide.CircleX
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
+import com.composables.icons.lucide.Undo2
+import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
 
-/** The gutter every phase list opens on, matched to Circle so the two tabs sit level. */
-private val ListTop = 16.dp
+/** The space under the bar, the same 8dp as every other page with a back bar. */
+private val ListTop = 8.dp
+
+/** Where a row sits in its run of rows, which rounds its outer corners. */
+internal fun placeOf(
+    index: Int,
+    count: Int,
+): TilePlace =
+    when {
+        count == 1 -> TilePlace.ONLY
+        index == 0 -> TilePlace.FIRST
+        index == count - 1 -> TilePlace.LAST
+        else -> TilePlace.MIDDLE
+    }
+
+private fun LazyListScope.block(content: @Composable () -> Unit) = item { Box(Modifier.padding(horizontal = Gutter)) { content() } }
+
+private fun <T> LazyListScope.rows(
+    key: String,
+    list: List<T>,
+    id: (T) -> String,
+    row: @Composable (T, TilePlace) -> Unit,
+) = itemsIndexed(list, key = { _, it -> "$key-${id(it)}" }) { index, it ->
+    Box(Modifier.animateItem().padding(horizontal = Gutter).padding(bottom = if (index < list.size - 1) 3.dp else 0.dp)) {
+        row(it, placeOf(index, list.size))
+    }
+}
+
+/** A crew's page, laid out the same way in every phase: hero, your app, then its lists. */
+@Composable
+private fun CrewList(
+    crew: Crew,
+    actions: CrewActions,
+    content: LazyListScope.(onSheet: (RowSheet) -> Unit) -> Unit,
+) {
+    var sheet by remember { mutableStateOf<RowSheet?>(null) }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = ListTop, bottom = Gutter + dockRoom())) {
+        content { sheet = it }
+    }
+    sheet?.let { CrewRowSheet(it, crew.name, actions) { sheet = null } }
+}
 
 /**
  * Your app is in and the crew has not started: still filling, or full and waiting for midnight.
- *
- * What is owed of you comes first: your own app's state, and if it was sent back, why. Then the
- * crew, every app with a way to install it before day 1 and a way to say it will not.
+ * Or it was sent back, which is the whole page until it is put in again.
  */
 @Composable
 fun CrewLobbyPhase(
@@ -46,155 +81,142 @@ fun CrewLobbyPhase(
 ) {
     val mine = crew.mine
     val others = crew.seats.filter { !it.mine && it.state != SeatState.REJECTED }
+    val asked = if (crew.mayVote) others.filter { it.state == SeatState.CHECKING } else emptyList()
+    val install = others - asked.toSet()
 
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = ListTop, bottom = Gutter + dockRoom()),
-    ) {
-        if (!crew.out) {
-            item {
-                Box(Modifier.padding(horizontal = Gutter)) {
-                    CrewCard(padding = PaddingValues(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Lucide.Clock, null, Modifier.size(16.dp), tint = Tt.colors.accentInk)
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                if (crew.filling) {
-                                    "${CrewRules.SEATS - crew.filled} more and it starts"
-                                } else {
-                                    "Starts in ${untilStart(crew.startsIn)}"
-                                },
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            if (crew.filling) {
-                                "${crew.name} starts at midnight the day it is full. Install the " +
-                                    "others meanwhile, so day 1 is only opening them."
-                            } else {
-                                "Day 1 begins at midnight, your time. Install the other " +
-                                    "${others.size} before then and no day counts against you."
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        SeatMeter(crew.filled, crew.taken - crew.filled)
-                    }
-                }
-            }
+    CrewList(crew, actions) { onSheet ->
+        if (mine != null && mine.state == SeatState.REJECTED) {
+            block { SentBack(crew, mine, actions) }
+            item { CrewHeading("Your app") }
+            block { YourAppCard(mine, "Sent back", Tone.BAD, "Not in ${crew.name} any more.") }
+            return@CrewList
         }
-
+        block { LobbyHero(crew) }
         if (mine != null) {
             item { CrewHeading("Your app") }
-            item { Box(Modifier.padding(horizontal = Gutter)) { YourSeat(crew, mine, actions) } }
+            block { LobbyYourApp(crew, mine, actions) }
         }
-
-        if (!crew.out && others.isNotEmpty()) {
-            item { CrewHeading("Install these", "${others.size}") }
-            itemsIndexed(others, key = { _, seat -> seat.id }) { index, seat ->
-                // Fades in, fades out and glides to its new place when the list changes.
-                Box(Modifier.animateItem()) {
-                    ListTile(index, others.size) {
-                        CrewSeatRow(
-                            seat,
-                            onInstall = { actions.onInstall(seat) },
-                            onReport = { actions.onReport(seat) },
-                            onVote = if (crew.mayVote) ({ yes -> actions.onVote(seat, yes) }) else null,
-                        )
-                    }
-                }
+        if (asked.isNotEmpty()) {
+            item { CrewHeading("Does it install for you?", "${asked.size}") }
+            item {
+                Text(
+                    "Play couldn't check these, so members decide. Install it; once it's on your phone the row asks you to confirm. Won't install? Tap the row. Two answers decide.",
+                    Modifier.padding(start = Gutter, end = Gutter, bottom = 10.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Tt.colors.text4,
+                )
             }
+            rows("ask", asked, { it.id }) { seat, place -> AskedRow(seat, place, actions, onSheet) }
+        }
+        if (install.isNotEmpty()) {
+            item { CrewHeading("Install these", "${install.size}") }
+            rows("in", install, { it.id }) { seat, place -> InstallRow(seat, place, actions, onSheet) }
         }
     }
 }
 
-/** Your own app's place, and the one thing you can do about it at this point. */
 @Composable
-private fun YourSeat(
+private fun LobbyHero(crew: Crew) {
+    val checking = (crew.taken - crew.filled).coerceAtLeast(0)
+    if (crew.filling) {
+        CrewHero(
+            chip = "Filling · ${crew.filled} of ${CrewRules.SEATS}",
+            tone = Tone.ACCENT,
+            icon = Lucide.Users,
+            headline = "${CrewRules.SEATS - crew.filled} more and it starts",
+            line = "It starts at midnight the day it's full. Install the others now, so day 1 is only opening them.",
+            meter = {
+                SeatMeter(crew.filled, checking)
+                MeterLabels("${crew.filled} in" + if (checking > 0) " · $checking being checked" else "", "${CrewRules.SEATS} seats")
+            },
+        )
+    } else {
+        CrewHero(
+            chip = "Full · ${CrewRules.SEATS} of ${CrewRules.SEATS}",
+            tone = Tone.OK,
+            icon = Lucide.Clock,
+            headline = "Starts in ${untilStart(crew.startsIn)}",
+            line = "Day 1 begins at midnight, your time. Install the other ${CrewRules.NIGHTLY} before then and no day counts against you.",
+            meter = {
+                SeatMeter(crew.filled, checking)
+                MeterLabels("Everyone's in", "Day 1 at midnight")
+            },
+        )
+    }
+}
+
+@Composable
+private fun LobbyYourApp(
     crew: Crew,
     mine: CrewSeat,
     actions: CrewActions,
 ) {
-    CrewCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            AppIcon(mine.packageName, mine.appName) { AppTile(mine.appName) }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(mine.appName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    when (mine.state) {
-                        SeatState.CONFIRMED ->
-                            if (mine.reports > 0) {
-                                "Play shows it to the testers group. ${mine.reports} of ${CrewRules.REPORTS_TO_RETURN} reports so far."
-                            } else {
-                                "Play shows it to the testers group."
-                            }
-                        SeatState.CHECKING ->
-                            "Play could not check it, so members are trying it: ${mine.yes} Yes, " +
-                                "${mine.no} No so far. Two answers decide."
-                        SeatState.REJECTED, SeatState.REMOVED -> mine.outReason.ifBlank { "It came back to you." }
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Spacer(Modifier.width(10.dp))
-            SeatPill(mine.state)
-        }
-
-        // The sign-in the crew was given, as they see it, so a typo is caught by its owner first.
-        if (mine.notes.isNotBlank()) {
-            Spacer(Modifier.height(10.dp))
-            SignInDetails(mine.notes, Modifier.padding(start = 56.dp))
-        }
-
-        // What reports said, for the owner only, without who said it.
-        if (mine.reasons.isNotEmpty()) {
-            Spacer(Modifier.height(12.dp))
-            Notice(Status.short, Lucide.TriangleAlert) {
-                Text(
-                    mine.reasons.joinToString("\n") { "\u201C$it\u201D" },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        }
-
+    val (chip, tone) =
         when {
-            mine.state == SeatState.REJECTED -> {
-                Spacer(Modifier.height(12.dp))
-                Primary("Put it in again", Modifier.fillMaxWidth(), onClick = actions.onTakeSeat)
-            }
-            // Leaving is only offered while it is filling. Once it is full fourteen people are
-            // counting on it, and the server refuses it anyway.
-            crew.filling -> {
-                Spacer(Modifier.height(12.dp))
-                CardRule()
-                Spacer(Modifier.height(12.dp))
-                Secondary(
-                    "Take it back out",
-                    Modifier.fillMaxWidth(),
-                    destructive = true,
-                    onClick = { actions.onLeave(mine) },
-                )
-            }
+            mine.state == SeatState.CHECKING -> "Checking" to Tone.WARN
+            mine.reports > 0 -> "${mine.reports} of ${CrewRules.REPORTS_TO_RETURN} reports" to Tone.WARN
+            else -> "In" to Tone.OK
         }
+    val status =
+        when {
+            mine.state == SeatState.CHECKING -> "Play couldn't check it, so members are trying it."
+            mine.reports > 0 -> "Play shows it to the testers group, but a member had trouble."
+            !crew.filling -> "Play shows it to the testers group. The crew is full, so it stays in now."
+            else -> "Play shows it to the testers group."
+        }
+    YourAppCard(
+        mine,
+        chip,
+        tone,
+        status,
+        extra = {
+            when {
+                mine.state == SeatState.CHECKING ->
+                    Quotes(emptyList(), "${mine.yes} Yes · ${mine.no} No so far. Two answers decide. Make sure the sign-in works.")
+                mine.reasons.isNotEmpty() ->
+                    Quotes(mine.reasons, "One more report sends it back. Check the sign-in still works.")
+            }
+        },
+        action =
+            if (crew.filling) {
+                {
+                    Spacer(Modifier.height(12.dp))
+                    Secondary("Take it back out", Modifier.fillMaxWidth(), destructive = true) { actions.onLeave(mine) }
+                    CardNote("Your ${CrewRules.SEAT_COST} tix come back in full.")
+                }
+            } else {
+                null
+            },
+    )
+}
+
+/** Your app came back before the run: why, in the members' own words, and the way back in. */
+@Composable
+private fun SentBack(
+    crew: Crew,
+    mine: CrewSeat,
+    actions: CrewActions,
+) {
+    androidx.compose.foundation.layout.Column {
+        CrewHero(
+            chip = "Sent back",
+            tone = Tone.BAD,
+            icon = Lucide.Undo2,
+            headline = "Your app came back",
+            line = mine.outReason.ifBlank { "It came back to you before the run." },
+            extra = {
+                if (mine.reasons.isNotEmpty()) Quotes(mine.reasons, "What members wrote. Who wrote it isn't shown.", Tone.BAD)
+            },
+            action = "Fix it, then put it in again",
+            onAction = actions.onTakeSeat,
+        )
+        CardNote("Your ${CrewRules.SEAT_COST} tix are back. Fix what's wrong, then put it in a crew again.")
     }
 }
 
 /**
- * One crew's night, as a list you can walk down.
- *
- * A row is a tap and the app opens. There is no sheet in between and no second confirmation,
- * because this list is used fourteen times a night for fourteen nights and anything charged per
- * app is charged nearly two hundred times.
- *
- * Above it, the same night in one press. Everything below the button exists for the evening
- * somebody wants to pick their way through; the button is for the other four nights in five.
+ * One crew's night. A row is a tap and the app opens; an app not on this phone offers Install
+ * first. Above it, the night in one press, for the apps that are here.
  */
 @Composable
 fun CrewRunPhase(
@@ -204,186 +226,177 @@ fun CrewRunPhase(
     val seatOf = { app: CrewApp -> crew.seats.first { it.id == app.id } }
     val owed = crew.apps.filter { !it.done && !it.reported }
     val settled = crew.apps.filter { it.done || it.reported }
+    val here = owed.filter { actions.isInstalled(it.packageName) }
+    val missing = owed - here.toSet()
 
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = ListTop, bottom = Gutter + dockRoom()),
-    ) {
+    CrewList(crew, actions) { onSheet ->
         if (crew.out) {
-            item {
-                Box(Modifier.padding(horizontal = Gutter)) {
-                    Notice(Status.missed, Lucide.TriangleAlert) {
-                        Text(
-                            "Your app left this run. ${crew.mine?.outReason.orEmpty()} Nobody opens it now, and " +
-                                "you have nothing more to open here.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
+            block {
+                androidx.compose.foundation.layout.Column {
+                    CrewHero(
+                        chip = "Your app is out",
+                        tone = Tone.BAD,
+                        icon = Lucide.CircleX,
+                        headline = "Your app left this run",
+                        line = "${crew.mine?.outReason.orEmpty().ifBlank {
+                            "It missed two days in a row."
+                        }} Nobody opens it now, and there's nothing more for you to open here.",
+                        action = "Put it in a new crew",
+                        onAction = actions.onTakeSeat,
+                    )
+                    CardNote("Seats are kept once a run starts, so this one's tix aren't refunded.")
                 }
             }
+            return@CrewList
         }
-        if (!crew.out) {
-            item {
-                Box(Modifier.padding(horizontal = Gutter)) {
-                    CrewCard(padding = PaddingValues(16.dp)) {
-                        Text(
-                            if (owed.isEmpty()) "Tonight is done" else "${owed.size} left tonight",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            if (owed.isEmpty()) {
-                                "All ${crew.apps.size} opened. Day ${crew.day + 1} begins at " +
-                                    "midnight, your time."
-                            } else {
-                                "Day ${crew.day} of ${CrewRules.RUN_DAYS}" +
-                                    if (crew.atRisk) {
-                                        " · ${crew.myMisses} " +
-                                            if (crew.myMisses == 1) "day missed" else "days missed"
-                                    } else {
-                                        " · no gaps"
-                                    }
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color =
-                                when {
-                                    owed.isEmpty() -> MaterialTheme.colorScheme.onSurfaceVariant
-                                    crew.atRisk -> Status.short
-                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
-                                },
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        DayTrack(crew.day)
-                        if (crew.atRisk && owed.isNotEmpty()) {
-                            Spacer(Modifier.height(14.dp))
-                            RiskNote(listOf(crew.name))
-                        }
-                        if (owed.isNotEmpty()) {
-                            Spacer(Modifier.height(16.dp))
-                            Primary("Open all ${owed.size}") { actions.onOpenAll(crew.id) }
-                        }
-                    }
-                }
-            }
+        block { RunHero(crew, owed, here, missing, actions) }
+        crew.mine?.let { mine ->
+            item { CrewHeading("Your app") }
+            block { TestersCard(crew, mine, actions) }
         }
-
         if (owed.isNotEmpty()) {
             item { CrewHeading("Tonight", "${owed.size}") }
-            itemsIndexed(owed, key = { _, app -> app.id }) { index, app ->
-                // Fades in, fades out and glides to its new place when the list changes.
-                Box(Modifier.animateItem()) {
-                    ListTile(index, owed.size) {
-                        CrewAppRow(app, onOpen = { actions.onOpen(app) }, onReport = { actions.onReport(seatOf(app)) })
-                    }
-                }
-            }
+            rows("t", owed, { it.id }) { app, place -> TonightRow(app, seatOf(app), place, actions, onSheet) }
         }
-
         if (settled.isNotEmpty()) {
             item { CrewHeading("Done", "${settled.size}") }
-            itemsIndexed(settled, key = { _, app -> "s-${app.id}" }) { index, app ->
-                // Fades in, fades out and glides to its new place when the list changes.
-                Box(Modifier.animateItem()) {
-                    ListTile(index, settled.size) {
-                        CrewAppRow(app, onOpen = { actions.onOpen(app) }, onReport = { actions.onReport(seatOf(app)) })
-                    }
-                }
-            }
-        }
-
-        item { CrewHeading("How everyone is doing", "${crew.members.size}") }
-        itemsIndexed(crew.members, key = { _, m -> m.id }) { index, member ->
-            // Fades in, fades out and glides to its new place when the list changes.
-            Box(Modifier.animateItem()) {
-                ListTile(index, crew.members.size) {
-                    CrewMemberRow(member)
-                }
-            }
+            rows("d", settled, { it.id }) { app, place -> DoneRow(app, seatOf(app), place, onSheet) }
         }
     }
 }
 
-/**
- * It is over, and this is what it was.
- *
- * Kept rather than cleared, because the fortnight is the thing somebody did and the record of it
- * is the only evidence they have that they did it. The crew's own figures come first, then
- * everybody in it.
- */
 @Composable
-fun CrewRecordPhase(crew: Crew) {
+private fun RunHero(
+    crew: Crew,
+    owed: List<CrewApp>,
+    here: List<CrewApp>,
+    missing: List<CrewApp>,
+    actions: CrewActions,
+) {
+    val done = owed.isEmpty()
+    val line =
+        when {
+            done -> "All ${crew.apps.size} opened. Day ${crew.day + 1} begins at midnight, your time."
+            crew.atRisk -> "Miss tonight too and your app leaves this crew."
+            missing.size == 1 -> "${missing.first().label} isn't on your phone yet, so install it first."
+            missing.isNotEmpty() -> "${missing.size} apps aren't on your phone yet, so install them first."
+            else -> "No missed days. Day ${crew.day + 1} begins at midnight, your time."
+        }
+    CrewHero(
+        chip = if (crew.atRisk) "Day ${crew.day} · ${crew.myMisses} missed" else "Day ${crew.day} of ${CrewRules.RUN_DAYS}",
+        tone =
+            if (crew.atRisk) {
+                Tone.WARN
+            } else if (done) {
+                Tone.OK
+            } else {
+                Tone.ACCENT
+            },
+        icon =
+            if (crew.atRisk) {
+                Lucide.TriangleAlert
+            } else if (done) {
+                Lucide.CircleCheck
+            } else {
+                Lucide.Clock
+            },
+        headline = if (done) "Tonight is done" else "${owed.size} left tonight",
+        line = line,
+        lineTone = if (crew.atRisk && !done) Tone.WARN else null,
+        meter = {
+            DayMeter(crew.day, done)
+            MeterLabels("${(crew.day - 1).coerceAtLeast(0)} days done", "${(CrewRules.RUN_DAYS - crew.day).coerceAtLeast(0)} to go")
+        },
+        action =
+            when {
+                here.isEmpty() -> null
+                here.size == 1 -> "Open ${here.first().label}"
+                missing.isEmpty() -> "Open all ${here.size}"
+                else -> "Open the ${here.size} on your phone"
+            },
+        onAction = { actions.onOpenAll(crew.id) },
+    )
+}
+
+/** Your app during a run, or after one: how many of the others opened it, and who. */
+@Composable
+private fun TestersCard(
+    crew: Crew,
+    mine: CrewSeat,
+    actions: CrewActions,
+) {
+    val testers = crew.testers.size
+    val finished = crew.phase == CrewPhase.RECORD
+    val opened = if (finished) crew.testedEveryDay else crew.openedMineTonight
+    val enough = opened >= CrewRules.FLOOR
+    val status =
+        if (finished) {
+            "Tested by $opened people on all ${crew.finishedDays} days. " +
+                if (enough) "Enough for Google." else "Google asks for ${CrewRules.FLOOR}."
+        } else {
+            "Opened by $opened of $testers testers so far tonight."
+        }
+    YourAppCard(
+        mine.copy(notes = ""),
+        "$opened of $testers",
+        if (!finished) {
+            Tone.ACCENT
+        } else if (enough) {
+            Tone.OK
+        } else {
+            Tone.WARN
+        },
+        status,
+        extra = {
+            Spacer(Modifier.height(14.dp))
+            val fill =
+                if (!finished) {
+                    Tt.colors.accent
+                } else if (enough) {
+                    Status.posted
+                } else {
+                    Status.short
+                }
+            SegmentMeter(testers.coerceAtLeast(1)) { i -> if (i < opened) fill else Tt.colors.glass2 }
+            MeterLabels(if (finished) "${crew.finishedDays} days done" else "Their day ${crew.day}", "${CrewRules.FLOOR} keep it counting")
+        },
+        action = {
+            Spacer(Modifier.height(12.dp))
+            Secondary("See who tested it", Modifier.fillMaxWidth(), onClick = actions.onMembers)
+        },
+    )
+}
+
+/** It is over, and this is what it was: the crew's figures, then what it did for your app. */
+@Composable
+fun CrewRecordPhase(
+    crew: Crew,
+    actions: CrewActions = CrewActions({}, {}, {}, {}, {}, {}),
+) {
     val stayed = crew.stayed
-
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = ListTop, bottom = Gutter + dockRoom()),
-    ) {
-        item {
-            Box(Modifier.padding(horizontal = Gutter)) {
-                CrewCard(padding = PaddingValues(16.dp)) {
-                    Text(
-                        "${crew.name} finished",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        "$stayed of ${crew.members.size} went the distance" +
-                            if (stayed >= CrewRules.FLOOR) {
-                                ", which is Google's ${CrewRules.FLOOR} or more."
-                            } else {
-                                ". Google asks for ${CrewRules.FLOOR}."
-                            },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(18.dp))
-                    Row(Modifier.fillMaxWidth()) {
-                        Tally(Modifier.weight(1f), "${crew.finishedDays}", "days tested")
-                        Tally(Modifier.weight(1f), "$stayed", "still in")
-                        Tally(Modifier.weight(1f), "${crew.myMisses}", "you missed")
-                    }
-                }
-            }
-        }
-
-        item { CrewHeading("Everyone", "${crew.members.size}") }
-        itemsIndexed(crew.members, key = { _, m -> "rec-${m.id}" }) { index, member ->
-            // Fades in, fades out and glides to its new place when the list changes.
-            Box(Modifier.animateItem()) {
-                ListTile(index, crew.members.size) {
-                    CrewMemberRow(member)
-                }
-            }
-        }
-    }
-}
-
-/**
- * Fourteen days as fourteen marks, with today lit.
- *
- * The same idea as [SeatMeter] and deliberately the same shape, because both answer the same
- * question: how much of this is behind me. One control learned twice is one control.
- */
-@Composable
-private fun DayTrack(day: Int) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        repeat(CrewRules.RUN_DAYS) { index ->
-            Box(
-                Modifier
-                    .weight(1f)
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(
-                        when {
-                            index < day - 1 -> MaterialTheme.colorScheme.primary
-                            index == day - 1 -> MaterialTheme.colorScheme.primaryContainer
-                            else -> MaterialTheme.colorScheme.surfaceVariant
-                        },
-                    ),
+    val enough = stayed >= CrewRules.FLOOR
+    CrewList(crew, actions) { _ ->
+        block {
+            CrewHero(
+                chip = "Finished · ${crew.finishedDays} days",
+                tone = if (enough) Tone.OK else Tone.WARN,
+                icon = if (enough) Lucide.CircleCheck else Lucide.TriangleAlert,
+                headline = "${crew.name} finished",
+                line =
+                    if (enough) {
+                        "$stayed of ${crew.members.size} went the distance, Google's ${CrewRules.FLOOR} or more. You can apply for production."
+                    } else {
+                        "$stayed of ${crew.members.size} went the distance. Google asks for ${CrewRules.FLOOR}, so this run may not count."
+                    },
+                lineTone = if (enough) null else Tone.WARN,
+                extra = { StatTiles("${crew.finishedDays}" to "days tested", "$stayed" to "stayed", "${crew.myMisses}" to "you missed") },
+                action = if (enough) null else "Put it in a new crew",
+                onAction = actions.onTakeSeat,
             )
+        }
+        crew.mine?.let { mine ->
+            item { CrewHeading("Your app") }
+            block { TestersCard(crew, mine, actions) }
         }
     }
 }

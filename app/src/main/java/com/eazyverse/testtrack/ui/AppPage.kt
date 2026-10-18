@@ -108,6 +108,7 @@ fun AppPage(
                     )
                 else -> {
                     val busy = vm.acting == app.id
+                    Spacer(Modifier.height(8.dp))
                     Hero(app)
                     Spacer(Modifier.height(20.dp))
                     if (!app.verified) {

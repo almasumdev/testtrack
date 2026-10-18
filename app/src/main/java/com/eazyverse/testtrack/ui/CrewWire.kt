@@ -68,6 +68,9 @@ fun ApiSeat.toMember() =
         missedYesterday = missedYesterday,
         mine = mine,
         out = state == "removed" || state == "rejected",
+        openedMineToday = openedMineToday,
+        openedMineAt = openedMineAt.orEmpty(),
+        openedMineDays = openedMineDays,
     )
 
 /**

@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -41,6 +39,8 @@ fun CrewPage(
     onBack: () -> Unit,
     onSignIn: () -> Unit,
     onAddToCrew: () -> Unit,
+    /** The crew's members, and what each did with your app. */
+    onMembers: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val dialogs = rememberCrewDialogs()
@@ -61,21 +61,17 @@ fun CrewPage(
         }
     }
     CrewLifecycle(vm)
-    val actions = crewActions(vm, dialogs, onSignIn, onAddToCrew)
+    val actions = crewActions(vm, dialogs, onSignIn, onAddToCrew, onMembers)
 
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             Column {
-                // Its name and where it has got to: the only thing saying which crew this is.
+                // Its name, and once it runs, the way to its members. Where it stands is the first card.
                 PageBar(crew?.name ?: "Crew", onBack) {
-                    crew?.let {
-                        Text(
-                            it.standing,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                    if (crew != null && (crew.phase == CrewPhase.RUN || crew.phase == CrewPhase.RECORD)) {
+                        MembersButton(crew.members.size, onMembers)
                     }
                 }
                 PageMessage(vm.message, vm::clearMessage)
@@ -96,7 +92,7 @@ fun CrewPage(
                 crew == null -> CrewLobbyLoading()
                 crew.phase == CrewPhase.LOBBY -> CrewLobbyPhase(crew, actions)
                 crew.phase == CrewPhase.RUN -> CrewRunPhase(crew, actions)
-                else -> CrewRecordPhase(crew)
+                else -> CrewRecordPhase(crew, actions)
             }
         }
     }
@@ -125,6 +121,7 @@ internal fun crewActions(
     dialogs: CrewDialogs,
     onSignIn: () -> Unit,
     onAddToCrew: () -> Unit,
+    onMembers: () -> Unit = {},
 ): CrewActions {
     val context = LocalContext.current
     val membership = rememberMembership()
@@ -137,6 +134,8 @@ internal fun crewActions(
         onVote = { seat, yes -> if (yes) vm.vote(context, seat, installed = true) else dialogs.refusing = seat },
         // Signed in and on the testers group first, then the page that puts an app in.
         onTakeSeat = { if (vm.signedOut) onSignIn() else membership.require { onAddToCrew() } },
+        isInstalled = { pkg -> vm.isInstalled(context, pkg) },
+        onMembers = onMembers,
     )
 }
 
@@ -153,6 +152,8 @@ internal fun CrewLifecycle(vm: CrewViewModel) {
             LifecycleEventObserver { _, event ->
                 when (event) {
                     Lifecycle.Event.ON_RESUME -> {
+                        // Back from Play, an app may be on the phone now: its row moves to Open.
+                        vm.refreshInstalled(context)
                         vm.settle(context)
                         vm.startLive(context)
                     }
@@ -202,9 +203,10 @@ internal fun CrewDialogsHost(
         Ask(
             title = "Take ${seat.appName} back out?",
             body =
-                "The seat is freed for somebody else and this crew goes back to waiting. You " +
-                    "can put an app in again straight away.",
+                "It leaves ${seat.crew.ifBlank { "this crew" }} and your ${CrewRules.SEAT_COST} tix come back. You " +
+                    "can put it in a crew again any time.",
             confirm = "Take it out",
+            dismiss = "Keep it in",
             destructive = true,
             onConfirm = {
                 dialogs.leaving = null

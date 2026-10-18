@@ -361,6 +361,11 @@ data class ApiSeat(
     val missed: Int = 0,
     /** The owner's yesterday was one of them: one more and their app is out. */
     @SerialName("missed_yesterday") val missedYesterday: Boolean = false,
+    /** This member opened the reader's own app on their current day, and when (ISO time). */
+    @SerialName("opened_mine_today") val openedMineToday: Boolean = false,
+    @SerialName("opened_mine_at") val openedMineAt: String? = null,
+    /** On how many of their days this member has opened the reader's app. */
+    @SerialName("opened_mine_days") val openedMineDays: Int = 0,
     @SerialName("created_at") val createdAt: String,
 )
 

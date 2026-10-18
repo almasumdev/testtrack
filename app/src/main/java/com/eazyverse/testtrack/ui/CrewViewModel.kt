@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.Device
+import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
@@ -148,9 +149,25 @@ class CrewViewModel : ViewModel() {
     /** Set by [preview]: the crews were put in by hand, and asking the server would replace them. */
     private var previewing = false
 
+    /** Set by [preview]: which sample packages count as on this phone. */
+    private var previewInstalled: Set<String>? = null
+
     /**
-     * Crews put in directly, for the screen gallery in androidTest: every state drawn by the real
-     * screens without a server. Nothing in the app calls this.
+     * Whether an app is on this phone. Read during drawing, it subscribes to the installed-apps
+     * cache, so a row redraws when [refreshInstalled] finds the app arrived.
+     */
+    fun isInstalled(
+        context: Context,
+        pkg: String,
+    ): Boolean = previewInstalled?.contains(pkg) ?: (pkg.isNotBlank() && InstalledApps.cachedInfo(context, pkg).installed)
+
+    /** Re-reads the installed apps, on the way back from Play. */
+    fun refreshInstalled(context: Context) {
+        if (previewInstalled == null) InstalledApps.refresh(context)
+    }
+
+    /**
+     * Crews put in directly, for the screen gallery in androidTest. Nothing in the app calls this.
      */
     @VisibleForTesting
     internal fun preview(
@@ -159,8 +176,10 @@ class CrewViewModel : ViewModel() {
         blocked: String? = null,
         signedOut: Boolean = false,
         tab: CrewPhase = CrewPhase.OPEN,
+        installed: Set<String> = emptySet(),
     ) {
         previewing = true
+        previewInstalled = installed
         crews = mine
         this.open = open
         this.blocked = blocked
@@ -222,60 +241,6 @@ class CrewViewModel : ViewModel() {
                 }
         }
     }
-
-    /** What the pill for a tab counts, or zero where the tab has nothing outstanding. */
-    fun badge(phase: CrewPhase) =
-        when (phase) {
-            CrewPhase.RUN -> tonight.size
-            CrewPhase.LOBBY -> sentBack.size + toAnswer
-            CrewPhase.OPEN -> 0
-            CrewPhase.RECORD -> 0
-        }
-
-    /** The crew being looked at. Only ever one of yours. */
-    val current: Crew?
-        get() = opened?.let { id -> crews.firstOrNull { it.id == id } }
-
-    /** Whether the open crew is one you already have an app in. */
-    val inOpen: Boolean
-        get() = open?.let { o -> crews.any { it.id == o.id && !it.out } } == true
-
-    /**
-     * Everything owed tonight, across every running crew.
-     *
-     * One column rather than one per crew. Which crew an app belongs to is not the reason anybody
-     * opens it, and a member with two runs going has one evening, not two.
-     */
-    val tonight: List<CrewApp>
-        get() = tonightIn(crews)
-
-    /** Everything settled tonight, for the count under the list. */
-    val doneTonight: Int
-        get() = doneTonightIn(crews)
-
-    /** Apps waiting on members that this account may answer for and has not. */
-    val toAnswer: Int
-        get() = crews.filter { it.mayVote }.sumOf { c -> c.seats.count { it.state == SeatState.CHECKING && !it.mine && it.myVote == null } }
-
-    /** Your apps sent back before a run, to fix and put in again. */
-    val sentBack: List<CrewSeat>
-        get() = sentBackIn(crews)
-
-    /**
-     * Whether this account holds a seat anywhere that has not started.
-     *
-     * The server decides this and sends the reason; the flag is only what the screen branches on.
-     */
-    val holdsSeat: Boolean
-        get() = blocked != null
-
-    /** The crew holding your one waiting app, by name, or null where you are free. */
-    val holding: String?
-        get() = holdingIn(crews)
-
-    /** How many runs are going, which is what the nightly figure is made of. */
-    val running: Int
-        get() = crews.count { it.phase == CrewPhase.RUN }
 
     /**
      * Take a seat with an app of your own.
@@ -386,6 +351,8 @@ class CrewViewModel : ViewModel() {
             crews
                 .filter { crewId == null || it.id == crewId }
                 .flatMap { crew -> crew.apps.filter { !it.done && !it.reported } }
+                // Only what is on this phone: the rest is installed first, from its own row.
+                .filter { isInstalled(context, it.packageName) }
         if (owed.isEmpty()) return
 
         round = owed.drop(1)

@@ -80,7 +80,8 @@ fun AboutScreen(onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = Gutter),
         ) {
-            Spacer(Modifier.height(16.dp))
+            // 8dp under the bar, as on every page with one.
+            Spacer(Modifier.height(8.dp))
             AppPlate()
             Spacer(Modifier.height(PLATE_GAP))
             RatingBank(
