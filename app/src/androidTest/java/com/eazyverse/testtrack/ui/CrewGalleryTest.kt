@@ -502,4 +502,26 @@ class CrewGalleryTest {
         page("34-sheet-tonight-base", vm, running.id)
         sheet("34-sheet-tonight", "Quick Notes")
     }
+
+    /** The Members page from top to bottom, on its own so a long list cannot stall the rest. */
+    @Test
+    fun draw_the_members_page() {
+        compose.mainClock.autoAdvance = false
+        compose.setContent { screen?.invoke() }
+        val running = run("Crew 02", day = 6, doneCount = 4)
+        val vm = CrewViewModel()
+        vm.preview(listOf(running), tab = CrewPhase.RUN)
+        screen = { key("m") { TestTrackTheme { Backdrop(Scene.CREW) { CrewMembersPage(vm, running.id, onBack = {}) } } } }
+        settle()
+        val shoot = { name: String ->
+            val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+            File(out, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        }
+        shoot("32-members-run")
+        repeat(2) {
+            compose.onAllNodes(hasScrollToIndexAction())[0].performTouchInput { swipeUp(startY = bottom - 100f, endY = top + 100f) }
+            settle()
+        }
+        shoot("32-members-run-end")
+    }
 }
