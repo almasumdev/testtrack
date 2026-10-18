@@ -3,10 +3,8 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,11 +12,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.eazyverse.testtrack.ui.theme.Tt
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Users
 
 /**
  * The crew taking seats, and what taking one means.
@@ -48,57 +45,37 @@ fun CrewOpenTab(
                     CrewOpenCardLoading()
                     return@LoadSwap
                 }
-                Box(Modifier.padding(start = Gutter, end = Gutter, bottom = 12.dp)) {
-                    CrewCard(padding = PaddingValues(16.dp)) {
-                        val free = CrewRules.SEATS - (crew?.taken ?: 0)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            // The app's own words, so they are there before the answer is; the crew's
-                            // name is news and goes in the line under the seats.
-                            Text(
-                                "Open crew",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Spacer(Modifier.weight(1f))
-                            // Only while it is genuinely close. A badge on every card is a badge on nothing.
-                            if (crew != null && free <= 3) {
-                                Pill("Starts soonest", Status.posted, Status.postedSoft)
-                            }
-                        }
-                        Spacer(Modifier.height(12.dp))
-                        SeatCountTiles(filled = crew?.filled ?: 0, taken = crew?.taken ?: 0)
-                        Spacer(Modifier.height(11.dp))
-                        Text(
-                            if (crew == null) {
-                                "No crew is filling right now. The next app starts one."
-                            } else {
-                                "${crew.name} · $free of ${CrewRules.SEATS} seats left"
+                Box(Modifier.padding(start = Gutter, end = Gutter, bottom = 4.dp)) {
+                    val free = CrewRules.SEATS - (crew?.taken ?: 0)
+                    CrewHero(
+                        chip =
+                            when {
+                                crew == null -> "Nothing filling"
+                                free <= 3 -> "Starts soonest"
+                                else -> "Taking seats"
                             },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        when {
-                            vm.inOpen ->
-                                Text(
-                                    "You are in this one. It is in your Lobby.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Tt.colors.accentInk,
-                                )
-                            // One waiting app at a time. Offering a second before the first crew is
-                            // full is offering fourteen more apps a day for a fortnight that has not
-                            // been set.
-                            vm.blocked != null ->
-                                Text(
-                                    vm.blocked.orEmpty(),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            vm.signedOut -> Primary("Sign in to take a seat", onClick = actions.onTakeSeat)
-                            else -> Primary("Take a seat", onClick = actions.onTakeSeat)
-                        }
-                    }
+                        tone = if (crew != null && free <= 3) Tone.OK else Tone.ACCENT,
+                        icon = Lucide.Users,
+                        headline = crew?.let { "${it.name} · $free of ${CrewRules.SEATS} seats left" } ?: "No crew is filling",
+                        line =
+                            when {
+                                vm.inOpen -> "You are in this one. It is in your Lobby."
+                                vm.blocked != null -> vm.blocked.orEmpty()
+                                crew == null -> "The next app put in starts one."
+                                else ->
+                                    "It starts at midnight the day it is full. A seat costs ${CrewRules.SEAT_COST} tix, " +
+                                        "back in full if your app leaves before the run."
+                            },
+                        lineTone = if (vm.inOpen) Tone.ACCENT else null,
+                        meter = { SeatCountTiles(filled = crew?.filled ?: 0, taken = crew?.taken ?: 0) },
+                        action =
+                            when {
+                                vm.inOpen || vm.blocked != null -> null
+                                vm.signedOut -> "Sign in to take a seat"
+                                else -> "Take a seat"
+                            },
+                        onAction = actions.onTakeSeat,
+                    )
                 }
             }
         }

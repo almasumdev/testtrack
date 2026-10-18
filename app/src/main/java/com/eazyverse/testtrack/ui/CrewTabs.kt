@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,10 +24,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -95,6 +99,7 @@ fun CrewRunTab(
     val total = left + done
     val risky = runs.filter { it.atRisk }.map { it.name }
     val nightsLeft = (going.ifEmpty { runs }).maxOf { (CrewRules.RUN_DAYS - it.day + 1).coerceAtLeast(0) }
+    val crews = "${going.size} ${if (going.size == 1) "crew" else "crews"}"
 
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -102,46 +107,53 @@ fun CrewRunTab(
     ) {
         item {
             Box(Modifier.padding(horizontal = Gutter)) {
-                CrewCard(padding = PaddingValues(16.dp)) {
-                    Text(
-                        if (left == 0) "Tonight is done" else "$left left tonight",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
+                CrewHero(
+                    chip = "Tonight · $crews",
+                    tone =
                         if (left == 0) {
-                            // The payoff. Nothing else in a fortnight of opening apps says a
-                            // night went right, and a zero does not feel like one.
-                            "All $total opened, across " +
-                                "${going.size} ${if (going.size == 1) "crew" else "crews"}. " +
-                                "Nothing counts against you."
+                            Tone.OK
+                        } else if (risky.isNotEmpty()) {
+                            Tone.WARN
                         } else {
-                            "$done of $total done, across " +
-                                "${going.size} ${if (going.size == 1) "crew" else "crews"}."
+                            Tone.ACCENT
                         },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(14.dp))
-                    NightProgress(done, total)
-                    Spacer(Modifier.height(18.dp))
-                    CrewTallies(
-                        nightly = CrewRules.nightly(going.size),
-                        nightsLeft = nightsLeft,
-                        crews = going.size,
-                    )
-                    if (risky.isNotEmpty() && left > 0) {
-                        Spacer(Modifier.height(14.dp))
-                        RiskNote(risky)
-                    }
-                    if (left > 0) {
-                        // The whole night, across every crew, in one press. A member with two runs
-                        // going came here to finish an evening, not to visit two screens first.
-                        Spacer(Modifier.height(16.dp))
-                        Primary("Open all $left") { actions.onOpenAll(null) }
-                    }
-                }
+                    icon =
+                        if (left == 0) {
+                            Lucide.CircleCheck
+                        } else if (risky.isNotEmpty()) {
+                            Lucide.TriangleAlert
+                        } else {
+                            Lucide.Clock
+                        },
+                    headline = if (left == 0) "Tonight is done" else "$left left tonight",
+                    line =
+                        when {
+                            // The payoff. Nothing else in a fortnight of opening apps says a night
+                            // went right, and a zero does not feel like one.
+                            left == 0 -> "All $total opened, across $crews. Nothing counts against you."
+                            risky.isNotEmpty() -> {
+                                val verb = if (risky.size == 1) "is" else "are"
+                                "${risky.joinToString()} $verb one missed day from dropping your app."
+                            }
+                            else -> "$done of $total done, across $crews."
+                        },
+                    lineTone = if (left > 0 && risky.isNotEmpty()) Tone.WARN else null,
+                    meter = {
+                        val lit = if (left == 0) Status.posted else Tt.colors.accent
+                        SegmentMeter(total.coerceIn(1, 42)) { i -> if (i < done) lit else Tt.colors.glass2 }
+                        MeterLabels("$done of $total opened", "$nightsLeft ${if (nightsLeft == 1) "night" else "nights"} to go")
+                    },
+                    extra = {
+                        StatTiles(
+                            "${CrewRules.nightly(going.size)}" to "apps a night",
+                            "$nightsLeft" to "nights to go",
+                            "${going.size}" to if (going.size == 1) "crew" else "crews",
+                        )
+                    },
+                    // The whole night, across every crew, in one press: the apps on this phone.
+                    action = if (left > 0) "Open all $left" else null,
+                    onAction = { actions.onOpenAll(null) },
+                )
             }
         }
 
@@ -198,72 +210,50 @@ fun CrewLobbyTab(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
     ) {
-        itemsIndexed(lobbies, key = { _, crew -> crew.id }) { _, crew ->
+        item { CrewHeading("Your crews", "${lobbies.size}", top = 8.dp) }
+        itemsIndexed(lobbies, key = { _, crew -> crew.id }) { index, crew ->
             // Fades in, fades out and glides to its new place when the list changes.
             Box(Modifier.animateItem()) {
-                val mine = crew.mine
-                Box(Modifier.padding(start = Gutter, end = Gutter, bottom = 12.dp)) {
-                    CrewCard(padding = PaddingValues(16.dp), onClick = { onOpenCrew(crew.id) }) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Lucide.Clock,
-                                null,
-                                Modifier.size(16.dp),
-                                tint = Tt.colors.accentInk,
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                when {
-                                    crew.out -> "${crew.name} sent your app back"
-                                    crew.filling -> "${crew.name} needs ${CrewRules.SEATS - crew.filled} more"
-                                    else -> "${crew.name} starts in ${untilStart(crew.startsIn)}"
-                                },
-                                Modifier.weight(1f),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Icon(
-                                Lucide.ChevronRight,
-                                null,
-                                Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                ListTile(index, lobbies.size) {
+                    val mine = crew.mine
+                    val (chip, tone) =
+                        when {
+                            crew.out -> "Sent back" to Tone.BAD
+                            mine?.state == SeatState.CHECKING -> "Checking" to Tone.WARN
+                            mine != null && mine.reports > 0 -> "${mine.reports} of ${CrewRules.REPORTS_TO_RETURN} reports" to Tone.WARN
+                            else -> "In" to Tone.OK
                         }
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            when {
-                                crew.out -> "Open it to see why, then fix it and put it in again."
-                                crew.filling -> "It starts at midnight the day it is full. Install the others meanwhile."
-                                else -> "Day 1 begins at midnight, your time. Install the others before then."
+                    CrewSummaryRow(
+                        mark = if (crew.filling) "${crew.filled}" else "${CrewRules.SEATS}",
+                        markTone =
+                            if (crew.out) {
+                                Tone.BAD
+                            } else if (crew.filling) {
+                                Tone.ACCENT
+                            } else {
+                                Tone.OK
                             },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        if (!crew.out) {
-                            Spacer(Modifier.height(16.dp))
-                            SeatTiles(crew.seats)
-                        }
-                        if (mine != null) {
-                            Spacer(Modifier.height(14.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    mine.appName,
-                                    Modifier.weight(1f),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                                Spacer(Modifier.width(10.dp))
-                                SeatPill(mine.state)
-                            }
-                        }
-                    }
+                        title = crew.name,
+                        line =
+                            when {
+                                crew.out -> "Sent your app back"
+                                crew.filling -> {
+                                    val more = CrewRules.SEATS - crew.filled
+                                    "Filling · ${crew.filled} of ${CrewRules.SEATS} · $more more to start"
+                                }
+                                else -> "Full · starts in ${untilStart(crew.startsIn)}"
+                            },
+                        chip = chip,
+                        chipTone = tone,
+                        onOpen = { onOpenCrew(crew.id) },
+                    )
                 }
             }
         }
         if (vm.sentBack.isNotEmpty() && vm.blocked == null) {
             item {
-                Box(Modifier.padding(horizontal = Gutter)) {
-                    Primary("Put an app in again", onClick = actions.onTakeSeat)
+                Box(Modifier.padding(start = Gutter, end = Gutter, top = 16.dp)) {
+                    Primary("Put an app in again", Modifier.fillMaxWidth(), onClick = actions.onTakeSeat)
                 }
             }
         }
@@ -330,103 +320,86 @@ private fun CrewRecordRow(
     onOpen: () -> Unit,
 ) {
     val stayed = crew.stayed
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onOpen)
-            .padding(horizontal = Gutter, vertical = 13.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            Modifier.size(34.dp).clip(RoundedCornerShape(11.dp)).background(Status.shortSoft),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                "${crew.finishedDays}",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = Status.short,
-            )
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                crew.name,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                "$stayed of ${crew.members.size} stayed the whole run",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Icon(
-            Lucide.ChevronRight,
-            null,
-            Modifier.size(18.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
+    val enough = stayed >= CrewRules.FLOOR
+    CrewSummaryRow(
+        mark = "${crew.finishedDays}",
+        markTone = if (enough) Tone.OK else Tone.WARN,
+        title = crew.name,
+        line = "$stayed of ${crew.members.size} stayed the whole run",
+        chip = if (enough) "Counts" else "Under ${CrewRules.FLOOR}",
+        chipTone = if (enough) Tone.OK else Tone.WARN,
+        onOpen = onOpen,
+    )
 }
 
 /**
- * One of your crews, as a line.
- *
- * The mark is the day it is on, which is the only number that separates two runs at a glance, and
- * it goes amber where a day has been missed. That is the same colour the warning above uses and
- * the same colour the heading above those rows implies, so one hue means one thing down the whole
- * screen.
+ * One of your crews, as a line. The mark is the day it is on, amber where a day was missed, the
+ * same colour the warning above uses, so one hue means one thing down the whole screen.
  */
 @Composable
 fun CrewListRow(
     crew: Crew,
     onOpen: () -> Unit,
 ) {
-    val tone = if (crew.atRisk) Status.short else Status.posted
-    val soft = if (crew.atRisk) Status.shortSoft else Status.postedSoft
+    val (chip, tone) =
+        when {
+            crew.out -> "Your app is out" to Tone.BAD
+            crew.atRisk -> "${crew.myMisses} missed" to Tone.WARN
+            crew.owed == 0 -> "Done" to Tone.OK
+            else -> "${crew.owed} left" to Tone.ACCENT
+        }
+    CrewSummaryRow(
+        mark = "${crew.day}",
+        markTone = if (crew.atRisk || crew.out) Tone.WARN else Tone.OK,
+        title = crew.name,
+        line = "Day ${crew.day} of ${CrewRules.RUN_DAYS}" + if (crew.atRisk) " · missed yesterday" else "",
+        lineTone = if (crew.atRisk) Tone.WARN else null,
+        chip = chip,
+        chipTone = tone,
+        onOpen = onOpen,
+    )
+}
+
+/** A crew as one row in a tab: its mark, its name, one line, where it stands, and a chevron. */
+@Composable
+private fun CrewSummaryRow(
+    mark: String,
+    markTone: Tone,
+    title: String,
+    line: String,
+    chip: String,
+    chipTone: Tone,
+    onOpen: () -> Unit,
+    lineTone: Tone? = null,
+) {
     Row(
         Modifier
             .fillMaxWidth()
+            .heightIn(min = 64.dp)
             .clickable(onClick = onOpen)
-            .padding(horizontal = Gutter, vertical = 13.dp),
+            .padding(start = 12.dp, end = 6.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            Modifier.size(34.dp).clip(RoundedCornerShape(11.dp)).background(soft),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                "${crew.day}",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = tone,
-            )
+        Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(markTone.soft()), contentAlignment = Alignment.Center) {
+            Text(mark, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = markTone.ink())
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                crew.name,
-                style = MaterialTheme.typography.titleSmall,
+                title,
+                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
                 fontWeight = FontWeight.SemiBold,
             )
-            Spacer(Modifier.height(2.dp))
             Text(
-                listOfNotNull(
-                    crew.standing,
-                    "${crew.owed} left".takeIf { crew.owed > 0 },
-                    "missed yesterday".takeIf { crew.atRisk },
-                ).joinToString(" · "),
-                style = MaterialTheme.typography.bodySmall,
-                color = if (crew.atRisk) Status.short else MaterialTheme.colorScheme.onSurfaceVariant,
+                line,
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
+                color = lineTone?.ink() ?: Tt.colors.text3,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        Icon(
-            Lucide.ChevronRight,
-            null,
-            Modifier.size(18.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Spacer(Modifier.width(8.dp))
+        StatusChip(chip, chipTone)
+        Icon(Lucide.ChevronRight, null, Modifier.padding(start = 2.dp).size(18.dp), tint = Tt.colors.text4)
     }
 }
