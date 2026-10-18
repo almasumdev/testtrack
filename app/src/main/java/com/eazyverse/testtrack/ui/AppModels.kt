@@ -63,7 +63,7 @@ private val CREW_ACTIVE = setOf("waiting", "checking", "starting", "testing")
 enum class BadgeTone { RUNNING, DONE, ATTENTION, PROBLEM, QUIET }
 
 /** What a badge is about, which decides where tapping it goes. */
-enum class BadgeKind { CREW, FEEDBACK, VERIFY }
+enum class BadgeKind { CREW, FEEDBACK, VERIFY, IDLE }
 
 data class AppBadge(
     val text: String,
@@ -77,6 +77,9 @@ fun AppEntry.badges(): List<AppBadge> =
         listOfNotNull(
             if (!verified) AppBadge("Not verified", BadgeTone.ATTENTION, BadgeKind.VERIFY) else null,
         )
+
+/** A tile's badges: the same, or one quiet one when nothing is happening, so the row is never empty. */
+fun AppEntry.tileBadges(): List<AppBadge> = badges().ifEmpty { listOf(AppBadge("Nothing running", BadgeTone.QUIET, BadgeKind.IDLE)) }
 
 fun crewBadge(crew: AppCrewStatus): AppBadge =
     when (crew.state) {

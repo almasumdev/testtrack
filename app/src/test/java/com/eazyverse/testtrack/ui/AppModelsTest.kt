@@ -19,6 +19,12 @@ class AppModelsTest {
     }
 
     @Test
+    fun its_tile_still_says_nothing_is_running_in_a_badge() {
+        assertEquals(listOf("Nothing running"), app().tileBadges().map { it.text })
+        assertEquals(listOf(BadgeKind.VERIFY), app(verifiedBy = null).tileBadges().map { it.kind })
+    }
+
+    @Test
     fun a_crew_and_a_request_both_show_crew_first() {
         val badges =
             app(

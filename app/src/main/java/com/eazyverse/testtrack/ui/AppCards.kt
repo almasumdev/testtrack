@@ -3,11 +3,13 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -131,21 +133,18 @@ internal fun AppCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Spacer(Modifier.width(10.dp))
-            SourceTag(app.live)
         }
+        // The badges on a row of their own, under a line: where it's found, then what's happening.
         Spacer(Modifier.height(12.dp))
-        val badges = app.badges()
-        if (badges.isEmpty()) {
-            Text(
-                "Nothing running. Open it to put it in a crew or ask for feedback.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Tt.colors.text3,
-            )
-        } else {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                badges.forEach { Badge(it) }
-            }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Tt.colors.glassBorder))
+        Spacer(Modifier.height(12.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            SourceTag(app.live)
+            app.tileBadges().forEach { Badge(it) }
         }
     }
 }

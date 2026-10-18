@@ -54,7 +54,9 @@ fun AppPage(
     onFeedback: (String) -> Unit,
 ) {
     val context = LocalContext.current
-    val app = vm.byId(id)
+    // Deleted here: still drawn while the page leaves, rather than flashing the not-found state.
+    var leaving by remember { mutableStateOf<AppEntry?>(null) }
+    val app = vm.byId(id) ?: leaving
     LaunchedEffect(id) {
         vm.clearActionError()
         if (app == null) vm.load(context)
@@ -67,11 +69,14 @@ fun AppPage(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = { PageBar(app?.name ?: "App", onBack) },
     ) { padding ->
+        val scroll = rememberScrollState()
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+                // Only the app scrolls: the loading and not-found states fill the page themselves,
+                // and a filling state inside a scroll has no height to fill and crashes.
+                .then(if (app != null) Modifier.verticalScroll(scroll) else Modifier)
                 .padding(horizontal = Gutter),
         ) {
             when {
@@ -156,7 +161,10 @@ fun AppPage(
             destructive = true,
             onConfirm = {
                 askDelete = false
-                vm.delete(context, app.id, onDone = onBack)
+                vm.delete(context, app.id) {
+                    leaving = app
+                    onBack()
+                }
             },
             onDismiss = { askDelete = false },
         )
