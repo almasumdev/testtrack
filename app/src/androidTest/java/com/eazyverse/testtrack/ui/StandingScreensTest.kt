@@ -13,7 +13,6 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.eazyverse.testtrack.net.ApiMyApp
 import com.eazyverse.testtrack.net.ApiProfile
 import com.eazyverse.testtrack.net.BoardRow
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
@@ -80,25 +79,18 @@ class StandingScreensTest {
     )
 
     private fun myApp(
-        state: String,
-        kind: String = "crew",
-        where: String = "Crew 07",
-        day: Int = 0,
-        testers: Int = 0,
+        crew: AppCrewStatus? = null,
+        feedback: AppFeedbackStatus? = null,
         name: String = "Nikosh Budget",
         id: String = "a1",
-    ) = ApiMyApp(
+        verifiedBy: String? = "play",
+    ) = AppEntry(
         id = id,
-        kind = kind,
-        appName = name,
-        packageName = "com.example.nikosh",
-        state = state,
-        where = where,
-        day = day,
-        runDays = 14,
-        testers = testers,
-        reviewsBought = 3,
-        createdAt = "2026-09-20T00:00:00+00:00",
+        pkg = "com.example.nikosh",
+        name = name,
+        crew = crew,
+        feedback = feedback,
+        verifiedBy = verifiedBy,
     )
 
     // ------------------------------------------------------------------ ranks
@@ -247,52 +239,63 @@ class StandingScreensTest {
     // ------------------------------------------------------------------ my apps
 
     @Test
-    fun an_app_list_says_what_is_happening_to_each_one() {
-        compose.setContent {
-            TestTrackTheme {
-                AppsBody(apps = listOf(myApp("testing", day = 6, testers = 14)))
-            }
-        }
-        compose.onNodeWithText("Nikosh Budget").assertIsDisplayed()
-        compose.onNodeWithText("Testing").assertIsDisplayed()
-        compose.onNodeWithText("Day 6 of 14").assertIsDisplayed()
-        compose.onNodeWithText("8 days left").assertIsDisplayed()
-    }
-
-    @Test
-    fun what_is_still_going_is_kept_apart_from_what_is_over() {
+    fun an_app_says_what_is_happening_to_it_in_badges() {
         compose.setContent {
             TestTrackTheme {
                 AppsBody(
                     apps =
                         listOf(
-                            myApp("testing", id = "live", name = "Running One", testers = 14),
-                            myApp("finished", id = "old", name = "Old One", testers = 13),
+                            myApp(
+                                crew = AppCrewStatus("testing", "c1", "Crew 07", day = 6, runDays = 14),
+                                feedback = AppFeedbackStatus("collecting", "p1", done = 2, bought = 3),
+                            ),
                         ),
                 )
             }
         }
-        compose.onNodeWithText("Going on").assertIsDisplayed()
-        compose.onNodeWithText("Ended").assertIsDisplayed()
+        compose.onNodeWithText("Nikosh Budget").assertIsDisplayed()
+        compose.onNodeWithText("Closed test").assertIsDisplayed()
+        compose.onNodeWithText("Day 6 of 14 · Crew 07").assertIsDisplayed()
+        compose.onNodeWithText("Feedback 2 of 3").assertIsDisplayed()
+    }
+
+    @Test
+    fun every_app_is_in_one_list_whatever_it_is_doing() {
+        compose.setContent {
+            TestTrackTheme {
+                AppsBody(
+                    apps =
+                        listOf(
+                            myApp(crew = AppCrewStatus("testing", "c1", "Crew 07", day = 3), id = "live", name = "Running One"),
+                            myApp(crew = AppCrewStatus("finished", "c2", "Crew 02"), id = "old", name = "Old One"),
+                            myApp(id = "new", name = "New One", verifiedBy = null),
+                        ),
+                )
+            }
+        }
+        compose.onNodeWithText("Your apps").assertIsDisplayed()
         compose.onNodeWithText("Running One").assertIsDisplayed()
         compose.onNodeWithText("Old One").assertIsDisplayed()
+        compose.onNodeWithText("Crew test done").assertIsDisplayed()
+        compose.onNodeWithText("Not verified").assertIsDisplayed()
     }
 
     @Test
-    fun a_rejected_app_is_the_one_row_that_asks_for_something() {
-        compose.setContent { TestTrackTheme { AppsBody(apps = listOf(myApp("rejected"))) } }
-        compose.onNodeWithText("Fix it").assertIsDisplayed()
-        compose.onNodeWithText("Fix it and put it in again", substring = true).assertIsDisplayed()
+    fun an_app_sent_back_says_to_fix_it() {
+        compose.setContent {
+            TestTrackTheme { AppsBody(apps = listOf(myApp(crew = AppCrewStatus("rejected", "c1", "Crew 07")))) }
+        }
+        compose.onNodeWithText("Sent back · fix it").assertIsDisplayed()
     }
 
     @Test
-    fun somebody_with_nothing_up_is_told_how_to_start() {
+    fun somebody_with_nothing_added_is_told_how_to_start() {
         // The robot moves for as long as it is on screen, so the clock is held: left to run, the
         // test would wait for an animation that never ends.
         compose.mainClock.autoAdvance = false
-        compose.setContent { TestTrackTheme { AppsBody(apps = emptyList()) } }
-        compose.onNodeWithText("Nothing up yet").assertIsDisplayed()
-        compose.onNodeWithText("Put an app into a crew", substring = true).assertIsDisplayed()
+        compose.setContent { TestTrackTheme { AppsBody(apps = emptyList(), onAdd = {}) } }
+        compose.onNodeWithText("Nothing added yet").assertIsDisplayed()
+        compose.onNodeWithText("Add an app").assertIsDisplayed()
     }
 
     // ------------------------------------------------------------------ profile

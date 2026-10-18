@@ -106,6 +106,7 @@ data class PostIn(
     @SerialName("is_live") val isLive: Boolean,
     @SerialName("reviews_bought") val reviewsBought: Int = 3,
     @SerialName("request_id") val requestId: String? = null,
+    @SerialName("app_id") val appId: String? = null,
 )
 
 @Serializable
@@ -282,6 +283,7 @@ data class SeatIn(
     val notes: String = "",
     @SerialName("device_fp") val deviceFp: String,
     val timezone: String = "UTC",
+    @SerialName("app_id") val appId: String? = null,
 )
 
 @Serializable

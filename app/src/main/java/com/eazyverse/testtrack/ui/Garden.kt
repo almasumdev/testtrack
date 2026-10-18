@@ -175,6 +175,8 @@ fun TileRow(
     trailing: (@Composable () -> Unit)? = null,
     /** A subtitle with styling in it, such as the gold stars in the rating row. Wins over [subtitle]. */
     subtitleRich: AnnotatedString? = null,
+    /** Drawn instead of the icon tile, at its size: an app's own icon in a list of apps. */
+    leading: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val t = Tt.colors
@@ -190,7 +192,7 @@ fun TileRow(
             .padding(start = 14.dp, top = 8.dp, end = 12.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconTile(icon, danger = danger)
+        if (leading != null) leading() else IconTile(icon, danger = danger)
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             // Title and subtitle together are exactly as tall as the 36dp icon tile beside them: a

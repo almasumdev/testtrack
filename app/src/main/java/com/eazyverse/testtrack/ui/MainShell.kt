@@ -46,6 +46,7 @@ import com.composables.icons.lucide.User
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.findActivity
+import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.HudViewModel
 import com.eazyverse.testtrack.viewmodel.ReviewMoment
 import kotlinx.coroutines.delay
@@ -97,8 +98,14 @@ fun MainShell(
     onOpenAbout: () -> Unit = {},
     /** A crew's own page. */
     onOpenCrew: (String) -> Unit = {},
-    /** The page that puts an app into a crew. */
-    onAddToCrew: () -> Unit = {},
+    /** The page that puts this app from My apps into a crew. */
+    onCrewForApp: (String) -> Unit = {},
+    /** Ask for feedback on this app from My apps. */
+    onAskForApp: (String) -> Unit = {},
+    /** An app's own page. */
+    onOpenApp: (String) -> Unit = {},
+    /** Adding an app to My apps. */
+    onAddApp: () -> Unit = {},
     /** Set by a tapped crew notification; cleared once the Crew tab is showing. */
     openCrew: MutableState<Boolean> = remember { mutableStateOf(false) },
     hudVm: HudViewModel = viewModel(),
@@ -106,8 +113,14 @@ fun MainShell(
     val context = LocalContext.current
     var tab by rememberSaveable { mutableStateOf(MainTab.CIRCLE) }
 
-    // Putting an app into a crew from My apps: on the testers group first, as Crew's own button.
+    // Putting an app into a crew: on the testers group first, wherever it is asked from.
     val membership = rememberMembership()
+
+    // My apps, shared by its tab and the pickers Crew and Circle open: one list, everywhere.
+    val apps: AppsViewModel = viewModel()
+
+    /** Which app, for Crew's Take a seat or Circle's Ask for feedback; null when not asking. */
+    var picking by remember { mutableStateOf<PickFor?>(null) }
 
     /** Where Back from the profile goes, so it lands where you actually came from. */
     var cameFrom by rememberSaveable { mutableStateOf(MainTab.CIRCLE) }
@@ -229,7 +242,15 @@ fun MainShell(
                                 FeedScreen(
                                     onReview = onReview,
                                     onCheck = onCheck,
-                                    onAsk = onAskForFeedback,
+                                    // Which app, from My apps; signed out, the old way in asks first.
+                                    onAsk = {
+                                        if (Session.signedIn) {
+                                            apps.load(context)
+                                            picking = PickFor.FEEDBACK
+                                        } else {
+                                            onAskForFeedback()
+                                        }
+                                    },
                                     onSignIn = {
                                         asking =
                                             SignInReason(
@@ -248,7 +269,11 @@ fun MainShell(
                             MainTab.GROUPS ->
                                 CrewScreen(
                                     onOpenCrew = onOpenCrew,
-                                    onAddToCrew = onAddToCrew,
+                                    // Signed in and on the testers group already: which app goes in.
+                                    onAddToCrew = {
+                                        apps.load(context)
+                                        picking = PickFor.CREW
+                                    },
                                     onSignIn = {
                                         asking =
                                             SignInReason(
@@ -265,10 +290,9 @@ fun MainShell(
 
                             MainTab.APPS ->
                                 AppsScreen(
-                                    onOpenCrew = onOpenCrew,
-                                    onOpenRequest = onCheck,
-                                    onAddToCrew = { membership.require { onAddToCrew() } },
-                                    onAskForFeedback = onAskForFeedback,
+                                    onOpenApp = onOpenApp,
+                                    onAddApp = onAddApp,
+                                    vm = apps,
                                     onSignIn = {
                                         asking =
                                             SignInReason(
@@ -310,6 +334,18 @@ fun MainShell(
             Modifier
                 .align(Alignment.BottomCenter)
                 .onSizeChanged { dockHeight = with(density) { it.height.toDp() } },
+        )
+    }
+
+    picking?.let { purpose ->
+        AppPickerSheet(
+            purpose = purpose,
+            apps = apps.apps,
+            onPick = { app ->
+                if (purpose == PickFor.CREW) membership.require { onCrewForApp(app.id) } else onAskForApp(app.id)
+            },
+            onAdd = onAddApp,
+            onDismiss = { picking = null },
         )
     }
 

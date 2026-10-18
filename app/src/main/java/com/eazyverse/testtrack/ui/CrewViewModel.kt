@@ -249,6 +249,7 @@ class CrewViewModel : ViewModel() {
         packageName: String,
         appName: String,
         notes: String,
+        appId: String? = null,
         onDone: () -> Unit,
     ) {
         val fingerprint = Device.fingerprint(context)
@@ -269,6 +270,7 @@ class CrewViewModel : ViewModel() {
                             notes = notes,
                             deviceFp = fingerprint,
                             timezone = TimeZone.getDefault().id,
+                            appId = appId,
                         ),
                     )
                 message =

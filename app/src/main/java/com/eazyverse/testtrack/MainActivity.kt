@@ -30,6 +30,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -54,6 +55,7 @@ import com.eazyverse.testtrack.ui.*
 import com.eazyverse.testtrack.ui.JoinGroupDialog
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
+import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.MembershipViewModel
 import com.eazyverse.testtrack.viewmodel.ThemeChoice
 import kotlinx.coroutines.launch
@@ -84,8 +86,23 @@ object Routes {
 
     fun crew(id: String) = "crew/${Uri.encode(id)}"
 
-    /** Putting an app into a crew: find it, confirm it, take the seat. */
-    const val CREW_ADD = "crew-add"
+    /** Putting an app from My apps into a crew: its name for the crew, its sign-in, the seat. */
+    const val CREW_ADD = "crew-add/{app}"
+
+    fun crewAdd(appId: String) = "crew-add/${Uri.encode(appId)}"
+
+    /** Asking for feedback on an app from My apps. */
+    const val ASK_APP = "ask/{app}"
+
+    fun askFor(appId: String) = "ask/${Uri.encode(appId)}"
+
+    /** An app on My apps, on its own page. */
+    const val APP = "app/{id}"
+
+    fun app(id: String) = "app/${Uri.encode(id)}"
+
+    /** Adding an app to My apps. */
+    const val APP_ADD = "app-add"
 }
 
 class MainActivity : ComponentActivity() {
@@ -284,7 +301,10 @@ fun AppNav(openCrew: MutableState<Boolean> = remember { mutableStateOf(false) })
                 onCheck = { nav.push(Routes.check(it)) },
                 onOpenAbout = { nav.push(Routes.ABOUT) },
                 onOpenCrew = { nav.push(Routes.crew(it)) },
-                onAddToCrew = { nav.push(Routes.CREW_ADD) },
+                onCrewForApp = { nav.push(Routes.crewAdd(it)) },
+                onAskForApp = { nav.push(Routes.askFor(it)) },
+                onOpenApp = { nav.push(Routes.app(it)) },
+                onAddApp = { nav.push(Routes.APP_ADD) },
                 openCrew = openCrew,
                 // The same teardown the other two do, and for the same reason: `replace` pops
                 // everything above the graph root, so the shell does not survive underneath a
@@ -334,23 +354,80 @@ fun AppNav(openCrew: MutableState<Boolean> = remember { mutableStateOf(false) })
             // borrows Circle's: the crew is already loaded there and opens on the first frame.
             val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
             val crews: CrewViewModel = viewModel(home)
+            val apps: AppsViewModel = viewModel(home)
+            val id = requireNotNull(entry.arguments?.getString("id"))
             Inset {
                 CrewPage(
                     crews,
-                    requireNotNull(entry.arguments?.getString("id")),
+                    id,
                     onBack = { nav.popBackStack() },
                     onSignIn = { nav.popBackStack() },
-                    onAddToCrew = { nav.push(Routes.CREW_ADD) },
+                    // Put it in again: the same app, from My apps, or added first if it is not there.
+                    onAddToCrew = {
+                        val pkg =
+                            crews.crews
+                                .firstOrNull { it.id == id }
+                                ?.mine
+                                ?.packageName
+                        val app = apps.apps.firstOrNull { it.pkg == pkg }
+                        nav.push(if (app != null) Routes.crewAdd(app.id) else Routes.APP_ADD)
+                    },
                 )
             }
         }
 
-        composable(Routes.CREW_ADD) { entry ->
-            // Taken on the Crew tab's model, so the seat is already there on the way back.
+        composable(Routes.CREW_ADD, arguments = listOf(navArgument("app") { type = NavType.StringType })) { entry ->
+            // Taken on the Crew tab's model, so the seat is already there on the way back; the
+            // app is My apps' own, so nothing about it is asked again.
             val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
             val crews: CrewViewModel = viewModel(home)
+            val apps: AppsViewModel = viewModel(home)
+            val context = LocalContext.current
+            val appId = requireNotNull(entry.arguments?.getString("app"))
+            LaunchedEffect(appId) { if (apps.byId(appId) == null) apps.load(context) }
             Inset {
-                CrewAddScreen(crews, onDone = { nav.popBackStack() }, onBack = { nav.popBackStack() })
+                CrewAddScreen(crews, apps.byId(appId), onDone = { nav.popBackStack() }, onBack = { nav.popBackStack() })
+            }
+        }
+
+        composable(Routes.ASK_APP, arguments = listOf(navArgument("app") { type = NavType.StringType })) { entry ->
+            val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
+            val apps: AppsViewModel = viewModel(home)
+            val context = LocalContext.current
+            val appId = requireNotNull(entry.arguments?.getString("app"))
+            LaunchedEffect(appId) { if (apps.byId(appId) == null) apps.load(context) }
+            Inset {
+                AskScreen(onDone = { nav.popBackStack() }, onBack = { nav.popBackStack() }, app = apps.byId(appId))
+            }
+        }
+
+        composable(Routes.APP, arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
+            val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
+            val apps: AppsViewModel = viewModel(home)
+            val membership = rememberMembership()
+            Inset {
+                AppPage(
+                    apps,
+                    requireNotNull(entry.arguments?.getString("id")),
+                    onBack = { nav.popBackStack() },
+                    onOpenCrew = { nav.push(Routes.crew(it)) },
+                    onOpenRequest = { nav.push(Routes.check(it)) },
+                    onCrew = { appId -> membership.require { nav.push(Routes.crewAdd(appId)) } },
+                    onFeedback = { nav.push(Routes.askFor(it)) },
+                )
+            }
+        }
+
+        composable(Routes.APP_ADD) {
+            Inset {
+                AppAddScreen(
+                    // Straight to the new app's page, with the add page gone from behind it.
+                    onAdded = { id ->
+                        nav.popBackStack()
+                        nav.push(Routes.app(id))
+                    },
+                    onBack = { nav.popBackStack() },
+                )
             }
         }
 

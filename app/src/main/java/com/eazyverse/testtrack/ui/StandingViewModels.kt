@@ -11,7 +11,6 @@ import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
-import com.eazyverse.testtrack.net.ApiMyApp
 import com.eazyverse.testtrack.net.ApiProfile
 import com.eazyverse.testtrack.net.BoardRow
 import com.eazyverse.testtrack.net.MeIn
@@ -123,72 +122,6 @@ class RanksViewModel : ViewModel() {
                     holdShimmer(startedAt)
                     pulling = false
                 }
-            }
-        }
-    }
-}
-
-class AppsViewModel : ViewModel() {
-    var apps by mutableStateOf<List<ApiMyApp>>(emptyList())
-        private set
-
-    var loading by mutableStateOf(true)
-        private set
-
-    var offline by mutableStateOf(false)
-        private set
-
-    /** Nobody is signed in. Not a fault, and not the same thing as being unable to reach us. */
-    var signedOut by mutableStateOf(false)
-        private set
-
-    // The crews your apps are in, your own channel (reviews coming in), and changes to your posts.
-    private val live =
-        LiveReload("apps", viewModelScope) { event ->
-            event.channel.startsWith("crew:") ||
-                event.channel.startsWith("user:") ||
-                (event.type == "post.changed" && apps.any { it.kind == "post" && it.id == event.ref })
-        }
-
-    fun startLive(context: Context) {
-        if (!signedOut) live.start { load(context) }
-    }
-
-    fun stopLive() = live.stop()
-
-    /** The application context from the first load, for reading again on news from elsewhere. */
-    private var app: Context? = null
-
-    // Your kept apps, before the first frame; none kept waits for the server rather than say so.
-    init {
-        Api.lastMyApps()?.takeIf { it.apps.isNotEmpty() }?.let {
-            apps = it.apps
-            loading = false
-        }
-        // An app put up or taken down on another screen: read again, whether or not this tab shows.
-        viewModelScope.launch { MyAppsChanged.events.collect { app?.let(::load) } }
-    }
-
-    fun load(context: Context) {
-        app = context.applicationContext
-        // Nothing shown yet: the shimmer while it comes, not "Nothing up yet" over an app just added.
-        if (apps.isEmpty()) loading = true
-        viewModelScope.launch {
-            try {
-                if (!ApiAuth.ensure(context)) {
-                    signedOut = true
-                    return@launch
-                }
-                signedOut = false
-                apps = Api.myApps().apps
-                live.channels(apps.mapNotNull { it.crewId }.map { "crew:$it" }.toSet())
-                offline = false
-            } catch (e: ApiError) {
-                if (e.isAuth) signedOut = true else offline = true
-            } catch (_: Exception) {
-                offline = true
-            } finally {
-                loading = false
             }
         }
     }

@@ -180,6 +180,20 @@ class AskViewModel :
         unchecked = false
     }
 
+    /** The app on My apps this request is for, when it came from there. */
+    var appId by mutableStateOf<String?>(null)
+        private set
+
+    /** Start from an app on My apps: found already, its track known, nothing to look up. */
+    fun useApp(app: AppEntry) {
+        if (appId == app.id) return
+        clearLookup()
+        appId = app.id
+        isLive = app.live
+        found = Listing(`package` = app.pkg, name = app.name, icon = app.icon, developer = app.developer)
+        unchecked = !app.verified
+    }
+
     /** Back to the first step, keeping what was typed so a wrong paste can be corrected. */
     fun startOver() {
         clearLookup()
@@ -252,6 +266,7 @@ class AskViewModel :
                 reward = reward,
                 reviewsBought = reviewCount,
                 isLive = isLive,
+                appId = appId,
             )
         val operation =
             pendingRequest?.takeIf { it.copy(requestId = null) == request }

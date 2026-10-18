@@ -42,8 +42,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun AskScreen(
     onDone: () -> Unit,
     onBack: () -> Unit,
+    /** The app from My apps this is for; null for the old way in, by link. */
+    app: AppEntry? = null,
     vm: AskViewModel = viewModel(),
 ) {
+    LaunchedEffect(app?.id) { app?.let(vm::useApp) }
     WhileShown(onShow = vm::startLive, onHide = vm::stopLive)
     val dismissKeyboard = rememberDismissKeyboard()
     Scaffold(
@@ -66,9 +69,12 @@ fun AskScreen(
             Spacer(Modifier.height(8.dp))
             AskIntro()
             Spacer(Modifier.height(20.dp))
-            AskAvailability(vm.isLive, vm::choose)
-            Spacer(Modifier.height(16.dp))
-            if (vm.found == null) Finding(vm) else Found(vm)
+            // From My apps the app and its track are known: straight to it.
+            if (app == null) {
+                AskAvailability(vm.isLive, vm::choose)
+                Spacer(Modifier.height(16.dp))
+            }
+            if (vm.found == null) Finding(vm) else Found(vm, onChange = if (app != null) onBack else vm::startOver)
 
             if (vm.found != null) {
                 Spacer(Modifier.height(16.dp))
@@ -183,7 +189,10 @@ private fun Finding(vm: AskViewModel) {
 
 /** App details sit directly on the page. Tap the row to choose a different listing. */
 @Composable
-private fun Found(vm: AskViewModel) {
+private fun Found(
+    vm: AskViewModel,
+    onChange: () -> Unit,
+) {
     val app = vm.found ?: return
-    FoundApp(app.`package`, app.name, app.icon, app.developer, unchecked = vm.unchecked, onChange = vm::startOver)
+    FoundApp(app.`package`, app.name, app.icon, app.developer, unchecked = vm.unchecked, onChange = onChange)
 }

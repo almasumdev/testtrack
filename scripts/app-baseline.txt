@@ -1,6 +1,5 @@
 # Known violations of docs/app-rules.md. This file may only shrink.
 # Fix one, then: python scripts/check_app.py --update
-app/src/main/java/com/eazyverse/testtrack/ui/AppsScreen.kt: ui imports net
 app/src/main/java/com/eazyverse/testtrack/ui/AskViewModel.kt: ui imports net
 app/src/main/java/com/eazyverse/testtrack/ui/CommonMarks.kt: ui imports data
 app/src/main/java/com/eazyverse/testtrack/ui/CrewViewModel.kt: ui imports data

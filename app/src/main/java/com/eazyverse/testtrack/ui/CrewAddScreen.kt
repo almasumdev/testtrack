@@ -24,7 +24,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -41,6 +40,8 @@ import com.eazyverse.testtrack.viewmodel.CrewAddViewModel
 @Composable
 fun CrewAddScreen(
     crews: CrewViewModel,
+    /** The app from My apps going in; null while My apps has not loaded it. */
+    app: AppEntry?,
     onDone: () -> Unit,
     onBack: () -> Unit,
     vm: CrewAddViewModel = viewModel(),
@@ -50,6 +51,7 @@ fun CrewAddScreen(
     val open = crews.open?.name
     // A refusal from an earlier try belongs to that try.
     LaunchedEffect(Unit) { crews.clearSeatError() }
+    LaunchedEffect(app?.id) { app?.let(vm::start) }
     Scaffold(
         containerColor = Color.Transparent,
         // The navigation route already applies safeDrawingPadding.
@@ -74,11 +76,19 @@ fun CrewAddScreen(
                 color = Tt.colors.text2,
             )
             Spacer(Modifier.height(20.dp))
-            val app = vm.found
             if (app == null) {
-                Finding(vm)
+                CrewLobbyLoading()
             } else {
-                FoundApp(app.pkg, app.name, app.icon, app.developer, unchecked = app.unchecked, onChange = vm::startOver)
+                // Found and confirmed when it was added; "Change" goes back to choose another.
+                FoundApp(app.pkg, app.name, app.icon, app.developer, unchecked = !app.verified, onChange = onBack)
+                if (!app.verified) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Members will try installing it. Two who get it verify it for good.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Tt.colors.text3,
+                    )
+                }
                 Spacer(Modifier.height(18.dp))
                 DialogField(
                     value = vm.name,
@@ -116,7 +126,7 @@ fun CrewAddScreen(
                     enabled = vm.name.isNotBlank() && vm.signInReady && !vm.short,
                     tall = true,
                 ) {
-                    crews.takeSeat(context, app.pkg, vm.name.trim(), vm.notes.trim(), onDone)
+                    crews.takeSeat(context, app.pkg, vm.name.trim(), vm.notes.trim(), appId = app.id, onDone = onDone)
                 }
             }
             Spacer(Modifier.height(24.dp))
@@ -159,46 +169,4 @@ private fun SeatPrice(tix: Int?) {
         Spacer(Modifier.height(10.dp))
         AskMessage(AskFailure("Not enough tix yet", "Review somebody's app in Circle to earn the rest."))
     }
-}
-
-/** Before an app is found: the link and the button, and the way past a checker that is down. */
-@Composable
-private fun Finding(vm: CrewAddViewModel) {
-    DialogField(
-        value = vm.query,
-        onValueChange = vm::type,
-        label = "Your closed testing link",
-        placeholder = "com.example.myapp",
-        isError = vm.failure?.invalidLink == true,
-        supporting = "The Play link or package name. Your closed track needs the testers group added.",
-        singleLine = true,
-        keyboardType = KeyboardType.Uri,
-        imeAction = ImeAction.Search,
-        onImeAction = vm::look,
-    )
-    vm.failure?.let {
-        Spacer(Modifier.height(14.dp))
-        AskMessage(it)
-    }
-    if (vm.byHand) {
-        Spacer(Modifier.height(18.dp))
-        ByHandForm(vm)
-        return
-    }
-    Spacer(Modifier.height(16.dp))
-    if (vm.failure?.byHand == true) {
-        Secondary("Enter details yourself", Modifier.fillMaxWidth(), onClick = vm::enterByHand)
-        Spacer(Modifier.height(10.dp))
-    }
-    Primary(
-        when {
-            vm.looking -> "Finding your app..."
-            vm.failure != null -> "Try again"
-            else -> "Find my app"
-        },
-        busy = vm.looking,
-        enabled = vm.canLook,
-        tall = true,
-        onClick = vm::look,
-    )
 }

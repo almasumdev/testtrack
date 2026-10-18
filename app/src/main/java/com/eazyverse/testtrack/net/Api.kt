@@ -283,6 +283,15 @@ object Api {
 
     suspend fun myApps(): MyApps = kept(MY_APPS)
 
+    /** Every app added to My apps, and where each is with crews and feedback. */
+    suspend fun apps(): AppsOut = kept(APPS)
+
+    suspend fun addApp(body: AppIn): AppAdded = post("/apps", body)
+
+    suspend fun goLive(appId: String): ApiApp = post("/apps/$appId/live", Empty())
+
+    suspend fun deleteApp(appId: String) = sendEmpty(Request.Builder().url(url("/apps/$appId")).delete())
+
     /** Where a piece of proof lives. Needs the token, so it is fetched, never linked. */
     fun proofUrl(ref: String): String = url("/uploads/$ref")
 
@@ -313,6 +322,8 @@ object Api {
 
     fun lastMyApps(): MyApps? = last(MY_APPS)
 
+    fun lastApps(): AppsOut? = last(APPS)
+
     private const val POSTS = "/feed/posts"
     private const val ACTIVITY = "/feed/activity"
     private const val MY_POSTS = "/feed/posts/mine"
@@ -323,6 +334,7 @@ object Api {
     private const val BOARD = "/board"
     private const val PROFILE = "/me/profile"
     private const val MY_APPS = "/me/apps"
+    private const val APPS = "/apps"
 
     /** A GET whose answer is also kept on the phone, for [last] to hand back next time. */
     @PublishedApi
