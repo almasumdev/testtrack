@@ -20,10 +20,10 @@ python scripts/build_onboarding.py
 ## Native launch
 
 - Android 12 / API 31 and newer use a platform AnimatedVectorDrawable.
-- Android 8–11 use the same vector in its completed pose through AndroidX SplashScreen.
+- Android 8 to 11 use the same vector in its completed pose through AndroidX SplashScreen.
 - The 900 ms animation tells one story: two app cards arrive, the arrows sweep in opposite
   directions, then both checks confirm. The eyes follow the apps, the head gives a small nod,
-  and a single blink finishes the sequence at 780–900 ms.
+  and a single blink finishes the sequence at 780 to 900 ms.
   The last frame preserves the approved artwork. It does not loop.
 - A 288 dp transparent icon canvas uses a 0.78 scale around its centre to keep the visible
   artwork inside Android's 192 dp circular safe area.

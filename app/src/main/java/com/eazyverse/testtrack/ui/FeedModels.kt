@@ -115,7 +115,7 @@ enum class FeedEventKind(
      * The one thing here a person wrote: an admin posting to everybody from the console.
      *
      * Everything else on this tab is the app noticing something. This is the exception, and it
-     * exists because there are things no rule can infer — an outage, a change to how groups are
+     * exists because there are things no rule can infer: an outage, a change to how groups are
      * filled, a week off. Without it those go out by Telegram and the half of the community that
      * is not in the channel never hears them.
      */

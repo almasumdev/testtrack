@@ -48,8 +48,8 @@ val LocalStatusColors = staticCompositionLocalOf { OceanDark.status() }
 /**
  * The tokens, poured into Material's slots.
  *
- * Only a mapping; no colour is decided here. Anything drawn by a stock Material component — a
- * dialog, a text field, a switch — picks up the palette through these, and everything drawn by
+ * Only a mapping; no colour is decided here. Anything drawn by a stock Material component, a
+ * dialog, a text field, a switch, picks up the palette through these, and everything drawn by
  * this app reads [Tt.colors] directly.
  */
 private fun TtTokens.scheme(): ColorScheme {

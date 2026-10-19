@@ -28,7 +28,7 @@ object Photo {
      * The widest a stored avatar is allowed to be, in base64 characters.
      *
      * Six kilobytes, which is roughly what a 96 pixel face costs as a middling JPEG. Thirty of
-     * them is under 200 KB for a whole cohort, which is the number that actually matters — a
+     * them is under 200 KB for a whole cohort, which is the number that actually matters: a
      * document limit of one megabyte would let this be a hundred times larger and the grid would
      * be unusable long before Firestore complained.
      */
@@ -118,7 +118,7 @@ object Photo {
      *
      * A profile picture is the same bytes every time it is drawn, and the same bytes for every row
      * showing the same person. Without this, scrolling a cohort ran a JPEG decode per row per
-     * frame — `remember` is per composable instance, so it survives recomposition and nothing
+     * frame: `remember` is per composable instance, so it survives recomposition and nothing
      * else, and a list that recycles its rows defeats it exactly when it matters.
      *
      * Sized in bytes rather than entries, because the entries are bitmaps and a count would be
@@ -137,7 +137,7 @@ object Photo {
      * Back to a bitmap for drawing, or null for anything that is not a picture.
      *
      * Null rather than an exception on purpose. This decodes a string that arrived over the
-     * network, and the caller's fallback is the tester's initial — which is the right answer for a
+     * network, and the caller's fallback is the tester's initial, which is the right answer for a
      * truncated field, a bad write, and an account that never set one, without telling the three
      * of them apart.
      *

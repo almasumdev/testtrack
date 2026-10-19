@@ -55,7 +55,7 @@ while they are reading the Play page is one tap.
 
 Asked of the owner when they post, in their own words rather than as a dropdown of jargon:
 
-> **My app is live on Play Store** — reviewers will be sent to leave a public review.
+> **My app is live on Play Store**: reviewers will be sent to leave a public review.
 
 Unticked means closed testing, and reviewers write feedback in the app instead. It is asked rather
 than detected because nothing on a stranger's phone can see which track an app is on, and the

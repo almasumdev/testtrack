@@ -51,7 +51,7 @@ object PushRepo {
      * Whether a notification would actually appear.
      *
      * Read live, never stored. From Android 13 this is a runtime permission, and before that it is
-     * a switch in system settings — both can be turned off behind our back, so a cached `true` is
+     * a switch in system settings, both can be turned off behind our back, so a cached `true` is
      * a lie the moment someone changes their mind.
      */
     fun granted(context: Context): Boolean =

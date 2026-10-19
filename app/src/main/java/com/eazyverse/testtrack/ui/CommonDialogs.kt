@@ -290,7 +290,7 @@ fun DialogField(
     keyboardType: KeyboardType = KeyboardType.Text,
     /** A floor, for a field that expects a sentence or two rather than a word. */
     minHeight: Dp = 0.dp,
-    /** The field's own cap, shown as "used/max" under it. Not enforced here — the caller already
+    /** The field's own cap, shown as "used/max" under it. Not enforced here: the caller already
      * has to hold typing to the limit, since this only draws what that number already is. */
     maxLength: Int? = null,
     /**

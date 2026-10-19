@@ -100,7 +100,7 @@ internal fun RecordGrid(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatCard(
                 Lucide.Trophy,
-                if (ranked) "#$place" else "–",
+                if (ranked) "#$place" else "New",
                 if (ranked) "Rank" else "Not ranked yet",
                 tint = t.gold,
                 onClick = if (ranked) onOpenRanks else null,

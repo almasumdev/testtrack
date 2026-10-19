@@ -4,7 +4,7 @@ rules_version = '2';
 //
 // The membership check that gates the UI runs in Apps Script and never reaches the database, so
 // these rules cannot lean on it. What they can lean on is `groups/{id}.memberUids`, which only an
-// admin can write — so "is this reader in that cohort?" is a question the database can answer for
+// admin can write, so "is this reader in that cohort?" is a question the database can answer for
 // itself, and answer unforgeably.
 //
 // Everything a tester can see is scoped to a cohort they belong to. Anything that decides who
@@ -44,7 +44,7 @@ service cloud.firestore {
     // ---- enforcement -------------------------------------------------------------------
     //
     // A member who stops opening the other apps loses their place, and the phones in the cohort
-    // are what carry that out — there is no server and the admin console is not in the loop. So
+    // are what carry that out: there is no server and the admin console is not in the loop. So
     // these rules do not take the client's word for any of it. Everything below re-derives the
     // verdict from the proof documents themselves, which means the worst a patched app can do is
     // be refused.
@@ -69,7 +69,7 @@ service cloud.firestore {
     /** How long an owner must wait between broadcasts to the same cohort. Matches Repo.kt. */
     function BROADCAST_COOLDOWN_MS() { return 172800000; }
 
-    /** Same duration, own field — matches FEEDBACK_ASK_COOLDOWN_MS in Repo.kt. */
+    /** Same duration, own field: matches FEEDBACK_ASK_COOLDOWN_MS in Repo.kt. */
     function FEEDBACK_ASK_COOLDOWN_MS() { return 172800000; }
 
     /** Zero for a document written before broadcasting existed, which reads as never sent. */
@@ -146,7 +146,7 @@ service cloud.firestore {
     }
 
     /**
-     * True once [targetUid] has personally opted out of testing [appId] — see the `skips`
+     * True once [targetUid] has personally opted out of testing [appId]: see the `skips`
      * collection, admitted only while [appId]'s own `skippable` is set.
      */
     function skippedBy(appId, targetUid) {
@@ -169,10 +169,10 @@ service cloud.firestore {
       return startDate > 0
         && targetPlacedAt > 0
         && placedAtOf(byAppId) > 0
-        // A reported app judges nobody until the report is cleared — see Enforcement.enforceOn,
+        // A reported app judges nobody until the report is cleared: see Enforcement.enforceOn,
         // which stops for the same reason on the client before ever reaching for this rule.
         && !isReported(byAppId)
-        // Nor does one this member chose to skip themselves — their own call, not a fact about
+        // Nor does one this member chose to skip themselves: their own call, not a fact about
         // the app, so it excuses only them and nobody else in the cohort.
         && !skippedBy(byAppId, targetUid)
         && dayOf(startDate) >= 2
@@ -186,7 +186,7 @@ service cloud.firestore {
         && dayOf(startDate) - 2 >= firstJudged(placedAtOf(byAppId), startDate)
         && dayOf(startDate) - 2 >= firstJudged(targetPlacedAt, startDate)
         // The fourth floor: a member an admin only just put back into testing cannot be judged
-        // on the very two days that got them flagged the first time — see Compliance.judgedDays'
+        // on the very two days that got them flagged the first time: see Compliance.judgedDays'
         // own reinstatedAt floor, which this has to agree with or a device that trusts the client
         // math ends up flagging someone the rules themselves would refuse to flag again.
         && dayOf(startDate) - 2 >= firstJudged(reinstatedAtOf(targetAppId), startDate)
@@ -197,7 +197,7 @@ service cloud.firestore {
     /**
      * Is this account barred from submitting?
      *
-     * Read from the user's own document, which only an admin can set — see the `users` block, where
+     * Read from the user's own document, which only an admin can set: see the `users` block, where
      * the owner is held to a fixed list of fields precisely so that nobody can lift their own ban.
      *
      * Blocking stops new submissions and nothing else. It deliberately does not eject anyone from a
@@ -231,20 +231,20 @@ service cloud.firestore {
     /**
      * The admin list.
      *
-     * Writes are console-only — an admin app that could grant admin would make the whole thing
+     * Writes are console-only: an admin app that could grant admin would make the whole thing
      * decorative. Reads are limited to your own row, and that narrow opening is what lets the
      * admin app tell "you are not an administrator" apart from "something went wrong": without it
      * the only way to find out is to attempt a privileged write and read the refusal, and every
      * screen opens on a bare PERMISSION_DENIED naming nothing.
      *
      * Your own row leaks nothing. The list cannot be enumerated, and nobody can ask about anybody
-     * else — `get()`/`exists()` inside a rule bypass this block entirely, so [isAdmin] is
+     * else: `get()`/`exists()` inside a rule bypass this block entirely, so [isAdmin] is
      * unaffected either way.
      */
     /**
      * The update policy every install reads on the way in.
      *
-     * One document, four numbers, and it decides whether somebody can use the app at all — so it
+     * One document, four numbers, and it decides whether somebody can use the app at all, so it
      * is written from the console and from nowhere else. A client that could raise
      * `minSupportedBuild` could lock out a whole cohort, and one that could lower it could keep
      * itself on a build the cohort has moved past.
@@ -270,7 +270,7 @@ service cloud.firestore {
      * Open to any signed-in account, deliberately and knowingly: a grid needs to turn a uid into
      * a name, and the queries that do it are `whereIn` over uid lists that rules cannot correlate
      * back to a cohort without a reverse index the admin would then have to maintain. What is
-     * exposed is an address and a display name — not proof, not group structure. If that stops
+     * exposed is an address and a display name, not proof, not group structure. If that stops
      * being an acceptable trade, the fix is an admin-written `groupIds` array here.
      */
     match /users/{uid} {
@@ -280,7 +280,7 @@ service cloud.firestore {
        * An account writes its own row, but only the fields that are its own business.
        *
        * `blocked` lives on this document and is an admin's judgement, so an owner allowed to write
-       * the document freely could simply clear it — a ban anybody can lift is not a ban. Held to a
+       * the document freely could simply clear it: a ban anybody can lift is not a ban. Held to a
        * fixed list rather than a denylist, so a field added later is closed by default instead of
        * open until somebody remembers.
        *
@@ -313,12 +313,12 @@ service cloud.firestore {
      *
      * A separate block and not an oversight: rules do **not** cascade to subcollections unless the
      * parent match uses `{document=**}`, so `users/{uid}` above governs the user document alone.
-     * That is exactly what is wanted here — the user document is readable by every signed-in
+     * That is exactly what is wanted here: the user document is readable by every signed-in
      * account so grids can turn a uid into a name, and device tokens must not inherit that. A
      * token is an address anyone could send to once a sender key leaks, and there is no reason for
      * one tester to hold another's.
      *
-     * Written by the device it belongs to, read by whatever ends up doing the sending — which is
+     * Written by the device it belongs to, read by whatever ends up doing the sending, which is
      * an admin credential today and the admin app later.
      */
     match /users/{uid}/tokens/{installId} {
@@ -365,14 +365,14 @@ service cloud.firestore {
     //
     // Readable only by its own members, so the shape of other people's cohorts is not browsable.
     // Entirely admin-written: members are added by placing their app and the run starts when the
-    // thirteenth arrives, and no client can do either — otherwise a tester could start their own
+    // thirteenth arrives, and no client can do either: otherwise a tester could start their own
     // clock or write themselves into someone else's cohort.
     match /groups/{groupId} {
       allow read: if isAdmin()
         || (signedIn() && request.auth.uid in resource.data.memberUids);
 
       // Entirely admin-written. A member who stops opening the other apps in their cohort is
-      // flagged on the app document below, for an admin to act on — nothing here removes anyone
+      // flagged on the app document below, for an admin to act on, nothing here removes anyone
       // from a group without an admin's own hand on it. See apps/{appId}'s flag rule and
       // Enforcement.enforceOn for why that changed.
       allow write: if isAdmin();
@@ -381,7 +381,7 @@ service cloud.firestore {
     /**
      * An app someone has registered.
      *
-     * Visible to its owner and to the cohort testing it — nothing else. A pending app carries no
+     * Visible to its owner and to the cohort testing it, nothing else. A pending app carries no
      * group, so until an admin places it only its owner can see it.
      *
      * Placement is not the owner's to set: approving an app *is* assigning it to a group, and that
@@ -437,7 +437,7 @@ service cloud.firestore {
        * name on day nine is the feature rather than the attack.
        *
        * `notes` is capped here as well as in the app. The tester app stops at NOTES_MAX and the
-       * console only ever reads the field, so nothing legitimate comes near this limit — but the
+       * console only ever reads the field, so nothing legitimate comes near this limit, but the
        * string is rendered in a list row by all twelve members of the cohort, and a client that
        * skips the check is exactly the one that would put a megabyte in it.
        *
@@ -446,7 +446,7 @@ service cloud.firestore {
        * enough otherwise (nothing else here names those keys) that it would otherwise admit it.
        *
        * `lastBroadcastAt` and `lastFeedbackAskAt` are pinned too, and admitted only through their
-       * own dedicated rules below — this one has no cooldown check, so leaving either open here
+       * own dedicated rules below: this one has no cooldown check, so leaving either open here
        * would let an owner bump their own timestamp for free without the wait it exists to
        * enforce.
        *
@@ -477,7 +477,7 @@ service cloud.firestore {
       /**
        * The app-side half of an owner's broadcast: moving `lastBroadcastAt` forward.
        *
-       * Own app only, one field only, and gated by the same cooldown the events half checks — see
+       * Own app only, one field only, and gated by the same cooldown the events half checks: see
        * the `owner_broadcast` rule above for why both sides ask the same question rather than one
        * trusting the other already did.
        */
@@ -493,7 +493,7 @@ service cloud.firestore {
       /**
        * The app-side half of an owner's feedback ask: moving `lastFeedbackAskAt` forward.
        *
-       * Same shape as the broadcast's own app-side rule directly above — own app only, one field
+       * Same shape as the broadcast's own app-side rule directly above: own app only, one field
        * only, gated by the same cooldown the events half checks.
        */
       allow update: if signedIn()
@@ -515,7 +515,7 @@ service cloud.firestore {
        * Narrow on purpose, because `status` is otherwise pinned for owners and this is the single
        * exception. Only from `pending`: an app inside a cohort is twelve other people's obligation
        * for the fortnight, and walking away from that is an admin's call rather than a button.
-       * Only to `withdrawn`, so this cannot become a way of reviving anything — an owner still
+       * Only to `withdrawn`, so this cannot become a way of reviving anything: an owner still
        * cannot move their own app back to `pending`, which is the whole point of the claim.
        *
        * `withdrawnAt` is admitted alongside it, and nothing else is.
@@ -532,7 +532,7 @@ service cloud.firestore {
       /**
        * A member who stopped opening this app flags its owner, for an admin to see.
        *
-       * Nothing here touches the group or even this document's own testability — `hasOnly` says
+       * Nothing here touches the group or even this document's own testability: `hasOnly` says
        * exactly the two fields this may change and refuses the rest by construction, so a field
        * added to app documents next year cannot quietly become writable by a peer. Taking
        * somebody out of testing, or dropping them from the group, is `removed`/`groups` and
@@ -547,7 +547,7 @@ service cloud.firestore {
        * something false about who noticed.
        *
        * And never an app already taken out of testing. `removed` excuses it from judgment
-       * entirely — see Enforcement.enforceOn's matching client-side skip — so without this a
+       * entirely, see Enforcement.enforceOn's matching client-side skip, so without this a
        * removed app would keep getting re-flagged on every sweep, forever, since it can never
        * earn back the attendance that would otherwise clear the flag.
        */
@@ -581,7 +581,7 @@ service cloud.firestore {
 
       /**
        * A cohort member saying an app would not open, or broke, before any admin hears about it
-       * another way — see reportProblem in Repo.kt.
+       * another way: see reportProblem in Repo.kt.
        *
        * A report is a fact a device can attest to about itself, the same shape of claim the
        * self-service removal above makes, so it is written directly rather than waiting on
@@ -590,7 +590,7 @@ service cloud.firestore {
        *
        * Set-once. `resource.data.reportedAt` must be unset or zero going in, so a tester cannot
        * bump their own report's timestamp. Undoing one is a different write, admitted by the rule
-       * just below rather than by widening this one — an owner still cannot touch either.
+       * just below rather than by widening this one: an owner still cannot touch either.
        *
        * Never the owner. There is nothing for an owner to report about their own app; admitting
        * them here would just be a second way to write `removed`-shaped relief without the
@@ -611,11 +611,11 @@ service cloud.firestore {
              || request.resource.data.reportedReason.size() <= 500);
 
       /**
-       * The reporter taking their own report back — see clearMyReport in Repo.kt.
+       * The reporter taking their own report back: see clearMyReport in Repo.kt.
        *
        * Only `reportedBy` may do this, not the wider cohort and not the owner: it is the one
        * person who can attest the thing they reported got sorted out, or that they jumped the
-       * gun. An admin can still clear any report through the unrestricted `allow update` above —
+       * gun. An admin can still clear any report through the unrestricted `allow update` above:
        * this rule only ever adds a second door for the reporter's own, never takes theirs away.
        *
        * Full zero, not a partial edit. Anything short of putting all three fields back to their
@@ -657,7 +657,7 @@ service cloud.firestore {
     }
 
     /**
-     * One member's own choice to skip one app — see Repo.kt's setSkip/clearSkip and
+     * One member's own choice to skip one app: see Repo.kt's setSkip/clearSkip and
      * DashboardScreen's TestRow toggle.
      *
      * A row per (app, member), not a field on `apps`: `removed` and `reportedAt` both excuse the
@@ -665,7 +665,7 @@ service cloud.firestore {
      * than something the app document could hold, since two members of the same cohort routinely
      * disagree about the same app.
      *
-     * Doc id is `{appId}__{uid}`, exactly like a proof id without the run/day suffix — existence is
+     * Doc id is `{appId}__{uid}`, exactly like a proof id without the run/day suffix: existence is
      * the whole fact, so create is "skip" and delete is "un-skip," and there is nothing to update.
      */
     match /skips/{skipId} {
@@ -673,7 +673,7 @@ service cloud.firestore {
 
       /**
        * Own uid only, own choice only, and only where an admin has actually opened this app up to
-       * being skipped — `skippable` is the switch, checked fresh against the live document rather
+       * being skipped: `skippable` is the switch, checked fresh against the live document rather
        * than trusted from the write, so a client cannot skip an app the admin never allowed just by
        * omitting the check on its own side.
        *
@@ -698,13 +698,13 @@ service cloud.firestore {
     /**
      * What an admin decided about someone.
      *
-     * The admin console is a phone app, and a phone app cannot send push — FCM's v1 API wants a
+     * The admin console is a phone app, and a phone app cannot send push: FCM's v1 API wants a
      * service account, and a service account key inside an APK is one in everybody's hands. So a
      * decision is written here and the addressed device raises it locally. Which makes this the
      * audit trail as well: `actorUid` is the admin who acted.
      *
      * Addressed to exactly one person and readable by exactly that person, so the query in
-     * AdminEvents constrains `uid` — rules are not filters, and a read without that clause is
+     * AdminEvents constrains `uid`: rules are not filters, and a read without that clause is
      * refused however impeccable the documents are.
      *
      * Append-only from an admin. A tester cannot write themselves an approval, and nobody can
@@ -719,7 +719,7 @@ service cloud.firestore {
         && request.resource.data.actorUid == request.auth.uid;
 
       /**
-       * An owner telling one member of their cohort an update is out — see Repo.kt's
+       * An owner telling one member of their cohort an update is out: see Repo.kt's
        * broadcastUpdate, which writes one of these per member in the same batch that advances
        * the app's own `lastBroadcastAt`.
        *
@@ -743,10 +743,10 @@ service cloud.firestore {
              >= BROADCAST_COOLDOWN_MS();
 
       /**
-       * An owner asking one member of their cohort for feedback — see Repo.kt's
+       * An owner asking one member of their cohort for feedback: see Repo.kt's
        * askForFeedback, which writes one of these per member in the same batch that advances
        * the app's own `lastFeedbackAskAt`. Same shape as the `owner_broadcast` rule above, for
-       * the same reasons — including the same pre-batch cooldown read.
+       * the same reasons: including the same pre-batch cooldown read.
        */
       allow create: if signedIn()
         && request.resource.data.type == TYPE_FEEDBACK_ASK()
@@ -763,7 +763,7 @@ service cloud.firestore {
              >= FEEDBACK_ASK_COOLDOWN_MS();
 
       /**
-       * A tester telling an app's owner that feedback is waiting for them — see Repo.kt's
+       * A tester telling an app's owner that feedback is waiting for them: see Repo.kt's
        * submitFeedback, which writes one of these in the same batch as the feedback document
        * itself. No cooldown: the feedback collection's own once-a-day-per-app shape is already
        * what keeps this from repeating, and this rule does not need to re-derive that.
@@ -790,16 +790,16 @@ service cloud.firestore {
     }
 
     /**
-     * A cohort's own record — who joined, who was taken out of testing and put back, who was
+     * A cohort's own record: who joined, who was taken out of testing and put back, who was
      * kicked, and when. See AdminRepo.logHistory.
      *
-     * Its own collection rather than another `events` type: `events` is deliberately disposable —
+     * Its own collection rather than another `events` type: `events` is deliberately disposable:
      * an app or an account being erased takes its events with it, see that block's own delete
-     * rule — and the entire point here is the opposite. Nothing in this collection is ever
+     * rule, and the entire point here is the opposite. Nothing in this collection is ever
      * deleted, not even by an admin.
      *
-     * Unbounded by construction — nothing is ever removed from a group's record, which is the
-     * whole point — so this cannot be read the way `apps` reads `inGroup(groupId)`: that check
+     * Unbounded by construction, nothing is ever removed from a group's record, which is the
+     * whole point, so this cannot be read the way `apps` reads `inGroup(groupId)`: that check
      * costs a `get()` per matched document, and `proofs` below already documents what happens
      * once a query like that grows past a handful of results. So this stays off the `inGroup`
      * path entirely: an admin sees every row through `isAdmin()`, which costs nothing extra
@@ -813,7 +813,7 @@ service cloud.firestore {
 
       /**
        * Admin-only: every trigger today is an admin action. `groupId` is required and non-blank,
-       * unlike `events` where it is often absent — a line in a cohort's own record that does not
+       * unlike `events` where it is often absent: a line in a cohort's own record that does not
        * name the cohort is not a record of anything.
        */
       allow create: if isAdmin()
@@ -824,7 +824,7 @@ service cloud.firestore {
         && request.resource.data.type in ['joined', 'removed', 'restored', 'kicked']
         && request.resource.data.actorUid == request.auth.uid;
 
-      // Never edited, never deleted — see the block's own note above.
+      // Never edited, never deleted: see the block's own note above.
       allow update, delete: if false;
     }
 
@@ -834,8 +834,8 @@ service cloud.firestore {
      * The sensitive collection: each document points at a full-screen capture readable by anyone
      * holding its Drive link.
      *
-     * Reading needs **no document lookup**, deliberately. Only two people ever read a proof — the
-     * tester who posted it, and the owner of the app it is about — and both are named in the
+     * Reading needs **no document lookup**, deliberately. Only two people ever read a proof, the
+     * tester who posted it, and the owner of the app it is about, and both are named in the
      * document, so the rule is two equality checks. An earlier version fetched the group to test
      * cohort membership; that survives the fourteen-document apps query and is refused on the
      * forty-five-document proofs query, which is the whole grid.
@@ -863,7 +863,7 @@ service cloud.firestore {
        * An admin, and only ever alongside the thing it is proof of.
        *
        * A tester cannot withdraw evidence they already posted, and an app owner cannot destroy a
-       * day somebody covered — that is the whole reliability record, and a record anybody can
+       * day somebody covered: that is the whole reliability record, and a record anybody can
        * prune is not one. The console deletes these only when the app or the account they belong
        * to is being erased, where leaving them behind would keep counting days towards a
        * developer who is gone.
@@ -875,14 +875,14 @@ service cloud.firestore {
     }
 
     /**
-     * A tester's own note about an app — a rough edge, a typo, something worth the owner hearing
+     * A tester's own note about an app: a rough edge, a typo, something worth the owner hearing
      * that isn't the app being broken outright. See Repo.submitFeedback and Feedback in Models.kt.
      *
      * Same shape as `proofs` on purpose, including why: a `feedbackId` query is one document, so
      * the integrity check happens on the write rather than being re-proven on every read.
      *
      * Document ids are {appId}__{testerUid}__{runStartedAt}__{day}, so a second note the same day
-     * overwrites rather than piling up — the same reasoning `proofs` already gives.
+     * overwrites rather than piling up: the same reasoning `proofs` already gives.
      */
     match /feedback/{feedbackId} {
       allow read: if isAdmin()
@@ -901,7 +901,7 @@ service cloud.firestore {
       );
 
       /**
-       * An admin, same as `proofs`: not the tester who wrote it, and not the owner it's about —
+       * An admin, same as `proofs`: not the tester who wrote it, and not the owner it's about:
        * the point of a note the owner cannot make disappear is lost the moment they can.
        */
       allow delete: if isAdmin();

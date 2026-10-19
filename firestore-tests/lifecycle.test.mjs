@@ -198,7 +198,7 @@ await check('a submission cannot arrive with oversized notes', () =>
 // ---- and what trails an app around goes with it ---------------------------------------------
 // Erasing an app is only erasure if the proofs and events about it go too: a proof left behind
 // keeps counting a day towards a developer whose record no longer exists, and an event left
-// behind is a decision about nothing. Both stay shut to everybody else — a tester who could
+// behind is a decision about nothing. Both stay shut to everybody else: a tester who could
 // delete a proof could withdraw evidence they already posted, and an audit trail anybody can
 // prune is not one.
 await check('a tester cannot delete a proof they posted', () =>
@@ -221,7 +221,7 @@ await check('an admin may delete an event', () =>
 
 // ---- a cohort's own record, and why it outlives membership itself ---------------------------
 // The claim under test: history is the one collection that must still answer for somebody after
-// every other reason it would has gone — after `inGroup` itself would refuse them. So this is
+// every other reason it would has gone: after `inGroup` itself would refuse them. So this is
 // tested against a group ME is no longer a member of, on purpose, rather than the running cohort
 // every other block in this file seeds.
 console.log('\na cohort\'s own record\n')
@@ -238,7 +238,7 @@ async function seedHistory() {
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore()
     await setDoc(doc(db, 'admins', ADMIN), {})
-    // ME already gone from the group by the time these tests run — memberUids has only PEER.
+    // ME already gone from the group by the time these tests run: memberUids has only PEER.
     await setDoc(doc(db, 'groups', HISTORY_GROUP), {
       name: 'Batch 07', memberUids: [PEER], appIds: [], startDate: 1, status: 'running',
     })
@@ -268,7 +268,7 @@ await check('a tester cannot write a history entry at all', () =>
 await check('an outsider cannot write one either', () =>
   assertFails(setDoc(doc(as(ME), 'history', 'h7'), historyDoc({ actorUid: ME }))))
 
-// One entry about ME, one about PEER, both already written under rules disabled — the write
+// One entry about ME, one about PEER, both already written under rules disabled: the write
 // path above is already proven, this half is purely about who may read what.
 await seedHistory()
 await env.withSecurityRulesDisabled(async (ctx) => {
@@ -287,7 +287,7 @@ await check('a cohort-mate may not read somebody else\'s entry', () =>
   assertFails(getDoc(doc(as(PEER), 'history', 'about-me'))))
 
 // The direct regression guard for the actual bug this collection exists to fix: ME is not in
-// HISTORY_GROUP's memberUids (seedHistory only ever put PEER there) — inGroup(HISTORY_GROUP)
+// HISTORY_GROUP's memberUids (seedHistory only ever put PEER there): inGroup(HISTORY_GROUP)
 // would refuse ME today, and the read still has to succeed anyway.
 await check('the person it is about can still read it after leaving the group', () =>
   assertSucceeds(getDoc(doc(as(ME), 'history', 'about-me'))))

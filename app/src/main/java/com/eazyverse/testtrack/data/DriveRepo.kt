@@ -19,7 +19,7 @@ data class DriveFile(
     val id: String,
     val name: String,
 ) {
-    /** Direct image bytes — what Coil should load in the grid. */
+    /** Direct image bytes: what Coil should load in the grid. */
     val thumbUrl: String get() = "https://drive.google.com/thumbnail?id=$id&sz=w1200"
 }
 
@@ -199,7 +199,7 @@ object DriveRepo {
      * The two that matter are told apart because the answers are opposites: a full Drive is
      * something only they can fix and retrying will never help, and a stale token fixes itself
      * by reconnecting on the testing screen. Everything else keeps its status code, which is the one part of the raw body
-     * worth carrying — it is what makes a report actionable when somebody sends a screenshot.
+     * worth carrying: it is what makes a report actionable when somebody sends a screenshot.
      */
     private fun refusal(
         code: Int,

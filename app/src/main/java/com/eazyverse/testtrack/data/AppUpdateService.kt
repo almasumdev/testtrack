@@ -320,7 +320,7 @@ object AppUpdateService {
 
     /**
      * The whole decision, as a pure function so it can be tested directly. Kept free of Play/Firestore
-     * dependencies on purpose — this is the path that can lock a user out.
+     * dependencies on purpose: this is the path that can lock a user out.
      */
     @VisibleForTesting
     fun resolveTier(
@@ -340,7 +340,7 @@ object AppUpdateService {
         if (currentBuild <= 0) return UpdateTier.NONE
         // Manual override. 0 is the resting state and blocks nobody.
         if (minSupportedBuild > 0 && currentBuild < minSupportedBuild) return UpdateTier.BLOCKED
-        // Automatic rule: a new major means breaking changes, so block — but only when what Play will
+        // Automatic rule: a new major means breaking changes, so block, but only when what Play will
         // actually hand this user IS the release the config describes, so a 2.0.0 on internal can't
         // block a production user whose best available build is still 1.x (they'd be stuck).
         val playCanReachLatest = availableBuild > 0 && latestBuild > 0 && availableBuild >= latestBuild

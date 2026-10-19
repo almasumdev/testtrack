@@ -34,7 +34,7 @@ import com.eazyverse.testtrack.ui.theme.Tt
  */
 val Gutter = 16.dp
 
-/** State colours, from the theme. Never used for a control — that is what primary is for. */
+/** State colours, from the theme. Never used for a control: that is what primary is for. */
 object Status {
     val posted: Color @Composable get() = LocalStatusColors.current.posted
     val postedSoft: Color @Composable get() = LocalStatusColors.current.postedSoft
@@ -50,8 +50,8 @@ object Status {
  * A pull to refresh, in Material's own stock appearance.
  *
  * One place for it rather than four, so every screen's gesture looks and feels identical.
- * [isRefreshing] doubles as the signal for a refresh this screen started on its own — opening it
- * or coming back to it — not only one the reader pulled for themselves; the indicator is the one
+ * [isRefreshing] doubles as the signal for a refresh this screen started on its own, opening it
+ * or coming back to it, not only one the reader pulled for themselves; the indicator is the one
  * place that state needs to show up, rather than a second one competing with a page's own numbers
  * for attention.
  */

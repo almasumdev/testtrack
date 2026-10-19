@@ -1,14 +1,14 @@
 root = true
 
 [*.{kt,kts}]
-# Compose functions are conventionally PascalCase — they read as components, not verbs — and
+# Compose functions are conventionally PascalCase, they read as components, not verbs, and
 # every screen/row/dialog in this codebase already follows that. ktlint's default expects
 # camelCase for every function with no exception for @Composable, so enforcing it here would
 # mean renaming every Composable in the project against its own ecosystem's convention.
 ktlint_standard_function-naming = disabled
 
 # This codebase already uses `import com.eazyverse.testtrack.data.*` deliberately and
-# consistently — several extension-function-based Repo splits rely on it to stay resolvable
+# consistently: several extension-function-based Repo splits rely on it to stay resolvable
 # without a per-function import. Enforcing explicit imports here would be a large, unrelated
 # style reversal, not a fix.
 ktlint_standard_no-wildcard-imports = disabled

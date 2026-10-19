@@ -27,7 +27,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 object Telemetry {
     /**
      * Analytics needs a context and this is an object, so it is handed one at startup rather than
-     * reaching for a static. Null until then, which reads as "say nothing" — the same answer a
+     * reaching for a static. Null until then, which reads as "say nothing": the same answer a
      * disabled build gives, so there is one quiet path instead of two.
      */
     private var analytics: FirebaseAnalytics? = null

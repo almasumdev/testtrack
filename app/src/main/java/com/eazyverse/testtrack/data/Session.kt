@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 /**
- * Everything that survives a restart. SharedPreferences rather than DataStore — the payload is a
+ * Everything that survives a restart. SharedPreferences rather than DataStore: the payload is a
  * handful of flags, and the synchronous read lets the start destination resolve before first
  * compose, so no screen flashes before the right one appears.
  *
@@ -47,7 +47,7 @@ object Session {
         private set
 
     /**
-     * Whether Settings → Special access → Usage access is on for TestTrack.
+     * Whether Settings > Special access > Usage access is on for TestTrack.
      *
      * Not persisted. It can be revoked from Settings without telling us, so a stored `true` would
      * be a lie the moment someone toggled it off; [refreshUsageAccess] re-reads it on every
@@ -60,7 +60,7 @@ object Session {
         usageAccessGranted = UsageRepo.hasAccess(context)
     }
 
-    /** Live, for the same reason as [usageAccessGranted] — the switch is the system's, not ours. */
+    /** Live, for the same reason as [usageAccessGranted]: the switch is the system's, not ours. */
     var notificationsGranted by mutableStateOf(false)
         private set
 
@@ -76,7 +76,7 @@ object Session {
      *
      * Inputs, never the verdict: once the installed build reaches [cachedUpdateAvailableBuild] the
      * same inputs resolve to nothing, so an update installed offline releases its own prompt. Plain
-     * properties rather than Compose state — nothing draws them, only [AppUpdateService] reads them.
+     * properties rather than Compose state, nothing draws them, only [AppUpdateService] reads them.
      * 0 in [cachedUpdateAvailableBuild] means nothing is cached.
      */
     var cachedUpdateAvailableBuild = 0
@@ -163,7 +163,7 @@ object Session {
     }
 
     /**
-     * Clears everything except onboarding — nobody wants to watch the intro twice — and except the
+     * Clears everything except onboarding, nobody wants to watch the intro twice, and except the
      * cached update policy, which is about this copy of the app rather than about whoever is signed
      * into it.
      */

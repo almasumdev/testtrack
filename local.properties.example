@@ -7,7 +7,7 @@ sdk.dir=/path/to/Android/sdk
 
 # OAuth 2.0 *Web* client ID from Google Cloud console. Not the Android client ID.
 # Must be byte-identical to the CLIENT_ID in the Apps Script, which verifies the token's
-# `aud` claim against it — a mismatch returns wrong_audience.
+# `aud` claim against it: a mismatch returns wrong_audience.
 TESTTRACK_WEB_CLIENT_ID=000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
 
 # Deployed Apps Script web app that answers the membership check.
@@ -16,7 +16,7 @@ TESTTRACK_GATE_URL=https://script.google.com/macros/s/XXXXXXXX/exec
 # Public URL of the testers Google Group, used for the "open the group" shortcut.
 TESTTRACK_GROUP_URL=https://groups.google.com/g/your-group
 
-# Release signing. Optional — omit and only debug builds are produced.
+# Release signing. Optional: omit and only debug builds are produced.
 # Google sign-in is bound to the signing certificate, so register this keystore's SHA-1 in the
 # Cloud console or release builds will fail to sign in.
 #TESTTRACK_KEYSTORE=/path/to/release.jks

@@ -1,4 +1,4 @@
-# Release builds are minified. Add keep rules here as real dependencies arrive —
+# Release builds are minified. Add keep rules here as real dependencies arrive:
 # reflection-based JSON models and anything named from the manifest are the usual casualties.
 
 # WorkManager keeps its queue in a Room database, and Room instantiates the generated
@@ -8,7 +8,7 @@
 #
 #   NoSuchMethodException: androidx.work.impl.WorkDatabase_Impl.<init> []
 #
-# Release only — debug builds are not minified, so the reminder scheduler looks perfectly healthy
+# Release only: debug builds are not minified, so the reminder scheduler looks perfectly healthy
 # right up until the APK that ships.
 #
 # Firestore needs no equivalent rule: Repo parses every document by hand through explicit string

@@ -33,7 +33,7 @@ import androidx.compose.foundation.Image as ComposeImage
  * A launcher icon, or a lettered tile when the app is not installed.
  *
  * This is the single biggest thing separating a list of apps from a list of strings, and it costs
- * nothing — the launcher `<queries>` filter is already declared for the install streak, and an app
+ * nothing: the launcher `<queries>` filter is already declared for the install streak, and an app
  * with a launcher icon to draw is by definition one that filter can see.
  */
 @Composable
@@ -89,7 +89,7 @@ fun installedLabel(pkg: String): String? {
     return remember(pkg, InstalledApps.revision) { InstalledApps.cachedInfo(context, pkg).label }
 }
 
-/** A tester's initial in a tinted disc — the only stand-in for an avatar we have. */
+/** A tester's initial in a tinted disc: the only stand-in for an avatar we have. */
 @Composable
 fun Initial(
     letter: String,
@@ -127,7 +127,7 @@ fun Avatar(
     loading: Boolean = false,
     letterStyle: TextStyle? = null,
 ) {
-    // Nothing has been fetched yet, so there is no letter to show either — the name it would come
+    // Nothing has been fetched yet, so there is no letter to show either: the name it would come
     // from is on the same document as the picture. A shimmer says "coming", where a letter would
     // say "this is who they are" and then change its mind.
     if (loading) {
@@ -151,8 +151,8 @@ fun Avatar(
 /**
  * Scannable down a column of twelve without reading any of them.
  *
- * Sized to match [ActionChip][com.eazyverse.testtrack.ui.ActionChip] and [Working] exactly — same
- * corner, same padding, same bumped-up text size — so a row does not visibly grow or shrink as it
+ * Sized to match [ActionChip][com.eazyverse.testtrack.ui.ActionChip] and [Working] exactly, same
+ * corner, same padding, same bumped-up text size, so a row does not visibly grow or shrink as it
  * moves between an actionable state and a settled one. It used to be a size of its own, smaller all
  * round, and a list mid scroll read as buttons of two different sizes rather than one list.
  */
@@ -177,8 +177,8 @@ fun Pill(
 /**
  * A [TextButton] enforces Material's ~40dp minimum touch height no matter what contentPadding
  * says, which is too tall for a row meant to hold five or six of these side by side. Built on a
- * plain clickable [Box] instead — the same shape the [reportDetails]-reading "Reported" chip
- * already used — so the padding below is the actual, final size.
+ * plain clickable [Box] instead, the same shape the [reportDetails]-reading "Reported" chip
+ * already used, so the padding below is the actual, final size.
  */
 @Composable
 fun ActionChip(

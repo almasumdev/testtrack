@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
  * Incoming push.
  *
  * Messages are sent **data-only**, on purpose. A message carrying a `notification` block is posted
- * by the system when the app is in the background, and this class never runs — which means no
+ * by the system when the app is in the background, and this class never runs, which means no
  * channel of ours, no icon of ours, and no way to open the group it is about. Data-only messages
  * always arrive here, so every notification looks the same whichever state the app is in.
  *

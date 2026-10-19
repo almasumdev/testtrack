@@ -349,8 +349,9 @@ private fun BoardRowView(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            // Zero is somebody who has not earned a point yet: not on the board, not first of one.
-            if (row.place > 0) "${row.place}" else "–",
+            // Zero is somebody who has not earned a point yet: not on the board, not first of one,
+            // so the place is left empty rather than given a number or a mark.
+            if (row.place > 0) "${row.place}" else "",
             Modifier.width(room),
             style = MaterialTheme.typography.labelLarge.tabular(),
             fontWeight = FontWeight.Bold,

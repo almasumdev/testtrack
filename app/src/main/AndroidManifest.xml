@@ -7,7 +7,7 @@
 
     <!--
       Proof that a tester installed an owner's app, and the ability to open it from the list.
-      Still gives installed yes/no, the installing package, and firstInstallTime — the
+      Still gives installed yes/no, the installing package, and firstInstallTime: the
       continuous-install streak, retroactively.
 
       Narrow by necessity rather than taste. QUERY_ALL_PACKAGES would read every package, but it
@@ -38,7 +38,7 @@
 
       Not granted at install and not promptable: it is an appop the tester switches on under
       Settings -> Special access. Declaring it only puts TestTrack in that list. There is no
-      cheaper source — timing the session from inside TestTrack measures only the visit TestTrack
+      cheaper source: timing the session from inside TestTrack measures only the visit TestTrack
       started, which is the number a tester could pass by waiting.
     -->
     <uses-permission

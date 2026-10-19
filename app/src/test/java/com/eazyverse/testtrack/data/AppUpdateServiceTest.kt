@@ -11,7 +11,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Covers the pure [AppUpdateService.resolveTier] decision — the path that can lock a user out —
+ * Covers the pure [AppUpdateService.resolveTier] decision: the path that can lock a user out:
  * with the same cases Sound Scheduler's AppUpdateServiceTest exercises, and the offline replay
  * [AppUpdateService.resolveCachedTier], per the testing checklist in docs/in-app-update-system.md.
  */

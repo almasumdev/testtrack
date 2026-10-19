@@ -26,11 +26,11 @@ import kotlin.coroutines.resumeWithException
  * One "Continue with Google" produces three different things, because Android and Firebase
  * separate them:
  *
- *  - **Identity** — Credential Manager returns an ID token. Only Google can mint it, so the
+ *  - **Identity**: Credential Manager returns an ID token. Only Google can mint it, so the
  *    membership verdict derived from it server-side cannot be forged by the device.
- *  - **Firebase session** — the same ID token is exchanged for a Firebase user, which is what
+ *  - **Firebase session**: the same ID token is exchanged for a Firebase user, which is what
  *    Firestore security rules key on.
- *  - **Authorization** — [AuthorizationClient] returns a Drive access token.
+ *  - **Authorization**: [AuthorizationClient] returns a Drive access token.
  *
  * The user sees two sheets the first time. Afterwards [authorizeDrive] resolves silently, so it
  * is a single tap from then on.
@@ -92,7 +92,7 @@ object AuthRepo {
      *
      * Almost always means Google sign-in is not enabled under Firebase Authentication for this
      * project. Worth naming precisely, because the raw exception says nothing useful and the
-     * symptom — an empty Today list — looks like missing data rather than missing auth.
+     * symptom, an empty Today list, looks like missing data rather than missing auth.
      */
     var firebaseError by mutableStateOf<String?>(null)
         private set
@@ -175,7 +175,7 @@ object AuthRepo {
      * Has this account already granted Drive access?
      *
      * Asked rather than remembered. The grant lives on Google's servers against the account and
-     * survives sign-out, reinstall and a new phone — whereas the local flag did not, so signing
+     * survives sign-out, reinstall and a new phone, whereas the local flag did not, so signing
      * out and back in used to present "Connect Drive" again for an authorisation that had never
      * been lost. This resolves silently when the grant exists; it shows nothing either way.
      */

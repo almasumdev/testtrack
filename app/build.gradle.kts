@@ -8,13 +8,13 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
     // Applied here too, not only at the root: the root's own apply only reaches its own build
-    // scripts (hence "ktlintKotlinScriptCheck" and nothing else) — the actual app/src Kotlin
+    // scripts (hence "ktlintKotlinScriptCheck" and nothing else): the actual app/src Kotlin
     // needs the plugin on the module that holds it, which for this single-module project is
     // this one.
     alias(libs.plugins.ktlint)
 }
 
-// See the root build.gradle.kts for why this exists on both — the setting itself is per-project,
+// See the root build.gradle.kts for why this exists on both: the setting itself is per-project,
 // so applying the plugin at the root does not carry this configuration down to this module.
 ktlint {
     android.set(true)
@@ -38,7 +38,7 @@ val localProperties =
 fun secret(key: String): String {
     val value = System.getenv(key) ?: localProperties.getProperty(key)
     if (value.isNullOrBlank()) {
-        logger.warn("WARNING: $key is not set. Add it to local.properties — see local.properties.example.")
+        logger.warn("WARNING: $key is not set. Add it to local.properties: see local.properties.example.")
         return ""
     }
     return value
@@ -208,12 +208,12 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     debugImplementation(libs.androidx.ui.tooling)
 
-    // Identity — the Google ID token the membership service verifies.
+    // Identity: the Google ID token the membership service verifies.
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
 
-    // Authorization — a Drive access token. Separate concern from identity.
+    // Authorization: a Drive access token. Separate concern from identity.
     implementation(libs.play.services.auth)
 
     implementation(platform(libs.firebase.bom))

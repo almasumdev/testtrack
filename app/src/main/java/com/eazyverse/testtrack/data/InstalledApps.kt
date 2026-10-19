@@ -27,19 +27,19 @@ import androidx.core.graphics.drawable.toBitmap
 object InstalledApps {
     data class Info(
         val installed: Boolean,
-        /** When it was first installed. Survives updates, resets on uninstall — so it *is* the streak. */
+        /** When it was first installed. Survives updates, resets on uninstall, so it *is* the streak. */
         val firstInstall: Long = 0L,
         /**
          * `com.android.vending` means it came from Play rather than a sideload.
          *
          * Nothing reads this yet. A closed-test build can only be installed from Play by someone
          * already opted in, so the source is the one thing on the device that says the tester
-         * opted in at all — and opting in is the only thing Play counts. A sideloaded copy passed
+         * opted in at all, and opting in is the only thing Play counts. A sideloaded copy passed
          * around the group would otherwise pass every check here and still be worth nothing.
          */
         val installer: String? = null,
         val label: String? = null,
-        /** From the same [android.content.pm.PackageInfo] read as everything else here — no extra cost. */
+        /** From the same [android.content.pm.PackageInfo] read as everything else here: no extra cost. */
         val versionCode: Long = 0L,
         val versionName: String? = null,
     )
@@ -163,7 +163,7 @@ object InstalledApps {
                 firstInstall = p.firstInstallTime,
                 // getInstallSourceInfo is API 30. runCatching would swallow the NoSuchMethodError
                 // on anything older and report every install as sourceless, which reads the same
-                // as a sideload — so ask the older question there instead of guessing.
+                // as a sideload, so ask the older question there instead of guessing.
                 installer =
                     runCatching {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

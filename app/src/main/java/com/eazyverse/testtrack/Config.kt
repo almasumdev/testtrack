@@ -5,7 +5,7 @@ package com.eazyverse.testtrack
  *
  * Every value comes from `local.properties` (or an environment variable) via BuildConfig, so
  * nothing here is committed. A missing key arrives as an empty string rather than a wrong value
- * — see [isConfigured].
+ * See [isConfigured].
  */
 object Config {
     /** OAuth *Web* client ID. The membership service checks the ID token's `aud` against it. */
@@ -19,7 +19,7 @@ object Config {
 
     /**
      * Only files this app creates. Non-sensitive, so no Google verification is required.
-     * Do not widen to `drive` or `drive.readonly` — those are restricted scopes.
+     * Do not widen to `drive` or `drive.readonly`: those are restricted scopes.
      */
     const val DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file"
 

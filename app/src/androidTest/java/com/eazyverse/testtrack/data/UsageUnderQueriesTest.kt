@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
  *
  * Package visibility filters what `PackageManager` will admit to. Whether it also filters
  * `UsageStatsManager` is undocumented, and the answer decides whether TestTrack still has a proof
- * mechanism at all — foreground time is the measurement, and everything else is decoration.
+ * mechanism at all: foreground time is the measurement, and everything else is decoration.
  *
  * Runs on a device because there is no other place the answer exists.
  */
@@ -27,7 +27,7 @@ class UsageUnderQueriesTest {
         get() = InstrumentationRegistry.getInstrumentation().targetContext
 
     /**
-     * `PACKAGE_USAGE_STATS` is an appop, so there is no runtime grant to request — but
+     * `PACKAGE_USAGE_STATS` is an appop, so there is no runtime grant to request, but
      * instrumentation carries shell privilege, which is enough to set it without a trip to
      * Settings that no test could make.
      */
@@ -59,7 +59,7 @@ class UsageUnderQueriesTest {
         )
     }
 
-    /** Every app the launcher query reaches — which is every app a cohort can contain. */
+    /** Every app the launcher query reaches, which is every app a cohort can contain. */
     private fun launchableApps(): List<String> {
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
         return context.packageManager
@@ -73,7 +73,7 @@ class UsageUnderQueriesTest {
      * The `<queries>` filter reaches other apps at all.
      *
      * Without it this list is empty and every row in the app reads "Not installed", so it is worth
-     * failing on separately — a zero here would make the usage result below meaningless rather
+     * failing on separately: a zero here would make the usage result below meaningless rather
      * than wrong.
      */
     @Test
@@ -92,7 +92,7 @@ class UsageUnderQueriesTest {
      * The measurement itself: open another app, leave it there, and see whether TestTrack can
      * still say how long it was on screen.
      *
-     * Reads while the app under test is still foreground, exactly as a round does — the visit is
+     * Reads while the app under test is still foreground, exactly as a round does: the visit is
      * measured on the way out, not after.
      */
     @Test

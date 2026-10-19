@@ -69,13 +69,13 @@ fun GateResult.address(): String =
 /**
  * Membership verification.
  *
- * Google publishes no API for reading a consumer `@googlegroups.com` roster — the Admin SDK and
+ * Google publishes no API for reading a consumer `@googlegroups.com` roster: the Admin SDK and
  * Cloud Identity are Workspace-only, and Play Console accepts only consumer groups. Apps Script's
  * `GroupsApp` is the one thing that works, because it authorises on *permission* (group owner)
  * rather than account edition.
  *
  * The verdict is computed on Google's servers from a token this device cannot forge, and the
- * endpoint returns only `{email, isMember}` about the caller — so nothing here leaks the roster
+ * endpoint returns only `{email, isMember}` about the caller, so nothing here leaks the roster
  * and the phone never asserts its own membership.
  */
 object GroupGate {

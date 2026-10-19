@@ -35,7 +35,7 @@ import com.eazyverse.testtrack.ui.theme.exchangeBackground
 
 /**
  * The blocked tier: a non-dismissible full-screen gate. Back is swallowed and stray taps can't reach
- * the UI behind it, so the only way forward is to update. Fails safe — the caller only shows this
+ * the UI behind it, so the only way forward is to update. Fails safe: the caller only shows this
  * when Play actually has an installable update, so it can never be a dead end.
  */
 @Composable

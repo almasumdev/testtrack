@@ -100,10 +100,10 @@ await check('cannot undo a flag, only make one', () =>
 await check('cannot claim somebody else did the checking', () =>
   assertFails(flagWrite(as(ME), { extra: { flaggedByAppId: TARGET_APP } })))
 
-console.log('\nA member can no longer evict, hard or soft — both capabilities are gone')
+console.log('\nA member can no longer evict, hard or soft, both capabilities are gone')
 // The two writes Repo.evict used to make in one transaction: dropping the member from the group,
 // and sending their app back to the queue. Nothing writes either any more, and these are the
-// regression guard that says so — the same two missed days that flag an app on the block above
+// regression guard that says so: the same two missed days that flag an app on the block above
 // no longer clear either of these, even though every fact in the write is genuine.
 await seed([{ app: MY_APP, uid: TARGET, day: 0 }])
 await check('the group half of an old-style eviction is refused', () =>
@@ -111,13 +111,13 @@ await check('the group half of an old-style eviction is refused', () =>
     memberUids: [ME], appIds: [MY_APP],
     lastEviction: { uid: TARGET, appId: TARGET_APP, byUid: ME, byAppId: MY_APP, day: 3, at: Date.now() },
   })))
-await check('the app half — sending it back to the queue — is refused too', () =>
+await check('the app half, sending it back to the queue, is refused too', () =>
   assertFails(updateDoc(doc(as(ME), 'apps', TARGET_APP), {
     groupId: '', status: 'pending', placedAt: 0, unplacedByAppId: MY_APP, unplacedAt: Date.now(),
   })))
 
 // The write Repo.softRemove used to make, on its own, in one document. This is the one an
-// account still running yesterday's build would actually attempt — the rules are what stop it,
+// account still running yesterday's build would actually attempt: the rules are what stop it,
 // not whatever the client thinks it's doing, so this has to be proved against the write itself
 // rather than assumed from deleting the Kotlin that used to send it.
 await check('an old build\'s own self-removal write is refused too', () =>
@@ -168,7 +168,7 @@ console.log('\nRemoving, flagging and reinstating are all admin-only to undo or 
 {
   await env.clearFirestore()
   await seed([])
-  // Flagging your own app cannot help you — nobody would be testing it either way — but it
+  // Flagging your own app cannot help you, nobody would be testing it either way, but it
   // would tell an admin something false about who noticed.
   await check('nobody may flag their own app', () =>
     assertFails(flagWrite(as(TARGET), { targetApp: TARGET_APP, byAppId: TARGET_APP })))
@@ -196,7 +196,7 @@ console.log('\nRemoving, flagging and reinstating are all admin-only to undo or 
     })
   })
   // Without the removed guard this would succeed: the two missed days are genuine, and nothing
-  // else here would refuse it — which is exactly how a removed app used to get re-flagged, and
+  // else here would refuse it, which is exactly how a removed app used to get re-flagged, and
   // re-notified about, on every single sweep after the one that excused it.
   await check('an already-removed app cannot be flagged again', () => assertFails(flagWrite(as(ME))))
 }
@@ -309,7 +309,7 @@ await check('a finished run flags nobody', () => assertFails(flagWrite(as(ME))))
 
 console.log('\nReinstating gives a genuine fresh start, not an invitation to re-flag on the spot')
 {
-  // Same two missed days that would ordinarily flag TARGET — see the very first block above.
+  // Same two missed days that would ordinarily flag TARGET: see the very first block above.
   await seed([])
   await env.withSecurityRulesDisabled((ctx) =>
     updateDoc(doc(ctx.firestore(), 'apps', TARGET_APP), { reinstatedAt: Date.now() }))
@@ -322,7 +322,7 @@ console.log('\nReinstating gives a genuine fresh start, not an invitation to re-
     assertSucceeds(flagWrite(as(ME))))
 
   // A custom timeline: today is day 5, TARGET was reinstated partway through day 2, and has
-  // missed the two days since — proving reinstatement only forgives the days before it, not
+  // missed the two days since: proving reinstatement only forgives the days before it, not
   // every day forever after.
   await env.clearFirestore()
   const runStart = Date.now() - 5 * DAY - 3600_000
@@ -377,7 +377,7 @@ console.log('\nReporting an app that would not open, or broke, before an admin h
   await check('a reason past the cap is refused', () =>
     assertFails(report(as(ME), TARGET_APP, { reportedReason: 'x'.repeat(501) })))
 
-  // Already reported once — set directly, the way a prior report would have landed.
+  // Already reported once: set directly, the way a prior report would have landed.
   const reseedReport = () => env.withSecurityRulesDisabled((ctx) =>
     updateDoc(doc(ctx.firestore(), 'apps', TARGET_APP), {
       reportedAt: Date.now() - DAY, reportedBy: ME, reportedReason: 'Already noted.',
@@ -468,7 +468,7 @@ console.log('\nA tester leaving day-one feedback on an app that otherwise went f
 
 console.log('\nA reported app is judged by nobody until the report is cleared')
 {
-  // TARGET has missed both judged days on MY_APP, which would ordinarily allow ME to flag them —
+  // TARGET has missed both judged days on MY_APP, which would ordinarily allow ME to flag them:
   // see the very first block in this file. The only difference here is that MY_APP itself carries
   // an open report.
   await seed([])
@@ -479,7 +479,7 @@ console.log('\nA reported app is judged by nobody until the report is cleared')
   await check('the flag this would otherwise allow is refused', () =>
     assertFails(flagWrite(as(ME))))
 
-  // Clearing the report — an admin-only write, done directly here the way the console does it —
+  // Clearing the report: an admin-only write, done directly here the way the console does it:
   // puts the ordinary flag back in reach without anything else about the day changing.
   await env.withSecurityRulesDisabled((ctx) =>
     updateDoc(doc(ctx.firestore(), 'apps', MY_APP), { reportedAt: 0, reportedBy: '', reportedReason: '' }))
@@ -654,7 +654,7 @@ console.log('\nA member skipping one app on their own, once an admin has allowed
 
   console.log('\n...and a skipped app judges nobody who skipped it')
   // TARGET has missed both judged days on MY_APP, same setup as the very first block in this file
-  // — the only difference is TARGET has skipped it.
+  //: the only difference is TARGET has skipped it.
   await seed([])
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore()
@@ -664,7 +664,7 @@ console.log('\nA member skipping one app on their own, once an admin has allowed
   await check('the flag this would otherwise allow is refused', () =>
     assertFails(flagWrite(as(ME))))
 
-  // A skip only ever excuses the member who made it — it must not read as a blanket exemption.
+  // A skip only ever excuses the member who made it: it must not read as a blanket exemption.
   await seed([])
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore()
@@ -675,7 +675,7 @@ console.log('\nA member skipping one app on their own, once an admin has allowed
     assertSucceeds(flagWrite(as(ME))))
 }
 
-console.log('\nA tester can no longer write an automatic-removal record — that capability is gone')
+console.log('\nA tester can no longer write an automatic-removal record: that capability is gone')
 // This is what Repo.evict used to write for itself, back when a device could evict somebody on
 // the spot. Nothing writes it any more, and this is the regression guard that says so: not an
 // absence nobody notices, a write that is now refused even though every fact in it is genuine.

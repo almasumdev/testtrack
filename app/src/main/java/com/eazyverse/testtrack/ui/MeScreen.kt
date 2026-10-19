@@ -351,8 +351,8 @@ fun ordinal(place: Int): String {
  * account was stuck with whatever Google last called it. Two fields, because two is all an
  * account is allowed to change: the email came from Google and the balance comes from the ledger.
  *
- * The picker is permissionless — it hands back one item the person chose and never gives the app
- * the library — which is why there is no permission prompt anywhere in this flow.
+ * The picker is permissionless, it hands back one item the person chose and never gives the app
+ * the library, which is why there is no permission prompt anywhere in this flow.
  */
 @Composable
 fun MeEditDialog(

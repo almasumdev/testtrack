@@ -18,20 +18,20 @@ import kotlinx.coroutines.delay
  * How long an app was actually on screen.
  *
  * A screenshot proves the app opened. It cannot prove anyone stayed, and Play is not satisfied by
- * a launch either — so the daily report carries real foreground time.
+ * a launch either, so the daily report carries real foreground time.
  *
  * This is the one thing TestTrack asks for that costs the tester a trip to Settings.
  * `PACKAGE_USAGE_STATS` cannot be granted by a runtime prompt: it is an appop, toggled by hand
- * under Special access. There is no cheaper source — anything measured inside TestTrack only sees
+ * under Special access. There is no cheaper source: anything measured inside TestTrack only sees
  * the session TestTrack itself started, which is exactly the number a tester could game by
  * waiting.
  */
 object UsageRepo {
     /**
-     * True once the tester has switched TestTrack on under Settings → Special access.
+     * True once the tester has switched TestTrack on under Settings > Special access.
      *
      * Two spellings of one call. `unsafeCheckOpNoThrow` only exists from API 29, and this runs on
-     * 26 — reaching for it unguarded is a `NoSuchMethodError` on Android 8 and 9, on the first
+     * 26: reaching for it unguarded is a `NoSuchMethodError` on Android 8 and 9, on the first
      * screen that asks whether access was granted. `checkOpNoThrow` is the same query under the
      * older name and goes back to 19.
      */
@@ -64,7 +64,7 @@ object UsageRepo {
     /**
      * Opens the usage-access list.
      *
-     * The per-app deep link is unreliable across manufacturers, so fall back to the plain list —
+     * The per-app deep link is unreliable across manufacturers, so fall back to the plain list:
      * a wrong-but-open Settings page beats an ActivityNotFoundException.
      */
     fun openSettings(context: Context) {

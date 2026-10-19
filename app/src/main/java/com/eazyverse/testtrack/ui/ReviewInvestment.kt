@@ -60,7 +60,11 @@ internal fun ReviewInvestment(
                 )
             }
         }
-        Text("Choose 1–50 reviews.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            "Choose between 1 and 50 reviews.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         Spacer(Modifier.height(20.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Reward per review", style = MaterialTheme.typography.titleSmall)

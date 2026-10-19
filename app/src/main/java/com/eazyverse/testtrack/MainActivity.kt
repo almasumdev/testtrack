@@ -233,7 +233,7 @@ class MainActivity : ComponentActivity() {
      *
      * The launch intent is `singleTop` + `clearTop`, so this arrives here rather than through
      * another `onCreate`, and without it the app would come forward on whatever screen it was left
-     * on — ignoring the thing the tester actually tapped.
+     * on: ignoring the thing the tester actually tapped.
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -283,7 +283,7 @@ fun AppNav(
      * Where the app opens, decided once.
      *
      * `remember` is load-bearing, not an optimisation. Session flags are Compose state, so reading
-     * them here unwrapped made this recompute on sign-out — the NavHost's `startDestination`
+     * them here unwrapped made this recompute on sign-out: the NavHost's `startDestination`
      * changed underneath a navigation that was popping up to it, the back stack came out empty and
      * the app closed instead of landing on sign-in.
      *
@@ -471,12 +471,12 @@ fun AppNav(
 /**
  * Navigate forward and drop everything behind, so Back never re-enters a finished step.
  *
- * Pops up to the graph, **exclusive** — every destination above the root goes, the root graph
+ * Pops up to the graph, **exclusive**: every destination above the root goes, the root graph
  * entry stays. Both halves matter, and both were wrong before:
  *
  *  - Popping up to the *start destination* only works once. The first replace removes it, and
  *    every later `popUpTo` then names a destination no longer on the stack, matches nothing, and
- *    pops nothing — so finishing setup left `[SETUP, HOME]` and Back went back to setup.
+ *    pops nothing, so finishing setup left `[SETUP, HOME]` and Back went back to setup.
  *  - Popping the graph *inclusive* takes the controller's own entry with it, leaving nothing to
  *    return to, and the activity finishes.
  */

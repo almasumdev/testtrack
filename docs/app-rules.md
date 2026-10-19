@@ -37,7 +37,7 @@ screen that cannot be put in front of a test without one.
 **500 lines maximum**, the same figure the backend uses. Eight files exceed it today; see the
 baseline below.
 
-Compose files run long honestly — a screen is a lot of layout — so the limit is on the file and
+Compose files run long honestly, a screen is a lot of layout, so the limit is on the file and
 the answer is usually another file, not shorter code. `CrewRows.kt`, `CrewTabs.kt` and
 `CrewPhases.kt` are one screen split three ways and that is the intended shape.
 
@@ -48,7 +48,7 @@ the answer is usually another file, not shorter code. `CrewRows.kt`, `CrewTabs.k
 
 This is not tidiness. It is the only reason any screen in this app has a UI test: a body that
 takes values can be put on a device in every state it has, including the ones that are hard to
-reach — a crew mid-fortnight, a rejected seat, an account that has done nothing. Before the split
+reach: a crew mid-fortnight, a rejected seat, an account that has done nothing. Before the split
 the review stepper shipped with every step showing as already done, because nothing could open it.
 
 ## Tests

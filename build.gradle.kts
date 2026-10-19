@@ -7,7 +7,7 @@ plugins {
 }
 
 // Applied at the root so `./gradlew ktlintCheck` / `ktlintFormat` cover the whole project from
-// one command, the same way `compileDebugKotlin` already does — this app is one module, so a
+// one command, the same way `compileDebugKotlin` already does: this app is one module, so a
 // per-module apply would just be this with extra steps.
 ktlint {
     // The default ktlint_official ruleset reformats every file it touches on first run, which

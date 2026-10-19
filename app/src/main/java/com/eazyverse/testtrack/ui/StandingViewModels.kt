@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
  * The three read-only tabs.
  *
  * Each does one thing: fetch, hold what came back, and say whether it is still waiting or has
- * given up. None of them computes anything, which is why there is no arithmetic here to test —
+ * given up. None of them computes anything, which is why there is no arithmetic here to test:
  * the figures are the server's and the screens draw them.
  *
  * Two flags rather than one, and the split is the point. "Offline" used to mean both "we could
