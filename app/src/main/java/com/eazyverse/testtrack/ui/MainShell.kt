@@ -92,6 +92,8 @@ enum class MainTab(
 @Composable
 fun MainShell(
     onAskForFeedback: () -> Unit,
+    /** An optional update for the header's button; null when Play has none. */
+    update: UpdateOffer? = null,
     onReview: (String) -> Unit,
     onSignOut: () -> Unit,
     onCheck: (String) -> Unit = {},
@@ -218,6 +220,7 @@ fun MainShell(
                     openTaken = hudVm.openTaken,
                     openSeats = hudVm.openSeats,
                     onSignIn = { asking = StartReason },
+                    update = update,
                 )
             },
             // No bottom bar slot: the dock floats over the page below, and the page runs to the

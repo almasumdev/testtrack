@@ -76,6 +76,8 @@ fun TopHud(
     openTaken: Int = 0,
     openSeats: Int = 0,
     onSignIn: () -> Unit = {},
+    /** An optional update Play has for this install; null when there is none. */
+    update: UpdateOffer? = null,
 ) {
     val visibleLevel = level.takeIf { signedIn }
     val title =
@@ -115,7 +117,11 @@ fun TopHud(
                     }
                 }
             }
-            Box(Modifier.align(Alignment.End).padding(top = 4.dp)) {
+            Row(Modifier.align(Alignment.End).padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (update != null) {
+                    UpdateChip(update)
+                    Spacer(Modifier.width(8.dp))
+                }
                 if (visibleLevel != null) {
                     TixChip(tix)
                 } else if (!signedIn) {
@@ -144,6 +150,10 @@ fun TopHud(
                     Text(text.second, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+        }
+        if (update != null) {
+            UpdateChip(update)
+            Spacer(Modifier.width(10.dp))
         }
         Crossfade(
             targetState =

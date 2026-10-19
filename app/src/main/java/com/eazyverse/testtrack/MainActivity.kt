@@ -148,7 +148,14 @@ class MainActivity : ComponentActivity() {
                     // tab shell takes only the top one, because its ground and its floating dock run
                     // to the bottom edge under the system bar.
                     Box(Modifier.fillMaxSize().exchangeBackground()) {
-                        if (Config.isConfigured) AppNav(openCrew) else Inset { NotConfigured() }
+                        if (Config.isConfigured) {
+                            AppNav(
+                                openCrew,
+                                updateOffer(updateLauncher, ::openPlayStoreListing),
+                            )
+                        } else {
+                            Inset { NotConfigured() }
+                        }
 
                         // The testers group, checked in front of the person as soon as they sign
                         // in, and quietly on every launch after. See [MembershipViewModel].
@@ -211,7 +218,7 @@ class MainActivity : ComponentActivity() {
         AppUpdateService.unregisterInstallListener()
     }
 
-    /** Where the blocked gate sends somebody Play will not download for in the background. */
+    /** Where the update gate and button send somebody Play will not download for in the background. */
     private fun openPlayStoreListing() {
         runCatching {
             startActivity(
@@ -264,7 +271,11 @@ private fun NotConfigured() {
 }
 
 @Composable
-fun AppNav(openCrew: MutableState<Boolean> = remember { mutableStateOf(false) }) {
+fun AppNav(
+    openCrew: MutableState<Boolean> = remember { mutableStateOf(false) },
+    /** An optional update for the header's button; null when Play has none. */
+    update: UpdateOffer? = null,
+) {
     val nav = rememberNavController()
     val scope = rememberCoroutineScope()
 
@@ -299,6 +310,7 @@ fun AppNav(openCrew: MutableState<Boolean> = remember { mutableStateOf(false) })
 
         composable(Routes.HOME) {
             MainShell(
+                update = update,
                 onAskForFeedback = { nav.push(Routes.ASK) },
                 onReview = { nav.push(Routes.review(it)) },
                 onCheck = { nav.push(Routes.check(it)) },
