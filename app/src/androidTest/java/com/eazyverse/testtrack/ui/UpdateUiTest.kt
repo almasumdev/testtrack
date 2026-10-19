@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -55,33 +56,55 @@ class UpdateUiTest {
 
     @Composable
     private fun Header(update: UpdateOffer?) {
-        Column(Modifier.fillMaxSize().exchangeBackground().statusBarsPadding()) {
-            TopHud(level = 3, intoLevel = 25, forNext = 100, tix = 340, update = update)
+        ProvideUpdateOffer(update) {
+            Column(Modifier.fillMaxSize().exchangeBackground().statusBarsPadding()) {
+                TopHud(level = 3, intoLevel = 25, forNext = 100, tix = 340, update = LocalUpdateOffer.current)
+                SupportGroup(onAbout = {})
+            }
         }
     }
 
     @Test
-    fun an_optional_update_is_a_button_that_becomes_restart() {
+    fun an_optional_update_is_an_icon_and_a_row_that_never_open_anything_by_themselves() {
         compose.mainClock.autoAdvance = false
         compose.setContent { screen?.invoke() }
-        var taps = 0
+        var downloads = 0
+        var restarts = 0
         shot("50-update-none") { Header(null) }
         compose.onNodeWithContentDescription("Update available").assertDoesNotExist()
+        compose.onNodeWithText("Ready to download").assertDoesNotExist()
 
-        shot("51-update-available") { Header(UpdateOffer(UpdateOffer.State.AVAILABLE) { taps++ }) }
+        shot("51-update-available") { Header(UpdateOffer(UpdateOffer.State.AVAILABLE, "1.6.2") { downloads++ }) }
+        compose.onNodeWithText("Version 1.6.2").assertExists()
         compose.onNodeWithContentDescription("Update available").performClick()
-        assertEquals(1, taps)
+        assertEquals(1, downloads)
 
-        shot("52-update-restart") { Header(UpdateOffer(UpdateOffer.State.READY) { taps++ }) }
-        compose.onNodeWithText("Restart").performClick()
-        assertEquals(2, taps)
+        shot("52-update-downloading") { Header(UpdateOffer(UpdateOffer.State.DOWNLOADING, "1.6.2", progress = .62f)) }
+        compose.onNodeWithText("62%").assertExists()
+
+        // Ready from an earlier session: Restart shows, and no dialog opens on its own.
+        shot("53-update-ready") { Header(UpdateOffer(UpdateOffer.State.READY, "1.6.2") { restarts++ }) }
+        compose.onNodeWithText("Restart to update?").assertDoesNotExist()
+        // The header's Restart; the row has its own, and both ask the same question.
+        compose.onAllNodesWithText("Restart")[0].performClick()
+        compose.mainClock.advanceTimeBy(500)
+        compose.onNodeWithText("Restart to update?").assertExists()
+        assertEquals(0, restarts)
+    }
+
+    @Test
+    fun a_download_started_here_asks_to_restart_when_it_lands() {
+        compose.mainClock.autoAdvance = false
+        compose.setContent { screen?.invoke() }
+        shot("54-update-restart-dialog") { Header(UpdateOffer(UpdateOffer.State.READY, "1.6.2", autoAsk = true)) }
+        compose.onNodeWithText("Restart to update?").assertExists()
     }
 
     @Test
     fun a_forced_update_fills_the_screen() {
         compose.mainClock.autoAdvance = false
         compose.setContent { screen?.invoke() }
-        shot("53-update-forced") { ForceUpdateScreen(false, true, {}, {}, {}) }
-        shot("54-update-forced-downloaded") { ForceUpdateScreen(true, true, {}, {}, {}) }
+        shot("55-update-forced") { ForceUpdateScreen(false, true, {}, {}, {}) }
+        shot("56-update-forced-downloaded") { ForceUpdateScreen(true, true, {}, {}, {}) }
     }
 }

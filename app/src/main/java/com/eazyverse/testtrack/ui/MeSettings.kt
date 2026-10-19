@@ -16,6 +16,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Bell
+import com.composables.icons.lucide.Download
 import com.composables.icons.lucide.ExternalLink
 import com.composables.icons.lucide.HardDrive
 import com.composables.icons.lucide.Info
@@ -133,7 +134,9 @@ internal fun SupportGroup(onAbout: () -> Unit) {
         SectionTitle("Support")
         // Left out on a phone with no mail app, where it could only open a dead end.
         val mailable = remember { canMail(context) }
-        val support = if (mailable) SUPPORT else SUPPORT - SupportRow.FEEDBACK
+        // The update row only while a newer version exists; without one the group is as it was.
+        val update = LocalUpdateOffer.current
+        val support = SUPPORT.filter { (mailable || it != SupportRow.FEEDBACK) && (update != null || it != SupportRow.UPDATE) }
         TileGroup(count = support.size) { index, place ->
             when (support[index]) {
                 SupportRow.ABOUT ->
@@ -144,6 +147,7 @@ internal fun SupportGroup(onAbout: () -> Unit) {
                         subtitle = "Who made it, and more apps",
                         onClick = onAbout,
                     )
+                SupportRow.UPDATE -> update?.let { UpdateRow(it, place, Lucide.Download) }
                 SupportRow.RATE ->
                     // The stars are drawn in the sentence, not beside it, and are not a control: the
                     // whole row goes to the listing, always.
@@ -176,7 +180,7 @@ internal fun SupportGroup(onAbout: () -> Unit) {
 }
 
 // No privacy row: the About page carries the policy, in its footer.
-private enum class SupportRow { ABOUT, RATE, FEEDBACK }
+private enum class SupportRow { ABOUT, UPDATE, RATE, FEEDBACK }
 
 private val SUPPORT = SupportRow.entries.toList()
 

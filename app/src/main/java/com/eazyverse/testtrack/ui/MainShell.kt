@@ -196,150 +196,153 @@ fun MainShell(
 
     val density = LocalDensity.current
     var dockHeight by remember { mutableStateOf(0.dp) }
-    Backdrop(scene = tab.scene) {
-        Scaffold(
-            // The status bar and the sides only. The bottom is left to the dock, which lifts itself
-            // over the navigation bar, so the page can run under both.
-            modifier =
-                Modifier.windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
-                ),
-            // Clear, so the exchange-pattern ground under the whole shell shows through; see [Backdrop].
-            containerColor = Color.Transparent,
-            // Above all five tabs rather than inside any of them, because it belongs to the account
-            // and not to a screen. The two tabbed screens keep their own controls and now sit under
-            // this rather than beside it.
-            topBar = {
-                TopHud(
-                    signedIn = !hudVm.signedOut,
-                    level = hudVm.level,
-                    intoLevel = hudVm.intoLevel,
-                    forNext = hudVm.forNext,
-                    tix = hudVm.tix,
-                    openCrew = hudVm.openCrew,
-                    openTaken = hudVm.openTaken,
-                    openSeats = hudVm.openSeats,
-                    onSignIn = { asking = StartReason },
-                    update = update,
-                )
-            },
-            // No bottom bar slot: the dock floats over the page below, and the page runs to the
-            // bottom edge under it and under the system bar. Lists make room with [dockRoom].
-            contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        ) { padding ->
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .padding(top = padding.calculateTopPadding()),
-            ) {
-                CompositionLocalProvider(LocalDockRoom provides dockHeight) {
-                    // Fade through rather than cut or cross-fade: the old page goes first, then the new
-                    // one comes in, so two pages' tabs and headings never sit on top of each other.
-                    AnimatedContent(
-                        tab,
-                        transitionSpec = { fadeIn(tween(160, delayMillis = 80)) togetherWith fadeOut(tween(80)) },
-                        label = "page",
-                    ) { page ->
-                        when (page) {
-                            MainTab.CIRCLE ->
-                                FeedScreen(
-                                    onReview = onReview,
-                                    onCheck = onCheck,
-                                    // Which app, from My apps; signed out, the old way in asks first.
-                                    onAsk = {
-                                        if (Session.signedIn) {
+    // The update's offer for the header and the You page, and the restart dialog behind both.
+    ProvideUpdateOffer(update) {
+        Backdrop(scene = tab.scene) {
+            Scaffold(
+                // The status bar and the sides only. The bottom is left to the dock, which lifts itself
+                // over the navigation bar, so the page can run under both.
+                modifier =
+                    Modifier.windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
+                    ),
+                // Clear, so the exchange-pattern ground under the whole shell shows through; see [Backdrop].
+                containerColor = Color.Transparent,
+                // Above all five tabs rather than inside any of them, because it belongs to the account
+                // and not to a screen. The two tabbed screens keep their own controls and now sit under
+                // this rather than beside it.
+                topBar = {
+                    TopHud(
+                        signedIn = !hudVm.signedOut,
+                        level = hudVm.level,
+                        intoLevel = hudVm.intoLevel,
+                        forNext = hudVm.forNext,
+                        tix = hudVm.tix,
+                        openCrew = hudVm.openCrew,
+                        openTaken = hudVm.openTaken,
+                        openSeats = hudVm.openSeats,
+                        onSignIn = { asking = StartReason },
+                        update = LocalUpdateOffer.current,
+                    )
+                },
+                // No bottom bar slot: the dock floats over the page below, and the page runs to the
+                // bottom edge under it and under the system bar. Lists make room with [dockRoom].
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            ) { padding ->
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(top = padding.calculateTopPadding()),
+                ) {
+                    CompositionLocalProvider(LocalDockRoom provides dockHeight) {
+                        // Fade through rather than cut or cross-fade: the old page goes first, then the new
+                        // one comes in, so two pages' tabs and headings never sit on top of each other.
+                        AnimatedContent(
+                            tab,
+                            transitionSpec = { fadeIn(tween(160, delayMillis = 80)) togetherWith fadeOut(tween(80)) },
+                            label = "page",
+                        ) { page ->
+                            when (page) {
+                                MainTab.CIRCLE ->
+                                    FeedScreen(
+                                        onReview = onReview,
+                                        onCheck = onCheck,
+                                        // Which app, from My apps; signed out, the old way in asks first.
+                                        onAsk = {
+                                            if (Session.signedIn) {
+                                                apps.load(context)
+                                                picking = PickFor.FEEDBACK
+                                            } else {
+                                                onAskForFeedback()
+                                            }
+                                        },
+                                        onSignIn = {
+                                            asking =
+                                                SignInReason(
+                                                    title = "Sign in to see what is waiting",
+                                                    why =
+                                                        "Reviews of your apps and cases you are asked to decide " +
+                                                            "are addressed to an account. The rest of Circle " +
+                                                            "you can read without one.",
+                                                )
+                                        },
+                                    )
+
+                                MainTab.GROUPS -> {
+                                    // Get ready asks whether an app is set for a crew, so My apps is read here too.
+                                    LaunchedEffect(Unit) { apps.load(context) }
+                                    CrewScreen(
+                                        onOpenCrew = onOpenCrew,
+                                        myApps = apps.apps.takeIf { it.isNotEmpty() || !apps.loading },
+                                        onAddApp = onAddApp,
+                                        onOpenApp = onOpenApp,
+                                        // Signed in and on the testers group already: which app goes in.
+                                        onAddToCrew = {
                                             apps.load(context)
-                                            picking = PickFor.FEEDBACK
-                                        } else {
-                                            onAskForFeedback()
-                                        }
-                                    },
-                                    onSignIn = {
-                                        asking =
-                                            SignInReason(
-                                                title = "Sign in to see what is waiting",
-                                                why =
-                                                    "Reviews of your apps and cases you are asked to decide " +
-                                                        "are addressed to an account. The rest of Circle " +
-                                                        "you can read without one.",
-                                            )
-                                    },
-                                )
+                                            picking = PickFor.CREW
+                                        },
+                                        onSignIn = {
+                                            asking =
+                                                SignInReason(
+                                                    title = "Sign in to see your crews",
+                                                    why =
+                                                        "Which seats are yours, what you owe tonight and what " +
+                                                            "you have finished all hang off the account. Open " +
+                                                            "reads without one.",
+                                                )
+                                        },
+                                    )
+                                }
+                                MainTab.RANKS -> RanksScreen()
 
-                            MainTab.GROUPS -> {
-                                // Get ready asks whether an app is set for a crew, so My apps is read here too.
-                                LaunchedEffect(Unit) { apps.load(context) }
-                                CrewScreen(
-                                    onOpenCrew = onOpenCrew,
-                                    myApps = apps.apps.takeIf { it.isNotEmpty() || !apps.loading },
-                                    onAddApp = onAddApp,
-                                    onOpenApp = onOpenApp,
-                                    // Signed in and on the testers group already: which app goes in.
-                                    onAddToCrew = {
-                                        apps.load(context)
-                                        picking = PickFor.CREW
-                                    },
-                                    onSignIn = {
-                                        asking =
-                                            SignInReason(
-                                                title = "Sign in to see your crews",
-                                                why =
-                                                    "Which seats are yours, what you owe tonight and what " +
-                                                        "you have finished all hang off the account. Open " +
-                                                        "reads without one.",
-                                            )
-                                    },
-                                )
+                                MainTab.APPS ->
+                                    AppsScreen(
+                                        onOpenApp = onOpenApp,
+                                        onAddApp = onAddApp,
+                                        vm = apps,
+                                        onSignIn = {
+                                            asking =
+                                                SignInReason(
+                                                    title = "Sign in to see your apps",
+                                                    why =
+                                                        "This is the list of what you have put up, so it needs " +
+                                                            "to know who you are. Everything else in TestTrack " +
+                                                            "you can read without an account.",
+                                                )
+                                        },
+                                    )
+
+                                MainTab.PROFILE ->
+                                    MeScreen(
+                                        onSignOut = onSignOut,
+                                        onOpenRanks = { show(MainTab.RANKS) },
+                                        notifications = Session.notificationsGranted,
+                                        onAbout = onOpenAbout,
+                                        onSignIn = {
+                                            asking =
+                                                SignInReason(
+                                                    title = "Sign in to see your record",
+                                                    why =
+                                                        "Your level, your tix and what you have done belong to " +
+                                                            "the account. Everything else in TestTrack you can " +
+                                                            "read without one.",
+                                                )
+                                        },
+                                    )
                             }
-                            MainTab.RANKS -> RanksScreen()
-
-                            MainTab.APPS ->
-                                AppsScreen(
-                                    onOpenApp = onOpenApp,
-                                    onAddApp = onAddApp,
-                                    vm = apps,
-                                    onSignIn = {
-                                        asking =
-                                            SignInReason(
-                                                title = "Sign in to see your apps",
-                                                why =
-                                                    "This is the list of what you have put up, so it needs " +
-                                                        "to know who you are. Everything else in TestTrack " +
-                                                        "you can read without an account.",
-                                            )
-                                    },
-                                )
-
-                            MainTab.PROFILE ->
-                                MeScreen(
-                                    onSignOut = onSignOut,
-                                    onOpenRanks = { show(MainTab.RANKS) },
-                                    notifications = Session.notificationsGranted,
-                                    onAbout = onOpenAbout,
-                                    onSignIn = {
-                                        asking =
-                                            SignInReason(
-                                                title = "Sign in to see your record",
-                                                why =
-                                                    "Your level, your tix and what you have done belong to " +
-                                                        "the account. Everything else in TestTrack you can " +
-                                                        "read without one.",
-                                            )
-                                    },
-                                )
                         }
                     }
                 }
             }
-        }
 
-        MainBar(
-            tab,
-            show,
-            Modifier
-                .align(Alignment.BottomCenter)
-                .onSizeChanged { dockHeight = with(density) { it.height.toDp() } - DockTop },
-        )
+            MainBar(
+                tab,
+                show,
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .onSizeChanged { dockHeight = with(density) { it.height.toDp() } - DockTop },
+            )
+        }
     }
 
     picking?.let { purpose ->

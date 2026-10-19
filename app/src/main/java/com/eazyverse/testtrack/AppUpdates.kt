@@ -10,12 +10,11 @@ import com.eazyverse.testtrack.data.UpdateTier
 import com.eazyverse.testtrack.ui.UpdateOffer
 
 /**
- * The header's update button, when Play has an optional update for this install.
- *
- * Tapping it starts the background download; once that is on the phone and was started from here,
- * the button becomes Restart. A download left from an earlier session stays behind the same button
- * rather than greeting anybody at launch. A forced update is the full screen instead, so it has no
- * button. Here rather than in a screen because only the shell may reach [AppUpdateService].
+ * The optional update the shell offers, following mkit's docs/in-app-update.md: nothing on launch
+ * and no dialog of its own; an icon that downloads when tapped, a spinner while it does, then
+ * Restart. A finished download shows as Restart whatever session it came from. A forced update is
+ * the full screen instead, so it gets no offer. Here because only the shell may reach
+ * [AppUpdateService].
  */
 @Composable
 internal fun updateOffer(
@@ -25,11 +24,15 @@ internal fun updateOffer(
     val tier by AppUpdateService.tier.collectAsState()
     val downloaded by AppUpdateService.isDownloaded.collectAsState()
     val started by AppUpdateService.userStartedUpdate.collectAsState()
+    val progress by AppUpdateService.downloadProgress.collectAsState()
+    val version = AppUpdateService.waitingVersionName
     return when {
         tier == UpdateTier.BLOCKED -> null
-        downloaded && started -> UpdateOffer(UpdateOffer.State.READY) { AppUpdateService.completeUpdate() }
-        tier == UpdateTier.NUDGE || downloaded ->
-            UpdateOffer(UpdateOffer.State.AVAILABLE) {
+        downloaded ->
+            UpdateOffer(UpdateOffer.State.READY, version, autoAsk = started) { AppUpdateService.completeUpdate() }
+        progress != null -> UpdateOffer(UpdateOffer.State.DOWNLOADING, version, progress ?: -1f)
+        tier == UpdateTier.NUDGE ->
+            UpdateOffer(UpdateOffer.State.AVAILABLE, version) {
                 if (!AppUpdateService.startUserUpdate(launcher)) openStore()
             }
         else -> null

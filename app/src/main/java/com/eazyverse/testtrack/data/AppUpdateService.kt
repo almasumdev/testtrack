@@ -61,12 +61,19 @@ object AppUpdateService {
     val isDownloaded: StateFlow<Boolean> = _isDownloaded
 
     /**
-     * True once somebody taps the app bar update icon in this process. Only then does a finished
-     * download earn the Restart banner; one left on disk from an earlier session waits behind the
-     * same icon instead of greeting them at launch.
+     * True once somebody taps the update icon in this process. Only then may the restart dialog open
+     * by itself when the download lands; one left on disk from an earlier session shows as the
+     * Restart icon and waits for a tap instead of greeting them at launch.
      */
     private val _userStartedUpdate = MutableStateFlow(false)
     val userStartedUpdate: StateFlow<Boolean> = _userStartedUpdate
+
+    /**
+     * A background download under way: null when there is none, -1 while Play has not said how big
+     * it is yet, otherwise how far along, 0 to 1. The icon is a spinner for as long as this is set.
+     */
+    private val _downloadProgress = MutableStateFlow<Float?>(null)
+    val downloadProgress: StateFlow<Float?> = _downloadProgress
 
     private var currentBuild = 0
     private var currentMajor = 0
@@ -87,13 +94,31 @@ object AppUpdateService {
     /** Whether Play will download in the background rather than sending the user to the store. */
     val canDownloadInApp: Boolean get() = playUpdateAvailable && flexibleAllowed
 
+    /**
+     * The name of the version waiting, when it is certain: Play gives only a build number, and the
+     * name in `config/app` is only that build's when the two agree. Null means say "Update available".
+     */
+    val waitingVersionName: String?
+        get() = latestVersionName.takeIf { it.isNotBlank() && availableBuild > 0 && availableBuild == latestBuild }
+
     private val installListener =
         InstallStateUpdatedListener { state ->
             when (state.installStatus()) {
-                InstallStatus.DOWNLOADED -> _isDownloaded.value = true
+                InstallStatus.PENDING -> _downloadProgress.value = -1f
+                InstallStatus.DOWNLOADING -> {
+                    val total = state.totalBytesToDownload()
+                    _downloadProgress.value = if (total > 0) state.bytesDownloaded().toFloat() / total else -1f
+                }
+                InstallStatus.DOWNLOADED -> {
+                    _downloadProgress.value = null
+                    _isDownloaded.value = true
+                }
                 InstallStatus.INSTALLING, InstallStatus.INSTALLED,
                 InstallStatus.FAILED, InstallStatus.CANCELED,
-                -> _isDownloaded.value = false
+                -> {
+                    _downloadProgress.value = null
+                    _isDownloaded.value = false
+                }
                 else -> {}
             }
         }
@@ -142,6 +167,8 @@ object AppUpdateService {
             // offers immediately.
             stalenessDays = info.clientVersionStalenessDays() ?: 0
             if (info.installStatus() == InstallStatus.DOWNLOADED) _isDownloaded.value = true
+            // Still downloading from before a restart of the app: keep showing it as under way.
+            if (info.installStatus() == InstallStatus.DOWNLOADING && _downloadProgress.value == null) _downloadProgress.value = -1f
         } catch (e: Exception) {
             // Thrown on sideloaded / non-Play installs, or with no connection to Play.
             Log.d(TAG, "Play update check unavailable: ${e.message}")
