@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.data
 import android.accounts.Account
 import android.app.Activity
 import android.content.Intent
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -113,9 +114,9 @@ object AuthRepo {
         val account =
             withTimeoutOrNull(GOOGLE_LIMIT) { GroupGate.signIn(activity) }
                 ?: throw StalledException(
-                    "Google never came back with an answer. Close TestTrack from your recent apps, " +
-                        "open it again and tap Continue with Google. If it happens a second time, " +
-                        "restart the phone. It is Play services that has stalled, not your account.",
+                    "Google didn't answer. Close TestTrack from your recent apps, open it again and " +
+                        "tap Continue with Google. If it happens again, restart your phone. Your " +
+                        "account is fine.",
                 )
 
         firebaseError =
@@ -130,8 +131,11 @@ object AuthRepo {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                "You're signed in, but Firebase turned the token down. Google needs enabling under " +
-                    "Firebase Authentication, in Sign-in method. (${e.message})"
+                // The cause is ours to read, not the person's: usually Google sign-in switched off
+                // under Firebase Authentication. The person only needs to know it did not finish.
+                Log.w("AuthRepo", "Firebase sign-in refused", e)
+                "Google signed you in, but TestTrack couldn't finish. Tap Continue with Google again " +
+                    "in a moment."
             }
         return account
     }

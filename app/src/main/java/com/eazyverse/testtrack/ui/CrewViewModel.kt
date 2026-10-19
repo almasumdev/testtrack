@@ -346,7 +346,7 @@ class CrewViewModel : ViewModel() {
     ) {
         val first = apps.firstOrNull() ?: return
         if (apps.any { it.packageName.isBlank() }) {
-            message = "${first.label} did not come with a package name, so it cannot be opened."
+            message = "${first.label} can't be opened from here. Open it from your phone's app list instead."
             return
         }
         // Asked at the first app somebody opens: without it the phone reads no time in the app,

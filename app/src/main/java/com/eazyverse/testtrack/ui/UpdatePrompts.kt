@@ -74,8 +74,8 @@ fun ForceUpdateScreen(
             )
             Text(
                 text =
-                    "This version of TestTrack no longer works with the server. Update to keep " +
-                        "your crews, feedback and tix in step with everyone else.",
+                    "This version of TestTrack is out of date. Update to keep testing with your " +
+                        "crews and collecting tix.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

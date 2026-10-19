@@ -102,7 +102,7 @@ class JoinGroupAskTest {
 
     @Test
     fun a_failed_check_is_never_told_as_not_being_a_member() {
-        open(failure = "Couldn't reach the membership service.")
+        open(failure = "Couldn't check the testers group. Check your connection and try again.")
         compose.onNodeWithText("Couldn't check the group").assertIsDisplayed()
         assertEquals(0, compose.onAllNodesWithText("Join the testers group").fetchSemanticsNodes().size)
         compose.onNodeWithText("Try again").performClick()

@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.data
 
+import android.util.Log
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
@@ -18,8 +19,8 @@ import java.io.IOException
  *
  * Every line below is one sentence of cause and, where there is one, one short thing to do. They
  * are read on a phone, in a hurry, by somebody who wants to get back to what they were doing, and
- * a paragraph gets skimmed to its first full stop anyway. Where the cause is genuinely unknown the
- * exception's own name and text are appended rather than guessed at.
+ * a paragraph gets skimmed to its first full stop anyway. The exception's own name and text are
+ * never shown: they go to the log, where whoever is fixing it can read them.
  *
  * Our own exceptions keep their text. They were written for this.
  */
@@ -48,22 +49,16 @@ fun Throwable.friendly(fallback: String): String =
         this is NoCredentialException ->
             "Google had no account ready. Try once more."
 
-        this is GetCredentialException -> "Google couldn't finish the sign-in. ${detail()}"
+        this is GetCredentialException -> logged("Google couldn't finish the sign-in. Try once more.")
 
-        this is ApiException -> "Google turned the sign-in down. ${detail()}"
+        this is ApiException -> logged("Google turned the sign-in down. Try once more in a moment.")
 
-        // Anything unrecognised says what it actually was.
-        //
-        // The sentence on its own is a guess dressed as an explanation: it names the network because
-        // the network is the usual suspect, and when it is wrong it sends somebody off to fix the one
-        // thing that was never broken. A tester who can read the real cause out to you, or screenshot
-        // it, turns an unreproducible report into a fixable one.
-        else -> "$fallback ${detail()}"
+        // Anything unrecognised: the caller's own sentence, with the real cause in the log.
+        else -> logged(fallback)
     }
 
-/** The real cause, in the smallest form still worth reading out over a chat. */
-private fun Throwable.detail(): String {
-    val name = this::class.simpleName ?: "Error"
-    val text = message?.trim()?.takeIf { it.isNotEmpty() }?.take(140)
-    return if (text == null) "($name)" else "($name: $text)"
+/** The sentence for the person; the exception itself, class and text, for the log. */
+private fun Throwable.logged(sentence: String): String {
+    Log.w("TestTrack", sentence, this)
+    return sentence
 }

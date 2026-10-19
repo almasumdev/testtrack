@@ -73,9 +73,8 @@ class AuthViewModel : ViewModel() {
                     // swallowed.
                     throw e
                 } catch (e: Exception) {
-                    // Short, because friendly() appends the real cause when it has no better
-                    // sentence of its own, and two guesses in a row read as noise.
-                    message = e.friendly("Sign-in could not be completed.")
+                    // The sentence for the person; friendly() puts the real cause in the log.
+                    message = e.friendly("Sign-in didn't finish. Try once more.")
                 } finally {
                     busy = false
                 }

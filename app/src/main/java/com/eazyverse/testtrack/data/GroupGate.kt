@@ -235,9 +235,9 @@ object GroupGate {
             } catch (e: IOException) {
                 // A dropped connection is not a verdict, and OkHttp's message for one names an IP
                 // address, which reads like the deployment is broken rather than the network.
-                GateResult.Failed("Couldn't reach the membership service. Check your connection and try again.")
+                GateResult.Failed("Couldn't check the testers group. Check your connection and try again.")
             } catch (e: Exception) {
-                GateResult.Failed(e.message ?: "Membership check failed")
+                GateResult.Failed(e.message ?: "Couldn't check the testers group. Try again.")
             }
         }
 }

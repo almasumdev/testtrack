@@ -326,7 +326,7 @@ class AskViewModel :
      */
     private fun whyNot(error: Throwable): String =
         when {
-            error !is ApiError -> "Couldn't reach the server. Check your connection and try again."
+            error !is ApiError -> "Couldn't reach TestTrack. Check your connection and try again."
             error.code == "listing_not_visible" ->
                 "Play won't show us that app. The usual cause is a closed testing track without " +
                     "the testers group on it. Add the group, then try again."
