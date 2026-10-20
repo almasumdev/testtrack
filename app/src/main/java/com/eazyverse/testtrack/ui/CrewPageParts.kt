@@ -270,7 +270,7 @@ internal fun YourAppCard(
                 .PaddingValues(horizontal = 16.dp, vertical = 14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            AppIcon(seat.packageName, seat.appName, size = 48.dp) { AppTile(seat.appName, 48.dp) }
+            AppMark(seat.packageName, seat.appName, seat.icon, size = 48.dp)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(seat.appName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)

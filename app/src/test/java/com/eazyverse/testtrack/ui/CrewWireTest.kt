@@ -233,4 +233,12 @@ class CrewWireTest {
         val full = crew(state = "full", members = listOf(seat("me", mine = true), waiting)).toCrew()
         assertFalse(full.mayVote)
     }
+
+    @Test
+    fun an_open_crew_carries_its_seats_icons_and_a_seat_its_own() {
+        val open = crew(members = emptyList()).copy(taken = 2, filled = 1, icons = listOf("https://play/a", "")).toCrew(member = false)
+        assertEquals(listOf("https://play/a", ""), open.icons)
+        val seat = seat().copy(icon = "https://play/b").toSeat("Crew 07")
+        assertEquals("https://play/b", seat.icon)
+    }
 }

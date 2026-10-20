@@ -27,7 +27,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -83,6 +85,8 @@ fun SeatCountTiles(
     filled: Int,
     taken: Int,
     modifier: Modifier = Modifier,
+    /** The taken seats' app icons, confirmed first. A seat without one stays a coloured square. */
+    icons: List<String> = emptyList(),
 ) {
     val perRow = 8
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -104,7 +108,19 @@ fun SeatCountTiles(
                                         MaterialTheme.colorScheme.primaryContainer
                                     },
                                 ),
-                        )
+                        ) {
+                            // The app itself, where Play gave an icon: a crew reads as the apps in
+                            // it. One still being checked is drawn faint, as the square was.
+                            val icon = icons.getOrNull(index).orEmpty()
+                            if (icon.isNotBlank()) {
+                                AsyncImage(
+                                    model = icon,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.matchParentSize().alpha(if (index < filled) 1f else 0.45f),
+                                )
+                            }
+                        }
                     }
                 }
                 repeat(perRow - row.size) { Spacer(Modifier.weight(1f)) }

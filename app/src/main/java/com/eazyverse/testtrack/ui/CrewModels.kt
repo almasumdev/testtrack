@@ -112,6 +112,8 @@ data class CrewSeat(
     val appName: String,
     val owner: String,
     val packageName: String = "",
+    /** Play's icon, for a row whose app is not on this phone yet. */
+    val icon: String = "",
     /** How a tester gets past the front door: a test login or a code. Read by the whole crew. */
     val notes: String = "",
     /** Which crew it is in. Carried on the seat because some lists span crews. */
@@ -193,6 +195,8 @@ data class Crew(
     /** Seats holding a place, and those of them seen on Play. From the server, not the list. */
     val taken: Int = 0,
     val filled: Int = 0,
+    /** The taken seats' app icons, confirmed first, for the seat tiles. Faces only, no names. */
+    val icons: List<String> = emptyList(),
     val seats: List<CrewSeat> = emptyList(),
     val members: List<CrewMember> = emptyList(),
     val apps: List<CrewApp> = emptyList(),

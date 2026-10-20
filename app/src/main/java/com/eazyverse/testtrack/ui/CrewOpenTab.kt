@@ -62,7 +62,7 @@ fun CrewOpenTab(
                                         "back in full if your app leaves before the run."
                             },
                         lineTone = if (vm.inOpen) Tone.ACCENT else null,
-                        meter = { SeatCountTiles(filled = crew?.filled ?: 0, taken = crew?.taken ?: 0) },
+                        meter = { SeatCountTiles(filled = crew?.filled ?: 0, taken = crew?.taken ?: 0, icons = crew?.icons.orEmpty()) },
                         action =
                             when {
                                 vm.inOpen || vm.blocked != null -> null

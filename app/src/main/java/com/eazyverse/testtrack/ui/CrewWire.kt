@@ -41,6 +41,7 @@ fun ApiSeat.toSeat(crewName: String = "") =
         appName = appName,
         owner = ownerName,
         packageName = packageName,
+        icon = icon,
         notes = notes,
         crew = crewName,
         state = SeatState.of(state),
@@ -114,6 +115,7 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
         filling = state == "filling",
         taken = taken,
         filled = filled,
+        icons = icons,
         seats = members.map { it.toSeat(name) },
         // Rejected seats never ran, so they are not members; only the reader sees their own.
         members = members.filter { it.state != "rejected" }.map { it.toMember() },

@@ -320,6 +320,8 @@ data class ApiSeat(
     @SerialName("crew_id") val crewId: String,
     @SerialName("app_name") val appName: String,
     @SerialName("package_name") val packageName: String,
+    /** Play's icon for the app, when it was added through My apps; empty otherwise. */
+    val icon: String = "",
     val notes: String = "",
     @SerialName("owner_name") val ownerName: String,
     /** checking, confirmed, rejected, withdrawn or removed. */
@@ -368,6 +370,8 @@ data class ApiCrew(
     val filled: Int,
     /** Seats holding a place either way, which is what decides whether there is room. */
     val taken: Int,
+    /** Those seats' app icons, confirmed first; empty where an app has none. Never names. */
+    val icons: List<String> = emptyList(),
     val seats: Int,
     @SerialName("run_days") val runDays: Int,
     /** This account's own day of the fortnight. Zero before their own midnight. */

@@ -114,6 +114,8 @@ internal fun CrewPageRow(
     line: androidx.compose.ui.text.AnnotatedString,
     place: TilePlace,
     onOpen: () -> Unit,
+    /** Play's icon, drawn when the app is not on this phone. */
+    icon: String = "",
     trailing: @Composable () -> Unit,
 ) {
     val t = Tt.colors
@@ -129,7 +131,7 @@ internal fun CrewPageRow(
             .padding(start = 12.dp, end = 6.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppIcon(packageName, title, size = 40.dp) { AppTile(title, 40.dp) }
+        AppMark(packageName, title, icon, size = 40.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
@@ -196,7 +198,7 @@ internal fun CrewRowSheet(
                 .padding(bottom = 18.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AppIcon(seat.packageName, seat.appName, size = 44.dp) { AppTile(seat.appName, 44.dp) }
+                AppMark(seat.packageName, seat.appName, seat.icon, size = 44.dp)
                 Spacer(Modifier.width(12.dp))
                 Column {
                     Text(seat.appName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -314,7 +316,7 @@ internal fun InstallRow(
     onSheet: (RowSheet) -> Unit,
 ) {
     val installed = actions.isInstalled(seat.packageName)
-    CrewPageRow(seat.packageName, seat.appName, ownerLine(seat.owner, seat.notes.isNotBlank()), place, onOpen = {
+    CrewPageRow(seat.packageName, seat.appName, ownerLine(seat.owner, seat.notes.isNotBlank()), place, icon = seat.icon, onOpen = {
         onSheet(RowSheet(seat, SheetKind.INSTALL))
     }) {
         when {
@@ -347,6 +349,7 @@ internal fun AskedRow(
         ownerLine(seat.owner, seat.notes.isNotBlank() && !installed, tail),
         place,
         onOpen = { onSheet(RowSheet(seat, SheetKind.ASKED)) },
+        icon = seat.icon,
     ) {
         when {
             seat.myVote == true -> StatusChip("You said Yes", Tone.OK)
@@ -373,6 +376,7 @@ internal fun TonightRow(
         ownerLine(app.owner, seat.notes.isNotBlank(), if (installed) "" else "not on your phone"),
         place,
         onOpen = { onSheet(RowSheet(seat, SheetKind.TONIGHT, app)) },
+        icon = seat.icon,
     ) {
         if (installed) {
             RowPill(
@@ -393,7 +397,9 @@ internal fun DoneRow(
     place: TilePlace,
     onSheet: (RowSheet) -> Unit,
 ) {
-    CrewPageRow(app.packageName, app.label, ownerLine(app.owner, false), place, onOpen = { onSheet(RowSheet(seat, SheetKind.DONE, app)) }) {
+    CrewPageRow(app.packageName, app.label, ownerLine(app.owner, false), place, icon = seat.icon, onOpen = {
+        onSheet(RowSheet(seat, SheetKind.DONE, app))
+    }) {
         if (app.reported) StatusChip("Reported", Tone.WARN) else StatusChip("Opened", Tone.OK)
     }
 }
