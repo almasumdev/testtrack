@@ -238,18 +238,10 @@ internal fun PickedApp(
                 AppChip(Lucide.Clock, "Not checked yet", Status.short, Status.shortSoft)
             }
         }
-        Spacer(Modifier.height(10.dp))
-        Text(
-            "Pick a different app",
-            style = MaterialTheme.typography.bodyMedium,
-            color = t.accentInk,
-            fontWeight = FontWeight.Medium,
-            modifier =
-                Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable(role = Role.Button, onClick = onPickAnother)
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-        )
+        Spacer(Modifier.height(16.dp))
+        // A button, not a line of coloured text: as text it read as a label, not as a way back
+        // to the list of apps.
+        Secondary("Choose another app", onClick = onPickAnother)
     }
     if (renaming) RenameApp(name, onDone = { renaming = false }, onRename = onRename)
 }
