@@ -70,7 +70,6 @@ object Routes {
     const val HOME = "home"
 
     /** Asking the circle to look at your app. A page, because finding the app is its own step. */
-    const val ASK = "ask"
     const val ABOUT = "about"
     const val REVIEW = "review?post={post}"
 
@@ -311,7 +310,6 @@ fun AppNav(
         composable(Routes.HOME) {
             MainShell(
                 update = update,
-                onAskForFeedback = { nav.push(Routes.ASK) },
                 onReview = { nav.push(Routes.review(it)) },
                 onCheck = { nav.push(Routes.check(it)) },
                 onOpenAbout = { nav.push(Routes.ABOUT) },
@@ -419,7 +417,12 @@ fun AppNav(
             val appId = requireNotNull(entry.arguments?.getString("app"))
             LaunchedEffect(appId) { if (apps.byId(appId) == null) apps.load(context) }
             Inset {
-                AskScreen(onDone = { nav.popBackStack() }, onBack = { nav.popBackStack() }, app = apps.byId(appId))
+                AskScreen(
+                    onDone = { nav.popBackStack() },
+                    onBack = { nav.popBackStack() },
+                    app = apps.byId(appId),
+                    loading = apps.loading,
+                )
             }
         }
 
@@ -455,15 +458,6 @@ fun AppNav(
 
         composable(Routes.ABOUT) {
             Inset { AboutScreen(onBack = { nav.popBackStack() }) }
-        }
-
-        composable(Routes.ASK) {
-            Inset {
-                AskScreen(
-                    onDone = { nav.popBackStack() },
-                    onBack = { nav.popBackStack() },
-                )
-            }
         }
     }
 }

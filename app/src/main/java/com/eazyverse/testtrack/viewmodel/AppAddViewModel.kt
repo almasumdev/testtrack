@@ -13,11 +13,8 @@ import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.AppIn
 import com.eazyverse.testtrack.net.Listing
-import com.eazyverse.testtrack.ui.AskFailure
 import com.eazyverse.testtrack.ui.FeedRules
 import com.eazyverse.testtrack.ui.MyAppsChanged
-import com.eazyverse.testtrack.ui.lookupFailure
-import com.eazyverse.testtrack.ui.packageFrom
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

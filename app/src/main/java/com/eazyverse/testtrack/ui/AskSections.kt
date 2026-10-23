@@ -25,6 +25,7 @@ import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.AskFailure
 
 @Composable
 internal fun AskIntro() {

@@ -1,6 +1,8 @@
 package com.eazyverse.testtrack.ui
 
 import com.eazyverse.testtrack.net.ApiError
+import com.eazyverse.testtrack.viewmodel.lookupFailure
+import com.eazyverse.testtrack.viewmodel.packageFrom
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

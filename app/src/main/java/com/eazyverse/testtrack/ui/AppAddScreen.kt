@@ -31,6 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AddWay
 import com.eazyverse.testtrack.viewmodel.AppAddViewModel
+import com.eazyverse.testtrack.viewmodel.AskFailure
 
 /**
  * Adding an app to My apps: picked from this phone, or found on Play by its link, then added.

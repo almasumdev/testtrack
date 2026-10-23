@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -22,34 +21,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.AskFailure
 
 /**
- * Asking the circle to look at your app.
+ * Asking the circle to look at one of your apps.
  *
- * A page rather than a dialog, because finding the app is its own step and it can fail in ways
- * worth explaining. A dialog that has to say "Play will not show us that app, check the testers
- * group is on the track" has outgrown being one.
- *
- * Two questions before anything else: where the app is, and its link. The name, icon and
- * publisher are read off Play and shown back to confirm. That used to be typed by hand, which is
- * two chances to make a typo nobody would catch until fifteen people failed to install the wrong
- * thing.
+ * Always an app on My apps, picked from Circle or opened from its own page, so it arrives with its
+ * name, icon and track. This page is only what to look at, how many reviews and what each pays.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AskScreen(
     onDone: () -> Unit,
     onBack: () -> Unit,
-    /** The app from My apps this is for; null for the old way in, by link. */
-    app: AppEntry? = null,
+    /** The app from My apps this is for; null while My apps is still arriving, or if it is gone. */
+    app: AppEntry?,
+    /** My apps is still arriving, so a missing app is not gone yet. */
+    loading: Boolean = false,
     vm: AskViewModel = viewModel(),
 ) {
     LaunchedEffect(app?.id) { app?.let(vm::useApp) }
@@ -73,14 +67,23 @@ fun AskScreen(
                 .padding(horizontal = Gutter),
         ) {
             Spacer(Modifier.height(8.dp))
+            if (app == null) {
+                if (loading) {
+                    CrewLobbyLoading()
+                } else {
+                    RobotState(
+                        Prop.Notes,
+                        "This app isn't on My apps",
+                        "It may have been deleted on another phone.",
+                        action = "Back",
+                        onAction = onBack,
+                    )
+                }
+                return@Column
+            }
             AskIntro()
             Spacer(Modifier.height(20.dp))
-            // From My apps the app and its track are known: straight to it.
-            if (app == null) {
-                AskAvailability(vm.isLive, vm::choose)
-                Spacer(Modifier.height(16.dp))
-            }
-            if (vm.found == null) Finding(vm) else Found(vm, onChange = if (app != null) onBack else vm::startOver)
+            Found(vm, onChange = onBack)
             if (vm.found != null) {
                 Spacer(Modifier.height(12.dp))
                 TrackNote(vm.isLive)
@@ -126,7 +129,7 @@ fun AskScreen(
     }
     if (vm.needsSignIn) {
         SignInSheet(
-            reason = SignInReason("Sign in to continue", "Sign in to find your app and request feedback."),
+            reason = SignInReason("Sign in to continue", "Your session ran out. Sign in again to post your request."),
             onDismiss = vm::dismissSignIn,
             onSignedIn = vm::signedIn,
             vm = viewModel(key = "ask-signin-${vm.authPromptId}"),
@@ -145,56 +148,6 @@ private fun PostFailure(failure: AskFailure) {
         AskMessage(failure)
         Spacer(Modifier.height(16.dp))
     }
-}
-
-/** Before an app is found: one field and one button, and nothing else competing with them. */
-@Composable
-private fun Finding(vm: AskViewModel) {
-    DialogField(
-        value = vm.query,
-        onValueChange = vm::type,
-        label = "Your Google Play link",
-        placeholder = "com.example.myapp",
-        isError = vm.failure?.invalidLink == true,
-        supporting =
-            if (vm.isLive) {
-                "Use the Google Play link or your app's package name."
-            } else {
-                "Add the testers group to your closed track before looking up your app."
-            },
-        singleLine = true,
-        keyboardType = KeyboardType.Uri,
-        imeAction = ImeAction.Search,
-        onImeAction = vm::look,
-    )
-    vm.failure?.let {
-        Spacer(Modifier.height(14.dp))
-        AskMessage(it)
-    }
-    if (vm.byHand) {
-        Spacer(Modifier.height(18.dp))
-        ByHandForm(vm)
-        return
-    }
-    Spacer(Modifier.height(16.dp))
-    // Our check is down, not their app: the way on that does not need it.
-    if (vm.failure?.byHand == true) {
-        Secondary("Enter details yourself", Modifier.fillMaxWidth(), onClick = vm::enterByHand)
-        Spacer(Modifier.height(10.dp))
-    }
-    Primary(
-        if (vm.looking) {
-            "Finding your app..."
-        } else if (vm.failure != null) {
-            "Try again"
-        } else {
-            "Find my app"
-        },
-        busy = vm.looking,
-        enabled = vm.canLook,
-        tall = true,
-        onClick = vm::look,
-    )
 }
 
 /** App details sit directly on the page. Tap the row to choose a different listing. */

@@ -91,7 +91,6 @@ enum class MainTab(
  */
 @Composable
 fun MainShell(
-    onAskForFeedback: () -> Unit,
     /** An optional update for the header's button; null when Play has none. */
     update: UpdateOffer? = null,
     onReview: (String) -> Unit,
@@ -134,6 +133,9 @@ fun MainShell(
      * all five of them, and from two of the tabs themselves. One sheet, one place it is opened.
      */
     var asking by remember { mutableStateOf<SignInReason?>(null) }
+
+    /** What to carry on with once the sheet has signed somebody in, when they were on their way somewhere. */
+    var afterSignIn by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     val show: (MainTab) -> Unit = { next ->
         if (next != tab) cameFrom = tab
@@ -247,13 +249,25 @@ fun MainShell(
                                     FeedScreen(
                                         onReview = onReview,
                                         onCheck = onCheck,
-                                        // Which app, from My apps; signed out, the old way in asks first.
+                                        // Which app, from My apps. Signed out, sign in first and then
+                                        // the same: a request is always for an app on My apps, which
+                                        // always has its icon.
                                         onAsk = {
-                                            if (Session.signedIn) {
+                                            val pick = {
                                                 apps.load(context)
                                                 picking = PickFor.FEEDBACK
+                                            }
+                                            if (Session.signedIn) {
+                                                pick()
                                             } else {
-                                                onAskForFeedback()
+                                                afterSignIn = pick
+                                                asking =
+                                                    SignInReason(
+                                                        title = "Sign in to ask for feedback",
+                                                        why =
+                                                            "Feedback is asked for one of your apps, so it needs your " +
+                                                                "account and My apps.",
+                                                    )
                                             }
                                         },
                                         onSignIn = {
@@ -360,9 +374,14 @@ fun MainShell(
     asking?.let { reason ->
         SignInSheet(
             reason = reason,
-            onDismiss = { asking = null },
+            onDismiss = {
+                asking = null
+                afterSignIn = null
+            },
             onSignedIn = {
                 asking = null
+                afterSignIn?.invoke()
+                afterSignIn = null
                 // Everything on screen was drawn for somebody without a name. The header is the
                 // one that would otherwise sit there telling them to sign in after they have.
                 hudVm.load(context)
