@@ -76,6 +76,8 @@ fun AppHeader(
     kind: CheckKind,
     /** A short line after the pill, such as who posted it; nothing when blank. */
     detail: String = "",
+    /** The app's icon from the server, for a reader who has not installed it yet. */
+    icon: String = "",
     trailing: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -86,7 +88,7 @@ fun AppHeader(
             .clickable(enabled = packageName.isNotBlank()) { openPlay(context, packageName) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppIcon(packageName, name, size = HEADER_ICON) { AppTile(name, HEADER_ICON) }
+        AppMark(packageName, name, icon, size = HEADER_ICON)
         Spacer(Modifier.width(12.dp))
         // Two lines that add up to the icon's height: a 22dp name, 4dp, and a 22dp pill.
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {

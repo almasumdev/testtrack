@@ -348,7 +348,7 @@ fun ReviewBody(
             Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
             ) {
-                ReviewAppRow(post.appName, post.packageName, post.isLive, post.ownerName, offline)
+                ReviewAppRow(post.appName, post.packageName, post.isLive, post.ownerName, offline, icon = post.icon)
                 // Which page this is, rather than the job itself: keyed on the job, every answer
                 // from the server faded the whole page out and back in. Now only a real change of
                 // page does: loading to the step, the step to sent.
