@@ -41,26 +41,26 @@ class AskFailureTest {
     }
 
     @Test
-    fun aClosedLookupThatCannotRunOffersTypingTheDetailsInAmber() {
+    fun aClosedLookupThatCannotRunOffersThePhoneInAmber() {
         val failure = lookupFailure(ApiError(503, "listing_unavailable", "x"), closed = true)
-        assertTrue(failure.byHand)
+        assertTrue(failure.pickInstead)
         assertTrue(failure.ours)
-        assertFalse(lookupFailure(ApiError(503, "listing_unavailable", "x"), closed = false).byHand)
+        assertFalse(lookupFailure(ApiError(503, "listing_unavailable", "x"), closed = false).pickInstead)
     }
 
     @Test
-    fun aHiddenClosedListingOffersTypingTheDetailsButStaysRed() {
+    fun aHiddenClosedListingOffersThePhoneButStaysRed() {
         val failure = lookupFailure(ApiError(404, "listing_not_visible", "x"), closed = true)
-        assertTrue(failure.byHand)
+        assertTrue(failure.pickInstead)
         assertFalse(failure.ours)
-        assertFalse(lookupFailure(ApiError(404, "listing_not_found", "x"), closed = true).byHand)
+        assertFalse(lookupFailure(ApiError(404, "listing_not_found", "x"), closed = true).pickInstead)
     }
 
     @Test
     fun onAddAnAppTheWayOnIsThePhoneNotTyping() {
         for (code in listOf("listing_not_visible", "listing_unavailable")) {
-            val failure = lookupFailure(ApiError(503, code, "x"), closed = true, fromPhone = true)
-            assertTrue(failure.byHand)
+            val failure = lookupFailure(ApiError(503, code, "x"), closed = true)
+            assertTrue(failure.pickInstead)
             assertTrue(failure.detail.contains("pick it from this phone"))
             assertFalse(failure.detail.contains("details yourself"))
         }

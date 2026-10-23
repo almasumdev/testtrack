@@ -10,13 +10,12 @@ import kotlinx.serialization.Serializable
 
 /**
  * Adding an app: what was pasted, and where people find it. `fromPhone` when it was picked from the
- * apps on this phone, with the name and icon (base64) it has here. `byHand` is what older builds sent.
+ * apps on this phone, with the name and icon (base64) it has here.
  */
 @Serializable
 data class AppIn(
     val query: String,
     val live: Boolean = false,
-    @SerialName("by_hand") val byHand: Boolean = false,
     val name: String = "",
     @SerialName("from_phone") val fromPhone: Boolean = false,
     @SerialName("icon_data") val iconData: String = "",

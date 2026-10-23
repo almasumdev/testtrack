@@ -188,7 +188,7 @@ private fun Finding(
     }
     Spacer(Modifier.height(16.dp))
     // Our check is down, or Play is slow to show a closed track: the phone has the app anyway.
-    if (vm.failure?.byHand == true) {
+    if (vm.failure?.pickInstead == true) {
         Secondary("Pick it from this phone instead", Modifier.fillMaxWidth(), onClick = onPickInstead)
         Spacer(Modifier.height(10.dp))
     }

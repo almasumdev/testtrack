@@ -198,7 +198,6 @@ fun ApiApp.toEntry(): AppEntry =
         icon = icon,
         developer = developer,
         live = live,
-        byHand = addedBy == "hand",
         verifiedBy = verifiedBy,
         crew = crew?.let { AppCrewStatus(it.state, it.crewId, it.crewName, it.day, it.runDays) },
         crewsDone = crewsDone,

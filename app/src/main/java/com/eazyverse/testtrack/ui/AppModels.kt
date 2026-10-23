@@ -31,12 +31,10 @@ data class AppEntry(
     val id: String,
     val pkg: String,
     val name: String,
-    /** Play's icon, or blank when added by hand. */
+    /** Play's icon, or ours for one picked from a phone; blank only for an app typed on an old build. */
     val icon: String = "",
     val developer: String = "",
     val live: Boolean = false,
-    /** Typed by its owner while Play could not be read for us. */
-    val byHand: Boolean = false,
     /** play, crew or review; null while unverified. */
     val verifiedBy: String? = null,
     val crew: AppCrewStatus? = null,

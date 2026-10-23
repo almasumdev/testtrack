@@ -26,7 +26,7 @@ import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
- * The app as Play shows it, or as it was typed, directly on the page, to be confirmed before it
+ * The app as Play shows it, or as My apps has it, directly on the page, to be confirmed before it
  * goes anywhere. Tap the row to choose a different one. Shared by Ask for feedback and Add to a
  * crew, so finding an app looks and works the same both ways.
  */
@@ -48,7 +48,7 @@ internal fun FoundApp(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon.isBlank()) {
-            // Typed by hand: no Play icon, so the one on this phone, as the feed will draw it.
+            // No icon from Play or My apps yet: the one on this phone, as the feed will draw it.
             AppIcon(pkg, name, size = 48.dp)
         } else {
             SubcomposeAsyncImage(

@@ -203,7 +203,7 @@ class AppAddViewModel : ViewModel() {
                 } catch (error: CancellationException) {
                     throw error
                 } catch (error: Exception) {
-                    failure = lookupFailure(error, closed = !isLive, fromPhone = true)
+                    failure = lookupFailure(error, closed = !isLive)
                 } finally {
                     if (isActive) looking = false
                 }
