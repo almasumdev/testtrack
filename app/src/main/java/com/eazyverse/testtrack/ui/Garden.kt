@@ -159,7 +159,8 @@ fun TileGroup(
  *
  * Sixty points at the least, so it takes a thumb comfortably. [danger] turns the title and the tile
  * red and drops the chevron; [trailing] replaces the chevron with anything else, a switch or an
- * external-link mark.
+ * external-link mark. [chosen] is a picker's chosen row, marked the one way every picker marks it:
+ * the soft accent wash and a bolder title, with the check as its [trailing].
  */
 @Composable
 fun TileRow(
@@ -175,6 +176,7 @@ fun TileRow(
     subtitleRich: AnnotatedString? = null,
     /** Drawn instead of the icon tile, at its size: an app's own icon in a list of apps. */
     leading: (@Composable () -> Unit)? = null,
+    chosen: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     val t = Tt.colors
@@ -185,6 +187,7 @@ fun TileRow(
             .heightIn(min = 60.dp)
             .clip(shape)
             .background(t.glass)
+            .then(if (chosen) Modifier.background(t.leafAccentSoft) else Modifier)
             .border(1.dp, t.glassBorder, shape)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(start = 14.dp, top = 8.dp, end = 12.dp, bottom = 8.dp),
@@ -199,7 +202,7 @@ fun TileRow(
             Text(
                 title,
                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = if (chosen) FontWeight.Bold else FontWeight.SemiBold,
                 color = if (danger) t.bad else t.text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

@@ -16,7 +16,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -30,7 +29,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -45,14 +43,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -298,13 +293,13 @@ fun ReviewBody(
         bottomBar = {
             // Always there, even while loading and once sent, so the space the page is centred in
             // never changes size under it.
-            Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp)) {
+            Box(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 12.dp, bottom = 18.dp)) {
                 if (job == null && failure != null) {
-                    Primary("Try again", tall = true, busy = spinning, onClick = onRetry)
+                    Primary("Try again", busy = spinning, onClick = onRetry)
                 } else if (job == null) {
                     Spacer(Modifier.height(52.dp))
                 } else if (job.settled) {
-                    Primary("Done", tall = true, onClick = onClose)
+                    Primary("Done", onClick = onClose)
                 } else {
                     val asking = job.step == ReviewStep.USE && !usageAccess
                     // Step four cannot send until there is a screenshot to send; the note is optional.
@@ -316,7 +311,6 @@ fun ReviewBody(
                             needsDrive -> "Connect Drive and send"
                             else -> stepAction(job.step, job)
                         },
-                        tall = true,
                         busy = spinning,
                         enabled = !waitingForProof,
                     ) {
@@ -347,7 +341,7 @@ fun ReviewBody(
             val gap = (room * 0.03f).coerceIn(10.dp, 22.dp)
 
             Column(
-                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Gutter),
             ) {
                 ReviewAppRow(post.appName, post.packageName, post.isLive, post.ownerName, offline, icon = post.icon)
                 // The dial is centred in the room under this row; when a step is taller than that
@@ -463,19 +457,14 @@ fun ReviewBody(
                         }
                         // The way out, quiet and at the end: somebody who cannot finish gives the
                         // slot back rather than holding it until it runs out.
+                        // What losing a dispute costs, said on the first step, before any work is done.
+                        if (!job.settled && job.step == ReviewStep.INSTALL) {
+                            Spacer(Modifier.height(gap))
+                            DisputeNote()
+                        }
                         if (!job.settled && onGiveUp != null) {
                             Spacer(Modifier.height(gap))
-                            Text(
-                                "Can't finish? Give this review up",
-                                Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable(onClick = onGiveUp)
-                                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
-                                color = t.text3,
-                                textDecoration = TextDecoration.Underline,
-                            )
+                            GiveUpLink(onGiveUp)
                         }
                     }
                 }

@@ -169,9 +169,9 @@ fun OnboardingBody(
             Button(
                 onClick = onNext,
                 enabled = !pager.isScrollInProgress,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                shape = RoundedCornerShape(18.dp),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = ButtonHeight),
+                shape = RoundedCornerShape(percent = 50),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
             ) {
                 Text(
                     stringResource(if (pager.currentPage == IntroPages.lastIndex) R.string.intro_start else R.string.intro_next),

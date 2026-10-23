@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -178,7 +179,8 @@ fun Pill(
  * A [TextButton] enforces Material's ~40dp minimum touch height no matter what contentPadding
  * says, which is too tall for a row meant to hold five or six of these side by side. Built on a
  * plain clickable [Box] instead, the same shape the [reportDetails]-reading "Reported" chip
- * already used, so the padding below is the actual, final size.
+ * already used, so the padding below is the size it is drawn at. The touch area around it is
+ * still 48, as every target's is.
  */
 @Composable
 fun ActionChip(
@@ -189,6 +191,7 @@ fun ActionChip(
 ) {
     Box(
         Modifier
+            .minimumInteractiveComponentSize()
             .clip(RoundedCornerShape(9.dp))
             .background(background)
             .clickable(onClick = onClick)

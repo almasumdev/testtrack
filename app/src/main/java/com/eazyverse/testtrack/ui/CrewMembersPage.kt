@@ -53,7 +53,7 @@ fun CrewMembersPage(
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = { PageBar(crew?.let { "${it.name} · Members" } ?: "Members", onBack) },
+        topBar = { PageBar(crew?.let { "${it.name} members" } ?: "Members", onBack) },
     ) { padding ->
         if (crew == null) {
             Box(Modifier.fillMaxSize().padding(padding)) { CrewLobbyLoading() }
@@ -71,7 +71,7 @@ fun CrewMembersPage(
             item {
                 Box(Modifier.padding(horizontal = Gutter)) {
                     CrewHero(
-                        chip = if (finished) "Finished · ${crew.finishedDays} days" else "Their day ${crew.day}",
+                        chip = if (finished) "Finished after ${crew.finishedDays} days" else "Their day ${crew.day}",
                         tone =
                             if (finished && opened < CrewRules.FLOOR) {
                                 Tone.WARN
@@ -91,7 +91,7 @@ fun CrewMembersPage(
                             SegmentMeter(testers.size.coerceAtLeast(1)) { i -> if (i < opened) lit else Tt.colors.glass2 }
                             val notYet = testers.size - opened
                             MeterLabels(
-                                if (finished) "$opened every day · $out left" else "$opened opened · $notYet not yet · $out out",
+                                if (finished) "$opened every day, $out left" else "$opened opened, $notYet not yet, $out out",
                                 "${CrewRules.FLOOR} needed",
                             )
                         },
@@ -119,22 +119,22 @@ private fun MemberRow(
     val days = member.openedMineDays
     val (line, chip, tone) =
         when {
-            member.out -> Triple("Left the run · opened yours on $days ${plural(days, "day")}", "Out", Tone.QUIET)
+            member.out -> Triple("Left the run, opened yours on $days ${plural(days, "day")}", "Out", Tone.QUIET)
             finished && days >= crew.finishedDays -> Triple("Opened yours on all ${crew.finishedDays} days", "Stayed", Tone.OK)
             finished -> Triple("Opened yours on $days of ${crew.finishedDays} days", "Some days", Tone.QUIET)
             member.missedYesterday ->
                 Triple(
-                    "Missed yesterday · yours on $days ${plural(days, "day")}",
+                    "Missed yesterday, opened yours on $days ${plural(days, "day")}",
                     "${member.missed} missed",
                     Tone.WARN,
                 )
             member.openedMineToday ->
                 Triple(
-                    "Opened yours${clock(member.openedMineAt)} · $days ${plural(days, "day")} so far",
+                    "Opened yours${clock(member.openedMineAt)}, $days ${plural(days, "day")} so far",
                     "Opened",
                     Tone.OK,
                 )
-            else -> Triple("Not tonight yet · opened yours on $days ${plural(days, "day")}", "Not yet", Tone.QUIET)
+            else -> Triple("Not tonight yet, opened yours on $days ${plural(days, "day")}", "Not yet", Tone.QUIET)
         }
     val t = Tt.colors
     val shape = place.shape()

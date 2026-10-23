@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -105,8 +106,9 @@ fun VisitDockContent(
             ui.open && ui.upright -> OpenUpright(ui, onToggleOpen, onPlayPause, onCopy)
             ui.open -> OpenFlat(ui, onToggleOpen, onPlayPause, onCopy)
             ui.upright ->
+                // No side or bottom padding: the play button's own 48 touch area is that margin.
                 Column(
-                    Modifier.clickable(onClick = onToggleOpen).padding(horizontal = 6.dp, vertical = 8.dp),
+                    Modifier.clickable(onClick = onToggleOpen).padding(top = 8.dp, bottom = 1.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
@@ -116,8 +118,9 @@ fun VisitDockContent(
                     PlayPause(ui, onPlayPause)
                 }
             else ->
+                // No end padding, for the same reason.
                 Row(
-                    Modifier.clickable(onClick = onToggleOpen).padding(6.dp),
+                    Modifier.clickable(onClick = onToggleOpen).padding(start = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -202,9 +205,9 @@ private fun OpenUpright(
 
 private fun status(ui: DockUi) =
     when {
-        ui.counted -> "Counted · ${ui.index + 1} of ${ui.total}"
-        ui.paused -> "Paused · ${ui.index + 1} of ${ui.total}"
-        else -> "${ui.secondsLeft}s to go · ${ui.index + 1} of ${ui.total}"
+        ui.counted -> "Counted, app ${ui.index + 1} of ${ui.total}"
+        ui.paused -> "Paused, app ${ui.index + 1} of ${ui.total}"
+        else -> "${ui.secondsLeft}s to go, app ${ui.index + 1} of ${ui.total}"
     }
 
 /** The ten seconds as a ring: filling while the app is open, full and green once it counts. */
@@ -273,6 +276,7 @@ private fun SignInLine(
     val tap =
         Modifier
             .fillMaxWidth()
+            .minimumInteractiveComponentSize()
             .clip(RoundedCornerShape(12.dp))
             .background(bg)
             .semantics { contentDescription = "Copy $label" }
@@ -312,8 +316,10 @@ private fun PlayPause(
     onClick: () -> Unit,
 ) {
     val play = ui.counted || ui.paused
+    // 34 to look at, 48 to touch.
     Box(
         Modifier
+            .minimumInteractiveComponentSize()
             .size(34.dp)
             .clip(CircleShape)
             .background(if (ui.counted) Status.posted else Tt.colors.accent)
@@ -346,6 +352,7 @@ private fun BigPlayPause(
         }
     Row(
         Modifier
+            .minimumInteractiveComponentSize()
             .clip(RoundedCornerShape(percent = 50))
             .background(if (ui.counted) Status.posted else Tt.colors.accent)
             .clickable(onClick = onClick)

@@ -33,6 +33,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -175,7 +177,8 @@ internal fun DeveloperAsks(asked: String) {
 }
 
 /**
- * The page before the review has arrived: the robot, waiting, centred where the step will be.
+ * The page before the review has arrived: a skeleton of the step, the dial, its four labels and
+ * its two lines of words, centred where the step will be, as every other page waits.
  */
 @Composable
 internal fun ReviewLoading(
@@ -183,11 +186,25 @@ internal fun ReviewLoading(
     dial: Dp,
     gap: Dp,
 ) {
-    Box(
-        Modifier.fillMaxWidth().heightIn(min = room - 64.dp),
-        contentAlignment = Alignment.Center,
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = room - 64.dp)
+            .semantics(mergeDescendants = true) { contentDescription = "Getting your review ready" },
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        RobotLoader(size = dial * 0.95f, label = "Getting your review ready")
+        Skeleton(width = dial, height = dial, corner = dial / 2)
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            repeat(ReviewSteps.size) { Skeleton(width = 40.dp, height = 10.dp) }
+        }
+        Spacer(Modifier.height(gap))
+        Skeleton(width = 180.dp, height = 22.dp, corner = 8.dp)
+        Spacer(Modifier.height(10.dp))
+        Skeleton(width = 260.dp)
+        Spacer(Modifier.height(6.dp))
+        Skeleton(width = 200.dp)
     }
 }
 

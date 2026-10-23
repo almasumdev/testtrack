@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -48,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,8 +63,8 @@ import com.eazyverse.testtrack.ui.theme.Tt
  *
  * A card in the panel's own colour with the robot looking over its top right corner: its head
  * behind the card, its mitts holding the edge. Compact by design, since most of these are a
- * sentence and a choice: a 16sp title, 13.5sp words, and two short buttons at the right, the
- * answer filled and the way out outlined, both 32dp with small corners. See [DialogRobotHead].
+ * sentence and a choice: a 16sp title, 13.5sp words, and two buttons at the right, the answer
+ * filled and the way out outlined, both the app's 52 high pill. See [DialogRobotHead].
  *
  * Destructive actions are named rather than coloured red by default. "Sign out" is not a warning,
  * and a dialog where the confirm button is always alarming teaches people to ignore the alarm, so
@@ -72,6 +75,7 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * the way out, for a dialog that is waiting on something; [looking] has the robot's eyes move
  * while it does.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Ask(
     title: String,
@@ -121,10 +125,12 @@ fun Ask(
                     it()
                 }
                 Spacer(Modifier.height(14.dp))
-                Row(
+                // Wraps rather than squeezes: two pills that do not fit side by side stack, the
+                // answer still last.
+                FlowRow(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     dismiss?.let { DialogButton(it, DialogButtonKind.OUTLINE, onClick = onDismiss) }
                     confirm?.let {
@@ -147,7 +153,7 @@ fun Ask(
 /** What a dialog button is: the answer, the answer that takes something away, or the way out. */
 enum class DialogButtonKind { FILL, DANGER, OUTLINE }
 
-/** A dialog's button: 32dp, small corners. Also for a dialog's own extra action. */
+/** A dialog's button: the same 52 high pill as every other button. Also for a dialog's own extra action. */
 @Composable
 fun DialogButton(
     label: String,
@@ -163,10 +169,10 @@ fun DialogButton(
         dismissKeyboard()
         onClick()
     }
-    val shape = RoundedCornerShape(8.dp)
-    val padding = PaddingValues(horizontal = 12.dp)
+    val shape = RoundedCornerShape(percent = 50)
+    val padding = PaddingValues(horizontal = 18.dp, vertical = 8.dp)
     val inner: @Composable RowScope.() -> Unit = {
-        Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, maxLines = 2)
         icon?.let {
             Spacer(Modifier.width(5.dp))
             Icon(it, null, Modifier.size(13.dp))
@@ -180,7 +186,7 @@ fun DialogButton(
             border = BorderStroke(1.dp, t.hair),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = t.accentInk),
             contentPadding = padding,
-            modifier = modifier.height(32.dp),
+            modifier = modifier.heightIn(min = ButtonHeight),
             content = inner,
         )
     } else {
@@ -198,7 +204,7 @@ fun DialogButton(
                     disabledContentColor = t.onAccent.copy(alpha = 0.85f),
                 ),
             contentPadding = padding,
-            modifier = modifier.height(32.dp),
+            modifier = modifier.heightIn(min = ButtonHeight),
             content = inner,
         )
     }

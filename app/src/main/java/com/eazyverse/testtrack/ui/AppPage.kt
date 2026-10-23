@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -295,7 +296,7 @@ private fun VerifyCallout(
             color = Tt.colors.text2,
         )
         Spacer(Modifier.height(12.dp))
-        Primary(if (busy) "Asking Play..." else "Verify now", busy = busy, onClick = onVerify)
+        Primary(if (busy) "Asking Play" else "Verify now", busy = busy, onClick = onVerify)
         Spacer(Modifier.height(8.dp))
         Text(
             "It's also verified when two crew members install it, or you accept a review.",
@@ -324,7 +325,7 @@ private fun Testing(
                 "Crew test",
                 place,
                 subtitle = crewStatus(app),
-                trailing = if (!app.crewOpen && app.canCrew) ({ Cta("Put in · ${CrewRules.SEAT_COST} tix") }) else null,
+                trailing = if (!app.crewOpen && app.canCrew) ({ Cta("Put in for ${CrewRules.SEAT_COST} tix") }) else null,
                 onClick =
                     when {
                         crew != null && app.crewOpen -> ({ onOpenCrew(crew.crewId) })
@@ -339,7 +340,7 @@ private fun Testing(
                 "Feedback",
                 place,
                 subtitle = feedbackStatus(app),
-                trailing = if (app.canFeedback) ({ Cta(if (feedback == null) "Ask" else "Ask again") }) else null,
+                trailing = if (app.canFeedback) ({ Cta(if (feedback == null) "Ask for feedback" else "Ask for feedback again") }) else null,
                 onClick =
                     when {
                         feedback != null && app.collecting -> ({ onOpenRequest(feedback.postId) })
@@ -352,12 +353,15 @@ private fun Testing(
     }
 }
 
-/** What a row starts, in the accent, before its chevron. */
+/** What a row starts, in the accent, before its chevron. Two short lines at most, so the row keeps its words. */
 @Composable
 private fun Cta(text: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text,
+            Modifier.widthIn(max = 136.dp),
+            textAlign = TextAlign.End,
+            maxLines = 2,
             style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
             fontWeight = FontWeight.Bold,
             color = Tt.colors.accentInk,
@@ -387,7 +391,7 @@ private fun Manage(
                     Lucide.ArrowUpRight,
                     "It's live on Google Play now",
                     place,
-                    subtitle = if (checking) "Checking its public Play page..." else "Moves it to feedback only",
+                    subtitle = if (checking) "Checking its public Play page" else "Moves it to feedback only",
                     trailing = if (checking) ({ RowBusy() }) else null,
                     onClick = if (busy) null else onLive,
                 )
@@ -397,7 +401,7 @@ private fun Manage(
                     "Delete app",
                     place,
                     danger = true,
-                    subtitle = if (running == AppAction.DELETE) "Deleting..." else null,
+                    subtitle = if (running == AppAction.DELETE) "Deleting" else null,
                     trailing = if (running == AppAction.DELETE) ({ RowBusy() }) else null,
                     onClick = if (busy) null else onDelete,
                 )

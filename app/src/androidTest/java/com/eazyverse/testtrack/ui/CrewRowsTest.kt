@@ -90,7 +90,7 @@ class CrewRowsTest {
     @Test
     fun an_app_not_on_the_phone_offers_install_first() {
         show { TonightRow(app(), seat(), TilePlace.ONLY, actions(onPhone = false)) {} }
-        compose.onNodeWithText("by Rafiul · not on your phone").assertIsDisplayed()
+        compose.onNodeWithText("by Rafiul, not on your phone").assertIsDisplayed()
         compose.onNodeWithText("Install").performClick()
         assertEquals(1, installed)
         compose.onNodeWithText("Open").assertDoesNotExist()
@@ -108,7 +108,7 @@ class CrewRowsTest {
     @Test
     fun a_lobby_app_offers_install_and_says_when_it_has_a_sign_in() {
         show { InstallRow(seat(notes = signInNotes("tester@example.com", "hunter2", "")), TilePlace.ONLY, actions(onPhone = false)) {} }
-        compose.onNodeWithText("by Rafiul · Sign-in").assertIsDisplayed()
+        compose.onNodeWithText("by Rafiul, has a sign-in").assertIsDisplayed()
         compose.onNodeWithText("Install").performClick()
         assertEquals(1, installed)
     }

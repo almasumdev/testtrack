@@ -92,8 +92,8 @@ fun WaitingBody(
                         review.appName,
                         listOf(
                             review.reviewerName.ifBlank { "A reviewer" },
-                            if (review.isLive) "Live app" else "Closed test",
-                        ).joinToString(" · "),
+                            if (review.isLive) "live app" else "closed test",
+                        ).joinToString(", "),
                         onClick = { onOpenReview(review) },
                         packageName = review.packageName,
                         icon = review.icon,
@@ -115,7 +115,7 @@ fun WaitingBody(
                     val case = disputes[index]
                     CheckRow(
                         case.appName,
-                        "Disputed · ${case.votesCast} of ${case.votesNeeded} votes",
+                        "Disputed, ${case.votesCast} of ${case.votesNeeded} votes in",
                         onClick = { onOpenCase(case) },
                         packageName = case.packageName,
                         icon = case.icon,
@@ -141,7 +141,7 @@ fun WaitingBody(
                         buildList {
                             add("${request.done} of ${request.bought} done")
                             if (request.underWay > 0) add("${request.underWay} under way")
-                        }.joinToString(" · "),
+                        }.joinToString(", "),
                         onClick = { onOpenRequest(request) },
                         packageName = request.packageName,
                         icon = request.icon,

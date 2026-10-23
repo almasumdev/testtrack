@@ -8,6 +8,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -20,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.ui.theme.LocalStatusColors
@@ -77,9 +79,10 @@ fun RefreshBox(
  * The other actions on a screen, beside its one [Primary].
  *
  * A soft filled pill, never an outline, because an outlined button beside a
- * filled one reads as the same action switched off. Short enough to sit two to a row. A destructive
- * one takes the red ground with red words rather than a red fill, which stays for the dialog that
- * actually confirms it.
+ * filled one reads as the same action switched off. The same 52 as every button, and two to a
+ * row still fits. A destructive one takes the red ground with red words rather than a red fill,
+ * which stays for the dialog that actually confirms it. [busy] shows a spinner before the label
+ * and holds the button until it is done.
  */
 @Composable
 fun Secondary(
@@ -87,6 +90,7 @@ fun Secondary(
     modifier: Modifier = Modifier,
     destructive: Boolean = false,
     enabled: Boolean = true,
+    busy: Boolean = false,
     onClick: () -> Unit,
 ) {
     val t = Tt.colors
@@ -96,7 +100,7 @@ fun Secondary(
             dismissKeyboard()
             onClick()
         },
-        enabled = enabled,
+        enabled = enabled && !busy,
         shape = RoundedCornerShape(percent = 50),
         colors =
             ButtonDefaults.buttonColors(
@@ -106,14 +110,23 @@ fun Secondary(
                 disabledContentColor = t.text.copy(alpha = 0.45f),
             ),
         elevation = null,
-        contentPadding = PaddingValues(horizontal = 14.dp),
-        modifier = modifier.height(44.dp),
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+        modifier = modifier.heightIn(min = ButtonHeight),
     ) {
+        if (busy) {
+            androidx.compose.material3.CircularProgressIndicator(
+                Modifier.size(16.dp),
+                strokeWidth = 2.dp,
+                color = LocalContentColor.current,
+            )
+            Spacer(Modifier.width(10.dp))
+        }
         Text(
             label,
             style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.5.sp),
             fontWeight = FontWeight.Bold,
-            maxLines = 1,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
         )
     }
 }
@@ -140,6 +153,9 @@ suspend fun holdShimmer(startedAt: Long) {
  * take the default tint, which is the same colour the label is painted in and follows it into the
  * disabled state as well. It gives way to the spinner while the button is busy: two things sitting
  * in the same place is one too many.
+ *
+ * At least 52 high and free to grow: at a large font size the label takes a second line rather
+ * than being cut off by a fixed height.
  */
 @Composable
 fun Primary(
@@ -147,7 +163,6 @@ fun Primary(
     modifier: Modifier = Modifier,
     busy: Boolean = false,
     enabled: Boolean = true,
-    tall: Boolean = false,
     mark: Painter? = null,
     onClick: () -> Unit,
 ) {
@@ -162,7 +177,8 @@ fun Primary(
         // one place the eye lands.
         shape = RoundedCornerShape(percent = 50),
         elevation = null,
-        modifier = modifier.fillMaxWidth().height(if (tall) 52.dp else 48.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+        modifier = modifier.fillMaxWidth().heightIn(min = ButtonHeight),
     ) {
         if (busy) {
             androidx.compose.material3.CircularProgressIndicator(
@@ -175,9 +191,18 @@ fun Primary(
             Icon(mark, null, Modifier.size(18.dp))
             Spacer(Modifier.width(10.dp))
         }
-        Text(label, style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp), fontWeight = FontWeight.Bold)
+        Text(
+            label,
+            style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp),
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+        )
     }
 }
+
+/** Every button's height, filled, soft or outlined: the garden look's one pill. */
+val ButtonHeight = 52.dp
 
 /**
  * Something the reader needs to know, drawn as an edge rather than a fill.

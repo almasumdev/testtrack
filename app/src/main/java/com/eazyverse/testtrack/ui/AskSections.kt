@@ -33,7 +33,7 @@ internal fun AskIntro() {
         Row(verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    "A FRESH PERSPECTIVE",
+                    "FROM OTHER DEVELOPERS",
                     style = MaterialTheme.typography.labelSmall,
                     letterSpacing = 1.5.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -41,7 +41,7 @@ internal fun AskIntro() {
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Better apps start\nwith feedback.",
+                    "Get your app\ntried and reviewed.",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Tt.colors.text,
@@ -52,7 +52,7 @@ internal fun AskIntro() {
         }
         Spacer(Modifier.height(8.dp))
         Text(
-            "Get useful feedback from other developers.",
+            "Developers on TestTrack try your app and send you feedback on Google Play. You pay each one in tix.",
             style = MaterialTheme.typography.bodyMedium,
             color = Tt.colors.text2,
         )
@@ -130,7 +130,7 @@ internal fun AskBudget(
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            "$reviews ${if (reviews == 1) "review" else "reviews"} · Your balance: $balance tix",
+            "$reviews ${if (reviews == 1) "review" else "reviews"}. Your balance is $balance tix.",
             style = MaterialTheme.typography.bodySmall,
             color = Tt.colors.text2,
         )

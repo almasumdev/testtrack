@@ -253,25 +253,22 @@ fun ReviewCheck(
         onBack = onBack,
         actions = {
             Primary(
-                if (review.reward > 0) "Accept · pay ${review.reward}" else "Accept",
+                if (review.reward > 0) "Accept and pay ${review.reward} tix" else "Accept",
                 Modifier.weight(1f),
                 busy = busy,
                 onClick = onApprove,
             )
             Spacer(Modifier.width(10.dp))
-            Secondary("Refuse", Modifier.weight(1f).height(48.dp), destructive = true, enabled = !busy, onClick = onReject)
+            Secondary("Refuse", Modifier.weight(1f), destructive = true, enabled = !busy, onClick = onReject)
         },
     ) {
         AppHeader(review.appName, review.packageName, if (review.isLive) CheckKind.PLAY else CheckKind.CLOSED, icon = review.icon)
         Spacer(Modifier.height(12.dp))
+        // Time left only from the server's own deadline. Without one there is no figure to show.
         StatTiles(
-            listOf(
+            listOfNotNull(
                 Stat("Reviewer", review.reviewerName.ifBlank { "Unknown" }),
-                if (until != null) {
-                    Stat("Time left", timeLeft(until, now), warn = closeTo(until, now))
-                } else {
-                    Stat("Time left", "2 days")
-                },
+                until?.let { Stat("Time left", timeLeft(it, now), warn = closeTo(it, now)) },
                 Stat("Pays", if (review.reward > 0) "${review.reward} tix" else "-"),
             ),
         )
@@ -323,8 +320,8 @@ fun CaseCheck(
         onBack = onBack,
         actions = {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Secondary("The review stands", Modifier.fillMaxWidth().height(48.dp), enabled = !busy) { onVote(true) }
-                Secondary("The developer is right", Modifier.fillMaxWidth().height(48.dp), enabled = !busy) { onVote(false) }
+                Secondary("The review stands", Modifier.fillMaxWidth(), enabled = !busy) { onVote(true) }
+                Secondary("The developer is right", Modifier.fillMaxWidth(), enabled = !busy) { onVote(false) }
             }
         },
     ) {

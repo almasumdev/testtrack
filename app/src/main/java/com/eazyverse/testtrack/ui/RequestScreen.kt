@@ -65,7 +65,7 @@ fun RequestCheck(
             if (!request.closed) {
                 Secondary(
                     if (request.refundable > 0) "Close and get ${request.refundable} tix back" else "Close request",
-                    Modifier.weight(1f).height(48.dp),
+                    Modifier.weight(1f),
                     enabled = !busy,
                 ) { closing = true }
             }
@@ -88,7 +88,11 @@ fun RequestCheck(
         )
         Spacer(Modifier.height(20.dp))
         Text(
-            if (request.reviews.isEmpty()) "Reviews" else "Reviews · ${request.reviews.size}",
+            when (request.reviews.size) {
+                0 -> "Reviews"
+                1 -> "1 review"
+                else -> "${request.reviews.size} reviews"
+            },
             style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp),
             fontWeight = FontWeight.Bold,
         )

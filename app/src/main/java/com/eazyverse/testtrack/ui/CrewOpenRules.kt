@@ -85,13 +85,13 @@ internal fun CrewRulesCard() {
                 Lucide.RotateCcw,
                 Tone.OK,
                 "Come back",
-                listOf("You take it out while it fills", "${CrewRules.REPORTS_TO_RETURN} reports send it back"),
+                listOf("Back in full if you take it out while the crew fills", "Or if ${CrewRules.REPORTS_TO_RETURN} reports send it back"),
             )
-            TixCard(Lucide.Lock, Tone.BAD, "Kept", listOf("Once the crew is full", "It leaves for missed days"))
+            TixCard(Lucide.Lock, Tone.BAD, "Kept", listOf("Once the crew is full", "Or if it leaves for missed days"))
         }
 
         RulesHeading("Good to know")
-        GoodToKnow(1, Lucide.CalendarDays, "A day runs from your own midnight.")
+        GoodToKnow(1, Lucide.CalendarDays, "A day runs from midnight, your time.")
         GoodToKnow(2, Lucide.Info, "An open counts after ${CrewRules.VISIT_SECONDS} seconds in front.")
         GoodToKnow(3, Lucide.Hourglass, "One app waiting at a time.")
     }
@@ -239,7 +239,7 @@ private fun androidx.compose.foundation.layout.RowScope.TixCard(
             Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = tone.ink())
         }
         lines.forEach { line ->
-            Text("• $line", Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = Tt.colors.text2)
+            Text(line, Modifier.padding(top = 5.dp), style = MaterialTheme.typography.bodySmall, color = Tt.colors.text2)
         }
     }
 }

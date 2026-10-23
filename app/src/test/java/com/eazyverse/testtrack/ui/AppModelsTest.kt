@@ -30,7 +30,7 @@ class AppModelsTest {
                 crew = AppCrewStatus("testing", "c", "Crew 01", day = 6, runDays = 14),
                 feedback = AppFeedbackStatus("collecting", "p", done = 2, bought = 3),
             ).badges()
-        assertEquals(listOf("Day 6 of 14 · Crew 01", "Feedback 2 of 3"), badges.map { it.text })
+        assertEquals(listOf("Day 6 of 14 in Crew 01", "Feedback 2 of 3"), badges.map { it.text })
         assertEquals(listOf(BadgeKind.CREW, BadgeKind.FEEDBACK), badges.map { it.kind })
     }
 

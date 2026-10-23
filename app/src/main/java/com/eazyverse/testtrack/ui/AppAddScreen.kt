@@ -79,7 +79,7 @@ fun AppAddScreen(
                 null -> {
                     AddWayChoice(vm.choice, vm::select)
                     Spacer(Modifier.height(22.dp))
-                    Primary("Continue", tall = true) { vm.proceed(context) }
+                    Primary("Continue") { vm.proceed(context) }
                 }
                 AddWay.PHONE -> {
                     // Only reached once an app is picked: the list itself is the sheet below.
@@ -148,7 +148,7 @@ private fun AddButton(
         AskMessage(AskFailure("Couldn't add it", it))
     }
     Spacer(Modifier.height(20.dp))
-    Primary("Add to My apps", busy = vm.adding, enabled = enabled, tall = true) {
+    Primary("Add to My apps", busy = vm.adding, enabled = enabled) {
         vm.add { app, _ -> onAdded(app) }
     }
 }
@@ -194,13 +194,12 @@ private fun Finding(
     }
     Primary(
         when {
-            vm.looking -> "Finding your app..."
+            vm.looking -> "Finding your app"
             vm.failure != null -> "Try again"
             else -> "Find my app"
         },
         busy = vm.looking,
         enabled = vm.canLook,
-        tall = true,
         onClick = vm::look,
     )
 }

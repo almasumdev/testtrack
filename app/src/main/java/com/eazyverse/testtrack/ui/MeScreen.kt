@@ -39,6 +39,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -247,7 +249,7 @@ private fun Who(
                     Modifier
                         .size(FaceSize)
                         .clip(CircleShape)
-                        .clickable(onClick = onEdit)
+                        .clickableRole("Edit profile", onEdit)
                         .background(t.glass)
                         .border(1.dp, t.glassBorder, CircleShape)
                         .padding(3.dp),
@@ -385,7 +387,12 @@ fun MeEditDialog(
     ) {
         // The picture in the middle with its camera badge, and the one thing to do with it under it.
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(Modifier.size(72.dp).clickable(enabled = !busy, onClick = choose)) {
+            Box(
+                Modifier
+                    .size(72.dp)
+                    .semantics { contentDescription = "Choose a picture" }
+                    .clickable(enabled = !busy, onClick = choose),
+            ) {
                 val chosen = picked
                 if (chosen != null) {
                     AsyncImage(chosen, null, Modifier.size(72.dp).clip(CircleShape), contentScale = ContentScale.Crop)

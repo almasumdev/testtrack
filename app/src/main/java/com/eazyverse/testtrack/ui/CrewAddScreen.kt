@@ -79,7 +79,7 @@ fun CrewAddScreen(
             Text(
                 "Your app goes in with ${CrewRules.SEATS - 1} others. You open theirs every day for " +
                     "${CrewRules.RUN_DAYS} days, and they open yours. That puts you on " +
-                    "${CrewRules.nightly(crews.running + 1)} apps a day.",
+                    "${CrewRules.nightly(crews.running + 1)} apps a night.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Tt.colors.text2,
             )
@@ -132,7 +132,6 @@ fun CrewAddScreen(
                     "Take a seat",
                     busy = crews.seating,
                     enabled = vm.name.isNotBlank() && vm.signInReady && !vm.short,
-                    tall = true,
                 ) {
                     crews.takeSeat(context, app.pkg, vm.name.trim(), vm.notes.trim(), appId = app.id, onDone = onDone)
                 }
@@ -157,9 +156,9 @@ private fun SeatPrice(tix: Int?) {
                 if (tix ==
                     null
                 ) {
-                    "Back in full if your app leaves before the run."
+                    "Back in full if you take it out while the crew fills."
                 } else {
-                    "You have $tix tix. Back in full if your app leaves before the run."
+                    "You have $tix tix. Back in full if you take it out while the crew fills."
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = if (short) Tt.colors.bad else Tt.colors.text3,

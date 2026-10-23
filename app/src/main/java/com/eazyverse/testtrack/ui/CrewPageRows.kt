@@ -11,20 +11,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,7 +37,6 @@ import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Flag
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
-import kotlinx.coroutines.launch
 
 /*
  * The rows of a crew's page, all of one shape: icon, title, one short line, the action you do
@@ -74,8 +69,10 @@ internal fun RowPill(
             PillKind.GHOST -> Tt.colors.glass to Tt.colors.accentInk
             PillKind.OK -> Status.posted to Tt.colors.inkOn(Status.posted)
         }
+    // 34 to look at, 48 to touch, the way an icon button is built.
     Box(
         Modifier
+            .minimumInteractiveComponentSize()
             .heightIn(min = 34.dp)
             .clip(shape)
             .background(bg)
@@ -96,7 +93,7 @@ internal fun RowPill(
     }
 }
 
-/** "by Habib", with "· Sign-in" after it when the app's sheet has one to copy. */
+/** "by Habib", with ", has a sign-in" after it when the app's sheet has one to copy. */
 @Composable
 internal fun ownerLine(
     owner: String,
@@ -105,10 +102,10 @@ internal fun ownerLine(
 ) = buildAnnotatedString {
     append("by $owner")
     if (signIn) {
-        append(" · ")
-        withStyle(SpanStyle(color = Tt.colors.accentInk, fontWeight = FontWeight.SemiBold)) { append("Sign-in") }
+        append(", ")
+        withStyle(SpanStyle(color = Tt.colors.accentInk, fontWeight = FontWeight.SemiBold)) { append("has a sign-in") }
     }
-    if (tail.isNotBlank()) append(" · $tail")
+    if (tail.isNotBlank()) append(", $tail")
 }
 
 /** One row of a crew's page. [trailing] is the pill or the chip; the chevron always follows. */
@@ -172,9 +169,9 @@ data class RowSheet(
 
 /**
  * One app's sheet: who brought it, its sign-in for testers, the main thing to do with it, and the
- * rarer one, Report (or It won't install, for an app members are asked about).
+ * rarer one, Report (or It won't install, for an app members are asked about). In the one
+ * [PickerSheet] frame, with the app's icon before its name.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CrewRowSheet(
     sheet: RowSheet,
@@ -182,37 +179,20 @@ internal fun CrewRowSheet(
     actions: CrewActions,
     onDismiss: () -> Unit,
 ) {
-    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
     val seat = sheet.seat
     val installed = actions.isInstalled(seat.packageName)
 
-    fun then(next: () -> Unit) {
-        scope.launch {
-            state.hide()
-            onDismiss()
-            next()
-        }
-    }
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = state, containerColor = MaterialTheme.colorScheme.surface) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Gutter)
-                .navigationBarsPadding()
-                .padding(bottom = 18.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AppMark(seat.packageName, seat.appName, seat.icon, size = 44.dp)
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Text(seat.appName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("by ${seat.owner} · in $crewName", style = MaterialTheme.typography.bodySmall, color = Tt.colors.text4)
-                }
-            }
+    PickerSheet(
+        title = seat.appName,
+        onDismiss = onDismiss,
+        subtitle = "by ${seat.owner}, in $crewName",
+        skipHalf = true,
+        leading = { AppMark(seat.packageName, seat.appName, seat.icon, size = 44.dp) },
+    ) { then ->
+        Column(Modifier.fillMaxWidth().padding(bottom = 18.dp)) {
             Text(
                 "Sign-in for testers",
-                Modifier.padding(top = 18.dp, bottom = 8.dp),
+                Modifier.padding(top = 4.dp, bottom = 8.dp),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = Tt.colors.text4,
@@ -247,9 +227,11 @@ internal fun CrewRowSheet(
             Spacer(Modifier.height(12.dp))
             when {
                 sheet.kind == SheetKind.ASKED && seat.myVote == null ->
-                    SheetOption("It won't install", "Say why. Two No answers send it back to ${seat.owner}.", Tone.BAD) {
-                        then { actions.onVote(seat, false) }
-                    }
+                    SheetOption(
+                        "It won't install",
+                        "Say why. ${CrewRules.VOTES_TO_DECIDE} No answers send it back to ${seat.owner}.",
+                        Tone.BAD,
+                    ) { then { actions.onVote(seat, false) } }
                 sheet.kind == SheetKind.ASKED -> Unit
                 seat.reported ->
                     SheetOption(
@@ -344,7 +326,7 @@ internal fun AskedRow(
     val installed = actions.isInstalled(seat.packageName)
     val tail =
         when {
-            seat.myVote != null -> "${seat.yes} Yes · ${seat.no} No"
+            seat.myVote != null -> "${seat.yes} Yes and ${seat.no} No"
             installed -> "on your phone"
             else -> if (seat.yes > 0) "${seat.yes} Yes so far" else "nobody has answered yet"
         }

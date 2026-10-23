@@ -47,8 +47,8 @@ fun requestReviewStatus(review: RequestReview): String =
         "claimed", "installed", "used" -> "In progress"
         "submitted" -> "Waiting on you"
         "approved" -> if (review.outcome == "overturned") "Paid after a dispute" else "Accepted"
-        "disputed" -> "Refused · members deciding"
-        "rejected" -> "Refused · upheld"
+        "disputed" -> "Refused, members deciding"
+        "rejected" -> "Refused and upheld"
         "abandoned" -> "Given up"
         "expired" -> "Ran out"
         else -> review.state

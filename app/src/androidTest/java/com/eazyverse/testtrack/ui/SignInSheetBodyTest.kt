@@ -57,7 +57,7 @@ class SignInSheetBodyTest {
     fun the_ask_shows_the_reason_it_came_up() {
         compose.setContent { TestTrackTheme { SignInSheetBody(reason = reason) } }
 
-        compose.onNodeWithText("Sign in to see your apps").assertIsDisplayed()
+        compose.onNodeWithText(reason.why).assertIsDisplayed()
         compose.onNodeWithText("Continue with Google").assertIsDisplayed()
     }
 
@@ -68,7 +68,7 @@ class SignInSheetBodyTest {
         compose.onNodeWithText("Waiting for Google").assertIsDisplayed()
         // The reason stays put. A sheet that empties itself while it works leaves somebody
         // looking at a spinner with nothing saying what it is for.
-        compose.onNodeWithText("Sign in to see your apps").assertIsDisplayed()
+        compose.onNodeWithText(reason.why).assertIsDisplayed()
     }
 
     @Test

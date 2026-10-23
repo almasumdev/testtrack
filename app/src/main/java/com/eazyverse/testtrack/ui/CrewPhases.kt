@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -98,14 +99,7 @@ fun CrewLobbyPhase(
         }
         if (asked.isNotEmpty()) {
             item { CrewHeading("Does it install for you?", "${asked.size}") }
-            item {
-                Text(
-                    "Play couldn't check these, so members decide. Install it; once it's on your phone the row asks you to confirm. Won't install? Tap the row. Two answers decide.",
-                    Modifier.padding(start = Gutter, end = Gutter, bottom = 10.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Tt.colors.text4,
-                )
-            }
+            item { AskedSteps() }
             rows("ask", asked, { it.id }) { seat, place -> AskedRow(seat, place, actions, onSheet) }
         }
         if (install.isNotEmpty()) {
@@ -115,31 +109,51 @@ fun CrewLobbyPhase(
     }
 }
 
+/** How many answers settle an app Play could not check, said the same way wherever it is said. */
+private val DECIDES =
+    "${CrewRules.VOTES_TO_DECIDE} Yes answers or ${CrewRules.VOTES_TO_DECIDE} No answers decide it."
+
+/** What to do with an app Play could not check, as steps, over the rows that ask. */
+@Composable
+private fun AskedSteps() {
+    Column(Modifier.padding(start = Gutter, end = Gutter, bottom = 10.dp)) {
+        listOf(
+            "Play couldn't check these, so members decide.",
+            "1. Install the app from its row.",
+            "2. Once it's on your phone, the row asks if it works. Answer Yes or No.",
+            "3. Won't install? Tap the row and say so.",
+            DECIDES,
+        ).forEach { line ->
+            Text(line, Modifier.padding(top = 2.dp), style = MaterialTheme.typography.bodySmall, color = Tt.colors.text4)
+        }
+    }
+}
+
 @Composable
 private fun LobbyHero(crew: Crew) {
     val checking = (crew.taken - crew.filled).coerceAtLeast(0)
     if (crew.filling) {
         CrewHero(
-            chip = "Filling · ${crew.filled} of ${CrewRules.SEATS}",
+            chip = "Filling, ${crew.filled} of ${CrewRules.SEATS}",
             tone = Tone.ACCENT,
             icon = Lucide.Users,
             headline = "${CrewRules.SEATS - crew.filled} more and it starts",
-            line = "It starts at midnight the day it's full. Install the others now, so day 1 is only opening them.",
+            line = "It starts at midnight, your time, the day it's full. Install the others now, so day 1 is only opening them.",
             meter = {
                 SeatMeter(crew.filled, checking)
-                MeterLabels("${crew.filled} in" + if (checking > 0) " · $checking being checked" else "", "${CrewRules.SEATS} seats")
+                MeterLabels("${crew.filled} in" + if (checking > 0) ", $checking being checked" else "", "${CrewRules.SEATS} seats")
             },
         )
     } else {
         CrewHero(
-            chip = "Full · ${CrewRules.SEATS} of ${CrewRules.SEATS}",
+            chip = "Full, ${CrewRules.SEATS} of ${CrewRules.SEATS}",
             tone = Tone.OK,
             icon = Lucide.Clock,
             headline = "Starts in ${untilStart(crew.startsIn)}",
             line = "Day 1 begins at midnight, your time. Install the other ${CrewRules.NIGHTLY} before then and no day counts against you.",
             meter = {
                 SeatMeter(crew.filled, checking)
-                MeterLabels("Everyone's in", "Day 1 at midnight")
+                MeterLabels("Everyone's in", "Day 1 at midnight, your time")
             },
         )
     }
@@ -172,7 +186,7 @@ private fun LobbyYourApp(
         extra = {
             when {
                 mine.state == SeatState.CHECKING ->
-                    Quotes(emptyList(), "${mine.yes} Yes · ${mine.no} No so far. Two answers decide. Make sure the sign-in works.")
+                    Quotes(emptyList(), "${mine.yes} Yes and ${mine.no} No so far. $DECIDES Make sure the sign-in works.")
                 mine.reasons.isNotEmpty() ->
                     Quotes(mine.reasons, "One more report sends it back. Check the sign-in still works.")
             }
@@ -183,10 +197,10 @@ private fun LobbyYourApp(
                     Spacer(Modifier.height(12.dp))
                     val leaving = actions.busySeat == mine.id
                     Secondary(
-                        if (leaving) "Taking it out..." else "Take it back out",
+                        if (leaving) "Taking it out" else "Take it back out",
                         Modifier.fillMaxWidth(),
                         destructive = true,
-                        enabled = !leaving,
+                        busy = leaving,
                     ) { actions.onLeave(mine) }
                     CardNote("Your ${CrewRules.SEAT_COST} tix come back in full.")
                 }
@@ -292,7 +306,7 @@ private fun RunHero(
             else -> "No missed days. Day ${crew.day + 1} begins at midnight, your time."
         }
     CrewHero(
-        chip = if (crew.atRisk) "Day ${crew.day} · ${crew.myMisses} missed" else "Day ${crew.day} of ${CrewRules.RUN_DAYS}",
+        chip = if (crew.atRisk) "Day ${crew.day}, ${crew.myMisses} missed" else "Day ${crew.day} of ${CrewRules.RUN_DAYS}",
         tone =
             if (crew.atRisk) {
                 Tone.WARN
@@ -389,7 +403,7 @@ fun CrewRecordPhase(
     CrewList(crew, actions) { _ ->
         block {
             CrewHero(
-                chip = "Finished · ${crew.finishedDays} days",
+                chip = "Finished after ${crew.finishedDays} days",
                 tone = if (enough) Tone.OK else Tone.WARN,
                 icon = if (enough) Lucide.CircleCheck else Lucide.TriangleAlert,
                 headline = "${crew.name} finished",

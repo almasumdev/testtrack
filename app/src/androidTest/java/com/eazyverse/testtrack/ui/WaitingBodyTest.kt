@@ -103,7 +103,7 @@ class WaitingBodyTest {
         }
         compose.onNodeWithText("Tanvir").assertIsDisplayed()
         compose.onNodeWithText("Accepted").assertIsDisplayed()
-        compose.onNodeWithText("Refused · upheld").assertIsDisplayed()
+        compose.onNodeWithText("Refused and upheld").assertIsDisplayed()
         compose.onNodeWithText("Close and get 40 tix back").performClick()
         compose.onNodeWithText("Close it").performClick()
         assertEquals(1, closed)
@@ -215,7 +215,7 @@ class WaitingBodyTest {
             }
         }
         // Who sent it and how long is left, on the row; no buttons until it is opened.
-        compose.onNodeWithText("Tanvir Hasan · Live app").assertIsDisplayed()
+        compose.onNodeWithText("Tanvir Hasan, live app").assertIsDisplayed()
         compose.onNodeWithText("1d 5h").assertIsDisplayed()
         compose.onNodeWithText("Accept").assertDoesNotExist()
         compose.onNodeWithText("Nikosh Budget").performClick()

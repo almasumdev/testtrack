@@ -85,6 +85,9 @@ object CrewRules {
     /** Reports from different members that send an app back before the run starts. */
     const val REPORTS_TO_RETURN = 2
 
+    /** Answers that decide an app Play could not check: this many Yes and it is in, this many No and it goes back. */
+    const val VOTES_TO_DECIDE = 2
+
     /** The shortest reason a report may give. The server refuses anything shorter. */
     const val REPORT_MIN_CHARS = 10
 
@@ -252,10 +255,10 @@ data class Crew(
             when {
                 out && phase != CrewPhase.RECORD -> "Your app is out"
                 phase == CrewPhase.OPEN -> "${CrewRules.SEATS - taken} seats left"
-                phase == CrewPhase.LOBBY && filling -> "Filling · $filled of ${CrewRules.SEATS}"
+                phase == CrewPhase.LOBBY && filling -> "Filling, $filled of ${CrewRules.SEATS}"
                 phase == CrewPhase.LOBBY -> "Starts in ${untilStart(startsIn)}"
                 phase == CrewPhase.RUN -> "Day $day of ${CrewRules.RUN_DAYS}"
-                else -> "Finished · $finishedDays days"
+                else -> "Finished after $finishedDays days"
             }
 }
 

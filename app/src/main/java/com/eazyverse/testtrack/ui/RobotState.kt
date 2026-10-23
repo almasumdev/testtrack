@@ -66,7 +66,7 @@ fun RobotState(
                     shape = RoundedCornerShape(percent = 50),
                     border = BorderStroke(1.5.dp, t.accentInk),
                     contentPadding = PaddingValues(horizontal = 22.dp),
-                    modifier = Modifier.heightIn(min = 48.dp),
+                    modifier = Modifier.heightIn(min = ButtonHeight),
                 ) {
                     Text(action, fontWeight = FontWeight.Bold, color = t.accentInk, fontSize = 14.5.sp)
                 }

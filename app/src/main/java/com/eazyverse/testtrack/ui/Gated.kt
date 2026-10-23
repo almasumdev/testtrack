@@ -98,7 +98,7 @@ fun Gated(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
-            modifier = Modifier.heightIn(min = 48.dp),
+            modifier = Modifier.heightIn(min = ButtonHeight),
         ) {
             Text(
                 "Sign in",

@@ -67,6 +67,22 @@ object FeedRules {
 
     /** An app's name on a post, as the server takes it (PostIn.app_name). */
     const val APP_NAME_MAX = 60
+
+    /** Members who decide a refused review, and what each is paid (rules.JURORS, rules.JUROR_FEE). */
+    const val JURORS = 3
+    const val JUROR_FEE = 5
+
+    /**
+     * What a dispute costs whoever loses it (rules.stake). The owner holds it while the members
+     * decide; a reviewer who loses pays it to them instead of being paid for the review.
+     */
+    const val STAKE = JURORS * JUROR_FEE
+
+    /** What a new account starts with, once per account and installation (rules.STARTER_TIX). */
+    const val STARTER_TIX = 120
+
+    /** The longest reason a refusal may give, as the server takes it (RejectIn.reason). */
+    const val REFUSE_MAX = 280
 }
 
 /**

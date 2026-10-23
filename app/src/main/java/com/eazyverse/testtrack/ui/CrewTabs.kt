@@ -74,7 +74,7 @@ fun CrewRunTab(
     // result it never got back.
     if (vm.signedOut) {
         Gated(
-            heading = "Sign in to see tonight’s apps",
+            heading = "Sign in to see tonight's apps",
             body = "Hold a seat and fourteen nights of testing start here, one night at a time.",
             onSignIn = onSignIn,
             mark = { NightsMark() },
@@ -109,7 +109,7 @@ fun CrewRunTab(
         item {
             Box(Modifier.padding(horizontal = Gutter)) {
                 CrewHero(
-                    chip = "Tonight · $crews",
+                    chip = "Tonight, $crews",
                     tone =
                         if (left == 0) {
                             Tone.OK
@@ -240,9 +240,9 @@ fun CrewLobbyTab(
                                 crew.out -> "Sent your app back"
                                 crew.filling -> {
                                     val more = CrewRules.SEATS - crew.filled
-                                    "Filling · ${crew.filled} of ${CrewRules.SEATS} · $more more to start"
+                                    "${crew.filled} of ${CrewRules.SEATS} in, $more more to start"
                                 }
-                                else -> "Full · starts in ${untilStart(crew.startsIn)}"
+                                else -> "Full, starts in ${untilStart(crew.startsIn)}"
                             },
                         chip = chip,
                         chipTone = tone,
@@ -353,7 +353,7 @@ fun CrewListRow(
         mark = "${crew.day}",
         markTone = if (crew.atRisk || crew.out) Tone.WARN else Tone.OK,
         title = crew.name,
-        line = "Day ${crew.day} of ${CrewRules.RUN_DAYS}" + if (crew.atRisk) " · missed yesterday" else "",
+        line = "Day ${crew.day} of ${CrewRules.RUN_DAYS}" + if (crew.atRisk) ", missed yesterday" else "",
         lineTone = if (crew.atRisk) Tone.WARN else null,
         chip = chip,
         chipTone = tone,

@@ -164,7 +164,7 @@ class AskViewModel : ViewModel() {
                     }
                 if (options == null) {
                     check(request.reviewsBought == FeedRules.REVIEWS_BOUGHT) {
-                        "Custom review counts aren't available yet. Choose 3 reviews to post now."
+                        "Custom review counts aren't available yet. Choose ${FeedRules.REVIEWS_BOUGHT} reviews for now."
                     }
                     // The previous API requires a question, even for general feedback.
                     Api.createPost(operation.copy(ask = request.ask.ifBlank { "General feedback on the app experience." }))
@@ -185,7 +185,7 @@ class AskViewModel : ViewModel() {
                 } else {
                     failure =
                         AskFailure(
-                            "Couldn't post your request",
+                            "Couldn't send your request",
                             if (it is IllegalStateException) {
                                 it.message.orEmpty()
                             } else {

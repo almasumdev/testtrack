@@ -88,7 +88,7 @@ fun RanksScreen(vm: RanksViewModel = viewModel()) {
             if (waiting) {
                 RanksLoading()
             } else {
-                RanksBody(rows = vm.rows, mine = vm.mine, offline = vm.offline)
+                RanksBody(rows = vm.rows, mine = vm.mine, offline = vm.offline, onRetry = { vm.load(context) })
             }
         }
     }
@@ -113,6 +113,7 @@ fun RanksBody(
     mine: BoardRow?,
     loading: Boolean = false,
     offline: Boolean = false,
+    onRetry: () -> Unit = {},
 ) {
     // Not the signed-out case. The board reads without an account, and somebody deciding whether
     // this is worth joining is exactly who most needs to see that people are doing the work.
@@ -121,7 +122,9 @@ fun RanksBody(
         RobotState(
             Prop.Plug,
             "The board did not load",
-            "Check your connection and pull to try again.",
+            "Check your connection and try again.",
+            action = "Try again",
+            onAction = onRetry,
             failed = true,
         )
         return
@@ -425,7 +428,7 @@ private fun work(row: BoardRow): String =
     buildString {
         append(if (row.opens == 1) "1 app opened" else "${row.opens} apps opened")
         if (row.reviews > 0) {
-            append(if (row.reviews == 1) " · 1 review" else " · ${row.reviews} reviews")
+            append(if (row.reviews == 1) ", 1 review" else ", ${row.reviews} reviews")
         }
     }
 

@@ -51,15 +51,15 @@ fun CrewOpenTab(
                             },
                         tone = if (crew != null && free <= 3) Tone.OK else Tone.ACCENT,
                         icon = Lucide.Users,
-                        headline = crew?.let { "${it.name} · $free of ${CrewRules.SEATS} seats left" } ?: "No crew is filling",
+                        headline = crew?.let { "${it.name}, $free of ${CrewRules.SEATS} seats left" } ?: "No crew is filling",
                         line =
                             when {
                                 vm.inOpen -> "You are in this one. It is in your Lobby."
                                 vm.blocked != null -> vm.blocked.orEmpty()
                                 crew == null -> "The next app put in starts one."
                                 else ->
-                                    "It starts at midnight the day it is full. A seat costs ${CrewRules.SEAT_COST} tix, " +
-                                        "back in full if your app leaves before the run."
+                                    "It starts at midnight, your time, the day it is full. A seat costs ${CrewRules.SEAT_COST} tix, " +
+                                        "back in full if you take it out while the crew fills."
                             },
                         lineTone = if (vm.inOpen) Tone.ACCENT else null,
                         meter = { SeatCountTiles(filled = crew?.filled ?: 0, taken = crew?.taken ?: 0, icons = crew?.icons.orEmpty()) },

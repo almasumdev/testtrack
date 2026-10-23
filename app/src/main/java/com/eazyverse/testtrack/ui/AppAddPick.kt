@@ -125,6 +125,7 @@ private fun PhoneAppRow(
                 null
             },
         leading = { AppIcon(app.pkg, app.label, size = 36.dp) },
+        chosen = chosen,
         // The check's room is kept on every row, so a title never shifts when it is chosen.
         trailing = {
             Box(Modifier.size(20.dp), contentAlignment = Alignment.Center) {

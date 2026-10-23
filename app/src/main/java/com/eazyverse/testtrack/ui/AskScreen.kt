@@ -111,10 +111,9 @@ fun AskScreen(
                     Spacer(Modifier.height(16.dp))
                     vm.failure?.let { PostFailure(it) }
                     Primary(
-                        "Post feedback request",
+                        "Ask for feedback",
                         busy = vm.posting,
                         enabled = vm.canPost,
-                        tall = true,
                         onClick = { vm.post(onDone) },
                     )
                 }
@@ -125,7 +124,7 @@ fun AskScreen(
     }
     if (vm.needsSignIn) {
         SignInSheet(
-            reason = SignInReason("Sign in to continue", "Your session ran out. Sign in again to post your request."),
+            reason = SignInReason("Sign in to continue", "Your session ran out. Sign in again to send your request."),
             onDismiss = vm::dismissSignIn,
             onSignedIn = vm::signedIn,
             vm = viewModel(key = "ask-signin-${vm.authPromptId}"),
@@ -167,7 +166,7 @@ private fun TrackNote(live: Boolean) {
             if (live) {
                 "Testers rate and review your app on Google Play in their own words, after using it on two days. " +
                     "Google does not allow rewarding reviews and can remove ones it doubts, so the reviews are " +
-                    "paced like real users'. Posting this is your decision to make."
+                    "paced like real users'. Whether to ask is your decision."
             } else {
                 "Testers send you private feedback on Google Play after trying your app for two minutes. It reaches " +
                     "you in Play Console, and a screenshot of it comes here."

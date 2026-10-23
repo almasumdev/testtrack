@@ -39,6 +39,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.R
@@ -118,9 +120,10 @@ fun TopHud(
                 }
             }
             Row(Modifier.align(Alignment.End).padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                // Less space after it than it looks: the update button's touch area takes 4 of it.
                 if (update != null) {
                     UpdateChip(update)
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(4.dp))
                 }
                 if (visibleLevel != null) {
                     TixChip(tix)
@@ -153,7 +156,7 @@ fun TopHud(
         }
         if (update != null) {
             UpdateChip(update)
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(6.dp))
         }
         Crossfade(
             targetState =
@@ -254,7 +257,8 @@ private fun TixChip(
     }
 
     val shape = RoundedCornerShape(percent = 50)
-    Box(modifier, contentAlignment = Alignment.CenterStart) {
+    // Read as one thing, the balance and its unit, rather than a bare number and a picture.
+    Box(modifier.clearAndSetSemantics { contentDescription = "$tix tix" }, contentAlignment = Alignment.CenterStart) {
         Row(
             Modifier
                 .padding(start = 16.dp, bottom = 3.dp)

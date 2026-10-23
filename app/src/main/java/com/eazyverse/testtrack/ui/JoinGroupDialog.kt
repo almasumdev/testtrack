@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
@@ -215,7 +216,7 @@ private fun Outside(
         Box(Modifier.padding(start = 28.dp)) { DialogNote("If the page says you don't have permission, tap Join anyway.") }
         Spacer(Modifier.height(12.dp))
         when {
-            checking -> DialogNote("Looking you up in the group…")
+            checking -> DialogNote("Looking you up in the group")
             stillOut ->
                 Text(
                     buildAnnotatedString {
@@ -243,7 +244,8 @@ private fun Outside(
                             append("Check now")
                         }
                     },
-                    Modifier.clickable(onClick = onCheck),
+                    // A line of text, touched as a 48dp target.
+                    Modifier.minimumInteractiveComponentSize().clickable(onClick = onCheck),
                     style = DialogBody.copy(fontSize = 13.sp),
                     color = t.text4,
                 )

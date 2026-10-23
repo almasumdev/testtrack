@@ -76,12 +76,12 @@ fun AppEntry.tileBadges(): List<AppBadge> = badges().ifEmpty { listOf(AppBadge("
 
 fun crewBadge(crew: AppCrewStatus): AppBadge =
     when (crew.state) {
-        "waiting" -> AppBadge("${crew.crewName} · filling", BadgeTone.RUNNING, BadgeKind.CREW)
-        "checking" -> AppBadge("${crew.crewName} · members checking", BadgeTone.ATTENTION, BadgeKind.CREW)
-        "starting" -> AppBadge("${crew.crewName} · starts at midnight", BadgeTone.RUNNING, BadgeKind.CREW)
-        "testing" -> AppBadge("Day ${crew.day} of ${crew.runDays} · ${crew.crewName}", BadgeTone.RUNNING, BadgeKind.CREW)
+        "waiting" -> AppBadge("${crew.crewName} is filling", BadgeTone.RUNNING, BadgeKind.CREW)
+        "checking" -> AppBadge("${crew.crewName}, members checking", BadgeTone.ATTENTION, BadgeKind.CREW)
+        "starting" -> AppBadge("${crew.crewName} starts at midnight, your time", BadgeTone.RUNNING, BadgeKind.CREW)
+        "testing" -> AppBadge("Day ${crew.day} of ${crew.runDays} in ${crew.crewName}", BadgeTone.RUNNING, BadgeKind.CREW)
         "finished" -> AppBadge("Crew test done", BadgeTone.DONE, BadgeKind.CREW)
-        "rejected" -> AppBadge("Sent back · fix it", BadgeTone.PROBLEM, BadgeKind.CREW)
+        "rejected" -> AppBadge("Sent back to be fixed", BadgeTone.PROBLEM, BadgeKind.CREW)
         "removed" -> AppBadge("Out of ${crew.crewName}", BadgeTone.PROBLEM, BadgeKind.CREW)
         else -> AppBadge(crew.crewName, BadgeTone.QUIET, BadgeKind.CREW)
     }
@@ -90,7 +90,7 @@ fun feedbackBadge(feedback: AppFeedbackStatus): AppBadge =
     when (feedback.state) {
         "collecting" -> AppBadge("Feedback ${feedback.done} of ${feedback.bought}", BadgeTone.RUNNING, BadgeKind.FEEDBACK)
         "done" -> AppBadge("Feedback done", BadgeTone.DONE, BadgeKind.FEEDBACK)
-        else -> AppBadge("Feedback closed · ${feedback.done} of ${feedback.bought}", BadgeTone.QUIET, BadgeKind.FEEDBACK)
+        else -> AppBadge("Feedback closed at ${feedback.done} of ${feedback.bought}", BadgeTone.QUIET, BadgeKind.FEEDBACK)
     }
 
 /** How the app is known to be real, in the chip under its name. */
@@ -113,7 +113,7 @@ fun crewStatus(app: AppEntry): String {
         crew == null -> "Not in a crew yet"
         crew.state == "waiting" -> "In ${crew.crewName}, filling up"
         crew.state == "checking" -> "In ${crew.crewName}, members checking"
-        crew.state == "starting" -> "${crew.crewName} starts at midnight"
+        crew.state == "starting" -> "${crew.crewName} starts at midnight, your time"
         crew.state == "testing" -> "Day ${crew.day} of ${crew.runDays} in ${crew.crewName}"
         crew.state == "finished" -> if (app.crewsDone > 1) "${app.crewsDone} crew tests done" else "Crew test done"
         crew.state == "rejected" -> "${crew.crewName} sent it back"

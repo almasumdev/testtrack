@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
@@ -129,7 +130,7 @@ internal fun UpdateChip(offer: UpdateOffer) {
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (saying) {
-                    Text("Downloading…", style = MaterialTheme.typography.labelMedium, color = t.text2)
+                    Text("Downloading", style = MaterialTheme.typography.labelMedium, color = t.text2)
                     Spacer(Modifier.width(8.dp))
                 }
                 RoundButton("Update downloading", onClick = { saying = true }) {
@@ -153,10 +154,11 @@ internal fun UpdateChip(offer: UpdateOffer) {
                 RoundButton("Update TestTrack", onClick = offer.onTap) {
                     Icon(Lucide.ArrowDownToLine, "Update available", Modifier.size(19.dp), tint = t.accentInk)
                 }
+                // Placed on the 40dp circle, inside the 48dp it is touched by.
                 Box(
                     Modifier
                         .align(Alignment.TopEnd)
-                        .offset(x = 1.dp, y = (-1).dp)
+                        .offset(x = (-3).dp, y = 3.dp)
                         .size(11.dp)
                         .clip(CircleShape)
                         .background(t.gold)
@@ -172,8 +174,10 @@ private fun RoundButton(
     onClick: () -> Unit,
     content: @Composable () -> Unit,
 ) {
+    // 40 to look at, 48 to touch: the extra 4 on each side is the gap the header leaves around it.
     Box(
         Modifier
+            .minimumInteractiveComponentSize()
             .size(40.dp)
             .clip(CircleShape)
             .background(Tt.colors.glass)
@@ -195,7 +199,7 @@ internal fun UpdateRow(
     val subtitle =
         when (offer.state) {
             UpdateOffer.State.AVAILABLE -> "Ready to download"
-            UpdateOffer.State.DOWNLOADING -> "Downloading…"
+            UpdateOffer.State.DOWNLOADING -> "Downloading"
             UpdateOffer.State.READY -> "Restart to finish updating"
         }
     TileRow(

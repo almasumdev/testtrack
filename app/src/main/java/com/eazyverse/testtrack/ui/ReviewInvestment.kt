@@ -61,7 +61,7 @@ internal fun ReviewInvestment(
             }
         }
         Text(
-            "Choose between 1 and 50 reviews.",
+            "Choose between ${FeedRules.MIN_REVIEWS} and ${FeedRules.MAX_REVIEWS} reviews.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

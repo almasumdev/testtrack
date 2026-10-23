@@ -6,11 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,27 +19,15 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
- * The robot, working on it: the app's own loading state. It holds two gears turning against each
- * other; the head breathes and the eyes blink like they do in the header, and the whole robot
+ * The robot holding the cartoon thing for a page's case (see [Prop]): a megaphone where nobody is
+ * asking, a plug pulled out where it did not load, a seal once approved, gears while an update is
+ * needed. The head breathes and the eyes blink like they do in the header, and the whole robot
  * hovers over a shadow that tightens as it rises. With animations off on the phone it stands
  * still, so nothing moves that the person asked not to move.
- */
-@Composable
-fun RobotLoader(
-    modifier: Modifier = Modifier,
-    size: Dp = 96.dp,
-    label: String? = null,
-) = RobotFigure(modifier, size, label ?: "Loading", label, Prop.Gears)
-
-/**
- * The robot holding the cartoon thing for a page's case (see [Prop]): a megaphone where nobody is
- * asking, a plug pulled out where it did not load, a seal once approved. Same hover and blink as
- * the loader, so it is plainly the same robot.
  */
 @Composable
 fun RobotHolding(
@@ -51,7 +35,7 @@ fun RobotHolding(
     modifier: Modifier = Modifier,
     size: Dp = 96.dp,
     description: String? = null,
-) = RobotFigure(modifier, size, description ?: "", null, prop)
+) = RobotFigure(modifier, size, description ?: "", prop)
 
 /**
  * The robot itself: body, breathing head, blinking eyes, swaying antenna, hovering over its
@@ -62,7 +46,6 @@ private fun RobotFigure(
     modifier: Modifier,
     size: Dp,
     description: String,
-    label: String?,
     prop: Prop,
 ) {
     val t = Tt.colors
@@ -141,10 +124,6 @@ private fun RobotFigure(
                 prop.layers.forEach { PropImage(it, clock) }
                 Image(painterResource(R.drawable.level_robot_hands), null, Modifier.matchParentSize())
             }
-        }
-        if (label != null) {
-            Spacer(Modifier.height(10.dp))
-            Text(label, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp), color = t.text3)
         }
     }
 }

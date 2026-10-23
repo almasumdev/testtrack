@@ -46,8 +46,8 @@ class MineBodyTest {
         compose.onNodeWithText("In progress").assertIsDisplayed()
         compose.onNodeWithText("Waiting for the developer").assertIsDisplayed()
         compose.onNodeWithText("History").assertIsDisplayed()
-        compose.onNodeWithText("Checking · up to 2 days").assertIsDisplayed()
-        compose.onNodeWithText("Approved · tix paid").assertIsDisplayed()
+        compose.onNodeWithText("Sent. Checked within 2 days").assertIsDisplayed()
+        compose.onNodeWithText("Approved. Tix paid").assertIsDisplayed()
         compose.onNodeWithText("Step 3/4").assertIsDisplayed()
     }
 

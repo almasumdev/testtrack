@@ -133,7 +133,7 @@ class CrewWireTest {
     @Test
     fun a_lobby_says_how_many_more_or_how_long_to_midnight() {
         val filling = crew(state = "filling", members = listOf(seat("a"), seat("b", mine = true))).toCrew()
-        assertEquals("Filling · 2 of 15", filling.standing)
+        assertEquals("Filling, 2 of 15", filling.standing)
         val waiting = crew(state = "full", startsIn = 2 * 3_600_000L + 5 * 60_000L).toCrew()
         assertEquals("Starts in 2h 5m", waiting.standing)
     }

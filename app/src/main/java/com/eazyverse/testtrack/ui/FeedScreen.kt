@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -113,11 +114,13 @@ fun FeedScreen(
     }
     LaunchedEffect(nearEnd) { if (nearEnd) vm.loadMore() }
 
-    // Notifications, asked for once and only once there is something of this account's in
-    // Feedback to hear about: a request out, or a review taken on. Asked any earlier it is a
+    // Notifications, offered once and only once there is something of this account's in
+    // Feedback to hear about: a request out, or a review taken on. Offered in our own words
+    // first, and the system's question only follows an Allow: a prompt out of nowhere is a
     // permission for nothing in particular, which is the one people refuse.
     val notify = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     val involved = vm.requests.isNotEmpty() || vm.mine.isNotEmpty()
+    var offeringNotify by remember { mutableStateOf(false) }
     LaunchedEffect(involved) {
         if (!involved || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return@LaunchedEffect
         val prefs = context.getSharedPreferences("feedback_notify", Context.MODE_PRIVATE)
@@ -126,8 +129,21 @@ fun FeedScreen(
                 PackageManager.PERMISSION_GRANTED
         if (!granted && !prefs.getBoolean("asked", false)) {
             prefs.edit().putBoolean("asked", true).apply()
-            notify.launch(Manifest.permission.POST_NOTIFICATIONS)
+            offeringNotify = true
         }
+    }
+    if (offeringNotify) {
+        Ask(
+            title = "Turn on notifications?",
+            body = "We let you know when a review of your app comes in or a review you sent is accepted.",
+            confirm = "Allow",
+            dismiss = "Not now",
+            onConfirm = {
+                offeringNotify = false
+                notify.launch(Manifest.permission.POST_NOTIFICATIONS)
+            },
+            onDismiss = { offeringNotify = false },
+        )
     }
 
     // Mine and Waiting are this account's own; signed out there is no account, so no tabs for them.

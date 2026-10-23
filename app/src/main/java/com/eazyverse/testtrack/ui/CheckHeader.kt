@@ -85,7 +85,9 @@ fun AppHeader(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .clickable(enabled = packageName.isNotBlank()) { openPlay(context, packageName) },
+            .clickable(enabled = packageName.isNotBlank(), onClickLabel = "Open $name on Google Play") {
+                openPlay(context, packageName)
+            },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AppMark(packageName, name, icon, size = HEADER_ICON)

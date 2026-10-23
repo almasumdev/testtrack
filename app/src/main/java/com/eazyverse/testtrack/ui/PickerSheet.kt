@@ -52,9 +52,10 @@ import kotlinx.coroutines.launch
  * 22, a 38 by 4 handle, the title, and the body under it, never wider than 560.
  *
  * [tall] is for a long list with search: the sheet takes 82% of the screen at once, rather than
- * growing and shrinking as the search narrows the list. [content] gets `close`, which hides the
- * sheet first and then runs what it is given, since a sheet removed while open vanishes on one
- * frame.
+ * growing and shrinking as the search narrows the list. [skipHalf] opens a short sheet fully,
+ * with no half-open stop. [leading] sits before the title, such as the app a sheet is about.
+ * [content] gets `close`, which hides the sheet first and then runs what it is given, since a
+ * sheet removed while open vanishes on one frame.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,9 +64,11 @@ internal fun PickerSheet(
     onDismiss: () -> Unit,
     subtitle: String? = null,
     tall: Boolean = false,
+    skipHalf: Boolean = tall,
+    leading: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.(close: (() -> Unit) -> Unit) -> Unit,
 ) {
-    val state = rememberModalBottomSheetState(skipPartiallyExpanded = tall)
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = skipHalf)
     val scope = rememberCoroutineScope()
     val close: (() -> Unit) -> Unit = { next ->
         scope.launch {
@@ -99,15 +102,23 @@ internal fun PickerSheet(
                     .navigationBarsPadding()
                     .imePadding(),
             ) {
-                Text(
-                    title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp, lineHeight = 22.sp),
-                    fontWeight = FontWeight.Bold,
-                    color = Tt.colors.text,
-                )
-                if (subtitle != null) {
-                    Spacer(Modifier.height(4.dp))
-                    Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text3)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (leading != null) {
+                        leading()
+                        Spacer(Modifier.width(12.dp))
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            title,
+                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp, lineHeight = 22.sp),
+                            fontWeight = FontWeight.Bold,
+                            color = Tt.colors.text,
+                        )
+                        if (subtitle != null) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text3)
+                        }
+                    }
                 }
                 Spacer(Modifier.height(14.dp))
                 content(close)
@@ -174,7 +185,7 @@ internal fun SearchField(
                             .background(t.glass2)
                             .clickable(onClickLabel = "Clear search") { onValueChange("") },
                         contentAlignment = Alignment.Center,
-                    ) { Icon(Lucide.X, null, Modifier.size(14.dp), tint = t.text2) }
+                    ) { Icon(Lucide.X, "Clear search", Modifier.size(14.dp), tint = t.text2) }
                 }
             }
         },

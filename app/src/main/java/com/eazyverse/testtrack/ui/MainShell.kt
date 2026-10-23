@@ -265,8 +265,8 @@ fun MainShell(
                                                     SignInReason(
                                                         title = "Sign in to ask for feedback",
                                                         why =
-                                                            "Feedback is asked for one of your apps, so it needs your " +
-                                                                "account and My apps.",
+                                                            "You ask for feedback on one of your own apps and pay for " +
+                                                                "it in tix, so you need to sign in first.",
                                                     )
                                             }
                                         },
@@ -275,8 +275,8 @@ fun MainShell(
                                                 SignInReason(
                                                     title = "Sign in to review apps",
                                                     why =
-                                                        "A review pays you tix, and tix belong to an account. " +
-                                                            "You can read Circle without one.",
+                                                        "Each review you finish pays you tix, kept on your account. " +
+                                                            "You can browse Circle without signing in.",
                                                 )
                                         },
                                         onSignIn = {
@@ -284,9 +284,9 @@ fun MainShell(
                                                 SignInReason(
                                                     title = "Sign in to see what is waiting",
                                                     why =
-                                                        "Reviews of your apps and cases you are asked to decide " +
-                                                            "are addressed to an account. The rest of Circle " +
-                                                            "you can read without one.",
+                                                        "Here you see reviews of your apps and cases you are asked " +
+                                                            "to decide. You can browse the rest of Circle " +
+                                                            "without signing in.",
                                                 )
                                         },
                                     )
@@ -309,9 +309,9 @@ fun MainShell(
                                                 SignInReason(
                                                     title = "Sign in to see your crews",
                                                     why =
-                                                        "Which seats are yours, what you owe tonight and what " +
-                                                            "you have finished all hang off the account. Open " +
-                                                            "reads without one.",
+                                                        "Here you see your seats, the apps to open tonight and the " +
+                                                            "crews you have finished. You can look at the Open " +
+                                                            "tab without signing in.",
                                                 )
                                         },
                                     )
@@ -328,9 +328,9 @@ fun MainShell(
                                                 SignInReason(
                                                     title = "Sign in to see your apps",
                                                     why =
-                                                        "This is the list of what you have put up, so it needs " +
-                                                            "to know who you are. Everything else in TestTrack " +
-                                                            "you can read without an account.",
+                                                        "Here you see the apps you have added and how their tests " +
+                                                            "are going. You can browse the rest of TestTrack " +
+                                                            "without signing in.",
                                                 )
                                         },
                                     )
@@ -346,9 +346,9 @@ fun MainShell(
                                                 SignInReason(
                                                     title = "Sign in to see your record",
                                                     why =
-                                                        "Your level, your tix and what you have done belong to " +
-                                                            "the account. Everything else in TestTrack you can " +
-                                                            "read without one.",
+                                                        "Here you see your level, your tix and what you have done. " +
+                                                            "You can browse the rest of TestTrack without " +
+                                                            "signing in.",
                                                 )
                                         },
                                     )

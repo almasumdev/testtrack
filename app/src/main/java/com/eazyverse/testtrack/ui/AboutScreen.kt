@@ -273,7 +273,6 @@ private fun ColumnScope.LegalBank() {
     val t = Tt.colors
     Row(Modifier.align(Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
         LegalLink("Privacy") { openUrl(context, APP_PRIVACY) }
-        Text("·", color = t.text4)
         LegalLink("Terms") { openUrl(context, STUDIO_TERMS) }
     }
     Spacer(Modifier.height(6.dp))
@@ -338,7 +337,7 @@ private fun Filled(
     val ink = MaterialTheme.colorScheme.onPrimary
     Button(
         onClick = onClick,
-        modifier = modifier.height(48.dp),
+        modifier = modifier.heightIn(min = ButtonHeight),
         shape = RoundedCornerShape(percent = 50),
         elevation = null,
         contentPadding = PaddingValues(horizontal = 16.dp),
@@ -364,7 +363,7 @@ private fun Outlined(
     val t = Tt.colors
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(48.dp),
+        modifier = modifier.heightIn(min = ButtonHeight),
         shape = RoundedCornerShape(percent = 50),
         border = BorderStroke(1.5.dp, t.accentInk),
         contentPadding = PaddingValues(horizontal = 16.dp),

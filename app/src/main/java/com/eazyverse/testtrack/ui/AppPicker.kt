@@ -79,7 +79,7 @@ private fun PickRow(
         icon = Lucide.Plus,
         title = app.name,
         place = place,
-        subtitle = if (app.live) "Live · ${app.pkg}" else "Closed test · ${app.pkg}",
+        subtitle = if (app.live) "Live, ${app.pkg}" else "Closed test, ${app.pkg}",
         leading = { AppMark(app.pkg, app.name, app.icon, size = 36.dp, ownIcon = true) },
         onClick = onClick,
     )

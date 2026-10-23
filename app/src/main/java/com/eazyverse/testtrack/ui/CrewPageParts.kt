@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -298,10 +299,11 @@ internal fun MembersButton(
     val shape = RoundedCornerShape(percent = 50)
     Row(
         Modifier
+            .minimumInteractiveComponentSize()
             .clip(shape)
             .background(Tt.colors.glass)
             .border(1.dp, Tt.colors.glassBorder, shape)
-            .clickableRole("Members, $count", onClick)
+            .clickableRole("$count members", onClick)
             .padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

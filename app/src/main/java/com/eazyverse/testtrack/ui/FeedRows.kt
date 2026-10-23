@@ -66,6 +66,8 @@ fun FeedCard(
     accent: Color? = null,
     /** A post needs room to breathe; a one line event does not. Same edge either way. */
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+    /** A card that does one thing does it from anywhere on it, not only from its chip. */
+    onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
@@ -77,7 +79,8 @@ fun FeedCard(
                 1.dp,
                 accent ?: Tt.colors.glassBorder,
                 RoundedCornerShape(CardRadius),
-            ).padding(padding),
+            ).then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(padding),
         content = content,
     )
 }
@@ -138,7 +141,7 @@ fun AppTile(
 }
 
 /** What both ways in to posting are labelled. One word for one action, in one place. */
-private const val POST_LABEL = "Post an app"
+private const val POST_LABEL = "Ask for feedback"
 
 /**
  * A dashed outline, in the vocabulary [RowDivider] already established.
@@ -256,7 +259,11 @@ fun FeedRequestCard(
     post: ApiPost,
     onReview: () -> Unit,
 ) {
-    FeedCard {
+    // In progress and waiting count as taken: the server says what is left.
+    val open = post.slotsOpen ?: (post.reviewsBought - post.reviewsDone)
+    // The same cases that show the action chip, so the card and its chip always do the same thing.
+    val actionable = !post.mine && post.myState != "approved" && !(post.myState == null && open <= 0)
+    FeedCard(onClick = if (actionable) onReview else null) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             // Installed here first, then the icon its owner's app has, then its initial.
             AppMark(post.packageName, post.appName, post.icon)
@@ -271,7 +278,7 @@ fun FeedRequestCard(
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    if (post.mine) "Your post" else "Posted by ${post.ownerName}",
+                    if (post.mine) "Your request" else "Asked by ${post.ownerName}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -297,8 +304,6 @@ fun FeedRequestCard(
         Spacer(Modifier.height(13.dp))
         CardRule()
         Spacer(Modifier.height(12.dp))
-        // In progress and waiting count as taken: the server says what is left.
-        val open = post.slotsOpen ?: (post.reviewsBought - post.reviewsDone)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 when {
@@ -322,7 +327,7 @@ fun FeedRequestCard(
                 else ->
                     ActionChip(
                         when (post.myState) {
-                            null -> "Review · +${post.reward}"
+                            null -> "Review for ${post.reward} tix"
                             in Underway -> "Carry on"
                             else -> "See it"
                         },

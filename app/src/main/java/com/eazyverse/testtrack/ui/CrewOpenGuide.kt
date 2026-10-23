@@ -225,7 +225,7 @@ private fun CrewJourney() {
                 Lucide.Armchair,
                 Tone.ACCENT,
                 "Fill up",
-                "Take a seat and wait in the Lobby. The crew starts at midnight the day all ${CrewRules.SEATS} are in.",
+                "Take a seat and wait in the Lobby. The crew starts at midnight, your time, the day all ${CrewRules.SEATS} are in.",
             ),
             Step(
                 Lucide.Download,

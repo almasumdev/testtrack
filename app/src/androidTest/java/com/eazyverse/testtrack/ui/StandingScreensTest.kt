@@ -155,7 +155,7 @@ class StandingScreensTest {
                 )
             }
         }
-        compose.onNodeWithText("12 apps opened · 2 reviews").assertIsDisplayed()
+        compose.onNodeWithText("12 apps opened, 2 reviews").assertIsDisplayed()
     }
 
     @Test
@@ -256,7 +256,7 @@ class StandingScreensTest {
         }
         compose.onNodeWithText("Nikosh Budget").assertIsDisplayed()
         compose.onNodeWithContentDescription("Closed test").assertIsDisplayed()
-        compose.onNodeWithText("Day 6 of 14 · Crew 07").assertIsDisplayed()
+        compose.onNodeWithText("Day 6 of 14 in Crew 07").assertIsDisplayed()
         compose.onNodeWithText("Feedback 2 of 3").assertIsDisplayed()
     }
 
@@ -286,7 +286,7 @@ class StandingScreensTest {
         compose.setContent {
             TestTrackTheme { AppsBody(apps = listOf(myApp(crew = AppCrewStatus("rejected", "c1", "Crew 07")))) }
         }
-        compose.onNodeWithText("Sent back · fix it").assertIsDisplayed()
+        compose.onNodeWithText("Sent back to be fixed").assertIsDisplayed()
     }
 
     @Test

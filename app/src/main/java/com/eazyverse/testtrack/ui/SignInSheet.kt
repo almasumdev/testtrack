@@ -12,10 +12,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,15 +26,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,8 +71,8 @@ val StartReason =
     SignInReason(
         title = "Sign in to TestTrack",
         why =
-            "Your crews, your apps and everything you earn belong to the account, and follow " +
-                "you onto any phone you sign in on.",
+            "Your crews, apps and tix are saved to your account, so they are there on any " +
+                "phone you sign in on.",
     )
 
 /**
@@ -79,8 +82,11 @@ val StartReason =
  * point pitch and a button, shown before they had been shown a single thing the app does. It is a
  * sheet now, over the content that prompted it, from the header or from a tab that cannot answer
  * without a name. Nobody is sent anywhere, and dismissing puts them back exactly where they were.
+ *
+ * Drawn in the one [PickerSheet] frame, the reason's title as the sheet's. It ends one of two ways
+ * and never both: [onDismiss] when somebody puts it away, [onSignedIn] when it closes itself after
+ * showing the account.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignInSheet(
     reason: SignInReason,
@@ -92,26 +98,22 @@ fun SignInSheet(
         onDispose { vm.resetResult() }
     }
     val activity = LocalContext.current.findActivity()
-    val state = rememberModalBottomSheetState()
+    // Set just before the sheet closes itself, so the frame's close ends in onSignedIn rather than
+    // onDismiss, which would forget whatever was waiting on the sign in.
+    var done by remember { mutableStateOf(false) }
 
-    // Long enough to read which of three accounts was picked, short enough that nobody is waiting
-    // on it. The sheet leaves on its own; there is nothing here to press once it has worked.
-    LaunchedEffect(vm.signedInAs) {
-        if (vm.signedInAs != null) {
-            delay(1_100)
-            // Hidden first, then removed. A ModalBottomSheet taken out of the composition while
-            // still open has no chance to run its own exit: it vanishes on one frame, which is
-            // what made the end of this flow feel broken however well the halves crossed over.
-            state.hide()
-            onSignedIn()
+    PickerSheet(title = reason.title, onDismiss = { if (done) onSignedIn() else onDismiss() }) { close ->
+        // Long enough to read which of three accounts was picked, short enough that nobody is
+        // waiting on it. The sheet leaves on its own; there is nothing here to press once it has
+        // worked. Hidden first, then removed, which is what close does: a sheet taken out while
+        // still open vanishes on one frame.
+        LaunchedEffect(vm.signedInAs) {
+            if (vm.signedInAs != null) {
+                delay(1_100)
+                done = true
+                close {}
+            }
         }
-    }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = state,
-        containerColor = MaterialTheme.colorScheme.surface,
-    ) {
         SignInSheetBody(
             reason = reason,
             busy = vm.busy,
@@ -123,7 +125,7 @@ fun SignInSheet(
 }
 
 /**
- * The sheet's contents, given its state rather than holding it.
+ * The sheet's contents, given its state rather than holding it. The title is the frame's.
  *
  * The same shape the rest of the screens here take, and for the same reason: everything this draws
  * can be put in front of a test this way, including the half that only exists after a real Google
@@ -140,7 +142,7 @@ fun SignInSheetBody(
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(start = Gutter, end = Gutter, bottom = 30.dp),
+            .padding(bottom = 20.dp),
     ) {
             /*
              * Crossed over rather than swapped.
@@ -186,12 +188,6 @@ private fun AskToSignIn(
 ) {
     Column {
         Text(
-            reason.title,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
             reason.why,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -206,7 +202,7 @@ private fun AskToSignIn(
         Button(
             onClick = onPress,
             enabled = !busy,
-            shape = RoundedCornerShape(15.dp),
+            shape = RoundedCornerShape(percent = 50),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             colors =
                 ButtonDefaults.buttonColors(
@@ -215,7 +211,8 @@ private fun AskToSignIn(
                     disabledContainerColor = MaterialTheme.colorScheme.background,
                     disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
-            modifier = Modifier.fillMaxWidth().height(54.dp),
+            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = ButtonHeight),
         ) {
             if (busy) {
                 CircularProgressIndicator(
@@ -231,6 +228,8 @@ private fun AskToSignIn(
                 if (busy) "Waiting for Google" else "Continue with Google",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
             )
         }
 
@@ -314,8 +313,8 @@ private fun SignedIn(account: String) {
         }
         Spacer(Modifier.height(16.dp))
         Text(
-            "Your crews and balance are loading. Eligible accounts receive 120 starter tix once per account and installation. " +
-                "Use them to request private feedback, or earn more by helping another developer.",
+            "Your crews and balance are loading. A new account gets ${FeedRules.STARTER_TIX} tix to start, once per " +
+                "account and phone. Use them to ask for feedback, or earn more by reviewing other apps.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
