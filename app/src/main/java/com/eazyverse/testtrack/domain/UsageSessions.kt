@@ -43,11 +43,38 @@ object UsageSessions {
         pkg: String,
         since: Long,
         now: Long,
-    ): Long {
-        if (since >= now) return 0L
+    ): Long = sessions(events, pkg, since, now).sumOf { it.last - it.first }
+
+    /**
+     * How many calendar days [pkg] was really used on between [since] and [now]: the days a sitting
+     * of at least [minMs] started on, by [dayOf] (the phone's own calendar, handed in so this stays
+     * free of time zones). What a live review's second day of use is counted from.
+     */
+    fun daysUsed(
+        events: List<Event>,
+        pkg: String,
+        since: Long,
+        now: Long,
+        dayOf: (Long) -> Long,
+        minMs: Long = 15_000L,
+    ): Int =
+        sessions(events, pkg, since, now)
+            .filter { it.last - it.first >= minMs }
+            .map { dayOf(it.first) }
+            .distinct()
+            .size
+
+    /** Each sitting of [pkg] in front, clipped to the window, as its start and end. */
+    private fun sessions(
+        events: List<Event>,
+        pkg: String,
+        since: Long,
+        now: Long,
+    ): List<LongRange> {
+        if (since >= now) return emptyList()
         val resumed = HashSet<String>()
         var openedAt = 0L
-        var total = 0L
+        val found = ArrayList<LongRange>()
 
         // Keyed on [openedAt], not on [resumed]: the last pause empties [resumed] just before
         // this is called, and checking that instead counted every finished visit as nothing.
@@ -55,7 +82,7 @@ object UsageSessions {
             if (openedAt > 0L) {
                 val start = maxOf(openedAt, since)
                 val end = minOf(at, now)
-                if (end > start) total += end - start
+                if (end > start) found += start..end
             }
             resumed.clear()
             openedAt = 0L
@@ -76,6 +103,6 @@ object UsageSessions {
             }
         }
         close(now)
-        return total
+        return found
     }
 }

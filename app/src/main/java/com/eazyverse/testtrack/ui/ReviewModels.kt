@@ -77,14 +77,20 @@ data class ReviewJob(
 
     val live: Boolean get() = post.isLive
 
+    /** A live review with all the time it needs, still waiting on its second day of use. */
+    val waitingForDay: Boolean get() = live && secondsLeft == 0 && review.state == "installed"
+
+    /** Used on two days already, so only the hours since it was taken are still to pass. */
+    val usedOnTwoDays: Boolean get() = review.daysUsed >= 2
+
     /**
-     * A live review with all the time it needs, waiting for its second day of use: the hours until
-     * the app may be used again for it, at least one. Null when it is not waiting.
+     * While [waitingForDay], the hours until it may open, at least one, from when the server says;
+     * null when it is not waiting or the server has not said.
      */
     val hoursToReturn: Int?
         get() {
             val at = review.returnsAt ?: return null
-            if (!live || secondsLeft > 0) return null
+            if (!waitingForDay) return null
             val millis =
                 runCatching {
                     java.time.OffsetDateTime

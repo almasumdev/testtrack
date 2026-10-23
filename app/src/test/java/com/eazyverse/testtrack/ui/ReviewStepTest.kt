@@ -133,10 +133,15 @@ class ReviewStepTest {
                 .now()
                 .plusHours(5)
                 .toString()
-        val job = ReviewJob(post, review("installed", used = 300_000, needed = 300_000).copy(returnsAt = later))
-        assertEquals(5, job.hoursToReturn)
-        assertEquals("Come back tomorrow", stepTitle(job))
-        assertTrue(stepLine(job).contains("about 5 hours"))
+        val oneDay = ReviewJob(post, review("installed", used = 300_000, needed = 300_000).copy(returnsAt = later, daysUsed = 1))
+        assertEquals("Come back tomorrow", stepTitle(oneDay))
+        assertTrue(stepLine(oneDay).contains("another day"))
+
+        // Used on two days already: only the hours since it was taken are left to pass.
+        val twoDays = oneDay.copy(review = oneDay.review.copy(daysUsed = 2))
+        assertEquals(5, twoDays.hoursToReturn)
+        assertEquals("Almost there", stepTitle(twoDays))
+        assertTrue(stepLine(twoDays).contains("about 5 hours"))
     }
 
     @Test

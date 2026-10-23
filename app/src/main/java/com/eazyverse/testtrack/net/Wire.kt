@@ -194,6 +194,8 @@ data class ClaimIn(
 @Serializable
 data class UsedIn(
     @SerialName("used_ms") val usedMs: Long,
+    /** Calendar days the app was used on since the review was taken. */
+    val days: Int = 0,
 )
 
 @Serializable
@@ -232,6 +234,8 @@ data class ApiReview(
     @SerialName("keep_from") val keepFrom: String? = null,
     /** What the phone answered, once it has. */
     val kept: Boolean? = null,
+    /** Calendar days the app has been used on for it, as this phone counted them. */
+    @SerialName("days_used") val daysUsed: Int = 0,
     // Only on /reviews/mine: the app the review is for, so the list needs no second call.
     @SerialName("app_name") val appName: String = "",
     @SerialName("package_name") val packageName: String = "",

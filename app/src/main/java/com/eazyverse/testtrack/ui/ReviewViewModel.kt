@@ -305,8 +305,8 @@ class ReviewViewModel : ViewModel() {
             offline = false
         }
         if (review.state == INSTALLED || review.state == USED) {
-            val used =
-                UsageRepo.measure(
+            val use =
+                UsageRepo.measureUse(
                     context,
                     current.post.packageName,
                     windowStart(context, review),
@@ -314,8 +314,9 @@ class ReviewViewModel : ViewModel() {
                     source = "review",
                     settle = settle,
                 )
-            if (used > review.usedMs) {
-                review = Api.used(review.id, used)
+            // A new day of use is news even when the total has not moved since the last report.
+            if (use.ms > review.usedMs || use.days > review.daysUsed) {
+                review = Api.used(review.id, maxOf(use.ms, review.usedMs), use.days)
                 offline = false
             }
         }

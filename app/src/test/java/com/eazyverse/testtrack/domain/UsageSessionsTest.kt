@@ -110,4 +110,24 @@ class UsageSessionsTest {
     fun a_window_that_has_not_started_is_zero() {
         assertEquals(0, seconds(listOf(on(10), off(40)), since = 50, now = 40))
     }
+
+    /** Days as blocks of 100 seconds, so a test can say which day a sitting started on. */
+    private fun days(events: List<Event>) = UsageSessions.daysUsed(events, app, 0L, 1_000_000L, dayOf = { it / 100_000L }, minMs = 15_000L)
+
+    @Test
+    fun days_are_counted_from_the_sittings_that_started_on_them() {
+        // A sitting on day 0 and one on day 3; the days between had nothing.
+        assertEquals(2, days(listOf(on(10), off(60), on(310), off(350))))
+    }
+
+    @Test
+    fun a_glance_does_not_make_a_day() {
+        // Ten seconds on day 2 is under the fifteen a sitting needs.
+        assertEquals(1, days(listOf(on(10), off(60), on(210), off(220))))
+    }
+
+    @Test
+    fun several_sittings_on_one_day_are_one_day() {
+        assertEquals(1, days(listOf(on(10), off(40), on(50), off(90))))
+    }
 }

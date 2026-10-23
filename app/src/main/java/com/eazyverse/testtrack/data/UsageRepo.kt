@@ -124,10 +124,33 @@ object UsageRepo {
         return reading.ms
     }
 
+    /** Time in an app since a moment, and the calendar days of it. */
+    class Use(
+        val ms: Long,
+        val days: Int,
+    )
+
+    /**
+     * [measure], with the calendar days the app was used on as well: what a live review's second
+     * day is counted from, so a day's use counts even when TestTrack was not opened that day.
+     */
+    suspend fun measureUse(
+        context: Context,
+        pkg: String,
+        since: Long,
+        needMs: Long,
+        source: String,
+        settle: Boolean = true,
+    ): Use {
+        val ms = measure(context, pkg, since, needMs, source, settle)
+        return Use(ms, read(context, pkg, since).days)
+    }
+
     private class Reading(
         val ms: Long,
         val events: Int,
         val access: Boolean,
+        val days: Int = 0,
     )
 
     @Suppress("DEPRECATION")
@@ -158,7 +181,20 @@ object UsageRepo {
                 if (event.packageName == pkg) mine++
                 events += UsageSessions.Event(kind, event.packageName ?: "", event.className ?: "", event.timeStamp)
             }
-            Reading(UsageSessions.foregroundMs(events, pkg, since, now), mine, access = true)
+            val zone = java.time.ZoneId.systemDefault()
+            val dayOf = { at: Long ->
+                java.time.Instant
+                    .ofEpochMilli(at)
+                    .atZone(zone)
+                    .toLocalDate()
+                    .toEpochDay()
+            }
+            Reading(
+                UsageSessions.foregroundMs(events, pkg, since, now),
+                mine,
+                access = true,
+                days = UsageSessions.daysUsed(events, pkg, since, now, dayOf),
+            )
         }.getOrDefault(Reading(0L, 0, access = true))
     }
 

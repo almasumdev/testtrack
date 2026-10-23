@@ -176,7 +176,8 @@ object Api {
     suspend fun used(
         reviewId: String,
         usedMs: Long,
-    ): ApiReview = post("/reviews/$reviewId/used", UsedIn(usedMs))
+        days: Int = 0,
+    ): ApiReview = post("/reviews/$reviewId/used", UsedIn(usedMs, days))
 
     suspend fun submit(
         reviewId: String,

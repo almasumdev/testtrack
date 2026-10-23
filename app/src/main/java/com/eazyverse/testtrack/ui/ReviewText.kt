@@ -57,7 +57,12 @@ internal fun stepShort(
 internal fun stepTitle(job: ReviewJob): String =
     when (job.step) {
         ReviewStep.INSTALL -> "Install ${job.post.appName}"
-        ReviewStep.USE -> if (job.hoursToReturn != null) "Come back tomorrow" else "Try the app"
+        ReviewStep.USE ->
+            when {
+                !job.waitingForDay -> "Try the app"
+                job.usedOnTwoDays -> "Almost there"
+                else -> "Come back tomorrow"
+            }
         ReviewStep.LEAVE -> if (job.live) "Review it on Google Play" else "Send feedback on Google Play"
         ReviewStep.PROVE -> "Send your proof"
         ReviewStep.WAIT -> "Sent"
@@ -79,12 +84,14 @@ internal fun stepLine(job: ReviewJob): String =
 
 /** Where the reviewer is with using the app: time still to go, or a live app's second day. */
 private fun useLine(job: ReviewJob): String {
-    val back = job.hoursToReturn
-    if (back != null) {
-        return when (back) {
-            0 -> "Open the app again now. Reviews from a second day of use are the ones Google keeps."
-            1 -> "Open the app again in about an hour. Reviews from a second day of use are the ones Google keeps."
-            else -> "Open the app again in about $back hours. Reviews from a second day of use are the ones Google keeps."
+    if (job.waitingForDay) {
+        if (!job.usedOnTwoDays) {
+            return "Use the app again on another day. Reviews from a second day of use are the ones Google keeps."
+        }
+        return when (val back = job.hoursToReturn) {
+            null, 0 -> "Used on two days. Come back to TestTrack and it opens."
+            1 -> "Used on two days. It opens in about an hour; come back to TestTrack then."
+            else -> "Used on two days. It opens in about $back hours; come back to TestTrack then."
         }
     }
     val left = job.secondsLeft
