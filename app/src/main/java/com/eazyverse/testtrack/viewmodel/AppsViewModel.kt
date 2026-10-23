@@ -46,6 +46,10 @@ class AppsViewModel : ViewModel() {
     var acting by mutableStateOf<String?>(null)
         private set
 
+    /** Which action that is, so the page shows it on the row or the icon it came from. */
+    var actingOn by mutableStateOf<AppAction?>(null)
+        private set
+
     /** Why the last action on an app did not happen, said on its page. */
     var actionError by mutableStateOf<String?>(null)
         private set
@@ -114,26 +118,26 @@ class AppsViewModel : ViewModel() {
     fun goLive(
         context: Context,
         id: String,
-    ) = act(context, id) { Api.goLive(id) }
+    ) = act(context, id, AppAction.LIVE) { Api.goLive(id) }
 
     /** Ask Play about an unverified app now. Play's refusal says what is still missing. */
     fun verify(
         context: Context,
         id: String,
-    ) = act(context, id) { Api.verifyApp(id) }
+    ) = act(context, id, AppAction.VERIFY) { Api.verifyApp(id) }
 
     fun delete(
         context: Context,
         id: String,
         onDone: () -> Unit,
-    ) = act(context, id, onDone) { Api.deleteApp(id) }
+    ) = act(context, id, AppAction.DELETE, onDone) { Api.deleteApp(id) }
 
     /** Give an app the icon it has on this phone. */
     fun iconFromPhone(
         context: Context,
         id: String,
         pkg: String,
-    ) = act(context, id) {
+    ) = act(context, id, AppAction.ICON) {
         Api.setAppIcon(id, IconIn(readIcon { AppIconData.ofInstalled(context.applicationContext, pkg) }))
     }
 
@@ -142,7 +146,7 @@ class AppsViewModel : ViewModel() {
         context: Context,
         id: String,
         uri: Uri,
-    ) = act(context, id) {
+    ) = act(context, id, AppAction.ICON) {
         Api.setAppIcon(id, IconIn(readIcon { AppIconData.ofPicture(context.applicationContext, uri) }))
     }
 
@@ -150,7 +154,7 @@ class AppsViewModel : ViewModel() {
     fun iconFromPlay(
         context: Context,
         id: String,
-    ) = act(context, id) { Api.appIconFromPlay(id) }
+    ) = act(context, id, AppAction.ICON) { Api.appIconFromPlay(id) }
 
     private suspend fun readIcon(read: () -> AppIconData.Encoded?): String =
         withContext(Dispatchers.Default) { runCatching(read).getOrNull() }?.base64 ?: throw UnusablePicture()
@@ -161,11 +165,13 @@ class AppsViewModel : ViewModel() {
     private fun act(
         context: Context,
         id: String,
+        what: AppAction,
         onDone: () -> Unit = {},
         call: suspend () -> Unit,
     ) {
         if (acting != null) return
         acting = id
+        actingOn = what
         actionError = null
         viewModelScope.launch {
             try {
@@ -180,10 +186,14 @@ class AppsViewModel : ViewModel() {
                 actionError = "We could not reach TestTrack. Check your connection."
             } finally {
                 acting = null
+                actingOn = null
             }
         }
     }
 }
+
+/** The things done to an app from its page, each shown busy where it was asked for. */
+enum class AppAction { LIVE, VERIFY, DELETE, ICON }
 
 /** The server's app, as the screens draw it. */
 fun ApiApp.toEntry(): AppEntry =

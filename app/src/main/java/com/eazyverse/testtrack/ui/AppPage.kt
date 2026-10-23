@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +57,7 @@ import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.AppAction
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 
 /**
@@ -122,8 +124,9 @@ fun AppPage(
                     )
                 else -> {
                     val busy = vm.acting == app.id
+                    val running = if (busy) vm.actingOn else null
                     Spacer(Modifier.height(8.dp))
-                    Hero(app) { changingIcon = true }
+                    Hero(app, iconBusy = running == AppAction.ICON) { if (!busy) changingIcon = true }
                     Spacer(Modifier.height(20.dp))
                     // Nothing for everybody else to see it by yet: the phone's own icon is not theirs.
                     if (app.icon.isBlank()) {
@@ -131,7 +134,7 @@ fun AppPage(
                         Spacer(Modifier.height(14.dp))
                     }
                     if (!app.verified) {
-                        VerifyCallout(busy) { vm.verify(context, app.id) }
+                        VerifyCallout(running == AppAction.VERIFY) { if (!busy) vm.verify(context, app.id) }
                         Spacer(Modifier.height(4.dp))
                     }
                     vm.actionError?.let {
@@ -139,7 +142,7 @@ fun AppPage(
                         AskMessage(AskFailure("That didn't work", it))
                     }
                     Testing(app, onOpenCrew, onOpenRequest, onCrew, onFeedback)
-                    Manage(app, busy, onLive = { askLive = true }, onDelete = { askDelete = true })
+                    Manage(app, busy, running, onLive = { askLive = true }, onDelete = { askDelete = true })
                     Spacer(Modifier.height(28.dp))
                 }
             }
@@ -192,11 +195,22 @@ fun AppPage(
 @Composable
 private fun Hero(
     app: AppEntry,
+    /** A new icon is being read and sent: shown on the icon itself, which is what is changing. */
+    iconBusy: Boolean,
     onChangeIcon: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(96.dp).clickable(role = Role.Button, onClickLabel = "Change icon", onClick = onChangeIcon)) {
             AppMark(app.pkg, app.name, app.icon, size = 88.dp, ownIcon = true)
+            if (iconBusy) {
+                Box(
+                    Modifier
+                        .size(88.dp)
+                        .clip(RoundedCornerShape(88.dp * 0.3f))
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)),
+                    contentAlignment = Alignment.Center,
+                ) { CircularProgressIndicator(Modifier.size(26.dp), strokeWidth = 2.5.dp, color = Tt.colors.accentInk) }
+            }
             Box(
                 Modifier
                     .align(Alignment.BottomEnd)
@@ -364,6 +378,7 @@ private fun Cta(text: String) {
 private fun Manage(
     app: AppEntry,
     busy: Boolean,
+    running: AppAction?,
     onLive: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -373,15 +388,25 @@ private fun Manage(
     if (rows.isNotEmpty()) {
         TileGroup(count = rows.size) { index, place ->
             if (rows[index] == "live") {
+                val checking = running == AppAction.LIVE
                 TileRow(
                     Lucide.ArrowUpRight,
                     "It's live on Google Play now",
                     place,
-                    subtitle = "Moves it to feedback only",
+                    subtitle = if (checking) "Checking its public Play page..." else "Moves it to feedback only",
+                    trailing = if (checking) ({ RowBusy() }) else null,
                     onClick = if (busy) null else onLive,
                 )
             } else {
-                TileRow(Lucide.Trash2, "Delete app", place, danger = true, onClick = if (busy) null else onDelete)
+                TileRow(
+                    Lucide.Trash2,
+                    "Delete app",
+                    place,
+                    danger = true,
+                    subtitle = if (running == AppAction.DELETE) "Deleting..." else null,
+                    trailing = if (running == AppAction.DELETE) ({ RowBusy() }) else null,
+                    onClick = if (busy) null else onDelete,
+                )
             }
         }
     }
@@ -394,4 +419,10 @@ private fun Manage(
             color = Tt.colors.text4,
         )
     }
+}
+
+/** A row's action under way: a small spinner where its chevron was. */
+@Composable
+private fun RowBusy() {
+    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Tt.colors.accentInk)
 }
