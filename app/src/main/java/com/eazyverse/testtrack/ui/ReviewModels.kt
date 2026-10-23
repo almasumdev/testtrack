@@ -108,7 +108,8 @@ fun reviewOutcome(
     when (state) {
         "submitted" ->
             if (live) {
-                "With the developer. Keep the app installed: after three days we check it is still there, then it's paid."
+                "With the developer, who can accept it any time. If they don't answer, keep the app installed: " +
+                    "we check after three days and then pay you."
             } else {
                 "With the developer. They have two days, then it approves itself."
             }

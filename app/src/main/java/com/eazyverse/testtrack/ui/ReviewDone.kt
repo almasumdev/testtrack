@@ -119,7 +119,9 @@ internal fun ReviewDone(
             when (state) {
                 "submitted" ->
                     if (job.live) {
-                        StageRow(Stage.NOW, "Keep the app installed", "After three days we check it is still there")
+                        StageRow(Stage.NOW, "The developer checks it", "They can accept it any time")
+                        StageGap()
+                        StageRow(Stage.LATER, "Keep the app installed", "If they don't answer, we check after 3 days and pay you")
                     } else {
                         StageRow(Stage.NOW, "The developer checks it", "Up to two days, then it approves itself")
                     }

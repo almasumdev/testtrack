@@ -263,7 +263,7 @@ private fun mineLine(review: MyReview): String =
         "claimed" -> "Install it from Play"
         "installed" -> if (review.isLive) "Use it on two days" else "Use it for two minutes"
         "used" -> if (review.isLive) "Review it on Google Play" else "Send feedback on Google Play"
-        "submitted" -> if (review.isLive) "Sent. Keep it installed for 3 days" else "Sent. Checked within 2 days"
+        "submitted" -> if (review.isLive) "Sent. With the developer" else "Sent. Checked within 2 days"
         "disputed" -> "Disputed. Members are deciding"
         "approved" -> "Approved. Tix paid"
         "rejected" -> review.reason.ifBlank { "Not paid" }
