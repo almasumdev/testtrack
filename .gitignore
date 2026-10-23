@@ -56,3 +56,6 @@ gate.gs
 
 # Store keyword research (mkit aso): the maintainer's working data.
 /console/
+todo.txt
+# Videos: the Remotion project, its voices and renders. Large, and rebuilt from its own sources.
+/media/
