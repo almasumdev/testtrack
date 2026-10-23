@@ -269,12 +269,6 @@ class AppAddViewModel : ViewModel() {
         pickedName = next.take(FeedRules.APP_NAME_MAX)
     }
 
-    /** Back to the icon the app has on this phone, after a picture was tried. */
-    fun usePhoneIcon(context: Context) {
-        val app = picked ?: return
-        readIcon { AppIconData.ofInstalled(context.applicationContext, app.pkg) }
-    }
-
     fun usePicture(
         context: Context,
         uri: Uri,

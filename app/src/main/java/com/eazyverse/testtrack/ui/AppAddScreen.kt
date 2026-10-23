@@ -20,8 +20,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,7 +49,6 @@ fun AppAddScreen(
 ) {
     val context = LocalContext.current
     val dismissKeyboard = rememberDismissKeyboard()
-    var changingIcon by remember { mutableStateOf(false) }
     val picture =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             uri?.let { vm.usePicture(context, it) }
@@ -95,7 +92,9 @@ fun AppAddScreen(
                             live = vm.isLive,
                             testBuild = app.testBuild,
                             onPickAnother = { vm.openPicker(context) },
-                            onChangeIcon = { changingIcon = true },
+                            // Straight to the gallery: the phone's own icon is already the one shown, so a
+                            // sheet offering it again only closed. Backing out leaves the icon as it was.
+                            onChangeIcon = { picture.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                             onRename = vm::renamePicked,
                         )
                         vm.iconError?.let {
@@ -133,17 +132,6 @@ fun AppAddScreen(
             picked = vm.picked?.pkg,
             onPick = { vm.pick(context, it) },
             onDismiss = vm::closePicker,
-        )
-    }
-    val app = vm.picked
-    if (changingIcon && app != null) {
-        AppIconSheet(
-            name = vm.pickedName.ifBlank { app.label },
-            installedHere = true,
-            onPhone = { vm.usePhoneIcon(context) },
-            onPicture = { picture.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-            onPlay = null,
-            onDismiss = { changingIcon = false },
         )
     }
 }
