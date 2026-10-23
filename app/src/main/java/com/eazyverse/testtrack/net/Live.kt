@@ -112,7 +112,13 @@ object Live {
         while (true) {
             val token = freshToken() ?: return
             val closed = Job()
-            val url = Api.url("/ws").replaceFirst("http", "ws") + "?token=" + token
+            // The token in a header, not the address: an address is written into every access log.
+            val request =
+                Request
+                    .Builder()
+                    .url(Api.url("/ws").replaceFirst("http", "ws"))
+                    .header("Authorization", "Bearer $token")
+                    .build()
             val listener =
                 object : WebSocketListener() {
                     override fun onOpen(
@@ -178,7 +184,7 @@ object Live {
                         closed.complete()
                     }
                 }
-            val opened = Api.http.newWebSocket(Request.Builder().url(url).build(), listener)
+            val opened = Api.http.newWebSocket(request, listener)
             socket = opened
             pinging?.cancel()
             pinging =
