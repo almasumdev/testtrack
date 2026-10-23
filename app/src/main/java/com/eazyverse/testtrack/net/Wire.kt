@@ -111,6 +111,8 @@ data class ApiPost(
     val id: String,
     @SerialName("app_name") val appName: String,
     @SerialName("package_name") val packageName: String,
+    /** The app's icon as its owner's My apps has it; empty where it has none yet, or from an older server. */
+    val icon: String = "",
     val ask: String,
     @SerialName("is_live") val isLive: Boolean,
     val reward: Int,

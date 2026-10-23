@@ -258,7 +258,8 @@ fun FeedRequestCard(
 ) {
     FeedCard {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            AppIcon(post.packageName, post.appName) { AppTile(post.appName) }
+            // Installed here first, then the icon its owner's app has, then its initial.
+            AppMark(post.packageName, post.appName, post.icon)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
