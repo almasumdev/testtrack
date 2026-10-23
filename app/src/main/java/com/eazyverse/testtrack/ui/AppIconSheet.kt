@@ -2,6 +2,8 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,10 +15,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Image
@@ -98,3 +102,18 @@ internal fun IconNudge(
         Secondary("Add", onClick = onAdd)
     }
 }
+
+/**
+ * Tapping an app's icon to change it, without the ripple. The tap area is the square round the
+ * icon and its pencil, so a ripple flashed a hard grey square over a rounded icon; what changes
+ * next, the gallery or the sheet, is the answer to the tap.
+ */
+@Composable
+internal fun Modifier.iconTap(onClick: () -> Unit): Modifier =
+    clickable(
+        interactionSource = remember { MutableInteractionSource() },
+        indication = null,
+        role = Role.Button,
+        onClickLabel = "Change icon",
+        onClick = onClick,
+    )

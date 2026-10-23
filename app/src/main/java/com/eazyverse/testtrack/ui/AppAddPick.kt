@@ -186,7 +186,7 @@ internal fun PickedApp(
     val t = Tt.colors
     var renaming by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(96.dp).clickable(role = Role.Button, onClickLabel = "Change icon", onClick = onChangeIcon)) {
+        Box(Modifier.size(96.dp).iconTap(onChangeIcon)) {
             val icon = Modifier.size(88.dp).clip(RoundedCornerShape(26.dp))
             if (preview != null) Image(preview, "App icon", icon) else Skeleton(width = 88.dp, height = 88.dp, corner = 26.dp)
             Box(
