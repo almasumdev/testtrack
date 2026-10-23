@@ -150,12 +150,6 @@ class AppsViewModel : ViewModel() {
         Api.setAppIcon(id, IconIn(readIcon { AppIconData.ofPicture(context.applicationContext, uri) }))
     }
 
-    /** Give an app the icon Play shows for it. Play's refusal says what is still missing. */
-    fun iconFromPlay(
-        context: Context,
-        id: String,
-    ) = act(context, id, AppAction.ICON) { Api.appIconFromPlay(id) }
-
     private suspend fun readIcon(read: () -> AppIconData.Encoded?): String =
         withContext(Dispatchers.Default) { runCatching(read).getOrNull() }?.base64 ?: throw UnusablePicture()
 

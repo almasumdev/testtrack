@@ -296,9 +296,6 @@ object Api {
         body: IconIn,
     ): ApiApp = put("/apps/$appId/icon", body)
 
-    /** Give an app the icon Play shows for it. */
-    suspend fun appIconFromPlay(appId: String): ApiApp = post("/apps/$appId/icon/play", Empty())
-
     suspend fun deleteApp(appId: String) = sendEmpty(Request.Builder().url(url("/apps/$appId")).delete())
 
     /** Where a piece of proof lives. Needs the token, so it is fetched, never linked. */

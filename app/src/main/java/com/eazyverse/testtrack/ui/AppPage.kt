@@ -87,12 +87,15 @@ fun AppPage(
     }
     var askLive by remember { mutableStateOf(false) }
     var askDelete by remember { mutableStateOf(false) }
-    var changingIcon by remember { mutableStateOf(false) }
     val picture =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             val target = app
             if (uri != null && target != null) vm.iconFromPicture(context, target.id, uri)
         }
+    // The pencil goes straight to the gallery. Play's icon is filled in by the server once Play
+    // shows the app, and the phone's own is the nudge's one tap, so a sheet of choices added a
+    // step and nothing else.
+    val choosePicture = { picture.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -124,11 +127,15 @@ fun AppPage(
                     val busy = vm.acting == app.id
                     val running = if (busy) vm.actingOn else null
                     Spacer(Modifier.height(8.dp))
-                    Hero(app, iconBusy = running == AppAction.ICON) { if (!busy) changingIcon = true }
+                    Hero(app, iconBusy = running == AppAction.ICON) { if (!busy) choosePicture() }
                     Spacer(Modifier.height(20.dp))
                     // Nothing for everybody else to see it by yet: the phone's own icon is not theirs.
                     if (app.icon.isBlank()) {
-                        IconNudge(app.name) { changingIcon = true }
+                        val installedHere = installedLabel(app.pkg) != null
+                        IconNudge(app.name, installedHere) {
+                            if (busy) return@IconNudge
+                            if (installedHere) vm.iconFromPhone(context, app.id, app.pkg) else choosePicture()
+                        }
                         Spacer(Modifier.height(14.dp))
                     }
                     if (!app.verified) {
@@ -147,16 +154,6 @@ fun AppPage(
         }
     }
 
-    if (changingIcon && app != null) {
-        AppIconSheet(
-            name = app.name,
-            installedHere = installedLabel(app.pkg) != null,
-            onPhone = { vm.iconFromPhone(context, app.id, app.pkg) },
-            onPicture = { picture.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-            onPlay = { vm.iconFromPlay(context, app.id) },
-            onDismiss = { changingIcon = false },
-        )
-    }
     if (askLive && app != null) {
         Ask(
             title = "Mark ${app.name} live?",
