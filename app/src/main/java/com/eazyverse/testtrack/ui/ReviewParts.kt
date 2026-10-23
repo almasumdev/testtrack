@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -188,4 +189,19 @@ internal fun ReviewLoading(
     ) {
         RobotLoader(size = dial * 0.95f, label = "Getting your review ready")
     }
+}
+
+/** Under the Google Play step, for somebody who would rather use the phone's own screenshot keys. */
+@Composable
+internal fun SelfShotLink(onClick: () -> Unit) {
+    Spacer(Modifier.height(10.dp))
+    Text(
+        "I'll take the screenshot myself",
+        Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        color = Tt.colors.accentInk,
+        style = MaterialTheme.typography.labelLarge,
+    )
 }

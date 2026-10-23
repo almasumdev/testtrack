@@ -125,4 +125,34 @@ class ReviewStepTest {
             assertTrue(state, reviewOutcome(state).isNotBlank())
         }
     }
+
+    @Test
+    fun a_live_review_with_its_time_in_waits_for_tomorrow() {
+        val later =
+            java.time.OffsetDateTime
+                .now()
+                .plusHours(5)
+                .toString()
+        val job = ReviewJob(post, review("installed", used = 300_000, needed = 300_000).copy(returnsAt = later))
+        assertEquals(5, job.hoursToReturn)
+        assertEquals("Come back tomorrow", stepTitle(job))
+        assertTrue(stepLine(job).contains("about 5 hours"))
+    }
+
+    @Test
+    fun a_closed_test_with_its_time_in_goes_to_google_play() {
+        val closed = post.copy(isLive = false)
+        val job = ReviewJob(closed, review("used", used = 120_000, needed = 120_000))
+        assertEquals(null, job.hoursToReturn)
+        assertEquals("Send feedback on Google Play", stepTitle(job))
+        assertEquals("Open Google Play", stepAction(job.step, job))
+    }
+
+    @Test
+    fun time_still_to_go_is_said_in_minutes() {
+        val job = ReviewJob(post, review("installed", used = 60_000, needed = 300_000))
+        assertEquals("4 minutes more in the app", stepLine(job))
+        val odd = ReviewJob(post, review("installed", used = 50_000, needed = 300_000))
+        assertEquals("4 min 10 s more in the app", stepLine(odd))
+    }
 }

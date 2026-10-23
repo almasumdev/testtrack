@@ -261,14 +261,14 @@ private fun Tix(review: MyReview) {
 private fun mineLine(review: MyReview): String =
     when (review.state) {
         "claimed" -> "Install it from Play"
-        "installed" -> "Use it for 30 seconds"
-        "used" -> "Write private feedback"
-        "submitted" -> "Checking · up to 2 days"
-        "disputed" -> "Disputed · members deciding"
-        "approved" -> "Approved · tix paid"
+        "installed" -> if (review.isLive) "Use it on two days" else "Use it for two minutes"
+        "used" -> if (review.isLive) "Review it on Google Play" else "Send feedback on Google Play"
+        "submitted" -> if (review.isLive) "Sent. Keep it installed for 3 days" else "Sent. Checked within 2 days"
+        "disputed" -> "Disputed. Members are deciding"
+        "approved" -> "Approved. Tix paid"
         "rejected" -> review.reason.ifBlank { "Not paid" }
         "abandoned" -> "Given up"
-        "expired" -> "Ran out after a day"
+        "expired" -> if (review.isLive) "Ran out after three days" else "Ran out after a day"
         else -> ""
     }
 

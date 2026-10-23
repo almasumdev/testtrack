@@ -82,7 +82,7 @@ internal fun ReviewDone(
         Spacer(Modifier.height(6.dp))
         Text(
             // The stages below say what happens next, so the line above them does not repeat it.
-            if (state == "submitted") "Thanks for reviewing. Here's what happens next." else reviewOutcome(state),
+            if (state == "submitted") "Thanks for reviewing. Here's what happens next." else reviewOutcome(state, job.live),
             Modifier.widthIn(max = 300.dp),
             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
             color = t.text2,
@@ -101,7 +101,13 @@ internal fun ReviewDone(
             if (state == "abandoned" || state == "expired") {
                 StageRow(
                     Stage.FAILED,
-                    if (state == "abandoned") "You gave it up" else "Not finished within a day",
+                    if (state == "abandoned") {
+                        "You gave it up"
+                    } else if (job.live) {
+                        "Not finished within three days"
+                    } else {
+                        "Not finished within a day"
+                    },
                     "The slot went back for somebody else",
                 )
                 StageGap()
@@ -111,7 +117,12 @@ internal fun ReviewDone(
             StageRow(Stage.DONE, "Sent with your screenshot", "Your part is done")
             StageGap()
             when (state) {
-                "submitted" -> StageRow(Stage.NOW, "The developer checks it", "Up to two days, then it approves itself")
+                "submitted" ->
+                    if (job.live) {
+                        StageRow(Stage.NOW, "Keep the app installed", "After three days we check it is still there")
+                    } else {
+                        StageRow(Stage.NOW, "The developer checks it", "Up to two days, then it approves itself")
+                    }
                 "disputed" -> StageRow(Stage.NOW, "Three members decide", "The developer disputed it")
                 "rejected" ->
                     StageRow(

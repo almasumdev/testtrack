@@ -2,10 +2,18 @@
 
 > **This is the plan, not the state.** Written before any of it was built and kept as the record of what was decided and why. For what actually runs and how the app talks to it, see [architecture.md](architecture.md).
 
-> **Superseded on 10 October 2026:** paid work now means private written feedback and screenshots
-> from the tested app for both live and closed apps. Rewarded public Play ratings/reviews are removed.
-> Images upload directly to the user's Drive; the backend verifies and stores references/metadata only.
-> The public-rating flow and open storage question below are historical, not current instructions.
+> **Current since 23 October 2026:** feedback is left on Google Play again. A closed test's
+> tester sends the developer private feedback on Play after two minutes in the app. A live app's
+> tester rates and reviews it publicly, paced like a real user: only accounts with two closed
+> tests reviewed, three a day per app, five minutes over two days, and the app kept installed for
+> three days after (checked by the phone) before an unanswered review approves itself; otherwise
+> it approves itself after seven days. The proof is a screenshot of what was left on Play, taken
+> with the floating camera over Play or chosen from the gallery; a note for the developer is
+> optional. Owners are told plainly that Google does not allow rewarding reviews. The numbers
+> live in the backend's `app/core/rules.py`.
+>
+> From 10 to 23 October paid work was private written feedback in TestTrack with a screenshot of
+> the tested app; that is no longer the flow.
 
 Circle's paid half, redesigned. Decided September 2026.
 

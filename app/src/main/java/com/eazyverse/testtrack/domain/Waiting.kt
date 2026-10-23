@@ -16,9 +16,9 @@ data class Waiting(
     val id: String,
     /** The app it is a review of, resolved for the reader. A post id means nothing on a card. */
     val appName: String,
-    /** The words, for an app still in closed testing where there is no Play review to point at. */
+    /** The reviewer's optional note, beside what they left on Google Play. */
     val written: String = "",
-    /** The screenshot, for one that is live. Empty when there is none. */
+    /** The screenshot of what they left on Google Play. Empty when there is none. */
     val proofRef: String = "",
     /** Who sent it, by the name they review under. Blank from an older server. */
     val reviewerName: String = "",
@@ -30,6 +30,11 @@ data class Waiting(
     val decideBy: Long? = null,
     /** The app's package, for its icon and its Play page. Blank from an older server. */
     val packageName: String = "",
+    /**
+     * For a live app: whether it was still on their phone a few days after they reviewed it. False
+     * is worth the owner's look before it accepts itself; null when not asked yet.
+     */
+    val kept: Boolean? = null,
 )
 
 private const val HOUR = 3_600_000L

@@ -187,6 +187,12 @@ object Api {
 
     suspend fun abandon(reviewId: String): ApiReview = post("/reviews/$reviewId/abandon", Empty())
 
+    /** Whether a live app is still installed a few days after its review was sent. */
+    suspend fun kept(
+        reviewId: String,
+        installed: Boolean,
+    ): ApiReview = post("/reviews/$reviewId/kept", KeptIn(installed))
+
     suspend fun myReviews(): List<ApiReview> = kept(MY_REVIEWS)
 
     // ---------------------------------------------------------------- the owner's side

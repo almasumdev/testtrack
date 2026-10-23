@@ -13,7 +13,9 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -24,6 +26,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.Info
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.TriangleAlert
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
  * Asking the circle to look at your app.
@@ -75,6 +81,10 @@ fun AskScreen(
                 Spacer(Modifier.height(16.dp))
             }
             if (vm.found == null) Finding(vm) else Found(vm, onChange = if (app != null) onBack else vm::startOver)
+            if (vm.found != null) {
+                Spacer(Modifier.height(12.dp))
+                TrackNote(vm.isLive)
+            }
 
             if (vm.found != null) {
                 Spacer(Modifier.height(16.dp))
@@ -195,4 +205,26 @@ private fun Found(
 ) {
     val app = vm.found ?: return
     FoundApp(app.`package`, app.name, app.icon, app.developer, unchecked = vm.unchecked, onChange = onChange)
+}
+
+/**
+ * What testers will leave, and where, said before anything is posted. For a live app that includes
+ * the part an owner should decide knowingly: Google does not allow rewarding reviews.
+ */
+@Composable
+private fun TrackNote(live: Boolean) {
+    Notice(if (live) Status.short else Tt.colors.accentInk, if (live) Lucide.TriangleAlert else Lucide.Info) {
+        Text(
+            if (live) {
+                "Testers rate and review your app on Google Play in their own words, after using it on two days, " +
+                    "a few a day. Google does not allow rewarding reviews and can remove ones it doubts, so " +
+                    "the reviews are paced like real users'. Posting this is your decision to make."
+            } else {
+                "Testers send you private feedback on Google Play after trying your app for two minutes. It reaches " +
+                    "you in Play Console, and a screenshot of it comes here."
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
 }

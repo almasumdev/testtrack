@@ -39,6 +39,7 @@ import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Quote
+import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.domain.Case
 import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.domain.closeTo
@@ -254,6 +255,17 @@ fun ReviewCheck(
                 Stat("Pays", if (review.reward > 0) "${review.reward} tix" else "-"),
             ),
         )
+        if (review.isLive && review.kept == false) {
+            Spacer(Modifier.height(12.dp))
+            Notice(Status.short, Lucide.TriangleAlert) {
+                Text(
+                    "They uninstalled the app within three days of reviewing it. Google may see that as a review " +
+                        "that is not genuine, so check it before it accepts itself.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
         if (review.written.isNotBlank()) Said("Their note", review.written)
         if (review.proofRef.isNotBlank()) {
             Spacer(Modifier.height(14.dp))

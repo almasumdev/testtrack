@@ -161,8 +161,9 @@ class ReviewViewModel : ViewModel() {
     }
 
     /**
-     * Put the camera button up with the consent just given, then open the tested app. Proof opens
-     * on the way out, so somebody who comes back without pressing it can still pick a screenshot.
+     * Put the camera button up with the consent just given, then open the app's Play page, where
+     * the review or the private feedback is left. Proof opens on the way out, so somebody who comes
+     * back without pressing it can still pick a screenshot.
      */
     fun startCapture(
         context: Context,
@@ -171,7 +172,7 @@ class ReviewViewModel : ViewModel() {
         pkg: String,
     ) {
         ReviewCaptureService.start(context, code, data)
-        openApp(context, pkg)
+        openPlay(context, pkg)
         markLeft()
     }
 
@@ -321,9 +322,7 @@ class ReviewViewModel : ViewModel() {
         return current.copy(review = review)
     }
 
-    /**
-     * Open private feedback and proof. This state makes no claim about a public Play review.
-     */
+    /** On to the proof: the reviewer has been to Google Play for it, or will screenshot it themselves. */
     fun markLeft() {
         val current = job ?: return
         app?.let { ProofStore.markLeft(it, current.review.id) }
@@ -356,7 +355,6 @@ class ReviewViewModel : ViewModel() {
         val context = activity.applicationContext
         // No message on success: the page itself turns into the sent screen.
         run(onOffline = { message = "You're offline. Your screenshot and note are saved; send them once you're back." }) {
-            if (note.isBlank()) throw ApiError(400, "feedback", "Write private feedback for the developer first.")
             val token =
                 AuthRepo.driveTokenOrNull(activity)
                     ?: throw ApiError(400, "drive", "Connect Google Drive to send your saved feedback.")

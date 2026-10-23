@@ -204,6 +204,11 @@ data class SubmitIn(
 )
 
 @Serializable
+data class KeptIn(
+    val installed: Boolean,
+)
+
+@Serializable
 data class RejectIn(
     val reason: String,
 )
@@ -221,6 +226,12 @@ data class ApiReview(
     @SerialName("created_at") val createdAt: String,
     @SerialName("submitted_at") val submittedAt: String? = null,
     @SerialName("decided_at") val decidedAt: String? = null,
+    /** A live review waiting on its second day of use: when the app may be used again for it. */
+    @SerialName("returns_at") val returnsAt: String? = null,
+    /** A live review sent: from when the phone is asked whether the app is still installed. */
+    @SerialName("keep_from") val keepFrom: String? = null,
+    /** What the phone answered, once it has. */
+    val kept: Boolean? = null,
     // Only on /reviews/mine: the app the review is for, so the list needs no second call.
     @SerialName("app_name") val appName: String = "",
     @SerialName("package_name") val packageName: String = "",

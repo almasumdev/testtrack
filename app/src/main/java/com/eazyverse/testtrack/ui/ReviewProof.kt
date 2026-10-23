@@ -50,7 +50,7 @@ import com.eazyverse.testtrack.ui.theme.Tt
  */
 
 /**
- * How the review step works, shown once: the first time somebody taps "Open Play to review".
+ * How the Google Play step works, shown once: the first time somebody taps "Open Google Play".
  * Saying it before Play opens is the difference between a button they expect and one that
  * appears from nowhere over somebody else's app.
  */
@@ -61,22 +61,33 @@ fun ReviewGuideDialog(
     onDismiss: () -> Unit,
 ) {
     Ask(
-        title = "Capture proof from the app",
+        title = if (live) "Review it on Google Play" else "Send feedback on Google Play",
         confirm = "Got it",
         dismiss = null,
         onConfirm = onOk,
         onDismiss = onDismiss,
     ) {
         DialogSteps(
-            listOf(
-                "The app you tested opens.",
-                "Choose a screen that supports your private feedback.",
-                "Tap the blue camera button.",
-                "You come straight back with the screenshot.",
+            (
+                if (live) {
+                    listOf(
+                        "The app's Google Play page opens.",
+                        "Rate it and write your review, in your own words.",
+                        "Once it is posted, tap the blue camera button.",
+                        "You come straight back with the screenshot.",
+                    )
+                } else {
+                    listOf(
+                        "The app's Google Play page opens.",
+                        "Under the testing section, send the developer private feedback.",
+                        "Once it is sent, tap the blue camera button.",
+                        "You come straight back with the screenshot.",
+                    )
+                }
             ).map { AnnotatedString(it) },
         )
         Spacer(Modifier.height(8.dp))
-        DialogNote("Android asks to allow screen capture, only for that one screenshot.")
+        DialogNote("Android asks to let TestTrack capture the screen. It takes one picture, then stops.")
     }
 }
 
@@ -89,8 +100,8 @@ fun OverlayPermissionDialog(
     Ask(
         title = "Allow the camera button",
         body =
-            "The camera button floats over the app you tested. Allow “Display over other " +
-                "apps” for TestTrack, then return and tap Capture app.",
+            "The camera button floats over Google Play. Allow “Display over other apps” for " +
+                "TestTrack, then come back and tap Open Google Play again.",
         confirm = "Open settings",
         onConfirm = onOpen,
         onDismiss = onDismiss,
@@ -134,7 +145,7 @@ fun ProofArea(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ProofAction(
                 Lucide.Camera,
-                if (shown == null) "Capture app" else "Capture again",
+                if (shown == null) "Capture on Play" else "Capture again",
                 onCapture,
                 Modifier.weight(1f),
             )
@@ -224,7 +235,7 @@ private fun NoteField(
         cursorBrush = SolidColor(t.accent),
         decorationBox = { field ->
             Box {
-                if (note.isEmpty()) Text("Your private feedback (required)", style = style.copy(color = t.text3))
+                if (note.isEmpty()) Text("A note for the developer (optional)", style = style.copy(color = t.text3))
                 field()
             }
         },

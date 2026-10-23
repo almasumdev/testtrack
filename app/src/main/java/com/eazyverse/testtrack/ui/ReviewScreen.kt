@@ -104,7 +104,7 @@ fun ReviewScreen(
             if (result.resultCode == Activity.RESULT_OK && data != null) {
                 vm.startCapture(context, result.resultCode, data, post.packageName)
             } else {
-                openApp(context, post.packageName)
+                openPlay(context, post.packageName)
             }
         }
     val toCapture: () -> Unit = {
@@ -307,8 +307,8 @@ fun ReviewBody(
                     Primary("Done", tall = true, onClick = onClose)
                 } else {
                     val asking = job.step == ReviewStep.USE && !usageAccess
-                    // Step four cannot send until there is a screenshot to send.
-                    val waitingForProof = job.step == ReviewStep.PROVE && (shown == null || note.isBlank())
+                    // Step four cannot send until there is a screenshot to send; the note is optional.
+                    val waitingForProof = job.step == ReviewStep.PROVE && shown == null
                     val needsDrive = job.step == ReviewStep.PROVE && !driveConnected
                     Primary(
                         when {
@@ -324,10 +324,11 @@ fun ReviewBody(
                             onAllowUsage()
                             return@Primary
                         }
-                        // The proof is picked here. Every other step hands the reviewer to Play or
-                        // to the app itself, which is somebody else's screen.
+                        // The proof is picked here. Leaving it on Play opens Play under the camera
+                        // button; every other step hands the reviewer to Play or to the app itself.
                         val step = job.step
                         when {
+                            step == ReviewStep.LEAVE -> onCapture()
                             step != ReviewStep.PROVE -> onLeave(step)
                             shown != null -> onSend(shown, note.trim())
                             else -> Unit
@@ -349,6 +350,9 @@ fun ReviewBody(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
             ) {
                 ReviewAppRow(post.appName, post.packageName, post.isLive, post.ownerName, offline, icon = post.icon)
+                // The dial is centred in the room under this row; when a step is taller than that
+                // room it starts at the top instead, and without this it sat flush against the row.
+                Spacer(Modifier.height(gap))
                 // Which page this is, rather than the job itself: keyed on the job, every answer
                 // from the server faded the whole page out and back in. Now only a real change of
                 // page does: loading to the step, the step to sent.
@@ -392,7 +396,7 @@ fun ReviewBody(
                                 }
                             ) to (
                                 when {
-                                    job.settled -> reviewOutcome(job.review.state)
+                                    job.settled -> reviewOutcome(job.review.state, job.live)
                                     job.step == ReviewStep.USE && !usageAccess ->
                                         "Allow Usage access for TestTrack, then return. Time already spent still counts."
                                     job.step == ReviewStep.PROVE && shown != null ->
@@ -423,6 +427,7 @@ fun ReviewBody(
                                 )
                             }
                         }
+                        if (!job.settled && job.step == ReviewStep.LEAVE) SelfShotLink { onLeave(ReviewStep.LEAVE) }
                         if (sideloaded) {
                             Spacer(Modifier.height(gap))
                             Notice(Status.short, Lucide.TriangleAlert) {

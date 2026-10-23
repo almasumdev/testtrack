@@ -19,6 +19,7 @@ import com.eazyverse.testtrack.net.ApiMyPost
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.ApiReview
 import com.eazyverse.testtrack.net.ApiSession
+import com.eazyverse.testtrack.viewmodel.KeptCheck
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -207,7 +208,11 @@ class FeedViewModel : ViewModel() {
                 tix = Api.me().tix
                 // Each part on its own: one that fails keeps what it had, rather than turning the
                 // whole tab into an offline page when the rest came back fine.
-                part { mine = Api.myReviews().map(::myReview) }
+                part {
+                    val reviews = Api.myReviews()
+                    mine = reviews.map(::myReview)
+                    KeptCheck.report(context.applicationContext, reviews)
+                }
                 // Both duties, fetched with the feed rather than when the tab is opened: the
                 // badge has to be right before anybody looks at it.
                 part { waiting = Api.waiting().map(::waitingOf) }
@@ -355,6 +360,7 @@ class FeedViewModel : ViewModel() {
             isLive = if (it.appName.isBlank()) post?.isLive ?: it.isLive else it.isLive,
             decideBy = millis(it.decideBy) ?: millis(it.submittedAt)?.plus(TWO_DAYS),
             packageName = it.packageName.ifBlank { post?.packageName.orEmpty() },
+            kept = it.kept,
         )
     }
 
