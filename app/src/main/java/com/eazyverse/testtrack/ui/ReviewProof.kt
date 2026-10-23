@@ -41,6 +41,7 @@ import com.composables.icons.lucide.Camera
 import com.composables.icons.lucide.HardDrive
 import com.composables.icons.lucide.HardDriveUpload
 import com.composables.icons.lucide.Image
+import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -162,11 +163,19 @@ fun ProofArea(
                 style = MaterialTheme.typography.labelLarge,
             )
         }
-        Text(
-            "Saved in your Drive. Anyone with the link can view it. The developer and authorized dispute jurors receive the link.",
-            style = MaterialTheme.typography.bodySmall,
-            color = t.text2,
-        )
+        // Its own line under the buttons, with room above it, so it reads as a note about where
+        // the picture goes rather than as part of the last button.
+        Spacer(Modifier.height(if (shown == null) 14.dp else 2.dp))
+        Row(verticalAlignment = Alignment.Top) {
+            Icon(Lucide.Info, null, Modifier.padding(top = 2.dp).size(15.dp), tint = t.text3)
+            Spacer(Modifier.width(8.dp))
+            Text(
+                "Saved to your Google Drive and shared by link. The developer gets the link, and so do " +
+                    "the members who decide it if it is ever disputed.",
+                style = MaterialTheme.typography.bodySmall,
+                color = t.text3,
+            )
+        }
     }
 }
 
