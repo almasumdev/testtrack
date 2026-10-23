@@ -1,47 +1,74 @@
 package com.eazyverse.testtrack.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eazyverse.testtrack.data.AppIconData
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.AppIn
 import com.eazyverse.testtrack.net.Listing
 import com.eazyverse.testtrack.ui.AskFailure
 import com.eazyverse.testtrack.ui.FeedRules
-import com.eazyverse.testtrack.ui.HandEntry
 import com.eazyverse.testtrack.ui.MyAppsChanged
 import com.eazyverse.testtrack.ui.lookupFailure
 import com.eazyverse.testtrack.ui.packageFrom
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+/** The two ways an app gets onto My apps, both of which bring its real icon and name. */
+enum class AddWay { PHONE, PLAY }
+
+/** An app on this phone that can be picked, as the list draws it. */
+data class PhoneApp(
+    val pkg: String,
+    val label: String,
+) {
+    /** A build from Android Studio rather than the one on Play: a different package to the listing. */
+    val testBuild: Boolean get() = TEST_SUFFIXES.any { pkg.endsWith(it) }
+
+    private companion object {
+        val TEST_SUFFIXES = listOf(".debug", ".dev", ".staging")
+    }
+}
 
 /**
- * Adding an app to My apps: where people find it, its link, Play's answer to confirm, then add.
+ * Adding an app to My apps: picked from this phone, or found on Play by its link.
  *
  * Nothing is spent and nothing is sent anywhere. The app is only remembered, and its crews and
- * feedback start from its own page. When Play cannot be read for us, or a closed track is not
- * showing yet, the details can be typed instead; the app is then added unverified, and becomes
- * verified once Play, a crew or a review shows it is real.
+ * feedback start from its own page. Either way it arrives with an icon and the name it really has:
+ * Play's, or the phone's. Typing the details by hand is gone, because that is how apps ended up on
+ * everybody's screens as a blank square. Picked from the phone, an app starts unverified and becomes
+ * verified once Play, a crew or a review shows it is real, which also covers a closed test Play is
+ * not showing yet.
  */
-class AppAddViewModel :
-    ViewModel(),
-    HandEntry {
-    var query by mutableStateOf("")
+class AppAddViewModel : ViewModel() {
+    /** Null on the first page, where the way is chosen. */
+    var way by mutableStateOf<AddWay?>(null)
+        private set
+
+    /** The way selected on the first page, before Continue. */
+    var choice by mutableStateOf(AddWay.PHONE)
         private set
 
     var isLive by mutableStateOf(false)
         private set
 
-    var found by mutableStateOf<Listing?>(null)
+    // ------------------------------------------------------------------ from Play
+
+    var query by mutableStateOf("")
         private set
 
-    /** What was found was typed rather than read off Play. */
-    var unchecked by mutableStateOf(false)
+    var found by mutableStateOf<Listing?>(null)
         private set
 
     var looking by mutableStateOf(false)
@@ -50,11 +77,34 @@ class AppAddViewModel :
     var failure by mutableStateOf<AskFailure?>(null)
         private set
 
-    var byHand by mutableStateOf(false)
+    // ------------------------------------------------------------------ from this phone
+
+    var phoneApps by mutableStateOf<List<PhoneApp>?>(null)
         private set
 
-    override var handName by mutableStateOf("")
+    var search by mutableStateOf("")
         private set
+
+    /** The app picked from this phone. */
+    var picked by mutableStateOf<PhoneApp?>(null)
+        private set
+
+    var pickedName by mutableStateOf("")
+        private set
+
+    private var pickedIcon by mutableStateOf<AppIconData.Encoded?>(null)
+
+    /** The icon it will go in with, to show before it does. */
+    val pickedPreview: ImageBitmap? get() = pickedIcon?.preview
+
+    /** Reading an icon, the phone's or a picture's. */
+    var reading by mutableStateOf(false)
+        private set
+
+    var iconError by mutableStateOf<String?>(null)
+        private set
+
+    // ------------------------------------------------------------------ adding
 
     var adding by mutableStateOf(false)
         private set
@@ -66,13 +116,43 @@ class AppAddViewModel :
 
     val canLook: Boolean get() = query.trim().length >= 3 && !looking
 
-    override val typedPackage: String? get() = packageFrom(query)
+    val canAddPicked: Boolean get() = picked != null && pickedIcon != null && pickedName.isNotBlank() && !reading
 
-    override val canUseByHand: Boolean get() = typedPackage != null && handName.isNotBlank()
+    /** The phone's apps that match the search, by name or package. */
+    val shownPhoneApps: List<PhoneApp>
+        get() {
+            val all = phoneApps.orEmpty()
+            val needle = search.trim()
+            if (needle.isEmpty()) return all
+            return all.filter { it.label.contains(needle, ignoreCase = true) || it.pkg.contains(needle, ignoreCase = true) }
+        }
 
-    fun type(next: String) {
-        clearLookup()
-        query = next.take(QUERY_MAX)
+    fun select(next: AddWay) {
+        choice = next
+    }
+
+    fun proceed(context: Context) {
+        way = choice
+        if (choice == AddWay.PHONE) loadPhoneApps(context)
+    }
+
+    /** A step back inside the flow. False on the first page, where Back leaves the screen. */
+    fun back(): Boolean {
+        when {
+            picked != null -> {
+                picked = null
+                pickedIcon = null
+                iconError = null
+                addError = null
+            }
+            found != null -> startOver()
+            way != null -> {
+                clearLookup()
+                way = null
+            }
+            else -> return false
+        }
+        return true
     }
 
     /** Changing where it is throws away anything found under the other answer. */
@@ -81,30 +161,18 @@ class AppAddViewModel :
         clearLookup()
         isLive = live
         found = null
-        unchecked = false
+    }
+
+    // ------------------------------------------------------------------ from Play
+
+    fun type(next: String) {
+        clearLookup()
+        query = next.take(QUERY_MAX)
     }
 
     fun startOver() {
         clearLookup()
         found = null
-        unchecked = false
-    }
-
-    fun enterByHand() {
-        failure = null
-        byHand = true
-    }
-
-    override fun typeName(next: String) {
-        handName = next.take(FeedRules.APP_NAME_MAX)
-    }
-
-    override fun useByHand() {
-        val pkg = typedPackage ?: return
-        if (handName.isBlank()) return
-        found = Listing(`package` = pkg, name = handName.trim())
-        unchecked = true
-        byHand = false
     }
 
     fun look() {
@@ -115,34 +183,118 @@ class AppAddViewModel :
             viewModelScope.launch {
                 try {
                     found = Api.lookupApp(query.trim(), closed = !isLive)
-                    unchecked = false
                 } catch (error: CancellationException) {
                     throw error
                 } catch (error: Exception) {
-                    failure = lookupFailure(error, closed = !isLive)
+                    failure = lookupFailure(error, closed = !isLive, fromPhone = true)
                 } finally {
                     if (isActive) looking = false
                 }
             }
     }
 
-    /** Add what was found. `onAdded` gets the app's id, and whether it was on My apps already. */
+    /**
+     * Play could not show it: go to the phone instead. Where the package typed is installed here,
+     * straight to that app, so nobody has to find it twice.
+     */
+    fun pickInstead(context: Context) {
+        val typed = packageFrom(query)
+        clearLookup()
+        choice = AddWay.PHONE
+        way = AddWay.PHONE
+        loadPhoneApps(context) { apps ->
+            apps.firstOrNull { it.pkg == typed }?.let { pick(context, it) }
+        }
+    }
+
+    // ------------------------------------------------------------------ from this phone
+
+    fun searchFor(next: String) {
+        search = next.take(FeedRules.APP_NAME_MAX)
+    }
+
+    private fun loadPhoneApps(
+        context: Context,
+        then: (List<PhoneApp>) -> Unit = {},
+    ) {
+        val app = context.applicationContext
+        if (phoneApps != null) {
+            then(phoneApps.orEmpty())
+            return
+        }
+        viewModelScope.launch {
+            val apps =
+                withContext(Dispatchers.IO) {
+                    runCatching { AppIconData.launchable(app).map { PhoneApp(it.pkg, it.label) } }.getOrDefault(emptyList())
+                }
+            phoneApps = apps
+            then(apps)
+        }
+    }
+
+    fun pick(
+        context: Context,
+        app: PhoneApp,
+    ) {
+        picked = app
+        pickedName = app.label.take(FeedRules.APP_NAME_MAX)
+        pickedIcon = null
+        addError = null
+        readIcon { AppIconData.ofInstalled(context.applicationContext, app.pkg) }
+    }
+
+    fun renamePicked(next: String) {
+        pickedName = next.take(FeedRules.APP_NAME_MAX)
+    }
+
+    /** Back to the icon the app has on this phone, after a picture was tried. */
+    fun usePhoneIcon(context: Context) {
+        val app = picked ?: return
+        readIcon { AppIconData.ofInstalled(context.applicationContext, app.pkg) }
+    }
+
+    fun usePicture(
+        context: Context,
+        uri: Uri,
+    ) {
+        readIcon { AppIconData.ofPicture(context.applicationContext, uri) }
+    }
+
+    private fun readIcon(read: () -> AppIconData.Encoded?) {
+        reading = true
+        iconError = null
+        viewModelScope.launch {
+            val icon = withContext(Dispatchers.Default) { runCatching(read).getOrNull() }
+            if (icon == null) {
+                iconError = "That picture could not be used. Try another one."
+            } else {
+                pickedIcon = icon
+            }
+            reading = false
+        }
+    }
+
+    // ------------------------------------------------------------------ adding
+
+    /** Add what was found or picked. `onAdded` gets the app's id, and whether it was on My apps already. */
     fun add(onAdded: (id: String, existing: Boolean) -> Unit) {
-        val app = found ?: return
+        val body =
+            when (way) {
+                AddWay.PHONE -> {
+                    val app = picked ?: return
+                    val icon = pickedIcon ?: return
+                    if (pickedName.isBlank()) return
+                    AppIn(query = app.pkg, live = isLive, name = pickedName.trim(), fromPhone = true, iconData = icon.base64)
+                }
+                AddWay.PLAY -> AppIn(query = found?.`package` ?: return, live = isLive)
+                null -> return
+            }
         if (adding) return
         adding = true
         addError = null
         viewModelScope.launch {
             try {
-                val added =
-                    Api.addApp(
-                        AppIn(
-                            query = app.`package`,
-                            live = isLive,
-                            byHand = unchecked,
-                            name = if (unchecked) app.name else "",
-                        ),
-                    )
+                val added = Api.addApp(body)
                 MyAppsChanged.tell()
                 onAdded(added.app.id, added.existing)
             } catch (e: ApiError) {
@@ -159,7 +311,6 @@ class AppAddViewModel :
         lookupJob?.cancel()
         looking = false
         failure = null
-        byHand = false
     }
 
     private companion object {

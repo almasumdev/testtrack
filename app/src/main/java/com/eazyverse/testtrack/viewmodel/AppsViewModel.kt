@@ -1,20 +1,25 @@
 package com.eazyverse.testtrack.viewmodel
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eazyverse.testtrack.data.AppIconData
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiApp
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
+import com.eazyverse.testtrack.net.IconIn
 import com.eazyverse.testtrack.ui.AppCrewStatus
 import com.eazyverse.testtrack.ui.AppEntry
 import com.eazyverse.testtrack.ui.AppFeedbackStatus
 import com.eazyverse.testtrack.ui.MyAppsChanged
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * My apps: every app added, where each is with crews and feedback, and the two things done to an
@@ -123,6 +128,36 @@ class AppsViewModel : ViewModel() {
         onDone: () -> Unit,
     ) = act(context, id, onDone) { Api.deleteApp(id) }
 
+    /** Give an app the icon it has on this phone. */
+    fun iconFromPhone(
+        context: Context,
+        id: String,
+        pkg: String,
+    ) = act(context, id) {
+        Api.setAppIcon(id, IconIn(readIcon { AppIconData.ofInstalled(context.applicationContext, pkg) }))
+    }
+
+    /** Give an app a picture its owner chose, cropped square. */
+    fun iconFromPicture(
+        context: Context,
+        id: String,
+        uri: Uri,
+    ) = act(context, id) {
+        Api.setAppIcon(id, IconIn(readIcon { AppIconData.ofPicture(context.applicationContext, uri) }))
+    }
+
+    /** Give an app the icon Play shows for it. Play's refusal says what is still missing. */
+    fun iconFromPlay(
+        context: Context,
+        id: String,
+    ) = act(context, id) { Api.appIconFromPlay(id) }
+
+    private suspend fun readIcon(read: () -> AppIconData.Encoded?): String =
+        withContext(Dispatchers.Default) { runCatching(read).getOrNull() }?.base64 ?: throw UnusablePicture()
+
+    /** A picture that could not be read or made small enough. Said as that, not as a lost connection. */
+    private class UnusablePicture : Exception()
+
     private fun act(
         context: Context,
         id: String,
@@ -139,6 +174,8 @@ class AppsViewModel : ViewModel() {
                 load(context)
             } catch (e: ApiError) {
                 actionError = e.message
+            } catch (_: UnusablePicture) {
+                actionError = "That picture could not be used. Try another one."
             } catch (_: Exception) {
                 actionError = "We could not reach TestTrack. Check your connection."
             } finally {

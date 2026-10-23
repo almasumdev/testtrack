@@ -1,5 +1,9 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,20 +19,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.AddWay
 import com.eazyverse.testtrack.viewmodel.AppAddViewModel
 
 /**
- * Adding an app to My apps: where people find it, its link, Play's answer to confirm, and add.
+ * Adding an app to My apps: picked from this phone, or found on Play by its link, then added.
  *
  * Nothing is spent here. The app is remembered, and its page is where it goes into a crew or up
- * for feedback, so it is found and confirmed once rather than at every step after.
+ * for feedback, so it is found and confirmed once rather than at every step after. Both ways bring
+ * the app's real icon and name; typing them is gone, since that is how blank squares got in.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,12 +49,26 @@ fun AppAddScreen(
     onBack: () -> Unit,
     vm: AppAddViewModel = viewModel(),
 ) {
+    val context = LocalContext.current
     val dismissKeyboard = rememberDismissKeyboard()
+    var changingIcon by remember { mutableStateOf(false) }
+    val picture =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            uri?.let { vm.usePicture(context, it) }
+        }
+    // Back walks the steps of this page before it leaves it.
+    BackHandler(enabled = vm.way != null) { vm.back() }
+
     Scaffold(
         containerColor = Color.Transparent,
         // The navigation route already applies safeDrawingPadding.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = { PageBar("Add an app", onBack) },
+        topBar = {
+            PageBar(
+                if (vm.way == AddWay.PHONE && vm.picked == null) "Pick your app" else "Add an app",
+                onBack = { if (!vm.back()) onBack() },
+            )
+        },
     ) { padding ->
         Column(
             Modifier
@@ -55,46 +80,103 @@ fun AppAddScreen(
                 .padding(horizontal = Gutter),
         ) {
             Spacer(Modifier.height(8.dp))
-            Text(
-                "Add it once. Then, from its page, put it in a crew for Play's closed test or ask " +
-                    "other developers for feedback.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Tt.colors.text2,
-            )
-            Spacer(Modifier.height(20.dp))
-            AskAvailability(vm.isLive, vm::choose)
-            Spacer(Modifier.height(16.dp))
-            val app = vm.found
-            if (app == null) {
-                Finding(vm)
-            } else {
-                FoundApp(app.`package`, app.name, app.icon, app.developer, unchecked = vm.unchecked, onChange = vm::startOver)
-                vm.addError?.let {
-                    Spacer(Modifier.height(14.dp))
-                    AskMessage(AskFailure("Couldn't add it", it))
+            when (vm.way) {
+                null -> {
+                    AddWayChoice(vm.choice, vm::select)
+                    Spacer(Modifier.height(22.dp))
+                    Primary("Continue", tall = true) { vm.proceed(context) }
                 }
-                Spacer(Modifier.height(20.dp))
-                Primary("Add to My apps", busy = vm.adding, tall = true) {
-                    vm.add { id, _ -> onAdded(id) }
+                AddWay.PHONE -> {
+                    val app = vm.picked
+                    if (app == null) {
+                        PhoneAppList(vm.shownPhoneApps.takeIf { vm.phoneApps != null }, vm.search, vm::searchFor) {
+                            vm.pick(context, it)
+                        }
+                    } else {
+                        PickedApp(
+                            pkg = app.pkg,
+                            name = vm.pickedName,
+                            onName = vm::renamePicked,
+                            preview = vm.pickedPreview,
+                            reading = vm.reading,
+                            testBuild = app.testBuild,
+                            onChangeIcon = { changingIcon = true },
+                        )
+                        vm.iconError?.let {
+                            Spacer(Modifier.height(12.dp))
+                            AskMessage(AskFailure("Couldn't use that picture", it))
+                        }
+                        Spacer(Modifier.height(18.dp))
+                        AskAvailability(vm.isLive, vm::choose)
+                        AddButton(vm, enabled = vm.canAddPicked, onAdded)
+                    }
+                }
+                AddWay.PLAY -> {
+                    AskAvailability(vm.isLive, vm::choose)
+                    Spacer(Modifier.height(16.dp))
+                    val app = vm.found
+                    if (app == null) {
+                        Finding(vm) { vm.pickInstead(context) }
+                    } else {
+                        FoundApp(app.`package`, app.name, app.icon, app.developer, unchecked = false, onChange = vm::startOver)
+                        AddButton(vm, enabled = true, onAdded)
+                    }
                 }
             }
             Spacer(Modifier.height(24.dp))
         }
     }
+
+    val app = vm.picked
+    if (changingIcon && app != null) {
+        AppIconSheet(
+            name = vm.pickedName.ifBlank { app.label },
+            installedHere = true,
+            onPhone = { vm.usePhoneIcon(context) },
+            onPicture = { picture.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            onPlay = null,
+            onDismiss = { changingIcon = false },
+        )
+    }
 }
 
-/** Before an app is found: the link and the button, and the way past a checker that is down. */
 @Composable
-private fun Finding(vm: AppAddViewModel) {
+private fun AddButton(
+    vm: AppAddViewModel,
+    enabled: Boolean,
+    onAdded: (String) -> Unit,
+) {
+    vm.addError?.let {
+        Spacer(Modifier.height(14.dp))
+        AskMessage(AskFailure("Couldn't add it", it))
+    }
+    Spacer(Modifier.height(20.dp))
+    Primary("Add to My apps", busy = vm.adding, enabled = enabled, tall = true) {
+        vm.add { id, _ -> onAdded(id) }
+    }
+}
+
+/** Before an app is found on Play: the link and the button, and the phone when Play cannot help. */
+@Composable
+private fun Finding(
+    vm: AppAddViewModel,
+    onPickInstead: () -> Unit,
+) {
+    Text(
+        "Paste your Google Play link or type the package name.",
+        style = MaterialTheme.typography.bodyMedium,
+        color = Tt.colors.text2,
+    )
+    Spacer(Modifier.height(12.dp))
     DialogField(
         value = vm.query,
         onValueChange = vm::type,
-        label = "Your Google Play link",
+        label = "Play link or package name",
         placeholder = "com.example.myapp",
         isError = vm.failure?.invalidLink == true,
         supporting =
             if (vm.isLive) {
-                "The Google Play link or your app's package name."
+                null
             } else {
                 "Add the testers group to your closed track before looking up your app."
             },
@@ -107,15 +189,10 @@ private fun Finding(vm: AppAddViewModel) {
         Spacer(Modifier.height(14.dp))
         AskMessage(it)
     }
-    if (vm.byHand) {
-        Spacer(Modifier.height(18.dp))
-        ByHandForm(vm)
-        return
-    }
     Spacer(Modifier.height(16.dp))
-    // Our check is down, or Play is slow to show a closed track: the way on that does not need it.
+    // Our check is down, or Play is slow to show a closed track: the phone has the app anyway.
     if (vm.failure?.byHand == true) {
-        Secondary("Enter details yourself", Modifier.fillMaxWidth(), onClick = vm::enterByHand)
+        Secondary("Pick it from this phone instead", Modifier.fillMaxWidth(), onClick = onPickInstead)
         Spacer(Modifier.height(10.dp))
     }
     Primary(

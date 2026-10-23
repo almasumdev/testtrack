@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -29,7 +30,8 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
+import com.composables.icons.lucide.AppWindow
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -109,16 +111,24 @@ fun SeatCountTiles(
                                     },
                                 ),
                         ) {
-                            // The app itself, where Play gave an icon: a crew reads as the apps in
-                            // it. One still being checked is drawn faint, as the square was.
+                            // The app itself, where it has an icon: a crew reads as the apps in it.
+                            // One still being checked is drawn faint, as the square was. Without an
+                            // icon, or while one will not load, an app mark rather than a blank
+                            // square, which looked like a seat still loading. No names: the open
+                            // crew is faces only.
                             val icon = icons.getOrNull(index).orEmpty()
+                            val shown = if (index < filled) 1f else 0.45f
+                            val mark: @Composable () -> Unit = { SeatMark(solid = index < filled) }
                             if (icon.isNotBlank()) {
-                                AsyncImage(
+                                SubcomposeAsyncImage(
                                     model = icon,
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
-                                    modifier = Modifier.matchParentSize().alpha(if (index < filled) 1f else 0.45f),
+                                    modifier = Modifier.matchParentSize().alpha(shown),
+                                    error = { mark() },
                                 )
+                            } else {
+                                mark()
                             }
                         }
                     }
@@ -126,6 +136,26 @@ fun SeatCountTiles(
                 repeat(perRow - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
+    }
+}
+
+/** An app in a seat with no icon to show: a window mark on its square, solid once checked on Play. */
+@Composable
+private fun SeatMark(solid: Boolean) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Icon(
+            Lucide.AppWindow,
+            null,
+            Modifier.fillMaxSize(0.56f),
+            tint =
+                if (solid) {
+                    MaterialTheme.colorScheme.onPrimary.copy(
+                        alpha = 0.85f,
+                    )
+                } else {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                },
+        )
     }
 }
 

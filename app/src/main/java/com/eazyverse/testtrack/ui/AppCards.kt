@@ -49,7 +49,23 @@ internal fun AppMark(
     name: String,
     icon: String,
     size: Dp = 44.dp,
+    /**
+     * The owner's own screens: the icon chosen for the app wins over the copy on this phone, or an
+     * owner who sets a picture keeps seeing the old icon and thinks it did not take. The installed
+     * one still shows while the chosen one loads, and stands in if it cannot.
+     */
+    ownIcon: Boolean = false,
 ) {
+    if (ownIcon && icon.isNotBlank()) {
+        SubcomposeAsyncImage(
+            model = icon,
+            contentDescription = null,
+            modifier = Modifier.size(size).clip(RoundedCornerShape(size * 0.3f)),
+            loading = { AppIcon(pkg, name, size = size) { AppTile(name, size) } },
+            error = { AppIcon(pkg, name, size = size) { AppTile(name, size) } },
+        )
+        return
+    }
     AppIcon(pkg, name, size = size) {
         if (icon.isBlank()) {
             AppTile(name, size)
@@ -102,7 +118,7 @@ internal fun AppCard(
 ) {
     CrewCard(modifier, padding = PaddingValues(0.dp), onClick = onOpen) {
         Row(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            AppMark(app.pkg, app.name, app.icon)
+            AppMark(app.pkg, app.name, app.icon, ownIcon = true)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 val title = MaterialTheme.typography.titleSmall

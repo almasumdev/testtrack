@@ -1,8 +1,13 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -45,6 +52,7 @@ import com.composables.icons.lucide.FlaskConical
 import com.composables.icons.lucide.Globe
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageSquare
+import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -79,6 +87,12 @@ fun AppPage(
     }
     var askLive by remember { mutableStateOf(false) }
     var askDelete by remember { mutableStateOf(false) }
+    var changingIcon by remember { mutableStateOf(false) }
+    val picture =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            val target = app
+            if (uri != null && target != null) vm.iconFromPicture(context, target.id, uri)
+        }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -109,8 +123,13 @@ fun AppPage(
                 else -> {
                     val busy = vm.acting == app.id
                     Spacer(Modifier.height(8.dp))
-                    Hero(app)
+                    Hero(app) { changingIcon = true }
                     Spacer(Modifier.height(20.dp))
+                    // Nothing for everybody else to see it by yet: the phone's own icon is not theirs.
+                    if (app.icon.isBlank()) {
+                        IconNudge(app.name) { changingIcon = true }
+                        Spacer(Modifier.height(14.dp))
+                    }
                     if (!app.verified) {
                         VerifyCallout(busy) { vm.verify(context, app.id) }
                         Spacer(Modifier.height(4.dp))
@@ -127,6 +146,16 @@ fun AppPage(
         }
     }
 
+    if (changingIcon && app != null) {
+        AppIconSheet(
+            name = app.name,
+            installedHere = installedLabel(app.pkg) != null,
+            onPhone = { vm.iconFromPhone(context, app.id, app.pkg) },
+            onPicture = { picture.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            onPlay = { vm.iconFromPlay(context, app.id) },
+            onDismiss = { changingIcon = false },
+        )
+    }
     if (askLive && app != null) {
         Ask(
             title = "Mark ${app.name} live?",
@@ -161,9 +190,23 @@ fun AppPage(
 
 /** The app, centred: its icon, name and package, and chips for where it is found and whether it's real. */
 @Composable
-private fun Hero(app: AppEntry) {
+private fun Hero(
+    app: AppEntry,
+    onChangeIcon: () -> Unit,
+) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        AppMark(app.pkg, app.name, app.icon, size = 88.dp)
+        Box(Modifier.size(96.dp).clickable(role = Role.Button, onClickLabel = "Change icon", onClick = onChangeIcon)) {
+            AppMark(app.pkg, app.name, app.icon, size = 88.dp, ownIcon = true)
+            Box(
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, Tt.colors.glassBorder, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) { Icon(Lucide.Pencil, null, Modifier.size(15.dp), tint = Tt.colors.accentInk) }
+        }
         Spacer(Modifier.height(12.dp))
         Text(
             app.name,

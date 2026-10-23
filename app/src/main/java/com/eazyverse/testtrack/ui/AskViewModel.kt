@@ -354,7 +354,10 @@ data class AskFailure(
     val title: String,
     val detail: String,
     val invalidLink: Boolean = false,
-    /** Typing the details instead is offered: our lookup is down, or Play is slow to show it. */
+    /**
+     * Another way on is offered: our lookup is down, or Play is slow to show it. Typing the details
+     * on Ask for feedback, picking the app from this phone on Add an app.
+     */
     val byHand: Boolean = false,
     /** The fault is ours, not their app's, so it is said in amber rather than red. */
     val ours: Boolean = byHand,
@@ -363,6 +366,8 @@ data class AskFailure(
 internal fun lookupFailure(
     error: Throwable,
     closed: Boolean = false,
+    /** Add an app, where the way on is the phone rather than typing. */
+    fromPhone: Boolean = false,
 ): AskFailure =
     when {
         error !is ApiError -> AskFailure("Couldn't connect", "Check your internet connection, then try again. Your app link is still here.")
@@ -384,14 +389,22 @@ internal fun lookupFailure(
             AskFailure(
                 "We can't access this listing",
                 "Check that the testers group is added to your closed track and the release is available. " +
-                    "Just added it? Play can take a few hours; you can enter the details yourself.",
+                    if (fromPhone) {
+                        "Just added it? Play can take a few hours. You can pick it from this phone instead."
+                    } else {
+                        "Just added it? Play can take a few hours; you can enter the details yourself."
+                    },
                 byHand = true,
                 ours = false,
             )
         error.code == "listing_unavailable" && closed ->
             AskFailure(
                 "Play check is down on our side",
-                "Your app is fine. Try again, or enter its details yourself and post now.",
+                if (fromPhone) {
+                    "Your app is fine. Try again, or pick it from this phone instead."
+                } else {
+                    "Your app is fine. Try again, or enter its details yourself and post now."
+                },
                 byHand = true,
             )
         error.code == "listing_unavailable" -> AskFailure("App lookup is unavailable", error.message)

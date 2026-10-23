@@ -290,6 +290,15 @@ object Api {
 
     suspend fun verifyApp(appId: String): ApiApp = post("/apps/$appId/verify", Empty())
 
+    /** Give an app the icon on this phone, or a picture its owner chose. */
+    suspend fun setAppIcon(
+        appId: String,
+        body: IconIn,
+    ): ApiApp = put("/apps/$appId/icon", body)
+
+    /** Give an app the icon Play shows for it. */
+    suspend fun appIconFromPlay(appId: String): ApiApp = post("/apps/$appId/icon/play", Empty())
+
     suspend fun deleteApp(appId: String) = sendEmpty(Request.Builder().url(url("/apps/$appId")).delete())
 
     /** Where a piece of proof lives. Needs the token, so it is fetched, never linked. */
@@ -357,6 +366,12 @@ object Api {
         path: String,
         body: In,
     ): Out = send(Request.Builder().url(url(path)).patch(json.encodeToString(body).toRequestBody(JSON)))
+
+    @PublishedApi
+    internal suspend inline fun <reified In, reified Out> put(
+        path: String,
+        body: In,
+    ): Out = send(Request.Builder().url(url(path)).put(json.encodeToString(body).toRequestBody(JSON)))
 
     @PublishedApi
     internal suspend inline fun <reified T> delete(path: String): T = send(Request.Builder().url(url(path)).delete())
