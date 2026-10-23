@@ -57,6 +57,8 @@ data class MyReview(
     val reason: String,
     val packageName: String = "",
     val isLive: Boolean = false,
+    /** The app's icon as its owner's My apps has it; empty where it has none, or from an older server. */
+    val icon: String = "",
 )
 
 /** States a review is still being worked on in. Tapping any row opens its review page. */
@@ -194,7 +196,7 @@ private fun MineRow(
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppIcon(review.packageName, review.appName, size = MINE_TILE) { AppTile(review.appName, size = MINE_TILE) }
+        AppMark(review.packageName, review.appName, review.icon, size = MINE_TILE)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f).height(MINE_TILE), verticalArrangement = Arrangement.SpaceBetween) {
             Text(

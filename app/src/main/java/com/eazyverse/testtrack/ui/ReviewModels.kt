@@ -119,7 +119,12 @@ fun reviewOutcome(
             } else {
                 "With the developer. They have two days, then it approves itself."
             }
-        "approved" -> "Approved. The tix are yours."
+        "approved" ->
+            if (live) {
+                "Approved. The tix are yours. Keep the app a few more days so your review counts on Google Play."
+            } else {
+                "Approved. The tix are yours."
+            }
         "disputed" -> "The developer disputed it. Three members are deciding."
         "rejected" -> "The members sided with the developer. Nothing was paid, and their fee came from your tix."
         "abandoned" -> "You gave this one up. The slot went to somebody else."

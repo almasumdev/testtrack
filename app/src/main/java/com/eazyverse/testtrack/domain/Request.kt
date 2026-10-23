@@ -20,6 +20,8 @@ data class Request(
     /** What closing it now would give back. */
     val refundable: Int = 0,
     val reviews: List<RequestReview> = emptyList(),
+    /** The app's icon as its owner's My apps has it; empty where it has none, or from an older server. */
+    val icon: String = "",
 ) {
     /** Reviews still on their way, or waiting on the owner or the members. */
     val underWay: Int get() = reviews.count { it.state in setOf("claimed", "installed", "used", "submitted", "disputed") }

@@ -161,6 +161,8 @@ internal fun CheckRow(
     onClick: () -> Unit,
     /** The app's package, so an installed one shows its own icon rather than a lettered tile. */
     packageName: String = "",
+    /** The app's icon from the server, for an app not installed here. */
+    icon: String = "",
     chip: @Composable () -> Unit,
 ) {
     val t = Tt.colors
@@ -171,7 +173,7 @@ internal fun CheckRow(
             .padding(start = 14.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppIcon(packageName, appName, size = ROW_TILE) { AppTile(appName, size = ROW_TILE) }
+        AppMark(packageName, appName, icon, size = ROW_TILE)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f).height(ROW_TILE), verticalArrangement = Arrangement.SpaceBetween) {
             Text(
@@ -242,7 +244,7 @@ fun ReviewCheck(
             Secondary("Refuse", Modifier.weight(1f).height(48.dp), destructive = true, enabled = !busy, onClick = onReject)
         },
     ) {
-        AppHeader(review.appName, review.packageName, if (review.isLive) CheckKind.PLAY else CheckKind.CLOSED)
+        AppHeader(review.appName, review.packageName, if (review.isLive) CheckKind.PLAY else CheckKind.CLOSED, icon = review.icon)
         Spacer(Modifier.height(12.dp))
         StatTiles(
             listOf(
@@ -307,7 +309,7 @@ fun CaseCheck(
             Secondary("The review stands", Modifier.weight(1f).height(48.dp), enabled = !busy) { onVote(true) }
         },
     ) {
-        AppHeader(case.appName, case.packageName, CheckKind.DISPUTED)
+        AppHeader(case.appName, case.packageName, CheckKind.DISPUTED, icon = case.icon)
         Spacer(Modifier.height(12.dp))
         StatTiles(
             listOf(

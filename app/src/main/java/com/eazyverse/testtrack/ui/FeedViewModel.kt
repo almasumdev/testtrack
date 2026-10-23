@@ -343,6 +343,7 @@ class FeedViewModel : ViewModel() {
             reason = it.reason,
             packageName = it.packageName,
             isLive = it.isLive,
+            icon = it.icon,
         )
 
     // Mapped here rather than drawn raw: a post id means nothing on a card, and the screen should
@@ -361,6 +362,7 @@ class FeedViewModel : ViewModel() {
             decideBy = millis(it.decideBy) ?: millis(it.submittedAt)?.plus(TWO_DAYS),
             packageName = it.packageName.ifBlank { post?.packageName.orEmpty() },
             kept = it.kept,
+            icon = it.icon,
         )
     }
 
@@ -377,6 +379,7 @@ class FeedViewModel : ViewModel() {
             packageName = it.packageName,
             reward = it.reward,
             isLive = it.isLive,
+            icon = it.icon,
         )
 
     private fun requestOf(it: ApiMyPost) =
@@ -391,6 +394,7 @@ class FeedViewModel : ViewModel() {
             open = it.slotsOpen,
             closed = it.closed,
             refundable = it.refundable,
+            icon = it.icon,
             reviews =
                 it.reviews.map { r ->
                     RequestReview(

@@ -35,6 +35,8 @@ data class Waiting(
      * is worth the owner's look before it accepts itself; null when not asked yet.
      */
     val kept: Boolean? = null,
+    /** The app's icon as its owner's My apps has it; empty where it has none, or from an older server. */
+    val icon: String = "",
 )
 
 private const val HOUR = 3_600_000L
@@ -84,4 +86,6 @@ data class Case(
     /** What the review in dispute would pay. */
     val reward: Int = 0,
     val isLive: Boolean = true,
+    /** The app's icon as its owner's My apps has it; empty where it has none, or from an older server. */
+    val icon: String = "",
 )

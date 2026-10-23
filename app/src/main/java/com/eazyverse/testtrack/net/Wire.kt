@@ -164,6 +164,8 @@ data class ApiMyPost(
     val id: String,
     @SerialName("app_name") val appName: String,
     @SerialName("package_name") val packageName: String = "",
+    /** The app's icon as its owner's My apps has it; empty where it has none, or from an older server. */
+    val icon: String = "",
     @SerialName("is_live") val isLive: Boolean = true,
     val reward: Int = 0,
     @SerialName("reviews_bought") val reviewsBought: Int = 0,
@@ -239,6 +241,8 @@ data class ApiReview(
     // Only on /reviews/mine: the app the review is for, so the list needs no second call.
     @SerialName("app_name") val appName: String = "",
     @SerialName("package_name") val packageName: String = "",
+    /** The app's icon as its owner's My apps has it; empty where it has none, or from an older server. */
+    val icon: String = "",
     @SerialName("is_live") val isLive: Boolean = false,
     val reward: Int = 0,
     // Only on /reviews/waiting: who sent it, and when it accepts itself.
@@ -262,6 +266,8 @@ data class ApiDispute(
     val outcome: String,
     @SerialName("package_name") val packageName: String = "",
     val reward: Int = 0,
+    /** The app's icon as its owner's My apps has it; empty where it has none, or from an older server. */
+    val icon: String = "",
 )
 
 @Serializable

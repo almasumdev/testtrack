@@ -96,6 +96,7 @@ fun WaitingBody(
                         ).joinToString(" · "),
                         onClick = { onOpenReview(review) },
                         packageName = review.packageName,
+                        icon = review.icon,
                     ) {
                         val until = review.decideBy
                         if (until != null) {
@@ -117,6 +118,7 @@ fun WaitingBody(
                         "Disputed · ${case.votesCast} of ${case.votesNeeded} votes",
                         onClick = { onOpenCase(case) },
                         packageName = case.packageName,
+                        icon = case.icon,
                     ) { Pill("${case.stake} tix", Tt.colors.accentInk, Tt.colors.glass2) }
                 }
             }
@@ -142,6 +144,7 @@ fun WaitingBody(
                         }.joinToString(" · "),
                         onClick = { onOpenRequest(request) },
                         packageName = request.packageName,
+                        icon = request.icon,
                     ) {
                         if (request.closed) {
                             Pill("Closed", Tt.colors.text3, Tt.colors.glass2)

@@ -76,6 +76,7 @@ fun RequestCheck(
             request.packageName,
             if (request.isLive) CheckKind.PLAY else CheckKind.CLOSED,
             detail = if (request.closed) "Closed" else "",
+            icon = request.icon,
         )
         Spacer(Modifier.height(12.dp))
         StatTiles(
