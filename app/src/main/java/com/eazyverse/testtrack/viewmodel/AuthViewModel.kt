@@ -71,8 +71,10 @@ class AuthViewModel : ViewModel() {
                     // so the catch below was turning a completely normal sign-in into a failure
                     // message on the way out. Cancellation is not a failure and must not be
                     // swallowed.
+                    AuthRepo.undoHalfSignIn()
                     throw e
                 } catch (e: Exception) {
+                    AuthRepo.undoHalfSignIn()
                     // The sentence for the person; friendly() puts the real cause in the log.
                     message = e.friendly("Sign-in didn't finish. Try once more.")
                 } finally {

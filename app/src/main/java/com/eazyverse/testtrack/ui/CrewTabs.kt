@@ -98,7 +98,8 @@ fun CrewRunTab(
     val done = vm.doneTonight
     val total = left + done
     val risky = runs.filter { it.atRisk }.map { it.name }
-    val nightsLeft = (going.ifEmpty { runs }).maxOf { (CrewRules.RUN_DAYS - it.day + 1).coerceAtLeast(0) }
+    // Tonight is one of them until it is done, as the crew's own page counts it.
+    val nightsLeft = (going.ifEmpty { runs }).maxOf { (CrewRules.RUN_DAYS - it.day + if (left > 0) 1 else 0).coerceAtLeast(0) }
     val crews = "${going.size} ${if (going.size == 1) "crew" else "crews"}"
 
     LazyColumn(

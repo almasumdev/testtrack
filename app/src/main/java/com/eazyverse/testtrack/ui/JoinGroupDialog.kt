@@ -238,7 +238,7 @@ private fun Outside(
                     buildAnnotatedString {
                         append("Already joined? ")
                         withStyle(
-                            SpanStyle(color = t.accent, fontWeight = FontWeight.SemiBold, textDecoration = TextDecoration.Underline),
+                            SpanStyle(color = t.accentInk, fontWeight = FontWeight.SemiBold, textDecoration = TextDecoration.Underline),
                         ) {
                             append("Check now")
                         }

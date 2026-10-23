@@ -76,6 +76,8 @@ fun FeedScreen(
     onAsk: () -> Unit = {},
     onReview: (String) -> Unit = {},
     onSignIn: () -> Unit = {},
+    /** Signed out and tapped Review on a card: asked for an account with that reason. */
+    onSignInToReview: () -> Unit = onSignIn,
     /** Open a review of your app, or a case, on a page of its own, by id. */
     onCheck: (String) -> Unit = {},
     vm: FeedViewModel = viewModel(),
@@ -244,7 +246,7 @@ fun FeedScreen(
                                         FeedRequestCard(post) {
                                             // Signed out, a review cannot be claimed: ask for the account first.
                                             if (vm.signedOut) {
-                                                onSignIn()
+                                                onSignInToReview()
                                             } else if (post.isLive) {
                                                 onReview(Json.encodeToString(post))
                                             } else {

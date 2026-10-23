@@ -41,10 +41,15 @@ import com.eazyverse.testtrack.viewmodel.CrewAddViewModel
 @Composable
 fun CrewAddScreen(
     crews: CrewViewModel,
-    /** The app from My apps going in; null while My apps has not loaded it. */
+    /** The app from My apps going in; null while My apps has not loaded it, or if it is gone. */
     app: AppEntry?,
     onDone: () -> Unit,
     onBack: () -> Unit,
+    /** My apps is still arriving, so a missing app is not gone yet. */
+    loading: Boolean = false,
+    /** My apps could not be read, so a missing app may not be gone at all. */
+    offline: Boolean = false,
+    onRetry: () -> Unit = {},
     vm: CrewAddViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -59,13 +64,15 @@ fun CrewAddScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = { PageBar(if (open != null) "Take a seat in $open" else "Start a new crew", onBack) },
     ) { padding ->
+        val scroll = rememberScrollState()
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .dismissKeyboardOnTap(dismissKeyboard)
                 .imePadding()
-                .verticalScroll(rememberScrollState())
+                // Only with the app: the not-found state fills the page, which a scroll cannot hold.
+                .then(if (app != null) Modifier.verticalScroll(scroll) else Modifier)
                 .padding(horizontal = Gutter),
         ) {
             Spacer(Modifier.height(8.dp))
@@ -78,7 +85,7 @@ fun CrewAddScreen(
             )
             Spacer(Modifier.height(20.dp))
             if (app == null) {
-                CrewLobbyLoading()
+                if (loading) FoundAppLoading() else AppNotThere(offline, onRetry, onBack)
             } else {
                 // Found and confirmed when it was added; "Change" goes back to choose another.
                 FoundApp(app.pkg, app.name, app.icon, app.developer, unchecked = !app.verified, onChange = onBack)

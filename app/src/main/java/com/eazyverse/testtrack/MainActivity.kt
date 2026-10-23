@@ -30,7 +30,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -166,6 +165,9 @@ class MainActivity : ComponentActivity() {
                             // Where our server can reach this phone. See [PushRepo.toServer].
                             if (Session.signedIn) PushRepo.toServer()
                             if (Session.signedIn && !wasSignedIn) membership.afterSignIn() else membership.quietly()
+                            // Signed out: stop, and forget what was seen, or the next account on
+                            // this phone is told about everything it has that the last one had not.
+                            if (!Session.signedIn && wasSignedIn) FeedbackWatch.cancel(this@MainActivity)
                             wasSignedIn = Session.signedIn
                         }
                         JoinGroupDialog(membership)
@@ -396,65 +398,7 @@ fun AppNav(
             Inset { CrewMembersPage(crews, requireNotNull(entry.arguments?.getString("id")), onBack = { nav.popBackStack() }) }
         }
 
-        composable(Routes.CREW_ADD, arguments = listOf(navArgument("app") { type = NavType.StringType })) { entry ->
-            // Taken on the Crew tab's model, so the seat is already there on the way back; the
-            // app is My apps' own, so nothing about it is asked again.
-            val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
-            val crews: CrewViewModel = viewModel(home)
-            val apps: AppsViewModel = viewModel(home)
-            val context = LocalContext.current
-            val appId = requireNotNull(entry.arguments?.getString("app"))
-            LaunchedEffect(appId) { if (apps.byId(appId) == null) apps.load(context) }
-            Inset {
-                CrewAddScreen(crews, apps.byId(appId), onDone = { nav.popBackStack() }, onBack = { nav.popBackStack() })
-            }
-        }
-
-        composable(Routes.ASK_APP, arguments = listOf(navArgument("app") { type = NavType.StringType })) { entry ->
-            val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
-            val apps: AppsViewModel = viewModel(home)
-            val context = LocalContext.current
-            val appId = requireNotNull(entry.arguments?.getString("app"))
-            LaunchedEffect(appId) { if (apps.byId(appId) == null) apps.load(context) }
-            Inset {
-                AskScreen(
-                    onDone = { nav.popBackStack() },
-                    onBack = { nav.popBackStack() },
-                    app = apps.byId(appId),
-                    loading = apps.loading,
-                )
-            }
-        }
-
-        composable(Routes.APP, arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
-            val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
-            val apps: AppsViewModel = viewModel(home)
-            val membership = rememberMembership()
-            Inset {
-                AppPage(
-                    apps,
-                    requireNotNull(entry.arguments?.getString("id")),
-                    onBack = { nav.popBackStack() },
-                    onOpenCrew = { nav.push(Routes.crew(it)) },
-                    onOpenRequest = { nav.push(Routes.check(it)) },
-                    onCrew = { appId -> membership.require { nav.push(Routes.crewAdd(appId)) } },
-                    onFeedback = { nav.push(Routes.askFor(it)) },
-                )
-            }
-        }
-
-        composable(Routes.APP_ADD) {
-            Inset {
-                AppAddScreen(
-                    // Straight to the new app's page, with the add page gone from behind it.
-                    onAdded = { id ->
-                        nav.popBackStack()
-                        nav.push(Routes.app(id))
-                    },
-                    onBack = { nav.popBackStack() },
-                )
-            }
-        }
+        appRoutes(nav)
 
         composable(Routes.ABOUT) {
             Inset { AboutScreen(onBack = { nav.popBackStack() }) }
@@ -482,12 +426,12 @@ private fun NavHostController.replace(route: String) {
 }
 
 /** Forward, keeping what is behind. Single-top so a double tap cannot stack the same screen. */
-private fun NavHostController.push(route: String) {
+internal fun NavHostController.push(route: String) {
     navigate(route) { launchSingleTop = true }
 }
 
 /** The safe drawing inset, for every screen that is not the tab shell. */
 @Composable
-private fun Inset(content: @Composable () -> Unit) {
+internal fun Inset(content: @Composable () -> Unit) {
     Box(Modifier.safeDrawingPadding()) { content() }
 }

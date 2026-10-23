@@ -198,4 +198,13 @@ object AuthRepo {
             .signOut()
         FirebaseAuth.getInstance().signOut()
     }
+
+    /**
+     * Google said yes but our server never did (it was unreachable, or the sheet was closed while
+     * it was asked). Left signed in to Google alone, the header showed an account that nothing
+     * else in the app had, so the Google half is undone and the next try starts clean.
+     */
+    fun undoHalfSignIn() {
+        if (!com.eazyverse.testtrack.net.ApiSession.signedIn) FirebaseAuth.getInstance().signOut()
+    }
 }

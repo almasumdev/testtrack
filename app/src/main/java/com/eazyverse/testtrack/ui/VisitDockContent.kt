@@ -112,7 +112,7 @@ fun VisitDockContent(
                 ) {
                     Ring(ui)
                     Text("${ui.index + 1} of ${ui.total}", fontSize = 10.5.sp, color = t.text4)
-                    if (ui.signIn.isNotEmpty()) Icon(Lucide.KeyRound, "Has a sign-in", Modifier.size(15.dp), tint = t.accent)
+                    if (ui.signIn.isNotEmpty()) Icon(Lucide.KeyRound, "Has a sign-in", Modifier.size(15.dp), tint = t.accentInk)
                     PlayPause(ui, onPlayPause)
                 }
             else ->
@@ -133,7 +133,7 @@ fun VisitDockContent(
                         )
                         Text("${ui.index + 1} of ${ui.total}", fontSize = 10.5.sp, color = t.text4)
                     }
-                    if (ui.signIn.isNotEmpty()) Icon(Lucide.KeyRound, "Has a sign-in", Modifier.size(15.dp), tint = t.accent)
+                    if (ui.signIn.isNotEmpty()) Icon(Lucide.KeyRound, "Has a sign-in", Modifier.size(15.dp), tint = t.accentInk)
                     PlayPause(ui, onPlayPause)
                 }
         }
@@ -328,7 +328,7 @@ private fun PlayPause(
                 else -> "Pause"
             },
             Modifier.size(15.dp),
-            tint = Tt.colors.onAccent,
+            tint = Tt.colors.inkOn(if (ui.counted) Status.posted else Tt.colors.accent),
         )
     }
 }
@@ -352,9 +352,10 @@ private fun BigPlayPause(
             .padding(horizontal = 18.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(if (ui.counted || ui.paused) Lucide.Play else Lucide.Pause, null, Modifier.size(14.dp), tint = Tt.colors.onAccent)
+        val ink = Tt.colors.inkOn(if (ui.counted) Status.posted else Tt.colors.accent)
+        Icon(if (ui.counted || ui.paused) Lucide.Play else Lucide.Pause, null, Modifier.size(14.dp), tint = ink)
         Spacer(Modifier.width(6.dp))
-        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Tt.colors.onAccent)
+        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = ink)
     }
 }
 

@@ -351,7 +351,7 @@ object Api {
     internal suspend inline fun <reified T> kept(path: String): T {
         val generation = ApiSession.generation
         val text = sendText(Request.Builder().url(url(path)).get())
-        ApiCache.write(path, text, generation)
+        withContext(Dispatchers.IO) { ApiCache.write(path, text, generation) }
         return json.decodeFromString<T>(text)
     }
 
@@ -474,6 +474,7 @@ object Api {
                     null,
                 )
             if (status !in 200..299) {
+                if (status == 401) ApiSession.dropTokens(generation) // Refused, not unreachable: the pair is dead.
                 false
             } else {
                 ApiSession.remember(json.decodeFromString<Tokens>(text), generation)

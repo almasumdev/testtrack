@@ -199,33 +199,9 @@ class AskViewModel : ViewModel() {
     }
 
     /**
-     * What to say about a failure, in the reader's terms rather than the server's.
-     *
-     * The one worth spelling out is a listing we cannot see. By far its most common real cause is
-     * an owner who set up a closed test and did not add the testers group to it, and telling them
-     * now beats fifteen people failing to install it later and nobody knowing why.
+     * What to say about a failure. The app is on My apps already, so nothing here is looked up on
+     * Play; the server's own sentence is shown as it is.
      */
     private fun whyNot(error: Throwable): String =
-        when {
-            error !is ApiError -> "Couldn't reach TestTrack. Check your connection and try again."
-            error.code == "listing_not_visible" ->
-                "Play won't show us that app. The usual cause is a closed testing track without " +
-                    "the testers group on it. Add the group, then try again."
-            error.code == "listing_not_found" ->
-                "Play has no public app with that package name. Check it, or pick Closed " +
-                    "testing if it is not public yet."
-            error.code == "package_unreadable" ->
-                "That doesn't look like a Play link or a package name. Paste the link from Play " +
-                    "Console, or the package name like com.example.myapp."
-            // Not reworded. The server knows why it could not look, and the reasons differ:
-            // Play refusing us, Play unreachable, the closed testing lookup not being set up at
-            // all. Replacing all three with one cheerful line was how a real outage spent an
-            // evening looking like a network blip.
-            else -> error.message
-        }
-
-    private companion object {
-        /** A Play URL with every parameter Console attaches is nowhere near this long. */
-        const val QUERY_MAX = 2048
-    }
+        if (error is ApiError) error.message else "Couldn't reach TestTrack. Check your connection and try again."
 }

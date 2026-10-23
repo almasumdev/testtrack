@@ -100,7 +100,7 @@ private fun WayCard(
             Box(
                 Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(tint),
                 contentAlignment = Alignment.Center,
-            ) { Icon(icon, null, Modifier.size(22.dp), tint = t.onAccent) }
+            ) { Icon(icon, null, Modifier.size(22.dp), tint = t.inkOn(tint)) }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
@@ -121,7 +121,7 @@ private fun WayCard(
                 tag,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = t.onAccent,
+                color = t.inkOn(Status.posted),
                 modifier =
                     Modifier
                         .align(Alignment.TopEnd)

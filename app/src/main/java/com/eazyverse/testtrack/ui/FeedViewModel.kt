@@ -2,6 +2,7 @@ package com.eazyverse.testtrack.ui
 
 import android.content.Context
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -19,8 +20,8 @@ import com.eazyverse.testtrack.net.ApiMyPost
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.ApiReview
 import com.eazyverse.testtrack.net.ApiSession
-import com.eazyverse.testtrack.viewmodel.KeptCheck
 import com.eazyverse.testtrack.viewmodel.LiveReload
+import com.eazyverse.testtrack.viewmodel.PhoneChecks
 import kotlinx.coroutines.launch
 import java.time.Instant
 
@@ -76,6 +77,12 @@ class FeedViewModel : ViewModel() {
         private set
 
     var loading by mutableStateOf(true)
+        private set
+
+    /** Loads started, and the newest of them that has finished, answered or failed. */
+    var loadsStarted = 0
+        private set
+    var loadsFinished by mutableIntStateOf(0)
         private set
 
     /**
@@ -176,6 +183,7 @@ class FeedViewModel : ViewModel() {
 
     /** Everything the tab shows, fetched together. Safe to call on every resume. */
     fun load(context: Context) {
+        val load = ++loadsStarted
         viewModelScope.launch {
             try {
                 // The posts come either way. Everything after them is about one account, so a
@@ -211,7 +219,7 @@ class FeedViewModel : ViewModel() {
                 part {
                     val reviews = Api.myReviews()
                     mine = reviews.map(::myReview)
-                    KeptCheck.report(context.applicationContext, reviews)
+                    PhoneChecks.report(context.applicationContext, reviews)
                 }
                 // Both duties, fetched with the feed rather than when the tab is opened: the
                 // badge has to be right before anybody looks at it.
@@ -227,6 +235,7 @@ class FeedViewModel : ViewModel() {
             } finally {
                 loading = false
                 answered = true
+                if (load > loadsFinished) loadsFinished = load
             }
         }
     }
@@ -296,6 +305,7 @@ class FeedViewModel : ViewModel() {
                         "Closed. Reviews already under way can still finish."
                     }
                 load(context)
+                MyAppsChanged.tell()
             } catch (e: ApiError) {
                 message = e.message
             } catch (_: Exception) {
@@ -456,6 +466,7 @@ class FeedViewModel : ViewModel() {
                 // Decided, so its page has nothing left to ask; it closes on this.
                 decided = id
                 load(context)
+                MyAppsChanged.tell()
             } catch (e: ApiError) {
                 message = e.message
             } catch (_: Exception) {

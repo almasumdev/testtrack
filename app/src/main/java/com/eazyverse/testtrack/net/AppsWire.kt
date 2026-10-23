@@ -56,8 +56,6 @@ data class ApiApp(
     val developer: String = "",
     /** closed or live. */
     val source: String = "closed",
-    /** play or hand. */
-    @SerialName("added_by") val addedBy: String = "play",
     /** play, crew or review; null while unverified. */
     @SerialName("verified_by") val verifiedBy: String? = null,
     val crew: AppCrew? = null,

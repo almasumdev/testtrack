@@ -115,15 +115,8 @@ fun AppPage(
                 .padding(horizontal = Gutter),
         ) {
             when {
-                app == null && vm.loading -> CrewLobbyLoading()
-                app == null ->
-                    RobotState(
-                        Prop.Notes,
-                        "This app isn't on My apps",
-                        "It may have been deleted on another phone.",
-                        action = "Back",
-                        onAction = onBack,
-                    )
+                app == null && (vm.loading || vm.reading) -> AppHeroLoading()
+                app == null -> AppNotThere(vm.offline, onRetry = { vm.load(context) }, onBack = onBack)
                 else -> {
                     val busy = vm.acting == app.id
                     val running = if (busy) vm.actingOn else null
@@ -140,7 +133,7 @@ fun AppPage(
                         Spacer(Modifier.height(14.dp))
                     }
                     if (!app.verified) {
-                        VerifyCallout(running == AppAction.VERIFY) { if (!busy) vm.verify(context, app.id) }
+                        VerifyCallout(app.live, running == AppAction.VERIFY) { if (!busy) vm.verify(context, app.id) }
                         Spacer(Modifier.height(4.dp))
                     }
                     vm.actionError?.let {
@@ -272,6 +265,7 @@ internal fun AppChip(
 /** An app nothing has verified: why, the way to ask Play again now, and the other ways it gets verified. */
 @Composable
 private fun VerifyCallout(
+    live: Boolean,
     busy: Boolean,
     onVerify: () -> Unit,
 ) {
@@ -291,8 +285,12 @@ private fun VerifyCallout(
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            "Play couldn't show it to us when you added it. Add the testers group to your closed " +
-                "track, then check again.",
+            if (live) {
+                "Google Play didn't answer when you added it. We keep asking, or you can check now."
+            } else {
+                "We check it on Play once the testers group can see it. Add the group to your closed " +
+                    "track, then check again."
+            },
             style = MaterialTheme.typography.bodySmall,
             color = Tt.colors.text2,
         )
@@ -362,10 +360,10 @@ private fun Cta(text: String) {
             text,
             style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
             fontWeight = FontWeight.Bold,
-            color = Tt.colors.accent,
+            color = Tt.colors.accentInk,
         )
         Spacer(Modifier.width(2.dp))
-        Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = Tt.colors.accent)
+        Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = Tt.colors.accentInk)
     }
 }
 

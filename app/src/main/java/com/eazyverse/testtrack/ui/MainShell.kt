@@ -270,6 +270,15 @@ fun MainShell(
                                                     )
                                             }
                                         },
+                                        onSignInToReview = {
+                                            asking =
+                                                SignInReason(
+                                                    title = "Sign in to review apps",
+                                                    why =
+                                                        "A review pays you tix, and tix belong to an account. " +
+                                                            "You can read Circle without one.",
+                                                )
+                                        },
                                         onSignIn = {
                                             asking =
                                                 SignInReason(
@@ -363,6 +372,7 @@ fun MainShell(
         AppPickerSheet(
             purpose = purpose,
             apps = apps.apps,
+            loading = apps.loading || apps.reading,
             onPick = { app ->
                 if (purpose == PickFor.CREW) membership.require { onCrewForApp(app.id) } else onAskForApp(app.id)
             },

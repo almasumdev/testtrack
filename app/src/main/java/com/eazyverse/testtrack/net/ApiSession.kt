@@ -103,6 +103,23 @@ object ApiSession {
         ready.value = false
     }
 
+    /**
+     * The server refused the refresh token: the pair is dead, though the account is not. Only the
+     * pair goes, so the next [ApiAuth.ensure] trades the Google sign-in for a new one; the
+     * account's cache and header stay, being the same person's.
+     */
+    @Synchronized
+    fun dropTokens(expectedGeneration: Long) {
+        if (expectedGeneration != generation) return
+        cachedAccess = null
+        cachedRefresh = null
+        prefs?.edit {
+            remove(ACCESS)
+            remove(REFRESH)
+        }
+        ready.value = false
+    }
+
     val access: String? get() = cachedAccess
     val refresh: String? get() = cachedRefresh
     val signedIn: Boolean get() = cachedAccess != null

@@ -278,13 +278,21 @@ private fun RenameApp(
  * from them; a test build gets the red callout instead, since it would add the wrong app.
  */
 @Composable
-internal fun PickedNotice(testBuild: Boolean) {
+internal fun PickedNotice(
+    testBuild: Boolean,
+    /** Live on Play: looked up on its public page as it is added, and never for a crew. */
+    live: Boolean,
+) {
     if (!testBuild) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.Top) {
             Icon(Lucide.Info, null, Modifier.padding(top = 2.dp).size(15.dp), tint = Status.short)
             Spacer(Modifier.width(8.dp))
             Text(
-                "We check it on Play by ourselves once the testers group can see it. You can put it in a crew before then.",
+                if (live) {
+                    "We look it up on Google Play's public page as you add it."
+                } else {
+                    "We check it on Play by ourselves once the testers group can see it. You can put it in a crew before then."
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = Tt.colors.text3,
             )

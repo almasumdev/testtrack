@@ -48,14 +48,9 @@ data class AppEntry(
 ) {
     val verified: Boolean get() = verifiedBy != null
 
-    /** In a crew right now, filling or running. */
-    val inCrew: Boolean get() = crew?.state in CREW_ACTIVE
-
     /** A feedback request still collecting. */
     val collecting: Boolean get() = feedback?.state == "collecting"
 }
-
-private val CREW_ACTIVE = setOf("waiting", "checking", "starting", "testing")
 
 /** How a badge is coloured: the word decides what it says, the tone how loudly. */
 enum class BadgeTone { RUNNING, DONE, ATTENTION, PROBLEM, QUIET }

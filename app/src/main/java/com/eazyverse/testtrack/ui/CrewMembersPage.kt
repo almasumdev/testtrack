@@ -83,7 +83,8 @@ fun CrewMembersPage(
                         icon = if (finished) Lucide.CircleCheck else Lucide.Users,
                         headline = "$opened of ${testers.size} " + if (finished) "tested it every day" else "opened your app tonight",
                         line =
-                            "${testers.size} testers are still in. ${CrewRules.FLOOR} need to keep opening it every day " +
+                            "${testers.size} ${if (testers.size == 1) "tester is" else "testers are"} still in. " +
+                                "${CrewRules.FLOOR} need to keep opening it every day " +
                                 "for Google to count the run.",
                         meter = {
                             val lit = Status.posted
@@ -120,7 +121,7 @@ private fun MemberRow(
         when {
             member.out -> Triple("Left the run · opened yours on $days ${plural(days, "day")}", "Out", Tone.QUIET)
             finished && days >= crew.finishedDays -> Triple("Opened yours on all ${crew.finishedDays} days", "Stayed", Tone.OK)
-            finished -> Triple("Opened yours on $days of ${crew.finishedDays} days", "Stayed", Tone.OK)
+            finished -> Triple("Opened yours on $days of ${crew.finishedDays} days", "Some days", Tone.QUIET)
             member.missedYesterday ->
                 Triple(
                     "Missed yesterday · yours on $days ${plural(days, "day")}",

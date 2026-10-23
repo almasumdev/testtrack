@@ -256,7 +256,7 @@ private fun Tix(review: MyReview) {
                 .tabular(),
         fontWeight = FontWeight.SemiBold,
         color = tone,
-        textDecoration = if (review.state != "approved") TextDecoration.LineThrough else null,
+        textDecoration = if (review.state in setOf("rejected", "abandoned", "expired")) TextDecoration.LineThrough else null,
     )
 }
 

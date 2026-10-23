@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -61,6 +62,8 @@ enum class PillKind { SOLID, SOFT, GHOST, OK }
 internal fun RowPill(
     label: String,
     kind: PillKind,
+    /** Sent and not answered yet: a spinner in place of the word, and nothing to tap. */
+    busy: Boolean = false,
     onClick: () -> Unit,
 ) {
     val shape = RoundedCornerShape(percent = 50)
@@ -69,7 +72,7 @@ internal fun RowPill(
             PillKind.SOLID -> Tt.colors.accent to Tt.colors.onAccent
             PillKind.SOFT -> Tt.colors.tile to Tt.colors.accentInk
             PillKind.GHOST -> Tt.colors.glass to Tt.colors.accentInk
-            PillKind.OK -> Status.posted to Tt.colors.onAccent
+            PillKind.OK -> Status.posted to Tt.colors.inkOn(Status.posted)
         }
     Box(
         Modifier
@@ -77,17 +80,19 @@ internal fun RowPill(
             .clip(shape)
             .background(bg)
             .then(if (kind == PillKind.GHOST) Modifier.border(1.5.dp, Tt.colors.glassBorderStrong, shape) else Modifier)
-            .clickable(onClick = onClick)
+            .clickable(enabled = !busy, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 7.dp),
         contentAlignment = Alignment.Center,
     ) {
+        // The word stays, unseen, so the pill keeps its width while the spinner is in it.
         Text(
             label,
             style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
             fontWeight = FontWeight.Bold,
-            color = fg,
+            color = if (busy) fg.copy(alpha = 0f) else fg,
             maxLines = 1,
         )
+        if (busy) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = fg)
     }
 }
 
@@ -354,7 +359,7 @@ internal fun AskedRow(
         when {
             seat.myVote == true -> StatusChip("You said Yes", Tone.OK)
             seat.myVote == false -> StatusChip("You said No", Tone.WARN)
-            installed -> RowPill("It installed", PillKind.OK) { actions.onVote(seat, true) }
+            installed -> RowPill("It installed", PillKind.OK, busy = actions.busySeat == seat.id) { actions.onVote(seat, true) }
             else -> RowPill("Install", PillKind.SOFT) { actions.onInstall(seat) }
         }
     }

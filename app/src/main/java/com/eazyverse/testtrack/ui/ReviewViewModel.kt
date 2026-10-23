@@ -5,31 +5,35 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.Device
 import com.eazyverse.testtrack.data.DriveFile
-import com.eazyverse.testtrack.data.DriveRepo
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.ProofStore
+import com.eazyverse.testtrack.data.ProofUpload
 import com.eazyverse.testtrack.data.ReviewCaptureService
+import com.eazyverse.testtrack.data.ReviewClock
 import com.eazyverse.testtrack.data.ReviewKeep
 import com.eazyverse.testtrack.data.Session
-import com.eazyverse.testtrack.data.UploadResult
 import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiPost
-import com.eazyverse.testtrack.net.ApiReview
 import com.eazyverse.testtrack.viewmodel.LiveReload
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 import java.time.Instant
 
 /**
@@ -201,14 +205,17 @@ class ReviewViewModel : ViewModel() {
         app = context.applicationContext
         failure = null
         // The last saved answer, drawn at once. The fetch below then brings it up to date, or
-        // leaves it standing, marked offline, when there is no connection.
-        val saved = if (job == null) ReviewKeep.get(context, post.id) else null
+        // leaves it standing, marked offline, when there is no connection. One that was given up or
+        // ran out, which the feed no longer counts as this account's, is not: only opened, it is
+        // taken again from the start.
+        val left = post.myReviewId == null
+        val saved = if (job == null) ReviewKeep.get(context, post.id)?.takeUnless { left && it.state in ENDED } else null
         if (saved != null) {
             job = ReviewJob(post, saved, leftReview = leftFor(context, saved.id))
             restore(context, saved.id)
         }
         run(onOffline = { if (job == null) failure = "TestTrack could not be reached. Check your connection." }) {
-            val existing = post.myReviewId ?: saved?.id
+            val existing = post.myReviewId ?: job?.review?.takeUnless { left && it.state in ENDED }?.id ?: saved?.id
             val mine = if (existing == null) null else Api.myReviews().firstOrNull { it.id == existing }
             offline = false
             val fingerprint = if (mine == null) Device.fingerprint(context) else null
@@ -216,11 +223,24 @@ class ReviewViewModel : ViewModel() {
                 failure = "This phone will not identify itself, so a review from it cannot count."
                 return@run
             }
-            val review = mine ?: Api.claim(post.id, fingerprint!!)
+            val review =
+                mine ?: Api.claim(post.id, fingerprint!!).also {
+                    // Taken again after it was only opened: same id, so its clock starts again.
+                    ReviewClock.restart(context, it.id)
+                }
             // Looked at before it is drawn, so the page opens on the step the phone is really at.
             // Drawing the server's last word first and then the phone's moved the page under the
-            // reviewer a moment after it appeared.
-            keep(look(context, ReviewJob(post, review, leftReview = leftFor(context, review.id)), settle = false))
+            // reviewer a moment after it appeared. A refusal while looking (every slot taken while
+            // they were installing) still opens the page, said, so it can be given up.
+            val first = ReviewJob(post, review, leftReview = leftFor(context, review.id))
+            val looked =
+                try {
+                    look(context, first, settle = false)
+                } catch (e: ApiError) {
+                    message = e.message
+                    first
+                }
+            keep(looked)
             restore(context, review.id)
             adoptPending()
         }
@@ -258,8 +278,13 @@ class ReviewViewModel : ViewModel() {
 
     fun stopLive() = live.stop()
 
+    /** How many times [keep] has run, so a reload can tell it was overtaken. */
+    internal var keeps = 0
+        private set
+
     /** Show a job the server has just confirmed, and save it as the last word. */
     internal fun keep(next: ReviewJob) {
+        keeps++
         job = next
         app?.let { ReviewKeep.put(it, next.post.id, next.review) }
     }
@@ -309,14 +334,16 @@ class ReviewViewModel : ViewModel() {
                 UsageRepo.measureUse(
                     context,
                     current.post.packageName,
-                    windowStart(context, review),
+                    ReviewClock.windowStart(context, review.id, review.createdAt),
                     needMs = review.neededMs,
                     source = "review",
                     settle = settle,
                 )
-            // A new day of use is news even when the total has not moved since the last report.
-            if (use.ms > review.usedMs || use.days > review.daysUsed) {
-                review = Api.used(review.id, maxOf(use.ms, review.usedMs), use.days)
+            // A new day of use is news even when the total has not moved since the last report, and
+            // so is a live review's hours passing: the server opens its last step on being asked.
+            val due = review.state == INSTALLED && review.returnsAt?.let(::passed) == true
+            if (use.ms > review.usedMs || use.days > review.daysUsed || due) {
+                review = Api.used(review.id, maxOf(use.ms, review.usedMs).coerceAtMost(MAX_USED_MS), use.days)
                 offline = false
             }
         }
@@ -355,13 +382,15 @@ class ReviewViewModel : ViewModel() {
         val current = job ?: return
         val context = activity.applicationContext
         // No message on success: the page itself turns into the sent screen.
-        run(onOffline = { message = "You're offline. Your screenshot and note are saved; send them once you're back." }) {
+        run(waits = true, onOffline = { message = "You're offline. Your screenshot and note are saved; send them once you're back." }) {
             val token =
                 AuthRepo.driveTokenOrNull(activity)
                     ?: throw ApiError(400, "drive", "Connect Google Drive to send your saved feedback.")
             val id = current.review.id
             val ref =
-                ProofStore.uploaded(context, id) ?: toDrive(activity, current, proof).also { ProofStore.markUploaded(context, id, it) }
+                ProofStore.uploaded(context, id)
+                    ?: (DRIVE_PREFIX + ProofUpload.send(activity, id, current.post.packageName, proof))
+                        .also { ProofStore.markUploaded(context, id, it) }
             keep(current.copy(review = Api.submit(id, ref, note, driveToken = token)))
             offline = false
             ProofStore.forget(context, current.review.id)
@@ -370,44 +399,10 @@ class ReviewViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Put the screenshot in the reviewer's own Drive, shared by link, and return the reference
-     * the review is sent with. The picture belongs to its uploader; only its reference and a
-     * transient metadata-verification grant reach our server. Crew visits send usage records.
-     *
-     * Without a Drive grant nothing is sent. The page shows how to connect, and the screenshot
-     * and note stay kept.
-     */
-    private suspend fun toDrive(
-        activity: Activity,
-        current: ReviewJob,
-        uri: Uri,
-    ): String {
-        val context = activity.applicationContext
-        val token = AuthRepo.driveTokenOrNull(activity)
-        if (token == null) {
-            Session.updateDriveConnected(false)
-            throw ApiError(0, "drive", "Connect Google Drive to send. Your screenshot is saved there and shared with the owner by link.")
-        }
-        val mime = context.contentResolver.getType(uri) ?: ProofStore.mime(context, current.review.id)
-        val name = "review_${current.post.packageName}_${current.review.id.take(8)}.${if (mime == "image/png") "png" else "jpg"}"
-        val read = {
-            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                ?: throw ApiError(400, "unreadable", "That image could not be read.")
-        }
-        val fileId =
-            ProofStore.reserved(context, current.review.id)
-                ?: DriveRepo.reserveId(token).also { ProofStore.reserve(context, current.review.id, it) }
-        return when (val result = DriveRepo.upload(token, name, mime, fileId = fileId, bytes = read)) {
-            is UploadResult.Ok -> DRIVE_PREFIX + result.file.id
-            is UploadResult.Failed -> throw ApiError(0, "drive", result.reason)
-        }
-    }
-
     /** Give the slot back so somebody else can take it. Whatever was kept for it goes too. */
     fun abandon(onDone: () -> Unit) {
         val current = job ?: return
-        run {
+        run(waits = true) {
             keep(current.copy(review = Api.abandon(current.review.id)))
             app?.let { ProofStore.forget(it, current.review.id) }
             proof = null
@@ -417,65 +412,45 @@ class ReviewViewModel : ViewModel() {
     }
 
     /**
-     * When the clock started, according to the server.
-     *
-     * Measured from the moment the job was taken on rather than from whenever this screen
-     * happened to open, so closing the app and coming back tomorrow does not reset the count.
-     * Falls back to an hour ago if the timestamp cannot be read, which under-reports rather than
-     * over-reports: the server only ever takes the larger figure, so a short answer costs nothing
-     * but a long one would be a free pass.
-     */
-    private fun claimedAt(review: ApiReview): Long =
-        runCatching { Instant.parse(review.createdAt).toEpochMilli() }
-            .getOrDefault(System.currentTimeMillis() - 3_600_000L)
-
-    /**
-     * Where the usage window opens: the server's claim time or the moment this phone first saw the
-     * review, whichever is earlier on this phone's clock.
-     *
-     * The claim time alone is the server's clock. On a phone running a few minutes behind it, the
-     * window opened in the phone's future and every reading came back zero until the clocks
-     * caught up, which on some phones they never did. The first sighting is the phone's own clock,
-     * remembered across restarts, so the window can never open later than the reviewer started.
-     */
-    private fun windowStart(
-        context: Context,
-        review: ApiReview,
-    ): Long {
-        val prefs = context.getSharedPreferences("review_clock", Context.MODE_PRIVATE)
-        val key = "first_seen_${review.id}"
-        val seen =
-            prefs.getLong(key, 0L).takeIf { it > 0L }
-                ?: System.currentTimeMillis().also { prefs.edit().putLong(key, it).apply() }
-        return minOf(claimedAt(review), seen)
-    }
-
-    /**
      * One place every call goes through, so no screen has to think about failure.
      *
      * The API's message is written for a person and is shown as it arrives. Nothing here reads it;
      * where a particular refusal needs particular handling, it matches on the code instead.
      */
     private fun run(
+        /** Something the reviewer asked for, which waits for a refresh under way rather than being dropped. */
+        waits: Boolean = false,
         onOffline: () -> Unit = {},
         block: suspend () -> Unit,
     ) {
-        if (busy) return
-        busy = true
+        if (busy && !waits) return
         viewModelScope.launch {
+            while (busy) snapshotFlow { busy }.first { !it }
+            busy = true
             try {
                 block()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: ApiError) {
                 if (job == null) failure = e.message else message = e.message
-            } catch (_: Exception) {
+            } catch (_: IOException) {
                 // Not an error to show: the page carries on from what it saved, marked offline.
                 offline = true
                 onOffline()
+            } catch (e: Exception) {
+                // Reached us, but something on this side could not be read: not a lost connection.
+                Log.w("Review", "step failed", e)
+                val said = "Something went wrong. Try again in a moment."
+                if (job == null) failure = said else message = said
             } finally {
                 busy = false
             }
         }
     }
+
+    /** Whether a time the server sent has come. */
+    private fun passed(iso: String): Boolean =
+        runCatching { Instant.parse(iso).toEpochMilli() <= System.currentTimeMillis() }.getOrDefault(false)
 
     private companion object {
         const val PLAY = "com.android.vending"
@@ -483,6 +458,12 @@ class ReviewViewModel : ViewModel() {
         const val CLAIMED = "claimed"
         const val INSTALLED = "installed"
         const val USED = "used"
+
+        /** Given up or run out: over, whatever the phone kept of it. */
+        val ENDED = setOf("abandoned", "expired")
+
+        /** The most the server takes in one report: a day. A lost pause event can read more. */
+        const val MAX_USED_MS = 86_400_000L
     }
 }
 

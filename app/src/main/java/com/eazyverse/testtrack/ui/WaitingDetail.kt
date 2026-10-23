@@ -71,13 +71,17 @@ fun CheckScreen(
     val case = feed.disputes.firstOrNull { it.id == id }
     val request = feed.requests.firstOrNull { it.id == id }
     var refusing by remember { mutableStateOf(false) }
+    val missing = review == null && case == null && request == null
+    // Only a load started from here on can say it is gone: one that finished before the page
+    // opened knew nothing of a request just posted or a review just sent.
+    val opened = remember { feed.loadsStarted }
     // Arrived from My apps, perhaps before Circle has ever loaded: fetch, rather than find nothing.
-    LaunchedEffect(Unit) { if (review == null && case == null && request == null) feed.load(context) }
+    LaunchedEffect(Unit) { if (missing) feed.load(context) }
     LaunchedEffect(feed.decided) { if (feed.decided == id) onClose() }
     // A review arriving, a vote landing or the case being decided shows on this page as it happens.
     WhileShown(onShow = { feed.startPageLive(context) }, onHide = feed::stopPageLive)
-    LaunchedEffect(review == null && case == null && request == null, feed.loading) {
-        if (review == null && case == null && request == null && !feed.loading) onClose()
+    LaunchedEffect(missing, feed.loadsFinished) {
+        if (missing && feed.loadsFinished > opened && !feed.offline) onClose()
     }
     Column(Modifier.fillMaxSize()) {
         PageMessage(feed.message, feed::clearMessage)
@@ -108,6 +112,20 @@ fun CheckScreen(
                     onBack = onClose,
                     onVote = { forReviewer -> feed.vote(context, case, forReviewer) },
                 )
+            else -> {
+                PageBar("", onClose)
+                if (feed.offline) {
+                    RobotState(
+                        Prop.Notes,
+                        "Couldn't load this",
+                        "Check your connection, then try again.",
+                        action = "Try again",
+                        onAction = { feed.load(context) },
+                    )
+                } else {
+                    FeedLoadingList()
+                }
+            }
         }
     }
     if (refusing && review != null) {
@@ -304,9 +322,10 @@ fun CaseCheck(
         title = "Case",
         onBack = onBack,
         actions = {
-            Secondary("The developer is right", Modifier.weight(1f).height(48.dp), enabled = !busy) { onVote(false) }
-            Spacer(Modifier.width(10.dp))
-            Secondary("The review stands", Modifier.weight(1f).height(48.dp), enabled = !busy) { onVote(true) }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Secondary("The review stands", Modifier.fillMaxWidth().height(48.dp), enabled = !busy) { onVote(true) }
+                Secondary("The developer is right", Modifier.fillMaxWidth().height(48.dp), enabled = !busy) { onVote(false) }
+            }
         },
     ) {
         AppHeader(case.appName, case.packageName, CheckKind.DISPUTED, icon = case.icon)

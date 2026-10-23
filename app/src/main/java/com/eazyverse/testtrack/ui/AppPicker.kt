@@ -25,16 +25,21 @@ enum class PickFor { CREW, FEEDBACK }
 internal fun AppPickerSheet(
     purpose: PickFor,
     apps: List<AppEntry>,
+    /** My apps has not answered yet, so an empty list says nothing about what there is. */
+    loading: Boolean,
     onPick: (AppEntry) -> Unit,
     onAdd: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val fits = apps.filter { if (purpose == PickFor.CREW) it.canCrew else it.canFeedback }
+    val waiting = loading && fits.isEmpty()
     PickerSheet(
         title = if (purpose == PickFor.CREW) "Which app goes in?" else "Feedback on which app?",
         subtitle =
             when {
+                waiting -> "Getting your apps."
                 fits.isNotEmpty() -> "Your apps that can go now."
+                apps.isEmpty() -> "You haven't added an app yet."
                 purpose == PickFor.CREW ->
                     "None of your apps can go into a crew now: live apps can't, and one already in a crew waits."
                 else -> "Each of your apps already has a request open."
@@ -42,6 +47,14 @@ internal fun AppPickerSheet(
         onDismiss = onDismiss,
     ) { close ->
         Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState())) {
+            if (waiting) {
+                repeat(2) {
+                    Skeleton(height = 60.dp, corner = 16.dp)
+                    Spacer(Modifier.height(3.dp))
+                }
+                Spacer(Modifier.height(20.dp))
+                return@Column
+            }
             TileGroup(count = fits.size + 1) { index, place ->
                 if (index < fits.size) {
                     val app = fits[index]

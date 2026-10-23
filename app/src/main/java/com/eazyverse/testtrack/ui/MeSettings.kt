@@ -58,7 +58,6 @@ internal fun MeSettings(
     val context = LocalContext.current
     val links = LocalUriHandler.current
     val out: @Composable () -> Unit = { Icon(Lucide.ExternalLink, null, Modifier.size(17.dp), tint = Tt.colors.text4) }
-    val gold = Tt.colors.gold
 
     Column {
         SectionTitle("Testing")

@@ -50,6 +50,8 @@ class FeedbackWatch(
     private suspend fun pass(context: Context) {
         val waiting = Api.waiting()
         val mine = Api.myReviews()
+        // Installed for or kept, as this phone sees it, said even while TestTrack stays closed.
+        ReviewChecks.report(context, mine)
         val cases = Api.disputes()
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val first = !prefs.getBoolean(KEY_STARTED, false)
@@ -72,7 +74,12 @@ class FeedbackWatch(
                 post(
                     context,
                     "New review of ${review.appName.ifBlank { "your app" }}",
-                    "${review.reviewerName.ifBlank { "A reviewer" }} sent theirs. It accepts itself in two days if you don't check it.",
+                    "${review.reviewerName.ifBlank { "A reviewer" }} sent theirs. " +
+                        if (review.isLive) {
+                            "Check it on Google Play. It accepts itself in a few days if you don't."
+                        } else {
+                            "It accepts itself in two days if you don't check it."
+                        },
                 )
             }
             waiting.forEach { review ->
@@ -105,7 +112,15 @@ class FeedbackWatch(
                             "The members sided with the developer",
                             "Your review of $app wasn't paid, and the members' fee came from your tix.",
                         )
-                    "expired" -> post(context, "Your review of $app ran out", "It sat unfinished for a day, so the slot went back.")
+                    // Only opened, never installed: nothing was started, so nothing to tell.
+                    "expired" ->
+                        if (before != "claimed") {
+                            post(
+                                context,
+                                "Your review of $app ran out",
+                                "It sat unfinished for ${if (review.isLive) "three days" else "a day"}, so the slot went back.",
+                            )
+                        }
                 }
             }
             val newCases = cases.count { it.id !in seenCases }

@@ -13,6 +13,14 @@
 > live in the backend's `app/core/rules.py`. Anybody may take a review while it has a slot, and a
 > slot is held only once the app is installed for it, so the first to install gets it.
 >
+> **Since 24 October 2026:** an install is reported from anywhere in TestTrack, not only the
+> review's own page, so somebody who installs and goes straight into the app still holds the
+> slot. A review runs out a day (closed) or three days (live) after its install, not after it was
+> opened. One only opened and then given up or run out held nothing, so the feed offers it again
+> and taking it starts it over. A live review used on two days opens its last step on the
+> server's sweep once its hours have passed, and the reviewer is told, rather than waiting for the
+> phone to report more use. The owner is told when a review accepts itself.
+>
 > From 10 to 23 October paid work was private written feedback in TestTrack with a screenshot of
 > the tested app; that is no longer the flow.
 

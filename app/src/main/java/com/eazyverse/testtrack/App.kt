@@ -3,6 +3,7 @@ package com.eazyverse.testtrack
 import android.app.Application
 import com.eazyverse.testtrack.data.AppUpdateService
 import com.eazyverse.testtrack.data.Telemetry
+import com.eazyverse.testtrack.net.ApiSession
 import com.eazyverse.testtrack.viewmodel.ReviewMoment
 import com.eazyverse.testtrack.viewmodel.ThemeChoice
 
@@ -25,5 +26,8 @@ class App : Application() {
         Telemetry.init(this)
         ReviewMoment.onSessionStart(this)
         ThemeChoice.init(this)
+        // Our own session, before any screen asks. Android brings a killed app back on the page it
+        // was on, and a page reached that way (Ask for feedback, say) found nobody signed in.
+        ApiSession.load(this)
     }
 }

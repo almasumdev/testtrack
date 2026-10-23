@@ -44,7 +44,7 @@ import com.eazyverse.testtrack.viewmodel.AskFailure
 @Composable
 fun AppAddScreen(
     /** Added: its id, and whether it was on My apps already. */
-    onAdded: (String) -> Unit,
+    onAdded: (AppEntry) -> Unit,
     onBack: () -> Unit,
     vm: AppAddViewModel = viewModel(),
 ) {
@@ -105,7 +105,7 @@ fun AppAddScreen(
                         Spacer(Modifier.height(22.dp))
                         AskAvailability(vm.isLive, vm::choose)
                         Spacer(Modifier.height(12.dp))
-                        PickedNotice(testBuild = app.testBuild)
+                        PickedNotice(testBuild = app.testBuild, live = vm.isLive)
                         AddButton(vm, enabled = vm.canAddPicked, onAdded)
                     }
                 }
@@ -141,7 +141,7 @@ fun AppAddScreen(
 private fun AddButton(
     vm: AppAddViewModel,
     enabled: Boolean,
-    onAdded: (String) -> Unit,
+    onAdded: (AppEntry) -> Unit,
 ) {
     vm.addError?.let {
         Spacer(Modifier.height(14.dp))
@@ -149,7 +149,7 @@ private fun AddButton(
     }
     Spacer(Modifier.height(20.dp))
     Primary("Add to My apps", busy = vm.adding, enabled = enabled, tall = true) {
-        vm.add { id, _ -> onAdded(id) }
+        vm.add { app, _ -> onAdded(app) }
     }
 }
 

@@ -333,6 +333,10 @@ class CrewViewModel : ViewModel() {
             .filter { isInstalled(context, it.packageName) },
     )
 
+    /** The seat a call is running for, so its row shows it busy and a second tap sends nothing. */
+    var acting by mutableStateOf<String?>(null)
+        private set
+
     /** A round asked for while the control may not float yet: started once the ask is answered. */
     var needsOverlayFor by mutableStateOf<List<RoundStore.Stop>?>(null)
         private set
@@ -420,6 +424,7 @@ class CrewViewModel : ViewModel() {
         seat: CrewSeat,
     ) = call(
         context = context,
+        seat = seat.id,
         onDone = {
             message = "Taken back out, and its ${CrewRules.SEAT_COST} tix are back. You can put an app in again."
             MyAppsChanged.tell()
@@ -434,9 +439,13 @@ class CrewViewModel : ViewModel() {
      */
     internal fun <T> call(
         context: Context? = null,
+        /** The seat this is for. One call at a time: another tap while it runs is dropped. */
+        seat: String? = null,
         onDone: (T) -> Unit = {},
         block: suspend () -> T,
     ) {
+        if (acting != null) return
+        acting = seat
         viewModelScope.launch {
             try {
                 onDone(block())
@@ -445,6 +454,8 @@ class CrewViewModel : ViewModel() {
                 message = e.message
             } catch (_: Exception) {
                 message = "We could not reach TestTrack. Check your connection."
+            } finally {
+                acting = null
             }
         }
     }

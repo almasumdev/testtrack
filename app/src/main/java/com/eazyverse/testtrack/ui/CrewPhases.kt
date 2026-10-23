@@ -181,7 +181,13 @@ private fun LobbyYourApp(
             if (crew.filling) {
                 {
                     Spacer(Modifier.height(12.dp))
-                    Secondary("Take it back out", Modifier.fillMaxWidth(), destructive = true) { actions.onLeave(mine) }
+                    val leaving = actions.busySeat == mine.id
+                    Secondary(
+                        if (leaving) "Taking it out..." else "Take it back out",
+                        Modifier.fillMaxWidth(),
+                        destructive = true,
+                        enabled = !leaving,
+                    ) { actions.onLeave(mine) }
                     CardNote("Your ${CrewRules.SEAT_COST} tix come back in full.")
                 }
             } else {
@@ -274,12 +280,15 @@ private fun RunHero(
     actions: CrewActions,
 ) {
     val done = owed.isEmpty()
+    val last = crew.day >= CrewRules.RUN_DAYS
+    val next = if (last) "That was the last night." else "Day ${crew.day + 1} begins at midnight, your time."
     val line =
         when {
-            done -> "All ${crew.apps.size} opened. Day ${crew.day + 1} begins at midnight, your time."
+            done -> "All ${crew.apps.size} opened. $next"
             crew.atRisk -> "Miss tonight too and your app leaves this crew."
             missing.size == 1 -> "${missing.first().label} isn't on your phone yet, so install it first."
             missing.isNotEmpty() -> "${missing.size} apps aren't on your phone yet, so install them first."
+            last -> "No missed days. Tonight is the last night."
             else -> "No missed days. Day ${crew.day + 1} begins at midnight, your time."
         }
     CrewHero(
@@ -305,7 +314,9 @@ private fun RunHero(
         lineTone = if (crew.atRisk && !done) Tone.WARN else null,
         meter = {
             DayMeter(crew.day, done)
-            MeterLabels("${(crew.day - 1).coerceAtLeast(0)} days done", "${(CrewRules.RUN_DAYS - crew.day).coerceAtLeast(0)} to go")
+            // Tonight counts as done once it is, so the two sides always add up to the run.
+            val daysDone = (crew.day - if (done) 0 else 1).coerceIn(0, CrewRules.RUN_DAYS)
+            MeterLabels("$daysDone ${if (daysDone == 1) "day" else "days"} done", "${CrewRules.RUN_DAYS - daysDone} to go")
         },
         action =
             when {

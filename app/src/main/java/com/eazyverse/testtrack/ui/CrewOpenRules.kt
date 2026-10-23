@@ -190,7 +190,7 @@ private fun DayStrip() {
                             "$day",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (fill != null) Tt.colors.onAccent else Tt.colors.text4,
+                            color = if (fill != null) Tt.colors.inkOn(fill) else Tt.colors.text4,
                         )
                     }
                 }

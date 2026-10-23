@@ -297,16 +297,17 @@ fun FeedRequestCard(
         Spacer(Modifier.height(13.dp))
         CardRule()
         Spacer(Modifier.height(12.dp))
+        // In progress and waiting count as taken: the server says what is left.
+        val open = post.slotsOpen ?: (post.reviewsBought - post.reviewsDone)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 when {
                     post.mine -> "${post.reviewsDone} of ${post.reviewsBought} done"
-                    post.myState != null -> "You are part way through this one"
-                    else -> {
-                        // In progress and waiting count as taken: the server says what is left.
-                        val open = post.slotsOpen ?: (post.reviewsBought - post.reviewsDone)
-                        if (open == 1) "1 slot open" else "$open slots open"
-                    }
+                    post.myState in Underway -> "You are part way through this one"
+                    post.myState in Sent -> "You sent your review"
+                    post.myState != null -> "You took this one"
+                    open == 1 -> "1 slot open"
+                    else -> "$open slots open"
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -316,9 +317,15 @@ fun FeedRequestCard(
             when {
                 post.mine -> Unit
                 post.myState == "approved" -> Pill("Done", Status.posted, Status.postedSoft)
+                // Every slot is installed for: taking it would only be refused.
+                post.myState == null && open <= 0 -> Pill("Full", Tt.colors.text3, Status.neutralSoft)
                 else ->
                     ActionChip(
-                        if (post.myState == null) "Review · +${post.reward}" else "Carry on",
+                        when (post.myState) {
+                            null -> "Review · +${post.reward}"
+                            in Underway -> "Carry on"
+                            else -> "See it"
+                        },
                         MaterialTheme.colorScheme.onPrimaryContainer,
                         MaterialTheme.colorScheme.primaryContainer,
                         onReview,
@@ -327,6 +334,10 @@ fun FeedRequestCard(
         }
     }
 }
+
+/** A review of the reader's own still being worked on, and one sent and not yet settled. */
+private val Underway = setOf("claimed", "installed", "used")
+private val Sent = setOf("submitted", "disputed")
 
 /** The uppercase word at the top of a card saying which kind of post this is. */
 @Composable

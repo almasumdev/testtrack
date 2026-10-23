@@ -13,6 +13,7 @@ import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.AppIn
 import com.eazyverse.testtrack.net.Listing
+import com.eazyverse.testtrack.ui.AppEntry
 import com.eazyverse.testtrack.ui.FeedRules
 import com.eazyverse.testtrack.ui.MyAppsChanged
 import kotlinx.coroutines.CancellationException
@@ -273,24 +274,29 @@ class AppAddViewModel : ViewModel() {
         readIcon { AppIconData.ofPicture(context.applicationContext, uri) }
     }
 
+    /** The read under way. A newer one replaces it, so a slow first read never lands over the last. */
+    private var iconJob: Job? = null
+
     private fun readIcon(read: () -> AppIconData.Encoded?) {
         reading = true
         iconError = null
-        viewModelScope.launch {
-            val icon = withContext(Dispatchers.Default) { runCatching(read).getOrNull() }
-            if (icon == null) {
-                iconError = "That picture could not be used. Try another one."
-            } else {
-                pickedIcon = icon
+        iconJob?.cancel()
+        iconJob =
+            viewModelScope.launch {
+                val icon = withContext(Dispatchers.Default) { runCatching(read).getOrNull() }
+                if (icon == null) {
+                    iconError = "That picture could not be used. Try another one."
+                } else {
+                    pickedIcon = icon
+                }
+                reading = false
             }
-            reading = false
-        }
     }
 
     // ------------------------------------------------------------------ adding
 
-    /** Add what was found or picked. `onAdded` gets the app's id, and whether it was on My apps already. */
-    fun add(onAdded: (id: String, existing: Boolean) -> Unit) {
+    /** Add what was found or picked. `onAdded` gets the app, and whether it was on My apps already. */
+    fun add(onAdded: (app: AppEntry, existing: Boolean) -> Unit) {
         val body =
             when (way) {
                 AddWay.PHONE -> {
@@ -309,7 +315,7 @@ class AppAddViewModel : ViewModel() {
             try {
                 val added = Api.addApp(body)
                 MyAppsChanged.tell()
-                onAdded(added.app.id, added.existing)
+                onAdded(added.app.toEntry(), added.existing)
             } catch (e: ApiError) {
                 addError = e.message
             } catch (_: Exception) {

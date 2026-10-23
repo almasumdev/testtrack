@@ -12,7 +12,9 @@ import android.os.Build
 import android.os.Process
 import android.provider.Settings
 import com.eazyverse.testtrack.domain.UsageSessions
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 /**
  * How long an app was actually on screen.
@@ -111,17 +113,30 @@ object UsageRepo {
         needMs: Long,
         source: String,
         settle: Boolean = true,
-    ): Long {
-        var reading = read(context, pkg, since)
+    ): Long = measured(context, pkg, since, needMs, source, settle).ms
+
+    /**
+     * The reading behind [measure] and [measureUse]. Off the main thread: days of usage events for
+     * every app is a lot to walk on a busy phone, and this runs on every return to the review.
+     */
+    private suspend fun measured(
+        context: Context,
+        pkg: String,
+        since: Long,
+        needMs: Long,
+        source: String,
+        settle: Boolean,
+    ): Reading {
+        var reading = withContext(Dispatchers.Default) { read(context, pkg, since) }
         var retried = false
         if (settle && reading.ms < needMs && reading.access) {
             delay(SETTLE_MS)
-            val again = read(context, pkg, since)
+            val again = withContext(Dispatchers.Default) { read(context, pkg, since) }
             if (again.ms > reading.ms) reading = again
             retried = true
         }
         Telemetry.usageRead(source, reading.ms, reading.events, reading.access, retried)
-        return reading.ms
+        return reading
     }
 
     /** Time in an app since a moment, and the calendar days of it. */
@@ -142,8 +157,8 @@ object UsageRepo {
         source: String,
         settle: Boolean = true,
     ): Use {
-        val ms = measure(context, pkg, since, needMs, source, settle)
-        return Use(ms, read(context, pkg, since).days)
+        val reading = measured(context, pkg, since, needMs, source, settle)
+        return Use(reading.ms, reading.days)
     }
 
     private class Reading(

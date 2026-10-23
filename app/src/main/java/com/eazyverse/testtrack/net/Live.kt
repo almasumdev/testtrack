@@ -150,6 +150,18 @@ object Live {
                         flow.tryEmit(Event(channel, type, ref, seq, reconcile = gap))
                     }
 
+                    // The server closes when the token it was opened with runs out. Answering at
+                    // once ends it now, so the next socket opens with a fresh token, rather than
+                    // after the server gives up waiting and events in between are missed.
+                    override fun onClosing(
+                        webSocket: WebSocket,
+                        code: Int,
+                        reason: String,
+                    ) {
+                        webSocket.close(1000, null)
+                        closed.complete()
+                    }
+
                     override fun onClosed(
                         webSocket: WebSocket,
                         code: Int,

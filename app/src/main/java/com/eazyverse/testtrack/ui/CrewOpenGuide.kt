@@ -190,7 +190,7 @@ private fun ReadyRow(
         // Unknown yet: neither a tick nor a button, rather than asking for something already done.
         if (done == false) {
             Spacer(Modifier.width(8.dp))
-            RowPill(action, PillKind.SOLID, onClick)
+            RowPill(action, PillKind.SOLID, onClick = onClick)
         }
     }
 }
@@ -209,7 +209,7 @@ internal fun IconSquare(
             .background(if (filled) tone.ink() else tone.soft()),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, null, Modifier.size((size / 2).dp), tint = if (filled) Tt.colors.onAccent else tone.ink())
+        Icon(icon, null, Modifier.size((size / 2).dp), tint = if (filled) Tt.colors.inkOn(tone.ink()) else tone.ink())
     }
 }
 

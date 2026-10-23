@@ -136,6 +136,7 @@ internal fun crewActions(
         onTakeSeat = { if (vm.signedOut) onSignIn() else membership.require { onAddToCrew() } },
         isInstalled = { pkg -> vm.isInstalled(context, pkg) },
         onMembers = onMembers,
+        busySeat = vm.acting,
     )
 }
 

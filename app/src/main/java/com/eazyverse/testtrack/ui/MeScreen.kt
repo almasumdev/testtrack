@@ -421,7 +421,7 @@ fun MeEditDialog(
                 Modifier.clip(RoundedCornerShape(6.dp)).clickable(enabled = !busy, onClick = choose).padding(4.dp),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = t.accent,
+                color = t.accentInk,
             )
         }
         Spacer(Modifier.height(10.dp))

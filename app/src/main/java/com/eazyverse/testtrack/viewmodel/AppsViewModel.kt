@@ -38,6 +38,13 @@ class AppsViewModel : ViewModel() {
     var offline by mutableStateOf(false)
         private set
 
+    /**
+     * A read of the list is under way, first or not. A page waiting on an app it does not have
+     * shows it loading while this is set, rather than saying the app is gone.
+     */
+    var reading by mutableStateOf(false)
+        private set
+
     /** Nobody is signed in. Not a fault, and not the same thing as being unable to reach us. */
     var signedOut by mutableStateOf(false)
         private set
@@ -60,6 +67,14 @@ class AppsViewModel : ViewModel() {
 
     fun byId(id: String): AppEntry? = apps.firstOrNull { it.id == id }
 
+    /**
+     * An app the server has just answered with, shown before the list is read again: the page
+     * opened for a newly added app otherwise found nothing and said it had been deleted.
+     */
+    fun put(app: AppEntry) {
+        apps = listOf(app) + apps.filterNot { it.id == app.id }
+    }
+
     // The crews your apps are in and your own channel: seats, reviews, tix and apps all say so there.
     private val live =
         LiveReload("apps", viewModelScope) { event ->
@@ -78,6 +93,9 @@ class AppsViewModel : ViewModel() {
     /** The application context from the first load, for reading again on news from elsewhere. */
     private var context: Context? = null
 
+    /** Loads overlap (news, a return to the tab, an action); only the latest started may land. */
+    private var loads = 0
+
     // Your kept apps, before the first frame; none kept waits for the server rather than say so.
     init {
         Api.lastApps()?.takeIf { it.apps.isNotEmpty() }?.let {
@@ -93,6 +111,8 @@ class AppsViewModel : ViewModel() {
         // Only before the first answer. An empty list is an answer too: shimmering again on every
         // live update or return to the tab made "Nothing added yet" flicker in and out.
         if (!answered) loading = true
+        val load = ++loads
+        reading = true
         viewModelScope.launch {
             try {
                 if (!ApiAuth.ensure(context)) {
@@ -100,7 +120,10 @@ class AppsViewModel : ViewModel() {
                     return@launch
                 }
                 signedOut = false
-                apps = Api.apps().apps.map(ApiApp::toEntry)
+                val read = Api.apps().apps.map(ApiApp::toEntry)
+                // An older answer landing after a newer one would bring back an app just deleted.
+                if (load != loads) return@launch
+                apps = read
                 answered = true
                 live.channels(apps.mapNotNull { it.crew?.crewId }.map { "crew:$it" }.toSet())
                 offline = false
@@ -110,6 +133,7 @@ class AppsViewModel : ViewModel() {
                 offline = true
             } finally {
                 loading = false
+                if (load == loads) reading = false
             }
         }
     }
@@ -169,6 +193,8 @@ class AppsViewModel : ViewModel() {
         actionError = null
         viewModelScope.launch {
             try {
+                // A pair the server stopped taking is traded for a new one here, not refused.
+                ApiAuth.ensure(context)
                 call()
                 onDone()
                 load(context)

@@ -53,8 +53,6 @@ object ApiAuth {
             exchangeOrThrow(context)
         }
 
-    suspend fun refresh(context: Context): Boolean = exchange.withLock { exchangeQuietly(context) }
-
     private suspend fun exchangeOrThrow(context: Context) {
         val generation = ApiSession.generation
         val user =
@@ -67,18 +65,6 @@ object ApiAuth {
             throw CancellationException("Account changed during sign-in")
         }
         Api.signIn(idToken, Device.fingerprint(context).orEmpty(), generation)
-    }
-
-    private suspend fun exchangeQuietly(context: Context): Boolean {
-        if (FirebaseAuth.getInstance().currentUser == null) return false
-        return try {
-            exchangeOrThrow(context)
-            true
-        } catch (error: CancellationException) {
-            throw error
-        } catch (_: Exception) {
-            false
-        }
     }
 
     fun signOut() = Api.signOut()

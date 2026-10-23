@@ -5,6 +5,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 
 /**
  * Every colour this app draws, in one place.
@@ -107,6 +108,12 @@ data class TtTokens(
     val onPrimary: Color get() = if (isDark) bg else onAccent
     val selectedFill: Color get() = if (isDark) leafAccentSoft else leafAccent
     val onSecondary: Color get() = if (isDark) bg else onSelected
+
+    /**
+     * Words and icons on a solid [fill]. White reads on the deep fills; on a pale one, the mint
+     * `ok` at night above all, white was about 1.6:1, so a pale fill gets the theme's dark ink.
+     */
+    fun inkOn(fill: Color): Color = if (fill.luminance() > 0.4f) (if (isDark) bg else text) else onAccent
 
     /**
      * An app's letter tile, tinted from its name.

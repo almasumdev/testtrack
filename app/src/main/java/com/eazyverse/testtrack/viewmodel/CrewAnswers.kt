@@ -18,6 +18,7 @@ fun CrewViewModel.vote(
     reason: String = "",
 ) = call(
     context = context,
+    seat = seat.id,
     onDone = { answer ->
         say(
             when (answer.state) {
@@ -42,6 +43,7 @@ fun CrewViewModel.report(
     reason: String,
 ) = call(
     context = context,
+    seat = seatId,
     onDone = { seat ->
         say(
             if (seat.state == "rejected") {

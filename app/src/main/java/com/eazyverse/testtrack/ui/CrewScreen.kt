@@ -152,6 +152,8 @@ class CrewActions(
     val isInstalled: (String) -> Boolean = { true },
     /** A crew's members page, from the button in its bar or its Your app card. */
     val onMembers: () -> Unit = {},
+    /** The seat an answer, report or withdrawal is being sent for. */
+    val busySeat: String? = null,
 )
 
 /**

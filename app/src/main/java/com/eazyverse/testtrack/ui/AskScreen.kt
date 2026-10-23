@@ -44,6 +44,9 @@ fun AskScreen(
     app: AppEntry?,
     /** My apps is still arriving, so a missing app is not gone yet. */
     loading: Boolean = false,
+    /** My apps could not be read, so a missing app may not be gone at all. */
+    offline: Boolean = false,
+    onRetry: () -> Unit = {},
     vm: AskViewModel = viewModel(),
 ) {
     LaunchedEffect(app?.id) { app?.let(vm::useApp) }
@@ -57,28 +60,21 @@ fun AskScreen(
             PageBar("Ask for feedback", onBack)
         },
     ) { padding ->
+        val scroll = rememberScrollState()
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .dismissKeyboardOnTap(dismissKeyboard)
                 .imePadding()
-                .verticalScroll(rememberScrollState())
+                // Only the app scrolls: the loading and not-found states fill the page themselves,
+                // and a filling state inside a scroll has no height to fill and crashes.
+                .then(if (app != null) Modifier.verticalScroll(scroll) else Modifier)
                 .padding(horizontal = Gutter),
         ) {
             Spacer(Modifier.height(8.dp))
             if (app == null) {
-                if (loading) {
-                    CrewLobbyLoading()
-                } else {
-                    RobotState(
-                        Prop.Notes,
-                        "This app isn't on My apps",
-                        "It may have been deleted on another phone.",
-                        action = "Back",
-                        onAction = onBack,
-                    )
-                }
+                if (loading) FoundAppLoading() else AppNotThere(offline, onRetry, onBack)
                 return@Column
             }
             AskIntro()
