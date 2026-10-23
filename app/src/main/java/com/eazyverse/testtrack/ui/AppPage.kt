@@ -223,23 +223,24 @@ private fun Hero(
         )
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Chip(
+            AppChip(
                 if (app.live) Lucide.Globe else Lucide.FlaskConical,
                 if (app.live) "Live" else "Closed test",
                 MaterialTheme.colorScheme.onSurfaceVariant,
                 Status.neutralSoft,
             )
             if (app.verified) {
-                Chip(Lucide.BadgeCheck, verifiedChip(app), Status.posted, Status.postedSoft)
+                AppChip(Lucide.BadgeCheck, verifiedChip(app), Status.posted, Status.postedSoft)
             } else {
-                Chip(Lucide.CircleAlert, verifiedChip(app), Status.short, Status.shortSoft)
+                AppChip(Lucide.CircleAlert, verifiedChip(app), Status.short, Status.shortSoft)
             }
         }
     }
 }
 
+/** A small fact about an app, as its page shows them: where it is found, whether it is real. */
 @Composable
-private fun Chip(
+internal fun AppChip(
     icon: ImageVector,
     text: String,
     tone: Color,

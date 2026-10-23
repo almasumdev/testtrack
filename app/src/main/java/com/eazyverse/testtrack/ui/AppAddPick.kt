@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,14 +30,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.FlaskConical
+import com.composables.icons.lucide.Globe
 import com.composables.icons.lucide.Image
+import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.TriangleAlert
@@ -160,68 +168,90 @@ private val NAMES = listOf(96, 128, 84, 112, 140, 90, 118)
 private val PACKAGES = listOf(170, 150, 186, 140, 160, 176, 132)
 
 /**
- * The app picked from this phone, as settings rows: the app itself (tap to pick another), its icon
- * and its name, each changeable. The icon shown is the one it will go in with.
+ * The app picked from this phone, drawn the way its own page will draw it once added: the icon large
+ * in the middle, its name and package under it, and chips for where it is and whether it is checked.
+ * Tap the icon to change it and the name to rename it; nothing else needs saying.
  */
 @Composable
 internal fun PickedApp(
     pkg: String,
     name: String,
     preview: ImageBitmap?,
-    fromPicture: Boolean,
+    live: Boolean,
+    testBuild: Boolean,
     onPickAnother: () -> Unit,
     onChangeIcon: () -> Unit,
     onRename: (String) -> Unit,
 ) {
+    val t = Tt.colors
     var renaming by remember { mutableStateOf(false) }
-    TileGroup(count = 3) { index, place ->
-        when (index) {
-            0 ->
-                TileRow(
-                    icon = Lucide.Image,
-                    title = name,
-                    place = place,
-                    subtitle = pkg,
-                    leading = { PreviewIcon(preview) },
-                    trailing = {
-                        Text(
-                            "Change",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Tt.colors.accentInk,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    },
-                    onClick = onPickAnother,
-                )
-            1 ->
-                TileRow(
-                    icon = Lucide.Image,
-                    title = "App icon",
-                    place = place,
-                    subtitle = if (fromPicture) "Your picture" else "The icon on this phone",
-                    onClick = onChangeIcon,
-                )
-            else ->
-                TileRow(
-                    icon = Lucide.Pencil,
-                    title = "Name",
-                    place = place,
-                    subtitle = "As Play shows it",
-                    onClick = { renaming = true },
-                )
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.size(96.dp).clickable(role = Role.Button, onClickLabel = "Change icon", onClick = onChangeIcon)) {
+            val icon = Modifier.size(88.dp).clip(RoundedCornerShape(26.dp))
+            if (preview != null) Image(preview, "App icon", icon) else Skeleton(width = 88.dp, height = 88.dp, corner = 26.dp)
+            Box(
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, t.glassBorder, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) { Icon(Lucide.Pencil, null, Modifier.size(15.dp), tint = t.accentInk) }
         }
+        Spacer(Modifier.height(12.dp))
+        Row(
+            Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .clickable(role = Role.Button, onClickLabel = "Rename") { renaming = true }
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                name,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp, lineHeight = 26.sp),
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            Spacer(Modifier.width(8.dp))
+            Icon(Lucide.Pencil, null, Modifier.size(16.dp), tint = t.accentInk)
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            pkg,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            AppChip(
+                if (live) Lucide.Globe else Lucide.FlaskConical,
+                if (live) "Live" else "Closed test",
+                MaterialTheme.colorScheme.onSurfaceVariant,
+                Status.neutralSoft,
+            )
+            if (testBuild) {
+                AppChip(Lucide.TriangleAlert, "Test build", Status.missed, Status.missedSoft)
+            } else {
+                AppChip(Lucide.Clock, "Not checked yet", Status.short, Status.shortSoft)
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "Pick a different app",
+            style = MaterialTheme.typography.bodyMedium,
+            color = t.accentInk,
+            fontWeight = FontWeight.Medium,
+            modifier =
+                Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .clickable(role = Role.Button, onClick = onPickAnother)
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+        )
     }
     if (renaming) RenameApp(name, onDone = { renaming = false }, onRename = onRename)
-}
-
-/** The icon it will go in with, or its shape while that is being read. */
-@Composable
-private fun PreviewIcon(preview: ImageBitmap?) {
-    if (preview != null) {
-        Image(preview, null, Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)))
-    } else {
-        Skeleton(width = 36.dp, height = 36.dp, corner = 11.dp)
-    }
 }
 
 @Composable
@@ -252,39 +282,40 @@ private fun RenameApp(
 }
 
 /**
- * What happens to an app picked from the phone, in the same callout the app's page uses for an
- * app not verified yet. A test build says so first, in its stead: its package is not Play's.
+ * What happens next to an app picked from the phone. One quiet line, as the check needs nothing
+ * from them; a test build gets the red callout instead, since it would add the wrong app.
  */
 @Composable
 internal fun PickedNotice(testBuild: Boolean) {
+    if (!testBuild) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.Top) {
+            Icon(Lucide.Info, null, Modifier.padding(top = 2.dp).size(15.dp), tint = Status.short)
+            Spacer(Modifier.width(8.dp))
+            Text(
+                "We check it on Play by ourselves once the testers group can see it. You can put it in a crew before then.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Tt.colors.text3,
+            )
+        }
+        return
+    }
     val shape = RoundedCornerShape(18.dp)
-    val tone = if (testBuild) Status.missed else Status.short
-    val wash = if (testBuild) Status.missedSoft else Status.shortSoft
     Column(
         Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(wash)
-            .border(1.dp, tone.copy(alpha = 0.28f), shape)
+            .background(Status.missedSoft)
+            .border(1.dp, Status.missed.copy(alpha = 0.28f), shape)
             .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(if (testBuild) Lucide.TriangleAlert else Lucide.Clock, null, Modifier.size(18.dp), tint = tone)
+            Icon(Lucide.TriangleAlert, null, Modifier.size(18.dp), tint = Status.missed)
             Spacer(Modifier.width(8.dp))
-            Text(
-                if (testBuild) "This is a test build" else "Not checked on Play yet",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = tone,
-            )
+            Text("This is a test build", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Status.missed)
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            if (testBuild) {
-                "Its package is not the one on Play, so testers would not find it. Pick the copy installed from Play."
-            } else {
-                "We check it on Play by ourselves once the testers group can see it. You can put it in a crew before then."
-            },
+            "Its package is not the one on Play, so testers would not find it. Pick the copy installed from Play.",
             style = MaterialTheme.typography.bodySmall,
             color = Tt.colors.text2,
         )

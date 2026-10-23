@@ -93,10 +93,6 @@ class AppAddViewModel : ViewModel() {
     var picked by mutableStateOf<PhoneApp?>(null)
         private set
 
-    /** The icon it goes in with is a picture chosen for it, not the one on this phone. */
-    var fromPicture by mutableStateOf(false)
-        private set
-
     var pickedName by mutableStateOf("")
         private set
 
@@ -165,7 +161,6 @@ class AppAddViewModel : ViewModel() {
             picked != null -> {
                 picked = null
                 pickedIcon = null
-                fromPicture = false
                 iconError = null
                 addError = null
                 way = null
@@ -266,9 +261,8 @@ class AppAddViewModel : ViewModel() {
         picked = app
         pickedName = app.label.take(FeedRules.APP_NAME_MAX)
         pickedIcon = null
-        fromPicture = false
         addError = null
-        readIcon(picture = false) { AppIconData.ofInstalled(context.applicationContext, app.pkg) }
+        readIcon { AppIconData.ofInstalled(context.applicationContext, app.pkg) }
     }
 
     fun renamePicked(next: String) {
@@ -278,20 +272,17 @@ class AppAddViewModel : ViewModel() {
     /** Back to the icon the app has on this phone, after a picture was tried. */
     fun usePhoneIcon(context: Context) {
         val app = picked ?: return
-        readIcon(picture = false) { AppIconData.ofInstalled(context.applicationContext, app.pkg) }
+        readIcon { AppIconData.ofInstalled(context.applicationContext, app.pkg) }
     }
 
     fun usePicture(
         context: Context,
         uri: Uri,
     ) {
-        readIcon(picture = true) { AppIconData.ofPicture(context.applicationContext, uri) }
+        readIcon { AppIconData.ofPicture(context.applicationContext, uri) }
     }
 
-    private fun readIcon(
-        picture: Boolean,
-        read: () -> AppIconData.Encoded?,
-    ) {
+    private fun readIcon(read: () -> AppIconData.Encoded?) {
         reading = true
         iconError = null
         viewModelScope.launch {
@@ -300,7 +291,6 @@ class AppAddViewModel : ViewModel() {
                 iconError = "That picture could not be used. Try another one."
             } else {
                 pickedIcon = icon
-                fromPicture = picture
             }
             reading = false
         }

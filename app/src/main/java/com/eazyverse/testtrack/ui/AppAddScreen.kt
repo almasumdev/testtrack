@@ -87,13 +87,13 @@ fun AppAddScreen(
                     // Only reached once an app is picked: the list itself is the sheet below.
                     val app = vm.picked
                     if (app != null) {
-                        AskAvailability(vm.isLive, vm::choose)
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(8.dp))
                         PickedApp(
                             pkg = app.pkg,
                             name = vm.pickedName,
                             preview = vm.pickedPreview,
-                            fromPicture = vm.fromPicture,
+                            live = vm.isLive,
+                            testBuild = app.testBuild,
                             onPickAnother = { vm.openPicker(context) },
                             onChangeIcon = { changingIcon = true },
                             onRename = vm::renamePicked,
@@ -102,7 +102,9 @@ fun AppAddScreen(
                             Spacer(Modifier.height(12.dp))
                             AskMessage(AskFailure("Couldn't use that picture", it))
                         }
-                        Spacer(Modifier.height(14.dp))
+                        Spacer(Modifier.height(22.dp))
+                        AskAvailability(vm.isLive, vm::choose)
+                        Spacer(Modifier.height(12.dp))
                         PickedNotice(testBuild = app.testBuild)
                         AddButton(vm, enabled = vm.canAddPicked, onAdded)
                     }
