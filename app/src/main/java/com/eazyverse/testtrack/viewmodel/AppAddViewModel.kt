@@ -85,8 +85,16 @@ class AppAddViewModel : ViewModel() {
     var search by mutableStateOf("")
         private set
 
+    /** The sheet of this phone's apps is open. */
+    var picking by mutableStateOf(false)
+        private set
+
     /** The app picked from this phone. */
     var picked by mutableStateOf<PhoneApp?>(null)
+        private set
+
+    /** The icon it goes in with is a picture chosen for it, not the one on this phone. */
+    var fromPicture by mutableStateOf(false)
         private set
 
     var pickedName by mutableStateOf("")
@@ -131,9 +139,24 @@ class AppAddViewModel : ViewModel() {
         choice = next
     }
 
+    /** Continue from the first page: to the link, or the sheet of this phone's apps over it. */
     fun proceed(context: Context) {
-        way = choice
-        if (choice == AddWay.PHONE) loadPhoneApps(context)
+        if (choice == AddWay.PHONE) {
+            openPicker(context)
+        } else {
+            way = AddWay.PLAY
+        }
+    }
+
+    /** The sheet of this phone's apps, to pick one or another one. */
+    fun openPicker(context: Context) {
+        loadPhoneApps(context)
+        picking = true
+    }
+
+    /** The sheet closed. Picking something has already moved the page on. */
+    fun closePicker() {
+        picking = false
     }
 
     /** A step back inside the flow. False on the first page, where Back leaves the screen. */
@@ -142,8 +165,10 @@ class AppAddViewModel : ViewModel() {
             picked != null -> {
                 picked = null
                 pickedIcon = null
+                fromPicture = false
                 iconError = null
                 addError = null
+                way = null
             }
             found != null -> startOver()
             way != null -> {
@@ -201,9 +226,9 @@ class AppAddViewModel : ViewModel() {
         val typed = packageFrom(query)
         clearLookup()
         choice = AddWay.PHONE
-        way = AddWay.PHONE
         loadPhoneApps(context) { apps ->
-            apps.firstOrNull { it.pkg == typed }?.let { pick(context, it) }
+            val installed = apps.firstOrNull { it.pkg == typed }
+            if (installed != null) pick(context, installed) else picking = true
         }
     }
 
@@ -236,11 +261,14 @@ class AppAddViewModel : ViewModel() {
         context: Context,
         app: PhoneApp,
     ) {
+        way = AddWay.PHONE
+        picking = false
         picked = app
         pickedName = app.label.take(FeedRules.APP_NAME_MAX)
         pickedIcon = null
+        fromPicture = false
         addError = null
-        readIcon { AppIconData.ofInstalled(context.applicationContext, app.pkg) }
+        readIcon(picture = false) { AppIconData.ofInstalled(context.applicationContext, app.pkg) }
     }
 
     fun renamePicked(next: String) {
@@ -250,17 +278,20 @@ class AppAddViewModel : ViewModel() {
     /** Back to the icon the app has on this phone, after a picture was tried. */
     fun usePhoneIcon(context: Context) {
         val app = picked ?: return
-        readIcon { AppIconData.ofInstalled(context.applicationContext, app.pkg) }
+        readIcon(picture = false) { AppIconData.ofInstalled(context.applicationContext, app.pkg) }
     }
 
     fun usePicture(
         context: Context,
         uri: Uri,
     ) {
-        readIcon { AppIconData.ofPicture(context.applicationContext, uri) }
+        readIcon(picture = true) { AppIconData.ofPicture(context.applicationContext, uri) }
     }
 
-    private fun readIcon(read: () -> AppIconData.Encoded?) {
+    private fun readIcon(
+        picture: Boolean,
+        read: () -> AppIconData.Encoded?,
+    ) {
         reading = true
         iconError = null
         viewModelScope.launch {
@@ -269,6 +300,7 @@ class AppAddViewModel : ViewModel() {
                 iconError = "That picture could not be used. Try another one."
             } else {
                 pickedIcon = icon
+                fromPicture = picture
             }
             reading = false
         }

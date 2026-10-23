@@ -64,10 +64,7 @@ fun AppAddScreen(
         // The navigation route already applies safeDrawingPadding.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            PageBar(
-                if (vm.way == AddWay.PHONE && vm.picked == null) "Pick your app" else "Add an app",
-                onBack = { if (!vm.back()) onBack() },
-            )
+            PageBar("Add an app", onBack = { if (!vm.back()) onBack() })
         },
     ) { padding ->
         Column(
@@ -87,27 +84,26 @@ fun AppAddScreen(
                     Primary("Continue", tall = true) { vm.proceed(context) }
                 }
                 AddWay.PHONE -> {
+                    // Only reached once an app is picked: the list itself is the sheet below.
                     val app = vm.picked
-                    if (app == null) {
-                        PhoneAppList(vm.shownPhoneApps.takeIf { vm.phoneApps != null }, vm.search, vm::searchFor) {
-                            vm.pick(context, it)
-                        }
-                    } else {
+                    if (app != null) {
+                        AskAvailability(vm.isLive, vm::choose)
+                        Spacer(Modifier.height(16.dp))
                         PickedApp(
                             pkg = app.pkg,
                             name = vm.pickedName,
-                            onName = vm::renamePicked,
                             preview = vm.pickedPreview,
-                            reading = vm.reading,
-                            testBuild = app.testBuild,
+                            fromPicture = vm.fromPicture,
+                            onPickAnother = { vm.openPicker(context) },
                             onChangeIcon = { changingIcon = true },
+                            onRename = vm::renamePicked,
                         )
                         vm.iconError?.let {
                             Spacer(Modifier.height(12.dp))
                             AskMessage(AskFailure("Couldn't use that picture", it))
                         }
-                        Spacer(Modifier.height(18.dp))
-                        AskAvailability(vm.isLive, vm::choose)
+                        Spacer(Modifier.height(14.dp))
+                        PickedNotice(testBuild = app.testBuild)
                         AddButton(vm, enabled = vm.canAddPicked, onAdded)
                     }
                 }
@@ -127,6 +123,16 @@ fun AppAddScreen(
         }
     }
 
+    if (vm.picking) {
+        PhoneAppSheet(
+            apps = vm.shownPhoneApps.takeIf { vm.phoneApps != null },
+            search = vm.search,
+            onSearch = vm::searchFor,
+            picked = vm.picked?.pkg,
+            onPick = { vm.pick(context, it) },
+            onDismiss = vm::closePicker,
+        )
+    }
     val app = vm.picked
     if (changingIcon && app != null) {
         AppIconSheet(

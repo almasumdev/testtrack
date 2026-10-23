@@ -7,17 +7,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,7 +23,6 @@ import com.composables.icons.lucide.Image
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Smartphone
 import com.composables.icons.lucide.Store
-import kotlinx.coroutines.launch
 
 /**
  * Where an app's icon comes from: the one it has on this phone, a picture, or Play's.
@@ -36,7 +30,6 @@ import kotlinx.coroutines.launch
  * Offered while adding an app picked from the phone, and on the app's own page afterwards. The
  * phone's choice only where the app is installed here, Play's only where it is asked for.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AppIconSheet(
     name: String,
@@ -46,50 +39,24 @@ internal fun AppIconSheet(
     onPlay: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
-    val state = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
-
-    // Hidden first, then left: a sheet removed while open vanishes on one frame.
-    fun go(next: () -> Unit) {
-        scope.launch {
-            state.hide()
-            onDismiss()
-            next()
-        }
-    }
     val rows =
         buildList {
             if (installedHere) add(Source(Lucide.Smartphone, "Use the icon on this phone", "$name is installed here", onPhone))
             add(Source(Lucide.Image, "Choose a picture", "A square picture works best", onPicture))
             onPlay?.let { add(Source(Lucide.Store, "Use the icon from Play", "Once Play shows your app", it)) }
         }
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = state, containerColor = MaterialTheme.colorScheme.surface) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Gutter)
-                .navigationBarsPadding(),
-        ) {
-            Text("App icon", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "Shown to everyone who sees this app.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+    PickerSheet(title = "App icon", subtitle = "Shown to everyone who sees this app.", onDismiss = onDismiss) { close ->
+        TileGroup(count = rows.size) { index, place ->
+            val row = rows[index]
+            TileRow(
+                icon = row.icon,
+                title = row.title,
+                place = place,
+                subtitle = row.subtitle,
+                onClick = { close(row.action) },
             )
-            Spacer(Modifier.height(14.dp))
-            TileGroup(count = rows.size) { index, place ->
-                val row = rows[index]
-                TileRow(
-                    icon = row.icon,
-                    title = row.title,
-                    place = place,
-                    subtitle = row.subtitle,
-                    onClick = { go(row.action) },
-                )
-            }
-            Spacer(Modifier.height(20.dp))
         }
+        Spacer(Modifier.height(20.dp))
     }
 }
 
