@@ -4,13 +4,14 @@
 
 > **Current since 23 October 2026:** feedback is left on Google Play again. A closed test's
 > tester sends the developer private feedback on Play after two minutes in the app. A live app's
-> tester rates and reviews it publicly, paced like a real user: only accounts with two closed
-> tests reviewed, three a day per app, five minutes over two days, and the app kept installed for
+> tester rates and reviews it publicly, paced like a real user: five minutes over two calendar
+> days of use (at least 20 hours after taking it), and the app kept installed for
 > three days after (checked by the phone) before an unanswered review approves itself; otherwise
 > it approves itself after seven days. The proof is a screenshot of what was left on Play, taken
 > with the floating camera over Play or chosen from the gallery; a note for the developer is
 > optional. Owners are told plainly that Google does not allow rewarding reviews. The numbers
-> live in the backend's `app/core/rules.py`.
+> live in the backend's `app/core/rules.py`. Anybody may take a review while it has a slot, and a
+> slot is held only once the app is installed for it, so the first to install gets it.
 >
 > From 10 to 23 October paid work was private written feedback in TestTrack with a screenshot of
 > the tested app; that is no longer the flow.

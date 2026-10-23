@@ -216,9 +216,9 @@ private fun TrackNote(live: Boolean) {
     Notice(if (live) Status.short else Tt.colors.accentInk, if (live) Lucide.TriangleAlert else Lucide.Info) {
         Text(
             if (live) {
-                "Testers rate and review your app on Google Play in their own words, after using it on two days, " +
-                    "a few a day. Google does not allow rewarding reviews and can remove ones it doubts, so " +
-                    "the reviews are paced like real users'. Posting this is your decision to make."
+                "Testers rate and review your app on Google Play in their own words, after using it on two days. " +
+                    "Google does not allow rewarding reviews and can remove ones it doubts, so the reviews are " +
+                    "paced like real users'. Posting this is your decision to make."
             } else {
                 "Testers send you private feedback on Google Play after trying your app for two minutes. It reaches " +
                     "you in Play Console, and a screenshot of it comes here."
