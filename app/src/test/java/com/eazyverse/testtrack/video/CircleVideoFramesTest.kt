@@ -16,8 +16,10 @@ import com.eazyverse.testtrack.ui.AskScreen
 import com.eazyverse.testtrack.ui.AskViewModel
 import com.eazyverse.testtrack.ui.CaseCheck
 import com.eazyverse.testtrack.ui.FeedRefuseDialog
+import com.eazyverse.testtrack.ui.FeedTab
 import com.eazyverse.testtrack.ui.Gutter
 import com.eazyverse.testtrack.ui.JoinGroupAsk
+import com.eazyverse.testtrack.ui.OverlayPermissionDialog
 import com.eazyverse.testtrack.ui.PickFor
 import com.eazyverse.testtrack.ui.RequestCheck
 import com.eazyverse.testtrack.ui.ReviewBody
@@ -73,6 +75,7 @@ class CircleVideoFramesTest {
         frame.target("cardHabit", compose.onNode(hasText(s.habit.appName) and hasClickAction()))
         frame.target("chipHabit", text("Review for ${s.habit.reward} tix", clickable = true))
         frame.target("pillClosed", compose.onNodeWithText("Closed test", useUnmergedTree = true))
+        frame.target("toCheckTab", compose.onNode(hasText("To check", substring = true) and hasClickAction()))
         frame.write("feed")
     }
 
@@ -109,6 +112,7 @@ class CircleVideoFramesTest {
         proof: Uri? = null,
         note: String = "",
         guide: Boolean = false,
+        overlay: Boolean = false,
         targets: () -> Unit = {},
     ) {
         val job = ReviewJob(s.habit, s.habitReview(state, used), leftReview)
@@ -127,6 +131,7 @@ class CircleVideoFramesTest {
                     onGiveUp = {},
                 )
                 if (guide) ReviewGuideDialog(live = false, onOk = {}, onDismiss = {})
+                if (overlay) OverlayPermissionDialog(onOpen = {}, onDismiss = {})
             }
         }
         targets()
@@ -189,6 +194,14 @@ class CircleVideoFramesTest {
             frame.target("sendProof", text("Send the proof", clickable = true))
             frame.target("note", compose.onNode(hasSetTextAction()))
             frame.target("gallery", text("Gallery", clickable = true))
+            frame.target("hideDetails", text("Inspect and hide personal details", clickable = true))
+        }
+
+    /** The first time the camera is wanted and "Display over other apps" is off. */
+    @Test
+    fun f07b_overlayAsk() =
+        review("used", "overlayAsk", overlay = true) {
+            frame.target("openSettings", text("Open settings", clickable = true))
         }
 
     @Test
@@ -206,6 +219,7 @@ class CircleVideoFramesTest {
             }
         }
         frame.target("pickFocus", text(s.focus.name, clickable = true))
+        frame.target("addNew", text("Add a new app", clickable = true))
         frame.write("askPicker")
     }
 
@@ -278,6 +292,25 @@ class CircleVideoFramesTest {
         frame.target("stands", text("The review stands", clickable = true))
         frame.target("devRight", text("The developer is right", clickable = true))
         frame.write("case")
+    }
+
+    /** To check: a review of one of yours, a case to help decide, and your own open request. */
+    @Test
+    fun f17_toCheck() {
+        val now = System.currentTimeMillis()
+        // Offered once, on the first request; somebody checking reviews has long answered it.
+        compose.activity.getSharedPreferences("feedback_notify", android.content.Context.MODE_PRIVATE).edit().putBoolean("asked", true).commit()
+        val feed = feedWith(compose.activity, s.feed)
+        feed.setState("waiting", listOf(s.weatherCheck(now)))
+        feed.setState("disputes", listOf(s.case))
+        feed.setState("requests", listOf(s.focusRequest(now)))
+        feed.setState("answered", true)
+        feed.show(FeedTab.WAITING)
+        frame.show { Ground { CircleShell(feed) } }
+        frame.target("rowWeather", compose.onNode(hasText(s.weather.appName, substring = true) and hasClickAction()))
+        frame.target("rowCase", compose.onNode(hasText(s.lift.appName, substring = true) and hasClickAction()))
+        frame.target("rowRequest", compose.onNode(hasText(s.focus.name, substring = true) and hasClickAction()))
+        frame.write("toCheck")
     }
 
     @Test
