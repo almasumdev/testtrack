@@ -21,7 +21,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -89,11 +88,11 @@ fun MeEditDialog(
                 Modifier
                     .size(72.dp)
                     .semantics { contentDescription = "Choose a picture" }
-                    // A round press the size of the photo, drawn without clipping the box, which
-                    // would cut off the camera badge that sits on its edge.
+                    // No press highlight: the photo and its camera badge already say what a tap
+                    // does, and a ripple over a face read as a glitch.
                     .clickable(
                         interactionSource = null,
-                        indication = ripple(bounded = false, radius = 36.dp),
+                        indication = null,
                         enabled = !busy,
                         onClick = choose,
                     ),
