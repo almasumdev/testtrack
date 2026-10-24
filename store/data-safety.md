@@ -6,7 +6,7 @@ release builds. `datasafety.csv` is generated from the declaration in `../mkit.t
 | Declared type | Evidence and purpose |
 | --- | --- |
 | Name, email and user IDs | Google/Firebase sign-in, API accounts, public names and legacy cohort identity/member rows. Account management and functionality; account/device comparisons prevent duplicate testing. |
-| Photos | Optional profile/feedback images upload directly to the user's Drive. The backend verifies transient-grant metadata and stores references only. Legacy Drive and historical backend images remain readable. Owners and eligible jurors can read feedback evidence; new Drive images are explicitly shared with anyone who has the link. |
+| Photos | Optional. Feedback screenshots upload directly to the user's Drive; the backend verifies transient-grant metadata and stores references only, and new Drive images are explicitly shared with anyone who has the link. A chosen profile photo is cropped on the phone and sent to the backend (`PUT /me/photo`), which redraws it as a 400 px JPEG and serves it publicly by its hash. Legacy Drive and historical backend images remain readable. Owners and eligible jurors can read feedback evidence. |
 | Other user-generated content | Written feedback, rejection reasons, crew entry notes and disputes, displayed to the people handling that work. |
 | Installed apps | Named package install/source/version checks through `InstalledApps`, review milestones and legacy version/proof records. The whole installed-package inventory is not uploaded. |
 | In-app search history | `AskViewModel` sends lookup queries to `/apps/lookup`; the lookup service does not persist them. Optional, ephemeral collection. |
