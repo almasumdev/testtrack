@@ -176,6 +176,28 @@ android {
         compose = true
         buildConfig = true
     }
+
+    // Robolectric reads the merged resources (Barlow, the theme), for the video frames below.
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+}
+
+/*
+ * The tutorial video's frames: the real Circle screens drawn by Robolectric, on the JVM, with no
+ * device. Off unless asked for, so testDebugUnitTest stays fast; the class reports itself skipped.
+ *
+ *     ./gradlew :app:testDebugUnitTest -PvideoFrames --tests "*VideoFrames*"
+ */
+val videoFrames = providers.gradleProperty("videoFrames").isPresent
+tasks.withType<Test>().configureEach {
+    if (videoFrames) {
+        systemProperty("videoFrames", "true")
+        systemProperty("videoFrames.out", rootProject.file("media/public/frames/circle").absolutePath)
+        systemProperty("videoFrames.art", rootProject.file("store/art").absolutePath)
+        // The frames are the output, and they are wanted again on every run.
+        outputs.upToDateWhen { false }
+    }
 }
 
 dependencies {
@@ -247,6 +269,12 @@ dependencies {
     implementation(libs.androidx.work.runtime)
 
     testImplementation(libs.junit)
+    // Video frames only; see the videoFrames block above.
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.androidx.espresso.core)
 
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)

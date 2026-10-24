@@ -37,6 +37,10 @@ androidxTestJunit = "1.3.0"
 # in setup with NoSuchMethodException. Nothing here calls espresso directly.
 espresso = "3.7.0"
 androidxTestRunner = "1.7.0"
+# Video frames only (opt-in, -PvideoFrames): the real Compose screens drawn on the JVM, no device.
+# Robolectric 4.17 (2026-09-10) and Roborazzi 1.75.0 (2026-09-21).
+robolectric = "4.17"
+roborazzi = "1.75.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -89,6 +93,10 @@ androidx-test-runner = { group = "androidx.test", name = "runner", version.ref =
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
+
+# The same screens on the JVM, for the tutorial video's frames. See app/src/test/.../video.
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
 
 [plugins]
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
