@@ -149,7 +149,7 @@ internal fun SupportGroup(onAbout: () -> Unit) {
                         Lucide.CirclePlay,
                         "How-to videos",
                         place,
-                        subtitle = "Crew, Circle and My apps, in English and Bangla",
+                        subtitle = "Step by step, in English and Bangla",
                         onClick = { videos = true },
                     )
                 SupportRow.ABOUT ->
