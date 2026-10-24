@@ -262,6 +262,20 @@ class CrewVideoFramesTest {
         frame.write("seatLogin")
     }
 
+    /** The same page scrolled to its end, the price and Take a seat in view. */
+    @Test
+    fun c05c_seatSubmit() {
+        val vm = crews(list = emptyList())
+        frame.show { Pushed { CrewAddScreen(crews = vm, app = CircleSamples.focus, onDone = {}, onBack = {}) } }
+        compose.onNode(hasText("Needs a sign-in") and hasClickAction()).performClick()
+        frame.settle(400)
+        frame.scrollTo(compose.onNode(hasText("Take a seat", substring = true) and hasClickAction()))
+        frame.settle(800)
+        runCatching { frame.target("takeSeat", compose.onNode(hasText("Take a seat", substring = true) and hasClickAction())) }
+        runCatching { frame.target("price", compose.onNodeWithText("A seat costs")) }
+        frame.write("seatSubmit")
+    }
+
     @Test
     fun c06_lobby() {
         val vm = crews(list = listOf(lobby), installed = false)
@@ -328,6 +342,7 @@ class CrewVideoFramesTest {
         }
         frame.settle(800)
         runCatching { frame.target("next", compose.onNode(hasText("Next", substring = true) and hasClickAction())) }
+        runCatching { frame.target("pause", compose.onNode(hasText("Pause", substring = true) and hasClickAction())) }
         runCatching { frame.target("dockApp", compose.onNodeWithText("Habit Garden", useUnmergedTree = true)) }
         frame.write(id)
     }
