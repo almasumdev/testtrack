@@ -114,6 +114,14 @@ fun MeEditDialog(
                         letterStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 28.sp),
                     )
                 }
+                // Saving a new photo takes a moment on mobile data; the photo itself says so.
+                // Drawn before the camera badge, which sits half off the photo's edge, so the dim
+                // covers the photo only and the badge stays whole on top.
+                if (busy && picked != null) {
+                    Box(Modifier.matchParentSize().clip(CircleShape).background(t.scrim), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.5.dp, color = t.onAccent)
+                    }
+                }
                 Box(
                     Modifier
                         .align(Alignment.BottomEnd)
@@ -126,12 +134,6 @@ fun MeEditDialog(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(Lucide.Camera, null, Modifier.size(12.dp), tint = t.onAccent)
-                }
-                // Saving a new photo takes a moment on mobile data; the photo itself says so.
-                if (busy && picked != null) {
-                    Box(Modifier.matchParentSize().clip(CircleShape).background(t.scrim), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.5.dp, color = t.onAccent)
-                    }
                 }
             }
             Spacer(Modifier.height(6.dp))
