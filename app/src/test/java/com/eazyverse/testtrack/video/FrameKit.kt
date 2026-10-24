@@ -228,23 +228,30 @@ internal class Frame(
     private val out = File(requireNotNull(System.getProperty("videoFrames.out")) { "videoFrames.out is not set" }, video)
 
     /** Edge to edge, as MainActivity is, with the page set and given time to settle. */
-    fun show(content: @Composable () -> Unit) {
+    /** [idle] false for a screen that animates without end, which never goes still. */
+    fun show(
+        idle: Boolean = true,
+        content: @Composable () -> Unit,
+    ) {
         val activity = compose.activity
         FrameImages.install(activity)
         WindowCompat.setDecorFitsSystemWindows(activity.window, false)
         compose.mainClock.autoAdvance = false
         compose.setContent(content)
-        settle()
+        settle(idle = idle)
     }
 
     /** Time passes, insets land on every window, and the frame clock catches up. */
-    fun settle(millis: Long = 2_500) {
+    fun settle(
+        millis: Long = 2_500,
+        idle: Boolean = true,
+    ) {
         repeat(4) {
             applyInsets()
             compose.mainClock.advanceTimeBy(millis / 4)
             ShadowLooper.idleMainLooper()
         }
-        compose.waitForIdle()
+        if (idle) compose.waitForIdle()
     }
 
     /** Scrolls the page until [node] is in view, then lets it settle. */
@@ -268,8 +275,11 @@ internal class Frame(
     /** dp to PNG pixels. */
     fun px(dp: Float) = dp * Phone.DENSITY
 
-    fun write(id: String) {
-        settle(400)
+    fun write(
+        id: String,
+        idle: Boolean = true,
+    ) {
+        settle(400, idle)
         out.mkdirs()
         val raw = File(out, "$id.raw.png")
         captureScreenRoboImage(raw, RoborazziOptions(taskType = RoborazziTaskType.Record))

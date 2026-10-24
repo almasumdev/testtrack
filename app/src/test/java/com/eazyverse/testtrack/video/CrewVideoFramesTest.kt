@@ -5,17 +5,34 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.net.ApiSession
 import com.eazyverse.testtrack.ui.Crew
 import com.eazyverse.testtrack.ui.CrewApp
 import com.eazyverse.testtrack.ui.CrewMember
+import com.eazyverse.testtrack.ui.CrewAddScreen
 import com.eazyverse.testtrack.ui.CrewMembersPage
 import com.eazyverse.testtrack.ui.CrewPage
 import com.eazyverse.testtrack.ui.CrewPhase
+import com.eazyverse.testtrack.ui.CrewReady
+import com.eazyverse.testtrack.ui.crewGuide
+import com.eazyverse.testtrack.ui.CrewReportDialog
 import com.eazyverse.testtrack.ui.CrewScreen
 import com.eazyverse.testtrack.ui.CrewSeat
 import com.eazyverse.testtrack.ui.CrewViewModel
+import com.eazyverse.testtrack.ui.DockUi
+import com.eazyverse.testtrack.ui.VisitDockContent
 import com.eazyverse.testtrack.ui.MainTab
 import com.eazyverse.testtrack.ui.Scene
 import org.junit.Assume.assumeTrue
@@ -105,11 +122,60 @@ class CrewVideoFramesTest {
             icons = others.take(11).map { it.third }.filter { it.isNotEmpty() }.map(::icon),
         )
 
-    private fun crews(): CrewViewModel {
+    /** Filling, with the reader's app in: eleven of fifteen, nothing opened yet. */
+    private val lobby =
+        Crew(
+            id = "crew-07",
+            name = "Crew 07",
+            phase = CrewPhase.LOBBY,
+            filling = true,
+            taken = 11,
+            filled = 11,
+            seats = seats.drop(4).map { it.copy(crew = "Crew 07") },
+        )
+
+    /** Full and waiting for midnight. */
+    private val waiting =
+        lobby.copy(
+            id = "crew-08",
+            name = "Crew 08",
+            filling = false,
+            taken = 15,
+            filled = 15,
+            seats = seats.map { it.copy(crew = "Crew 08") },
+            startsIn = 9 * 3_600_000L + 20 * 60_000L,
+        )
+
+    /** Six days in, and yesterday was missed. */
+    private val slipping =
+        running.copy(
+            id = "crew-09",
+            name = "Crew 09",
+            members = running.members.map { if (it.mine) it.copy(missed = 1, missedYesterday = true) else it },
+        )
+
+    /** Over: fourteen days, thirteen of the fourteen testers went the distance. */
+    private val finished =
+        running.copy(
+            id = "crew-04",
+            name = "Crew 04",
+            phase = CrewPhase.RECORD,
+            day = 14,
+            finishedDays = 14,
+            members = running.members.mapIndexed { i, m -> if (m.mine) m else m.copy(day = 14, openedMineDays = if (i == 3) 9 else 14, out = i == 3) },
+        )
+
+    /**
+     * The Crew model holding [list], and [open] taking seats. With [installed], the crew's apps are
+     * on this phone, so a row opens rather than installs.
+     */
+    private fun crews(
+        list: List<Crew> = listOf(running, lobby, waiting, slipping, finished),
+        installed: Boolean = true,
+    ): CrewViewModel {
         ApiSession.load(compose.activity)
-        // Tonight's apps are on this phone already, so each row opens rather than installs.
         val packages = org.robolectric.Shadows.shadowOf(compose.activity.packageManager)
-        seats.filter { !it.mine }.forEach { seat ->
+        if (installed) seats.filter { !it.mine }.forEach { seat ->
             packages.installPackage(
                 android.content.pm.PackageInfo().apply {
                     packageName = seat.packageName
@@ -118,7 +184,7 @@ class CrewVideoFramesTest {
             )
         }
         return CrewViewModel().apply {
-            setState("crews", listOf(running))
+            setState("crews", list)
             setState("open", filling)
             setState("loading", false)
         }
@@ -142,7 +208,151 @@ class CrewVideoFramesTest {
         frame.settle(800)
         runCatching { frame.target("openAll", compose.onNode(hasText("Open all", substring = true) and hasClickAction())) }
         runCatching { frame.target("left", compose.onNodeWithText("left tonight", substring = true)) }
+        runCatching { frame.target("seeWho", compose.onNode(hasText("See who tested it") and hasClickAction())) }
         frame.write("tonight")
+    }
+
+    @Test
+    fun c04_ready() {
+        // The Open tab's own guide cards, drawn from the top, with nothing done yet. Scrolled to
+        // in the tab, the seat tiles above them keep it from ever going still.
+        crews(list = emptyList())
+        frame.show {
+            Ground {
+                TabShell(MainTab.GROUPS, Scene.CREW) {
+                    androidx.compose.foundation.lazy.LazyColumn {
+                        crewGuide(CrewReady(app = false, member = false, permissions = false), hasApps = true, onApp = {}, onJoin = {}, onAllow = {})
+                    }
+                }
+            }
+        }
+        frame.settle(800)
+        runCatching { frame.target("readyApp", compose.onNodeWithText("checked on Play", substring = true)) }
+        runCatching { frame.target("readyGroup", compose.onAllNodesWithText("testers group", substring = true)[0]) }
+        runCatching { frame.target("readyPerms", compose.onNodeWithText("permissions", substring = true)) }
+        runCatching { frame.target("check", compose.onNode(hasText("Check") and hasClickAction())) }
+        runCatching { frame.target("join", compose.onNode(hasText("Join") and hasClickAction())) }
+        runCatching { frame.target("allow", compose.onNode(hasText("Allow") and hasClickAction())) }
+        runCatching { frame.target("getReady", compose.onNodeWithText("Before you take a seat")) }
+        frame.write("ready")
+    }
+
+    @Test
+    fun c05_seat() {
+        val vm = crews(list = emptyList())
+        frame.show { Pushed { CrewAddScreen(crews = vm, app = CircleSamples.focus, onDone = {}, onBack = {}) } }
+        frame.settle(800)
+        runCatching { frame.target("seatName", compose.onNodeWithText("Name the crew sees", substring = true)) }
+        runCatching { frame.target("takeSeat", compose.onNode(hasText("Take a seat", substring = true) and hasClickAction())) }
+        runCatching { frame.target("nameField", compose.onNode(androidx.compose.ui.test.hasSetTextAction())) }
+        runCatching { frame.target("needsSignIn", compose.onNode(hasText("Needs a sign-in") and hasClickAction())) }
+        runCatching { frame.target("price", compose.onNodeWithText("A seat costs")) }
+        frame.write("seat")
+    }
+
+    /** The seat page once "Needs a sign-in" is picked: where the crew's test account goes. */
+    @Test
+    fun c05b_seatLogin() {
+        val vm = crews(list = emptyList())
+        frame.show { Pushed { CrewAddScreen(crews = vm, app = CircleSamples.focus, onDone = {}, onBack = {}) } }
+        compose.onNode(hasText("Needs a sign-in") and hasClickAction()).performClick()
+        frame.settle(800)
+        runCatching { frame.target("login", compose.onAllNodes(androidx.compose.ui.test.hasSetTextAction())[1]) }
+        runCatching { frame.target("takeSeat", compose.onNode(hasText("Take a seat", substring = true) and hasClickAction())) }
+        frame.write("seatLogin")
+    }
+
+    @Test
+    fun c06_lobby() {
+        val vm = crews(list = listOf(lobby), installed = false)
+        frame.show { Pushed { CrewPage(vm = vm, id = lobby.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        frame.settle(800)
+        runCatching { frame.target("install", compose.onAllNodes(hasText("Install") and hasClickAction())[0]) }
+        runCatching { frame.target("rowWeather", compose.onNode(hasText("Pixel Weather", substring = true) and hasClickAction())) }
+        runCatching { frame.target("filling", compose.onNodeWithText("more and it starts", substring = true)) }
+        runCatching { frame.target("inChip", compose.onNodeWithText("Play shows it", substring = true)) }
+        frame.write("lobby")
+    }
+
+    @Test
+    fun c07_report() {
+        val vm = crews(list = listOf(lobby), installed = false)
+        frame.show {
+            Pushed {
+                CrewPage(vm = vm, id = lobby.id, onBack = {}, onSignIn = {}, onAddToCrew = {})
+                CrewReportDialog(seat = lobby.seats.first(), onReport = {}, onDismiss = {})
+            }
+        }
+        frame.settle(800)
+        runCatching { frame.target("report", compose.onNode(hasText("Report") and hasClickAction())) }
+        runCatching { frame.target("wontInstall", compose.onNode(hasText("It won't install from Play") and hasClickAction())) }
+        frame.write("report")
+    }
+
+    @Test
+    fun c08_waiting() {
+        val vm = crews()
+        frame.show { Pushed { CrewPage(vm = vm, id = waiting.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        frame.settle(800)
+        runCatching { frame.target("starts", compose.onNodeWithText("Starts in", substring = true)) }
+        frame.write("waiting")
+    }
+
+    @Test
+    fun c09_run() {
+        val vm = crews(list = listOf(running))
+        vm.setState("tab", CrewPhase.RUN)
+        frame.show { Ground { TabShell(MainTab.GROUPS, Scene.CREW) { CrewScreen(vm = vm) } } }
+        frame.settle(800)
+        runCatching { frame.target("openAll", compose.onAllNodes(hasText("Open all", substring = true) and hasClickAction())[0]) }
+        frame.write("run")
+    }
+
+    /** The timer over the app being visited: counting, then counted. */
+    private fun dock(
+        id: String,
+        left: Int,
+    ) {
+        val file = java.io.File(FrameImages.art, "../../media/public/frames/circle/habitB.png").canonicalFile
+        val picture = javax.imageio.ImageIO.read(file)
+        val bitmap = android.graphics.Bitmap.createBitmap(picture.width, picture.height, android.graphics.Bitmap.Config.ARGB_8888)
+        bitmap.setPixels(picture.getRGB(0, 0, picture.width, picture.height, null, 0, picture.width), 0, picture.width, 0, 0, picture.width, picture.height)
+        val ui = DockUi(app = "Habit Garden", index = 2, total = 9, secondsLeft = left, paused = false, counted = left == 0, signIn = emptyList(), upright = true, open = true)
+        frame.show {
+            Ground {
+                Image(bitmap.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
+                Box(Modifier.fillMaxSize().padding(end = 12.dp), contentAlignment = Alignment.CenterEnd) {
+                    VisitDockContent(ui, onToggleOpen = {}, onPlayPause = {}, onCopy = {}, onDrag = {}, onDragEnd = {})
+                }
+            }
+        }
+        frame.settle(800)
+        runCatching { frame.target("next", compose.onNode(hasText("Next", substring = true) and hasClickAction())) }
+        runCatching { frame.target("dockApp", compose.onNodeWithText("Habit Garden", useUnmergedTree = true)) }
+        frame.write(id)
+    }
+
+    @Test
+    fun c10_dock() = dock("dock", 6)
+
+    @Test
+    fun c11_counted() = dock("counted", 0)
+
+    @Test
+    fun c12_missed() {
+        val vm = crews(list = listOf(slipping))
+        frame.show(idle = false) { Pushed { CrewPage(vm = vm, id = slipping.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        runCatching { frame.target("warning", compose.onNodeWithText("Miss tonight too", substring = true)) }
+        frame.write("missed", idle = false)
+    }
+
+    @Test
+    fun c13_record() {
+        val vm = crews()
+        frame.show { Pushed { CrewPage(vm = vm, id = finished.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        frame.settle(800)
+        runCatching { frame.target("finished", compose.onNodeWithText("finished", substring = true)) }
+        frame.write("record")
     }
 
     @Test
