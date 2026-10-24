@@ -333,7 +333,7 @@ fun FeedRequestCard(
                         },
                         MaterialTheme.colorScheme.onPrimaryContainer,
                         MaterialTheme.colorScheme.primaryContainer,
-                        onReview,
+                        onClick = onReview,
                     )
             }
         }

@@ -19,8 +19,8 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
  *    round is caught and turned into a sentence the tester can act on, which is right for them and
  *    leaves nobody any way to know it happened. A landscape crash lived through a whole release
  *    because the only person who saw it was the one it happened to.
- *  - **Analytics** takes four events, which is enough to know whether rounds are being finished
- *    and not enough to reconstruct anybody's evening.
+ *  - **Analytics** takes a handful of events: enough to know whether rounds are being finished
+ *    and which how-to videos get opened, and not enough to reconstruct anybody's evening.
  *
  * Both are off in debug builds. See the manifest.
  */
@@ -61,6 +61,21 @@ object Telemetry {
         "events" to events.toLong(),
         "access" to if (access) 1L else 0L,
         "retried" to if (retried) 1L else 0L,
+    )
+
+    /**
+     * A how-to video opened. [video] is a fixed id ("apps", "crew", "circle"); [bangla] the language
+     * chosen; [fromList] whether it came from the list under You rather than the screen it explains,
+     * which says whether the cards on those screens are doing their job.
+     */
+    fun howToOpened(
+        video: String,
+        bangla: Boolean,
+        fromList: Boolean,
+    ) = log(
+        "howto_open_$video",
+        "bangla" to if (bangla) 1L else 0L,
+        "from_list" to if (fromList) 1L else 0L,
     )
 
     /**

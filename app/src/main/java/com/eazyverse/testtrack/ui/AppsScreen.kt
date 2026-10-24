@@ -117,6 +117,7 @@ fun AppsBody(
                 "developers for feedback, from its page.",
             action = if (onAdd != null) "Add an app" else "",
             onAction = { onAdd?.invoke() },
+            footer = { HowToLinks(HowTo.APPS) },
         )
         return
     }

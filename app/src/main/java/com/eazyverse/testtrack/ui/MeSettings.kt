@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -16,6 +19,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Bell
+import com.composables.icons.lucide.CirclePlay
 import com.composables.icons.lucide.Download
 import com.composables.icons.lucide.ExternalLink
 import com.composables.icons.lucide.HardDrive
@@ -129,6 +133,8 @@ internal fun SupportGroup(onAbout: () -> Unit) {
     val context = LocalContext.current
     val out: @Composable () -> Unit = { Icon(Lucide.ExternalLink, null, Modifier.size(17.dp), tint = Tt.colors.text4) }
     val gold = Tt.colors.gold
+    var videos by remember { mutableStateOf(false) }
+    if (videos) HowToSheet(onDismiss = { videos = false })
     Column {
         SectionTitle("Support")
         // Left out on a phone with no mail app, where it could only open a dead end.
@@ -138,6 +144,14 @@ internal fun SupportGroup(onAbout: () -> Unit) {
         val support = SUPPORT.filter { (mailable || it != SupportRow.FEEDBACK) && (update != null || it != SupportRow.UPDATE) }
         TileGroup(count = support.size) { index, place ->
             when (support[index]) {
+                SupportRow.VIDEOS ->
+                    TileRow(
+                        Lucide.CirclePlay,
+                        "How-to videos",
+                        place,
+                        subtitle = "Crew, Circle and My apps, in English and Bangla",
+                        onClick = { videos = true },
+                    )
                 SupportRow.ABOUT ->
                     TileRow(
                         Lucide.Info,
@@ -179,7 +193,7 @@ internal fun SupportGroup(onAbout: () -> Unit) {
 }
 
 // No privacy row: the About page carries the policy, in its footer.
-private enum class SupportRow { ABOUT, UPDATE, RATE, FEEDBACK }
+private enum class SupportRow { VIDEOS, ABOUT, UPDATE, RATE, FEEDBACK }
 
 private val SUPPORT = SupportRow.entries.toList()
 

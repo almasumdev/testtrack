@@ -43,8 +43,8 @@ import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
- * The Open tab's guide, under the crew that is filling: what a crew is, what to set up before
- * taking a seat, how the fortnight goes, and the rules with their numbers.
+ * The Open tab's guide, under the crew that is filling: the how-to video, what a crew is, what to
+ * set up before taking a seat, how the fortnight goes, and the rules with their numbers.
  *
  * Every number is the server's rule (CrewRules mirrors app/core/rules.py), so the page cannot
  * promise what the server will not do. Colour sits on the icons and the figures only; the cards
@@ -69,6 +69,7 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.crewGuide(
     onJoin: () -> Unit,
     onAllow: () -> Unit,
 ) {
+    item(key = "video") { GuideCard { HowToBody(HowTo.CREW) } }
     item(key = "story") { GuideCard { CrewStory() } }
     if (!ready.all) {
         item(key = "ready") { GuideCard { CrewGetReady(ready, hasApps, onApp, onJoin, onAllow) } }

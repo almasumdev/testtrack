@@ -37,6 +37,8 @@ fun RobotState(
     action: String = "",
     onAction: () -> Unit = {},
     failed: Boolean = false,
+    /** Something quieter under the way out, such as the how-to video's links. */
+    footer: (@Composable () -> Unit)? = null,
 ) {
     val t = Tt.colors
     // Fills the page and sits in the middle of what is visible: between the tabs and the dock that
@@ -73,6 +75,10 @@ fun RobotState(
             } else {
                 Primary(action, Modifier.widthIn(max = 240.dp), onClick = onAction)
             }
+        }
+        if (footer != null) {
+            Spacer(Modifier.height(10.dp))
+            footer()
         }
     }
 }

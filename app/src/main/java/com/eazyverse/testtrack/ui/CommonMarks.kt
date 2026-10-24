@@ -187,15 +187,19 @@ fun ActionChip(
     text: String,
     tone: Color,
     background: Color,
+    /** Sizes the chip as drawn, such as a shared height for chips side by side. */
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     Box(
         Modifier
             .minimumInteractiveComponentSize()
+            .then(modifier)
             .clip(RoundedCornerShape(9.dp))
             .background(background)
             .clickable(onClick = onClick)
             .padding(horizontal = 13.dp, vertical = 7.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text,

@@ -132,6 +132,16 @@ fun FeedScreen(
             offeringNotify = true
         }
     }
+    // Circle's how-to card, under the Ask button: until this account has a review or a request of
+    // its own, by when it has seen how Circle goes, or until it is closed. Gone for good either way.
+    var howTo by remember { mutableStateOf(!HowToCards.circleGone(context)) }
+    LaunchedEffect(involved) {
+        if (involved && howTo) {
+            HowToCards.hideCircle(context)
+            howTo = false
+        }
+    }
+
     if (offeringNotify) {
         Ask(
             title = "Turn on notifications?",
@@ -254,6 +264,20 @@ fun FeedScreen(
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
                                 item(key = "ask") { FeedAskButton(onPost = onAsk) }
+                                // Only once the server has answered: saved lists can be last time's,
+                                // and a card shown from them would vanish as the real ones arrive.
+                                if (!hold && howTo && vm.answered && !involved) {
+                                    item(key = "howto") {
+                                        Box(Modifier.animateItem()) {
+                                            FeedCard {
+                                                HowToBody(HowTo.CIRCLE, onHide = {
+                                                    HowToCards.hideCircle(context)
+                                                    howTo = false
+                                                })
+                                            }
+                                        }
+                                    }
+                                }
                                 if (hold) items(3) { FeedLoadingCard() }
                                 items(if (hold) emptyList() else vm.openPosts, key = { it.id }) { post ->
                                     // Fades in, fades out and glides to its new place when the list changes.
