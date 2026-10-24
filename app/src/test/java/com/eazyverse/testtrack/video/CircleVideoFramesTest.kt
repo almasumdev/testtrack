@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
@@ -75,6 +76,7 @@ class CircleVideoFramesTest {
         frame.target("cardHabit", compose.onNode(hasText(s.habit.appName) and hasClickAction()))
         frame.target("chipHabit", text("Review for ${s.habit.reward} tix", clickable = true))
         frame.target("pillClosed", compose.onNodeWithText("Closed test", useUnmergedTree = true))
+        frame.target("pillOnPlay", compose.onAllNodesWithText("On Play", useUnmergedTree = true)[0])
         frame.target("toCheckTab", compose.onNode(hasText("To check", substring = true) and hasClickAction()))
         frame.write("feed")
     }
@@ -138,16 +140,22 @@ class CircleVideoFramesTest {
         frame.write(id)
     }
 
-    /** The dial is drawn, not labelled: its square is found from the words centred in it. */
+    /**
+     * The dial is drawn, not labelled: its square is found from what StepDial puts in it. Its words
+     * are one column centred in the square, and the step labels sit 8 dp under its bottom edge.
+     */
     private fun dial(
         middle: String,
+        second: String,
         under: String,
     ): Rect {
-        val words = compose.onNodeWithText(middle).screenBounds()
+        val top = compose.onNodeWithText(middle).screenBounds().top
+        val bottom = compose.onNodeWithText(second).screenBounds().bottom
         val labels = compose.onNodeWithText(under).screenBounds()
-        val centre = words.center.y
+        val centre = (top + bottom) / 2
         val half = labels.top - frame.px(8f) - centre
-        return Rect(words.center.x - half, centre - half, words.center.x + half, centre + half)
+        val x = compose.onNodeWithText(second).screenBounds().center.x
+        return Rect(x - half, centre - half, x + half, centre + half)
     }
 
     @Test
@@ -155,7 +163,7 @@ class CircleVideoFramesTest {
         review("claimed", "review1") {
             frame.target("stepTitle", compose.onNodeWithText("Install ${s.habit.appName}"))
             frame.target("getOnPlay", text("Get it on Play", clickable = true))
-            frame.target("dial", dial("Step 1", "Install"))
+            frame.target("dial", dial("Step 1", "of 4", "Install"))
         }
 
     @Test
@@ -163,7 +171,7 @@ class CircleVideoFramesTest {
         review("installed", "review2", used = 80_000) {
             frame.target("stepTitle", compose.onNodeWithText("Try the app"))
             frame.target("openApp", text("Open the app", clickable = true))
-            frame.target("dial", dial("80", "✓ Install"))
+            frame.target("dial", dial("80", "of 120 seconds", "✓ Install"))
         }
 
     @Test
