@@ -70,7 +70,15 @@ class AppsVideoFramesTest {
     private fun art(): Bitmap {
         val picture = ImageIO.read(FrameImages.art.resolve("icon_focus.png"))
         val bitmap = Bitmap.createBitmap(picture.width, picture.height, Bitmap.Config.ARGB_8888)
-        bitmap.setPixels(picture.getRGB(0, 0, picture.width, picture.height, null, 0, picture.width), 0, picture.width, 0, 0, picture.width, picture.height)
+        bitmap.setPixels(
+            picture.getRGB(0, 0, picture.width, picture.height, null, 0, picture.width),
+            0,
+            picture.width,
+            0,
+            0,
+            picture.width,
+            picture.height,
+        )
         return bitmap
     }
 
@@ -81,7 +89,10 @@ class AppsVideoFramesTest {
             packages.installPackage(
                 android.content.pm.PackageInfo().apply {
                     packageName = app.pkg
-                    applicationInfo = android.content.pm.ApplicationInfo().apply { packageName = app.pkg }
+                    applicationInfo =
+                        android.content.pm
+                            .ApplicationInfo()
+                            .apply { packageName = app.pkg }
                 },
             )
         }
@@ -96,7 +107,17 @@ class AppsVideoFramesTest {
 
     /** Focus Flow as My apps has it once added from the phone: a closed test, not verified yet. */
     private val added =
-        AppEntry(id = "app-focus", pkg = focus.pkg, name = focus.name, icon = focus.icon, developer = "You", live = false, canCrew = true, canFeedback = true, canDelete = true)
+        AppEntry(
+            id = "app-focus",
+            pkg = focus.pkg,
+            name = focus.name,
+            icon = focus.icon,
+            developer = "You",
+            live = false,
+            canCrew = true,
+            canFeedback = true,
+            canDelete = true,
+        )
 
     private fun apps(list: List<AppEntry>): AppsViewModel {
         ApiSession.load(compose.activity)
@@ -167,7 +188,11 @@ class AppsVideoFramesTest {
         // The note is a line of text after its 15 dp info icon and an 8 dp gap: the mark takes both.
         runCatching {
             val words = compose.onNodeWithText("We check it on Play", substring = true).screenBounds()
-            frame.target("notice", androidx.compose.ui.geometry.Rect(words.left - frame.px(23f), words.top, words.right, words.bottom))
+            frame.target(
+                "notice",
+                androidx.compose.ui.geometry
+                    .Rect(words.left - frame.px(23f), words.top, words.right, words.bottom),
+            )
         }
         runCatching { frame.target("add", tap("Add to My apps")) }
         frame.write("picked")
@@ -214,7 +239,19 @@ class AppsVideoFramesTest {
     @Test
     fun a09_page() {
         val vm = apps(listOf(added))
-        frame.show { Pushed { AppPage(vm = vm, id = added.id, onBack = {}, onOpenCrew = {}, onOpenRequest = {}, onCrew = {}, onFeedback = {}) } }
+        frame.show {
+            Pushed {
+                AppPage(
+                    vm = vm,
+                    id = added.id,
+                    onBack = {},
+                    onOpenCrew = {},
+                    onOpenRequest = {},
+                    onCrew = {},
+                    onFeedback = {},
+                )
+            }
+        }
         runCatching { frame.target("crewRow", tap("Crew test")) }
         runCatching { frame.target("feedbackRow", compose.onNode(hasText("Feedback") and hasClickAction())) }
         runCatching { frame.target("verify", compose.onNodeWithText("Not verified yet")) }

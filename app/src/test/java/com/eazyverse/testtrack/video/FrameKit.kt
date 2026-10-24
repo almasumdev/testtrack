@@ -227,8 +227,10 @@ internal class Frame(
 
     private val out = File(requireNotNull(System.getProperty("videoFrames.out")) { "videoFrames.out is not set" }, video)
 
-    /** Edge to edge, as MainActivity is, with the page set and given time to settle. */
-    /** [idle] false for a screen that animates without end, which never goes still. */
+    /**
+     * Edge to edge, as MainActivity is, with the page set and given time to settle. [idle] false
+     * for a screen that animates without end, which never goes still.
+     */
     fun show(
         idle: Boolean = true,
         content: @Composable () -> Unit,

@@ -2,9 +2,6 @@ package com.eazyverse.testtrack.video
 
 import android.app.Application
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,28 +10,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.net.ApiSession
 import com.eazyverse.testtrack.ui.Crew
+import com.eazyverse.testtrack.ui.CrewAddScreen
 import com.eazyverse.testtrack.ui.CrewApp
 import com.eazyverse.testtrack.ui.CrewMember
-import com.eazyverse.testtrack.ui.CrewAddScreen
 import com.eazyverse.testtrack.ui.CrewMembersPage
 import com.eazyverse.testtrack.ui.CrewPage
 import com.eazyverse.testtrack.ui.CrewPhase
 import com.eazyverse.testtrack.ui.CrewReady
-import com.eazyverse.testtrack.ui.crewGuide
 import com.eazyverse.testtrack.ui.CrewReportDialog
 import com.eazyverse.testtrack.ui.CrewScreen
 import com.eazyverse.testtrack.ui.CrewSeat
 import com.eazyverse.testtrack.ui.CrewViewModel
 import com.eazyverse.testtrack.ui.DockUi
-import com.eazyverse.testtrack.ui.VisitDockContent
 import com.eazyverse.testtrack.ui.MainTab
 import com.eazyverse.testtrack.ui.Scene
+import com.eazyverse.testtrack.ui.VisitDockContent
+import com.eazyverse.testtrack.ui.crewGuide
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
@@ -82,8 +82,24 @@ class CrewVideoFramesTest {
 
     private val seats =
         others.mapIndexed { i, (app, owner, art) ->
-            CrewSeat(id = "seat-$i", appName = app, owner = owner, packageName = "com.example.app$i", icon = if (art.isEmpty()) "" else icon(art), crew = "Crew 05")
-        } + CrewSeat(id = "seat-mine", appName = "Focus Flow", owner = "You", packageName = "com.example.focusflow", icon = icon("icon_focus"), crew = "Crew 05", mine = true)
+            CrewSeat(
+                id = "seat-$i",
+                appName = app,
+                owner = owner,
+                packageName = "com.example.app$i",
+                icon = if (art.isEmpty()) "" else icon(art),
+                crew = "Crew 05",
+            )
+        } +
+            CrewSeat(
+                id = "seat-mine",
+                appName = "Focus Flow",
+                owner = "You",
+                packageName = "com.example.focusflow",
+                icon = icon("icon_focus"),
+                crew = "Crew 05",
+                mine = true,
+            )
 
     /** Six days in: nine of tonight's fourteen still to open, nine testers have opened yours. */
     private val running =
@@ -107,7 +123,18 @@ class CrewVideoFramesTest {
                         openedMineDays = 5 + if (i < 9) 1 else 0,
                     )
                 } + CrewMember(id = "m-mine", name = "You", appName = "Focus Flow", day = 6, mine = true),
-            apps = others.mapIndexed { i, (app, owner, _) -> CrewApp(id = "seat-$i", label = app, packageName = "com.example.app$i", owner = owner, crew = "Crew 05", done = i >= 9) },
+            apps =
+                others.mapIndexed { i, (app, owner, _) ->
+                    CrewApp(
+                        id = "seat-$i",
+                        label = app,
+                        packageName = "com.example.app$i",
+                        owner = owner,
+                        crew = "Crew 05",
+                        done =
+                            i >= 9,
+                    )
+                },
         )
 
     /** Taking seats: eleven of fifteen in. */
@@ -119,7 +146,12 @@ class CrewVideoFramesTest {
             filling = true,
             taken = 11,
             filled = 11,
-            icons = others.take(11).map { it.third }.filter { it.isNotEmpty() }.map(::icon),
+            icons =
+                others
+                    .take(11)
+                    .map { it.third }
+                    .filter { it.isNotEmpty() }
+                    .map(::icon),
         )
 
     /** Filling, with the reader's app in: eleven of fifteen, nothing opened yet. */
@@ -162,7 +194,25 @@ class CrewVideoFramesTest {
             phase = CrewPhase.RECORD,
             day = 14,
             finishedDays = 14,
-            members = running.members.mapIndexed { i, m -> if (m.mine) m else m.copy(day = 14, openedMineDays = if (i == 3) 9 else 14, out = i == 3) },
+            members =
+                running.members.mapIndexed { i, m ->
+                    if (m.mine) {
+                        m
+                    } else {
+                        m.copy(
+                            day = 14,
+                            openedMineDays =
+                                if (i ==
+                                    3
+                                ) {
+                                    9
+                                } else {
+                                    14
+                                },
+                            out = i == 3,
+                        )
+                    }
+                },
         )
 
     /**
@@ -175,13 +225,18 @@ class CrewVideoFramesTest {
     ): CrewViewModel {
         ApiSession.load(compose.activity)
         val packages = org.robolectric.Shadows.shadowOf(compose.activity.packageManager)
-        if (installed) seats.filter { !it.mine }.forEach { seat ->
-            packages.installPackage(
-                android.content.pm.PackageInfo().apply {
-                    packageName = seat.packageName
-                    applicationInfo = android.content.pm.ApplicationInfo().apply { packageName = seat.packageName }
-                },
-            )
+        if (installed) {
+            seats.filter { !it.mine }.forEach { seat ->
+                packages.installPackage(
+                    android.content.pm.PackageInfo().apply {
+                        packageName = seat.packageName
+                        applicationInfo =
+                            android.content.pm
+                                .ApplicationInfo()
+                                .apply { packageName = seat.packageName }
+                    },
+                )
+            }
         }
         return CrewViewModel().apply {
             setState("crews", list)
@@ -221,7 +276,13 @@ class CrewVideoFramesTest {
             Ground {
                 TabShell(MainTab.GROUPS, Scene.CREW) {
                     androidx.compose.foundation.lazy.LazyColumn {
-                        crewGuide(CrewReady(app = false, member = false, permissions = false), hasApps = true, onApp = {}, onJoin = {}, onAllow = {})
+                        crewGuide(
+                            CrewReady(app = false, member = false, permissions = false),
+                            hasApps = true,
+                            onApp = {},
+                            onJoin = {},
+                            onAllow = {},
+                        )
                     }
                 }
             }
@@ -244,7 +305,15 @@ class CrewVideoFramesTest {
         frame.settle(800)
         runCatching { frame.target("seatName", compose.onNodeWithText("Name the crew sees", substring = true)) }
         runCatching { frame.target("takeSeat", compose.onNode(hasText("Take a seat", substring = true) and hasClickAction())) }
-        runCatching { frame.target("nameField", compose.onNode(androidx.compose.ui.test.hasSetTextAction())) }
+        runCatching {
+            frame.target(
+                "nameField",
+                compose.onNode(
+                    androidx.compose.ui.test
+                        .hasSetTextAction(),
+                ),
+            )
+        }
         runCatching { frame.target("needsSignIn", compose.onNode(hasText("Needs a sign-in") and hasClickAction())) }
         runCatching { frame.target("price", compose.onNodeWithText("A seat costs")) }
         frame.write("seat")
@@ -257,7 +326,15 @@ class CrewVideoFramesTest {
         frame.show { Pushed { CrewAddScreen(crews = vm, app = CircleSamples.focus, onDone = {}, onBack = {}) } }
         compose.onNode(hasText("Needs a sign-in") and hasClickAction()).performClick()
         frame.settle(800)
-        runCatching { frame.target("login", compose.onAllNodes(androidx.compose.ui.test.hasSetTextAction())[1]) }
+        runCatching {
+            frame.target(
+                "login",
+                compose.onAllNodes(
+                    androidx.compose.ui.test
+                        .hasSetTextAction(),
+                )[1],
+            )
+        }
         runCatching { frame.target("takeSeat", compose.onNode(hasText("Take a seat", substring = true) and hasClickAction())) }
         frame.write("seatLogin")
     }
@@ -330,8 +407,27 @@ class CrewVideoFramesTest {
         val file = java.io.File(FrameImages.art, "../../media/public/frames/circle/habitB.png").canonicalFile
         val picture = javax.imageio.ImageIO.read(file)
         val bitmap = android.graphics.Bitmap.createBitmap(picture.width, picture.height, android.graphics.Bitmap.Config.ARGB_8888)
-        bitmap.setPixels(picture.getRGB(0, 0, picture.width, picture.height, null, 0, picture.width), 0, picture.width, 0, 0, picture.width, picture.height)
-        val ui = DockUi(app = "Habit Garden", index = 2, total = 9, secondsLeft = left, paused = false, counted = left == 0, signIn = emptyList(), upright = true, open = true)
+        bitmap.setPixels(
+            picture.getRGB(0, 0, picture.width, picture.height, null, 0, picture.width),
+            0,
+            picture.width,
+            0,
+            0,
+            picture.width,
+            picture.height,
+        )
+        val ui =
+            DockUi(
+                app = "Habit Garden",
+                index = 2,
+                total = 9,
+                secondsLeft = left,
+                paused = false,
+                counted = left == 0,
+                signIn = emptyList(),
+                upright = true,
+                open = true,
+            )
         frame.show {
             Ground {
                 Image(bitmap.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)

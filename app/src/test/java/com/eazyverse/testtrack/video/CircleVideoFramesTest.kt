@@ -154,7 +154,11 @@ class CircleVideoFramesTest {
         val labels = compose.onNodeWithText(under).screenBounds()
         val centre = (top + bottom) / 2
         val half = labels.top - frame.px(8f) - centre
-        val x = compose.onNodeWithText(second).screenBounds().center.x
+        val x =
+            compose
+                .onNodeWithText(second)
+                .screenBounds()
+                .center.x
         return Rect(x - half, centre - half, x + half, centre + half)
     }
 
@@ -307,7 +311,13 @@ class CircleVideoFramesTest {
     fun f17_toCheck() {
         val now = System.currentTimeMillis()
         // Offered once, on the first request; somebody checking reviews has long answered it.
-        compose.activity.getSharedPreferences("feedback_notify", android.content.Context.MODE_PRIVATE).edit().putBoolean("asked", true).commit()
+        compose.activity
+            .getSharedPreferences(
+                "feedback_notify",
+                android.content.Context.MODE_PRIVATE,
+            ).edit()
+            .putBoolean("asked", true)
+            .commit()
         val feed = feedWith(compose.activity, s.feed)
         feed.setState("waiting", listOf(s.weatherCheck(now)))
         feed.setState("disputes", listOf(s.case))
