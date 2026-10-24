@@ -21,6 +21,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -88,10 +89,14 @@ fun MeEditDialog(
                 Modifier
                     .size(72.dp)
                     .semantics { contentDescription = "Choose a picture" }
-                    // Clipped before it is made clickable, so the press is the round photo's and
-                    // not a square around it.
-                    .clip(CircleShape)
-                    .clickable(enabled = !busy, onClick = choose),
+                    // A round press the size of the photo, drawn without clipping the box, which
+                    // would cut off the camera badge that sits on its edge.
+                    .clickable(
+                        interactionSource = null,
+                        indication = ripple(bounded = false, radius = 36.dp),
+                        enabled = !busy,
+                        onClick = choose,
+                    ),
             ) {
                 val chosen = picked
                 if (chosen != null) {

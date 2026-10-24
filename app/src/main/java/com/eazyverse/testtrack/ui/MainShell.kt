@@ -28,6 +28,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -269,114 +270,118 @@ fun MainShell(
                             transitionSpec = { fadeIn(tween(160, delayMillis = 80)) togetherWith fadeOut(tween(80)) },
                             label = "page",
                         ) { page ->
-                            when (page) {
-                                MainTab.CIRCLE ->
-                                    FeedScreen(
-                                        onReview = onReview,
-                                        onCheck = onCheck,
-                                        // Which app, from My apps. Signed out, sign in first and then
-                                        // the same: a request is always for an app on My apps, which
-                                        // always has its icon.
-                                        onAsk = {
-                                            val pick = {
-                                                apps.load(context)
-                                                picking = PickFor.FEEDBACK
-                                            }
-                                            if (Session.signedIn) {
-                                                pick()
-                                            } else {
-                                                afterSignIn = pick
+                            // Drawn again when the account changes, so a tab signed in to from its
+                            // own sheet reads itself again instead of still offering Sign in.
+                            key(Session.signedIn) {
+                                when (page) {
+                                    MainTab.CIRCLE ->
+                                        FeedScreen(
+                                            onReview = onReview,
+                                            onCheck = onCheck,
+                                            // Which app, from My apps. Signed out, sign in first and then
+                                            // the same: a request is always for an app on My apps, which
+                                            // always has its icon.
+                                            onAsk = {
+                                                val pick = {
+                                                    apps.load(context)
+                                                    picking = PickFor.FEEDBACK
+                                                }
+                                                if (Session.signedIn) {
+                                                    pick()
+                                                } else {
+                                                    afterSignIn = pick
+                                                    asking =
+                                                        SignInReason(
+                                                            title = "Sign in to ask for feedback",
+                                                            why =
+                                                                "You ask for feedback on one of your own apps and pay for " +
+                                                                    "it in tix, so you need to sign in first.",
+                                                        )
+                                                }
+                                            },
+                                            onSignInToReview = {
                                                 asking =
                                                     SignInReason(
-                                                        title = "Sign in to ask for feedback",
+                                                        title = "Sign in to review apps",
                                                         why =
-                                                            "You ask for feedback on one of your own apps and pay for " +
-                                                                "it in tix, so you need to sign in first.",
+                                                            "Each review you finish pays you tix, kept on your account. " +
+                                                                "You can browse Circle without signing in.",
                                                     )
-                                            }
-                                        },
-                                        onSignInToReview = {
-                                            asking =
-                                                SignInReason(
-                                                    title = "Sign in to review apps",
-                                                    why =
-                                                        "Each review you finish pays you tix, kept on your account. " +
-                                                            "You can browse Circle without signing in.",
-                                                )
-                                        },
-                                        onSignIn = {
-                                            asking =
-                                                SignInReason(
-                                                    title = "Sign in to see what is waiting",
-                                                    why =
-                                                        "Here you see reviews of your apps and cases you are asked " +
-                                                            "to decide. You can browse the rest of Circle " +
-                                                            "without signing in.",
-                                                )
-                                        },
-                                    )
+                                            },
+                                            onSignIn = {
+                                                asking =
+                                                    SignInReason(
+                                                        title = "Sign in to see what is waiting",
+                                                        why =
+                                                            "Here you see reviews of your apps and cases you are asked " +
+                                                                "to decide. You can browse the rest of Circle " +
+                                                                "without signing in.",
+                                                    )
+                                            },
+                                        )
 
-                                MainTab.GROUPS -> {
-                                    // Get ready asks whether an app is set for a crew, so My apps is read here too.
-                                    LaunchedEffect(Unit) { apps.load(context) }
-                                    CrewScreen(
-                                        onOpenCrew = onOpenCrew,
-                                        myApps = apps.apps.takeIf { it.isNotEmpty() || !apps.loading },
-                                        onAddApp = onAddApp,
-                                        onOpenApp = onOpenApp,
-                                        // Signed in and on the testers group already: which app goes in.
-                                        onAddToCrew = {
-                                            apps.load(context)
-                                            picking = PickFor.CREW
-                                        },
-                                        onSignIn = {
-                                            asking =
-                                                SignInReason(
-                                                    title = "Sign in to see your crews",
-                                                    why =
-                                                        "Here you see your seats, the apps to open tonight and the " +
-                                                            "crews you have finished. You can look at the Open " +
-                                                            "tab without signing in.",
-                                                )
-                                        },
-                                    )
+                                    MainTab.GROUPS -> {
+                                        // Get ready asks whether an app is set for a crew, so My apps is read here too.
+                                        LaunchedEffect(Unit) { apps.load(context) }
+                                        CrewScreen(
+                                            onOpenCrew = onOpenCrew,
+                                            myApps = apps.apps.takeIf { it.isNotEmpty() || !apps.loading },
+                                            onAddApp = onAddApp,
+                                            onOpenApp = onOpenApp,
+                                            // Signed in and on the testers group already: which app goes in.
+                                            onAddToCrew = {
+                                                apps.load(context)
+                                                picking = PickFor.CREW
+                                            },
+                                            onSignIn = {
+                                                asking =
+                                                    SignInReason(
+                                                        title = "Sign in to see your crews",
+                                                        why =
+                                                            "Here you see your seats, the apps to open tonight and the " +
+                                                                "crews you have finished. You can look at the Open " +
+                                                                "tab without signing in.",
+                                                    )
+                                            },
+                                        )
+                                    }
+                                    MainTab.RANKS -> RanksScreen()
+
+                                    MainTab.APPS ->
+                                        AppsScreen(
+                                            onOpenApp = onOpenApp,
+                                            onAddApp = onAddApp,
+                                            vm = apps,
+                                            onSignIn = {
+                                                asking =
+                                                    SignInReason(
+                                                        title = "Sign in to see your apps",
+                                                        why =
+                                                            "Here you see the apps you have added and how their tests " +
+                                                                "are going. You can browse the rest of TestTrack " +
+                                                                "without signing in.",
+                                                    )
+                                            },
+                                        )
+
+                                    MainTab.PROFILE ->
+                                        MeScreen(
+                                            onSignOut = onSignOut,
+                                            onOpenRanks = { show(MainTab.RANKS) },
+                                            notifications = Session.notificationsGranted,
+                                            onAbout = onOpenAbout,
+                                            onSignIn = {
+                                                asking =
+                                                    SignInReason(
+                                                        title = "Sign in to see your record",
+                                                        why =
+                                                            "Here you see your level, your tix and what you have done. " +
+                                                                "You can browse the rest of TestTrack without " +
+                                                                "signing in.",
+                                                    )
+                                            },
+                                        )
                                 }
-                                MainTab.RANKS -> RanksScreen()
-
-                                MainTab.APPS ->
-                                    AppsScreen(
-                                        onOpenApp = onOpenApp,
-                                        onAddApp = onAddApp,
-                                        vm = apps,
-                                        onSignIn = {
-                                            asking =
-                                                SignInReason(
-                                                    title = "Sign in to see your apps",
-                                                    why =
-                                                        "Here you see the apps you have added and how their tests " +
-                                                            "are going. You can browse the rest of TestTrack " +
-                                                            "without signing in.",
-                                                )
-                                        },
-                                    )
-
-                                MainTab.PROFILE ->
-                                    MeScreen(
-                                        onSignOut = onSignOut,
-                                        onOpenRanks = { show(MainTab.RANKS) },
-                                        notifications = Session.notificationsGranted,
-                                        onAbout = onOpenAbout,
-                                        onSignIn = {
-                                            asking =
-                                                SignInReason(
-                                                    title = "Sign in to see your record",
-                                                    why =
-                                                        "Here you see your level, your tix and what you have done. " +
-                                                            "You can browse the rest of TestTrack without " +
-                                                            "signing in.",
-                                                )
-                                        },
-                                    )
                             }
                         }
                     }
