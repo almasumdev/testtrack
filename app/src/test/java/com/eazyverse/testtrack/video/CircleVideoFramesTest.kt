@@ -188,6 +188,7 @@ class CircleVideoFramesTest {
             frame.target("stepTitle", compose.onNodeWithText("Send your proof"))
             frame.target("sendProof", text("Send the proof", clickable = true))
             frame.target("note", compose.onNode(hasSetTextAction()))
+            frame.target("gallery", text("Gallery", clickable = true))
         }
 
     @Test
