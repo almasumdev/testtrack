@@ -188,17 +188,18 @@ class MainActivity : ComponentActivity() {
                         val tier by AppUpdateService.tier.collectAsState()
                         val downloaded by AppUpdateService.isDownloaded.collectAsState()
                         if (tier == UpdateTier.BLOCKED) {
-                            Inset {
-                                ForceUpdateScreen(
-                                    downloaded = downloaded,
-                                    canDownloadInApp = AppUpdateService.canDownloadInApp,
-                                    onUpdate = {
-                                        if (!AppUpdateService.startFlexibleUpdate(updateLauncher)) openPlayStoreListing()
-                                    },
-                                    onRestart = { AppUpdateService.completeUpdate() },
-                                    onOpenStore = { openPlayStoreListing() },
-                                )
-                            }
+                            // Not inside [Inset]: the gate's ground runs under the status and
+                            // navigation bars so nothing of the app shows through them, and the
+                            // screen keeps its own content clear of the bars.
+                            ForceUpdateScreen(
+                                downloaded = downloaded,
+                                canDownloadInApp = AppUpdateService.canDownloadInApp,
+                                onUpdate = {
+                                    if (!AppUpdateService.startFlexibleUpdate(updateLauncher)) openPlayStoreListing()
+                                },
+                                onRestart = { AppUpdateService.completeUpdate() },
+                                onOpenStore = { openPlayStoreListing() },
+                            )
                         }
                     }
                 }

@@ -36,7 +36,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import com.composables.icons.lucide.Camera
 import com.composables.icons.lucide.HardDrive
 import com.composables.icons.lucide.HardDriveUpload
@@ -185,9 +185,10 @@ private fun Shot(
     onClick: () -> Unit,
 ) {
     val t = Tt.colors
-    AsyncImage(
+    SubcomposeAsyncImage(
         model = picture,
         contentDescription = "Your review screenshot",
+        loading = { Skeleton(THUMB_WIDTH, THUMB_HEIGHT, 10.dp) },
         modifier =
             Modifier
                 .size(width = THUMB_WIDTH, height = THUMB_HEIGHT)

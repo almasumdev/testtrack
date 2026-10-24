@@ -61,7 +61,7 @@ internal fun AppMark(
             model = icon,
             contentDescription = null,
             modifier = Modifier.size(size).clip(RoundedCornerShape(size * 0.3f)),
-            loading = { AppIcon(pkg, name, size = size) { AppTile(name, size) } },
+            loading = { Skeleton(size, size, size * 0.3f) },
             error = { AppIcon(pkg, name, size = size) { AppTile(name, size) } },
         )
         return
@@ -74,7 +74,7 @@ internal fun AppMark(
                 model = icon,
                 contentDescription = null,
                 modifier = Modifier.size(size).clip(RoundedCornerShape(size * 0.3f)),
-                loading = { AppTile(name, size) },
+                loading = { Skeleton(size, size, size * 0.3f) },
                 error = { AppTile(name, size) },
             )
         }

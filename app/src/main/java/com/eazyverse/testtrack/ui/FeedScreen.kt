@@ -13,6 +13,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -45,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.eazyverse.testtrack.net.Api
 import kotlinx.serialization.encodeToString
@@ -402,7 +403,7 @@ fun ProofImage(
     // Drive needs no token: the file is shared by link.
     val loader = remember { ImageLoader.Builder(context).okHttpClient { Api.images }.build() }
 
-    AsyncImage(
+    SubcomposeAsyncImage(
         model =
             ImageRequest
                 .Builder(context)
@@ -411,6 +412,14 @@ fun ProofImage(
                 .build(),
         contentDescription = "The screenshot sent as proof",
         imageLoader = loader,
+        // A screenshot from Drive takes a moment on mobile data: its shape shimmers meanwhile.
+        loading = {
+            if (whole) {
+                Skeleton(height = 320.dp, corner = 14.dp)
+            } else {
+                BoxWithConstraints(Modifier.fillMaxSize()) { Skeleton(maxWidth, maxHeight, 10.dp) }
+            }
+        },
         // On a review's own page it is shown whole, at the width of the page. Anywhere smaller it
         // is cropped to its top, where the review is, since a shrunk-to-fit screenshot is
         // unreadable.

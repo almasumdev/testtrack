@@ -55,7 +55,7 @@ internal fun FoundApp(
                 model = icon,
                 contentDescription = null,
                 modifier = Modifier.size(48.dp).clip(RoundedCornerShape(11.dp)),
-                loading = { AskAppPlaceholder() },
+                loading = { Skeleton(48.dp, 48.dp, 11.dp) },
                 error = { AskAppPlaceholder() },
             )
         }

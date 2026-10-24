@@ -139,14 +139,14 @@ fun Avatar(
 
     // A face kept by address: ours, Google's or a Drive thumbnail. Only the old inline base64 faces
     // were drawn here once, so every address-kept face showed as its letter, including one just
-    // saved. The letter stands in while it loads and if it cannot be fetched.
+    // saved. It shimmers while it loads, and the letter stands in if it cannot be fetched.
     if (photo.startsWith("https://") || photo.startsWith("http://")) {
         SubcomposeAsyncImage(
             model = photo,
             contentDescription = null,
             modifier = Modifier.size(size).clip(CircleShape),
             contentScale = ContentScale.Crop,
-            loading = { Initial(letter, size, letterStyle) },
+            loading = { Skeleton(size, size, size / 2) },
             error = { Initial(letter, size, letterStyle) },
         )
         return
