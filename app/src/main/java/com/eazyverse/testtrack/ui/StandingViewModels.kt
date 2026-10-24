@@ -1,8 +1,7 @@
 package com.eazyverse.testtrack.ui
 
-import android.app.Activity
 import android.content.Context
-import android.net.Uri
+import android.graphics.Bitmap
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -163,27 +162,24 @@ class MeViewModel : ViewModel() {
     /**
      * Change the name, and the face if a new one was chosen.
      *
-     * The picture goes up first because the second call needs what the first returns. Leaving the
-     * picture alone sends back what is already there, since the endpoint takes both fields and a
-     * missing one would read as "clear it".
+     * The photo, already cropped square, goes to TestTrack first because the second call needs the
+     * URL it is kept at. Leaving the photo alone sends back what is already there, since the
+     * endpoint takes both fields and a missing one would read as "clear it". Whatever goes wrong
+     * lands in [message], which the dialog shows: it used to land there and be shown nowhere.
      */
     fun save(
-        context: Activity,
+        context: Context,
         name: String,
-        photo: Uri?,
+        photo: Bitmap?,
         onDone: () -> Unit,
     ) {
         if (busy) return
         busy = true
+        message = null
         viewModelScope.launch {
             try {
-                val (ref, token) =
-                    if (photo == null) {
-                        profile?.photoUrl.orEmpty() to ""
-                    } else {
-                        ProfileUpload.photo(context, photo)
-                    }
-                Api.updateMe(MeIn(displayName = name.trim(), photoRef = ref, driveToken = token))
+                val ref = if (photo == null) profile?.photoUrl.orEmpty() else ProfileUpload.photo(photo)
+                Api.updateMe(MeIn(displayName = name.trim(), photoRef = ref))
                 load(context)
                 onDone()
             } catch (e: ApiError) {

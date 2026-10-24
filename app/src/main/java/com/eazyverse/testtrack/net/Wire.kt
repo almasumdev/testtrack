@@ -309,7 +309,7 @@ data class SeatIn(
 @Serializable
 data class MeIn(
     @SerialName("display_name") val displayName: String,
-    /** An uploaded image by its reference. Empty clears it back to the initial. */
+    /** The photo to keep, by its URL. Empty clears it back to the initial. */
     @SerialName("photo_ref") val photoRef: String = "",
     @SerialName("drive_token") val driveToken: String = "",
 )

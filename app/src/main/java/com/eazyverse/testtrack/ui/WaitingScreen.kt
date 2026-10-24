@@ -42,11 +42,12 @@ fun WaitingBody(
     // titled "Sign in to see what is waiting", so a dropped connection told the reader they were
     // the problem, and a reader without an account was never told anything at all.
     if (signedOut) {
-        Gated(
-            heading = "Sign in to see your feedback",
-            body = "Reviews of your apps, and cases you are asked to decide, arrive here.",
-            onSignIn = onSignIn,
-            mark = { NoteMark() },
+        RobotState(
+            Prop.Lock,
+            "Sign in to see your feedback",
+            "Reviews of your apps, and cases you are asked to decide, arrive here.",
+            action = "Sign in",
+            onAction = onSignIn,
         )
         return
     }

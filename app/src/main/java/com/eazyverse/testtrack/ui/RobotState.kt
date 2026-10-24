@@ -1,10 +1,14 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -12,6 +16,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,6 +32,10 @@ import com.eazyverse.testtrack.viewmodel.ReviewMoment
  * Empty pages are in the accent with a filled button, since there is something to go and do.
  * A page that did not load is grey with an outlined "Try again", so it reads as a pause rather
  * than as something still loading or broken.
+ *
+ * [fill] false lays it out at its own height, for the top of a page that has more under it, such as
+ * You signed out with its settings below. A fixed share of the screen was tried there and cut the
+ * button in half on a short phone.
  */
 @Composable
 fun RobotState(
@@ -39,11 +48,10 @@ fun RobotState(
     failed: Boolean = false,
     /** Something quieter under the way out, such as the how-to video's links. */
     footer: (@Composable () -> Unit)? = null,
+    fill: Boolean = true,
 ) {
     val t = Tt.colors
-    // Fills the page and sits in the middle of what is visible: between the tabs and the dock that
-    // floats over the bottom of the page.
-    CenteredState(modifier) {
+    val body: @Composable ColumnScope.() -> Unit = {
         RobotHolding(prop, size = 112.dp, description = title)
         Spacer(Modifier.height(14.dp))
         Text(
@@ -80,6 +88,17 @@ fun RobotState(
             Spacer(Modifier.height(10.dp))
             footer()
         }
+    }
+    if (fill) {
+        // Fills the page and sits in the middle of what is visible: between the tabs and the dock
+        // that floats over the bottom of the page.
+        CenteredState(modifier, content = body)
+    } else {
+        Column(
+            modifier.fillMaxWidth().padding(top = 20.dp, bottom = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            content = body,
+        )
     }
 }
 

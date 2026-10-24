@@ -2,10 +2,13 @@ package com.eazyverse.testtrack.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -15,7 +18,10 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -28,12 +34,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -46,6 +58,7 @@ import com.composables.icons.lucide.User
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.findActivity
+import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.HudViewModel
 import com.eazyverse.testtrack.viewmodel.ReviewMoment
@@ -163,6 +176,18 @@ fun MainShell(
     // Back from a tab returns to the first one rather than closing the app, which is what a bottom
     // bar has taught everybody to expect. Off on the first tab, so Back there still leaves.
     BackHandler(enabled = tab != MainTab.CIRCLE) { show(MainTab.CIRCLE) }
+
+    // On the first tab Back leaves, so the first press only says so and the second, inside the
+    // window, is let through to the system. Leaving on one press closed the app on a thumb that
+    // only meant to go back a step.
+    var leaving by remember { mutableStateOf(false) }
+    BackHandler(enabled = tab == MainTab.CIRCLE && !leaving) { leaving = true }
+    LaunchedEffect(leaving) {
+        if (leaving) {
+            delay(LEAVE_WINDOW_MS)
+            leaving = false
+        }
+    }
 
     // Read again on every arrival at the shell, and on every return to it. Tix move while somebody
     // is inside another app being tested, so coming back to a stale balance would be the screen
@@ -365,6 +390,12 @@ fun MainShell(
                     .align(Alignment.BottomCenter)
                     .onSizeChanged { dockHeight = with(density) { it.height.toDp() } - DockTop },
             )
+            LeaveHint(
+                leaving,
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = dockHeight + 10.dp),
+            )
         }
     }
 
@@ -396,6 +427,35 @@ fun MainShell(
                 // one that would otherwise sit there telling them to sign in after they have.
                 hudVm.load(context)
             },
+        )
+    }
+}
+
+/** How long a second Back still leaves, after the first one on the first tab said it would. */
+private const val LEAVE_WINDOW_MS = 2_000L
+
+/** "Press back again", just above the dock, while a second Back would leave. */
+@Composable
+private fun LeaveHint(
+    shown: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    AnimatedVisibility(
+        visible = shown,
+        modifier = modifier,
+        enter = fadeIn(tween(120)) + slideInVertically(tween(160)) { it / 2 },
+        exit = fadeOut(tween(160)),
+    ) {
+        Text(
+            "Press back again to leave TestTrack",
+            Modifier
+                .clip(RoundedCornerShape(percent = 50))
+                .background(Tt.colors.inverse)
+                .padding(horizontal = 18.dp, vertical = 11.dp)
+                .semantics { liveRegion = LiveRegionMode.Polite },
+            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+            fontWeight = FontWeight.SemiBold,
+            color = Tt.colors.onInverse,
         )
     }
 }

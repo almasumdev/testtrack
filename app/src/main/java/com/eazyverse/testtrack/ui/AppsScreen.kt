@@ -93,11 +93,12 @@ fun AppsBody(
     // without an account; this is the first screen that cannot answer without knowing who they
     // are, so this is where the question belongs, with the way out attached to it.
     if (signedOut) {
-        Gated(
-            heading = "Sign in to see your apps",
-            body = "Your apps, and how each one is getting on, belong to your account.",
-            onSignIn = onSignIn,
-            mark = { AppsMark() },
+        RobotState(
+            Prop.Lock,
+            "Sign in to see your apps",
+            "Your apps, and how each one is getting on, belong to your account.",
+            action = "Sign in",
+            onAction = onSignIn,
         )
         return
     }

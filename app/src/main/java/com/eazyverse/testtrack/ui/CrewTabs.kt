@@ -73,11 +73,12 @@ fun CrewRunTab(
     // account, and answering it with "Nothing running" to somebody the app cannot identify is a
     // result it never got back.
     if (vm.signedOut) {
-        Gated(
-            heading = "Sign in to see tonight's apps",
-            body = "Hold a seat and fourteen nights of testing start here, one night at a time.",
-            onSignIn = onSignIn,
-            mark = { NightsMark() },
+        RobotState(
+            Prop.Lock,
+            "Sign in to see tonight's apps",
+            "Hold a seat and fourteen nights of testing start here, one night at a time.",
+            action = "Sign in",
+            onAction = onSignIn,
         )
         return
     }
@@ -186,11 +187,12 @@ fun CrewLobbyTab(
     val lobbies = vm.crews.filter { it.phase == CrewPhase.LOBBY }
 
     if (vm.signedOut) {
-        Gated(
-            heading = "Sign in to see your crew",
-            body = "A crew you have joined waits here until all fifteen apps are in.",
-            onSignIn = onSignIn,
-            mark = { SeatsMark() },
+        RobotState(
+            Prop.Lock,
+            "Sign in to see your crew",
+            "A crew you have joined waits here until all fifteen apps are in.",
+            action = "Sign in",
+            onAction = onSignIn,
         )
         return
     }
@@ -277,11 +279,12 @@ fun CrewRecordTab(
     val finished = vm.crews.filter { it.phase == CrewPhase.RECORD }
 
     if (vm.signedOut) {
-        Gated(
-            heading = "Sign in to see your record",
-            body = "A crew lands here the day its fourteen nights are up, and stays for good.",
-            onSignIn = onSignIn,
-            mark = { RecordMark() },
+        RobotState(
+            Prop.Lock,
+            "Sign in to see your record",
+            "A crew lands here the day its fourteen nights are up, and stays for good.",
+            action = "Sign in",
+            onAction = onSignIn,
         )
         return
     }

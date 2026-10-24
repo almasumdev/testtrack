@@ -1,8 +1,6 @@
 package com.eazyverse.testtrack.ui
 
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,20 +33,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import com.composables.icons.lucide.CalendarDays
-import com.composables.icons.lucide.Camera
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
@@ -77,6 +69,7 @@ fun MeScreen(
 ) {
     val context = LocalContext.current
     var editing by remember { mutableStateOf(false) }
+    var signingOut by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { vm.load(context) }
     WhileShown(onShow = { vm.startLive(context) }, onHide = vm::stopLive)
 
@@ -97,8 +90,14 @@ fun MeScreen(
         offline = vm.offline,
         signedOut = vm.signedOut,
         // Not before the profile arrives, or an empty name could be saved over the real one.
-        onEdit = { if (vm.profile != null) editing = true },
-        onSignOut = onSignOut,
+        onEdit = {
+            if (vm.profile != null) {
+                vm.clearMessage()
+                editing = true
+            }
+        },
+        // Asked first: one tap on the last row of the page should not end the session.
+        onSignOut = { signingOut = true },
         onSignIn = onSignIn,
         onOpenRanks = onOpenRanks,
         notifications = notifications,
@@ -123,8 +122,23 @@ fun MeScreen(
             name = vm.profile?.displayName.orEmpty(),
             photo = vm.profile?.photoUrl.orEmpty(),
             busy = vm.busy,
-            onSave = { name, photo -> vm.save(activity, name, photo) { editing = false } },
+            error = vm.message,
+            onSave = { name, photo -> vm.save(context, name, photo) { editing = false } },
             onDismiss = { editing = false },
+        )
+    }
+
+    if (signingOut) {
+        Ask(
+            title = "Sign out?",
+            body = "Your crews, reviews and tix stay on your account. Sign in again any time to pick up where you left off.",
+            confirm = "Sign out",
+            destructive = true,
+            onConfirm = {
+                signingOut = false
+                onSignOut()
+            },
+            onDismiss = { signingOut = false },
         )
     }
 }
@@ -152,19 +166,19 @@ fun MeBody(
         // The sign-in ask, then what needs no account: About, rating and feedback, and the version.
         LazyColumn(
             Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = Gutter, end = Gutter, bottom = Gutter + dockRoom()),
+            contentPadding = PaddingValues(start = Gutter, end = Gutter, bottom = FootRoom + dockRoom()),
         ) {
             item {
-                Box(Modifier.fillParentMaxHeight(0.6f)) {
-                    Gated(
-                        heading = "Sign in to see your profile",
-                        body =
-                            "Every night you open somebody's app moves this ring. Sign in and it starts " +
-                                "counting.",
-                        onSignIn = onSignIn,
-                        mark = { LevelMark() },
-                    )
-                }
+                // At its own height rather than a share of the screen, which cut the button in
+                // half on a short phone; the settings follow straight after.
+                RobotState(
+                    Prop.Lock,
+                    "Sign in to see your profile",
+                    "Your points, your place on the board and every app you have opened, kept for you.",
+                    action = "Sign in",
+                    onAction = onSignIn,
+                    fill = false,
+                )
             }
             item { AppearanceGroup() }
             item { SupportGroup(onAbout) }
@@ -182,7 +196,7 @@ fun MeBody(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = FootRoom + dockRoom()),
     ) {
         item { LoadSwap(shown == null) { if (it) WhoLoading() else shown?.let { p -> Who(p, onEdit) } } }
         item { SectionTitle("Your record") }
@@ -346,105 +360,8 @@ fun ordinal(place: Int): String {
     return "$place$suffix"
 }
 
-/**
- * Changing how you appear to everybody else.
- *
- * The old Firestore profile could do this and the version that replaced it could not, so an
- * account was stuck with whatever Google last called it. Two fields, because two is all an
- * account is allowed to change: the email came from Google and the balance comes from the ledger.
- *
- * The picker is permissionless, it hands back one item the person chose and never gives the app
- * the library, which is why there is no permission prompt anywhere in this flow.
- */
-@Composable
-fun MeEditDialog(
-    name: String,
-    /** The picture there is now, as the profile carries it; blank for none. */
-    photo: String = "",
-    busy: Boolean = false,
-    onSave: (String, Uri?) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var typed by remember { mutableStateOf(name) }
-    var picked by remember { mutableStateOf<Uri?>(null) }
-    val t = Tt.colors
-
-    val pick =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) picked = uri
-        }
-
-    val choose = { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
-    Ask(
-        title = "Edit profile",
-        body =
-            "Your name and picture are visible to the community. New photos are saved in " +
-                "your Drive; anyone with the link can view them.",
-        confirm = if (busy) "Saving" else "Save",
-        confirmEnabled = typed.trim().isNotBlank() && !busy,
-        onConfirm = { onSave(typed, picked) },
-        onDismiss = onDismiss,
-    ) {
-        // The picture in the middle with its camera badge, and the one thing to do with it under it.
-        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                Modifier
-                    .size(72.dp)
-                    .semantics { contentDescription = "Choose a picture" }
-                    .clickable(enabled = !busy, onClick = choose),
-            ) {
-                val chosen = picked
-                if (chosen != null) {
-                    AsyncImage(chosen, null, Modifier.size(72.dp).clip(CircleShape), contentScale = ContentScale.Crop)
-                } else {
-                    Avatar(
-                        photo,
-                        typed
-                            .trim()
-                            .take(1)
-                            .uppercase()
-                            .ifBlank { "?" },
-                        size = 72.dp,
-                        letterStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 28.sp),
-                    )
-                }
-                Box(
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(t.glass)
-                        .padding(2.dp)
-                        .clip(CircleShape)
-                        .background(t.accent),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Lucide.Camera, null, Modifier.size(12.dp), tint = t.onAccent)
-                }
-            }
-            Spacer(Modifier.height(6.dp))
-            Text(
-                "Change photo",
-                Modifier.clip(RoundedCornerShape(6.dp)).clickable(enabled = !busy, onClick = choose).padding(4.dp),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = t.accentInk,
-            )
-        }
-        Spacer(Modifier.height(10.dp))
-        DialogField(
-            value = typed,
-            onValueChange = { typed = it.take(NAME_MAX) },
-            label = "Name",
-            placeholder = "Rafiul",
-            error = if (typed.isNotEmpty() && typed.isBlank()) "That is only spaces." else null,
-            supporting = "It doesn't have to be your real name.",
-            maxLength = NAME_MAX,
-        )
-    }
-}
-
-private const val NAME_MAX = 40
+/** Under the version at the foot of the page: twice the gutter, so it does not sit on the dock. */
+private val FootRoom = Gutter * 2
 
 /** The running version, quietly, at the foot: the short form only. */
 @Composable

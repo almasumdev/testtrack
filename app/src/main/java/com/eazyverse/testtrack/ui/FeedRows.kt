@@ -217,8 +217,10 @@ fun FeedAskButton(
  * the one already offered at the top of the page: this is that control following you down, and
  * the only thing it gives up on the way is the room to be tall.
  *
- * Filled in the page ground rather than the card surface, because it sits over a moving list of
- * cards and needs to read as a plate laid over them, not as one more of them drifting loose.
+ * Filled in the soft accent tile, the ground of the cards' own Review chips, rather than the card
+ * surface or the page ground. Over a moving list it has to read as a plate laid over the cards and
+ * as something to tap: on the card surface it was one more card drifting loose, and on the page
+ * ground it read grey and switched off.
  */
 @Composable
 fun FeedAskBar(onPost: () -> Unit) {
@@ -228,7 +230,7 @@ fun FeedAskBar(onPost: () -> Unit) {
             .padding(horizontal = Gutter)
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.background)
+            .background(Tt.colors.tile)
             .dashedBorder(MaterialTheme.colorScheme.outline, 14.dp)
             .clickable(onClick = onPost)
             .padding(12.dp),
@@ -238,7 +240,7 @@ fun FeedAskBar(onPost: () -> Unit) {
             POST_LABEL,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Tt.colors.tileInk,
         )
     }
 }
