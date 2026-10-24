@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.SubcomposeAsyncImage
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.Photo
 import androidx.compose.foundation.Image as ComposeImage
@@ -136,6 +137,20 @@ fun Avatar(
         return
     }
 
+    // A face kept by address: ours, Google's or a Drive thumbnail. Only the old inline base64 faces
+    // were drawn here once, so every address-kept face showed as its letter, including one just
+    // saved. The letter stands in while it loads and if it cannot be fetched.
+    if (photo.startsWith("https://") || photo.startsWith("http://")) {
+        SubcomposeAsyncImage(
+            model = photo,
+            contentDescription = null,
+            modifier = Modifier.size(size).clip(CircleShape),
+            contentScale = ContentScale.Crop,
+            loading = { Initial(letter, size, letterStyle) },
+            error = { Initial(letter, size, letterStyle) },
+        )
+        return
+    }
     val bitmap = remember(photo) { Photo.decode(photo)?.asImageBitmap() }
     if (bitmap == null) {
         Initial(letter, size, letterStyle)
