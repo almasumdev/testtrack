@@ -184,7 +184,7 @@ android {
 }
 
 /*
- * The tutorial video's frames: the real Circle screens drawn by Robolectric, on the JVM, with no
+ * The videos' frames: the app's real screens drawn by Robolectric, on the JVM, with no
  * device. Off unless asked for, so testDebugUnitTest stays fast; the class reports itself skipped.
  *
  *     ./gradlew :app:testDebugUnitTest -PvideoFrames --tests "*VideoFrames*"
@@ -193,7 +193,8 @@ val videoFrames = providers.gradleProperty("videoFrames").isPresent
 tasks.withType<Test>().configureEach {
     if (videoFrames) {
         systemProperty("videoFrames", "true")
-        systemProperty("videoFrames.out", rootProject.file("media/public/frames/circle").absolutePath)
+        // Each video's frames in their own folder under this one (Frame's [video]).
+        systemProperty("videoFrames.out", rootProject.file("media/public/frames").absolutePath)
         systemProperty("videoFrames.art", rootProject.file("store/art").absolutePath)
         // The frames are the output, and they are wanted again on every run.
         outputs.upToDateWhen { false }

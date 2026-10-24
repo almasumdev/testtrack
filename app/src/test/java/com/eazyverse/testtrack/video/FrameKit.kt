@@ -215,6 +215,8 @@ internal object FrameImages {
 /** One frame being made: a page on screen, the taps recorded, then the PNG and its JSON. */
 internal class Frame(
     private val compose: AndroidComposeTestRule<ActivityScenarioRule<ComponentActivity>, ComponentActivity>,
+    /** The video these frames are for: they go to media/public/frames/<video>. */
+    video: String = "circle",
 ) {
     private val targets = Targets()
 
@@ -223,7 +225,7 @@ internal class Frame(
         NoNetwork.install()
     }
 
-    private val out = File(requireNotNull(System.getProperty("videoFrames.out")) { "videoFrames.out is not set" })
+    private val out = File(requireNotNull(System.getProperty("videoFrames.out")) { "videoFrames.out is not set" }, video)
 
     /** Edge to edge, as MainActivity is, with the page set and given time to settle. */
     fun show(content: @Composable () -> Unit) {

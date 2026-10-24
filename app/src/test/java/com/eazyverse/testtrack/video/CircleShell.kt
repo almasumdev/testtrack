@@ -54,10 +54,18 @@ import org.junit.Assert.assertEquals
  * header's numbers passed in as MainShell would pass them from its model.
  */
 @Composable
-internal fun CircleShell(feed: FeedViewModel) {
+internal fun CircleShell(feed: FeedViewModel) = TabShell(MainTab.CIRCLE, Scene.CIRCLE) { FeedScreen(vm = feed) }
+
+/** Any of the main tabs, laid out as [CircleShell] lays out Circle. */
+@Composable
+internal fun TabShell(
+    tab: MainTab,
+    scene: Scene,
+    page: @Composable () -> Unit,
+) {
     val density = LocalDensity.current
     var dock by remember { mutableStateOf(0.dp) }
-    Backdrop(scene = Scene.CIRCLE) {
+    Backdrop(scene = scene) {
         Scaffold(
             modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)),
             containerColor = Color.Transparent,
@@ -73,11 +81,11 @@ internal fun CircleShell(feed: FeedViewModel) {
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
         ) { padding ->
             Box(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) {
-                CompositionLocalProvider(LocalDockRoom provides dock) { FeedScreen(vm = feed) }
+                CompositionLocalProvider(LocalDockRoom provides dock) { page() }
             }
         }
         MainBar(
-            MainTab.CIRCLE,
+            tab,
             {},
             Modifier
                 .align(Alignment.BottomCenter)
