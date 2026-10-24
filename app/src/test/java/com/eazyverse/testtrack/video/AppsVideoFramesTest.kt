@@ -161,10 +161,14 @@ class AppsVideoFramesTest {
                 setState("pickedIcon", AppIconData.Encoded("", art().asImageBitmap()))
             }
         frame.show { Pushed { AppAddScreen(onAdded = {}, onBack = {}, vm = vm) } }
-        runCatching { frame.target("icon", compose.onNode(hasContentDescription("App icon"))) }
+        runCatching { frame.target("icon", compose.onNode(hasContentDescription("App icon"), useUnmergedTree = true)) }
         runCatching { frame.target("closed", tap("Closed testing")) }
         runCatching { frame.target("live", tap("Live on Play")) }
-        runCatching { frame.target("notice", compose.onNodeWithText("We check it on Play", substring = true)) }
+        // The note is a line of text after its 15 dp info icon and an 8 dp gap: the mark takes both.
+        runCatching {
+            val words = compose.onNodeWithText("We check it on Play", substring = true).screenBounds()
+            frame.target("notice", androidx.compose.ui.geometry.Rect(words.left - frame.px(23f), words.top, words.right, words.bottom))
+        }
         runCatching { frame.target("add", tap("Add to My apps")) }
         frame.write("picked")
     }
