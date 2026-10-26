@@ -47,6 +47,7 @@ import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.TriangleAlert
+import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.PhoneApp
 
@@ -292,7 +293,8 @@ internal fun PickedNotice(
                 if (live) {
                     "We look it up on Google Play's public page as you add it."
                 } else {
-                    "We check it on Play by ourselves once the testers group can see it. You can put it in a crew before then."
+                    "We check it on Play by ourselves once ${Config.GROUP_EMAIL} is on your closed track's testers. " +
+                        "You can put it in a crew before then."
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = Tt.colors.text3,

@@ -18,6 +18,17 @@ object Config {
     val GROUP_URL: String = BuildConfig.GROUP_URL
 
     /**
+     * The group's address, which an owner adds to their closed track's testers: the name in
+     * [GROUP_URL] at googlegroups.com, so the two can never name different groups.
+     */
+    val GROUP_EMAIL: String =
+        GROUP_URL
+            .substringAfter("/g/", "")
+            .substringBefore('/')
+            .substringBefore('?')
+            .let { if (it.isBlank()) "" else "$it@googlegroups.com" }
+
+    /**
      * Only files this app creates. Non-sensitive, so no Google verification is required.
      * Do not widen to `drive` or `drive.readonly`: those are restricted scopes.
      */

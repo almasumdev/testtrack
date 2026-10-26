@@ -159,6 +159,10 @@ private fun Finding(
     vm: AppAddViewModel,
     onPickInstead: () -> Unit,
 ) {
+    if (!vm.isLive) {
+        GroupSetupCard()
+        Spacer(Modifier.height(18.dp))
+    }
     Text(
         "Paste your Google Play link or type the package name.",
         style = MaterialTheme.typography.bodyMedium,
@@ -171,12 +175,6 @@ private fun Finding(
         label = "Play link or package name",
         placeholder = "com.example.myapp",
         isError = vm.failure?.invalidLink == true,
-        supporting =
-            if (vm.isLive) {
-                null
-            } else {
-                "Add the testers group to your closed track before looking up your app."
-            },
         singleLine = true,
         keyboardType = KeyboardType.Uri,
         imeAction = ImeAction.Search,

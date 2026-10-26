@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
+import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
@@ -93,7 +94,7 @@ internal fun UncheckedNote() {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Icon(Lucide.Info, null, Modifier.size(16.dp), tint = Tt.colors.text3)
         Text(
-            "Not checked on Play yet. Make sure the testers group is on your closed track, " +
+            "Not checked on Play yet. Add ${Config.GROUP_EMAIL} to your closed track's testers, " +
                 "or reviewers won't be able to install it.",
             style = MaterialTheme.typography.bodySmall,
             color = Tt.colors.text3,

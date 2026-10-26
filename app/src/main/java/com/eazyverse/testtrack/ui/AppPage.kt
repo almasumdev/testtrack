@@ -270,6 +270,7 @@ private fun VerifyCallout(
     busy: Boolean,
     onVerify: () -> Unit,
 ) {
+    var how by remember { mutableStateOf(false) }
     val shape = RoundedCornerShape(18.dp)
     Column(
         Modifier
@@ -289,13 +290,17 @@ private fun VerifyCallout(
             if (live) {
                 "Google Play didn't answer when you added it. We keep asking, or you can check now."
             } else {
-                "We check it on Play once the testers group can see it. Add the group to your closed " +
-                    "track, then check again."
+                "Add this group to your closed track's testers, then check again."
             },
             style = MaterialTheme.typography.bodySmall,
             color = Tt.colors.text2,
         )
-        Spacer(Modifier.height(12.dp))
+        if (!live) {
+            Spacer(Modifier.height(10.dp))
+            GroupAddress()
+            GroupHowLink { how = true }
+        }
+        Spacer(Modifier.height(if (live) 12.dp else 4.dp))
         Primary(if (busy) "Asking Play" else "Verify now", busy = busy, onClick = onVerify)
         Spacer(Modifier.height(8.dp))
         Text(
@@ -304,6 +309,7 @@ private fun VerifyCallout(
             color = Tt.colors.text4,
         )
     }
+    if (how) GroupHowSheet { how = false }
 }
 
 /** Crew test and feedback as two rows: where each stands, and tapping goes on to the next step. */
