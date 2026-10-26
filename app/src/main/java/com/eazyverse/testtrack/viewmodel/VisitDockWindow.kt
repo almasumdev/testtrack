@@ -6,7 +6,6 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.PixelFormat
-import android.os.Build
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -23,6 +22,7 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.eazyverse.testtrack.data.RoundStore
+import com.eazyverse.testtrack.data.overlayScreen
 import com.eazyverse.testtrack.domain.DockScreen
 import com.eazyverse.testtrack.domain.dockCorner
 import com.eazyverse.testtrack.domain.stickTo
@@ -197,25 +197,7 @@ class VisitDockWindow(
         view?.let { runCatching { windows.updateViewLayout(it, params) } }
     }
 
-    private fun screen(): DockScreen {
-        val res = context.resources
-        val bounds =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                windows.currentWindowMetrics.bounds.let { it.width().toFloat() to it.height().toFloat() }
-            } else {
-                res.displayMetrics.let { it.widthPixels.toFloat() to it.heightPixels.toFloat() }
-            }
-
-        @SuppressLint("DiscouragedApi", "InternalInsetResource")
-        fun bar(name: String) = res.getIdentifier(name, "dimen", "android").takeIf { it > 0 }?.let { res.getDimension(it) } ?: 0f
-        return DockScreen(
-            width = bounds.first,
-            height = bounds.second,
-            top = bar("status_bar_height"),
-            bottom = bar("navigation_bar_height"),
-            margin = 4 * res.displayMetrics.density,
-        )
-    }
+    private fun screen(): DockScreen = overlayScreen(context)
 
     private fun copy(text: String) {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager

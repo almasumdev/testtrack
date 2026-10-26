@@ -151,7 +151,9 @@ private fun LobbyHero(crew: Crew) {
             tone = Tone.OK,
             icon = Lucide.Clock,
             headline = "Starts in ${untilStart(crew.startsIn)}",
-            line = "This crew is already running. Your first day is day ${crew.firstNight}, from midnight, your time. Install the others before then and no day counts against you.",
+            line =
+                "This crew is already running. Your first day is day ${crew.firstNight}, from midnight, your time. " +
+                    "Install the others before then and no day counts against you.",
             meter = {
                 DayMeter(crew.firstNight - 1, done = true, from = crew.firstNight)
                 MeterLabels("You join on day ${crew.firstNight}", "${crew.ownNights} ${if (crew.ownNights == 1) "day" else "days"} for you")

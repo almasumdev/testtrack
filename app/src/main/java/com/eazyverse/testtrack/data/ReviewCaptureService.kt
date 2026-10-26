@@ -1,5 +1,7 @@
 package com.eazyverse.testtrack.data
 
+import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -20,10 +22,17 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.DisplayMetrics
 import android.view.Gravity
+import android.view.MotionEvent
+import android.view.ViewConfiguration
 import android.view.WindowManager
+import android.view.animation.DecelerateInterpolator
 import android.widget.ImageView
 import com.eazyverse.testtrack.MainActivity
 import com.eazyverse.testtrack.R
+import com.eazyverse.testtrack.domain.DockEdge
+import com.eazyverse.testtrack.domain.DockSpot
+import com.eazyverse.testtrack.domain.dockCorner
+import com.eazyverse.testtrack.domain.stickTo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.io.File
@@ -120,18 +129,19 @@ class ReviewCaptureService : Service() {
     }
 
     /**
-     * The button: round, in the right thumb's reach, and not draggable on purpose. It sits where
-     * the guide said it would, every time, so nobody has to look for it.
+     * The button: round, and the first time in the right thumb's reach, a quarter of the way up the
+     * right edge, clear of Play's own bottom bar and its Post button. It moves like the night's
+     * testing control: dragged anywhere, stuck to the nearest edge when let go, and found where it
+     * was left the next time. A tap without a drag takes the screenshot.
      */
+    @SuppressLint("ClickableViewAccessibility")
     private fun showButton() {
         val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val size = dp(64)
-        // Read out here: inside the LayoutParams block below, `height` is the window's own.
-        val lift = (height * 0.24f).toInt()
         val view =
             ImageView(this).apply {
                 setImageResource(R.drawable.review_capture_button)
-                contentDescription = "Take the review screenshot"
+                contentDescription = "Take the review screenshot. Drag to move it."
                 setOnClickListener { capture() }
             }
         val params =
@@ -143,18 +153,103 @@ class ReviewCaptureService : Service() {
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                         WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                     PixelFormat.TRANSLUCENT,
-                ).apply {
-                    gravity = Gravity.BOTTOM or Gravity.END
-                    x = dp(20)
-                    // About a quarter of the way up: where a right thumb rests holding the phone,
-                    // clear of Play's own bottom bar and its Post button.
-                    y = lift
+                ).apply { gravity = Gravity.TOP or Gravity.START }
+        val (x, y) = dockCorner(spot(), size.toFloat(), size.toFloat(), overlayScreen(this))
+        params.x = x.toInt()
+        params.y = y.toInt()
+
+        val slop = ViewConfiguration.get(this).scaledTouchSlop
+        var downX = 0f
+        var downY = 0f
+        var fromX = 0
+        var fromY = 0
+        var dragged = false
+        view.setOnTouchListener { v, e ->
+            when (e.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    downX = e.rawX
+                    downY = e.rawY
+                    fromX = params.x
+                    fromY = params.y
+                    dragged = false
+                    slide?.cancel()
+                    true
                 }
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = e.rawX - downX
+                    val dy = e.rawY - downY
+                    if (!dragged && dx * dx + dy * dy > slop * slop) dragged = true
+                    if (dragged) {
+                        params.x = fromX + dx.toInt()
+                        params.y = fromY + dy.toInt()
+                        runCatching { wm.updateViewLayout(v, params) }
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (dragged) stick(wm, v, params, size) else v.performClick()
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    if (dragged) stick(wm, v, params, size)
+                    true
+                }
+                else -> false
+            }
+        }
         wm.addView(view, params)
         button = view
     }
 
+    private var slide: ValueAnimator? = null
+
+    /** Let go: onto the edge nearest the button's centre, gently, and remembered for next time. */
+    private fun stick(
+        wm: WindowManager,
+        v: android.view.View,
+        params: WindowManager.LayoutParams,
+        size: Int,
+    ) {
+        val screen = overlayScreen(this)
+        val spot = stickTo(params.x + size / 2f, params.y + size / 2f, screen)
+        keepSpot(spot)
+        val (toX, toY) = dockCorner(spot, size.toFloat(), size.toFloat(), screen)
+        val startX = params.x
+        val startY = params.y
+        slide?.cancel()
+        slide =
+            ValueAnimator.ofFloat(0f, 1f).apply {
+                duration = 200
+                interpolator = DecelerateInterpolator()
+                addUpdateListener {
+                    val f = it.animatedValue as Float
+                    params.x = (startX + (toX - startX) * f).toInt()
+                    params.y = (startY + (toY - startY) * f).toInt()
+                    if (button != null) runCatching { wm.updateViewLayout(v, params) }
+                }
+                start()
+            }
+    }
+
+    private fun prefs() = applicationContext.getSharedPreferences(SPOT_PREFS, Context.MODE_PRIVATE)
+
+    /** Where the button was left; the right edge, a quarter of the way up, the first time. */
+    private fun spot(): DockSpot {
+        val p = prefs()
+        val edge = runCatching { DockEdge.valueOf(p.getString(SPOT_EDGE, null) ?: "") }.getOrDefault(DockEdge.RIGHT)
+        return DockSpot(edge, p.getFloat(SPOT_ALONG, 0.76f))
+    }
+
+    private fun keepSpot(spot: DockSpot) {
+        prefs()
+            .edit()
+            .putString(SPOT_EDGE, spot.edge.name)
+            .putFloat(SPOT_ALONG, spot.along)
+            .apply()
+    }
+
     private fun hideButton() {
+        slide?.cancel()
         val view = button ?: return
         button = null
         runCatching { (getSystemService(Context.WINDOW_SERVICE) as WindowManager).removeView(view) }
@@ -286,6 +381,9 @@ class ReviewCaptureService : Service() {
         private const val NOTIF_ID = 4217
         private const val FIRST_GRAB_MS = 350L
         private const val RETRY_MS = 150L
+        private const val SPOT_PREFS = "review_capture_button"
+        private const val SPOT_EDGE = "edge"
+        private const val SPOT_ALONG = "along"
 
         private val state = MutableStateFlow(State.IDLE)
         private val captured = MutableStateFlow<File?>(null)

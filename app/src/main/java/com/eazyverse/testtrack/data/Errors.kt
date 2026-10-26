@@ -53,6 +53,11 @@ fun Throwable.friendly(fallback: String): String =
 
         this is ApiException -> logged("Google turned the sign-in down. Try once more in a moment.")
 
+        // TestTrack's own refusals are written for a person, so they are shown as they came:
+        // "This account was deleted", "That app is already in a crew". Only a server failure
+        // (5xx) gets the caller's sentence instead.
+        this is com.eazyverse.testtrack.net.ApiError && status in 400..499 && message.isNotBlank() -> message
+
         // Anything unrecognised: the caller's own sentence, with the real cause in the log.
         else -> logged(fallback)
     }

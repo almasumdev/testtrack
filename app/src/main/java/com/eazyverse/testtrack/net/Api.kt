@@ -475,6 +475,7 @@ object Api {
                 )
             if (status !in 200..299) {
                 if (status == 401) ApiSession.dropTokens(generation) // Refused, not unreachable: the pair is dead.
+                if (status == 403) failure(status, text) // A deleted account ends here too.
                 false
             } else {
                 ApiSession.remember(json.decodeFromString<Tokens>(text), generation)
@@ -484,16 +485,23 @@ object Api {
         }
     }
 
-    /** Turn the API's error body into something the app can match on. */
+    /**
+     * Turn the API's error body into something the app can match on. An account the team deleted
+     * is ended on the spot, from whichever request found out first.
+     */
     @PublishedApi
     internal fun failure(
         status: Int,
         text: String,
-    ): ApiError =
-        try {
-            val body = json.decodeFromString<ApiErrorOut>(text).error
-            ApiError(status, body.code, body.message)
-        } catch (_: Exception) {
-            ApiError(status, "unknown", "Something went wrong. Try again in a moment.")
-        }
+    ): ApiError {
+        val error =
+            try {
+                val body = json.decodeFromString<ApiErrorOut>(text).error
+                ApiError(status, body.code, body.message)
+            } catch (_: Exception) {
+                ApiError(status, "unknown", "Something went wrong. Try again in a moment.")
+            }
+        if (error.code == AccountGone.CODE) AccountGone.deleted(error.message)
+        return error
+    }
 }

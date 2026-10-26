@@ -49,6 +49,7 @@ import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.data.UpdateTier
 import com.eazyverse.testtrack.domain.LaunchDestination
 import com.eazyverse.testtrack.domain.launchDestination
+import com.eazyverse.testtrack.net.AccountGone
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.*
 import com.eazyverse.testtrack.ui.JoinGroupDialog
@@ -133,6 +134,12 @@ class MainActivity : ComponentActivity() {
             window.isNavigationBarContrastEnforced = false
         }
         Session.init(this)
+        // An account the team deleted is signed out on its first refusal: Google and local state
+        // here, the tokens and the socket in the network layer. See [AccountGone].
+        AccountGone.onGone = {
+            AuthRepo.signOut()
+            Session.signOut()
+        }
         // The last update decision proven online, until Play answers in onStart. Here rather than in
         // App because it reads Session, which is only loaded now.
         AppUpdateService.applyCachedDecision()
@@ -171,6 +178,19 @@ class MainActivity : ComponentActivity() {
                             wasSignedIn = Session.signedIn
                         }
                         JoinGroupDialog(membership)
+
+                        // Said once, in the server's own words, after the account was signed out.
+                        val gone by AccountGone.notice.collectAsState()
+                        gone?.let { said ->
+                            Ask(
+                                title = "This account was deleted",
+                                body = said,
+                                confirm = "OK",
+                                dismiss = null,
+                                onConfirm = AccountGone::seen,
+                                onDismiss = AccountGone::seen,
+                            )
+                        }
 
                         // Once per install: stop hearing from the old version's push. On its own, so
                         // a slow first Firestore connection never holds up anything above.

@@ -13,5 +13,5 @@ class ApiError(
     override val message: String,
 ) : Exception(message) {
     /** The session is gone or was never valid. The one case worth handling everywhere. */
-    val isAuth: Boolean get() = status == 401 || code == "unauthenticated"
+    val isAuth: Boolean get() = status == 401 || code == "unauthenticated" || code == AccountGone.CODE
 }

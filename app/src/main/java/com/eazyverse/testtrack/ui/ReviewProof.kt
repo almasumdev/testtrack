@@ -88,7 +88,10 @@ fun ReviewGuideDialog(
             ).map { AnnotatedString(it) },
         )
         Spacer(Modifier.height(8.dp))
-        DialogNote("Android asks to let TestTrack capture the screen. It takes one picture, then stops.")
+        DialogNote(
+            "Android asks to let TestTrack capture the screen. It takes one picture, then stops. " +
+                "If the button is in the way, drag it to any edge.",
+        )
     }
 }
 
