@@ -270,4 +270,27 @@ class CrewWireTest {
         assertEquals("Day 3 of 14", running.standing)
         assertEquals(listOf("a"), running.apps.map { it.id })
     }
+
+    // ------------------------------------------------------------------------- what came back
+
+    @Test
+    fun a_refund_says_what_really_came_back() {
+        val paid = seat("me", mine = true).copy(charged = 100, refunded = 100).toSeat()
+        assertEquals("Your 100 tix are back.", seatRefundLine(paid))
+        val free = seat("me", mine = true).copy(charged = 0, refunded = 0).toSeat()
+        assertTrue(seatRefundLine(free).contains("placed free"))
+        assertTrue(seatOutLine(free).contains("placed free"))
+        val kept = seat("me", mine = true).copy(charged = 100, refunded = 0).toSeat()
+        assertTrue(seatOutLine(kept).contains("aren't refunded"))
+        // An older server says nothing: the usual price, as before.
+        assertEquals("Your 100 tix are back.", seatRefundLine(seat("me", mine = true).toSeat()))
+    }
+
+    @Test
+    fun a_review_stopped_by_others_does_not_blame_its_reviewer() {
+        assertTrue(reviewOutcome("abandoned").startsWith("You gave this one up"))
+        assertTrue(reviewOutcome("abandoned", endedReason = "reported").contains("Nothing counts against you"))
+        assertTrue(reviewOutcome("abandoned", endedReason = "request_deleted").contains("request was removed"))
+        assertTrue(reviewOutcome("abandoned", endedReason = "team").contains("TestTrack team"))
+    }
 }

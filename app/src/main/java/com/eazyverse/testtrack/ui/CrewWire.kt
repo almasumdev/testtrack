@@ -53,6 +53,8 @@ fun ApiSeat.toSeat(crewName: String = "") =
         yes = yes,
         no = no,
         myVote = myVote,
+        charged = charged,
+        refunded = refunded,
     )
 
 /** One member, as the run screen lists them, in their own calendar. */

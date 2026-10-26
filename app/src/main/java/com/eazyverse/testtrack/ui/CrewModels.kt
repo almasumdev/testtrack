@@ -134,6 +134,9 @@ data class CrewSeat(
     val no: Int = 0,
     /** This account's answer on it, or null if it has not answered. */
     val myVote: Boolean? = null,
+    /** Tix taken for it and given back for it; -1 from an older server that does not say. */
+    val charged: Int = -1,
+    val refunded: Int = -1,
 )
 
 /**

@@ -86,7 +86,9 @@ fun CrewLobbyPhase(
     val install = others - asked.toSet()
 
     CrewList(crew, actions) { onSheet ->
-        if (mine != null && mine.state == SeatState.REJECTED) {
+        // Sent back by members, or taken out by the team before the run: either way it is not
+        // in this crew any more, and its owner is told why rather than shown a lobby.
+        if (mine != null && (mine.state == SeatState.REJECTED || mine.state == SeatState.REMOVED)) {
             block { SentBack(crew, mine, actions) }
             item { CrewHeading("Your app") }
             block { YourAppCard(mine, "Sent back", Tone.BAD, "Not in ${crew.name} any more.") }
@@ -232,20 +234,21 @@ private fun SentBack(
     mine: CrewSeat,
     actions: CrewActions,
 ) {
+    val byTeam = mine.state == SeatState.REMOVED
     androidx.compose.foundation.layout.Column {
         CrewHero(
-            chip = "Sent back",
+            chip = if (byTeam) "Taken out" else "Sent back",
             tone = Tone.BAD,
             icon = Lucide.Undo2,
-            headline = "Your app came back",
-            line = mine.outReason.ifBlank { "It came back to you before the run." },
+            headline = if (byTeam) "The TestTrack team took your app out" else "Your app came back",
+            line = mine.outReason.ifBlank { if (byTeam) "It is not in ${crew.name} any more." else "It came back to you before the run." },
             extra = {
                 if (mine.reasons.isNotEmpty()) Quotes(mine.reasons, "What members wrote. Who wrote it isn't shown.", Tone.BAD)
             },
-            action = "Fix it, then put it in again",
+            action = if (byTeam) "Put it in a crew again" else "Fix it, then put it in again",
             onAction = actions.onTakeSeat,
         )
-        CardNote("Your ${CrewRules.SEAT_COST} tix are back. Fix what's wrong, then put it in a crew again.")
+        CardNote(seatRefundLine(mine, if (byTeam) "" else " Fix what's wrong, then put it in a crew again."))
     }
 }
 
@@ -279,7 +282,9 @@ fun CrewRunPhase(
                         action = "Put it in a new crew",
                         onAction = actions.onTakeSeat,
                     )
-                    CardNote("Seats are kept once a run starts, so this one's tix aren't refunded.")
+                    CardNote(
+                        crew.mine?.let { seatOutLine(it) } ?: "Seats are kept once a run starts, so this one's tix aren't refunded.",
+                    )
                 }
             }
             return@CrewList
@@ -440,3 +445,24 @@ fun CrewRecordPhase(
         }
     }
 }
+
+/** What came back for a seat that left before its run, as the server says it was paid. */
+internal fun seatRefundLine(
+    seat: CrewSeat,
+    after: String = "",
+): String =
+    when {
+        seat.refunded > 0 -> "Your ${seat.refunded} tix are back.$after"
+        seat.charged == 0 -> "It was placed free by the TestTrack team, so there was nothing to refund.$after"
+        seat.charged > 0 -> "Your ${seat.charged} tix are on their way back.$after"
+        // An older server that does not say: the usual price, as before.
+        else -> "Your ${CrewRules.SEAT_COST} tix are back.$after"
+    }
+
+/** What a seat out of a running crew came to: refunded only before its run began. */
+internal fun seatOutLine(seat: CrewSeat): String =
+    when {
+        seat.refunded > 0 -> "Its ${seat.refunded} tix were refunded."
+        seat.charged == 0 -> "It was placed free by the TestTrack team, so there was nothing to refund."
+        else -> "Seats are kept once a run starts, so this one's tix aren't refunded."
+    }

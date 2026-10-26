@@ -316,6 +316,28 @@ class FeedViewModel : ViewModel() {
         }
     }
 
+    /** Put a request two testers could not install back in the feed, once it is fixed. */
+    fun relistRequest(
+        context: Context,
+        id: String,
+    ) {
+        if (busy) return
+        busy = true
+        viewModelScope.launch {
+            try {
+                Api.relistPost(id)
+                message = "Back in the feed. Testers can take it again."
+                load(context)
+            } catch (e: ApiError) {
+                message = e.message
+            } catch (_: Exception) {
+                message = "We could not reach TestTrack. Check your connection."
+            } finally {
+                busy = false
+            }
+        }
+    }
+
     /** One personal part of the load. An auth refusal still ends the whole load. */
     private suspend fun part(block: suspend () -> Unit) {
         try {
@@ -405,6 +427,12 @@ class FeedViewModel : ViewModel() {
             closed = it.closed,
             refundable = it.refundable,
             icon = it.icon,
+            unlisted = it.unlistedAt != null,
+            reports =
+                it.reports.map { r ->
+                    com.eazyverse.testtrack.domain
+                        .InstallReport(r.label, r.note)
+                },
             reviews =
                 it.reviews.map { r ->
                     RequestReview(

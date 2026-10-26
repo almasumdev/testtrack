@@ -399,6 +399,23 @@ class ReviewViewModel : ViewModel() {
         }
     }
 
+    /** It would not install: the developer is told why, the slot goes back, nothing counts against you. */
+    fun report(
+        reason: String,
+        note: String,
+        onDone: () -> Unit,
+    ) {
+        val current = job ?: return
+        run(waits = true) {
+            keep(current.copy(review = Api.reportPost(current.review.postId, reason, note)))
+            app?.let { ProofStore.forget(it, current.review.id) }
+            proof = null
+            this.note = ""
+            message = "Thanks. The developer is told why, and nothing counts against you."
+            onDone()
+        }
+    }
+
     /** Give the slot back so somebody else can take it. Whatever was kept for it goes too. */
     fun abandon(onDone: () -> Unit) {
         val current = job ?: return

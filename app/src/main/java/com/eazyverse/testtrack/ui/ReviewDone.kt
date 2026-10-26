@@ -82,7 +82,13 @@ internal fun ReviewDone(
         Spacer(Modifier.height(6.dp))
         Text(
             // The stages below say what happens next, so the line above them does not repeat it.
-            if (state == "submitted") "Thanks for reviewing. Here's what happens next." else reviewOutcome(state, job.live),
+            if (state ==
+                "submitted"
+            ) {
+                "Thanks for reviewing. Here's what happens next."
+            } else {
+                reviewOutcome(state, job.live, job.review.endedReason)
+            },
             Modifier.widthIn(max = 300.dp),
             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
             color = t.text2,

@@ -93,6 +93,7 @@ fun ReviewScreen(
     var guiding by remember { mutableStateOf(false) }
     var askingOverlay by remember { mutableStateOf(false) }
     var givingUp by remember { mutableStateOf(false) }
+    var reporting by remember { mutableStateOf(false) }
     val consent =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             val data = result.data
@@ -178,6 +179,7 @@ fun ReviewScreen(
             }
         },
         onGiveUp = { givingUp = true },
+        onReport = { reporting = true },
         onSend = { proof, note ->
             requireMembership {
                 if (vm.driveConnected) {
@@ -189,6 +191,17 @@ fun ReviewScreen(
             }
         },
     )
+
+    if (reporting) {
+        InstallReportDialog(
+            appName = post.appName,
+            onSend = { reason, note ->
+                reporting = false
+                vm.report(reason, note, onClose)
+            },
+            onDismiss = { reporting = false },
+        )
+    }
 
     if (givingUp) {
         Ask(
@@ -264,6 +277,7 @@ fun ReviewBody(
     connectingDrive: Boolean = false,
     onConnectDrive: () -> Unit = {},
     onGiveUp: (() -> Unit)? = null,
+    onReport: (() -> Unit)? = null,
 ) {
     var editingProof by remember { mutableStateOf<Uri?>(null) }
     val pick =
@@ -390,7 +404,7 @@ fun ReviewBody(
                                 }
                             ) to (
                                 when {
-                                    job.settled -> reviewOutcome(job.review.state, job.live)
+                                    job.settled -> reviewOutcome(job.review.state, job.live, job.review.endedReason)
                                     job.step == ReviewStep.USE && !usageAccess ->
                                         "Allow Usage access for TestTrack, then return. Time already spent still counts."
                                     job.step == ReviewStep.PROVE && shown != null ->
@@ -461,6 +475,12 @@ fun ReviewBody(
                         if (!job.settled && job.step == ReviewStep.INSTALL) {
                             Spacer(Modifier.height(gap))
                             DisputeNote()
+                        }
+                        // Before the app is in use: something that will not install is reported, not
+                        // given up, so the developer hears why and nothing counts against the tester.
+                        if (!job.settled && onReport != null && job.step == ReviewStep.INSTALL) {
+                            Spacer(Modifier.height(gap))
+                            ReportLink(onReport)
                         }
                         if (!job.settled && onGiveUp != null) {
                             Spacer(Modifier.height(gap))

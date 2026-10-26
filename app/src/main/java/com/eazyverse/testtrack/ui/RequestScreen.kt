@@ -56,12 +56,16 @@ fun RequestCheck(
     onBack: () -> Unit = {},
     onClose: () -> Unit = {},
     onOpenWaiting: (String) -> Unit = {},
+    onRelist: () -> Unit = {},
 ) {
     var closing by remember { mutableStateOf(false) }
     CheckPage(
         title = "Your request",
         onBack = onBack,
         actions = {
+            if (request.unlisted && !request.closed) {
+                Primary("I fixed it, relist it", Modifier.weight(1f), enabled = !busy, onClick = onRelist)
+            }
             if (!request.closed) {
                 Secondary(
                     if (request.refundable > 0) "Close and get ${request.refundable} tix back" else "Close request",
@@ -78,6 +82,10 @@ fun RequestCheck(
             detail = if (request.closed) "Closed" else "",
             icon = request.icon,
         )
+        if (request.reports.isNotEmpty()) {
+            Spacer(Modifier.height(12.dp))
+            InstallReports(request)
+        }
         Spacer(Modifier.height(12.dp))
         StatTiles(
             listOf(

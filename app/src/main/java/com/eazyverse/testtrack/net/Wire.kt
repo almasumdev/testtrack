@@ -174,6 +174,25 @@ data class ApiMyPost(
     val closed: Boolean = false,
     val refundable: Int = 0,
     val reviews: List<ApiOwnerReview> = emptyList(),
+    /** Set while it is off the feed because two testers could not install it. */
+    @SerialName("unlisted_at") val unlistedAt: String? = null,
+    /** Why testers could not install it, newest first, without who said so. */
+    val reports: List<ApiPostReport> = emptyList(),
+)
+
+@Serializable
+data class ApiPostReport(
+    val reason: String,
+    val label: String,
+    val note: String = "",
+    val at: String = "",
+)
+
+/** A tester who could not install an app: one of the fixed reasons, and a note for "other". */
+@Serializable
+data class PostReportIn(
+    val reason: String,
+    val note: String,
 )
 
 @Serializable
@@ -222,6 +241,8 @@ data class ApiReview(
     val id: String,
     @SerialName("post_id") val postId: String,
     val state: String,
+    /** Why it ended when its reviewer did not give it up: reported, request_deleted, member_deleted, team. */
+    @SerialName("ended_reason") val endedReason: String? = null,
     @SerialName("used_ms") val usedMs: Long,
     @SerialName("needed_ms") val neededMs: Long,
     @SerialName("proof_ref") val proofRef: String,
@@ -382,6 +403,9 @@ data class ApiSeat(
     @SerialName("opened_mine_days") val openedMineDays: Int = 0,
     /** The day this seat's own run starts on: 1 unless the team put it in part-way through. */
     @SerialName("first_night") val firstNight: Int = 1,
+    /** Tix taken for this seat and given back for it; -1 from an older server that does not say. */
+    val charged: Int = -1,
+    val refunded: Int = -1,
     @SerialName("created_at") val createdAt: String,
 )
 

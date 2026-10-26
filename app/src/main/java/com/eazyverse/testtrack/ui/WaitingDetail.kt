@@ -102,6 +102,7 @@ fun CheckScreen(
                     proof = { ref -> ProofImage(ref, whole = true) },
                     onBack = onClose,
                     onClose = { feed.closeRequest(context, request.id) },
+                    onRelist = { feed.relistRequest(context, request.id) },
                     onOpenWaiting = onOpen,
                 )
             case != null ->

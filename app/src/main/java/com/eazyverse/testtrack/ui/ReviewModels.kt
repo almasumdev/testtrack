@@ -110,8 +110,18 @@ data class ReviewJob(
 fun reviewOutcome(
     state: String,
     live: Boolean = false,
+    /** Why it ended, where its reviewer did not give it up. */
+    endedReason: String? = null,
 ): String =
     when (state) {
+        "abandoned" ->
+            when (endedReason) {
+                "reported" -> "You told the developer it wouldn't install. Nothing counts against you, and the slot went back."
+                "request_deleted" -> "The request was removed, so this review stopped. Nothing counts against you."
+                "member_deleted" -> "The developer's account was removed, so this review stopped. Nothing counts against you."
+                "team" -> "The TestTrack team stopped this review. Nothing counts against you."
+                else -> "You gave this one up. The slot went to somebody else."
+            }
         "submitted" ->
             if (live) {
                 "With the developer, who can accept it any time. If they don't answer, keep the app installed: " +
@@ -127,7 +137,6 @@ fun reviewOutcome(
             }
         "disputed" -> "The developer disputed it. Three members are deciding."
         "rejected" -> "The members sided with the developer. Nothing was paid, and their fee came from your tix."
-        "abandoned" -> "You gave this one up. The slot went to somebody else."
         "expired" ->
             if (live) "It sat unfinished for three days, so the slot went back." else "It sat unfinished for a day, so the slot went back."
         else -> ""

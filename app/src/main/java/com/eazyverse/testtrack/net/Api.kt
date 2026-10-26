@@ -188,6 +188,16 @@ object Api {
 
     suspend fun abandon(reviewId: String): ApiReview = post("/reviews/$reviewId/abandon", Empty())
 
+    /** This app would not install: tell its owner why, and give the slot back with nothing against you. */
+    suspend fun reportPost(
+        postId: String,
+        reason: String,
+        note: String,
+    ): ApiReview = post("/feed/posts/$postId/report", PostReportIn(reason, note))
+
+    /** Put your request back in the feed after two testers could not install it. */
+    suspend fun relistPost(postId: String): ApiMyPost = post("/feed/posts/$postId/relist", Empty())
+
     /** Whether a live app is still installed a few days after its review was sent. */
     suspend fun kept(
         reviewId: String,

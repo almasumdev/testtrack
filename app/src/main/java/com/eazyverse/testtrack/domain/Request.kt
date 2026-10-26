@@ -22,6 +22,10 @@ data class Request(
     val reviews: List<RequestReview> = emptyList(),
     /** The app's icon as its owner's My apps has it; empty where it has none, or from an older server. */
     val icon: String = "",
+    /** Off the feed because two testers could not install it, until it is relisted. */
+    val unlisted: Boolean = false,
+    /** Why testers could not install it, newest first, without who said so. */
+    val reports: List<InstallReport> = emptyList(),
 ) {
     /** Reviews still on their way, or waiting on the owner or the members. */
     val underWay: Int get() = reviews.count { it.state in setOf("claimed", "installed", "used", "submitted", "disputed") }
@@ -53,3 +57,9 @@ fun requestReviewStatus(review: RequestReview): String =
         "expired" -> "Ran out"
         else -> review.state
     }
+
+/** One tester who could not install the app, in the fixed reason's words and their own note. */
+data class InstallReport(
+    val label: String,
+    val note: String = "",
+)
