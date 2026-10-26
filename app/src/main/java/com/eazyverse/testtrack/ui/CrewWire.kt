@@ -106,7 +106,8 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
     // next: what they have to do about it is fix it and take a seat again, not watch a run.
     val phase = if (member && mine?.state == "rejected") CrewPhase.LOBBY else crewPhase(this, member)
     val stillIn = mine != null && mine.state == "confirmed"
-    val owed = members.filter { !it.mine && it.state == "confirmed" }
+    // An app the team put in part-way through is owed from its first night, not before.
+    val owed = members.filter { !it.mine && it.state == "confirmed" && it.firstNight <= day }
 
     return Crew(
         id = id,
@@ -123,8 +124,10 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
         day = day,
         startsIn = startsInMs,
         // What it came to. Only meaningful once it is over, and the server's own day count is
-        // the honest figure: capped at the fortnight rather than however long ago it filled.
-        finishedDays = if (phase == CrewPhase.RECORD) minOf(day, runDays) else 0,
+        // the honest figure: capped at the fortnight rather than however long ago it filled, and
+        // counted from this account's first night where its app joined part-way through.
+        finishedDays = if (phase == CrewPhase.RECORD) (minOf(day, runDays) - firstNight + 1).coerceAtLeast(0) else 0,
+        firstNight = firstNight,
     )
 }
 

@@ -380,6 +380,8 @@ data class ApiSeat(
     @SerialName("opened_mine_at") val openedMineAt: String? = null,
     /** On how many of their days this member has opened the reader's app. */
     @SerialName("opened_mine_days") val openedMineDays: Int = 0,
+    /** The day this seat's own run starts on: 1 unless the team put it in part-way through. */
+    @SerialName("first_night") val firstNight: Int = 1,
     @SerialName("created_at") val createdAt: String,
 )
 
@@ -399,6 +401,8 @@ data class ApiCrew(
     @SerialName("run_days") val runDays: Int,
     /** This account's own day of the fortnight. Zero before their own midnight. */
     val day: Int = 0,
+    /** The day this account's own run starts on: 1 unless the team put its app in part-way through. */
+    @SerialName("first_night") val firstNight: Int = 1,
     @SerialName("starts_in_ms") val startsInMs: Long = 0,
     @SerialName("my_seat_id") val mySeatId: String? = null,
     @SerialName("filled_at") val filledAt: String? = null,

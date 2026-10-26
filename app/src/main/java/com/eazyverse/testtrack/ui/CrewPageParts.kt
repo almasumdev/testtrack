@@ -115,11 +115,14 @@ internal fun SegmentMeter(
 internal fun DayMeter(
     day: Int,
     done: Boolean = false,
+    /** The first day that is this account's; days before it were the crew's before it joined. */
+    from: Int = 1,
 ) {
     val past = if (done) Status.posted else Tt.colors.accent
     val now = Tt.colors.accent.copy(alpha = 0.45f)
     SegmentMeter(CrewRules.RUN_DAYS) { i ->
         when {
+            i < from - 1 -> Tt.colors.glassBorderStrong
             i < day - 1 -> past
             i == day - 1 -> if (done) past else now
             else -> Tt.colors.glass2

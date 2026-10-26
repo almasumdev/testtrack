@@ -144,6 +144,19 @@ private fun LobbyHero(crew: Crew) {
                 MeterLabels("${crew.filled} in" + if (checking > 0) ", $checking being checked" else "", "${CrewRules.SEATS} seats")
             },
         )
+    } else if (crew.firstNight > 1) {
+        // Put in by the team part-way through: this account's own run starts on a later day.
+        CrewHero(
+            chip = "Joining on day ${crew.firstNight}",
+            tone = Tone.OK,
+            icon = Lucide.Clock,
+            headline = "Starts in ${untilStart(crew.startsIn)}",
+            line = "This crew is already running. Your first day is day ${crew.firstNight}, from midnight, your time. Install the others before then and no day counts against you.",
+            meter = {
+                DayMeter(crew.firstNight - 1, done = true, from = crew.firstNight)
+                MeterLabels("You join on day ${crew.firstNight}", "${crew.ownNights} ${if (crew.ownNights == 1) "day" else "days"} for you")
+            },
+        )
     } else {
         CrewHero(
             chip = "Full, ${CrewRules.SEATS} of ${CrewRules.SEATS}",
@@ -295,7 +308,7 @@ private fun RunHero(
 ) {
     val done = owed.isEmpty()
     val last = crew.day >= CrewRules.RUN_DAYS
-    val next = if (last) "That was the last night." else "Day ${crew.day + 1} begins at midnight, your time."
+    val next = if (last) "That was the last night." else "Day ${crew.ownDay + 1} begins at midnight, your time."
     val line =
         when {
             done -> "All ${crew.apps.size} opened. $next"
@@ -303,10 +316,10 @@ private fun RunHero(
             missing.size == 1 -> "${missing.first().label} isn't on your phone yet, so install it first."
             missing.isNotEmpty() -> "${missing.size} apps aren't on your phone yet, so install them first."
             last -> "No missed days. Tonight is the last night."
-            else -> "No missed days. Day ${crew.day + 1} begins at midnight, your time."
+            else -> "No missed days. Day ${crew.ownDay + 1} begins at midnight, your time."
         }
     CrewHero(
-        chip = if (crew.atRisk) "Day ${crew.day}, ${crew.myMisses} missed" else "Day ${crew.day} of ${CrewRules.RUN_DAYS}",
+        chip = if (crew.atRisk) "Day ${crew.ownDay}, ${crew.myMisses} missed" else "Day ${crew.ownDay} of ${crew.ownNights}",
         tone =
             if (crew.atRisk) {
                 Tone.WARN
@@ -327,10 +340,10 @@ private fun RunHero(
         line = line,
         lineTone = if (crew.atRisk && !done) Tone.WARN else null,
         meter = {
-            DayMeter(crew.day, done)
-            // Tonight counts as done once it is, so the two sides always add up to the run.
-            val daysDone = (crew.day - if (done) 0 else 1).coerceIn(0, CrewRules.RUN_DAYS)
-            MeterLabels("$daysDone ${if (daysDone == 1) "day" else "days"} done", "${CrewRules.RUN_DAYS - daysDone} to go")
+            DayMeter(crew.day, done, from = crew.firstNight)
+            // Tonight counts as done once it is, so the two sides always add up to this account's run.
+            val daysDone = (crew.ownDay - if (done) 0 else 1).coerceIn(0, crew.ownNights)
+            MeterLabels("$daysDone ${if (daysDone == 1) "day" else "days"} done", "${crew.ownNights - daysDone} to go")
         },
         action =
             when {

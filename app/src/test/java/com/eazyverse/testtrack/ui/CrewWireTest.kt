@@ -241,4 +241,33 @@ class CrewWireTest {
         val seat = seat().copy(icon = "https://play/b").toSeat("Crew 07")
         assertEquals("https://play/b", seat.icon)
     }
+
+    // ------------------------------------------------------------------------- joining part-way
+
+    @Test
+    fun an_app_put_in_part_way_is_not_owed_before_its_first_night() {
+        val late = seat("late").copy(firstNight = 7)
+        val tonight = crew(state = "full", day = 6, members = listOf(seat("me", mine = true), seat("a"), late)).toCrew()
+        assertEquals(listOf("a"), tonight.apps.map { it.id })
+        val next = crew(state = "full", day = 7, members = listOf(seat("me", mine = true), seat("a"), late)).toCrew()
+        assertEquals(listOf("a", "late"), next.apps.map { it.id })
+    }
+
+    @Test
+    fun a_late_joiner_counts_its_own_days_not_the_crews() {
+        val running = crew(state = "full", day = 9, members = listOf(seat("me", mine = true))).copy(firstNight = 6).toCrew()
+        assertEquals(9, running.ownNights)
+        assertEquals(4, running.ownDay)
+        assertEquals("Day 4 of 9", running.standing)
+        val done = crew(state = "done", day = 20, members = listOf(seat("me", mine = true))).copy(firstNight = 6).toCrew()
+        assertEquals(9, done.finishedDays)
+    }
+
+    @Test
+    fun a_seat_from_the_start_is_unchanged() {
+        val running = crew(state = "full", day = 3, members = listOf(seat("me", mine = true), seat("a"))).toCrew()
+        assertEquals(1, running.firstNight)
+        assertEquals("Day 3 of 14", running.standing)
+        assertEquals(listOf("a"), running.apps.map { it.id })
+    }
 }

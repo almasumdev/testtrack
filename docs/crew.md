@@ -118,6 +118,26 @@ The lobby is the new screen and the interesting one. It is the only place in the
 members do something together before the run, and it is what makes a crew feel like a crew rather
 than a queue.
 
+## Joining part-way
+
+Decided October 2026. The team can put an app into any crew that has not finished and has a free
+place, and move a seat between crews at any time, from the admin panel
+(eazyverse.com/testtrack/admin). Members still cannot: taking a seat is unchanged.
+
+- A seat placed or moved into a crew whose run has begun carries `joined_at`. Its **first night**
+  is the first local midnight after that moment, the same rule that starts a crew; the rest of that
+  day is its setup window. Every other seat has `first_night` 1.
+- Day numbers stay on the crew's clock, and the crew still ends on its own last day, so a seat that
+  joins on day 6 has days 6 to 14: nine days, not fourteen. The panel says so before the team
+  confirms, because Google's fourteen days will not come from that run alone.
+- Nothing before a seat's first night counts: not as a missed day, not in reminders, not in what
+  anybody owes. Other members are owed the newcomer's app from its first night in their own
+  calendars, and the newcomer owes the others from the same night.
+- A seat moved out of a running crew keeps its visits there as history and starts over where it
+  lands. The visits key is per crew for that reason.
+- The app counts a late joiner's run from its own first night ("Day 4 of 9"), greys the days before
+  it on the meter, and leaves a newcomer's app out of tonight's list until its first night.
+
 ## Missed days
 
 Decided October 2026, from the rule the app had always shown: miss a day (anything owed left
@@ -127,5 +147,5 @@ against you. Every member gets an evening reminder at 20:00 their time while any
 
 ## Still open
 
-- No admin console page yet. Force-start and taking an app out are admin endpoints
-  (`/crews/admin/...`), logged with who and why.
+- The admin panel (eazyverse.com/testtrack/admin) starts crews, takes apps out, places apps and
+  moves seats, each logged with who and why.

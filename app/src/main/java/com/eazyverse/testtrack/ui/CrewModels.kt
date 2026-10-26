@@ -209,7 +209,15 @@ data class Crew(
     val startsIn: Long = 0L,
     /** How the fortnight went, once there is a fortnight to talk about. */
     val finishedDays: Int = 0,
+    /** The day this account's own run starts on: 1 unless its app joined part-way through. */
+    val firstNight: Int = 1,
 ) {
+    /** Days of the run that are this account's: all fourteen, or what was left when it joined. */
+    val ownNights: Int get() = (CrewRules.RUN_DAYS - firstNight + 1).coerceAtLeast(0)
+
+    /** Which of this account's own days it is, counted from its first night. */
+    val ownDay: Int get() = (day - firstNight + 1).coerceAtLeast(0)
+
     /** This account's seat in it, in whatever state. */
     val mine: CrewSeat? get() = seats.firstOrNull { it.mine }
 
@@ -257,7 +265,7 @@ data class Crew(
                 phase == CrewPhase.OPEN -> "${CrewRules.SEATS - taken} seats left"
                 phase == CrewPhase.LOBBY && filling -> "Filling, $filled of ${CrewRules.SEATS}"
                 phase == CrewPhase.LOBBY -> "Starts in ${untilStart(startsIn)}"
-                phase == CrewPhase.RUN -> "Day $day of ${CrewRules.RUN_DAYS}"
+                phase == CrewPhase.RUN -> "Day $ownDay of $ownNights"
                 else -> "Finished after $finishedDays days"
             }
 }
