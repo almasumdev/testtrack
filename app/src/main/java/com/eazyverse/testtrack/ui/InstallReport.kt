@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
+import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -157,7 +158,7 @@ internal fun InstallReports(request: Request) {
         }
         Text(
             if (request.unlisted) {
-                "Check your testers list and that the app is on its closed track, then relist it."
+                "Check that ${Config.GROUP_EMAIL} is on your closed track's testers and a release is rolled out, then relist it."
             } else {
                 "Two reports take it off Circle until you fix it and relist it."
             },

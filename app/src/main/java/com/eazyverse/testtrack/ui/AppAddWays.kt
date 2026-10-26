@@ -67,7 +67,7 @@ internal fun AddWayChoice(
         tint = Tt.colors.accent,
         title = "Play link or package name",
         body = "Paste your Google Play link or type the package name. Play gives us the icon and name.",
-        ticks = listOf("Checked on Play right away", "For closed testing, add the testers group first"),
+        ticks = listOf("Checked on Play right away", "For closed testing, we show you which group to add"),
         tag = null,
         selected = selected == AddWay.PLAY,
         onClick = { onSelect(AddWay.PLAY) },
