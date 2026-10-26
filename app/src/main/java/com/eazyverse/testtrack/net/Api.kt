@@ -71,7 +71,7 @@ object Api {
                         .build()
                 val used = ApiSession.access
                 val first = chain.proceed(withToken(used))
-                if (first.code != 401 || !refreshQuietly(used)) return@addInterceptor first
+                if (first.code != 401 || !ApiRefresh.quietly(used)) return@addInterceptor first
                 first.close()
                 chain.proceed(withToken(ApiSession.access))
             }.build()
@@ -422,7 +422,7 @@ object Api {
         withContext(Dispatchers.IO) {
             val used = if (authed) ApiSession.access else null
             var attempt = call(builder, used)
-            if (attempt.first == 401 && authed && refreshQuietly(used)) {
+            if (attempt.first == 401 && authed && ApiRefresh.quietly(used)) {
                 attempt = call(builder, ApiSession.access)
             }
             val (status, text) = attempt
@@ -435,7 +435,7 @@ object Api {
         withContext(Dispatchers.IO) {
             val used = ApiSession.access
             var attempt = call(builder, used)
-            if (attempt.first == 401 && refreshQuietly(used)) attempt = call(builder, ApiSession.access)
+            if (attempt.first == 401 && ApiRefresh.quietly(used)) attempt = call(builder, ApiSession.access)
             val (status, text) = attempt
             if (status !in 200..299) throw failure(status, text)
         }
@@ -448,50 +448,6 @@ object Api {
         if (token != null) builder.header("Authorization", "Bearer $token") else builder.removeHeader("Authorization")
         http.newCall(builder.build()).execute().use { response ->
             return response.code to (response.body?.string().orEmpty())
-        }
-    }
-
-    private val refreshing = Any()
-
-    /**
-     * Try the refresh token once. False means the session is really gone.
-     *
-     * One at a time, and only for the token that was refused. The server retires a refresh token
-     * the moment it is used, so when a launch after the access token has lapsed sends five
-     * requests at once and all five come back 401, five refreshes with the same token meant one
-     * won and four were told to sign in again: the screen said the session had ended, and the next
-     * launch, holding the winner's pair, worked. Now the first refreshes, and the rest find the
-     * token they were refused with has already been replaced and simply retry with the new one.
-     */
-    @PublishedApi
-    internal fun refreshQuietly(refused: String?): Boolean =
-        synchronized(refreshing) {
-            val current = ApiSession.access
-            if (current != null && current != refused) return true
-            refreshNow()
-        }
-
-    private fun refreshNow(): Boolean {
-        val generation = ApiSession.generation
-        val token = ApiSession.refresh ?: return false
-        return try {
-            val (status, text) =
-                call(
-                    Request
-                        .Builder()
-                        .url(url("/auth/refresh"))
-                        .post(json.encodeToString(RefreshIn(token)).toRequestBody(JSON)),
-                    null,
-                )
-            if (status !in 200..299) {
-                if (status == 401) ApiSession.dropTokens(generation) // Refused, not unreachable: the pair is dead.
-                if (status == 403) failure(status, text) // A deleted account ends here too.
-                false
-            } else {
-                ApiSession.remember(json.decodeFromString<Tokens>(text), generation)
-            }
-        } catch (_: Exception) {
-            false
         }
     }
 

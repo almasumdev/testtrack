@@ -9,21 +9,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.domain.Case
 import com.eazyverse.testtrack.domain.Request
-import com.eazyverse.testtrack.domain.RequestReview
 import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiActivityEvent
 import com.eazyverse.testtrack.net.ApiAuth
-import com.eazyverse.testtrack.net.ApiDispute
 import com.eazyverse.testtrack.net.ApiError
-import com.eazyverse.testtrack.net.ApiMyPost
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.ApiReview
 import com.eazyverse.testtrack.net.ApiSession
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import com.eazyverse.testtrack.viewmodel.PhoneChecks
+import com.eazyverse.testtrack.viewmodel.caseOf
+import com.eazyverse.testtrack.viewmodel.millis
+import com.eazyverse.testtrack.viewmodel.requestOf
 import kotlinx.coroutines.launch
-import java.time.Instant
 
 /**
  * Circle, against the API.
@@ -398,56 +397,6 @@ class FeedViewModel : ViewModel() {
         )
     }
 
-    private fun caseOf(it: ApiDispute) =
-        Case(
-            id = it.id,
-            appName = it.appName,
-            reason = it.reason,
-            written = it.written,
-            proofRef = it.proofRef,
-            stake = it.stake,
-            votesCast = it.votesCast,
-            votesNeeded = it.votesNeeded,
-            packageName = it.packageName,
-            reward = it.reward,
-            isLive = it.isLive,
-            icon = it.icon,
-        )
-
-    private fun requestOf(it: ApiMyPost) =
-        Request(
-            id = it.id,
-            appName = it.appName,
-            packageName = it.packageName,
-            isLive = it.isLive,
-            reward = it.reward,
-            bought = it.reviewsBought,
-            done = it.reviewsDone,
-            open = it.slotsOpen,
-            closed = it.closed,
-            refundable = it.refundable,
-            icon = it.icon,
-            unlisted = it.unlistedAt != null,
-            reports =
-                it.reports.map { r ->
-                    com.eazyverse.testtrack.domain
-                        .InstallReport(r.label, r.note)
-                },
-            reviews =
-                it.reviews.map { r ->
-                    RequestReview(
-                        id = r.id,
-                        state = r.state,
-                        reviewerName = r.reviewerName,
-                        proofRef = r.proofRef,
-                        written = r.written,
-                        reason = r.reason,
-                        outcome = r.outcome,
-                        decideBy = millis(r.decideBy),
-                    )
-                },
-        )
-
     /** Accept a review of your app. The reviewer is paid and the post is one closer to done. */
     fun approve(
         context: Context,
@@ -505,9 +454,6 @@ class FeedViewModel : ViewModel() {
         }
     }
 }
-
-/** An ISO time from the server as epoch milliseconds, or null when absent or unreadable. */
-private fun millis(iso: String?): Long? = iso?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() }
 
 /** How long an owner has to answer, as the server's rule; only used when it did not say. */
 private const val TWO_DAYS = 48 * 3_600_000L

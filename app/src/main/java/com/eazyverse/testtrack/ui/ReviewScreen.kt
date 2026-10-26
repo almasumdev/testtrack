@@ -1,11 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import android.app.Activity
-import android.content.Context
-import android.media.projection.MediaProjectionConfig
-import android.media.projection.MediaProjectionManager
 import android.net.Uri
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -107,16 +103,7 @@ fun ReviewScreen(
         if (!vm.canFloat(context)) {
             askingOverlay = true
         } else {
-            val projections = context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-            // The whole screen, asked for by name: on Android 14 and later the default is "share one
-            // app", which adds an app picker to a one-tap screenshot.
-            val ask =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    projections.createScreenCaptureIntent(MediaProjectionConfig.createConfigForDefaultDisplay())
-                } else {
-                    projections.createScreenCaptureIntent()
-                }
-            consent.launch(ask)
+            consent.launch(wholeScreenCapture(context))
         }
     }
 
@@ -204,12 +191,8 @@ fun ReviewScreen(
     }
 
     if (givingUp) {
-        Ask(
-            title = "Give this review up?",
-            body = "The slot goes back for somebody else, and you can't take this one again.",
-            confirm = "Give it up",
-            destructive = true,
-            onConfirm = {
+        GiveUpDialog(
+            onGiveUp = {
                 givingUp = false
                 vm.abandon(onClose)
             },
