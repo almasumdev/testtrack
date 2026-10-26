@@ -439,6 +439,10 @@ fun CrewRecordPhase(
                 onAction = actions.onTakeSeat,
             )
         }
+        // Paid by the server as the crew closed; an older server, or a run with a miss, says nothing.
+        crew.mine?.takeIf { it.refunded > 0 }?.let { mine ->
+            block { CardNote("You never missed a day, so your ${mine.refunded} tix came back.") }
+        }
         crew.mine?.let { mine ->
             item { CrewHeading("Your app") }
             block { TestersCard(crew, mine, actions) }

@@ -145,6 +145,15 @@ unopened at your own midnight) and you get a warning; miss two in a row and your
 run, nobody opens it any more and you owe nothing more there. An app you reported is not counted
 against you. Every member gets an evening reminder at 20:00 their time while anything is left.
 
+## A clean run pays the seat back
+
+Decided October 2026. When a crew closes, every member still in it who opened everything they
+owed on every one of their nights gets back what their seat cost (100 tix), once, and the
+finished notification and the Record say so. One short day, even one only warned, keeps the tix.
+A seat the team put in part-way is held only to its own nights; a seat placed free gets nothing
+back because nothing was charged. Showing up every day is what makes a crew work, so the member
+who never let it down rides for free. The server's crew_sweep.close_finished decides it.
+
 ## Still open
 
 - The admin panel (eazyverse.com/testtrack/admin) starts crews, takes apps out, places apps and

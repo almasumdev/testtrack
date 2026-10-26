@@ -156,9 +156,9 @@ private fun SeatPrice(tix: Int?) {
                 if (tix ==
                     null
                 ) {
-                    "Back in full if you take it out while the crew fills."
+                    "Back in full if you take it out while the crew fills, or finish every day."
                 } else {
-                    "You have $tix tix. Back in full if you take it out while the crew fills."
+                    "You have $tix tix. Back in full if you take it out while the crew fills, or finish every day."
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = if (short) Tt.colors.bad else Tt.colors.text3,

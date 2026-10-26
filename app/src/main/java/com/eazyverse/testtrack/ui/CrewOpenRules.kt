@@ -85,9 +85,13 @@ internal fun CrewRulesCard() {
                 Lucide.RotateCcw,
                 Tone.OK,
                 "Come back",
-                listOf("Back in full if you take it out while the crew fills", "Or if ${CrewRules.REPORTS_TO_RETURN} reports send it back"),
+                listOf(
+                    "Back in full if you take it out while the crew fills",
+                    "Or if ${CrewRules.REPORTS_TO_RETURN} reports send it back",
+                    "Or if you finish all ${CrewRules.RUN_DAYS} days without missing one",
+                ),
             )
-            TixCard(Lucide.Lock, Tone.BAD, "Kept", listOf("Once the crew is full", "Or if it leaves for missed days"))
+            TixCard(Lucide.Lock, Tone.BAD, "Kept", listOf("If you miss a day once the run starts", "Or if your app leaves for missed days"))
         }
 
         RulesHeading("Good to know")

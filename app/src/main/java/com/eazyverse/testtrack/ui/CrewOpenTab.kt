@@ -59,7 +59,7 @@ fun CrewOpenTab(
                                 crew == null -> "The next app put in starts one."
                                 else ->
                                     "It starts at midnight, your time, the day it is full. A seat costs ${CrewRules.SEAT_COST} tix, " +
-                                        "back in full if you take it out while the crew fills."
+                                        "back in full if you take it out while the crew fills or finish without missing a day."
                             },
                         lineTone = if (vm.inOpen) Tone.ACCENT else null,
                         meter = { SeatCountTiles(filled = crew?.filled ?: 0, taken = crew?.taken ?: 0, icons = crew?.icons.orEmpty()) },

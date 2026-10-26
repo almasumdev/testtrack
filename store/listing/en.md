@@ -25,7 +25,7 @@ A crew is 15 developers, each bringing one app that is in closed testing. While 
 
 When all 15 seats are taken, the crew starts at midnight in your own time zone. From then on, each day you open the other 14 apps. Open all takes you through them one by one, with a small timer floating on screen and the sign-in details ready to copy. A visit counts after about ten seconds in the app, so the whole round takes a few minutes. If you still have apps left in the evening, TestTrack reminds you.
 
-Miss a day and you get a warning. Miss two days in a row and your app leaves the crew. A crew has 15 seats for a rule that asks for 12, so your closed test still counts if a couple of people drop out along the way.
+Miss a day and you get a warning. Miss two days in a row and your app leaves the crew. Open every app all 14 days and your tix come back in full. A crew has 15 seats for a rule that asks for 12, so your closed test still counts if a couple of people drop out along the way.
 
 WHY YOUR TESTERS STAY
 
