@@ -86,8 +86,17 @@ fun CrewPicturesPage(
                             color = Tt.colors.text3,
                         )
                     }
+                    item { TrackingGrid(pictures) }
+                    item {
+                        Text(
+                            "Each member's pictures",
+                            Modifier.padding(top = 12.dp, bottom = 4.dp),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                     items(pictures.testers, key = { it.seatId }) { tester ->
-                        TesterNights(tester, pictures.runDays) { open = it.copy(app = pictures.appName) }
+                        TesterNights(tester, pictures.runDays, pictures.offDays) { open = it.copy(app = pictures.appName) }
                     }
                     item { Legend() }
                 }
@@ -101,6 +110,7 @@ fun CrewPicturesPage(
 private fun TesterNights(
     tester: MemberNights,
     runDays: Int,
+    offDays: Set<Int>,
     onOpen: (NightPicture) -> Unit,
 ) {
     val t = Tt.colors
@@ -117,8 +127,12 @@ private fun TesterNights(
             )
             val counted = tester.nights.count { it.counts }
             StatusChip(
-                if (tester.out) "Out" else "$counted of ${tester.day.coerceIn(0, runDays)} nights",
-                if (tester.out) Tone.QUIET else Tone.OK,
+                when {
+                    tester.out -> "Out"
+                    tester.excused -> "Reported it"
+                    else -> "$counted of ${tester.day.coerceIn(0, runDays)} nights"
+                },
+                if (tester.out || tester.excused) Tone.QUIET else Tone.OK,
             )
         }
         Row(Modifier.padding(top = 8.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -131,6 +145,9 @@ private fun TesterNights(
                                 onOpen(NightPicture(night.proof, tester.name, day, night.at, night.usedMs, night.byHand, ""))
                             }
                         night != null && night.counts -> Mark(t.okBg, null, "Opened")
+                        day < tester.firstNight -> Mark(Color.Transparent, null, "Not joined yet", dashed = true)
+                        tester.excused || day in tester.freeDays || day in offDays ->
+                            Mark(t.glass2, null, "Let off", border = t.glassBorder)
                         day == tester.day -> Mark(Color.Transparent, Lucide.Clock, "Tonight", border = t.accent)
                         day < tester.day -> Mark(t.badBg, Lucide.X, "Missed", border = t.badBorder)
                         else -> Mark(Color.Transparent, null, "To come", dashed = true)

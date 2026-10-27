@@ -55,6 +55,10 @@ fun ApiSeat.toSeat(crewName: String = "") =
         myVote = myVote,
         charged = charged,
         refunded = refunded,
+        versionCode = versionCode,
+        versionName = versionName,
+        versionAt = versionAt.orEmpty(),
+        downsLeft = downsLeft,
     )
 
 /** One member, as the run screen lists them, in their own calendar. */
@@ -84,19 +88,28 @@ fun ApiSeat.toMember() =
  * Only apps still in the run, and never your own. An app sent back is not something to ask
  * anybody to open, and nobody tests their own.
  */
-fun ApiSeat.toApp(crewName: String = "") =
-    CrewApp(
-        id = id,
-        label = appName,
-        packageName = packageName,
-        owner = ownerName,
-        crew = crewName,
-        done = openedToday,
-        // A report from this account excuses it from this app: something that will not install
-        // is not something anybody can open.
-        reported = reported,
-        pictureDue = pictureDue,
-    )
+fun ApiSeat.toApp(
+    crewName: String = "",
+    /** The reader's own day, which says whether this app's Play feedback is late. */
+    day: Int = 0,
+) = CrewApp(
+    id = id,
+    label = appName,
+    packageName = packageName,
+    owner = ownerName,
+    crew = crewName,
+    done = openedToday,
+    // A report from this account excuses it from this app: something that will not install
+    // is not something anybody can open.
+    reported = reported,
+    pictureDue = pictureDue,
+    versionCode = versionCode,
+    updateRequired = updateRequired,
+    feedbackSent = feedbackSent,
+    feedbackDueDay = feedbackDueDay,
+    // From the night after it was due, opening it counts only once the feedback is in.
+    feedbackLate = !feedbackSent && !reported && feedbackDueDay in 1..<day,
+)
 
 /**
  * A whole crew, ready for whichever screen it lands on.
@@ -112,7 +125,8 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
     val phase = if (member && mine?.state == "rejected") CrewPhase.LOBBY else crewPhase(this, member)
     val stillIn = mine != null && mine.state == "confirmed"
     // An app the team put in part-way through is owed from its first night, not before.
-    val owed = members.filter { !it.mine && it.state == "confirmed" && it.firstNight <= day }
+    // An app marked down or let off tonight is owed by nobody, so it is not on tonight's list.
+    val owed = members.filter { !it.mine && it.state == "confirmed" && it.firstNight <= day && !it.offTonight }
 
     return Crew(
         id = id,
@@ -125,7 +139,7 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
         seats = members.map { it.toSeat(name) },
         // Rejected seats never ran, so they are not members; only the reader sees their own.
         members = members.filter { it.state != "rejected" }.map { it.toMember() },
-        apps = if (phase == CrewPhase.RUN && stillIn) owed.map { it.toApp(name) } else emptyList(),
+        apps = if (phase == CrewPhase.RUN && stillIn) owed.map { it.toApp(name, day) } else emptyList(),
         day = day,
         startsIn = startsInMs,
         // What it came to. Only meaningful once it is over, and the server's own day count is

@@ -192,7 +192,7 @@ October. Proof the owner can see is the point of a crew, and this section is wha
 
 ## Telling the crew about an update
 
-Decided 27 October 2026, not built yet. **Build it from this section, not from the August app**,
+Decided 27 October 2026, built 28 October. **Build on this section, not on the August app**,
 whose version (commit da72874, removed in 65cac3c) was only a message.
 
 - **The owner's Update button.** On their own crew page. TestTrack reads the owner's own app on the
@@ -213,7 +213,7 @@ whose version (commit da72874, removed in 65cac3c) was only a message.
 
 ## Private feedback on Play
 
-Decided 27 October 2026, not built yet. **Build it from this section, not from the August app**,
+Decided 27 October 2026, built 28 October. **Build on this section, not on the August app**,
 whose crew notes (commit 9776af2, removed in 65cac3c) are a different thing.
 
 - **Once per app.** Each member leaves private feedback on Google Play for every other app in the
@@ -229,11 +229,35 @@ whose crew notes (commit 9776af2, removed in 65cac3c) are a different thing.
   seat page, who may act on a false one. The owner reads the feedback itself in Play Console.
 - **No reward.** No tix either way.
 
+## Nights let off
+
+Decided and built 28 October 2026. Reporting an app excuses it for the member who reported it; two
+more ways to let a night off, so nobody is marked down for something they could not do:
+
+- **The owner marks their app down tonight**, from their crew page, twice a run
+  (`rules.DOWN_NIGHTS`). Nobody owes it that night. It costs the owner that night towards Google's
+  14, which is why it is theirs to spend. The crew is told.
+- **The team lets one app off for everybody, or one member off everything, for one night**, from
+  the admin panel, with a reason in the log. The member is told.
+
+A night let off is owed by nobody it covers, so it is never a miss and never counts against the
+seat's refund.
+
+## Nights waiting on pictures
+
+Decided and built 28 October 2026. A night whose opens are only waiting on their pictures is not
+held against anybody by the take-out rule: a member offline for two nights is not put out of the
+run for it. It still counts for nothing until the pictures land.
+
+## Tracking the run
+
+Built 28 October 2026, in the spirit of the August app's dashboard. The owner's Every night page
+opens with a grid like a contribution graph: one square per tester per night (picture in, picked
+by hand, waiting, missed, let off or reported, tonight, to come), each night's count under it, and
+a line that says "On track for Google" or names the nights short of 12. Each member's pictures
+follow. The team sees the same grid on the seat page.
+
 ## Still open
 
 - The admin panel (eazyverse.com/testtrack/admin) starts crews, takes apps out, places apps and
   moves seats, each logged with who and why.
-- Skipping an app needs more room than reporting it: an owner's "down tonight", and the team
-  excusing one member's night or one app, are to be designed.
-- The owner's grid of testers by nights is to grow into a fuller tracking view, in the spirit of
-  the August app's dashboard: every state on it, and each night's count against Google's 12.

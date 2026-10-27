@@ -26,6 +26,24 @@ data class VisitIn(
     @SerialName("used_ms") val usedMs: Long,
     /** This build takes a picture of each app: the visit counts once its picture is in. */
     val pictures: Boolean = true,
+    /** The version on this phone, and who installed it: an open of a copy Play did not put here does not count. */
+    @SerialName("version_code") val versionCode: Long? = null,
+    val installer: String? = null,
+)
+
+/** The owner's own copy, as Android reads it, to tell the crew a newer version is out. */
+@Serializable
+data class VersionIn(
+    @SerialName("version_code") val versionCode: Long,
+    @SerialName("version_name") val versionName: String = "",
+    val installer: String = "",
+)
+
+/** A member's private feedback on Play for one app: its picture in their own Drive. */
+@Serializable
+data class FeedbackIn(
+    @SerialName("proof_ref") val proofRef: String,
+    @SerialName("drive_token") val driveToken: String,
 )
 
 /** A visit's picture, in the member's own Drive and shared by link. */
@@ -58,6 +76,11 @@ data class ApiTesterPictures(
     val day: Int = 0,
     val out: Boolean = false,
     val nights: List<ApiNightPicture> = emptyList(),
+    /** They reported the app as not installing, so they owe it nothing. */
+    val excused: Boolean = false,
+    @SerialName("first_night") val firstNight: Int = 1,
+    /** Nights the team let them off everything. */
+    @SerialName("free_days") val freeDays: List<Int> = emptyList(),
 )
 
 /** Every member's pictures of the reader's own app in one crew: the owner's grid. */
@@ -66,6 +89,8 @@ data class ApiCrewPictures(
     @SerialName("seat_id") val seatId: String,
     @SerialName("app_name") val appName: String,
     @SerialName("run_days") val runDays: Int = 14,
+    /** Nights the app was let off for everybody. */
+    @SerialName("off_days") val offDays: List<Int> = emptyList(),
     val testers: List<ApiTesterPictures> = emptyList(),
 )
 
@@ -129,6 +154,18 @@ data class ApiSeat(
     @SerialName("opened_mine_by_hand") val openedMineByHand: Boolean = false,
     /** The reader opened this app tonight and its picture is not in yet, so it has not counted. */
     @SerialName("picture_due") val pictureDue: Boolean = false,
+    /** The owner's newest version, when they told the crew, and whether its 24 hours are over. */
+    @SerialName("version_code") val versionCode: Long? = null,
+    @SerialName("version_name") val versionName: String = "",
+    @SerialName("version_at") val versionAt: String? = null,
+    @SerialName("update_required") val updateRequired: Boolean = false,
+    /** The reader's Play feedback on this app: sent, and the last of their nights to send it by. */
+    @SerialName("feedback_sent") val feedbackSent: Boolean = false,
+    @SerialName("feedback_due_day") val feedbackDueDay: Int = 0,
+    /** Nobody owes this app the reader's tonight: marked down by its owner, or let off. */
+    @SerialName("off_tonight") val offTonight: Boolean = false,
+    /** Nights its owner can still mark it down; on the owner's own seat only. */
+    @SerialName("downs_left") val downsLeft: Int = 0,
     /** The day this seat's own run starts on: 1 unless the team put it in part-way through. */
     @SerialName("first_night") val firstNight: Int = 1,
     /** Tix taken for this seat and given back for it; -1 from an older server that does not say. */

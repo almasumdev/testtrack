@@ -281,7 +281,9 @@ object Api {
     suspend fun visit(
         seatId: String,
         usedMs: Long,
-    ): ApiSeat = post("/crews/seats/$seatId/visit", VisitIn(usedMs))
+        versionCode: Long? = null,
+        installer: String? = null,
+    ): ApiSeat = post("/crews/seats/$seatId/visit", VisitIn(usedMs, versionCode = versionCode, installer = installer))
 
     suspend fun withdraw(seatId: String): ApiSeat = delete("/crews/seats/$seatId")
 

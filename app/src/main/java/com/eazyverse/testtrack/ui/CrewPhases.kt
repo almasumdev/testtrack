@@ -291,9 +291,11 @@ fun CrewRunPhase(
         }
         block { RunHero(crew, owed, here, missing, actions) }
         if (crew.apps.any { it.pictureDue }) block { PicturesDueCard(crew.apps, actions) }
+        block { PlayFeedbackCard(crew, actions) }
         crew.mine?.let { mine ->
             item { CrewHeading("Your app") }
             block { TestersCard(crew, mine, actions) }
+            block { OwnerToolsCard(mine, actions) }
         }
         if (owed.isNotEmpty()) {
             item { CrewHeading("Tonight", "${owed.size}") }

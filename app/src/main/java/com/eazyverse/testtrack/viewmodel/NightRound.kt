@@ -289,7 +289,10 @@ object NightRound {
         val used = UsageRepo.measure(context, stop.packageName, since, needMs = COUNT_MS, source = "crew")
         if (used < COUNT_MS) return Outcome.Short(used)
         return try {
-            Api.visit(stop.seatId, used)
+            // Which copy was opened: a copy Play did not put here, or one older than the owner's
+            // newest past its 24 hours, is refused with what to do.
+            val copy = InstalledApps.info(context, stop.packageName)
+            Api.visit(stop.seatId, used, versionCode = copy.versionCode.takeIf { copy.installed }, installer = copy.installer.orEmpty())
             // The visit first, then its picture, in the background: the next app does not wait.
             if (taken != null) {
                 VisitPictures.add(context, VisitPictures.Waiting(stop.seatId, stop.label, taken.path))

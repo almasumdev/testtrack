@@ -331,7 +331,7 @@ class CrewViewModel : ViewModel() {
         crews
             .filter { crewId == null || it.id == crewId }
             .flatMap { crew -> crew.apps.filter { !it.done && !it.reported } }
-            .filter { !pictures.sending(it.id) && isInstalled(context, it.packageName) },
+            .filter { !pictures.sending(it.id) && !it.feedbackLate && isInstalled(context, it.packageName) },
     )
 
     /** The seat a call is running for, so its row shows it busy and a second tap sends nothing. */

@@ -139,25 +139,28 @@ internal fun crewActions(
         }
     val waiting by vm.pictures.waiting.collectAsState()
     val stuck by vm.pictures.stuck.collectAsState()
-    return CrewActions(
-        onOpen = { app -> membership.require { vm.openApp(context, app) } },
-        onOpenAll = { id -> membership.require { vm.openAll(context, id) } },
-        onInstall = { seat -> membership.require { openOnPlay(context, seat.packageName) } },
-        onReport = { dialogs.reporting = it },
-        onLeave = { dialogs.leaving = it },
-        onVote = { seat, yes -> if (yes) vm.vote(context, seat, installed = true) else dialogs.refusing = seat },
-        // Signed in and on the testers group first, then the page that puts an app in.
-        onTakeSeat = { if (vm.signedOut) onSignIn() else membership.require { onAddToCrew() } },
-        isInstalled = { pkg -> vm.isInstalled(context, pkg) },
-        onMembers = onMembers,
-        busySeat = vm.acting,
-        onPickPicture = { app ->
-            picking = app
-            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-        },
-        sendingPicture = { id -> waiting.any { it.seatId == id } },
-        picturesStuck = stuck,
-        onRetryPictures = { vm.pictures.send(context.findActivity()) },
+    return withCrewExtras(
+        vm,
+        CrewActions(
+            onOpen = { app -> membership.require { vm.openApp(context, app) } },
+            onOpenAll = { id -> membership.require { vm.openAll(context, id) } },
+            onInstall = { seat -> membership.require { openOnPlay(context, seat.packageName) } },
+            onReport = { dialogs.reporting = it },
+            onLeave = { dialogs.leaving = it },
+            onVote = { seat, yes -> if (yes) vm.vote(context, seat, installed = true) else dialogs.refusing = seat },
+            // Signed in and on the testers group first, then the page that puts an app in.
+            onTakeSeat = { if (vm.signedOut) onSignIn() else membership.require { onAddToCrew() } },
+            isInstalled = { pkg -> vm.isInstalled(context, pkg) },
+            onMembers = onMembers,
+            busySeat = vm.acting,
+            onPickPicture = { app ->
+                picking = app
+                picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+            sendingPicture = { id -> waiting.any { it.seatId == id } },
+            picturesStuck = stuck,
+            onRetryPictures = { vm.pictures.send(context.findActivity()) },
+        ),
     )
 }
 
@@ -260,6 +263,7 @@ internal fun CrewDialogsHost(
      * tonight does not count, which is theirs to choose, and the ask returns the next time.
      */
     CrewPictureAsks(vm)
+    CrewExtrasAsks(vm)
 
     vm.needsUsageFor?.let { label ->
         Ask(

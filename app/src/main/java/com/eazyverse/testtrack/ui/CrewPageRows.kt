@@ -357,21 +357,30 @@ internal fun TonightRow(
     onSheet: (RowSheet) -> Unit,
 ) {
     val installed = actions.isInstalled(app.packageName)
+    // Older than the owner's newest: still counts for its 24 hours, then only once updated.
+    val newer = app.versionCode
+    val old = installed && newer != null && (actions.localVersion(app.packageName) ?: newer) < newer
+    val note =
+        when {
+            !installed -> "not on your phone"
+            old && app.updateRequired -> "update needed"
+            old -> "update out"
+            app.feedbackLate -> "feedback late"
+            else -> ""
+        }
     CrewPageRow(
         app.packageName,
         app.label,
-        ownerLine(app.owner, seat.notes.isNotBlank(), if (installed) "" else "not on your phone"),
+        ownerLine(app.owner, seat.notes.isNotBlank(), note),
         place,
         onOpen = { onSheet(RowSheet(seat, SheetKind.TONIGHT, app)) },
         icon = seat.icon,
     ) {
-        if (installed) {
-            RowPill(
-                "Open",
-                PillKind.SOLID,
-            ) { actions.onOpen(app) }
-        } else {
-            RowPill("Install", PillKind.SOFT) { actions.onInstall(seat) }
+        when {
+            !installed -> RowPill("Install", PillKind.SOFT) { actions.onInstall(seat) }
+            old && app.updateRequired -> RowPill("Update", PillKind.SOLID) { actions.onUpdateApp(app) }
+            app.feedbackLate -> RowPill("Feedback", PillKind.SOLID) { actions.onFeedback(app) }
+            else -> RowPill("Open", PillKind.SOLID) { actions.onOpen(app) }
         }
     }
 }

@@ -100,6 +100,12 @@ object CrewRules {
      */
     const val VISIT_SECONDS = 10
 
+    /** Nights a run an owner can mark their app down, so nobody owes it (rules.DOWN_NIGHTS). */
+    const val DOWN_NIGHTS = 2
+
+    /** The member's night with an app by which its Play feedback is due (rules.FEEDBACK_BY_NIGHT). */
+    const val FEEDBACK_BY_NIGHT = 7
+
     /** How long each app stays open in a round; its picture is taken after the first ten. */
     const val OPEN_SECONDS = 20
 
@@ -140,6 +146,12 @@ data class CrewSeat(
     /** Tix taken for it and given back for it; -1 from an older server that does not say. */
     val charged: Int = -1,
     val refunded: Int = -1,
+    /** The newest version its owner told the crew about, and when; null until they first did. */
+    val versionCode: Long? = null,
+    val versionName: String = "",
+    val versionAt: String = "",
+    /** Nights its owner can still mark it down this run; on the reader's own seat only. */
+    val downsLeft: Int = 0,
 )
 
 /**
@@ -192,6 +204,13 @@ data class CrewApp(
     val reported: Boolean = false,
     /** Opened tonight, but its picture is not on the server yet, so it has not counted. */
     val pictureDue: Boolean = false,
+    /** The owner's newest version, and whether its 24 hours are over, so an older copy no longer counts. */
+    val versionCode: Long? = null,
+    val updateRequired: Boolean = false,
+    /** This account's Play feedback on it: sent, the last night to send it by, and whether it is late. */
+    val feedbackSent: Boolean = false,
+    val feedbackDueDay: Int = 0,
+    val feedbackLate: Boolean = false,
 )
 
 /**

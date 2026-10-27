@@ -13,7 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.data.RoundStore
 import com.eazyverse.testtrack.data.Session
@@ -119,6 +121,9 @@ class CrewPictureFramesTest {
                 packageName = "com.example.focusflow",
                 crew = "Crew 05",
                 mine = true,
+                versionCode = 41,
+                versionName = "1.4.0",
+                downsLeft = 2,
             )
 
     /** Six days in. Steps Daily was opened but its picture failed; four are still to open. */
@@ -155,6 +160,12 @@ class CrewPictureFramesTest {
                         crew = "Crew 05",
                         done = i >= 5,
                         pictureDue = i == 1,
+                        // Lingo Cards has an update out past its 24 hours; Tiny Tasks' feedback is late.
+                        versionCode = if (i == 3) 12L else null,
+                        updateRequired = i == 3,
+                        feedbackSent = i % 3 == 0,
+                        feedbackDueDay = 7,
+                        feedbackLate = i == 2,
                     )
                 },
         )
@@ -298,6 +309,9 @@ class CrewPictureFramesTest {
                     name = owner,
                     day = 6,
                     out = false,
+                    excused = i == 6,
+                    firstNight = if (i == 4) 2 else 1,
+                    freeDays = if (i == 1) setOf(2) else emptySet(),
                     nights =
                         (1..6).mapNotNull { d ->
                             when {
@@ -363,5 +377,73 @@ class CrewPictureFramesTest {
         frame.write("stuck")
         set("queue", emptyList<com.eazyverse.testtrack.data.VisitPictures.Waiting>())
         set("failure", null)
+    }
+
+    /** The member's Play feedback card on the run page. */
+    @Test
+    fun p12_feedback() {
+        val vm = crews()
+        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        frame.settle(800)
+        vm.pictures.clearDriveAsk()
+        compose
+            .onAllNodes(
+                androidx.compose.ui.test
+                    .hasScrollToNodeAction(),
+            )[0]
+            .performScrollToNode(hasText("Private feedback on Play"))
+        frame.settle(800)
+        frame.write("feedbackCard")
+    }
+
+    /**
+     * Tonight's rows for an app whose update is past its 24 hours and one whose feedback is late,
+     * and the owner's card twice: Update ready, and Update waiting on a copy from Play.
+     */
+    @Test
+    fun p13_rowsAndOwner() {
+        crews()
+        val actions =
+            com.eazyverse.testtrack.ui.CrewActions(
+                onOpen = {},
+                onOpenAll = {},
+                onInstall = {},
+                onReport = {},
+                onLeave = {},
+                onTakeSeat = {},
+                localVersion = { 11L },
+            )
+        val blocked =
+            com.eazyverse.testtrack.ui.CrewActions(
+                onOpen = {},
+                onOpenAll = {},
+                onInstall = {},
+                onReport = {},
+                onLeave = {},
+                onTakeSeat = {},
+                updateBlocked = { "Install the new version from Google Play on this phone first." },
+            )
+        val mine = seats.last()
+        show {
+            Pushed {
+                androidx.compose.foundation.layout.Column(Modifier.padding(16.dp)) {
+                    listOf(3, 2).forEachIndexed { k, i ->
+                        com.eazyverse.testtrack.ui.TonightRow(
+                            running.apps[i],
+                            seats[i],
+                            com.eazyverse.testtrack.ui
+                                .placeOf(k, 2),
+                            actions,
+                        ) {}
+                    }
+                    com.eazyverse.testtrack.ui
+                        .OwnerToolsCard(mine, actions)
+                    com.eazyverse.testtrack.ui
+                        .OwnerToolsCard(mine.copy(downsLeft = 1), blocked)
+                }
+            }
+        }
+        frame.settle(800)
+        frame.write("rowsAndOwner")
     }
 }

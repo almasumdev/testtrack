@@ -179,6 +179,18 @@ class CrewActions(
     /** Why waiting pictures could not go yet, and another try at sending them. */
     val picturesStuck: String? = null,
     val onRetryPictures: () -> Unit = {},
+    /** The version of an app on this phone, or null when it is not here. */
+    val localVersion: (String) -> Long? = { null },
+    /** To an app's Play page, for an update or for its feedback. */
+    val onUpdateApp: (CrewApp) -> Unit = {},
+    /** Private feedback on Play for an app, with its picture: by camera, or picked from the phone. */
+    val onFeedback: (CrewApp) -> Unit = {},
+    val onPickFeedback: (CrewApp) -> Unit = {},
+    /** The owner's own seat: tell the crew about an update, or mark it down tonight. */
+    val onTellUpdate: (CrewSeat) -> Unit = {},
+    val onMarkDown: (CrewSeat) -> Unit = {},
+    /** Why Update cannot be tapped yet for this seat, or null when it can. */
+    val updateBlocked: (CrewSeat) -> String? = { null },
 )
 
 /**

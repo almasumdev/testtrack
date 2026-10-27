@@ -28,6 +28,11 @@ data class MemberNights(
     val day: Int,
     val out: Boolean,
     val nights: List<MemberNight>,
+    /** Reported the app as not installing, so owes it nothing. */
+    val excused: Boolean = false,
+    /** Their first night with this app, and nights the team let them off. */
+    val firstNight: Int = 1,
+    val freeDays: Set<Int> = emptySet(),
 )
 
 /** The reader's app in one crew, as every other member opened it. */
@@ -35,6 +40,8 @@ data class AppNights(
     val appName: String,
     val runDays: Int,
     val testers: List<MemberNights>,
+    /** Nights the app was let off for everybody. */
+    val offDays: Set<Int> = emptySet(),
 )
 
 /** One crew's pictures of your own app, every member and every night: the owner's grid. */
@@ -62,8 +69,12 @@ class CrewPicturesViewModel : ViewModel() {
                                 t.day,
                                 t.out,
                                 t.nights.map { MemberNight(it.day, it.at, it.usedMs, it.proof, it.byHand, it.counts) },
+                                excused = t.excused,
+                                firstNight = t.firstNight,
+                                freeDays = t.freeDays.toSet(),
                             )
                         },
+                        offDays = got.offDays.toSet(),
                     )
                 failed = null
             } catch (e: CancellationException) {
