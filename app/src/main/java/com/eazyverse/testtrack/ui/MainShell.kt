@@ -63,6 +63,7 @@ import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.HudViewModel
 import com.eazyverse.testtrack.viewmodel.ReviewMoment
+import com.eazyverse.testtrack.viewmodel.TabCountsViewModel
 import kotlinx.coroutines.delay
 
 /**
@@ -194,6 +195,10 @@ fun MainShell(
     // is inside another app being tested, so coming back to a stale balance would be the screen
     // telling them their last ten seconds did not count.
     LaunchedEffect(tab, hudVm.signedOut) { hudVm.load(context) }
+    // The bar's numbers: asked on every tab change and every return, and with the account's news.
+    val counts: TabCountsViewModel = viewModel()
+    LaunchedEffect(tab, hudVm.signedOut) { counts.refresh() }
+    WhileShown(onShow = counts::start, onHide = counts::stop)
     var ratingAsk by remember { mutableStateOf(DebugLooks.showRatingAsk) }
     if (ratingAsk) RatingAsk(onClose = { ratingAsk = false })
 
@@ -216,7 +221,10 @@ fun MainShell(
     DisposableEffect(owner) {
         val watcher =
             LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) hudVm.load(context)
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    hudVm.load(context)
+                    counts.refresh()
+                }
             }
         owner.lifecycle.addObserver(watcher)
         onDispose { owner.lifecycle.removeObserver(watcher) }
@@ -394,6 +402,10 @@ fun MainShell(
                 Modifier
                     .align(Alignment.BottomCenter)
                     .onSizeChanged { dockHeight = with(density) { it.height.toDp() } - DockTop },
+                counts =
+                    counts.actions?.let {
+                        mapOf(MainTab.CIRCLE to it.circle, MainTab.GROUPS to it.crew, MainTab.APPS to it.apps)
+                    } ?: emptyMap(),
             )
             LeaveHint(
                 leaving,

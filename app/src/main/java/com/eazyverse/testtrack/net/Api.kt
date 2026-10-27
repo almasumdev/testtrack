@@ -148,8 +148,24 @@ object Api {
 
     // ---------------------------------------------------------------- feed
 
-    /** The first page is kept on the phone (see [lastPosts]); later pages are not. */
-    suspend fun posts(before: String? = null): PostPage = if (before == null) kept(POSTS) else get("$POSTS?before=$before")
+    /**
+     * The feed in this reader's own shuffled order for [seed], which stays the same while it pages
+     * ([after]). [before] pages a server that does not shuffle, which answers without `next`. The
+     * first page is kept on the phone (see [lastPosts]); later pages are not.
+     */
+    suspend fun posts(
+        seed: String,
+        after: String? = null,
+        before: String? = null,
+    ): PostPage =
+        when {
+            after != null -> get("$POSTS?seed=$seed&after=$after")
+            before != null -> get("$POSTS?seed=$seed&before=$before")
+            else -> kept("$POSTS?seed=$seed", key = POSTS)
+        }
+
+    /** One number a tab for what waits on this account. Refused signed out. */
+    suspend fun actions(): ApiActions = get("/me/actions")
 
     suspend fun feedbackOptions(): FeedbackOptions = get("/feed/options")
 
@@ -358,10 +374,13 @@ object Api {
 
     /** A GET whose answer is also kept on the phone, for [last] to hand back next time. */
     @PublishedApi
-    internal suspend inline fun <reified T> kept(path: String): T {
+    internal suspend inline fun <reified T> kept(
+        path: String,
+        key: String = path,
+    ): T {
         val generation = ApiSession.generation
         val text = sendText(Request.Builder().url(url(path)).get())
-        withContext(Dispatchers.IO) { ApiCache.write(path, text, generation) }
+        withContext(Dispatchers.IO) { ApiCache.write(key, text, generation) }
         return json.decodeFromString<T>(text)
     }
 

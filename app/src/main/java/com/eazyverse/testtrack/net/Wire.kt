@@ -205,6 +205,29 @@ data class ClosedPost(
 data class PostPage(
     val posts: List<ApiPost>,
     @SerialName("next_cursor") val nextCursor: String? = null,
+    /** The shuffled feed's own cursor, sent back as `after`; null from a server that does not shuffle. */
+    val next: String? = null,
+)
+
+/** What waits on this account, one number a tab: each the sum of things to do now. */
+@Serializable
+data class ApiActions(
+    val crew: Int = 0,
+    val circle: Int = 0,
+    val apps: Int = 0,
+    val parts: ApiActionParts = ApiActionParts(),
+)
+
+/** The pieces each tab's number is made of. */
+@Serializable
+data class ApiActionParts(
+    @SerialName("crew_tonight") val crewTonight: Int = 0,
+    @SerialName("crew_verdicts") val crewVerdicts: Int = 0,
+    @SerialName("reviews_going") val reviewsGoing: Int = 0,
+    @SerialName("to_approve") val toApprove: Int = 0,
+    @SerialName("cases_to_vote") val casesToVote: Int = 0,
+    @SerialName("apps_to_verify") val appsToVerify: Int = 0,
+    @SerialName("requests_unlisted") val requestsUnlisted: Int = 0,
 )
 
 @Serializable

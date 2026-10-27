@@ -221,7 +221,15 @@ fun FeedScreen(
                     WordTabs(
                         labels = shownTabs.map { it.label },
                         selected = shownTabs.indexOf(tab),
-                        counts = shownTabs.map { if (it == FeedTab.WAITING) owed else 0 },
+                        counts =
+                            shownTabs.map {
+                                when (it) {
+                                    FeedTab.WAITING -> owed
+                                    // Taken on and not yet sent: each one is the reader's own next step.
+                                    FeedTab.MINE -> vm.mine.count { r -> r.state in InProgressStates }
+                                    else -> 0
+                                }
+                            },
                         gap = 14,
                     ) { vm.show(shownTabs[it]) }
                 }

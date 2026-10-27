@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -81,6 +82,8 @@ fun MainBar(
     selected: MainTab,
     onSelect: (MainTab) -> Unit,
     modifier: Modifier = Modifier,
+    /** What waits on this account, by tab; a tab missing or at 0 shows no number. */
+    counts: Map<MainTab, Int> = emptyMap(),
 ) {
     val t = Tt.colors
     val haptic = LocalHapticFeedback.current
@@ -112,7 +115,7 @@ fun MainBar(
                 .padding(4.dp),
         ) {
             if (maxWidth < Wide + 48.dp * 4 || LocalDensity.current.fontScale > 1.2f) {
-                CompactBar(selected, onSelect)
+                CompactBar(selected, onSelect, counts)
                 return@BoxWithConstraints
             }
             val slots = remember(maxWidth) { Slots(maxWidth, MainTab.entries.size) }
@@ -126,7 +129,7 @@ fun MainBar(
             val pillWidth = widths.zip(values).fold(0.dp) { at, (w, s) -> at + w * (s / total) }
 
             // Underneath: the bar's ink, and the only layer that takes taps.
-            BarRow(values, widths, t.dockInk, selected) { tab ->
+            BarRow(values, widths, t.dockInk, selected, counts) { tab ->
                 if (tab != selected) {
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                     onSelect(tab)
@@ -148,7 +151,7 @@ fun MainBar(
                     .background(t.selectedFill)
                     .clearAndSetSemantics {},
             ) {
-                BarRow(values, widths, t.onSelected, selected = null, onSelect = null)
+                BarRow(values, widths, t.onSelected, selected = null, counts = counts, onSelect = null)
             }
         }
     }
@@ -158,6 +161,7 @@ fun MainBar(
 private fun CompactBar(
     selected: MainTab,
     onSelect: (MainTab) -> Unit,
+    counts: Map<MainTab, Int>,
 ) {
     val t = Tt.colors
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -178,12 +182,7 @@ private fun CompactBar(
                         .selectable(tab == selected, role = Role.Tab, onClick = { onSelect(tab) }),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        tab.icon,
-                        tab.label,
-                        Modifier.size(22.dp),
-                        tint = if (tab == selected) t.onSelected else t.dockInk,
-                    )
+                    TabIcon(tab, counts[tab] ?: 0, if (tab == selected) t.onSelected else t.dockInk, tab.label)
                 }
             }
         }
@@ -202,6 +201,7 @@ private fun BarRow(
     widths: List<Dp>,
     ink: Color,
     selected: MainTab?,
+    counts: Map<MainTab, Int>,
     onSelect: ((MainTab) -> Unit)?,
 ) {
     Row(Modifier.height(BarHeight), verticalAlignment = Alignment.CenterVertically) {
@@ -229,8 +229,54 @@ private fun BarRow(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(tab.icon, if (tab == selected) null else tab.label, Modifier.size(22.dp), tint = ink)
+                TabIcon(tab, counts[tab] ?: 0, ink, if (tab == selected) null else tab.label)
                 if (share > 0.02f) Name(tab.label, share, ink)
+            }
+        }
+    }
+}
+
+/**
+ * A tab's icon, and over its corner how many things on it wait for this account.
+ *
+ * The count is the bad colour rather than the accent, because the selected pill is drawn in the
+ * accent and a count in it vanished on the very tab it was about. Ringed in the dock's own colour
+ * so it lifts off the icon under it. Said with the tab's name for a screen reader.
+ */
+@Composable
+private fun TabIcon(
+    tab: MainTab,
+    count: Int,
+    tint: Color,
+    description: String?,
+) {
+    Box {
+        Icon(
+            tab.icon,
+            description?.let { if (count > 0) "$it, $count to do" else it },
+            Modifier.size(22.dp),
+            tint = tint,
+        )
+        if (count > 0) {
+            val shape = RoundedCornerShape(percent = 50)
+            Box(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 10.dp, y = (-6).dp)
+                    .clip(shape)
+                    .background(Tt.colors.dock)
+                    .padding(1.5.dp)
+                    .clip(shape)
+                    .background(Tt.colors.bad)
+                    .padding(horizontal = 4.5.dp, vertical = 0.5.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    if (count > 99) "99+" else "$count",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, lineHeight = 12.sp),
+                    fontWeight = FontWeight.Bold,
+                    color = Tt.colors.onBad,
+                )
             }
         }
     }

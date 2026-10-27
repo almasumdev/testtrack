@@ -190,9 +190,10 @@ class FeedViewModel : ViewModel() {
                 // content the server was perfectly willing to hand over.
                 val named = ApiAuth.ensure(context)
                 signedOut = !named
-                val page = Api.posts()
+                val page = Api.posts(seed)
                 posts = page.posts
-                cursor = page.nextCursor
+                cursor = page.next ?: page.nextCursor
+                shuffled = page.next != null || page.nextCursor == null
                 pagedPast = false
                 // Readable signed out too, like the posts. Its own failure is its own.
                 try {
@@ -257,6 +258,21 @@ class FeedViewModel : ViewModel() {
 
     fun stopPageLive() = pageLive.stop()
 
+    /**
+     * This visit's shuffle of the feed. A new one each time the app starts, so the requests at the
+     * top change from one visit to the next; the same one for the whole visit, so coming back from
+     * a review or a live refresh never reorders the list under somebody's thumb.
+     */
+    private val seed =
+        java.util.UUID
+            .randomUUID()
+            .toString()
+            .replace("-", "")
+            .take(16)
+
+    /** The server shuffles and pages with `after`; false for one that still pages newest first. */
+    private var shuffled = true
+
     /** Somebody scrolled past the first page; a live refetch would cut the list back under them. */
     private var pagedPast = false
 
@@ -275,10 +291,10 @@ class FeedViewModel : ViewModel() {
         paging = true
         viewModelScope.launch {
             try {
-                val page = Api.posts(before = from)
+                val page = if (shuffled) Api.posts(seed, after = from) else Api.posts(seed, before = from)
                 val seen = posts.map { it.id }.toSet()
                 posts = posts + page.posts.filter { it.id !in seen }
-                cursor = page.nextCursor
+                cursor = if (shuffled) page.next else page.nextCursor
             } catch (_: Exception) {
                 // The next scroll to the end asks again.
             } finally {
