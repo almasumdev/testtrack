@@ -246,19 +246,24 @@ class VisitCameraService : Service() {
             return null
         }
 
-        /** Nearly one colour all over: a splash or a screen still drawing, not proof of anything. */
-        private fun blank(bitmap: Bitmap): Boolean {
+        /**
+         * One colour all over: a screen still drawing, or a black frame, not proof of anything.
+         *
+         * Sampled finely and called blank only when almost nothing differs, since a plain light
+         * screen (a settings list, a form) is mostly one colour and is still a real picture of it.
+         * A test on a real device took Settings for blank with a coarser rule and kept no picture.
+         */
+        internal fun blank(bitmap: Bitmap): Boolean {
             val first = bitmap.getPixel(bitmap.width / 2, bitmap.height / 2)
-            var same = 0
+            var differ = 0
             var total = 0
-            for (y in 1 until 12) {
-                for (x in 1 until 8) {
-                    val p = bitmap.getPixel(bitmap.width * x / 8, bitmap.height * y / 12)
+            for (y in 1 until 48) {
+                for (x in 1 until 24) {
                     total++
-                    if (near(p, first)) same++
+                    if (!near(bitmap.getPixel(bitmap.width * x / 24, bitmap.height * y / 48), first)) differ++
                 }
             }
-            return same >= total * 0.95
+            return differ < total / 200
         }
 
         private fun near(

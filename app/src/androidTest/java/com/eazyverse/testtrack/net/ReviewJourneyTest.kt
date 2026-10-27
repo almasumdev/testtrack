@@ -215,7 +215,7 @@ class ReviewJourneyTest {
     @Test
     fun t4_the_screen_reads_a_real_server_review_at_every_step() =
         runBlocking {
-            val posts = Api.posts().posts
+            val posts = Api.posts(seed = "e2e").posts
             val post =
                 posts.firstOrNull { it.id == livePostId }
                     ?: error("The seeded post is not in the feed the app fetches.")

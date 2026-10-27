@@ -139,7 +139,7 @@ class CrewExtrasViewModel : ViewModel() {
     ) {
         val job = feedbackFor ?: return
         feedbackFor = job.copy(capturing = true)
-        ReviewCaptureService.start(activity, code, data)
+        ReviewCaptureService.start(activity, code, data, crew = true)
         runCatching {
             activity.startActivity(
                 Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=${job.packageName}"))
@@ -151,8 +151,8 @@ class CrewExtrasViewModel : ViewModel() {
     /** Back in TestTrack: the camera's picture, if it took one, goes to Drive and onto the feedback. */
     fun takeCaptured(activity: Activity) {
         val job = feedbackFor ?: return
-        val file = ReviewCaptureService.proof.value ?: return
-        ReviewCaptureService.takeProof()
+        val file = ReviewCaptureService.crewProof.value ?: return
+        ReviewCaptureService.takeCrewProof()
         send(activity, job) { file.readBytes() }
     }
 

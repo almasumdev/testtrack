@@ -315,7 +315,9 @@ class ReviewCaptureService : Service() {
         projection?.stop()
         projection = null
         if (file != null) {
-            captured.value = file
+            // A crew member's Play feedback has its own taker, so a review page left open
+            // behind it never takes the picture as its proof.
+            if (forCrew) crewCaptured.value = file else captured.value = file
             runCatching {
                 startActivity(
                     Intent(this, MainActivity::class.java).addFlags(
@@ -387,6 +389,17 @@ class ReviewCaptureService : Service() {
 
         private val state = MutableStateFlow(State.IDLE)
         private val captured = MutableStateFlow<File?>(null)
+        private val crewCaptured = MutableStateFlow<File?>(null)
+
+        /** The camera is up for a crew's Play feedback rather than a Circle review. */
+        @Volatile private var forCrew = false
+
+        /** The last picture taken for a crew's Play feedback, until the Crew page has taken it. */
+        val crewProof: StateFlow<File?> = crewCaptured
+
+        fun takeCrewProof() {
+            crewCaptured.value = null
+        }
 
         /** Whether the button is out on screen, waiting for its press. */
         val running: StateFlow<State> = state
@@ -403,7 +416,9 @@ class ReviewCaptureService : Service() {
             context: Context,
             code: Int,
             data: Intent,
+            crew: Boolean = false,
         ) {
+            forCrew = crew
             val intent =
                 Intent(context, ReviewCaptureService::class.java)
                     .setAction(ACTION_START)
