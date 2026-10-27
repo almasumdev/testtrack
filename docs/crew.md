@@ -192,43 +192,42 @@ October. Proof the owner can see is the point of a crew, and this section is wha
 
 ## Telling the crew about an update
 
-Planned, not built yet. **Build it from this section, not from the August app**, whose version
-(commit da72874, removed in 65cac3c) was a Firestore message and nothing more.
+Decided 27 October 2026, not built yet. **Build it from this section, not from the August app**,
+whose version (commit da72874, removed in 65cac3c) was only a message.
 
-An owner fixes things during a run, and testers on an old build test the wrong app. So:
+- **The owner's Update button.** On their own crew page. TestTrack reads the owner's own app on the
+  owner's phone: its version, and whether Google Play installed it.
+  - **Tappable** only when that copy came from Play and its version is newer than the one the
+    server has for the seat.
+  - **Otherwise it looks disabled**, and a tap says what to do: install the new version from Google
+    Play on this phone first; a copy from Android Studio or a file does not count.
+- **Only the owner's tap tells the server.** Nothing is detected from the other members' phones.
+- **Members get 24 hours.** For the first 24 hours after the tap, opening the old version still
+  counts, and the app's row says "Update out" with a button to Play. After 24 hours, opening the old
+  version does not count: the row says "Update needed" and tonight is not done until they update
+  and open it again. The 24 hours are Play's time to reach everybody.
+- **From Play only, for everyone.** Each visit sends the installed version and who installed it. A
+  member's copy that did not come from Play does not count; the row says to install it from Play.
+- **The team sees** each seat's newest version, when the owner tapped Update, and who is still on
+  an old one, on the admin panel's seat page.
 
-- **The owner presses "Tell the crew about an update"** on their Your app card, with an optional
-  line of what changed (up to 280 characters).
-- **Every member still in the run is told**: a push, and the notice on the app's row in their
-  Tonight list, "Update out: install the new version" with an Update button that opens the app on
-  Play. The row keeps saying it until they open Play from it, or for 24 hours.
-- **Once every 2 days per app**, held by the server, not only by a greyed-out button.
-- **The server keeps it**: when it was sent and what it said, on the seat. The owner sees "Last
-  told 26 Oct"; the admin panel's seat page lists it with the other things done to the seat.
-- **It changes no rule.** Nobody's night depends on updating. Whether a tester really updated is
-  not something the phone can tell the owner, so the notice does not pretend to.
+## Private feedback on Play
 
-## Asking the crew for feedback
+Decided 27 October 2026, not built yet. **Build it from this section, not from the August app**,
+whose crew notes (commit 9776af2, removed in 65cac3c) are a different thing.
 
-Planned, not built yet. **Build it from this section, not from the August app**, whose version
-(commit 9776af2, removed in 65cac3c) kept notes in Firestore with no question and no moderation.
-
-Testing for Google is opening the app; what the owner also wants is to hear what is wrong with it.
-Circle is paid feedback on Play; this is the crew's free word, inside TestTrack:
-
-- **The owner presses "Ask the crew for feedback"**, with an optional question, up to 200
-  characters ("Is the sign-in clear?").
-- **Every member still in the run is told**: a push, and "Leave a note" on the app's row in their
-  Tonight list, with the owner's question above the box.
-- **One note per member per app per day**, up to 500 characters, free, no tix either way. Writing
-  again the same day replaces that day's note.
-- **The owner is told** when a note arrives and reads them all, newest first, from their Your app
-  card. Notes carry the member's crew name, so the owner can tell who to follow up with; reports
-  stay nameless, as they are now.
-- **Once every 2 days per app**, held by the server.
-- **The team can read and remove notes** from the admin panel's seat page, each removal logged
-  with a reason, since a free text box is a place for abuse.
-- Still to decide: whether a note can carry a picture.
+- **Once per app.** Each member leaves private feedback on Google Play for every other app in the
+  run, once for the whole run.
+- **With a screenshot.** They take it with TestTrack's camera button over Play, as a Circle review
+  does, and submit it. It goes to their own Drive, shared by link.
+- **By the end of day 7.** From day 8, a member's opens of an app they have not sent feedback for
+  do not count, until they send it. For a seat that joined part-way, the 7 days count from that
+  member's own first night with it.
+- **A reported app is excused.** A member who reported an app as not installing owes it no
+  feedback either.
+- **Nobody verifies it in the app.** The screenshot is seen only by the team, on the admin panel's
+  seat page, who may act on a false one. The owner reads the feedback itself in Play Console.
+- **No reward.** No tix either way.
 
 ## Still open
 
