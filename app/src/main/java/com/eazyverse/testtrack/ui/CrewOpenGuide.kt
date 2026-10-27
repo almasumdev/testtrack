@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Armchair
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Download
+import com.composables.icons.lucide.HardDrive
 import com.composables.icons.lucide.ListChecks
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
@@ -51,14 +52,22 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * themselves are the same glass as everything else on the tab.
  */
 
-/** What is already in place for taking a seat. [app] is null until My apps has answered. */
+/**
+ * What is already in place for taking a seat. [app] is null until My apps has answered, [drive]
+ * until Google has: where the picture of each app goes, without which no night counts.
+ */
 data class CrewReady(
     val app: Boolean?,
     val member: Boolean,
     val permissions: Boolean,
+    val drive: Boolean? = true,
 ) {
-    val done: Int get() = listOf(app == true, member, permissions).count { it }
-    val all: Boolean get() = done == 3
+    val done: Int get() = listOf(app == true, member, permissions, drive == true).count { it }
+    val all: Boolean get() = done == STEPS
+
+    companion object {
+        const val STEPS = 4
+    }
 }
 
 /** The guide's sections, each its own card, in the order somebody reads them. */
@@ -68,11 +77,12 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.crewGuide(
     onApp: () -> Unit,
     onJoin: () -> Unit,
     onAllow: () -> Unit,
+    onDrive: () -> Unit = {},
 ) {
     item(key = "video") { GuideCard { HowToBody(HowTo.CREW) } }
     item(key = "story") { GuideCard { CrewStory() } }
     if (!ready.all) {
-        item(key = "ready") { GuideCard { CrewGetReady(ready, hasApps, onApp, onJoin, onAllow) } }
+        item(key = "ready") { GuideCard { CrewGetReady(ready, hasApps, onApp, onJoin, onAllow, onDrive) } }
     }
     item(key = "journey") { GuideCard { CrewJourney() } }
     item(key = "rules") { GuideCard(padding = PaddingValues(0.dp)) { CrewRulesCard() } }
@@ -141,10 +151,11 @@ private fun CrewGetReady(
     onApp: () -> Unit,
     onJoin: () -> Unit,
     onAllow: () -> Unit,
+    onDrive: () -> Unit,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.weight(1f)) { Eyebrow(Lucide.ListChecks, "Get ready") }
-        StatusChip("${ready.done} of 3", Tone.OK)
+        StatusChip("${ready.done} of ${CrewReady.STEPS}", Tone.OK)
     }
     Text(
         "Before you take a seat",
@@ -164,10 +175,18 @@ private fun CrewGetReady(
     ReadyRow(
         Lucide.ShieldCheck,
         "Two permissions",
-        "Usage access proves each visit; over other apps shows the timer",
+        "Usage access times each visit; over other apps shows the timer",
         ready.permissions,
         "Allow",
         onAllow,
+    )
+    ReadyRow(
+        Lucide.HardDrive,
+        "Google Drive",
+        "The picture of each app you open is saved there, for its owner",
+        ready.drive,
+        "Connect",
+        onDrive,
     )
 }
 

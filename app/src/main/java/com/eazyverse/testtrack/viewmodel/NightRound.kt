@@ -6,6 +6,8 @@ import android.provider.Settings
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.RoundStore
 import com.eazyverse.testtrack.data.UsageRepo
+import com.eazyverse.testtrack.data.VisitCameraService
+import com.eazyverse.testtrack.data.VisitPictures
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import kotlinx.coroutines.CoroutineScope
@@ -15,6 +17,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import java.io.File
 
 /**
  * Tonight's round: the apps to open, the one on screen now, and whether it has counted.
@@ -28,9 +32,11 @@ import kotlinx.coroutines.launch
  * Every step is written to [RoundStore], so Android closing TestTrack mid-visit loses nothing: the
  * next time TestTrack comes to the front, the app that was on screen is measured and recorded.
  *
- * The proof is unchanged. The control's clock is only a guide; what counts is the phone's own
- * usage record of the app in front for ten seconds, read when the visit is recorded, and the
- * server refuses anything under its floor regardless.
+ * The proof is two things, as it was in the August app. The phone's own usage record of the app in
+ * front for ten seconds, read when the visit is recorded, which the server holds to its floor; and
+ * a picture of the app, taken by [VisitCameraService] the moment those ten seconds are in, while
+ * the app is still on screen with the control over it. The visit is recorded first and the picture
+ * follows through [VisitPictures], and only once it is in does the server count the visit.
  */
 object NightRound {
     const val VISIT_MS = 10_000L
@@ -44,20 +50,31 @@ object NightRound {
     private var ranMs = 0L
     private var paused = false
 
+    /** Whether this round takes pictures, and this app's: taken, failed, or not yet. */
+    private var pictures = false
+    private var shot: File? = null
+    private var shotFailed = false
+    private var shooting: Job? = null
+
     /** Said on the Crew page the next time it is in front: the round's last word. */
     private var pendingSay: String? = null
 
     fun canFloat(context: Context): Boolean = Settings.canDrawOverlays(context)
 
-    /** Starts a round. [float] puts the testing control over each app. */
+    /**
+     * Starts a round. [float] puts the testing control over each app; [pictures] is a round whose
+     * camera is on, started by the Crew page with tonight's screen-share consent.
+     */
     fun start(
         context: Context,
         stops: List<RoundStore.Stop>,
         float: Boolean,
+        pictures: Boolean = false,
     ) {
         if (stops.isEmpty()) return
         val app = context.applicationContext
-        end(app)
+        end(app, camera = false)
+        this.pictures = pictures
         round = RoundStore.Round(stops, 0, System.currentTimeMillis())
         if (float && canFloat(app)) window = VisitDockWindow(app, onPlayPause = { playPause(app) })
         begin(app)
@@ -70,11 +87,13 @@ object NightRound {
         RoundStore.save(context, round)
         ranMs = 0
         paused = false
-        window?.let {
-            it.show()
-            publish()
-            tick()
-        }
+        shot = null
+        shotFailed = false
+        window?.show()
+        publish()
+        // The clock runs without the control too: it is what says when the picture is due.
+        tick()
+        if (pictures) shoot(context, stop)
         if (!InstalledApps.launch(context, stop.packageName)) {
             pendingSay = "${stop.label} is not on this phone. Install it from its row first."
             end(context)
@@ -102,7 +121,45 @@ object NightRound {
     private fun publish() {
         val now = round ?: return
         val stop = now.current ?: return
-        window?.state(stop, now.index, now.stops.size, ranMs, paused)
+        val picture =
+            if (shot != null) {
+                true
+            } else if (shotFailed) {
+                false
+            } else {
+                null
+            }
+        window?.state(stop, now.index, now.stops.size, ranMs, paused, picture)
+    }
+
+    /**
+     * The app's picture, once its ten seconds are in and while it is still on screen. A press of
+     * Next before it is taken waits for it ([picture]) rather than leaving the app without one.
+     */
+    private fun shoot(
+        context: Context,
+        stop: RoundStore.Stop,
+    ) {
+        shooting?.cancel()
+        shooting =
+            scope.launch {
+                while (isActive && ranMs < VISIT_MS) delay(200)
+                val file = VisitCameraService.take(context, "${stop.seatId.take(8)}_${System.currentTimeMillis()}")
+                if (round?.current?.seatId != stop.seatId) {
+                    file?.delete()
+                    return@launch
+                }
+                shot = file
+                shotFailed = file == null
+                publish()
+            }
+    }
+
+    /** A picture still being taken is waited for, briefly, before the app is left. */
+    private suspend fun picture(): File? {
+        if (!pictures) return null
+        shooting?.let { job -> withTimeoutOrNull(4_000) { job.join() } }
+        return shot
     }
 
     /** The control's one button: pause or play while the clock runs, the next app once it counts. */
@@ -119,7 +176,8 @@ object NightRound {
         val now = round ?: return
         val stop = now.current ?: return
         scope.launch {
-            when (val result = record(context, stop, now.since)) {
+            val taken = picture()
+            when (val result = record(context, stop, now.since, taken)) {
                 is Outcome.Short -> {
                     // Left the app part way, by the phone's own count: the clock goes back to that.
                     ranMs = result.ms
@@ -167,7 +225,9 @@ object NightRound {
         window?.hide()
         ticker?.cancel()
         scope.launch {
-            when (val result = record(app, stop, now.since)) {
+            // Back in TestTrack, so a picture not taken yet can no longer be: what is in hand goes.
+            shooting?.cancel()
+            when (val result = record(app, stop, now.since, shot)) {
                 is Outcome.Short -> {
                     end(app)
                     say(
@@ -217,11 +277,17 @@ object NightRound {
         context: Context,
         stop: RoundStore.Stop,
         since: Long,
+        taken: File? = null,
     ): Outcome {
         val used = UsageRepo.measure(context, stop.packageName, since, needMs = VISIT_MS, source = "crew")
         if (used < VISIT_MS) return Outcome.Short(used)
         return try {
             Api.visit(stop.seatId, used)
+            // The visit first, then its picture, in the background: the next app does not wait.
+            if (taken != null) {
+                VisitPictures.add(context, VisitPictures.Waiting(stop.seatId, stop.label, taken.path))
+                scope.launch { VisitPictures.send(context) }
+            }
             Outcome.Counted
         } catch (e: ApiError) {
             Outcome.Failed(e.message)
@@ -230,12 +296,19 @@ object NightRound {
         }
     }
 
-    private fun end(context: Context) {
+    private fun end(
+        context: Context,
+        camera: Boolean = true,
+    ) {
         ticker?.cancel()
+        shooting?.cancel()
         window?.hide()
         window = null
         round = null
         RoundStore.save(context, null)
+        // Off with the round, so Android's sharing chip goes with it.
+        if (camera && pictures) VisitCameraService.stop(context)
+        if (camera) pictures = false
     }
 
     /** TestTrack to the front, on the Crew tab, once a floating round is over. */

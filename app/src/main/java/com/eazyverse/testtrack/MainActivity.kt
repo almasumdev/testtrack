@@ -56,6 +56,7 @@ import com.eazyverse.testtrack.ui.JoinGroupDialog
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
+import com.eazyverse.testtrack.viewmodel.CrewPicturesViewModel
 import com.eazyverse.testtrack.viewmodel.MembershipViewModel
 import com.eazyverse.testtrack.viewmodel.ThemeChoice
 import kotlinx.coroutines.launch
@@ -83,10 +84,13 @@ object Routes {
     /** One crew on its own page. */
     const val CREW = "crew/{id}"
     const val CREW_MEMBERS = "crew/{id}/members"
+    const val CREW_PICTURES = "crew/{id}/pictures"
 
     fun crew(id: String) = "crew/${Uri.encode(id)}"
 
     fun crewMembers(id: String) = "crew/${Uri.encode(id)}/members"
+
+    fun crewPictures(id: String) = "crew/${Uri.encode(id)}/pictures"
 
     /** Putting an app from My apps into a crew: its name for the crew, its sign-in, the seat. */
     const val CREW_ADD = "crew-add/{app}"
@@ -416,7 +420,17 @@ fun AppNav(
         composable(Routes.CREW_MEMBERS, arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
             val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
             val crews: CrewViewModel = viewModel(home)
-            Inset { CrewMembersPage(crews, requireNotNull(entry.arguments?.getString("id")), onBack = { nav.popBackStack() }) }
+            val id = requireNotNull(entry.arguments?.getString("id"))
+            Inset { CrewMembersPage(crews, id, onBack = { nav.popBackStack() }, onEveryNight = { nav.push(Routes.crewPictures(id)) }) }
+        }
+
+        composable(Routes.CREW_PICTURES, arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
+            val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
+            val crews: CrewViewModel = viewModel(home)
+            val pictures: CrewPicturesViewModel = viewModel()
+            val id = requireNotNull(entry.arguments?.getString("id"))
+            val name = crews.crews.firstOrNull { it.id == id }?.name ?: "this crew"
+            Inset { CrewPicturesPage(pictures, id, name, onBack = { nav.popBackStack() }) }
         }
 
         appRoutes(nav)

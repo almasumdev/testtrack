@@ -489,7 +489,11 @@ const val DRIVE_PREFIX = "drive:"
 
 /**
  * Where a proof's picture is fetched from. Drive, shared by link, for every proof sent now; our
- * own server, behind the session, for the older ones that were uploaded there.
+ * own server, behind the session, for older ones uploaded there; a file for one still on the phone.
  */
 fun proofSource(ref: String): String =
-    if (ref.startsWith(DRIVE_PREFIX)) DriveFile(ref.removePrefix(DRIVE_PREFIX), "").thumbUrl else Api.proofUrl(ref)
+    when {
+        ref.startsWith(DRIVE_PREFIX) -> DriveFile(ref.removePrefix(DRIVE_PREFIX), "").thumbUrl
+        ref.startsWith("file:") -> ref
+        else -> Api.proofUrl(ref)
+    }

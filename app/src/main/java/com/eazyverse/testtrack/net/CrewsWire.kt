@@ -24,6 +24,49 @@ data class SeatIn(
 data class VisitIn(
     /** Real foreground milliseconds, measured on this phone. The server holds it to its floor. */
     @SerialName("used_ms") val usedMs: Long,
+    /** This build takes a picture of each app: the visit counts once its picture is in. */
+    val pictures: Boolean = true,
+)
+
+/** A visit's picture, in the member's own Drive and shared by link. */
+@Serializable
+data class PictureIn(
+    @SerialName("proof_ref") val proofRef: String,
+    /** A short-lived Drive grant the server uses once to check the file is ours, never kept. */
+    @SerialName("drive_token") val driveToken: String,
+    /** Picked from the phone after TestTrack's own picture failed. */
+    @SerialName("by_hand") val byHand: Boolean = false,
+)
+
+/** One member's pictures of the reader's own app, night by night. */
+@Serializable
+data class ApiNightPicture(
+    val day: Int,
+    val at: String,
+    @SerialName("used_ms") val usedMs: Long = 0,
+    /** "drive:<id>", or empty for a visit from before pictures or one still waiting on its own. */
+    val proof: String = "",
+    @SerialName("by_hand") val byHand: Boolean = false,
+    val counts: Boolean = true,
+)
+
+@Serializable
+data class ApiTesterPictures(
+    @SerialName("seat_id") val seatId: String,
+    val name: String,
+    /** Their own day of the run, and whether their app has left it. */
+    val day: Int = 0,
+    val out: Boolean = false,
+    val nights: List<ApiNightPicture> = emptyList(),
+)
+
+/** Every member's pictures of the reader's own app in one crew: the owner's grid. */
+@Serializable
+data class ApiCrewPictures(
+    @SerialName("seat_id") val seatId: String,
+    @SerialName("app_name") val appName: String,
+    @SerialName("run_days") val runDays: Int = 14,
+    val testers: List<ApiTesterPictures> = emptyList(),
 )
 
 @Serializable
@@ -81,6 +124,11 @@ data class ApiSeat(
     @SerialName("opened_mine_at") val openedMineAt: String? = null,
     /** On how many of their days this member has opened the reader's app. */
     @SerialName("opened_mine_days") val openedMineDays: Int = 0,
+    /** Tonight's picture of the reader's own app from this member, and whether it was picked by hand. */
+    @SerialName("opened_mine_picture") val openedMinePicture: String = "",
+    @SerialName("opened_mine_by_hand") val openedMineByHand: Boolean = false,
+    /** The reader opened this app tonight and its picture is not in yet, so it has not counted. */
+    @SerialName("picture_due") val pictureDue: Boolean = false,
     /** The day this seat's own run starts on: 1 unless the team put it in part-way through. */
     @SerialName("first_night") val firstNight: Int = 1,
     /** Tix taken for this seat and given back for it; -1 from an older server that does not say. */

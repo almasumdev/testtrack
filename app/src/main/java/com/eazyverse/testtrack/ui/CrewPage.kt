@@ -1,5 +1,8 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +12,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -125,6 +129,15 @@ internal fun crewActions(
 ): CrewActions {
     val context = LocalContext.current
     val membership = rememberMembership()
+    // The app a picked picture is for, held while the picker is up.
+    var picking by remember { mutableStateOf<CrewApp?>(null) }
+    val picker =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            val app = picking
+            picking = null
+            if (app != null && uri != null) vm.pictures.pick(context.findActivity(), app.id, app.label, uri)
+        }
+    val waiting by vm.pictures.waiting.collectAsState()
     return CrewActions(
         onOpen = { app -> membership.require { vm.openApp(context, app) } },
         onOpenAll = { id -> membership.require { vm.openAll(context, id) } },
@@ -137,6 +150,11 @@ internal fun crewActions(
         isInstalled = { pkg -> vm.isInstalled(context, pkg) },
         onMembers = onMembers,
         busySeat = vm.acting,
+        onPickPicture = { app ->
+            picking = app
+            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        },
+        sendingPicture = { id -> waiting.any { it.seatId == id } },
     )
 }
 
@@ -238,6 +256,8 @@ internal fun CrewDialogsHost(
      * with the app they were opening named in the question. Dismissing is allowed: refusing means
      * tonight does not count, which is theirs to choose, and the ask returns the next time.
      */
+    CrewPictureAsks(vm)
+
     vm.needsUsageFor?.let { label ->
         Ask(
             title = "Let TestTrack see the time",

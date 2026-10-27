@@ -20,6 +20,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,15 +36,12 @@ import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /**
  * A crew's members, from the button in its bar: everybody in it, and what each of them did with
- * the reader's own app. The proof is the phone's own record of each open, ten seconds or more in
- * the app, so there is nothing like a screenshot to check.
+ * the reader's own app. The proof is two things: the phone's own record of each open, ten seconds
+ * or more in the app, and the picture of the app taken then, which each row shows for tonight and
+ * Every night shows for the whole run.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,8 +49,10 @@ fun CrewMembersPage(
     vm: CrewViewModel,
     id: String,
     onBack: () -> Unit,
+    onEveryNight: () -> Unit = {},
 ) {
     val crew = vm.crews.firstOrNull { it.id == id }
+    var open by remember { mutableStateOf<NightPicture?>(null) }
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -98,14 +101,20 @@ fun CrewMembersPage(
                     )
                 }
             }
+            item {
+                Box(Modifier.padding(horizontal = Gutter).padding(top = 10.dp)) {
+                    Secondary("See every night", Modifier.fillMaxWidth(), onClick = onEveryNight)
+                }
+            }
             item { CrewHeading("Testers", "${others.size}") }
             itemsIndexed(others, key = { _, m -> m.id }) { index, member ->
                 Box(Modifier.padding(horizontal = Gutter).padding(bottom = if (index < others.size - 1) 3.dp else 0.dp)) {
-                    MemberRow(member, crew, placeOf(index, others.size))
+                    MemberRow(member, crew, placeOf(index, others.size)) { picture -> open = picture }
                 }
             }
         }
     }
+    open?.let { PictureViewer(it) { open = null } }
 }
 
 /** One person in the crew, and what they did with your app. */
@@ -114,6 +123,7 @@ private fun MemberRow(
     member: CrewMember,
     crew: Crew,
     place: TilePlace,
+    onPicture: (NightPicture) -> Unit,
 ) {
     val finished = crew.phase == CrewPhase.RECORD
     val days = member.openedMineDays
@@ -130,7 +140,11 @@ private fun MemberRow(
                 )
             member.openedMineToday ->
                 Triple(
-                    "Opened yours${clock(member.openedMineAt)}, $days ${plural(days, "day")} so far",
+                    if (member.openedMineByHand) {
+                        "Opened yours${clockAt(member.openedMineAt)}, picked by hand"
+                    } else {
+                        "Opened yours${clockAt(member.openedMineAt)}, $days ${plural(days, "day")} so far"
+                    },
                     "Opened",
                     Tone.OK,
                 )
@@ -167,7 +181,25 @@ private fun MemberRow(
             )
         }
         Spacer(Modifier.width(8.dp))
-        StatusChip(chip, tone)
+        // Tonight's picture takes the place of the Opened chip: it is the proof, not a word for it.
+        val picture = member.openedMinePicture
+        if (member.openedMineToday && picture.isNotBlank() && !finished) {
+            PictureThumb(picture, member.openedMineByHand, 40.dp) {
+                onPicture(
+                    NightPicture(
+                        picture,
+                        member.name,
+                        member.day,
+                        member.openedMineAt,
+                        0,
+                        member.openedMineByHand,
+                        crew.mine?.appName.orEmpty(),
+                    ),
+                )
+            }
+        } else {
+            StatusChip(chip, tone)
+        }
     }
 }
 
@@ -175,10 +207,3 @@ private fun plural(
     n: Int,
     word: String,
 ) = if (n == 1) word else "${word}s"
-
-/** " at 9:14 pm", in this phone's own time, or nothing if the time did not come. */
-private fun clock(iso: String): String =
-    runCatching {
-        val local = OffsetDateTime.parse(iso).atZoneSameInstant(ZoneId.systemDefault())
-        " at " + local.format(DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())).lowercase()
-    }.getOrDefault("")

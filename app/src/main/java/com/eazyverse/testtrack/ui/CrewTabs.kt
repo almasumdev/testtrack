@@ -108,7 +108,7 @@ fun CrewRunTab(
         contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
     ) {
         item {
-            Box(Modifier.padding(horizontal = Gutter)) {
+            Column(Modifier.padding(horizontal = Gutter)) {
                 CrewHero(
                     chip = "Tonight, $crews",
                     tone =
@@ -156,6 +156,7 @@ fun CrewRunTab(
                     action = if (left > 0) "Open all $left" else null,
                     onAction = { actions.onOpenAll(null) },
                 )
+                PicturesDueCard(going.flatMap { it.apps }, actions)
             }
         }
 

@@ -3,6 +3,8 @@ package com.eazyverse.testtrack.ui
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +38,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.TestingDriveViewModel
 
 /**
  * Crew: one cohort, at whatever point it has reached.
@@ -126,15 +129,30 @@ private fun rememberCrewGuide(
         onDispose { owner.lifecycle.removeObserver(watcher) }
     }
     val permissions = remember(resumes) { vm.permissionsReady(context) }
+    // Asked of Google without showing anything, on every return, since the grant is the account's.
+    val drive: TestingDriveViewModel = viewModel()
+    val activity = context.findActivity()
+    LaunchedEffect(resumes, vm.signedOut) { if (!vm.signedOut) drive.check(activity) }
+    val driveSheet =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+            drive.consentResult(activity, it.data) {}
+        }
     // Ready for a crew: checked on Play and still in closed testing. A live app goes to Feedback.
     val waiting = myApps?.filter { !it.live }
     val app = waiting?.let { list -> list.any { it.verified } }
     return CrewGuide(
-        ready = CrewReady(app = if (vm.signedOut) false else app, member = membership.member, permissions = permissions),
+        ready =
+            CrewReady(
+                app = if (vm.signedOut) false else app,
+                member = membership.member,
+                permissions = permissions,
+                drive = if (vm.signedOut) false else drive.connected,
+            ),
         hasApps = !waiting.isNullOrEmpty(),
         onApp = { waiting?.firstOrNull { !it.verified }?.let { onOpenApp(it.id) } ?: onAddApp() },
         onJoin = { membership.show() },
         onAllow = { vm.allowPermissions(context.findActivity()) },
+        onDrive = { drive.connect(activity, driveSheet::launch) {} },
     )
 }
 
@@ -154,6 +172,10 @@ class CrewActions(
     val onMembers: () -> Unit = {},
     /** The seat an answer, report or withdrawal is being sent for. */
     val busySeat: String? = null,
+    /** A picture from the phone for an app whose own picture failed tonight. */
+    val onPickPicture: (CrewApp) -> Unit = {},
+    /** This app's picture is on the phone, waiting to send. */
+    val sendingPicture: (String) -> Boolean = { false },
 )
 
 /**

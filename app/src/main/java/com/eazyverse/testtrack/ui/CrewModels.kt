@@ -165,6 +165,9 @@ data class CrewMember(
     val openedMineAt: String = "",
     /** On how many of their days they have opened the reader's app. */
     val openedMineDays: Int = 0,
+    /** Tonight's picture of the reader's app from them, and whether they picked it by hand. */
+    val openedMinePicture: String = "",
+    val openedMineByHand: Boolean = false,
 )
 
 /**
@@ -184,6 +187,8 @@ data class CrewApp(
     val done: Boolean = false,
     /** Reported by this account as not installing, so it is excused rather than owed. */
     val reported: Boolean = false,
+    /** Opened tonight, but its picture is not on the server yet, so it has not counted. */
+    val pictureDue: Boolean = false,
 )
 
 /**

@@ -74,6 +74,8 @@ fun ApiSeat.toMember() =
         openedMineToday = openedMineToday,
         openedMineAt = openedMineAt.orEmpty(),
         openedMineDays = openedMineDays,
+        openedMinePicture = openedMinePicture,
+        openedMineByHand = openedMineByHand,
     )
 
 /**
@@ -93,6 +95,7 @@ fun ApiSeat.toApp(crewName: String = "") =
         // A report from this account excuses it from this app: something that will not install
         // is not something anybody can open.
         reported = reported,
+        pictureDue = pictureDue,
     )
 
 /**

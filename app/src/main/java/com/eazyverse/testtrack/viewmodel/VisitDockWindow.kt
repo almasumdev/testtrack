@@ -75,6 +75,7 @@ class VisitDockWindow(
         total: Int,
         ranMs: Long,
         paused: Boolean,
+        picture: Boolean? = null,
     ) {
         ui =
             DockUi(
@@ -84,6 +85,7 @@ class VisitDockWindow(
                 secondsLeft = ((NightRound.VISIT_MS - ranMs + 999) / 1000).toInt().coerceAtLeast(0),
                 paused = paused,
                 counted = ranMs >= NightRound.VISIT_MS,
+                picture = picture,
                 signIn = signInParts(stop.notes),
                 upright = spot.edge.upright,
                 open = open,

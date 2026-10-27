@@ -103,6 +103,12 @@
         </activity>
 
 
+        <!-- The night's camera: one picture of each crew app, taken the moment its visit counts. -->
+        <service
+            android:name=".data.VisitCameraService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
         <!-- The review's one screenshot: a floating camera button over Play, one frame on press. -->
         <service
             android:name=".data.ReviewCaptureService"

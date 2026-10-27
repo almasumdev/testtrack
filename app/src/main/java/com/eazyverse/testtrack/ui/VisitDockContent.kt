@@ -69,6 +69,8 @@ data class DockUi(
     val paused: Boolean,
     /** Ten seconds are in: the ring is full and the button goes on to the next app. */
     val counted: Boolean,
+    /** Its picture once the ten seconds are in: taken, could not be taken, or not yet. */
+    val picture: Boolean? = null,
     /** The app's sign-in for testers: labelled parts, or the whole note when it has no labels. */
     val signIn: List<Pair<String, String>>,
     val upright: Boolean,
@@ -205,7 +207,9 @@ private fun OpenUpright(
 
 private fun status(ui: DockUi) =
     when {
-        ui.counted -> "Counted, app ${ui.index + 1} of ${ui.total}"
+        ui.counted && ui.picture == true -> "Counted with its picture, app ${ui.index + 1} of ${ui.total}"
+        ui.counted && ui.picture == false -> "No picture yet, app ${ui.index + 1} of ${ui.total}"
+        ui.counted -> "Taking its picture, app ${ui.index + 1} of ${ui.total}"
         ui.paused -> "Paused, app ${ui.index + 1} of ${ui.total}"
         else -> "${ui.secondsLeft}s to go, app ${ui.index + 1} of ${ui.total}"
     }

@@ -69,13 +69,14 @@ fun CrewOpenTab(
                                 vm.signedOut -> "Sign in to take a seat"
                                 else -> "Take a seat"
                             },
-                        onAction = actions.onTakeSeat,
+                        // No Drive, no seat: a night counts only with its pictures, and they go there.
+                        onAction = if (guide.ready.drive == false) guide.onDrive else actions.onTakeSeat,
                     )
                 }
             }
         }
 
-        crewGuide(guide.ready, guide.hasApps, guide.onApp, guide.onJoin, guide.onAllow)
+        crewGuide(guide.ready, guide.hasApps, guide.onApp, guide.onJoin, guide.onAllow, guide.onDrive)
     }
 }
 
@@ -86,4 +87,5 @@ class CrewGuide(
     val onApp: () -> Unit = {},
     val onJoin: () -> Unit = {},
     val onAllow: () -> Unit = {},
+    val onDrive: () -> Unit = {},
 )

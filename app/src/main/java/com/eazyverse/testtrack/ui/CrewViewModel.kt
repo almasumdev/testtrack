@@ -20,6 +20,7 @@ import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.SeatIn
 import com.eazyverse.testtrack.viewmodel.LiveReload
+import com.eazyverse.testtrack.viewmodel.NightPictures
 import com.eazyverse.testtrack.viewmodel.NightRound
 import com.eazyverse.testtrack.viewmodel.ReviewMoment
 import kotlinx.coroutines.launch
@@ -330,7 +331,7 @@ class CrewViewModel : ViewModel() {
         crews
             .filter { crewId == null || it.id == crewId }
             .flatMap { crew -> crew.apps.filter { !it.done && !it.reported } }
-            .filter { isInstalled(context, it.packageName) },
+            .filter { !pictures.sending(it.id) && isInstalled(context, it.packageName) },
     )
 
     /** The seat a call is running for, so its row shows it busy and a second tap sends nothing. */
@@ -343,6 +344,9 @@ class CrewViewModel : ViewModel() {
 
     /** Asked once a session: somebody who said Not now is not asked at every app. */
     private var overlayAsked = false
+
+    /** What a round needs before it starts: Drive, and tonight's screen-share yes. */
+    val pictures = NightPictures(viewModelScope, say = { message = it }, reload = { load(it) })
 
     private fun round(
         context: Context,
@@ -369,7 +373,7 @@ class CrewViewModel : ViewModel() {
             needsOverlayFor = stops
             return
         }
-        NightRound.start(context, stops, float = true)
+        pictures.ask(stops, float = true)
     }
 
     /** Both switches a round needs: usage access for the proof, drawing over apps for the timer. */
@@ -394,7 +398,7 @@ class CrewViewModel : ViewModel() {
     fun skipOverlay(context: Context) {
         val stops = needsOverlayFor ?: return
         needsOverlayFor = null
-        NightRound.start(context, stops, float = false)
+        pictures.ask(stops, float = false)
     }
 
     /**
@@ -404,12 +408,14 @@ class CrewViewModel : ViewModel() {
     fun settle(context: Context) {
         needsOverlayFor?.let { stops ->
             needsOverlayFor = null
-            NightRound.start(context, stops, float = NightRound.canFloat(context))
+            pictures.ask(stops, float = NightRound.canFloat(context))
             return
         }
         NightRound.onTestTrackInFront(context) { said ->
             said?.let { message = it }
             load(context)
+            // Anything a round could not send yet goes now, with TestTrack in front to ask Drive.
+            (context as? Activity)?.let(pictures::send)
         }
     }
 

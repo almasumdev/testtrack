@@ -290,6 +290,7 @@ fun CrewRunPhase(
             return@CrewList
         }
         block { RunHero(crew, owed, here, missing, actions) }
+        if (crew.apps.any { it.pictureDue }) block { PicturesDueCard(crew.apps, actions) }
         crew.mine?.let { mine ->
             item { CrewHeading("Your app") }
             block { TestersCard(crew, mine, actions) }
