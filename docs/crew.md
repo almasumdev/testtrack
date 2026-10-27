@@ -154,7 +154,87 @@ A seat the team put in part-way is held only to its own nights; a seat placed fr
 back because nothing was charged. Showing up every day is what makes a crew work, so the member
 who never let it down rides for free. The server's crew_sweep.close_finished decides it.
 
+## A night's proof: time and a picture
+
+Decided 27 October 2026, and built. Proof is two things, as it was in the August app, and a night
+counts only with both:
+
+- **Time.** Each app is open for 20 seconds in a round. It counts with at least 10 of them really
+  in front, by the phone's own usage record, which the server holds to its floor.
+- **A picture.** TestTrack takes one picture of the app at a moment picked at random between 10
+  and 20 seconds: past the app's opening logo, and not a moment anybody can time a screen for. The
+  testing control is in the picture on purpose, so it shows the app's name and its place in the
+  round.
+
+How it runs:
+
+- **Google Drive is required.** It is a Get ready step, and the Take a seat page, which every way
+  to a seat leads to, connects it first. Pictures go to the member's own Drive, shared by link;
+  only the file's id reaches our server, which checks the file is theirs.
+- **Android asks to share the screen every night**, once for the whole round, after one line from
+  us saying why. Not now opens nothing and the night is still owed.
+- **The visit is sent first and its picture follows**, so an upload never holds up the next app.
+  A picture that cannot send stays on the phone and keeps trying by itself, with TestTrack closed
+  too, and never makes a second copy. It counts for its night whenever it lands, even after
+  midnight.
+- **A picture that fails** (a blank screen, a camera that stopped) is asked for on the Crew page:
+  open the app again for a fresh one, or pick one from the phone, which its owner sees as picked
+  by hand.
+- **The owner sees** tonight's picture on each member's row and every member's picture night by
+  night under Every night; any picture opens full screen. The team sees the same on the admin
+  panel's seat page.
+- **Older builds** count as before, without a picture. A member who has sent one visit with a
+  picture needs one on every later visit in that crew.
+
+Why this is written down: the move to our own server in September 2026 kept the time and dropped
+the picture without anybody deciding to, and the capture code went with the Firestore code in
+October. Proof the owner can see is the point of a crew, and this section is what keeps it.
+
+## Telling the crew about an update
+
+Planned, not built yet. **Build it from this section, not from the August app**, whose version
+(commit da72874, removed in 65cac3c) was a Firestore message and nothing more.
+
+An owner fixes things during a run, and testers on an old build test the wrong app. So:
+
+- **The owner presses "Tell the crew about an update"** on their Your app card, with an optional
+  line of what changed (up to 280 characters).
+- **Every member still in the run is told**: a push, and the notice on the app's row in their
+  Tonight list, "Update out: install the new version" with an Update button that opens the app on
+  Play. The row keeps saying it until they open Play from it, or for 24 hours.
+- **Once every 2 days per app**, held by the server, not only by a greyed-out button.
+- **The server keeps it**: when it was sent and what it said, on the seat. The owner sees "Last
+  told 26 Oct"; the admin panel's seat page lists it with the other things done to the seat.
+- **It changes no rule.** Nobody's night depends on updating. Whether a tester really updated is
+  not something the phone can tell the owner, so the notice does not pretend to.
+
+## Asking the crew for feedback
+
+Planned, not built yet. **Build it from this section, not from the August app**, whose version
+(commit 9776af2, removed in 65cac3c) kept notes in Firestore with no question and no moderation.
+
+Testing for Google is opening the app; what the owner also wants is to hear what is wrong with it.
+Circle is paid feedback on Play; this is the crew's free word, inside TestTrack:
+
+- **The owner presses "Ask the crew for feedback"**, with an optional question, up to 200
+  characters ("Is the sign-in clear?").
+- **Every member still in the run is told**: a push, and "Leave a note" on the app's row in their
+  Tonight list, with the owner's question above the box.
+- **One note per member per app per day**, up to 500 characters, free, no tix either way. Writing
+  again the same day replaces that day's note.
+- **The owner is told** when a note arrives and reads them all, newest first, from their Your app
+  card. Notes carry the member's crew name, so the owner can tell who to follow up with; reports
+  stay nameless, as they are now.
+- **Once every 2 days per app**, held by the server.
+- **The team can read and remove notes** from the admin panel's seat page, each removal logged
+  with a reason, since a free text box is a place for abuse.
+- Still to decide: whether a note can carry a picture.
+
 ## Still open
 
 - The admin panel (eazyverse.com/testtrack/admin) starts crews, takes apps out, places apps and
   moves seats, each logged with who and why.
+- Skipping an app needs more room than reporting it: an owner's "down tonight", and the team
+  excusing one member's night or one app, are to be designed.
+- The owner's grid of testers by nights is to grow into a fuller tracking view, in the spirit of
+  the August app's dashboard: every state on it, and each night's count against Google's 12.

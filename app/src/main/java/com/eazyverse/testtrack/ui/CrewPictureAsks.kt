@@ -40,7 +40,7 @@ internal fun CrewPictureAsks(vm: CrewViewModel) {
         Ask(
             title = "A picture of each app",
             body =
-                "Each app counts with ${CrewRules.VISIT_SECONDS} seconds in it and a picture of it. Android asks " +
+                "Each app is open for ${CrewRules.OPEN_SECONDS} seconds, with a picture taken along the way. Android asks " +
                     "next whether TestTrack can see your screen. Say yes once and it covers " +
                     "${if (stops.size == 1) "this app" else "all ${stops.size} tonight"}.",
             confirm = "Start",

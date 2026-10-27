@@ -258,7 +258,7 @@ private fun CrewJourney() {
                 Lucide.Play,
                 Tone.OK,
                 "Open them every day",
-                "Open all takes you through them with a timer on screen. ${CrewRules.VISIT_SECONDS} seconds in each counts it.",
+                "Open all takes you through them, ${CrewRules.OPEN_SECONDS} seconds each, with a timer on screen and a picture of each.",
                 tag = "${CrewRules.RUN_DAYS} days",
             ),
             Step(

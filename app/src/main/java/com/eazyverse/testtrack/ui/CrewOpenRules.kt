@@ -96,7 +96,7 @@ internal fun CrewRulesCard() {
 
         RulesHeading("Good to know")
         GoodToKnow(1, Lucide.CalendarDays, "A day runs from midnight, your time.")
-        GoodToKnow(2, Lucide.Info, "An open counts after ${CrewRules.VISIT_SECONDS} seconds in front.")
+        GoodToKnow(2, Lucide.Info, "An open counts with ${CrewRules.VISIT_SECONDS} seconds in front and its picture.")
         GoodToKnow(3, Lucide.Hourglass, "One app waiting at a time.")
     }
 }

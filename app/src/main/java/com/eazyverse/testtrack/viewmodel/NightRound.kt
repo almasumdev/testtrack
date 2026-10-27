@@ -39,7 +39,13 @@ import java.io.File
  * follows through [VisitPictures], and only once it is in does the server count the visit.
  */
 object NightRound {
-    const val VISIT_MS = 10_000L
+    /**
+     * Each app is open for twenty seconds. It counts with ten of them really in front, the
+     * server's floor, and its picture is taken at a moment picked at random between the two: past
+     * the app's opening logo, and not a moment anybody could time a screen for.
+     */
+    const val VISIT_MS = 20_000L
+    const val COUNT_MS = 10_000L
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var round: RoundStore.Round? = null
@@ -143,7 +149,8 @@ object NightRound {
         shooting?.cancel()
         shooting =
             scope.launch {
-                while (isActive && ranMs < VISIT_MS) delay(200)
+                val at = COUNT_MS + kotlin.random.Random.nextLong(VISIT_MS - COUNT_MS)
+                while (isActive && ranMs < at) delay(200)
                 val file = VisitCameraService.take(context, "${stop.seatId.take(8)}_${System.currentTimeMillis()}")
                 if (round?.current?.seatId != stop.seatId) {
                     file?.delete()
@@ -232,7 +239,7 @@ object NightRound {
                     end(app)
                     say(
                         "That was ${result.ms / 1000}s in ${stop.label}. " +
-                            "It needs ${VISIT_MS / 1000}, so it has not counted yet.",
+                            "It needs ${COUNT_MS / 1000}, so it has not counted yet.",
                     )
                 }
                 is Outcome.Failed -> {
@@ -279,8 +286,8 @@ object NightRound {
         since: Long,
         taken: File? = null,
     ): Outcome {
-        val used = UsageRepo.measure(context, stop.packageName, since, needMs = VISIT_MS, source = "crew")
-        if (used < VISIT_MS) return Outcome.Short(used)
+        val used = UsageRepo.measure(context, stop.packageName, since, needMs = COUNT_MS, source = "crew")
+        if (used < COUNT_MS) return Outcome.Short(used)
         return try {
             Api.visit(stop.seatId, used)
             // The visit first, then its picture, in the background: the next app does not wait.

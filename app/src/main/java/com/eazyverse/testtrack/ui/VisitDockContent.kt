@@ -69,8 +69,10 @@ data class DockUi(
     val paused: Boolean,
     /** Ten seconds are in: the ring is full and the button goes on to the next app. */
     val counted: Boolean,
-    /** Its picture once the ten seconds are in: taken, could not be taken, or not yet. */
+    /** Its picture, taken somewhere in the second ten seconds: taken, could not be, or not yet. */
     val picture: Boolean? = null,
+    /** How long each app is open for, which the ring fills over. */
+    val totalSeconds: Int = 20,
     /** The app's sign-in for testers: labelled parts, or the whole note when it has no labels. */
     val signIn: List<Pair<String, String>>,
     val upright: Boolean,
@@ -214,7 +216,7 @@ private fun status(ui: DockUi) =
         else -> "${ui.secondsLeft}s to go, app ${ui.index + 1} of ${ui.total}"
     }
 
-/** The ten seconds as a ring: filling while the app is open, full and green once it counts. */
+/** The app's twenty seconds as a ring: filling while it is open, full and green once it counts. */
 @Composable
 private fun Ring(
     ui: DockUi,
@@ -223,7 +225,8 @@ private fun Ring(
     val accent = Tt.colors.accent
     val done = Status.posted
     val track = Tt.colors.glass2
-    val fraction = if (ui.counted) 1f else (10 - ui.secondsLeft).coerceIn(0, 10) / 10f
+    val total = ui.totalSeconds.coerceAtLeast(1)
+    val fraction = if (ui.counted) 1f else (total - ui.secondsLeft).coerceIn(0, total) / total.toFloat()
     Box(Modifier.size(size), contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(size)) {
             val stroke = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)

@@ -100,6 +100,9 @@ object CrewRules {
      */
     const val VISIT_SECONDS = 10
 
+    /** How long each app stays open in a round; its picture is taken after the first ten. */
+    const val OPEN_SECONDS = 20
+
     /** What being in this many crews costs every evening, which is the only honest warning. */
     fun nightly(crews: Int) = crews * NIGHTLY
 }
