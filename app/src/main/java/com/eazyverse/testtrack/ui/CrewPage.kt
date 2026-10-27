@@ -138,6 +138,7 @@ internal fun crewActions(
             if (app != null && uri != null) vm.pictures.pick(context.findActivity(), app.id, app.label, uri)
         }
     val waiting by vm.pictures.waiting.collectAsState()
+    val stuck by vm.pictures.stuck.collectAsState()
     return CrewActions(
         onOpen = { app -> membership.require { vm.openApp(context, app) } },
         onOpenAll = { id -> membership.require { vm.openAll(context, id) } },
@@ -155,6 +156,8 @@ internal fun crewActions(
             picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         },
         sendingPicture = { id -> waiting.any { it.seatId == id } },
+        picturesStuck = stuck,
+        onRetryPictures = { vm.pictures.send(context.findActivity()) },
     )
 }
 

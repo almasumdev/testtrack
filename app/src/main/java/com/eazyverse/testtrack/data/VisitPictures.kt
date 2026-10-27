@@ -42,6 +42,8 @@ object VisitPictures {
         /** Picked from the phone after TestTrack's own picture failed. */
         val byHand: Boolean = false,
         val takenAt: Long = System.currentTimeMillis(),
+        /** Its Drive file, reserved once, so a try that dies half way never makes a second copy. */
+        val fileId: String? = null,
     )
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -51,6 +53,16 @@ object VisitPictures {
 
     /** The pictures not yet on their visits, for the page to say "sending" rather than "missing". */
     val waiting: StateFlow<List<Waiting>> = queue
+
+    private val failure = MutableStateFlow<String?>(null)
+
+    /** Why the last try to send stopped, for the page to say under "Sending"; null once they went. */
+    val stuck: StateFlow<String?> = failure
+
+    /** Google wants the member to agree to Drive again, which only the Crew page can ask. */
+    fun needsDrive() {
+        failure.value = "Connect Google Drive again to send tonight's pictures."
+    }
 
     /** Drive access for this round, asked for while TestTrack was in front, since asking needs it. */
     @Volatile var token: String? = null
@@ -71,6 +83,8 @@ object VisitPictures {
         val old = queue.value.filter { it.seatId == item.seatId }
         old.filter { it.path != item.path }.forEach { File(it.path).delete() }
         save(context, queue.value.filter { it.seatId != item.seatId } + item)
+        // Sent from here as soon as there is a connection, with TestTrack open or not.
+        VisitPicturesWork.enqueue(context)
     }
 
     /** A picture picked from the phone for an app whose own picture failed. */
@@ -91,7 +105,8 @@ object VisitPictures {
 
     /**
      * Send every waiting picture: to Drive, then onto its visit. Stops at the first Drive or
-     * connection failure and says why; a visit the server no longer has drops its picture.
+     * connection failure and says why, keeping the rest; a visit the server no longer has drops
+     * its picture. Safe to repeat: each picture's Drive file is reserved once and written over.
      *
      * @return null when everything went, or the reason the rest is still waiting.
      */
@@ -101,30 +116,51 @@ object VisitPictures {
     ): String? =
         lock.withLock {
             load(context)
-            if (queue.value.isEmpty()) return null
-            val grant = token ?: return "Connect Google Drive to send tonight's pictures."
-            for (item in queue.value.toList()) {
-                val file = File(item.path)
-                if (!file.exists()) {
-                    drop(context, item)
-                    continue
-                }
-                val name = "crew_${item.seatId.take(8)}_${item.takenAt}.jpg"
-                val upload = DriveRepo.upload(grant, file, name)
-                if (upload is UploadResult.Failed) return upload.reason
-                val id = (upload as UploadResult.Ok).file.id
-                try {
-                    Api.visitPicture(item.seatId, PictureIn("drive:$id", grant, item.byHand))
-                    drop(context, item)
-                } catch (e: ApiError) {
-                    // Gone on the server: the visit was never kept, or the app left the run.
-                    if (e.status == 404 || e.status == 409) drop(context, item) else return e.message
-                } catch (_: Exception) {
-                    return "We could not reach TestTrack. Tonight's pictures will go when you are back online."
-                }
-            }
-            null
+            if (queue.value.isEmpty()) return null.also { failure.value = null }
+            val grant = token ?: return "Connect Google Drive to send tonight's pictures.".also { failure.value = it }
+            val why = sendAll(context, grant)
+            failure.value = why
+            why
         }
+
+    private suspend fun sendAll(
+        context: Context,
+        grant: String,
+    ): String? {
+        for (waiting in queue.value.toList()) {
+            val file = File(waiting.path)
+            if (!file.exists()) {
+                drop(context, waiting)
+                continue
+            }
+            val item =
+                waiting.fileId?.let { waiting }
+                    ?: runCatching { DriveRepo.reserveId(grant) }
+                        .getOrNull()
+                        ?.let { id -> waiting.copy(fileId = id).also { keep(context, waiting, it) } }
+                    ?: return "Drive didn't answer. Tonight's pictures will go by themselves when it does."
+            val name = "crew_${item.seatId.take(8)}_${item.takenAt}.jpg"
+            val upload = DriveRepo.upload(grant, name, "image/jpeg", fileId = item.fileId) { file.readBytes() }
+            if (upload is UploadResult.Failed) return upload.reason
+            try {
+                Api.visitPicture(item.seatId, PictureIn("drive:${item.fileId}", grant, item.byHand))
+                drop(context, item)
+            } catch (e: ApiError) {
+                // Gone on the server: the visit was never kept, or the app left the run.
+                if (e.status == 404 || e.status == 409) drop(context, item) else return e.message
+            } catch (_: Exception) {
+                return "We could not reach TestTrack. Tonight's pictures will go by themselves when you are back online."
+            }
+        }
+        return null
+    }
+
+    /** The same picture with its reserved Drive file, in its place in the queue. */
+    private fun keep(
+        context: Context,
+        old: Waiting,
+        new: Waiting,
+    ) = save(context, queue.value.map { if (it.path == old.path) new else it })
 
     private fun drop(
         context: Context,

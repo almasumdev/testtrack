@@ -176,6 +176,9 @@ class CrewActions(
     val onPickPicture: (CrewApp) -> Unit = {},
     /** This app's picture is on the phone, waiting to send. */
     val sendingPicture: (String) -> Boolean = { false },
+    /** Why waiting pictures could not go yet, and another try at sending them. */
+    val picturesStuck: String? = null,
+    val onRetryPictures: () -> Unit = {},
 )
 
 /**

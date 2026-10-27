@@ -335,4 +335,33 @@ class CrewPictureFramesTest {
         frame.settle(1500)
         frame.write("viewer")
     }
+
+    /** A picture taken but not sent yet, and the reason the last try stopped. */
+    @Test
+    fun p10_stuck() {
+        val vm = crews()
+        val waiting =
+            com.eazyverse.testtrack.data.VisitPictures
+                .Waiting("seat-1", "Steps Daily", "/nowhere.jpg")
+
+        fun <T> set(
+            name: String,
+            value: T,
+        ) {
+            val field = com.eazyverse.testtrack.data.VisitPictures::class.java.getDeclaredField(name).apply { isAccessible = true }
+            @Suppress("UNCHECKED_CAST")
+            (field.get(com.eazyverse.testtrack.data.VisitPictures) as kotlinx.coroutines.flow.MutableStateFlow<T>).value = value
+        }
+        set("queue", listOf(waiting))
+        set("failure", "We could not reach TestTrack. Tonight's pictures will go by themselves when you are back online.")
+        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        frame.settle(800)
+        // Opening the page tries to send, and without Google here it asks to reconnect Drive.
+        vm.pictures.clearDriveAsk()
+        set("failure", "We could not reach TestTrack. Tonight's pictures will go by themselves when you are back online.")
+        frame.settle(800)
+        frame.write("stuck")
+        set("queue", emptyList<com.eazyverse.testtrack.data.VisitPictures.Waiting>())
+        set("failure", null)
+    }
 }

@@ -414,9 +414,8 @@ class CrewViewModel : ViewModel() {
         NightRound.onTestTrackInFront(context) { said ->
             said?.let { message = it }
             load(context)
-            // Anything a round could not send yet goes now, with TestTrack in front to ask Drive.
-            (context as? Activity)?.let(pictures::send)
         }
+        (context as? Activity)?.let(pictures::send) // What could not go yet, with Drive askable.
     }
 
     /**

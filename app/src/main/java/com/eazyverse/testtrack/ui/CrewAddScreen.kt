@@ -1,5 +1,7 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +20,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,9 +32,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AskFailure
 import com.eazyverse.testtrack.viewmodel.CrewAddViewModel
+import com.eazyverse.testtrack.viewmodel.TestingDriveViewModel
 
 /**
  * Putting an app into a crew, on a page as Ask for feedback is: the link, the app Play has for it
@@ -58,6 +66,16 @@ fun CrewAddScreen(
     // A refusal from an earlier try belongs to that try.
     LaunchedEffect(Unit) { crews.clearSeatError() }
     LaunchedEffect(app?.id) { app?.let(vm::start) }
+    // Every way to a seat ends here, so this is where Drive is made sure of: each night's
+    // pictures go there, and without them no night counts. Asked of Google quietly first.
+    val activity = context.findActivity()
+    val drive: TestingDriveViewModel = viewModel()
+    LaunchedEffect(Unit) { drive.check(activity) }
+    var afterDrive by remember { mutableStateOf<(() -> Unit)?>(null) }
+    val driveSheet =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+            drive.consentResult(activity, it.data) { afterDrive?.invoke() }
+        }
     Scaffold(
         containerColor = Color.Transparent,
         // The navigation route already applies safeDrawingPadding.
@@ -128,12 +146,27 @@ fun CrewAddScreen(
                     DialogNote("Checking it on Play the way the crew will see it. This can take half a minute.")
                     Spacer(Modifier.height(12.dp))
                 }
+                val needsDrive = drive.connected == false
+                if (needsDrive) {
+                    DialogNote("Each night's pictures go to your own Google Drive, so it is connected before you take a seat.")
+                    Spacer(Modifier.height(12.dp))
+                }
+                val take = { crews.takeSeat(context, app.pkg, vm.name.trim(), vm.notes.trim(), appId = app.id, onDone = onDone) }
                 Primary(
-                    "Take a seat",
-                    busy = crews.seating,
+                    if (needsDrive) "Connect Drive and take a seat" else "Take a seat",
+                    busy = crews.seating || drive.busy,
                     enabled = vm.name.isNotBlank() && vm.signInReady && !vm.short,
                 ) {
-                    crews.takeSeat(context, app.pkg, vm.name.trim(), vm.notes.trim(), appId = app.id, onDone = onDone)
+                    if (drive.connected == true) {
+                        take()
+                    } else {
+                        afterDrive = take
+                        drive.connect(activity, driveSheet::launch, take)
+                    }
+                }
+                drive.message?.let {
+                    Spacer(Modifier.height(10.dp))
+                    DialogNote(it)
                 }
             }
             Spacer(Modifier.height(24.dp))

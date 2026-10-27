@@ -40,6 +40,9 @@ class NightPictures(
     /** The pictures still on the phone, so a row can say "sending" rather than "missing". */
     val waiting get() = VisitPictures.waiting
 
+    /** Why the last try to send them stopped; null while they are going, or once they went. */
+    val stuck get() = VisitPictures.stuck
+
     /** This app's picture is only waiting to send: it has been opened and needs no second visit. */
     fun sending(seatId: String) = VisitPictures.waiting.value.any { it.seatId == seatId }
 
@@ -107,13 +110,23 @@ class NightPictures(
         }
     }
 
-    /** Pictures still on the phone, onto their visits; said only when something is stuck. */
+    /**
+     * Pictures still on the phone, onto their visits. A fresh Drive grant every time, since the one
+     * a round started with lasts an hour; none to be had quietly means Google wants the member to
+     * agree again, which is asked. What still could not go stays, and says why on the page.
+     */
     fun send(activity: Activity) {
         scope.launch {
             VisitPictures.load(activity)
             if (VisitPictures.waiting.value.isEmpty()) return@launch
-            val token = VisitPictures.token ?: AuthRepo.driveTokenOrNull(activity)?.also { VisitPictures.token = it }
-            VisitPictures.send(activity, token)?.let(say)
+            val token = AuthRepo.driveTokenOrNull(activity)
+            if (token == null) {
+                VisitPictures.needsDrive()
+                needsDrive = true
+                return@launch
+            }
+            VisitPictures.token = token
+            VisitPictures.send(activity, token)
             reload(activity)
         }
     }

@@ -36,13 +36,27 @@ internal fun PicturesDueCard(
     Box(Modifier.padding(top = 10.dp)) {
         CrewCard {
             if (stuck.isEmpty()) {
-                StatusChip("Sending ${due.size} ${if (due.size == 1) "picture" else "pictures"}", Tone.ACCENT)
+                val why = actions.picturesStuck
+                StatusChip(
+                    "Sending ${due.size} ${if (due.size == 1) "picture" else "pictures"}",
+                    if (why !=
+                        null
+                    ) {
+                        Tone.WARN
+                    } else {
+                        Tone.ACCENT
+                    },
+                )
                 Text(
-                    "Opened and timed. ${if (due.size == 1) "It counts" else "They count"} once the picture reaches your Drive.",
+                    why ?: "Opened and timed. ${if (due.size == 1) "It counts" else "They count"} once the picture reaches your Drive.",
                     Modifier.padding(top = 8.dp),
                     style = MaterialTheme.typography.bodySmall,
                     color = Tt.colors.text3,
                 )
+                // The picture is safe on the phone and goes by itself; this is for not waiting.
+                if (why != null) {
+                    Secondary("Try again", Modifier.fillMaxWidth().padding(top = 10.dp)) { actions.onRetryPictures() }
+                }
                 return@CrewCard
             }
             StatusChip("${stuck.size} ${if (stuck.size == 1) "picture" else "pictures"} missing", Tone.WARN)

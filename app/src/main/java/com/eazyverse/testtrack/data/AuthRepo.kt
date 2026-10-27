@@ -2,6 +2,7 @@ package com.eazyverse.testtrack.data
 
 import android.accounts.Account
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -156,7 +157,7 @@ object AuthRepo {
      * token; the caller must launch it through an
      * `ActivityResultContracts.StartIntentSenderForResult` launcher.
      */
-    suspend fun authorizeDrive(activity: Activity): AuthorizationResult =
+    suspend fun authorizeDrive(activity: Context): AuthorizationResult =
         suspendCancellableCoroutine { cont ->
             Identity
                 .getAuthorizationClient(activity)
@@ -165,8 +166,11 @@ object AuthRepo {
                 .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
         }
 
-    /** The access token, if one can be had without showing anything. Null means consent needed. */
-    suspend fun driveTokenOrNull(activity: Activity): String? =
+    /**
+     * The access token, if one can be had without showing anything. Null means consent needed.
+     * Any context will do for this quiet ask, which is what lets a background upload make it.
+     */
+    suspend fun driveTokenOrNull(activity: Context): String? =
         withTimeoutOrNull(AUTH_TIMEOUT_MS) {
             runCatching { authorizeDrive(activity).accessToken }.getOrNull()
         }
