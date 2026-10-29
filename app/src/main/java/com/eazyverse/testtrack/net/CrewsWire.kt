@@ -209,7 +209,8 @@ data class ApiCrew(
     /** Those seats' app icons, confirmed first; empty where an app has none. Never names. */
     val icons: List<String> = emptyList(),
     val seats: Int,
-    @SerialName("run_days") val runDays: Int,
+    /** The crew's own length: 14 unless the team extended it. Never assumed. */
+    @SerialName("run_days") val runDays: Int = 14,
     /** This account's own day of the fortnight. Zero before their own midnight. */
     val day: Int = 0,
     /** The day this account's own run starts on: 1 unless the team put its app in part-way through. */

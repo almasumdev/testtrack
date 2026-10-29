@@ -156,7 +156,7 @@ private fun LobbyHero(crew: Crew) {
                 "This crew is already running. Your first day is day ${crew.firstNight}, from midnight, your time. " +
                     "Install the others before then and no day counts against you.",
             meter = {
-                DayMeter(crew.firstNight - 1, done = true, from = crew.firstNight)
+                DayMeter(crew.firstNight - 1, done = true, from = crew.firstNight, total = crew.runDays)
                 MeterLabels("You join on day ${crew.firstNight}", "${crew.ownNights} ${if (crew.ownNights == 1) "day" else "days"} for you")
             },
         )
@@ -273,6 +273,15 @@ fun CrewRunPhase(
             block { OwnerOutCard(crew, actions) }
             return@CrewList
         }
+        // Ahead in time zone: this account's last night is over while the others finish theirs.
+        if (crew.nightsDone) {
+            block { NightsDoneHero(crew) }
+            crew.mine?.let { mine ->
+                item { CrewHeading("Your app") }
+                block { TestersCard(crew, mine, actions) }
+            }
+            return@CrewList
+        }
         block { RunHero(crew, owed, here, missing, refused, actions) }
         if (crew.apps.any { it.pictureDue }) block { PicturesDueCard(crew.apps, actions) }
         block { PlayFeedbackCard(crew, actions) }
@@ -310,7 +319,7 @@ private fun RunHero(
     actions: CrewActions,
 ) {
     val done = owed.isEmpty()
-    val last = crew.day >= CrewRules.RUN_DAYS
+    val last = crew.day >= crew.runDays
     val next = if (last) "That was the last night." else "Day ${crew.ownDay + 1} begins at midnight, your time."
     val line =
         when {
@@ -347,7 +356,7 @@ private fun RunHero(
         line = line,
         lineTone = if (crew.atRisk && !done) Tone.WARN else null,
         meter = {
-            DayMeter(crew.day, done, from = crew.firstNight)
+            DayMeter(crew.day, done, from = crew.firstNight, total = crew.runDays)
             // Tonight counts as done once it is, so the two sides always add up to this account's run.
             val daysDone = (crew.ownDay - if (done) 0 else 1).coerceIn(0, crew.ownNights)
             MeterLabels("$daysDone ${if (daysDone == 1) "day" else "days"} done", "${crew.ownNights - daysDone} to go")
@@ -361,6 +370,22 @@ private fun RunHero(
                 else -> "Open the ${here.size} on your phone"
             },
         onAction = { actions.onOpenAll(crew.id) },
+    )
+}
+
+/** This account's nights are over, and the crew is still on its last: nothing to open. */
+@Composable
+private fun NightsDoneHero(crew: Crew) {
+    CrewHero(
+        chip = "${crew.ownNights} of ${crew.ownNights} nights",
+        tone = Tone.OK,
+        icon = Lucide.CircleCheck,
+        headline = "Finished for you",
+        line = "Your nights are done. The crew closes when everyone else finishes.",
+        meter = {
+            DayMeter(crew.runDays, done = true, from = crew.firstNight, total = crew.runDays)
+            MeterLabels("${crew.ownNights} ${if (crew.ownNights == 1) "day" else "days"} done", "Nothing to open")
+        },
     )
 }
 

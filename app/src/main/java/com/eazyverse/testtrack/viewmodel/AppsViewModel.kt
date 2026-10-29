@@ -16,6 +16,7 @@ import com.eazyverse.testtrack.net.IconIn
 import com.eazyverse.testtrack.ui.AppCrewStatus
 import com.eazyverse.testtrack.ui.AppEntry
 import com.eazyverse.testtrack.ui.AppFeedbackStatus
+import com.eazyverse.testtrack.ui.CrewRules
 import com.eazyverse.testtrack.ui.MyAppsChanged
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -225,7 +226,18 @@ fun ApiApp.toEntry(): AppEntry =
         developer = developer,
         live = live,
         verifiedBy = verifiedBy,
-        crew = crew?.let { AppCrewStatus(it.state, it.crewId, it.crewName, it.day, it.runDays) },
+        crew =
+            crew?.let {
+                AppCrewStatus(
+                    it.state,
+                    it.crewId,
+                    it.crewName,
+                    it.day,
+                    it.runDays.takeIf { n ->
+                        n > 0
+                    } ?: CrewRules.RUN_DAYS,
+                )
+            },
         crewsDone = crewsDone,
         feedback = feedback?.let { AppFeedbackStatus(it.state, it.postId, it.done, it.bought) },
         reviewsReceived = reviewsReceived,

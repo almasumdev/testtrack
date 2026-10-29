@@ -110,17 +110,19 @@ internal fun SegmentMeter(
     }
 }
 
-/** The fourteen days, with those behind filled, tonight lit, and the rest empty. */
+/** The run's days, with those behind filled, tonight lit, and the rest empty. */
 @Composable
 internal fun DayMeter(
     day: Int,
     done: Boolean = false,
     /** The first day that is this account's; days before it were the crew's before it joined. */
     from: Int = 1,
+    /** How many nights the crew runs, which the team can extend. */
+    total: Int = CrewRules.RUN_DAYS,
 ) {
     val past = if (done) Status.posted else Tt.colors.accent
     val now = Tt.colors.accent.copy(alpha = 0.45f)
-    SegmentMeter(CrewRules.RUN_DAYS) { i ->
+    SegmentMeter(total) { i ->
         when {
             i < from - 1 -> Tt.colors.glassBorderStrong
             i < day - 1 -> past

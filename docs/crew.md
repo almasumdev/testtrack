@@ -87,6 +87,11 @@ A seat counts toward the fifteen only once other members confirm the app install
 - **Crew-level day is approximate.** Members drift up to a day apart, so the last member finishes a
   day after the first. Circle says "Crew 06 is halfway"; the owner's dashboard shows per-tester
   days rather than one crew day.
+- **The crew's own length** (30 October 2026). Fourteen nights is the usual run, and the team can
+  extend a running crew, so the app reads the crew's `run_days` from the server and never assumes
+  14. A member whose own nights are over while the others finish theirs sees the crew as finished
+  for them: "Your nights are done. The crew closes when everyone else finishes.", with nothing to
+  open and no Open all.
 
 ## One device, two accounts
 

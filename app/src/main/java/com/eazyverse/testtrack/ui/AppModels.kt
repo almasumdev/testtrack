@@ -79,7 +79,12 @@ fun crewBadge(crew: AppCrewStatus): AppBadge =
         "waiting" -> AppBadge("${crew.crewName} is filling", BadgeTone.RUNNING, BadgeKind.CREW)
         "checking" -> AppBadge("${crew.crewName}, members checking", BadgeTone.ATTENTION, BadgeKind.CREW)
         "starting" -> AppBadge("${crew.crewName} starts at midnight, your time", BadgeTone.RUNNING, BadgeKind.CREW)
-        "testing" -> AppBadge("Day ${crew.day} of ${crew.runDays} in ${crew.crewName}", BadgeTone.RUNNING, BadgeKind.CREW)
+        "testing" ->
+            if (crew.day > crew.runDays) {
+                AppBadge("Your nights in ${crew.crewName} are done", BadgeTone.RUNNING, BadgeKind.CREW)
+            } else {
+                AppBadge("Day ${crew.day} of ${crew.runDays} in ${crew.crewName}", BadgeTone.RUNNING, BadgeKind.CREW)
+            }
         "finished" -> AppBadge("Crew test done", BadgeTone.DONE, BadgeKind.CREW)
         "rejected" -> AppBadge("Sent back to be fixed", BadgeTone.PROBLEM, BadgeKind.CREW)
         "removed" -> AppBadge("Out of ${crew.crewName}", BadgeTone.PROBLEM, BadgeKind.CREW)
@@ -114,6 +119,7 @@ fun crewStatus(app: AppEntry): String {
         crew.state == "waiting" -> "In ${crew.crewName}, filling up"
         crew.state == "checking" -> "In ${crew.crewName}, members checking"
         crew.state == "starting" -> "${crew.crewName} starts at midnight, your time"
+        crew.state == "testing" && crew.day > crew.runDays -> "Your nights in ${crew.crewName} are done"
         crew.state == "testing" -> "Day ${crew.day} of ${crew.runDays} in ${crew.crewName}"
         crew.state == "finished" -> if (app.crewsDone > 1) "${app.crewsDone} crew tests done" else "Crew test done"
         crew.state == "rejected" -> "${crew.crewName} sent it back"

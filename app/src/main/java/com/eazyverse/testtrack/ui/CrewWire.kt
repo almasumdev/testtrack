@@ -21,6 +21,9 @@ import com.eazyverse.testtrack.net.ApiSeat
  * a lobby, and the same crew an hour later is a run. Which one it is depends on the reader, which
  * is why the day comes from the server per member rather than being worked out here. A crew the
  * reader is not in is the open one, whatever its state.
+ *
+ * A run whose reader is past its last night stays a run, since the others are still on theirs:
+ * [Crew.nightsDone] says it is over for the reader, with nothing left to open.
  */
 fun crewPhase(
     crew: ApiCrew,
@@ -129,6 +132,9 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
     // next: what they have to do about it is fix it and take a seat again, not watch a run.
     val phase = if (member && mine?.state == "rejected") CrewPhase.LOBBY else crewPhase(this, member)
     val stillIn = mine != null && mine.state == "confirmed"
+    // The crew's own length, which the team can extend; past it the reader has nothing to open.
+    val nights = runDays.takeIf { it > 0 } ?: CrewRules.RUN_DAYS
+    val going = phase == CrewPhase.RUN && stillIn && day <= nights
     // An app the team put in part-way through is owed from its first night, not before.
     // An app marked down or let off tonight is owed by nobody, so it is not on tonight's list.
     val owed = members.filter { !it.mine && it.state == "confirmed" && it.firstNight <= day && !it.offTonight }
@@ -144,9 +150,9 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
         seats = members.map { it.toSeat(name) },
         // Rejected seats never ran, so they are not members; only the reader sees their own.
         members = members.filter { it.state != "rejected" }.map { it.toMember() },
-        apps = if (phase == CrewPhase.RUN && stillIn) owed.map { it.toApp(name, day) } else emptyList(),
+        apps = if (going) owed.map { it.toApp(name, day) } else emptyList(),
         left =
-            if (phase == CrewPhase.RUN && stillIn) {
+            if (going) {
                 members.filter { !it.mine && it.state == "removed" }.map { it.toApp(name, day).copy(outAt = it.outAt.orEmpty()) }
             } else {
                 emptyList()
@@ -156,8 +162,9 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
         // What it came to. Only meaningful once it is over, and the server's own day count is
         // the honest figure: capped at the fortnight rather than however long ago it filled, and
         // counted from this account's first night where its app joined part-way through.
-        finishedDays = if (phase == CrewPhase.RECORD) (minOf(day, runDays) - firstNight + 1).coerceAtLeast(0) else 0,
+        finishedDays = if (phase == CrewPhase.RECORD) (minOf(day, nights) - firstNight + 1).coerceAtLeast(0) else 0,
         firstNight = firstNight,
+        runDays = nights,
     )
 }
 

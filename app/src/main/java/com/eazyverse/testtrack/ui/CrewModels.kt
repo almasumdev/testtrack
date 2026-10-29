@@ -278,9 +278,17 @@ data class Crew(
     val finishedDays: Int = 0,
     /** The day this account's own run starts on: 1 unless its app joined part-way through. */
     val firstNight: Int = 1,
+    /** How many nights the crew runs: [CrewRules.RUN_DAYS] unless the team extended it. */
+    val runDays: Int = CrewRules.RUN_DAYS,
 ) {
-    /** Days of the run that are this account's: all fourteen, or what was left when it joined. */
-    val ownNights: Int get() = (CrewRules.RUN_DAYS - firstNight + 1).coerceAtLeast(0)
+    /** Days of the run that are this account's: all of them, or what was left when it joined. */
+    val ownNights: Int get() = (runDays - firstNight + 1).coerceAtLeast(0)
+
+    /**
+     * This account's own nights are over while the others are still on their last: members ahead
+     * in time zone finish first. Nothing is left to open, and the crew closes when everyone is done.
+     */
+    val nightsDone: Boolean get() = phase == CrewPhase.RUN && day > runDays
 
     /** Which of this account's own days it is, counted from its first night. */
     val ownDay: Int get() = (day - firstNight + 1).coerceAtLeast(0)
@@ -310,7 +318,7 @@ data class Crew(
      * gets through twenty of forty-two apps has chosen, without being told, which crews to lose;
      * the list can make that choice a good one by putting the costly rows first.
      */
-    val atRisk: Boolean get() = phase == CrewPhase.RUN && members.firstOrNull { it.mine }?.missedYesterday == true
+    val atRisk: Boolean get() = phase == CrewPhase.RUN && !nightsDone && members.firstOrNull { it.mine }?.missedYesterday == true
 
     /** Members still in the run. */
     val stayed: Int get() = members.count { !it.out }
@@ -332,6 +340,7 @@ data class Crew(
                 phase == CrewPhase.OPEN -> "${CrewRules.SEATS - taken} seats left"
                 phase == CrewPhase.LOBBY && filling -> "Filling, $filled of ${CrewRules.SEATS}"
                 phase == CrewPhase.LOBBY -> "Starts in ${untilStart(startsIn)}"
+                nightsDone -> "Your nights are done"
                 phase == CrewPhase.RUN -> "Day $ownDay of $ownNights"
                 else -> "Finished after $finishedDays days"
             }

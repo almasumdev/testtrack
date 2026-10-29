@@ -67,7 +67,8 @@ fun CrewRunTab(
     onOpenCrew: (String) -> Unit,
 ) {
     val runs = vm.crews.filter { it.phase == CrewPhase.RUN }
-    val going = runs.filter { !it.out }
+    // Still owing nights: an app out of the run, or this account's own nights over, owes none.
+    val going = runs.filter { !it.out && !it.nightsDone }
 
     // Before the empty case, not after it. Whether anything is running is a question about an
     // account, and answering it with "Nothing running" to somebody the app cannot identify is a
@@ -101,8 +102,10 @@ fun CrewRunTab(
     val total = left + done
     val risky = runs.filter { it.atRisk }.map { it.name }
     // Tonight is one of them until it is done, as the crew's own page counts it.
-    val nightsLeft = (going.ifEmpty { runs }).maxOf { (CrewRules.RUN_DAYS - it.day + if (left > 0) 1 else 0).coerceAtLeast(0) }
+    val nightsLeft = (going.ifEmpty { runs }).maxOf { (it.runDays - it.day + if (left > 0) 1 else 0).coerceAtLeast(0) }
     val crews = "${going.size} ${if (going.size == 1) "crew" else "crews"}"
+    // Every run's own nights are over, members ahead in time zone finishing first.
+    val finishedForMe = going.isEmpty() && runs.any { it.nightsDone }
 
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -111,7 +114,7 @@ fun CrewRunTab(
         item {
             Column(Modifier.padding(horizontal = Gutter)) {
                 CrewHero(
-                    chip = "Tonight, $crews",
+                    chip = if (finishedForMe) "Finished for you" else "Tonight, $crews",
                     tone =
                         if (left == 0) {
                             Tone.OK
@@ -128,9 +131,15 @@ fun CrewRunTab(
                         } else {
                             Lucide.Clock
                         },
-                    headline = if (left == 0) "Tonight is done" else "$left left tonight",
+                    headline =
+                        when {
+                            finishedForMe -> "Your nights are done"
+                            left == 0 -> "Tonight is done"
+                            else -> "$left left tonight"
+                        },
                     line =
                         when {
+                            finishedForMe -> "Nothing to open. The crew closes when everyone else finishes."
                             // The payoff. Nothing else in a fortnight of opening apps says a night
                             // went right, and a zero does not feel like one.
                             left == 0 -> "All $total opened, across $crews. Nothing counts against you."
@@ -351,6 +360,7 @@ fun CrewListRow(
     val (chip, tone) =
         when {
             crew.out -> "Your app is out" to Tone.BAD
+            crew.nightsDone -> "Done" to Tone.OK
             crew.atRisk -> "${crew.myMisses} missed" to Tone.WARN
             crew.owed == 0 -> "Done" to Tone.OK
             else -> "${crew.owed} left" to Tone.ACCENT
@@ -359,7 +369,13 @@ fun CrewListRow(
         mark = "${crew.day}",
         markTone = if (crew.atRisk || crew.out) Tone.WARN else Tone.OK,
         title = crew.name,
-        line = "Day ${crew.day} of ${CrewRules.RUN_DAYS}" + if (crew.atRisk) ", missed yesterday" else "",
+        line =
+            if (crew.nightsDone) {
+                "Your nights are done"
+            } else {
+                "Day ${crew.day} of ${crew.runDays}" +
+                    if (crew.atRisk) ", missed yesterday" else ""
+            },
         lineTone = if (crew.atRisk) Tone.WARN else null,
         chip = chip,
         chipTone = tone,
