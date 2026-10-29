@@ -127,10 +127,16 @@ internal fun CrewRowSheet(
                         Tone.BAD,
                     ) { then { actions.onVote(seat, false) } }
                 sheet.kind == SheetKind.ASKED -> Unit
+                // During the run a report lets off only the night it is sent on; tomorrow the row
+                // is owed again, and Report is back here if it is still broken.
                 seat.reported ->
                     SheetOption(
                         "You reported it",
-                        "Its owner has what you wrote. It no longer counts against you.",
+                        if (sheet.kind == SheetKind.INSTALL) {
+                            "Its owner has what you wrote. It no longer counts against you."
+                        } else {
+                            "Its owner has what you wrote. Tonight doesn't count against you."
+                        },
                         Tone.WARN,
                         null,
                     )
@@ -142,7 +148,7 @@ internal fun CrewRowSheet(
                         ) {
                             "It won't install, crashes, or the sign-in fails"
                         } else {
-                            "It won't open or the sign-in fails. It stops counting against you."
+                            "It won't open or the sign-in fails. Tonight stops counting against you."
                         },
                         Tone.BAD,
                     ) { then { actions.onReport(seat) } }

@@ -45,7 +45,9 @@ copy decision, not a schema one.
 > 12 hours. Members can **report** an app with a written reason; the owner is told at once without
 > the reporter's name; two reports before the run starts send it back (a full crew goes back to
 > filling); during the run a report only tells the owner and the team, and excuses the reporter
-> from that app.
+> from that app for the night it is sent on (30 October 2026: not the nights before it, not the
+> nights after). On a later night the app is owed again and can be reported again, once a night.
+> A report before the run still excuses the whole run. Nothing already judged changes.
 >
 > **Voting is back as the fallback (October 2026).** When the checker cannot run, instead of the
 > app going in unchecked after 12 hours, members decide it: those whose own app is already in the
@@ -148,7 +150,8 @@ place, and move a seat between crews at any time, from the admin panel
 Decided October 2026, from the rule the app had always shown: miss a day (anything owed left
 unopened at your own midnight) and you get a warning; miss two in a row and your app leaves the
 run, nobody opens it any more and you owe nothing more there. An app you reported is not counted
-against you. Every member gets an evening reminder at 20:00 their time while anything is left.
+against you on the night you reported it. Every member gets an evening reminder at 20:00 their
+time while anything is left.
 
 ## Taken out: appeal and put back
 
@@ -274,8 +277,9 @@ whose crew notes (commit 9776af2, removed in 65cac3c) are a different thing.
 
 ## Nights let off
 
-Decided and built 28 October 2026. Reporting an app excuses it for the member who reported it; two
-more ways to let a night off, so nobody is marked down for something they could not do:
+Decided and built 28 October 2026. Reporting an app excuses it for the member who reported it, on
+the night they report it; two more ways to let a night off, so nobody is marked down for something
+they could not do:
 
 - **The owner marks their app down tonight**, from their crew page, twice a run
   (`rules.DOWN_NIGHTS`). Nobody owes it that night. It costs the owner that night towards Google's

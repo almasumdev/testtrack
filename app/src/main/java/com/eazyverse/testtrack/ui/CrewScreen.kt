@@ -234,6 +234,8 @@ fun CrewReportDialog(
     onDismiss: () -> Unit,
     /** An answer for an app waiting on members, rather than a report on one already in. */
     answering: Boolean = false,
+    /** Sent during the run, when a report lets off only tonight; before it, the whole run. */
+    running: Boolean = false,
 ) {
     var reason by remember { mutableStateOf("") }
     val enough = reason.trim().length >= CrewRules.REPORT_MIN_CHARS
@@ -288,7 +290,11 @@ fun CrewReportDialog(
             if (!answering) {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "It also stops counting against you if you cannot open it.",
+                    if (running) {
+                        "If you can't open it, tonight won't count against you. Still broken on a later night? Report it again then."
+                    } else {
+                        "It also stops counting against you if you cannot open it."
+                    },
                     style = DialogBody,
                     color = Tt.colors.text4,
                 )

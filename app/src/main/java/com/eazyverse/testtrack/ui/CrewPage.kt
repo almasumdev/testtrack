@@ -208,6 +208,7 @@ internal fun CrewDialogsHost(
     dialogs.reporting?.let { seat ->
         CrewReportDialog(
             seat = seat,
+            running = vm.crews.any { crew -> crew.phase == CrewPhase.RUN && crew.seats.any { it.id == seat.id } },
             onReport = { reason ->
                 dialogs.reporting = null
                 vm.report(context, seat.id, seat.appName, reason)
