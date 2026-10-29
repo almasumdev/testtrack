@@ -39,13 +39,17 @@ class FeedViewModel : ViewModel() {
         private set
 
     /**
-     * The Feedback list: requests this account has not started. One it has started (Install tapped,
-     * which is when the server first hears of it) is in My reviews instead, so a tile never changes
-     * under the reader. One given up or run out is offered again.
+     * The Feedback list: requests this account has not started, started meaning the app is
+     * installed for it (step 1 done). Until then a request stays here, unchanged, whether or not
+     * Install was tapped; once installed it is in My reviews instead. One given up or run out is
+     * offered again.
      */
-    val openPosts: List<ApiPost> get() = posts.filter { it.myState == null || it.myState in restartable }
+    val openPosts: List<ApiPost> get() = posts.filter { it.myState == null || it.myState in notStarted }
 
-    private val restartable = setOf("abandoned", "expired")
+    private val notStarted = setOf("claimed", "abandoned", "expired")
+
+    /** My reviews: those started, the app installed for them. One only taken is still on the feed. */
+    val started: List<MyReview> get() = mine.filter { it.state != "claimed" }
 
     /**
      * The post to open one of my reviews through. The live one when it is still on the feed;
