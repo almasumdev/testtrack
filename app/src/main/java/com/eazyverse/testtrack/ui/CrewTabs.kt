@@ -96,6 +96,7 @@ fun CrewRunTab(
     }
 
     val left = vm.tonight.size
+    val ready = openAllOf(vm.tonight, { actions.copyOf(it) }, actions.sendingPicture).size
     val done = vm.doneTonight
     val total = left + done
     val risky = runs.filter { it.atRisk }.map { it.name }
@@ -152,8 +153,9 @@ fun CrewRunTab(
                             "${going.size}" to if (going.size == 1) "crew" else "crews",
                         )
                     },
-                    // The whole night, across every crew, in one press: the apps on this phone.
-                    action = if (left > 0) "Open all $left" else null,
+                    // The whole night, across every crew, in one press: the apps on this phone
+                    // that will count. The rest keep their own button on their crew's page.
+                    action = if (ready > 0) "Open all $ready" else null,
                     onAction = { actions.onOpenAll(null) },
                 )
                 PicturesDueCard(going.flatMap { it.apps }, actions)

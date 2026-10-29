@@ -8,6 +8,7 @@ import com.eazyverse.testtrack.data.RoundStore
 import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.data.VisitCameraService
 import com.eazyverse.testtrack.data.VisitPictures
+import com.eazyverse.testtrack.domain.RoundRules
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import kotlinx.coroutines.CoroutineScope
@@ -196,12 +197,15 @@ object NightRound {
                     end(context)
                     bringBack(context)
                 }
-                Outcome.Counted -> {
-                    if (now.index + 1 < now.stops.size) {
-                        round = now.copy(index = now.index + 1)
+                // Refused anyway (an update past its 24 hours, a copy not from Play): skipped, and
+                // on to the rest. Its row keeps its button, and the page says what is left.
+                is Outcome.Refused, Outcome.Counted -> {
+                    val moved = if (result is Outcome.Refused) now.copy(skipped = now.skipped + result.message) else now
+                    if (moved.index + 1 < moved.stops.size) {
+                        round = moved.copy(index = moved.index + 1)
                         begin(context)
                     } else {
-                        pendingSay = "That is tonight done."
+                        pendingSay = RoundRules.lastWord(moved.skipped)
                         end(context)
                         bringBack(context)
                     }
@@ -246,19 +250,24 @@ object NightRound {
                     end(app)
                     say(result.message)
                 }
-                Outcome.Counted -> {
-                    val left = now.stops.size - now.index - 1
+                is Outcome.Refused, Outcome.Counted -> {
+                    val moved = if (result is Outcome.Refused) now.copy(skipped = now.skipped + result.message) else now
+                    val left = moved.stops.size - moved.index - 1
                     when {
                         left == 0 -> {
                             end(app)
-                            say("That is tonight done.")
+                            say(RoundRules.lastWord(moved.skipped))
+                        }
+                        floating && result is Outcome.Refused -> {
+                            end(app)
+                            say("${result.message} Open all again for the $left left.")
                         }
                         floating -> {
                             end(app)
                             say("${stop.label} counted. Open all again for the $left left.")
                         }
                         else -> {
-                            round = now.copy(index = now.index + 1)
+                            round = moved.copy(index = moved.index + 1)
                             say(null)
                             begin(app)
                         }
@@ -276,6 +285,11 @@ object NightRound {
         ) : Outcome
 
         data class Failed(
+            val message: String,
+        ) : Outcome
+
+        /** The server will not count this app's open as it is: skipped, and the round goes on. */
+        data class Refused(
             val message: String,
         ) : Outcome
     }
@@ -300,7 +314,7 @@ object NightRound {
             }
             Outcome.Counted
         } catch (e: ApiError) {
-            Outcome.Failed(e.message)
+            if (RoundRules.refusedOpen(e.status, e.isAuth)) Outcome.Refused(e.message) else Outcome.Failed(e.message)
         } catch (_: Exception) {
             Outcome.Failed("We could not reach TestTrack. Check your connection.")
         }

@@ -259,11 +259,14 @@ internal fun TonightRow(
     onSheet: (RowSheet) -> Unit,
 ) {
     val installed = actions.isInstalled(app.packageName)
+    // A copy Play did not put here never counts: installing it from Play is the way out.
+    val notPlay = installed && !actions.fromPlay(app.packageName)
     // Older than the owner's newest: still counts for its 24 hours, then only once updated.
     val old = olderHere(app, actions)
     val note =
         when {
             !installed -> "not on your phone"
+            notPlay -> "Install it from Play"
             old && app.updateRequired -> "update needed"
             old -> updateBy(app)?.let { "update by $it" } ?: "update out"
             app.feedbackLate -> "feedback late"
@@ -276,7 +279,7 @@ internal fun TonightRow(
         // is in the row's sheet.
         when {
             actions.latePicture(app.id) -> lateLine()
-            old -> AnnotatedString(note.replaceFirstChar(Char::uppercase))
+            notPlay || old -> AnnotatedString(note.replaceFirstChar(Char::uppercase))
             else -> ownerLine(app.owner, seat.notes.isNotBlank(), note)
         },
         place,
@@ -286,6 +289,7 @@ internal fun TonightRow(
     ) {
         when {
             !installed -> RowPill("Install", PillKind.SOFT) { actions.onInstall(seat) }
+            notPlay -> RowPill("Install", PillKind.SOLID) { actions.onInstall(seat) }
             // From the moment the owner tells the crew, as the notification says: Update is the
             // button, soft while the old copy still counts and solid once it no longer does. Open
             // is still in the row's sheet for those 24 hours.
@@ -307,10 +311,13 @@ internal fun DoneRow(
 ) {
     // Opened tonight on the old copy: the update is still to do before the 24 hours run out.
     val old = actions != null && actions.isInstalled(app.packageName) && olderHere(app, actions)
+    // A copy Play did not put here does not count on any night, so the row says how to fix it.
+    val notPlay = actions != null && actions.isInstalled(app.packageName) && !actions.fromPlay(app.packageName)
     val note = if (old) (if (app.updateRequired) "update needed" else updateBy(app)?.let { "update by $it" } ?: "update out") else ""
     val line =
         when {
             actions?.latePicture(app.id) == true -> lateLine()
+            notPlay -> AnnotatedString("Install it from Play")
             old -> AnnotatedString(note.replaceFirstChar(Char::uppercase))
             else -> ownerLine(app.owner, false)
         }
@@ -319,6 +326,7 @@ internal fun DoneRow(
     }) {
         when {
             app.reported -> StatusChip("Reported", Tone.WARN)
+            notPlay && actions != null -> RowPill("Install", PillKind.SOFT) { actions.onInstall(seat) }
             old && actions != null -> RowPill("Update", PillKind.SOFT) { actions.onUpdateApp(app) }
             else -> StatusChip("Opened", Tone.OK)
         }

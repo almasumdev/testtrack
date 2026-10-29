@@ -234,7 +234,12 @@ whose version (commit da72874, removed in 65cac3c) was only a message.
   version does not count: the row says "Update needed" and tonight is not done until they update
   and open it again. The 24 hours are Play's time to reach everybody.
 - **From Play only, for everyone.** Each visit sends the installed version and who installed it. A
-  member's copy that did not come from Play does not count; the row says to install it from Play.
+  member's copy that did not come from Play does not count; the row says "Install it from Play"
+  with an Install button that opens Play, on Tonight and on Done.
+- **Open all leaves out what will be refused** (30 October 2026): an older copy once its 24 hours
+  are over, and a copy not from Play. If an open is refused anyway, the round skips that app and
+  finishes the rest, and says how many are left ("1 left"). The app left over stays in Tonight
+  with its Update or Install button; once that is done, Open all opens just it.
 - **The team sees** each seat's newest version, when the owner tapped Update, and who is still on
   an old one, on the admin panel's seat page.
 

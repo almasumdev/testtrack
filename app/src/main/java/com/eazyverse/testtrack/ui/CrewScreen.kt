@@ -184,6 +184,8 @@ class CrewActions(
     val onRetryPictures: () -> Unit = {},
     /** The version of an app on this phone, or null when it is not here. */
     val localVersion: (String) -> Long? = { null },
+    /** Whether Google Play installed the copy here; true when it is not here at all. */
+    val fromPlay: (String) -> Boolean = { true },
     /** To an app's Play page, for an update or for its feedback. */
     val onUpdateApp: (CrewApp) -> Unit = {},
     /** Private feedback on Play for an app, with its picture: by camera, or picked from the phone. */

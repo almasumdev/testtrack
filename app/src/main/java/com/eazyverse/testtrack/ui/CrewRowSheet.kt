@@ -96,8 +96,17 @@ internal fun CrewRowSheet(
                 Primary("Update on Google Play", Modifier.fillMaxWidth()) { then { actions.onUpdateApp(app) } }
                 Spacer(Modifier.height(10.dp))
             }
+            val notPlay = installed && !actions.fromPlay(seat.packageName)
+            if (notPlay) {
+                Text(
+                    "This copy wasn't installed from Google Play, so opening it doesn't count. Uninstall it, then install it from Play.",
+                    Modifier.padding(bottom = 10.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Tt.colors.text2,
+                )
+            }
             when {
-                !installed -> Primary("Install on Play", Modifier.fillMaxWidth()) { then { actions.onInstall(seat) } }
+                !installed || notPlay -> Primary("Install on Play", Modifier.fillMaxWidth()) { then { actions.onInstall(seat) } }
                 app != null && sheet.kind == SheetKind.TONIGHT ->
                     Primary(
                         "Open ${seat.appName}",

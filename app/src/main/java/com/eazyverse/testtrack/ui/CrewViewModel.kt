@@ -167,6 +167,20 @@ class CrewViewModel : ViewModel() {
         pkg: String,
     ): Boolean = previewInstalled?.contains(pkg) ?: (pkg.isNotBlank() && InstalledApps.cachedInfo(context, pkg).installed)
 
+    /**
+     * The copy of an app on this phone as the server will judge an open of it: here, from Play,
+     * and which version. Cached as [isInstalled] is, and re-read on the way back from Play.
+     */
+    fun copyOf(
+        context: Context,
+        pkg: String,
+    ): HereCopy {
+        previewInstalled?.let { return HereCopy(pkg in it) }
+        if (pkg.isBlank()) return HereCopy(false)
+        val info = InstalledApps.cachedInfo(context, pkg)
+        return HereCopy(info.installed, info.installer == "com.android.vending", info.versionCode.takeIf { info.installed })
+    }
+
     /** Re-reads the installed apps, on the way back from Play. */
     fun refreshInstalled(context: Context) {
         if (previewInstalled == null) InstalledApps.refresh(context)
@@ -320,18 +334,19 @@ class CrewViewModel : ViewModel() {
     ) = round(context, listOf(app))
 
     /**
-     * Walk the whole night, one app at a time: only what is on this phone, since the rest is
-     * installed first from its own row.
+     * Walk the whole night, one app at a time: only what is on this phone and will count, since
+     * the rest is installed, updated or installed from Play first, from its own row.
      */
     fun openAll(
         context: Context,
         crewId: String? = null,
     ) = round(
         context,
-        crews
-            .filter { crewId == null || it.id == crewId }
-            .flatMap { crew -> crew.apps.filter { !it.done && !it.reported } }
-            .filter { !pictures.sending(it.id, it.day) && !it.feedbackLate && isInstalled(context, it.packageName) },
+        openAllOf(
+            crews.filter { crewId == null || it.id == crewId }.flatMap { it.apps },
+            copy = { pkg -> copyOf(context, pkg) },
+            sendingTonight = { pictures.sending(it.id, it.day) },
+        ),
     )
 
     /** The seat a call is running for, so its row shows it busy and a second tap sends nothing. */
@@ -417,29 +432,6 @@ class CrewViewModel : ViewModel() {
         }
         (context as? Activity)?.let(pictures::send) // What could not go yet, with Drive askable.
     }
-
-    /**
-     * Give your seat up before the crew starts.
-     *
-     * Only possible before it fills. The server refuses it afterwards, because by then fourteen
-     * other people have committed a fortnight on the strength of it being there.
-     */
-    fun leave(
-        context: Context,
-        seat: CrewSeat,
-    ) = call(
-        context = context,
-        seat = seat.id,
-        onDone = {
-            message =
-                when {
-                    seat.charged == 0 -> "Taken back out. It was placed free, so there was nothing to refund. You can put an app in again."
-                    seat.charged > 0 -> "Taken back out, and its ${seat.charged} tix are back. You can put an app in again."
-                    else -> "Taken back out, and its ${CrewRules.SEAT_COST} tix are back. You can put an app in again."
-                }
-            MyAppsChanged.tell()
-        },
-    ) { Api.withdraw(seat.id) }
 
     /**
      * One call, one reload, one place failure is handled.

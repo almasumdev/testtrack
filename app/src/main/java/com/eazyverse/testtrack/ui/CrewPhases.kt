@@ -263,15 +263,17 @@ fun CrewRunPhase(
     val seatOf = { app: CrewApp -> crew.seats.first { it.id == app.id } }
     val owed = crew.apps.filter { !it.done && !it.reported }
     val settled = crew.apps.filter { it.done || it.reported }
-    val here = owed.filter { actions.isInstalled(it.packageName) }
-    val missing = owed - here.toSet()
+    // What Open all opens: on this phone, and nothing the server is known to refuse.
+    val here = openAllOf(owed, { actions.copyOf(it) }, actions.sendingPicture)
+    val missing = owed.filter { !actions.isInstalled(it.packageName) }
+    val refused = owed.filter { refusedHere(it, actions.copyOf(it.packageName)) }
 
     CrewList(crew, actions) { onSheet ->
         if (crew.out) {
             block { OwnerOutCard(crew, actions) }
             return@CrewList
         }
-        block { RunHero(crew, owed, here, missing, actions) }
+        block { RunHero(crew, owed, here, missing, refused, actions) }
         if (crew.apps.any { it.pictureDue }) block { PicturesDueCard(crew.apps, actions) }
         block { PlayFeedbackCard(crew, actions) }
         crew.mine?.let { mine ->
@@ -303,6 +305,8 @@ private fun RunHero(
     owed: List<CrewApp>,
     here: List<CrewApp>,
     missing: List<CrewApp>,
+    /** On this phone, but its open would be refused: an update past its 24 hours, or not from Play. */
+    refused: List<CrewApp>,
     actions: CrewActions,
 ) {
     val done = owed.isEmpty()
@@ -314,6 +318,10 @@ private fun RunHero(
             crew.atRisk -> "Miss tonight too and your app leaves this crew."
             missing.size == 1 -> "${missing.first().label} isn't on your phone yet, so install it first."
             missing.isNotEmpty() -> "${missing.size} apps aren't on your phone yet, so install them first."
+            refused.size == 1 && !actions.fromPlay(refused.first().packageName) ->
+                "${refused.first().label} wasn't installed from Google Play, so install it from Play first."
+            refused.size == 1 -> "${refused.first().label} needs its update before it counts."
+            refused.isNotEmpty() -> "${refused.size} apps need an update or a copy from Google Play first."
             last -> "No missed days. Tonight is the last night."
             else -> "No missed days. Day ${crew.ownDay + 1} begins at midnight, your time."
         }
@@ -348,7 +356,8 @@ private fun RunHero(
             when {
                 here.isEmpty() -> null
                 here.size == 1 -> "Open ${here.first().label}"
-                missing.isEmpty() -> "Open all ${here.size}"
+                missing.isEmpty() && refused.isEmpty() -> "Open all ${here.size}"
+                missing.isEmpty() -> "Open the other ${here.size}"
                 else -> "Open the ${here.size} on your phone"
             },
         onAction = { actions.onOpenAll(crew.id) },

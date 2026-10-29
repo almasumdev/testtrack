@@ -62,6 +62,7 @@ internal fun withCrewExtras(
         picturesStuck = base.picturesStuck,
         onRetryPictures = base.onRetryPictures,
         localVersion = { pkg -> extras.copy(context, pkg).takeIf { it.installed }?.versionCode },
+        fromPlay = { pkg -> extras.copy(context, pkg).let { !it.installed || it.fromPlay } },
         onUpdateApp = { app -> openOnPlay(context, app.packageName) },
         onFeedback = { app -> extras.askFeedback(app.id, app.label, app.packageName) },
         onPickFeedback = { app ->

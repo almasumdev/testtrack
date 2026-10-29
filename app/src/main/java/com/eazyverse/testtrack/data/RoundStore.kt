@@ -41,6 +41,8 @@ object RoundStore {
         val stops: List<Stop>,
         val index: Int,
         val since: Long,
+        /** Why each app the server refused was skipped, for the round's last line. */
+        val skipped: List<String> = emptyList(),
     ) {
         val current: Stop? get() = stops.getOrNull(index)
     }

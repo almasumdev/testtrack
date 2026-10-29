@@ -24,6 +24,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.eazyverse.testtrack.findActivity
+import com.eazyverse.testtrack.viewmodel.leave
 import com.eazyverse.testtrack.viewmodel.report
 import com.eazyverse.testtrack.viewmodel.vote
 
