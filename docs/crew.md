@@ -209,6 +209,9 @@ How it runs:
   connection or the server being down stops the others. One that waits more than 3 hours shows
   red on its row and in the Sending card, and the red goes by itself once it lands. Open all
   skips an app only when tonight's picture of it is the one waiting.
+- **If Android closes TestTrack mid-round**, the app on screen is still measured and recorded the
+  next time TestTrack is in front, with no picture (the Crew page then asks for one), and the round
+  ends there: the camera did not survive. A round from an earlier day measures only today's use.
 - **A picture that fails** (a blank screen, a camera that stopped) is asked for on the Crew page:
   open the app again for a fresh one, or pick one from the phone, which its owner sees as picked
   by hand.

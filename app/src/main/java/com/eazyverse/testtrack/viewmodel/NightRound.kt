@@ -20,6 +20,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
+import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * Tonight's round: the apps to open, the one on screen now, and whether it has counted.
@@ -31,7 +33,9 @@ import java.io.File
  * back, and the next opens on its own.
  *
  * Every step is written to [RoundStore], so Android closing TestTrack mid-visit loses nothing: the
- * next time TestTrack comes to the front, the app that was on screen is measured and recorded.
+ * next time TestTrack comes to the front, the app that was on screen is measured and recorded. The
+ * camera does not outlive the process, so a round found that way ends there, as does one from an
+ * earlier day, which only ever measures today's use.
  *
  * The proof is two things, as it was in the August app. The phone's own usage record of the app in
  * front for ten seconds, read when the visit is recorded, which the server holds to its floor; and
@@ -82,7 +86,8 @@ object NightRound {
         val app = context.applicationContext
         end(app, camera = false)
         this.pictures = pictures
-        round = RoundStore.Round(stops, 0, System.currentTimeMillis())
+        val at = System.currentTimeMillis()
+        round = RoundStore.Round(stops, 0, at, pictures = pictures, startedAt = at)
         if (float && canFloat(app)) window = VisitDockWindow(app, onPlayPause = { playPause(app) })
         begin(app)
     }
@@ -230,15 +235,32 @@ object NightRound {
             return
         }
         // The process was closed mid-visit: the round is only on disk now.
-        val now = round ?: RoundStore.load(app)?.also { round = it } ?: return
+        val restored = round == null
+        val now =
+            round ?: RoundStore.load(app)?.also {
+                round = it
+                pictures = it.pictures
+            } ?: return
         val stop = now.current ?: return end(app)
-        val floating = window != null
+        // Found after Android closed TestTrack: without its camera, or from an earlier day, it
+        // records the app that was on screen and ends rather than opening the next one.
+        val today =
+            LocalDate
+                .now()
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli()
+        val stale = restored && !RoundRules.resumes(now.pictures, VisitCameraService.on.value, now.startedAt, today)
+        // Only today's use counts as tonight's: a round from yesterday never records yesterday's.
+        val since = if (restored) RoundRules.measureFrom(now.since, today) else now.since
+        // A floating round ends here, its control no longer over an app, and so does a stale one.
+        val endsHere = window != null || stale
         window?.hide()
         ticker?.cancel()
         scope.launch {
             // Back in TestTrack, so a picture not taken yet can no longer be: what is in hand goes.
             shooting?.cancel()
-            when (val result = record(app, stop, now.since, shot)) {
+            when (val result = record(app, stop, since, shot)) {
                 is Outcome.Short -> {
                     end(app)
                     say(
@@ -258,11 +280,11 @@ object NightRound {
                             end(app)
                             say(RoundRules.lastWord(moved.skipped))
                         }
-                        floating && result is Outcome.Refused -> {
+                        endsHere && result is Outcome.Refused -> {
                             end(app)
                             say("${result.message} Open all again for the $left left.")
                         }
-                        floating -> {
+                        endsHere -> {
                             end(app)
                             say("${stop.label} counted. Open all again for the $left left.")
                         }

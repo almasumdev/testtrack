@@ -43,6 +43,10 @@ object RoundStore {
         val since: Long,
         /** Why each app the server refused was skipped, for the round's last line. */
         val skipped: List<String> = emptyList(),
+        /** Whether the round takes pictures, so one found after a restart knows its camera went. */
+        val pictures: Boolean = false,
+        /** When the round began; 0 from a build before it was kept. */
+        val startedAt: Long = 0L,
     ) {
         val current: Stop? get() = stops.getOrNull(index)
     }
