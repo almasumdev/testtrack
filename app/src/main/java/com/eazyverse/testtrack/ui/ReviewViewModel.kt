@@ -206,7 +206,8 @@ class ReviewViewModel : ViewModel() {
             // hears nothing about it before then, so opening a request and backing out changes
             // nothing anywhere.
             if (mine == null) {
-                job = ReviewJob(post, previewOf(post))
+                val here = InstalledApps.info(context, post.packageName)
+                job = ReviewJob(post, previewOf(post), onPhone = here.installed && here.installer == PLAY)
                 return@run
             }
             val review = mine

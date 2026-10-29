@@ -61,6 +61,8 @@ data class ReviewJob(
      * use: an app used at 11 PM and reported after midnight is still first used the day before.
      */
     val firstUsedHere: Long? = null,
+    /** Not taken yet, and already on this phone from Play: taking it starts the review at once. */
+    val onPhone: Boolean = false,
 ) {
     /** The first day of use: the phone's own record where it has one, else what the server heard. */
     private val firstUse: java.time.Instant?

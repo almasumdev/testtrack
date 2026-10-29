@@ -158,7 +158,7 @@ fun ReviewScreen(
         onLeave = { step ->
             requireMembership {
                 when (step) {
-                    ReviewStep.INSTALL -> vm.take(context) { openPlay(context, post.packageName) }
+                    ReviewStep.INSTALL -> vm.install(context) { openPlay(context, post.packageName) }
                     ReviewStep.USE -> openApp(context, post.packageName)
                     ReviewStep.LEAVE -> vm.markLeft()
                     else -> Unit

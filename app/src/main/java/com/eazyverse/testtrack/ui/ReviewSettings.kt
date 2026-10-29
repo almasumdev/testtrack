@@ -36,3 +36,11 @@ fun ReviewViewModel.openOverlaySettings(context: Context) {
  * the page is a view, with nothing to give up or report.
  */
 val ReviewViewModel.previewing: Boolean get() = job?.step == ReviewStep.INSTALL
+
+/** Install tapped: taken, then Play for it, or, already on the phone, a fresh look that moves it on. */
+fun ReviewViewModel.install(
+    context: Context,
+    openPlay: () -> Unit,
+) {
+    if (job?.onPhone == true) take(context) { refresh(context) } else take(context, openPlay)
+}

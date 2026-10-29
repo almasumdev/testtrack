@@ -107,7 +107,7 @@ private fun opensToday(job: ReviewJob): Boolean {
 
 internal fun stepTitle(job: ReviewJob): String =
     when (job.step) {
-        ReviewStep.INSTALL -> "Install ${job.post.appName}"
+        ReviewStep.INSTALL -> if (job.onPhone) "Already on your phone" else "Install ${job.post.appName}"
         ReviewStep.USE ->
             when {
                 !job.waitingForDay -> "Try the app"
@@ -123,7 +123,12 @@ internal fun stepTitle(job: ReviewJob): String =
 
 internal fun stepLine(job: ReviewJob): String =
     when (job.step) {
-        ReviewStep.INSTALL -> "Get it from Google Play so it counts."
+        ReviewStep.INSTALL ->
+            if (job.onPhone) {
+                "Tap Start review and it counts as installed. It moves to My reviews and your time to finish starts."
+            } else {
+                "Get it from Google Play so it counts."
+            }
         ReviewStep.USE -> useLine(job)
         ReviewStep.LEAVE ->
             if (job.live) {
@@ -181,7 +186,7 @@ internal fun stepAction(
     job: ReviewJob,
 ): String =
     when (step) {
-        ReviewStep.INSTALL -> "Get it on Play"
+        ReviewStep.INSTALL -> if (job.onPhone) "Start review" else "Get it on Play"
         ReviewStep.USE -> "Open the app"
         ReviewStep.LEAVE -> "Open Google Play"
         ReviewStep.PROVE -> "Send the proof"

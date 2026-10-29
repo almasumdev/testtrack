@@ -211,4 +211,14 @@ class ReviewStepTest {
         val odd = ReviewJob(post, review("installed", used = 50_000, needed = 300_000))
         assertEquals("4 min 10 s more in the app", stepLine(odd))
     }
+
+    @Test
+    fun an_app_already_on_the_phone_says_so_and_starts_the_review_instead_of_opening_play() {
+        val fresh = ReviewJob(post, review("claimed"))
+        assertEquals("Get it on Play", stepAction(ReviewStep.INSTALL, fresh))
+        val here = fresh.copy(onPhone = true)
+        assertEquals("Already on your phone", stepTitle(here))
+        assertEquals("Start review", stepAction(ReviewStep.INSTALL, here))
+        assertTrue(stepLine(here).contains("My reviews"))
+    }
 }
