@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
+import com.eazyverse.testtrack.ui.FeedRequestCard
 import com.eazyverse.testtrack.ui.FeedRequestLoadingCard
 import com.eazyverse.testtrack.ui.Gutter
 import com.eazyverse.testtrack.ui.ReviewBody
@@ -92,5 +93,18 @@ class ReviewWaitFramesTest {
         }
         frame.settle(700)
         frame.write("feedLoading")
+    }
+
+    /** The request cards' tickets over a few seconds, to see the light sweep across them. */
+    @Test
+    fun w4_ticket_shine() {
+        frame.show {
+            Pushed {
+                Column(Modifier.padding(horizontal = Gutter), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    CircleSamples.feed.forEach { FeedRequestCard(it) {} }
+                }
+            }
+        }
+        repeat(14) { frame.write("shine${it.toString().padStart(2, '0')}") }
     }
 }

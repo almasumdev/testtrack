@@ -1,5 +1,9 @@
 package com.eazyverse.testtrack.ui
 
+import android.animation.ValueAnimator
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,7 +25,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +67,8 @@ import com.composables.icons.lucide.UserPlus
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.theme.Tt
+import kotlinx.coroutines.delay
+import kotlin.random.Random
 
 /**
  * The feed's own container.
@@ -314,11 +322,26 @@ fun FeedRequestCard(
 
 /**
  * What a review pays: the tix ticket itself, as the top bar draws it, with the number in it, and a
- * streak of light across it, as if it caught the light.
+ * streak of light that sweeps across it every few seconds, as if it caught the light. Still, part
+ * way across, where the phone has animations turned off.
  */
 @Composable
 private fun TixReward(tix: Int) {
     val shine = Tt.colors.ticketShine
+    val moving = remember { ValueAnimator.areAnimatorsEnabled() }
+    // A sweep, then a rest, rather than an endless transition: the rest asks for no frames, so a
+    // screen of these settles for its tests. Each ticket starts at its own moment, so a list of
+    // them does not flash all at once.
+    val sweep = remember { Animatable(0f) }
+    LaunchedEffect(moving) {
+        if (!moving) return@LaunchedEffect
+        delay(Random.nextLong(SHINE_EVERY_MS.toLong()))
+        while (true) {
+            sweep.snapTo(0f)
+            sweep.animateTo(1f, tween(SHINE_MS, easing = FastOutSlowInEasing))
+            delay((SHINE_EVERY_MS - SHINE_MS).toLong())
+        }
+    }
     Box(
         Modifier
             .clearAndSetSemantics { contentDescription = "$tix tix" }
@@ -336,8 +359,8 @@ private fun TixReward(tix: Int) {
                     }
                 clipPath(inside) {
                     rotate(22f) {
-                        val x = size.width * 0.14f
                         val w = 8.dp.toPx()
+                        val x = if (moving) -w * 2 + (size.width + w * 3) * sweep.value else size.width * 0.14f
                         drawRect(
                             Brush.horizontalGradient(
                                 listOf(shine.copy(alpha = 0f), shine.copy(alpha = 0.7f), shine.copy(alpha = 0f)),
@@ -363,6 +386,10 @@ private fun TixReward(tix: Int) {
         )
     }
 }
+
+/** How often the ticket's light sweeps across it, and how long one sweep takes. */
+private const val SHINE_EVERY_MS = 3600
+private const val SHINE_MS = 900
 
 /** A review of the reader's own still being worked on, and one sent and not yet settled. */
 private val Underway = setOf("claimed", "installed", "used")
