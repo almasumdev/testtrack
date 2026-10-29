@@ -31,11 +31,14 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -266,33 +269,20 @@ fun FeedRequestCard(
     val actionable = !post.mine && post.myState != "approved" && !(post.myState == null && open <= 0)
     FeedCard(onClick = if (actionable) onReview else null, padding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            // Twice a row's icon: the face is how a request is told apart, with no name on it.
-            AppMark(post.packageName, post.appName, post.icon, size = 76.dp)
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
+            // As tall as the name and the pill together, as the app's header on its review is.
+            AppMark(post.packageName, post.appName, post.icon, size = HEADER_ICON)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     post.appName,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp, lineHeight = 22.sp),
                     fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(Modifier.height(2.dp))
-                // Which kind decides how it is reviewed. Never whose it is: requests are anonymous,
-                // and what the developer asks is on the review itself.
-                Text(
-                    when {
-                        post.mine -> "Your request"
-                        post.myState in Underway -> "You are part way through this one"
-                        post.myState in Sent -> "You sent your review"
-                        post.isLive -> "On Play"
-                        else -> "Closed test"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                // Which kind decides how it is reviewed. Never whose it is: requests are anonymous,
+                // and what the developer asks is on the review itself.
+                KindPill(if (post.isLive) CheckKind.PLAY else CheckKind.CLOSED)
             }
             Spacer(Modifier.width(10.dp))
             when {
@@ -317,18 +307,28 @@ fun FeedRequestCard(
     }
 }
 
-/** What a review pays, as the top bar shows tix: the ticket, and the number under it. */
+/**
+ * What a review pays, as the top bar shows a balance: the ticket leaning on a gold pill with the
+ * number in it, at a size that sits beside a card's title.
+ */
 @Composable
 private fun TixReward(tix: Int) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(painterResource(R.drawable.tix_ticket), "tix", Modifier.size(width = 36.dp, height = 25.dp))
-        Spacer(Modifier.height(2.dp))
+    val t = Tt.colors
+    val shape = RoundedCornerShape(percent = 50)
+    Box(Modifier.clearAndSetSemantics { contentDescription = "$tix tix" }, contentAlignment = Alignment.CenterStart) {
         Text(
             "$tix",
-            style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+            Modifier
+                .padding(start = 13.dp)
+                .clip(shape)
+                .background(Brush.verticalGradient(listOf(t.tixTop, t.tixBottom)))
+                .border(1.5.dp, t.tixEdge, shape)
+                .padding(start = 20.dp, end = 10.dp, top = 2.dp, bottom = 2.dp),
+            style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
             fontWeight = FontWeight.ExtraBold,
-            color = Tt.colors.accentInk,
+            color = t.onAccent,
         )
+        Image(painterResource(R.drawable.tix_ticket), null, Modifier.size(width = 30.dp, height = 21.dp))
     }
 }
 

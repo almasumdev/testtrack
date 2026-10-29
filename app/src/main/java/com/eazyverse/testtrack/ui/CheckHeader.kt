@@ -119,11 +119,19 @@ fun AppHeader(
     }
 }
 
-/** The kind of review: a small rounded pill with its mark, never wrapping. */
+/**
+ * The kind of review: a small rounded pill with its mark, never wrapping. A live app's is the
+ * accent tile, a closed test's the quiet glass, so the two tell apart at a glance down a list.
+ */
 @Composable
-private fun KindPill(kind: CheckKind) {
+internal fun KindPill(kind: CheckKind) {
     val t = Tt.colors
-    val (ink, ground) = if (kind == CheckKind.DISPUTED) t.warn to t.warnBg else t.accentInk to t.glass2
+    val (ink, ground) =
+        when (kind) {
+            CheckKind.DISPUTED -> t.warn to t.warnBg
+            CheckKind.PLAY -> t.tileInk to t.tile
+            CheckKind.CLOSED -> t.text2 to t.glass2
+        }
     Row(
         Modifier
             .clip(RoundedCornerShape(percent = 50))
@@ -216,4 +224,4 @@ fun StatTiles(stats: List<Stat>) {
     }
 }
 
-private val HEADER_ICON = 48.dp
+internal val HEADER_ICON = 48.dp
