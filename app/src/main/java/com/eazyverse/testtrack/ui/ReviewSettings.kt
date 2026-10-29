@@ -31,5 +31,8 @@ fun ReviewViewModel.openOverlaySettings(context: Context) {
     }
 }
 
-/** A request opened and not yet taken: nothing on the server, nothing on this phone. */
-val ReviewViewModel.previewing: Boolean get() = job?.review?.id?.isEmpty() == true
+/**
+ * Only viewed so far: not taken, or taken but the app is not installed yet. Until it is installed
+ * the page is a view, with nothing to give up or report.
+ */
+val ReviewViewModel.previewing: Boolean get() = job?.step == ReviewStep.INSTALL

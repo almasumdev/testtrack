@@ -165,7 +165,7 @@ fun ReviewScreen(
                 }
             }
         },
-        // Nothing to give up or report before Install is tapped: nothing has been taken.
+        // Nothing to give up or report until the app is installed: until then it is only viewed.
         onGiveUp = if (vm.previewing) null else ({ givingUp = true }),
         onReport = if (vm.previewing) null else ({ reporting = true }),
         onSend = { proof, note ->
