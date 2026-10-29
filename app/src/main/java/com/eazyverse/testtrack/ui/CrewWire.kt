@@ -63,6 +63,8 @@ fun ApiSeat.toSeat(crewName: String = "") =
         versionAt = versionAt.orEmpty(),
         downsLeft = downsLeft,
         appeal = appeal?.let { SeatAppeal(it.state, it.text, it.answer) },
+        canAppeal = canAppeal,
+        appealBlocked = appealBlocked,
     )
 
 /** One member, as the run screen lists them, in their own calendar. */

@@ -179,6 +179,13 @@ data class ApiSeat(
     @SerialName("out_at") val outAt: String? = null,
     /** The owner's appeal to get it back, on their own seat only; null when there is none. */
     val appeal: ApiAppeal? = null,
+    /**
+     * Whether the owner of a seat taken out may still ask to get it back, and why not in words:
+     * the run is over for them, the app is in another crew now, or an appeal already exists.
+     * True from an older server that does not say.
+     */
+    @SerialName("can_appeal") val canAppeal: Boolean = true,
+    @SerialName("appeal_blocked") val appealBlocked: String = "",
     @SerialName("created_at") val createdAt: String,
 )
 

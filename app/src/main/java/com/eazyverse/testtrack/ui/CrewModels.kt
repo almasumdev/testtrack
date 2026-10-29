@@ -160,6 +160,9 @@ data class CrewSeat(
     val downsLeft: Int = 0,
     /** Its owner's appeal to get it back into the run, on the reader's own seat only. */
     val appeal: SeatAppeal? = null,
+    /** Whether its owner may ask to get it back, and the server's words when not. */
+    val canAppeal: Boolean = true,
+    val appealBlocked: String = "",
 )
 
 /**

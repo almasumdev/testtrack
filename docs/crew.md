@@ -159,6 +159,8 @@ An app taken out of a run (two missed days in a row, or the team) is not the end
 - **Accepted:** the team puts it back in the run. Its owner's missed nights and the nights it was out are let off, so the warning is gone and one more miss does not take it straight out again. The app is let off for every tester on the nights it was out, so nobody turns short for an app they could not open. The owner is told.
 - **Refused:** the owner sees the team's reason, and only then **Put it in a new crew**.
 - **The run ends first:** the appeal closes, and the owner can take a new seat.
+- **Out again after a put back:** there is no second appeal. The card says it was put back once and is out again, and offers **Put it in a new crew**.
+- **Only when the server would take it** (30 October 2026): Ask to get it back is offered only while the server says the seat can be asked back (`can_appeal`). Once the run is over for the owner, or the app is in another crew now, the card says why in the server's words (`appeal_blocked`) and offers a new crew instead, and an appeal sent anyway is refused with the same words.
 - **The team can also put an app back without an appeal**, for example after the owner wrote in.
 
 Everybody else keeps a taken-out app on the crew page, under **Left the run** ("You don't need to open these"). It is faded, nobody owes it, and Open all never reaches it. The first day it only says "Out of the run. Nothing to open.", since it may come back. From a day after it left it says "You can uninstall it now." with **Uninstall**, which opens Android's own prompt for that one app. Once it is off the phone the row goes. If the team puts it back, it moves back to Tonight.
