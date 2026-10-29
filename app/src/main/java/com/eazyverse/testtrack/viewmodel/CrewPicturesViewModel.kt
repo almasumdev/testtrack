@@ -19,7 +19,24 @@ data class MemberNight(
     val proof: String,
     val byHand: Boolean,
     val counts: Boolean,
-)
+) {
+    /** Opened, and its picture still on the member's phone hours later: drawn red until it lands. */
+    fun waitingLong(now: java.time.Instant = java.time.Instant.now()): Boolean {
+        if (counts || proof.isNotBlank()) return false
+        val opened =
+            runCatching {
+                java.time.OffsetDateTime
+                    .parse(at)
+                    .toInstant()
+            }.getOrNull() ?: return false
+        return opened.plusSeconds(WAIT_LONG_HOURS * 3600L) < now
+    }
+
+    companion object {
+        /** A picture still on the phone this long after its visit shows red, on every grid. */
+        const val WAIT_LONG_HOURS = 3
+    }
+}
 
 /** One member's nights with the reader's own app. */
 data class MemberNights(
@@ -35,12 +52,14 @@ data class MemberNights(
     val freeDays: Set<Int> = emptySet(),
     /** Nights they did not owe the app, a quiet skip covering it. Drawn like any night not owed. */
     val skippedDays: Set<Int> = emptySet(),
+    /** Nights a report they sent during the run excused the app, that night alone. */
+    val reportedDays: Set<Int> = emptySet(),
 ) {
     /** They did not owe the app that night: reported, let off, or covered by a skip. */
     fun notOwed(
         day: Int,
         offDays: Set<Int>,
-    ) = excused || day in freeDays || day in offDays || day in skippedDays
+    ) = excused || day in freeDays || day in offDays || day in skippedDays || day in reportedDays
 }
 
 /** The reader's app in one crew, as every other member opened it. */
@@ -81,6 +100,7 @@ class CrewPicturesViewModel : ViewModel() {
                                 firstNight = t.firstNight,
                                 freeDays = t.freeDays.toSet(),
                                 skippedDays = t.skippedDays.toSet(),
+                                reportedDays = t.reportedDays.toSet(),
                             )
                         },
                         offDays = got.offDays.toSet(),

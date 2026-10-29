@@ -85,6 +85,8 @@ data class ApiTesterPictures(
     @SerialName("free_days") val freeDays: List<Int> = emptyList(),
     /** Nights a quiet skip covered the reader's app for them: not owed, so never a miss. */
     @SerialName("skipped_days") val skippedDays: List<Int> = emptyList(),
+    /** Nights a report they sent during the run excused the reader's app for them, that night alone. */
+    @SerialName("reported_days") val reportedDays: List<Int> = emptyList(),
 )
 
 /** Every member's pictures of the reader's own app in one crew: the owner's grid. */

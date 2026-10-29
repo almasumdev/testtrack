@@ -148,6 +148,14 @@ private fun TesterNights(
                         night != null && night.counts -> Mark(t.okBg, null, "Opened")
                         day < tester.firstNight -> Mark(Color.Transparent, null, "Not joined yet", dashed = true)
                         // Opened, its picture still on its way: not a miss.
+                        // Hours later and still on their phone: red, until it lands.
+                        night != null && night.waitingLong() ->
+                            Mark(
+                                t.badBg,
+                                Lucide.Clock,
+                                "Picture waiting for hours",
+                                border = t.badBorder,
+                            )
                         night != null -> Mark(t.accent.copy(alpha = 0.35f), Lucide.Clock, "Picture on its way", border = t.accent)
                         tester.notOwed(day, offDays) -> Mark(t.glass2, null, "Not owed", border = t.glassBorder)
                         day == tester.day -> Mark(Color.Transparent, Lucide.Clock, "Tonight", border = t.accent)

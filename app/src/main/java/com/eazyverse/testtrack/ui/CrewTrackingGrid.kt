@@ -36,7 +36,7 @@ import com.eazyverse.testtrack.viewmodel.MemberNights
  */
 
 /** What one square says. Each has its own fill and edge, so it reads without the colour too. */
-private enum class Square { PICTURE, BY_HAND, WAITING, MISSED, NOT_OWED, TONIGHT, TO_COME, BEFORE }
+private enum class Square { PICTURE, BY_HAND, WAITING, WAITING_LONG, MISSED, NOT_OWED, TONIGHT, TO_COME, BEFORE }
 
 /**
  * What one tester's night was, as the server judges it: a night they did not owe (reported, let
@@ -52,6 +52,7 @@ private fun squareOf(
         day < tester.firstNight -> Square.BEFORE
         night != null && night.counts && night.byHand -> Square.BY_HAND
         night != null && night.counts -> Square.PICTURE
+        night != null && night.waitingLong() -> Square.WAITING_LONG
         night != null -> Square.WAITING
         tester.notOwed(day, offDays) -> Square.NOT_OWED
         day == tester.day -> Square.TONIGHT
@@ -144,6 +145,7 @@ private fun Cell(
             Square.PICTURE -> Status.posted to Status.posted
             Square.BY_HAND -> Status.posted to t.warn
             Square.WAITING -> t.accent.copy(alpha = 0.35f) to t.accent
+            Square.WAITING_LONG -> t.badBg to t.accent
             Square.MISSED -> t.badBg to t.bad
             Square.NOT_OWED -> t.glass2 to t.glassBorder
             Square.TONIGHT -> Color.Transparent to t.accent
