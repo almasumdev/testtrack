@@ -228,7 +228,7 @@ class ReviewBodyTest {
         compose.onNodeWithText("Sent to the developer").assertIsDisplayed()
         compose.onNodeWithText("Sent with your screenshot").assertIsDisplayed()
         compose
-            .onNodeWithText("Up to two days, then it approves itself")
+            .onNodeWithText("Up to a day, then it approves itself")
             .assertIsDisplayed()
         for (action in listOf("Get it on Play", "Open the app", "Send the proof")) {
             compose.onNodeWithText(action).assertDoesNotExist()

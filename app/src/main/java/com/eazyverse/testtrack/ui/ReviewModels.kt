@@ -28,7 +28,7 @@ enum class ReviewStep(
     /** A screenshot of what they left there, which is the only evidence anybody can produce. */
     PROVE("Prove it"),
 
-    /** With the owner, who has two days. */
+    /** With the owner, who has a day. */
     WAIT("Waiting on the developer"),
     ;
 
@@ -229,9 +229,9 @@ fun reviewOutcome(
         "submitted" ->
             if (live) {
                 "With the developer, who can accept it any time. If they don't answer, keep the app installed: " +
-                    "we check after three days and then pay you."
+                    "we check after a day and then pay you."
             } else {
-                "With the developer. They have two days, then it approves itself."
+                "With the developer. They have a day, then it approves itself."
             }
         "approved" ->
             if (live) {

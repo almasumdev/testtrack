@@ -406,7 +406,7 @@ class FeedViewModel : ViewModel() {
             reviewerName = it.reviewerName,
             reward = it.reward.takeIf { r -> r > 0 } ?: post?.reward ?: 0,
             isLive = if (it.appName.isBlank()) post?.isLive ?: it.isLive else it.isLive,
-            decideBy = millis(it.decideBy) ?: millis(it.submittedAt)?.plus(TWO_DAYS),
+            decideBy = millis(it.decideBy) ?: millis(it.submittedAt)?.plus(ONE_DAY),
             packageName = it.packageName.ifBlank { post?.packageName.orEmpty() },
             kept = it.kept,
             icon = it.icon,
@@ -472,4 +472,4 @@ class FeedViewModel : ViewModel() {
 }
 
 /** How long an owner has to answer, as the server's rule; only used when it did not say. */
-private const val TWO_DAYS = 48 * 3_600_000L
+private const val ONE_DAY = 24 * 3_600_000L

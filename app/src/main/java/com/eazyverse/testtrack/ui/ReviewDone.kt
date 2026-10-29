@@ -127,9 +127,9 @@ internal fun ReviewDone(
                     if (job.live) {
                         StageRow(Stage.NOW, "The developer checks it", "They can accept it any time")
                         StageGap()
-                        StageRow(Stage.LATER, "Keep the app installed", "If they don't answer, we check after 3 days and pay you")
+                        StageRow(Stage.LATER, "Keep the app installed", "If they don't answer, we check after a day and pay you")
                     } else {
-                        StageRow(Stage.NOW, "The developer checks it", "Up to two days, then it approves itself")
+                        StageRow(Stage.NOW, "The developer checks it", "Up to a day, then it approves itself")
                     }
                 "disputed" -> StageRow(Stage.NOW, "Three members decide", "The developer disputed it")
                 "rejected" ->

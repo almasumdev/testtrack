@@ -277,7 +277,7 @@ fun ReviewCheck(
             Spacer(Modifier.height(12.dp))
             Notice(Status.short, Lucide.TriangleAlert) {
                 Text(
-                    "They uninstalled the app within three days of reviewing it. Google may see that as a review " +
+                    "They uninstalled the app within a day of reviewing it. Google may see that as a review " +
                         "that is not genuine, so check it before it accepts itself.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -297,7 +297,7 @@ fun ReviewCheck(
                 ) {
                     "Accepts itself in ${timeLeft(until, now)} if you do nothing. "
                 } else {
-                    "It accepts itself after two days if you do nothing. "
+                    "It accepts itself after a day if you do nothing. "
                 }
             ) +
                 "Refusing sends it to three members, and whoever they decide against pays them.",

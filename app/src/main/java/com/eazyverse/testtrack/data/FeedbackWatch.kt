@@ -78,7 +78,7 @@ class FeedbackWatch(
                         if (review.isLive) {
                             "Check it on Google Play. It accepts itself in a few days if you don't."
                         } else {
-                            "It accepts itself in two days if you don't check it."
+                            "It accepts itself in a day if you don't check it."
                         },
                 )
             }
