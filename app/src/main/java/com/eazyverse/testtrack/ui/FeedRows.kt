@@ -276,11 +276,9 @@ fun FeedRequestCard(
     post: ApiPost,
     onReview: () -> Unit,
 ) {
-    // In progress and waiting count as taken: the server says what is left.
-    val open = post.slotsOpen ?: (post.reviewsBought - post.reviewsDone)
-    // The same cases that show something to do, so the card and its corner always agree.
-    val actionable = !post.mine && post.myState != "approved" && !(post.myState == null && open <= 0)
-    FeedCard(onClick = if (actionable) onReview else null, padding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)) {
+    // The list holds only requests the reader can still start (FeedViewModel.openPosts), so a
+    // tile is the same from the moment it appears to the moment it is started and leaves.
+    FeedCard(onClick = if (post.mine) null else onReview, padding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             // As tall as the name and the pill together, as the app's header on its review is.
             AppMark(post.packageName, post.appName, post.icon, size = HEADER_ICON)
@@ -298,24 +296,7 @@ fun FeedRequestCard(
                 KindPill(if (post.isLive) CheckKind.PLAY else CheckKind.CLOSED)
             }
             Spacer(Modifier.width(10.dp))
-            when {
-                post.mine -> Unit
-                post.myState == "approved" -> Pill("Done", Status.posted, Status.postedSoft)
-                post.myState == null && open <= 0 -> Pill("Full", Tt.colors.text3, Status.neutralSoft)
-                post.myState in Underway ->
-                    Pill(
-                        "Carry on",
-                        MaterialTheme.colorScheme.onPrimaryContainer,
-                        MaterialTheme.colorScheme.primaryContainer,
-                    )
-                post.myState != null ->
-                    Pill(
-                        "See it",
-                        MaterialTheme.colorScheme.onPrimaryContainer,
-                        MaterialTheme.colorScheme.primaryContainer,
-                    )
-                else -> TixReward(post.reward)
-            }
+            if (!post.mine) TixReward(post.reward)
         }
     }
 }
@@ -390,10 +371,6 @@ private fun TixReward(tix: Int) {
 /** How often the ticket's light sweeps across it, and how long one sweep takes. */
 private const val SHINE_EVERY_MS = 3600
 private const val SHINE_MS = 900
-
-/** A review of the reader's own still being worked on, and one sent and not yet settled. */
-private val Underway = setOf("claimed", "installed", "used")
-private val Sent = setOf("submitted", "disputed")
 
 /** The uppercase word at the top of a card saying which kind of post this is. */
 @Composable

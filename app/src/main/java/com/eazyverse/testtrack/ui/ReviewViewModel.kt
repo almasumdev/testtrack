@@ -26,6 +26,7 @@ import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiPost
+import com.eazyverse.testtrack.net.ApiReview
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -223,11 +224,14 @@ class ReviewViewModel : ViewModel() {
                 failure = "This phone will not identify itself, so a review from it cannot count."
                 return@run
             }
-            val review =
-                mine ?: Api.claim(post.id, fingerprint!!).also {
-                    // Taken again after it was only opened: same id, so its clock starts again.
-                    ReviewClock.restart(context, it.id)
-                }
+            // Not taken yet: the page is a preview until Install is tapped (take), and the server
+            // hears nothing about it before then, so opening a request and backing out changes
+            // nothing anywhere.
+            if (mine == null) {
+                job = ReviewJob(post, preview(post))
+                return@run
+            }
+            val review = mine
             // Looked at before it is drawn, so the page opens on the step the phone is really at.
             // Drawing the server's last word first and then the phone's moved the page under the
             // reviewer a moment after it appeared. A refusal while looking (every slot taken while
@@ -243,6 +247,54 @@ class ReviewViewModel : ViewModel() {
             keep(looked)
             restore(context, review.id)
             adoptPending()
+        }
+    }
+
+    /** A request opened and not yet taken: nothing on the server, nothing on this phone. */
+    val previewing: Boolean get() = job?.review?.id?.isEmpty() == true
+
+    private fun preview(post: ApiPost) =
+        ApiReview(
+            id = "",
+            postId = post.id,
+            state = CLAIMED,
+            usedMs = 0,
+            neededMs = (if (post.isLive) FeedRules.LIVE_USE_SECONDS else FeedRules.CLOSED_USE_SECONDS) * 1000L,
+            proofRef = "",
+            written = "",
+            reason = "",
+            createdAt =
+                java.time.Instant
+                    .now()
+                    .toString(),
+            isLive = post.isLive,
+        )
+
+    /**
+     * Install tapped: the review is taken on now, and then [then] runs (to its Play page). Already
+     * taken, [then] runs at once. A refusal (full, or this phone ruled out) is said on the page.
+     */
+    fun take(
+        context: Context,
+        then: () -> Unit,
+    ) {
+        val current = job ?: return
+        if (current.review.id.isNotEmpty()) {
+            then()
+            return
+        }
+        run(waits = true) {
+            val fingerprint = Device.fingerprint(context)
+            if (fingerprint == null) {
+                failure = "This phone will not identify itself, so a review from it cannot count."
+                return@run
+            }
+            val review = Api.claim(current.post.id, fingerprint)
+            // Taken again after it was given up: same id, so its clock starts again.
+            ReviewClock.restart(context, review.id)
+            keep(ReviewJob(current.post, review, leftReview = leftFor(context, review.id)))
+            restore(context, review.id)
+            then()
         }
     }
 
@@ -315,7 +367,7 @@ class ReviewViewModel : ViewModel() {
         current: ReviewJob,
         settle: Boolean,
     ): ReviewJob {
-        if (current.settled) return current
+        if (current.settled || current.review.id.isEmpty()) return current
         usageAccess = UsageRepo.hasAccess(context)
         val info = InstalledApps.info(context, current.post.packageName)
 

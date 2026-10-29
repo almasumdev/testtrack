@@ -39,10 +39,13 @@ class FeedViewModel : ViewModel() {
         private set
 
     /**
-     * The Feedback list: open posts, less any this account has already sent a review for. A sent
-     * review is done from the reviewer's side, and it is followed from the Mine tab instead.
+     * The Feedback list: requests this account has not started. One it has started (Install tapped,
+     * which is when the server first hears of it) is in My reviews instead, so a tile never changes
+     * under the reader. One given up or run out is offered again.
      */
-    val openPosts: List<ApiPost> get() = posts.filter { it.myState !in SentStates }
+    val openPosts: List<ApiPost> get() = posts.filter { it.myState == null || it.myState in restartable }
+
+    private val restartable = setOf("abandoned", "expired")
 
     /**
      * The post to open one of my reviews through. The live one when it is still on the feed;

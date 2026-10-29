@@ -158,15 +158,16 @@ fun ReviewScreen(
         onLeave = { step ->
             requireMembership {
                 when (step) {
-                    ReviewStep.INSTALL -> openPlay(context, post.packageName)
+                    ReviewStep.INSTALL -> vm.take(context) { openPlay(context, post.packageName) }
                     ReviewStep.USE -> openApp(context, post.packageName)
                     ReviewStep.LEAVE -> vm.markLeft()
                     else -> Unit
                 }
             }
         },
-        onGiveUp = { givingUp = true },
-        onReport = { reporting = true },
+        // Nothing to give up or report before Install is tapped: nothing has been taken.
+        onGiveUp = if (vm.previewing) null else ({ givingUp = true }),
+        onReport = if (vm.previewing) null else ({ reporting = true }),
         onSend = { proof, note ->
             requireMembership {
                 if (vm.driveConnected) {

@@ -45,6 +45,10 @@ enum class FeedTab(
  * be this rule with the minimum plugged into it.
  */
 object FeedRules {
+    /** rules.LIVE_USE_SECONDS and rules.CLOSED_USE_SECONDS on the server: use before Play opens. */
+    const val LIVE_USE_SECONDS = 300
+    const val CLOSED_USE_SECONDS = 120
+
     /** The least a post may offer. Below this nobody writes forty characters for it. */
     const val MIN_REWARD = 20
 
