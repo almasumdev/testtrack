@@ -65,7 +65,7 @@ class AuthViewModel : ViewModel() {
                         establishSession = { ApiAuth.authenticate(activity.applicationContext) },
                         publish = {
                             Session.updateEmail(it.email)
-                            phoneUsedStarter = StarterNotice.take(activity.applicationContext)
+                            phoneUsedStarter = StarterNotice.take(activity.applicationContext, AuthRepo.uid)
                             signedInAs = it.email
                         },
                     )
