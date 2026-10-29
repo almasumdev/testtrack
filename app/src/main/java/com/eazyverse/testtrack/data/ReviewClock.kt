@@ -11,8 +11,40 @@ import java.time.Instant
  * window opened in the phone's future and every reading came back zero until the clocks caught up,
  * which on some phones they never did. The first sighting is the phone's own clock, remembered
  * across restarts, so the window can never open later than the reviewer started.
+ *
+ * Also when the app was first really used for the review, by the phone's own usage record. The
+ * server hears of that use only when TestTrack reports it, which can be after midnight for an app
+ * used at 11 PM; the day the use happened is the phone's to say, and a live review's second day is
+ * counted from it.
  */
 object ReviewClock {
+    /**
+     * The review's use on this phone since its window opened, as [UsageRepo.measureUse] reads it,
+     * keeping the earliest first sitting seen so a record the phone later drops is not lost.
+     */
+    suspend fun measure(
+        context: Context,
+        pkg: String,
+        reviewId: String,
+        createdAt: String,
+        needMs: Long,
+        settle: Boolean,
+    ): UsageRepo.Use {
+        val start = windowStart(context, reviewId, createdAt)
+        val use = UsageRepo.measureUse(context, pkg, start, needMs = needMs, source = "review", settle = settle)
+        use.firstAt?.let { at ->
+            val was = firstUse(context, reviewId)
+            if (was == null || at < was) prefs(context).edit().putLong(firstKey(reviewId), at).apply()
+        }
+        return use
+    }
+
+    /** When the app was first used for this review by this phone's record, or null if not yet. */
+    fun firstUse(
+        context: Context,
+        reviewId: String,
+    ): Long? = prefs(context).getLong(firstKey(reviewId), 0L).takeIf { it > 0L }
+
     fun windowStart(
         context: Context,
         reviewId: String,
@@ -30,7 +62,11 @@ object ReviewClock {
     fun restart(
         context: Context,
         reviewId: String,
-    ) = prefs(context).edit().remove(key(reviewId)).apply()
+    ) = prefs(context)
+        .edit()
+        .remove(key(reviewId))
+        .remove(firstKey(reviewId))
+        .apply()
 
     /**
      * When the clock started, according to the server: from the moment the job was taken on rather
@@ -46,4 +82,6 @@ object ReviewClock {
     private fun prefs(context: Context) = context.getSharedPreferences("review_clock", Context.MODE_PRIVATE)
 
     private fun key(reviewId: String) = "first_seen_$reviewId"
+
+    private fun firstKey(reviewId: String) = "first_used_$reviewId"
 }

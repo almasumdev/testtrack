@@ -130,4 +130,11 @@ class UsageSessionsTest {
     fun several_sittings_on_one_day_are_one_day() {
         assertEquals(1, days(listOf(on(10), off(40), on(50), off(90))))
     }
+
+    @Test
+    fun the_first_use_is_the_first_sitting_long_enough_to_count_a_day() {
+        val events = listOf(on(10), off(15), on(100), off(130), on(200), off(260))
+        assertEquals(100_000L, UsageSessions.firstUse(events, app, 0L, 1_000_000L))
+        assertEquals(null, UsageSessions.firstUse(listOf(on(10), off(15)), app, 0L, 1_000_000L))
+    }
 }

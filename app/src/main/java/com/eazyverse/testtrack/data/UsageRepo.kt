@@ -139,10 +139,11 @@ object UsageRepo {
         return reading
     }
 
-    /** Time in an app since a moment, and the calendar days of it. */
+    /** Time in an app since a moment, the calendar days of it, and when its first day's use began. */
     class Use(
         val ms: Long,
         val days: Int,
+        val firstAt: Long? = null,
     )
 
     /**
@@ -158,7 +159,7 @@ object UsageRepo {
         settle: Boolean = true,
     ): Use {
         val reading = measured(context, pkg, since, needMs, source, settle)
-        return Use(reading.ms, reading.days)
+        return Use(reading.ms, reading.days, reading.firstAt)
     }
 
     private class Reading(
@@ -166,6 +167,7 @@ object UsageRepo {
         val events: Int,
         val access: Boolean,
         val days: Int = 0,
+        val firstAt: Long? = null,
     )
 
     @Suppress("DEPRECATION")
@@ -209,6 +211,7 @@ object UsageRepo {
                 mine,
                 access = true,
                 days = UsageSessions.daysUsed(events, pkg, since, now, dayOf),
+                firstAt = UsageSessions.firstUse(events, pkg, since, now),
             )
         }.getOrDefault(Reading(0L, 0, access = true))
     }

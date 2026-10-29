@@ -169,6 +169,33 @@ class ReviewStepTest {
     }
 
     @Test
+    fun the_phones_own_first_day_of_use_wins_over_when_the_server_heard() {
+        val utc = java.time.ZoneOffset.UTC
+        // Used at 11 PM, reported after midnight: the server heard it on the 30th.
+        val job =
+            ReviewJob(
+                post,
+                review("installed", used = 300_000, needed = 300_000).copy(
+                    createdAt = "2026-10-29T18:00:00Z",
+                    firstUsedAt = "2026-10-30T00:10:00Z",
+                    returnsAt = "2026-10-30T20:10:00Z",
+                    daysUsed = 1,
+                ),
+            )
+        val morning = java.time.Instant.parse("2026-10-30T15:00:00Z")
+        assertFalse(job.secondDayNow(morning, utc))
+        val here =
+            job.copy(
+                firstUsedHere =
+                    java.time.Instant
+                        .parse("2026-10-29T23:00:00Z")
+                        .toEpochMilli(),
+            )
+        assertTrue(here.secondDayNow(morning, utc))
+        assertEquals(java.time.Instant.parse("2026-10-30T14:00:00Z"), here.opensAt(utc))
+    }
+
+    @Test
     fun a_closed_test_with_its_time_in_goes_to_google_play() {
         val closed = post.copy(isLive = false)
         val job = ReviewJob(closed, review("used", used = 120_000, needed = 120_000))

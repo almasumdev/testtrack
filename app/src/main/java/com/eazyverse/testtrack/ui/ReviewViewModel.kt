@@ -289,7 +289,8 @@ class ReviewViewModel : ViewModel() {
     /** Show a job the server has just confirmed, and save it as the last word. */
     internal fun keep(next: ReviewJob) {
         keeps++
-        job = next
+        // With the phone's own record of the first day of use, where it has one (ReviewClock).
+        job = app?.let { next.copy(firstUsedHere = ReviewClock.firstUse(it, next.review.id)) } ?: next
         app?.let { ReviewKeep.put(it, next.post.id, next.review) }
     }
 
@@ -334,15 +335,7 @@ class ReviewViewModel : ViewModel() {
             offline = false
         }
         if (review.state == INSTALLED || review.state == USED) {
-            val use =
-                UsageRepo.measureUse(
-                    context,
-                    current.post.packageName,
-                    ReviewClock.windowStart(context, review.id, review.createdAt),
-                    needMs = review.neededMs,
-                    source = "review",
-                    settle = settle,
-                )
+            val use = ReviewClock.measure(context, current.post.packageName, review.id, review.createdAt, review.neededMs, settle)
             // A new day of use is news even when the total has not moved since the last report, and
             // so is a live review's hours passing: the server opens its last step on being asked.
             val due = review.state == INSTALLED && review.returnsAt?.let(::isPast) == true

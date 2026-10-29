@@ -55,7 +55,17 @@ data class ReviewJob(
     val review: ApiReview,
     /** Whether the reviewer has been to Google Play for it and is on to the proof. */
     val leftReview: Boolean = false,
+    /**
+     * When the app was first used for it, by this phone's own usage record (epoch ms), or null.
+     * Preferred over the server's [ApiReview.firstUsedAt], which is when TestTrack reported that
+     * use: an app used at 11 PM and reported after midnight is still first used the day before.
+     */
+    val firstUsedHere: Long? = null,
 ) {
+    /** The first day of use: the phone's own record where it has one, else what the server heard. */
+    private val firstUse: java.time.Instant?
+        get() = firstUsedHere?.let { java.time.Instant.ofEpochMilli(it) } ?: instantOf(review.firstUsedAt)
+
     val step: ReviewStep
         get() {
             val reached = ReviewStep.of(review)
@@ -114,7 +124,7 @@ data class ReviewJob(
         zone: java.time.ZoneId = java.time.ZoneId.systemDefault(),
     ): Boolean {
         if (!waitingForDay || usedOnTwoDays) return false
-        val first = instantOf(review.firstUsedAt) ?: return false
+        val first = firstUse ?: return false
         return first.atZone(zone).toLocalDate() < now.atZone(zone).toLocalDate()
     }
 
@@ -127,7 +137,7 @@ data class ReviewJob(
         if (!waitingForDay) return null
         val back = instantOf(review.returnsAt) ?: return null
         if (usedOnTwoDays) return back
-        val first = instantOf(review.firstUsedAt) ?: return back
+        val first = firstUse ?: return back
         val taken = instantOf(review.createdAt) ?: return back
         val nextDay =
             first

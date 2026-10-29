@@ -64,6 +64,22 @@ object UsageSessions {
             .distinct()
             .size
 
+    /**
+     * When [pkg]'s first sitting of at least [minMs] between [since] and [now] began, or null when
+     * there was none: the phone's own record of the first day of use, which a live review's second
+     * day is counted from. Taken from the same sittings as [daysUsed], so the two always agree.
+     */
+    fun firstUse(
+        events: List<Event>,
+        pkg: String,
+        since: Long,
+        now: Long,
+        minMs: Long = 15_000L,
+    ): Long? =
+        sessions(events, pkg, since, now)
+            .filter { it.last - it.first >= minMs }
+            .minOfOrNull { it.first }
+
     /** Each sitting of [pkg] in front, clipped to the window, as its start and end. */
     private fun sessions(
         events: List<Event>,
