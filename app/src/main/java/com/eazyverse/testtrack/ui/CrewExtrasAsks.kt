@@ -57,6 +57,8 @@ internal fun withCrewExtras(
         busySeat = base.busySeat ?: (if (extras.busy) extras.feedbackFor?.seatId else null),
         onPickPicture = base.onPickPicture,
         sendingPicture = base.sendingPicture,
+        waitingPicture = base.waitingPicture,
+        latePicture = base.latePicture,
         picturesStuck = base.picturesStuck,
         onRetryPictures = base.onRetryPictures,
         localVersion = { pkg -> extras.copy(context, pkg).takeIf { it.installed }?.versionCode },

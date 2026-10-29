@@ -108,6 +108,13 @@ internal fun ownerLine(
     if (tail.isNotBlank()) append(", $tail")
 }
 
+/** A picture of the app has waited more than 3 hours to send: said on its row in red until it goes. */
+@Composable
+private fun lateLine() =
+    buildAnnotatedString {
+        withStyle(SpanStyle(color = Tone.BAD.ink(), fontWeight = FontWeight.SemiBold)) { append("Picture waiting over 3 hours") }
+    }
+
 /** One row of a crew's page. [trailing] is the pill or the chip; the chevron always follows. */
 @Composable
 internal fun CrewPageRow(
@@ -267,7 +274,11 @@ internal fun TonightRow(
         app.label,
         // An update out says only that, with its deadline, so the line is not cut: whose it is
         // is in the row's sheet.
-        if (old) AnnotatedString(note.replaceFirstChar(Char::uppercase)) else ownerLine(app.owner, seat.notes.isNotBlank(), note),
+        when {
+            actions.latePicture(app.id) -> lateLine()
+            old -> AnnotatedString(note.replaceFirstChar(Char::uppercase))
+            else -> ownerLine(app.owner, seat.notes.isNotBlank(), note)
+        },
         place,
         onOpen = { onSheet(RowSheet(seat, SheetKind.TONIGHT, app)) },
         icon = seat.icon,
@@ -297,7 +308,12 @@ internal fun DoneRow(
     // Opened tonight on the old copy: the update is still to do before the 24 hours run out.
     val old = actions != null && actions.isInstalled(app.packageName) && olderHere(app, actions)
     val note = if (old) (if (app.updateRequired) "update needed" else updateBy(app)?.let { "update by $it" } ?: "update out") else ""
-    val line = if (old) AnnotatedString(note.replaceFirstChar(Char::uppercase)) else ownerLine(app.owner, false)
+    val line =
+        when {
+            actions?.latePicture(app.id) == true -> lateLine()
+            old -> AnnotatedString(note.replaceFirstChar(Char::uppercase))
+            else -> ownerLine(app.owner, false)
+        }
     CrewPageRow(app.packageName, app.label, line, place, icon = seat.icon, onOpen = {
         onSheet(RowSheet(seat, SheetKind.DONE, app))
     }) {

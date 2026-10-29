@@ -331,7 +331,7 @@ class CrewViewModel : ViewModel() {
         crews
             .filter { crewId == null || it.id == crewId }
             .flatMap { crew -> crew.apps.filter { !it.done && !it.reported } }
-            .filter { !pictures.sending(it.id) && !it.feedbackLate && isInstalled(context, it.packageName) },
+            .filter { !pictures.sending(it.id, it.day) && !it.feedbackLate && isInstalled(context, it.packageName) },
     )
 
     /** The seat a call is running for, so its row shows it busy and a second tap sends nothing. */
@@ -366,7 +366,7 @@ class CrewViewModel : ViewModel() {
         val stops =
             apps.map { app ->
                 val notes = crews.firstNotNullOfOrNull { c -> c.seats.firstOrNull { it.id == app.id } }?.notes.orEmpty()
-                RoundStore.Stop(app.id, app.packageName, app.label, notes)
+                RoundStore.Stop(app.id, app.packageName, app.label, notes, day = app.day)
             }
         if (!NightRound.canFloat(context) && !overlayAsked) {
             overlayAsked = true

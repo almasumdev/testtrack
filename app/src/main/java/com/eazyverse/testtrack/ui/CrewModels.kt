@@ -226,6 +226,8 @@ data class CrewApp(
     val reported: Boolean = false,
     /** Opened tonight, but its picture is not on the server yet, so it has not counted. */
     val pictureDue: Boolean = false,
+    /** This account's own night in the app's crew: the night its picture is kept and sent for. */
+    val day: Int = 0,
     /** The owner's newest version, and whether its 24 hours are over, so an older copy no longer counts. */
     val versionCode: Long? = null,
     val updateRequired: Boolean = false,

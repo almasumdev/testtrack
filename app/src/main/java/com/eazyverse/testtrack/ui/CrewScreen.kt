@@ -174,8 +174,11 @@ class CrewActions(
     val busySeat: String? = null,
     /** A picture from the phone for an app whose own picture failed tonight. */
     val onPickPicture: (CrewApp) -> Unit = {},
-    /** This app's picture is on the phone, waiting to send. */
-    val sendingPicture: (String) -> Boolean = { false },
+    /** Tonight's picture of this app is on the phone, waiting to send. */
+    val sendingPicture: (CrewApp) -> Boolean = { false },
+    /** A picture of this app from any night is waiting to send, and whether one has waited over 3 hours. */
+    val waitingPicture: (String) -> Boolean = { false },
+    val latePicture: (String) -> Boolean = { false },
     /** Why waiting pictures could not go yet, and another try at sending them. */
     val picturesStuck: String? = null,
     val onRetryPictures: () -> Unit = {},

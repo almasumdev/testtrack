@@ -198,6 +198,12 @@ How it runs:
   A picture that cannot send stays on the phone and keeps trying by itself, with TestTrack closed
   too, and never makes a second copy. It counts for its night whenever it lands, even after
   midnight.
+- **One waiting picture per app per night** (30 October 2026). Night 5's picture still waiting is
+  kept when the same app is opened on night 6, and each is sent with its own night. A picture the
+  server refuses for good (the app left the run) is dropped and the rest carry on; only a lost
+  connection or the server being down stops the others. One that waits more than 3 hours shows
+  red on its row and in the Sending card, and the red goes by itself once it lands. Open all
+  skips an app only when tonight's picture of it is the one waiting.
 - **A picture that fails** (a blank screen, a camera that stopped) is asked for on the Crew page:
   open the app again for a fresh one, or pick one from the phone, which its owner sees as picked
   by hand.

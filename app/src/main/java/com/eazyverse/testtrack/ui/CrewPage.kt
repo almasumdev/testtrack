@@ -135,7 +135,7 @@ internal fun crewActions(
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             val app = picking
             picking = null
-            if (app != null && uri != null) vm.pictures.pick(context.findActivity(), app.id, app.label, uri)
+            if (app != null && uri != null) vm.pictures.pick(context.findActivity(), app.id, app.label, uri, app.day)
         }
     val waiting by vm.pictures.waiting.collectAsState()
     val stuck by vm.pictures.stuck.collectAsState()
@@ -157,7 +157,10 @@ internal fun crewActions(
                 picking = app
                 picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             },
-            sendingPicture = { id -> waiting.any { it.seatId == id } },
+            // Read through [waiting], so a row redraws when its picture goes.
+            sendingPicture = { app -> waiting.any { it.seatId == app.id && it.day == app.day } },
+            waitingPicture = { id -> waiting.any { it.seatId == id } },
+            latePicture = { id -> waiting.any { it.seatId == id && it.late() } },
             picturesStuck = stuck,
             onRetryPictures = { vm.pictures.send(context.findActivity()) },
         ),

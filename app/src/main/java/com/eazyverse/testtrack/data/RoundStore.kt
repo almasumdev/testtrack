@@ -31,6 +31,8 @@ object RoundStore {
         val packageName: String,
         val label: String,
         val notes: String = "",
+        /** The member's own night in that app's crew, which its picture is kept and sent for. */
+        val day: Int = 0,
     )
 
     /** The apps of the round, which one is on screen, and since when. */

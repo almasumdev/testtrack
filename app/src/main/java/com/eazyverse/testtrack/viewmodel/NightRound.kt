@@ -295,7 +295,7 @@ object NightRound {
             Api.visit(stop.seatId, used, versionCode = copy.versionCode.takeIf { copy.installed }, installer = copy.installer.orEmpty())
             // The visit first, then its picture, in the background: the next app does not wait.
             if (taken != null) {
-                VisitPictures.add(context, VisitPictures.Waiting(stop.seatId, stop.label, taken.path))
+                VisitPictures.add(context, VisitPictures.Waiting(stop.seatId, stop.label, taken.path, day = stop.day))
                 scope.launch { VisitPictures.send(context) }
             }
             Outcome.Counted

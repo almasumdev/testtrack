@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.eazyverse.testtrack.data.AuthRepo
+import com.eazyverse.testtrack.data.PictureQueue
 import com.eazyverse.testtrack.data.RoundStore
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.data.VisitCameraService
@@ -43,8 +44,14 @@ class NightPictures(
     /** Why the last try to send them stopped; null while they are going, or once they went. */
     val stuck get() = VisitPictures.stuck
 
-    /** This app's picture is only waiting to send: it has been opened and needs no second visit. */
-    fun sending(seatId: String) = VisitPictures.waiting.value.any { it.seatId == seatId }
+    /**
+     * Tonight's picture of this app is only waiting to send: it has been opened tonight and needs
+     * no second visit. A picture from an earlier night waiting is not tonight's, so it is opened.
+     */
+    fun sending(
+        seatId: String,
+        day: Int,
+    ) = PictureQueue.waitingTonight(VisitPictures.waiting.value, seatId, day)
 
     fun ask(
         stops: List<RoundStore.Stop>,
@@ -100,9 +107,10 @@ class NightPictures(
         seatId: String,
         label: String,
         uri: Uri,
+        day: Int = 0,
     ) {
         scope.launch {
-            if (!VisitPictures.addPicked(activity, seatId, label, uri)) {
+            if (!VisitPictures.addPicked(activity, seatId, label, uri, day)) {
                 say("That picture could not be read. Choose another.")
                 return@launch
             }

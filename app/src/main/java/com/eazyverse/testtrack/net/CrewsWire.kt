@@ -54,6 +54,8 @@ data class PictureIn(
     @SerialName("drive_token") val driveToken: String,
     /** Picked from the phone after TestTrack's own picture failed. */
     @SerialName("by_hand") val byHand: Boolean = false,
+    /** The visitor's own night it was taken on, so a late picture lands there; null when unknown. */
+    val day: Int? = null,
 )
 
 /** One member's pictures of the reader's own app, night by night. */

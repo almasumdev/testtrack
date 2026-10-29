@@ -104,6 +104,7 @@ fun ApiSeat.toApp(
     // is not something anybody can open.
     reported = reported,
     pictureDue = pictureDue,
+    day = day,
     versionCode = versionCode,
     updateRequired = updateRequired,
     versionName = versionName,
