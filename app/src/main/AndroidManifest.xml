@@ -58,6 +58,9 @@
       and the testing control over each app in a crew round (viewmodel/VisitDockWindow).
     -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Uninstall on an app that left a crew's run opens Android's own prompt for that one app.
+         Nothing is removed without the person saying yes there. -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
 
     <!--

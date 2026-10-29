@@ -23,7 +23,9 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
@@ -118,6 +120,8 @@ internal fun CrewPageRow(
     onOpen: () -> Unit,
     /** Play's icon, drawn when the app is not on this phone. */
     icon: String = "",
+    /** Out of the run: faded, and nothing to open, so no chevron and no tap. */
+    out: Boolean = false,
     trailing: @Composable () -> Unit,
 ) {
     val t = Tt.colors
@@ -129,15 +133,16 @@ internal fun CrewPageRow(
             .clip(shape)
             .background(t.glass)
             .border(1.dp, t.glassBorder, shape)
-            .clickable(onClick = onOpen)
-            .padding(start = 12.dp, end = 6.dp, top = 8.dp, bottom = 8.dp),
+            .clickable(enabled = !out, onClick = onOpen)
+            .padding(start = 12.dp, end = if (out) 12.dp else 6.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppMark(packageName, title, icon, size = 40.dp)
+        Box(if (out) Modifier.alpha(0.5f) else Modifier) { AppMark(packageName, title, icon, size = 40.dp) }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
                 title,
+                color = if (out) t.text3 else Color.Unspecified,
                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -153,7 +158,7 @@ internal fun CrewPageRow(
         }
         Spacer(Modifier.width(8.dp))
         trailing()
-        Icon(Lucide.ChevronRight, null, Modifier.padding(start = 2.dp).size(18.dp), tint = t.text4)
+        if (!out) Icon(Lucide.ChevronRight, null, Modifier.padding(start = 2.dp).size(18.dp), tint = t.text4)
     }
 }
 

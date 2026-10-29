@@ -191,6 +191,10 @@ class CrewActions(
     val onMarkDown: (CrewSeat) -> Unit = {},
     /** Why Update cannot be tapped yet for this seat, or null when it can. */
     val updateBlocked: (CrewSeat) -> String? = { null },
+    /** The owner of an app taken out asks to get it back. */
+    val onAppeal: (CrewSeat) -> Unit = {},
+    /** Android's own uninstall prompt for an app that left the run. */
+    val onUninstall: (String) -> Unit = {},
 )
 
 /**

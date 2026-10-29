@@ -23,3 +23,9 @@ suspend fun Api.sendFeedback(
 
 /** The owner marks their app down tonight, so nobody owes it. */
 suspend fun Api.markDown(seatId: String): ApiSeat = post("/crews/seats/$seatId/down", emptyMap<String, String>())
+
+/** The owner of an app taken out of its run asks, once, to get it back. */
+suspend fun Api.appeal(
+    seatId: String,
+    text: String,
+): ApiSeat = post("/crews/seats/$seatId/appeal", AppealIn(text))

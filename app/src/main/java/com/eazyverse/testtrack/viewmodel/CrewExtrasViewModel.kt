@@ -19,6 +19,7 @@ import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.FeedbackIn
 import com.eazyverse.testtrack.net.VersionIn
+import com.eazyverse.testtrack.net.appeal
 import com.eazyverse.testtrack.net.markDown
 import com.eazyverse.testtrack.net.sendFeedback
 import com.eazyverse.testtrack.net.tellUpdate
@@ -46,6 +47,9 @@ class CrewExtrasViewModel : ViewModel() {
 
     /** The seat waiting on its owner's yes to being marked down tonight. */
     var confirmDown by mutableStateOf<String?>(null)
+
+    /** The taken-out seat its owner is writing an appeal for, with its app's name. */
+    var appealFor by mutableStateOf<Pair<String, String>?>(null)
 
     /** The app a member is sending Play feedback for, from its first ask to its picture landing. */
     var feedbackFor by mutableStateOf<FeedbackJob?>(null)
@@ -115,6 +119,24 @@ class CrewExtrasViewModel : ViewModel() {
     ) = act(reload) {
         Api.markDown(seatId)
         "Marked down tonight. Nobody owes it tonight, and nobody is marked down for it."
+    }
+
+    fun askAppeal(
+        seatId: String,
+        appName: String,
+    ) {
+        appealFor = seatId to appName
+    }
+
+    /** The owner asks, once, to get their taken-out app back into its run. */
+    fun appeal(
+        seatId: String,
+        text: String,
+        reload: () -> Unit,
+    ) = act(reload) {
+        appealFor = null
+        Api.appeal(seatId, text)
+        "Sent. The team usually answers within a day."
     }
 
     /** Ask about the feedback, then the camera and Play once they have read how it goes. */

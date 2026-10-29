@@ -145,6 +145,19 @@ unopened at your own midnight) and you get a warning; miss two in a row and your
 run, nobody opens it any more and you owe nothing more there. An app you reported is not counted
 against you. Every member gets an evening reminder at 20:00 their time while anything is left.
 
+## Taken out: appeal and put back
+
+An app taken out of a run (two missed days in a row, or the team) is not the end of it while the run is going.
+
+- **The owner asks first.** Their crew page offers **Ask to get it back**, not a new crew. They write what happened (up to 500 characters) and send it, once per app.
+- **While it waits, no new seat.** The owner can't put any app in a new crew until the team answers. The Take a seat screen says why and its button is off.
+- **Accepted:** the team puts it back in the run. Its owner's missed nights and the nights it was out are let off, so the warning is gone and one more miss does not take it straight out again. The app is let off for every tester on the nights it was out, so nobody turns short for an app they could not open. The owner is told.
+- **Refused:** the owner sees the team's reason, and only then **Put it in a new crew**.
+- **The run ends first:** the appeal closes, and the owner can take a new seat.
+- **The team can also put an app back without an appeal**, for example after the owner wrote in.
+
+Everybody else keeps a taken-out app on the crew page, under **Left the run** ("You don't need to open these"). It is faded, nobody owes it, and Open all never reaches it. The first day it only says "Out of the run. Nothing to open.", since it may come back. From a day after it left it says "You can uninstall it now." with **Uninstall**, which opens Android's own prompt for that one app. Once it is off the phone the row goes. If the team puts it back, it moves back to Tonight.
+
 ## A clean run pays the seat back
 
 Decided October 2026. When a crew closes, every member still in it who opened everything they

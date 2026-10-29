@@ -109,6 +109,9 @@ object CrewRules {
     /** How long each app stays open in a round; its picture is taken after the first ten. */
     const val OPEN_SECONDS = 20
 
+    /** The longest appeal to get a taken-out app back, as the server keeps it. */
+    const val APPEAL_MAX = 500
+
     /** What being in this many crews costs every evening, which is the only honest warning. */
     fun nightly(crews: Int) = crews * NIGHTLY
 }
@@ -152,7 +155,23 @@ data class CrewSeat(
     val versionAt: String = "",
     /** Nights its owner can still mark it down this run; on the reader's own seat only. */
     val downsLeft: Int = 0,
+    /** Its owner's appeal to get it back into the run, on the reader's own seat only. */
+    val appeal: SeatAppeal? = null,
 )
+
+/**
+ * An owner asking to get their app back into the run it was taken out of, and the team's answer.
+ *
+ * [state] is waiting, accepted, refused, or closed (the run ended before an answer). While one
+ * waits, its owner takes no new seat anywhere.
+ */
+data class SeatAppeal(
+    val state: String,
+    val text: String = "",
+    val answer: String = "",
+) {
+    val waiting: Boolean get() = state == "waiting"
+}
 
 /**
  * One member's fortnight, from the outside, in their own calendar.
@@ -211,6 +230,8 @@ data class CrewApp(
     val feedbackSent: Boolean = false,
     val feedbackDueDay: Int = 0,
     val feedbackLate: Boolean = false,
+    /** When it was taken out of the run (ISO time), for an app in Left the run; blank otherwise. */
+    val outAt: String = "",
 )
 
 /**
@@ -233,6 +254,9 @@ data class Crew(
     val seats: List<CrewSeat> = emptyList(),
     val members: List<CrewMember> = emptyList(),
     val apps: List<CrewApp> = emptyList(),
+    /** Others' apps taken out of the run: nobody owes them, and they are left on the page so the
+     * reader knows which to uninstall, once it is clear they will not come back. */
+    val left: List<CrewApp> = emptyList(),
     /** Which day of the run, in this account's own calendar. Zero before it starts. */
     val day: Int = 0,
     /** Milliseconds until this account's midnight, once it is full. */

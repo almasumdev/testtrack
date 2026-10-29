@@ -21,7 +21,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.CircleCheck
-import com.composables.icons.lucide.CircleX
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
@@ -269,24 +268,7 @@ fun CrewRunPhase(
 
     CrewList(crew, actions) { onSheet ->
         if (crew.out) {
-            block {
-                androidx.compose.foundation.layout.Column {
-                    CrewHero(
-                        chip = "Your app is out",
-                        tone = Tone.BAD,
-                        icon = Lucide.CircleX,
-                        headline = "Your app left this run",
-                        line = "${crew.mine?.outReason.orEmpty().ifBlank {
-                            "It missed two days in a row."
-                        }} Nobody opens it now, and there's nothing more for you to open here.",
-                        action = "Put it in a new crew",
-                        onAction = actions.onTakeSeat,
-                    )
-                    CardNote(
-                        crew.mine?.let { seatOutLine(it) } ?: "Seats are kept once a run starts, so this one's tix aren't refunded.",
-                    )
-                }
-            }
+            block { OwnerOutCard(crew, actions) }
             return@CrewList
         }
         block { RunHero(crew, owed, here, missing, actions) }
@@ -304,6 +286,13 @@ fun CrewRunPhase(
         if (settled.isNotEmpty()) {
             item { CrewHeading("Done", "${settled.size}") }
             rows("d", settled, { it.id }) { app, place -> DoneRow(app, seatOf(app), place, onSheet) }
+        }
+        // Taken out: nobody owes them; listed until uninstalled, so the reader knows which they were.
+        val left = crew.left.filter { actions.isInstalled(it.packageName) }
+        if (left.isNotEmpty()) {
+            item { CrewHeading("Left the run", "${left.size}") }
+            item { LeftRunNote() }
+            rows("l", left, { it.id }) { app, place -> LeftRow(app, seatOf(app), place, actions) }
         }
     }
 }

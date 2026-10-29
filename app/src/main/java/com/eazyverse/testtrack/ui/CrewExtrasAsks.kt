@@ -1,13 +1,24 @@
 package com.eazyverse.testtrack.ui
 
 import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -65,6 +76,8 @@ internal fun withCrewExtras(
         },
         onMarkDown = { seat -> extras.confirmDown = seat.id },
         updateBlocked = { seat -> extras.updateBlocked(context, seat.packageName, seat.versionCode) },
+        onAppeal = { seat -> extras.askAppeal(seat.id, seat.appName) },
+        onUninstall = { pkg -> uninstall(context, pkg) },
     )
 }
 
@@ -126,6 +139,15 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
         )
     }
 
+    extras.appealFor?.let { (seatId, appName) ->
+        AppealSheet(
+            appName = appName,
+            busy = extras.busy,
+            onSend = { text -> extras.appeal(seatId, text) { vm.load(context) } },
+            onDismiss = { extras.appealFor = null },
+        )
+    }
+
     extras.confirmDown?.let { seatId ->
         Ask(
             title = "Mark your app down tonight?",
@@ -140,5 +162,51 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
             },
             onDismiss = { extras.confirmDown = null },
         )
+    }
+}
+
+/**
+ * Android's own "uninstall this app?" for one package. TestTrack removes nothing by itself: the
+ * phone asks, and the person says yes or no.
+ */
+private fun uninstall(
+    context: Context,
+    packageName: String,
+) {
+    runCatching {
+        context.startActivity(
+            Intent(Intent.ACTION_DELETE, Uri.fromParts("package", packageName, null)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+    }
+}
+
+/** The owner's appeal, in their own words: once per app, read by the team. */
+@Composable
+internal fun AppealSheet(
+    appName: String,
+    busy: Boolean,
+    onSend: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var text by rememberSaveable { mutableStateOf("") }
+    PickerSheet(
+        title = "Ask to get $appName back",
+        subtitle = "Tell the team what happened on the nights you missed. They usually answer within a day.",
+        onDismiss = onDismiss,
+    ) { close ->
+        DialogField(
+            value = text,
+            onValueChange = { text = it.take(CrewRules.APPEAL_MAX) },
+            label = "What happened",
+            singleLine = false,
+            minHeight = 110.dp,
+            maxLength = CrewRules.APPEAL_MAX,
+        )
+        Spacer(Modifier.height(16.dp))
+        Primary("Send", busy = busy, enabled = text.isNotBlank()) {
+            onSend(text.trim())
+            close {}
+        }
+        Spacer(Modifier.height(20.dp))
     }
 }

@@ -171,7 +171,25 @@ data class ApiSeat(
     /** Tix taken for this seat and given back for it; -1 from an older server that does not say. */
     val charged: Int = -1,
     val refunded: Int = -1,
+    /** When it was taken out of the run (ISO time), for every member; null while it is in. */
+    @SerialName("out_at") val outAt: String? = null,
+    /** The owner's appeal to get it back, on their own seat only; null when there is none. */
+    val appeal: ApiAppeal? = null,
     @SerialName("created_at") val createdAt: String,
+)
+
+@Serializable
+data class ApiAppeal(
+    /** waiting, accepted, refused, or closed (the run ended before an answer). */
+    val state: String,
+    val text: String = "",
+    /** The team's reason, when it refused. */
+    val answer: String = "",
+)
+
+@Serializable
+data class AppealIn(
+    val text: String,
 )
 
 @Serializable

@@ -1,9 +1,11 @@
 package com.eazyverse.testtrack.ui
 
+import com.eazyverse.testtrack.net.ApiAppeal
 import com.eazyverse.testtrack.net.ApiCrew
 import com.eazyverse.testtrack.net.ApiSeat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -292,5 +294,36 @@ class CrewWireTest {
         assertTrue(reviewOutcome("abandoned", endedReason = "reported").contains("Nothing counts against you"))
         assertTrue(reviewOutcome("abandoned", endedReason = "request_deleted").contains("request was removed"))
         assertTrue(reviewOutcome("abandoned", endedReason = "team").contains("TestTrack team"))
+    }
+
+    // ------------------------------------------------------------------------- left the run
+
+    @Test
+    fun an_app_taken_out_stays_on_the_page_under_left_the_run_and_is_never_owed() {
+        val out = seat("gone", state = "removed").copy(outAt = "2026-10-28T09:00:00Z")
+        val crew =
+            crew(state = "full", day = 7, members = listOf(seat("me", mine = true), seat("s2"), out)).toCrew()
+        assertEquals(listOf("s2"), crew.apps.map { it.id })
+        assertEquals(listOf("gone"), crew.left.map { it.id })
+        assertEquals("2026-10-28T09:00:00Z", crew.left.single().outAt)
+    }
+
+    @Test
+    fun uninstall_is_offered_only_a_whole_day_after_it_left() {
+        val left = java.time.Instant.parse("2026-10-28T09:00:00Z")
+        assertFalse(outLongEnough("2026-10-28T09:00:00Z", left.plusSeconds(23 * 3600)))
+        assertTrue(outLongEnough("2026-10-28T09:00:00.123456Z", left.plusSeconds(25 * 3600)))
+        assertFalse(outLongEnough("", left))
+    }
+
+    @Test
+    fun a_waiting_appeal_holds_new_seats_and_names_the_app_and_crew() {
+        val mine = seat("me", mine = true, state = "removed").copy(appeal = ApiAppeal("waiting", "Phone in repair."))
+        val crew = crew(state = "full", day = 7, members = listOf(mine, seat("s2"))).toCrew()
+        assertEquals("App me" to "Crew 07", appealWaitingIn(listOf(crew)))
+        assertEquals("Phone in repair.", crew.mine?.appeal?.text)
+
+        val refused = mine.copy(appeal = ApiAppeal("refused", "No.", "Visits stopped earlier too."))
+        assertNull(appealWaitingIn(listOf(crew(state = "full", day = 7, members = listOf(refused)).toCrew())))
     }
 }

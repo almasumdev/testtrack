@@ -32,6 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AskFailure
@@ -146,6 +148,18 @@ fun CrewAddScreen(
                     DialogNote("Checking it on Play the way the crew will see it. This can take half a minute.")
                     Spacer(Modifier.height(12.dp))
                 }
+                // While an appeal waits, no new seat anywhere: the answer decides which way they go.
+                val held = appealWaitingIn(crews.crews)
+                held?.let { (appName, crewName) ->
+                    Notice(Status.short, Lucide.TriangleAlert) {
+                        Text(
+                            "You asked to get $appName back into $crewName. You can take a new seat once the team answers.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                    Spacer(Modifier.height(12.dp))
+                }
                 val needsDrive = drive.connected == false
                 if (needsDrive) {
                     DialogNote("Each night's pictures go to your own Google Drive, so it is connected before you take a seat.")
@@ -155,7 +169,7 @@ fun CrewAddScreen(
                 Primary(
                     if (needsDrive) "Connect Drive and take a seat" else "Take a seat",
                     busy = crews.seating || drive.busy,
-                    enabled = vm.name.isNotBlank() && vm.signInReady && !vm.short,
+                    enabled = vm.name.isNotBlank() && vm.signInReady && !vm.short && held == null,
                 ) {
                     if (drive.connected == true) {
                         take()

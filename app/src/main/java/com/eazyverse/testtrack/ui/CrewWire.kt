@@ -59,6 +59,7 @@ fun ApiSeat.toSeat(crewName: String = "") =
         versionName = versionName,
         versionAt = versionAt.orEmpty(),
         downsLeft = downsLeft,
+        appeal = appeal?.let { SeatAppeal(it.state, it.text, it.answer) },
     )
 
 /** One member, as the run screen lists them, in their own calendar. */
@@ -140,6 +141,12 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
         // Rejected seats never ran, so they are not members; only the reader sees their own.
         members = members.filter { it.state != "rejected" }.map { it.toMember() },
         apps = if (phase == CrewPhase.RUN && stillIn) owed.map { it.toApp(name, day) } else emptyList(),
+        left =
+            if (phase == CrewPhase.RUN && stillIn) {
+                members.filter { !it.mine && it.state == "removed" }.map { it.toApp(name, day).copy(outAt = it.outAt.orEmpty()) }
+            } else {
+                emptyList()
+            },
         day = day,
         startsIn = startsInMs,
         // What it came to. Only meaningful once it is over, and the server's own day count is
@@ -174,6 +181,28 @@ fun doneTonightIn(crews: List<Crew>): Int =
     crews
         .filter { it.phase == CrewPhase.RUN }
         .sumOf { crew -> crew.apps.count { it.done || it.reported } }
+
+/**
+ * This account's appeal still waiting on the team, as the app's and the crew's names: while there
+ * is one, no new seat can be taken anywhere. Null when nothing waits.
+ */
+fun appealWaitingIn(crews: List<Crew>): Pair<String, String>? =
+    crews.firstNotNullOfOrNull { crew -> crew.mine?.takeIf { it.appeal?.waiting == true }?.let { it.appName to crew.name } }
+
+/**
+ * Whether an app that left the run has been out a whole day, so its row may offer Uninstall.
+ * The first day it may still come back, so the row only says it is out.
+ */
+fun outLongEnough(
+    outAt: String,
+    now: java.time.Instant = java.time.Instant.now(),
+): Boolean =
+    runCatching {
+        java.time.OffsetDateTime
+            .parse(outAt)
+            .toInstant()
+            .plusSeconds(24 * 3600) <= now
+    }.getOrDefault(false)
 
 /** Your apps sent back before a run, to fix and take a seat with again. */
 fun sentBackIn(crews: List<Crew>): List<CrewSeat> = crews.mapNotNull { crew -> crew.mine?.takeIf { it.state == SeatState.REJECTED } }
