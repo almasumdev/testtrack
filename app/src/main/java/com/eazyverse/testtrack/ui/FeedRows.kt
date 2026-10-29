@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -306,19 +307,35 @@ fun FeedRequestCard(
     }
 }
 
-/** What a review pays: the tix ticket itself, as the top bar draws it, with the number in it. */
+/**
+ * What a review pays: the tix ticket itself, as the top bar draws it, with the number in it, and a
+ * soft gold light behind it so the reward is the first thing the eye finds on the card.
+ */
 @Composable
 private fun TixReward(tix: Int) {
+    val glow = Tt.colors.ticketGlow
     Box(
         Modifier
             .clearAndSetSemantics { contentDescription = "$tix tix" }
-            .size(width = 48.dp, height = 33.dp)
+            .drawBehind {
+                drawOval(
+                    Brush.radialGradient(
+                        listOf(glow.copy(alpha = 0.55f), glow.copy(alpha = 0f)),
+                        center = center,
+                        radius = size.width * 0.78f,
+                    ),
+                    topLeft = Offset(-size.width * 0.28f, -size.height * 0.4f),
+                    size =
+                        androidx.compose.ui.geometry
+                            .Size(size.width * 1.56f, size.height * 1.8f),
+                )
+            }.size(width = 52.dp, height = 36.dp)
             .paint(painterResource(R.drawable.tix_ticket_blank)),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             "$tix",
-            style = MaterialTheme.typography.labelLarge.copy(fontSize = if (tix >= 1000) 11.sp else 14.sp, fontFeatureSettings = "tnum"),
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = if (tix >= 1000) 13.sp else 17.sp, fontFeatureSettings = "tnum"),
             fontWeight = FontWeight.ExtraBold,
             color = Tt.colors.ticketInk,
             maxLines = 1,
