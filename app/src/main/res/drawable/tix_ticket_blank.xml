@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The tix ticket (tix_ticket) with its tear line and star left off, so a number can sit in it: a Circle request's reward. -->
+<vector xmlns:aapt="http://schemas.android.com/aapt" xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp" android:height="44dp" android:viewportWidth="64" android:viewportHeight="44">
+  <path android:pathData="M8 3 H56 Q61 3 61 8 V16 A6 6 0 0 0 61 28 V36 Q61 41 56 41 H8 Q3 41 3 36 V28 A6 6 0 0 0 3 16 V8 Q3 3 8 3 Z"
+      android:strokeColor="#17405E" android:strokeWidth="3.5" android:strokeLineJoin="round">
+    <aapt:attr name="android:fillColor">
+      <gradient android:type="linear" android:startX="3" android:startY="3" android:endX="61" android:endY="41">
+        <item android:offset="0" android:color="#FFE07A" />
+        <item android:offset="1" android:color="#F2A92E" />
+      </gradient>
+    </aapt:attr>
+  </path>
+  <path android:pathData="M8 8 Q9 6 12 6" android:strokeColor="#FFFFFF" android:strokeAlpha="0.8"
+      android:strokeWidth="2.5" android:strokeLineCap="round" />
+</vector>

@@ -103,11 +103,8 @@ data class TtTokens(
     val tixTop: Color,
     val tixBottom: Color,
     val tixEdge: Color,
-    /** The ticket itself, as res/drawable/tix_ticket draws it: gold, a navy edge, a tear line. */
-    val ticketLight: Color,
-    val ticketDeep: Color,
+    /** The navy the tix ticket's edge is drawn in (res/drawable/tix_ticket), for a number on it. */
     val ticketInk: Color,
-    val ticketTear: Color,
 ) {
     val primary: Color get() = if (isDark) accentInk else accent
     val onPrimary: Color get() = if (isDark) bg else onAccent
@@ -211,10 +208,7 @@ val OceanLight =
         tixTop = Color(0xFF2B6F99),
         tixBottom = Color(0xFF1B4F70),
         tixEdge = Color(0xFF143A55),
-        ticketLight = Color(0xFFFFE07A),
-        ticketDeep = Color(0xFFF2A92E),
         ticketInk = Color(0xFF17405E),
-        ticketTear = Color(0xFFB97A1E),
     )
 
 val OceanDark =
@@ -284,11 +278,8 @@ val OceanDark =
         tixTop = Color(0xFF3A7FAA),
         tixBottom = Color(0xFF235C80),
         tixEdge = Color(0xFF0E2A3F),
-        // The ticket is the same gold at night, as the drawable is.
-        ticketLight = Color(0xFFFFE07A),
-        ticketDeep = Color(0xFFF2A92E),
+        // The ticket is the same at night, as the drawable is.
         ticketInk = Color(0xFF17405E),
-        ticketTear = Color(0xFFB97A1E),
     )
 
 val LocalTokens = staticCompositionLocalOf { OceanDark }

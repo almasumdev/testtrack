@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- The ticket's star on its own, for the small ticket stub on a Circle request (FeedRows.TixReward). -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="20dp" android:height="20dp" android:viewportWidth="20" android:viewportHeight="20">
-  <path android:pathData="M10 1.8 l2.4 5 5.4 0.8 -3.9 3.8 0.9 5.4 -4.8 -2.6 -4.8 2.6 0.9 -5.4 -3.9 -3.8 5.4 -0.8 Z"
-      android:fillColor="#FFF8E1" android:strokeColor="#17405E" android:strokeWidth="1.8" android:strokeLineJoin="round" />
-</vector>
