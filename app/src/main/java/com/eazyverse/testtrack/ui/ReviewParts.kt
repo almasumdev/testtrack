@@ -87,6 +87,8 @@ internal fun StepDial(
                 segment(t.glass2, 1f)
                 when {
                     i < here -> segment(t.accent, 1f)
+                    // Waiting on a second day: its time is in, but the step is not done, so lighter.
+                    i == here && ReviewSteps[i] == ReviewStep.USE && job.waitingForDay -> segment(t.accent.copy(alpha = 0.45f), 1f)
                     i == here && ReviewSteps[i] == ReviewStep.USE -> if (used > 0f) segment(t.accent, used)
                     i == here -> segment(t.accentInk.copy(alpha = 0.35f), 1f)
                 }
@@ -103,6 +105,7 @@ internal fun StepDial(
                     Icon(Lucide.Check, null, Modifier.size(size * 0.2f), tint = t.accentInk)
                     Text("with the developer", style = MaterialTheme.typography.labelMedium, color = t.text3)
                 }
+                job.step == ReviewStep.USE && job.waitingForDay && job.opensAt() != null -> WaitCentre(job, size)
                 job.step == ReviewStep.USE -> {
                     val needed = (job.review.neededMs / 1000).toInt()
                     Text(
@@ -124,15 +127,52 @@ internal fun StepDial(
     }
 }
 
+/**
+ * The dial's middle while a live review waits on its second day: when it opens, as a time
+ * tomorrow, a countdown once only hours are left, or "Day 2" when today already counts.
+ */
+@Composable
+private fun WaitCentre(
+    job: ReviewJob,
+    size: Dp,
+) {
+    val t = Tt.colors
+    val opens = job.opensAt() ?: return
+    val now = java.time.Instant.now()
+    val (big, small) =
+        when {
+            !opens.isAfter(now) -> "Open" to "come back to it"
+            job.secondDayNow() -> "Day 2" to "open it again"
+            job.usedOnTwoDays -> untilShort(opens, now) to "until it opens"
+            else -> {
+                val at = opensWhen(opens, now)
+                at.substringAfter(" at ") to at.substringBefore(" at ")
+            }
+        }
+    Text(
+        big,
+        style = MaterialTheme.typography.headlineMedium.copy(fontSize = (size.value * 0.15f).sp),
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
+    )
+    Text(small, style = MaterialTheme.typography.labelMedium, color = t.text3)
+}
+
 /** The four steps by name under the dial, ticked as they are done. */
 @Composable
 internal fun StepLabels(job: ReviewJob) {
     val t = Tt.colors
     val here = if (job.settled) ReviewSteps.size else ReviewSteps.indexOf(job.step).coerceAtLeast(0)
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
         ReviewSteps.forEachIndexed { i, step ->
+            // Where you are, in a soft pill; done ones ticked, the rest grey. As four bare words it
+            // read like four things to tap.
             Text(
                 (if (i < here) "✓ " else "") + stepShort(step, job),
+                Modifier
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(if (i == here) t.tile else Color.Transparent)
+                    .padding(horizontal = 9.dp, vertical = 3.dp),
                 style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.5.sp),
                 fontWeight = FontWeight.SemiBold,
                 color =

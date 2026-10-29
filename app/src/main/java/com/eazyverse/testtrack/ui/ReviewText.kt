@@ -1,20 +1,17 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -42,18 +39,23 @@ internal fun DisputeNote() {
 
 /** The way out, quiet and at the end: somebody who cannot finish gives the slot back. 48 to touch. */
 @Composable
-internal fun GiveUpLink(onGiveUp: () -> Unit) {
-    Text(
-        "Can't finish? Give this review up",
-        Modifier
-            .minimumInteractiveComponentSize()
-            .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onGiveUp)
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
-        color = Tt.colors.text3,
-        textDecoration = TextDecoration.Underline,
-    )
+internal fun GiveUpLink(onGiveUp: () -> Unit) = QuietAction("Can't finish?", "Give it up", onGiveUp)
+
+/**
+ * A way out, said as a question and a small outlined button beside it. It was underlined small
+ * print, which read as a note rather than something to tap.
+ */
+@Composable
+internal fun QuietAction(
+    question: String,
+    action: String,
+    onClick: () -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(question, style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp), color = Tt.colors.text3)
+        Spacer(Modifier.width(10.dp))
+        RowPill(action, PillKind.GHOST, onClick = onClick)
+    }
 }
 
 /** The app under review: its mark, its name, and where it is. */
@@ -96,6 +98,13 @@ internal fun stepShort(
         ReviewStep.WAIT -> ""
     }
 
+/** It opens later today: used again that long after its first use counts, whatever the date. */
+private fun opensToday(job: ReviewJob): Boolean {
+    val opens = job.opensAt() ?: return false
+    val zone = java.time.ZoneId.systemDefault()
+    return opens.atZone(zone).toLocalDate() == java.time.LocalDate.now(zone)
+}
+
 internal fun stepTitle(job: ReviewJob): String =
     when (job.step) {
         ReviewStep.INSTALL -> "Install ${job.post.appName}"
@@ -103,6 +112,8 @@ internal fun stepTitle(job: ReviewJob): String =
             when {
                 !job.waitingForDay -> "Try the app"
                 job.usedOnTwoDays -> "Almost there"
+                job.secondDayNow() -> "Use it again today"
+                opensToday(job) -> "Come back later today"
                 else -> "Come back tomorrow"
             }
         ReviewStep.LEAVE -> if (job.live) "Review it on Google Play" else "Send feedback on Google Play"
@@ -127,13 +138,23 @@ internal fun stepLine(job: ReviewJob): String =
 /** Where the reviewer is with using the app: time still to go, or a live app's second day. */
 private fun useLine(job: ReviewJob): String {
     if (job.waitingForDay) {
-        if (!job.usedOnTwoDays) {
-            return "Use the app again on another day. Reviews from a second day of use are the ones Google keeps."
+        val opens = job.opensAt()
+        val now = java.time.Instant.now()
+        if (opens == null) {
+            return if (job.usedOnTwoDays) {
+                "Used on two days. Come back to TestTrack and it opens."
+            } else {
+                "Use the app again on another day. Reviews from a second day of use are the ones Google keeps."
+            }
         }
-        return when (val back = job.hoursToReturn) {
-            null, 0 -> "Used on two days. Come back to TestTrack and it opens."
-            1 -> "Used on two days. It opens in about an hour; come back to TestTrack then."
-            else -> "Used on two days. It opens in about $back hours; come back to TestTrack then."
+        val past = !opens.isAfter(now)
+        return when {
+            job.usedOnTwoDays && past -> "Used on two days. Come back to TestTrack and it opens."
+            job.usedOnTwoDays -> "Used on two days. Your review opens ${opensWhen(opens, now)}. Come back to TestTrack then."
+            job.secondDayNow() && past -> "Open the app again today, for its second day, and your review opens."
+            job.secondDayNow() -> "Open the app again today, for its second day. Your review opens ${opensWhen(opens, now)}."
+            opensToday(job) -> "Open the app again ${opensWhen(opens, now)}, in ${untilWords(opens, now)}. Your review opens then."
+            else -> "Open the app again tomorrow. Your review opens ${opensWhen(opens, now)}, in ${untilWords(opens, now)}."
         }
     }
     val left = job.secondsLeft

@@ -302,14 +302,19 @@ fun ReviewBody(
                     // Step four cannot send until there is a screenshot to send; the note is optional.
                     val waitingForProof = job.step == ReviewStep.PROVE && shown == null
                     val needsDrive = job.step == ReviewStep.PROVE && !driveConnected
+                    // Waiting on a second day: opening the app today would not count, so the button
+                    // says when instead. From the next calendar day it opens the app again.
+                    val opens = job.opensAt()?.takeIf { job.step == ReviewStep.USE && !job.secondDayNow() }
+                    val notYet = opens != null && opens.isAfter(java.time.Instant.now())
                     Primary(
                         when {
                             asking -> "Allow usage access"
                             needsDrive -> "Connect Drive and send"
+                            notYet && opens != null -> "Opens " + opensWhen(opens).removePrefix("today ")
                             else -> stepAction(job.step, job)
                         },
                         busy = spinning,
-                        enabled = !waitingForProof,
+                        enabled = !waitingForProof && !notYet,
                     ) {
                         if (asking) {
                             onAllowUsage()

@@ -104,6 +104,110 @@ data class ReviewJob(
 
     val settled: Boolean
         get() = review.state in setOf("submitted", "approved", "rejected", "disputed", "abandoned", "expired")
+
+    /**
+     * While [waitingForDay] and not yet used on two days: today is already another calendar day
+     * than the first use, so opening the app now is the second day's use.
+     */
+    fun secondDayNow(
+        now: java.time.Instant = java.time.Instant.now(),
+        zone: java.time.ZoneId = java.time.ZoneId.systemDefault(),
+    ): Boolean {
+        if (!waitingForDay || usedOnTwoDays) return false
+        val first = instantOf(review.firstUsedAt) ?: return false
+        return first.atZone(zone).toLocalDate() < now.atZone(zone).toLocalDate()
+    }
+
+    /**
+     * The earliest a live review waiting on its second day can open, as the server rules it:
+     * used again [LIVE_RETURN_HOURS] after its first use, or used on a second calendar day once
+     * that long has passed since it was taken. Null when it is not waiting, or a time is missing.
+     */
+    fun opensAt(zone: java.time.ZoneId = java.time.ZoneId.systemDefault()): java.time.Instant? {
+        if (!waitingForDay) return null
+        val back = instantOf(review.returnsAt) ?: return null
+        if (usedOnTwoDays) return back
+        val first = instantOf(review.firstUsedAt) ?: return back
+        val taken = instantOf(review.createdAt) ?: return back
+        val nextDay =
+            first
+                .atZone(zone)
+                .toLocalDate()
+                .plusDays(1)
+                .atStartOfDay(zone)
+                .toInstant()
+        val twoDays = maxOf(nextDay, taken.plusSeconds(LIVE_RETURN_HOURS * 3600L))
+        return minOf(back, twoDays)
+    }
+
+    private companion object {
+        /** rules.LIVE_RETURN_HOURS on the server. */
+        const val LIVE_RETURN_HOURS = 20
+
+        fun instantOf(iso: String?): java.time.Instant? =
+            iso?.let {
+                runCatching {
+                    java.time.OffsetDateTime
+                        .parse(it)
+                        .toInstant()
+                }.getOrNull()
+            }
+    }
+}
+
+/**
+ * When a review opens, said the way a person says it: "today at 2:10 PM", "tomorrow at 2:10 PM",
+ * or "on Friday at 2:10 PM". The time in the phone's own format.
+ */
+fun opensWhen(
+    at: java.time.Instant,
+    now: java.time.Instant = java.time.Instant.now(),
+    zone: java.time.ZoneId = java.time.ZoneId.systemDefault(),
+): String {
+    val then = at.atZone(zone)
+    val time =
+        then.format(
+            java.time.format.DateTimeFormatter
+                .ofLocalizedTime(java.time.format.FormatStyle.SHORT),
+        )
+    val days =
+        java.time.temporal.ChronoUnit.DAYS
+            .between(now.atZone(zone).toLocalDate(), then.toLocalDate())
+    return when (days) {
+        0L -> "today at $time"
+        1L -> "tomorrow at $time"
+        else -> "on ${then.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault())} at $time"
+    }
+}
+
+/** "about 20 hours", "about an hour", or "a few minutes", until [at]. */
+fun untilWords(
+    at: java.time.Instant,
+    now: java.time.Instant = java.time.Instant.now(),
+): String {
+    val minutes =
+        java.time.Duration
+            .between(now, at)
+            .toMinutes()
+    val hours = (minutes + 30) / 60
+    return when {
+        minutes < 50 -> "a few minutes"
+        hours <= 1 -> "about an hour"
+        else -> "about $hours hours"
+    }
+}
+
+/** "3h 5m", "45m", for the dial's countdown. */
+fun untilShort(
+    at: java.time.Instant,
+    now: java.time.Instant = java.time.Instant.now(),
+): String {
+    val minutes =
+        java.time.Duration
+            .between(now, at)
+            .toMinutes()
+            .coerceAtLeast(1)
+    return if (minutes < 60) "${minutes}m" else "${minutes / 60}h ${minutes % 60}m"
 }
 
 /** What a review is worth saying about itself once it is out of the reviewer's hands. */

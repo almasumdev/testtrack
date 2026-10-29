@@ -278,6 +278,8 @@ data class ApiReview(
     @SerialName("decided_at") val decidedAt: String? = null,
     /** A live review waiting on its second day of use: when the app may be used again for it. */
     @SerialName("returns_at") val returnsAt: String? = null,
+    /** When the app was first used for it, as the server heard; null before then, or from an older server. */
+    @SerialName("first_used_at") val firstUsedAt: String? = null,
     /** A live review sent: from when the phone is asked whether the app is still installed. */
     @SerialName("keep_from") val keepFrom: String? = null,
     /** What the phone answered, once it has. */

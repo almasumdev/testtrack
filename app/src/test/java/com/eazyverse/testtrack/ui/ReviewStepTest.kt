@@ -134,14 +134,38 @@ class ReviewStepTest {
                 .plusHours(5)
                 .toString()
         val oneDay = ReviewJob(post, review("installed", used = 300_000, needed = 300_000).copy(returnsAt = later, daysUsed = 1))
-        assertEquals("Come back tomorrow", stepTitle(oneDay))
-        assertTrue(stepLine(oneDay).contains("another day"))
+        assertTrue(stepTitle(oneDay) in setOf("Come back tomorrow", "Come back later today"))
+        assertTrue(stepLine(oneDay).contains("Your review opens"))
 
         // Used on two days already: only the hours since it was taken are left to pass.
         val twoDays = oneDay.copy(review = oneDay.review.copy(daysUsed = 2))
         assertEquals(5, twoDays.hoursToReturn)
         assertEquals("Almost there", stepTitle(twoDays))
-        assertTrue(stepLine(twoDays).contains("about 5 hours"))
+        assertTrue(stepLine(twoDays).contains("Your review opens"))
+    }
+
+    @Test
+    fun a_waiting_review_opens_on_the_second_day_once_twenty_hours_have_passed() {
+        val utc = java.time.ZoneOffset.UTC
+        val job =
+            ReviewJob(
+                post,
+                review("installed", used = 300_000, needed = 300_000).copy(
+                    createdAt = "2026-10-29T18:00:00Z",
+                    firstUsedAt = "2026-10-29T18:05:00Z",
+                    returnsAt = "2026-10-30T14:05:00Z",
+                    daysUsed = 1,
+                ),
+            )
+        // The second calendar day, once twenty hours have passed since it was taken: 14:00.
+        assertEquals(java.time.Instant.parse("2026-10-30T14:00:00Z"), job.opensAt(utc))
+        // The next morning already counts as its second day.
+        assertTrue(job.secondDayNow(java.time.Instant.parse("2026-10-30T09:00:00Z"), utc))
+        assertFalse(job.secondDayNow(java.time.Instant.parse("2026-10-29T23:00:00Z"), utc))
+        assertEquals(
+            "tomorrow at 2:00 PM",
+            opensWhen(job.opensAt(utc)!!, java.time.Instant.parse("2026-10-29T19:00:00Z"), utc).replace(' ', ' '),
+        )
     }
 
     @Test

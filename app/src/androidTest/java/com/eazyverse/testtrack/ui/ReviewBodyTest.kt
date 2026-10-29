@@ -322,14 +322,14 @@ class ReviewBodyTest {
     fun an_unfinished_review_can_be_given_up_and_a_sent_one_cannot() {
         var gaveUp = 0
         open("installed", onGiveUp = { gaveUp++ })
-        compose.onNodeWithText("Can't finish? Give this review up").performScrollTo().performClick()
+        compose.onNodeWithText("Give it up").performScrollTo().performClick()
         assertEquals(1, gaveUp)
     }
 
     @Test
     fun a_sent_review_has_no_way_to_give_it_up() {
         open("submitted", onGiveUp = {})
-        compose.onNodeWithText("Can't finish? Give this review up").assertDoesNotExist()
+        compose.onNodeWithText("Give it up").assertDoesNotExist()
     }
 
     @Test
