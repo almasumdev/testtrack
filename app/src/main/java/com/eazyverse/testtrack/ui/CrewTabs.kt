@@ -294,7 +294,7 @@ fun CrewRecordTab(
         RobotState(
             Prop.Lock,
             "Sign in to see your record",
-            "A crew lands here the day its fourteen nights are up, and stays for good.",
+            "A crew lands here the day its last night is over, and stays for good.",
             action = "Sign in",
             onAction = onSignIn,
         )
@@ -308,7 +308,7 @@ fun CrewRecordTab(
         RobotState(
             Prop.Calendar,
             "Nothing finished yet",
-            "A crew lands here the day its fourteen are up, and stays.",
+            "A crew lands here the day its last night is over, and stays.",
         )
         return
     }
