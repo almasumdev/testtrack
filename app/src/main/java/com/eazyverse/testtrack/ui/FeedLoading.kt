@@ -36,6 +36,26 @@ internal fun FeedLoadingCard(compact: Boolean = false) {
     }
 }
 
+/** A request on the Feedback list while it loads, shaped as the card that lands: icon, name, pill, ticket. */
+@Composable
+internal fun FeedRequestLoadingCard() {
+    FeedCard(
+        modifier = Modifier.semantics { contentDescription = "Loading Circle content" },
+        padding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Skeleton(width = 48.dp, height = 48.dp, corner = 24.dp)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Skeleton(height = 16.dp, modifier = Modifier.fillMaxWidth(0.6f))
+                Skeleton(width = 84.dp, height = 20.dp, corner = 10.dp)
+            }
+            Spacer(Modifier.width(10.dp))
+            Skeleton(width = 52.dp, height = 36.dp, corner = 8.dp)
+        }
+    }
+}
+
 /** A Circle tab before its list has arrived: three placeholder cards where the first will land. */
 @Composable
 internal fun FeedLoadingList() {

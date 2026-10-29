@@ -27,14 +27,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -309,28 +314,44 @@ fun FeedRequestCard(
 
 /**
  * What a review pays: the tix ticket itself, as the top bar draws it, with the number in it, and a
- * soft gold light behind it so the reward is the first thing the eye finds on the card.
+ * streak of light across it, as if it caught the light.
  */
 @Composable
 private fun TixReward(tix: Int) {
-    val glow = Tt.colors.ticketGlow
+    val shine = Tt.colors.ticketShine
     Box(
         Modifier
             .clearAndSetSemantics { contentDescription = "$tix tix" }
-            .drawBehind {
-                drawOval(
-                    Brush.radialGradient(
-                        listOf(glow.copy(alpha = 0.55f), glow.copy(alpha = 0f)),
-                        center = center,
-                        radius = size.width * 0.78f,
-                    ),
-                    topLeft = Offset(-size.width * 0.28f, -size.height * 0.4f),
-                    size =
-                        androidx.compose.ui.geometry
-                            .Size(size.width * 1.56f, size.height * 1.8f),
-                )
-            }.size(width = 52.dp, height = 36.dp)
-            .paint(painterResource(R.drawable.tix_ticket_blank)),
+            .size(width = 52.dp, height = 36.dp)
+            .paint(painterResource(R.drawable.tix_ticket_blank))
+            .drawWithContent {
+                drawContent()
+                // Inside the navy edge only, leaning like light through a window.
+                val edge = 3.dp.toPx()
+                val inside =
+                    Path().apply {
+                        addRoundRect(
+                            RoundRect(edge, edge, size.width - edge, size.height - edge, CornerRadius(4.dp.toPx())),
+                        )
+                    }
+                clipPath(inside) {
+                    rotate(22f) {
+                        val x = size.width * 0.14f
+                        val w = 8.dp.toPx()
+                        drawRect(
+                            Brush.horizontalGradient(
+                                listOf(shine.copy(alpha = 0f), shine.copy(alpha = 0.7f), shine.copy(alpha = 0f)),
+                                startX = x,
+                                endX = x + w,
+                            ),
+                            topLeft = Offset(x, -size.height),
+                            size =
+                                androidx.compose.ui.geometry
+                                    .Size(w, size.height * 3f),
+                        )
+                    }
+                }
+            },
         contentAlignment = Alignment.Center,
     ) {
         Text(

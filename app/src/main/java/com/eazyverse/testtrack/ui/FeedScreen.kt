@@ -287,7 +287,7 @@ fun FeedScreen(
                                         }
                                     }
                                 }
-                                if (hold) items(3) { FeedLoadingCard() }
+                                if (hold) items(3) { FeedRequestLoadingCard() }
                                 items(if (hold) emptyList() else vm.openPosts, key = { it.id }) { post ->
                                     // Fades in, fades out and glides to its new place when the list changes.
                                     Box(Modifier.animateItem()) {

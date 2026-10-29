@@ -2,7 +2,14 @@ package com.eazyverse.testtrack.video
 
 import android.app.Application
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.unit.dp
+import com.eazyverse.testtrack.ui.FeedRequestLoadingCard
+import com.eazyverse.testtrack.ui.Gutter
 import com.eazyverse.testtrack.ui.ReviewBody
 import com.eazyverse.testtrack.ui.ReviewJob
 import org.junit.Assume.assumeTrue
@@ -72,4 +79,18 @@ class ReviewWaitFramesTest {
 
     @Test
     fun w2_next_day() = show("nextDay", takenHoursAgo = 17, daysUsed = 2)
+
+    /** The Feedback list while it loads, shaped as the request cards that land. */
+    @Test
+    fun w3_feed_loading() {
+        frame.show {
+            Pushed {
+                Column(Modifier.padding(horizontal = Gutter), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    repeat(3) { FeedRequestLoadingCard() }
+                }
+            }
+        }
+        frame.settle(700)
+        frame.write("feedLoading")
+    }
 }
