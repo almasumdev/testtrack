@@ -158,6 +158,14 @@ An app taken out of a run (two missed days in a row, or the team) is not the end
 
 Everybody else keeps a taken-out app on the crew page, under **Left the run** ("You don't need to open these"). It is faded, nobody owes it, and Open all never reaches it. The first day it only says "Out of the run. Nothing to open.", since it may come back. From a day after it left it says "You can uninstall it now." with **Uninstall**, which opens Android's own prompt for that one app. Once it is off the phone the row goes. If the team puts it back, it moves back to Tonight.
 
+## Quiet skips
+
+Decided October 2026, to make the crew fair both ways. Each night a member leaves your app unopened gives you one skip of theirs, for any later night of the run. A night you leave their app unopened while you have a skip of it is not a miss: no warning, nothing counts against you, and one skip is used at your midnight.
+
+- **Nothing invites a skip.** Open all opens every app, theirs too, and the counts include it. The only thing on screen is a small grey number after the app's name on its Tonight row: how many skips you have of it. Nothing explains it, and nothing is said on their page.
+- **No skipping back.** A skip used is not a miss, so it never earns them a skip of yours.
+- **Only real misses earn one:** not a night their app was down or let off for everybody, not an app reported as not installing, and not a night that is not over yet in their calendar. A night the team let them off still earns one, because you still weren't tested.
+
 ## A clean run pays the seat back
 
 Decided October 2026. When a crew closes, every member still in it who opened everything they

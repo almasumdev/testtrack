@@ -232,6 +232,11 @@ data class CrewApp(
     val feedbackLate: Boolean = false,
     /** When it was taken out of the run (ISO time), for an app in Left the run; blank otherwise. */
     val outAt: String = "",
+    /**
+     * Quiet skips of it: nights its owner left this account's app unopened, each letting this one
+     * go unopened once without a miss. Shown only as a bare number; nothing invites a skip.
+     */
+    val skips: Int = 0,
 )
 
 /**

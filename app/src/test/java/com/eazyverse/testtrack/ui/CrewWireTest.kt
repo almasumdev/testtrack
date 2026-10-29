@@ -309,6 +309,15 @@ class CrewWireTest {
     }
 
     @Test
+    fun quiet_skips_reach_tonights_row_as_a_bare_count() {
+        val dhm = seat("dhm").copy(skips = 2)
+        val crew = crew(state = "full", day = 3, members = listOf(seat("me", mine = true), dhm, seat("s2"))).toCrew()
+        assertEquals(mapOf("dhm" to 2, "s2" to 0), crew.apps.associate { it.id to it.skips })
+        // Still owed tonight like any app: Open all opens it too.
+        assertEquals(2, crew.owed)
+    }
+
+    @Test
     fun uninstall_is_offered_only_a_whole_day_after_it_left() {
         val left = java.time.Instant.parse("2026-10-28T09:00:00Z")
         assertFalse(outLongEnough("2026-10-28T09:00:00Z", left.plusSeconds(23 * 3600)))

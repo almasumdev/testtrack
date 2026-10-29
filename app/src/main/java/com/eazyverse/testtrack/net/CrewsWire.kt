@@ -166,6 +166,8 @@ data class ApiSeat(
     @SerialName("off_tonight") val offTonight: Boolean = false,
     /** Nights its owner can still mark it down; on the owner's own seat only. */
     @SerialName("downs_left") val downsLeft: Int = 0,
+    /** Quiet skips this account has of this app, from nights its owner left this account's unopened. */
+    val skips: Int = 0,
     /** The day this seat's own run starts on: 1 unless the team put it in part-way through. */
     @SerialName("first_night") val firstNight: Int = 1,
     /** Tix taken for this seat and given back for it; -1 from an older server that does not say. */

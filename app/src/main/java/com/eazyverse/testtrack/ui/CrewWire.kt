@@ -110,6 +110,7 @@ fun ApiSeat.toApp(
     feedbackDueDay = feedbackDueDay,
     // From the night after it was due, opening it counts only once the feedback is in.
     feedbackLate = !feedbackSent && !reported && feedbackDueDay in 1..<day,
+    skips = skips,
 )
 
 /**

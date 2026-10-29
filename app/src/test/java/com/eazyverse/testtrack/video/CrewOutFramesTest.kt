@@ -102,7 +102,8 @@ class CrewOutFramesTest {
         page("waiting", SeatAppeal("waiting", "My phone was in repair on day 5 and 6. I'm back now and can open everything tonight."))
 
     @Test
-    fun o3_refused() = page("refused", SeatAppeal("refused", "Phone in repair.", "Visits stopped on day 4 too, so this wasn't only the repair."))
+    fun o3_refused() =
+        page("refused", SeatAppeal("refused", "Phone in repair.", "Visits stopped on day 4 too, so this wasn't only the repair."))
 
     @Test
     fun o4_ask() {
@@ -122,7 +123,21 @@ class CrewOutFramesTest {
             }
         val apps =
             others.mapIndexed { i, (owner, app) ->
-                CrewApp(id = "s$i", label = app, packageName = "com.example.app$i", owner = owner, crew = "Crew 05", outAt = if (i == 2) outAt else "")
+                CrewApp(
+                    id = "s$i",
+                    label = app,
+                    packageName = "com.example.app$i",
+                    owner = owner,
+                    crew = "Crew 05",
+                    outAt =
+                        if (i ==
+                            2
+                        ) {
+                            outAt
+                        } else {
+                            ""
+                        },
+                )
             }
         val actions = CrewActions(onOpen = {}, onOpenAll = {}, onInstall = {}, onReport = {}, onLeave = {}, onTakeSeat = {})
         frame.show {
@@ -139,6 +154,42 @@ class CrewOutFramesTest {
         }
         frame.settle(600)
         frame.write(name)
+    }
+
+    /** Tonight with a quiet skip mark: DHM left the reader's app unopened on two nights. */
+    @Test
+    fun t3_skips() {
+        val seat =
+            CrewSeat(
+                id = "d",
+                appName = "Deshi Help Malaysia",
+                owner = "Mr. Ariyan Ahmad",
+                packageName = "com.example.dhm",
+                crew = "Crew 05",
+            )
+        val dhm =
+            CrewApp(
+                id = "d",
+                label = "Deshi Help Malaysia",
+                packageName = "com.example.dhm",
+                owner = "Mr. Ariyan Ahmad",
+                crew = "Crew 05",
+                skips = 2,
+            )
+        val other = CrewSeat(id = "s0", appName = "Steps Daily", owner = "Kenji Sato", packageName = "com.example.app0", crew = "Crew 05")
+        val steps = CrewApp(id = "s0", label = "Steps Daily", packageName = "com.example.app0", owner = "Kenji Sato", crew = "Crew 05")
+        val actions = CrewActions(onOpen = {}, onOpenAll = {}, onInstall = {}, onReport = {}, onLeave = {}, onTakeSeat = {})
+        frame.show {
+            Pushed {
+                Column {
+                    CrewHeading("Tonight", "2")
+                    TonightRow(dhm, seat, placeOf(0, 2), actions) {}
+                    TonightRow(steps, other, placeOf(1, 2), actions) {}
+                }
+            }
+        }
+        frame.settle(600)
+        frame.write("skips")
     }
 
     @Test

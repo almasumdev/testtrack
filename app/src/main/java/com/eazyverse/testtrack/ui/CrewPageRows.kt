@@ -122,6 +122,8 @@ internal fun CrewPageRow(
     icon: String = "",
     /** Out of the run: faded, and nothing to open, so no chevron and no tap. */
     out: Boolean = false,
+    /** A bare number after the name, quiet skips of it; nothing is drawn at 0. */
+    mark: Int = 0,
     trailing: @Composable () -> Unit,
 ) {
     val t = Tt.colors
@@ -140,14 +142,18 @@ internal fun CrewPageRow(
         Box(if (out) Modifier.alpha(0.5f) else Modifier) { AppMark(packageName, title, icon, size = 40.dp) }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(
-                title,
-                color = if (out) t.text3 else Color.Unspecified,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    title,
+                    Modifier.weight(1f, fill = false),
+                    color = if (out) t.text3 else Color.Unspecified,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (mark > 0) QuietMark(mark)
+            }
             Text(
                 line,
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
@@ -159,6 +165,27 @@ internal fun CrewPageRow(
         Spacer(Modifier.width(8.dp))
         trailing()
         if (!out) Icon(Lucide.ChevronRight, null, Modifier.padding(start = 2.dp).size(18.dp), tint = t.text4)
+    }
+}
+
+/** The bare count after an app's name: quiet skips of it. Grey and small, and never explained. */
+@Composable
+private fun QuietMark(count: Int) {
+    Box(
+        Modifier
+            .padding(start = 6.dp)
+            .heightIn(min = 17.dp)
+            .clip(RoundedCornerShape(percent = 50))
+            .background(Tt.colors.glass2)
+            .padding(horizontal = 5.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            "$count",
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, lineHeight = 14.sp),
+            fontWeight = FontWeight.Bold,
+            color = Tt.colors.text4,
+        )
     }
 }
 
@@ -380,6 +407,7 @@ internal fun TonightRow(
         place,
         onOpen = { onSheet(RowSheet(seat, SheetKind.TONIGHT, app)) },
         icon = seat.icon,
+        mark = app.skips,
     ) {
         when {
             !installed -> RowPill("Install", PillKind.SOFT) { actions.onInstall(seat) }
