@@ -15,6 +15,7 @@ import com.eazyverse.testtrack.ui.CrewPage
 import com.eazyverse.testtrack.ui.CrewPhase
 import com.eazyverse.testtrack.ui.CrewSeat
 import com.eazyverse.testtrack.ui.CrewViewModel
+import com.eazyverse.testtrack.ui.DoneRow
 import com.eazyverse.testtrack.ui.LeftRow
 import com.eazyverse.testtrack.ui.LeftRunNote
 import com.eazyverse.testtrack.ui.SeatAppeal
@@ -190,6 +191,50 @@ class CrewOutFramesTest {
         }
         frame.settle(600)
         frame.write("skips")
+    }
+
+    /** An update out: told today (still within its 24 hours), and one opened tonight on the old copy. */
+    @Test
+    fun t4_update_out() {
+        val seats =
+            others.mapIndexed { i, (owner, app) ->
+                CrewSeat(id = "s$i", appName = app, owner = owner, packageName = "com.example.app$i", crew = "Crew 05")
+            }
+        val apps =
+            others.mapIndexed { i, (owner, app) ->
+                CrewApp(
+                    id = "s$i",
+                    label = app,
+                    packageName = "com.example.app$i",
+                    owner = owner,
+                    crew = "Crew 05",
+                    versionCode = 12,
+                    done =
+                        i == 1,
+                )
+            }
+        val actions =
+            CrewActions(
+                onOpen = {},
+                onOpenAll = {},
+                onInstall = {},
+                onReport = {},
+                onLeave = {},
+                onTakeSeat = {},
+                localVersion = { 11 },
+            )
+        frame.show {
+            Pushed {
+                Column {
+                    CrewHeading("Tonight", "1")
+                    TonightRow(apps[0], seats[0], placeOf(0, 1), actions) {}
+                    CrewHeading("Done", "1")
+                    DoneRow(apps[1], seats[1], placeOf(0, 1), actions) {}
+                }
+            }
+        }
+        frame.settle(600)
+        frame.write("updateOut")
     }
 
     @Test

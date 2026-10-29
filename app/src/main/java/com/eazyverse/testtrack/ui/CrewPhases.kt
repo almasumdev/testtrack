@@ -285,7 +285,7 @@ fun CrewRunPhase(
         }
         if (settled.isNotEmpty()) {
             item { CrewHeading("Done", "${settled.size}") }
-            rows("d", settled, { it.id }) { app, place -> DoneRow(app, seatOf(app), place, onSheet) }
+            rows("d", settled, { it.id }) { app, place -> DoneRow(app, seatOf(app), place, actions, onSheet) }
         }
         // Taken out: nobody owes them; listed until uninstalled, so the reader knows which they were.
         val left = crew.left.filter { actions.isInstalled(it.packageName) }

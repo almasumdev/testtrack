@@ -243,6 +243,11 @@ internal fun CrewRowSheet(
             }
             Spacer(Modifier.height(16.dp))
             val app = sheet.app
+            // An update out: getting it is the main thing, opening the old copy the second.
+            if (installed && app != null && olderHere(app, actions)) {
+                Primary("Update on Google Play", Modifier.fillMaxWidth()) { then { actions.onUpdateApp(app) } }
+                Spacer(Modifier.height(10.dp))
+            }
             when {
                 !installed -> Primary("Install on Play", Modifier.fillMaxWidth()) { then { actions.onInstall(seat) } }
                 app != null && sheet.kind == SheetKind.TONIGHT ->
@@ -390,8 +395,7 @@ internal fun TonightRow(
 ) {
     val installed = actions.isInstalled(app.packageName)
     // Older than the owner's newest: still counts for its 24 hours, then only once updated.
-    val newer = app.versionCode
-    val old = installed && newer != null && (actions.localVersion(app.packageName) ?: newer) < newer
+    val old = olderHere(app, actions)
     val note =
         when {
             !installed -> "not on your phone"
@@ -411,7 +415,10 @@ internal fun TonightRow(
     ) {
         when {
             !installed -> RowPill("Install", PillKind.SOFT) { actions.onInstall(seat) }
-            old && app.updateRequired -> RowPill("Update", PillKind.SOLID) { actions.onUpdateApp(app) }
+            // From the moment the owner tells the crew, as the notification says: Update is the
+            // button, soft while the old copy still counts and solid once it no longer does. Open
+            // is still in the row's sheet for those 24 hours.
+            old -> RowPill("Update", if (app.updateRequired) PillKind.SOLID else PillKind.SOFT) { actions.onUpdateApp(app) }
             app.feedbackLate -> RowPill("Feedback", PillKind.SOLID) { actions.onFeedback(app) }
             else -> RowPill("Open", PillKind.SOLID) { actions.onOpen(app) }
         }
@@ -424,11 +431,27 @@ internal fun DoneRow(
     app: CrewApp,
     seat: CrewSeat,
     place: TilePlace,
+    actions: CrewActions? = null,
     onSheet: (RowSheet) -> Unit,
 ) {
-    CrewPageRow(app.packageName, app.label, ownerLine(app.owner, false), place, icon = seat.icon, onOpen = {
+    // Opened tonight on the old copy: the update is still to do before the 24 hours run out.
+    val old = actions != null && actions.isInstalled(app.packageName) && olderHere(app, actions)
+    CrewPageRow(app.packageName, app.label, ownerLine(app.owner, false, if (old) "update out" else ""), place, icon = seat.icon, onOpen = {
         onSheet(RowSheet(seat, SheetKind.DONE, app))
     }) {
-        if (app.reported) StatusChip("Reported", Tone.WARN) else StatusChip("Opened", Tone.OK)
+        when {
+            app.reported -> StatusChip("Reported", Tone.WARN)
+            old && actions != null -> RowPill("Update", PillKind.SOFT) { actions.onUpdateApp(app) }
+            else -> StatusChip("Opened", Tone.OK)
+        }
     }
+}
+
+/** The copy on this phone is older than the version the owner told the crew about. */
+internal fun olderHere(
+    app: CrewApp,
+    actions: CrewActions,
+): Boolean {
+    val newer = app.versionCode ?: return false
+    return actions.isInstalled(app.packageName) && (actions.localVersion(app.packageName) ?: newer) < newer
 }
