@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,10 +31,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.PathOperation
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -308,29 +314,60 @@ fun FeedRequestCard(
 }
 
 /**
- * What a review pays, as the top bar shows a balance: the ticket leaning on a gold pill with the
- * number in it, at a size that sits beside a card's title.
+ * What a review pays, as a small ticket stub in the tix ticket's own look: gold, a navy edge,
+ * notched at both ends, the star, a dashed tear line, and the number.
  */
 @Composable
 private fun TixReward(tix: Int) {
     val t = Tt.colors
-    val shape = RoundedCornerShape(percent = 50)
-    Box(Modifier.clearAndSetSemantics { contentDescription = "$tix tix" }, contentAlignment = Alignment.CenterStart) {
+    val shape = TicketShape
+    Row(
+        Modifier
+            .clearAndSetSemantics { contentDescription = "$tix tix" }
+            .height(26.dp)
+            .clip(shape)
+            .background(Brush.linearGradient(listOf(t.ticketLight, t.ticketDeep)))
+            .border(1.5.dp, t.ticketInk, shape)
+            .drawBehind {
+                // The tear line, just past the star.
+                val x = 24.dp.toPx()
+                drawLine(
+                    t.ticketTear,
+                    Offset(x, 5.dp.toPx()),
+                    Offset(x, size.height - 5.dp.toPx()),
+                    strokeWidth = 1.5.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(2.5.dp.toPx(), 2.dp.toPx())),
+                    cap = StrokeCap.Round,
+                )
+            }.padding(start = 7.dp, end = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(painterResource(R.drawable.tix_star), null, Modifier.size(12.dp))
+        Spacer(Modifier.width(11.dp))
         Text(
             "$tix",
-            Modifier
-                .padding(start = 13.dp)
-                .clip(shape)
-                .background(Brush.verticalGradient(listOf(t.tixTop, t.tixBottom)))
-                .border(1.5.dp, t.tixEdge, shape)
-                .padding(start = 20.dp, end = 10.dp, top = 2.dp, bottom = 2.dp),
-            style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, lineHeight = 16.sp, fontFeatureSettings = "tnum"),
             fontWeight = FontWeight.ExtraBold,
-            color = t.onAccent,
+            color = t.ticketInk,
         )
-        Image(painterResource(R.drawable.tix_ticket), null, Modifier.size(width = 30.dp, height = 21.dp))
     }
 }
+
+/** A ticket's outline: a rounded bar with a half-round notch cut into each end. */
+private val TicketShape =
+    GenericShape { size, _ ->
+        val r = size.height * 0.22f
+        val body =
+            Path().apply {
+                addRoundRect(RoundRect(0f, 0f, size.width, size.height, CornerRadius(size.height * 0.24f)))
+            }
+        val notches =
+            Path().apply {
+                addOval(Rect(Offset(0f, size.height / 2f), r))
+                addOval(Rect(Offset(size.width, size.height / 2f), r))
+            }
+        addPath(Path.combine(PathOperation.Difference, body, notches))
+    }
 
 /** A review of the reader's own still being worked on, and one sent and not yet settled. */
 private val Underway = setOf("claimed", "installed", "used")
