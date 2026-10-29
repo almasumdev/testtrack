@@ -51,6 +51,10 @@ class CrewExtrasViewModel : ViewModel() {
     /** The taken-out seat its owner is writing an appeal for, with its app's name. */
     var appealFor by mutableStateOf<Pair<String, String>?>(null)
 
+    /** Why the appeal did not reach the team, said in its sheet, which stays open with the words. */
+    var appealError by mutableStateOf<String?>(null)
+        private set
+
     /** The app a member is sending Play feedback for, from its first ask to its picture landing. */
     var feedbackFor by mutableStateOf<FeedbackJob?>(null)
         private set
@@ -125,17 +129,28 @@ class CrewExtrasViewModel : ViewModel() {
         seatId: String,
         appName: String,
     ) {
+        appealError = null
         appealFor = seatId to appName
     }
 
-    /** The owner asks, once, to get their taken-out app back into its run. */
+    fun closeAppeal() {
+        appealFor = null
+        appealError = null
+    }
+
+    /**
+     * The owner asks, once, to get their taken-out app back into its run. The sheet closes
+     * ([sent]) only once the server has it; offline or refused, it stays open with what they wrote.
+     */
     fun appeal(
         seatId: String,
         text: String,
         reload: () -> Unit,
-    ) = act(reload) {
-        appealFor = null
+        sent: () -> Unit,
+    ) = act(reload, failed = { appealError = it }) {
+        appealError = null
         Api.appeal(seatId, text)
+        sent()
         "Sent. The team usually answers within a day."
     }
 
@@ -170,10 +185,21 @@ class CrewExtrasViewModel : ViewModel() {
         }
     }
 
-    /** Back in TestTrack: the camera's picture, if it took one, goes to Drive and onto the feedback. */
+    /**
+     * Back in TestTrack: the camera's picture, if it took one, goes to Drive and onto the feedback.
+     * Back without one, the camera and Android's sharing chip go, as the review page does it, so a
+     * later tap cannot send whatever is on screen then as this app's feedback.
+     */
     fun takeCaptured(activity: Activity) {
         val job = feedbackFor ?: return
-        val file = ReviewCaptureService.crewProof.value ?: return
+        val file = ReviewCaptureService.crewProof.value
+        if (file == null) {
+            if (job.capturing && ReviewCaptureService.running.value == ReviewCaptureService.State.WAITING) {
+                ReviewCaptureService.cancel(activity)
+                feedbackFor = null
+            }
+            return
+        }
         ReviewCaptureService.takeCrewProof()
         send(activity, job) { file.readBytes() }
     }
@@ -210,6 +236,8 @@ class CrewExtrasViewModel : ViewModel() {
 
     private fun act(
         reload: () -> Unit,
+        /** Where a failure is said instead of [message], such as inside the sheet that asked. */
+        failed: ((String) -> Unit)? = null,
         block: suspend () -> String,
     ) {
         if (busy) return
@@ -221,9 +249,9 @@ class CrewExtrasViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: ApiError) {
-                message = e.message
+                (failed ?: { message = it })(e.message)
             } catch (_: Exception) {
-                message = "We could not reach TestTrack. Check your connection."
+                (failed ?: { message = it })("We could not reach TestTrack. Check your connection.")
             } finally {
                 busy = false
             }

@@ -108,7 +108,7 @@ class CrewOutFramesTest {
 
     @Test
     fun o4_ask() {
-        frame.show { Pushed { AppealSheet(appName = "Focus Flow", busy = false, onSend = {}, onDismiss = {}) } }
+        frame.show { Pushed { AppealSheet(appName = "Focus Flow", busy = false, onSend = { _, _ -> }, onDismiss = {}) } }
         frame.settle(900)
         frame.write("ask")
     }

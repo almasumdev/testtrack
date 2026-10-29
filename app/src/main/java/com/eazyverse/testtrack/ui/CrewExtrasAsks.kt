@@ -146,8 +146,9 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
         AppealSheet(
             appName = appName,
             busy = extras.busy,
-            onSend = { text -> extras.appeal(seatId, text) { vm.load(context) } },
-            onDismiss = { extras.appealFor = null },
+            error = extras.appealError,
+            onSend = { text, sent -> extras.appeal(seatId, text, reload = { vm.load(context) }, sent = sent) },
+            onDismiss = { extras.closeAppeal() },
         )
     }
 
@@ -183,13 +184,18 @@ private fun uninstall(
     }
 }
 
-/** The owner's appeal, in their own words: once per app, read by the team. */
+/**
+ * The owner's appeal, in their own words: once per app, read by the team. It closes only once
+ * the server has it; a failure is said under the words, which stay for another try.
+ */
 @Composable
 internal fun AppealSheet(
     appName: String,
     busy: Boolean,
-    onSend: (String) -> Unit,
+    /** The words and how to close the sheet once they are in. */
+    onSend: (String, () -> Unit) -> Unit,
     onDismiss: () -> Unit,
+    error: String? = null,
 ) {
     var text by rememberSaveable { mutableStateOf("") }
     PickerSheet(
@@ -204,12 +210,10 @@ internal fun AppealSheet(
             singleLine = false,
             minHeight = 110.dp,
             maxLength = CrewRules.APPEAL_MAX,
+            error = error,
         )
         Spacer(Modifier.height(16.dp))
-        Primary("Send", busy = busy, enabled = text.isNotBlank()) {
-            onSend(text.trim())
-            close {}
-        }
+        Primary("Send", busy = busy, enabled = text.isNotBlank()) { onSend(text.trim()) { close {} } }
         Spacer(Modifier.height(20.dp))
     }
 }

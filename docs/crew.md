@@ -154,7 +154,7 @@ against you. Every member gets an evening reminder at 20:00 their time while any
 
 An app taken out of a run (two missed days in a row, or the team) is not the end of it while the run is going.
 
-- **The owner asks first.** Their crew page offers **Ask to get it back**, not a new crew. They write what happened (up to 500 characters) and send it, once per app.
+- **The owner asks first.** Their crew page offers **Ask to get it back**, not a new crew. They write what happened (up to 500 characters) and send it, once per app. The sheet closes only once the server has it; offline or refused, it stays open with the words and says why.
 - **While it waits, no new seat.** The owner can't put any app in a new crew until the team answers. The Take a seat screen says why and its button is off.
 - **Accepted:** the team puts it back in the run. Its owner's missed nights and the nights it was out are let off, so the warning is gone and one more miss does not take it straight out again. The app is let off for every tester on the nights it was out, so nobody turns short for an app they could not open. The owner is told.
 - **Refused:** the owner sees the team's reason, and only then **Put it in a new crew**.
@@ -256,7 +256,8 @@ whose crew notes (commit 9776af2, removed in 65cac3c) are a different thing.
 - **Once per app.** Each member leaves private feedback on Google Play for every other app in the
   run, once for the whole run.
 - **With a screenshot.** They take it with TestTrack's camera button over Play, as a Circle review
-  does, and submit it. It goes to their own Drive, shared by link.
+  does, and submit it. It goes to their own Drive, shared by link. Back in TestTrack without
+  taking it, the camera button and Android's sharing chip go, so a later tap sends nothing.
 - **By the end of day 7.** From day 8, a member's opens of an app they have not sent feedback for
   do not count, until they send it. For a seat that joined part-way, the 7 days count from that
   member's own first night with it.
