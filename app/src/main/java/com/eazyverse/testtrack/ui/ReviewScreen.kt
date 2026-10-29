@@ -152,7 +152,7 @@ fun ReviewScreen(
         onConnectDrive = { drive.connect(activity, driveSheet::launch, connected) },
         offline = vm.offline,
         failure = vm.failure,
-        onRetry = { vm.retry(context, post) },
+        onRetry = { vm.start(context, post) },
         onClose = onClose,
         // Closed tests need group membership; publicly available apps do not.
         onLeave = { step ->

@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.provider.Settings
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,7 +25,6 @@ import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiPost
-import com.eazyverse.testtrack.net.ApiReview
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +33,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
-import java.time.Instant
 
 /**
  * One guided review, driven against the API.
@@ -148,23 +145,6 @@ class ReviewViewModel : ViewModel() {
         app?.let { ProofStore.saveNote(it, id, text) }
     }
 
-    /** Whether the one-time guide has been read. */
-    fun guideSeen(context: Context) = prefs(context).getBoolean(GUIDE_SEEN, false)
-
-    fun markGuideSeen(context: Context) = prefs(context).edit().putBoolean(GUIDE_SEEN, true).apply()
-
-    /** The camera button floats over the tested app, requiring "Display over other apps". */
-    fun canFloat(context: Context) = Settings.canDrawOverlays(context)
-
-    fun openOverlaySettings(context: Context) {
-        runCatching {
-            context.startActivity(
-                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            )
-        }
-    }
-
     /**
      * Put the camera button up with the consent just given, then open the app's Play page, where
      * the review or the private feedback is left. Proof opens on the way out, so somebody who comes
@@ -187,8 +167,6 @@ class ReviewViewModel : ViewModel() {
             ReviewCaptureService.cancel(context)
         }
     }
-
-    private fun prefs(context: Context) = context.getSharedPreferences("review_prefs", Context.MODE_PRIVATE)
 
     /** True once the package is present but Play did not put it there. */
     var sideloaded by mutableStateOf(false)
@@ -228,7 +206,7 @@ class ReviewViewModel : ViewModel() {
             // hears nothing about it before then, so opening a request and backing out changes
             // nothing anywhere.
             if (mine == null) {
-                job = ReviewJob(post, preview(post))
+                job = ReviewJob(post, previewOf(post))
                 return@run
             }
             val review = mine
@@ -249,26 +227,6 @@ class ReviewViewModel : ViewModel() {
             adoptPending()
         }
     }
-
-    /** A request opened and not yet taken: nothing on the server, nothing on this phone. */
-    val previewing: Boolean get() = job?.review?.id?.isEmpty() == true
-
-    private fun preview(post: ApiPost) =
-        ApiReview(
-            id = "",
-            postId = post.id,
-            state = CLAIMED,
-            usedMs = 0,
-            neededMs = (if (post.isLive) FeedRules.LIVE_USE_SECONDS else FeedRules.CLOSED_USE_SECONDS) * 1000L,
-            proofRef = "",
-            written = "",
-            reason = "",
-            createdAt =
-                java.time.Instant
-                    .now()
-                    .toString(),
-            isLive = post.isLive,
-        )
 
     /**
      * Install tapped: the review is taken on now, and then [then] runs (to its Play page). Already
@@ -297,12 +255,6 @@ class ReviewViewModel : ViewModel() {
             then()
         }
     }
-
-    /** Try the first load again, from the page shown when it failed. */
-    fun retry(
-        context: Context,
-        post: ApiPost,
-    ) = start(context, post)
 
     /** Step four's own saved work for this review: the screenshot and the note. */
     private fun restore(
@@ -393,7 +345,7 @@ class ReviewViewModel : ViewModel() {
                 )
             // A new day of use is news even when the total has not moved since the last report, and
             // so is a live review's hours passing: the server opens its last step on being asked.
-            val due = review.state == INSTALLED && review.returnsAt?.let(::passed) == true
+            val due = review.state == INSTALLED && review.returnsAt?.let(::isPast) == true
             if (use.ms > review.usedMs || use.days > review.daysUsed || due) {
                 review = Api.used(review.id, maxOf(use.ms, review.usedMs).coerceAtMost(MAX_USED_MS), use.days)
                 offline = false
@@ -445,9 +397,7 @@ class ReviewViewModel : ViewModel() {
                         .also { ProofStore.markUploaded(context, id, it) }
             keep(current.copy(review = Api.submit(id, ref, note, driveToken = token)))
             offline = false
-            ProofStore.forget(context, current.review.id)
-            this.proof = null
-            this.note = ""
+            dropProof(current.review.id)
         }
     }
 
@@ -460,9 +410,7 @@ class ReviewViewModel : ViewModel() {
         val current = job ?: return
         run(waits = true) {
             keep(current.copy(review = Api.reportPost(current.review.postId, reason, note)))
-            app?.let { ProofStore.forget(it, current.review.id) }
-            proof = null
-            this.note = ""
+            dropProof(current.review.id)
             message = "Thanks. The developer is told why, and nothing counts against you."
             onDone()
         }
@@ -473,11 +421,16 @@ class ReviewViewModel : ViewModel() {
         val current = job ?: return
         run(waits = true) {
             keep(current.copy(review = Api.abandon(current.review.id)))
-            app?.let { ProofStore.forget(it, current.review.id) }
-            proof = null
-            note = ""
+            dropProof(current.review.id)
             onDone()
         }
+    }
+
+    /** The review is sent or over: its kept screenshot and note go. */
+    private fun dropProof(id: String) {
+        app?.let { ProofStore.forget(it, id) }
+        proof = null
+        note = ""
     }
 
     /**
@@ -517,13 +470,8 @@ class ReviewViewModel : ViewModel() {
         }
     }
 
-    /** Whether a time the server sent has come. */
-    private fun passed(iso: String): Boolean =
-        runCatching { Instant.parse(iso).toEpochMilli() <= System.currentTimeMillis() }.getOrDefault(false)
-
     private companion object {
         const val PLAY = "com.android.vending"
-        const val GUIDE_SEEN = "guide_seen"
         const val CLAIMED = "claimed"
         const val INSTALLED = "installed"
         const val USED = "used"

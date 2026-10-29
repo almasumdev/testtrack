@@ -155,6 +155,32 @@ data class ReviewJob(
     }
 }
 
+/** A request opened and not yet taken, as a review that has not started: nothing on the server. */
+internal fun previewOf(post: ApiPost) =
+    ApiReview(
+        id = "",
+        postId = post.id,
+        state = "claimed",
+        usedMs = 0,
+        neededMs = (if (post.isLive) FeedRules.LIVE_USE_SECONDS else FeedRules.CLOSED_USE_SECONDS) * 1000L,
+        proofRef = "",
+        written = "",
+        reason = "",
+        createdAt =
+            java.time.Instant
+                .now()
+                .toString(),
+        isLive = post.isLive,
+    )
+
+/** Whether a time the server sent has come. */
+internal fun isPast(iso: String): Boolean =
+    runCatching {
+        java.time.Instant
+            .parse(iso)
+            .toEpochMilli() <= System.currentTimeMillis()
+    }.getOrDefault(false)
+
 /**
  * When a review opens, said the way a person says it: "today at 2:10 PM", "tomorrow at 2:10 PM",
  * or "on Friday at 2:10 PM". The time in the phone's own format.

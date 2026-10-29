@@ -3,13 +3,11 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,7 +35,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
-import com.composables.icons.lucide.Flag
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -190,152 +187,6 @@ private fun QuietMark(count: Int) {
     }
 }
 
-/** What a row's sheet is about, which decides its main button and its last option. */
-enum class SheetKind { INSTALL, ASKED, TONIGHT, DONE }
-
-/** The app a row's sheet is open for. */
-data class RowSheet(
-    val seat: CrewSeat,
-    val kind: SheetKind,
-    val app: CrewApp? = null,
-)
-
-/**
- * One app's sheet: who brought it, its sign-in for testers, the main thing to do with it, and the
- * rarer one, Report (or It won't install, for an app members are asked about). In the one
- * [PickerSheet] frame, with the app's icon before its name.
- */
-@Composable
-internal fun CrewRowSheet(
-    sheet: RowSheet,
-    crewName: String,
-    actions: CrewActions,
-    onDismiss: () -> Unit,
-) {
-    val seat = sheet.seat
-    val installed = actions.isInstalled(seat.packageName)
-
-    PickerSheet(
-        title = seat.appName,
-        onDismiss = onDismiss,
-        subtitle = "by ${seat.owner}, in $crewName",
-        skipHalf = true,
-        leading = { AppMark(seat.packageName, seat.appName, seat.icon, size = 44.dp) },
-    ) { then ->
-        Column(Modifier.fillMaxWidth().padding(bottom = 18.dp)) {
-            Text(
-                "Sign-in for testers",
-                Modifier.padding(top = 4.dp, bottom = 8.dp),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = Tt.colors.text4,
-            )
-            TintBox {
-                if (seat.notes.isNotBlank()) {
-                    SignInDetails(seat.notes)
-                } else {
-                    Text(
-                        "No sign-in needed. It opens straight in.",
-                        Modifier.padding(vertical = 6.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Tt.colors.text4,
-                    )
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-            val app = sheet.app
-            // An update out: getting it is the main thing, opening the old copy the second.
-            if (installed && app != null && olderHere(app, actions)) {
-                Text(
-                    updateLine(app, seat.owner),
-                    Modifier.padding(bottom = 10.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Tt.colors.text2,
-                )
-                Primary("Update on Google Play", Modifier.fillMaxWidth()) { then { actions.onUpdateApp(app) } }
-                Spacer(Modifier.height(10.dp))
-            }
-            when {
-                !installed -> Primary("Install on Play", Modifier.fillMaxWidth()) { then { actions.onInstall(seat) } }
-                app != null && sheet.kind == SheetKind.TONIGHT ->
-                    Primary(
-                        "Open ${seat.appName}",
-                        Modifier.fillMaxWidth(),
-                    ) { then { actions.onOpen(app) } }
-                app != null && sheet.kind == SheetKind.DONE ->
-                    Secondary("Open ${seat.appName} again", Modifier.fillMaxWidth()) {
-                        then { actions.onOpen(app) }
-                    }
-                else -> Secondary("Open its Play page", Modifier.fillMaxWidth()) { then { actions.onInstall(seat) } }
-            }
-            Spacer(Modifier.height(12.dp))
-            when {
-                sheet.kind == SheetKind.ASKED && seat.myVote == null ->
-                    SheetOption(
-                        "It won't install",
-                        "Say why. ${CrewRules.VOTES_TO_DECIDE} No answers send it back to ${seat.owner}.",
-                        Tone.BAD,
-                    ) { then { actions.onVote(seat, false) } }
-                sheet.kind == SheetKind.ASKED -> Unit
-                seat.reported ->
-                    SheetOption(
-                        "You reported it",
-                        "Its owner has what you wrote. It no longer counts against you.",
-                        Tone.WARN,
-                        null,
-                    )
-                else ->
-                    SheetOption(
-                        "Report a problem",
-                        if (sheet.kind ==
-                            SheetKind.INSTALL
-                        ) {
-                            "It won't install, crashes, or the sign-in fails"
-                        } else {
-                            "It won't open or the sign-in fails. It stops counting against you."
-                        },
-                        Tone.BAD,
-                    ) { then { actions.onReport(seat) } }
-            }
-        }
-    }
-}
-
-/** The rarer thing a sheet offers, as one row with its icon and what it does. */
-@Composable
-private fun SheetOption(
-    title: String,
-    line: String,
-    tone: Tone,
-    onClick: (() -> Unit)?,
-) {
-    val shape = RoundedCornerShape(18.dp)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(Tt.colors.glass)
-            .border(1.dp, Tt.colors.glassBorder, shape)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Box(Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)).background(tone.soft()), contentAlignment = Alignment.Center) {
-            Icon(Lucide.Flag, null, Modifier.size(17.dp), tint = tone.ink())
-        }
-        Column(Modifier.weight(1f)) {
-            Text(
-                title,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp),
-                fontWeight = FontWeight.SemiBold,
-                color = tone.ink(),
-            )
-            Text(line, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text4)
-        }
-    }
-}
-
 // ------------------------------------------------------------------ the rows, by section
 
 /** Lobby: an app to install before day 1. */
@@ -456,46 +307,4 @@ internal fun DoneRow(
             else -> StatusChip("Opened", Tone.OK)
         }
     }
-}
-
-/**
- * When the old copy stops counting, said short for a row: "6:40 PM" today, "tomorrow 6:40 PM",
- * or null when the owner's time is unknown or already past.
- */
-internal fun updateBy(
-    app: CrewApp,
-    now: java.time.Instant = java.time.Instant.now(),
-): String? {
-    val told =
-        runCatching {
-            java.time.OffsetDateTime
-                .parse(app.versionAt)
-                .toInstant()
-        }.getOrNull() ?: return null
-    val by = told.plusSeconds(CrewRules.UPDATE_GRACE_HOURS * 3600L)
-    if (!by.isAfter(now)) return null
-    return opensWhen(by, now).replace("today at ", "").replace("tomorrow at ", "tomorrow ")
-}
-
-/** The sheet's line about an update out: whose version, and until when the old copy counts. */
-internal fun updateLine(
-    app: CrewApp,
-    owner: String,
-): String {
-    val version = if (app.versionName.isNotBlank()) "version ${app.versionName}" else "a new version"
-    val by = updateBy(app)
-    return when {
-        app.updateRequired || by == null ->
-            "$owner put out $version. Opening the old copy no longer counts, so update it before you open it."
-        else -> "$owner put out $version. Your copy still counts until $by. After that, only the new one does."
-    }
-}
-
-/** The copy on this phone is older than the version the owner told the crew about. */
-internal fun olderHere(
-    app: CrewApp,
-    actions: CrewActions,
-): Boolean {
-    val newer = app.versionCode ?: return false
-    return actions.isInstalled(app.packageName) && (actions.localVersion(app.packageName) ?: newer) < newer
 }
