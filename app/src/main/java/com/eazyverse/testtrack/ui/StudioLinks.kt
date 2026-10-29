@@ -21,6 +21,9 @@ internal const val APP_PRIVACY = "https://eazyverse.com/apps/testtrack/privacy"
 internal const val PORTFOLIO = "https://almasum.dev"
 internal const val SOURCE_REPO = "https://github.com/almasumdev/testtrack"
 
+/** The members' WhatsApp group: WhatsApp opens it where it is installed, the browser elsewhere. */
+internal const val WHATSAPP_GROUP = "https://chat.whatsapp.com/LsRjKR99BJRJBII3Oaz0OS"
+
 /** The app's own listing: Play first, the web second, nothing if the phone has neither. */
 internal fun openPlayListing(context: Context) {
     if (!openUrl(context, "market://details?id=$PACKAGE")) {

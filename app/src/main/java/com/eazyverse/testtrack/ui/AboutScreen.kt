@@ -51,6 +51,7 @@ import com.composables.icons.lucide.Github
 import com.composables.icons.lucide.Globe
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Mail
+import com.composables.icons.lucide.MessageCircle
 import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -97,6 +98,8 @@ fun AboutScreen(onBack: () -> Unit) {
                     }
                 },
             )
+            Spacer(Modifier.height(BANK_GAP))
+            QuestionsBank()
             Spacer(Modifier.height(BANK_GAP))
             MakerBank()
             Spacer(Modifier.height(BANK_GAP))
@@ -174,6 +177,21 @@ private fun ColumnScope.RatingBank(onRate: (Int) -> Unit) {
     BankLine("Rate it on Google Play and support our work.")
     Spacer(Modifier.height(10.dp))
     RatingStars(Modifier.align(Alignment.CenterHorizontally), onRate = onRate)
+}
+
+/** Where a question goes: the members' group, where other members and the team answer. */
+@Composable
+private fun ColumnScope.QuestionsBank() {
+    val context = LocalContext.current
+    BankHeading("Have a question?")
+    Spacer(Modifier.height(HEAD_GAP))
+    BankLine("Ask in our WhatsApp group. Members and the team answer there.")
+    Spacer(Modifier.height(16.dp))
+    Outlined(
+        "Join the WhatsApp group",
+        Modifier.fillMaxWidth(),
+        icon = { Icon(Lucide.MessageCircle, null, Modifier.size(17.dp)) },
+    ) { openUrl(context, WHATSAPP_GROUP) }
 }
 
 /** Who made it, then the studio's ask and its two ways of answering it. */
