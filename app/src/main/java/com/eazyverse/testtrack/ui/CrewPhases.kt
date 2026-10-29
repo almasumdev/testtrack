@@ -283,7 +283,8 @@ fun CrewRunPhase(
             return@CrewList
         }
         block { RunHero(crew, owed, here, missing, refused, actions) }
-        if (crew.apps.any { it.pictureDue }) block { PicturesDueCard(crew.apps, actions) }
+        // Tonight's pictures missing or sending, and any older night's still on the phone.
+        block { PicturesDueCard(crew.apps, actions) }
         block { PlayFeedbackCard(crew, actions) }
         crew.mine?.let { mine ->
             item { CrewHeading("Your app") }
