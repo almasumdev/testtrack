@@ -59,6 +59,11 @@ data class MyReview(
     val isLive: Boolean = false,
     /** The app's icon as its owner's My apps has it; empty where it has none, or from an older server. */
     val icon: String = "",
+    /** Days the app was used on for it, and whether its time in the app is done. */
+    val daysUsed: Int = 0,
+    val usedEnough: Boolean = false,
+    /** A live review waiting on its second day: when it opens, as the server says. */
+    val opensAt: String? = null,
 )
 
 /** States a review is still being worked on in. Tapping any row opens its review page. */
@@ -263,7 +268,7 @@ private fun Tix(review: MyReview) {
 private fun mineLine(review: MyReview): String =
     when (review.state) {
         "claimed" -> "Install it from Play"
-        "installed" -> if (review.isLive) "Use it on two days" else "Use it for two minutes"
+        "installed" -> if (review.isLive) liveUseLine(review) else "Use it for two minutes"
         "used" -> if (review.isLive) "Review it on Google Play" else "Send feedback on Google Play"
         "submitted" -> if (review.isLive) "Sent. With the developer" else "Sent. Checked within a day"
         "disputed" -> "Disputed. Members are deciding"
@@ -273,6 +278,28 @@ private fun mineLine(review: MyReview): String =
         "expired" -> if (review.isLive) "Ran out after three days" else "Ran out after a day"
         else -> ""
     }
+
+/** Where a live review is with its two days, so a row never asks for what is already done. */
+internal fun liveUseLine(
+    review: MyReview,
+    now: java.time.Instant = java.time.Instant.now(),
+): String {
+    val opens =
+        review.opensAt?.let {
+            runCatching {
+                java.time.OffsetDateTime
+                    .parse(it)
+                    .toInstant()
+            }.getOrNull()
+        }
+    return when {
+        review.daysUsed >= 2 && opens != null && opens.isAfter(now) -> "Opens ${opensWhen(opens, now)}"
+        review.daysUsed >= 2 && review.usedEnough -> "Ready for your review"
+        review.daysUsed >= 2 -> "A little more time in the app"
+        review.usedEnough || review.daysUsed == 1 -> "Open it again on another day"
+        else -> "Use it on two days"
+    }
+}
 
 /** The small mark before the state line, and the colour both are in. */
 @Composable

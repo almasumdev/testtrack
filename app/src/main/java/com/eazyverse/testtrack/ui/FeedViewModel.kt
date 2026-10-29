@@ -398,6 +398,9 @@ class FeedViewModel : ViewModel() {
             packageName = it.packageName,
             isLive = it.isLive,
             icon = it.icon,
+            daysUsed = it.daysUsed,
+            usedEnough = it.usedMs >= it.neededMs,
+            opensAt = it.returnsAt,
         )
 
     // Mapped here rather than drawn raw: a post id means nothing on a card, and the screen should
