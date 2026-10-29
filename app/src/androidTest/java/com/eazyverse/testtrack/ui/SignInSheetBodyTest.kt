@@ -5,11 +5,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
@@ -81,6 +84,27 @@ class SignInSheetBodyTest {
 
         compose.onNodeWithText("Signed in").assertIsDisplayed()
         compose.onNodeWithText("tester@example.com").assertIsDisplayed()
+    }
+
+    @Test
+    fun a_second_account_on_the_phone_is_told_why_it_starts_at_0_and_closes_on_ok() {
+        var closed = false
+        compose.setContent {
+            TestTrackTheme {
+                SignInSheetBody(
+                    reason = reason,
+                    signedInAs = "second@example.com",
+                    phoneUsedStarter = true,
+                    onOk = { closed = true },
+                )
+            }
+        }
+
+        compose.onNodeWithText("This phone already got its 120 starter tix", substring = true).assertIsDisplayed()
+        // The usual line promises 120 tix, which is not true for this account.
+        compose.onAllNodesWithText("A new account gets", substring = true).assertCountEquals(0)
+        compose.onNodeWithText("OK").performClick()
+        assertTrue(closed)
     }
 
     /**

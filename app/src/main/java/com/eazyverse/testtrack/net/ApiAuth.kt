@@ -2,6 +2,7 @@ package com.eazyverse.testtrack.net
 
 import android.content.Context
 import com.eazyverse.testtrack.data.Device
+import com.eazyverse.testtrack.data.StarterNotice
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
@@ -64,7 +65,8 @@ object ApiAuth {
         if (generation != ApiSession.generation || FirebaseAuth.getInstance().currentUser?.uid != user.uid) {
             throw CancellationException("Account changed during sign-in")
         }
-        Api.signIn(idToken, Device.fingerprint(context).orEmpty(), generation)
+        val tokens = Api.signIn(idToken, Device.fingerprint(context).orEmpty(), generation)
+        StarterNotice.heard(context, user.uid, tokens.starter)
     }
 
     fun signOut() = Api.signOut()

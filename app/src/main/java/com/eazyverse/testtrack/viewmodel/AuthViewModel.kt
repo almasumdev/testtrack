@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.Session
+import com.eazyverse.testtrack.data.StarterNotice
 import com.eazyverse.testtrack.data.friendly
 import com.eazyverse.testtrack.domain.completeSignIn
 import com.eazyverse.testtrack.net.ApiAuth
@@ -42,11 +43,16 @@ class AuthViewModel : ViewModel() {
     var signedInAs by mutableStateOf<String?>(null)
         private set
 
+    /** This account starts at 0 because its phone gave the starter tix to another account; said once. */
+    var phoneUsedStarter by mutableStateOf(false)
+        private set
+
     fun signIn(activity: Activity) {
         if (busy) return
         busy = true
         message = null
         signedInAs = null
+        phoneUsedStarter = false
         signInJob =
             viewModelScope.launch {
                 try {
@@ -59,6 +65,7 @@ class AuthViewModel : ViewModel() {
                         establishSession = { ApiAuth.authenticate(activity.applicationContext) },
                         publish = {
                             Session.updateEmail(it.email)
+                            phoneUsedStarter = StarterNotice.take(activity.applicationContext)
                             signedInAs = it.email
                         },
                     )
@@ -86,6 +93,7 @@ class AuthViewModel : ViewModel() {
     fun resetResult() {
         signInJob?.cancel()
         signedInAs = null
+        phoneUsedStarter = false
         message = null
         busy = false
     }

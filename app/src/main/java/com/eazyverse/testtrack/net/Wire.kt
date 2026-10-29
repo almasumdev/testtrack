@@ -27,6 +27,8 @@ data class Tokens(
     @SerialName("access_token") val accessToken: String,
     @SerialName("refresh_token") val refreshToken: String,
     @SerialName("expires_in") val expiresIn: Int,
+    /** Sign-in only: given, phone_used (this phone gave the starter tix to another account) or none. */
+    val starter: String = "none",
 )
 
 @Serializable

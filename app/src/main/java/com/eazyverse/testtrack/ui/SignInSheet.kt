@@ -48,6 +48,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Smartphone
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.viewmodel.AuthViewModel
@@ -107,8 +108,9 @@ fun SignInSheet(
         // waiting on it. The sheet leaves on its own; there is nothing here to press once it has
         // worked. Hidden first, then removed, which is what close does: a sheet taken out while
         // still open vanishes on one frame.
+        // Not when there is something to read first: then it waits for OK.
         LaunchedEffect(vm.signedInAs) {
-            if (vm.signedInAs != null) {
+            if (vm.signedInAs != null && !vm.phoneUsedStarter) {
                 delay(1_100)
                 done = true
                 close {}
@@ -119,7 +121,12 @@ fun SignInSheet(
             busy = vm.busy,
             message = vm.message,
             signedInAs = vm.signedInAs,
+            phoneUsedStarter = vm.phoneUsedStarter,
             onPress = { vm.signIn(activity) },
+            onOk = {
+                done = true
+                close {}
+            },
         )
     }
 }
@@ -137,7 +144,9 @@ fun SignInSheetBody(
     busy: Boolean = false,
     message: String? = null,
     signedInAs: String? = null,
+    phoneUsedStarter: Boolean = false,
     onPress: () -> Unit = {},
+    onOk: () -> Unit = {},
 ) {
     Column(
         Modifier
@@ -172,7 +181,7 @@ fun SignInSheetBody(
             if (account == null) {
                 AskToSignIn(reason, busy, message, onPress)
             } else {
-                SignedIn(account)
+                SignedIn(account, phoneUsedStarter, onOk)
             }
         }
     }
@@ -285,7 +294,11 @@ private fun Refusal(message: String) {
  * the line about loading were all drawn over one another, which is what "broken" looked like.
  */
 @Composable
-private fun SignedIn(account: String) {
+private fun SignedIn(
+    account: String,
+    phoneUsedStarter: Boolean,
+    onOk: () -> Unit,
+) {
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
@@ -312,12 +325,26 @@ private fun SignedIn(account: String) {
             }
         }
         Spacer(Modifier.height(16.dp))
-        Text(
-            "Your crews and balance are loading. A new account gets ${FeedRules.STARTER_TIX} tix to start, once per " +
-                "account and phone. Use them to ask for feedback, or earn more by reviewing other apps.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (phoneUsedStarter) {
+            // Shown once per account; the sheet waits for OK instead of leaving on its own.
+            Notice(Status.short, Lucide.Smartphone) {
+                Text(
+                    "This phone already got its ${FeedRules.STARTER_TIX} starter tix with another account, so this " +
+                        "account starts at 0. You can still earn tix by reviewing other apps.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+            Primary("OK", onClick = onOk)
+        } else {
+            Text(
+                "Your crews and balance are loading. A new account gets ${FeedRules.STARTER_TIX} tix to start, once per " +
+                    "account and phone. Use them to ask for feedback, or earn more by reviewing other apps.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         Spacer(Modifier.height(20.dp))
     }
 }
