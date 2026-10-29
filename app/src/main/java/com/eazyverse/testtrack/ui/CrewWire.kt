@@ -106,6 +106,8 @@ fun ApiSeat.toApp(
     pictureDue = pictureDue,
     versionCode = versionCode,
     updateRequired = updateRequired,
+    versionName = versionName,
+    versionAt = versionAt.orEmpty(),
     feedbackSent = feedbackSent,
     feedbackDueDay = feedbackDueDay,
     // From the night after it was due, opening it counts only once the feedback is in.

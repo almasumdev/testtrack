@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -245,6 +246,12 @@ internal fun CrewRowSheet(
             val app = sheet.app
             // An update out: getting it is the main thing, opening the old copy the second.
             if (installed && app != null && olderHere(app, actions)) {
+                Text(
+                    updateLine(app, seat.owner),
+                    Modifier.padding(bottom = 10.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Tt.colors.text2,
+                )
                 Primary("Update on Google Play", Modifier.fillMaxWidth()) { then { actions.onUpdateApp(app) } }
                 Spacer(Modifier.height(10.dp))
             }
@@ -400,14 +407,16 @@ internal fun TonightRow(
         when {
             !installed -> "not on your phone"
             old && app.updateRequired -> "update needed"
-            old -> "update out"
+            old -> updateBy(app)?.let { "update by $it" } ?: "update out"
             app.feedbackLate -> "feedback late"
             else -> ""
         }
     CrewPageRow(
         app.packageName,
         app.label,
-        ownerLine(app.owner, seat.notes.isNotBlank(), note),
+        // An update out says only that, with its deadline, so the line is not cut: whose it is
+        // is in the row's sheet.
+        if (old) AnnotatedString(note.replaceFirstChar(Char::uppercase)) else ownerLine(app.owner, seat.notes.isNotBlank(), note),
         place,
         onOpen = { onSheet(RowSheet(seat, SheetKind.TONIGHT, app)) },
         icon = seat.icon,
@@ -436,7 +445,9 @@ internal fun DoneRow(
 ) {
     // Opened tonight on the old copy: the update is still to do before the 24 hours run out.
     val old = actions != null && actions.isInstalled(app.packageName) && olderHere(app, actions)
-    CrewPageRow(app.packageName, app.label, ownerLine(app.owner, false, if (old) "update out" else ""), place, icon = seat.icon, onOpen = {
+    val note = if (old) (if (app.updateRequired) "update needed" else updateBy(app)?.let { "update by $it" } ?: "update out") else ""
+    val line = if (old) AnnotatedString(note.replaceFirstChar(Char::uppercase)) else ownerLine(app.owner, false)
+    CrewPageRow(app.packageName, app.label, line, place, icon = seat.icon, onOpen = {
         onSheet(RowSheet(seat, SheetKind.DONE, app))
     }) {
         when {
@@ -444,6 +455,39 @@ internal fun DoneRow(
             old && actions != null -> RowPill("Update", PillKind.SOFT) { actions.onUpdateApp(app) }
             else -> StatusChip("Opened", Tone.OK)
         }
+    }
+}
+
+/**
+ * When the old copy stops counting, said short for a row: "6:40 PM" today, "tomorrow 6:40 PM",
+ * or null when the owner's time is unknown or already past.
+ */
+internal fun updateBy(
+    app: CrewApp,
+    now: java.time.Instant = java.time.Instant.now(),
+): String? {
+    val told =
+        runCatching {
+            java.time.OffsetDateTime
+                .parse(app.versionAt)
+                .toInstant()
+        }.getOrNull() ?: return null
+    val by = told.plusSeconds(CrewRules.UPDATE_GRACE_HOURS * 3600L)
+    if (!by.isAfter(now)) return null
+    return opensWhen(by, now).replace("today at ", "").replace("tomorrow at ", "tomorrow ")
+}
+
+/** The sheet's line about an update out: whose version, and until when the old copy counts. */
+internal fun updateLine(
+    app: CrewApp,
+    owner: String,
+): String {
+    val version = if (app.versionName.isNotBlank()) "version ${app.versionName}" else "a new version"
+    val by = updateBy(app)
+    return when {
+        app.updateRequired || by == null ->
+            "$owner put out $version. Opening the old copy no longer counts, so update it before you open it."
+        else -> "$owner put out $version. Your copy still counts until $by. After that, only the new one does."
     }
 }
 

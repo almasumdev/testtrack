@@ -137,7 +137,7 @@ class CrewRunCardsTest {
             TonightRow(old, seat, placeOf(0, 2), actions(localVersion = 11)) {}
             TonightRow(late, seat, placeOf(1, 2), actions(localVersion = 11)) {}
         }
-        compose.onNodeWithText("by Daniel, update needed", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Update needed", substring = true).assertIsDisplayed()
         compose.onNode(hasText("Update") and hasClickAction()).performClick()
         compose.onNode(hasText("Feedback") and hasClickAction()).performClick()
         assertEquals(listOf("update Lingo Cards", "feedback Lingo Cards"), did)

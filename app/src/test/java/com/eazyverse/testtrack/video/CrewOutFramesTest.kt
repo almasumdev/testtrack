@@ -209,8 +209,9 @@ class CrewOutFramesTest {
                     owner = owner,
                     crew = "Crew 05",
                     versionCode = 12,
-                    done =
-                        i == 1,
+                    versionName = "1.4.0",
+                    versionAt = Instant.now().minusSeconds(5 * 3600).toString(),
+                    done = i == 1,
                 )
             }
         val actions =

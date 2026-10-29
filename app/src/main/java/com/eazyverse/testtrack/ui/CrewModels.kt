@@ -109,6 +109,9 @@ object CrewRules {
     /** How long each app stays open in a round; its picture is taken after the first ten. */
     const val OPEN_SECONDS = 20
 
+    /** rules.UPDATE_GRACE_HOURS: how long an older copy still counts once its owner tells the crew. */
+    const val UPDATE_GRACE_HOURS = 24
+
     /** The longest appeal to get a taken-out app back, as the server keeps it. */
     const val APPEAL_MAX = 500
 
@@ -226,6 +229,9 @@ data class CrewApp(
     /** The owner's newest version, and whether its 24 hours are over, so an older copy no longer counts. */
     val versionCode: Long? = null,
     val updateRequired: Boolean = false,
+    /** That version's name, and when its owner told the crew (ISO time), for the deadline. */
+    val versionName: String = "",
+    val versionAt: String = "",
     /** This account's Play feedback on it: sent, the last night to send it by, and whether it is late. */
     val feedbackSent: Boolean = false,
     val feedbackDueDay: Int = 0,
