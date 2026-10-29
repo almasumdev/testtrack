@@ -33,7 +33,15 @@ data class MemberNights(
     /** Their first night with this app, and nights the team let them off. */
     val firstNight: Int = 1,
     val freeDays: Set<Int> = emptySet(),
-)
+    /** Nights they did not owe the app, a quiet skip covering it. Drawn like any night not owed. */
+    val skippedDays: Set<Int> = emptySet(),
+) {
+    /** They did not owe the app that night: reported, let off, or covered by a skip. */
+    fun notOwed(
+        day: Int,
+        offDays: Set<Int>,
+    ) = excused || day in freeDays || day in offDays || day in skippedDays
+}
 
 /** The reader's app in one crew, as every other member opened it. */
 data class AppNights(
@@ -72,6 +80,7 @@ class CrewPicturesViewModel : ViewModel() {
                                 excused = t.excused,
                                 firstNight = t.firstNight,
                                 freeDays = t.freeDays.toSet(),
+                                skippedDays = t.skippedDays.toSet(),
                             )
                         },
                         offDays = got.offDays.toSet(),

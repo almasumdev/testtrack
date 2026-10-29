@@ -36,8 +36,12 @@ import com.eazyverse.testtrack.viewmodel.MemberNights
  */
 
 /** What one square says. Each has its own fill and edge, so it reads without the colour too. */
-private enum class Square { PICTURE, BY_HAND, WAITING, MISSED, LET_OFF, TONIGHT, TO_COME, BEFORE }
+private enum class Square { PICTURE, BY_HAND, WAITING, MISSED, NOT_OWED, TONIGHT, TO_COME, BEFORE }
 
+/**
+ * What one tester's night was, as the server judges it: a night they did not owe (reported, let
+ * off, or a quiet skip) or one before their first is neutral, never a miss.
+ */
 private fun squareOf(
     tester: MemberNights,
     day: Int,
@@ -49,7 +53,7 @@ private fun squareOf(
         night != null && night.counts && night.byHand -> Square.BY_HAND
         night != null && night.counts -> Square.PICTURE
         night != null -> Square.WAITING
-        tester.excused || day in tester.freeDays || day in offDays -> Square.LET_OFF
+        tester.notOwed(day, offDays) -> Square.NOT_OWED
         day == tester.day -> Square.TONIGHT
         day > tester.day -> Square.TO_COME
         else -> Square.MISSED
@@ -119,7 +123,7 @@ internal fun TrackingGrid(pictures: AppNights) {
             }
         }
         Text(
-            "Full: picture in. Yellow edge: picked by hand. Outline: tonight. Red: missed. Grey: let off or reported.",
+            "Full: picture in. Yellow edge: picked by hand. Outline: tonight. Red: missed. Grey: not owed that night.",
             Modifier.padding(top = 8.dp),
             style = MaterialTheme.typography.labelSmall,
             color = t.text4,
@@ -141,7 +145,7 @@ private fun Cell(
             Square.BY_HAND -> Status.posted to t.warn
             Square.WAITING -> t.accent.copy(alpha = 0.35f) to t.accent
             Square.MISSED -> t.badBg to t.bad
-            Square.LET_OFF -> t.glass2 to t.glassBorder
+            Square.NOT_OWED -> t.glass2 to t.glassBorder
             Square.TONIGHT -> Color.Transparent to t.accent
             Square.TO_COME -> Color.Transparent to t.glassBorder
             Square.BEFORE -> Color.Transparent to Color.Transparent

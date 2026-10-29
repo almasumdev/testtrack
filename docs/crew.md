@@ -300,9 +300,12 @@ run for it. It still counts for nothing until the pictures land.
 
 Built 28 October 2026, in the spirit of the August app's dashboard. The owner's Every night page
 opens with a grid like a contribution graph: one square per tester per night (picture in, picked
-by hand, waiting, missed, let off or reported, tonight, to come), each night's count under it, and
-a line that says "On track for Google" or names the nights short of 12. Each member's pictures
-follow. The team sees the same grid on the seat page.
+by hand, waiting, missed, not owed, tonight, to come), each night's count under it, and a line
+that says "On track for Google" or names the nights short of 12. Each member's pictures follow.
+The team sees the same grid on the seat page. A night the tester did not owe is grey, never a
+miss (30 October 2026): reported, let off for them or for the app, before their first night, or
+covered by a quiet skip (the server's `skipped_days`; the grid does not say which). An opened
+night whose picture is still on its way is never drawn as missed either.
 
 ## Still open
 

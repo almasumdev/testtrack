@@ -49,8 +49,9 @@ import com.eazyverse.testtrack.viewmodel.MemberNights
  * in every cell the picture they took of your app that night, as the August app's owner grid had.
  *
  * Shapes as well as colours say what a cell is: a picture, a picture with a yellow edge for one
- * picked by hand, a cross for a finished night they missed, a clock for tonight not done yet, and
- * a dashed outline for nights still to come. A tap on a picture opens it whole.
+ * picked by hand, a cross for a finished night they missed, a clock for tonight not done yet or a
+ * picture on its way, grey for a night they did not owe, and a dashed outline for nights still to
+ * come. A tap on a picture opens it whole.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,8 +147,9 @@ private fun TesterNights(
                             }
                         night != null && night.counts -> Mark(t.okBg, null, "Opened")
                         day < tester.firstNight -> Mark(Color.Transparent, null, "Not joined yet", dashed = true)
-                        tester.excused || day in tester.freeDays || day in offDays ->
-                            Mark(t.glass2, null, "Let off", border = t.glassBorder)
+                        // Opened, its picture still on its way: not a miss.
+                        night != null -> Mark(t.accent.copy(alpha = 0.35f), Lucide.Clock, "Picture on its way", border = t.accent)
+                        tester.notOwed(day, offDays) -> Mark(t.glass2, null, "Not owed", border = t.glassBorder)
                         day == tester.day -> Mark(Color.Transparent, Lucide.Clock, "Tonight", border = t.accent)
                         day < tester.day -> Mark(t.badBg, Lucide.X, "Missed", border = t.badBorder)
                         else -> Mark(Color.Transparent, null, "To come", dashed = true)
