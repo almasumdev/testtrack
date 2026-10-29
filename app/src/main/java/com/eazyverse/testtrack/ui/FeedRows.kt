@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -48,6 +50,7 @@ import com.composables.icons.lucide.Megaphone
 import com.composables.icons.lucide.MessageSquareText
 import com.composables.icons.lucide.Rocket
 import com.composables.icons.lucide.UserPlus
+import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -246,15 +249,11 @@ fun FeedAskBar(onPost: () -> Unit) {
 }
 
 /**
- * One developer's ask.
+ * One request, anonymous: the app's face, its name, which kind it is, and what it pays.
  *
- * The app is the headline and the ask is what it says. A list you scan by app, not by question:
- * you recognise the icon and the name first, and read what is being asked once one of them has
- * stopped you.
- *
- * The line above the button is the one thing that varies and so the one thing worth printing: how
- * many of the reviews this post bought are still going, and whether this reader is part way
- * through one of them already.
+ * Decided October 2026: no owner's name (it invites reviewing friends), no slot count (the feed
+ * only lists requests the reader can take), and no question (the review screen shows it). The
+ * whole card is the way in.
  */
 @Composable
 fun FeedRequestCard(
@@ -263,82 +262,73 @@ fun FeedRequestCard(
 ) {
     // In progress and waiting count as taken: the server says what is left.
     val open = post.slotsOpen ?: (post.reviewsBought - post.reviewsDone)
-    // The same cases that show the action chip, so the card and its chip always do the same thing.
+    // The same cases that show something to do, so the card and its corner always agree.
     val actionable = !post.mine && post.myState != "approved" && !(post.myState == null && open <= 0)
-    FeedCard(onClick = if (actionable) onReview else null) {
+    FeedCard(onClick = if (actionable) onReview else null, padding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            // Installed here first, then the icon its owner's app has, then its initial.
-            AppMark(post.packageName, post.appName, post.icon)
-            Spacer(Modifier.width(12.dp))
+            // Twice a row's icon: the face is how a request is told apart, with no name on it.
+            AppMark(post.packageName, post.appName, post.icon, size = 76.dp)
+            Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(
                     post.appName,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Spacer(Modifier.height(2.dp))
+                // Which kind decides how it is reviewed. Never whose it is: requests are anonymous,
+                // and what the developer asks is on the review itself.
                 Text(
-                    if (post.mine) "Your request" else "Asked by ${post.ownerName}",
+                    when {
+                        post.mine -> "Your request"
+                        post.myState in Underway -> "You are part way through this one"
+                        post.myState in Sent -> "You sent your review"
+                        post.isLive -> "On Play"
+                        else -> "Closed test"
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Spacer(Modifier.width(8.dp))
-            // This changes installation eligibility. Both kinds receive private feedback.
-            Pill(
-                if (post.isLive) "On Play" else "Closed test",
-                MaterialTheme.colorScheme.onSurfaceVariant,
-                Status.neutralSoft,
-            )
-        }
-
-        Spacer(Modifier.height(11.dp))
-        Text(
-            post.ask.ifBlank { "General feedback on the app experience." },
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-
-        Spacer(Modifier.height(13.dp))
-        CardRule()
-        Spacer(Modifier.height(12.dp))
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                when {
-                    post.mine -> "${post.reviewsDone} of ${post.reviewsBought} done"
-                    post.myState in Underway -> "You are part way through this one"
-                    post.myState in Sent -> "You sent your review"
-                    post.myState != null -> "You took this one"
-                    open == 1 -> "1 slot open"
-                    else -> "$open slots open"
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
             Spacer(Modifier.width(10.dp))
             when {
                 post.mine -> Unit
                 post.myState == "approved" -> Pill("Done", Status.posted, Status.postedSoft)
-                // Every slot is installed for: taking it would only be refused.
                 post.myState == null && open <= 0 -> Pill("Full", Tt.colors.text3, Status.neutralSoft)
-                else ->
-                    ActionChip(
-                        when (post.myState) {
-                            null -> "Review for ${post.reward} tix"
-                            in Underway -> "Carry on"
-                            else -> "See it"
-                        },
+                post.myState in Underway ->
+                    Pill(
+                        "Carry on",
                         MaterialTheme.colorScheme.onPrimaryContainer,
                         MaterialTheme.colorScheme.primaryContainer,
-                        onClick = onReview,
                     )
+                post.myState != null ->
+                    Pill(
+                        "See it",
+                        MaterialTheme.colorScheme.onPrimaryContainer,
+                        MaterialTheme.colorScheme.primaryContainer,
+                    )
+                else -> TixReward(post.reward)
             }
         }
+    }
+}
+
+/** What a review pays, as the top bar shows tix: the ticket, and the number under it. */
+@Composable
+private fun TixReward(tix: Int) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Image(painterResource(R.drawable.tix_ticket), "tix", Modifier.size(width = 36.dp, height = 25.dp))
+        Spacer(Modifier.height(2.dp))
+        Text(
+            "$tix",
+            style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.ExtraBold,
+            color = Tt.colors.accentInk,
+        )
     }
 }
 

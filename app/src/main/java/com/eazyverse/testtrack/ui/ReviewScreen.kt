@@ -345,7 +345,8 @@ fun ReviewBody(
             Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Gutter),
             ) {
-                ReviewAppRow(post.appName, post.packageName, post.isLive, post.ownerName, offline, icon = post.icon)
+                // Anonymous: whose app it is is not shown to the reviewer.
+                ReviewAppRow(post.appName, post.packageName, post.isLive, if (post.mine) post.ownerName else "", offline, icon = post.icon)
                 // The dial is centred in the room under this row; when a step is taller than that
                 // room it starts at the top instead, and without this it sat flush against the row.
                 Spacer(Modifier.height(gap))

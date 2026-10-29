@@ -74,7 +74,7 @@ class CircleVideoFramesTest {
         frame.target("tix", compose.onNodeWithContentDescription("${s.BALANCE} tix"))
         frame.target("askButton", text("Ask for feedback", clickable = true))
         frame.target("cardHabit", compose.onNode(hasText(s.habit.appName) and hasClickAction()))
-        frame.target("chipHabit", text("Review for ${s.habit.reward} tix", clickable = true))
+        frame.target("chipHabit", compose.onNodeWithText("${s.habit.reward}", useUnmergedTree = true))
         frame.target("pillClosed", compose.onNodeWithText("Closed test", useUnmergedTree = true))
         frame.target("pillOnPlay", compose.onAllNodesWithText("On Play", useUnmergedTree = true)[0])
         frame.target("toCheckTab", compose.onNode(hasText("To check", substring = true) and hasClickAction()))
