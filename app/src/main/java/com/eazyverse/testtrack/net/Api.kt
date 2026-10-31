@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.net
 
 import com.eazyverse.testtrack.BuildConfig
+import com.eazyverse.testtrack.data.EmulatorGate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -39,6 +40,7 @@ object Api {
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .callTimeout(90, TimeUnit.SECONDS)
+            .addInterceptor(EmulatorGate.stopWhileBlocked)
             .build()
 
     /**

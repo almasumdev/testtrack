@@ -43,6 +43,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.eazyverse.testtrack.data.AppUpdateService
 import com.eazyverse.testtrack.data.AuthRepo
+import com.eazyverse.testtrack.data.EmulatorGate
 import com.eazyverse.testtrack.data.FeedbackWatch
 import com.eazyverse.testtrack.data.PushRepo
 import com.eazyverse.testtrack.data.Session
@@ -157,6 +158,13 @@ class MainActivity : ComponentActivity() {
                     // tab shell takes only the top one, because its ground and its floating dock run
                     // to the bottom edge under the system bar.
                     Box(Modifier.fillMaxSize().exchangeBackground()) {
+                        // Before anything else is composed: an emulator gets no app and no server.
+                        val emulator by EmulatorGate.blocked.collectAsState()
+                        if (emulator) {
+                            EmulatorBlockScreen(EmulatorGate.signs)
+                            LaunchedEffect(Unit) { EmulatorGate.refresh(this@MainActivity) }
+                            return@Box
+                        }
                         if (Config.isConfigured) {
                             AppNav(
                                 openCrew,

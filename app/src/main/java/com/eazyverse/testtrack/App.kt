@@ -2,6 +2,7 @@ package com.eazyverse.testtrack
 
 import android.app.Application
 import com.eazyverse.testtrack.data.AppUpdateService
+import com.eazyverse.testtrack.data.EmulatorGate
 import com.eazyverse.testtrack.data.Telemetry
 import com.eazyverse.testtrack.net.ApiSession
 import com.eazyverse.testtrack.viewmodel.ReviewMoment
@@ -24,6 +25,7 @@ class App : Application() {
         super.onCreate()
         AppUpdateService.init(this)
         Telemetry.init(this)
+        EmulatorGate.init(this)
         ReviewMoment.onSessionStart(this)
         ThemeChoice.init(this)
         // Our own session, before any screen asks. Android brings a killed app back on the page it

@@ -41,6 +41,17 @@ object Telemetry {
     }
 
     /**
+     * Blocked as an emulator, and on which signs. Analytics adds the make and model, so a real phone
+     * caught by mistake shows up here without anybody having to write in.
+     */
+    fun emulatorBlocked(signs: List<String>) {
+        analytics?.logEvent(
+            "emulator_blocked",
+            Bundle().apply { putString("signs", signs.joinToString(", ").take(100)) },
+        )
+    }
+
+    /**
      * One usage reading at the end of a visit.
      *
      * [source] is a fixed string from the caller ("review", "crew"). [ms] is what was counted,
