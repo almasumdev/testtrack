@@ -160,9 +160,9 @@ class MainActivity : ComponentActivity() {
                     Box(Modifier.fillMaxSize().exchangeBackground()) {
                         // Before anything else is composed: an emulator gets no app and no server.
                         val emulator by EmulatorGate.blocked.collectAsState()
+                        LaunchedEffect(Unit) { EmulatorGate.keepChecking(this@MainActivity) }
                         if (emulator) {
                             EmulatorBlockScreen(EmulatorGate.signs)
-                            LaunchedEffect(Unit) { EmulatorGate.refresh(this@MainActivity) }
                             return@Box
                         }
                         if (Config.isConfigured) {

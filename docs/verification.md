@@ -48,3 +48,13 @@ sign-out.
 
 Release signing reads the keys listed in `local.properties.example`. Without them only debug builds
 are produced.
+
+## Emulators
+
+Decided 1 November 2026: an emulator gets a block screen and never reaches our server. It is decided on the phone alone, with no server and no Play Integrity, in `domain/EmulatorSigns.kt`.
+
+Only names and files that belong to emulator products count, because a real phone blocked is worse than an emulator missed. Somebody who changes an emulator to hide them gets past it. The block screen has a mail link that says what the app saw, and each block logs `emulator_blocked` in Analytics with the phone's make and model.
+
+Debug builds and Firebase Test Lab, which runs Play's pre-launch report, are never blocked.
+
+**To lift it for everybody without a release:** set `allowEmulators` to `true` in the Firestore document `config/app`. A blocked screen checks about once a minute and lets the person in. Set it back to `false` to block again. While blocked, the app still reads that one setting and logs to Firebase; it never calls our own API.

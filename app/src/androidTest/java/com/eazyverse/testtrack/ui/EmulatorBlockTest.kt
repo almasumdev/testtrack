@@ -28,7 +28,7 @@ class EmulatorBlockTest {
     @Test
     fun aRealPhoneShowsNoSign() {
         assumeTrue(InstrumentationRegistry.getArguments().getString("realPhone") == "true")
-        assertEquals(emptyList<String>(), EmulatorSigns.of(EmulatorGate.read(instrumentation.targetContext)))
+        assertEquals(emptyList<String>(), EmulatorSigns.of(EmulatorGate.read()))
     }
 
     @Test
