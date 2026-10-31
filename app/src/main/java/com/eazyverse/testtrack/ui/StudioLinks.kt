@@ -24,17 +24,52 @@ internal const val SOURCE_REPO = "https://github.com/almasumdev/testtrack"
 /** The members' WhatsApp group: WhatsApp opens it where it is installed, the browser elsewhere. */
 internal const val WHATSAPP_GROUP = "https://chat.whatsapp.com/LsRjKR99BJRJBII3Oaz0OS"
 
+/** Google Play, as Android names it. */
+internal const val PLAY_STORE = "com.android.vending"
+
+/**
+ * Where a store link is tried, in order, as (address, the app that must open it). A phone's own
+ * store claims market:// and Play's web addresses too (Samsung's, Xiaomi's, Oppo's), and has none
+ * of these apps, so Play is asked for by name. Only a phone with no Play gets the web page, from
+ * whatever can open it.
+ */
+internal fun storeAttempts(
+    market: String,
+    web: String,
+): List<Pair<String, String?>> = listOf(market to PLAY_STORE, web to PLAY_STORE, web to null)
+
+/** Opens a store link in Google Play; false when nothing on the phone could. */
+internal fun openStoreLink(
+    context: Context,
+    market: String,
+    web: String,
+): Boolean =
+    storeAttempts(market, web).any { (url, app) ->
+        runCatching {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse(url)).setPackage(app).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }.isSuccess
+    }
+
+/** An app's listing on Google Play. */
+internal fun openPlayListingOf(
+    context: Context,
+    packageName: String,
+): Boolean =
+    openStoreLink(
+        context,
+        "market://details?id=$packageName",
+        "https://play.google.com/store/apps/details?id=$packageName",
+    )
+
 /** The app's own listing: Play first, the web second, nothing if the phone has neither. */
 internal fun openPlayListing(context: Context) {
-    if (!openUrl(context, "market://details?id=$PACKAGE")) {
-        openUrl(context, "https://play.google.com/store/apps/details?id=$PACKAGE")
-    }
+    openPlayListingOf(context, PACKAGE)
 }
 
 internal fun openDeveloperPage(context: Context) {
-    if (!openUrl(context, "market://dev?id=$DEVELOPER_ID")) {
-        openUrl(context, "https://play.google.com/store/apps/dev?id=$DEVELOPER_ID")
-    }
+    openStoreLink(context, "market://dev?id=$DEVELOPER_ID", "https://play.google.com/store/apps/dev?id=$DEVELOPER_ID")
 }
 
 /**

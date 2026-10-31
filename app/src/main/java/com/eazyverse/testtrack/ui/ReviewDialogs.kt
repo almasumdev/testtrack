@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
-import android.net.Uri
 import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,15 +19,7 @@ fun openPlay(
     context: Context,
     packageName: String,
 ) {
-    val market = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
-    val web =
-        Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("https://play.google.com/store/apps/details?id=$packageName"),
-        )
-    runCatching { context.startActivity(market) }.onFailure {
-        runCatching { context.startActivity(web) }
-    }
+    openPlayListingOf(context, packageName)
 }
 
 /** Open the app being reviewed, if it is there. */

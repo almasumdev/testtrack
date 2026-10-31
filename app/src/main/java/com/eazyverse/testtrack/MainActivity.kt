@@ -246,12 +246,7 @@ class MainActivity : ComponentActivity() {
 
     /** Where the update gate and button send somebody Play will not download for in the background. */
     private fun openPlayStoreListing() {
-        runCatching {
-            startActivity(
-                Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            )
-        }
+        openPlayListingOf(this, packageName)
     }
 
     /**
