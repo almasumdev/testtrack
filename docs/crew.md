@@ -147,11 +147,23 @@ place, and move a seat between crews at any time, from the admin panel
 
 ## Missed days
 
-Decided October 2026, from the rule the app had always shown: miss a day (anything owed left
-unopened at your own midnight) and you get a warning; miss two in a row and your app leaves the
-run, nobody opens it any more and you owe nothing more there. An app you reported is not counted
-against you on the night you reported it. Every member gets an evening reminder at 20:00 their
-time while anything is left.
+Decided 1 November 2026. A day is missed when three or more of the apps you owed are unopened at
+your own midnight, or you opened none of them. One or two left is not a miss, though it still costs
+the refund below. One miss is a warning; two in a row and your app leaves the run, nobody opens it
+any more and you owe nothing more there. An app you reported is not counted against you on the
+night you reported it. Every member gets an evening reminder at 20:00 their time while anything is
+left.
+
+A night already over on 1 November 2026 keeps the rule it was judged by, where one app left unopened
+was a miss. Nothing new rewrites what was already judged.
+
+Every past night owes the apps that were in the run that night, for every member, so somebody
+leaving or returning later changes no night already over. The team's Let a night off is the one
+deliberate exception: it can still change a night already judged.
+
+Quiet skips and this allowance add up. A member holding four skips can leave those four apps and
+two more unopened, opening eight of fourteen, with no miss. That is accepted: skips are only earned
+when others left your app unopened.
 
 ## Taken out: appeal and put back
 
@@ -159,7 +171,8 @@ An app taken out of a run (two missed days in a row, or the team) is not the end
 
 - **The owner asks first.** Their crew page offers **Ask to get it back**, not a new crew. They write what happened (up to 500 characters) and send it, once per app. The sheet closes only once the server has it; offline or refused, it stays open with the words and says why.
 - **While it waits, no new seat.** The owner can't put any app in a new crew until the team answers. The Take a seat screen says why and its button is off.
-- **Accepted:** the team puts it back in the run. Its owner's missed nights and the nights it was out are let off, so the warning is gone and one more miss does not take it straight out again. The app is let off for every tester on the nights it was out, so nobody turns short for an app they could not open. The owner is told.
+- **Accepted:** the team puts it back in the run. Its owner's real nights stay on record, the misses that took it out too. Only the warning clears, and the count starts fresh: those misses cannot join a new one to take it out again. Nobody owes anything for the nights it was out. The owner is told.
+- **The night it comes back on is optional, both ways.** Its owner owes nothing that night and the others owe it nothing, each on their own night in progress when it came back. Anyone still inside their own run may open it anyway, whether they have finished tonight's list or not, and the owner may open the others'. Those opens count and show, and never lower a percentage. Not opening is never a miss, and that night neither uses nor earns a quiet skip. Normal rules return on each member's next night. In the app these apps sit under **Optional tonight**, and Open all does not include them.
 - **Refused:** the owner sees the team's reason, and only then **Put it in a new crew**.
 - **The run ends first:** the appeal closes, and the owner can take a new seat.
 - **Out again after a put back:** there is no second appeal. The card says it was put back once and is out again, and offers **Put it in a new crew**.
@@ -180,7 +193,10 @@ Decided October 2026, to make the crew fair both ways. Each night a member leave
 
 Decided October 2026. When a crew closes, every member still in it who opened everything they
 owed on every one of their nights gets back what their seat cost (100 tix), once, and the
-finished notification and the Record say so. One short day, even one only warned, keeps the tix.
+finished notification and the Record say so. One app left unopened on any night keeps the tix, even
+though that night is no miss. A night let off by the team, a quiet skip, a reported app, a night
+the app was out and the night it came back on do not count against it. A put back does not restore
+it: that is the team's to decide, by letting those nights off.
 A seat the team put in part-way is held only to its own nights; a seat placed free gets nothing
 back because nothing was charged. Showing up every day is what makes a crew work, so the member
 who never let it down rides for free. The server's crew_sweep.close_finished decides it.

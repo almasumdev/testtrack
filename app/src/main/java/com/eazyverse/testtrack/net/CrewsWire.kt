@@ -170,6 +170,8 @@ data class ApiSeat(
     @SerialName("feedback_due_day") val feedbackDueDay: Int = 0,
     /** Nobody owes this app the reader's tonight: marked down by its owner, or let off. */
     @SerialName("off_tonight") val offTonight: Boolean = false,
+    /** It came back to the run tonight, or the reader's own did: nothing owed, and open to test. */
+    @SerialName("optional_tonight") val optionalTonight: Boolean = false,
     /** Nights its owner can still mark it down; on the owner's own seat only. */
     @SerialName("downs_left") val downsLeft: Int = 0,
     /** Quiet skips this account has of this app, from nights its owner left this account's unopened. */

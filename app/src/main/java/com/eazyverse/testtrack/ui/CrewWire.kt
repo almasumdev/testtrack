@@ -153,6 +153,12 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
         // Rejected seats never ran, so they are not members; only the reader sees their own.
         members = members.filter { it.state != "rejected" }.map { it.toMember() },
         apps = if (going) owed.map { it.toApp(name, day) } else emptyList(),
+        optional =
+            if (going) {
+                members.filter { !it.mine && it.state == "confirmed" && it.optionalTonight }.map { it.toApp(name, day) }
+            } else {
+                emptyList()
+            },
         left =
             if (going) {
                 members.filter { !it.mine && it.state == "removed" }.map { it.toApp(name, day).copy(outAt = it.outAt.orEmpty()) }

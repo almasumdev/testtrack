@@ -88,16 +88,22 @@ internal fun CrewRulesCard() {
                 listOf(
                     "Back in full if you take it out while the crew fills",
                     "Or if ${CrewRules.REPORTS_TO_RETURN} reports send it back",
-                    "Or if you finish all ${CrewRules.RUN_DAYS} days without missing one",
+                    "Or if you open every app on all ${CrewRules.RUN_DAYS} days",
                 ),
             )
-            TixCard(Lucide.Lock, Tone.BAD, "Kept", listOf("If you miss a day once the run starts", "Or if your app leaves for missed days"))
+            TixCard(
+                Lucide.Lock,
+                Tone.BAD,
+                "Kept",
+                listOf("If any app stays unopened on any night", "Or if your app leaves for missed days"),
+            )
         }
 
         RulesHeading("Good to know")
         GoodToKnow(1, Lucide.CalendarDays, "A day runs from midnight, your time.")
         GoodToKnow(2, Lucide.Info, "An open counts with ${CrewRules.VISIT_SECONDS} seconds in front and its picture.")
         GoodToKnow(3, Lucide.Hourglass, "One app waiting at a time.")
+        GoodToKnow(4, Lucide.TriangleAlert, "A day is missed when ${CrewRules.MISS_UNOPENED} or more apps stay unopened, or you open none.")
     }
 }
 

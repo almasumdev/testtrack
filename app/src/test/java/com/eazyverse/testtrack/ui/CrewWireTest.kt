@@ -266,6 +266,37 @@ class CrewWireTest {
     }
 
     @Test
+    fun an_app_put_back_tonight_is_optional_and_never_owed() {
+        val running =
+            crew(
+                state = "full",
+                day = 5,
+                members =
+                    listOf(
+                        seat("me", mine = true),
+                        seat("a"),
+                        seat("back").copy(offTonight = true, optionalTonight = true),
+                        seat("down").copy(offTonight = true),
+                    ),
+            ).toCrew()
+        assertEquals(listOf("a"), running.apps.map { it.id })
+        assertEquals(listOf("back"), running.optional.map { it.id })
+        assertEquals(1, running.owed)
+        assertEquals(listOf("a"), tonightIn(listOf(running)).map { it.id })
+    }
+
+    @Test
+    fun an_app_out_of_the_run_offers_nothing_optional() {
+        val out =
+            crew(
+                state = "full",
+                day = 5,
+                members = listOf(seat("me", mine = true, state = "removed"), seat("a").copy(optionalTonight = true)),
+            ).toCrew()
+        assertTrue(out.optional.isEmpty())
+    }
+
+    @Test
     fun a_seat_from_the_start_is_unchanged() {
         val running = crew(state = "full", day = 3, members = listOf(seat("me", mine = true), seat("a"))).toCrew()
         assertEquals(1, running.firstNight)

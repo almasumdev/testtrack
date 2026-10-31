@@ -85,6 +85,9 @@ object CrewRules {
     /** Reports from different members that send an app back before the run starts. */
     const val REPORTS_TO_RETURN = 2
 
+    /** Apps left unopened that make a day a miss. Fewer still cost the seat's refund. */
+    const val MISS_UNOPENED = 3
+
     /** Answers that decide an app Play could not check: this many Yes and it is in, this many No and it goes back. */
     const val VOTES_TO_DECIDE = 2
 
@@ -270,6 +273,8 @@ data class Crew(
     val seats: List<CrewSeat> = emptyList(),
     val members: List<CrewMember> = emptyList(),
     val apps: List<CrewApp> = emptyList(),
+    /** Nobody owes these tonight, since the team put an app back, and they still count if opened. */
+    val optional: List<CrewApp> = emptyList(),
     /** Others' apps taken out of the run: nobody owes them, and they are left on the page so the
      * reader knows which to uninstall, once it is clear they will not come back. */
     val left: List<CrewApp> = emptyList(),
