@@ -33,10 +33,12 @@ class EmulatorBlockTest {
 
     @Test
     fun theBlockScreenSaysWhyAndHowToReachUs() {
+        // The robot's gears turn for ever, so the clock is held or the test waits for them to stop.
+        compose.mainClock.autoAdvance = false
         compose.setContent { TestTrackTheme { EmulatorBlockScreen(listOf("hardware ranchu")) } }
         compose.onNodeWithText("TestTrack needs a real phone").assertIsDisplayed()
         compose.onNodeWithText("This is a real phone? Tell us").assertIsDisplayed()
-        compose.waitForIdle()
+        compose.mainClock.advanceTimeBy(500)
         val picture = instrumentation.uiAutomation.takeScreenshot()
         File(instrumentation.targetContext.filesDir, "emulator-block.png").outputStream().use {
             picture.compress(Bitmap.CompressFormat.PNG, 100, it)
