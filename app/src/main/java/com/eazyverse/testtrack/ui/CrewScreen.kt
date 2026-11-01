@@ -1,8 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -304,15 +302,13 @@ fun CrewReportDialog(
 }
 
 /**
- * The app's closed test on Play: the page where a tester joins it and then installs.
- *
- * The opt-in page rather than the listing, because a closed test has to be joined before Play
- * will offer the install, and the listing on its own says "not found" until then.
+ * The app's page in the Play app, by name. Not the web join page: a browser uses whichever Google
+ * account it is signed in to, which may not be the one on the testers group, and then says
+ * "App not available" for an app this member can really get.
  */
 internal fun openOnPlay(
     context: Context,
     packageName: String,
 ) {
-    val page = Uri.parse("https://play.google.com/apps/testing/$packageName")
-    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, page).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+    openPlayListingOf(context, packageName)
 }

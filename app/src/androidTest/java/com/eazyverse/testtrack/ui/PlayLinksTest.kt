@@ -32,6 +32,12 @@ class PlayLinksTest {
     }
 
     @Test
+    fun aCrewsInstallButtonOpensGooglePlay() {
+        openOnPlay(instrumentation.targetContext, "com.eazyverse.testtrack")
+        assertTrue("Top was: ${topActivity()}", playComesUp())
+    }
+
+    @Test
     fun getItOnPlayOpensGooglePlay() {
         openPlay(instrumentation.targetContext, "com.eazyverse.testtrack")
         assertTrue("Top was: ${topActivity()}", playComesUp())
