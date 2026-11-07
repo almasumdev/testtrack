@@ -248,6 +248,8 @@ data class ApiActionParts(
 @Serializable
 data class ClaimIn(
     @SerialName("device_fp") val deviceFp: String,
+    /** This app shows what a request asks for, so the server lets it take written ones. */
+    @SerialName("knows_feedback") val knowsFeedback: Boolean = true,
 )
 
 @Serializable
