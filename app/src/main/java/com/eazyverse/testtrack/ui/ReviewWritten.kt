@@ -232,5 +232,5 @@ internal fun Screenshots(
 @Composable
 internal fun CantFind(onAskAgain: () -> Unit) {
     Spacer(Modifier.height(14.dp))
-    QuietAction("Can't find it on Google Play?", "Ask for a new screenshot", onAskAgain)
+    QuietAction("Can't find it on Google Play?", "Ask again", onAskAgain)
 }

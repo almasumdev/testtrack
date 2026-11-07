@@ -33,7 +33,7 @@ data class Request(
     val readyTexts: List<String> = emptyList(),
 ) {
     /** Reviews still on their way, or waiting on the owner or the members. */
-    val underWay: Int get() = reviews.count { it.state in setOf("claimed", "installed", "used", "submitted", "disputed") }
+    val underWay: Int get() = reviews.count { it.state in setOf("claimed", "installed", "used", "submitted", "checking", "disputed") }
 }
 
 /** One review a request has had. */

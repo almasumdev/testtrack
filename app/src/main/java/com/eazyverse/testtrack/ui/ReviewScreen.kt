@@ -476,7 +476,8 @@ fun ReviewBody(
                             Spacer(Modifier.height(gap))
                             ReportLink(onReport)
                         }
-                        if (!job.settled && onGiveUp != null) {
+                        // A review sent and being checked is with the developer: nothing to give up.
+                        if (!job.settled && !job.rechecking && onGiveUp != null) {
                             Spacer(Modifier.height(gap))
                             GiveUpLink(onGiveUp)
                         }

@@ -67,8 +67,11 @@ data class MyReview(
     val opensAt: String? = null,
 )
 
-/** States a review is still being worked on in. Tapping any row opens its review page. */
-val InProgressStates = setOf("claimed", "installed", "used")
+/**
+ * States a review is still being worked on in. Tapping any row opens its review page. Checking is
+ * one: the developer can't find it on Play and the reviewer owes a new screenshot.
+ */
+val InProgressStates = setOf("claimed", "installed", "used", "checking")
 
 /** Sent, and with the developer (or the members deciding a dispute). */
 val PendingStates = setOf("submitted", "disputed")
@@ -239,6 +242,7 @@ private fun StepChip(review: MyReview) {
         when (review.state) {
             "claimed" -> 1
             "installed" -> 2
+            "checking" -> 4
             else -> 3
         }
     Pill("Step $step/4", Tt.colors.accentInk, Tt.colors.tile)

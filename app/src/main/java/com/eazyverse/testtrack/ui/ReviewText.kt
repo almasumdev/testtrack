@@ -155,8 +155,8 @@ internal fun stepLine(job: ReviewJob): String =
 /** The owner could not find the review on Play: a new screenshot of it, and by when. */
 private fun recheckLine(job: ReviewJob): String {
     val due = job.checkBy
-    val by = if (due != null) " by ${opensWhen(due)}" else ""
-    return "The developer can't find it on Google Play. Open its Play page and take a new screenshot of your review$by. " +
+    val by = if (due != null) " Send it ${opensWhen(due)} at the latest." else ""
+    return "The developer can't find it on Google Play. Open its Play page and take a new screenshot of your review.$by " +
         "If Google is hiding it, you can still see it there."
 }
 
