@@ -68,6 +68,12 @@ data class ReviewJob(
     private val firstUse: java.time.Instant?
         get() = firstUsedHere?.let { java.time.Instant.ofEpochMilli(it) } ?: instantOf(review.firstUsedAt)
 
+    /** Characters of text pasted from Play this review must carry; 0 for stars alone. */
+    val needsChars: Int get() = maxOf(post.needsChars, review.needsChars)
+
+    /** The text typed so far is long enough to send. */
+    fun textEnough(note: String): Boolean = plainLength(note) >= needsChars
+
     val step: ReviewStep
         get() {
             val reached = ReviewStep.of(review)

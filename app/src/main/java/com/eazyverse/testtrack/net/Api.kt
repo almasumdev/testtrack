@@ -235,6 +235,9 @@ object Api {
         reason: String,
     ): ApiDispute = post("/reviews/$reviewId/reject", RejectIn(reason))
 
+    /** Accept a review you refused, while the members are still deciding it. */
+    suspend fun acceptLater(reviewId: String): ApiReview = post("/reviews/$reviewId/accept", Empty())
+
     // ---------------------------------------------------------------- disputes
 
     suspend fun disputes(): List<ApiDispute> = kept(DISPUTES)

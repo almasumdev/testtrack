@@ -26,6 +26,11 @@ data class Request(
     val unlisted: Boolean = false,
     /** Why testers could not install it, newest first, without who said so. */
     val reports: List<InstallReport> = emptyList(),
+    /** What it asks of each reviewer (stars, written or detailed), and the characters that takes. */
+    val feedback: String = "stars",
+    val needsChars: Int = 0,
+    /** Its ready-written reviews, in the order they are handed out. */
+    val readyTexts: List<String> = emptyList(),
 ) {
     /** Reviews still on their way, or waiting on the owner or the members. */
     val underWay: Int get() = reviews.count { it.state in setOf("claimed", "installed", "used", "submitted", "disputed") }
@@ -39,18 +44,37 @@ data class RequestReview(
     val proofRef: String = "",
     val written: String = "",
     val reason: String = "",
-    /** A refusal's outcome: open, upheld or overturned; null if it was never refused. */
+    /** A refusal's outcome: open, upheld, overturned or accepted; null if it was never refused. */
     val outcome: String? = null,
     /** When a submitted one accepts itself, in epoch milliseconds. */
     val decideBy: Long? = null,
-)
+    /** Whether they used the ready-written review they were given: used, changed or own. */
+    val textUse: String? = null,
+) {
+    /** Refused, with the members still deciding: the owner can still accept it. */
+    val canAcceptLater: Boolean get() = state == "disputed" && outcome == "open"
+}
+
+/** How a sent text compares with the ready-written review its reviewer was given, in words. */
+fun textUseLabel(use: String?): String? =
+    when (use) {
+        "used" -> "Used your ready review"
+        "changed" -> "Changed your ready review"
+        "own" -> "In their own words"
+        else -> null
+    }
 
 /** Where one review of your app stands, in a few words. */
 fun requestReviewStatus(review: RequestReview): String =
     when (review.state) {
         "claimed", "installed", "used" -> "In progress"
         "submitted" -> "Waiting on you"
-        "approved" -> if (review.outcome == "overturned") "Paid after a dispute" else "Accepted"
+        "approved" ->
+            when (review.outcome) {
+                "overturned" -> "Paid after a dispute"
+                "accepted" -> "Accepted after all"
+                else -> "Accepted"
+            }
         "disputed" -> "Refused, members deciding"
         "rejected" -> "Refused and upheld"
         "abandoned" -> "Given up"

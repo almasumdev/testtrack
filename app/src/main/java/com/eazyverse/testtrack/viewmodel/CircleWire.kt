@@ -29,6 +29,9 @@ fun caseOf(it: ApiDispute) =
         reward = it.reward,
         isLive = it.isLive,
         icon = it.icon,
+        feedback = it.feedback,
+        needsChars = it.needsChars,
+        textUse = it.textUse,
     )
 
 fun requestOf(it: ApiMyPost) =
@@ -47,6 +50,9 @@ fun requestOf(it: ApiMyPost) =
         unlisted = it.unlistedAt != null,
         reports =
             it.reports.map { r -> InstallReport(r.label, r.note) },
+        feedback = it.feedback,
+        needsChars = it.needsChars,
+        readyTexts = it.readyTexts,
         reviews =
             it.reviews.map { r ->
                 RequestReview(
@@ -58,6 +64,7 @@ fun requestOf(it: ApiMyPost) =
                     reason = r.reason,
                     outcome = r.outcome,
                     decideBy = millis(r.decideBy),
+                    textUse = r.textUse,
                 )
             },
     )

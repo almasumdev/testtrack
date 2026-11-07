@@ -104,6 +104,7 @@ fun CheckScreen(
                     onClose = { feed.closeRequest(context, request.id) },
                     onRelist = { feed.relistRequest(context, request.id) },
                     onOpenWaiting = onOpen,
+                    onAcceptLater = { reviewId -> feed.acceptLater(context, reviewId) },
                 )
             case != null ->
                 CaseCheck(
@@ -132,6 +133,7 @@ fun CheckScreen(
     if (refusing && review != null) {
         FeedRefuseDialog(
             appName = review.appName,
+            needsChars = review.needsChars,
             onRefuse = { reason ->
                 refusing = false
                 feed.reject(context, review, reason)
@@ -284,7 +286,8 @@ fun ReviewCheck(
                 )
             }
         }
-        if (review.written.isNotBlank()) Said("Their note", review.written)
+        AskedFor(review.feedback, review.needsChars, owner = true)
+        TextGiven(review.written, review.needsChars, review.textUse)
         if (review.proofRef.isNotBlank()) {
             Spacer(Modifier.height(14.dp))
             proof(review.proofRef)
@@ -336,7 +339,8 @@ fun CaseCheck(
             ),
         )
         Said("The developer says", case.reason)
-        if (case.written.isNotBlank()) Said("The reviewer's note", case.written)
+        AskedFor(case.feedback, case.needsChars, owner = false)
+        TextGiven(case.written, case.needsChars, case.textUse, note = "The reviewer's note")
         if (case.proofRef.isNotBlank()) {
             Spacer(Modifier.height(14.dp))
             proof(case.proofRef)

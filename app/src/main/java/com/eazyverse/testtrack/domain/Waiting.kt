@@ -37,6 +37,11 @@ data class Waiting(
     val kept: Boolean? = null,
     /** The app's icon as its owner's My apps has it; empty where it has none, or from an older server. */
     val icon: String = "",
+    /** What the request asked for (stars, written or detailed), and the characters of text that takes. */
+    val feedback: String = "stars",
+    val needsChars: Int = 0,
+    /** Whether they used the ready-written review they were given: used, changed or own; null with none. */
+    val textUse: String? = null,
 )
 
 private const val HOUR = 3_600_000L
@@ -88,4 +93,9 @@ data class Case(
     val isLive: Boolean = true,
     /** The app's icon as its owner's My apps has it; empty where it has none, or from an older server. */
     val icon: String = "",
+    /** What the request asked for (stars, written or detailed), and the characters of text that takes. */
+    val feedback: String = "stars",
+    val needsChars: Int = 0,
+    /** Whether they used the ready-written review they were given: used, changed or own; null with none. */
+    val textUse: String? = null,
 )

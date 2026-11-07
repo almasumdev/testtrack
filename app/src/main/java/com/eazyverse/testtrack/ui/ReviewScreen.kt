@@ -300,8 +300,8 @@ fun ReviewBody(
                     Primary("Done", onClick = onClose)
                 } else {
                     val asking = job.step == ReviewStep.USE && !usageAccess
-                    // Step four cannot send until there is a screenshot to send; the note is optional.
-                    val waitingForProof = job.step == ReviewStep.PROVE && shown == null
+                    // Step four sends once there is a screenshot, and the text the request asks for.
+                    val waitingForProof = job.step == ReviewStep.PROVE && (shown == null || !job.textEnough(note))
                     val needsDrive = job.step == ReviewStep.PROVE && !driveConnected
                     // Waiting on a second day: opening the app today would not count, so the button
                     // says when instead. From the next calendar day it opens the app again.
@@ -426,6 +426,7 @@ fun ReviewBody(
                             }
                         }
                         if (!job.settled && job.step == ReviewStep.LEAVE) SelfShotLink { onLeave(ReviewStep.LEAVE) }
+                        WrittenAsk(job, gap, onNote)
                         if (sideloaded) {
                             Spacer(Modifier.height(gap))
                             Notice(Status.short, Lucide.TriangleAlert) {
@@ -442,6 +443,7 @@ fun ReviewBody(
                             ProofArea(
                                 shown = shown,
                                 note = note,
+                                needs = job.needsChars,
                                 onNote = onNote,
                                 onCapture = onCapture,
                                 onGallery = {

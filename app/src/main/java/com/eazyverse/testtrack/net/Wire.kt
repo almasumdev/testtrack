@@ -106,6 +106,10 @@ data class PostIn(
     @SerialName("reviews_bought") val reviewsBought: Int = 3,
     @SerialName("request_id") val requestId: String? = null,
     @SerialName("app_id") val appId: String? = null,
+    /** What each reviewer gives: stars, written or detailed (FeedRules.Feedback). */
+    val feedback: String = "stars",
+    /** Detailed only: ready-written reviews, each handed to one reviewer to use or not. */
+    @SerialName("ready_texts") val readyTexts: List<String> = emptyList(),
 )
 
 @Serializable
@@ -127,6 +131,9 @@ data class ApiPost(
     @SerialName("my_review_id") val myReviewId: String? = null,
     @SerialName("my_state") val myState: String? = null,
     @SerialName("created_at") val createdAt: String,
+    /** What the request asks for (stars, written or detailed) and the characters of text that takes. */
+    val feedback: String = "stars",
+    @SerialName("needs_chars") val needsChars: Int = 0,
 )
 
 /** One thing that happened in the community, as the Activity tab shows it. */
@@ -158,6 +165,8 @@ data class ApiOwnerReview(
     @SerialName("reviewer_name") val reviewerName: String = "",
     val outcome: String? = null,
     @SerialName("decide_by") val decideBy: String? = null,
+    /** Whether they used the ready-written review they were given: used, changed or own. */
+    @SerialName("text_use") val textUse: String? = null,
 )
 
 /** One of the reader's own requests, with every review it has had. */
@@ -180,6 +189,10 @@ data class ApiMyPost(
     @SerialName("unlisted_at") val unlistedAt: String? = null,
     /** Why testers could not install it, newest first, without who said so. */
     val reports: List<ApiPostReport> = emptyList(),
+    /** What the request asks for (stars, written or detailed) and the characters of text that takes. */
+    val feedback: String = "stars",
+    @SerialName("needs_chars") val needsChars: Int = 0,
+    @SerialName("ready_texts") val readyTexts: List<String> = emptyList(),
 )
 
 @Serializable
@@ -296,6 +309,13 @@ data class ApiReview(
     // Only on /reviews/waiting: who sent it, and when it accepts itself.
     @SerialName("reviewer_name") val reviewerName: String = "",
     @SerialName("decide_by") val decideBy: String? = null,
+    /** The owner's ready-written review handed to this reviewer alone; empty when there is none. */
+    val offered: String = "",
+    /** How the sent text compares with [offered]: used, changed or own. */
+    @SerialName("text_use") val textUse: String? = null,
+    /** What the request asks for (stars, written or detailed) and the characters of text that takes. */
+    val feedback: String = "stars",
+    @SerialName("needs_chars") val needsChars: Int = 0,
 )
 
 @Serializable
@@ -316,6 +336,10 @@ data class ApiDispute(
     val reward: Int = 0,
     /** The app's icon as its owner's My apps has it; empty where it has none, or from an older server. */
     val icon: String = "",
+    /** What the request asks for (stars, written or detailed) and the characters of text that takes. */
+    val feedback: String = "stars",
+    @SerialName("needs_chars") val needsChars: Int = 0,
+    @SerialName("text_use") val textUse: String? = null,
 )
 
 @Serializable

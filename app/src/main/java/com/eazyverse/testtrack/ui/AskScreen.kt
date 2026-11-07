@@ -99,13 +99,27 @@ fun AskScreen(
                         maxLength = FeedRules.ASK_MAX,
                     )
                     Spacer(Modifier.height(16.dp))
+                    AskFeedbackChoice(vm.feedback, enabled = !vm.posting, onWritten = vm::askWritten, onDetailed = vm::askDetailed)
+                    Spacer(Modifier.height(16.dp))
                     ReviewInvestment(
                         reviews = vm.reviewCount,
                         reward = vm.reward,
                         enabled = !vm.posting,
                         onReviewsChange = vm::changeReviewCount,
                         onRewardChange = vm::changeReward,
+                        least = vm.feedback.least,
                     )
+                    if (vm.feedback == FeedRules.Feedback.DETAILED) {
+                        Spacer(Modifier.height(20.dp))
+                        AskReadyTexts(
+                            texts = vm.readyTexts,
+                            max = vm.reviewCount,
+                            enabled = !vm.posting,
+                            onAdd = vm::addReady,
+                            onEdit = vm::editReady,
+                            onRemove = vm::removeReady,
+                        )
+                    }
                     Spacer(Modifier.height(20.dp))
                     AskBudget(cost = vm.cost, balance = vm.tix, reviews = vm.reviewCount)
                     Spacer(Modifier.height(16.dp))

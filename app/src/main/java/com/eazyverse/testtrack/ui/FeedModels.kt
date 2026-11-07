@@ -60,6 +60,32 @@ object FeedRules {
     const val MIN_REVIEWS = 1
     const val MAX_REVIEWS = 50
 
+    /**
+     * What a request asks of each reviewer (rules.FEEDBACK): the least it may pay for one review,
+     * and the characters of text pasted from Play. Stars is every request from before these.
+     */
+    enum class Feedback(
+        val wire: String,
+        val least: Int,
+        val chars: Int,
+        val label: String,
+    ) {
+        STARS("stars", MIN_REWARD, 0, "Star rating"),
+        WRITTEN("written", 35, 100, "Written feedback"),
+        DETAILED("detailed", 50, 250, "Detailed feedback"),
+        ;
+
+        companion object {
+            fun of(wire: String): Feedback = entries.firstOrNull { it.wire == wire } ?: STARS
+        }
+    }
+
+    /** The longest text a review may carry, and so a ready-written one (rules.WRITTEN_MAX). */
+    const val WRITTEN_MAX = 600
+
+    /** The feed's options version from which a request can ask for written or detailed feedback. */
+    const val FEEDBACK_OPTIONS = 3
+
     /** What going up costs, given what it is offering. */
     fun postCost(
         reward: Int,

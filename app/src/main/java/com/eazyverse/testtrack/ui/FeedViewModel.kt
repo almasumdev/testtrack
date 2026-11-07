@@ -420,6 +420,9 @@ class FeedViewModel : ViewModel() {
             packageName = it.packageName.ifBlank { post?.packageName.orEmpty() },
             kept = it.kept,
             icon = it.icon,
+            feedback = it.feedback,
+            needsChars = it.needsChars,
+            textUse = it.textUse,
         )
     }
 
@@ -440,6 +443,12 @@ class FeedViewModel : ViewModel() {
         review: Waiting,
         reason: String,
     ) = decide(context, review.id, "Refused. Three members will decide it.") { Api.reject(review.id, reason) }
+
+    /** Accept a review you refused, while the members are still deciding. The reviewer is paid. */
+    fun acceptLater(
+        context: Context,
+        reviewId: String,
+    ) = decide(context, reviewId, "Accepted. The reviewer has been paid.") { Api.acceptLater(reviewId) }
 
     /** Come down on one side of a case between two other people. */
     fun vote(

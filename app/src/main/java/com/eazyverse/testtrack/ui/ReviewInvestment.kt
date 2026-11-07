@@ -23,6 +23,8 @@ internal fun ReviewInvestment(
     enabled: Boolean,
     onReviewsChange: (Int) -> Unit,
     onRewardChange: (Int) -> Unit,
+    /** The least a review may pay for what the request asks (FeedRules.Feedback.least). */
+    least: Int = FeedRules.MIN_REWARD,
 ) {
     Column {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -72,14 +74,15 @@ internal fun ReviewInvestment(
         }
         Slider(
             value = reward.toFloat(),
-            onValueChange = { onRewardChange((it / 10).roundToInt() * 10) },
-            valueRange = FeedRules.MIN_REWARD.toFloat()..FeedRules.MAX_REWARD.toFloat(),
-            steps = (FeedRules.MAX_REWARD - FeedRules.MIN_REWARD) / 10 - 1,
+            // In fives from the least, so 35 for written feedback is a stop of its own.
+            onValueChange = { onRewardChange((it / 5).roundToInt() * 5) },
+            valueRange = least.toFloat()..FeedRules.MAX_REWARD.toFloat(),
+            steps = (FeedRules.MAX_REWARD - least) / 5 - 1,
             enabled = enabled,
             modifier = Modifier.semantics { contentDescription = "Ticket reward per review" },
         )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("${FeedRules.MIN_REWARD} tix", style = MaterialTheme.typography.bodySmall)
+            Text("$least tix", style = MaterialTheme.typography.bodySmall)
             Text("${FeedRules.MAX_REWARD} tix", style = MaterialTheme.typography.bodySmall)
         }
     }

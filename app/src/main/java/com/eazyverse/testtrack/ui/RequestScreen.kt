@@ -57,8 +57,11 @@ fun RequestCheck(
     onClose: () -> Unit = {},
     onOpenWaiting: (String) -> Unit = {},
     onRelist: () -> Unit = {},
+    /** Accept a review the owner refused, while its case is still open. */
+    onAcceptLater: (String) -> Unit = {},
 ) {
     var closing by remember { mutableStateOf(false) }
+    var accepting by remember { mutableStateOf<RequestReview?>(null) }
     CheckPage(
         title = "Your request",
         onBack = onBack,
@@ -94,6 +97,12 @@ fun RequestCheck(
                 Stat("Pays", "${request.reward} tix"),
             ),
         )
+        AskedFor(request.feedback, request.needsChars, owner = true)
+        if (request.readyTexts.isNotEmpty()) {
+            Spacer(Modifier.height(6.dp))
+            val n = request.readyTexts.size
+            DialogNote("$n ready-written ${if (n == 1) "review" else "reviews"}, each for one reviewer. Nobody has to use them.")
+        }
         Spacer(Modifier.height(20.dp))
         Text(
             when (request.reviews.size) {
@@ -120,7 +129,7 @@ fun RequestCheck(
                         .spacedBy(10.dp),
             ) {
                 request.reviews.forEach { review ->
-                    RequestReviewCard(review, proof) { onOpenWaiting(review.id) }
+                    RequestReviewCard(review, request.needsChars, proof, { accepting = review }) { onOpenWaiting(review.id) }
                 }
             }
         }
@@ -146,13 +155,29 @@ fun RequestCheck(
             onDismiss = { closing = false },
         )
     }
+    accepting?.let { review ->
+        Ask(
+            title = "Accept it after all?",
+            body =
+                "The reviewer is paid ${request.reward} tix and the members stop deciding. Members who already voted " +
+                    "get ${FeedRules.JUROR_FEE} tix each from your ${FeedRules.STAKE} tix stake, and the rest comes back to you.",
+            confirm = "Accept and pay",
+            onConfirm = {
+                accepting = null
+                onAcceptLater(review.id)
+            },
+            onDismiss = { accepting = null },
+        )
+    }
 }
 
 /** One review of the request: who, where it stands, and on tap what they sent. */
 @Composable
 private fun RequestReviewCard(
     review: RequestReview,
+    needs: Int,
     proof: @Composable (String) -> Unit,
+    onAcceptLater: () -> Unit,
     onOpenWaiting: () -> Unit,
 ) {
     val t = Tt.colors
@@ -199,10 +224,14 @@ private fun RequestReviewCard(
                 Spacer(Modifier.height(4.dp))
                 DialogNote("You said: ${review.reason}")
             }
+            if (review.canAcceptLater) {
+                Spacer(Modifier.height(8.dp))
+                QuietAction("Refused by mistake?", "Accept after all", onAcceptLater)
+            }
         }
         AnimatedVisibility(open && !waiting) {
             Column {
-                if (review.written.isNotBlank()) Said("Their note", review.written)
+                TextGiven(review.written, needs, review.textUse)
                 if (review.proofRef.isNotBlank()) {
                     Spacer(Modifier.height(12.dp))
                     proof(review.proofRef)

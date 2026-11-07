@@ -124,6 +124,8 @@ fun ProofArea(
     shown: Uri?,
     note: String,
     onNote: (String) -> Unit,
+    /** Characters of pasted text the request asks for; 0 when the note is optional. */
+    needs: Int = 0,
     onCapture: () -> Unit,
     onGallery: () -> Unit,
     onInspect: (Uri) -> Unit = {},
@@ -143,7 +145,16 @@ fun ProofArea(
                 if (picture == null) EmptyShot() else Shot(picture) { onInspect(picture) }
             }
             Spacer(Modifier.width(12.dp))
-            NoteField(note, onNote, Modifier.weight(1f).height(THUMB_HEIGHT))
+            NoteField(note, onNote, Modifier.weight(1f).height(THUMB_HEIGHT), needs)
+        }
+        if (needs > 0) {
+            val have = plainLength(note)
+            Text(
+                if (have >= needs) "$have characters. Enough." else "$have of at least $needs characters.",
+                Modifier.padding(top = 6.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (have >= needs) t.ok else t.text3,
+            )
         }
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -232,6 +243,7 @@ private fun NoteField(
     note: String,
     onNote: (String) -> Unit,
     modifier: Modifier,
+    needs: Int,
 ) {
     val t = Tt.colors
     val style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.5.sp, lineHeight = 20.sp, color = t.text)
@@ -248,7 +260,12 @@ private fun NoteField(
         cursorBrush = SolidColor(t.accent),
         decorationBox = { field ->
             Box {
-                if (note.isEmpty()) Text("A note for the developer (optional)", style = style.copy(color = t.text3))
+                if (note.isEmpty()) {
+                    Text(
+                        if (needs > 0) "Paste the text you left on Google Play" else "A note for the developer (optional)",
+                        style = style.copy(color = t.text3),
+                    )
+                }
                 field()
             }
         },

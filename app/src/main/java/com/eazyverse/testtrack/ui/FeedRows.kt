@@ -293,7 +293,10 @@ fun FeedRequestCard(
                 )
                 // Which kind decides how it is reviewed. Never whose it is: requests are anonymous,
                 // and what the developer asks is on the review itself.
-                KindPill(if (post.isLive) CheckKind.PLAY else CheckKind.CLOSED)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    KindPill(if (post.isLive) CheckKind.PLAY else CheckKind.CLOSED)
+                    FeedbackPill(post.feedback)
+                }
             }
             Spacer(Modifier.width(10.dp))
             if (!post.mine) TixReward(post.reward)

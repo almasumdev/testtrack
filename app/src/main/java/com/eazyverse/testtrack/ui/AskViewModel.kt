@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -52,13 +53,57 @@ class AskViewModel : ViewModel() {
     var reviewCount by mutableStateOf(FeedRules.REVIEWS_BOUGHT)
         private set
 
+    /** What each reviewer gives. Ticking written or detailed raises the least a review may pay. */
+    var feedback by mutableStateOf(FeedRules.Feedback.STARS)
+        private set
+
+    /** A detailed request's ready-written reviews, as typed; blank ones are not sent. */
+    val readyTexts = mutableStateListOf<String>()
+
     fun changeReward(value: Int) {
-        reward = value.coerceIn(FeedRules.MIN_REWARD, FeedRules.MAX_REWARD)
+        reward = value.coerceIn(feedback.least, FeedRules.MAX_REWARD)
     }
 
     fun changeReviewCount(value: Int) {
         reviewCount = value.coerceIn(FeedRules.MIN_REVIEWS, FeedRules.MAX_REVIEWS)
+        // Fewer reviews than ready ones: the empty ones go; written ones stay for the owner to choose.
+        while (readyTexts.size > reviewCount && readyTexts.last().isBlank()) readyTexts.removeAt(readyTexts.lastIndex)
     }
+
+    /** Written off takes detailed with it: detailed feedback is written feedback, only longer. */
+    fun askWritten(on: Boolean) = changeFeedback(if (on) FeedRules.Feedback.WRITTEN else FeedRules.Feedback.STARS)
+
+    fun askDetailed(on: Boolean) = changeFeedback(if (on) FeedRules.Feedback.DETAILED else FeedRules.Feedback.WRITTEN)
+
+    private fun changeFeedback(to: FeedRules.Feedback) {
+        feedback = to
+        if (reward < to.least) reward = to.least
+        if (to != FeedRules.Feedback.DETAILED) readyTexts.clear()
+    }
+
+    fun addReady() {
+        if (readyTexts.size < reviewCount) readyTexts.add("")
+    }
+
+    fun editReady(
+        index: Int,
+        text: String,
+    ) {
+        if (index in readyTexts.indices) readyTexts[index] = text
+    }
+
+    fun removeReady(index: Int) {
+        if (index in readyTexts.indices) readyTexts.removeAt(index)
+    }
+
+    private val ready: List<String> get() = readyTexts.map { it.trim() }.filter { it.isNotEmpty() }
+
+    /** Each filled one long enough, all different, and no more of them than reviews asked for. */
+    private val readyOk: Boolean
+        get() =
+            ready.size <= reviewCount &&
+                ready.all { plainLength(it) >= FeedRules.Feedback.DETAILED.chars } &&
+                ready.map { it.lowercase() }.toSet().size == ready.size
 
     /**
      * Read once when the page opens, so the cost line can say what you have.
@@ -110,7 +155,7 @@ class AskViewModel : ViewModel() {
     private val inRange: Boolean get() = reward in FeedRules.MIN_REWARD..FeedRules.MAX_REWARD
     private val affordable: Boolean get() = inRange && cost <= tix
 
-    val canPost: Boolean get() = found != null && affordable && !posting
+    val canPost: Boolean get() = found != null && affordable && readyOk && reward >= feedback.least && !posting
 
     /** The app on My apps this request is for. */
     var appId by mutableStateOf<String?>(null)
@@ -140,6 +185,8 @@ class AskViewModel : ViewModel() {
                 reviewsBought = reviewCount,
                 isLive = isLive,
                 appId = appId,
+                feedback = feedback.wire,
+                readyTexts = if (feedback == FeedRules.Feedback.DETAILED) ready else emptyList(),
             )
         val operation =
             pendingRequest?.takeIf { it.copy(requestId = null) == request }
@@ -162,6 +209,10 @@ class AskViewModel : ViewModel() {
                         if (error.status != 404) throw error
                         null
                     }
+                // An older server would take the request as stars and say nothing.
+                check(request.feedback == FeedRules.Feedback.STARS.wire || (options?.version ?: 0) >= FeedRules.FEEDBACK_OPTIONS) {
+                    "Written and detailed feedback aren't available yet. Untick them to ask for star ratings."
+                }
                 if (options == null) {
                     check(request.reviewsBought == FeedRules.REVIEWS_BOUGHT) {
                         "Custom review counts aren't available yet. Choose ${FeedRules.REVIEWS_BOUGHT} reviews for now."
