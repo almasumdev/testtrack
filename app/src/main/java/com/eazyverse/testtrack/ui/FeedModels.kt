@@ -49,6 +49,13 @@ object FeedRules {
     const val LIVE_USE_SECONDS = 300
     const val CLOSED_USE_SECONDS = 120
 
+    /** rules.LIVE_RETURN_HOURS: a live app is used again this long after its first use. */
+    const val LIVE_RETURN_HOURS = 20
+
+    /** rules.CLAIM_HOURS and rules.LIVE_CLAIM_HOURS: how long a taken review may sit unfinished. */
+    const val CLAIM_HOURS = 24
+    const val LIVE_CLAIM_HOURS = 72
+
     /** The least a post may offer. Below this nobody writes forty characters for it. */
     const val MIN_REWARD = 20
 

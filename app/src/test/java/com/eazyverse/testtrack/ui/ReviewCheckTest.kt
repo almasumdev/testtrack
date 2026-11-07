@@ -79,4 +79,26 @@ class ReviewCheckTest {
         assertEquals("No new screenshot came", requestReviewStatus(RequestReview("r1", "rejected", checked = true)))
         assertFalse(requestReviewStatus(RequestReview("r1", "rejected")) == "No new screenshot came")
     }
+
+    @Test
+    fun `the first page lists what a review asks, by kind of request`() {
+        val live = ReviewJob(post(100), review("claimed", 100))
+        assertEquals(
+            listOf(
+                "Install it from Play",
+                "Use it for 5 minutes",
+                "Open it again tomorrow, after 20 hours",
+                "Review it on Google Play: stars and at least 100 characters",
+                "Take a screenshot of your review with the capture button",
+            ),
+            todoLines(live),
+        )
+        assertEquals("You get 41 tix. Finish within 3 days.", todoPayLine(live))
+
+        val closed = ReviewJob(post().copy(isLive = false), review("claimed"))
+        assertEquals(4, todoLines(closed).size)
+        assertEquals("Use it for 2 minutes", todoLines(closed)[1])
+        assertEquals("Give it a star rating on Google Play", todoLines(closed)[2])
+        assertEquals("You get 41 tix. Finish within 1 day.", todoPayLine(closed))
+    }
 }

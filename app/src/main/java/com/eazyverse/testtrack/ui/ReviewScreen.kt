@@ -430,6 +430,7 @@ fun ReviewBody(
                         }
                         if (!job.settled && job.step == ReviewStep.LEAVE) SelfShotLink { onLeave(ReviewStep.LEAVE) }
                         WrittenAsk(job, gap, onNote, onNoBox)
+                        WhatYouWillDo(job)
                         if (sideloaded) {
                             Spacer(Modifier.height(gap))
                             Notice(Status.short, Lucide.TriangleAlert) {
