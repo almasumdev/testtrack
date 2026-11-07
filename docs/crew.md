@@ -207,11 +207,16 @@ Decided 27 October 2026, and built. Proof is two things, as it was in the August
 counts only with both:
 
 - **Time.** Each app is open for 20 seconds in a round. It counts with at least 10 of them really
-  in front, by the phone's own usage record, which the server holds to its floor.
+  in front, by the phone's own usage record, which the server holds to its floor. With the testing control
+  floating, the next app opens by itself after the 20 seconds (7 November 2026); pause holds an
+  app for longer. Time in a browser counts as the app's when the app hands over to it straight
+  away (a Custom Tab, a web app in a browser's frame), and stops when anything else comes in front.
 - **A picture.** TestTrack takes one picture of the app at a moment picked at random between 10
   and 20 seconds: past the app's opening logo, and not a moment anybody can time a screen for. The
   testing control is in the picture on purpose, so it shows the app's name and its place in the
-  round.
+  round. The picture is taken only while the phone's usage record says the app (or the
+  browser it handed over to) is in front, checked just before and just after, so it is never a
+  picture of TestTrack.
 
 How it runs:
 

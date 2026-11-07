@@ -43,7 +43,8 @@ object UsageSessions {
         pkg: String,
         since: Long,
         now: Long,
-    ): Long = sessions(events, pkg, since, now).sumOf { it.last - it.first }
+        helpers: Set<String> = emptySet(),
+    ): Long = sessions(events, pkg, since, now, helpers).sumOf { it.last - it.first }
 
     /**
      * How many calendar days [pkg] was really used on between [since] and [now]: the days a sitting
@@ -57,8 +58,9 @@ object UsageSessions {
         now: Long,
         dayOf: (Long) -> Long,
         minMs: Long = 15_000L,
+        helpers: Set<String> = emptySet(),
     ): Int =
-        sessions(events, pkg, since, now)
+        sessions(events, pkg, since, now, helpers)
             .filter { it.last - it.first >= minMs }
             .map { dayOf(it.first) }
             .distinct()
@@ -75,21 +77,48 @@ object UsageSessions {
         since: Long,
         now: Long,
         minMs: Long = 15_000L,
+        helpers: Set<String> = emptySet(),
     ): Long? =
-        sessions(events, pkg, since, now)
+        sessions(events, pkg, since, now, helpers)
             .filter { it.last - it.first >= minMs }
             .minOfOrNull { it.first }
 
-    /** Each sitting of [pkg] in front, clipped to the window, as its start and end. */
+    /**
+     * Whether [pkg] is in front at [now], itself or through a browser it handed over to: what the
+     * night's picture waits for, so it is never a picture of TestTrack or of whatever came next.
+     */
+    fun inFront(
+        events: List<Event>,
+        pkg: String,
+        since: Long,
+        now: Long,
+        helpers: Set<String> = emptySet(),
+    ): Boolean = sessions(events, pkg, since, now, helpers).lastOrNull()?.last == now
+
+    /**
+     * Each sitting of [pkg] in front, clipped to the window, as its start and end.
+     *
+     * [helpers] are the browsers on the phone. Some apps are a web page in a browser's frame (a
+     * Custom Tab or a Trusted Web Activity): the app's own screen shows for a moment and hands
+     * over to the browser's, which Android logs as the browser in front. Time in a browser counts
+     * as the app's only when it takes over straight from the app, within [HANDOVER_MS], and stops
+     * when anything else comes to the front. A browser opened any other way counts nothing.
+     *
+     * A pause does not close the sitting at once: Android logs the leaving screen's pause before
+     * the next screen's resume, so the sitting waits for that next resume to say who took over.
+     */
     private fun sessions(
         events: List<Event>,
         pkg: String,
         since: Long,
         now: Long,
+        helpers: Set<String> = emptySet(),
     ): List<LongRange> {
         if (since >= now) return emptyList()
         val resumed = HashSet<String>()
         var openedAt = 0L
+        // When the last screen of the sitting paused; 0 while one is still in front.
+        var leftAt = 0L
         val found = ArrayList<LongRange>()
 
         // Keyed on [openedAt], not on [resumed]: the last pause empties [resumed] just before
@@ -102,23 +131,40 @@ object UsageSessions {
             }
             resumed.clear()
             openedAt = 0L
+            leftAt = 0L
         }
 
         for (event in events.sortedBy { it.at }) {
+            val ours = event.pkg == pkg
+            val helper = !ours && event.pkg in helpers
+            val key = "${event.pkg}/${event.activity}"
             when (event.kind) {
-                Kind.SCREEN_OFF -> close(event.at)
-                Kind.RESUMED ->
-                    if (event.pkg == pkg) {
-                        if (resumed.isEmpty()) openedAt = event.at
-                        resumed += event.activity
+                Kind.SCREEN_OFF -> close(if (leftAt > 0L) leftAt else event.at)
+                Kind.RESUMED -> {
+                    val handedOver = leftAt > 0L && event.at - leftAt <= HANDOVER_MS
+                    when {
+                        // Back in the app, or a browser taking over from it: the sitting goes on.
+                        (ours || helper) && (resumed.isNotEmpty() || handedOver) -> {
+                            leftAt = 0L
+                            resumed += key
+                        }
+                        ours -> {
+                            close(leftAt)
+                            openedAt = event.at
+                            resumed += key
+                        }
+                        // Some other app came to the front: the sitting ended when the app left.
+                        leftAt > 0L -> close(leftAt)
                     }
+                }
                 Kind.PAUSED ->
-                    if (event.pkg == pkg && resumed.remove(event.activity) && resumed.isEmpty()) {
-                        close(event.at)
-                    }
+                    if (resumed.remove(key) && resumed.isEmpty()) leftAt = event.at
             }
         }
-        close(now)
+        close(if (leftAt > 0L) leftAt else now)
         return found
     }
+
+    /** How soon after the app's last screen pauses a browser's must resume to be the app's. */
+    const val HANDOVER_MS = 3_000L
 }

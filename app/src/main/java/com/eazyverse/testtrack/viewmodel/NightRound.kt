@@ -28,8 +28,9 @@ import java.time.ZoneId
  *
  * App-wide rather than the Crew screen's, because most of a round happens with TestTrack behind
  * somebody else's app. With "display over other apps" allowed, the testing control floats over
- * each app with its ten seconds, its sign-in and one button; play on a counted app records it and
- * opens the next without a trip back to TestTrack. Without it, a round is the old one: open, come
+ * each app with its ten seconds, its sign-in and one button; a counted app is recorded and the next
+ * opens by itself once its twenty seconds are up, or sooner with the button, without a trip back
+ * to TestTrack. Without it, a round is the old one: open, come
  * back, and the next opens on its own.
  *
  * Every step is written to [RoundStore], so Android closing TestTrack mid-visit loses nothing: the
@@ -60,6 +61,9 @@ object NightRound {
     /** Time the control has been up and running for this app, and whether it is paused. */
     private var ranMs = 0L
     private var paused = false
+
+    /** The move to the next app is under way, so the clock and the button do not start another. */
+    private var advancing = false
 
     /** Whether this round takes pictures, and this app's: taken, failed, or not yet. */
     private var pictures = false
@@ -99,13 +103,14 @@ object NightRound {
         RoundStore.save(context, round)
         ranMs = 0
         paused = false
+        advancing = false
         shot = null
         shotFailed = false
         window?.show()
         publish()
         // The clock runs without the control too: it is what says when the picture is due.
-        tick()
-        if (pictures) shoot(context, stop)
+        tick(context)
+        if (pictures) shoot(context, stop, round?.since ?: return)
         if (!InstalledApps.launch(context, stop.packageName)) {
             pendingSay = "${stop.label} is not on this phone. Install it from its row first."
             end(context)
@@ -113,7 +118,13 @@ object NightRound {
         }
     }
 
-    private fun tick() {
+    /**
+     * The control's clock. Once an app has had its twenty seconds, a floating round records it and
+     * opens the next by itself, as the August app did; pause holds it for longer. Without the
+     * control there is nothing over the app to move on from, and the round goes on when TestTrack
+     * is back in front.
+     */
+    private fun tick(context: Context) {
         ticker?.cancel()
         ticker =
             scope.launch {
@@ -125,6 +136,7 @@ object NightRound {
                         ranMs = (ranMs + now - last).coerceAtMost(VISIT_MS)
                         publish()
                     }
+                    if (!paused && ranMs >= VISIT_MS && window != null) next(context)
                     last = now
                 }
             }
@@ -147,17 +159,34 @@ object NightRound {
     /**
      * The app's picture, once its ten seconds are in and while it is still on screen. A press of
      * Next before it is taken waits for it ([picture]) rather than leaving the app without one.
+     *
+     * The phone's usage record is asked whether the app is in front just before the picture and
+     * just after it. The clock runs from the moment the app was asked to open, so an app slow to
+     * open, one that closed itself, or a tester back in TestTrack would otherwise be a picture of
+     * TestTrack. Not in front, it waits and asks again; left while the picture was taken, the
+     * picture is thrown away and taken again.
      */
     private fun shoot(
         context: Context,
         stop: RoundStore.Stop,
+        since: Long,
     ) {
         shooting?.cancel()
         shooting =
             scope.launch {
                 val at = COUNT_MS + kotlin.random.Random.nextLong(VISIT_MS - COUNT_MS)
                 while (isActive && ranMs < at) delay(200)
-                val file = VisitCameraService.take(context, "${stop.seatId.take(8)}_${System.currentTimeMillis()}")
+                val name = "${stop.seatId.take(8)}_${System.currentTimeMillis()}"
+                var file: File? = null
+                while (isActive) {
+                    if (UsageRepo.inFront(context, stop.packageName, since)) {
+                        file = VisitCameraService.take(context, name) ?: break
+                        if (UsageRepo.inFront(context, stop.packageName, since)) break
+                        file.delete()
+                        file = null
+                    }
+                    delay(500)
+                }
                 if (round?.current?.seatId != stop.seatId) {
                     file?.delete()
                     return@launch
@@ -177,6 +206,7 @@ object NightRound {
 
     /** The control's one button: pause or play while the clock runs, the next app once it counts. */
     private fun playPause(context: Context) {
+        if (advancing) return
         if (ranMs >= VISIT_MS) {
             next(context)
         } else {
@@ -186,8 +216,10 @@ object NightRound {
     }
 
     private fun next(context: Context) {
+        if (advancing) return
         val now = round ?: return
         val stop = now.current ?: return
+        advancing = true
         scope.launch {
             val taken = picture()
             when (val result = record(context, stop, now.since, taken)) {
@@ -195,6 +227,7 @@ object NightRound {
                     // Left the app part way, by the phone's own count: the clock goes back to that.
                     ranMs = result.ms
                     paused = false
+                    advancing = false
                     publish()
                 }
                 is Outcome.Failed -> {

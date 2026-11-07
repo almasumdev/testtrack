@@ -182,22 +182,9 @@ object UsageRepo {
         if (since <= 0L || since >= now) return Reading(0L, 0, access = true)
 
         return runCatching {
-            val raw = manager.queryEvents(since - LOOK_BACK, now)
-            val event = UsageEvents.Event()
-            val events = ArrayList<UsageSessions.Event>()
-            var mine = 0
-            while (raw.hasNextEvent()) {
-                raw.getNextEvent(event)
-                val kind =
-                    when (event.eventType) {
-                        UsageEvents.Event.MOVE_TO_FOREGROUND -> UsageSessions.Kind.RESUMED
-                        UsageEvents.Event.MOVE_TO_BACKGROUND, ACTIVITY_STOPPED -> UsageSessions.Kind.PAUSED
-                        SCREEN_NON_INTERACTIVE, KEYGUARD_SHOWN, DEVICE_SHUTDOWN -> UsageSessions.Kind.SCREEN_OFF
-                        else -> null
-                    } ?: continue
-                if (event.packageName == pkg) mine++
-                events += UsageSessions.Event(kind, event.packageName ?: "", event.className ?: "", event.timeStamp)
-            }
+            val helpers = browsers(context) - pkg
+            val events = events(manager, since - LOOK_BACK, now)
+            val mine = events.count { it.pkg == pkg }
             val zone = java.time.ZoneId.systemDefault()
             val dayOf = { at: Long ->
                 java.time.Instant
@@ -207,14 +194,77 @@ object UsageRepo {
                     .toEpochDay()
             }
             Reading(
-                UsageSessions.foregroundMs(events, pkg, since, now),
+                UsageSessions.foregroundMs(events, pkg, since, now, helpers),
                 mine,
                 access = true,
-                days = UsageSessions.daysUsed(events, pkg, since, now, dayOf),
-                firstAt = UsageSessions.firstUse(events, pkg, since, now),
+                days = UsageSessions.daysUsed(events, pkg, since, now, dayOf, helpers = helpers),
+                firstAt = UsageSessions.firstUse(events, pkg, since, now, helpers = helpers),
             )
         }.getOrDefault(Reading(0L, 0, access = true))
     }
+
+    /**
+     * Whether [pkg] is on screen now, by the phone's own record: the app itself, or a browser it
+     * handed over to. Read before and after the night's picture so the picture is of the app and
+     * never of TestTrack. True when there is no usage access, since nothing could be checked and
+     * the visit will not count without it anyway.
+     */
+    suspend fun inFront(
+        context: Context,
+        pkg: String,
+        since: Long,
+    ): Boolean =
+        withContext(Dispatchers.Default) {
+            if (!hasAccess(context)) return@withContext true
+            val manager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+            val now = System.currentTimeMillis()
+            runCatching {
+                val events = events(manager, since - LOOK_BACK, now)
+                UsageSessions.inFront(events, pkg, since, now, browsers(context) - pkg)
+            }.getOrDefault(true)
+        }
+
+    /** The phone's usage events between [from] and [to], in the terms [UsageSessions] works in. */
+    private fun events(
+        manager: UsageStatsManager,
+        from: Long,
+        to: Long,
+    ): List<UsageSessions.Event> {
+        val raw = manager.queryEvents(from, to)
+        val event = UsageEvents.Event()
+        val events = ArrayList<UsageSessions.Event>()
+        while (raw.hasNextEvent()) {
+            raw.getNextEvent(event)
+            @Suppress("DEPRECATION")
+            val kind =
+                when (event.eventType) {
+                    UsageEvents.Event.MOVE_TO_FOREGROUND -> UsageSessions.Kind.RESUMED
+                    UsageEvents.Event.MOVE_TO_BACKGROUND, ACTIVITY_STOPPED -> UsageSessions.Kind.PAUSED
+                    SCREEN_NON_INTERACTIVE, KEYGUARD_SHOWN, DEVICE_SHUTDOWN -> UsageSessions.Kind.SCREEN_OFF
+                    else -> null
+                } ?: continue
+            events += UsageSessions.Event(kind, event.packageName ?: "", event.className ?: "", event.timeStamp)
+        }
+        return events
+    }
+
+    /**
+     * The browsers on this phone: whatever opens a web link, and whatever offers Custom Tabs. An
+     * app that is a web page in a browser's frame is in front as the browser, and its time is
+     * counted through these (see [UsageSessions]).
+     */
+    private fun browsers(context: Context): Set<String> {
+        val pm = context.packageManager
+        val web =
+            Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com"))
+                .addCategory(Intent.CATEGORY_BROWSABLE)
+        val links = runCatching { pm.queryIntentActivities(web, PackageManager.MATCH_ALL) }.getOrDefault(emptyList())
+        val tabs = runCatching { pm.queryIntentServices(Intent(CUSTOM_TABS), 0) }.getOrDefault(emptyList())
+        return (links.mapNotNull { it.activityInfo?.packageName } + tabs.mapNotNull { it.serviceInfo?.packageName })
+            .toSet() - context.packageName
+    }
+
+    private const val CUSTOM_TABS = "android.support.customtabs.action.CustomTabsService"
 
     /** How far before the window events are read, to catch a session already under way. */
     private const val LOOK_BACK = 6 * 60 * 60 * 1000L

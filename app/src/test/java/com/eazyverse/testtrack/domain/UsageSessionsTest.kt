@@ -137,4 +137,53 @@ class UsageSessionsTest {
         assertEquals(100_000L, UsageSessions.firstUse(events, app, 0L, 1_000_000L))
         assertEquals(null, UsageSessions.firstUse(listOf(on(10), off(15)), app, 0L, 1_000_000L))
     }
+
+    private val browser = "com.android.chrome"
+
+    private fun withBrowser(
+        events: List<Event>,
+        now: Int = 1000,
+    ) = UsageSessions.foregroundMs(events, app, 0, now * 1000L, setOf(browser)) / 1000
+
+    @Test
+    fun a_browser_the_app_hands_over_to_counts_as_the_app() {
+        // A web app: its own screen for a moment, then the browser's Custom Tab in front.
+        val events = listOf(on(10), off(11), on(12, "CustomTab", browser), off(40, "CustomTab", browser))
+        assertEquals(30, withBrowser(events))
+    }
+
+    @Test
+    fun a_browser_resumed_before_the_app_pauses_counts_too() {
+        val events = listOf(on(10), on(11, "CustomTab", browser), off(11), off(40, "CustomTab", browser))
+        assertEquals(30, withBrowser(events))
+    }
+
+    @Test
+    fun a_browser_opened_long_after_the_app_counts_nothing() {
+        val events = listOf(on(10), off(20), on(60, "Main", browser), off(90, "Main", browser))
+        assertEquals(10, withBrowser(events))
+    }
+
+    @Test
+    fun a_browser_reached_through_another_app_counts_nothing() {
+        val events = listOf(on(10), off(20), on(20, "Home", other), off(21, "Home", other), on(21, "Main", browser))
+        assertEquals(10, withBrowser(events, now = 60))
+    }
+
+    @Test
+    fun without_the_browser_list_a_hand_over_ends_the_visit() {
+        val events = listOf(on(10), off(11), on(12, "CustomTab", browser), off(40, "CustomTab", browser))
+        assertEquals(1, seconds(events))
+    }
+
+    @Test
+    fun in_front_is_true_only_while_the_app_or_its_browser_is_on_screen() {
+        val now = 50_000L
+        val front = { events: List<Event> -> UsageSessions.inFront(events, app, 0, now, setOf(browser)) }
+        assertEquals(true, front(listOf(on(10))))
+        assertEquals(true, front(listOf(on(10), off(11), on(12, "CustomTab", browser))))
+        assertEquals(false, front(listOf(on(10), off(30), on(30, "Main", "com.eazyverse.testtrack"))))
+        assertEquals(false, front(listOf(on(10), off(30))))
+        assertEquals(false, front(listOf(on(10), dark(20))))
+    }
 }
