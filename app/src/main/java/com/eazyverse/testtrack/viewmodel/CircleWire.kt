@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.viewmodel
 
 import com.eazyverse.testtrack.domain.Case
+import com.eazyverse.testtrack.domain.Evidence
 import com.eazyverse.testtrack.domain.InstallReport
 import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.RequestReview
@@ -37,6 +38,7 @@ fun caseOf(it: ApiDispute) =
         textUse = it.textUse,
         noBox = it.noBox,
         recheckedRef = it.recheckedRef,
+        evidence = Evidence(it.ownerProofRef, it.reply, it.replyProofRef),
     )
 
 fun requestOf(it: ApiMyPost) =
@@ -73,6 +75,7 @@ fun requestOf(it: ApiMyPost) =
                     noBox = r.noBox,
                     recheckedRef = r.recheckedRef,
                     checked = r.checkedAt != null,
+                    evidence = Evidence(r.ownerProofRef, r.reply, r.replyProofRef),
                 )
             },
     )

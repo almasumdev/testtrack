@@ -56,6 +56,8 @@ data class RequestReview(
     val recheckedRef: String = "",
     /** The owner asked for a new screenshot (once); with the state rejected, none came. */
     val checked: Boolean = false,
+    /** What each side showed in the dispute. */
+    val evidence: Evidence = Evidence(),
 ) {
     /** Refused, with the members still deciding: the owner can still accept it. */
     val canAcceptLater: Boolean get() = state == "disputed" && outcome == "open"

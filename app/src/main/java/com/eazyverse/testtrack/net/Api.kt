@@ -234,7 +234,9 @@ object Api {
     suspend fun reject(
         reviewId: String,
         reason: String,
-    ): ApiDispute = post("/reviews/$reviewId/reject", RejectIn(reason))
+        proofRef: String = "",
+        driveToken: String = "",
+    ): ApiDispute = post("/reviews/$reviewId/reject", RejectIn(reason, proofRef, driveToken))
 
     // ---------------------------------------------------------------- disputes
 

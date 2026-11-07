@@ -169,6 +169,7 @@ fun ReviewScreen(
         onGiveUp = if (vm.previewing) null else ({ givingUp = true }),
         onReport = if (vm.previewing) null else ({ reporting = true }),
         onNoBox = vm::markNoBox,
+        onReply = { text, picture -> vm.reply(activity, text, picture) },
         onSend = { proof, note ->
             requireMembership {
                 if (vm.driveConnected) {
@@ -264,6 +265,7 @@ fun ReviewBody(
     onGiveUp: (() -> Unit)? = null,
     onReport: (() -> Unit)? = null,
     onNoBox: () -> Unit = {},
+    onReply: (String, Uri?) -> Unit = { _, _ -> },
 ) {
     var editingProof by remember { mutableStateOf<Uri?>(null) }
     val pick =
@@ -430,7 +432,7 @@ fun ReviewBody(
                         }
                         if (!job.settled && job.step == ReviewStep.LEAVE) SelfShotLink { onLeave(ReviewStep.LEAVE) }
                         WrittenAsk(job, gap, onNote, onNoBox)
-                        WhatYouWillDo(job)
+                        AboutThisReview(job, gap, onReply)
                         if (sideloaded) {
                             Spacer(Modifier.height(gap))
                             Notice(Status.short, Lucide.TriangleAlert) {
@@ -477,8 +479,7 @@ fun ReviewBody(
                             Spacer(Modifier.height(gap))
                             ReportLink(onReport)
                         }
-                        // A review sent and being checked is with the developer: nothing to give up.
-                        if (!job.settled && !job.rechecking && onGiveUp != null) {
+                        if (!job.settled && !job.rechecking && onGiveUp != null) { // sent and checked: nothing to give up
                             Spacer(Modifier.height(gap))
                             GiveUpLink(onGiveUp)
                         }

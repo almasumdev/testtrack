@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,7 +32,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun FeedRefuseDialog(
     appName: String,
-    onRefuse: (String) -> Unit,
+    onRefuse: (String, Uri?) -> Unit,
     onDismiss: () -> Unit,
     /** What refusing holds from the owner until the members decide. */
     stake: Int = FeedRules.STAKE,
@@ -42,6 +43,7 @@ fun FeedRefuseDialog(
     // What was missing, ticked: the members see these first, then any words of the owner's own.
     val problems = remember(needsChars) { refuseProblems(needsChars) }
     var ticked by remember { mutableStateOf(emptySet<String>()) }
+    var picture by remember { mutableStateOf<Uri?>(null) }
     val sent = (problems.filter { it in ticked } + listOfNotNull(reason.trim().ifBlank { null })).joinToString(". ")
     val enough = ticked.isNotEmpty() || reason.trim().length >= REFUSE_MIN_CHARS
 
@@ -54,7 +56,7 @@ fun FeedRefuseDialog(
         confirm = "Refuse it",
         destructive = true,
         confirmEnabled = enough,
-        onConfirm = { onRefuse(sent.take(FeedRules.REFUSE_MAX)) },
+        onConfirm = { onRefuse(sent.take(FeedRules.REFUSE_MAX), picture) },
         onDismiss = onDismiss,
         content = {
             Text("What was missing", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
@@ -90,6 +92,9 @@ fun FeedRefuseDialog(
                 minHeight = 96.dp,
                 maxLength = FeedRules.REFUSE_MAX,
             )
+            Spacer(Modifier.height(8.dp))
+            // Shown to the three members beside the reviewer's own: the Play page with no review on it.
+            AddPicture(picture, { picture = it }, "Show what you see?")
             Spacer(Modifier.height(4.dp))
             Text(
                 "Accepting $appName's review instead costs nothing more.",

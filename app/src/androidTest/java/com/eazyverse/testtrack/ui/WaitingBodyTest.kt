@@ -242,7 +242,7 @@ class WaitingBodyTest {
             TestTrackTheme {
                 FeedRefuseDialog(
                     appName = "Nikosh Budget",
-                    onRefuse = { reason = it },
+                    onRefuse = { text, _ -> reason = text },
                     onDismiss = {},
                 )
             }

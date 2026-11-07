@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +24,7 @@ import com.eazyverse.testtrack.viewmodel.PhoneChecks
 import com.eazyverse.testtrack.viewmodel.caseOf
 import com.eazyverse.testtrack.viewmodel.feedEventOf
 import com.eazyverse.testtrack.viewmodel.millis
+import com.eazyverse.testtrack.viewmodel.rejectWithPicture
 import com.eazyverse.testtrack.viewmodel.requestOf
 import kotlinx.coroutines.launch
 
@@ -433,7 +435,10 @@ class FeedViewModel : ViewModel() {
         context: Context,
         review: Waiting,
         reason: String,
-    ) = decide(context, review.id, "Refused. Three members will decide it.") { Api.reject(review.id, reason) }
+        picture: Uri? = null,
+    ) = decide(context, review.id, "Refused. Three members will decide it.") {
+        rejectWithPicture(context, review.id, review.packageName, reason, picture)
+    }
 
     /** Can't find it on Play: ask its reviewer for a new screenshot. Once per review. */
     fun askAgain(

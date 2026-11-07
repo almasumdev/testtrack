@@ -83,6 +83,9 @@ data class ReviewJob(
             }
         }
 
+    /** Refused, with the members still deciding and the reviewer not yet answered: they may answer once. */
+    val canReply: Boolean get() = review.state == "disputed" && review.repliedAt == null
+
     /** The owner could not find it on Play and is waiting for a new screenshot. */
     val rechecking: Boolean get() = review.state == "checking"
 

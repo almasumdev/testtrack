@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import com.eazyverse.testtrack.domain.Evidence
 import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.RequestReview
 import com.eazyverse.testtrack.domain.Waiting
@@ -100,5 +101,16 @@ class ReviewCheckTest {
         assertEquals("Use it for 2 minutes", todoLines(closed)[1])
         assertEquals("Give it a star rating on Google Play", todoLines(closed)[2])
         assertEquals("You get 41 tix. Finish within 1 day.", todoPayLine(closed))
+    }
+
+    @Test
+    fun `a refused review may be answered once, and the members see both sides`() {
+        assertTrue(ReviewJob(post(), review("disputed")).canReply)
+        assertFalse(ReviewJob(post(), review("disputed").copy(repliedAt = "2026-11-07T10:00:00+00:00")).canReply)
+        assertFalse(ReviewJob(post(), review("submitted")).canReply)
+
+        assertTrue(Evidence().isEmpty)
+        assertFalse(Evidence(ownerProofRef = "drive:OwnerPlayPage12345").isEmpty)
+        assertFalse(Evidence(reply = "It is there.").isEmpty)
     }
 }

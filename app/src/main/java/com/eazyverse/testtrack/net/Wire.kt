@@ -173,6 +173,9 @@ data class ApiOwnerReview(
     @SerialName("checked_at") val checkedAt: String? = null,
     @SerialName("check_by") val checkBy: String? = null,
     @SerialName("rechecked_ref") val recheckedRef: String = "",
+    @SerialName("owner_proof_ref") val ownerProofRef: String = "",
+    val reply: String = "",
+    @SerialName("reply_proof_ref") val replyProofRef: String = "",
 )
 
 /** One of the reader's own requests, with every review it has had. */
@@ -289,6 +292,17 @@ data class KeptIn(
 @Serializable
 data class RejectIn(
     val reason: String,
+    /** An optional picture with the refusal: the owner's own Drive file and Drive token. */
+    @SerialName("proof_ref") val proofRef: String = "",
+    @SerialName("drive_token") val driveToken: String = "",
+)
+
+/** The reviewer's one answer to a refusal: words, a picture, or both. */
+@Serializable
+data class ReplyIn(
+    val text: String = "",
+    @SerialName("proof_ref") val proofRef: String = "",
+    @SerialName("drive_token") val driveToken: String = "",
 )
 
 @Serializable
@@ -336,6 +350,10 @@ data class ApiReview(
     @SerialName("checked_at") val checkedAt: String? = null,
     @SerialName("check_by") val checkBy: String? = null,
     @SerialName("rechecked_ref") val recheckedRef: String = "",
+    @SerialName("owner_proof_ref") val ownerProofRef: String = "",
+    val reply: String = "",
+    @SerialName("reply_proof_ref") val replyProofRef: String = "",
+    @SerialName("replied_at") val repliedAt: String? = null,
     /** What the request asks for (stars, written or detailed) and the characters of text that takes. */
     val feedback: String = "stars",
     @SerialName("needs_chars") val needsChars: Int = 0,
@@ -365,6 +383,9 @@ data class ApiDispute(
     @SerialName("text_use") val textUse: String? = null,
     @SerialName("no_box") val noBox: Boolean = false,
     @SerialName("rechecked_ref") val recheckedRef: String = "",
+    @SerialName("owner_proof_ref") val ownerProofRef: String = "",
+    val reply: String = "",
+    @SerialName("reply_proof_ref") val replyProofRef: String = "",
 )
 
 @Serializable

@@ -289,7 +289,7 @@ class CircleVideoFramesTest {
         frame.show {
             Pushed {
                 ReviewCheck(review, proof = { LocalProof(shot("weather")) })
-                FeedRefuseDialog(appName = review.appName, onRefuse = {}, onDismiss = {})
+                FeedRefuseDialog(appName = review.appName, onRefuse = { _, _ -> }, onDismiss = {})
             }
         }
         compose.onNode(hasSetTextAction()).performTextInput(s.REFUSAL)

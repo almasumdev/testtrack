@@ -13,7 +13,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.Device
-import com.eazyverse.testtrack.data.DriveFile
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.ProofStore
 import com.eazyverse.testtrack.data.ReviewCaptureService
@@ -25,6 +24,7 @@ import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.viewmodel.LiveReload
+import com.eazyverse.testtrack.viewmodel.replyWithPicture
 import com.eazyverse.testtrack.viewmodel.sendProof
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -397,6 +397,19 @@ class ReviewViewModel : ViewModel() {
         }
     }
 
+    /** The reviewer's one answer to a refusal: words, a picture, or both. */
+    fun reply(
+        activity: Activity,
+        text: String,
+        picture: Uri?,
+    ) {
+        val current = job ?: return
+        run(waits = true) {
+            keep(current.copy(review = replyWithPicture(activity, current, text, picture)))
+            message = "Sent. The developer and the members will see your answer."
+        }
+    }
+
     /** It would not install: the developer is told why, the slot goes back, nothing counts against you. */
     fun report(
         reason: String,
@@ -479,17 +492,3 @@ class ReviewViewModel : ViewModel() {
         const val MAX_USED_MS = 86_400_000L
     }
 }
-
-/** A proof kept in the reviewer's own Drive is sent as this followed by the file's id. */
-const val DRIVE_PREFIX = "drive:"
-
-/**
- * Where a proof's picture is fetched from. Drive, shared by link, for every proof sent now; our
- * own server, behind the session, for older ones uploaded there; a file for one still on the phone.
- */
-fun proofSource(ref: String): String =
-    when {
-        ref.startsWith(DRIVE_PREFIX) -> DriveFile(ref.removePrefix(DRIVE_PREFIX), "").thumbUrl
-        ref.startsWith("file:") -> ref
-        else -> Api.proofUrl(ref)
-    }

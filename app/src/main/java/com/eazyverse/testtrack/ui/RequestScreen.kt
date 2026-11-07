@@ -233,6 +233,7 @@ private fun RequestReviewCard(
             Column {
                 TextGiven(review.written, needs, review.textUse)
                 Screenshots(review.proofRef, review.recheckedRef, proof)
+                DisputeEvidence(review.evidence, proof)
             }
         }
     }

@@ -113,4 +113,6 @@ data class Case(
     val recheckedRef: String = "",
     /** The owner has asked once for a new screenshot; they may not again. */
     val checked: Boolean = false,
+    /** What each side showed in the dispute, for the members deciding it. */
+    val evidence: Evidence = Evidence(),
 )

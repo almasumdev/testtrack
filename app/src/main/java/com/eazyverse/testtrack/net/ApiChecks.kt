@@ -17,3 +17,11 @@ suspend fun Api.recheck(
     proofRef: String,
     driveToken: String,
 ): ApiReview = post("/reviews/$reviewId/recheck", RecheckIn(proofRef, driveToken))
+
+/** The reviewer's one answer to a refusal: words, a picture, or both. */
+suspend fun Api.reply(
+    reviewId: String,
+    text: String,
+    proofRef: String,
+    driveToken: String,
+): ApiReview = post("/reviews/$reviewId/reply", ReplyIn(text, proofRef, driveToken))

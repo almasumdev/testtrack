@@ -153,9 +153,9 @@ fun CheckScreen(
         FeedRefuseDialog(
             appName = review.appName,
             needsChars = review.needsChars,
-            onRefuse = { reason ->
+            onRefuse = { reason, picture ->
                 refusing = false
-                feed.reject(context, review, reason)
+                feed.reject(context, review, reason, picture)
             },
             onDismiss = { refusing = false },
         )
@@ -363,6 +363,7 @@ fun CaseCheck(
         NoBoxNote(case.noBox, case.reward)
         TextGiven(case.written, case.needsChars, case.textUse, note = "The reviewer's note")
         Screenshots(case.proofRef, case.recheckedRef, proof)
+        DisputeEvidence(case.evidence, proof)
         Spacer(Modifier.height(14.dp))
         Text(
             "Whoever you decide against pays the ${case.stake} tix that goes to the three of you deciding.",
