@@ -53,6 +53,7 @@ private enum class Stage { DONE, NOW, LATER, FAILED }
 internal fun ReviewDone(
     job: ReviewJob,
     room: Dp,
+    onReply: (String, android.net.Uri?) -> Unit = { _, _ -> },
 ) {
     val t = Tt.colors
     val state = job.review.state
@@ -147,6 +148,8 @@ internal fun ReviewDone(
                 else -> StageRow(Stage.LATER, "+$reward tix", "Paid when it is approved")
             }
         }
+        // A refused review: why, the owner's screenshot, and the one answer the reviewer may give.
+        ReplyToRefusal(job, 18.dp, onReply)
     }
 }
 

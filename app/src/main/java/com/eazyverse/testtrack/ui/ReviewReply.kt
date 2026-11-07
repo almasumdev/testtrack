@@ -32,17 +32,6 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * see both sides.
  */
 
-/** What the page tells about this review besides its step: what to do first, and a refusal's two sides. */
-@Composable
-internal fun AboutThisReview(
-    job: ReviewJob,
-    gap: androidx.compose.ui.unit.Dp,
-    onReply: (String, Uri?) -> Unit,
-) {
-    WhatYouWillDo(job)
-    ReplyToRefusal(job, gap, onReply)
-}
-
 /** Add one screenshot from the gallery, optionally: a link to add it, and one to take it back out. */
 @Composable
 internal fun AddPicture(

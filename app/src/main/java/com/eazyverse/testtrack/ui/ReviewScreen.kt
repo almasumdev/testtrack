@@ -376,7 +376,7 @@ fun ReviewBody(
                         return@Crossfade
                     }
                     if (shownPage == ReviewPage.DONE) {
-                        ReviewDone(job, room)
+                        ReviewDone(job, room, onReply)
                         return@Crossfade
                     }
                     // Centred in what is left under the app row; scrolls only if a phone is smaller
@@ -432,7 +432,7 @@ fun ReviewBody(
                         }
                         if (!job.settled && job.step == ReviewStep.LEAVE) SelfShotLink { onLeave(ReviewStep.LEAVE) }
                         WrittenAsk(job, gap, onNote, onNoBox)
-                        AboutThisReview(job, gap, onReply)
+                        WhatYouWillDo(job)
                         if (sideloaded) {
                             Spacer(Modifier.height(gap))
                             Notice(Status.short, Lucide.TriangleAlert) {
