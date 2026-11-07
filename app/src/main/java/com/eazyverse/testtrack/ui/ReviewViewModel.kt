@@ -16,7 +16,6 @@ import com.eazyverse.testtrack.data.Device
 import com.eazyverse.testtrack.data.DriveFile
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.ProofStore
-import com.eazyverse.testtrack.data.ProofUpload
 import com.eazyverse.testtrack.data.ReviewCaptureService
 import com.eazyverse.testtrack.data.ReviewClock
 import com.eazyverse.testtrack.data.ReviewKeep
@@ -26,6 +25,7 @@ import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.viewmodel.LiveReload
+import com.eazyverse.testtrack.viewmodel.sendProof
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -287,11 +287,22 @@ class ReviewViewModel : ViewModel() {
     internal var keeps = 0
         private set
 
+    /** The review that is being sent without Play, because Play showed no review box. */
+    private var noBoxFor: String? = null
+
+    /** Play showed no review box: on to the proof step, to send it here instead, for half. */
+    fun markNoBox() {
+        val current = job ?: return
+        noBoxFor = current.review.id
+        job = current.copy(leftReview = true, noBox = true)
+    }
+
     /** Show a job the server has just confirmed, and save it as the last word. */
     internal fun keep(next: ReviewJob) {
         keeps++
         // With the phone's own record of the first day of use, where it has one (ReviewClock).
-        job = app?.let { next.copy(firstUsedHere = ReviewClock.firstUse(it, next.review.id)) } ?: next
+        val marked = next.copy(noBox = next.noBox || noBoxFor == next.review.id)
+        job = app?.let { marked.copy(firstUsedHere = ReviewClock.firstUse(it, next.review.id)) } ?: marked
         app?.let { ReviewKeep.put(it, next.post.id, next.review) }
     }
 
@@ -378,18 +389,9 @@ class ReviewViewModel : ViewModel() {
         note: String,
     ) {
         val current = job ?: return
-        val context = activity.applicationContext
         // No message on success: the page itself turns into the sent screen.
         run(waits = true, onOffline = { message = "You're offline. Your screenshot and note are saved; send them once you're back." }) {
-            val token =
-                AuthRepo.driveTokenOrNull(activity)
-                    ?: throw ApiError(400, "drive", "Connect Google Drive to send your saved feedback.")
-            val id = current.review.id
-            val ref =
-                ProofStore.uploaded(context, id)
-                    ?: (DRIVE_PREFIX + ProofUpload.send(activity, id, current.post.packageName, proof))
-                        .also { ProofStore.markUploaded(context, id, it) }
-            keep(current.copy(review = Api.submit(id, ref, note, driveToken = token)))
+            keep(current.copy(review = sendProof(activity, current, proof, note)))
             offline = false
             dropProof(current.review.id)
         }

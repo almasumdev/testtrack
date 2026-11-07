@@ -117,7 +117,12 @@ internal fun stepTitle(job: ReviewJob): String =
                 else -> "Come back tomorrow"
             }
         ReviewStep.LEAVE -> if (job.live) "Review it on Google Play" else "Send feedback on Google Play"
-        ReviewStep.PROVE -> "Send your proof"
+        ReviewStep.PROVE ->
+            when {
+                job.rechecking -> "Show your review again"
+                job.noBox -> "Send it here instead"
+                else -> "Send your proof"
+            }
         ReviewStep.WAIT -> "Sent"
     }
 
@@ -136,9 +141,24 @@ internal fun stepLine(job: ReviewJob): String =
             } else {
                 "On its Play page, send the developer private feedback. Then tap the camera to take a picture of it."
             }
-        ReviewStep.PROVE -> "The screenshot of what you left on Google Play. Add a note for the developer if you like."
+        ReviewStep.PROVE ->
+            when {
+                job.rechecking -> recheckLine(job)
+                job.noBox ->
+                    "A screenshot of the app's Play page with no review option, and your feedback for the developer. " +
+                        "This pays half the reward."
+                else -> "The screenshot of what you left on Google Play. Add a note for the developer if you like."
+            }
         ReviewStep.WAIT -> ""
     }
+
+/** The owner could not find the review on Play: a new screenshot of it, and by when. */
+private fun recheckLine(job: ReviewJob): String {
+    val due = job.checkBy
+    val by = if (due != null) " by ${opensWhen(due)}" else ""
+    return "The developer can't find it on Google Play. Open its Play page and take a new screenshot of your review$by. " +
+        "If Google is hiding it, you can still see it there."
+}
 
 /** Where the reviewer is with using the app: time still to go, or a live app's second day. */
 private fun useLine(job: ReviewJob): String {
@@ -189,6 +209,11 @@ internal fun stepAction(
         ReviewStep.INSTALL -> if (job.onPhone) "Start review" else "Get it on Play"
         ReviewStep.USE -> "Open the app"
         ReviewStep.LEAVE -> "Open Google Play"
-        ReviewStep.PROVE -> "Send the proof"
+        ReviewStep.PROVE ->
+            when {
+                job.rechecking -> "Send the new screenshot"
+                job.noBox -> "Send for half"
+                else -> "Send the proof"
+            }
         ReviewStep.WAIT -> ""
     }

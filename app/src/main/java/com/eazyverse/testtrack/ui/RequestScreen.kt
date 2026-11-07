@@ -232,10 +232,7 @@ private fun RequestReviewCard(
         AnimatedVisibility(open && !waiting) {
             Column {
                 TextGiven(review.written, needs, review.textUse)
-                if (review.proofRef.isNotBlank()) {
-                    Spacer(Modifier.height(12.dp))
-                    proof(review.proofRef)
-                }
+                Screenshots(review.proofRef, review.recheckedRef, proof)
             }
         }
     }
@@ -247,7 +244,7 @@ private fun tone(review: RequestReview): Pair<Color, Color> {
     val t = Tt.colors
     return when (review.state) {
         "approved" -> t.ok to t.okBg
-        "submitted", "disputed" -> t.warn to t.warnBg
+        "submitted", "disputed", "checking" -> t.warn to t.warnBg
         "claimed", "installed", "used" -> t.accentInk to t.glass2
         else -> t.text3 to t.glass2
     }

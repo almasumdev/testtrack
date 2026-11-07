@@ -44,6 +44,8 @@ enum class ReviewStep(
                 "claimed" -> INSTALL
                 "installed" -> USE
                 "used" -> LEAVE
+                // The owner could not find it on Play: the proof step again, for a new screenshot.
+                "checking" -> PROVE
                 else -> WAIT
             }
     }
@@ -63,13 +65,29 @@ data class ReviewJob(
     val firstUsedHere: Long? = null,
     /** Not taken yet, and already on this phone from Play: taking it starts the review at once. */
     val onPhone: Boolean = false,
+    /** Play showed no review box, so it is being sent here instead, for half. */
+    val noBox: Boolean = false,
 ) {
     /** The first day of use: the phone's own record where it has one, else what the server heard. */
     private val firstUse: java.time.Instant?
         get() = firstUsedHere?.let { java.time.Instant.ofEpochMilli(it) } ?: instantOf(review.firstUsedAt)
 
-    /** Characters of text pasted from Play this review must carry; 0 for stars alone. */
-    val needsChars: Int get() = maxOf(post.needsChars, review.needsChars)
+    /** Characters of text this review must carry: 0 for stars alone, and when showing it again. */
+    val needsChars: Int
+        get() {
+            val asked = maxOf(post.needsChars, review.needsChars)
+            return when {
+                rechecking -> 0
+                noBox -> maxOf(FeedRules.NO_BOX_MIN_CHARS, asked)
+                else -> asked
+            }
+        }
+
+    /** The owner could not find it on Play and is waiting for a new screenshot. */
+    val rechecking: Boolean get() = review.state == "checking"
+
+    /** By when that new screenshot has to come. */
+    val checkBy: java.time.Instant? get() = instantOf(review.checkBy)
 
     /** The text typed so far is long enough to send. */
     fun textEnough(note: String): Boolean = plainLength(note) >= needsChars
@@ -289,3 +307,8 @@ fun reviewOutcome(
             if (live) "It sat unfinished for three days, so the slot went back." else "It sat unfinished for a day, so the slot went back."
         else -> ""
     }
+
+/** What a post carries when the developer asked nothing in particular; not worth showing. */
+internal const val GENERAL_ASK = "General feedback on the app experience."
+
+internal val ReviewSteps = ReviewStep.entries.filter { it != ReviewStep.WAIT }

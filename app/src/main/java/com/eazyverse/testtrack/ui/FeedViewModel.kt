@@ -11,15 +11,17 @@ import com.eazyverse.testtrack.domain.Case
 import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.net.Api
-import com.eazyverse.testtrack.net.ApiActivityEvent
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.ApiReview
 import com.eazyverse.testtrack.net.ApiSession
+import com.eazyverse.testtrack.net.acceptLater
+import com.eazyverse.testtrack.net.check
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import com.eazyverse.testtrack.viewmodel.PhoneChecks
 import com.eazyverse.testtrack.viewmodel.caseOf
+import com.eazyverse.testtrack.viewmodel.feedEventOf
 import com.eazyverse.testtrack.viewmodel.millis
 import com.eazyverse.testtrack.viewmodel.requestOf
 import kotlinx.coroutines.launch
@@ -175,7 +177,7 @@ class FeedViewModel : ViewModel() {
             cursor = it.nextCursor
             loading = false
         }
-        Api.lastActivity()?.let { events = it.events.mapNotNull(::eventOf) }
+        Api.lastActivity()?.let { events = it.events.mapNotNull(::feedEventOf) }
         if (!ApiSession.signedIn) return
         Api.lastMyReviews()?.let { mine = it.map(::myReview) }
         Api.lastWaiting()?.let { waiting = it.map(::waitingOf) }
@@ -204,7 +206,7 @@ class FeedViewModel : ViewModel() {
                 pagedPast = false
                 // Readable signed out too, like the posts. Its own failure is its own.
                 try {
-                    events = Api.activity().events.mapNotNull(::eventOf)
+                    events = Api.activity().events.mapNotNull(::feedEventOf)
                     activityFailed = false
                 } catch (e: kotlinx.coroutines.CancellationException) {
                     throw e
@@ -373,20 +375,6 @@ class FeedViewModel : ViewModel() {
         }
     }
 
-    private fun eventOf(it: ApiActivityEvent): FeedEvent? {
-        val kind = FeedEventKind.of(it.kind) ?: return null
-        return FeedEvent(
-            id = it.id,
-            kind = kind,
-            headline = it.headline,
-            detail = it.detail,
-            happenedAt = millis(it.happenedAt) ?: return null,
-            faces = it.faces,
-            moreFaces = it.moreFaces,
-            tix = it.tix,
-        )
-    }
-
     private fun myReview(it: ApiReview) =
         MyReview(
             id = it.id,
@@ -423,6 +411,9 @@ class FeedViewModel : ViewModel() {
             feedback = it.feedback,
             needsChars = it.needsChars,
             textUse = it.textUse,
+            noBox = it.noBox,
+            recheckedRef = it.recheckedRef,
+            checked = it.checkedAt != null,
         )
     }
 
@@ -443,6 +434,14 @@ class FeedViewModel : ViewModel() {
         review: Waiting,
         reason: String,
     ) = decide(context, review.id, "Refused. Three members will decide it.") { Api.reject(review.id, reason) }
+
+    /** Can't find it on Play: ask its reviewer for a new screenshot. Once per review. */
+    fun askAgain(
+        context: Context,
+        review: Waiting,
+    ) = decide(context, review.id, "Asked. They have ${FeedRules.RECHECK_HOURS} hours to send a new screenshot.") {
+        Api.check(review.id)
+    }
 
     /** Accept a review you refused, while the members are still deciding. The reviewer is paid. */
     fun acceptLater(

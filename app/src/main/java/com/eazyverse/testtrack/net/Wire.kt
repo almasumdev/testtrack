@@ -167,6 +167,12 @@ data class ApiOwnerReview(
     @SerialName("decide_by") val decideBy: String? = null,
     /** Whether they used the ready-written review they were given: used, changed or own. */
     @SerialName("text_use") val textUse: String? = null,
+    /** Sent in TestTrack because Play showed no review box: pays half. */
+    @SerialName("no_box") val noBox: Boolean = false,
+    /** The owner could not find it on Play: when, by when a new screenshot is due, and the one sent. */
+    @SerialName("checked_at") val checkedAt: String? = null,
+    @SerialName("check_by") val checkBy: String? = null,
+    @SerialName("rechecked_ref") val recheckedRef: String = "",
 )
 
 /** One of the reader's own requests, with every review it has had. */
@@ -264,6 +270,15 @@ data class SubmitIn(
     @SerialName("proof_ref") val proofRef: String = "",
     val written: String = "",
     @SerialName("drive_token") val driveToken: String = "",
+    /** Play showed no review box: the screenshot is of that page and [written] is the feedback. */
+    @SerialName("no_box") val noBox: Boolean = false,
+)
+
+/** A new screenshot of the review on Play, after its owner could not find it. */
+@Serializable
+data class RecheckIn(
+    @SerialName("proof_ref") val proofRef: String,
+    @SerialName("drive_token") val driveToken: String,
 )
 
 @Serializable
@@ -315,6 +330,12 @@ data class ApiReview(
     val offered: String = "",
     /** How the sent text compares with [offered]: used, changed or own. */
     @SerialName("text_use") val textUse: String? = null,
+    /** Sent in TestTrack because Play showed no review box: pays half. */
+    @SerialName("no_box") val noBox: Boolean = false,
+    /** The owner could not find it on Play: when, by when a new screenshot is due, and the one sent. */
+    @SerialName("checked_at") val checkedAt: String? = null,
+    @SerialName("check_by") val checkBy: String? = null,
+    @SerialName("rechecked_ref") val recheckedRef: String = "",
     /** What the request asks for (stars, written or detailed) and the characters of text that takes. */
     val feedback: String = "stars",
     @SerialName("needs_chars") val needsChars: Int = 0,
@@ -342,6 +363,8 @@ data class ApiDispute(
     val feedback: String = "stars",
     @SerialName("needs_chars") val needsChars: Int = 0,
     @SerialName("text_use") val textUse: String? = null,
+    @SerialName("no_box") val noBox: Boolean = false,
+    @SerialName("rechecked_ref") val recheckedRef: String = "",
 )
 
 @Serializable

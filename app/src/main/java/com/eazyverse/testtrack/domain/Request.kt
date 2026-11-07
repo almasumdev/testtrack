@@ -50,6 +50,12 @@ data class RequestReview(
     val decideBy: Long? = null,
     /** Whether they used the ready-written review they were given: used, changed or own. */
     val textUse: String? = null,
+    /** Sent in TestTrack because Play showed no review box: pays half. */
+    val noBox: Boolean = false,
+    /** The new screenshot sent after the owner could not find it on Play; blank for none. */
+    val recheckedRef: String = "",
+    /** The owner asked for a new screenshot (once); with the state rejected, none came. */
+    val checked: Boolean = false,
 ) {
     /** Refused, with the members still deciding: the owner can still accept it. */
     val canAcceptLater: Boolean get() = state == "disputed" && outcome == "open"
@@ -68,6 +74,7 @@ fun textUseLabel(use: String?): String? =
 fun requestReviewStatus(review: RequestReview): String =
     when (review.state) {
         "claimed", "installed", "used" -> "In progress"
+        "checking" -> "Waiting for a new screenshot"
         "submitted" -> "Waiting on you"
         "approved" ->
             when (review.outcome) {
@@ -76,7 +83,7 @@ fun requestReviewStatus(review: RequestReview): String =
                 else -> "Accepted"
             }
         "disputed" -> "Refused, members deciding"
-        "rejected" -> "Refused and upheld"
+        "rejected" -> if (review.checked && review.recheckedRef.isBlank()) "No new screenshot came" else "Refused and upheld"
         "abandoned" -> "Given up"
         "expired" -> "Ran out"
         else -> review.state

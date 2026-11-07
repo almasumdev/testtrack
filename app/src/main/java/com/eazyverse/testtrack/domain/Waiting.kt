@@ -42,7 +42,16 @@ data class Waiting(
     val needsChars: Int = 0,
     /** Whether they used the ready-written review they were given: used, changed or own; null with none. */
     val textUse: String? = null,
+    /** Sent in TestTrack because Play showed no review box: pays half. */
+    val noBox: Boolean = false,
+    /** The new screenshot sent after the owner could not find it on Play; blank for none. */
+    val recheckedRef: String = "",
+    /** The owner has asked once for a new screenshot; they may not again. */
+    val checked: Boolean = false,
 )
+
+/** What accepting it pays: half the reward for one sent without Play (FeedRules.NO_BOX_MIN_CHARS). */
+val Waiting.pays: Int get() = if (noBox) reward / 2 else reward
 
 private const val HOUR = 3_600_000L
 
@@ -98,4 +107,10 @@ data class Case(
     val needsChars: Int = 0,
     /** Whether they used the ready-written review they were given: used, changed or own; null with none. */
     val textUse: String? = null,
+    /** Sent in TestTrack because Play showed no review box: pays half. */
+    val noBox: Boolean = false,
+    /** The new screenshot sent after the owner could not find it on Play; blank for none. */
+    val recheckedRef: String = "",
+    /** The owner has asked once for a new screenshot; they may not again. */
+    val checked: Boolean = false,
 )

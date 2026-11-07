@@ -202,7 +202,8 @@ object Api {
         proofRef: String = "",
         written: String = "",
         driveToken: String = "",
-    ): ApiReview = post("/reviews/$reviewId/submit", SubmitIn(proofRef, written, driveToken))
+        noBox: Boolean = false,
+    ): ApiReview = post("/reviews/$reviewId/submit", SubmitIn(proofRef, written, driveToken, noBox))
 
     suspend fun abandon(reviewId: String): ApiReview = post("/reviews/$reviewId/abandon", Empty())
 
@@ -234,9 +235,6 @@ object Api {
         reviewId: String,
         reason: String,
     ): ApiDispute = post("/reviews/$reviewId/reject", RejectIn(reason))
-
-    /** Accept a review you refused, while the members are still deciding it. */
-    suspend fun acceptLater(reviewId: String): ApiReview = post("/reviews/$reviewId/accept", Empty())
 
     // ---------------------------------------------------------------- disputes
 

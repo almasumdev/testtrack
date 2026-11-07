@@ -43,6 +43,7 @@ import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.domain.Case
 import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.domain.closeTo
+import com.eazyverse.testtrack.domain.pays
 import com.eazyverse.testtrack.domain.timeLeft
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -71,6 +72,7 @@ fun CheckScreen(
     val case = feed.disputes.firstOrNull { it.id == id }
     val request = feed.requests.firstOrNull { it.id == id }
     var refusing by remember { mutableStateOf(false) }
+    var askingAgain by remember { mutableStateOf(false) }
     val missing = review == null && case == null && request == null
     // Only a load started from here on can say it is gone: one that finished before the page
     // opened knew nothing of a request just posted or a review just sent.
@@ -94,6 +96,7 @@ fun CheckScreen(
                     onBack = onClose,
                     onApprove = { feed.approve(context, review) },
                     onReject = { refusing = true },
+                    onAskAgain = { askingAgain = true },
                 )
             request != null ->
                 RequestCheck(
@@ -129,6 +132,22 @@ fun CheckScreen(
                 }
             }
         }
+    }
+    if (askingAgain && review != null) {
+        Ask(
+            title = "Ask for a new screenshot?",
+            body =
+                "The reviewer gets ${FeedRules.RECHECK_HOURS} hours to show their review on Google Play again, with a " +
+                    "new screenshot. Google sometimes hides reviews from the public, and they can still see theirs. " +
+                    "${FeedRules.RECHECK_FEE} tix are held from you: they go to the reviewer if they show it, and come " +
+                    "back if they don't. You can ask once.",
+            confirm = "Ask",
+            onConfirm = {
+                askingAgain = false
+                feed.askAgain(context, review)
+            },
+            onDismiss = { askingAgain = false },
+        )
     }
     if (refusing && review != null) {
         FeedRefuseDialog(
@@ -248,6 +267,8 @@ fun ReviewCheck(
     onBack: () -> Unit = {},
     onApprove: () -> Unit = {},
     onReject: () -> Unit = {},
+    /** Can't find it on Play: ask the reviewer for a new screenshot. */
+    onAskAgain: () -> Unit = {},
 ) {
     val now = System.currentTimeMillis()
     val until = review.decideBy
@@ -256,7 +277,7 @@ fun ReviewCheck(
         onBack = onBack,
         actions = {
             Primary(
-                if (review.reward > 0) "Accept and pay ${review.reward} tix" else "Accept",
+                if (review.pays > 0) "Accept and pay ${review.pays} tix" else "Accept",
                 Modifier.weight(1f),
                 busy = busy,
                 onClick = onApprove,
@@ -272,7 +293,7 @@ fun ReviewCheck(
             listOfNotNull(
                 Stat("Reviewer", review.reviewerName.ifBlank { "Unknown" }),
                 until?.let { Stat("Time left", timeLeft(it, now), warn = closeTo(it, now)) },
-                Stat("Pays", if (review.reward > 0) "${review.reward} tix" else "-"),
+                Stat("Pays", if (review.pays > 0) "${review.pays} tix" else "-"),
             ),
         )
         if (review.isLive && review.kept == false) {
@@ -287,11 +308,10 @@ fun ReviewCheck(
             }
         }
         AskedFor(review.feedback, review.needsChars, owner = true)
+        NoBoxNote(review.noBox, review.reward)
         TextGiven(review.written, review.needsChars, review.textUse)
-        if (review.proofRef.isNotBlank()) {
-            Spacer(Modifier.height(14.dp))
-            proof(review.proofRef)
-        }
+        Screenshots(review.proofRef, review.recheckedRef, proof)
+        if (!review.noBox && !review.checked) CantFind(onAskAgain)
         Spacer(Modifier.height(14.dp))
         Text(
             (
@@ -340,11 +360,9 @@ fun CaseCheck(
         )
         Said("The developer says", case.reason)
         AskedFor(case.feedback, case.needsChars, owner = false)
+        NoBoxNote(case.noBox, case.reward)
         TextGiven(case.written, case.needsChars, case.textUse, note = "The reviewer's note")
-        if (case.proofRef.isNotBlank()) {
-            Spacer(Modifier.height(14.dp))
-            proof(case.proofRef)
-        }
+        Screenshots(case.proofRef, case.recheckedRef, proof)
         Spacer(Modifier.height(14.dp))
         Text(
             "Whoever you decide against pays the ${case.stake} tix that goes to the three of you deciding.",

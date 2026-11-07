@@ -122,12 +122,14 @@ fun OverlayPermissionDialog(
 @Composable
 fun ProofArea(
     shown: Uri?,
-    note: String,
+    /** Null when only a screenshot is asked for, as when showing a review again. */
+    note: String?,
     onNote: (String) -> Unit,
     /** Characters of pasted text the request asks for; 0 when the note is optional. */
     needs: Int = 0,
     onCapture: () -> Unit,
-    onGallery: () -> Unit,
+    /** Null where the picture must be taken now, on Play, rather than picked. */
+    onGallery: (() -> Unit)?,
     onInspect: (Uri) -> Unit = {},
 ) {
     val t = Tt.colors
@@ -145,9 +147,9 @@ fun ProofArea(
                 if (picture == null) EmptyShot() else Shot(picture) { onInspect(picture) }
             }
             Spacer(Modifier.width(12.dp))
-            NoteField(note, onNote, Modifier.weight(1f).height(THUMB_HEIGHT), needs)
+            if (note != null) NoteField(note, onNote, Modifier.weight(1f).height(THUMB_HEIGHT), needs)
         }
-        if (needs > 0) {
+        if (note != null && needs > 0) {
             val have = plainLength(note)
             Text(
                 if (have >= needs) "$have characters. Enough." else "$have of at least $needs characters.",
@@ -164,7 +166,7 @@ fun ProofArea(
                 onCapture,
                 Modifier.weight(1f),
             )
-            ProofAction(Lucide.Image, "Gallery", onGallery, Modifier.weight(1f))
+            if (onGallery != null) ProofAction(Lucide.Image, "Gallery", onGallery, Modifier.weight(1f))
         }
         if (shown != null) {
             Text(
@@ -262,7 +264,7 @@ private fun NoteField(
             Box {
                 if (note.isEmpty()) {
                     Text(
-                        if (needs > 0) "Paste the text you left on Google Play" else "A note for the developer (optional)",
+                        if (needs > 0) "Your feedback for the developer" else "A note for the developer (optional)",
                         style = style.copy(color = t.text3),
                     )
                 }

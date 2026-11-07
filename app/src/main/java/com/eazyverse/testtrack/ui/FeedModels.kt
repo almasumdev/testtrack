@@ -80,6 +80,16 @@ object FeedRules {
         }
     }
 
+    /**
+     * A live review Play would not take, sent in TestTrack instead (rules.NO_BOX_MIN_CHARS): at
+     * least this much feedback, or the request's own if more. It pays half.
+     */
+    const val NO_BOX_MIN_CHARS = 100
+
+    /** What asking for a new screenshot holds from the owner, and how long the reviewer has. */
+    const val RECHECK_FEE = 5
+    const val RECHECK_HOURS = 48
+
     /** The longest text a review may carry, and so a ready-written one (rules.WRITTEN_MAX). */
     const val WRITTEN_MAX = 600
 

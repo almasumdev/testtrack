@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.Camera
 import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.CircleX
 import com.composables.icons.lucide.Hourglass
@@ -272,6 +273,7 @@ private fun mineLine(review: MyReview): String =
         "used" -> if (review.isLive) "Review it on Google Play" else "Send feedback on Google Play"
         "submitted" -> if (review.isLive) "Sent. With the developer" else "Sent. Checked within a day"
         "disputed" -> "Disputed. Members are deciding"
+        "checking" -> "Developer can't find it. Take a new screenshot"
         "approved" -> "Approved. Tix paid"
         "rejected" -> review.reason.ifBlank { "Not paid" }
         "abandoned" -> "Given up"
@@ -308,6 +310,7 @@ private fun mineMark(review: MyReview): Pair<ImageVector?, Color> {
     return when (review.state) {
         "submitted" -> Lucide.Hourglass to t.accentInk
         "disputed" -> Lucide.Users to t.warn
+        "checking" -> Lucide.Camera to t.warn
         "approved" -> Lucide.CircleCheck to t.ok
         "rejected" -> Lucide.CircleX to t.bad
         "abandoned", "expired" -> Lucide.CircleX to t.text4

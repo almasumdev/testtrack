@@ -168,6 +168,7 @@ fun ReviewScreen(
         // Nothing to give up or report until the app is installed: until then it is only viewed.
         onGiveUp = if (vm.previewing) null else ({ givingUp = true }),
         onReport = if (vm.previewing) null else ({ reporting = true }),
+        onNoBox = vm::markNoBox,
         onSend = { proof, note ->
             requireMembership {
                 if (vm.driveConnected) {
@@ -262,6 +263,7 @@ fun ReviewBody(
     onConnectDrive: () -> Unit = {},
     onGiveUp: (() -> Unit)? = null,
     onReport: (() -> Unit)? = null,
+    onNoBox: () -> Unit = {},
 ) {
     var editingProof by remember { mutableStateOf<Uri?>(null) }
     val pick =
@@ -272,6 +274,7 @@ fun ReviewBody(
     val t = Tt.colors
     // A spinner only for work that takes a moment: a quick check on coming back stays still.
     var spinning by remember { mutableStateOf(false) }
+    val galleryPick = { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
     LaunchedEffect(busy) {
         if (busy) delay(SPIN_AFTER_MS)
         spinning = busy
@@ -426,7 +429,7 @@ fun ReviewBody(
                             }
                         }
                         if (!job.settled && job.step == ReviewStep.LEAVE) SelfShotLink { onLeave(ReviewStep.LEAVE) }
-                        WrittenAsk(job, gap, onNote)
+                        WrittenAsk(job, gap, onNote, onNoBox)
                         if (sideloaded) {
                             Spacer(Modifier.height(gap))
                             Notice(Status.short, Lucide.TriangleAlert) {
@@ -442,13 +445,12 @@ fun ReviewBody(
                             Spacer(Modifier.height(gap))
                             ProofArea(
                                 shown = shown,
-                                note = note,
+                                note = note.takeUnless { job.rechecking },
                                 needs = job.needsChars,
                                 onNote = onNote,
                                 onCapture = onCapture,
-                                onGallery = {
-                                    pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                                },
+                                // Showing it again needs a picture taken now, on Play, not one picked.
+                                onGallery = galleryPick.takeUnless { job.rechecking },
                                 onInspect = { editingProof = it },
                             )
                             if (!driveConnected) {
@@ -491,8 +493,3 @@ fun ReviewBody(
 private enum class ReviewPage { LOADING, FAILED, STEP, DONE }
 
 private const val SPIN_AFTER_MS = 250L
-
-/** What a post carries when the developer asked nothing in particular; not worth showing. */
-private const val GENERAL_ASK = "General feedback on the app experience."
-
-internal val ReviewSteps = ReviewStep.entries.filter { it != ReviewStep.WAIT }
