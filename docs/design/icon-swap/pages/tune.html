@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Swap icon tuner</title>
+<style>
+  :root{--ink:#142F43;--quiet:#59758A;--line:#B7D1E2;--page:#E9F0F4;--card:#F2F9FD;--accent:#1D5C82}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--ink);font:14px/1.4 Barlow,"Segoe UI",system-ui,sans-serif}
+  main{max-width:1200px;margin:auto;padding:20px 16px 40px;display:grid;grid-template-columns:340px 1fr;gap:20px}
+  @media (max-width:860px){main{grid-template-columns:1fr}}
+  h1{font-size:20px;margin:0 0 4px} p{margin:0 0 12px;color:var(--quiet)}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px}
+  .ctl{margin:10px 0}
+  .ctl label{display:flex;justify-content:space-between;font-weight:600}
+  .ctl label span{color:var(--quiet);font-weight:400}
+  input[type=range]{width:100%}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--quiet);margin:16px 0 4px}
+  .views{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+  .view{text-align:center}
+  .tile{width:300px;height:300px;border-radius:22%;overflow:hidden;position:relative;background:#0A3570}
+  .tile img,.tile svg{position:absolute;inset:0;width:100%;height:100%}
+  .small .tile{width:48px;height:48px}
+  .pick .tile{width:120px;height:120px;cursor:pointer;outline:3px solid transparent;outline-offset:3px}
+  .pick .tile.on{outline-color:var(--accent)}
+  .cap{font-size:12px;color:var(--quiet);margin-top:6px}
+  button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:10px 16px;background:var(--accent);color:#fff;cursor:pointer;margin-right:8px}
+  button.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+  textarea{width:100%;height:120px;margin-top:10px;font:12px/1.4 Consolas,monospace;border:1px solid var(--line);border-radius:10px;padding:8px}
+</style>
+</head>
+<body>
+<main>
+  <div class="panel">
+    <h1>Swap icon tuner</h1>
+    <p>Move the sliders until it looks right. The overlay shows your picture under it. Then press Copy and paste the numbers to me.</p>
+    <div id="controls"></div>
+    <button id="copy">Copy numbers</button><button class="ghost" id="reset">Reset</button>
+    <textarea id="out" readonly></textarea>
+  </div>
+  <div>
+    <div class="views">
+      <div class="view"><div class="tile"><img src="ref.png" alt="Your picture" style="object-fit:fill"></div><div class="cap">Your picture</div></div>
+      <div class="view"><div class="tile" id="mineD"></div><div class="cap">Dark</div></div>
+      <div class="view"><div class="tile" id="mineL"></div><div class="cap">Light</div></div>
+    </div>
+    <h2>Dark background (click one)</h2>
+    <div class="views pick" id="pickD"></div>
+    <h2>Light background (click one)</h2>
+    <div class="views pick" id="pickL"></div>
+    <h2>Home-screen size</h2>
+    <div class="views small" id="smalls"></div>
+    <h2>Phone shapes</h2>
+    <div class="views" id="shapes"></div>
+    <h2>Laid over your picture</h2>
+    <div class="views"><div class="view"><div class="tile"><img src="ref.png" alt="" style="object-fit:fill"><div id="over" style="position:absolute;inset:0;opacity:.5"></div></div></div></div>
+  </div>
+</main>
+<script>
+// Arrow numbers fitted to the reference's arrow pixels (fit_arrow.py); phone numbers are the owner's.
+const DEF = {phoneW:20.6, phoneH:31.7, phoneR:3.8, gap:33, tilt:9.9, phoneY:0, topGap:4.6, sideGap:2.4,
+             arcR:17.9, arcY:-2.5, drop:-5.35, side:-0.7, span:84, shift:-4.9, bottomY:5, thick:4.2, tail:2.4,
+             headLen:6.4, headW:9, headSkew:0.42, check:0.99, bgDark:0, bgLight:0};
+const RANGES = {
+  phoneW:[14,28,.1,"Phone width"], phoneH:[22,40,.1,"Phone height"], phoneR:[1,8,.1,"Phone corner"],
+  gap:[24,44,.1,"Phone spacing (centre to centre)"], tilt:[0,18,.1,"Phone tilt"], phoneY:[-8,8,.1,"Phones up or down"],
+  topGap:[2.5,8,.1,"Phone top bezel"], sideGap:[.8,6,.1,"Phone side bezel"],
+  arcR:[12,60,.1,"Arrow curve radius (smaller bends more)"], arcY:[-8,8,.1,"Arrows up or down"], drop:[-15,30,.1,"Arrows closer or apart"],
+  side:[-10,10,.1,"Arrows left or right"], span:[20,140,1,"Arrow length (degrees of turn)"], shift:[-30,30,.1,"Arrows turn (degrees)"], bottomY:[-6,6,.1,"Bottom arrow up or down"],
+  thick:[1.5,7,.1,"Arrow thickness at head"], tail:[.5,7,.1,"Arrow thickness at tail"],
+  headLen:[3,12,.1,"Arrowhead length"], headW:[4,18,.1,"Arrowhead width"], headSkew:[0,.5,.01,"Arrowhead outer barb share"],
+  check:[.5,1.6,.01,"Check size"]
+};
+let P = {...DEF};
+try { const s = JSON.parse(localStorage.getItem("swapTune9") || "null"); if (s) P = {...DEF, ...s}; } catch (e) {}
+
+const C = 54;
+const f = n => n.toFixed(2);
+
+// Only the app theme's colours (Theme.kt) plus the cyan from your picture.
+const BG = {
+  dark: [
+    {name: "Accent to ink (Dark 2)", stops: ["#1D5C82", "#163A54"]},
+    {name: "Deep sky", stops: ["#246C97", "#18517A"]},
+    {name: "Sky", stops: ["#4196C8", "#2C77A6"]},
+    {name: "Deep navy, even", stops: ["#0B3A72", "#0B3A72"]},
+    {name: "Navy, gentle fade", stops: ["#0E4479", "#082B5E"]},
+    {name: "App blue", stops: ["#1D5C82", "#123C56"]},
+    {name: "Ink", stops: ["#1B3B52", "#142F43"]},
+    {name: "Accent to ink", stops: ["#1D5C82", "#142F43"]},
+  ],
+  light: [
+    {name: "Light 3", stops: ["#EEF7FC", "#D5EAF7"]},
+    {name: "Glass, even", stops: ["#F2F9FD", "#F2F9FD"]},
+    {name: "Wash fade", stops: ["#F7FCFF", "#E7F4FC"]},
+    {name: "Tile blue", stops: ["#E7F4FC", "#D5EAF7"]},
+    {name: "Ice", stops: ["#E7F4FC", "#B8D8EB"]},
+    {name: "White to tile", stops: ["#FFFFFF", "#D5EAF7"]},
+  ],
+};
+const LOOK = {
+  // Dark pair: Sky + mint "Dark 2". Light: "Light 3", the owner's pick.
+  dark:  {body: ["#FFFFFF", "#E3F1FA"], edge: "#9DC3DC", screen: ["#1D5C82", "#1D5C82"], screenEdge: "#06223F",
+          parts: "#0B2A50", check: "#8EE3CE", arrow: "#8EE3CE", shadow: "#0E2E44", shadowA: .4, arrowShadowA: .3},
+  light: {body: ["#3E92C4", "#2B74A3"], edge: "#0E2E44", screen: ["#F7FCFF", "#F7FCFF"], screenEdge: "#B7D1E2",
+          parts: "#B8D8EB", check: "#2A9E83", arrow: "#2A9E83", shadow: "#0E2E44", shadowA: .25, arrowShadowA: .15},
+};
+
+function arrow(sign, color) {
+  // Centre line: an arc that turns P.span degrees, so the tail points up and out and the head points down and in.
+  const cx = C + sign * P.side, cy = C + P.arcY + sign * P.drop + (sign < 0 ? P.bottomY : 0), r = P.arcR;
+  const mid = (sign > 0 ? 270 : 90) + P.shift;
+  const a0 = (mid - P.span / 2) * Math.PI / 180, a1 = (mid + P.span / 2) * Math.PI / 180;
+  const n = 48, outer = [], inner = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, a = a0 + (a1 - a0) * t, w = (P.tail + (P.thick - P.tail) * t) / 2;
+    outer.push([cx + (r + w) * Math.cos(a), cy + (r + w) * Math.sin(a)]);
+    inner.push([cx + (r - w) * Math.cos(a), cy + (r - w) * Math.sin(a)]);
+  }
+  const tx = -Math.sin(a1), ty = Math.cos(a1), nx = Math.cos(a1), ny = Math.sin(a1);
+  const bx = cx + r * Math.cos(a1), by = cy + r * Math.sin(a1), back = 1.0, rnd = 1.1;
+  const L = P.headLen - rnd, out = P.headW * P.headSkew - rnd / 2, inn = P.headW * (1 - P.headSkew) - rnd / 2;
+  const tip = [bx + tx * L, by + ty * L];
+  const h1 = [bx - tx * back + nx * out, by - ty * back + ny * out];
+  const h2 = [bx - tx * back - nx * inn, by - ty * back - ny * inn];
+  let d = "M" + outer.map(p => f(p[0]) + " " + f(p[1])).join("L");
+  d += "L" + inner.reverse().map(p => f(p[0]) + " " + f(p[1])).join("L");
+  d += `A${f(P.tail / 2)} ${f(P.tail / 2)} 0 0 1 ${f(outer[0][0])} ${f(outer[0][1])}Z`;
+  const head = `M${f(tip[0])} ${f(tip[1])}L${f(h1[0])} ${f(h1[1])}L${f(h2[0])} ${f(h2[1])}Z`;
+  return `<path d="${d}" fill="${color}"/><path d="${head}" fill="${color}" stroke="${color}" stroke-width="${rnd * 2}" stroke-linejoin="round"/>`;
+}
+
+function phone(side, L, id) {
+  const cx = C + side * P.gap / 2, cy = C + P.phoneY, W = P.phoneW, H = P.phoneH;
+  const x = cx - W / 2, y = cy - H / 2, sx = x + P.sideGap, sy = y + P.topGap, sw = W - 2 * P.sideGap, sh = H - P.topGap - 5.2;
+  const mx = cx, my = sy + sh / 2 + .4, k = P.check;
+  const chk = `M${f(mx - 4.6 * k)} ${f(my + 1.2 * k)}L${f(mx - 1.4 * k)} ${f(my + 4.3 * k)}L${f(mx + 4.4 * k)} ${f(my - 2.3 * k)}`;
+  const spY = y + P.topGap / 2 - .7;
+  return `<g transform="rotate(${side * P.tilt} ${f(cx)} ${f(cy)})">
+    <rect x="${f(x)}" y="${f(y)}" width="${W}" height="${H}" rx="${P.phoneR}" fill="url(#${id}body)" filter="url(#${id}drop)"/>
+    <rect x="${f(sx)}" y="${f(sy)}" width="${f(sw)}" height="${f(sh)}" rx="1.9" fill="url(#${id}screen)"/>
+    <rect x="${f(cx - 2.8)}" y="${f(spY + .15)}" width="5.6" height="1.2" rx=".6" fill="${L.parts}"/>
+    <circle cx="${f(cx)}" cy="${f(y + H - 2.6)}" r="1.15" fill="${L.parts}"/>
+    <path d="${chk}" fill="none" stroke="${L.check}" stroke-width="${f(2.9 * k)}" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>`;
+}
+
+let uid = 0;
+// mode: "dark" | "light"; bgi: which background. Each SVG gets its own ids so several on one page never share gradients.
+function svg(crop, mode, bgi) {
+  const L = LOOK[mode], bg = BG[mode][bgi ?? (mode === "dark" ? P.bgDark : P.bgLight)], id = `m${uid++}`;
+  const vb = crop ? "18 18 72 72" : "0 0 108 108";
+  const lin = (n, c) => `<linearGradient id="${id}${n}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c[0]}"/><stop offset="1" stop-color="${c[1]}"/></linearGradient>`;
+  const shadow = (n, sd, dy, a) => `<filter id="${id}${n}" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="${sd}"/><feOffset dy="${dy}" result="b"/><feFlood flood-color="${L.shadow}" flood-opacity="${a}"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}"><defs>
+    ${lin("bg", bg.stops)}${lin("body", L.body)}${lin("screen", L.screen)}
+    ${shadow("drop", 1.7, 1.8, L.shadowA)}${shadow("soft", 1.1, 1.3, L.arrowShadowA)}
+  </defs><rect width="108" height="108" fill="url(#${id}bg)"/>
+  <g filter="url(#${id}soft)">${arrow(1, L.arrow)}${arrow(-1, L.arrow)}</g>${phone(-1, L, id)}${phone(1, L, id)}</svg>`;
+}
+
+function picks(mode, key) {
+  const el = document.getElementById(mode === "dark" ? "pickD" : "pickL");
+  el.innerHTML = BG[mode].map((b, i) =>
+    `<div class="view"><div class="tile${P[key] === i ? " on" : ""}" data-i="${i}">${svg(true, mode, i)}</div><div class="cap">${b.name}</div></div>`).join("");
+  if (el.querySelectorAll) el.querySelectorAll(".tile").forEach(t => t.onclick = () => { P[key] = +t.dataset.i; draw(); });
+}
+
+function draw() {
+  uid = 0;
+  document.getElementById("mineD").innerHTML = svg(true, "dark");
+  document.getElementById("mineL").innerHTML = svg(true, "light");
+  document.getElementById("over").innerHTML = svg(true, "dark");
+  picks("dark", "bgDark"); picks("light", "bgLight");
+  document.getElementById("smalls").innerHTML = ["dark", "light"].map(m =>
+    `<div class="view"><div class="tile">${svg(true, m)}</div></div>`).join("");
+  document.getElementById("shapes").innerHTML = ["dark", "light"].flatMap(m => ["50%", "34%", "22%"].map(r =>
+    `<div class="view"><div class="tile" style="width:140px;height:140px;border-radius:${r}">${svg(true, m)}</div></div>`)).join("");
+  document.getElementById("out").value = JSON.stringify(P);
+  try { localStorage.setItem("swapTune9", JSON.stringify(P)); } catch (e) {}
+}
+
+const box = document.getElementById("controls");
+for (const [k, [mn, mx, st, label]] of Object.entries(RANGES)) {
+  const d = document.createElement("div"); d.className = "ctl";
+  d.innerHTML = `<label>${label}<span id="v_${k}"></span></label><input type="range" min="${mn}" max="${mx}" step="${st}" value="${P[k]}" id="r_${k}">`;
+  box.appendChild(d);
+  const inp = d.querySelector("input"), val = d.querySelector("span");
+  val.textContent = P[k];
+  inp.addEventListener("input", () => { P[k] = parseFloat(inp.value); val.textContent = inp.value; draw(); });
+}
+document.getElementById("copy").onclick = () => {
+  const t = document.getElementById("out"); t.select();
+  navigator.clipboard?.writeText(t.value).catch(() => {}); try { document.execCommand("copy"); } catch (e) {}
+};
+document.getElementById("reset").onclick = () => {
+  P = {...DEF};
+  for (const k in RANGES) { document.getElementById("r_" + k).value = P[k]; document.getElementById("v_" + k).textContent = P[k]; }
+  draw();
+};
+draw();
+</script>
+</body>
+</html>
