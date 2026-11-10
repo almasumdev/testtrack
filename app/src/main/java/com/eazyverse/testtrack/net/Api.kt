@@ -187,7 +187,7 @@ object Api {
     suspend fun claim(
         postId: String,
         deviceFp: String,
-    ): ApiReview = post("/feed/posts/$postId/claim", ClaimIn(deviceFp))
+    ): ApiReview = post("/feed/posts/$postId/claim", ClaimIn(deviceFp, knowsFeedback = true))
 
     suspend fun installed(reviewId: String): ApiReview = post("/reviews/$reviewId/installed", Empty())
 
