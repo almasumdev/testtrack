@@ -20,7 +20,7 @@ python scripts/build_onboarding.py
 ## Native launch
 
 The launch screen no longer shows this robot. It uses the two-phones icon from
-`../icon-swap/`, built by `python scripts/build_swap_splash.py`. What stays true:
+`../icon-swap/` (final files in the root `branding/` folder), built by `python scripts/build_swap_splash.py`. What stays true:
 
 - Android 12 / API 31 and newer use a platform AnimatedVectorDrawable.
 - Android 8 to 11 use the same vector in its completed pose through AndroidX SplashScreen.

@@ -1,7 +1,7 @@
 """Shared SVG to vector-drawable helpers for the Test Exchange robot, plus its browser preview.
 
 The launch screen no longer comes from here. It is built by scripts/build_swap_splash.py from
-docs/design/icon-swap/splash/. This file stays because build_launcher.py, build_onboarding.py and
+branding/. This file stays because build_launcher.py, build_onboarding.py and
 build_brand_background.py import its helpers. Running it only refreshes the robot's browser
 preview in docs/design/logo; it never writes Android resources.
 """

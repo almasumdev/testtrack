@@ -24,7 +24,7 @@ Chosen on 2026-11-11, bug added the same day after the meaning and ASO review. O
 
 ## For Android Studio (Image Asset)
 
-Use the files in `studio/`:
+Use the files in the repo-root `branding/` folder:
 - **Foreground layer:** `foreground.png` (1024 px, keeps the soft shadows) or `foreground.svg` (vector, no shadows).
 - **Background layer:** `background.png` or `background.svg`, a tile-blue gradient from #E7F4FC to #D5EAF7.
 - **Monochrome layer:** `monochrome.png` or `monochrome.svg`.
@@ -41,18 +41,18 @@ The check is at size 0.9 (it was 0.99), so it balances the bug at 0.78.
 | `icon-combined.svg` | Both layers together, for Play (512 px) and previews |
 | `icon-monochrome.svg` | Themed-icon layer: one colour, cut-outs done with evenodd, no masks |
 | `splash-foreground-light.svg` / `splash-foreground-dark.svg` | Launch-screen icon (no background) for the day and night themes |
-| `splash/swap-splash-light.svg`, `splash/swap-splash-dark.svg` | Launch-animation sources. Every moving part is a named group (`arrows`, `arrow_top`, `arrow_bottom`, `phone_left` with `bug`, `phone_right` with `check`), with no filters |
+| `branding/splash-light.svg`, `branding/splash-dark.svg` | Launch-animation sources. Every moving part is a named group (`arrows`, `arrow_top`, `arrow_bottom`, `phone_left` with `bug`, `phone_right` with `check`), with no filters |
 | `numbers.json` | Every shape number (phone size, tilt, arrow curve and so on) |
 | `pages/launch-animation.html` | The chosen animation, playing on light and dark launch screens |
 | `pages/icon-on-app-backgrounds.html` | The icon on the app's light and dark backgrounds, on the Figma V2 theme, and as themed icons |
 | `pages/robot-colour-options.html` | All 19 colour options (10 from the robot, 9 from Codex); #2 is the pick |
 | `pages/one-cue-variants.html`, `pages/bug-and-check.html`, `pages/light-backgrounds.html` | The variants (robot, 12-tester ring, bug), the old and new bug, and light backgrounds by arrow colour |
 | `pages/tune.html` | The slider tuner (needs `ref.png` next to it) |
-| `source/` | Generators. `_t.js` is the tuner's script; `final.js <outdir>` rebuilds the final SVGs; `anim.js` rebuilds the animation page |
+| `source/` | Generators. `_t.js` is the tuner's script; `final.js <outdir>` rebuilds the final SVGs (the Studio layers and splash sources it writes there are the ones kept in `branding/`); `anim.js` rebuilds the animation page |
 
 ## Still to do (needs the owner's go)
 
 1. **Build the icon into the app.** In the monochrome version the bug is a solid shape, without the cream details. The coder turns the SVGs into adaptive-icon vector drawables (foreground, background, monochrome) plus the 512 px Play icon.
    - Vector drawables can't use the SVG drop-shadow filters, so either leave the shadows out or bake them into the foreground.
-2. **Launch animation: done.** `python scripts/build_swap_splash.py` turns `splash/swap-splash-light.svg` and `-dark.svg` into the animated vector drawables (`drawable-v31`, `drawable-night-v31`), the static icons for Android 11 and older (`drawable`, `drawable-night`) and the easing curves in `res/interpolator`. Backgrounds are `splash_background` (`values/splash.xml`, `values-night/splash.xml`).
+2. **Launch animation: done.** `python scripts/build_swap_splash.py` turns `branding/splash-light.svg` and `branding/splash-dark.svg` into the animated vector drawables (`drawable-v31`, `drawable-night-v31`), the static icons for Android 11 and older (`drawable`, `drawable-night`) and the easing curves in `res/interpolator`. Backgrounds are `splash_background` (`values/splash.xml`, `values-night/splash.xml`).
 3. **Later:** the app review from onboarding (the UI is too bulky) and a full hand-test setup.
