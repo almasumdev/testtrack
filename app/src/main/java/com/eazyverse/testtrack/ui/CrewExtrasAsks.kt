@@ -39,6 +39,7 @@ internal fun withCrewExtras(
     base: CrewActions,
 ): CrewActions {
     val context = LocalContext.current
+    val membership = rememberMembership()
     val extras: CrewExtrasViewModel = viewModel()
     val picker =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -63,8 +64,8 @@ internal fun withCrewExtras(
         onRetryPictures = base.onRetryPictures,
         localVersion = { pkg -> extras.copy(context, pkg).takeIf { it.installed }?.versionCode },
         fromPlay = { pkg -> extras.copy(context, pkg).let { !it.installed || it.fromPlay } },
-        onUpdateApp = { app -> openOnPlay(context, app.packageName) },
-        onFeedback = { app -> extras.askFeedback(app.id, app.label, app.packageName) },
+        onUpdateApp = { app -> membership.require { openOnPlay(context, app.packageName) } },
+        onFeedback = { app -> membership.require { extras.askFeedback(app.id, app.label, app.packageName) } },
         onPickFeedback = { app ->
             extras.askFeedback(app.id, app.label, app.packageName, asking = false)
             picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))

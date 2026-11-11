@@ -33,8 +33,8 @@ import kotlin.math.roundToInt
  *    Firestore security rules key on.
  *  - **Authorization**: [AuthorizationClient] returns a Drive access token.
  *
- * The user sees two sheets the first time. Afterwards [authorizeDrive] resolves silently, so it
- * is a single tap from then on.
+ * Signing in shows only Google's account chooser. Drive consent comes later, on the tap that needs
+ * it, and the first time it is its own sheet. Afterwards [authorizeDrive] resolves silently.
  */
 object AuthRepo {
     /**

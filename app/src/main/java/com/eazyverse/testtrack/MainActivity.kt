@@ -174,8 +174,9 @@ class MainActivity : ComponentActivity() {
                             Inset { NotConfigured() }
                         }
 
-                        // The testers group, checked in front of the person as soon as they sign
-                        // in, and quietly on every launch after. See [MembershipViewModel].
+                        // The testers group is checked quietly, on launch and after signing in,
+                        // with no dialog. Whatever needs it asks at the point of use. See
+                        // [MembershipViewModel].
                         val membership: MembershipViewModel = viewModel()
                         var wasSignedIn by remember { mutableStateOf(Session.signedIn) }
                         LaunchedEffect(Session.signedIn) {
@@ -183,7 +184,7 @@ class MainActivity : ComponentActivity() {
                             if (Session.signedIn) FeedbackWatch.schedule(this@MainActivity)
                             // Where our server can reach this phone. See [PushRepo.toServer].
                             if (Session.signedIn) PushRepo.toServer()
-                            if (Session.signedIn && !wasSignedIn) membership.afterSignIn() else membership.quietly()
+                            membership.quietly()
                             // Signed out: stop, and forget what was seen, or the next account on
                             // this phone is told about everything it has that the last one had not.
                             if (!Session.signedIn && wasSignedIn) FeedbackWatch.cancel(this@MainActivity)

@@ -15,13 +15,14 @@ import kotlinx.coroutines.launch
  * Whether this account is on the testers group, and the dialog that gets it there.
  *
  * Being on the group is what lets an owner add somebody to a closed test, so a review or a crew
- * test from outside it cannot be done properly. It is checked straight after signing in, and
- * again in front of every action that needs it: taking a review on, each of its steps and the
- * submit, and running a crew's apps. Once the server says yes it is remembered on the phone, the
- * dialog says so and waits for Continue, and nobody is asked again; a no is never remembered, so
- * joining takes effect the next time anything is tapped.
+ * test from outside it cannot be done properly. Signing in never opens the dialog. It is asked
+ * in front of every action that needs it: taking a review on, each of its steps and the submit,
+ * and taking a crew seat, running a crew's apps, installing or updating them and sending their
+ * feedback. Once the server says yes it is remembered on the phone, the dialog says so and waits
+ * for Continue, and nobody is asked again; a no is never remembered, so joining takes effect
+ * the next time anything is tapped.
  *
- * One per activity, so the dialog the sign-in opens and the one a button opens are the same.
+ * One per activity, so the dialog one button opens is the same one every other button opens.
  */
 class MembershipViewModel : ViewModel() {
     val member: Boolean get() = Session.isGroupMember
@@ -63,20 +64,13 @@ class MembershipViewModel : ViewModel() {
         ask()
     }
 
-    /** Straight after signing in: checked in front of the person, with nothing waiting on it. */
-    fun afterSignIn() {
-        if (member) return
-        pending = null
-        ask()
-    }
-
     /** From the Me page: check now, in front of the person, whatever was remembered. */
     fun show() {
         pending = null
         ask()
     }
 
-    /** On launch: a yes is remembered quietly, a no waits for the next action to say so. */
+    /** On launch and after signing in, with no dialog: a yes is remembered, a no waits for the next action to say so. */
     fun quietly() {
         if (member || checking || !Session.signedIn) return
         viewModelScope.launch {
