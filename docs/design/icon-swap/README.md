@@ -28,7 +28,7 @@ Chosen on 2026-11-11. Nothing is in the app yet.
 | `splash-foreground-light.svg` / `splash-foreground-dark.svg` | Launch-screen icon (no background) for the day and night themes |
 | `numbers.json` | Every shape number (phone size, tilt, arrow curve and so on) |
 | `pages/launch-animation.html` | The chosen animation, playing on light and dark launch screens |
-| `pages/icon-on-app-backgrounds.html` | The icon on the app's light and dark backgrounds, themed icons, Figma V2 |
+| `pages/icon-on-app-backgrounds.html` | The icon on the app's light and dark backgrounds, on the Figma V2 theme, and as themed icons |
 | `pages/robot-colour-options.html` | All 19 colour options (10 from the robot, 9 from Codex); #2 is the pick |
 | `pages/tune.html` | The slider tuner (needs `ref.png` next to it) |
 | `source/` | Generators. `_t.js` is the tuner's script; `final.js <outdir>` rebuilds the final SVGs; `anim.js` rebuilds the animation page |
