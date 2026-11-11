@@ -234,7 +234,7 @@ class FeedbackWatch(
             val note =
                 NotificationCompat
                     .Builder(context, CHANNEL)
-                    .setSmallIcon(R.drawable.ic_notification_robot)
+                    .setSmallIcon(R.drawable.ic_notification)
                     .setContentTitle(title)
                     .setContentText(body)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(body))

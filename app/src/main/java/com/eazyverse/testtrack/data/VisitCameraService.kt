@@ -161,7 +161,7 @@ class VisitCameraService : Service() {
                 .Builder(this, CHANNEL)
                 .setContentTitle("TestTrack")
                 .setContentText("Taking one picture of each app you open tonight")
-                .setSmallIcon(R.drawable.ic_notification_robot)
+                .setSmallIcon(R.drawable.ic_notification)
                 .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)

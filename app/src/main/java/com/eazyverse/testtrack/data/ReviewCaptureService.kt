@@ -341,7 +341,7 @@ class ReviewCaptureService : Service() {
                 .Builder(this, CHANNEL)
                 .setContentTitle("TestTrack")
                 .setContentText("Tap the camera button to take your review screenshot")
-                .setSmallIcon(R.drawable.ic_notification_robot)
+                .setSmallIcon(R.drawable.ic_notification)
                 .build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)

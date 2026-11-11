@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -31,7 +32,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.R
+import com.eazyverse.testtrack.DebugNotifications
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
 import kotlinx.coroutines.launch
@@ -83,6 +86,7 @@ private val IntroPages =
 fun OnboardingScreen(onDone: () -> Unit) {
     val pager = rememberPagerState { IntroPages.size }
     val scope = rememberCoroutineScope()
+    val appContext = LocalContext.current.applicationContext
     var signIn by rememberSaveable { mutableStateOf(false) }
     var finished by remember { mutableStateOf(false) }
     val finish = {
@@ -106,7 +110,11 @@ fun OnboardingScreen(onDone: () -> Unit) {
     OnboardingBody(
         pager = pager,
         motionEnabled = ValueAnimator.areAnimatorsEnabled(),
-        onNext = { if (pager.currentPage == IntroPages.lastIndex) finish() else move(pager.currentPage + 1) },
+        onNext = {
+            // Debug builds only: lets the owner see the notification icon. No-op in release.
+            if (BuildConfig.DEBUG) DebugNotifications.showTest(appContext)
+            if (pager.currentPage == IntroPages.lastIndex) finish() else move(pager.currentPage + 1)
+        },
         onSkip = finish,
         onSignIn = { signIn = true },
     )

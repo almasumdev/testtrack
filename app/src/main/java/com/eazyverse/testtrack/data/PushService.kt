@@ -90,7 +90,7 @@ class PushService : FirebaseMessagingService() {
         val notification =
             NotificationCompat
                 .Builder(this, PushRepo.CHANNEL_REMINDERS)
-                .setSmallIcon(R.drawable.ic_notification_robot)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))
