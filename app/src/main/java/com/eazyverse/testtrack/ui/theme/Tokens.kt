@@ -22,14 +22,8 @@ import androidx.compose.ui.graphics.luminance
 @Immutable
 data class TtTokens(
     val isDark: Boolean,
-    /** The ground under everything. Cards sit on it and are lighter (light) or one step up (dark). */
+    /** The ground under everything, one plain colour. Same as the launch screen ground (res splash_background). */
     val bg: Color,
-    val washTop: Color,
-    val washMiddle: Color,
-    val washLower: Color,
-    val washBottom: Color,
-    val shapeFill: Color,
-    val shapeRim: Color,
     val text: Color,
     /** Secondary text: the line under a title. */
     val text2: Color,
@@ -146,13 +140,7 @@ private val BadDark = Color(0xFFE4938A)
 val OceanLight =
     TtTokens(
         isDark = false,
-        bg = Color(0xFFE9F0F4),
-        washTop = Color(0xFFF7FCFF),
-        washMiddle = Color(0xFFE7F4FC),
-        washLower = Color(0xFFB8D8EB),
-        washBottom = Color(0xFF7FAAC7),
-        shapeFill = Color.White.alpha(.23f),
-        shapeRim = Color.White.alpha(.48f),
+        bg = Color(0xFFF7FCFF),
         text = Color(0xFF142F43),
         text2 = Color(0xFF203A4E),
         text3 = Color(0xFF223D50),
@@ -218,12 +206,6 @@ val OceanDark =
     TtTokens(
         isDark = true,
         bg = Color(0xFF0F1011),
-        washTop = Color(0xFF21394A),
-        washMiddle = Color(0xFF182B39),
-        washLower = Color(0xFF101A23),
-        washBottom = Color(0xFF0F1011),
-        shapeFill = Color(0xFF8BCBF7).alpha(.045f),
-        shapeRim = Color(0xFF8BCBF7).alpha(.10f),
         text = Color(0xFFEFF7FC),
         text2 = Color(0xFFBDD1DF),
         text3 = Color(0xFFA1BDCF),

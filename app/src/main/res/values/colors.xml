@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Generated from ui/theme/Tokens.kt. Do not edit. -->
 <resources>
-    <color name="paper">#FFE9F0F4</color>
+    <color name="paper">#FFF7FCFF</color>
     <color name="notification_accent">#FF1D5C82</color>
 </resources>
