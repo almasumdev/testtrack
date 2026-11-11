@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TestTrack robot: the rig</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{ --page:#E9EEF2; --ptext:#1B2731; --ptext2:#4F606D; --pline:#CDD7DF; --card:#FFFFFF; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--ptext);font-family:Barlow,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:14px;padding:12px 28px;background:var(--page);border-bottom:1px solid var(--pline)}
+.bar h1{font:700 20px Barlow;margin:0;flex:1}
+.seg{display:flex;border:1px solid var(--pline);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{font:600 13px Barlow;border:0;background:transparent;color:var(--ptext2);padding:7px 14px;cursor:pointer}
+.seg button.on{background:var(--ptext);color:var(--page)}
+.wrap{display:grid;grid-template-columns:minmax(560px,1fr) 470px;gap:20px;padding:20px 28px;align-items:start}
+.stagecol{display:flex;flex-direction:column;gap:14px}
+.stage{border-radius:22px;padding:8px;display:flex;justify-content:center;border:1px solid var(--pline);transition:background .2s}
+.stage svg{display:block;height:470px;width:auto;touch-action:none}
+.stage svg [data-inst="m"] [data-bone]{cursor:grab}
+.stage svg.dragging, .stage svg.dragging *{cursor:grabbing !important}
+.shade,#mini{pointer-events:none}
+.minirow{display:flex;gap:14px;align-items:stretch}
+.cmp{border-radius:18px;padding:10px 16px;border:1px solid var(--pline);background:var(--card)}
+.cmp .cap{font:600 12px Barlow;opacity:.75;margin-bottom:6px}
+.cmp .rowc{display:flex;gap:18px;align-items:flex-end;padding:12px;border-radius:14px;margin-bottom:8px}
+.cmp figure{margin:0;text-align:center;font:600 11.5px Barlow}
+.cmp figure img{display:block;height:200px}
+.cmp figure svg{display:block}
+.mini{border-radius:18px;padding:6px 16px 8px;border:1px solid var(--pline);display:flex;flex-direction:column;align-items:center}
+.mini svg{height:177px;width:auto;display:block}
+.mini .cap,.hint .cap{font:600 12px Barlow;opacity:.75}
+.hint{flex:1;border-radius:18px;padding:12px 16px;background:var(--card);border:1px solid var(--pline);font-size:14px;line-height:20px;color:var(--ptext2)}
+.hint ol{margin:4px 0 0;padding-left:18px}
+.panel{background:var(--card);border:1px solid var(--pline);border-radius:18px;padding:14px 16px}
+.panel h3{font:700 13px Barlow;letter-spacing:.6px;color:var(--ptext2);margin:14px 0 8px}
+.panel h3:first-child{margin-top:0}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.btns button{font:600 13px Barlow;border:1px solid var(--pline);background:#F6F9FB;color:var(--ptext);border-radius:999px;padding:6px 12px;cursor:pointer}
+.btns button:hover{border-color:#9FB2C0}
+.btns button.on{background:var(--ptext);color:#fff;border-color:var(--ptext)}
+.btns button.reset{background:#fff;border-color:#C9A27A;color:#7A4E22}
+.tog{display:flex;flex-wrap:wrap;gap:14px;font:500 14px Barlow;color:var(--ptext)}
+.tog label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.sl{display:grid;grid-template-columns:118px 1fr 38px;gap:4px 10px;align-items:center;font:500 13px Barlow}
+.sl span.v{font:600 12px ui-monospace,monospace;color:var(--ptext2);text-align:right}
+.sl input{width:100%}
+.groups{display:grid;grid-template-columns:1fr;gap:2px}
+details{border-top:1px solid var(--pline);padding:6px 0}
+details summary{font:700 13px Barlow;letter-spacing:.4px;color:var(--ptext2);cursor:pointer;padding:4px 0}
+details .inner{padding:6px 0 4px}
+.hands{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font:500 13px Barlow}
+.hands select{font:500 13px Barlow}
+.note{padding:6px 28px 48px;max-width:1100px;color:var(--ptext2);font-size:15px;line-height:22px}
+.note h2{color:var(--ptext);font:700 20px Barlow;margin:18px 0 6px}
+.note h3{color:var(--ptext);font:700 16px Barlow;margin:16px 0 4px}
+.note table{border-collapse:collapse;width:100%;margin:6px 0}
+.note td,.note th{border-top:1px solid var(--pline);padding:8px 10px;vertical-align:top;text-align:left}
+.note th{color:var(--ptext)}
+.note b{color:var(--ptext)}
+/* ?embed=1: only the robot, on a clear ground, filling the frame (used by onboarding/final.html) */
+body.embed{background:transparent;overflow:hidden}
+body.embed .bar, body.embed .note, body.embed #handBox, body.embed .minirow, body.embed .wrap > :not(.stagecol){display:none}
+body.embed .wrap{display:block;padding:0}
+body.embed .stage{border:0;padding:0;border-radius:0;background:transparent !important}
+body.embed .stage svg{width:100vw;height:100vh}
+body.embed .cmp{display:none !important}
+.note ol,.note ul{margin:4px 0;padding-left:20px}
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1>TestTrack robot: the rig</h1>
+  <div class="seg" id="style"><button data-v="s1" class="on">1. Line and shade</button><button data-v="s2">2. Shape and tone</button><button data-v="s3">3. Outline and colour</button><button data-v="s4">4. Rendered</button></div>
+  <div class="seg" id="palr" style="display:none"><button data-v="O" class="on">Old bot blue</button><button data-v="S">Sky blue</button></div>
+  <div class="seg" id="palk" style="display:none"><button data-v="A" class="on">A. Robot blue</button><button data-v="B">B. App icon</button><button data-v="C">C. Apricot and sky</button><button data-v="D">D. Old bot</button></div>
+  <div class="seg" id="theme"><button data-v="light" class="on">Light</button><button data-v="dark">Dark</button></div>
+</div>
+
+<div class="wrap">
+  <div class="stagecol">
+    <div class="stage" id="stageBox"><svg id="stage" viewBox="-150 -240 300 260" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="cmp" id="cmpBox" style="display:none"><div class="cap">BESIDE THE OLD BOT: by day and at night, about 360 px and at phone size</div><div id="cmp"></div></div>
+    <div class="mini" id="handBox" style="align-items:stretch"><div class="cap">HAND SHAPES: large, then phone size</div><div id="handsheet" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:6px"></div></div>
+    <div class="minirow">
+      <div class="mini" id="miniBox"><svg id="mini" viewBox="-150 -240 300 260" xmlns="http://www.w3.org/2000/svg"></svg><div class="cap">Phone size, about 130 px</div></div>
+      <div class="hint"><div class="cap">HOW TO POSE IT</div>
+        <ol>
+          <li>Drag an arm, a leg, the head or the antenna to turn it at its joint.</li>
+          <li>Drag a hand to bend the elbow, or a boot to bend the knee.</li>
+          <li>Use the sliders for exact angles. Reset puts everything back.</li>
+        </ol></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>CHEST</h3>
+    <div class="btns" id="chest">
+      <button data-c="led" class="on">Status light</button><button data-c="screen">Small screen</button><button data-c="arrows">Swap arrows</button>
+      <button data-c="grille">Grille and light</button><button data-c="dial">Bolts and dial</button><button data-c="check">Today's check</button>
+    </div>
+    <h3>FACE</h3>
+    <div class="btns" id="expr"></div>
+    <h3>ACTIONS</h3>
+    <div class="btns" id="acts"></div>
+    <h3>ALWAYS ON</h3>
+    <div class="tog">
+      <label><input type="checkbox" id="tBreath" checked> Breathing</label>
+      <label><input type="checkbox" id="tBlink" checked> Blinks now and then</label>
+      <label><input type="checkbox" id="tBrows" checked> Brows</label>
+    </div>
+    <h3>POSE</h3>
+    <div class="groups" id="sliders"></div>
+    <div class="hands">
+      <label>Left hand <select id="hL"><option value="open">Open</option><option value="wave">Wave, fingers spread</option><option value="fist">Fist</option><option value="point">Point</option><option value="thumbsup">Thumbs up</option><option value="hold">Holding</option></select></label>
+      <label>Right hand <select id="hR"><option value="open">Open</option><option value="wave">Wave, fingers spread</option><option value="fist">Fist</option><option value="point">Point</option><option value="thumbsup">Thumbs up</option><option value="hold">Holding</option></select></label>
+      <label><input type="checkbox" id="fL"> Left arm in front of head</label>
+      <label><input type="checkbox" id="fR"> Right arm in front of head</label>
+    </div>
+    <div class="btns" style="margin-top:12px"><button class="reset" id="reset">Reset</button></div>
+  </div>
+</div>
+
+<div class="note" id="note"></div>
+
+<script>
+/* ======================= palettes (the same values as onboarding/system.html) ======================= */
+const PAL = {
+  s1: {
+    light:{page:'#F7FCFF', paper:'#FFFFFF', line:'#26343F', plate:'#DDE6EC', accent:'#32729B', accentLit:'#5E9BC2', onAccent:'#FFFFFF', face:'#FFFFFF', eye:'#26343F', glint:'#FFFFFF', dim:'#C6D3DC',
+      // the limbs one step darker than the head and body: weight without a shadow
+      limb:'#E4ECF2', hand:'#E4ECF2', boot:'#E4ECF2', joint:'#E4ECF2', ear:'#E4ECF2', collar:'#E4ECF2', cuff:'#E4ECF2', housing:'#E4ECF2'},
+    dark: {page:'#0F1011', paper:'#1A1E22', line:'#7E8B96', plate:'#242A30', accent:'#45728F', accentLit:'#6A9ABA', onAccent:'#DCE4EA', face:'#1A1E22', eye:'#A9B4BD', glint:'#1A1E22', dim:'#343C43',
+      limb:'#2C333A', hand:'#2C333A', boot:'#2C333A', joint:'#2C333A', ear:'#2C333A', collar:'#2C333A', cuff:'#2C333A', housing:'#2C333A'},
+  },
+  s2: {
+    light:{page:'#F7FCFF', body:'#D4DFE7', shade:'#C0CED9', limb:'#A8B9C6', face:'#FFFFFF', ink:'#25333E', eye:'#25333E', glint:'#FFFFFF', accent:'#32729B', accentLit:'#5E9BC2', onAccent:'#FFFFFF', floor:'#DCE5EC', dim:'#B4C3CF'},
+    dark: {page:'#0F1011', body:'#333B42', shade:'#2A3137', limb:'#47515A', face:'#7C8994', ink:'#A9B5BF', eye:'#14181B', glint:'#C4CCD3', accent:'#45728F', accentLit:'#6A9ABA', onAccent:'#DCE4EA', floor:'#1B1F23', dim:'#262C32'},
+  },
+  /* Outline and colour: line and shade exactly, with tints inside the ink lines. At night it stays a sticker:
+     the tints a step deeper, the ink line still dark, so the shapes carry the silhouette against the dark page. The face plate stays light,
+     the colour sits on the shell, ears and limbs, and the shade plate stays one neutral tone.
+     A Robot blue   B App icon (mint and coral)   C Apricot and sky (warm, with the app's blue as the accent) */
+  s3: {
+    A: {
+      light:{page:'#F7FCFF', paper:'#FFFFFF', line:'#26343F', plate:'#DDE6EC', face:'#FFFDF8', eye:'#26343F', glint:'#FFFFFF',
+        head:'#CFE3F0', torso:'#BCD7EA', ear:'#9CC2DC', collar:'#9CC2DC', limb:'#8DB7D4', joint:'#9CC2DC', hand:'#E6F1F8', cuff:'#9CC2DC', boot:'#7CA8C8', housing:'#9CC2DC',
+        accent:'#3FBFA2', accentLit:'#7ED9C4', onAccent:'#FFFFFF', dim:'#7FA9C6', ball:'#F58B73', cheek:'#F7A893'},
+      // night: a soft grey-blue line instead of ink, so the edge holds on the dark page; fills one step deeper so the line has contrast
+      dark: {page:'#0F1011', paper:'#1A1E22', line:'#B4C7D6', plate:'#20262C', face:'#EEEBE3', eye:'#16202A', glint:'#FFFFFF',
+        head:'#4F7593', torso:'#476C89', ear:'#3A5C77', collar:'#3A5C77', limb:'#36576F', joint:'#3A5C77', hand:'#5F84A1', cuff:'#3A5C77', boot:'#2F4D64', housing:'#3A5C77',
+        accent:'#4CC7AA', accentLit:'#86DFCA', onAccent:'#0F2B25', dim:'#2F4D64', ball:'#EE8A74', stalk:null, cheek:'#E89A87'},
+    },
+    B: {
+      light:{page:'#F7FCFF', paper:'#FFFFFF', line:'#26343F', plate:'#DDE6EC', face:'#FFFDF8', eye:'#26343F', glint:'#FFFFFF',
+        head:'#CDEEE5', torso:'#BFE7DB', ear:'#F7BCAA', collar:'#F7BCAA', limb:'#F4AE9A', joint:'#F7BCAA', hand:'#FFF3E6', cuff:'#F4AE9A', boot:'#EE9C86', housing:'#F7BCAA',
+        accent:'#EF7F66', accentLit:'#F7A68F', onAccent:'#FFFFFF', dim:'#D9907C', ball:'#F0806A', cheek:'#F6A08A'},
+      dark: {page:'#0F1011', paper:'#1A1E22', line:'#0E1418', plate:'#20262C', face:'#F1EEE6', eye:'#16202A', glint:'#FFFFFF',
+        head:'#8ACFBE', torso:'#7BC4B2', ear:'#E09A86', collar:'#E09A86', limb:'#D98B76', joint:'#E09A86', hand:'#EADCCB', cuff:'#D98B76', boot:'#C97C68', housing:'#E09A86',
+        accent:'#E86F55', accentLit:'#F29A84', onAccent:'#2A100A', dim:'#B06A58', ball:'#F0806A', stalk:'#E09A86', cheek:'#E89884'},
+    },
+    C: {
+      light:{page:'#F7FCFF', paper:'#FFFFFF', line:'#26343F', plate:'#DDE6EC', face:'#FFFFFF', eye:'#26343F', glint:'#FFFFFF',
+        head:'#FBE3CC', torso:'#F8D2B3', ear:'#A9C9DF', collar:'#A9C9DF', limb:'#9DC0D9', joint:'#A9C9DF', hand:'#FFF6EC', cuff:'#A9C9DF', boot:'#86ADCB', housing:'#A9C9DF',
+        accent:'#32729B', accentLit:'#5E9BC2', onAccent:'#FFFFFF', dim:'#86ADCB', ball:'#32729B', cheek:'#F4A68F'},
+      dark: {page:'#0F1011', paper:'#1A1E22', line:'#0E1418', plate:'#20262C', face:'#F4EFE7', eye:'#16202A', glint:'#FFFFFF',
+        head:'#E7C6A6', torso:'#DDB28E', ear:'#8DB0CA', collar:'#8DB0CA', limb:'#7FA4C0', joint:'#8DB0CA', hand:'#EADFCF', cuff:'#8DB0CA', boot:'#6E95B3', housing:'#8DB0CA',
+        accent:'#5E9BC2', accentLit:'#8DBFE0', onAccent:'#0E2233', dim:'#5F86A3', ball:'#6FA6CC', stalk:'#8DB0CA', cheek:'#E39C86'},
+    },
+    /* D, Old bot: the app's existing robot (res/drawable/testtrack_robot.xml, logo/test-exchange.svg), each part in its
+       old colour, every gradient taken at its middle tone. The old bot had no arms, legs or cheeks: the limbs take its
+       antenna blue, the hands its light hand blue, and the cheeks stay off as they were. */
+    D: {
+      light:{page:'#F7FCFF', paper:'#FFFFFF', line:'#26343F', plate:'#DDE6EC', face:'#FFFCF1', eye:'#17253B', glint:'#FFFFFF',
+        head:'#28678F', torso:'#1E5475', ear:'#1E5475', collar:'#1D5C82', limb:'#1D5C82', joint:'#245F84', hand:'#6FADD2', cuff:'#245F84', boot:'#1E5475', housing:'#1D5C82',
+        accent:'#64CBB6', accentLit:'#8EDCCB', onAccent:'#FFFFFF', dim:'#3C7BA3', ball:'#F48E76', stalk:'#1D5C82', cheek:null, earIn:'#6CA9CF'},
+      // night: the same soft grey-blue line as A, every fill a step deeper, the face a little softer
+      dark: {page:'#0F1011', paper:'#1A1E22', line:'#B4C7D6', plate:'#20262C', face:'#EEEBE3', eye:'#16202A', glint:'#FFFFFF',
+        head:'#225A7E', torso:'#1A4A68', ear:'#1A4A68', collar:'#18506F', limb:'#18506F', joint:'#1F5376', hand:'#5E9AC0', cuff:'#1F5376', boot:'#1A4A68', housing:'#18506F',
+        accent:'#5BC2AC', accentLit:'#86D8C6', onAccent:'#0F2B25', dim:'#2C5F80', ball:'#E98670', stalk:null, cheek:null, earIn:'#5E9AC0'},
+    },
+  },
+};
+/* Rendered: every part is [highlight, base, shadow, outline]. Light comes from the top left. The outline is a darker
+   shade of the part's own colour, so the parts separate without one ink line everywhere.
+   O, Old bot blue: the old bot's own colours (testtrack_robot.xml). S, Sky blue: lighter and friendlier, white hands. */
+/* Rendered: every part is [highlight, base, shadow, outline], lit from the top left. The whole figure stays in one
+   light value range: the shadow side is only a little deeper than the base, and each outline is only a little darker
+   than its own fill. The cream face and the dark eyes carry the contrast. At night the fills stay the same (a bright
+   robot on a dark page is fine) and a thin rim light on the shadow side keeps the edge.
+   O, Old bot blue: the old bot's hues, lifted two steps. S, Sky blue: bright and airy, white hands. */
+const R4PAL = {
+  O: {
+    light:{ page:'#F7FCFF', floor:['rgba(45,105,155,.24)','rgba(45,105,155,0)'],
+      head:['#A9D2EE','#5E9FCA','#4F91BF','#3F80AE'], ear:['#7DB4DA','#5294C1','#4687B5','#397AA8'], earIn:['#E6F4FD','#AFD7F0','#8DC3E4','#609DC7'],
+      torso:['#9ACAEA','#5899C5','#4B8BB9','#3D7DAB'], collar:['#75AED6','#5294C1','#4687B5','#397AA8'],
+      limb:['#A8D1EE','#6BA9D1','#5B9AC5','#4686B3'], joint:['#6CA7D0','#4D8EBC','#4282B0','#356F9D'],
+      hand:['#D6ECF9','#A2D0ED','#88C0E2','#619FC7'], cuff:['#75AED6','#5898C4','#4B8BB9','#3D7DAB'], boot:['#75AED6','#4F90BD','#4383B1','#356F9D'],
+      ball:['#FFE4DA','#FBA68E','#F08C72','#D6765F'], face:['#FFFFFF','#FFFCF1','#F4ECDC','#4F91BF'], eye:['#3A5476','#17253B','#0B1322'],
+      stalk:'#4D8EBC', accent:'#5CC8B1', accentLit:'#9AE6D5', onAccent:'#FFFFFF', dim:'#86BADD', cheek:'#F7A893', glint:'#FFFFFF', rimShade:'rgba(45,105,155,.18)' },
+    dark: { page:'#0F1011', floor:['rgba(0,0,0,.55)','rgba(0,0,0,0)'], rim:'rgba(225,242,252,.7)',
+      head:['#A9D2EE','#5E9FCA','#4F91BF','#3F80AE'], ear:['#7DB4DA','#5294C1','#4687B5','#397AA8'], earIn:['#E6F4FD','#AFD7F0','#8DC3E4','#609DC7'],
+      torso:['#9ACAEA','#5899C5','#4B8BB9','#3D7DAB'], collar:['#75AED6','#5294C1','#4687B5','#397AA8'],
+      limb:['#A8D1EE','#6BA9D1','#5B9AC5','#4686B3'], joint:['#6CA7D0','#4D8EBC','#4282B0','#356F9D'],
+      hand:['#D6ECF9','#A2D0ED','#88C0E2','#619FC7'], cuff:['#75AED6','#5898C4','#4B8BB9','#3D7DAB'], boot:['#75AED6','#4F90BD','#4383B1','#356F9D'],
+      ball:['#FFE4DA','#FBA68E','#F08C72','#D6765F'], face:['#FFFFFF','#FFFCF1','#F4ECDC','#4F91BF'], eye:['#3A5476','#17253B','#0B1322'],
+      stalk:'#4D8EBC', accent:'#5CC8B1', accentLit:'#9AE6D5', onAccent:'#FFFFFF', dim:'#86BADD', cheek:'#F7A893', glint:'#FFFFFF', rimShade:'rgba(45,105,155,.18)' },
+  },
+  S: {
+    light:{ page:'#F7FCFF', floor:['rgba(70,140,190,.22)','rgba(70,140,190,0)'],
+      head:['#DDF1FD','#9DD3F4','#83C2EA','#68A8D3'], ear:['#B4DDF7','#8BC6EC','#76B6E2','#5F9FCB'], earIn:['#FFFFFF','#E4F4FD','#C6E5F8','#8ABBDB'],
+      torso:['#CDEAFB','#94CEF1','#7FBFE8','#66A6D1'], collar:['#ABD9F5','#88C5EB','#74B4E0','#5E9FCB'],
+      limb:['#D3EDFC','#A6D8F5','#8EC8EE','#6FA9D2'], joint:['#A3D3F2','#82C0E8','#70B0DD','#5A9AC6'],
+      hand:['#FFFFFF','#F6FBFE','#E0EFF9','#9FC4DD'], cuff:['#A3D3F2','#86C3EB','#72B2DE','#5E9FCB'], boot:['#AAD7F4','#84C1E9','#6FAFDC','#5896C3'],
+      ball:['#FFE4DA','#FBA68E','#F08C72','#D6765F'], face:['#FFFFFF','#FFFCF1','#F4ECDC','#76AED4'], eye:['#3A5476','#17253B','#0B1322'],
+      stalk:'#72B2DE', accent:'#5CC8B1', accentLit:'#9AE6D5', onAccent:'#FFFFFF', dim:'#A9D3EE', cheek:'#F7A893', glint:'#FFFFFF', rimShade:'rgba(70,140,190,.16)' },
+    dark: { page:'#0F1011', floor:['rgba(0,0,0,.55)','rgba(0,0,0,0)'], rim:'rgba(240,250,255,.75)',
+      head:['#DDF1FD','#9DD3F4','#83C2EA','#68A8D3'], ear:['#B4DDF7','#8BC6EC','#76B6E2','#5F9FCB'], earIn:['#FFFFFF','#E4F4FD','#C6E5F8','#8ABBDB'],
+      torso:['#CDEAFB','#94CEF1','#7FBFE8','#66A6D1'], collar:['#ABD9F5','#88C5EB','#74B4E0','#5E9FCB'],
+      limb:['#D3EDFC','#A6D8F5','#8EC8EE','#6FA9D2'], joint:['#A3D3F2','#82C0E8','#70B0DD','#5A9AC6'],
+      hand:['#FFFFFF','#F6FBFE','#E0EFF9','#9FC4DD'], cuff:['#A3D3F2','#86C3EB','#72B2DE','#5E9FCB'], boot:['#AAD7F4','#84C1E9','#6FAFDC','#5896C3'],
+      ball:['#FFE4DA','#FBA68E','#F08C72','#D6765F'], face:['#FFFFFF','#FFFCF1','#F4ECDC','#76AED4'], eye:['#3A5476','#17253B','#0B1322'],
+      stalk:'#72B2DE', accent:'#5CC8B1', accentLit:'#9AE6D5', onAccent:'#FFFFFF', dim:'#A9D3EE', cheek:'#F7A893', glint:'#FFFFFF', rimShade:'rgba(70,140,190,.16)' },
+  },
+};
+// the flat keys the rest of the page reads (seams, glyphs, the chest light, the plate)
+const r4flat = Q => ({ ...Q, paper:'#FFFFFF', line:Q.torso[3], plate:'#DDE6EC', face:Q.face[1], eye:Q.eye[1], ball:Q.ball[1], limb:Q.limb[1], hand:Q.hand[1] });
+let PR = 'O';
+let PK = 'A';
+const rad = d => d*Math.PI/180;
+const QP = new URLSearchParams(location.search), PROP = QP.get('prop'), PROP_SIDE = QP.get('propside') || 'R', PROP_LEAN = +(QP.get('lean') || 0);
+const PALS = () => STYLE === 's4' ? r4flat(R4PAL[PR][THEME]) : STYLE === 's3' ? PAL.s3[PK][THEME] : PAL[STYLE][THEME];
+const W = 3.37;   // one line weight, in robot units (about 2.3 px at phone size)
+
+/* ======================= geometry (robot units, ground at y = 6) ======================= */
+const f = v => (+v).toFixed(2).replace(/\.?0+$/,'');
+const rr = (x,y,w,h,r) => { r = Math.min(r, w/2, h/2);
+  return `M${f(x+r)} ${f(y)}H${f(x+w-r)}A${f(r)} ${f(r)} 0 0 1 ${f(x+w)} ${f(y+r)}V${f(y+h-r)}A${f(r)} ${f(r)} 0 0 1 ${f(x+w-r)} ${f(y+h)}H${f(x+r)}A${f(r)} ${f(r)} 0 0 1 ${f(x)} ${f(y+h-r)}V${f(y+r)}A${f(r)} ${f(r)} 0 0 1 ${f(x+r)} ${f(y)}Z`; };
+const circ = (cx,cy,r) => `M${f(cx-r)} ${f(cy)}A${f(r)} ${f(r)} 0 1 0 ${f(cx+r)} ${f(cy)}A${f(r)} ${f(r)} 0 1 0 ${f(cx-r)} ${f(cy)}Z`;
+const tickD = (cx,cy,s) => `M${f(cx-s*.42)} ${f(cy+s*.02)}L${f(cx-s*.12)} ${f(cy+s*.3)}L${f(cx+s*.42)} ${f(cy-s*.3)}`;
+const HEAD = 'M0 -160C40 -160 61 -156 64.5 -131C66.8 -115 66.8 -99 64 -87C60.5 -73 41 -68 0 -68C-41 -68 -60.5 -73 -64 -87C-66.8 -99 -66.8 -115 -64.5 -131C-61 -156 -40 -160 0 -160Z';
+const FACE = 'M0 -143C33 -143 49 -140 52.5 -124C54.5 -113 54.5 -101 52 -92C49 -83 34 -81 0 -81C-34 -81 -49 -83 -52 -92C-54.5 -101 -54.5 -113 -52.5 -124C-49 -140 -33 -143 0 -143Z';
+const EAR_R = 'M60 -127C75 -128 82.5 -119 82.5 -107C82.5 -95 75 -86 60 -87Z';
+const EAR_L = 'M-60 -127C-75 -128 -82.5 -119 -82.5 -107C-82.5 -95 -75 -86 -60 -87Z';
+const TORSO = 'M-28 -66H28C33.5 -66 36 -63 36.6 -58L39.4 -32C40.4 -24 35.5 -20 27 -20H-27C-35.5 -20 -40.4 -24 -39.4 -32L-36.6 -58C-36 -63 -33.5 -66 -28 -66Z';
+const COLLAR = rr(-23,-74,46,12,5.5);
+const PANEL = rr(-14,-58,28,19,6);
+/* Hands, drawn from the wrist along +y, the thumb on the inner side (+x for the left arm).
+   That is right while the arm hangs. Once the arm lifts past about 70 degrees the forearm turns the hand over
+   (see TURN below), so the thumb stays on top when the arm is level and toward the head when it is raised.
+   A rounded palm, two chunky fingers and a thumb. The fingers sit far enough apart that one line
+   (or, without outlines, one gap) always shows between them, so a hand never melts into a mitten.
+   u: one silhouette (outlined once round the outside)   top: parts drawn whole on top
+   Each part: r = rounded rect [x,y,w,h,radius], c = circle [x,y,r], t = tube [x1,y1,x2,y2,width] */
+const FW = 6.4;                                   // finger width
+const fing = (x, y, len, a, w=FW) => ({ t:[x, y, x + len*Math.sin(a*Math.PI/180), y + len*Math.cos(a*Math.PI/180), w] });
+const PALM = { r:[-9,2,18,12.5,5.5] }, FISTP = { r:[-9,2,18,13.5,6.2] };
+const HANDS = {
+  open:     { u:[PALM, fing(-4.7,10,8.5,-3), fing(4.7,10,8.5,3), fing(7,6.5,6,72,6.2)] },
+  wave:     { u:[PALM, fing(-4.4,10,8.5,-20), fing(4.4,10,8.5,14), fing(6.8,6.5,7,82,6.2)] },
+  fist:     { u:[FISTP, {c:[-4.7,14.8,3.7]}, {c:[4.7,14.8,3.7]}], top:[{t:[8.5,8.5,-0.5,10,6]}] },
+  point:    { u:[FISTP, {c:[-4.7,14.8,3.7]}, fing(4.4,10,13.5,0), {c:[9.6,7.5,3.4]}] },
+  thumbsup: { u:[FISTP, {c:[-4.7,14.8,3.7]}, {c:[4.7,14.8,3.7]}, {t:[6,7,16,7,FW]}] },   // the thumb on the inner side too: the turn puts it on top
+  hold:     { u:[PALM, fing(-4.7,10,4.5,-28), fing(4.7,10,4.5,-28), fing(7.5,5,9.5,8,6.2)] },
+};
+const HAND_KEYS = Object.keys(HANDS);
+/* the hand turns over when the whole arm (shoulder + elbow + wrist) lifts past TURN_ON, and back below TURN_OFF.
+   The turn is a quick squeeze through zero width, like a wrist rolling, never a jump. */
+const TURN_ON = 70, TURN_OFF = 56;
+const TURN = { L:{ s:1, x:1 }, R:{ s:1, x:1 } };
+// the boot, drawn from the ankle; the toe points outwards (-x for the left leg)
+const BOOT = 'M-16 9.5C-16 2 -11 -1 -3 -1H5C9.5 -1 11.5 2 11.5 6V9.5Q11.5 11 10 11H-14.5Q-16 11 -16 9.5Z';
+const ARM = { up:18, fore:15, w:11 }, LEG = { thigh:13, shin:12, w:15 };
+
+/* ======================= the skeleton =======================
+   Every bone is a <g data-bone> whose transform is translate(joint offset from its parent) rotate(angle),
+   so it turns about its own joint. Its drawing sits inside, in the bone's own space (joint at 0,0).
+   root (hip, 0,-26)
+     hipL > kneeL > ankleL           hipR > kneeR > ankleR   (the right side is the left side mirrored)
+     torso
+       shoulderL > elbowL > wristL   shoulderR > elbowR > wristR
+       neck > head > antenna
+   Arms and legs are drawn in two passes, every outline first and then every fill, so an elbow or a knee is
+   one unbroken tube at any angle. Hands, boots and the shoulder balls are drawn whole, on top.        */
+const REL = {
+  root:[0,-26], torso:[0,0], neck:[0,-36], head:[0,-8], antenna:[0,-90],
+  shoulderL:[-35,-29], elbowL:[0,ARM.up], wristL:[0,ARM.fore], shoulderR:[-35,-29], elbowR:[0,ARM.up], wristR:[0,ARM.fore],
+  hipL:[-15,-4], kneeL:[0,LEG.thigh], ankleL:[0,LEG.shin], hipR:[-15,-4], kneeR:[0,LEG.thigh], ankleR:[0,LEG.shin],
+};
+
+let STYLE = 's1', THEME = 'light';
+let clipN = 0;
+
+function gen(prefix, mode){
+  const P = PALS(), s1 = STYLE !== 's2', plate = mode === 'plate';   // s1 here means 'outlined': styles 1 and 3
+  const T = (k, fb) => (!plate && P[k]) || fb;                        // a part's own tint in style 3, else the plain fill
+  const defs = [];
+  /* style 4, Rendered: gradients and highlights belong to their part, so they turn with the bones.
+     Shapes use objectBoundingBox gradients. Tubes and hands are strokes, so they use userSpaceOnUse gradients in their
+     own bone's space, one per side, so the light stays on the viewer's left on the mirrored right arm and leg too. */
+  const R4 = STYLE === 's4' && mode !== 'plate';
+  const LW4 = new URLSearchParams(location.search).get('nol') ? .01 : W * .62, G = R4 ? R4PAL[PR][THEME] : null;   // the part colours as [highlight, base, shadow, outline]
+  let CS = 'L', CL = 'arm';
+  if (R4) {
+    const st = (cs, os) => cs.map((c, i) => `<stop offset="${os[i]}" stop-color="${c}"/>`).join('');
+    const lin = (id, c, x1=0, y1=0, x2=.72, y2=1) => defs.push(`<linearGradient id="${prefix}${id}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">${st(c.slice(0,3), [0,.48,1])}</linearGradient>`);
+    ['head','ear','torso','collar','cuff','boot','hand'].forEach(k => lin('g-' + k, G[k]));
+    lin('g-earIn', G.earIn, 0, 0, 1, .6);
+    lin('g-face', G.face, 0, 0, .25, 1);
+    lin('g-glass', ['rgba(255,255,255,.75)', 'rgba(255,255,255,.18)', 'rgba(255,255,255,0)'], 0, 0, 0, 1);
+    const rad = (id, c, fx=.34, fy=.3) => defs.push(`<radialGradient id="${prefix}${id}" cx=".5" cy=".5" r=".62" fx="${fx}" fy="${fy}">${st(c, [0,.5,1])}</radialGradient>`);
+    rad('g-joint', G.joint.slice(0,3)); rad('g-eye', G.eye);
+    defs.push(`<radialGradient id="${prefix}g-ball" cx=".5" cy=".5" r=".6" fx=".33" fy=".28"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".16" stop-color="${G.ball[0]}"/><stop offset=".55" stop-color="${G.ball[1]}"/><stop offset="1" stop-color="${G.ball[2]}"/></radialGradient>`);
+    defs.push(`<radialGradient id="${prefix}g-floor" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="${G.floor[0]}"/><stop offset="1" stop-color="${G.floor[1]}"/></radialGradient>`);
+    defs.push(`<radialGradient id="${prefix}g-occ" cx=".5" cy="0" r=".9"><stop offset="0" stop-color="rgba(20,70,120,.26)"/><stop offset="1" stop-color="rgba(20,70,120,0)"/></radialGradient>`);
+    // tubes: across the tube from its left edge to its right edge; the right side's stops run the other way
+    const tubeG = (id, c, w, flip) => defs.push(`<linearGradient id="${prefix}${id}" gradientUnits="userSpaceOnUse" x1="${flip ? w/2 : -w/2}" y1="0" x2="${flip ? -w/2 : w/2}" y2="0">${st(c.slice(0,3), [0,.45,1])}</linearGradient>`);
+    ['L','R'].forEach(sd => { tubeG('t-arm-' + sd, G.limb, ARM.w, sd === 'R'); tubeG('t-leg-' + sd, G.limb, LEG.w, sd === 'R'); tubeG('t-hand-' + sd, G.hand, FW, sd === 'R');
+      defs.push(`<linearGradient id="${prefix}h-${sd}" gradientUnits="userSpaceOnUse" x1="${sd === 'R' ? 12 : -10}" y1="0" x2="${sd === 'R' ? -10 : 12}" y2="20">${st(G.hand.slice(0,3), [0,.5,1])}</linearGradient>`); });
+  }
+  const U = id => `url(#${prefix}${id})`;
+  const rend = (d, key, extra='') => `<path d="${d}" fill="${U('g-' + key)}" stroke="${G[key][3]}" stroke-width="${LW4}" stroke-linejoin="round" ${extra}/>`;
+  const C = {
+    solid: plate ? P.plate : s1 ? P.paper : P.body,
+    line:  plate ? P.plate : s1 ? P.line : 'none',
+    part:  plate ? P.plate : s1 ? P.paper : P.limb,
+    limbOut: plate ? P.plate : s1 ? P.line : P.limb,
+    limbIn: (s1 && !plate) ? (P.limb || P.paper) : null,
+    face:  plate ? P.plate : P.face,
+    mark:  plate ? P.plate : s1 ? P.line : P.ink,
+    seam:  plate ? P.plate : s1 ? P.line : P.limb,
+  };
+  const sw = (s1 || plate) ? W : 0;
+  const strokeA = sw ? `stroke="${C.line}" stroke-width="${W}" stroke-linejoin="round"` : '';
+  const LJ = 'stroke-linejoin="round" stroke-linecap="round"';
+  const stroked = (d, fill, extra='') => `<path d="${d}" fill="${fill}" ${strokeA} ${extra}/>`;
+  const solid = (d, sh, key) => {
+    if (R4) return rend(d, key);
+    if (!s1 && !plate) {
+      const id = `${prefix}c${clipN++}`; defs.push(`<clipPath id="${id}"><path d="${d}"/></clipPath>`);
+      return `<path d="${d}" fill="${P.shade}"/><g clip-path="url(#${id})"><path d="${d}" transform="translate(${-sh} ${-sh})" fill="${P.body}"/></g>`;
+    }
+    return stroked(d, T(key, C.solid));
+  };
+  const part = (d, extra='') => R4 ? rend(d, 'joint', extra) : stroked(d, C.part, extra);
+  const partK = (d, key) => R4 ? rend(d, key === 'housing' ? 'collar' : key) : stroked(d, T(key, C.part));
+  const mark = (d, col, extra='') => `<path d="${d}" fill="none" stroke="${col || C.mark}" stroke-width="${W}" ${LJ} ${extra}/>`;
+  const seam = d => mark(d, C.seam);
+  const tubeO = (y2, w, x1=0, y1=0, x2=0) => `<path d="M${x1} ${y1}L${x2} ${y2}" fill="none" stroke="${R4 ? G[CL === 'hand' ? 'hand' : 'limb'][3] : C.limbOut}" stroke-width="${R4 ? w + LW4 : w + sw}" ${LJ}/>`;
+  const tubeI = (y2, w, x1=0, y1=0, x2=0) => R4 ? `<path d="M${x1} ${y1}L${x2} ${y2}" fill="none" stroke="${U('t-' + CL + '-' + CS)}" stroke-width="${w - LW4}" ${LJ}/>`
+    : C.limbIn ? `<path d="M${x1} ${y1}L${x2} ${y2}" fill="none" stroke="${C.limbIn}" stroke-width="${w - W}" ${LJ}/>` : '';
+  const tube = (x1,y1,x2,y2,w) => tubeO(y2, w, x1, y1, x2) + tubeI(y2, w, x1, y1, x2);
+  const bone = (name, inner, children='', abs) =>
+    `<g data-bone="${name}">${abs ? `<g transform="translate(${-abs[0]} ${-abs[1]})">${inner}</g>` : inner}${children}</g>`;
+
+  /* hands: every shape is there, one shown at a time. The cuff covers the end of the forearm at any angle. */
+  const shapeD = q => q.r ? rr(...q.r) : circ(...q.c);
+  const union = list => {
+    const sh = list.filter(q => !q.t), tb = list.filter(q => q.t);
+    const tline = (q, col, w) => `<path d="M${f(q.t[0])} ${f(q.t[1])}L${f(q.t[2])} ${f(q.t[3])}" fill="none" stroke="${col}" stroke-width="${f(w)}" ${LJ}/>`;
+    if (plate) return sh.map(q => `<path d="${shapeD(q)}" fill="${C.part}" stroke="${C.part}" stroke-width="${2*W}" ${LJ}/>`).join('') + tb.map(q => tline(q, C.part, q.t[4] + 2*W)).join('');
+    if (!s1) return sh.map(q => `<path d="${shapeD(q)}" fill="${P.limb}"/>`).join('') + tb.map(q => tline(q, P.limb, q.t[4])).join('');
+    if (R4) { const oc = G.hand[3], fc = U('h-' + CS), lw = LW4;
+      return sh.map(q => `<path d="${shapeD(q)}" fill="${oc}" stroke="${oc}" stroke-width="${2*lw}" ${LJ}/>`).join('') + tb.map(q => tline(q, oc, q.t[4] + 2*lw)).join('')
+           + sh.map(q => `<path d="${shapeD(q)}" fill="${fc}"/>`).join('') + tb.map(q => tline(q, fc, q.t[4])).join('')
+           + `<path d="M-5.5 4.8Q-1 3 4 4.4" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.6" stroke-linecap="round"/>`; }
+    return sh.map(q => `<path d="${shapeD(q)}" fill="${C.line}" stroke="${C.line}" stroke-width="${2*W}" ${LJ}/>`).join('') + tb.map(q => tline(q, C.line, q.t[4] + 2*W)).join('')
+         + sh.map(q => `<path d="${shapeD(q)}" fill="${T('hand', C.part)}"/>`).join('') + tb.map(q => tline(q, T('hand', C.part), q.t[4])).join('');
+  };
+  // without outlines, the cuff and anything laid over the hand take the body tone so they still read
+  const over = d => (!s1 && !plate) ? `<path d="${d}" fill="${P.body}"/>` : partK(d, 'cuff');
+  const whole = q => q.t ? (R4 ? (tubeO(q.t[3], q.t[4], q.t[0], q.t[1], q.t[2]) + `<path d="M${f(q.t[0])} ${f(q.t[1])}L${f(q.t[2])} ${f(q.t[3])}" fill="none" stroke="${U('h-' + CS)}" stroke-width="${f(q.t[4] - LW4)}" ${LJ}/>`) : (!s1 && !plate) ? `<path d="M${f(q.t[0])} ${f(q.t[1])}L${f(q.t[2])} ${f(q.t[3])}" fill="none" stroke="${P.body}" stroke-width="${q.t[4]}" ${LJ}/>` : (q.t ? tubeO(q.t[3], q.t[4], q.t[0], q.t[1], q.t[2]) + `<path d="M${f(q.t[0])} ${f(q.t[1])}L${f(q.t[2])} ${f(q.t[3])}" fill="none" stroke="${T('hand', C.part)}" stroke-width="${f(q.t[4] - W)}" ${LJ}/>` : '')) : (R4 ? `<path d="${shapeD(q)}" fill="${U('h-' + CS)}" stroke="${G.hand[3]}" stroke-width="${LW4}" stroke-linejoin="round"/>` : partK(shapeD(q), 'hand'));
+  const CUFF = rr(-8,-2.5,16,5.5,2.75);
+  /* a phone held in the holding hand (?prop=phone&propside=R&lean=-8): the palm behind it, the fingers wrapping
+     its outer edge and the thumb on its front face. Drawn upright, with +x pointing away from the body; render()
+     keeps it upright and leaning by "lean" degrees (minus leans the top in toward the body) whatever the arm does. */
+  const heldProp = side => {
+    if (!PROP || PROP_SIDE !== side || plate) return '';
+    const fillK = (d, k) => R4 ? rend(d, k) : stroked(d, T(k, C.solid));
+    const pad = (x, y, w, h, a) => `<g transform="rotate(${a} ${x} ${y})">${partK(rr(x - w/2, y - h/2, w, h, h/2), 'hand')}</g>`;
+    return `<g transform="translate(0 8)"><g data-part="prop${side}"><g transform="scale(1.2)">`
+      + fillK(rr(-14, -37, 30, 54, 8), 'head')
+      + `<path d="${rr(-10, -30, 22, 36, 4)}" fill="${C.face}" stroke="${C.line}" stroke-width="${W*.8}" stroke-linejoin="round"/>`
+      + `<path d="M-2 -33.6H4" stroke="${C.line}" stroke-width="${W*.8}" stroke-linecap="round"/>`
+      + `<path d="${rr(-6, -25, 14, 14, 4)}" fill="${P.accent}" stroke="${C.line}" stroke-width="${W*.7}" stroke-linejoin="round"/>`
+      + `<path d="${tickD(1, -18, 8)}" fill="none" stroke="${P.onAccent}" stroke-width="${W*.75}" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `<path d="M-5 -3.5H7" stroke="${P.dim || C.line}" stroke-width="3" stroke-linecap="round"/>`
+      + pad(16.5, -3, 11, 6.6, -8) + pad(16.5, 4.5, 11, 6.6, 8)      // two fingers round the outer edge
+      + pad(-13, -7, 12, 6.8, -38)                                     // the thumb on the front
+      + `</g></g></g>`;
+  };
+  const hands = side => (CS = side, CL = 'hand', '') + `<g data-drag="elbow${side}" data-part="turn${side}">${HAND_KEYS.map(k =>
+      `<g data-part="hand${side}-${k}" ${k === 'open' ? '' : 'style="display:none"'}>${union(HANDS[k].u)}${(HANDS[k].top || []).map(whole).join('')}${k === 'hold' ? heldProp(side) : ''}</g>`).join('')}
+      ${over(CUFF)}</g>`;
+  if (mode === 'handsheet') {
+    // a forearm and one hand shape, hanging down and held out to the side
+    const one = (k, a, x) => `<g transform="translate(${x} 0) rotate(${a})">${tubeO(0, ARM.w, 0, -16, 0)}${tubeI(0, ARM.w, 0, -16, 0)}`
+      + `<g transform="scale(${a >= TURN_ON ? -1 : 1} 1)">${union(HANDS[k].u)}${(HANDS[k].top || []).map(whole).join('')}${over(CUFF)}</g></g>`;
+    const dd = R4 ? `<defs>${defs.join('')}</defs>` : '';
+    return { defs:'', body: HAND_KEYS.map(k => (CS = 'L', CL = 'hand', dd) + one(k, 0, -22) + one(k, 90, 34)).join('|') };
+  }
+  const arm = (side, pass) => {
+    CS = side; CL = 'arm';
+    const o = pass === 'o';
+    const whole = o && plate;            // the shade plate needs one pass with everything
+    return bone('shoulder'+side,
+        (o ? tubeO(ARM.up, ARM.w) : tubeI(ARM.up, ARM.w)) + ((!o || whole) ? partK(circ(0,0,7.2), 'joint') : ''),
+        bone('elbow'+side, (CS = side, CL = 'arm', '') + (o ? tubeO(ARM.fore, ARM.w) : tubeI(ARM.fore, ARM.w)),
+          bone('wrist'+side, (!o || whole) ? hands(side) : '')));
+  };
+  const leg = (side, pass) => {
+    CS = side; CL = 'leg';
+    const o = pass === 'o', whole = o && plate;
+    return bone('hip'+side, o ? tubeO(LEG.thigh, LEG.w) : tubeI(LEG.thigh, LEG.w),
+      bone('knee'+side, o ? tubeO(LEG.shin, LEG.w) : tubeI(LEG.shin, LEG.w),
+        bone('ankle'+side, (!o || whole) ? `<g data-drag="knee${side}">${partK(BOOT, 'boot')}${R4 ? `<path d="M-11 4.2Q-8 1.6 -3 1.4" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1.8" stroke-linecap="round"/>` : ''}</g>` : '')));
+  };
+  const chainArm = (side, pass) => side === 'L'
+    ? `<g data-chain="armL-${pass}">${arm('L', pass)}</g>`
+    : `<g data-chain="armR-${pass}" transform="scale(-1 1)">${arm('R', pass)}</g>`;
+  const chainLeg = (side, pass) => side === 'L' ? `<g>${leg('L', pass)}</g>` : `<g transform="scale(-1 1)">${leg('R', pass)}</g>`;
+  const passes = plate ? ['o'] : ['o','f'];
+
+  /* the face */
+  const eye = side => `<g data-part="eye${side}">
+      <g data-part="ball${side}">${R4 ? `<circle r="11" fill="${U('g-eye')}"/><circle cx="3.6" cy="-4.4" r="3.6" fill="#FFFFFF"/><circle cx="-4.2" cy="4.6" r="1.5" fill="rgba(255,255,255,.7)"/>` : `<circle r="11" fill="${P.eye}"/><circle cx="3.7" cy="-4.2" r="3.4" fill="${P.glint}"/>`}</g>
+      <path data-part="arc${side}" d="" fill="none" stroke="${P.eye}" stroke-width="${W}" ${LJ} opacity="0"/>
+      <g clip-path="url(#${prefix}lid${side})"><g data-part="lid${side}" style="display:none"><path data-part="lidfill${side}" fill="${P.face}"/><path data-part="lidline${side}" fill="none" stroke="${P.eye}" stroke-width="${W}" ${LJ}/></g></g>
+    </g>`;
+  if (!plate) defs.push(`<clipPath id="${prefix}lidL"><circle r="12.6"/></clipPath><clipPath id="${prefix}lidR"><circle r="12.6"/></clipPath>`);
+  const features = plate ? '' : `<g data-part="features">
+      <path data-part="browL" fill="none" stroke="${P.eye}" stroke-width="${W}" ${LJ}/>
+      <path data-part="browR" fill="none" stroke="${P.eye}" stroke-width="${W}" ${LJ}/>
+      ${P.cheek ? `<ellipse cx="-42" cy="-96.5" rx="6.8" ry="3.8" fill="${P.cheek}" opacity=".7"/><ellipse cx="42" cy="-96.5" rx="6.8" ry="3.8" fill="${P.cheek}" opacity=".7"/>` : ''}
+      ${eye('L')}${eye('R')}
+      <path data-part="mouth" fill="${P.eye}" stroke="${P.eye}" stroke-width="${W}" ${LJ}/>
+    </g>`;
+  const zz = plate ? '' : `<g data-part="zz" opacity="0">${mark('M0 0H7L0 8H7')}${mark('M11 -13H16L11 -7H16')}</g>`;
+  const headInner =
+      (R4 ? `<g data-part="ears">${rend(EAR_L, 'ear')}${rend(EAR_R, 'ear')}`
+          + [-1, 1].map(sx => `<path d="${rr(sx*73 - 4.2, -119, 8.4, 24, 4.2)}" fill="${U('g-earIn')}" stroke="${G.earIn[3]}" stroke-width="${LW4*.8}"/>`
+                + `<path d="M${sx*73 - 1.4} -115V-108" stroke="rgba(255,255,255,.7)" stroke-width="1.6" stroke-linecap="round"/>`).join('') + `</g>` :
+      `<g data-part="ears">${partK(EAR_L, 'ear')}${partK(EAR_R, 'ear')}${P.earIn && !plate ? `<path d="M-73 -116V-98M73 -116V-98" stroke="${P.earIn}" stroke-width="6.5" stroke-linecap="round"/>` : seam('M-73 -114V-100') + seam('M73 -114V-100')}</g>`)
+    + solid(HEAD, 8, 'head')
+    + (R4 ? `<ellipse cx="-30" cy="-147" rx="26" ry="7" transform="rotate(-9 -30 -147)" fill="rgba(255,255,255,.3)"/>`
+          + `<path d="M-56 -132C-51 -148 -37 -154 -10 -155.4" fill="none" stroke="rgba(255,255,255,.88)" stroke-width="5" stroke-linecap="round"/><circle cx="2" cy="-155.6" r="2.4" fill="rgba(255,255,255,.85)"/>`
+          + `<path d="M58 -96C56 -82 44 -76 18 -74.5" fill="none" stroke="rgba(20,70,120,.12)" stroke-width="3" stroke-linecap="round"/>`
+          + (G.rim ? `<path d="M62.6 -128C64.6 -114 64.6 -100 61.6 -89C58 -77 42 -71.6 10 -71" fill="none" stroke="${G.rim}" stroke-width="1.8" stroke-linecap="round"/>` : '') : '')
+    + (R4 ? (defs.push(`<clipPath id="${prefix}vis"><path d="${FACE}"/></clipPath>`), '') + `<g data-part="faceplate"><path d="${FACE}" fill="${U('g-face')}"/>`
+          + `<g clip-path="url(#${prefix}vis)"><path d="${FACE}" fill="none" stroke="${G.rimShade}" stroke-width="9"/>`
+          + `<path d="M-52 -121C-50 -136 -38 -140 0 -140.5C38 -140 50 -136 52 -121C34 -127 -34 -127 -52 -121Z" fill="${U('g-glass')}"/></g>`
+          + `<path d="${FACE}" fill="none" stroke="${G.face[3]}" stroke-width="${LW4}" stroke-linejoin="round"/></g>`
+        : `<g data-part="faceplate"><path d="${FACE}" fill="${C.face}" ${strokeA}/></g>`)
+    + features;
+  const antenna = bone('antenna',
+      mark('M0 0V-11', (!plate && P.stalk) || null, 'data-part="stalk"') + (R4
+        ? `<circle data-part="ball" cx="0" cy="-17.5" r="6.8" fill="${U('g-ball')}" stroke="${G.ball[3]}" stroke-width="${LW4}"/>`
+        : `<circle data-part="ball" cx="0" cy="-17.5" r="6.8" fill="${(!plate && P.ball) || C.part}" ${strokeA}/>`));
+  const head = `<g data-bone="head">${antenna}<g transform="translate(0 70)">${headInner}</g>${zz}</g>`;
+  // the antenna sits behind the head: put it first inside the head bone
+  const neck = bone('neck', partK(COLLAR, 'collar') + (R4 ? `<path d="${rr(-21.5,-72.5,43,6,3)}" fill="${U('g-occ')}"/>` : ''), head, [0,-62]);
+  const CY = -45;   // the middle of the chest, between the collar (-62) and the hip seam (-30.5)
+  const lit = (dp, d, extra='') => `<path data-part="${dp}" d="${d}" fill="${P.dim}" ${extra}/>`;
+  const GLYPHS = {
+    dot:  `<path d="M-3.5 0H3.5" fill="none" stroke="currentColor" stroke-width="${W}" ${LJ}/>`,
+    heart:`<path d="M0 4.6C-6.3 .6 -6.2 -4.6 -2.7 -4.6C-1.3 -4.6 -.4 -3.7 0 -2.8C.4 -3.7 1.3 -4.6 2.7 -4.6C6.2 -4.6 6.3 .6 0 4.6Z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>`,
+    check:`<path d="${tickD(0,.4,12)}" fill="none" stroke="currentColor" stroke-width="${W}" ${LJ}/>`,
+    q:    `<path d="M-3.2 -2.6C-3.2 -6 3.2 -6 3.2 -2.6C3.2 -.4 0 0 0 1.6" fill="none" stroke="currentColor" stroke-width="${W}" ${LJ}/><circle cx="0" cy="5.2" r="1.8" fill="currentColor"/>`,
+    bang: `<path d="M0 -5.2V1.2" fill="none" stroke="currentColor" stroke-width="${W}" ${LJ}/><circle cx="0" cy="5.2" r="1.8" fill="currentColor"/>`,
+    z:    `<path d="M-3.6 -3.6H3.6L-3.6 3.6H3.6" fill="none" stroke="currentColor" stroke-width="${W}" ${LJ}/>`,
+    dots: [-4.5,0,4.5].map(x => `<circle cx="${x}" cy="0" r="1.8" fill="currentColor"/>`).join(''),
+  };
+  const arrowArc = (a0, a1, r) => { const P0 = [r*Math.cos(a0*Math.PI/180), r*Math.sin(a0*Math.PI/180)], P1 = [r*Math.cos(a1*Math.PI/180), r*Math.sin(a1*Math.PI/180)];
+    const t = (a1 + 90) * Math.PI/180, h = 3.6, h1 = [P1[0] - h*Math.cos(t - .7), P1[1] - h*Math.sin(t - .7)], h2 = [P1[0] - h*Math.cos(t + .7), P1[1] - h*Math.sin(t + .7)];
+    return `<path d="M${f(P0[0])} ${f(P0[1])}A${r} ${r} 0 0 1 ${f(P1[0])} ${f(P1[1])}M${f(h1[0])} ${f(h1[1])}L${f(P1[0])} ${f(P1[1])}L${f(h2[0])} ${f(h2[1])}" fill="none" stroke-width="${W}" ${LJ}/>`; };
+  const CHESTS = plate ? { all: part(rr(-14,-58,28,20,6)) } : {
+    led: partK(circ(0,CY,6.5), 'housing') + lit('led', circ(0,CY,3.5)),
+    screen: (R4 ? `<path d="${rr(-13.5,CY-10,27,20,5.5)}" fill="${U('g-face')}" stroke="${G.torso[3]}" stroke-width="${LW4}"/><path d="M-10 ${CY-6.5}Q0 ${CY-8.5} 10 ${CY-6.5}" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1.6" stroke-linecap="round"/>`
+                : `<path d="${rr(-13.5,CY-10,27,20,5.5)}" fill="${P.face}" ${strokeA}/>`)
+      + `<g data-part="glyphs" transform="translate(0 ${CY})" color="${P.accent}">${Object.entries(GLYPHS).map(([k, g]) => `<g data-part="glyph-${k}" ${k === 'dot' ? '' : 'style="display:none"'}>${g}</g>`).join('')}</g>`,
+    arrows: part(circ(0,CY,10.5)) + `<g data-part="spinbox" transform="translate(0 ${CY})"><g data-part="spin" stroke="${P.accent}">${arrowArc(200, 330, 5.6)}${arrowArc(20, 150, 5.6)}</g></g>`,
+    grille: [-6,0,6].map(dy => mark(`M-13 ${CY+dy}H1`, C.seam)).join('') + part(circ(9.5,CY,4.6)) + lit('led2', circ(9.5,CY,2.2)),
+    dial: part(rr(-16,CY-10,32,20,6)) + `<circle cx="-11" cy="${CY}" r="1.9" fill="${C.seam}"/><circle cx="11" cy="${CY}" r="1.9" fill="${C.seam}"/>`
+      + part(circ(0,CY,7.4)) + `<g transform="translate(0 ${CY})"><path data-part="needle" d="M0 0V-5" fill="none" stroke="${P.accent}" stroke-width="${W*.85}" ${LJ}/></g>`
+      + `<circle cx="0" cy="${CY}" r="1.7" fill="${P.accent}"/>`,
+    check: `<path data-part="panel" d="${PANEL}" fill="${P.accent}" ${strokeA}/><path d="${tickD(0,-48.5,15)}" fill="none" stroke="${P.onAccent}" stroke-width="${W}" ${LJ}/>`,
+  };
+  const torsoInner = solid(TORSO, 6, 'torso') + (R4 ? `<path d="${rr(-24,-66,48,7,3.5)}" fill="${U('g-occ')}"/><path d="M-31 -59L-33.4 -38" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="3" stroke-linecap="round"/>`
+        + `<path d="${rr(-24,-60.5,48,26,8)}" fill="rgba(255,255,255,.16)" stroke="${G.torso[3]}" stroke-opacity=".55" stroke-width="1.3"/>`
+        + `<path d="M-22.6 -35.6H22.6" stroke="rgba(255,255,255,.45)" stroke-width="1"/>`
+        + [-1, 1].map(sx => `<circle cx="${sx*19.5}" cy="-56" r="1.5" fill="${G.torso[3]}" fill-opacity=".6"/><circle cx="${sx*19.5 - .4}" cy="-56.4" r=".6" fill="rgba(255,255,255,.7)"/>`).join('')
+        + `<path d="M-39 -30.5H39" stroke="${G.torso[3]}" stroke-width="${LW4}"/><path d="M-38.6 -28.6H38.6" stroke="rgba(255,255,255,.2)" stroke-width="1.2"/>`
+        + (G.rim ? `<path d="M35 -57.5L37.6 -33C38.2 -26 35 -22.4 27 -22.2" fill="none" stroke="${G.rim}" stroke-width="1.6" stroke-linecap="round"/>` : '') : seam('M-39 -30.5H39'))
+    + `<g data-part="chest">` + Object.entries(CHESTS).map(([k, g]) => `<g data-part="chest-${k}" ${plate || k === CHEST ? '' : 'style="display:none"'}>${g}</g>`).join('')
+    + (plate ? '' : `<path data-part="ring" d="${circ(0,CY,9)}" fill="none" stroke="${P.accent}" stroke-width="${W}" opacity="0"/>`) + `</g>`;
+  const torso = `<g data-bone="torso"><g transform="translate(0 26)">${torsoInner}</g>
+      <g data-part="armsBack">${['L','R'].map(s => passes.map(p => chainArm(s, p)).join('')).join('')}</g>
+      ${neck}
+      <g data-part="armsFront"></g></g>`;
+  const legs = passes.map(p => chainLeg('L', p) + chainLeg('R', p)).join('');
+  const floor = plate ? '' : `<ellipse data-part="floor" cx="0" cy="6.5" rx="46" ry="5.5" fill="${R4 ? U('g-floor') : s1 ? P.plate : P.floor}"/>`;
+  // no offset shade: the owner asked for none. Weight comes from the ground shadow and the limb tint.
+  const shade = '';
+  return { defs: defs.join(''),
+    body: `${floor}${shade}<g data-inst="${prefix}" id="${prefix}inst"><g data-part="mover"><g data-bone="root">${legs}${torso}</g></g></g>` };
+}
+
+/* ======================= parameters ======================= */
+const BODY_DEF = { rootRot:0, rootX:0, rootY:0, squash:0, torso:0, neck:0, neckY:0, head:0, antenna:0,
+  shL:20, elL:-8, wrL:0, shR:20, elR:-8, wrR:0, hipL:0, knL:0, anL:0, hipR:0, knR:0, anR:0,
+  lookX:0, lookY:0, faceX:0, faceY:0, bAmp:1, bRate:1 };
+const FACE_DEF = { openL:1, openR:1, sizeL:1, sizeR:1, arcL:0, arcR:0, arcCL:-15, arcCR:-15, lidL:0, lidR:0, tiltL:0, tiltR:0,
+  browYL:0, browYR:0, browTL:0, browTR:0, mW:19, mUp:6, mLo:6, mK:.5, mTilt:0, mX:0, glow:.55, pulse:0, pRate:1, needle:0, spin:0, flash:0, ring:0, zz:0,
+  eLookX:0, eLookY:0, eHead:0, eAnt:0, eNeckY:0, eFaceY:0 };
+const EXPR = {
+  neutral:{},
+  happy:{ openL:0, openR:0, arcL:1, arcR:1, mW:20, mUp:1, mLo:13, mK:.6, browYL:-2, browYR:-2, glow:.85, pulse:.25, pRate:.6, needle:30 },
+  excited:{ sizeL:1.18, sizeR:1.18, browYL:-5, browYR:-5, mW:26, mUp:1, mLo:16, mK:.55, eFaceY:-1, eAnt:0, glow:1, pulse:.45, pRate:2.2, needle:55 },
+  surprised:{ sizeL:1.24, sizeR:1.24, browYL:-7, browYR:-7, mW:10, mUp:-7, mLo:9, mK:1, eFaceY:-1, glow:1, needle:45 },
+  thinking:{ eLookX:4, eLookY:-4, browYL:-5, browYR:0, browTR:-8, mW:9, mUp:1, mLo:1, mTilt:-14, mX:6, eHead:6, lidR:.12, glow:.7, pulse:.6, pRate:.8, needle:-8 },
+  confused:{ sizeL:1.1, sizeR:.84, browYL:-6, browTR:-12, browYR:1, mW:13, mUp:2, mLo:2, mTilt:16, eHead:-8, eLookX:-2, glow:.6, pulse:.5, pRate:1.4, needle:-20 },
+  sad:{ lidL:.36, lidR:.36, tiltL:22, tiltR:22, eLookY:3, browTL:18, browTR:18, mW:15, mUp:-5, mLo:-5, eHead:4, eAnt:18, eFaceY:2, eNeckY:1.5, glow:.22, needle:-50 },
+  sleepy:{ lidL:.58, lidR:.58, tiltL:-5, tiltR:-5, browYL:2, browYR:2, mW:9, mUp:0, mLo:1.5, eHead:7, eFaceY:1.5, eAnt:10, glow:.35, pulse:.5, pRate:.35, needle:-35 },
+  proud:{ openL:0, openR:0, arcL:1, arcR:1, arcCL:-10, arcCR:-10, eFaceY:-3.5, eLookY:-1, browYL:-3, browYR:-3, mW:22, mUp:4, mLo:9, mK:.55, eHead:-2, eAnt:-4, glow:.9, needle:40 },
+};
+const GLYPH_OF = { neutral:'dot', happy:'heart', excited:'heart', surprised:'bang', thinking:'q', confused:'q', sad:'dots', sleepy:'z', proud:'check' };
+const EXPR_NAMES = [['neutral','Neutral'],['happy','Happy'],['excited','Excited'],['surprised','Surprised'],['thinking','Thinking'],['confused','Confused'],['sad','Sad'],['sleepy','Sleepy'],['proud','Proud']];
+
+let base = { ...BODY_DEF };                 // what the sliders say
+let faceT = { ...FACE_DEF };               // what the expression says
+const cur = { ...BODY_DEF, ...FACE_DEF };  // smoothed
+const disc = { handL:'open', handR:'open', frontL:false, frontR:false, glyph:'dot' };   // the pose's discrete choices
+let shown = { handL:null, handR:null, frontL:null, frontR:null, glyph:null };
+let CHEST = 'led', glyphPop = 1;
+
+/* ======================= easing and actions ======================= */
+const EZ = {
+  lin:u=>u, s:u=>.5-.5*Math.cos(Math.PI*u),
+  io:u=>u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2, o:u=>1-Math.pow(1-u,3), i:u=>u*u*u,
+  ob:u=>{const c=1.9,c3=c+1;return 1+c3*Math.pow(u-1,3)+c*Math.pow(u-1,2);},
+  ib:u=>{const c=1.7;return (c+1)*u*u*u-c*u*u;},
+};
+const B = 'b';   // "the pose's own value"
+const both = (k, keys) => ({ [k+'L']:keys, [k+'R']:keys });
+const ACTIONS = {
+  wave:{ label:'Wave', dur:2.2, set:{frontR:true, handR:'wave', glyph:'heart'}, keys:{
+    shR:[[0,B],[.18,8,'io'],[.52,104,'ob'],[1.7,104,'lin'],[2.2,B,'io']],
+    elR:[[0,B],[.18,-20,'io'],[.52,42,'ob'],[.74,14,'s'],[.96,48,'s'],[1.18,14,'s'],[1.4,46,'s'],[1.7,30,'s'],[2.2,B,'io']],
+    torso:[[0,B],[.52,-3,'io'],[1.7,-3],[2.2,B,'io']],
+    head:[[0,B],[.52,6,'ob'],[1.7,6],[2.2,B,'io']],
+    ...both('open',[[0,B],[.3,0,'o'],[1.75,0],[2.1,B,'io']]), ...both('arc',[[0,B],[.3,1,'o'],[1.75,1],[2.1,B,'io']]),
+    mLo:[[0,B],[.35,13,'o'],[1.75,13],[2.1,B]], mUp:[[0,B],[.35,1,'o'],[1.75,1],[2.1,B]] } },
+  nod:{ label:'Nod', dur:1.35, keys:{
+    faceY:[[0,B],[.18,-2,'io'],[.42,5,'io'],[.66,-1,'io'],[.9,4,'io'],[1.35,B,'io']],
+    lookY:[[0,B],[.18,-1],[.42,2.5,'io'],[.66,0,'io'],[.9,2,'io'],[1.35,B,'io']],
+    neckY:[[0,B],[.42,1.6,'io'],[.66,0,'io'],[.9,1.2,'io'],[1.35,B,'io']],
+    head:[[0,B],[.42,1.5,'io'],[.9,1,'io'],[1.35,B]] } },
+  shake:{ label:'Shake head', dur:1.45, keys:{
+    faceX:[[0,B],[.2,-6,'io'],[.46,6,'io'],[.72,-5,'io'],[.95,4,'io'],[1.45,B,'io']],
+    lookX:[[0,B],[.2,-3,'io'],[.46,3,'io'],[.72,-2.5,'io'],[.95,2,'io'],[1.45,B,'io']],
+    head:[[0,B],[.2,-2.5,'io'],[.46,2.5,'io'],[.72,-2,'io'],[.95,1.5,'io'],[1.45,B,'io']],
+    mUp:[[0,B],[.2,0],[1.15,0],[1.45,B]], mLo:[[0,B],[.2,0],[1.15,0],[1.45,B]], mW:[[0,B],[.2,14],[1.15,14],[1.45,B]] } },
+  look:{ label:'Look around', dur:3.3, blinks:[.42,1.86], set:{glyph:'dots'}, keys:{
+    faceX:[[0,B],[.5,-6,'io'],[1.35,-6],[1.95,6,'io'],[2.7,6],[3.3,B,'io']],
+    lookX:[[0,B],[.38,-5,'ob'],[1.35,-5],[1.85,5,'ob'],[2.7,5],[3.3,B,'io']],
+    lookY:[[0,B],[.5,-1.5],[1.95,-1.5],[3.3,B]],
+    head:[[0,B],[.5,-4,'io'],[1.35,-4],[1.95,4,'io'],[2.7,4],[3.3,B,'io']],
+    torso:[[0,B],[.6,-2,'io'],[1.35,-2],[2.05,2,'io'],[2.7,2],[3.3,B,'io']] } },
+  jump:{ label:'Jump for joy', dur:1.7, set:{frontL:true, frontR:true, handL:'wave', handR:'wave', glyph:'heart'}, keys:{
+    glow:[[0,B],[.4,1,'o'],[1.3,1],[1.7,B]], pulse:[[0,B],[.4,.4],[1.3,.4],[1.7,B]], pRate:[[0,B],[.4,2.4],[1.7,B]], needle:[[0,B],[.4,60,'ob'],[1.3,55],[1.7,B]],
+    squash:[[0,B],[.26,.11,'io'],[.37,-.08,'o'],[.7,-.02,'io'],[1,.13,'i'],[1.16,-.03,'o'],[1.36,.02,'io'],[1.7,B,'io']],
+    rootY:[[0,B],[.26,2.5,'io'],[.4,-26,'o'],[.68,-42,'o'],[1,0,'i'],[1.12,1.5,'o'],[1.7,B,'io']],
+    ...both('hip',[[0,B],[.26,24,'io'],[.42,4,'o'],[.68,12,'io'],[1,4,'i'],[1.1,22,'o'],[1.7,B,'io']]),
+    ...both('kn',[[0,B],[.26,-48,'io'],[.42,-6,'o'],[.68,-28,'io'],[1,-6,'i'],[1.1,-44,'o'],[1.7,B,'io']]),
+    ...both('an',[[0,B],[.26,24,'io'],[.42,2,'o'],[.68,16,'io'],[1,2,'i'],[1.1,22,'o'],[1.7,B,'io']]),
+    ...both('sh',[[0,B],[.26,4,'io'],[.44,112,'ob'],[.92,108],[1.12,56,'io'],[1.7,B,'io']]),
+    ...both('el',[[0,B],[.26,-24,'io'],[.44,30,'ob'],[.92,34],[1.12,0,'io'],[1.7,B,'io']]),
+    ...both('open',[[0,B],[.3,0,'o'],[1.35,0],[1.65,B]]), ...both('arc',[[0,B],[.3,1,'o'],[1.35,1],[1.65,B]]),
+    mW:[[0,B],[.3,24,'o'],[1.35,24],[1.65,B]], mUp:[[0,B],[.3,1],[1.35,1],[1.65,B]], mLo:[[0,B],[.3,15,'o'],[1.35,15],[1.65,B]] } },
+  thumbs:{ label:'Thumbs up', dur:2.1, set:{handR:'thumbsup', frontR:true, glyph:'check'}, keys:{
+    shR:[[0,B],[.2,10,'io'],[.48,36,'ob'],[1.65,36],[2.1,B,'io']],
+    elR:[[0,B],[.2,-12,'io'],[.48,60,'ob'],[1.65,58],[2.1,B,'io']],
+    wrR:[[0,B],[.48,-6,'ob'],[1.65,-4],[2.1,B]],
+    glow:[[0,B],[.5,1,'o'],[1.65,1],[2.1,B]], needle:[[0,B],[.5,45,'ob'],[1.65,45],[2.1,B]],
+    torso:[[0,B],[.48,-2,'io'],[1.65,-2],[2.1,B,'io']],
+    head:[[0,B],[.48,-5,'ob'],[1.65,-5],[2.1,B,'io']],
+    openL:[[0,B],[.5,B],[.62,0,'o'],[1.5,0],[1.7,B,'io']], arcL:[[0,B],[.5,B],[.62,1,'o'],[1.5,1],[1.7,B,'io']],
+    mW:[[0,B],[.48,22,'o'],[1.65,22],[2.05,B]], mUp:[[0,B],[.48,4],[1.65,4],[2.05,B]], mLo:[[0,B],[.48,10,'o'],[1.65,10],[2.05,B]] } },
+  point:{ label:'Point', dur:2.3, set:{handR:'point', glyph:'bang'}, keys:{
+    shR:[[0,B],[.22,72,'io'],[.44,100,'ob'],[1.85,96],[2.3,B,'io']],
+    elR:[[0,B],[.22,-16,'io'],[.44,4,'ob'],[1.85,2],[2.3,B,'io']],
+    torso:[[0,B],[.44,2.5,'ob'],[1.85,2.5],[2.3,B,'io']],
+    faceX:[[0,B],[.36,5,'io'],[1.85,5],[2.3,B,'io']], lookX:[[0,B],[.3,5,'ob'],[1.85,5],[2.3,B,'io']],
+    head:[[0,B],[.44,3,'io'],[1.85,3],[2.3,B]],
+    browYL:[[0,B],[.4,-3],[1.85,-3],[2.3,B]], browYR:[[0,B],[.4,-3],[1.85,-3],[2.3,B]],
+    mW:[[0,B],[.4,14],[1.85,14],[2.3,B]], mUp:[[0,B],[.4,2],[1.85,2],[2.3,B]], mLo:[[0,B],[.4,8],[1.85,8],[2.3,B]] } },
+  celebrate:{ label:'Celebrate', dur:2.5, set:{frontL:true, frontR:true, handL:'wave', handR:'wave', glyph:'check'}, keys:{
+    flash:[[0,0],[.52,0,'lin'],[.6,1,'o'],[1.6,1],[2.3,0,'io']], glow:[[0,B],[.6,1,'o'],[2,1],[2.5,B]],
+    spin:[[0,0],[.55,0,'lin'],[1.35,360,'ob'],[2.5,360,'lin']], needle:[[0,B],[.6,60,'ob'],[1.9,58],[2.5,B]],
+    ring:[[0,0],[.52,0,'lin'],[1.25,1,'o'],[1.26,0,'lin'],[2.5,0]],
+    shL:[[0,B],[.26,6,'io'],[.56,112,'ob'],[1.75,108],[2.5,B,'io']], shR:[[0,B],[.26,6,'io'],[.6,112,'ob'],[1.75,108],[2.5,B,'io']],
+    elL:[[0,B],[.26,-20,'io'],[.56,32,'ob'],[.9,16,'s'],[1.2,38,'s'],[1.5,18,'s'],[1.75,28,'s'],[2.5,B,'io']],
+    elR:[[0,B],[.26,-20,'io'],[.6,32,'ob'],[.95,18,'s'],[1.25,38,'s'],[1.55,18,'s'],[1.75,28,'s'],[2.5,B,'io']],
+    rootY:[[0,B],[.26,2,'io'],[.5,-14,'o'],[.76,0,'i'],[.86,1,'o'],[1.2,B,'io']],
+    squash:[[0,B],[.26,.08,'io'],[.42,-.05,'o'],[.76,.09,'i'],[.94,0,'o'],[1.2,B]],
+    ...both('open',[[0,B],[.3,0,'o'],[1.9,0],[2.3,B]]), ...both('arc',[[0,B],[.3,1,'o'],[1.9,1],[2.3,B]]),
+    mW:[[0,B],[.3,24,'o'],[1.9,24],[2.3,B]], mUp:[[0,B],[.3,1],[1.9,1],[2.3,B]], mLo:[[0,B],[.3,15,'o'],[1.9,15],[2.3,B]] } },
+  shrug:{ label:'Shrug', dur:1.9, set:{glyph:'q'}, keys:{
+    needle:[[0,B],[.32,-25,'ob'],[.8,15,'s'],[1.35,-10,'s'],[1.9,B]],
+    ...both('sh',[[0,B],[.32,38,'ob'],[1.35,38],[1.9,B,'io']]),
+    ...both('el',[[0,B],[.32,84,'ob'],[1.35,84],[1.9,B,'io']]),
+    ...both('wr',[[0,B],[.32,12,'ob'],[1.35,12],[1.9,B,'io']]),
+    neckY:[[0,B],[.32,3.5,'ob'],[1.35,3.5],[1.9,B,'io']],
+    head:[[0,B],[.36,-7,'ob'],[1.35,-7],[1.9,B,'io']],
+    squash:[[0,B],[.32,-.025,'o'],[1.35,-.025],[1.9,B]],
+    browYL:[[0,B],[.3,-5],[1.4,-5],[1.85,B]], browYR:[[0,B],[.3,-5],[1.4,-5],[1.85,B]],
+    lookX:[[0,B],[.3,-3],[1.4,-3],[1.85,B]], lookY:[[0,B],[.3,-2],[1.4,-2],[1.85,B]],
+    mW:[[0,B],[.3,14],[1.4,14],[1.85,B]], mUp:[[0,B],[.3,0],[1.4,0],[1.85,B]], mLo:[[0,B],[.3,0],[1.4,0],[1.85,B]], mTilt:[[0,B],[.3,9],[1.4,9],[1.85,B]] } },
+  sleep:{ label:'Sleep', dur:1.4, hold:true, set:{glyph:'z'}, keys:{
+    glow:[[0,B],[1.2,.4,'io']], pulse:[[0,B],[1.2,.7]], pRate:[[0,B],[1.2,.28]], needle:[[0,B],[1.2,-55,'io']],
+    ...both('open',[[0,B],[.7,0,'io']]), ...both('arc',[[0,B],[.5,B],[.8,1,'o']]), ...both('arcC',[[0,9],[.8,9]]),
+    ...both('lid',[[0,B],[.6,.7,'io'],[.8,0,'lin']]),
+    mW:[[0,B],[.8,9,'io']], mUp:[[0,B],[.8,0]], mLo:[[0,B],[.8,3.5]], browYL:[[0,B],[.8,2]], browYR:[[0,B],[.8,2]],
+    head:[[0,B],[1.2,9,'io']], neckY:[[0,B],[1.2,3,'io']], faceY:[[0,B],[1.2,2,'io']], antenna:[[0,B],[1.2,20,'io']],
+    torso:[[0,B],[1.2,1.5,'io']], ...both('sh',[[0,B],[1.2,10,'io']]), ...both('el',[[0,B],[1.2,-4,'io']]),
+    bAmp:[[0,B],[1.2,2.3,'io']], bRate:[[0,B],[1.2,.5,'io']], zz:[[0,0],[1,0],[1.4,1,'o']] } },
+};
+
+let act = null;                 // { name, t }
+let blend = null;               // { from, t, dur }  smooths any cut between motions
+let lastPre = { ...cur };
+function sampleTrack(keys, t, baseVal){
+  const val = v => v === B ? baseVal : v;
+  if (t <= keys[0][0]) return val(keys[0][1]);
+  for (let i = 1; i < keys.length; i++) {
+    if (t < keys[i][0]) {
+      const [t0, v0] = keys[i-1], [t1, v1, e] = keys[i];
+      const u = (t - t0) / (t1 - t0);
+      return val(v0) + (val(v1) - val(v0)) * EZ[e || 'io'](u);
+    }
+  }
+  return val(keys[keys.length-1][1]);
+}
+function startBlend(dur=.28){ blend = { from:{ ...lastPre }, t:0, dur }; }
+function play(name){
+  startBlend(.18);
+  act = { name, t:0 };
+  document.querySelectorAll('#acts button').forEach(b => b.classList.toggle('on', b.dataset.a === name && ACTIONS[name].hold));
+}
+function stopAction(){
+  if (!act) return;
+  startBlend(ACTIONS[act.name].hold ? .6 : .28);
+  act = null;
+  document.querySelectorAll('#acts button').forEach(b => b.classList.remove('on'));
+}
+
+/* ======================= follow-through: springs ======================= */
+const SPR = { ant:{x:0,v:0}, st:{x:0,v:0}, nk:{x:0,v:0}, wL:{x:0,v:0}, wR:{x:0,v:0}, nd:{x:0,v:0} };
+let chestT = 0, flashKick = 0;
+const hist = {};
+function accel(key, x, dt){
+  const h = hist[key] || (hist[key] = { x, v:0 });
+  const v = (x - h.x) / dt, a = (v - h.v) / dt;
+  h.x = x; h.v = v;
+  return Math.max(-9000, Math.min(9000, a));
+}
+function spring(s, k, c, drive, dt, lim){
+  // semi-implicit Euler on fixed sub-steps of at most 1/240 s: stable for these stiffnesses at any frame rate
+  const n = Math.max(1, Math.ceil(dt * 240)), h = dt / n;
+  for (let i = 0; i < n; i++) { s.v += (-k*s.x - c*s.v + drive) * h; s.x += s.v * h; }
+  s.x = Math.max(-lim, Math.min(lim, s.x));
+}
+/* Every pose and face value passes through a critically damped follower. It has no corners: a keyframe
+   that changes speed, a new expression, a slider jump or a cut between actions all come out with a
+   continuous speed. This is the exact closed-form step, so it is stable at any frame time. */
+const FOL = {};
+function follow(k, target, w, dt){
+  const s = FOL[k] || (FOL[k] = { x:target, v:0 });
+  const x0 = s.x - target, t = (s.v + w*x0) * dt, e = Math.exp(-w*dt);
+  s.x = target + (x0 + t) * e;
+  s.v = (s.v - w*t) * e;
+  return s.x;
+}
+const NO_FOLLOW = { ring:1, spin:1, zz:1, flash:1 };
+const vel = k => FOL[k] ? FOL[k].v : 0;
+const prevV = {};
+function rate(key, v, dt){ const p = prevV[key] ?? v; prevV[key] = v; return Math.max(-6000, Math.min(6000, (v - p) / dt)); }
+
+/* ======================= build, cache, render ======================= */
+let E = { bones:{}, parts:{} };
+function build(){
+  clipN = 0;
+  const P = PALS();
+  const plate = { defs:'', body:'' };   // the old second robot behind; replaced by the shade filter
+  const main = gen('m', 'main'), mini = gen('s', 'small');
+  document.getElementById('stage').innerHTML = `<defs>${plate.defs}${main.defs}</defs>${plate.body}${main.body}`;
+  document.getElementById('mini').innerHTML = `<defs>${mini.defs}</defs>${mini.body}`;
+  if (STYLE === 's4') {
+    const keep = THEME, rows = ['light','dark'].map(t => {
+      THEME = t; const Q = PALS(), big = gen('c' + t[0], 'main'), sm = gen('c' + t[0] + 's', 'small');
+      return `<div class="rowc" style="background:${Q.page};color:${t === 'dark' ? '#9AA6B0' : '#4F606D'}">
+        <figure><img src="../logo/test-exchange.svg" alt="">Old bot</figure>
+        <figure><svg viewBox="-150 -240 300 260" style="height:360px;width:auto"><defs>${big.defs}</defs>${big.body}</svg>New, ${PR === 'O' ? 'old bot blue' : 'sky blue'}</figure>
+        <figure><svg viewBox="-150 -240 300 260" style="height:130px;width:auto"><defs>${sm.defs}</defs>${sm.body}</svg>Phone size</figure></div>`; });
+    THEME = keep; document.getElementById('cmp').innerHTML = rows.join('');
+  } else document.getElementById('cmp').innerHTML = '';
+  document.getElementById('stageBox').style.background = P.page;
+  document.getElementById('miniBox').style.background = P.page;
+  document.getElementById('miniBox').style.color = THEME === 'dark' ? '#C9D1D8' : '#4F606D';
+  const hs = gen('h', 'handsheet').body.split('|'), names = { open:'Open', wave:'Wave', fist:'Fist', point:'Point', thumbsup:'Thumbs up', hold:'Holding' };
+  document.getElementById('handsheet').innerHTML = HAND_KEYS.map((k, i) => `<div style="text-align:center">
+      <svg viewBox="-42 -20 106 46" style="width:100%;height:auto;display:block">${hs[i]}</svg>
+      <svg viewBox="-42 -20 106 46" style="width:72px;height:auto;display:block;margin:2px auto 0">${hs[i]}</svg>
+      <div class="cap" style="margin-top:2px">${names[k]}</div></div>`).join('');
+  document.getElementById('handBox').style.background = P.page;
+  document.getElementById('handBox').style.color = THEME === 'dark' ? '#C9D1D8' : '#4F606D';
+  E = { bones:{}, parts:{} };
+  document.querySelectorAll('#stage [data-bone], #mini [data-bone], #cmp [data-bone]').forEach(el => (E.bones[el.dataset.bone] ||= []).push(el));
+  document.querySelectorAll('#stage [data-part], #mini [data-part], #cmp [data-part]').forEach(el => (E.parts[el.dataset.part] ||= []).push(el));
+  shown = { handL:null, handR:null, frontL:null, frontR:null, glyph:null };
+}
+const setT = (name, t) => (E.bones[name] || []).forEach(el => el.setAttribute('transform', t));
+const setP = (name, attr, v) => (E.parts[name] || []).forEach(el => el.setAttribute(attr, v));
+const mix = (a, b, u) => { const p = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
+  const A = p(a), Bc = p(b); return '#' + A.map((x,i) => Math.round(x + (Bc[i]-x)*u).toString(16).padStart(2,'0')).join(''); };
+
+function applyDiscrete(d){
+  if (shown.glyph !== d.glyph) {
+    Object.keys(E.parts).filter(k => k.startsWith('glyph-')).forEach(k => E.parts[k].forEach(el => el.style.display = k === 'glyph-' + d.glyph ? '' : 'none'));
+    if (shown.glyph !== null) glyphPop = 0;
+    shown.glyph = d.glyph;
+  }
+  ['L','R'].forEach(s => {
+    const h = d['hand'+s];
+    if (shown['hand'+s] !== h) {
+      HAND_KEYS.forEach(k => (E.parts[`hand${s}-${k}`]||[]).forEach(el => el.style.display = k === h ? '' : 'none'));
+      shown['hand'+s] = h;
+    }
+    const fr = d['front'+s];
+    if (shown['front'+s] !== fr) {
+      document.querySelectorAll('[data-inst]').forEach(inst => {
+        const slot = inst.querySelector(fr ? '[data-part="armsFront"]' : '[data-part="armsBack"]');
+        ['o','f'].forEach(p => { const g = inst.querySelector(`[data-chain="arm${s}-${p}"]`); if (g) slot.appendChild(g); });
+      });
+      shown['front'+s] = fr;
+    }
+  });
+}
+
+function render(V){
+  setT('root', `translate(0 -26) rotate(${f(V.rootRot)})`);
+  setP('mover', 'transform', `translate(${f(V.rootX)} ${f(V.rootY)}) translate(0 6) scale(${f(1+V.squash*.6)} ${f(1-V.squash)}) translate(0 -6)`);
+  setT('torso', `rotate(${f(V.torso)}) scale(1 ${f(V.torsoS)})`);
+  setT('neck', `translate(0 ${f(-36 + V.neckY)}) rotate(${f(V.neck)})`);
+  setT('head', `translate(0 -8) rotate(${f(V.head)})`);
+  setT('antenna', `translate(${f(V.faceX*.3)} -90) rotate(${f(V.antenna)})`);
+  ['L','R'].forEach(s => {
+    setT('shoulder'+s, `translate(-35 -29) rotate(${f(V['sh'+s])})`);
+    setT('elbow'+s, `translate(0 ${ARM.up}) rotate(${f(V['el'+s])})`);
+    setT('wrist'+s, `translate(0 ${ARM.fore}) rotate(${f(V['wr'+s])})`);
+    const lift = V['sh'+s] + V['el'+s] + V['wr'+s], tn = TURN[s];
+    if (tn.s === 1 && lift > TURN_ON) tn.s = -1; else if (tn.s === -1 && lift < TURN_OFF) tn.s = 1;
+    tn.x += (tn.s - tn.x) * .4; if (Math.abs(tn.s - tn.x) < .02) tn.x = tn.s;
+    setP('turn'+s, 'transform', `scale(${f(Math.sign(tn.x) * Math.max(.08, Math.abs(tn.x)))} 1)`);
+    if (PROP && PROP_SIDE === s) {
+      // undo the chain (mirror, arm angle, the hand's turn) so the phone stays upright with its own lean
+      const R2 = a => { const c = Math.cos(rad(a)), n = Math.sin(rad(a)); return [c, n, -n, c]; };
+      const mul = (A, B) => [A[0]*B[0] + A[2]*B[1], A[1]*B[0] + A[3]*B[1], A[0]*B[2] + A[2]*B[3], A[1]*B[2] + A[3]*B[3]];
+      const D = x => [x, 0, 0, 1], side = s === 'R' ? 1 : -1;
+      let A = mul(D(Math.sign(tn.x) || 1), R2(-lift));
+      A = mul(A, D(-side)); A = mul(A, R2(side * PROP_LEAN)); A = mul(A, D(side));
+      setP('prop'+s, 'transform', `matrix(${A.map(v => f(v)).join(' ')} 0 0)`);
+    }
+    setT('hip'+s, `translate(-15 -4) rotate(${f(V['hip'+s])})`);
+    setT('knee'+s, `translate(0 ${LEG.thigh}) rotate(${f(V['kn'+s])})`);
+    setT('ankle'+s, `translate(0 ${LEG.shin}) rotate(${f(V['an'+s])})`);
+  });
+  // the antenna bends and stretches on its spring
+  const b = V.bend * Math.PI/180, L = 11 * V.stretch;
+  const tx = Math.sin(b)*L, ty = -Math.cos(b)*L;
+  setP('stalk', 'd', `M0 0Q0 ${f(-L*.55)} ${f(tx)} ${f(ty)}`);
+  setP('ball', 'cx', f(Math.sin(b)*(L+6.5))); setP('ball', 'cy', f(-Math.cos(b)*(L+6.5)));
+  // a head turn: the features move most, the face plate less, the ears the other way
+  setP('ears', 'transform', `translate(${f(-V.faceX*.5)} ${f(V.faceY*.2)})`);
+  setP('faceplate', 'transform', `translate(${f(V.faceX*.45)} ${f(V.faceY*.4)})`);
+  setP('features', 'transform', `translate(${f(V.faceX)} ${f(V.faceY)})`);
+  ['L','R'].forEach(s => {
+    const ss = (a, b, x) => { const u = Math.max(0, Math.min(1, (x - a)/(b - a))); return u*u*(3 - 2*u); };
+    // the round eye closes before the arc shows, so the two never sit on top of each other
+    const sx = s === 'L' ? -28 : 28, size = V['size'+s], open = Math.max(.001, V['open'+s] * (1 - V.blink) * (1 - ss(.15, .55, V['arc'+s])));
+    setP('eye'+s, 'transform', `translate(${f(sx + V.lookX)} ${f(-111 + V.lookY)})`);
+    setP('ball'+s, 'transform', `scale(${f(size)} ${f(size*open)})`);
+    const ac = V['arcC'+s];
+    setP('arc'+s, 'd', `M${f(-11*size)} 3Q0 ${f(3 + ac*size)} ${f(11*size)} 3`);
+    setP('arc'+s, 'opacity', f(ss(.45, .9, V['arc'+s])));
+    const lid = V['lid'+s];
+    const lidOn = lid > .01; if (shown['lidOn'+s] !== lidOn) { (E.parts['lid'+s]||[]).forEach(el => el.style.display = lidOn ? '' : 'none'); shown['lidOn'+s] = lidOn; }
+    const e = -14 + lid*28;
+    setP('lid'+s, 'transform', `rotate(${f(s === 'L' ? -V['tilt'+s] : V['tilt'+s])})`);
+    setP('lidfill'+s, 'd', `M-18 -18H18V${f(e)}H-18Z`);
+    setP('lidline'+s, 'd', `M-18 ${f(e)}H18`);
+    // brows: a short arch, the inner end lifts for "sad"
+    const bx = sx + V.lookX*.3, by = -132 + V['browY'+s], th = (s === 'L' ? -V['browT'+s] : V['browT'+s]) * Math.PI/180;
+    const R = (x,y) => [bx + x*Math.cos(th) - y*Math.sin(th), by + x*Math.sin(th) + y*Math.cos(th)];
+    const [ax,ay] = R(-7,0), [cx,cy] = R(0,-3), [ex,ey] = R(7,0);
+    setP('brow'+s, 'd', `M${f(ax)} ${f(ay)}Q${f(cx)} ${f(cy)} ${f(ex)} ${f(ey)}`);
+    setP('brow'+s, 'opacity', f(V.browOn));
+  });
+  const a = V.mW/2, kx = a*V.mK, mx = V.mX + V.faceX*.1, my = -97;
+  const lo = Math.max(V.mLo, V.mUp);
+  setP('mouth', 'd', `M${f(mx-a)} ${my}C${f(mx-kx)} ${f(my+V.mUp)} ${f(mx+kx)} ${f(my+V.mUp)} ${f(mx+a)} ${my}C${f(mx+kx)} ${f(my+lo)} ${f(mx-kx)} ${f(my+lo)} ${f(mx-a)} ${my}Z`);
+  setP('mouth', 'transform', `rotate(${f(V.mTilt)} ${f(mx)} ${my})`);
+  const P = PALS();
+  // the chest: one light level drives every option; it pulses, and flashes on big moments
+  const g = Math.max(0, Math.min(1, Math.max(V.glowEff, V.flash)));
+  const lightCol = mix(P.dim, P.accent, g);
+  setP('led', 'fill', lightCol); setP('led2', 'fill', lightCol); setP('spin', 'stroke', mix(P.dim, P.accent, .35 + .65*g));
+  setP('glyphs', 'color', mix(P.dim, P.accent, .3 + .7*g));
+  setP('panel', 'fill', mix(P.accent, P.accentLit, V.flash));
+  const pop = glyphPop < 1 ? .55 + .45*EZ.ob(glyphPop) : 1;
+  setP('glyphs', 'transform', `translate(0 -45) scale(${f(pop)})`);
+  setP('spin', 'transform', `rotate(${f(V.spin)})`);
+  setP('needle', 'transform', `rotate(${f(V.needleS)})`);
+  setP('needle', 'stroke', mix(P.dim, P.accent, .45 + .55*g));
+  // the chest rides down with the collar when the head sinks, so its margin to the collar never closes
+  setP('chest', 'transform', `translate(0 ${f(Math.max(0, V.neckY) * .5)})`);
+  const rg = V.ring, rs = 1 + rg*1.2;
+  setP('ring', 'opacity', rg > .001 && rg < .999 ? f(1 - rg) : '0');
+  setP('ring', 'transform', `translate(0 -45) scale(${f(rs)}) translate(0 45)`);
+  setP('ring', 'stroke-width', f(W/rs));
+  setP('zz', 'opacity', f(V.zz * (.55 + .45*Math.sin(V.zzT*2))));
+  setP('zz', 'transform', `translate(${f(52 + Math.sin(V.zzT)*2.5)} ${f(-92 - ((V.zzT*3) % 8))})`);
+  const lift = Math.max(0, Math.min(1, -V.rootY / 70));
+  setP('floor', 'rx', f(46 * (1 - lift*.45) * (1 + V.squash*.5)));
+  setP('floor', 'opacity', f(1 - lift*.55));
+}
+
+/* ======================= the loop ======================= */
+let breathPh = 0, zzT = 0, blinkT = -1, nextBlink = 2, blinkQueue = [];
+let last = performance.now();
+const tog = id => document.getElementById(id).checked;
+function frame(now){
+  // real frame time from requestAnimationFrame, clamped so a stalled tab does not jump
+  const dt = Math.min(1/20, Math.max(1/500, (now - last)/1000)); last = now;
+  // the targets: the sliders and the expression as they are (the followers below do the smoothing)
+  Object.assign(cur, base, faceT);
+  const pre = { ...cur };
+  // the expression's head, antenna and look offsets sit on top of the pose
+  pre.lookX += cur.eLookX; pre.lookY += cur.eLookY; pre.head += cur.eHead; pre.antenna += cur.eAnt;
+  pre.neckY += cur.eNeckY; pre.faceY += cur.eFaceY;
+  let d = { ...disc };
+  if (act) {
+    const A = ACTIONS[act.name];
+    if (!STILL && !HOLD) act.t += dt;
+    for (const k in A.keys) pre[k] = sampleTrack(A.keys[k], act.t, pre[k]);
+    if (A.set) d = { ...d, ...A.set };
+    (A.blinks || []).forEach(bt => { if (act.t - dt < bt && act.t >= bt) blinkT = 0; });
+    if (act.t >= A.dur && !A.hold) { act = null; document.querySelectorAll('#acts button').forEach(b => b.classList.remove('on')); }
+  }
+  if (blend) {
+    blend.t += dt; const u = EZ.io(Math.min(1, blend.t / blend.dur));
+    for (const k in pre) if (k in blend.from) pre[k] = blend.from[k] + (pre[k] - blend.from[k]) * u;
+    if (blend.t >= blend.dur) blend = null;
+  }
+  if (GLYPHQ) d.glyph = GLYPHQ;
+  lastPre = pre;
+  applyDiscrete(d);
+  const V = { ...pre };
+  for (const k in pre) {
+    if (NO_FOLLOW[k]) continue;
+    const w = dragging && dragging.param === k ? 70 : (k in FACE_DEF ? 26 : 30);
+    V[k] = STILL ? (FOL[k] = { x:pre[k], v:0 }).x : follow(k, pre[k], w, dt);
+  }
+  // breathing: the chest swells a little, the shoulders and head ride on it
+  breathPh += dt * 2*Math.PI * .27 * V.bRate;
+  const br = tog('tBreath') ? Math.sin(breathPh) * V.bAmp : 0;
+  V.torsoS = 1 + br*.009; V.neckY += br*.5; V.shL += br*1.3; V.shR += br*1.3; V.head += Math.sin(breathPh*.5)*.6*(V.bAmp>1.5?1:0);
+  // blinks: quick to close, slower to open; now and then a double blink
+  if (tog('tBlink') && !(act && act.name === 'sleep')) {
+    nextBlink -= dt;
+    if (nextBlink <= 0 && blinkT < 0) { blinkT = 0; nextBlink = 2.2 + Math.random()*3.8; if (Math.random() < .2) blinkQueue.push(.32); }
+  }
+  V.blink = 0;
+  if (blinkT >= 0) { blinkT += dt; const t = blinkT; V.blink = t < .06 ? t/.06 : t < .16 ? 1 - (t-.06)/.1 : 0;
+    if (t >= .16) { blinkT = -1; if (blinkQueue.length) { const w = blinkQueue.shift(); setTimeout(() => { blinkT = 0; }, w*1000); } } }
+  // follow-through: the antenna, the head and the hands lag behind and settle
+  // the springs are driven by the followers' own speeds, which are smooth, not by differences of positions
+  const aHead = rate('head', vel('rootRot') + vel('torso') + vel('neck') + vel('head'), dt);
+  const aTurn = rate('turn', vel('faceX'), dt), aY = rate('y', vel('rootY') + vel('neckY'), dt);
+  spring(SPR.ant, 170, 6.5, -1.5*aHead - 3.2*aTurn, dt, 38);
+  spring(SPR.st, 260, 9, .05*aY, dt, .38);
+  spring(SPR.nk, 300, 15, -.55*aY, dt, 5);
+  const fL = vel('rootRot') + vel('torso') + vel('shL') + vel('elL'), fR = -(vel('rootRot') + vel('torso')) + vel('shR') + vel('elR');
+  spring(SPR.wL, 240, 12, -.45*rate('fL', fL, dt), dt, 30);
+  spring(SPR.wR, 240, 12, -.45*rate('fR', fR, dt), dt, 30);
+  V.bend = SPR.ant.x; V.stretch = 1 + SPR.st.x;
+  // the head may sink into the collar, but never so far that the collar reaches the chest light
+  V.neckY = Math.max(-3, Math.min(3.5, V.neckY + SPR.nk.x));
+  V.wrL += SPR.wL.x; V.wrR += SPR.wR.x;
+  V.browOn = tog('tBrows') ? 1 : 0;
+  flashKick *= Math.exp(-dt*3.5); V.flash = Math.max(V.flash, flashKick);
+  chestT += dt * V.pRate;
+  V.glowEff = V.glow * (1 - V.pulse * (.5 - .5*Math.cos(chestT * 2*Math.PI)));
+  spring(SPR.nd, 90, 7, 90 * V.needle, dt, 80); V.needleS = SPR.nd.x;
+  if (glyphPop < 1) glyphPop = Math.min(1, glyphPop + dt/.32);
+  zzT += dt; V.zzT = zzT;
+  render(V);
+  if (TRACE) TRACE.push([V[TRACE.k], V.bend, pre[TRACE.k]]);
+  if (!SIM) requestAnimationFrame(frame);
+}
+
+/* ======================= controls ======================= */
+const SLIDERS = [
+  ['Body', [['rootRot','Lean',-25,25],['rootY','Height',-60,10],['torso','Torso',-20,20],['neck','Neck',-15,15],['head','Head tilt',-30,30],['antenna','Antenna',-40,40]]],
+  ['Left arm (as you look at it)', [['shL','Shoulder',-30,180],['elL','Elbow',-120,150],['wrL','Wrist',-60,60]]],
+  ['Right arm', [['shR','Shoulder',-30,180],['elR','Elbow',-120,150],['wrR','Wrist',-60,60]]],
+  ['Left leg', [['hipL','Hip',-20,60],['knL','Knee',-90,40],['anL','Ankle',-40,40]]],
+  ['Right leg', [['hipR','Hip',-20,60],['knR','Knee',-90,40],['anR','Ankle',-40,40]]],
+  ['Eyes and face', [['lookX','Look left, right',-6,6],['lookY','Look up, down',-5,5],['faceX','Turn head',-7,7],['faceY','Chin up, down',-5,5]]],
+];
+document.getElementById('sliders').innerHTML = SLIDERS.map(([g, list], i) => `<details ${i < 3 ? 'open' : ''}><summary>${g}</summary><div class="inner sl">${
+  list.map(([k, label, lo, hi]) => `<label for="sl_${k}">${label}</label><input id="sl_${k}" type="range" min="${lo}" max="${hi}" step="${hi-lo > 20 ? 1 : .1}" value="${BODY_DEF[k]}" data-k="${k}"><span class="v" id="v_${k}">${BODY_DEF[k]}</span>`).join('')
+}</div></details>`).join('');
+const syncSlider = k => { const s = document.getElementById('sl_'+k); if (s) { s.value = base[k]; document.getElementById('v_'+k).textContent = Math.round(base[k]*10)/10; } };
+document.querySelectorAll('#sliders input').forEach(inp => inp.oninput = () => { base[inp.dataset.k] = +inp.value; syncSlider(inp.dataset.k); });
+
+let exprName = 'neutral';
+document.getElementById('expr').innerHTML = EXPR_NAMES.map(([k, l]) => `<button data-e="${k}" class="${k==='neutral'?'on':''}">${l}</button>`).join('');
+const setExpr = k => {
+  exprName = k; faceT = { ...FACE_DEF, ...EXPR[k] }; disc.glyph = GLYPH_OF[k];
+  if (k === 'surprised' || k === 'excited') flashKick = 1;
+  if (act && ACTIONS[act.name].hold) stopAction();
+  document.querySelectorAll('#expr button').forEach(b => b.classList.toggle('on', b.dataset.e === k));
+  if (Math.random() < .5 && k !== 'happy') blinkT = 0;
+};
+document.querySelectorAll('#expr button').forEach(b => b.onclick = () => setExpr(b.dataset.e));
+document.getElementById('acts').innerHTML = Object.entries(ACTIONS).map(([k, a]) => `<button data-a="${k}">${a.label}</button>`).join('');
+document.querySelectorAll('#acts button').forEach(b => b.onclick = () => {
+  if (act && act.name === b.dataset.a && ACTIONS[act.name].hold) stopAction(); else play(b.dataset.a);
+});
+const discUI = () => { disc.handL = hL.value; disc.handR = hR.value; disc.frontL = fL.checked; disc.frontR = fR.checked; };
+['hL','hR','fL','fR'].forEach(id => document.getElementById(id).onchange = discUI);
+document.getElementById('reset').onclick = () => {
+  stopAction(); base = { ...BODY_DEF }; Object.keys(BODY_DEF).forEach(syncSlider);
+  hL.value = hR.value = 'open'; fL.checked = fR.checked = false; discUI(); setExpr('neutral');
+};
+
+/* drag a part to turn the bone it hangs on, about that bone's own joint */
+const PARAM = { root:'rootRot', torso:'torso', neck:'neck', head:'head', antenna:'antenna',
+  shoulderL:'shL', elbowL:'elL', wristL:'wrL', shoulderR:'shR', elbowR:'elR', wristR:'wrR',
+  hipL:'hipL', kneeL:'knL', ankleL:'anL', hipR:'hipR', kneeR:'knR', ankleR:'anR' };
+const LIMIT = {}; SLIDERS.forEach(([, l]) => l.forEach(([k,,lo,hi]) => LIMIT[k] = [lo,hi]));
+let dragging = null;
+const stage = document.getElementById('stage');
+stage.addEventListener('pointerdown', e => {
+  const inst = e.target.closest('[data-inst="m"]'); if (!inst) return;
+  const over = e.target.closest('[data-drag]'), g = e.target.closest('[data-bone]');
+  const boneName = over ? over.dataset.drag : g ? g.dataset.bone : null;
+  if (!boneName || !PARAM[boneName]) return;
+  const el = inst.querySelector(`[data-bone="${boneName}"]`); const m = el.getScreenCTM();
+  const px = m.e, py = m.f, sign = (m.a*m.d - m.b*m.c) < 0 ? -1 : 1;
+  stopAction();
+  dragging = { param: PARAM[boneName], px, py, sign, a0: Math.atan2(e.clientY - py, e.clientX - px), v0: base[PARAM[boneName]] };
+  stage.setPointerCapture(e.pointerId); stage.classList.add('dragging'); e.preventDefault();
+});
+stage.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  let d = (Math.atan2(e.clientY - dragging.py, e.clientX - dragging.px) - dragging.a0) * 180/Math.PI;
+  d = ((d + 540) % 360) - 180;
+  const [lo, hi] = LIMIT[dragging.param] || [-180, 180];
+  base[dragging.param] = Math.max(lo, Math.min(hi, dragging.v0 + dragging.sign*d));
+  syncSlider(dragging.param);
+});
+const endDrag = () => { dragging = null; stage.classList.remove('dragging'); };
+stage.addEventListener('pointerup', endDrag); stage.addEventListener('pointercancel', endDrag);
+
+const seg = (id, fn) => document.querySelectorAll(`#${id} button`).forEach(b => b.onclick = () => {
+  document.querySelectorAll(`#${id} button`).forEach(x => x.classList.toggle('on', x === b)); fn(b.dataset.v); });
+seg('style', v => { STYLE = v; if (v === 's4') { CHEST = 'screen'; document.querySelectorAll('#chest button').forEach(b => b.classList.toggle('on', b.dataset.c === CHEST)); } document.getElementById('palk').style.display = v === 's3' ? '' : 'none'; document.getElementById('palr').style.display = v === 's4' ? '' : 'none'; document.getElementById('cmpBox').style.display = v === 's4' ? '' : 'none'; build(); });
+seg('palr', v => { PR = v; build(); });
+seg('palk', v => { PK = v; build(); });
+const setChest = c => { CHEST = c; document.querySelectorAll('#chest button').forEach(b => b.classList.toggle('on', b.dataset.c === c)); build(); };
+document.querySelectorAll('#chest button').forEach(b => b.onclick = () => setChest(b.dataset.c));
+seg('theme', v => { THEME = v; build(); });
+
+/* test hooks: ?style=s2&theme=dark&expr=sad&act=wave&at=0.6&pose=shL:90,elL:40 renders a still frame */
+const q = new URLSearchParams(location.search);
+const STILL = !!q.get('still');
+/* ?embed=1&hold=point&at=1&glyph=heart: the robot alone, holding an action's frame at "at",
+   with breathing and blinks still running (the idle loop), and an optional fixed chest sign */
+const EMBED = !!q.get('embed'), HOLD = q.get('hold'), GLYPHQ = q.get('glyph');
+if (EMBED) document.body.classList.add('embed');
+if (q.get('style')) { STYLE = q.get('style'); document.querySelectorAll('#style button').forEach(b => b.classList.toggle('on', b.dataset.v === STYLE)); }
+if (q.get('theme')) { THEME = q.get('theme'); document.querySelectorAll('#theme button').forEach(b => b.classList.toggle('on', b.dataset.v === THEME)); }
+if (q.get('pk')) { PK = q.get('pk'); document.querySelectorAll('#palk button').forEach(b => b.classList.toggle('on', b.dataset.v === PK)); }
+if (STYLE === 's3') document.getElementById('palk').style.display = '';
+if (q.get('pr')) { PR = q.get('pr'); document.querySelectorAll('#palr button').forEach(b => b.classList.toggle('on', b.dataset.v === PR)); }
+if (STYLE === 's4') { document.getElementById('palr').style.display = ''; document.getElementById('cmpBox').style.display = ''; }
+if (STYLE === 's4' && !q.get('chest')) { CHEST = 'screen'; document.querySelectorAll('#chest button').forEach(b => b.classList.toggle('on', b.dataset.c === CHEST)); }
+if (q.get('chest')) { CHEST = q.get('chest'); document.querySelectorAll('#chest button').forEach(b => b.classList.toggle('on', b.dataset.c === CHEST)); }
+build();
+if (q.get('expr')) setExpr(q.get('expr'));
+if (q.get('pose')) q.get('pose').split(',').forEach(kv => { const [k,v] = kv.split(':'); base[k] = +v; syncSlider(k); });
+if (q.get('hands')) { const [a,b] = q.get('hands').split(','); hL.value = a; hR.value = b || a; discUI(); }
+if (q.get('front')) { const [a,b] = q.get('front').split(','); fL.checked = a === '1'; fR.checked = (b || a) === '1'; discUI(); }
+if (q.get('probe')) setTimeout(() => { const r = document.getElementById('mini').getBoundingClientRect(), t = document.getElementById('stage').getBoundingClientRect();
+  document.title = JSON.stringify({mini:[r.x,r.y,r.width,r.height], stage:[t.x,t.y,t.width,t.height]}); }, 300);
+if (HOLD && ACTIONS[HOLD]) { act = { name:HOLD, t:+(q.get('at')||0) }; ACTIONS[HOLD].dur = 1e9; }
+if (q.get('play')) setTimeout(() => play(q.get('play')), +(q.get('after') || 300));
+if (q.get('still')) {
+  // jump straight to a settled frame: no breathing or blinking, an action frozen at time "at"
+  document.getElementById('tBreath').checked = false; document.getElementById('tBlink').checked = false;
+  Object.assign(cur, base, faceT); SPR.nd.x = faceT.needle;
+  if (q.get('act')) { act = { name:q.get('act'), t:+(q.get('at')||0) }; }
+  const A = act && ACTIONS[act.name]; if (A) A.dur = 1e9;
+}
+/* ?sim=1&play=jump&at=1.0 runs the real loop at a steady 60 fps for that long after the action starts,
+   with every follower and spring, then stops: a true mid-motion frame for checking */
+const SIM = !!q.get('sim');
+var TRACE = q.get('trace') ? Object.assign([], { k:q.get('trace') }) : null;
+if (SIM) {
+  document.getElementById('tBlink').checked = false;
+  let t = 0; last = 0;
+  for (let i = 0; i < 60; i++) { t += 1000/60; frame(t); }            // settle for a second first
+  if (q.get('play')) play(q.get('play'));
+  const n = Math.round(+(q.get('at') || 0) * 60);
+  for (let i = 0; i < n; i++) { t += 1000/60; frame(t); }
+  if (TRACE) document.title = JSON.stringify(TRACE.slice(60).map(r => r.map(v => +v.toFixed(3))));
+} else requestAnimationFrame(t => { last = t; frame(t); });
+
+/* ======================= the Android note ======================= */
+document.getElementById('note').innerHTML = `
+<h2>The styles</h2>
+<p><b>1. Line and shade</b> is the ink drawing in two greys. <b>3. Outline and colour</b> is the same drawing with tints inside the lines: the face plate stays light, the colour sits on the shell, ears and limbs, and the antenna ball and chest light carry the accent. Pick a palette next to the style buttons.</p>
+<table>
+<tr><th>Palette</th><th>Shell</th><th>Ears and limbs</th><th>Accents</th></tr>
+<tr><td><b>A. Robot blue</b></td><td>Pale blue</td><td>Mid blue</td><td>Coral ball, mint light</td></tr>
+<tr><td><b>B. App icon</b></td><td>Mint</td><td>Coral</td><td>Coral ball and light, cream hands</td></tr>
+<tr><td><b>C. Apricot and sky</b></td><td>Apricot</td><td>Sky blue</td><td>Robot blue ball and light</td></tr>
+</table>
+<p>At night every palette keeps the ink line and a light face, with the tints a step deeper. It reads as the same sticker on a dark page, not an inverted glow. The antenna stem takes the ear colour at night, since an ink stem disappears on the dark page.</p>
+<p>There is no offset shadow behind the robot in any style. The weight comes from a soft ground shadow under the feet and from the limbs, which sit one step darker than the head and body.</p>
+<h2>Style 4, Rendered</h2>
+<p>A finished mascot look. Each part has a highlight, a base and a shadow tone, lit from the top left, and an outline in a darker shade of its own colour. The visor is glass: a light band across the top and a soft shade inside the rim. The head shell, the antenna ball and the boots carry small highlights, the ears have an inner ring, the collar sits in the head's shadow, and the joints are a shade darker than the limbs. The whole figure stays light: shadows only a little deeper than the base, outlines only a little darker than each fill, so the cream face and dark eyes carry the contrast. At night the fills stay the same and a thin rim light on the shadow side keeps the edge. The torso has a soft inset panel round the chest screen, which is this style's default chest.</p>
+<p>Old bot blue takes the old bot's hues, lifted two steps. Sky blue is bright and airy, with white hands. The panel under the robot puts both beside the old bot, by day and at night. Every gradient belongs to its part, so it turns with the bones. A version without outlines was tried: it looks softer but the fingers merge, the white hands vanish on a light page, and the arms melt into the body, so the coloured outline stays.</p>
+<h2>The chest</h2>
+<p>Pick an option at the top of the panel. Every option runs on the same light level, so each one reacts the same way: brighter when happy, a pulse when excited or thinking, a flash on surprise and on Celebrate, dim and slow while asleep.</p>
+<table>
+<tr><th>Option</th><th>What it does</th><th>At phone size</th></tr>
+<tr><td><b>Status light</b> (default)</td><td>A round light in a ring, in the accent colour (mint in Robot blue, coral in App icon). Brightness and pulse speed follow the mood.</td><td>Reads, and stays calm.</td></tr>
+<tr><td><b>Small screen</b></td><td>A tiny screen showing one sign per reaction: a dash at rest, a heart for happy and excited, a check for proud, thumbs up and Celebrate, ! for surprise and pointing, ? for thinking, confused and shrug, three dots for sad and looking around, Z for sleep. The sign pops in when it changes.</td><td>Reads. The sign is the one blue thing on the body.</td></tr>
+<tr><td><b>Swap arrows</b></td><td>The app icon's two arrows on a round badge. They spin once on Celebrate.</td><td>Turns into a ring. Too small to read.</td></tr>
+<tr><td><b>Grille and light</b></td><td>Three vent slots and a small light.</td><td>Reads, but hardly reacts.</td></tr>
+<tr><td><b>Bolts and dial</b></td><td>A plate with two bolts and a mood needle that swings and settles.</td><td>Too busy. Without outlines the dial disappears.</td></tr>
+</table>
+<p><b>Default: the status light</b>, a circle in the middle of the chest. It sits in the torso's own frame, halfway between the collar and the hip seam, and moves down with the collar when the head sinks, so it keeps a clear margin to every edge through squash, lean, breathing, shrug and landing. The small screen stays as the option that can say the most.</p>
+<h2>The hands</h2>
+<p>A rounded palm, two chunky fingers and a separate thumb, with a cuff at the wrist. The fingers sit far enough apart that a line, or a gap in the style without outlines, always shows between them. The cuff covers the end of the forearm, so the wrist is clean at any angle. Six shapes: open, wave with the fingers spread, fist, point, thumbs up and holding. Thumbs up is held out to the side so the thumb points straight up.</p>
+<h2>Taking this rig to Android</h2>
+<p>The rig is small on purpose: 17 bones, each a turn about one joint, plus a handful of face values (eye openness, lid, look, mouth width and curve). Every motion is a few keyframes per value with an ease, and the life comes from four springs (the antenna, its stretch, the head bounce and the hands). That shape fits any of the three ways to ship it.</p>
+<table>
+<tr><th></th><th>Rive</th><th>Lottie</th><th>Compose Canvas rig, drawn in code</th></tr>
+<tr><td><b>Bones and poses</b></td><td>Real bones, constraints and meshes in the editor.</td><td>Exported keyframes only. No bones at run time.</td><td>Nested <code>withTransform { rotate(angle, pivot) }</code>, one per bone, the same tree as here.</td></tr>
+<tr><td><b>Reacting to events</b></td><td>A state machine with inputs: set a trigger such as <i>onSaved</i> and it blends to the reaction.</td><td>Play a clip or a frame range. Blending between clips is up to you.</td><td>A <code>when</code> over app events starts an <code>Animatable</code> track. Springs with <code>spring()</code>.</td></tr>
+<tr><td><b>Colours and dark mode</b></td><td>Baked into the file, or bound through data binding. Two palettes need care.</td><td>Baked. Dynamic colours through value callbacks, one by one.</td><td>Read straight from <code>Tt.colors</code>, so light, dark and any future palette just work.</td></tr>
+<tr><td><b>Cost</b></td><td>A runtime library with native code (a few MB), and the .riv files.</td><td>A runtime library and JSON files that grow with every clip.</td><td>No library. A few hundred lines of Kotlin.</td></tr>
+<tr><td><b>Who changes the motion</b></td><td>A person in the Rive editor.</td><td>A person in After Effects.</td><td>Whoever edits the code, with a debug screen like this page.</td></tr>
+</table>
+<h3>Recommendation</h3>
+<p><b>A Compose Canvas rig.</b> For a mascot that reacts to events in a native Compose app with no animator on the team, drawing it in code wins.</p>
+<ol>
+  <li>The geometry and the keyframes on this page port across almost line for line: the same bones, the same paths, the same eases.</li>
+  <li>The colours come from the theme like every other colour in the app, so the light and dark palettes stay in one place.</li>
+  <li>It adds no library and almost nothing to the app size.</li>
+  <li>Reactions are plain code: a crew night done plays Celebrate, an error plays Shrug with the Confused face, waiting plays Look around.</li>
+</ol>
+<p>Pick Rive instead only if a person will keep animating the robot by hand. Its state machine is the best tool for that, at the cost of a runtime and colours that live outside the theme. Lottie is the weakest fit here: it plays clips well but has no real way to react, blend or follow through.</p>`;
+</script>
+</body>
+</html>

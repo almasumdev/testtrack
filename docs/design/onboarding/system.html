@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TestTrack onboarding: three calm illustration systems</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{ --page:#E9EEF2; --ptext:#1B2731; --ptext2:#4F606D; --pline:#CDD7DF; --band:#0A0B0C; --bandtext:#C9D1D8; --bandline:#22272C; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--ptext);font-family:Barlow,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:16px;padding:14px 32px;background:var(--page);border-bottom:1px solid var(--pline)}
+.bar h1{font:700 20px Barlow;margin:0;flex:1}
+.bar .seg{display:flex;border:1px solid var(--pline);border-radius:999px;overflow:hidden}
+.bar .seg button{font:600 13px Barlow;border:0;background:transparent;color:var(--ptext2);padding:7px 14px;cursor:pointer}
+.bar .seg button.on{background:var(--ptext);color:var(--page)}
+.bar nav a{font:600 13px Barlow;color:var(--ptext2);text-decoration:none;margin-left:12px}
+.intro{padding:20px 32px 8px;max-width:1120px;color:var(--ptext2);font-size:15px;line-height:22px}
+.intro b{color:var(--ptext)}
+.intro ol{margin:6px 0 0;padding-left:20px}
+.intro li{margin:3px 0}
+.sys{border-top:1px solid var(--pline);padding:26px 0 10px}
+.sh{padding:0 32px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sh .n{font:600 13px ui-monospace,monospace;color:var(--ptext2)}
+.sh h2{font:700 24px Barlow;margin:0}
+.sh .tag{font:600 12px Barlow;color:var(--ptext2);border:1px solid var(--pline);border-radius:999px;padding:2px 10px}
+.idea{padding:0 32px;color:var(--ptext2);font-size:15px;line-height:22px;margin:6px 0 14px;max-width:1060px}
+.idea b{color:var(--ptext)}
+.pal{display:flex;gap:28px;flex-wrap:wrap;padding:0 32px 16px}
+.pal .set{background:#fff;border:1px solid var(--pline);border-radius:14px;padding:12px 14px}
+.pal .set.dk{background:#0F1011;border-color:#22272C;color:#C9D1D8}
+.pal .set h4{margin:0 0 8px;font:700 13px Barlow;letter-spacing:.6px}
+.pal .sw{display:flex;gap:10px;flex-wrap:wrap}
+.pal .sw div{width:86px;font:500 11.5px/15px Barlow}
+.pal .sw i{display:block;width:86px;height:30px;border-radius:8px;margin-bottom:4px;box-shadow:inset 0 0 0 1px rgba(127,140,151,.35)}
+.pal .sw code{font:600 11px ui-monospace,monospace;opacity:.85}
+.band{padding:14px 0 6px}
+.band.dark{background:var(--band)}
+.band .lab{padding:0 32px 8px;font:700 13px Barlow;letter-spacing:.6px;color:var(--ptext2)}
+.band.dark .lab{color:var(--bandtext)}
+.row{display:flex;gap:22px;overflow-x:auto;padding:4px 32px 18px;align-items:flex-start}
+.cell{flex:none}
+.cap{font:600 13px Barlow;color:var(--ptext2);margin:0 0 8px 6px;display:flex;gap:8px}
+.band.dark .cap{color:var(--bandtext)}
+.cap .warn{color:#C0712F}
+
+/* ---- the phone, laid out as OnboardingScreen.kt lays it out (dp = px at 360 wide) ---- */
+.phone{width:360px;height:800px;border-radius:46px;background:#101316;padding:9px;zoom:var(--z,.62)}
+.band.dark .phone{background:#2A2F35}
+.scr{position:relative;width:100%;height:100%;border-radius:38px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column;color:var(--text)}
+.scr.light{--bg:#F7FCFF;--text:#142F43;--text2:#203A4E;--accent:#1D5C82;--onAccent:#FFFFFF;--accentInk:#123C56;--dotOff:#789AAF}
+.scr.dark{--bg:#0F1011;--text:#EFF7FC;--text2:#BDD1DF;--accent:#32729B;--onAccent:#FFFFFF;--accentInk:#8BCBF7;--dotOff:#58788E}
+.sb{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:2px 24px 0 26px;font:600 13px Barlow}
+.sb .cam{position:absolute;left:50%;top:9px;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;background:#050607}
+.brand{flex:none;display:flex;align-items:center;padding:4px 8px 4px 20px}
+.brand img{width:44px;height:44px;flex:none}
+.brand .nm{flex:1;margin-left:8px;font:700 22px/28px Barlow}
+.brand .skip{font:600 14px/20px Barlow;letter-spacing:.1px;color:var(--text2);padding:10px 12px}
+.pager{flex:1;min-height:0;overflow:hidden;position:relative}
+.slide{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 28px}
+.slide .art{flex:none}
+.slide .art svg{display:block;width:100%;height:100%}
+.eb{margin-top:12px;font:600 14px/20px Barlow;letter-spacing:1.4px;color:var(--accentInk);text-align:center}
+.tt{margin-top:10px;font:600 32px/35px Barlow;text-align:center}
+.bd{margin-top:14px;font:400 16px/24px Barlow;letter-spacing:.5px;color:var(--text2);text-align:center}
+.foot{flex:none;display:flex;flex-direction:column;align-items:center;padding:0 28px}
+.dots{display:flex;gap:6px;padding:18px 0}
+.dots i{display:block;width:7px;height:7px;border-radius:4px;background:var(--dotOff)}
+.dots i.on{width:24px;background:var(--accent)}
+.btn{width:100%;height:52px;border-radius:999px;background:var(--accent);color:var(--onAccent);font:600 16px/24px Barlow;letter-spacing:.15px;display:flex;align-items:center;justify-content:center}
+.lnk{margin:6px 0 8px;padding:10px 12px;font:600 14px/20px Barlow;color:var(--accentInk)}
+.gest{flex:none;height:20px;display:flex;justify-content:center;align-items:center}
+.gest i{width:110px;height:4px;border-radius:2px;background:var(--text);opacity:.32}
+
+/* ---- robot sheet ---- */
+.sheet{padding:6px 32px 22px}
+.sheet .pane{border-radius:18px;padding:16px 18px 10px;margin-bottom:14px}
+.sheet .pane.light{background:#F7FCFF;border:1px solid var(--pline)}
+.sheet .pane.dark{background:#0F1011;color:#C9D1D8}
+.sheet .pane h4{margin:0 0 4px;font:700 13px Barlow;letter-spacing:.6px;color:var(--ptext2)}
+.sheet .pane.dark h4{color:#9AA6B0}
+.sheet .big{display:grid;grid-template-columns:192fr 192fr 208fr 192fr 192fr 242fr;gap:10px;align-items:end;max-width:1500px}
+.sheet .small{display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap}
+.sheet .big figure,.sheet .small figure{margin:0;flex:none;text-align:center}
+.sheet .big svg{width:100%;height:auto;display:block}
+.sheet .small svg{height:150px;display:block}
+.sheet figcaption{font:600 12px Barlow;color:var(--ptext2);margin-top:2px}
+.sheet .pane.dark figcaption{color:#8A96A1}
+.notes{padding:10px 32px 48px;max-width:1080px;color:var(--ptext2);font-size:15px;line-height:22px}
+.notes h3{color:var(--ptext);font:700 18px Barlow;margin:20px 0 6px}
+.notes ol,.notes ul{margin:4px 0;padding-left:20px}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <h1>TestTrack onboarding: three calm illustration systems</h1>
+  <nav><a href="#s1">1. Line and shade</a><a href="#s2">2. Shape and tone</a><a href="#s3">3. Line and dot</a><a href="#robot">The robot</a></nav>
+  <div class="seg" id="size"><button data-z=".5">S</button><button data-z=".62" class="on">M</button><button data-z=".8">L</button><button data-z="1">1:1</button></div>
+</div>
+
+<div class="intro">
+  The screen stays exactly as it is in OnboardingScreen.kt: the brand row, the pager, the dots, the button and the sign-in link, with the agreed new words.
+  Only the five pictures change. Each system below is shown twice, by day on the app's light ground and at night on its dark ground, and then the robot on its own.
+  <br><br>
+  <b>What all three share</b>
+  <ol>
+    <li>Mostly ink and paper. One accent, robot blue, and only on the one thing each page is about.</li>
+    <li>Dark is its own palette, not the light one turned inside out: fills one step above the night ground, soft grey-blue lines, a quieter blue.</li>
+    <li>One stroke weight per system, no glows, no gradients, no dashed lines.</li>
+    <li>The same robot in all three: a full figure with a neck, shoulders, hands and feet, and a pose that tells each page's story.</li>
+  </ol>
+  <br>
+  <b>Why blue and not mint.</b> The screen already spends its blue on the button, the dots and the label above the title. Blue in the picture keeps the whole page in one hue.
+  Mint would be a third colour beside the brand row's coral and mint icon, and the aim is fewer colours. Blue is also the robot's own colour, so the accent always belongs to the character.
+</div>
+
+<div id="root"></div>
+<div class="notes" id="notes"></div>
+
+<script>
+/* ======================= words: the agreed copy (refine.html row B3) ======================= */
+const COPY = [
+  ['TESTERS FOR YOUR APP', 'Swap tests with<br>other developers', 'Google Play asks new developers for 12 testers over 14 days. Here, you test their apps and they test yours.'],
+  ['FEEDBACK', 'Find out what<br>to fix next', 'Testers try your app and leave feedback on Google Play. You pay them in tix and earn tix by testing for others.'],
+  ['14 DAYS IN A CREW', '14 days of testing,<br>a night at a time', 'Join a crew of 15 apps. Each night, open the other 14 for 20 seconds each, and they open yours.'],
+  ['ADD YOUR APP', 'Start with<br>your Play link', "Paste the link or package name, and we fill in your app's name and icon."],
+  ['LOOK AROUND FIRST', 'No account needed<br>to look around', 'See the Circle, the ranks and the crew that is filling. Sign in when you want to join in.'],
+];
+const NAMES = ['1. Together','2. Feedback','3. 14 days','4. Play link','5. Look around'];
+
+/* ======================= the three systems and their palettes ======================= */
+const SYS = [
+  { id:'s1', n:'System 1', name:'Line and shade', tag:'one ink line, a flat shade plate set off below right',
+    W:3.2,
+    idea:'Every object is drawn once in a single ink line on paper. Behind it sits a flat plate of one soft tone, the same shape moved down and to the right, as if printed in two passes. That plate gives weight without shading or shadows. No other tones.',
+    pal:{
+      light:{page:'#F7FCFF', paper:'#FFFFFF', line:'#26343F', plate:'#DDE6EC', soft:'#B4C3CE', accent:'#32729B', onAccent:'#FFFFFF', wash:'rgba(50,114,155,.13)', face:'#FFFFFF', eye:'#26343F', glint:'#FFFFFF'},
+      dark: {page:'#0F1011', paper:'#1A1E22', line:'#7E8B96', plate:'#242A30', soft:'#3D464F', accent:'#45728F', onAccent:'#DCE4EA', wash:'rgba(110,150,178,.16)', face:'#1A1E22', eye:'#A9B4BD', glint:'#1A1E22'},
+    },
+    roles:[['paper','Fill'],['line','Line'],['plate','Shade plate'],['soft','Text bars'],['accent','Accent'],['onAccent','On accent']] },
+  { id:'s2', n:'System 2', name:'Shape and tone', tag:'no outlines, three greys and one blue',
+    W:3.2,
+    idea:'No outlines at all. Form comes from quiet values of one grey-blue: cards are paper, the robot is a soft grey with darker limbs, and each form has a shade cut into its lower right. Ink only for eyes, ticks and small marks. A soft backing tile holds each picture together.',
+    pal:{
+      light:{page:'#F7FCFF', back:'#EBF1F5', card:'#FFFFFF', cardShade:'#E2E9EF', body:'#D4DFE7', shade:'#C0CED9', limb:'#A8B9C6', surface:'#FFFFFF', face:'#FFFFFF', ink:'#25333E', tone:'#BCCAD5', ghost:'#E3EAF0', barStrong:'#A8B9C6', barSoft:'#D4DFE7', accent:'#32729B', onAccent:'#FFFFFF', wash:'rgba(50,114,155,.14)', floor:'#DCE5EC', eye:'#25333E', glint:'#FFFFFF'},
+      dark: {page:'#0F1011', back:'#161A1D', card:'#23292E', cardShade:'#1D2226', body:'#333B42', shade:'#2A3137', limb:'#47515A', surface:'#3C464F', face:'#7C8994', ink:'#A9B5BF', tone:'#4D5862', ghost:'#2E353B', barStrong:'#5E6A75', barSoft:'#374048', accent:'#45728F', onAccent:'#DCE4EA', wash:'rgba(110,150,178,.18)', floor:'#1B1F23', eye:'#14181B', glint:'#C4CCD3'},
+    },
+    roles:[['back','Backing'],['card','Cards'],['body','Robot body'],['shade','Shade'],['limb','Limbs'],['face','Face'],['surface','Screens'],['tone','Done, filled'],['ink','Ink'],['accent','Accent'],['onAccent','On accent']] },
+  { id:'s3', n:'System 3', name:'Line and dot', tag:'a fine editorial line with a printed dot tone',
+    W:2.4,
+    idea:'A finer ink line, the kind used in editorial and technical drawing. Shade is a field of small ink dots, like a printed screen tone, on the robot\'s head and body and on the things that are filled in. Cards stay plain paper. The only tone in the picture is the ink itself, so it reads as a light grey from a distance.',
+    pal:{
+      light:{page:'#F7FCFF', paper:'#FFFFFF', line:'#1F2B35', dot:'#1F2B35', soft:'#A8B7C2', accent:'#32729B', onAccent:'#FFFFFF', wash:'rgba(50,114,155,.13)', face:'#FFFFFF', eye:'#1F2B35', glint:'#FFFFFF'},
+      dark: {page:'#0F1011', paper:'#181B1F', line:'#86939E', dot:'#86939E', soft:'#454F58', accent:'#45728F', onAccent:'#DCE4EA', wash:'rgba(110,150,178,.16)', face:'#181B1F', eye:'#AEB9C2', glint:'#181B1F'},
+    },
+    roles:[['paper','Fill'],['line','Line and dots'],['soft','Text bars'],['accent','Accent'],['onAccent','On accent']] },
+];
+
+/* ======================= geometry helpers ======================= */
+const f = v => (+v).toFixed(2).replace(/\.?0+$/,'');
+const rr = (x,y,w,h,r) => { r = Math.min(r, w/2, h/2);
+  return `M${f(x+r)} ${f(y)}H${f(x+w-r)}A${f(r)} ${f(r)} 0 0 1 ${f(x+w)} ${f(y+r)}V${f(y+h-r)}A${f(r)} ${f(r)} 0 0 1 ${f(x+w-r)} ${f(y+h)}H${f(x+r)}A${f(r)} ${f(r)} 0 0 1 ${f(x)} ${f(y+h-r)}V${f(y+r)}A${f(r)} ${f(r)} 0 0 1 ${f(x+r)} ${f(y)}Z`; };
+const circ = (cx,cy,r) => `M${f(cx-r)} ${f(cy)}A${f(r)} ${f(r)} 0 1 0 ${f(cx+r)} ${f(cy)}A${f(r)} ${f(r)} 0 1 0 ${f(cx-r)} ${f(cy)}Z`;
+const ell = (cx,cy,rx,ry) => `M${f(cx-rx)} ${f(cy)}A${f(rx)} ${f(ry)} 0 1 0 ${f(cx+rx)} ${f(cy)}A${f(rx)} ${f(ry)} 0 1 0 ${f(cx-rx)} ${f(cy)}Z`;
+const tickD = (cx,cy,s) => `M${f(cx-s*.42)} ${f(cy+s*.02)}L${f(cx-s*.12)} ${f(cy+s*.3)}L${f(cx+s*.42)} ${f(cy-s*.3)}`;
+const rad = d => d*Math.PI/180;
+const pt = (cx,cy,r,a) => [cx + r*Math.cos(rad(a)), cy + r*Math.sin(rad(a))];
+
+/* ======================= one drawing API, three renderers =======================
+   Every picture is written once against these roles; each system decides what a role looks like.
+   solid   a main form (head, torso, card, phone)
+   part    a small hard part (legs, feet, ears, joints, hands)
+   surface paper: a screen, the face plate
+   tone    a filled secondary thing (a done night, a thumbnail)
+   accent  the one blue
+   ink     a solid ink shape (eyes)
+   mark    a line on its own (a smile, a tick, an arrow)
+   tube    an arm or a finger                                                                  */
+let UID = 0;
+function makeR(sys, P, sil=false){
+  const uid = 'u' + (UID++);
+  let n = 0, k = 1; const defs = [];
+  const W = () => sys.W * k;
+  const LJ = 'stroke-linejoin="round" stroke-linecap="round"';
+  const path = (d, a) => `<path d="${d}" ${a}/>`;
+  const R = { sys, P, defs, sil };
+  R.scale = (s, fn) => { const o = k; k = o / s; const out = fn(); k = o; return out; };
+
+  if (sys.id === 's1') {
+    const lineFill = (d, fill) => sil ? path(d, `fill="${P.plate}" stroke="${P.plate}" stroke-width="${f(W())}" ${LJ}`)
+                                      : path(d, `fill="${fill}" stroke="${P.line}" stroke-width="${f(W())}" ${LJ}`);
+    R.solid = d => lineFill(d, P.paper);
+    R.card = d => lineFill(d, P.paper);
+    R.part = d => lineFill(d, P.paper);
+    R.surface = d => lineFill(d, P.face);
+    R.face = R.surface;
+    R.paperOnly = d => lineFill(d, P.paper);
+    R.tone = d => lineFill(d, sil ? P.plate : P.plate);
+    R.accent = d => lineFill(d, P.accent);
+    R.ink = (d, c) => path(d, `fill="${sil ? P.plate : (c || P.eye)}"`);
+    R.glint = d => sil ? '' : path(d, `fill="${P.glint}"`);
+    R.mark = (d, c) => path(d, `fill="none" stroke="${sil ? P.plate : (c || P.line)}" stroke-width="${f(W())}" ${LJ}`);
+    R.accentMark = d => R.mark(d, P.accent);
+    R.onAccent = d => R.mark(d, P.onAccent);
+    R.faceMark = d => R.mark(d, P.eye);
+    R.seam = d => R.mark(d);
+    R.bar = (x,y,w,strong) => path(rr(x,y,w,strong?7:6,3.5), `fill="${sil ? P.plate : (strong ? P.line : P.soft)}"`);
+    R.tube = (d, w) => sil ? path(d, `fill="none" stroke="${P.plate}" stroke-width="${f(w*k + W())}" ${LJ}`)
+      : path(d, `fill="none" stroke="${P.line}" stroke-width="${f(w*k + W())}" ${LJ}`) + path(d, `fill="none" stroke="${P.paper}" stroke-width="${f(Math.max(.5, w*k - W()))}" ${LJ}`);
+    R.wash = d => sil ? '' : path(d, `fill="${P.wash}"`);
+    R.ghost = d => sil ? lineFill(d) : path(d, `fill="${P.paper}" stroke="${P.soft}" stroke-width="${f(W())}" ${LJ}`);
+    R.glass = d => sil ? '' : path(d, `fill="${P.face}" fill-opacity=".55" stroke="${P.line}" stroke-width="${f(W())}" ${LJ}`);
+    R.socket = d => sil ? lineFill(d) : path(d, `fill="${P.wash}" stroke="${P.accent}" stroke-width="${f(W())}" ${LJ}`);
+    R.floor = (cx,cy,rx,ry) => sil ? '' : path(ell(cx,cy,rx,ry), `fill="${P.plate}"`);
+    R.back = () => '';
+    R.lift = (fn, dx=6, dy=6) => {
+      if (sil) return fn(R);
+      const S = makeR(sys, P, true);
+      const shadow = fn(S);
+      return `<g transform="translate(${dx} ${dy})">${shadow}</g>` + fn(R);
+    };
+    return R;
+  }
+
+  if (sys.id === 's2') {
+    const clip = d => { const id = `${uid}c${n++}`; defs.push(`<clipPath id="${id}"><path d="${d}"/></clipPath>`); return id; };
+    const shaded = (d, base, shade, sh) => {
+      const id = clip(d);
+      return path(d, `fill="${shade}"`) + `<g clip-path="url(#${id})"><path d="${d}" transform="translate(${f(-sh)} ${f(-sh)})" fill="${base}"/></g>`;
+    };
+    R.solid = (d, sh=6) => shaded(d, P.body, P.shade, sh);
+    R.card = (d, sh=6) => shaded(d, P.card, P.cardShade, sh);
+    R.part = d => path(d, `fill="${P.limb}"`);
+    R.surface = d => path(d, `fill="${P.surface}"`);
+    R.face = d => path(d, `fill="${P.face}"`);
+    R.paperOnly = d => path(d, `fill="${P.surface}"`);
+    R.tone = d => path(d, `fill="${P.tone}"`);
+    R.accent = d => path(d, `fill="${P.accent}"`);
+    R.ink = (d, c) => path(d, `fill="${c || P.eye}"`);
+    R.glint = d => path(d, `fill="${P.glint}"`);
+    R.mark = (d, c) => path(d, `fill="none" stroke="${c || P.ink}" stroke-width="${f(W())}" ${LJ}`);
+    R.accentMark = d => R.mark(d, P.accent);
+    R.onAccent = d => R.mark(d, P.onAccent);
+    R.faceMark = d => R.mark(d, P.eye);
+    R.seam = d => R.mark(d, P.limb);
+    R.bar = (x,y,w,strong) => path(rr(x,y,w,strong?7:6,3.5), `fill="${strong ? P.barStrong : P.barSoft}"`);
+    R.tube = (d, w) => path(d, `fill="none" stroke="${P.limb}" stroke-width="${f(w*k)}" ${LJ}`);
+    R.wash = d => path(d, `fill="${P.wash}"`);
+    R.ghost = d => path(d, `fill="${P.ghost}"`);
+    R.glass = d => path(d, `fill="${P.surface}" fill-opacity=".6"`);
+    R.socket = d => path(d, `fill="${P.wash}"`) + path(d, `fill="none" stroke="${P.accent}" stroke-width="${f(W())}" ${LJ}`);
+    R.floor = (cx,cy,rx,ry) => path(ell(cx,cy,rx,ry), `fill="${P.floor}"`);
+    R.back = () => path(rr(6,10,388,384,64), `fill="${P.back}"`);
+    R.lift = fn => fn(R);
+    return R;
+  }
+
+  /* s3: line and dot */
+  const pid = `${uid}dot`;
+  defs.push(`<pattern id="${pid}" width="4.8" height="4.8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><circle cx="2.4" cy="2.4" r="1.1" fill="${P.dot}"/></pattern>`);
+  const clip = d => { const id = `${uid}c${n++}`; defs.push(`<clipPath id="${id}"><path d="${d}"/></clipPath>`); return id; };
+  const stroke = (d, fill) => path(d, `fill="${fill}" stroke="${P.line}" stroke-width="${f(W())}" ${LJ}`);
+  const dotted = (d, sh, fill=P.paper) => {
+    const id = clip(d);
+    return path(d, `fill="${fill}"`) + `<g clip-path="url(#${id})"><path d="${d}" fill="url(#${pid})"/><path d="${d}" transform="translate(${f(-sh)} ${f(-sh)})" fill="${fill}"/></g>`
+      + path(d, `fill="none" stroke="${P.line}" stroke-width="${f(W())}" ${LJ}`);
+  };
+  R.solid = (d, sh=10) => dotted(d, Math.max(sh, 9));
+  R.card = d => stroke(d, P.paper);
+  R.part = d => stroke(d, P.paper);
+  R.surface = d => stroke(d, P.face);
+  R.face = R.surface;
+  R.paperOnly = d => stroke(d, P.paper);
+  R.tone = d => path(d, `fill="url(#${pid})"`) + path(d, `fill="none" stroke="${P.line}" stroke-width="${f(W())}" ${LJ}`);
+  R.accent = d => stroke(d, P.accent);
+  R.ink = (d, c) => path(d, `fill="${c || P.eye}"`);
+  R.glint = d => path(d, `fill="${P.glint}"`);
+  R.mark = (d, c) => path(d, `fill="none" stroke="${c || P.line}" stroke-width="${f(W())}" ${LJ}`);
+  R.accentMark = d => R.mark(d, P.accent);
+  R.onAccent = d => R.mark(d, P.onAccent);
+  R.faceMark = d => R.mark(d, P.eye);
+  R.seam = d => R.mark(d);
+  R.bar = (x,y,w,strong) => path(rr(x,y,w,strong?6:5,3), `fill="${strong ? P.line : P.soft}"`);
+  R.tube = (d, w) => path(d, `fill="none" stroke="${P.line}" stroke-width="${f(w*k + W())}" ${LJ}`) + path(d, `fill="none" stroke="${P.paper}" stroke-width="${f(Math.max(.5, w*k - W()))}" ${LJ}`);
+  R.wash = d => path(d, `fill="${P.wash}"`);
+  R.ghost = d => path(d, `fill="${P.paper}" stroke="${P.soft}" stroke-width="${f(W())}" ${LJ}`);
+  R.glass = d => path(d, `fill="${P.face}" fill-opacity=".55" stroke="${P.line}" stroke-width="${f(W())}" ${LJ}`);
+  R.socket = d => path(d, `fill="${P.wash}" stroke="${P.accent}" stroke-width="${f(W())}" ${LJ}`);
+  R.floor = (cx,cy,rx,ry) => path(ell(cx,cy,rx,ry), `fill="url(#${pid})"`);
+  R.back = () => '';
+  R.lift = fn => fn(R);
+  return R;
+}
+
+/* ======================= the robot =======================
+   Local units, origin on the ground between the feet, y up is negative.
+   Head 92 tall of 166 from the soles to the top of the head (55%); the antenna adds 25 above.
+   One silhouette: a wide soft head over a narrow collar, a bell-shaped torso a little more than half
+   the head's width, shoulders with a round joint, tube arms of two segments, mitten hands with a
+   thumb, short legs and rounded boots. Details: the chest panel with the check (the one accent),
+   one seam at the hip, the shoulder joints, a line on each ear pod. Nothing smaller than 3 units. */
+const HEAD = 'M0 -160C40 -160 61 -156 64.5 -131C66.8 -115 66.8 -99 64 -87C60.5 -73 41 -68 0 -68C-41 -68 -60.5 -73 -64 -87C-66.8 -99 -66.8 -115 -64.5 -131C-61 -156 -40 -160 0 -160Z';
+const FACE = 'M0 -143C33 -143 49 -140 52.5 -124C54.5 -113 54.5 -101 52 -92C49 -83 34 -81 0 -81C-34 -81 -49 -83 -52 -92C-54.5 -101 -54.5 -113 -52.5 -124C-49 -140 -33 -143 0 -143Z';
+const EAR_R = 'M60 -127C75 -128 82.5 -119 82.5 -107C82.5 -95 75 -86 60 -87Z';
+const EAR_L = 'M-60 -127C-75 -128 -82.5 -119 -82.5 -107C-82.5 -95 -75 -86 -60 -87Z';
+const TORSO = 'M-28 -66H28C33.5 -66 36 -63 36.6 -58L39.4 -32C40.4 -24 35.5 -20 27 -20H-27C-35.5 -20 -40.4 -24 -39.4 -32L-36.6 -58C-36 -63 -33.5 -66 -28 -66Z';
+const LEG_L = rr(-23,-26,16,28,7), LEG_R = rr(7,-26,16,28,7);
+const FOOT_L = 'M-31 -1.5C-31 -9 -26 -12 -18 -12H-10C-5.5 -12 -3.5 -9 -3.5 -5V-1.5Q-3.5 0 -5 0H-29.5Q-31 0 -31 -1.5Z';
+const FOOT_R = 'M31 -1.5C31 -9 26 -12 18 -12H10C5.5 -12 3.5 -9 3.5 -5V-1.5Q3.5 0 5 0H29.5Q31 0 31 -1.5Z';
+const SH_L = [-35,-55], SH_R = [35,-55];
+
+const BASE = {
+  armL:{e:[-45,-42], w:[-50,-25], hand:'mitt', side:-1},
+  armR:{e:[45,-42], w:[50,-25], hand:'mitt', side:1},
+  eyes:{dx:0, dy:0, mode:'open'}, mouth:'smile', tilt:0, step:false,
+};
+
+const MITT = 'M-3.5 -8C4.5 -8.8 10.5 -5.6 10.5 0C10.5 5.6 4.5 8.8 -3.5 8C-7 7.6 -8.5 4 -8.5 0C-8.5 -4 -7 -7.6 -3.5 -8Z';
+function hand(R, [x,y], h, along){
+  let g = '';
+  if (h.hand === 'thumbsup') {          // a fist with the thumb straight up
+    g += R.tube(`M${f(x-1)} ${f(y-3)}L${f(x-1)} ${f(y-16)}`, 7);
+    g += R.part(rr(x-9, y-7, 18, 15, 6.5));
+    g += R.seam(`M${f(x-4)} ${f(y+1)}H${f(x+5)}`);
+    return g;
+  }
+  const a = h.rot ?? along;              // the mitten points the way the forearm does
+  const side = h.side ?? 1;              // which side the thumb is on
+  const at = `translate(${f(x)} ${f(y)}) rotate(${f(a)})`;
+  if (h.hand === 'point') g += `<g transform="${at}">${R.tube('M4 0L17 0', 7)}</g>`;
+  g += `<g transform="${at}">${R.part(circ(0.5, side*7.6, 4))}${R.part(MITT)}</g>`;
+  return g;
+}
+
+function robot(R, pose={}){
+  const p = { ...BASE, ...pose, eyes:{...BASE.eyes, ...(pose.eyes||{})} };
+  let g = '';
+  // legs and boots
+  const legR = R.part(LEG_R) + `<g transform="translate(0 6)">${R.part(FOOT_R)}</g>`;
+  g += R.part(LEG_L) + `<g transform="translate(0 6)">${R.part(FOOT_L)}</g>`;
+  g += p.step ? `<g transform="translate(1.5 -5) rotate(-7 15 -6)">${legR}</g>` : legR;
+  // torso, hip seam, chest panel
+  g += R.solid(TORSO, 6);
+  g += R.seam('M-39 -30.5H39');
+  g += R.accent(rr(-14,-58,28,19,6)) + R.onAccent(tickD(0,-48.5,15));
+  // arms behind the head (and in front of the torso)
+  const arm = a => R.tube(`M${a.s[0]} ${a.s[1]}L${f(a.e[0])} ${f(a.e[1])}L${f(a.w[0])} ${f(a.w[1])}`, 11);
+  const A = [{...p.armL, s:SH_L}, {...p.armR, s:SH_R}];
+  A.filter(a => !a.front).forEach(a => { g += arm(a); });
+  g += R.part(circ(SH_L[0],SH_L[1],7.2)) + R.part(circ(SH_R[0],SH_R[1],7.2));
+  // collar
+  g += R.part(rr(-23,-74,46,12,5.5));
+  // head
+  let h = '';
+  h += R.part(EAR_L) + R.part(EAR_R);
+  h += R.mark('M0 -160V-171') + R.part(circ(0,-177.5,6.8));
+  h += R.solid(HEAD, 8);
+  h += R.face(FACE);
+  h += R.seam('M-73 -114V-100') + R.seam('M73 -114V-100');
+  const {dx, dy, mode} = p.eyes;
+  if (mode === 'happy') {
+    h += R.faceMark(`M${-39+dx} ${-106+dy}Q${-28+dx} ${-121+dy} ${-17+dx} ${-106+dy}`) + R.faceMark(`M${17+dx} ${-106+dy}Q${28+dx} ${-121+dy} ${39+dx} ${-106+dy}`);
+  } else {
+    h += R.ink(circ(-28+dx,-111+dy,11)) + R.ink(circ(28+dx,-111+dy,11));
+    h += R.glint(circ(-24.3+dx,-115.2+dy,3.4)) + R.glint(circ(31.7+dx,-115.2+dy,3.4));
+  }
+  const mx = dx*.6;
+  if (p.mouth === 'open') h += R.ink(`M${-9+mx} -97.5Q${mx} -85 ${9+mx} -97.5Z`);
+  else h += R.faceMark(`M${-9.5+mx} -97Q${mx} -89.5 ${9.5+mx} -97`);
+  g += p.tilt ? `<g transform="rotate(${p.tilt} 0 -70)">${h}</g>` : h;
+  // arms in front of the head, held things, then the hands
+  A.filter(a => a.front).forEach(a => { g += arm(a); });
+  if (p.held) g += p.held(R);
+  A.forEach(a => { g += hand(R, a.w, a, Math.atan2(a.w[1]-a.e[1], a.w[0]-a.e[0]) * 180 / Math.PI); });
+  if (p.over) g += p.over(R);
+  return g;
+}
+const placeRobot = (R, x, y, s, pose) => R.lift(Rx => `<g transform="translate(${x} ${f(y - 6*s)}) scale(${s})">${Rx.scale(s, () => robot(Rx, pose))}</g>`);
+
+/* ---- the poses, one per page ---- */
+const ticket = (R, x, y, a) => {
+  const d = `M${x-19} ${y-13}H${x+19}Q${x+22} ${y-13} ${x+22} ${y-10}V${y-5}A5 5 0 0 0 ${x+22} ${y+5}V${y+10}Q${x+22} ${y+13} ${x+19} ${y+13}H${x-19}Q${x-22} ${y+13} ${x-22} ${y+10}V${y+5}A5 5 0 0 0 ${x-22} ${y-5}V${y-10}Q${x-22} ${y-13} ${x-19} ${y-13}Z`;
+  return `<g transform="rotate(${a} ${x} ${y})">${R.part(d)}${R.seam(`M${x-9} ${y-7}V${y+7}`)}${R.bar(x-3,y-3.5,16,true)}</g>`;
+};
+const POSES = {
+  front: { },
+  together: { // arms open, palms up: the host of the swap
+    armL:{e:[-54,-48], w:[-69,-60], hand:'mitt', side:1}, armR:{e:[54,-48], w:[69,-60], hand:'mitt', side:-1},
+    eyes:{mode:'happy'}, mouth:'open' },
+  feedback: { // points at the line to fix; holds the tix it paid with
+    armR:{e:[56,-60], w:[71,-71], hand:'point', rot:-32, side:-1},
+    armL:{e:[-47,-41], w:[-52,-24], hand:'mitt', side:-1},
+    held: R => ticket(R, -70, -20, -14),
+    eyes:{dx:4, dy:-2}, tilt:-4 },
+  progress: { // carries tonight's square to the board
+    armL:{e:[-48,-36], w:[-18,-28], hand:'mitt', side:-1, rot:-10}, armR:{e:[48,-36], w:[18,-28], hand:'mitt', side:1, rot:190},
+    held: R => R.accent(rr(-21,-64,42,36,8)) + R.onAccent(tickD(0,-46,20)),
+    eyes:{dx:4}, step:true, tilt:3 },
+  share: { // a hand on the filled-in app card, the other gives a thumbs up
+    armR:{e:[57,-56], w:[77,-58], hand:'mitt', side:-1},
+    armL:{e:[-51,-44], w:[-62,-58], hand:'thumbsup'},
+    eyes:{dx:3, mode:'open'}, mouth:'open' },
+  explore: { // a magnifier held out to the side, the other hand on the hip
+    armR:{e:[56,-55], w:[73,-63], hand:'mitt', side:-1, rot:-30},
+    armL:{e:[-56,-44], w:[-42,-31], hand:'mitt', side:1, rot:40},
+    held: R => R.tube('M72 -63L94 -76', 8),
+    over: R => R.part(circ(113,-87,22)) + R.glass(circ(113,-87,15)) + R.mark('M105 -92Q107.5 -97.5 113.5 -98.5'),
+    eyes:{dx:4, dy:1}, tilt:5 },
+};
+
+/* ======================= the five pictures (400 by 400) ======================= */
+function phoneProp(R, cx, cy, a, screenAccent){
+  const w = 56, h = 94;
+  return `<g transform="rotate(${a} ${cx} ${cy})">`
+    + R.solid(rr(cx-w/2, cy-h/2, w, h, 12), 6)
+    + R.surface(rr(cx-w/2+7, cy-h/2+15, w-14, h-30, 5))
+    + R.bar(cx-8, cy-h/2+6, 16, true)
+    + (screenAccent ? R.accent(rr(cx-13, cy-22, 26, 26, 7)) + R.onAccent(tickD(cx, cy-9, 14))
+                    : R.tone(rr(cx-13, cy-22, 26, 26, 7)) + R.mark(tickD(cx, cy-9, 14)))
+    + R.bar(cx-13, cy+12, 26, true) + R.bar(cx-13, cy+23, 18)
+    + `</g>`;
+}
+function arrowArc(R, cx, cy, r, a0, a1){
+  const [x0,y0] = pt(cx,cy,r,a0), [x1,y1] = pt(cx,cy,r,a1);
+  const large = (a1 - a0) > 180 ? 1 : 0;
+  const d = `M${f(x0)} ${f(y0)}A${r} ${r} 0 ${large} 1 ${f(x1)} ${f(y1)}`;
+  const tang = a1 + 90;                       // direction of travel at the end
+  const [h1x,h1y] = pt(x1,y1,11,tang+180-38), [h2x,h2y] = pt(x1,y1,11,tang+180+38);
+  return R.accentMark(d) + R.accentMark(`M${f(h1x)} ${f(h1y)}L${f(x1)} ${f(y1)}L${f(h2x)} ${f(h2y)}`);
+}
+
+const PAGES = [
+  // 1. Together: the swap, as in the new icon. Two tilted phones on one loop, the robot as host.
+  R => {
+    let g = R.back();
+    g += arrowArc(R, 200, 210, 140, 206, 334) + arrowArc(R, 200, 210, 140, 26, 154);
+    g += R.lift(Rx => phoneProp(Rx, 62, 206, -12, false));
+    g += R.lift(Rx => phoneProp(Rx, 338, 206, 12, true));
+    g += R.floor(200, 334, 52, 6);
+    g += placeRobot(R, 200, 333, 1.08, POSES.together);
+    return g;
+  },
+  // 2. Feedback: a review from a tester; the robot points at the line to fix next.
+  R => {
+    let g = R.back();
+    const bx=168, by=78, bw=204, bh=196;
+    const bubble = `M${bx+22} ${by}H${bx+bw-22}Q${bx+bw} ${by} ${bx+bw} ${by+22}V${by+bh-22}Q${bx+bw} ${by+bh} ${bx+bw-22} ${by+bh}H${bx+58}L${bx+30} ${by+bh+22}L${bx+34} ${by+bh}H${bx+22}Q${bx} ${by+bh} ${bx} ${by+bh-22}V${by+22}Q${bx} ${by} ${bx+22} ${by}Z`;
+    g += R.lift(Rx => {
+      let c = Rx.card(bubble, 6);
+      c += Rx.tone(circ(bx+32, by+32, 13)) + Rx.bar(bx+54, by+24, 74, true) + Rx.bar(bx+54, by+37, 46);
+      const rows = [by+82, by+120, by+158];
+      c += Rx.wash(rr(bx+12, rows[2]-18, bw-24, 36, 11));
+      rows.forEach((ry, i) => {
+        c += i === 2 ? Rx.accent(circ(bx+32, ry, 7)) : Rx.mark(tickD(bx+32, ry, 13));
+        c += Rx.bar(bx+50, ry-8, i===1 ? 104 : 120, true) + Rx.bar(bx+50, ry+3, i===0 ? 80 : 96);
+      });
+      return c;
+    });
+    g += R.floor(98, 336, 48, 6);
+    g += placeRobot(R, 98, 335, .95, POSES.feedback);
+    return g;
+  },
+  // 3. 14 days: fourteen nights on the board, nine done; the robot carries tonight's square over.
+  R => {
+    let g = R.back();
+    const x=186, y=150, w=190, h=134;
+    g += R.lift(Rx => {
+      let c = Rx.card(rr(x, y, w, h, 18), 6);
+      c += Rx.seam(`M${x} ${y+32}H${x+w}`);
+      c += Rx.bar(x+18, y+13, 58, true);
+      // a crescent moon: tonight is a night
+      const mx = x+w-28, my = y+16;
+      c += Rx.tone(`M${mx+4} ${my-8.5}A9 9 0 1 0 ${mx+5} ${my+8.3}A7 7 0 0 1 ${mx+4} ${my-8.5}Z`);
+      const cell = 20, gap = 5, x0 = x + (w - (7*cell + 6*gap))/2, y0 = y + 50;
+      for (let i = 0; i < 14; i++) {
+        const cx = x0 + (i%7)*(cell+gap), cy = y0 + Math.floor(i/7)*(cell+gap);
+        if (i < 9) c += Rx.tone(rr(cx, cy, cell, cell, 5));
+        else if (i === 9) c += Rx.socket(rr(cx, cy, cell, cell, 5));
+        else c += Rx.ghost(rr(cx, cy, cell, cell, 5));
+      }
+      // the two rings that hang it
+      c += Rx.part(rr(x+36, y-10, 9, 20, 4.5)) + Rx.part(rr(x+w-45, y-10, 9, 20, 4.5));
+      return c;
+    });
+    g += R.floor(98, 336, 48, 6);
+    g += placeRobot(R, 98, 335, .95, POSES.progress);
+    return g;
+  },
+  // 4. Play link: paste the link above, the app card fills in below; the robot rests a hand on it.
+  R => {
+    let g = R.back();
+    g += R.lift(Rx => {
+      let c = Rx.card(rr(118, 76, 256, 44, 22), 5);
+      // a link glyph: two rounded links
+      c += `<g transform="rotate(-45 146 98)">` + Rx.mark(rr(133, 93, 15, 10, 5)) + Rx.mark(rr(144, 93, 15, 10, 5)) + `</g>`;
+      c += Rx.bar(166, 91, 120, true) + Rx.bar(166, 103, 78);
+      return c;
+    });
+    g += R.lift(Rx => Rx.mark('M300 128V156') + Rx.mark('M292 149L300 157L308 149'));
+    const x=172, y=168, w=202, h=164;
+    g += R.lift(Rx => {
+      let c = Rx.card(rr(x, y, w, h, 20), 6);
+      c += Rx.accent(rr(x+18, y+18, 48, 48, 13));
+      c += Rx.onAccent(`M${x+36} ${y+33}L${x+52} ${y+42}L${x+36} ${y+51}Z`);
+      c += Rx.bar(x+80, y+24, 92, true) + Rx.bar(x+80, y+38, 64) + Rx.bar(x+80, y+50, 40);
+      [0,1,2].forEach(i => { c += Rx.tone(rr(x+18+i*60, y+84, 50, 62, 10)); });
+      return c;
+    });
+    g += R.floor(98, 338, 48, 6);
+    g += placeRobot(R, 98, 337, .95, POSES.share);
+    return g;
+  },
+  // 5. Look around: the Circle seen as a guest; the robot looks through a magnifier.
+  R => {
+    let g = R.back();
+    const x=190, y=70, w=184, h=232;
+    g += R.lift(Rx => {
+      let c = Rx.card(rr(x, y, w, h, 20), 6);
+      c += Rx.seam(`M${x} ${y+36}H${x+w}`);
+      [0,1,2].forEach(i => { c += Rx.mark(circ(x+22+i*14, y+18, 3.2)); });
+      // the Circle: two apps
+      [0,1].forEach(i => { const ry = y+54+i*48;
+        c += Rx.tone(rr(x+16, ry, 34, 34, 10)) + Rx.bar(x+62, ry+7, 92, true) + Rx.bar(x+62, ry+20, 70); });
+      // the crew that is filling: 10 of 15 seats
+      const ry = y+160;
+      c += Rx.bar(x+16, ry, 70, true) + Rx.bar(x+16, ry+13, 44);
+      c += Rx.ghost(rr(x+16, ry+32, w-32, 14, 7)) + Rx.accent(rr(x+16, ry+32, (w-32)*10/15, 14, 7));
+      return c;
+    });
+    g += R.floor(96, 336, 48, 6);
+    g += placeRobot(R, 96, 335, .95, POSES.explore);
+    return g;
+  },
+];
+
+function svgFor(sys, theme, body, vb='0 0 400 400', extra=''){
+  const R = makeR(sys, sys.pal[theme]);
+  const inner = body(R);
+  return `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" ${extra}><defs>${R.defs.join('')}</defs>${inner}</svg>`;
+}
+
+/* ======================= the phone ======================= */
+const SB = `<div class="sb"><span>9:41</span><span class="cam"></span><span style="display:flex;gap:6px;align-items:center">
+ <svg width="16" height="11" viewBox="0 0 16 11"><path d="M1 10h2V7H1zM5 10h2V5H5zM9 10h2V3H9zM13 10h2V1h-2z" fill="currentColor"/></svg>
+ <svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 10.5 1 4a9.2 9.2 0 0 1 13 0z" fill="currentColor"/></svg>
+ <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2.5" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="12" height="7" rx="1.3" fill="currentColor"/></svg></span></div>`;
+function screen(theme, artSvg, copy, i){
+  return `<div class="phone"><div class="scr ${theme}">${SB}
+    <div class="brand"><img src="../logo/test-exchange.svg" alt=""><span class="nm">TestTrack</span><span class="skip">Skip</span></div>
+    <div class="pager"><div class="slide"><div class="art">${artSvg}</div>
+      <div class="eb">${copy[0]}</div><div class="tt">${copy[1]}</div><div class="bd">${copy[2]}</div></div></div>
+    <div class="foot"><div class="dots">${[0,1,2,3,4].map(k=>`<i class="${k===i?'on':''}"></i>`).join('')}</div>
+      <div class="btn">${i===4?'Explore TestTrack':'Next'}</div><div class="lnk">Already here? Sign in</div></div>
+    <div class="gest"><i></i></div></div></div>`;
+}
+
+/* ======================= the robot sheet ======================= */
+const SHEET = [['front','Front'],['together','1. Open arms'],['feedback','2. Points'],['progress','3. Carries'],['share','4. Thumbs up'],['explore','5. Looks']];
+function sheetPane(sys, theme){
+  const fig = (key, cls) => {
+    const vb = key === 'explore' ? '-100 -194 242 208' : key === 'feedback' ? '-104 -194 208 208' : '-96 -194 192 208';
+    const svg = svgFor(sys, theme, R => R.floor(0, 7, 42, 5) + R.lift(Rx => robot(Rx, POSES[key])), vb);
+    return `<figure class="${cls}">${svg}<figcaption>${SHEET.find(s=>s[0]===key)[1]}</figcaption></figure>`;
+  };
+  return `<div class="pane ${theme}"><h4>${theme === 'light' ? 'BY DAY' : 'AT NIGHT'}: about 240 px, then phone size (about 130 px)</h4>
+    <div class="big">${SHEET.map(([k]) => fig(k,'b')).join('')}</div>
+    <div class="small">${SHEET.map(([k]) => fig(k,'s')).join('')}</div></div>`;
+}
+
+/* ======================= build ======================= */
+function palette(sys){
+  const set = t => `<div class="set ${t==='dark'?'dk':''}"><h4>${t==='light'?'LIGHT, on #F7FCFF':'DARK, on #0F1011'}</h4><div class="sw">${
+    sys.roles.map(([k,label]) => `<div><i style="background:${sys.pal[t][k]}"></i>${label}<br><code>${sys.pal[t][k]}</code></div>`).join('')}</div></div>`;
+  return `<div class="pal">${set('light')}${set('dark')}</div>`;
+}
+document.getElementById('root').innerHTML = SYS.map(sys => `
+  <section class="sys" id="${sys.id}">
+    <div class="sh"><span class="n">${sys.n}</span><h2>${sys.name}</h2><span class="tag">${sys.tag}</span></div>
+    <div class="idea">${sys.idea} Line weight ${sys.W} on the 400 grid, about ${(sys.W*.81).toFixed(1)} px on the phone.</div>
+    ${palette(sys)}
+    ${['light','dark'].map(t => `<div class="band ${t}"><div class="lab">${t==='light'?'BY DAY':'AT NIGHT'}</div><div class="row">${
+      [0,1,2,3,4].map(i => `<div class="cell"><div class="cap">${NAMES[i]}<span class="warn"></span></div>${screen(t, svgFor(sys, t, PAGES[i]), COPY[i], i)}</div>`).join('')
+    }</div></div>`).join('')}
+    <div class="sheet" ${sys.id==='s1'?'id="robot"':''}><div class="sh" style="padding:12px 0 10px"><h2 style="font-size:18px">${sys.name}: the robot</h2></div>
+      ${sheetPane(sys,'light')}${sheetPane(sys,'dark')}</div>
+  </section>`).join('');
+
+/* size the art exactly as IntroSlide does: min(maxWidth - 36, clamp(maxHeight * .63, 130, 340)) */
+function layout(){
+  document.querySelectorAll('.pager').forEach(p => {
+    const W = 360, H = p.clientHeight;
+    const size = Math.min(W - 36, Math.max(130, Math.min(340, H * .63)));
+    // Image(Modifier.size(artSize)) inside the 28 dp padded column: the width is held to 304, the picture fits it
+    const a = p.querySelector('.art'); a.style.width = Math.min(size, W - 56) + 'px'; a.style.height = size + 'px';
+    const cut = p.querySelector('.bd').getBoundingClientRect().bottom - p.getBoundingClientRect().bottom;
+    p.closest('.cell').querySelector('.warn').textContent = cut > 8 ? 'scrolls: last line below the fold' : '';
+  });
+}
+document.fonts.ready.then(layout); layout();
+
+document.getElementById('notes').innerHTML = `
+  <h3>What changed in the robot</h3>
+  <ol>
+    <li>It is one figure now, head and body drawn together, not a head on a box. The head is 55% of the height (92 of 166 units, not counting the antenna), so it still reads as the app's robot at phone size.</li>
+    <li>A collar joins the head to the body. The torso is a soft bell a little wider at the hip, a bit more than half the head's width.</li>
+    <li>Shoulders have a round joint. Arms are two segments with an elbow, so a pose can bend. Hands are mittens with a thumb, and one can point or give a thumbs up.</li>
+    <li>Short legs and rounded boots let it stand, and step on page 3.</li>
+    <li>Three details only: the chest panel with the check (the one blue on the robot), a seam at the hip, and a line on each ear pod.</li>
+    <li>The face stays as it was: the cream face plate, two round eyes with a glint, a small smile. Eyes look at whatever the page is about.</li>
+  </ol>
+  <h3>Poses</h3>
+  <ol>
+    <li>Together: arms open, palms up, happy eyes, between two phones on one swap loop like the new icon.</li>
+    <li>Feedback: points at the highlighted line in a tester's review, holding the tix it paid with.</li>
+    <li>14 days: walks tonight's square over to the board of fourteen nights.</li>
+    <li>Play link: rests a hand on the app card that filled in from the link, thumbs up with the other.</li>
+    <li>Look around: hand on hip, looks at the Circle through a magnifier.</li>
+  </ol>
+  <h3>Ranking</h3>
+  <ol>
+    <li><b>Line and shade.</b> The most finished and the most like the app: the line matches the app's outlined icons, the shade plate gives weight without any shading, and day and night look equally good. Pick this one.</li>
+    <li><b>Shape and tone.</b> The softest and the calmest, and the best at night. Costs more care: with no outlines, every new prop needs its own value so it does not melt into the card behind it.</li>
+    <li><b>Line and dot.</b> The most editorial and the most distinct. The dots read as a light grey at phone size but can look like grit on a low-density screen, and they cost the most to export as Android vectors.</li>
+  </ol>`;
+
+const seg = (id, attr, apply) => document.querySelectorAll(`#${id} button`).forEach(b => b.onclick = () => {
+  document.querySelectorAll(`#${id} button`).forEach(x => x.classList.toggle('on', x === b)); apply(b.dataset[attr]);
+});
+seg('size','z', z => { document.documentElement.style.setProperty('--z', z); });
+const q = new URLSearchParams(location.search);
+if (q.get('z')) document.querySelector(`#size button[data-z="${q.get('z')}"]`)?.click();
+/* inspection view: ?inspect=s1 shows that system's bare pictures at phone size (324 px), light over dark */
+if (q.get('inspect')) {
+  const sys = SYS.find(x => x.id === q.get('inspect')), px = +(q.get('px') || 324);
+  if (q.get('sheet')) { document.body.innerHTML = '<div class="sheet">' + sheetPane(sys,'light') + sheetPane(sys,'dark') + '</div>'; } else
+  document.body.innerHTML = ['light','dark'].map(t => `<div style="display:flex;gap:12px;padding:12px;background:${sys.pal[t].page}">${
+    [0,1,2,3,4].map(i => `<div style="width:${px}px;height:${px}px">${svgFor(sys, t, PAGES[i])}</div>`).join('')}</div>`).join('');
+}
+</script>
+</body>
+</html>

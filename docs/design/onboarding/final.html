@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TestTrack onboarding: final art</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{ --page:#E9EEF2; --ptext:#1B2731; --ptext2:#4F606D; --pline:#CDD7DF; --band:#0A0B0C; --bandtext:#C9D1D8; --bandline:#22272C; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--ptext);font-family:Barlow,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:16px;padding:14px 32px;background:var(--page);border-bottom:1px solid var(--pline)}
+.bar h1{font:700 20px Barlow;margin:0;flex:1}
+.bar .seg{display:flex;border:1px solid var(--pline);border-radius:999px;overflow:hidden}
+.bar .seg button{font:600 13px Barlow;border:0;background:transparent;color:var(--ptext2);padding:7px 14px;cursor:pointer}
+.bar .seg button.on{background:var(--ptext);color:var(--page)}
+.bar nav a{font:600 13px Barlow;color:var(--ptext2);text-decoration:none;margin-left:12px}
+.intro{padding:20px 32px 8px;max-width:1120px;color:var(--ptext2);font-size:15px;line-height:22px}
+.intro b{color:var(--ptext)}
+.intro ol{margin:6px 0 0;padding-left:20px}
+.intro li{margin:3px 0}
+.sys{border-top:1px solid var(--pline);padding:26px 0 10px}
+.sh{padding:0 32px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sh .n{font:600 13px ui-monospace,monospace;color:var(--ptext2)}
+.sh h2{font:700 24px Barlow;margin:0}
+.sh .tag{font:600 12px Barlow;color:var(--ptext2);border:1px solid var(--pline);border-radius:999px;padding:2px 10px}
+.idea{padding:0 32px;color:var(--ptext2);font-size:15px;line-height:22px;margin:6px 0 14px;max-width:1060px}
+.idea b{color:var(--ptext)}
+.pal{display:flex;gap:28px;flex-wrap:wrap;padding:0 32px 16px}
+.pal .set{background:#fff;border:1px solid var(--pline);border-radius:14px;padding:12px 14px}
+.pal .set.dk{background:#0F1011;border-color:#22272C;color:#C9D1D8}
+.pal .set h4{margin:0 0 8px;font:700 13px Barlow;letter-spacing:.6px}
+.pal .sw{display:flex;gap:10px;flex-wrap:wrap}
+.pal .sw div{width:86px;font:500 11.5px/15px Barlow}
+.pal .sw i{display:block;width:86px;height:30px;border-radius:8px;margin-bottom:4px;box-shadow:inset 0 0 0 1px rgba(127,140,151,.35)}
+.pal .sw code{font:600 11px ui-monospace,monospace;opacity:.85}
+.band{padding:14px 0 6px}
+.band.dark{background:var(--band)}
+.band .lab{padding:0 32px 8px;font:700 13px Barlow;letter-spacing:.6px;color:var(--ptext2)}
+.band.dark .lab{color:var(--bandtext)}
+.row{display:flex;gap:22px;overflow-x:auto;padding:4px 32px 18px;align-items:flex-start}
+.cell{flex:none}
+.cap{font:600 13px Barlow;color:var(--ptext2);margin:0 0 8px 6px;display:flex;gap:8px}
+.band.dark .cap{color:var(--bandtext)}
+.cap .warn{color:#C0712F}
+
+/* ---- the phone, laid out as OnboardingScreen.kt lays it out (dp = px at 360 wide) ---- */
+.phone{width:360px;height:800px;border-radius:46px;background:#101316;padding:9px;zoom:var(--z,.62)}
+.band.dark .phone{background:#2A2F35}
+.scr{position:relative;width:100%;height:100%;border-radius:38px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column;color:var(--text)}
+.scr.light{--bg:#F7FCFF;--text:#142F43;--text2:#203A4E;--accent:#1D5C82;--onAccent:#FFFFFF;--accentInk:#123C56;--dotOff:#789AAF}
+.scr.dark{--bg:#0F1011;--text:#EFF7FC;--text2:#BDD1DF;--accent:#32729B;--onAccent:#FFFFFF;--accentInk:#8BCBF7;--dotOff:#58788E}
+.sb{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:2px 24px 0 26px;font:600 13px Barlow}
+.sb .cam{position:absolute;left:50%;top:9px;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;background:#050607}
+.brand{flex:none;display:flex;align-items:center;padding:4px 8px 4px 20px}
+.brand img{width:44px;height:44px;flex:none}
+.brand .nm{flex:1;margin-left:8px;font:700 22px/28px Barlow}
+.brand .skip{font:600 14px/20px Barlow;letter-spacing:.1px;color:var(--text2);padding:10px 12px}
+.pager{flex:1;min-height:0;overflow:hidden;position:relative}
+.slide{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 28px}
+.slide .art{flex:none}
+.slide .art svg{display:block;width:100%;height:100%}
+.eb{margin-top:12px;font:600 14px/20px Barlow;letter-spacing:1.4px;color:var(--accentInk);text-align:center}
+.tt{margin-top:10px;font:600 32px/35px Barlow;text-align:center}
+.bd{margin-top:14px;font:400 16px/24px Barlow;letter-spacing:.5px;color:var(--text2);text-align:center}
+.foot{flex:none;display:flex;flex-direction:column;align-items:center;padding:0 28px}
+.dots{display:flex;gap:6px;padding:18px 0}
+.dots i{display:block;width:7px;height:7px;border-radius:4px;background:var(--dotOff)}
+.dots i.on{width:24px;background:var(--accent)}
+.btn{width:100%;height:52px;border-radius:999px;background:var(--accent);color:var(--onAccent);font:600 16px/24px Barlow;letter-spacing:.15px;display:flex;align-items:center;justify-content:center}
+.lnk{margin:6px 0 8px;padding:10px 12px;font:600 14px/20px Barlow;color:var(--accentInk)}
+.gest{flex:none;height:20px;display:flex;justify-content:center;align-items:center}
+.gest i{width:110px;height:4px;border-radius:2px;background:var(--text);opacity:.32}
+
+
+.art{position:relative}
+.art .sq{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.art .sq svg{position:absolute;inset:0;width:100%;height:100%}
+.art .sq iframe{position:absolute;border:0;background:transparent;pointer-events:none;color-scheme:normal}
+.notes{padding:10px 32px 48px;max-width:1080px;color:var(--ptext2);font-size:15px;line-height:22px}
+.notes h3{color:var(--ptext);font:700 18px Barlow;margin:20px 0 6px}
+.notes ol{margin:4px 0;padding-left:20px}
+.stripwrap{display:flex;gap:0;padding:4px 32px 18px}
+.strip{display:flex;gap:18px;align-items:flex-end;padding:12px 18px 10px;border-radius:18px}
+.strip.light{background:#F7FCFF;border:1px solid var(--pline)}
+.strip.dark{background:#0F1011;color:#9AA6B0;margin-left:14px}
+.strip figure{margin:0;text-align:center}
+.strip img{height:180px;display:block}
+.strip figcaption{font:600 12px Barlow;color:var(--ptext2);margin-top:4px}
+.strip.dark figcaption{color:#9AA6B0}
+.strip p{max-width:230px;font:500 13px/19px Barlow;margin:0 0 22px}
+.cell.alt{padding-left:22px;border-left:2px dashed var(--pline)}
+.band.dark .cell.alt{border-left-color:#2A3036}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <h1>TestTrack onboarding: final art</h1>
+  <div class="seg" id="pal"><button data-p="A">A. Robot blue</button><button data-p="D" class="on">D. Old bot</button></div>
+  <div class="seg" id="size"><button data-z=".5">S</button><button data-z=".62" class="on">M</button><button data-z=".8">L</button><button data-z="1">1:1</button></div>
+</div>
+
+<div class="intro">
+  The screen is exactly as it is in OnboardingScreen.kt, with the agreed words. The pictures use the robot's chosen look: an ink line with colour inside,
+  the same palette on every prop. The strip below puts the old bot beside the new one, so the colours can be checked. The robot is the rig itself, so each page breathes and blinks on its own.
+</div>
+
+<div class="stripwrap" id="strip"></div>
+<div id="root"></div>
+<div class="notes" id="notes"></div>
+
+<script>
+const COPY = [
+  ['TESTERS FOR YOUR APP', 'Swap tests with<br>other developers', 'Google Play asks new developers for 12 testers over 14 days. Here, you test their apps and they test yours.'],
+  ['FEEDBACK', 'Find out what<br>to fix next', 'Testers try your app and leave feedback on Google Play. You pay them in tix and earn tix by testing for others.'],
+  ['14 DAYS IN A CREW', '14 days of testing,<br>a night at a time', 'Join a crew of 15 apps. Each night, open the other 14 for 20 seconds each, and chat with your crew while you test.'],
+  ['ADD YOUR APP', 'Start with<br>your Play link', "Paste the link or package name, and we fill in your app's name and icon."],
+  ['LOOK AROUND FIRST', 'No account needed<br>to look around', 'See the Circle, the ranks and the crew that is filling. Sign in when you want to join in.'],
+];
+const NAMES = ['1. Together','2. Feedback','3. 14 days','4. Play link','5. Look around'];
+
+
+/* ======================= the palette: the rig's style 3, palette A ======================= */
+/* the props follow the robot's palette. A: the pale robot blues. D: the old bot's own colours,
+   with the light blues from the old onboarding drawables (#D3E4EF, #B7D1E2, #6CA9CF) for the props */
+const PALS = {
+  A: {
+    light:{ line:'#26343F', card:'#FFFFFF', shell:'#CFE3F0', part:'#9CC2DC', face:'#FFFDF8', tone:'#CFE3F0', done:'#9CC2DC', ghost:'#EEF4F8', ghostLine:'#C9D8E3',
+            barStrong:'#8DB7D4', barSoft:'#CFE3F0', accent:'#3FBFA2', onAccent:'#FFFFFF', wash:'rgba(63,191,162,.16)', loop:'#BCD7EA', ball:'#F58B73' },
+    dark: { line:'#B4C7D6', card:'#1D262E', shell:'#4F7593', part:'#3A5C77', face:'#EEEBE3', tone:'#3A5C77', done:'#4F7593', ghost:'#222C34', ghostLine:'#3A4854',
+            barStrong:'#6F93AE', barSoft:'#3A5C77', accent:'#4CC7AA', onAccent:'#0F2B25', wash:'rgba(76,199,170,.16)', loop:'#476C89', ball:'#EE8A74' },
+  },
+  D: {
+    light:{ line:'#26343F', card:'#FFFFFF', shell:'#28678F', part:'#6CA9CF', face:'#FFFCF1', tone:'#D3E4EF', done:'#6CA9CF', ghost:'#EEF4F8', ghostLine:'#C9D8E3',
+            barStrong:'#6CA9CF', barSoft:'#D3E4EF', accent:'#64CBB6', onAccent:'#FFFFFF', wash:'rgba(100,203,182,.18)', loop:'#B7D1E2', ball:'#F48E76' },
+    dark: { line:'#B4C7D6', card:'#1D262E', shell:'#225A7E', part:'#2C5F80', face:'#EEEBE3', tone:'#1F4560', done:'#3C7BA3', ghost:'#222C34', ghostLine:'#3A4854',
+            barStrong:'#5E9AC0', barSoft:'#1F4560', accent:'#5BC2AC', onAccent:'#0F2B25', wash:'rgba(91,194,172,.16)', loop:'#2B5C7C', ball:'#E98670' },
+  },
+};
+let PK = new URLSearchParams(location.search).get('pk') || 'D';
+const W = 3.6;   // the props' line, close to the rig's line at the scale the robot is drawn
+
+/* ======================= geometry ======================= */
+const f = v => (+v).toFixed(2).replace(/\.?0+$/,'');
+const rr = (x,y,w,h,r) => { r = Math.min(r, w/2, h/2);
+  return `M${f(x+r)} ${f(y)}H${f(x+w-r)}A${f(r)} ${f(r)} 0 0 1 ${f(x+w)} ${f(y+r)}V${f(y+h-r)}A${f(r)} ${f(r)} 0 0 1 ${f(x+w-r)} ${f(y+h)}H${f(x+r)}A${f(r)} ${f(r)} 0 0 1 ${f(x)} ${f(y+h-r)}V${f(y+r)}A${f(r)} ${f(r)} 0 0 1 ${f(x+r)} ${f(y)}Z`; };
+const circ = (cx,cy,r) => `M${f(cx-r)} ${f(cy)}A${f(r)} ${f(r)} 0 1 0 ${f(cx+r)} ${f(cy)}A${f(r)} ${f(r)} 0 1 0 ${f(cx-r)} ${f(cy)}Z`;
+const tickD = (cx,cy,s) => `M${f(cx-s*.42)} ${f(cy+s*.02)}L${f(cx-s*.12)} ${f(cy+s*.3)}L${f(cx+s*.42)} ${f(cy-s*.3)}`;
+const rad = d => d*Math.PI/180;
+const pt = (cx,cy,r,a) => [cx + r*Math.cos(rad(a)), cy + r*Math.sin(rad(a))];
+
+/* ======================= the props, drawn in the robot's language ======================= */
+function makeR(P){
+  const LJ = 'stroke-linejoin="round" stroke-linecap="round"';
+  const fillLine = (d, fill, w=W) => `<path d="${d}" fill="${fill}" stroke="${P.line}" stroke-width="${w}" ${LJ}/>`;
+  return {
+    card:    d => fillLine(d, P.card),
+    shell:   d => fillLine(d, P.shell),
+    part:    d => fillLine(d, P.part),
+    surface: d => fillLine(d, P.face),
+    tone:    d => fillLine(d, P.tone, W*.8),
+    done:    d => fillLine(d, P.done, W*.8),
+    accent:  d => fillLine(d, P.accent, W*.8),
+    ghost:   d => `<path d="${d}" fill="${P.ghost}" stroke="${P.ghostLine}" stroke-width="${W*.6}" ${LJ}/>`,
+    wash:    d => `<path d="${d}" fill="${P.wash}"/>`,
+    mark:   (d, w=W) => `<path d="${d}" fill="none" stroke="${P.line}" stroke-width="${w}" ${LJ}/>`,
+    onAccent: d => `<path d="${d}" fill="none" stroke="${P.onAccent}" stroke-width="${W}" ${LJ}/>`,
+    // a line drawn as an outlined tube, like the robot's arms
+    tube:   (d, w=9, col=P.loop) => `<path d="${d}" fill="none" stroke="${P.line}" stroke-width="${w+W*2}" ${LJ}/><path d="${d}" fill="none" stroke="${col}" stroke-width="${w}" ${LJ}/>`,
+    bar:    (x, y, w, strong) => `<path d="M${f(x+3.5)} ${f(y+3.5)}H${f(x+w-3.5)}" stroke="${strong ? P.barStrong : P.barSoft}" stroke-width="7" stroke-linecap="round"/>`,
+    P,
+  };
+}
+function phoneProp(R, cx, cy, a, lit){
+  const w = 62, h = 104;
+  return `<g transform="rotate(${a} ${cx} ${cy})">`
+    + R.shell(rr(cx-w/2, cy-h/2, w, h, 13))
+    + R.surface(rr(cx-w/2+8, cy-h/2+16, w-16, h-32, 6))
+    + R.bar(cx-8, cy-h/2+6, 16, true)
+    + (lit ? R.accent(rr(cx-14, cy-24, 28, 28, 8)) + R.onAccent(tickD(cx, cy-10, 15))
+           : R.tone(rr(cx-14, cy-24, 28, 28, 8)) + R.mark(tickD(cx, cy-10, 15)))
+    + R.bar(cx-14, cy+12, 28, true) + R.bar(cx-14, cy+24, 19)
+    + `</g>`;
+}
+function loopArc(R, cx, cy, r, a0, a1){
+  const [x0,y0] = pt(cx,cy,r,a0), [x1,y1] = pt(cx,cy,r,a1);
+  const d = `M${f(x0)} ${f(y0)}A${r} ${r} 0 ${(a1-a0) > 180 ? 1 : 0} 1 ${f(x1)} ${f(y1)}`;
+  const tang = a1 + 90;
+  const [h1x,h1y] = pt(x1,y1,14,tang+180-40), [h2x,h2y] = pt(x1,y1,14,tang+180+40);
+  return R.tube(d + `M${f(h1x)} ${f(h1y)}L${f(x1)} ${f(y1)}L${f(h2x)} ${f(h2y)}`, 7);
+}
+
+/* ======================= the robot: the rig, embedded =======================
+   x, y: where its feet stand on the 400 grid. s: rig units to grid units.
+   The rig's frame is viewBox -150 -240 300 260, so the frame is placed from the feet. */
+const ARM = { up:18, fore:15, palm:9 };
+// where a hand is, on the 400 grid, for a robot at (x, y, s) with that arm's angles (the same chain as the rig)
+function handAt(r, side, sh, el, wr=0){
+  const sx = side === 'R' ? 1 : -1, d = a => [sx*Math.sin(rad(a)), Math.cos(rad(a))];
+  let px = 35*sx, py = -55;
+  const a1 = sh, a2 = sh + el, a3 = sh + el + wr;
+  px += ARM.up*d(a1)[0];   py += ARM.up*d(a1)[1];
+  px += ARM.fore*d(a2)[0]; py += ARM.fore*d(a2)[1];
+  px += ARM.palm*d(a3)[0]; py += ARM.palm*d(a3)[1];
+  return [r.x + px*r.s, r.y + py*r.s];
+}
+// the swap from the app icon: two arrows chasing round one small circle, coral over the top and mint under it
+function swapPair(R, cx, cy, r){
+  const arc = (a0, a1, col) => {
+    const [x0,y0] = pt(cx,cy,r,a0), [x1,y1] = pt(cx,cy,r,a1);
+    const tang = a1 + 90, [h1x,h1y] = pt(x1,y1,12,tang+180-40), [h2x,h2y] = pt(x1,y1,12,tang+180+40);
+    return R.tube(`M${f(x0)} ${f(y0)}A${r} ${r} 0 0 1 ${f(x1)} ${f(y1)}M${f(h1x)} ${f(h1y)}L${f(x1)} ${f(y1)}L${f(h2x)} ${f(h2y)}`, 7, col);
+  };
+  return arc(200, 335, R.P.ball) + arc(20, 155, R.P.accent);
+}
+// a phone standing in a hand: its lower edge sits in the palm, the fingers wrap over it (the robot is drawn on top)
+function heldPhone(R, hx, hy, w, h, lit){
+  const x = hx - w/2, y = hy + 5 - h;
+  return R.shell(rr(x, y, w, h, w*.22))
+    + R.surface(rr(x+6, y+12, w-12, h-26, 5))
+    + R.bar(hx-6, y+4.5, 12, true)
+    + (lit ? R.accent(rr(hx-11, y+18, 22, 22, 6.5)) + R.onAccent(tickD(hx, y+29, 12))
+           : R.tone(rr(hx-11, y+18, 22, 22, 6.5)) + R.mark(tickD(hx, y+29, 12), W*.8))
+    + R.bar(hx-11, y+46, 22, true);
+}
+// one chat line: an app's avatar and a bubble of text bars; mine sits on the right in mint
+function chatLine(R, x, y, w, mine, avatar, bars, extra=''){
+  let c = '';
+  if (mine) {
+    c += `<path d="${rr(x+w-8-bars[0]-20, y, bars[0]+20, 34, 13)}" fill="${R.P.wash}" stroke="${R.P.line}" stroke-width="${W*.8}" stroke-linejoin="round"/>`;
+    c += R.bar(x+w-8-bars[0]-10, y+9, bars[0], true) + (bars[1] ? R.bar(x+w-8-bars[0]-10, y+20, bars[1]) : '');
+  } else {
+    c += `<path d="${rr(x, y+4, 26, 26, 8)}" fill="${avatar}" stroke="${R.P.line}" stroke-width="${W*.8}" stroke-linejoin="round"/>`;
+    c += R.card(rr(x+34, y, bars[0]+22, 34, 13));
+    c += R.bar(x+45, y+9, bars[0], true) + (bars[1] ? R.bar(x+45, y+20, bars[1]) : '');
+  }
+  return c + extra;
+}
+const heartD = (cx, cy, s) => `M${f(cx)} ${f(cy+s*.42)}C${f(cx-s*.9)} ${f(cy-s*.1)} ${f(cx-s*.42)} ${f(cy-s*.72)} ${f(cx)} ${f(cy-s*.28)}C${f(cx+s*.42)} ${f(cy-s*.72)} ${f(cx+s*.9)} ${f(cy-s*.1)} ${f(cx)} ${f(cy+s*.42)}Z`;
+
+// page 1: two robots, each hands its phone across; the swap sits above, between them
+const R1a = { x:92, y:378, s:1.14 }, R1b = { x:322, y:378, s:.88 };
+const P1A = [40, 40], P1B = [40, 40];     // the reaching arm: shoulder, elbow
+const PAGES = [
+  {
+    props: R => {
+      const [ax] = handAt(R1a, 'R', ...P1A), [bx] = handAt(R1b, 'L', ...P1B);
+      return swapPair(R, (ax+bx)/2, 150, 40);
+    },
+    robots: [
+      { ...R1a, q:`pose=shR:${P1A[0]},elR:${P1A[1]},lookX:5,faceX:4,head:3&hands=open,hold&front=0,1&prop=phone&propside=R&lean=-9&expr=happy&glyph=heart` },
+      { ...R1b, q:`pose=shL:${P1B[0]},elL:${P1B[1]},lookX:-5,faceX:-4,head:-3&hands=hold,open&front=1,0&prop=phone&propside=L&lean=-9&expr=happy&glyph=check` },
+    ],
+  },
+  // 2. Feedback: points at the line to fix next in a tester's review; the chest shows a heart
+  {
+    props: R => {
+      const bx=200, by=84, bw=188, bh=214;
+      // one closed path: the tail grows out of the bottom edge and curves back into it, so the outline never breaks
+      const bubble = `M${bx+22} ${by}H${bx+bw-22}Q${bx+bw} ${by} ${bx+bw} ${by+22}V${by+bh-22}Q${bx+bw} ${by+bh} ${bx+bw-22} ${by+bh}`
+        + `H${bx+80}C${bx+70} ${by+bh} ${bx+58} ${by+bh+14} ${bx+40} ${by+bh+26}C${bx+46} ${by+bh+14} ${bx+48} ${by+bh+6} ${bx+46} ${by+bh}`
+        + `H${bx+22}Q${bx} ${by+bh} ${bx} ${by+bh-22}V${by+22}Q${bx} ${by} ${bx+22} ${by}Z`;
+      let c = R.card(bubble);
+      c += R.tone(circ(bx+32, by+32, 13)) + R.bar(bx+54, by+22, 74, true) + R.bar(bx+54, by+36, 46);
+      const rows = [by+84, by+128, by+172];
+      c += R.wash(rr(bx+10, rows[2]-20, bw-20, 40, 12));
+      rows.forEach((ry, i) => {
+        c += i === 2 ? R.accent(circ(bx+30, ry, 8)) : R.mark(tickD(bx+30, ry, 14));
+        c += R.bar(bx+50, ry-9, i===1 ? 100 : 116, true) + R.bar(bx+50, ry+3, i===0 ? 78 : 92);
+      });
+      return c;
+    },
+    robots: [{ x:100, y:378, s:1.3, q:'hold=point&at=1&glyph=heart' }],
+  },
+  // 3. 14 days: the board of fourteen nights, and a small crew chat bubble under it; thumbs up
+  {
+    props: R => {
+      const x=200, y=70, w=188, h=138;
+      let c = R.part(rr(x+36, y-12, 10, 22, 5)) + R.part(rr(x+w-46, y-12, 10, 22, 5));
+      c += R.card(rr(x, y, w, h, 18));
+      c += R.mark(`M${x} ${y+34}H${x+w}`, W*.8);
+      c += R.bar(x+18, y+14, 58, true);
+      const mx = x+w-28, my = y+17;
+      c += R.tone(`M${mx+4} ${my-8.5}A9 9 0 1 0 ${mx+5} ${my+8.3}A7 7 0 0 1 ${mx+4} ${my-8.5}Z`);
+      const cell = 20, gap = 5, x0 = x + (w - (7*cell + 6*gap))/2, y0 = y + 52;
+      for (let i = 0; i < 14; i++) {
+        const cx = x0 + (i%7)*(cell+gap), cy = y0 + Math.floor(i/7)*(cell+gap);
+        c += i < 9 ? R.done(rr(cx, cy, cell, cell, 5)) : i === 9 ? R.accent(rr(cx, cy, cell, cell, 5)) : R.ghost(rr(cx, cy, cell, cell, 5));
+      }
+      // the crew chat: one message from a crew mate, with their app's avatar
+      c += chatLine(R, 236, 232, 152, false, R.P.ball, [80, 52]);
+      const bx = 270, by = 232;
+      c += R.mark(`M${bx+10} ${by+34}L${bx+4} ${by+44}L${bx+20} ${by+34}`, W*.8);
+      return c;
+    },
+    robots: [{ x:112, y:378, s:1.3, q:'hold=thumbs&at=1&expr=proud&glyph=check' }],
+  },
+  // 4. Play link: the link goes in above, the app card fills in below; the robot holds the card up on one hand
+  {
+    props: R => {
+      const r = PAGES[3].robots[0], [hx, hy] = handAt(r, 'R', 76, 16);
+      let c = R.card(rr(132, 46, 254, 46, 23));
+      c += `<g transform="rotate(-45 160 69)">` + R.mark(rr(147, 64, 15, 10, 5), W*.8) + R.mark(rr(158, 64, 15, 10, 5), W*.8) + `</g>`;
+      c += R.bar(182, 62, 120, true) + R.bar(182, 74, 76);
+      c += R.mark('M314 100V124') + R.mark('M305 116L314 125L323 116');
+      const w = 186, h = 158, x = Math.max(hx - 14, 388 - w), y = hy + 4 - h;
+      c += R.card(rr(x, y, w, h, 20));
+      c += R.accent(rr(x+18, y+18, 50, 50, 14)) + `<path d="M${x+37} ${y+33}L${x+54} ${y+43}L${x+37} ${y+53}Z" fill="${R.P.onAccent}" stroke="${R.P.onAccent}" stroke-width="2" stroke-linejoin="round"/>`;
+      c += R.bar(x+82, y+24, 86, true) + R.bar(x+82, y+38, 60) + R.bar(x+82, y+51, 40);
+      [0,1,2].forEach(i => { c += R.tone(rr(x+16+i*54, y+86, 46, 56, 10)); });
+      return c;
+    },
+    robots: [{ x:96, y:378, s:1.3, q:'pose=shR:76,elR:16,lookX:4,lookY:-3,faceX:3,head:2,torso:-2&hands=open,hold&expr=happy&glyph=check' }],
+  },
+  // 5. Look around: the Circle seen as a guest; the robot tilts its head and looks at it, curious, a small smile
+  {
+    props: R => {
+      const x=204, y=62, w=184, h=238;
+      let c = R.card(rr(x, y, w, h, 20));
+      c += R.mark(`M${x} ${y+38}H${x+w}`, W*.8);
+      [0,1,2].forEach(i => { c += R.ghost(circ(x+22+i*15, y+19, 4)); });
+      [0,1].forEach(i => { const ry = y+56+i*48;
+        c += R.tone(rr(x+16, ry, 34, 34, 10)) + R.bar(x+62, ry+7, 92, true) + R.bar(x+62, ry+20, 70); });
+      const ry = y+164;
+      c += R.bar(x+16, ry, 70, true) + R.bar(x+16, ry+13, 44);
+      c += R.ghost(rr(x+16, ry+34, w-32, 16, 8)) + R.accent(rr(x+16, ry+34, (w-32)*10/15, 16, 8));
+      return c;
+    },
+    robots: [{ x:104, y:378, s:1.3, q:'pose=head:9,faceX:6,lookX:5,lookY:-2,torso:3,antenna:-12,shL:16,shR:24,elR:-4&expr=neutral&glyph=q' }],
+  },
+  // 3, the other version: the crew chat is the picture; the robot waves at it, happy
+  {
+    props: R => {
+      const x=196, y=54, w=192, h=270;
+      let c = R.card(rr(x, y, w, h, 20));
+      c += R.mark(`M${x} ${y+40}H${x+w}`, W*.8);
+      // the crew: a row of app avatars, then a count
+      [R.P.tone, R.P.ball, R.P.done, R.P.accent].forEach((col, i) => {
+        c += `<path d="${rr(x+14+i*17, y+9, 22, 22, 7)}" fill="${col}" stroke="${R.P.line}" stroke-width="${W*.8}" stroke-linejoin="round"/>`;
+      });
+      c += R.bar(x+100, y+16, 60, true);
+      c += chatLine(R, x+12, y+56, w-24, false, R.P.ball, [92, 60]);
+      c += chatLine(R, x+12, y+104, w-24, false, R.P.done, [74, 0]);
+      c += chatLine(R, x+12, y+148, w-24, true, null, [84, 50]);
+      // a reaction on my message
+      c += R.accent(circ(x+w-24, y+186, 11)) + `<path d="${heartD(x+w-24, y+186, 11)}" fill="${R.P.onAccent}"/>`;
+      // the message box
+      c += R.ghost(rr(x+12, y+h-46, w-24, 32, 16)) + R.bar(x+28, y+h-34, 70);
+      return c;
+    },
+    robots: [{ x:100, y:378, s:1.28, q:'hold=wave&at=.9&glyph=heart' }],
+  },
+];
+
+function art(theme, i){
+  const pg = PAGES[i], R = makeR(PALS[PK][theme]);
+  const frames = pg.robots.map(r => {
+    const L = (r.x - 150*r.s)/4, T = (r.y - 240*r.s)/4, Wd = 300*r.s/4, Ht = 260*r.s/4;   // in % of the 400 grid
+    const src = `../robot/rig.html?embed=1&style=s3&pk=${PK}&chest=screen&theme=${theme}&${r.q}`;
+    return `<iframe src="${src}" loading="eager" style="left:${f(L)}%;top:${f(T)}%;width:${f(Wd)}%;height:${f(Ht)}%" tabindex="-1" aria-hidden="true"></iframe>`;
+  }).join('');
+  const front = pg.front ? `<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none">${pg.front(R)}</svg>` : '';
+  return `<div class="sq"><svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">${pg.props(R)}</svg>${frames}${front}</div>`;
+}
+
+/* ======================= the phone ======================= */
+const SB = `<div class="sb"><span>9:41</span><span class="cam"></span><span style="display:flex;gap:6px;align-items:center">
+ <svg width="16" height="11" viewBox="0 0 16 11"><path d="M1 10h2V7H1zM5 10h2V5H5zM9 10h2V3H9zM13 10h2V1h-2z" fill="currentColor"/></svg>
+ <svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 10.5 1 4a9.2 9.2 0 0 1 13 0z" fill="currentColor"/></svg>
+ <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2.5" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="12" height="7" rx="1.3" fill="currentColor"/></svg></span></div>`;
+function screen(theme, artSvg, copy, i){
+  return `<div class="phone"><div class="scr ${theme}">${SB}
+    <div class="brand"><img src="../logo/test-exchange.svg" alt=""><span class="nm">TestTrack</span><span class="skip">Skip</span></div>
+    <div class="pager"><div class="slide"><div class="art">${artSvg}</div>
+      <div class="eb">${copy[0]}</div><div class="tt">${copy[1]}</div><div class="bd">${copy[2]}</div></div></div>
+    <div class="foot"><div class="dots">${[0,1,2,3,4].map(k=>`<i class="${k===i?'on':''}"></i>`).join('')}</div>
+      <div class="btn">${i===4?'Explore TestTrack':'Next'}</div><div class="lnk">Already here? Sign in</div></div>
+    <div class="gest"><i></i></div></div></div>`;
+}
+
+
+function buildAll(){
+document.getElementById('strip').innerHTML = stripHtml();
+document.getElementById('root').innerHTML = ['light','dark'].map(t => `<div class="band ${t}"><div class="lab">${t==='light'?'BY DAY':'AT NIGHT'}</div><div class="row">${
+  [0,1,2,3,4].map(i => `<div class="cell"><div class="cap">${NAMES[i]}<span class="warn"></span></div>${screen(t, art(t, i), COPY[i], i)}</div>`).join('')
+  + `<div class="cell alt"><div class="cap">3, other version: the crew chat first<span class="warn"></span></div>${screen(t, art(t, 5), COPY[2], 2)}</div>`
+}</div></div>`).join('');
+layout();
+}
+/* the colour check: the old bot as it ships, beside the new robot in the palette shown */
+function stripHtml(){
+  const rob = t => `<iframe src="../robot/rig.html?embed=1&style=s3&pk=${PK}&chest=screen&theme=${t}&expr=happy&glyph=heart" style="width:208px;height:180px;border:0;background:transparent;pointer-events:none"></iframe>`;
+  return `<div class="strip light"><figure><img src="../logo/test-exchange.svg" alt=""><figcaption>Old bot: the top-bar icon</figcaption></figure>
+      <figure><img src="old-bot-together.svg" alt=""><figcaption>Old bot: onboarding page 1</figcaption></figure>
+      <figure>${rob('light')}<figcaption>New robot, ${PK === 'D' ? 'D. Old bot' : 'A. Robot blue'}, by day</figcaption></figure></div>
+    <div class="strip dark"><figure>${rob('dark')}<figcaption>The same, at night</figcaption></figure>
+      <p>The old bot has no night version: it uses the same colours on both grounds. The new one deepens each fill a step at night and swaps the ink line for a soft grey-blue.</p></div>`;
+}
+
+/* size the art exactly as IntroSlide does: min(maxWidth - 36, clamp(maxHeight * .63, 130, 340)) */
+function layout(){
+  document.querySelectorAll('.pager').forEach(p => {
+    const Wp = 360, H = p.clientHeight;
+    const size = Math.min(Wp - 36, Math.max(130, Math.min(340, H * .63)));
+    const a = p.querySelector('.art'), aw = Math.min(size, Wp - 56);
+    a.style.width = aw + 'px'; a.style.height = size + 'px';
+    const sq = a.querySelector('.sq'), side = Math.min(aw, size);
+    sq.style.width = sq.style.height = side + 'px';
+    const cut = p.querySelector('.bd').getBoundingClientRect().bottom - p.getBoundingClientRect().bottom;
+    p.closest('.cell').querySelector('.warn').textContent = cut > 8 ? 'scrolls: last line below the fold' : '';
+  });
+}
+document.fonts.ready.then(layout); buildAll();
+
+document.getElementById('notes').innerHTML = `
+  <h3>What is on each page</h3>
+  <ol>
+    <li>Together: two robots, each handing its phone across to the other, with the app icon's swap above them. You test their app, they test yours.</li>
+    <li>Feedback: points at the line to fix next in a tester's review. The chest screen shows a heart.</li>
+    <li>14 days: thumbs up beside the board of fourteen nights, nine done and tonight in mint, with one message from the crew chat under it. The words now mention the chat.</li>
+    <li>Play link: holds up the app card that filled in from the link, with a check on the chest.</li>
+    <li>Look around: tilts its head toward the Circle and looks at it, with a small smile.</li>
+  </ol>
+  <p>The last phone in each row is the other version of page 3, with the crew chat as the picture: three short messages with app avatars, a heart on yours, and the robot waving at it. Pick one of the two page 3s.</p>
+  <h3>The hands</h3>
+  <p>The thumb is fixed in the rig. Each hand turns over as its arm lifts, the way a wrist rolls, so the thumb sits on top when the arm is level, toward the head when it is raised, and toward the body when it hangs. Thumbs up always points up. This holds on both arms and in every pose.</p>
+  <h3>How it is drawn</h3>
+  <ol>
+    <li>The robot is the rig's style 3 in palette D, the old bot's own colours. Switch to palette A at the top to compare. It is the rig itself: each page holds one pose and keeps breathing and blinking.</li>
+    <li>The props use the same ink line and the same pale blues. Mint marks the one thing each page is about, the same mint as the robot's chest.</li>
+    <li>No shadows behind anything. Only the soft ground shadow under the robot's feet.</li>
+    <li>At night the line turns a soft grey-blue and the fills go a step deeper, the same change the robot makes.</li>
+    <li>The robot is about a third bigger than in the earlier rounds: about 190 px tall on a 360 dp wide phone.</li>
+  </ol>`;
+
+const seg = (id, attr, apply) => document.querySelectorAll(`#${id} button`).forEach(b => b.onclick = () => {
+  document.querySelectorAll(`#${id} button`).forEach(x => x.classList.toggle('on', x === b)); apply(b.dataset[attr]);
+});
+seg('size','z', z => { document.documentElement.style.setProperty('--z', z); });
+seg('pal','p', p => { PK = p; buildAll(); });
+document.querySelectorAll('#pal button').forEach(b => b.classList.toggle('on', b.dataset.p === PK));
+const q = new URLSearchParams(location.search);
+if (q.get('z')) document.querySelector(`#size button[data-z="${q.get('z')}"]`)?.click();
+</script>
+</body>
+</html>

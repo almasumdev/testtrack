@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TestTrack onboarding: refine the words and pictures</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* OceanLight, ui/theme/Tokens.kt */
+  --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --accent:#1D5C82; --onAccent:#FFFFFF; --accentInk:#123C56; --dotOff:#789AAF;
+  /* illustration grounds (would live in the theme as illustration roles) */
+  --a-blob:#E6F1F8; --a-sh:#D3E4EF; --a-ground:rgba(29,92,130,.12);
+  --b-ground:rgba(29,92,130,.32); --b-ring:rgba(29,92,130,.28);
+  --c-wall:#EAF3F9; --c-floor:#D6E7F2; --c-shadow:rgba(23,72,102,.16);
+  --b2-line:#1D5C82; --b2-fill:#FFFCF1; --b2-soft:#9DB9CC; --b2-disc:#E9F2F8; --b2-onmint:#1D5C82;
+  --page:#E8EFF4; --ptext:#142F43; --ptext2:#4B6578; --pline:#CFDDE7; --bezel:#101316;
+}
+[data-theme=dark]{
+  --bg:#0F1011; --text:#EFF7FC; --text2:#BDD1DF; --accent:#32729B; --onAccent:#FFFFFF; --accentInk:#8BCBF7; --dotOff:#58788E;
+  --a-blob:#16242E; --a-sh:#0A1820; --a-ground:rgba(0,0,0,.5);
+  --b-ground:rgba(139,203,247,.34); --b-ring:rgba(139,203,247,.28);
+  --c-wall:#141F27; --c-floor:#1B2B36; --c-shadow:rgba(0,0,0,.5);
+  --b2-line:#A9D6F5; --b2-fill:#152430; --b2-soft:#5E7F94; --b2-disc:#111B22; --b2-onmint:#0F2A26;
+  --page:#08090A; --ptext:#EFF7FC; --ptext2:#93A7B6; --pline:#1E2A33; --bezel:#2A2F35;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--ptext);font-family:Barlow,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:16px;padding:14px 32px;background:var(--page);border-bottom:1px solid var(--pline)}
+.bar h1{font:700 20px Barlow;margin:0;flex:1}
+.bar .seg{display:flex;border:1px solid var(--pline);border-radius:999px;overflow:hidden}
+.bar .seg button{font:600 13px Barlow;border:0;background:transparent;color:var(--ptext2);padding:7px 14px;cursor:pointer}
+.bar .seg button.on{background:var(--ptext);color:var(--page)}
+.intro{padding:18px 32px 4px;max-width:1040px;color:var(--ptext2);font-size:15px;line-height:22px}
+.intro b{color:var(--ptext)}
+.opt{padding:24px 32px 16px;border-top:1px solid var(--pline)}
+.oh{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.oh .n{font:600 13px ui-monospace,monospace;color:var(--ptext2)}
+.oh h2{font:700 22px Barlow;margin:0}
+.oh .tag{font:600 12px Barlow;color:var(--ptext2);border:1px solid var(--pline);border-radius:999px;padding:2px 10px}
+.idea{color:var(--ptext2);font-size:15px;line-height:21px;margin:6px 0 14px;max-width:980px}
+.row{display:flex;gap:22px;overflow-x:auto;padding:4px 2px 16px;align-items:flex-start}
+.cell{flex:none}
+.cap{font:600 13px Barlow;color:var(--ptext2);margin:0 0 8px 6px;display:flex;gap:8px}
+.cap .warn{color:#C0712F}
+
+/* ---- the phone, laid out as OnboardingScreen.kt lays it out (dp = px at 360 wide) ---- */
+.phone{width:360px;height:800px;border-radius:46px;background:var(--bezel);padding:9px;zoom:var(--z,.62)}
+.scr{position:relative;width:100%;height:100%;border-radius:38px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column;color:var(--text)}
+.sb{flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;padding:2px 24px 0 26px;font:600 13px Barlow}
+.sb .cam{position:absolute;left:50%;top:9px;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;background:#050607}
+/* brand row: padding 20/4, robot 44, gap 8, titleLarge, Skip TextButton */
+.brand{flex:none;display:flex;align-items:center;padding:4px 8px 4px 20px}
+.brand svg{width:44px;height:44px;flex:none}
+.brand .nm{flex:1;margin-left:8px;font:700 22px/28px Barlow}
+.brand .skip{font:600 14px/20px Barlow;letter-spacing:.1px;color:var(--text2);padding:10px 12px}
+/* pager page: padding 28/12, centred column, art then 12, label, 10, title, 14, body */
+.pager{flex:1;min-height:0;overflow:hidden;position:relative}
+.slide{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 28px}
+.slide .art{flex:none}
+.slide .art svg{display:block;width:100%;height:100%}
+.eb{margin-top:12px;font:600 14px/20px Barlow;letter-spacing:1.4px;color:var(--accentInk);text-align:center}
+.tt{margin-top:10px;font:600 32px/35px Barlow;text-align:center}
+.bd{margin-top:14px;font:400 16px/24px Barlow;letter-spacing:.5px;color:var(--text2);text-align:center}
+/* bottom: padding 28, dots row padding 18, pill button 52, text button top 6 bottom 8 */
+.foot{flex:none;display:flex;flex-direction:column;align-items:center;padding:0 28px}
+.dots{display:flex;gap:6px;padding:18px 0}
+.dots i{display:block;width:7px;height:7px;border-radius:4px;background:var(--dotOff)}
+.dots i.on{width:24px;background:var(--accent)}
+.btn{width:100%;height:52px;border-radius:999px;background:var(--accent);color:var(--onAccent);font:600 16px/24px Barlow;letter-spacing:.15px;display:flex;align-items:center;justify-content:center}
+.lnk{margin:6px 0 8px;padding:10px 12px;font:600 14px/20px Barlow;color:var(--accentInk)}
+.gest{flex:none;height:20px;display:flex;justify-content:center;align-items:center}
+.gest i{width:110px;height:4px;border-radius:2px;background:var(--text);opacity:.32}
+
+.notes{padding:4px 32px 40px;max-width:1040px;color:var(--ptext2);font-size:15px;line-height:22px}
+.notes h3{color:var(--ptext);font:700 18px Barlow;margin:18px 0 6px}
+.notes table{border-collapse:collapse;width:100%}
+.notes td,.notes th{border-top:1px solid var(--pline);padding:8px 10px;vertical-align:top;text-align:left}
+.notes th{color:var(--ptext);font-weight:600}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="blue" gradientUnits="userSpaceOnUse" x1="350" y1="277" x2="910" y2="744"><stop offset="0" stop-color="#32729B" /><stop offset="1" stop-color="#1D5C82" /></linearGradient><linearGradient id="deepBlue" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" /><stop offset="1" stop-color="#174866" /></linearGradient><linearGradient id="handBlue" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE" /><stop offset="1" stop-color="#5E9DC5" /></linearGradient><linearGradient id="coral" gradientUnits="userSpaceOnUse" x1="310" y1="765" x2="568" y2="1056"><stop offset="0" stop-color="#F99B80" /><stop offset="1" stop-color="#EF806B" /></linearGradient><linearGradient id="mint" gradientUnits="userSpaceOnUse" x1="710" y1="768" x2="921" y2="1055"><stop offset="0" stop-color="#77D6C2" /><stop offset="1" stop-color="#54C5AC" /></linearGradient><clipPath id="top_tip_mask" clipPathUnits="userSpaceOnUse"><path d="M710 652 L810 652 L810 870 L618 870 Z" /></clipPath><clipPath id="bottom_tip_mask" clipPathUnits="userSpaceOnUse"><path d="M607 997 L539 1180 L440 1180 L440 997 Z" /></clipPath><g id="rob-ex"><g><path fill="url(#deepBlue)" d="M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z" /><g><g><path fill="#1D5C82" d="M603 227 H650 V295 H603 Z" /><path fill="url(#coral)" d="M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z" /><path fill="#FFFFFF" d="M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z" /></g><g><path fill="url(#deepBlue)" d="M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z" /><path fill="url(#deepBlue)" d="M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z" /><path fill="#6CA9CF" d="M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z" /><path fill="#6CA9CF" d="M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z" /></g><path fill="url(#blue)" d="M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z" /><path fill="#FFFCF1" d="M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z" /><g><g><path fill="#17253B" d="M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z" /><path fill="#17253B" d="M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z" /><path fill="#FFFFFF" d="M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z" /><path fill="#FFFFFF" d="M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z" /></g></g><path stroke="#17253B" stroke-width="31" stroke-linecap="round" d="M576 594 C602 620 651 620 677 594" /></g><g><path fill="#32729B" stroke="#FFFCF1" stroke-width="20" stroke-linejoin="round" d="M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z" /></g><g><path fill="#32729B" stroke="#FFFCF1" stroke-width="20" stroke-linejoin="round" d="M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z" /></g><g><path fill="url(#coral)" d="M362 766 L502 764 C532 764 550 785 553 814 L568 983 C571 1013 554 1036 524 1040 L388 1056 C356 1059 336 1044 332 1013 L310 819 C306 789 327 767 362 766 Z" /><path fill="#FFFCF1" d="M381 817 L496 813 C512 812 522 823 524 839 L536 966 C538 982 530 992 514 995 L399 1006 C383 1007 374 999 372 983 L358 842 C356 828 365 818 381 817 Z" /><path stroke="#17253B" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" d="M405 918 L432 941 L488 871" /><path fill="url(#deepBlue)" d="M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z" /><path fill="url(#handBlue)" d="M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z" /></g><g><path fill="url(#mint)" d="M752 765 L894 767 C927 768 947 790 943 822 L922 1013 C918 1044 899 1059 866 1056 L731 1041 C701 1038 684 1018 687 987 L701 811 C704 782 724 764 752 765 Z" /><path fill="#FFFCF1" d="M757 814 L869 817 C887 818 898 831 896 848 L880 984 C879 1000 869 1007 853 1005 L740 993 C726 992 719 981 721 966 L734 838 C736 823 743 814 757 814 Z" /><path stroke="#17253B" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" d="M768 916 L795 939 L854 873" /><path fill="url(#deepBlue)" d="M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z" /><path fill="url(#handBlue)" d="M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z" /></g><g><g clip-path="url(#top_tip_mask)"><path fill="#32729B" stroke="#FFFCF1" stroke-width="20" stroke-linejoin="round" d="M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z" /></g></g><g><g clip-path="url(#bottom_tip_mask)"><path fill="#32729B" stroke="#FFFCF1" stroke-width="20" stroke-linejoin="round" d="M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z" /></g></g></g></g><g id="rob"><g><path fill="url(#deepBlue)" d="M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z" /><g><g><path fill="#1D5C82" d="M603 227 H650 V295 H603 Z" /><path fill="url(#coral)" d="M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z" /><path fill="#FFFFFF" d="M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z" /></g><g><path fill="url(#deepBlue)" d="M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z" /><path fill="url(#deepBlue)" d="M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z" /><path fill="#6CA9CF" d="M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z" /><path fill="#6CA9CF" d="M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z" /></g><path fill="url(#blue)" d="M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z" /><path fill="#FFFCF1" d="M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z" /><g><g><path fill="#17253B" d="M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z" /><path fill="#17253B" d="M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z" /><path fill="#FFFFFF" d="M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z" /><path fill="#FFFFFF" d="M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z" /></g></g><path stroke="#17253B" stroke-width="31" stroke-linecap="round" d="M576 594 C602 620 651 620 677 594" /></g><path d="M513 876 A114 110 0 1 0 741 876 A114 110 0 1 0 513 876 Z" fill="#64CBB6" /><path d="M570.3 878 L614.4 919.58 L690.0 827.6" fill="none" stroke="#FFFCF1" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" /><path d="M254 835 A81 92 0 1 0 416 835 A81 92 0 1 0 254 835 Z" fill="#32729B" /><path d="M838 835 A81 92 0 1 0 1000 835 A81 92 0 1 0 838 835 Z" fill="#32729B" /><path d="M258 819 A58 67 0 1 0 374 819 A58 67 0 1 0 258 819 Z" fill="#6CA9CF" /><path d="M880 819 A58 67 0 1 0 996 819 A58 67 0 1 0 880 819 Z" fill="#6CA9CF" /></g></g></defs></svg>
+<script>const TODAY = {"onboarding_together": {"vb": "0 0 400 400", "inner": "<defs><linearGradient id=\"ttogether-g1\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"ttogether-g2\" gradientUnits=\"userSpaceOnUse\" x1=\"310\" y1=\"765\" x2=\"568\" y2=\"1056\"><stop offset=\"0\" stop-color=\"#F99B80\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#EF806B\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"ttogether-g3\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"ttogether-g4\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"ttogether-g5\" gradientUnits=\"userSpaceOnUse\" x1=\"350\" y1=\"277\" x2=\"910\" y2=\"744\"><stop offset=\"0\" stop-color=\"#32729B\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#1D5C82\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"ttogether-g6\" gradientUnits=\"userSpaceOnUse\" x1=\"310\" y1=\"765\" x2=\"568\" y2=\"1056\"><stop offset=\"0\" stop-color=\"#F99B80\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#EF806B\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"ttogether-g7\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"ttogether-g8\" gradientUnits=\"userSpaceOnUse\" x1=\"270\" y1=\"846\" x2=\"960\" y2=\"966\"><stop offset=\"0\" stop-color=\"#80BCDE\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#5E9DC5\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"ttogether-g9\" gradientUnits=\"userSpaceOnUse\" x1=\"710\" y1=\"768\" x2=\"921\" y2=\"1055\"><stop offset=\"0\" stop-color=\"#77D6C2\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#54C5AC\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"ttogether-g10\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"ttogether-g11\" gradientUnits=\"userSpaceOnUse\" x1=\"270\" y1=\"846\" x2=\"960\" y2=\"966\"><stop offset=\"0\" stop-color=\"#80BCDE\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#5E9DC5\" stop-opacity=\"1.000\"/></linearGradient><clipPath id=\"ttogether-c12\"><path d=\"M710 652 L810 652 L810 870 L618 870 Z\"/></clipPath><clipPath id=\"ttogether-c13\"><path d=\"M607 997 L539 1180 L440 1180 L440 997 Z\"/></clipPath></defs><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M42 203 A158 152 0 1 0 358 203 A158 152 0 1 0 42 203 Z\" fill=\"#32729B\" fill-opacity=\"0.080\"/><path d=\"M67 356 A133 12 0 1 0 333 356 A133 12 0 1 0 67 356 Z\" fill=\"#1D5C82\" fill-opacity=\"0.100\"/><path d=\"M91 128 C71 226 94 304 172 325 M303 132 C342 222 311 297 247 324 M118 87 Q200 34 281 88\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#32729B\" stroke-opacity=\"0.280\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><g transform=\"translate(81.0 122.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M-31 0 A31 31 0 1 0 31 0 A31 31 0 1 0 -31 0 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M-27 1 A27 27 0 1 0 27 1 A27 27 0 1 0 -27 1 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M-23 19 Q-22 8 -9 8 H9 Q22 8 23 19 Q0 35 -23 19Z\" fill=\"#F58B73\" fill-opacity=\"1.000\"/><path d=\"M-13 -5 A13 16 0 1 0 13 -5 A13 16 0 1 0 -13 -5 Z\" fill=\"#F3C3A5\" fill-opacity=\"1.000\"/><path d=\"M-13 -5 Q-19 -23 0 -23 Q19 -23 13 -4 L9 -13 Q0 -8 -10 -13 Z\" fill=\"#18242E\" fill-opacity=\"1.000\"/><path d=\"M-5.3 -4 A1.3 1.6 0 1 0 -2.7 -4 A1.3 1.6 0 1 0 -5.3 -4 Z\" fill=\"#18242E\" fill-opacity=\"1.000\"/><path d=\"M3.7 -4 A1.3 1.6 0 1 0 6.3 -4 A1.3 1.6 0 1 0 3.7 -4 Z\" fill=\"#18242E\" fill-opacity=\"1.000\"/><path d=\"M-3 2 Q1 6 5 2\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#18242E\" stroke-opacity=\"1.000\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g><g transform=\"translate(200.0 63.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M-31 0 A31 31 0 1 0 31 0 A31 31 0 1 0 -31 0 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M-27 1 A27 27 0 1 0 27 1 A27 27 0 1 0 -27 1 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M-23 19 Q-22 8 -9 8 H9 Q22 8 23 19 Q0 35 -23 19Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M-13 -5 A13 16 0 1 0 13 -5 A13 16 0 1 0 -13 -5 Z\" fill=\"#F3C3A5\" fill-opacity=\"1.000\"/><path d=\"M-13 -5 Q-19 -23 0 -23 Q19 -23 13 -4 L9 -13 Q0 -8 -10 -13 Z\" fill=\"#463D3A\" fill-opacity=\"1.000\"/><path d=\"M-5.3 -4 A1.3 1.6 0 1 0 -2.7 -4 A1.3 1.6 0 1 0 -5.3 -4 Z\" fill=\"#18242E\" fill-opacity=\"1.000\"/><path d=\"M3.7 -4 A1.3 1.6 0 1 0 6.3 -4 A1.3 1.6 0 1 0 3.7 -4 Z\" fill=\"#18242E\" fill-opacity=\"1.000\"/><path d=\"M-3 2 Q1 6 5 2\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#18242E\" stroke-opacity=\"1.000\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g><g transform=\"translate(320.0 129.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M-31 0 A31 31 0 1 0 31 0 A31 31 0 1 0 -31 0 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M-27 1 A27 27 0 1 0 27 1 A27 27 0 1 0 -27 1 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M-23 19 Q-22 8 -9 8 H9 Q22 8 23 19 Q0 35 -23 19Z\" fill=\"#64CBB6\" fill-opacity=\"1.000\"/><path d=\"M-13 -5 A13 16 0 1 0 13 -5 A13 16 0 1 0 -13 -5 Z\" fill=\"#F3C3A5\" fill-opacity=\"1.000\"/><path d=\"M-13 -5 Q-19 -23 0 -23 Q19 -23 13 -4 L9 -13 Q0 -8 -10 -13 Z\" fill=\"#18242E\" fill-opacity=\"1.000\"/><path d=\"M-5.3 -4 A1.3 1.6 0 1 0 -2.7 -4 A1.3 1.6 0 1 0 -5.3 -4 Z\" fill=\"#18242E\" fill-opacity=\"1.000\"/><path d=\"M3.7 -4 A1.3 1.6 0 1 0 6.3 -4 A1.3 1.6 0 1 0 3.7 -4 Z\" fill=\"#18242E\" fill-opacity=\"1.000\"/><path d=\"M-3 2 Q1 6 5 2\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#18242E\" stroke-opacity=\"1.000\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g><g transform=\"translate(18.0 52.0) rotate(0.0) scale(0.29 0.29) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 627.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -627.0)\"><path d=\"M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z\" fill=\"url(#ttogether-g1)\"/><g transform=\"translate(627.0 530.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -530.0)\"><g transform=\"translate(627.0 278.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -278.0)\"><path d=\"M603 227 H650 V295 H603 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z\" fill=\"url(#ttogether-g2)\"/><path d=\"M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/></g><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z\" fill=\"url(#ttogether-g3)\"/><path d=\"M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z\" fill=\"url(#ttogether-g4)\"/><path d=\"M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/><path d=\"M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/></g><path d=\"M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z\" fill=\"url(#ttogether-g5)\"/><path d=\"M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -529.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -529.0)\"><path d=\"M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z\" fill=\"#17253B\" fill-opacity=\"1.000\"/><path d=\"M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z\" fill=\"#17253B\" fill-opacity=\"1.000\"/><path d=\"M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/><path d=\"M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/></g></g><path d=\"M576 594 C602 620 651 620 677 594\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#17253B\" stroke-opacity=\"1.000\" stroke-width=\"31\" stroke-linecap=\"round\" stroke-linejoin=\"miter\"/></g><g transform=\"translate(627.0 907.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -907.0)\"><path d=\"M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z\" fill=\"#32729B\" fill-opacity=\"1.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"20\" stroke-linecap=\"butt\" stroke-linejoin=\"round\"/></g><g transform=\"translate(627.0 907.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -907.0)\"><path d=\"M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z\" fill=\"#32729B\" fill-opacity=\"1.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"20\" stroke-linecap=\"butt\" stroke-linejoin=\"round\"/></g><g transform=\"translate(440.0 911.0) rotate(0.0) scale(1.0 1.0) translate(-440.0 -911.0)\"><path d=\"M362 766 L502 764 C532 764 550 785 553 814 L568 983 C571 1013 554 1036 524 1040 L388 1056 C356 1059 336 1044 332 1013 L310 819 C306 789 327 767 362 766 Z\" fill=\"url(#ttogether-g6)\"/><path d=\"M381 817 L496 813 C512 812 522 823 524 839 L536 966 C538 982 530 992 514 995 L399 1006 C383 1007 374 999 372 983 L358 842 C356 828 365 818 381 817 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M405 918 L432 941 L488 871\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#17253B\" stroke-opacity=\"1.000\" stroke-width=\"36\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z\" fill=\"url(#ttogether-g7)\"/><path d=\"M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z\" fill=\"url(#ttogether-g8)\"/></g><g transform=\"translate(814.0 911.0) rotate(0.0) scale(1.0 1.0) translate(-814.0 -911.0)\"><path d=\"M752 765 L894 767 C927 768 947 790 943 822 L922 1013 C918 1044 899 1059 866 1056 L731 1041 C701 1038 684 1018 687 987 L701 811 C704 782 724 764 752 765 Z\" fill=\"url(#ttogether-g9)\"/><path d=\"M757 814 L869 817 C887 818 898 831 896 848 L880 984 C879 1000 869 1007 853 1005 L740 993 C726 992 719 981 721 966 L734 838 C736 823 743 814 757 814 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M768 916 L795 939 L854 873\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#17253B\" stroke-opacity=\"1.000\" stroke-width=\"36\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z\" fill=\"url(#ttogether-g10)\"/><path d=\"M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z\" fill=\"url(#ttogether-g11)\"/></g><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g clip-path=\"url(#ttogether-c12)\"><path d=\"M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z\" fill=\"#32729B\" fill-opacity=\"1.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"20\" stroke-linecap=\"butt\" stroke-linejoin=\"round\"/></g></g></g><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g clip-path=\"url(#ttogether-c13)\"><path d=\"M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z\" fill=\"#32729B\" fill-opacity=\"1.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"20\" stroke-linecap=\"butt\" stroke-linejoin=\"round\"/></g></g></g></g></g><path d=\"M42 236 A15 15 0 1 0 72 236 A15 15 0 1 0 42 236 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M50.7 236 L55.6 240.62 L64.0 230.4\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#32729B\" stroke-opacity=\"1.000\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M330 295 A15 15 0 1 0 360 295 A15 15 0 1 0 330 295 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M338.7 295 L343.6 299.62 L352.0 289.4\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#32729B\" stroke-opacity=\"1.000\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>"}, "onboarding_feedback": {"vb": "0 0 400 400", "inner": "<defs><linearGradient id=\"tfeedback-g1\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"tfeedback-g2\" gradientUnits=\"userSpaceOnUse\" x1=\"310\" y1=\"765\" x2=\"568\" y2=\"1056\"><stop offset=\"0\" stop-color=\"#F99B80\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#EF806B\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"tfeedback-g3\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"tfeedback-g4\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"tfeedback-g5\" gradientUnits=\"userSpaceOnUse\" x1=\"350\" y1=\"277\" x2=\"910\" y2=\"744\"><stop offset=\"0\" stop-color=\"#32729B\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#1D5C82\" stop-opacity=\"1.000\"/></linearGradient></defs><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M67 356 A133 12 0 1 0 333 356 A133 12 0 1 0 67 356 Z\" fill=\"#1D5C82\" fill-opacity=\"0.100\"/><g transform=\"translate(4.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M116 80 H234 Q261 80 261 107 V320 Q261 347 234 347 H116 Q89 347 89 320 V107 Q89 80 116 80 Z\" fill=\"#B7D1E2\" fill-opacity=\"1.000\"/><path d=\"M110 74 H228 Q255 74 255 101 V314 Q255 341 228 341 H110 Q83 341 83 314 V101 Q83 74 110 74 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M112 85 H226 Q246 85 246 105 V308 Q246 328 226 328 H112 Q92 328 92 308 V105 Q92 85 112 85 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M144 84 H194 Q201 84 201 91 V91 Q201 98 194 98 H144 Q137 98 137 91 V91 Q137 84 144 84 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M122 119 H216 Q231 119 231 134 V191 Q231 206 216 206 H122 Q107 206 107 191 V134 Q107 119 122 119 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M147 153 A22 22 0 1 0 191 153 A22 22 0 1 0 147 153 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M161 142 L182 153 L161 165 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M146.5 186 H192.5 Q195 186 195 188.5 V188.5 Q195 191 192.5 191 H146.5 Q144 191 144 188.5 V188.5 Q144 186 146.5 186 Z\" fill=\"#A0B3C0\" fill-opacity=\"1.000\"/><path d=\"M110.5 224 H191.5 Q195 224 195 227.5 V227.5 Q195 231 191.5 231 H110.5 Q107 231 107 227.5 V227.5 Q107 224 110.5 224 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M109.5 239 H223.5 Q226 239 226 241.5 V241.5 Q226 244 223.5 244 H109.5 Q107 244 107 241.5 V241.5 Q107 239 109.5 239 Z\" fill=\"#B7CAD6\" fill-opacity=\"1.000\"/><path d=\"M109.5 251 H204.5 Q207 251 207 253.5 V253.5 Q207 256 204.5 256 H109.5 Q107 256 107 253.5 V253.5 Q107 251 109.5 251 Z\" fill=\"#B7CAD6\" fill-opacity=\"1.000\"/><path d=\"M117 277 H177 Q187 277 187 287 V294 Q187 304 177 304 H117 Q107 304 107 294 V287 Q107 277 117 277 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M140.7 290 L145.6 294.62 L154.0 284.4\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M150.5 317 H187.5 Q189 317 189 318.5 V318.5 Q189 320 187.5 320 H150.5 Q149 320 149 318.5 V318.5 Q149 317 150.5 317 Z\" fill=\"#B7CAD6\" fill-opacity=\"1.000\"/></g><g transform=\"translate(85.0 213.0) rotate(-7.0) scale(1.0 1.0) translate(-85.0 -213.0)\"><path d=\"M37 174 H129 Q143 174 143 188 V226 Q143 239 129 239 H75 L56 253 V239 H37 Q24 239 24 226 V188 Q24 174 37 174Z\" fill=\"#F58B73\" fill-opacity=\"1.000\"/><path d=\"M43 191 H100 Q103 191 103 194 V194 Q103 197 100 197 H43 Q40 197 40 194 V194 Q40 191 43 191 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M42.5 204 H123.5 Q126 204 126 206.5 V206.5 Q126 209 123.5 209 H42.5 Q40 209 40 206.5 V206.5 Q40 204 42.5 204 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M42.5 217 H87.5 Q90 217 90 219.5 V219.5 Q90 222 87.5 222 H42.5 Q40 222 40 219.5 V219.5 Q40 217 42.5 217 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/></g><path d=\"M234 48 H325 Q340 48 340 64 V102 Q340 116 325 116 H276 L260 131 V116 H234 Q218 116 218 102 V64 Q218 48 234 48Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M230 80 A14 14 0 1 0 258 80 A14 14 0 1 0 230 80 Z\" fill=\"#64CBB6\" fill-opacity=\"1.000\"/><path d=\"M238.15 80 L242.7 84.29 L250.5 74.8\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#1D5C82\" stroke-opacity=\"1.000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M271 68 H317 Q320 68 320 71 V71 Q320 74 317 74 H271 Q268 74 268 71 V71 Q268 68 271 68 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M270.5 81 H304.5 Q307 81 307 83.5 V83.5 Q307 86 304.5 86 H270.5 Q268 86 268 83.5 V83.5 Q268 81 270.5 81 Z\" fill=\"#A0B3C0\" fill-opacity=\"1.000\"/><path d=\"M237 99 H318 Q320 99 320 101 V101 Q320 103 318 103 H237 Q235 103 235 101 V101 Q235 99 237 99 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><g transform=\"translate(195.0 161.0) rotate(0.0) scale(0.17 0.17) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 627.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -627.0)\"><path d=\"M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z\" fill=\"url(#tfeedback-g1)\"/><g transform=\"translate(627.0 530.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -530.0)\"><g transform=\"translate(627.0 278.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -278.0)\"><path d=\"M603 227 H650 V295 H603 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z\" fill=\"url(#tfeedback-g2)\"/><path d=\"M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/></g><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z\" fill=\"url(#tfeedback-g3)\"/><path d=\"M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z\" fill=\"url(#tfeedback-g4)\"/><path d=\"M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/><path d=\"M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/></g><path d=\"M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z\" fill=\"url(#tfeedback-g5)\"/><path d=\"M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -529.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -529.0)\"><path d=\"M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z\" fill=\"#17253B\" fill-opacity=\"1.000\"/><path d=\"M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z\" fill=\"#17253B\" fill-opacity=\"1.000\"/><path d=\"M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/><path d=\"M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/></g></g><path d=\"M576 594 C602 620 651 620 677 594\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#17253B\" stroke-opacity=\"1.000\" stroke-width=\"31\" stroke-linecap=\"round\" stroke-linejoin=\"miter\"/></g><path d=\"M513 876 A114 110 0 1 0 741 876 A114 110 0 1 0 513 876 Z\" fill=\"#64CBB6\" fill-opacity=\"1.000\"/><path d=\"M570.3 878 L614.4 919.58 L690.0 827.6\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"34\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M254 835 A81 92 0 1 0 416 835 A81 92 0 1 0 254 835 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M838 835 A81 92 0 1 0 1000 835 A81 92 0 1 0 838 835 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M258 819 A58 67 0 1 0 374 819 A58 67 0 1 0 258 819 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/><path d=\"M880 819 A58 67 0 1 0 996 819 A58 67 0 1 0 880 819 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/></g></g></g></g>"}, "onboarding_progress": {"vb": "0 0 400 400", "inner": "<defs><linearGradient id=\"tprogress-g1\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"tprogress-g2\" gradientUnits=\"userSpaceOnUse\" x1=\"310\" y1=\"765\" x2=\"568\" y2=\"1056\"><stop offset=\"0\" stop-color=\"#F99B80\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#EF806B\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"tprogress-g3\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"tprogress-g4\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"tprogress-g5\" gradientUnits=\"userSpaceOnUse\" x1=\"350\" y1=\"277\" x2=\"910\" y2=\"744\"><stop offset=\"0\" stop-color=\"#32729B\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#1D5C82\" stop-opacity=\"1.000\"/></linearGradient></defs><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M67 356 A133 12 0 1 0 333 356 A133 12 0 1 0 67 356 Z\" fill=\"#1D5C82\" fill-opacity=\"0.100\"/><g transform=\"translate(214.0 191.0) rotate(5.0) scale(1.0 1.0) translate(-214.0 -191.0)\"><path d=\"M119 87 H310 Q331 87 331 108 V277 Q331 298 310 298 H119 Q98 298 98 277 V108 Q98 87 119 87 Z\" fill=\"#B7D1E2\" fill-opacity=\"1.000\"/><path d=\"M113 78 H304 Q325 78 325 99 V268 Q325 289 304 289 H113 Q92 289 92 268 V99 Q92 78 113 78 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M113 78 H304 Q325 78 325 99 V132 H92 V99 Q92 78 113 78Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M121 64 H121 Q126 64 126 69 V91 Q126 96 121 96 H121 Q116 96 116 91 V69 Q116 64 121 64 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M294 64 H294 Q299 64 299 69 V91 Q299 96 294 96 H294 Q289 96 289 91 V69 Q289 64 294 64 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M141.5 101 H227.5 Q231 101 231 104.5 V104.5 Q231 108 227.5 108 H141.5 Q138 108 138 104.5 V104.5 Q138 101 141.5 101 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M284 105 A8 8 0 1 0 300 105 A8 8 0 1 0 284 105 Z\" fill=\"#64CBB6\" fill-opacity=\"1.000\"/><path d=\"M118 151 H130 Q138 151 138 159 V171 Q138 179 130 179 H118 Q110 179 110 171 V159 Q110 151 118 151 Z\" fill=\"#C3E9DF\" fill-opacity=\"1.000\"/><path d=\"M117.7 164 L122.6 168.62 L131.0 158.4\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#1D5C82\" stroke-opacity=\"1.000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M158 151 H170 Q178 151 178 159 V171 Q178 179 170 179 H158 Q150 179 150 171 V159 Q150 151 158 151 Z\" fill=\"#C3E9DF\" fill-opacity=\"1.000\"/><path d=\"M157.7 164 L162.6 168.62 L171.0 158.4\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#1D5C82\" stroke-opacity=\"1.000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M198 151 H210 Q218 151 218 159 V171 Q218 179 210 179 H198 Q190 179 190 171 V159 Q190 151 198 151 Z\" fill=\"#C3E9DF\" fill-opacity=\"1.000\"/><path d=\"M197.7 164 L202.6 168.62 L211.0 158.4\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#1D5C82\" stroke-opacity=\"1.000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M238 151 H250 Q258 151 258 159 V171 Q258 179 250 179 H238 Q230 179 230 171 V159 Q230 151 238 151 Z\" fill=\"#C3E9DF\" fill-opacity=\"1.000\"/><path d=\"M237.7 164 L242.6 168.62 L251.0 158.4\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#1D5C82\" stroke-opacity=\"1.000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M278 151 H290 Q298 151 298 159 V171 Q298 179 290 179 H278 Q270 179 270 171 V159 Q270 151 278 151 Z\" fill=\"#C3E9DF\" fill-opacity=\"1.000\"/><path d=\"M277.7 164 L282.6 168.62 L291.0 158.4\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#1D5C82\" stroke-opacity=\"1.000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M118 191 H130 Q138 191 138 199 V211 Q138 219 130 219 H118 Q110 219 110 211 V199 Q110 191 118 191 Z\" fill=\"#C3E9DF\" fill-opacity=\"1.000\"/><path d=\"M117.7 204 L122.6 208.62 L131.0 198.4\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#1D5C82\" stroke-opacity=\"1.000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M158 191 H170 Q178 191 178 199 V211 Q178 219 170 219 H158 Q150 219 150 211 V199 Q150 191 158 191 Z\" fill=\"#C3E9DF\" fill-opacity=\"1.000\"/><path d=\"M157.7 204 L162.6 208.62 L171.0 198.4\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#1D5C82\" stroke-opacity=\"1.000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M198 191 H210 Q218 191 218 199 V211 Q218 219 210 219 H198 Q190 219 190 211 V199 Q190 191 198 191 Z\" fill=\"#C3E9DF\" fill-opacity=\"1.000\"/><path d=\"M197.7 204 L202.6 208.62 L211.0 198.4\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#1D5C82\" stroke-opacity=\"1.000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M238 191 H250 Q258 191 258 199 V211 Q258 219 250 219 H238 Q230 219 230 211 V199 Q230 191 238 191 Z\" fill=\"#C3E9DF\" fill-opacity=\"1.000\"/><path d=\"M237.7 204 L242.6 208.62 L251.0 198.4\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#1D5C82\" stroke-opacity=\"1.000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M278 191 H290 Q298 191 298 199 V211 Q298 219 290 219 H278 Q270 219 270 211 V199 Q270 191 278 191 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M279 205 A5 5 0 1 0 289 205 A5 5 0 1 0 279 205 Z\" fill=\"#F58B73\" fill-opacity=\"1.000\"/><path d=\"M118 231 H130 Q138 231 138 239 V251 Q138 259 130 259 H118 Q110 259 110 251 V239 Q110 231 118 231 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M158 231 H170 Q178 231 178 239 V251 Q178 259 170 259 H158 Q150 259 150 251 V239 Q150 231 158 231 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M198 231 H210 Q218 231 218 239 V251 Q218 259 210 259 H198 Q190 259 190 251 V239 Q190 231 198 231 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M238 231 H250 Q258 231 258 239 V251 Q258 259 250 259 H238 Q230 259 230 251 V239 Q230 231 238 231 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M278 231 H290 Q298 231 298 239 V251 Q298 259 290 259 H278 Q270 259 270 251 V239 Q270 231 278 231 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/></g><g transform=\"translate(-2.0 181.0) rotate(0.0) scale(0.174 0.174) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 627.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -627.0)\"><path d=\"M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z\" fill=\"url(#tprogress-g1)\"/><g transform=\"translate(627.0 530.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -530.0)\"><g transform=\"translate(627.0 278.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -278.0)\"><path d=\"M603 227 H650 V295 H603 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z\" fill=\"url(#tprogress-g2)\"/><path d=\"M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/></g><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z\" fill=\"url(#tprogress-g3)\"/><path d=\"M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z\" fill=\"url(#tprogress-g4)\"/><path d=\"M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/><path d=\"M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/></g><path d=\"M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z\" fill=\"url(#tprogress-g5)\"/><path d=\"M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -529.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -529.0)\"><path d=\"M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z\" fill=\"#17253B\" fill-opacity=\"1.000\"/><path d=\"M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z\" fill=\"#17253B\" fill-opacity=\"1.000\"/><path d=\"M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/><path d=\"M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/></g></g><path d=\"M576 594 C602 620 651 620 677 594\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#17253B\" stroke-opacity=\"1.000\" stroke-width=\"31\" stroke-linecap=\"round\" stroke-linejoin=\"miter\"/></g><path d=\"M513 876 A114 110 0 1 0 741 876 A114 110 0 1 0 513 876 Z\" fill=\"#64CBB6\" fill-opacity=\"1.000\"/><path d=\"M570.3 878 L614.4 919.58 L690.0 827.6\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"34\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M254 835 A81 92 0 1 0 416 835 A81 92 0 1 0 254 835 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M838 835 A81 92 0 1 0 1000 835 A81 92 0 1 0 838 835 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M258 819 A58 67 0 1 0 374 819 A58 67 0 1 0 258 819 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/><path d=\"M880 819 A58 67 0 1 0 996 819 A58 67 0 1 0 880 819 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/></g></g><path d=\"M229 293 H329 Q347 293 347 311 V324 Q347 342 329 342 H229 Q211 342 211 324 V311 Q211 293 229 293 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M223 317 A14 14 0 1 0 251 317 A14 14 0 1 0 223 317 Z\" fill=\"#64CBB6\" fill-opacity=\"1.000\"/><path d=\"M230.7 317 L235.6 321.62 L244.0 311.4\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#1D5C82\" stroke-opacity=\"1.000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M264 306 H324 Q327 306 327 309 V309 Q327 312 324 312 H264 Q261 312 261 309 V309 Q261 306 264 306 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M263.5 319 H309.5 Q312 319 312 321.5 V321.5 Q312 324 309.5 324 H263.5 Q261 324 261 321.5 V321.5 Q261 319 263.5 319 Z\" fill=\"#A0B3C0\" fill-opacity=\"1.000\"/></g></g>"}, "onboarding_share": {"vb": "0 0 400 400", "inner": "<defs><linearGradient id=\"tshare-g1\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"tshare-g2\" gradientUnits=\"userSpaceOnUse\" x1=\"310\" y1=\"765\" x2=\"568\" y2=\"1056\"><stop offset=\"0\" stop-color=\"#F99B80\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#EF806B\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"tshare-g3\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"tshare-g4\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"tshare-g5\" gradientUnits=\"userSpaceOnUse\" x1=\"350\" y1=\"277\" x2=\"910\" y2=\"744\"><stop offset=\"0\" stop-color=\"#32729B\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#1D5C82\" stop-opacity=\"1.000\"/></linearGradient></defs><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M67 356 A133 12 0 1 0 333 356 A133 12 0 1 0 67 356 Z\" fill=\"#1D5C82\" fill-opacity=\"0.100\"/><g transform=\"translate(225.0 199.0) rotate(5.0) scale(1.0 1.0) translate(-225.0 -199.0)\"><path d=\"M132 93 H298 Q320 93 320 115 V310 Q320 332 298 332 H132 Q110 332 110 310 V115 Q110 93 132 93 Z\" fill=\"#B7D1E2\" fill-opacity=\"1.000\"/><path d=\"M126 85 H292 Q314 85 314 107 V302 Q314 324 292 324 H126 Q104 324 104 302 V107 Q104 85 126 85 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M141 109 H169 Q186 109 186 126 V154 Q186 171 169 171 H141 Q124 171 124 154 V126 Q124 109 141 109 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M142 152 L152 125 Q155 118 159 125 L170 152 H163 L159 142 H149 L146 152 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M202 116 H285 Q289 116 289 120 V120 Q289 124 285 124 H202 Q198 124 198 120 V120 Q198 116 202 116 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M200.5 135 H261.5 Q264 135 264 137.5 V137.5 Q264 140 261.5 140 H200.5 Q198 140 198 137.5 V137.5 Q198 135 200.5 135 Z\" fill=\"#A0B3C0\" fill-opacity=\"1.000\"/><path d=\"M200.5 150 H241.5 Q244 150 244 152.5 V152.5 Q244 155 241.5 155 H200.5 Q198 155 198 152.5 V152.5 Q198 150 200.5 150 Z\" fill=\"#B7CAD6\" fill-opacity=\"1.000\"/><path d=\"M136 192 H282 Q294 192 294 204 V232 Q294 244 282 244 H136 Q124 244 124 232 V204 Q124 192 136 192 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M142 205 H251 Q254 205 254 208 V208 Q254 211 251 211 H142 Q139 211 139 208 V208 Q139 205 142 205 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M141.5 221 H275.5 Q278 221 278 223.5 V223.5 Q278 226 275.5 226 H141.5 Q139 226 139 223.5 V223.5 Q139 221 141.5 221 Z\" fill=\"#A0B3C0\" fill-opacity=\"1.000\"/><path d=\"M136 266 H220 Q232 266 232 278 V287 Q232 299 220 299 H136 Q124 299 124 287 V278 Q124 266 136 266 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M169.35 282 L175.3 287.61 L185.5 275.2\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g><g transform=\"translate(128.0 82.0) rotate(-7.0) scale(1.0 1.0) translate(-128.0 -82.0)\"><path d=\"M58 53 H222 Q240 53 240 71 V87 Q240 105 222 105 H58 Q40 105 40 87 V71 Q40 53 58 53 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M72 83 L66 83 C54 83 54 67 66 67 H76 M76 75 H89 M89 67 H95 C107 67 107 83 95 83 H85\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#32729B\" stroke-opacity=\"1.000\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M122 70 H215 Q218 70 218 73 V73 Q218 76 215 76 H122 Q119 76 119 73 V73 Q119 70 122 70 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M121 83 H186 Q188 83 188 85 V85 Q188 87 186 87 H121 Q119 87 119 85 V85 Q119 83 121 83 Z\" fill=\"#B7CAD6\" fill-opacity=\"1.000\"/></g><path d=\"M323 234 L347 259\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#1D5C82\" stroke-opacity=\"1.000\" stroke-width=\"15\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M276 215 A33 33 0 1 0 342 215 A33 33 0 1 0 276 215 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M284 215 A25 25 0 1 0 334 215 A25 25 0 1 0 284 215 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M291 215 A18 18 0 1 0 327 215 A18 18 0 1 0 291 215 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M298.65 215 L306.7 222.59 L320.5 205.8\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#1D5C82\" stroke-opacity=\"1.000\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><g transform=\"translate(-7.0 181.0) rotate(0.0) scale(0.17 0.17) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 627.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -627.0)\"><path d=\"M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z\" fill=\"url(#tshare-g1)\"/><g transform=\"translate(627.0 530.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -530.0)\"><g transform=\"translate(627.0 278.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -278.0)\"><path d=\"M603 227 H650 V295 H603 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z\" fill=\"url(#tshare-g2)\"/><path d=\"M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/></g><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z\" fill=\"url(#tshare-g3)\"/><path d=\"M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z\" fill=\"url(#tshare-g4)\"/><path d=\"M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/><path d=\"M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/></g><path d=\"M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z\" fill=\"url(#tshare-g5)\"/><path d=\"M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -529.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -529.0)\"><path d=\"M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z\" fill=\"#17253B\" fill-opacity=\"1.000\"/><path d=\"M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z\" fill=\"#17253B\" fill-opacity=\"1.000\"/><path d=\"M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/><path d=\"M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/></g></g><path d=\"M576 594 C602 620 651 620 677 594\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#17253B\" stroke-opacity=\"1.000\" stroke-width=\"31\" stroke-linecap=\"round\" stroke-linejoin=\"miter\"/></g><path d=\"M513 876 A114 110 0 1 0 741 876 A114 110 0 1 0 513 876 Z\" fill=\"#64CBB6\" fill-opacity=\"1.000\"/><path d=\"M570.3 878 L614.4 919.58 L690.0 827.6\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"34\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M254 835 A81 92 0 1 0 416 835 A81 92 0 1 0 254 835 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M838 835 A81 92 0 1 0 1000 835 A81 92 0 1 0 838 835 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M258 819 A58 67 0 1 0 374 819 A58 67 0 1 0 258 819 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/><path d=\"M880 819 A58 67 0 1 0 996 819 A58 67 0 1 0 880 819 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/></g></g></g></g>"}, "onboarding_explore": {"vb": "0 0 400 400", "inner": "<defs><linearGradient id=\"texplore-g1\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"texplore-g2\" gradientUnits=\"userSpaceOnUse\" x1=\"310\" y1=\"765\" x2=\"568\" y2=\"1056\"><stop offset=\"0\" stop-color=\"#F99B80\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#EF806B\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"texplore-g3\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"texplore-g4\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"texplore-g5\" gradientUnits=\"userSpaceOnUse\" x1=\"350\" y1=\"277\" x2=\"910\" y2=\"744\"><stop offset=\"0\" stop-color=\"#32729B\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#1D5C82\" stop-opacity=\"1.000\"/></linearGradient></defs><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M67 356 A133 12 0 1 0 333 356 A133 12 0 1 0 67 356 Z\" fill=\"#1D5C82\" fill-opacity=\"0.100\"/><g transform=\"translate(184.0 202.0) rotate(-4.0) scale(1.0 1.0) translate(-184.0 -202.0)\"><path d=\"M84 92 H289 Q311 92 311 114 V290 Q311 312 289 312 H84 Q62 312 62 290 V114 Q62 92 84 92 Z\" fill=\"#B7D1E2\" fill-opacity=\"1.000\"/><path d=\"M78 84 H283 Q305 84 305 106 V282 Q305 304 283 304 H78 Q56 304 56 282 V106 Q56 84 78 84 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M78 84 H283 Q305 84 305 106 V127 H56 V106 Q56 84 78 84 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M75 106 A3 3 0 1 0 81 106 A3 3 0 1 0 75 106 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M88 106 A3 3 0 1 0 94 106 A3 3 0 1 0 88 106 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M101 106 A3 3 0 1 0 107 106 A3 3 0 1 0 101 106 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M127 102 H240 Q243 102 243 105 V105 Q243 108 240 108 H127 Q124 108 124 105 V105 Q124 102 127 102 Z\" fill=\"#80BCDE\" fill-opacity=\"1.000\"/><path d=\"M90 148 H152 Q166 148 166 162 V242 Q166 256 152 256 H90 Q76 256 76 242 V162 Q76 148 90 148 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M195 148 H271 Q285 148 285 162 V242 Q285 256 271 256 H195 Q181 256 181 242 V162 Q181 148 195 148 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M109 161 H133 Q148 161 148 176 V200 Q148 215 133 215 H109 Q94 215 94 200 V176 Q94 161 109 161 Z\" fill=\"#F58B73\" fill-opacity=\"1.000\"/><path d=\"M110 188 Q110 173 121 181 Q132 173 132 188 Q131 196 121 202 Q111 196 110 188Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M222 161 H246 Q261 161 261 176 V200 Q261 215 246 215 H222 Q207 215 207 200 V176 Q207 161 222 161 Z\" fill=\"#64CBB6\" fill-opacity=\"1.000\"/><path d=\"M219 199 L231 176 L246 199 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M94.5 229 H147.5 Q150 229 150 231.5 V231.5 Q150 234 147.5 234 H94.5 Q92 234 92 231.5 V231.5 Q92 229 94.5 229 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M204.5 229 H264.5 Q267 229 267 231.5 V231.5 Q267 234 264.5 234 H204.5 Q202 234 202 231.5 V231.5 Q202 229 204.5 229 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M80.5 276 H200.5 Q203 276 203 278.5 V278.5 Q203 281 200.5 281 H80.5 Q78 281 78 278.5 V278.5 Q78 276 80.5 276 Z\" fill=\"#B7CAD6\" fill-opacity=\"1.000\"/></g><g transform=\"translate(291.0 82.0) rotate(12.0) scale(1.0 1.0) translate(-291.0 -82.0)\"><path d=\"M249 82 A42 42 0 1 0 333 82 A42 42 0 1 0 249 82 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M257 82 A34 34 0 1 0 325 82 A34 34 0 1 0 257 82 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M291 51 V57 M291 107 V113 M260 82 H266 M316 82 H322\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#32729B\" stroke-opacity=\"1.000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M303 64 L298 89 L279 100 L284 75 Z\" fill=\"#D3E4EF\" fill-opacity=\"1.000\"/><path d=\"M303 64 L298 89 L284 75 Z\" fill=\"#F58B73\" fill-opacity=\"1.000\"/><path d=\"M287 82 A4 4 0 1 0 295 82 A4 4 0 1 0 287 82 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/></g><path d=\"M56 317 Q59 343 101 335 Q142 328 168 344\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#32729B\" stroke-opacity=\"0.400\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M161 333 L171 344 L158 350\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#32729B\" stroke-opacity=\"1.000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><g transform=\"translate(193.0 184.0) rotate(0.0) scale(0.166 0.166) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 627.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -627.0)\"><path d=\"M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z\" fill=\"url(#texplore-g1)\"/><g transform=\"translate(627.0 530.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -530.0)\"><g transform=\"translate(627.0 278.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -278.0)\"><path d=\"M603 227 H650 V295 H603 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z\" fill=\"url(#texplore-g2)\"/><path d=\"M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/></g><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z\" fill=\"url(#texplore-g3)\"/><path d=\"M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z\" fill=\"url(#texplore-g4)\"/><path d=\"M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/><path d=\"M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/></g><path d=\"M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z\" fill=\"url(#texplore-g5)\"/><path d=\"M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -529.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -529.0)\"><path d=\"M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z\" fill=\"#17253B\" fill-opacity=\"1.000\"/><path d=\"M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z\" fill=\"#17253B\" fill-opacity=\"1.000\"/><path d=\"M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/><path d=\"M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/></g></g><path d=\"M576 594 C602 620 651 620 677 594\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#17253B\" stroke-opacity=\"1.000\" stroke-width=\"31\" stroke-linecap=\"round\" stroke-linejoin=\"miter\"/></g><path d=\"M513 876 A114 110 0 1 0 741 876 A114 110 0 1 0 513 876 Z\" fill=\"#64CBB6\" fill-opacity=\"1.000\"/><path d=\"M570.3 878 L614.4 919.58 L690.0 827.6\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"34\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M254 835 A81 92 0 1 0 416 835 A81 92 0 1 0 254 835 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M838 835 A81 92 0 1 0 1000 835 A81 92 0 1 0 838 835 Z\" fill=\"#32729B\" fill-opacity=\"1.000\"/><path d=\"M258 819 A58 67 0 1 0 374 819 A58 67 0 1 0 258 819 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/><path d=\"M880 819 A58 67 0 1 0 996 819 A58 67 0 1 0 880 819 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/></g></g></g></g>"}, "testtrack_robot": {"vb": "0 0 1040 1040", "inner": "<defs><linearGradient id=\"testtrack_robot-g1\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"testtrack_robot-g2\" gradientUnits=\"userSpaceOnUse\" x1=\"310\" y1=\"765\" x2=\"568\" y2=\"1056\"><stop offset=\"0\" stop-color=\"#F99B80\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#EF806B\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"testtrack_robot-g3\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"testtrack_robot-g4\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"testtrack_robot-g5\" gradientUnits=\"userSpaceOnUse\" x1=\"350\" y1=\"277\" x2=\"910\" y2=\"744\"><stop offset=\"0\" stop-color=\"#32729B\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#1D5C82\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"testtrack_robot-g6\" gradientUnits=\"userSpaceOnUse\" x1=\"310\" y1=\"765\" x2=\"568\" y2=\"1056\"><stop offset=\"0\" stop-color=\"#F99B80\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#EF806B\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"testtrack_robot-g7\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"testtrack_robot-g8\" gradientUnits=\"userSpaceOnUse\" x1=\"270\" y1=\"846\" x2=\"960\" y2=\"966\"><stop offset=\"0\" stop-color=\"#80BCDE\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#5E9DC5\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"testtrack_robot-g9\" gradientUnits=\"userSpaceOnUse\" x1=\"710\" y1=\"768\" x2=\"921\" y2=\"1055\"><stop offset=\"0\" stop-color=\"#77D6C2\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#54C5AC\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"testtrack_robot-g10\" gradientUnits=\"userSpaceOnUse\" x1=\"230\" y1=\"436\" x2=\"1000\" y2=\"985\"><stop offset=\"0\" stop-color=\"#245F84\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#174866\" stop-opacity=\"1.000\"/></linearGradient><linearGradient id=\"testtrack_robot-g11\" gradientUnits=\"userSpaceOnUse\" x1=\"270\" y1=\"846\" x2=\"960\" y2=\"966\"><stop offset=\"0\" stop-color=\"#80BCDE\" stop-opacity=\"1.000\"/><stop offset=\"1\" stop-color=\"#5E9DC5\" stop-opacity=\"1.000\"/></linearGradient><clipPath id=\"testtrack_robot-c12\"><path d=\"M710 652 L810 652 L810 870 L618 870 Z\"/></clipPath><clipPath id=\"testtrack_robot-c13\"><path d=\"M607 997 L539 1180 L440 1180 L440 997 Z\"/></clipPath></defs><g transform=\"translate(-107.0 -107.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 627.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -627.0)\"><path d=\"M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z\" fill=\"url(#testtrack_robot-g1)\"/><g transform=\"translate(627.0 530.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -530.0)\"><g transform=\"translate(627.0 278.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -278.0)\"><path d=\"M603 227 H650 V295 H603 Z\" fill=\"#1D5C82\" fill-opacity=\"1.000\"/><path d=\"M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z\" fill=\"url(#testtrack_robot-g2)\"/><path d=\"M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/></g><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><path d=\"M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z\" fill=\"url(#testtrack_robot-g3)\"/><path d=\"M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z\" fill=\"url(#testtrack_robot-g4)\"/><path d=\"M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/><path d=\"M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z\" fill=\"#6CA9CF\" fill-opacity=\"1.000\"/></g><path d=\"M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z\" fill=\"url(#testtrack_robot-g5)\"/><path d=\"M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -529.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -529.0)\"><path d=\"M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z\" fill=\"#17253B\" fill-opacity=\"1.000\"/><path d=\"M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z\" fill=\"#17253B\" fill-opacity=\"1.000\"/><path d=\"M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/><path d=\"M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z\" fill=\"#FFFFFF\" fill-opacity=\"1.000\"/></g></g><path d=\"M576 594 C602 620 651 620 677 594\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#17253B\" stroke-opacity=\"1.000\" stroke-width=\"31\" stroke-linecap=\"round\" stroke-linejoin=\"miter\"/></g><g transform=\"translate(627.0 907.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -907.0)\"><path d=\"M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z\" fill=\"#32729B\" fill-opacity=\"1.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"20\" stroke-linecap=\"butt\" stroke-linejoin=\"round\"/></g><g transform=\"translate(627.0 907.0) rotate(0.0) scale(1.0 1.0) translate(-627.0 -907.0)\"><path d=\"M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z\" fill=\"#32729B\" fill-opacity=\"1.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"20\" stroke-linecap=\"butt\" stroke-linejoin=\"round\"/></g><g transform=\"translate(440.0 911.0) rotate(0.0) scale(1.0 1.0) translate(-440.0 -911.0)\"><path d=\"M362 766 L502 764 C532 764 550 785 553 814 L568 983 C571 1013 554 1036 524 1040 L388 1056 C356 1059 336 1044 332 1013 L310 819 C306 789 327 767 362 766 Z\" fill=\"url(#testtrack_robot-g6)\"/><path d=\"M381 817 L496 813 C512 812 522 823 524 839 L536 966 C538 982 530 992 514 995 L399 1006 C383 1007 374 999 372 983 L358 842 C356 828 365 818 381 817 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M405 918 L432 941 L488 871\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#17253B\" stroke-opacity=\"1.000\" stroke-width=\"36\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z\" fill=\"url(#testtrack_robot-g7)\"/><path d=\"M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z\" fill=\"url(#testtrack_robot-g8)\"/></g><g transform=\"translate(814.0 911.0) rotate(0.0) scale(1.0 1.0) translate(-814.0 -911.0)\"><path d=\"M752 765 L894 767 C927 768 947 790 943 822 L922 1013 C918 1044 899 1059 866 1056 L731 1041 C701 1038 684 1018 687 987 L701 811 C704 782 724 764 752 765 Z\" fill=\"url(#testtrack_robot-g9)\"/><path d=\"M757 814 L869 817 C887 818 898 831 896 848 L880 984 C879 1000 869 1007 853 1005 L740 993 C726 992 719 981 721 966 L734 838 C736 823 743 814 757 814 Z\" fill=\"#FFFCF1\" fill-opacity=\"1.000\"/><path d=\"M768 916 L795 939 L854 873\" fill=\"#000000\" fill-opacity=\"0.000\" stroke=\"#17253B\" stroke-opacity=\"1.000\" stroke-width=\"36\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z\" fill=\"url(#testtrack_robot-g10)\"/><path d=\"M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z\" fill=\"url(#testtrack_robot-g11)\"/></g><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g clip-path=\"url(#testtrack_robot-c12)\"><path d=\"M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z\" fill=\"#32729B\" fill-opacity=\"1.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"20\" stroke-linecap=\"butt\" stroke-linejoin=\"round\"/></g></g></g><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1.0 1.0) translate(-0.0 -0.0)\"><g clip-path=\"url(#testtrack_robot-c13)\"><path d=\"M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z\" fill=\"#32729B\" fill-opacity=\"1.000\" stroke=\"#FFFCF1\" stroke-opacity=\"1.000\" stroke-width=\"20\" stroke-linecap=\"butt\" stroke-linejoin=\"round\"/></g></g></g></g></g>"}};</script>
+
+<div class="bar">
+  <h1>TestTrack onboarding: better words and pictures, same screen</h1>
+  <div class="seg" id="size"><button data-z=".5">S</button><button data-z=".62" class="on">M</button><button data-z=".8">L</button><button data-z="1">1:1</button></div>
+  <div class="seg" id="theme"><button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>
+</div>
+<div class="intro">
+  Row 1 is <b>today</b>: the five real drawables (res/drawable/onboarding_*.xml, converted path for path) and the real strings, laid out with
+  OnboardingScreen.kt's own numbers on a 360 by 800 dp phone. Rows A, B and C keep that layout exactly. Only the <b>words</b> and the
+  <b>pictures</b> change; the robot is the app's own robot, never redrawn. A page marked <b>scrolls</b> has more than fits, so its last
+  line is below the fold, as it would be on the phone.
+</div>
+
+<div id="root"></div>
+<div class="notes" id="notes"></div>
+
+<script>
+/* ======================= words ======================= */
+const TODAY_COPY = [
+  ['TESTERS FOR YOUR APP', "Developers testing<br>each other's apps.", "You try other people's apps and they try yours, so nobody here has to find testers alone."],
+  ['FEEDBACK', 'Find out what<br>to fix next.', "Ask the Circle to try your app and tell you what works and what doesn't. You pay for reviews in tix and earn tix by reviewing other apps."],
+  ['CLOSED TESTING', '14 days of testing,<br>one night at a time.', 'Join a crew to get the closed test Google asks for. Each night you open the other apps, and you can see what is left in one place.'],
+  ['ADD YOUR APP', 'Start with<br>your Play link.', "Paste your Play link or package name. We fill in the app's name and icon, so you can ask for feedback or take a crew seat."],
+  ['LOOK AROUND FIRST', 'No account needed<br>to look around.', 'Browse the Circle and Crew without an account. Sign in when you want to take part.'],
+];
+const NEW_COPY = [
+  ['TESTERS FOR YOUR APP', 'Swap tests with<br>other developers', 'Google Play asks new developers for 12 testers over 14 days. Here, you test their apps and they test yours.'],
+  ['FEEDBACK', 'Find out what<br>to fix next', 'Testers try your app and leave feedback on Google Play. You pay them in tix and earn tix by testing for others.'],
+  ['14 DAYS IN A CREW', '14 days of testing,<br>a night at a time', 'Join a crew of 15 apps. Each night, open the other 14 for 20 seconds each, and they open yours.'],
+  ['ADD YOUR APP', 'Start with<br>your Play link', "Paste the link or package name, and we fill in your app's name and icon."],
+  ['LOOK AROUND FIRST', 'No account needed<br>to look around', 'See the Circle, the ranks and the crew that is filling. Sign in when you want to join in.'],
+];
+
+/* ======================= the fixed illustration palette (scripts/build_onboarding.py) ======================= */
+const BLUE='#32729B', DEEP='#1D5C82', PALE='#D3E4EF', PAPER='#FFFCF1', MINT='#64CBB6', CORAL='#F58B73',
+      LINE='#B7CAD6', LINE2='#A0B3C0', EDGE='#B7D1E2', SIDE='#A9C3D5', GOLD='#F7C24E', GOLDEDGE='#17405E', SKY='#80BCDE';
+
+/* ---- the robot, from logo/test-exchange.svg: stands with its feet at (x, y) ---- */
+const robot = (x, y, h, ex=false) => { const bottom = ex ? 1126 : 1031, hh = ex ? 999 : 904, s = h/hh;
+  return `<use href="#${ex?'rob-ex':'rob'}" transform="translate(${x} ${y}) scale(${s.toFixed(4)}) translate(-627 ${-bottom})"/>`; };
+
+/* ---- small shapes ---- */
+const R = (x,y,w,h,r,fill,extra='') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${fill}" ${extra}/>`;
+const C = (x,y,r,fill,extra='') => `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" ${extra}/>`;
+const E = (x,y,rx,ry,style) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" style="${style}"/>`;
+const tick = (x,y,s,color,w) => `<path d="M${x-s*.45} ${y} L${x-s*.1} ${y+s*.33} L${x+s*.5} ${y-s*.4}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+const STROKE = (w=3, c=DEEP) => `stroke="${c}" stroke-width="${w}" stroke-linejoin="round"`;
+
+/* glyphs drawn inside an app tile, centred, k = tile size */
+const GL = {
+  heart:(x,y,k,f)=>`<path d="M${x} ${y+k*.2} C${x-k*.34} ${y-k*.02} ${x-k*.26} ${y-k*.3} ${x} ${y-k*.12} C${x+k*.26} ${y-k*.3} ${x+k*.34} ${y-k*.02} ${x} ${y+k*.2}Z" ${f}/>`,
+  tri:(x,y,k,f)=>`<path d="M${x} ${y-k*.2} L${x+k*.22} ${y+k*.17} L${x-k*.22} ${y+k*.17}Z" stroke-linejoin="round" ${f}/>`,
+  dot:(x,y,k,f)=>`<circle cx="${x}" cy="${y}" r="${k*.17}" ${f}/>`,
+  play:(x,y,k,f)=>`<path d="M${x-k*.12} ${y-k*.19} L${x+k*.2} ${y} L${x-k*.12} ${y+k*.19}Z" stroke-linejoin="round" ${f}/>`,
+  bars:(x,y,k,f)=>`<path d="M${x-k*.16} ${y+k*.16}V${y+k*.02}M${x} ${y+k*.16}V${y-k*.16}M${x+k*.16} ${y+k*.16}V${y-k*.06}" stroke-linecap="round" fill="none" ${f.replace('fill=','stroke=')} stroke-width="${k*.09}"/>`,
+};
+
+/* ======================= three treatments ======================= */
+/* Each treatment says how a card, a tile, a badge, a ticket and the ground are drawn.
+   The compositions below are the same for all three, so the set reads as one. */
+const T = {
+  A: { // refined flat: soft fills, no outlines, one soft offset shadow under each card
+    name:'A',
+    card:(x,y,w,h,r,fill=PAPER)=> R(x,y+7,w,h,r,'var(--a-sh)','style="fill:var(--a-sh)"') + R(x,y,w,h,r,fill),
+    phone:(x,y,w,h)=> R(x,y+7,w,h,26,'','style="fill:var(--a-sh)"') + R(x,y,w,h,26,DEEP) + R(x+8,y+12,w-16,h-30,18,PAPER) + R(x+w/2-18,y+4,36,5,2.5,SKY),
+    tile:(x,y,s,fill,g)=> R(x,y,s,s,s*.28,fill) + GL[g](x+s/2,y+s/2,s,`fill="${PAPER}" stroke="${PAPER}"`),
+    line:(x,y,w,h,c=LINE)=> R(x,y,w,h,h/2,c),
+    badge:(x,y,r)=> C(x,y,r+3,PAPER) + C(x,y,r,MINT) + tick(x,y+1,r*1.05,PAPER,r*.3),
+    cell:(x,y,s,state)=> state==='done' ? R(x,y,s,s,7,'#C3E9DF') + tick(x+s/2,y+s/2,s*.5,DEEP,2.6)
+                    : state==='now' ? R(x,y,s,s,7,PAPER,`stroke="${CORAL}" stroke-width="2.4"`) + C(x+s/2,y+s/2,3.4,CORAL) : R(x,y,s,s,7,PALE),
+    ticket:(cx,cy,w,rot)=> ticketSvg(cx,cy,w,rot,GOLD,GOLDEDGE,'#FFF8E1','#B97A1E'),
+    bubble:(x,y,w,h)=> `<path d="${bubblePath(x,y,w,h)}" fill="${CORAL}"/>`,
+    bubbleLine:PAPER, header:BLUE, ring:'',
+    back:()=> C(200,192,150,'', 'style="fill:var(--a-blob)"'),
+    under:(x,w,prop)=> prop ? '' : E(x,340,w,9,'fill:var(--a-ground)'),
+    front:()=> '',
+  },
+  B: { // clean line art: paper fills, one 3px navy line everywhere, mint as the only accent
+    name:'B',
+    card:(x,y,w,h,r)=> R(x,y,w,h,r,PAPER,STROKE()),
+    phone:(x,y,w,h)=> R(x,y,w,h,26,PAPER,STROKE()) + `<path d="M${x+8} ${y+16} V${y+h-22}" stroke="none"/>` + R(x+w/2-16,y+9,32,4,2,DEEP) + `<path d="M${x+w/2-10} ${y+h-11} H${x+w/2+10}" stroke="${DEEP}" stroke-width="3" stroke-linecap="round"/>`,
+    tile:(x,y,s,fill,g)=> R(x,y,s,s,s*.28,PAPER,STROKE()) + GL[g](x+s/2,y+s/2,s,`fill="none" stroke="${DEEP}" stroke-width="2.6"`),
+    line:(x,y,w,h,c)=> R(x,y,w,h,h/2,c===DEEP||c===BLUE?DEEP:'rgba(29,92,130,.28)'),
+    badge:(x,y,r)=> C(x,y,r,MINT,STROKE(3)) + tick(x,y+1,r*1.05,DEEP,r*.28),
+    cell:(x,y,s,state)=> state==='done' ? R(x,y,s,s,7,MINT,STROKE(2.4)) + tick(x+s/2,y+s/2,s*.5,DEEP,2.4)
+                    : state==='now' ? R(x,y,s,s,7,PAPER,STROKE(2.4)) + C(x+s/2,y+s/2,3.2,DEEP) : R(x,y,s,s,7,PAPER,`stroke="${DEEP}" stroke-opacity=".35" stroke-width="2" stroke-dasharray="3 3.4"`),
+    ticket:(cx,cy,w,rot)=> ticketSvg(cx,cy,w,rot,PAPER,DEEP,PAPER,DEEP,true),
+    bubble:(x,y,w,h)=> `<path d="${bubblePath(x,y,w,h)}" fill="${PAPER}" ${STROKE()}/>`,
+    bubbleLine:DEEP, header:null, ring:'dash',
+    back:()=> '',
+    under:()=> '',
+    front:()=> `<path d="M44 341 H356" style="stroke:var(--b-ground)" stroke-width="3" stroke-linecap="round"/>`,
+  },
+  C: { // small scene: a soft room (wall and floor), cards with thickness, contact shadows
+    name:'C',
+    card:(x,y,w,h,r,fill=PAPER)=> R(x+3,y+9,w,h,r,SIDE) + R(x,y,w,h,r,fill),
+    phone:(x,y,w,h)=> R(x+4,y+9,w,h,26,'#123F5C') + R(x,y,w,h,26,DEEP) + R(x+8,y+12,w-16,h-30,18,PAPER) + R(x+w/2-18,y+4,36,5,2.5,SKY),
+    tile:(x,y,s,fill,g)=> R(x+2,y+5,s,s,s*.28,shade(fill)) + R(x,y,s,s,s*.28,fill) + GL[g](x+s/2,y+s/2,s,`fill="${PAPER}" stroke="${PAPER}"`),
+    line:(x,y,w,h,c=LINE)=> R(x,y,w,h,h/2,c),
+    badge:(x,y,r)=> C(x+1.5,y+3.5,r+3,'rgba(23,72,102,.25)') + C(x,y,r+3,PAPER) + C(x,y,r,MINT) + tick(x,y+1,r*1.05,PAPER,r*.3),
+    cell:(x,y,s,state)=> state==='done' ? R(x,y+2,s,s,7,'#9FD9CB') + R(x,y,s,s,7,'#C3E9DF') + tick(x+s/2,y+s/2,s*.5,DEEP,2.6)
+                    : state==='now' ? R(x,y,s,s,7,PAPER,`stroke="${CORAL}" stroke-width="2.4"`) + C(x+s/2,y+s/2,3.4,CORAL) : R(x,y,s,s,7,PALE),
+    ticket:(cx,cy,w,rot)=> ticketSvg(cx,cy,w,rot,GOLD,GOLDEDGE,'#FFF8E1','#B97A1E'),
+    bubble:(x,y,w,h)=> `<path d="${bubblePath(x+3,y+8,w,h)}" fill="#D9715B"/><path d="${bubblePath(x,y,w,h)}" fill="${CORAL}"/>`,
+    bubbleLine:PAPER, header:BLUE, ring:'',
+    back:()=> R(30,36,340,302,34,'','style="fill:var(--c-wall)"') + `<path d="M30 300 H370 V312 Q370 338 344 338 H56 Q30 338 30 312Z" style="fill:var(--c-floor)"/>`,
+    under:(x,w,prop)=> E(x,338,prop?w*.9:w,prop?6:8,'fill:var(--c-shadow)'),
+    front:()=> '',
+  },
+};
+function shade(hex){ const n=parseInt(hex.slice(1),16); const f=v=>Math.round(v*.82); return `rgb(${f(n>>16)},${f((n>>8)&255)},${f(n&255)})`; }
+function bubblePath(x,y,w,h){ const r=18, tx=x+w-30; // tail low on the right, pointing right and down
+  return `M${x+r} ${y} H${x+w-r} Q${x+w} ${y} ${x+w} ${y+r} V${y+h-r} Q${x+w} ${y+h} ${x+w-r} ${y+h} H${tx+12} L${tx+26} ${y+h+16} L${tx} ${y+h} H${x+r} Q${x} ${y+h} ${x} ${y+h-r} V${y+r} Q${x} ${y} ${x+r} ${y}Z`; }
+function ticketSvg(cx,cy,w,rot,fill,edge,star,tear,line=false){ const s=w/64;
+  return `<g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${s}) translate(-32 -22)">
+    <path d="M8 3H56Q61 3 61 8V16A6 6 0 0 0 61 28V36Q61 41 56 41H8Q3 41 3 36V28A6 6 0 0 0 3 16V8Q3 3 8 3Z" fill="${fill}" stroke="${edge}" stroke-width="${line?3/s:3.5}" stroke-linejoin="round"/>
+    <path d="M18 9V12M18 15V18M18 21V24M18 27V30M18 33V36" stroke="${tear}" stroke-width="${line?2.4/s:2.5}" stroke-linecap="round" ${line?'stroke-opacity=".45"':''}/>
+    <path d="M39 12l3.2 6.6 7.2 1-5.2 5 1.3 7.2-6.5-3.4-6.5 3.4 1.3-7.2-5.2-5 7.2-1Z" fill="${line?MINT:star}" stroke="${edge}" stroke-width="${line?2.4/s:2}" stroke-linejoin="round"/></g>`; }
+
+/* ======================= the five pictures ======================= */
+/* One rule for the set: page 1 has the robot in the middle with the apps around it. On pages 2 to 5
+   the robot stands in the same place, bottom left, the same size, and the page's one thing stands
+   to its right. Cards share corner radii (22 large, 14 small), lines share heights (8 title, 6 text). */
+const RX = 100, RY = 338, RH = 158;   // where the robot stands on pages 2 to 5
+
+function together(t){
+  const pts = [[200,46,'tile',CORAL,'heart',true],[331,118,'tile',MINT,'tri',true],[331,262,'tile',BLUE,'play',false],[69,262,'tile',MINT,'bars',true],[69,118,'tile',BLUE,'dot',false]];
+  const s = 46;
+  let ring = t.name==='B' ? `<circle cx="200" cy="190" r="146" fill="none" style="stroke:var(--b-ring)" stroke-width="2.5" stroke-dasharray="2 9" stroke-linecap="round"/>`
+           : t.name==='A' ? `<circle cx="200" cy="190" r="146" fill="none" stroke="${PAPER}" stroke-width="3" opacity=".9"/>` : '';
+  let tiles = pts.map(([x,y,_,f,g,ok]) => t.tile(x-s/2,y-s/2,s,f,g) + (ok ? t.badge(x+s/2-3,y-s/2+3,9) : '')).join('');
+  return t.back() + ring + tiles + t.under(200,92) + robot(200,338,232,true) + t.front();
+}
+function feedback(t){
+  const px=212, py=60, pw=132, ph=250;
+  // the phone: an app on screen being tried
+  let phone = t.phone(px,py,pw,ph)
+    + (t.name==='B' ? R(px+20,py+30,pw-40,70,14,PAPER,STROKE(2.4)) : R(px+20,py+30,pw-40,70,14,PALE))
+    + (t.name==='B' ? C(px+pw/2,py+65,15,'none',STROKE(2.6)) + GL.play(px+pw/2+1,py+65,30,`fill="none" stroke="${DEEP}" stroke-width="2.4"`) : C(px+pw/2,py+65,15,BLUE) + GL.play(px+pw/2+1,py+65,30,`fill="${PAPER}"`))
+    + t.line(px+20,py+118,64,8,DEEP) + t.line(px+20,py+134,92,6) + t.line(px+20,py+146,76,6)
+    + (t.name==='B' ? R(px+20,py+176,pw-40,30,15,MINT,STROKE(2.6)) + tick(px+pw/2,py+191,13,DEEP,2.6)
+                    : R(px+20,py+176,pw-40,30,15,BLUE) + tick(px+pw/2,py+191,13,PAPER,2.8));
+  // the feedback it gets, and what it pays
+  let bubble = t.bubble(44,52,150,84) + R(64,72,82,8,4,t.bubbleLine) + R(64,90,110,6,3,t.bubbleLine, t.name==='B'?'opacity=".35"':'opacity=".75"') + R(64,104,92,6,3,t.bubbleLine, t.name==='B'?'opacity=".35"':'opacity=".75"');
+  return t.back() + t.under(px+pw/2+4,58,true) + phone + bubble + t.under(RX,64) + robot(RX,RY,RH) + t.ticket(176,294,58,-14) + t.front();
+}
+function progress(t){
+  const x=164, y=66, w=208, h=200, cell=22, gap=6;
+  let cal = t.card(x,y,w,h,22);
+  cal += t.name==='B' ? `<path d="M${x} ${y+48} H${x+w}" stroke="${DEEP}" stroke-width="3"/>` + R(x+22,y+20,70,8,4,DEEP) + C(x+w-26,y+24,6,MINT,STROKE(2.4))
+                      : `<path d="M${x+22} ${y} H${x+w-22} Q${x+w} ${y} ${x+w} ${y+22} V${y+48} H${x} V${y+22} Q${x} ${y} ${x+22} ${y}Z" fill="${BLUE}"/>` + R(x+22,y+20,70,8,4,PAPER) + C(x+w-26,y+24,6,MINT);
+  cal += [x+44, x+w-44].map(rx => t.name==='B' ? R(rx-5,y-12,10,24,5,PAPER,STROKE(2.6)) : R(rx-5,y-12,10,24,5,DEEP)).join('');
+  const x0 = x + (w - (7*cell + 6*gap))/2;
+  for (let k=0;k<14;k++){ const cx = x0 + (k%7)*(cell+gap), cy = y + 66 + Math.floor(k/7)*(cell+gap+2);
+    cal += t.cell(cx,cy,cell, k<9?'done':k===9?'now':'todo'); }
+  // how far through the 14 nights
+  const by = y+138, bw = 7*cell+6*gap;
+  cal += t.name==='B' ? R(x0,by,bw,10,5,PAPER,STROKE(2.4)) + R(x0+2,by+2,(bw-4)*9/14,6,3,MINT)
+                      : R(x0,by,bw,10,5,PALE) + R(x0,by,bw*9/14,10,5,MINT);
+  cal += t.line(x0,by+26,92,6) ;
+  return t.back() + t.under(x+w/2+6,64,true) + cal + t.under(RX,64) + robot(RX,RY,RH) + t.front();
+}
+function share(t){
+  // the link you paste
+  let link = t.card(58,58,286,52,26)
+    + (t.name==='B' ? C(86,84,15,MINT,STROKE(2.6)) : C(86,84,15,BLUE))
+    + `<path d="M81 88 l-3 0 a5.5 5.5 0 0 1 0 -11 h5 M84 84 h5 M89 77 h3 a5.5 5.5 0 0 1 0 11 h-5" fill="none" stroke="${t.name==='B'?DEEP:PAPER}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`
+    + t.line(112,74,132,8,DEEP) + t.line(112,90,86,6);
+  // what it turns into: your app's listing, found
+  const x=168, y=138, w=196, h=158;
+  let card = t.card(x,y,w,h,22) + t.tile(x+18,y+18,54,BLUE,'tri') + t.line(x+86,y+26,82,8,DEEP) + t.line(x+86,y+44,60,6) + t.line(x+86,y+58,44,6)
+    + [0,1,2].map(k => t.name==='B' ? R(x+18+k*56,y+90,48,48,10,PAPER,`stroke="${DEEP}" stroke-opacity=".4" stroke-width="2.4"`) : R(x+18+k*56,y+90,48,48,10,PALE)).join('')
+    + t.badge(x+w-6,y+6,13);
+  // the link becomes the listing: one short dotted lead between them
+  const lead = `<path d="M268 116 Q272 128 266 132" fill="none" style="stroke:${t.name==='B'?'var(--b-ring)':'#9DB9CC'}" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.5 7"/>`;
+  return t.back() + t.under(x+w/2+6,60,true) + link + lead + card + t.under(RX,64) + robot(RX,RY,RH) + t.front();
+}
+function explore(t){
+  const x=160, y=68, w=210, h=210;
+  let win = t.card(x,y,w,h,22);
+  win += t.name==='B' ? `<path d="M${x} ${y+36} H${x+w}" stroke="${DEEP}" stroke-width="3"/>` + [0,1,2].map(k=>C(x+22+k*13,y+18,3.6,'none',STROKE(2.2))).join('')
+                      : `<path d="M${x+22} ${y} H${x+w-22} Q${x+w} ${y} ${x+w} ${y+22} V${y+36} H${x} V${y+22} Q${x} ${y} ${x+22} ${y}Z" fill="${BLUE}"/>` + [0,1,2].map(k=>C(x+22+k*13,y+18,3.6,PAPER)).join('');
+  const rows = [[CORAL,'heart'],[MINT,'tri'],[BLUE,'bars']];
+  rows.forEach(([f,g],k) => { const ry = y+52+k*50;
+    win += t.tile(x+18,ry,34,f,g) + t.line(x+64,ry+6,90,8,DEEP) + t.line(x+64,ry+21,116,6); });
+  // a compass: find your way around before you sign in
+  const cx=352, cy=74;
+  let comp = t.name==='B' ? C(cx,cy,30,PAPER,STROKE(3)) + `<path d="M${cx+10} ${cy-13} L${cx+4} ${cy+5} L${cx-10} ${cy+13} L${cx-4} ${cy-5}Z" fill="${MINT}" ${STROKE(2.4)}/>` + C(cx,cy,2.6,DEEP)
+          : (t.name==='C' ? C(cx+2,cy+5,33,'rgba(23,72,102,.22)') : '') + C(cx,cy,33,DEEP) + C(cx,cy,26,PAPER)
+            + `<path d="M${cx+10} ${cy-13} L${cx+4} ${cy+5} L${cx-10} ${cy+13} L${cx-4} ${cy-5}Z" fill="${PALE}"/><path d="M${cx+10} ${cy-13} L${cx+4} ${cy+5} L${cx-4} ${cy-5}Z" fill="${CORAL}"/>` + C(cx,cy,3.2,DEEP);
+  return t.back() + t.under(x+w/2+6,62,true) + win + comp + t.under(RX,64) + robot(RX,RY,RH) + t.front();
+}
+const PAGES = [together, feedback, progress, share, explore];
+/* ======================= A2: the polish pass on A ======================= */
+/* Rules for the whole set (400 x 400 viewport, every coordinate an even number):
+   - one radius scale: 6 cells, 10 small tiles and thumbnails, 14 tiles and inner blocks, 20 cards
+     and screens, 28 the phone body; pills and badges are fully round
+   - one stroke weight for every glyph and tick: 3
+   - text lines: title 8 high, body 6 high; card padding 16; list rows 50 apart
+   - one card shadow: the same pale slab, 6 below; one ground shadow under the robot, 7 high
+   - the disc: centre (200, 196), radius 150, on every page
+   - robot zone x 20 to 164 on pages 2 to 5; props live in x 180 to 380 (or above the robot's head),
+     so nothing touches the robot */
+const A2 = (() => {
+  const SW = 3;
+  const rect = (x,y,w,h,r,fill) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${fill}"/>`;
+  const slab = (x,y,w,h,r) => `<rect x="${x}" y="${y+6}" width="${w}" height="${h}" rx="${r}" style="fill:var(--a-sh)"/>`;
+  const card = (x,y,w,h,r=20,fill=PAPER) => slab(x,y,w,h,r) + rect(x,y,w,h,r,fill);
+  const bar = (x,y,w,title=false,c) => rect(x,y,w,title?8:6,title?4:3,c || (title?DEEP:LINE));
+  const tickP = (cx,cy,s,c=PAPER) => `<path d="M${cx-s*.42} ${cy+s*.02} L${cx-s*.12} ${cy+s*.3} L${cx+s*.42} ${cy-s*.3}" fill="none" stroke="${c}" stroke-width="${SW}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const badge = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="15" fill="${PAPER}"/><circle cx="${cx}" cy="${cy}" r="12" fill="${MINT}"/>` + tickP(cx,cy+1,12);
+  // glyphs: one optical size (about 18 units), filled shapes with soft 3-unit joins, all paper
+  const G2 = {
+    heart:(cx,cy)=>`<path d="M${cx} ${cy+8} C${cx-13} ${cy} ${cx-11} ${cy-11} ${cx} ${cy-5} C${cx+11} ${cy-11} ${cx+13} ${cy} ${cx} ${cy+8}Z" fill="${PAPER}" stroke="${PAPER}" stroke-width="2" stroke-linejoin="round"/>`,
+    tri:(cx,cy)=>`<path d="M${cx} ${cy-8} L${cx+9} ${cy+7} L${cx-9} ${cy+7}Z" fill="${PAPER}" stroke="${PAPER}" stroke-width="3" stroke-linejoin="round"/>`,
+    play:(cx,cy)=>`<path d="M${cx-5} ${cy-8} L${cx+8} ${cy} L${cx-5} ${cy+8}Z" fill="${PAPER}" stroke="${PAPER}" stroke-width="3" stroke-linejoin="round"/>`,
+    bars:(cx,cy)=>`<path d="M${cx-7} ${cy+8}V${cy+2}M${cx} ${cy+8}V${cy-8}M${cx+7} ${cy+8}V${cy-3}" stroke="${PAPER}" stroke-width="3.5" stroke-linecap="round"/>`,
+  };
+  const tile = (x,y,s,r,fill,g) => rect(x,y,s,s,r,fill) + G2[g](x+s/2,y+s/2);
+  const disc = () => `<circle cx="200" cy="196" r="150" style="fill:var(--a-blob)"/>`;
+  const ground = (cx,rx) => `<ellipse cx="${cx}" cy="342" rx="${rx}" ry="7" style="fill:var(--a-ground)"/>`;
+  const RX2 = 92, RH2 = 158;                       // robot on pages 2 to 5: x 20 to 164
+  const bot = () => ground(RX2,62) + robot(RX2,338,RH2);
+  const ticket = (cx,cy,w,rot) => ticketSvg(cx,cy,w,rot,GOLD,GOLDEDGE,'#FFF8E1','#B97A1E');
+  const head = (x,y,w,hh) => `<path d="M${x+20} ${y} H${x+w-20} Q${x+w} ${y} ${x+w} ${y+20} V${y+hh} H${x} V${y+20} Q${x} ${y} ${x+20} ${y}Z" fill="${BLUE}"/>`;
+
+  function together(){
+    // four apps around the robot, all tested; symmetric so the eye goes straight to the middle
+    const s = 48, spots = [[70,122,CORAL,'heart'],[330,122,MINT,'tri'],[70,270,BLUE,'play'],[330,270,MINT,'bars']];
+    const tiles = spots.map(([cx,cy,f,g]) => tile(cx-s/2,cy-s/2,s,14,f,g) + badge(cx+s/2-2,cy-s/2+2)).join('');
+    return disc() + tiles + ground(200,84) + robot(200,338,232,true);
+  }
+  function feedback(){
+    // the app being tried on the right, the feedback it gets above the robot, paid with a ticket
+    const px=236, py=64, pw=124, ph=236;
+    const phone = slab(px,py,pw,ph,28) + rect(px,py,pw,ph,28,DEEP)
+      + rect(px+6,py+6,pw-12,ph-12,22,PAPER) + rect(px+pw/2-14,py+12,28,4,2,SKY)
+      + rect(px+18,py+30,pw-36,64,14,PALE) + `<circle cx="${px+pw/2}" cy="${py+62}" r="16" fill="${BLUE}"/>` + G2.play(px+pw/2+1,py+62)
+      + bar(px+18,py+112,56,true) + bar(px+18,py+128,88) + bar(px+18,py+142,72)
+      + rect(px+18,py+182,pw-36,30,15,BLUE) + tickP(px+pw/2,py+197,14);
+    const bx=36, by=60, bw=176, bh=80;
+    const bubble = `<path d="M${bx+20} ${by} H${bx+bw-20} Q${bx+bw} ${by} ${bx+bw} ${by+20} V${by+bh-20} Q${bx+bw} ${by+bh} ${bx+bw-20} ${by+bh} H${bx+bw-6} L${bx+bw+12} ${by+bh+14} L${bx+bw-34} ${by+bh} H${bx+20} Q${bx} ${by+bh} ${bx} ${by+bh-20} V${by+20} Q${bx} ${by} ${bx+20} ${by}Z" fill="${CORAL}"/>`
+      + bar(bx+20,by+20,88,true,PAPER) + rect(bx+20,by+36,128,6,3,'rgba(255,252,241,.78)') + rect(bx+20,by+50,104,6,3,'rgba(255,252,241,.78)');
+    return disc() + phone + bubble + ticket(66,146,56,-10) + bot();
+  }
+  function progress(){
+    // 14 nights, 9 done, tonight marked, and how far through the run
+    const x=180, y=112, w=200, h=166;          // centred on the disc, like the cards on pages 4 and 5
+    let c = card(x,y,w,h) + head(x,y,w,44) + bar(x+16,y+18,72,true,PAPER) + rect(x+40,y-12,10,24,5,DEEP) + rect(x+w-50,y-12,10,24,5,DEEP);
+    const cell=20, gap=6, x0 = x + (w - (7*cell + 6*gap))/2;          // 176 wide, 12 in from each side
+    for (let k=0;k<14;k++){ const cx = x0 + (k%7)*(cell+gap), cy = y+64 + Math.floor(k/7)*(cell+gap);
+      c += k<9 ? rect(cx,cy,cell,cell,6,MINT)
+         : k===9 ? `<rect x="${cx+1.5}" y="${cy+1.5}" width="${cell-3}" height="${cell-3}" rx="5" fill="${PAPER}" stroke="${CORAL}" stroke-width="${SW}"/>`
+         : rect(cx,cy,cell,cell,6,PALE); }
+    const by = y+130, bw = 7*cell+6*gap;
+    c += rect(x0,by,bw,10,5,PALE) + rect(x0,by,Math.round(bw*9/14),10,5,MINT);
+    return disc() + c + bot();
+  }
+  function share(){
+    // the link you paste, and the listing it turns into, found
+    const link = card(40,64,320,48,24)
+      + `<circle cx="68" cy="88" r="14" fill="${BLUE}"/>`
+      + `<g transform="translate(59 79) scale(.75)" fill="none" stroke="${PAPER}" stroke-width="${SW/.75}" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></g>`
+      + bar(94,78,150,true) + bar(94,94,96);
+    const x=180, y=138, w=200, h=164;
+    const listing = card(x,y,w,h) + tile(x+16,y+16,52,14,BLUE,'tri')
+      + bar(x+82,y+22,96,true) + bar(x+82,y+38,72) + bar(x+82,y+52,48)
+      + [0,1,2].map(k => rect(x+16+k*58,y+84,52,64,10,PALE)).join('')
+      + badge(x+w-8,y+8);
+    return disc() + link + listing + bot();
+  }
+  function explore(){
+    // the Circle as a guest: a window of rows, and a compass for finding your way
+    const x=180, y=76, w=200, h=216;
+    let win = card(x,y,w,h) + head(x,y,w,40) + [0,1,2].map(k=>`<circle cx="${x+22+k*14}" cy="${y+20}" r="4" fill="${PAPER}"/>`).join('');
+    [[CORAL,'heart'],[MINT,'tri'],[BLUE,'bars']].forEach(([f,g],k) => { const ry = y+58+k*50;
+      win += tile(x+16,ry,36,10,f,g) + bar(x+66,ry+6,96,true) + bar(x+66,ry+22,110); });
+    const cx=352, cy=78;
+    const comp = `<circle cx="${cx}" cy="${cy+6}" r="30" style="fill:var(--a-sh)"/><circle cx="${cx}" cy="${cy}" r="30" fill="${DEEP}"/><circle cx="${cx}" cy="${cy}" r="24" fill="${PAPER}"/>`
+      + `<path d="M${cx+10} ${cy-12} L${cx+3} ${cy+3} L${cx-10} ${cy+12} L${cx-3} ${cy-3}Z" fill="${PALE}" stroke="${PALE}" stroke-width="2" stroke-linejoin="round"/>`
+      + `<path d="M${cx+10} ${cy-12} L${cx+3} ${cy+3} L${cx-3} ${cy-3}Z" fill="${CORAL}" stroke="${CORAL}" stroke-width="2" stroke-linejoin="round"/><circle cx="${cx}" cy="${cy}" r="3" fill="${DEEP}"/>`;
+    return disc() + win + comp + bot();
+  }
+  return { name:'A2', pages:[together, feedback, progress, share, explore] };
+})();
+T.A2 = A2;
+/* ======================= B2: clean line art, polished, with a line-art robot ======================= */
+/* Rules (400 x 400 viewport, even coordinates):
+   - one line: 3.5 wide everywhere (about 2.8 dp at the 324 dp the picture gets on a 360 dp phone),
+     round joins and caps; the robot's lines are scaled so they land at the same 3.5
+   - one radius scale: 6 cells, 10 small tiles and thumbnails, 14 tiles and inner blocks,
+     20 cards, 28 the phone; pills and badges fully round
+   - by day: paper fills, navy lines; by night: a dark fill and a light blue line, so the line
+     always has the contrast and never sits light on paper
+   - mint is the only accent: done days, the tested and found badges, the robot's chest check
+   - no ground line, no progress bar, no shadows; the same pale disc on every page
+   - robot zone x 20 to 164 on pages 2 to 5, props in x 180 to 380 or above its head */
+const makeLineSet = (BODY, CORALANT) => (() => {
+  const W = 3.5;
+  const LN = 'var(--b2-line)', FL = 'var(--b2-fill)', SOFT = 'var(--b2-soft)', ONM = 'var(--b2-onmint)';
+  const st = (fill, line=LN, w=W) => `style="fill:${fill};stroke:${line}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
+  const box = (x,y,w,h,r,fill=FL,line=LN) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ${st(fill,line)}/>`;
+  const solid = (x,y,w,h,r,fill) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" style="fill:${fill}"/>`;
+  const bar = (x,y,w,title=false) => solid(x,y,w,title?8:6,title?4:3,title?LN:SOFT);
+  const tick = (cx,cy,s,c=LN) => `<path d="M${cx-s*.42} ${cy+s*.02} L${cx-s*.12} ${cy+s*.3} L${cx+s*.42} ${cy-s*.3}" fill="none" style="stroke:${c}" stroke-width="${W}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const badge = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="12" ${st(MINT)}/>` + tick(cx,cy+1,11,ONM);
+  // glyphs: solid shapes in the line colour, one optical size; solid holds up better than a thin outline
+  const G = {
+    heart:(cx,cy)=>`<path d="M${cx} ${cy+7} C${cx-12} ${cy} ${cx-10} ${cy-10} ${cx} ${cy-4} C${cx+10} ${cy-10} ${cx+12} ${cy} ${cx} ${cy+7}Z" ${st(LN,LN,2)}/>`,
+    tri:(cx,cy)=>`<path d="M${cx} ${cy-7} L${cx+8} ${cy+6} L${cx-8} ${cy+6}Z" ${st(LN,LN,3)}/>`,
+    play:(cx,cy)=>`<path d="M${cx-4} ${cy-7} L${cx+7} ${cy} L${cx-4} ${cy+7}Z" ${st(LN,LN,3)}/>`,
+    bars:(cx,cy)=>`<path d="M${cx-6} ${cy+7}V${cy+2}M${cx} ${cy+7}V${cy-7}M${cx+6} ${cy+7}V${cy-2}" style="stroke:${LN}" stroke-width="${W}" stroke-linecap="round"/>`,
+  };
+  const tile = (x,y,s,r,g) => box(x,y,s,s,r) + G[g](x+s/2,y+s/2);
+  const disc = () => `<circle cx="200" cy="196" r="150" style="fill:var(--b2-disc)"/>`;
+
+  /* ---- the robot, as lines: the same paths as logo/test-exchange.svg ---- */
+  const P = {
+    torso:'M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z',
+    earL:'M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z',
+    earR:'M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z',
+    head:'M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z',
+    face:'M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z',
+    arrowTop:'M453 768 C509 704 609 682 683 716 L685 707 Q692 689 706 707 L749 765 Q763 785 742 795 L678 816 Q649 823 652 799 L656 780 C602 761 551 771 516 805 Z',
+    arrowBot:'M705 1036 Q717 1030 727 1038 L745 1050 Q761 1063 744 1078 C690 1125 619 1130 566 1107 L562 1117 Q552 1135 538 1118 L497 1059 Q483 1037 508 1029 L573 1010 Q600 1004 594 1030 L588 1048 C627 1063 669 1060 705 1036 Z',
+    cardL:'M362 766 L502 764 C532 764 550 785 553 814 L568 983 C571 1013 554 1036 524 1040 L388 1056 C356 1059 336 1044 332 1013 L310 819 C306 789 327 767 362 766 Z',
+    cardR:'M752 765 L894 767 C927 768 947 790 943 822 L922 1013 C918 1044 899 1059 866 1056 L731 1041 C701 1038 684 1018 687 987 L701 811 C704 782 724 764 752 765 Z',
+    handL:'M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z',
+    handR:'M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z',
+  };
+  const ell = (cx,cy,rx,ry,style) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" ${style}/>`;
+  function lineRobot(x, y, h, ex=false){
+    const bottom = ex ? 1126 : (BODY ? BODY.bottom : 1031), hh = bottom - 127, s = h/hh, w = W/s;     // w lands at 3.5 on the page
+    const S = (fill, line=LN) => `style="fill:${fill};stroke:${line}" stroke-width="${w.toFixed(1)}" stroke-linejoin="round" stroke-linecap="round"`;
+    const p = (d, fill=FL) => `<path d="${d}" ${S(fill)}/>`;
+    let g = '';
+    if (BODY) g += BODY(ex, {w, S, p, ell, LN, FL, ONM});
+    else { g += p(P.torso); }
+    if (!ex && !BODY) {
+      // chest check (the accent) and the two hands, as in the onboarding pose
+      g += ell(627,872,110,106,S(MINT)) + `<path d="M570 876 L614 918 L690 834" fill="none" style="stroke:${ONM}" stroke-width="${(w*1.15).toFixed(1)}" stroke-linecap="round" stroke-linejoin="round"/>`
+         + ell(335,835,74,86,S(FL)) + ell(919,835,74,86,S(FL));
+    }
+    g += p(P.earL) + p(P.earR)
+       + `<path d="M627 296 V240" style="stroke:${LN}" stroke-width="${w.toFixed(1)}" stroke-linecap="round"/>` + ell(627,187,56,56,S(CORALANT ? CORAL : FL))
+       + p(P.head) + `<path d="${P.face}" ${S(FL)}/>`
+       + ell(481,529,58,58,`style="fill:${LN}"`) + ell(772,529,58,58,`style="fill:${LN}"`)
+       + ell(496,504,17,17,`style="fill:${FL}"`) + ell(786,504,17,17,`style="fill:${FL}"`)
+       + `<path d="M576 594 C602 620 651 620 677 594" fill="none" style="stroke:${LN}" stroke-width="${w.toFixed(1)}" stroke-linecap="round"/>`;
+    if (ex) {
+      // the two app cards it swaps, the arrows behind them, and its hands in front
+      const chk = d => `<path d="${d}" fill="none" style="stroke:${LN}" stroke-width="${(w*1.1).toFixed(1)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+      g += p(P.arrowTop) + p(P.arrowBot)
+         + p(P.cardL) + chk('M405 918 L432 941 L488 871')
+         + p(P.cardR, MINT) + `<path d="M768 916 L795 939 L854 873" fill="none" style="stroke:${ONM}" stroke-width="${(w*1.1).toFixed(1)}" stroke-linecap="round" stroke-linejoin="round"/>`
+         + p(P.handL) + p(P.handR)
+         // the arrow tips pass in front of the cards, as in the app icon (its own clip masks)
+         + `<g clip-path="url(#top_tip_mask)">${p(P.arrowTop)}</g><g clip-path="url(#bottom_tip_mask)">${p(P.arrowBot)}</g>`;
+    }
+    return `<g transform="translate(${x} ${y}) scale(${s.toFixed(4)}) translate(-627 ${-bottom})">${g}</g>`;
+  }
+  const RX2 = 92, RH2 = BODY ? Math.round(158 * (BODY.bottom - 127) / 904) : 158;   // the head stays the same size whatever the body
+  const bot = () => lineRobot(RX2, 338, RH2);
+
+  function together(){
+    const s = 48, spots = [[70,122,'heart'],[330,122,'tri'],[70,270,'play'],[330,270,'bars']];
+    return disc() + spots.map(([cx,cy,g]) => tile(cx-s/2,cy-s/2,s,14,g) + badge(cx+s/2-2,cy-s/2+2)).join('') + lineRobot(200,338,232,true);
+  }
+  function feedback(){
+    const px=236, py=64, pw=124, ph=236;
+    const phone = box(px,py,pw,ph,28) + solid(px+pw/2-14,py+12,28,4,2,LN)
+      + box(px+16,py+30,pw-32,64,14) + G.play(px+pw/2+1,py+62)
+      + bar(px+16,py+112,56,true) + bar(px+16,py+128,88) + bar(px+16,py+142,72)
+      + box(px+16,py+180,pw-32,30,15) + tick(px+pw/2,py+195,14)
+      + `<path d="M${px+pw/2-12} ${py+ph-12} H${px+pw/2+12}" style="stroke:${LN}" stroke-width="${W}" stroke-linecap="round"/>`;
+    const bx=36, by=60, bw=176, bh=80;
+    const bubble = `<path d="M${bx+20} ${by} H${bx+bw-20} Q${bx+bw} ${by} ${bx+bw} ${by+20} V${by+bh-20} Q${bx+bw} ${by+bh} ${bx+bw-20} ${by+bh} H${bx+bw-30} L${bx+bw-22} ${by+bh+16} L${bx+bw-52} ${by+bh} H${bx+20} Q${bx} ${by+bh} ${bx} ${by+bh-20} V${by+20} Q${bx} ${by} ${bx+20} ${by}Z" ${st(FL)}/>`
+      + bar(bx+20,by+20,88,true) + bar(bx+20,by+36,128) + bar(bx+20,by+50,104);
+    // the tix ticket on the bubble's corner: feedback, paid in tix
+    const tk = `<g transform="translate(${BODY ? 58 : 66} ${BODY ? 138 : 146}) rotate(-10) scale(.875) translate(-32 -22)">
+      <path d="M8 3H56Q61 3 61 8V16A6 6 0 0 0 61 28V36Q61 41 56 41H8Q3 41 3 36V28A6 6 0 0 0 3 16V8Q3 3 8 3Z" ${st(FL,LN,W/.875)}/>
+      <path d="M18 12V32" style="stroke:${SOFT}" stroke-width="${W/.875}" stroke-linecap="round"/>
+      <path d="M39 12l3.2 6.6 7.2 1-5.2 5 1.3 7.2-6.5-3.4-6.5 3.4 1.3-7.2-5.2-5 7.2-1Z" ${st(MINT,LN,2.6/.875)}/></g>`;
+    return disc() + phone + bubble + tk + bot();
+  }
+  function progress(){
+    // 14 nights: 9 done in mint, tonight outlined, the rest waiting. The cells are the progress.
+    const x=180, y=118, w=200, h=148;
+    let c = box(x,y,w,h,20) + `<path d="M${x} ${y+44} H${x+w}" style="stroke:${LN}" stroke-width="${W}"/>` + bar(x+16,y+18,72,true)
+      + box(x+40,y-12,10,24,5) + box(x+w-50,y-12,10,24,5);
+    const cell=20, gap=6, x0 = x + (w - (7*cell + 6*gap))/2;
+    for (let k=0;k<14;k++){ const cx = x0 + (k%7)*(cell+gap), cy = y+66 + Math.floor(k/7)*(cell+gap);
+      c += k<9 ? solid(cx,cy,cell,cell,6,MINT)
+         : k===9 ? `<rect x="${cx+1.75}" y="${cy+1.75}" width="${cell-3.5}" height="${cell-3.5}" rx="5" ${st(FL)}/>`
+         : `<rect x="${cx+1.75}" y="${cy+1.75}" width="${cell-3.5}" height="${cell-3.5}" rx="5" ${st(FL,SOFT)}/>`; }
+    return disc() + c + bot();
+  }
+  function share(){
+    const link = box(40,64,320,48,24)
+      + `<g transform="translate(56 76) scale(1)" fill="none" style="stroke:${LN}" stroke-width="${W}" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></g>`
+      + bar(94,78,150,true) + bar(94,94,96);
+    const x=180, y=138, w=200, h=164;
+    const listing = box(x,y,w,h,20) + tile(x+16,y+16,52,14,'tri')
+      + bar(x+82,y+22,96,true) + bar(x+82,y+38,72) + bar(x+82,y+52,48)
+      + [0,1,2].map(k => `<rect x="${x+16+k*58}" y="${y+84}" width="52" height="64" rx="10" ${st(FL,SOFT)}/>`).join('')
+      + badge(x+w-8,y+8);
+    return disc() + link + listing + bot();
+  }
+  function explore(){
+    const x=180, y=76, w=200, h=216;
+    let win = box(x,y,w,h,20) + `<path d="M${x} ${y+40} H${x+w}" style="stroke:${LN}" stroke-width="${W}"/>`
+      + [0,1,2].map(k=>`<circle cx="${x+22+k*14}" cy="${y+20}" r="4" style="fill:${LN}"/>`).join('');
+    ['heart','tri','bars'].forEach((g,k) => { const ry = y+58+k*50;
+      win += tile(x+16,ry,36,10,g) + bar(x+66,ry+6,96,true) + bar(x+66,ry+22,110); });
+    const cx=352, cy=78;
+    const comp = `<circle cx="${cx}" cy="${cy}" r="28" ${st(FL)}/>`
+      + `<path d="M${cx+10} ${cy-12} L${cx+3} ${cy+3} L${cx-10} ${cy+12} L${cx-3} ${cy-3}Z" ${st(FL,LN,3)}/>`
+      + `<path d="M${cx+10} ${cy-12} L${cx+3} ${cy+3} L${cx-3} ${cy-3}Z" ${st(MINT,LN,3)}/>`;
+    return disc() + win + comp + bot();
+  }
+  return { name: BODY ? 'B3' : 'B2', pages:[together, feedback, progress, share, explore], lineRobot };
+})();
+const B2 = makeLineSet(null, false);
+T.B2 = B2;
+/* ======================= B3: the line robot's body, reworked ======================= */
+/* Drawn on the robot's own grid (the 1254 units of logo/test-exchange.svg); the head is untouched.
+   Every body has: a neck or collar that joins the head, a torso with shoulders, arms that start
+   under the shoulders, hands at the ends, a chest panel about a third of the torso wide with the
+   check (the only mint), and one or two quiet details in line colour. Line weight is the page's
+   3.5; nothing is smaller than about 6 page units (34 robot units). */
+const BODIES = (() => {
+  const mx = x => 1254 - x;                        // mirror across the robot's centre line
+  // an outlined capsule: a line colour stroke with a fill colour stroke inside it
+  const cap = (k, x1, y1, x2, y2, r) => `<path d="M${x1} ${y1} L${x2} ${y2}" style="stroke:${k.LN}" stroke-width="${(2*r + k.w).toFixed(1)}" stroke-linecap="round"/>`
+                                      + `<path d="M${x1} ${y1} L${x2} ${y2}" style="stroke:${k.FL}" stroke-width="${(2*r - k.w).toFixed(1)}" stroke-linecap="round"/>`;
+  const arms = (k, sx, sy, hx, hy, r) => cap(k, sx, sy, hx, hy, r) + cap(k, mx(sx), sy, mx(hx), hy, r);
+  const line = (k, d, mul=1) => `<path d="${d}" fill="none" style="stroke:${k.LN}" stroke-width="${(k.w*mul).toFixed(1)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const rect = (k, x, y, w, h, r, fill) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ${k.S(fill || k.FL)}/>`;
+  const dot = (k, x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" style="fill:${k.LN}"/>`;
+  const panel = (k, x, y, w, h, r) => rect(k, x, y, w, h, r, MINT)
+    + `<path d="M${x+w*.27} ${y+h*.52} L${x+w*.44} ${y+h*.72} L${x+w*.74} ${y+h*.3}" fill="none" style="stroke:${k.ONM}" stroke-width="${(k.w*1.1).toFixed(1)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const hands = (k, x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" ${k.S(k.FL)}/><circle cx="${mx(x)}" cy="${y}" r="${r}" ${k.S(k.FL)}/>`;
+  // in the page 1 pose the hands hold the cards, so the arms reach for them (hands are drawn later)
+  const exArms = (k, sx, sy, r) => arms(k, sx, sy, 318, 902, r);
+
+  /* 1. Box body with a belt: a rounded box as wide as the face, a neck, a belt line and two shoulder bolts */
+  const v1 = (ex, k) => {
+    const torso = `<path d="M487 790 H767 Q867 790 867 890 V1016 Q867 1080 803 1080 H451 Q387 1080 387 1016 V890 Q387 790 487 790Z" ${k.S(k.FL)}/>`;
+    let g = rect(k, 567, 712, 120, 92, 22);                                 // neck, tucked under the head
+    g += ex ? exArms(k, 420, 862, 38) : arms(k, 420, 862, 330, 990, 38);
+    g += torso + line(k, 'M387 1014 H867') + dot(k, 462, 866, 18) + dot(k, mx(462), 866, 18);
+    if (!ex) g += panel(k, 547, 846, 160, 128, 34) + hands(k, 326, 996, 56);
+    return g;
+  };
+  v1.bottom = 1080;
+
+  /* 2. Tapered body with a collar: wide shoulders narrowing to the base, a collar plate, three vents */
+  const v2 = (ex, k) => {
+    const torso = `<path d="M467 794 H787 Q877 794 877 884 L847 1010 Q831 1080 767 1080 H487 Q423 1080 407 1010 L377 884 Q377 794 467 794Z" ${k.S(k.FL)}/>`;
+    let g = rect(k, 517, 712, 220, 84, 42);                                 // collar plate
+    g += ex ? exArms(k, 410, 862, 36) : arms(k, 410, 862, 322, 982, 36);
+    g += torso + [587, 627, 667].map(x => line(k, `M${x} 1012 V1046`)).join('');
+    if (!ex) g += panel(k, 552, 846, 150, 124, 32) + hands(k, 318, 990, 54);
+    return g;
+  };
+  v2.bottom = 1080;
+
+  /* 3. Rounded body on two feet: a pill-shaped torso, ball shoulder joints, a waist seam and feet */
+  const v3 = (ex, k) => {
+    let g = rect(k, 585, 712, 84, 92, 20);                                  // neck
+    g += rect(k, 477, 1030, 120, 70, 32) + rect(k, 657, 1030, 120, 70, 32); // feet, behind the body
+    g += ex ? exArms(k, 420, 868, 32) : arms(k, 420, 868, 342, 980, 32);
+    g += `<rect x="407" y="790" width="440" height="270" rx="120" ${k.S(k.FL)}/>`
+       + line(k, 'M440 1000 Q627 1036 814 1000')
+       + `<circle cx="420" cy="866" r="44" ${k.S(k.FL)}/><circle cx="${mx(420)}" cy="866" r="44" ${k.S(k.FL)}/>`;
+    if (!ex) g += panel(k, 554, 836, 146, 116, 30) + hands(k, 336, 990, 50);
+    return g;
+  };
+  v3.bottom = 1100;
+  return { v1, v2, v3 };
+})();
+
+/* the pick, used for row B3 */
+const B3 = makeLineSet(BODIES.v1, false);
+T.B3 = B3;
+
+/* ---- the study at the top of the page ---- */
+function robotStudy(){
+  const sets = [
+    ['Old B2 body', makeLineSet(null,false), makeLineSet(null,true)],
+    ['1. Box with a belt', makeLineSet(BODIES.v1,false), makeLineSet(BODIES.v1,true)],
+    ['2. Tapered, collar, vents', makeLineSet(BODIES.v2,false), makeLineSet(BODIES.v2,true)],
+    ['3. Rounded, on two feet', makeLineSet(BODIES.v3,false), makeLineSet(BODIES.v3,true)],
+  ];
+  // the robot stands with its feet at (100, 212) and is 196 high in a 200 x 220 box
+  const pic = (set, px) => `<svg viewBox="0 0 200 220" width="${px}" height="${Math.round(px*1.1)}" style="display:block">
+      <ellipse cx="100" cy="213" rx="58" ry="5" style="fill:var(--b2-disc)"/>${set.lineRobot(100, 212, 196)}</svg>`;
+  // at phone size the robot is 158 of 400 units in a 324 px picture: 128 px high
+  const phone = set => pic(set, Math.round(128 / 196 * 200 / 1.1 * 1.1));
+  const block = theme => `<div data-theme="${theme}" style="background:var(--bg);color:var(--text);border-radius:22px;padding:18px 18px 8px;flex:1;min-width:880px">
+      <div style="font:600 13px Barlow;color:var(--text2);margin-bottom:8px">${theme === 'light' ? 'Light' : 'Dark'}</div>
+      <div style="display:flex;gap:22px;flex-wrap:wrap">${sets.map(([name, a, b]) => `
+        <div><div style="font:600 13px Barlow;margin:0 0 6px 4px">${name}</div>
+          <div style="display:flex;gap:6px">${pic(a,200)}${pic(b,200)}</div>
+          <div style="display:flex;gap:6px;align-items:flex-end;margin-top:6px">${phone(a)}${phone(b)}<span style="font:500 12px Barlow;color:var(--text2);padding:0 0 8px 6px">phone size</span></div>
+        </div>`).join('')}</div>
+      <div style="font:500 12px Barlow;color:var(--text2);margin-top:6px">Each pair: plain antenna, then coral antenna.</div></div>`;
+  return `<section class="opt" style="border-top:0"><div class="oh"><span class="n">Robot study</span><h2>The line robot's body</h2><span class="tag">head unchanged</span></div>
+    <div class="idea">The head is the app's own (visor, eyes, smile, ears, antenna). Each new body adds a neck or collar, a torso with shoulders, arms that start under the shoulders, a chest panel about a third of the torso wide with the check as the only mint, and one or two quiet details at the same line weight. Shown large and at the size it has on the phone.</div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap">${block('light')}${block('dark')}</div></section>`;
+}
+/* ---- end B3 ---- */
+const art = (t, i) => `<svg viewBox="0 0 400 400">${t.pages ? t.pages[i]() : PAGES[i](t)}</svg>`;
+const todayArt = i => { const d = TODAY[['onboarding_together','onboarding_feedback','onboarding_progress','onboarding_share','onboarding_explore'][i]]; return `<svg viewBox="${d.vb}">${d.inner}</svg>`; };
+
+/* ======================= the screen ======================= */
+const SB = `<div class="sb"><span>9:41</span><span class="cam"></span><span style="display:flex;gap:6px;align-items:center">
+ <svg width="16" height="11" viewBox="0 0 16 11"><path d="M1 10h2V7H1zM5 10h2V5H5zM9 10h2V3H9zM13 10h2V1h-2z" fill="currentColor"/></svg>
+ <svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 10.5 1 4a9.2 9.2 0 0 1 13 0z" fill="currentColor"/></svg>
+ <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2.5" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="12" height="7" rx="1.3" fill="currentColor"/></svg></span></div>`;
+const brandRobot = () => { const d = TODAY.testtrack_robot; return `<svg viewBox="${d.vb}">${d.inner}</svg>`; };
+function screen(artSvg, copy, i){
+  return `<div class="phone"><div class="scr">${SB}
+    <div class="brand">${brandRobot()}<span class="nm">TestTrack</span><span class="skip">Skip</span></div>
+    <div class="pager"><div class="slide"><div class="art">${artSvg}</div>
+      <div class="eb">${copy[0]}</div><div class="tt">${copy[1]}</div><div class="bd">${copy[2]}</div></div></div>
+    <div class="foot"><div class="dots">${[0,1,2,3,4].map(k=>`<i class="${k===i?'on':''}"></i>`).join('')}</div>
+      <div class="btn">${i===4?'Explore TestTrack':'Next'}</div><div class="lnk">Already here? Sign in</div></div>
+    <div class="gest"><i></i></div></div></div>`;
+}
+const NAMES = ['1. Together','2. Feedback','3. 14 days','4. Play link','5. Look around'];
+const ROWS = [
+  {n:'Today', title:'Today, as it ships', tag:'real drawables, real strings',
+   idea:'res/drawable/onboarding_together, _feedback, _progress, _share and _explore, converted path for path, with the strings in values/onboarding.xml.',
+   page:i=>screen(todayArt(i), TODAY_COPY[i], i)},
+  {n:'A', title:'Refined flat', tag:'soft fills, no outlines',
+   idea:'Soft filled shapes, one pale disc behind every picture, one soft offset shadow under each card. The robot stands in the same spot on pages 2 to 5, with the page\'s one thing beside it.',
+   page:i=>screen(art(T.A,i), NEW_COPY[i], i)},
+  {n:'A2', title:'Refined flat, polished', tag:'A, cleaned up',
+   idea:'A after a close pass at 1:1 and 2x: one radius scale, one stroke weight, even spacing, nothing touching the robot, one shadow, the same disc on every page, and fewer small parts.',
+   page:i=>screen(art(T.A2,i), NEW_COPY[i], i)},
+  {n:'B', title:'Clean line art, one accent', tag:'one navy line, mint accent',
+   idea:'Every prop is paper with the same 3 px navy line; mint is the only accent (done, found, paid). The robot keeps its full colour, so it is the one coloured thing on the page. A single ground line.',
+   page:i=>screen(art(T.B,i), NEW_COPY[i], i)},
+  {n:'B2', title:'Clean line art, polished, line-art robot', tag:'B, cleaned up',
+   idea:'B with the robot drawn in the same lines (its own paths, outlined), no ground line and no progress bar, a 3.5 line that holds at phone size, light lines on a dark fill at night, the A2 spacing rules and the same disc on every page. Mint only for done, found and the chest check.',
+   page:i=>screen(art(T.B2,i), NEW_COPY[i], i)},
+  {n:'B3', title:'Line art with the reworked robot', tag:'B2, new body',
+   idea:'B2 with body 1 from the robot study: a neck that joins the head, a rounded box with shoulders, arms with hands at the ends, a smaller chest panel with the check, a belt line and two shoulder bolts. Everything else as B2.',
+   page:i=>screen(art(T.B3,i), NEW_COPY[i], i)},
+  {n:'C', title:'Small scene with depth', tag:'room, thickness, shadows',
+   idea:'A soft room behind each picture (a wall and a floor), cards with a little thickness, and contact shadows where things meet the floor. The most finished look, and the heaviest of the three.',
+   page:i=>screen(art(T.C,i), NEW_COPY[i], i)},
+];
+document.getElementById('root').innerHTML = ROWS.map(r=>`
+ <section class="opt"><div class="oh"><span class="n">${r.n==='Today'?'Row 1':r.n==='A2'?'Row A2':r.n==='B2'?'Row B2':r.n==='B3'?'Row B3':'Direction '+r.n}</span><h2>${r.title}</h2><span class="tag">${r.tag}</span></div>
+  <div class="idea">${r.idea}</div>
+  <div class="row">${[0,1,2,3,4].map(i=>`<div class="cell"><div class="cap">${NAMES[i]}<span class="warn"></span></div>${r.page(i)}</div>`).join('')}</div></section>`).join('');
+
+document.getElementById('root').insertAdjacentHTML('afterbegin', robotStudy());
+/* size the art exactly as IntroSlide does: min(maxWidth - 36, clamp(maxHeight * .63, 130, 340)) */
+function layout(){
+  document.querySelectorAll('.pager').forEach(p => {
+    const W = 360, H = p.clientHeight;
+    const size = Math.min(W - 36, Math.max(130, Math.min(340, H * .63)));
+    const a = p.querySelector('.art'); a.style.width = a.style.height = size + 'px';
+    const slide = p.querySelector('.slide');
+    const cut = p.querySelector('.bd').getBoundingClientRect().bottom - p.getBoundingClientRect().bottom;
+    p.closest('.cell').querySelector('.warn').textContent = cut > 8 ? 'scrolls: last line hidden' : '';
+  });
+}
+document.fonts.ready.then(layout); layout();
+
+document.getElementById('notes').innerHTML = `
+ <h3>The words, page by page</h3>
+ <table><tr><th></th><th>Today</th><th>New (A, B and C share it)</th></tr>
+ ${[0,1,2,3,4].map(i=>`<tr><td>${NAMES[i]}</td><td><b>${TODAY_COPY[i][1].replace('<br>',' ')}</b><br>${TODAY_COPY[i][2]}</td><td><b>${NEW_COPY[i][1].replace('<br>',' ')}</b><br>${NEW_COPY[i][2]}</td></tr>`).join('')}
+ </table>`;
+
+const seg = (id, attr, apply) => document.querySelectorAll(`#${id} button`).forEach(b => b.onclick = () => {
+  document.querySelectorAll(`#${id} button`).forEach(x => x.classList.toggle('on', x === b)); apply(b.dataset[attr]);
+});
+seg('theme','t', t => document.documentElement.dataset.theme = t);
+seg('size','z', z => { document.documentElement.style.setProperty('--z', z); });
+const q = new URLSearchParams(location.search);
+if (q.get('t')) document.querySelector(`#theme button[data-t="${q.get('t')}"]`)?.click();
+if (q.get('z')) document.querySelector(`#size button[data-z="${q.get('z')}"]`)?.click();
+</script>
+</body>
+</html>

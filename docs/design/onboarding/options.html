@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TestTrack onboarding: 10 options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* OceanLight, from ui/theme/Tokens.kt */
+  --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+  --glass:#F2F9FD; --glass2:#DFEDF6; --border:#B7D1E2; --borderStrong:#789AAF; --hair:#B7D1E2;
+  --accent:#1D5C82; --onAccent:#FFFFFF; --accentInk:#123C56; --tile:#D5EAF7; --tileInk:#1D5C82;
+  --soft:rgba(50,114,155,.16); --surface2:#EAF4FB; --field:#F7FCFF;
+  --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+  --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+  --tixTop:#2B6F99; --tixBottom:#1B4F70; --tixEdge:#143A55; --scrim:rgba(20,34,48,.46);
+  --arrow:#32729B; /* robot blue, the icon's arrows */
+  --tileL:89%; --tileS:45%; --inkL:32%; --inkS:50%;
+  /* page around the phones (not part of the app) */
+  --page:#E8EFF4; --ptext:#142F43; --ptext2:#4B6578; --pline:#CFDDE7; --bezel:#101316;
+}
+[data-theme=dark]{
+  /* OceanDark */
+  --bg:#0F1011; --text:#EFF7FC; --text2:#BDD1DF; --text3:#A1BDCF; --text4:#7F9EB3;
+  --glass:#1B3040; --glass2:#263F51; --border:#365568; --borderStrong:#58788E; --hair:#365568;
+  --accent:#32729B; --onAccent:#FFFFFF; --accentInk:#8BCBF7; --tile:#24485F; --tileInk:#8BCBF7;
+  --soft:rgba(139,203,247,.12); --surface2:#203849; --field:#152A39;
+  --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+  --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+  --tixTop:#3A7FAA; --tixBottom:#235C80; --tixEdge:#0E2A3F; --scrim:rgba(0,0,0,.6);
+  --arrow:#80BCDE;
+  --tileL:18%; --tileS:30%; --inkL:76%; --inkS:55%;
+  --page:#08090A; --ptext:#EFF7FC; --ptext2:#93A7B6; --pline:#1E2A33; --bezel:#2A2F35;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--ptext);font-family:Barlow,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-feature-settings:"tnum"}
+
+/* page chrome */
+.bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:16px;padding:14px 32px;background:var(--page);border-bottom:1px solid var(--pline)}
+.bar h1{font:700 20px Barlow;margin:0;flex:1}
+.bar .seg{display:flex;border:1px solid var(--pline);border-radius:999px;overflow:hidden}
+.bar .seg button{font:600 13px Barlow;border:0;background:transparent;color:var(--ptext2);padding:7px 14px;cursor:pointer}
+.bar .seg button.on{background:var(--ptext);color:var(--page)}
+.intro{padding:20px 32px 6px;max-width:980px;color:var(--ptext2);font-size:15px;line-height:22px}
+.intro b{color:var(--ptext)}
+.opt{padding:26px 32px 18px;border-top:1px solid var(--pline)}
+.opt:first-of-type{border-top:0}
+.oh{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.oh .n{font:600 13px "IBM Plex Mono";color:var(--ptext2)}
+.oh h2{font:700 22px Barlow;margin:0}
+.oh .tag{font:600 12px Barlow;color:var(--ptext2);border:1px solid var(--pline);border-radius:999px;padding:2px 10px}
+.idea{color:var(--ptext2);font-size:15px;line-height:21px;margin:6px 0 14px;max-width:920px}
+.row{display:flex;gap:26px;overflow-x:auto;padding:4px 2px 16px;align-items:flex-start}
+.cell{flex:none}
+.cap{font:600 13px Barlow;color:var(--ptext2);margin:0 0 8px 6px}
+
+/* phone */
+.phone{width:360px;height:780px;border-radius:46px;background:var(--bezel);padding:9px;zoom:var(--z,.7)}
+.scr{position:relative;width:100%;height:100%;border-radius:38px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column;color:var(--text)}
+.sb{flex:none;height:32px;display:flex;align-items:center;justify-content:space-between;padding:4px 26px 0 28px;font:600 13px Barlow;color:var(--text)}
+.sb .cam{position:absolute;left:50%;top:10px;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;background:#050607}
+.sb svg{display:block}
+.top{flex:none;height:52px;display:flex;align-items:center;gap:8px;padding:0 10px 0 18px}
+.top .nm{font:700 18px Barlow;flex:1;letter-spacing:.005em}
+.top .skip{font:600 14px Barlow;color:var(--text2);padding:10px 10px}
+.body{flex:1;min-height:0;display:flex;flex-direction:column;padding:0 24px}
+.art{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.eb{font:600 12px Barlow;letter-spacing:.09em;text-transform:uppercase;color:var(--accentInk)}
+.h{font:600 25px/30px Barlow;margin:6px 0 8px;letter-spacing:-.003em}
+.h.c,.p.c{text-align:center}
+.p{font:400 14.5px/21px Barlow;color:var(--text2);margin:0}
+.p + .p{margin-top:8px}
+.foot{flex:none;padding:10px 24px 4px;display:flex;flex-direction:column;align-items:center}
+.dots{display:flex;gap:6px;margin:2px 0 16px}
+.dots i{display:block;width:7px;height:7px;border-radius:4px;background:var(--borderStrong)}
+.dots i.on{width:24px;background:var(--accent)}
+.btn{width:100%;height:48px;border-radius:999px;background:var(--accent);color:var(--onAccent);font:600 16px Barlow;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn.out{background:transparent;color:var(--accentInk);border:1.2px solid var(--borderStrong)}
+.gdot{width:24px;height:24px;border-radius:50%;background:#fff;display:grid;place-items:center}
+.lnk{font:600 14px Barlow;color:var(--accentInk);padding:13px 8px 7px}
+.lnk.mut{color:var(--text2)}
+.gest{flex:none;height:22px;display:flex;justify-content:center;align-items:center}
+.gest i{width:110px;height:4px;border-radius:2px;background:var(--text);opacity:.32}
+.spacer{flex:1}
+.art.pin{align-items:flex-start;padding-top:22px}
+
+/* shared bits */
+.ic{display:block;flex:none}
+.nt{display:grid;place-items:center;flex:none;font:700 15px Barlow;border-radius:10px;
+  background:hsl(var(--h) var(--tileS) var(--tileL));color:hsl(var(--h) var(--inkS) var(--inkL))}
+.num{width:26px;height:26px;border-radius:50%;background:var(--tile);color:var(--tileInk);font:600 13px "IBM Plex Mono";display:grid;place-items:center;flex:none}
+.steps{margin-top:6px}
+.st{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--hair)}
+.st:first-child{border-top:0}
+.st b{display:block;font:600 15px/20px Barlow;color:var(--text)}
+.st > div > span{display:block;font:400 13.5px/19px Barlow;color:var(--text2);margin-top:1px}
+.note{display:flex;gap:10px;align-items:center;font:500 13.5px/18px Barlow;color:var(--text2);background:var(--surface2);border-radius:12px;padding:9px 12px;margin-top:10px}
+.frag{background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:14px}
+.meter{display:flex;justify-content:space-between;align-items:baseline;font:500 13.5px Barlow;color:var(--text2);margin-top:12px}
+.meter b{font:600 14px "IBM Plex Mono";color:var(--text)}
+.track{height:6px;border-radius:3px;background:var(--glass2);margin-top:6px;overflow:hidden}
+.track i{display:block;height:100%;border-radius:3px;background:var(--accent)}
+.tix{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px 0 6px;border-radius:999px;color:#fff;font:600 14px "IBM Plex Mono";
+  background:linear-gradient(var(--tixTop),var(--tixBottom));box-shadow:0 2px 0 var(--tixEdge)}
+.chip{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:999px;font:600 12px Barlow;background:var(--tile);color:var(--tileInk)}
+.chip.ok{background:var(--okBg);color:var(--ok)}
+.sbtn{height:32px;padding:0 14px;border-radius:999px;background:var(--accent);color:#fff;font:600 13px Barlow;display:inline-flex;align-items:center;gap:6px}
+.sbtn.soft{background:var(--glass2);color:var(--accentInk)}
+.hint{font:500 12px Barlow;color:var(--text4)}
+.ls div{font:400 13.5px/18px Barlow;color:var(--text2);margin-top:7px}
+
+/* option 2: numbers */
+.fig{display:flex;align-items:flex-end;gap:12px;padding:12px 0;border-top:1px solid var(--hair)}
+.fig:first-child{border-top:0}
+.fig .v{font:600 64px/0.92 "IBM Plex Mono";letter-spacing:-.05em;min-width:132px}
+.fig .v.sm{font-size:52px}
+.fig .u{font:500 15px/19px Barlow;color:var(--text2);padding-bottom:4px}
+.fig .u b{display:block;font:600 16px Barlow;color:var(--text)}
+
+/* option 3: screen fragments */
+.mini{width:100%;border-radius:22px;border:1px solid var(--border);background:var(--bg);overflow:hidden;
+  -webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 78%,transparent)}
+.mini .mh{display:flex;align-items:center;gap:8px;padding:12px 14px 6px;font:700 17px Barlow}
+.mrow{display:flex;align-items:center;gap:10px;padding:8px 12px;margin:0 8px 4px;border-radius:14px;background:var(--glass);border:1px solid var(--border)}
+.mrow .t{flex:1;min-width:0}
+.mrow .t b{display:block;font:600 14px Barlow}
+.mrow .t span{display:block;font:400 12px Barlow;color:var(--text3)}
+
+/* option 4: one page */
+.tr{display:flex;gap:14px;align-items:center;padding:10px 12px;background:var(--glass);border:1px solid var(--border);border-radius:6px;margin-top:3px}
+.tr:first-of-type{border-radius:18px 18px 6px 6px}
+.tr:last-of-type{border-radius:6px 6px 18px 18px}
+.itile{width:36px;height:36px;border-radius:11px;background:var(--tile);color:var(--tileInk);display:grid;place-items:center;flex:none}
+.tr b{display:block;font:600 15px/19px Barlow}
+.tr span{display:block;font:400 13px/17px Barlow;color:var(--text3);margin-top:1px}
+.sech{font:700 11px Barlow;letter-spacing:.07em;text-transform:uppercase;color:var(--text4);margin:18px 2px 6px}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--glass);border-radius:22px 22px 0 0;padding:10px 22px 0;border-top:1px solid var(--border)}
+.sheet .hd{width:38px;height:4px;border-radius:2px;background:var(--borderStrong);margin:0 auto 14px}
+.sheet h3{font:700 17px Barlow;margin:0 0 6px}
+.scrim{position:absolute;inset:0;background:var(--scrim)}
+
+/* option 6: before and after */
+.ba{border-radius:16px;padding:12px 14px;margin-top:8px}
+.ba.a{border:1.3px dashed var(--borderStrong)}
+.ba.b{background:var(--glass);border:1px solid var(--border)}
+.ba .lb{font:700 11px Barlow;letter-spacing:.07em;text-transform:uppercase;color:var(--text4);margin-bottom:8px}
+.ba.b .lb{color:var(--accentInk)}
+.ba p{margin:8px 0 0;font:400 14px/20px Barlow;color:var(--text2)}
+.slots{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.slots i{width:16px;height:16px;border-radius:5px;border:1.3px dashed var(--borderStrong)}
+.slots i.f{border:0;background:#66CEB7}
+.slots i.c{border:0;background:#F48E76;opacity:.75}
+.slots em{font:600 12px "IBM Plex Mono";font-style:normal;color:var(--text3);margin-left:6px}
+
+/* option 7: calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal div{height:46px;border-radius:10px;border:1.3px dashed var(--borderStrong);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:600 11px "IBM Plex Mono";color:var(--text4)}
+.cal div.d{border:0;background:var(--okBg);color:var(--ok)}
+.cal div.t{border:2px solid var(--accent);color:var(--accentInk);background:var(--soft)}
+
+/* option 8: questions */
+.qn{font:600 12px "IBM Plex Mono";color:var(--text4);margin-top:6px}
+.qh{font:600 28px/32px Barlow;margin:8px 0 10px}
+
+/* option 9: choices */
+.ch{display:flex;align-items:center;gap:12px;padding:12px;border-radius:13px;margin-top:6px;border:1px solid var(--border);background:var(--glass)}
+.ch.on{background:var(--soft);border-color:transparent}
+.ch .t{flex:1}
+.ch .t b{display:block;font:600 15px Barlow}
+.ch.on .t b{font-weight:700}
+.ch .t span{display:block;font:400 13px/17px Barlow;color:var(--text3)}
+
+/* option 10: loop */
+.loop{position:relative;width:312px;height:290px}
+.loop svg{position:absolute;inset:0}
+.node{position:absolute;width:100px;height:42px;margin:-21px 0 0 -50px;border-radius:12px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;
+  border:1.2px dashed var(--borderStrong);color:var(--text4);background:var(--bg)}
+.node b{font:600 13px/15px Barlow}
+.node span{font:500 11px/13px Barlow}
+.node.on{border:1.4px solid var(--accent);color:var(--text);background:var(--soft)}
+.node.on span{color:var(--text3)}
+.ctr{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center}
+.ctr .mono{font-size:15px;font-weight:600;line-height:19px}
+.ctr span{display:block;font:500 11px Barlow;color:var(--text3);margin-top:3px}
+.ctr.off{opacity:.35}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F99B80"/><stop offset="1" stop-color="#EF806B"/></linearGradient>
+    <linearGradient id="gR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#77D6C2"/><stop offset="1" stop-color="#54C5AC"/></linearGradient>
+    <marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M1 1 9 5 1 9Z" style="fill:var(--arrow)" stroke-linejoin="round"/></marker>
+    <marker id="ahf" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M1 1 9 5 1 9Z" style="fill:var(--border)"/></marker>
+    <symbol id="swap" viewBox="22 22 64 64">
+      <path style="fill:var(--arrow)" d="M39.35 33.10L39.75 32.67L40.15 32.25L40.57 31.84L41.00 31.44L41.44 31.06L41.90 30.69L42.37 30.33L42.84 29.99L43.33 29.66L43.83 29.35L44.34 29.05L44.86 28.77L45.39 28.50L45.92 28.25L46.47 28.01L47.02 27.80L47.57 27.59L48.14 27.41L48.71 27.24L49.28 27.09L49.86 26.96L50.45 26.85L51.04 26.75L51.63 26.67L52.22 26.61L52.82 26.57L53.42 26.54L54.02 26.54L54.62 26.55L55.22 26.58L55.82 26.63L56.42 26.70L57.01 26.78L57.61 26.89L58.20 27.01L58.78 27.15L59.37 27.31L59.95 27.49L60.52 27.68L61.09 27.89L61.65 28.12L62.20 28.37L62.75 28.63L63.29 28.91L63.82 29.21L64.35 29.52L64.86 29.85L65.36 30.20L62.83 33.55L62.45 33.25L62.06 32.96L61.67 32.68L61.26 32.42L60.85 32.16L60.42 31.92L60.00 31.69L59.56 31.48L59.11 31.28L58.66 31.09L58.21 30.91L57.74 30.75L57.28 30.61L56.80 30.47L56.33 30.36L55.85 30.25L55.36 30.16L54.87 30.09L54.38 30.03L53.89 29.99L53.40 29.96L52.90 29.94L52.41 29.94L51.91 29.96L51.42 29.99L50.92 30.04L50.43 30.10L49.93 30.18L49.44 30.27L48.95 30.37L48.47 30.50L47.99 30.63L47.51 30.79L47.04 30.95L46.57 31.13L46.10 31.33L45.65 31.54L45.19 31.76L44.75 32.00L44.31 32.25L43.88 32.52L43.46 32.80L43.04 33.09L42.64 33.40L42.24 33.71L41.85 34.04L41.47 34.39L41.11 34.74A1.20 1.20 0 0 1 39.35 33.10Z"/>
+      <path style="fill:var(--arrow);stroke:var(--arrow)" stroke-width="2.2" stroke-linejoin="round" d="M68.32 35.07L65.25 28.69L60.48 34.99Z"/>
+      <path style="fill:var(--arrow)" d="M68.65 74.90L68.25 75.33L67.85 75.75L67.43 76.16L67.00 76.56L66.56 76.94L66.10 77.31L65.63 77.67L65.16 78.01L64.67 78.34L64.17 78.65L63.66 78.95L63.14 79.23L62.61 79.50L62.08 79.75L61.53 79.99L60.98 80.20L60.43 80.41L59.86 80.59L59.29 80.76L58.72 80.91L58.14 81.04L57.55 81.15L56.96 81.25L56.37 81.33L55.78 81.39L55.18 81.43L54.58 81.46L53.98 81.46L53.38 81.45L52.78 81.42L52.18 81.37L51.58 81.30L50.99 81.22L50.39 81.11L49.80 80.99L49.22 80.85L48.63 80.69L48.05 80.51L47.48 80.32L46.91 80.11L46.35 79.88L45.80 79.63L45.25 79.37L44.71 79.09L44.18 78.79L43.65 78.48L43.14 78.15L42.64 77.80L45.17 74.45L45.55 74.75L45.94 75.04L46.33 75.32L46.74 75.58L47.15 75.84L47.58 76.08L48.00 76.31L48.44 76.52L48.89 76.72L49.34 76.91L49.79 77.09L50.26 77.25L50.72 77.39L51.20 77.53L51.67 77.64L52.15 77.75L52.64 77.84L53.13 77.91L53.62 77.97L54.11 78.01L54.60 78.04L55.10 78.06L55.59 78.06L56.09 78.04L56.58 78.01L57.08 77.96L57.57 77.90L58.07 77.82L58.56 77.73L59.05 77.63L59.53 77.50L60.01 77.37L60.49 77.21L60.96 77.05L61.43 76.87L61.90 76.67L62.35 76.46L62.81 76.24L63.25 76.00L63.69 75.75L64.12 75.48L64.54 75.20L64.96 74.91L65.36 74.60L65.76 74.29L66.15 73.96L66.53 73.61L66.89 73.26A1.20 1.20 0 0 1 68.65 74.90Z"/>
+      <path style="fill:var(--arrow);stroke:var(--arrow)" stroke-width="2.2" stroke-linejoin="round" d="M39.68 72.93L42.75 79.31L47.52 73.01Z"/>
+      <g transform="rotate(-9.9 37.5 54)">
+        <rect x="27.2" y="38.15" width="20.6" height="31.7" rx="3.8" fill="url(#gL)"/>
+        <rect x="29.6" y="42.75" width="15.8" height="21.9" rx="1.9" fill="#FFFCF1"/>
+        <rect x="34.7" y="39.9" width="5.6" height="1.2" rx=".6" fill="#FFFCF1"/>
+        <circle cx="37.5" cy="67.25" r="1.15" fill="#FFFCF1"/>
+        <g transform="translate(37.5 53.8) scale(.78)">
+          <path d="M-2.5 -.4L-4.6 -1.8M2.5 -.4L4.6 -1.8M-3 1.7L-5.1 1.9M3 1.7L5.1 1.9M-2.5 3.8L-4.3 5.3M2.5 3.8L4.3 5.3" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/>
+          <path d="M-.8 -3.7Q-1.3 -5.6 -2.7 -6M.8 -3.7Q1.3 -5.6 2.7 -6" fill="none" stroke="#17253B" stroke-width=".9" stroke-linecap="round"/>
+          <rect x="-3.4" y="-1.1" width="6.8" height="7.3" rx="3.4" fill="#17253B"/>
+          <circle cx="0" cy="-2.8" r="2.05" fill="#17253B" stroke="#FFFCF1" stroke-width=".6"/>
+          <path d="M0 .1V5.6" stroke="#FFFCF1" stroke-width=".55" stroke-linecap="round"/>
+        </g>
+      </g>
+      <g transform="rotate(9.9 70.5 54)">
+        <rect x="60.2" y="38.15" width="20.6" height="31.7" rx="3.8" fill="url(#gR)"/>
+        <rect x="62.6" y="42.75" width="15.8" height="21.9" rx="1.9" fill="#FFFCF1"/>
+        <rect x="67.7" y="39.9" width="5.6" height="1.2" rx=".6" fill="#FFFCF1"/>
+        <circle cx="70.5" cy="67.25" r="1.15" fill="#FFFCF1"/>
+        <path d="M66.36 55.18L69.24 57.97L74.46 52.03" fill="none" stroke="#17253B" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="bar">
+  <h1>TestTrack onboarding: 10 options</h1>
+  <div class="seg" id="size"><button data-z=".55">S</button><button data-z=".7" class="on">M</button><button data-z=".85">L</button><button data-z="1">1:1</button></div>
+  <div class="seg" id="theme"><button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>
+</div>
+<div class="intro">
+  Every option says the same four things: <b>Play's rule</b> (12 testers for 14 days), <b>how it works</b> (you test theirs, they test yours),
+  <b>tix</b> (earn by testing, spend for testers) and <b>what to do first</b>. All keep what the app has today: guests can look around without an account,
+  sign-in is the existing Google sheet, and no permission is asked here (each feature asks for its own). Phones are 360 by 780 dp; body text 14 to 15, titles 25.
+  Numbers shown in app screens (tix a review pays, app names) are samples.
+</div>
+
+<div id="root"></div>
+
+<script>
+/* ---------- icons (Lucide, as the app uses) ---------- */
+const L = {
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  msg:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+  user:'<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  ticket:'<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/>',
+  lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  eye:'<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  undo:'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  back:'<path d="M15.5 4 7.5 12l8 8"/>',
+  chev:'<path d="m9 18 6-6-6-6"/>',
+  star:'<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>',
+  moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  play:'<path d="M6 3l14 9-14 9V3z"/>',
+  coins:'<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18M7 6h1v4M16.71 13.88l.7.71-2.82 2.82"/>',
+  heart:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+};
+const ic = (n, s=20, sw=2, st='') => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="${st}">${L[n]}</svg>`;
+const G = s => `<svg width="${s}" height="${s}" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
+const mark = s => `<svg width="${s}" height="${s}"><use href="#swap"/></svg>`;
+
+/* ---------- icon-language drawing: a phone from the app icon ---------- */
+const BUG = `<g transform="translate(0 -.2) scale(.78)"><path d="M-2.5 -.4L-4.6 -1.8M2.5 -.4L4.6 -1.8M-3 1.7L-5.1 1.9M3 1.7L5.1 1.9M-2.5 3.8L-4.3 5.3M2.5 3.8L4.3 5.3" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M-.8 -3.7Q-1.3 -5.6 -2.7 -6M.8 -3.7Q1.3 -5.6 2.7 -6" fill="none" stroke="#17253B" stroke-width=".9" stroke-linecap="round"/><rect x="-3.4" y="-1.1" width="6.8" height="7.3" rx="3.4" fill="#17253B"/><circle cx="0" cy="-2.8" r="2.05" fill="#17253B" stroke="#FFFCF1" stroke-width=".6"/><path d="M0 .1V5.6" stroke="#FFFCF1" stroke-width=".55" stroke-linecap="round"/></g>`;
+const CHECK = `<path d="M-4.14 1.18L-1.26 3.97L3.96 -1.97" fill="none" stroke="#17253B" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>`;
+function ph(x, y, s, rot, kind, glyph=''){
+  let g = `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})">`;
+  if (kind === 'outline') {
+    g += `<rect x="-10.3" y="-15.85" width="20.6" height="31.7" rx="3.8" fill="none" style="stroke:var(--borderStrong)" stroke-width="${1.3/s}" stroke-dasharray="${3/s} ${2.4/s}"/>`;
+  } else {
+    const fill = kind === 'coral' ? 'url(#gL)' : 'url(#gR)';
+    g += `<rect x="-10.3" y="-15.85" width="20.6" height="31.7" rx="3.8" fill="${fill}"/><rect x="-7.9" y="-11.25" width="15.8" height="21.9" rx="1.9" fill="#FFFCF1"/><rect x="-2.8" y="-14.1" width="5.6" height="1.2" rx=".6" fill="#FFFCF1"/><circle cx="0" cy="13.25" r="1.15" fill="#FFFCF1"/>`;
+  }
+  if (glyph === 'bug') g += BUG; else if (glyph === 'check') g += CHECK; else g += glyph;
+  return g + '</g>';
+}
+/* the tix ticket, as res/drawable/tix_ticket, flat */
+function ticket(w, rot=0){
+  return `<svg width="${w}" height="${w*44/64}" viewBox="0 0 64 44" style="transform:rotate(${rot}deg);display:block"><path d="M8 3H56Q61 3 61 8V16A6 6 0 0 0 61 28V36Q61 41 56 41H8Q3 41 3 36V28A6 6 0 0 0 3 16V8Q3 3 8 3Z" fill="#F7C24E" stroke="#17405E" stroke-width="3.5" stroke-linejoin="round"/><path d="M18 9V12M18 15V18M18 21V24M18 27V30M18 33V36" stroke="#B97A1E" stroke-width="2.5" stroke-linecap="round"/><path d="M39 12l3.2 6.6 7.2 1-5.2 5 1.3 7.2-6.5-3.4-6.5 3.4 1.3-7.2-5.2-5 7.2-1Z" fill="#FFF8E1" stroke="#17405E" stroke-width="2" stroke-linejoin="round"/></svg>`;
+}
+const tixPill = n => `<span class="tix">${ticket(24)}${n}</span>`;
+const nt = (ch, h, s=36, r=10) => `<span class="nt" style="--h:${h};width:${s}px;height:${s}px;border-radius:${r}px;font-size:${Math.round(s*.42)}px">${ch}</span>`;
+const APPS = [['N',200,'Notely'],['P',18,'Pocket Gym'],['L',45,'Lumo Weather'],['T',150,'Tally Split'],['M',280,'Mapple'],['K',330,'Kiro Notes'],['B',95,'Budgeteer'],['R',240,'Runlog'],['S',175,'Sudo Sudoku'],['F',5,'Flashy'],['O',60,'Orbit Timer'],['W',215,'Wordly'],['D',305,'Doodle Pad'],['H',125,'Habitat']];
+
+/* ---------- phone chrome ---------- */
+const SB = `<div class="sb"><span>9:41</span><span class="cam"></span><span style="display:flex;gap:6px;align-items:center">
+ <svg width="16" height="11" viewBox="0 0 16 11"><path d="M1 10h2V7H1zM5 10h2V5H5zM9 10h2V3H9zM13 10h2V1h-2z" fill="currentColor"/></svg>
+ <svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 10.5 1 4a9.2 9.2 0 0 1 13 0z" fill="currentColor"/></svg>
+ <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2.5" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="12" height="7" rx="1.3" fill="currentColor"/><rect x="19.5" y="3.5" width="1.8" height="4" rx=".8" fill="currentColor" opacity=".5"/></svg>
+</span></div>`;
+const topBar = (o={}) => `<div class="top">${o.brand===false?'':mark(30)}<span class="nm">${o.title ?? 'TestTrack'}</span>${o.skip===false?'':`<span class="skip">${o.skipText||'Skip'}</span>`}</div>`;
+const dots = (i, n) => `<div class="dots">${Array.from({length:n},(_,k)=>`<i class="${k===i?'on':''}"></i>`).join('')}</div>`;
+const gBtn = (t='Sign in with Google') => `<div class="btn"><span class="gdot">${G(15)}</span>${t}</div>`;
+const btn = (t, cls='') => `<div class="btn ${cls}">${t}</div>`;
+const lnk = (t, cls='') => `<div class="lnk ${cls}">${t}</div>`;
+const foot = inner => `<div class="foot">${inner}</div>`;
+const phone = (inner, extra='') => `<div class="phone"><div class="scr">${SB}${inner}<div class="gest"><i></i></div>${extra}</div></div>`;
+const steps = list => `<div class="steps">${list.map((s,k)=>`<div class="st"><span class="num">${k+1}</span><div><b>${s[0]}</b>${s[1]?`<span>${s[1]}</span>`:''}</div></div>`).join('')}</div>`;
+const FIRST = [
+  ['Sign in with Google','Your crews, apps and tix stay with your account.'],
+  ['Add your app','Paste its Play link. We fill in the name and icon.'],
+  ['Take a seat in the open crew','A seat is 100 tix. You start with 120.'],
+];
+const lastFoot = (i,n) => foot(`${n?dots(i,n):''}${gBtn()}${lnk('Look around first','mut')}`);
+
+/* ---------- options ---------- */
+const OPTIONS = [];
+const add = (title, tag, idea, pages) => OPTIONS.push({title, tag, idea, pages});
+
+/* 1. The short story */
+add('The short story', '4 pages, text first',
+ 'One page per point the owner listed, in order. Left-aligned text does the work; each page has one small, flat diagram. Lightest of the pager options.',
+ [
+ ['1. The rule', phone(`${topBar()}<div class="body">
+   <div class="art"><div class="frag" style="width:100%">
+     <div style="display:flex;align-items:center;gap:8px;font:600 15px Barlow">${ic('play',16,2,'color:var(--ok)')}Closed testing</div>
+     <div class="meter"><span>Testers opted in</span><b>3 / 12</b></div><div class="track"><i style="width:25%"></i></div>
+     <div class="meter"><span>Days in a row</span><b>0 / 14</b></div><div class="track"><i style="width:0"></i></div>
+     <div style="display:flex;align-items:center;gap:8px;margin-top:14px;font:500 13px Barlow;color:var(--text3)">${ic('lock',15)}Production: not yet</div>
+   </div></div>
+   <div class="eb">Why you're here</div>
+   <div class="h">Google Play wants 12 testers for 14 days</div>
+   <p class="p">A new developer account has to run a closed test before its app can go to production. Finding 12 people who stay for two weeks is the hard part.</p>
+   </div>${foot(dots(0,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['2. How it works', phone(`${topBar()}<div class="body">
+   <div class="art"><div style="display:flex;align-items:center;gap:6px">
+     <div style="text-align:center"><svg width="78" height="104" viewBox="-21 -27 42 54">${ph(0,0,1.6,-6,'coral','bug')}</svg><div class="hint" style="margin-top:6px">Your app</div></div>
+     <svg width="62" height="90" viewBox="0 0 62 90"><path d="M8 32Q31 8 54 32" fill="none" style="stroke:var(--arrow)" stroke-width="3.2" stroke-linecap="round" marker-end="url(#ah)"/><path d="M54 58Q31 82 8 58" fill="none" style="stroke:var(--arrow)" stroke-width="3.2" stroke-linecap="round" marker-end="url(#ah)"/></svg>
+     <div style="text-align:center"><div style="display:grid;grid-template-columns:repeat(4,26px);gap:5px">${APPS.slice(0,14).map(a=>nt(a[0],a[1],26,8)).join('')}</div><div class="hint" style="margin-top:6px">14 other apps</div></div>
+   </div></div>
+   <div class="eb">How it works</div>
+   <div class="h">You test theirs. They test yours.</div>
+   <p class="p">You join a crew of 15 developers. Every night you open the other 14 apps for 20 seconds each, and they open yours. After 14 nights, everyone has their testers.</p>
+   </div>${foot(dots(1,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['3. Tix', phone(`${topBar()}<div class="body">
+   <div class="art"><div style="width:100%">
+     <div style="display:flex;justify-content:center;margin-bottom:16px">${ticket(76,-6)}</div>
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+       <div class="frag" style="padding:12px"><div style="font:700 12px Barlow;letter-spacing:.06em;color:var(--ok)">EARN</div><div class="ls"><div>Opening apps in your crew</div><div>Giving feedback in the Circle</div></div></div>
+       <div class="frag" style="padding:12px"><div style="font:700 12px Barlow;letter-spacing:.06em;color:var(--accentInk)">SPEND</div><div class="ls"><div>A crew seat</div><div>Feedback and reviews on your app</div></div></div>
+     </div></div></div>
+   <div class="eb">Tix</div>
+   <div class="h">Help others, get help back</div>
+   <p class="p">Tix are what you earn by testing and spend to get testers. A seat is 100 tix, and you get all of it back if you open every app every night.</p>
+   </div>${foot(dots(2,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['4. First steps', phone(`${topBar({skip:false})}<div class="body">
+   <div class="eb" style="margin-top:14px">Start here</div>
+   <div class="h">Your first crew in three steps</div>
+   ${steps(FIRST)}
+   <div class="spacer"></div>
+   </div>${lastFoot(3,4)}`)],
+ ]);
+
+/* 2. Numbers first */
+add('Numbers first', '4 pages, type-led',
+ 'Big tabular figures in IBM Plex Mono (the app\'s figure font) carry each page; a line of text under each. No pictures at all. Reads like a spec sheet, very calm.',
+ [
+ ['1. The rule', phone(`${topBar()}<div class="body">
+   <div class="eb" style="margin-top:18px">Google Play's rule</div>
+   <div style="margin-top:14px">
+     <div class="fig"><div class="v mono">12</div><div class="u"><b>testers</b>opted in to your closed test</div></div>
+     <div class="fig"><div class="v mono">14</div><div class="u"><b>days in a row</b>before you can apply for production</div></div>
+   </div>
+   <div class="spacer"></div>
+   <p class="p">This is what Google asks of new developer accounts. TestTrack is how you get there with other developers.</p>
+   </div>${foot(dots(0,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['2. A crew', phone(`${topBar()}<div class="body">
+   <div class="eb" style="margin-top:18px">How a crew works</div>
+   <div style="margin-top:14px">
+     <div class="fig"><div class="v mono">15</div><div class="u"><b>apps in a crew</b>one from each developer</div></div>
+     <div class="fig"><div class="v mono">14</div><div class="u"><b>apps you open a night</b>everyone's but your own</div></div>
+     <div class="fig"><div class="v sm mono">20s</div><div class="u"><b>for each app</b>with a picture as proof</div></div>
+   </div>
+   <div class="spacer"></div>
+   <p class="p">They open yours the same way, so your app gets 14 testers. That is two more than Google asks for.</p>
+   </div>${foot(dots(1,4)+btn('Next'))}`)],
+ ['3. Tix', phone(`${topBar()}<div class="body">
+   <div class="eb" style="margin-top:18px">What it costs</div>
+   <div style="margin-top:14px">
+     <div class="fig"><div class="v mono">100</div><div class="u"><b>tix for a seat</b>in the open crew</div></div>
+     <div class="fig"><div class="v mono" style="color:var(--ok)">100</div><div class="u"><b>tix back</b>if you open every app every night</div></div>
+     <div class="fig"><div class="v mono">120</div><div class="u"><b>tix to start</b>enough for your first seat</div></div>
+   </div>
+   <div class="spacer"></div>
+   <p class="p">No money. Earn more tix by testing apps and giving feedback in the Circle.</p>
+   </div>${foot(dots(2,4)+btn('Next'))}`)],
+ ['4. First steps', phone(`${topBar({skip:false})}<div class="body">
+   <div class="fig" style="margin-top:14px"><div class="v mono" style="min-width:56px">3</div><div class="u"><b>steps to your first crew</b></div></div>
+   ${steps(FIRST)}
+   <div class="spacer"></div>
+   </div>${lastFoot(3,4)}`)],
+ ]);
+
+/* 3. Real screens */
+const miniCrew = `<div class="mini">
+  <div class="mh">Crew<span class="spacer"></span>${tixPill(120)}</div>
+  <div class="mrow" style="flex-direction:column;align-items:stretch;padding:12px">
+    <div style="display:flex;align-items:center;gap:8px"><b style="font:600 15px Barlow;flex:1">Crew 14 is filling</b><span class="chip">11 of 15</span></div>
+    <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-top:10px">${APPS.slice(0,11).map(a=>nt(a[0],a[1],26,8)).join('')}${'<span style="width:26px;height:26px;border-radius:8px;border:1.3px dashed var(--borderStrong)"></span>'.repeat(4)}</div>
+    <div class="hint" style="margin-top:10px">Starts at midnight once all 15 seats are taken.</div>
+    <div class="sbtn" style="margin-top:10px;justify-content:center;height:36px">Take a seat for 100 tix</div>
+  </div>
+  <div class="mrow"><span class="itile" style="width:30px;height:30px">${ic('cal',16)}</span><div class="t"><b>Your 14 days</b><span>One night at a time</span></div>${ic('chev',16,2,'color:var(--text4)')}</div>
+ </div>`;
+const tonightRow = (a, state) => `<div class="mrow">${nt(a[0],a[1],32,9)}<div class="t"><b>${a[2]}</b><span>${state==='done'?'Opened, picture in':'Not opened yet'}</span></div>${state==='done'?`<span class="chip ok">${ic('check',13,2.6)}Done</span>`:'<span class="sbtn soft">Open</span>'}</div>`;
+const miniTonight = `<div class="mini">
+  <div class="mh">Tonight<span class="spacer"></span><span class="chip">Day 3 of 14</span></div>
+  <div style="padding:0 14px 10px"><div class="meter" style="margin-top:2px"><span>5 of 14 opened</span><span class="hint">12 nights to go</span></div><div class="track"><i style="width:36%"></i></div></div>
+  ${tonightRow(APPS[0],'done')}${tonightRow(APPS[1],'done')}${tonightRow(APPS[2])}${tonightRow(APPS[3])}${tonightRow(APPS[4])}
+ </div>`;
+const feedCard = (a, kind, pay) => `<div class="mrow" style="align-items:flex-start;padding:11px 12px">${nt(a[0],a[1],36,10)}<div class="t"><b>${a[2]}</b><span>${kind}</span></div><span style="display:flex;align-items:center;gap:5px;font:600 13px 'IBM Plex Mono'">${ticket(22)}${pay}</span></div>`;
+const miniCircle = `<div class="mini">
+  <div class="mh">Circle<span class="spacer"></span>${tixPill(240)}</div>
+  <div style="display:flex;gap:6px;padding:0 12px 10px"><span class="chip" style="background:var(--accent);color:#fff">Feedback</span><span class="chip" style="background:var(--glass2);color:var(--text2)">Activity</span></div>
+  ${feedCard(APPS[4],'Written feedback on a closed test','40')}
+  ${feedCard(APPS[5],'Rating and review on Play','60')}
+  ${feedCard(APPS[6],'Written feedback on a closed test','30')}
+ </div>`;
+const miniAdd = `<div class="mini">
+  <div class="mh">${ic('back',20,2.2,'color:var(--text)')}Add your app</div>
+  <div style="margin:4px 12px 10px;height:46px;border-radius:999px;background:var(--surface2);border:1.2px solid var(--text);display:flex;align-items:center;gap:8px;padding:0 14px;font:500 14px Barlow;overflow:hidden;white-space:nowrap">${ic('link',16)}<span style="overflow:hidden;text-overflow:ellipsis">play.google.com/store/apps/details?id=com.lumo.weather</span></div>
+  <div class="mrow" style="background:var(--soft);border-color:transparent">${nt('L',45,40,11)}<div class="t"><b>Lumo Weather</b><span>com.lumo.weather</span></div>${ic('check',18,2.4,'color:var(--accentInk)')}</div>
+  <div class="hint" style="padding:6px 16px">Found on Google Play.</div>
+ </div>`;
+add('Real screens', '4 pages, app fragments',
+ 'Each page shows a cropped piece of the real screen it talks about (Crew filling, Tonight, Circle, Add your app), in the app\'s own components. Teaches the UI before the user lands in it.',
+ [
+ ['1. The rule and a crew', phone(`${topBar()}<div class="body"><div class="art">${miniCrew}</div>
+   <div class="h">Get your 12 testers in a crew</div>
+   <p class="p">Google Play asks for 12 testers over 14 days. A crew is 15 developers testing each other's apps for exactly that.</p>
+   </div>${foot(dots(0,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['2. Each night', phone(`${topBar()}<div class="body"><div class="art">${miniTonight}</div>
+   <div class="h">Open their apps each night</div>
+   <p class="p">About five minutes. TestTrack opens each app for 20 seconds and keeps a picture as proof. The others do the same for yours.</p>
+   </div>${foot(dots(1,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['3. Tix in the Circle', phone(`${topBar()}<div class="body"><div class="art">${miniCircle}</div>
+   <div class="h">Earn tix, spend tix</div>
+   <p class="p">Give feedback in the Circle to earn tix. Spend them on a crew seat, or to ask others what they think of your app.</p>
+   </div>${foot(dots(2,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['4. Start', phone(`${topBar({skip:false})}<div class="body"><div class="art">${miniAdd}</div>
+   <div class="h">Start with your Play link</div>
+   <p class="p">Sign in, paste your app's Play link, then take a seat in the open crew. You start with 120 tix, enough for one seat.</p>
+   </div>${lastFoot(3,4)}`)],
+ ]);
+
+/* 4. One page */
+const onePageTop = `<div class="top" style="height:48px">${mark(30)}<span class="nm">TestTrack</span></div>
+ <div class="body" style="overflow:hidden">
+  <div class="h" style="font-size:26px;line-height:31px;margin-top:10px">Testers for your closed test, from other developers</div>
+  <p class="p">Google Play asks new developers for 12 testers over 14 days. Here, developers test each other's apps until everyone has theirs.</p>
+  <div class="sech">How it works</div>
+  <div class="tr"><span class="itile">${ic('users',18)}</span><div><b>Join a crew of 15</b><span>Each night, open the other 14 apps for 20 seconds.</span></div></div>
+  <div class="tr"><span class="itile">${ic('cal',18)}</span><div><b>Keep it up for 14 nights</b><span>They open your app the same way.</span></div></div>
+  <div class="tr"><span class="itile">${ic('ticket',18)}</span><div><b>Pay with tix, not money</b><span>Earn tix by testing. A seat is 100, back if you never miss.</span></div></div>
+  <div class="sech">First steps</div>
+  ${steps(FIRST)}
+ </div>`;
+add('One page', '1 page, no pager',
+ 'Everything on one short scrolling page: a headline, three TileRow lines for how it works, and the first steps. No Next, no dots, no Skip. Sign in and Look around stay pinned at the bottom.',
+ [
+ ['Top of the page', phone(`${onePageTop}${foot(gBtn()+lnk('Look around first','mut'))}`)],
+ ['Scrolled to the end', phone(`<div class="top" style="height:48px">${mark(30)}<span class="nm">TestTrack</span></div>
+   <div class="body"><div class="sech" style="margin-top:4px">How it works</div>
+   <div class="tr"><span class="itile">${ic('ticket',18)}</span><div><b>Pay with tix, not money</b><span>Earn tix by testing. A seat is 100, back if you never miss.</span></div></div>
+   <div class="sech">First steps</div>${steps(FIRST)}
+   <div class="note">${ticket(28)}You start with 120 tix, enough for your first seat.</div>
+   <div class="note">${ic('eye',18,2,'color:var(--accentInk)')}You can look around the Circle and Crew without an account.</div>
+   </div>${foot(gBtn()+lnk('Look around first','mut'))}`)],
+ ['Sign in sheet (existing)', phone(`${onePageTop}${foot(gBtn()+lnk('Look around first','mut'))}`,
+   `<div class="scrim"></div><div class="sheet"><div class="hd"></div><h3>Sign in to TestTrack</h3>
+    <p class="p">Your crews, apps and tix are saved to your account, so they are there on any phone you sign in on.</p>
+    <div style="height:16px"></div><div class="btn" style="background:var(--bg);color:var(--text);border:1px solid var(--borderStrong)">${G(20)}Continue with Google</div><div class="hint" style="text-align:center;margin:10px 0 18px">Play ties closed testing to Google accounts.</div><div class="gest"><i></i></div></div>`)],
+ ]);
+
+/* 5. Icon language */
+const ring12 = (() => { let s=''; for(let k=0;k<12;k++){ const a=(-90+k*30)*Math.PI/180; const x=130+104*Math.cos(a), y=130+104*Math.sin(a); s+=ph(x.toFixed(1),y.toFixed(1),.95,0,k<3?'mint':'outline',k<3?'check':''); } return s; })();
+add('Icon language', '4 pages, flat illustrations',
+ 'Every picture is built only from the launcher icon\'s parts: the coral phone with the bug, the mint phone with the check, the robot-blue arrows and the tix ticket. Centred, friendly, the most "brand" option.',
+ [
+ ['1. The rule', phone(`${topBar()}<div class="body">
+   <div class="art"><svg width="260" height="260" viewBox="0 0 260 260">${ring12}${ph(130,130,2.9,-6,'coral','bug')}</svg></div>
+   <div class="h c">Your app needs 12 testers</div>
+   <p class="p c">Google Play asks new developers for a closed test with 12 testers who keep your app for 14 days.</p>
+   </div>${foot(dots(0,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['2. Swap', phone(`${topBar()}<div class="body">
+   <div class="art">${mark(250)}</div>
+   <div class="h c">Swap tests with other developers</div>
+   <p class="p c">In a crew of 15, you open their apps every night and they open yours. After 14 nights, you all have your testers.</p>
+   </div>${foot(dots(1,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['3. Tix', phone(`${topBar()}<div class="body">
+   <div class="art"><div style="position:relative;width:250px;height:240px">
+     <svg width="250" height="240" viewBox="0 0 250 240" style="position:absolute;inset:0">${ph(92,132,3.6,-8,'mint','check')}
+       <path d="M140 64Q170 38 196 58" fill="none" style="stroke:var(--arrow)" stroke-width="4" stroke-linecap="round" marker-end="url(#ah)"/></svg>
+     <div style="position:absolute;left:160px;top:72px">${ticket(80,10)}</div>
+   </div></div>
+   <div class="h c">Testing earns tix</div>
+   <p class="p c">Spend tix on a crew seat or on feedback for your app. Open every app every night and the seat's 100 tix come back.</p>
+   </div>${foot(dots(2,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['4. First steps', phone(`${topBar({skip:false})}<div class="body">
+   <div style="display:flex;justify-content:center;margin:10px 0 2px">${mark(96)}</div>
+   <div class="h c">Start in three steps</div>
+   ${steps(FIRST)}
+   <div class="spacer"></div>
+   </div>${lastFoot(3,4)}`)],
+ ]);
+
+/* 6. Before and after */
+const slots = (f, cls, extra='') => `<div class="slots">${Array.from({length:12},(_,k)=>`<i class="${k<f?cls:''}"></i>`).join('')}${extra}</div>`;
+add('Before and after', '4 pages, compare',
+ 'Each page puts "On your own" (dashed, faint) over "With TestTrack" (solid). The value is shown by contrast, not by claims. Good for developers who already tried asking friends.',
+ [
+ ['1. Finding testers', phone(`${topBar()}<div class="body">
+   <div class="h" style="margin-top:10px">Finding 12 testers</div>
+   <p class="p">Google Play wants 12 testers who stay for 14 days before a new app can go to production.</p>
+   <div class="ba a" style="margin-top:14px"><div class="lb">On your own</div>${slots(3,'c','<em>3 / 12</em>')}<p>Friends say yes, then forget to open it after a few days.</p></div>
+   <div class="ba b"><div class="lb">With TestTrack</div>${slots(12,'f','<i class="f"></i><i class="f"></i><em>14 / 12</em>')}<p>A crew of 15 developers who all need the same thing, opening each other's apps every night.</p></div>
+   <div class="spacer"></div></div>${foot(dots(0,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['2. Paying for it', phone(`${topBar()}<div class="body">
+   <div class="h" style="margin-top:10px">Paying for it</div>
+   <p class="p">Testers cost time or money. Here they cost tix.</p>
+   <div class="ba a" style="margin-top:14px"><div class="lb">On your own</div><div style="display:flex;gap:10px;color:var(--text4)">${ic('coins',26,1.8)}${ic('heart',26,1.8)}</div><p>Paid testing services, or favours you will owe for a while.</p></div>
+   <div class="ba b"><div class="lb">With TestTrack</div><div style="display:flex;gap:10px;align-items:center">${ticket(40)}<span style="font:600 15px Barlow;color:var(--text2)">100 tix a seat</span></div><p>You earn tix by testing other apps. A seat is 100 tix, and you get it back if you open every app every night.</p></div>
+   <div class="spacer"></div></div>${foot(dots(1,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['3. Knowing it happened', phone(`${topBar()}<div class="body">
+   <div class="h" style="margin-top:10px">Knowing it really happened</div>
+   <p class="p">You see who opened your app, night by night.</p>
+   <div class="ba a" style="margin-top:14px"><div class="lb">On your own</div><p style="margin-top:0">You hope they opened it. Play Console only tells you later.</p></div>
+   <div class="ba b"><div class="lb">With TestTrack</div>
+     <div style="display:flex;gap:6px;align-items:center">${APPS.slice(0,5).map(a=>nt(a[0],a[1],26,8)).join('')}<span class="chip ok" style="margin-left:4px">${ic('camera',13)}5 pictures</span></div>
+     <p>Every visit is timed and comes with a picture. Miss two nights in a row and your app leaves the crew, so people keep up.</p></div>
+   <div class="spacer"></div></div>${foot(dots(2,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['4. First steps', phone(`${topBar({skip:false})}<div class="body">
+   <div class="h" style="margin-top:10px">Ready to try it?</div>
+   ${steps(FIRST)}
+   <div class="spacer"></div></div>${lastFoot(3,4)}`)],
+ ]);
+
+/* 7. The 14 nights */
+const cal = states => `<div class="cal">${states.map((s,k)=>`<div class="${s}">${s==='d'?ic('check',14,2.6):''}<span>${k+1}</span></div>`).join('')}</div>`;
+const S = (d, t) => Array.from({length:14},(_,k)=> k<d?'d':(k===t?'t':''));
+add('The 14 nights', '4 pages, one calendar',
+ 'A 14-night strip stays in the same place on every page and fills up as the story moves on. The core of the app (the run) is the picture, and the tix refund lands at the end of it.',
+ [
+ ['1. The rule', phone(`${topBar()}<div class="body"><div class="art pin"><div style="width:100%">
+   <div class="meter" style="margin:0 0 10px"><span>Your closed test</span><b>0 / 14 nights</b></div>${cal(S(0,-1))}
+   <div class="meter" style="margin-top:16px"><span>Testers</span><b>0 / 12</b></div><div class="track"><i style="width:0"></i></div></div></div>
+   <div class="h">Google counts 14 days</div>
+   <p class="p">Your closed test needs at least 12 testers opted in for 14 days in a row before you can apply for production.</p>
+   </div>${foot(dots(0,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['2. Each night', phone(`${topBar()}<div class="body"><div class="art pin"><div style="width:100%">
+   <div class="meter" style="margin:0 0 10px"><span>Crew 14</span><b>Night 1</b></div>${cal(S(0,0))}
+   <div style="margin-top:14px">${[APPS[0],APPS[1],APPS[2]].map(a=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0">${nt(a[0],a[1],28,8)}<span style="flex:1;font:600 14px Barlow">${a[2]}</span><span class="hint mono">20s</span></div>`).join('')}<div class="hint" style="padding:4px 0 0 38px">and 11 more</div></div></div></div>
+   <div class="h">Each night, open their apps</div>
+   <p class="p">In a crew of 15 you open the other 14 apps for 20 seconds each, about five minutes. Your night runs from midnight, your time.</p>
+   </div>${foot(dots(1,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['3. Finish clean', phone(`${topBar()}<div class="body"><div class="art pin"><div style="width:100%">
+   <div class="meter" style="margin:0 0 10px"><span>Crew 14</span><b>Night 14</b></div>${cal(S(13,13))}
+   <div style="display:flex;align-items:center;gap:12px;margin-top:16px" class="frag">${ticket(44)}<div><b style="font:600 15px Barlow;display:block">100 tix back</b><span class="hint" style="font-size:13px">Every app opened on every night</span></div></div></div></div>
+   <div class="h">Never miss, and the seat is free</div>
+   <p class="p">A seat costs 100 tix. Open every app on every night and all 100 come back. Earn more by giving feedback in the Circle.</p>
+   </div>${foot(dots(2,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['4. Start', phone(`${topBar({skip:false})}<div class="body">
+   <div style="margin-top:22px">${cal(S(14,-1))}</div>
+   <div class="h" style="margin-top:14px">Start your 14 nights</div>
+   ${steps(FIRST)}
+   <div class="spacer"></div></div>${lastFoot(3,4)}`)],
+ ]);
+
+/* 8. Questions */
+const qPage = (n, q, a, art, btnText, last) => phone(`${topBar({skip:!last})}<div class="body">
+   <div class="qn">${n} of 4</div>
+   <div class="qh">${q}</div>
+   ${a}
+   <div class="art">${art}</div>
+   </div>${last?lastFoot():foot(btn(btnText)+lnk('Already here? Sign in'))}`);
+add('Questions', '4 pages, the user\'s questions',
+ 'Each page is a question a developer actually has, answered in two or three sentences. The button names the next question, so there are no dots. The picture sits under the answer and stays small.',
+ [
+ ['1. Why', qPage(1,'Why do I need testers?',
+   '<p class="p">Google Play asks new developer accounts to run a closed test with at least 12 testers for 14 days in a row. Only then can the app go to production.</p>',
+   `<div class="frag" style="width:100%"><div class="meter" style="margin:0"><span>Testers</span><b>12</b></div><div class="meter"><span>Days in a row</span><b>14</b></div></div>`,
+   'Next: who tests my app?')],
+ ['2. Who', qPage(2,'Who tests my app?',
+   '<p class="p">Other developers in the same spot. You join a crew of 15, and every night each of you opens everyone else\'s app for 20 seconds.</p>',
+   mark(170), 'Next: what does it cost?')],
+ ['3. Cost', qPage(3,'What does it cost?',
+   '<p class="p">No money. You pay in tix, which you earn by testing and giving feedback. A seat is 100 tix, and they come back if you open every app every night.</p><p class="p">You start with 120.</p>',
+   ticket(110,-6), 'Next: where do I start?')],
+ ['4. Start', qPage(4,'Where do I start?', steps(FIRST), '', '', true)],
+ ]);
+
+/* 9. Pick your goal */
+const choice = (icn, t, s, on) => `<div class="ch ${on?'on':''}"><span class="itile">${ic(icn,18)}</span><div class="t"><b>${t}</b><span>${s}</span></div><span style="width:20px">${on?ic('check',20,2.4,'color:var(--accentInk)'):''}</span></div>`;
+add('Pick your goal', '3 pages, branches',
+ 'One page explains the whole idea, the second asks what they came for, the third gives steps for that goal only. Short, and the user lands where they meant to go. Costs a little more to build (one choice to keep).',
+ [
+ ['1. The idea', phone(`${topBar()}<div class="body">
+   <div class="art">${mark(200)}</div>
+   <div class="h">Developers testing each other's apps</div>
+   <p class="p">Google Play asks for 12 testers over 14 days before a new app goes live. Here you test other people's apps and they test yours.</p>
+   <p class="p">You earn tix by testing and spend them to get testers.</p>
+   </div>${foot(dots(0,3)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['2. What do you need?', phone(`${topBar()}<div class="body">
+   <div class="h" style="margin-top:12px">What do you need first?</div>
+   <p class="p">We'll show the steps for that. You can do the rest later.</p>
+   <div style="margin-top:10px">
+   ${choice('users','Testers for my closed test','12 testers for 14 days, in a crew',true)}
+   ${choice('msg','Feedback or reviews','Ask the Circle and pay in tix',false)}
+   ${choice('eye','Just looking for now','Browse without an account',false)}
+   </div><div class="spacer"></div>
+   </div>${foot(dots(1,3)+btn('Continue'))}`)],
+ ['3. Steps: testers', phone(`${topBar({skip:false})}<div class="body">
+   <div class="eb" style="margin-top:12px">Testers for your closed test</div>
+   <div class="h">Four steps to your 12 testers</div>
+   ${steps([['Sign in with Google',''],['Add our testers group to your closed test','In Play Console, under Testers. We show you how.'],['Add your app with its Play link',''],['Take a seat in the open crew','100 tix. You start with 120.']])}
+   <div class="spacer"></div></div>${lastFoot(2,3)}`)],
+ ['3. If they picked feedback', phone(`${topBar({skip:false})}<div class="body">
+   <div class="eb" style="margin-top:12px">Feedback or reviews</div>
+   <div class="h">Ask the Circle in three steps</div>
+   ${steps([['Sign in with Google',''],['Add your app with its Play link',''],['Ask for feedback','Say what you want to know and how many tix it pays.']])}
+   <div class="note">${ticket(28)}Earn more tix by giving feedback on other apps.</div>
+   <div class="spacer"></div></div>${lastFoot(2,3)}`)],
+ ]);
+
+/* 10. The loop */
+function loopArt(active){
+  const cx=156, cy=145, r=100;
+  const P = a => [cx + r*Math.cos(a*Math.PI/180), cy + r*Math.sin(a*Math.PI/180)].map(v=>v.toFixed(1));
+  const arc = (a,b,on) => { const [x1,y1]=P(a), [x2,y2]=P(b); return `<path d="M${x1} ${y1}A${r} ${r} 0 0 1 ${x2} ${y2}" fill="none" style="stroke:var(${on?'--arrow':'--border'})" stroke-width="${on?3.4:2.4}" stroke-linecap="round" marker-end="url(#${on?'ah':'ahf'})"/>`; };
+  const on = k => active.includes(k);
+  // arcs: top>right, right>bottom, bottom>left, left>top
+  const arcs = arc(-52,-22,on('a1')) + arc(22,52,on('a2')) + arc(128,158,on('a3')) + arc(202,232,on('a4'));
+  const node = (k,x,y,t,s) => `<div class="node ${on(k)?'on':''}" style="left:${x}px;top:${y}px"><b>${t}</b><span>${s}</span></div>`;
+  return `<div class="loop"><svg width="312" height="290">${arcs}</svg>
+    ${node('seat',156,45,'Take a seat','100 tix')}
+    ${node('open',261,145,'Open their apps','each night')}
+    ${node('yours',156,245,'They open yours','each night')}
+    ${node('earn',51,145,'Earn tix','by testing')}
+    <div class="ctr ${on('ctr')?'':'off'}"><div class="mono">12 testers</div><div class="mono">14 days</div><span>Google Play's rule</span></div></div>`;
+}
+add('The loop', '4 pages, one diagram',
+ 'One circle diagram explains the whole system: take a seat, open theirs, they open yours, earn tix, and round again. Each page lights up the part it talks about; the last page shows it all lit.',
+ [
+ ['1. The rule', phone(`${topBar()}<div class="body"><div class="art">${loopArt(['ctr'])}</div>
+   <div class="h">Google Play wants 12 testers for 14 days</div>
+   <p class="p">New developer accounts need a closed test before going to production. TestTrack gets you there with other developers.</p>
+   </div>${foot(dots(0,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['2. Swap', phone(`${topBar()}<div class="body"><div class="art">${loopArt(['open','yours','a2'])}</div>
+   <div class="h">You test theirs, they test yours</div>
+   <p class="p">A crew is 15 apps. Each night you open the other 14 for 20 seconds, and the other 14 open yours.</p>
+   </div>${foot(dots(1,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['3. Tix', phone(`${topBar()}<div class="body"><div class="art">${loopArt(['seat','earn','a4'])}</div>
+   <div class="h">Tix keep it going</div>
+   <p class="p">A seat costs 100 tix. Open every app every night and they come back for your next app. Feedback in the Circle earns more.</p>
+   </div>${foot(dots(2,4)+btn('Next')+lnk('Already here? Sign in'))}`)],
+ ['4. Start', phone(`${topBar({skip:false})}<div class="body">
+   <div class="h" style="margin-top:12px">Start your first loop</div>
+   ${steps(FIRST)}
+   <div class="art" style="zoom:.7">${loopArt(['seat','open','yours','earn','a1','a2','a3','a4','ctr'])}</div>
+   </div>${lastFoot(3,4)}`)],
+ ]);
+
+/* ---------- render ---------- */
+document.getElementById('root').innerHTML = OPTIONS.map((o,i)=>`
+ <section class="opt" id="o${i+1}">
+  <div class="oh"><span class="n">Option ${String(i+1).padStart(2,'0')}</span><h2>${o.title}</h2><span class="tag">${o.tag}</span></div>
+  <div class="idea">${o.idea}</div>
+  <div class="row">${o.pages.map(p=>`<div class="cell"><div class="cap">${p[0]}</div>${p[1]}</div>`).join('')}</div>
+ </section>`).join('');
+
+/* ---------- controls ---------- */
+const seg = (id, attr, apply) => document.querySelectorAll(`#${id} button`).forEach(b => b.onclick = () => {
+  document.querySelectorAll(`#${id} button`).forEach(x => x.classList.toggle('on', x === b)); apply(b.dataset[attr]);
+});
+seg('theme','t', t => document.documentElement.dataset.theme = t);
+seg('size','z', z => document.documentElement.style.setProperty('--z', z));
+const q = new URLSearchParams(location.search);
+if (q.get('t')) document.querySelector(`#theme button[data-t="${q.get('t')}"]`)?.click();
+if (q.get('z')) document.querySelector(`#size button[data-z="${q.get('z')}"]`)?.click();
+</script>
+</body>
+</html>
