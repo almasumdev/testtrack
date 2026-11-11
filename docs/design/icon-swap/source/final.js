@@ -9,7 +9,7 @@ global.document = {getElementById: mk, createElement: () => ({className: '', set
 global.localStorage = {getItem: () => null, setItem() {}};
 global.navigator = {};
 eval(src + `
-const CORAL = ["#F99B80", "#EF806B"], MINT = ["#77D6C2", "#54C5AC"], TILE = ["#E7F4FC", "#D5EAF7"];
+const CORAL = ["#F99B80", "#EF806B"], MINT = ["#77D6C2", "#54C5AC"], TILE = ["#F7FCFF", "#D5EAF7"];
 const CREAM = "#FFFCF1", INK = "#17253B";
 const lin = (id, c) => '<linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c[0] + '"/><stop offset="1" stop-color="' + c[1] + '"/></linearGradient>';
 const sh = (id, sd, dy, a) => '<filter id="' + id + '" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="' + sd + '"/><feOffset dy="' + dy + '" result="b"/><feFlood flood-color="#0E2E44" flood-opacity="' + a + '"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>';

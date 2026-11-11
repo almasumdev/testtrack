@@ -26,7 +26,7 @@ Chosen on 2026-11-11, bug added the same day after the meaning and ASO review. O
 
 Use the files in the repo-root `branding/` folder:
 - **Foreground layer:** `foreground.png` (1024 px, keeps the soft shadows) or `foreground.svg` (vector, no shadows).
-- **Background layer:** `background.png` or `background.svg`, a tile-blue gradient from #E7F4FC to #D5EAF7.
+- **Background layer:** `background.png` or `background.svg`, a gradient from #F7FCFF to #D5EAF7.
 - **Monochrome layer:** `monochrome.png` or `monochrome.svg`.
 - **Play icon:** Android Studio writes `app/src/main/ic_launcher-playstore.png` together with the launcher set. `mkit.toml` `[store] icon` points there, so no copy is kept here (mkit guide store).
 
