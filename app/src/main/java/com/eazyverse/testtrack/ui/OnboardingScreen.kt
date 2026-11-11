@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -146,12 +147,15 @@ fun OnboardingBody(
             Modifier.widthIn(max = 520.dp).fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Image(painterResource(R.drawable.testtrack_mark), null, Modifier.size(44.dp))
+            val brandStyle = MaterialTheme.typography.titleLarge
+            // The mark is as tall as the word's line, and scales with the font size.
+            val markSize = with(LocalDensity.current) { brandStyle.lineHeight.toDp() }
+            Image(painterResource(R.drawable.testtrack_mark), null, Modifier.size(markSize))
             Spacer(Modifier.width(8.dp))
             Text(
                 stringResource(R.string.intro_brand),
                 Modifier.weight(1f),
-                style = MaterialTheme.typography.titleLarge,
+                style = brandStyle,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
