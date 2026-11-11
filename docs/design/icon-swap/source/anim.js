@@ -1,7 +1,7 @@
 // anim.html: three splash animations of icon #2 (robot's swap on tile blue). Only moves Android's animated vector can do:
 // rotate, translate, scale, fade, and trimming the stroked checks.
 const fs = require('fs');
-const src = fs.readFileSync(__dirname + '/_t.js', 'utf8');
+const src = fs.readFileSync(__dirname + '/_t.js', 'utf8') + ';' + fs.readFileSync(__dirname + '/_bug.js', 'utf8');
 const els = {};
 const mk = id => els[id] || (els[id] = {innerHTML: '', value: '', textContent: '', appendChild() {}, querySelector() { return {addEventListener() {}, textContent: ''}; }, querySelectorAll() { return []; }, set onclick(v) {}});
 global.document = {getElementById: mk, createElement: () => ({className: '', set innerHTML(v) {}, querySelector() { return {addEventListener() {}, textContent: ''}; }})};
@@ -16,7 +16,13 @@ const sh = (id, sd, dy, a) => '<filter id="' + id + '" x="-40%" y="-30%" width="
 const L = {parts: CREAM, check: INK};
 const markCheck = s => s.replace(/<path d="([^"]*)" fill="none" stroke="#17253B"/, '<path class="chk" pathLength="1" d="$1" fill="none" stroke="#17253B"');
 // A phone drawn upright at the centre; CSS moves and tilts it, so it can travel.
-function centrePhone(id) { const t = P.tilt; P.tilt = 0; const s = markCheck(phone(0, L, id)); P.tilt = t; return s; }
+const thinChk = s => s.split('stroke-width="' + f(2.9 * P.check) + '"').join('stroke-width="' + CHECK_W + '"');
+// Left phone: no check, the bug instead (it pops in). Right phone: the thinner check, which draws itself.
+function centrePhone(id, withBug) { const t = P.tilt; P.tilt = 0; let s;
+  if (withBug) { const sc = screenOf(0), pp = phone(0, {parts: CREAM, check: 'none'}, id); s = pp.slice(0, pp.lastIndexOf('</g>')) +
+    '<g transform="translate(' + f(sc.mx) + ' ' + f(sc.my - .3) + ') scale(1.12)"><g class="bugmark">' + bugShape(INK, CREAM) + '</g></g></g>'; }
+  else s = thinChk(markCheck(phone(0, L, id)));
+  P.tilt = t; return s; }
 const X = P.gap / 2, T = P.tilt;
 
 function icon(k, bg, arm, full) {
@@ -28,7 +34,7 @@ function icon(k, bg, arm, full) {
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vb + '"><defs>' + defs + '</defs>' +
     (bg ? '<rect width="108" height="108" fill="url(#' + id + 'bg)"/>' : '') +
     '<g class="arrows"><g class="atop" filter="url(#' + id + 'soft)">' + arrow(1, arm) + '</g><g class="abot" filter="url(#' + id + 'soft)">' + arrow(-1, arm) + '</g></g>' +
-    '<g class="ph left">' + centrePhone(id + "L") + '</g><g class="ph right">' + centrePhone(id + "R") + '</g></svg>';
+    '<g class="ph left">' + centrePhone(id + "L", true) + '</g><g class="ph right">' + centrePhone(id + "R") + '</g></svg>';
 }
 
 // Positions: left phone rests at (-X, 0) tilted -T, right at (+X, 0) tilted +T.
@@ -70,7 +76,7 @@ const css = \`
 .play.C .ph.left{animation:cRiseL 420ms cubic-bezier(.2,.9,.3,1) both}
 .play.C .ph.right{animation:cRiseR 420ms 90ms cubic-bezier(.2,.9,.3,1) both}
 .play.C .arrows{animation:cTurn 600ms 260ms cubic-bezier(.3,1.25,.5,1) both}
-.play.C .left .chk{animation:draw 240ms 600ms ease-out both}.play.C .right .chk{animation:draw 240ms 690ms ease-out both}
+.stage .bugmark{transform-box:fill-box;transform-origin:center}.play.C .bugmark{animation:bugPop 300ms 560ms cubic-bezier(.3,1.5,.5,1) both}@keyframes bugPop{from{transform:scale(0);opacity:0}to{transform:none;opacity:1}}.play.C .right .chk{animation:draw 240ms 690ms ease-out both}
 @keyframes cRiseL{from{transform:translate(\${(-X).toFixed(2)}px,10px) rotate(\${-T}deg);opacity:0}to{transform:\${rest(-1)};opacity:1}}
 @keyframes cRiseR{from{transform:translate(\${X.toFixed(2)}px,10px) rotate(\${T}deg);opacity:0}to{transform:\${rest(1)};opacity:1}}
 @keyframes cTurn{from{transform:rotate(-180deg)}to{transform:none}}
@@ -83,7 +89,7 @@ const css = \`
 const cards = '<figure data-k="C"><div class="pair">' +
   '<div class="shot"><div class="splash"><div class="notch"></div><div class="stage bare">' + icon(1, false, ARM, true) + '</div></div><div class="cap">Light theme</div></div>' +
   '<div class="shot"><div class="splash dark"><div class="notch"></div><div class="stage bare">' + icon(2, false, "#80BCDE", true) + '</div></div><div class="cap">Dark theme</div></div></div>' +
-  '<figcaption><b>Rise and turn</b> <span>950 ms</span><p>The phones rise into place, the arrows fade in slowly while making a half turn with a small bounce, then the checks draw. On the dark screen the arrows use the light blue of the robot, because its darker blue disappears on black.</p><button>Play again</button></figcaption></figure>';
+  '<figcaption><b>Rise and turn</b> <span>950 ms</span><p>The phones rise into place, the arrows fade in slowly while making a half turn with a small bounce, then the bug pops in and the check draws. On the dark screen the arrows use the light blue of the robot, because its darker blue disappears on black.</p><button>Play again</button></figcaption></figure>';
 
 fs.writeFileSync(__dirname + "/anim.html", \`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Icon animation</title><style>
