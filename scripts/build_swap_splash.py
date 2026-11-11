@@ -29,8 +29,15 @@ ET.register_namespace("aapt", AAPT)
 
 # The artwork is drawn on a 108 unit grid. Android's splash canvas is 288dp and masks it to a
 # 192dp circle (2/3), the same ratio as the 72 of 108 units. The artwork reaches about 32 units
-# from the centre and the circle is 36, so it fits at full scale without a shrink group.
+# from the centre and the circle is 36, so it fits even before the ICON_SCALE shrink below.
 CANVAS_DP = 288
+
+# Scale of the whole artwork about the canvas centre. Matches the 0.9 foreground scale that
+# Android Studio Image Asset wrote into ic_launcher_foreground.xml, so the launch screen icon is
+# the same size as the launcher icon. Studio writes it as scale 0.9 plus translate 5.4, which is
+# the same as scaling about the centre (54, 54).
+ICON_SCALE = 0.9
+CENTER = 54
 
 # Easing curves, copied from the browser reference (CSS cubic-bezier).
 EASING = {
@@ -236,8 +243,14 @@ def build_vector(svg, animated=False):
     bug = svg.find(f".//*[@id='bug']")
     inner = bug.find(f"{{{SVG}}}g/{{{SVG}}}g/{{{SVG}}}g")
     inner.set("id", "bug_pop")
+    # Outer static group: scales everything about the centre. Inner groups keep their own pivots
+    # (in this group's coordinates), and animation targets are found by name, so motion is unchanged.
+    scaled = ET.SubElement(vector, "group", android_attrs(
+        name="icon_scale", scaleX=num(ICON_SCALE), scaleY=num(ICON_SCALE),
+        pivotX=num(CENTER), pivotY=num(CENTER),
+    ))
     for child in svg:
-        convert(child, vector, [])
+        convert(child, scaled, [])
     return vector, paths
 
 
