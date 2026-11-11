@@ -28,7 +28,7 @@ Use the files in `studio/`:
 - **Foreground layer:** `foreground.png` (1024 px, keeps the soft shadows) or `foreground.svg` (vector, no shadows).
 - **Background layer:** `background.png` or `background.svg`, a tile-blue gradient from #E7F4FC to #D5EAF7.
 - **Monochrome layer:** `monochrome.png` or `monochrome.svg`.
-- **Play Console icon:** `play-icon-512.png`.
+- **Play icon:** Android Studio writes `app/src/main/ic_launcher-playstore.png` together with the launcher set. `mkit.toml` `[store] icon` points there, so no copy is kept here (mkit guide store).
 
 The check is at size 0.9 (it was 0.99), so it balances the bug at 0.78.
 
