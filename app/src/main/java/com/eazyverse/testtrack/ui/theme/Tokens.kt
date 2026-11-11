@@ -101,6 +101,18 @@ data class TtTokens(
     val ticketInk: Color,
     /** The streak of light across the ticket where a request shows what it pays. */
     val ticketShine: Color,
+    /** The sign-in sheet's own surface, and the hairline along its top edge. */
+    val sheet: Color,
+    val sheetLine: Color,
+    /** The edge of the Google pill and of the account row on that sheet. */
+    val sheetOutline: Color,
+    /** The faint ring round an avatar, so a pale photo still has an edge. */
+    val ring: Color,
+    /** The empty run of a thin progress bar. */
+    val track: Color,
+    /** A quiet note card on the sign-in sheet, and its edge. */
+    val card: Color,
+    val cardLine: Color,
 ) {
     val primary: Color get() = if (isDark) accentInk else accent
     val onPrimary: Color get() = if (isDark) bg else onAccent
@@ -200,6 +212,13 @@ val OceanLight =
         tixEdge = Color(0xFF143A55),
         ticketInk = Color(0xFF17405E),
         ticketShine = Color(0xFFFFFFFF),
+        sheet = Color(0xFFFFFFFF),
+        sheetLine = Color(0xFFDCE8F0),
+        sheetOutline = Color(0xFFB7D1E2),
+        ring = Color(0xFF142F43).alpha(0.14f),
+        track = Color(0xFFE4EEF4),
+        card = Color(0xFFF3F8FB),
+        cardLine = Color(0xFFE1ECF3),
     )
 
 val OceanDark =
@@ -266,6 +285,13 @@ val OceanDark =
         // The ticket is the same at night, as the drawable is.
         ticketInk = Color(0xFF17405E),
         ticketShine = Color(0xFFFFFFFF),
+        sheet = Color(0xFF191B1D),
+        sheetLine = Color(0xFF2A2E32),
+        sheetOutline = Color(0xFF3A3F44),
+        ring = Color(0xFFFFFFFF).alpha(0.16f),
+        track = Color(0xFF2A2E32),
+        card = Color(0xFF202326),
+        cardLine = Color(0xFF2C3034),
     )
 
 val LocalTokens = staticCompositionLocalOf { OceanDark }

@@ -5,9 +5,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import coil.imageLoader
+import coil.request.ImageRequest
 import com.eazyverse.testtrack.Config
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.AuthorizationResult
@@ -22,6 +21,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.math.roundToInt
 
 /**
  * One "Continue with Google" produces three different things, because Android and Firebase
@@ -89,16 +89,6 @@ object AuthRepo {
     private const val FIREBASE_LIMIT = 20_000L
 
     /**
-     * Set when the ID token could not be exchanged for a Firebase session.
-     *
-     * Almost always means Google sign-in is not enabled under Firebase Authentication for this
-     * project. Worth naming precisely, because the raw exception says nothing useful and the
-     * symptom, an empty Today list, looks like missing data rather than missing auth.
-     */
-    var firebaseError by mutableStateOf<String?>(null)
-        private set
-
-    /**
      * Signs in and exchanges the token for a Firebase session. Nothing else.
      *
      * Deliberately only those two things. Each testing feature requests group membership, Drive, usage
@@ -108,38 +98,66 @@ object AuthRepo {
      * and the rest of it. Getting a session is quick; everything after it belongs to the screen
      * that shows its progress.
      *
-     * A Firebase failure is recorded rather than thrown, so a tester with a working Google account
-     * still lands somewhere they can act instead of watching sign-in collapse.
+     * A Firebase failure is thrown as [FirebaseSignInException] with the real cause inside. Almost
+     * always that means Google sign-in is not enabled under Firebase Authentication for this
+     * project, or the connection dropped; the caller sorts which, because the person needs a
+     * different sentence for each. It used to be left in a field the screen never read, so every
+     * one of them showed as the same generic line.
      */
     suspend fun signIn(activity: Activity): GoogleAccount {
-        val account =
+        var account =
             withTimeoutOrNull(GOOGLE_LIMIT) { GroupGate.signIn(activity) }
                 ?: throw StalledException(
                     "Google didn't answer. Close TestTrack from your recent apps, open it again and " +
                         "tap Continue with Google. If it happens again, restart your phone. Your " +
                         "account is fine.",
                 )
+        // Started now, while the Firebase and server round trips run, so the face is already
+        // there when the sheet shows the account.
+        preloadPhoto(activity, account.photo)
 
-        firebaseError =
-            try {
-                withTimeout(FIREBASE_LIMIT) { signInToFirebase(account.idToken) }
-                null
-            } catch (e: TimeoutCancellationException) {
-                // Caught before CancellationException on purpose: a timeout is one, so the branch
-                // below would rethrow it and the spinner this exists to end would go on turning.
-                "Google signed you in, but TestTrack's own sign-in didn't answer. Check your " +
-                    "connection and tap Continue with Google again."
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                // The cause is ours to read, not the person's: usually Google sign-in switched off
-                // under Firebase Authentication. The person only needs to know it did not finish.
-                Log.w("AuthRepo", "Firebase sign-in refused", e)
-                "Google signed you in, but TestTrack couldn't finish. Tap Continue with Google again " +
-                    "in a moment."
+        try {
+            withTimeout(FIREBASE_LIMIT) { signInToFirebase(account.idToken) }
+        } catch (e: TimeoutCancellationException) {
+            // Caught before CancellationException on purpose: a timeout is one, so the branch
+            // below would rethrow it and the spinner this exists to end would go on turning.
+            throw FirebaseSignInException(e)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // The cause is ours to read, not the person's.
+            Log.w("AuthRepo", "Firebase sign-in refused", e)
+            throw FirebaseSignInException(e)
+        }
+
+        if (account.photo == null) {
+            val user = FirebaseAuth.getInstance().currentUser
+            val fallback = sizedGooglePhoto(user?.photoUrl?.toString())
+            if (fallback != null) {
+                account = account.copy(photo = fallback)
+                preloadPhoto(activity, fallback)
             }
+        }
         return account
     }
+
+    /** Fetches the picture into Coil's cache, at the size the sheet's avatar asks for. */
+    private fun preloadPhoto(
+        context: Context,
+        photo: String?,
+    ) {
+        if (photo == null) return
+        val px = (AVATAR_DP * context.resources.displayMetrics.density).roundToInt()
+        val request =
+            ImageRequest
+                .Builder(context)
+                .data(photo)
+                .size(px)
+                .build()
+        context.imageLoader.enqueue(request)
+    }
+
+    private const val AVATAR_DP = 36
 
     private suspend fun signInToFirebase(idToken: String) =
         suspendCancellableCoroutine { cont ->

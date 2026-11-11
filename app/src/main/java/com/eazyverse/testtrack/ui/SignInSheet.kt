@@ -1,5 +1,9 @@
 package com.eazyverse.testtrack.ui
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -7,28 +11,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -36,22 +23,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Smartphone
+import com.composables.icons.lucide.UserPlus
+import com.composables.icons.lucide.UserX
+import com.composables.icons.lucide.WifiOff
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.findActivity
+import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AuthViewModel
+import com.eazyverse.testtrack.viewmodel.SignInUi
 import kotlinx.coroutines.delay
 
 /**
@@ -84,9 +73,13 @@ val StartReason =
  * sheet now, over the content that prompted it, from the header or from a tab that cannot answer
  * without a name. Nobody is sent anywhere, and dismissing puts them back exactly where they were.
  *
- * Drawn in the one [PickerSheet] frame, the reason's title as the sheet's. It ends one of two ways
- * and never both: [onDismiss] when somebody puts it away, [onSignedIn] when it closes itself after
- * showing the account.
+ * Drawn in the one [PickerSheet] frame. The sheet answers in its own title: what happened is the
+ * first thing read after Google closes, so the title and its leading mark or tile follow the state
+ * rather than staying on the reason. It ends one of two ways and never both: [onDismiss] when
+ * somebody puts it away, [onSignedIn] when it closes itself after showing the account.
+ *
+ * While Google is being waited on it cannot be put away at all. Closing it then would leave a
+ * sign-in running behind nothing, and the answer arriving into a sheet that is gone.
  */
 @Composable
 fun SignInSheet(
@@ -98,19 +91,31 @@ fun SignInSheet(
     DisposableEffect(vm) {
         onDispose { vm.resetResult() }
     }
-    val activity = LocalContext.current.findActivity()
+    val context = LocalContext.current
+    val activity = context.findActivity()
     // Set just before the sheet closes itself, so the frame's close ends in onSignedIn rather than
     // onDismiss, which would forget whatever was waiting on the sign in.
     var done by remember { mutableStateOf(false) }
+    val ui = vm.ui
 
-    PickerSheet(title = reason.title, onDismiss = { if (done) onSignedIn() else onDismiss() }) { close ->
+    PickerSheet(
+        title = signInTitle(reason, ui),
+        onDismiss = { if (done) onSignedIn() else onDismiss() },
+        leading = { SignInLead(ui) },
+        containerColor = Tt.colors.sheet,
+        topLine = Tt.colors.sheetLine,
+        handleGap = 16.dp,
+        headerGap = 12.dp,
+        titleLiveRegion = true,
+        dismissible = ui !is SignInUi.Working,
+    ) { close ->
         // Long enough to read which of three accounts was picked, short enough that nobody is
         // waiting on it. The sheet leaves on its own; there is nothing here to press once it has
         // worked. Hidden first, then removed, which is what close does: a sheet taken out while
         // still open vanishes on one frame.
         // Not when there is something to read first: then it waits for OK.
-        LaunchedEffect(vm.signedInAs) {
-            if (vm.signedInAs != null && !vm.phoneUsedStarter) {
+        LaunchedEffect(ui) {
+            if (ui is SignInUi.SignedIn && !ui.starterUsed) {
                 delay(1_100)
                 done = true
                 close {}
@@ -118,11 +123,10 @@ fun SignInSheet(
         }
         SignInSheetBody(
             reason = reason,
-            busy = vm.busy,
-            message = vm.message,
-            signedInAs = vm.signedInAs,
-            phoneUsedStarter = vm.phoneUsedStarter,
+            ui = ui,
             onPress = { vm.signIn(activity) },
+            onAddAccount = { addGoogleAccount(context) },
+            onClose = { close {} },
             onOk = {
                 done = true
                 close {}
@@ -132,7 +136,61 @@ fun SignInSheet(
 }
 
 /**
- * The sheet's contents, given its state rather than holding it. The title is the frame's.
+ * Opens the phone's own add account screen, for Google accounts only.
+ *
+ * Nothing starts signing in when the person comes back: they tap Try again, which is the one thing
+ * on the sheet that says so.
+ */
+private fun addGoogleAccount(context: Context) {
+    val intent =
+        Intent(Settings.ACTION_ADD_ACCOUNT)
+            .putExtra(Settings.EXTRA_ACCOUNT_TYPES, arrayOf("com.google"))
+    try {
+        context.startActivity(intent)
+    } catch (_: ActivityNotFoundException) {
+        // A phone with no add account screen has nothing to offer here.
+    }
+}
+
+/** The sheet's title for a state. Only the first one is the caller's own words. */
+internal fun signInTitle(
+    reason: SignInReason,
+    ui: SignInUi,
+): String =
+    when (ui) {
+        SignInUi.Idle -> reason.title
+        SignInUi.Working -> "Signing you in"
+        SignInUi.Cancelled -> "Sign-in was cancelled"
+        SignInUi.Offline -> "No internet connection"
+        SignInUi.NoAccount -> "No Google account found"
+        is SignInUi.Failed -> "Sign-in didn't work"
+        is SignInUi.SignedIn -> "You're signed in"
+    }
+
+/**
+ * What sits before the title. The TestTrack mark while nothing is wrong, a toned tile when
+ * something is, so a tile only ever appears for a reason.
+ */
+@Composable
+internal fun SignInLead(ui: SignInUi) {
+    val t = Tt.colors
+    when (ui) {
+        SignInUi.Idle, SignInUi.Working, SignInUi.Cancelled ->
+            Image(painterResource(R.drawable.testtrack_mark), null, Modifier.size(36.dp))
+
+        SignInUi.Offline -> StatusTile(Lucide.WifiOff, t.warn, t.warnBg)
+
+        SignInUi.NoAccount -> StatusTile(Lucide.UserX, t.warn, t.warnBg)
+
+        is SignInUi.Failed -> StatusTile(Lucide.CircleAlert, t.bad, t.badBg)
+
+        is SignInUi.SignedIn -> StatusTile(Lucide.Check, t.ok, t.okBg)
+    }
+}
+
+/**
+ * The sheet's contents, given its state rather than holding it. The title is the frame's, from
+ * [signInTitle].
  *
  * The same shape the rest of the screens here take, and for the same reason: everything this draws
  * can be put in front of a test this way, including the half that only exists after a real Google
@@ -141,11 +199,10 @@ fun SignInSheet(
 @Composable
 fun SignInSheetBody(
     reason: SignInReason,
-    busy: Boolean = false,
-    message: String? = null,
-    signedInAs: String? = null,
-    phoneUsedStarter: Boolean = false,
+    ui: SignInUi = SignInUi.Idle,
     onPress: () -> Unit = {},
+    onAddAccount: () -> Unit = {},
+    onClose: () -> Unit = {},
     onOk: () -> Unit = {},
 ) {
     Column(
@@ -153,20 +210,24 @@ fun SignInSheetBody(
             .fillMaxWidth()
             .padding(bottom = 20.dp),
     ) {
-            /*
-             * Crossed over rather than swapped.
-             *
-             * The two halves of this sheet are different heights and different shapes, and it was
-             * cutting from one to the other on the frame the answer arrived: the form vanished,
-             * the panel appeared, and the sheet jumped to its new height under both of them. The
-             * one moment in this flow worth feeling was the only one with nothing in it.
-             *
-             * The outgoing goes first and faster, so the two are never both solid on top of each
-             * other, and the incoming lifts a little as it arrives. SizeTransform is what carries
-             * the sheet between the two heights instead of snapping.
-             */
+        /*
+         * Crossed over rather than swapped.
+         *
+         * The states of this sheet are different heights and different shapes, and it was cutting
+         * from one to the next on the frame the answer arrived: the form vanished, the panel
+         * appeared, and the sheet jumped to its new height under both of them. The one moment in
+         * this flow worth feeling was the only one with nothing in it.
+         *
+         * The outgoing goes first and faster, so the two are never both solid on top of each
+         * other, and the incoming lifts a little as it arrives. SizeTransform is what carries
+         * the sheet between heights instead of snapping.
+         *
+         * Keyed on the kind of state, not the state: two failures with different sentences are
+         * the same panel and should not play the transition over again.
+         */
         AnimatedContent(
-            targetState = signedInAs,
+            targetState = ui,
+            contentKey = { it::class },
             transitionSpec = {
                 (
                     fadeIn(tween(durationMillis = 240, delayMillis = 70)) +
@@ -177,175 +238,54 @@ fun SignInSheetBody(
                     .using(SizeTransform(clip = false))
             },
             label = "signin",
-        ) { account ->
-            if (account == null) {
-                AskToSignIn(reason, busy, message, onPress)
-            } else {
-                SignedIn(account, phoneUsedStarter, onOk)
-            }
-        }
-    }
-}
-
-/** The half that asks. */
-@Composable
-private fun AskToSignIn(
-    reason: SignInReason,
-    busy: Boolean,
-    message: String?,
-    onPress: () -> Unit,
-) {
-    Column {
-        Text(
-            reason.why,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        message?.let { Refusal(it) }
-
-        Spacer(Modifier.height(20.dp))
-
-        // Google asks for its own mark on a plain surface rather than a tinted button, which
-        // also keeps it distinct from the app's own primary actions.
-        Button(
-            onClick = onPress,
-            enabled = !busy,
-            shape = RoundedCornerShape(percent = 50),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    disabledContainerColor = MaterialTheme.colorScheme.background,
-                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
-            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
-            modifier = Modifier.fillMaxWidth().heightIn(min = ButtonHeight),
-        ) {
-            if (busy) {
-                CircularProgressIndicator(
-                    Modifier.size(18.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                GoogleMark(Modifier.size(20.dp))
-            }
-            Spacer(Modifier.width(12.dp))
-            Text(
-                if (busy) "Waiting for Google" else "Continue with Google",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-            )
-        }
-
-        Spacer(Modifier.height(12.dp))
-        Text(
-            "Play ties closed testing to Google accounts.",
-            style = MaterialTheme.typography.labelSmall,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-/**
- * What went wrong, as a wash rather than a box.
- *
- * It was an outlined rectangle with plain white text in it, which put the loudest thing in the
- * notice on its edge and the quietest on its words: a validation box bolted to the sheet rather
- * than the sheet saying something. The colour is carried by the text now and the shape only holds
- * it together.
- */
-@Composable
-private fun Refusal(message: String) {
-    Spacer(Modifier.height(16.dp))
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(13.dp))
-            .background(MaterialTheme.colorScheme.error.copy(alpha = 0.10f))
-            .padding(12.dp),
-    ) {
-        Icon(
-            Lucide.CircleAlert,
-            null,
-            Modifier.size(16.dp),
-            tint = MaterialTheme.colorScheme.error,
-        )
-        Spacer(Modifier.width(10.dp))
-        Text(
-            message,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onErrorContainer,
-        )
-    }
-}
-
-/**
- * It worked. Shown for a beat so the account is visible, then the sheet goes on its own.
- *
- * Its own Column, and that is not tidiness. AnimatedContent lays its content out in a Box, so
- * siblings emitted here stack on top of each other rather than under: the title, the address and
- * the line about loading were all drawn over one another, which is what "broken" looked like.
- */
-@Composable
-private fun SignedIn(
-    account: String,
-    phoneUsedStarter: Boolean,
-    onOk: () -> Unit,
-) {
-    Column {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Status.posted.copy(alpha = 0.16f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Lucide.Check, null, Modifier.size(20.dp), tint = Status.posted)
-            }
-            Spacer(Modifier.width(13.dp))
+        ) { state ->
+            // Its own Column: AnimatedContent lays its content out in a Box, so siblings emitted
+            // directly would be drawn over one another rather than under.
             Column {
-                Text(
-                    "Signed in",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    account,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                when (state) {
+                    SignInUi.Idle -> {
+                        Why(reason.why)
+                        Actions { GooglePill(onPress) }
+                        Footnote("Google Play links testers by their Google account.")
+                    }
+
+                    SignInUi.Working -> {
+                        Why("This takes a few seconds.")
+                        Actions { AccountSkeleton() }
+                    }
+
+                    SignInUi.Cancelled -> {
+                        Why("You can try again or keep looking around.")
+                        Actions { GooglePill(onPress) }
+                        TextAction("Keep looking around", onClose)
+                    }
+
+                    SignInUi.Offline -> {
+                        Why("Sign-in needs the internet. Check your Wi-Fi or mobile data, then try again.")
+                        Actions { GooglePill(onPress) }
+                    }
+
+                    SignInUi.NoAccount -> {
+                        Why("Add a Google account to this phone, then come back and try again.")
+                        Actions {
+                            Primary(
+                                "Add a Google account",
+                                mark = rememberVectorPainter(Lucide.UserPlus),
+                                onClick = onAddAccount,
+                            )
+                        }
+                        TextAction("Try again", onPress)
+                    }
+
+                    is SignInUi.Failed -> {
+                        Why(state.body ?: DEFAULT_FAILURE)
+                        Actions { GooglePill(onPress) }
+                    }
+
+                    is SignInUi.SignedIn -> SignedIn(state, onOk)
+                }
             }
         }
-        Spacer(Modifier.height(16.dp))
-        if (phoneUsedStarter) {
-            // Shown once per account; the sheet waits for OK instead of leaving on its own.
-            Notice(Status.short, Lucide.Smartphone) {
-                Text(
-                    "This phone already got its ${FeedRules.STARTER_TIX} starter tix with another account, so this " +
-                        "account starts at 0. You can still earn tix by reviewing other apps.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-            Spacer(Modifier.height(16.dp))
-            Primary("OK", onClick = onOk)
-        } else {
-            Text(
-                "Your crews and balance are loading. A new account gets ${FeedRules.STARTER_TIX} tix to start, once per " +
-                    "account and phone. Use them to ask for feedback, or earn more by reviewing other apps.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Spacer(Modifier.height(20.dp))
     }
 }
 

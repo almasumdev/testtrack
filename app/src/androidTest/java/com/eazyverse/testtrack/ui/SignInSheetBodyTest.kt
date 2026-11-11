@@ -1,9 +1,18 @@
 package com.eazyverse.testtrack.ui
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -13,9 +22,11 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
+import com.eazyverse.testtrack.viewmodel.SignInUi
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -56,53 +67,130 @@ class SignInSheetBodyTest {
         }
     }
 
+    /** The frame's title row and the body under it, as the sheet puts them together. */
+    @Composable
+    private fun Sheet(
+        ui: SignInUi,
+        onPress: () -> Unit = {},
+        onAddAccount: () -> Unit = {},
+        onClose: () -> Unit = {},
+        onOk: () -> Unit = {},
+    ) {
+        TestTrackTheme {
+            Column(Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    SignInLead(ui)
+                    Spacer(Modifier.width(12.dp))
+                    Text(signInTitle(reason, ui))
+                }
+                SignInSheetBody(reason, ui, onPress, onAddAccount, onClose, onOk)
+            }
+        }
+    }
+
+    private fun show(
+        ui: SignInUi,
+        title: String,
+        body: String,
+    ) {
+        compose.setContent { Sheet(ui) }
+        compose.onNodeWithText(title).assertIsDisplayed()
+        compose.onNodeWithText(body).assertIsDisplayed()
+    }
+
     @Test
     fun the_ask_shows_the_reason_it_came_up() {
-        compose.setContent { TestTrackTheme { SignInSheetBody(reason = reason) } }
+        compose.setContent { Sheet(SignInUi.Idle) }
 
+        compose.onNodeWithText(reason.title).assertIsDisplayed()
         compose.onNodeWithText(reason.why).assertIsDisplayed()
+        compose.onNodeWithText("Continue with Google").assertIsDisplayed()
+        compose.onNodeWithText("Google Play links testers by their Google account.").assertIsDisplayed()
+    }
+
+    @Test
+    fun signing_in_says_so_and_has_no_button() {
+        show(SignInUi.Working, "Signing you in", "This takes a few seconds.")
+
+        // Nothing to press while Google is being waited on.
+        compose.onAllNodesWithText("Continue with Google").assertCountEquals(0)
+    }
+
+    @Test
+    fun cancelling_can_try_again_or_keep_looking_around() {
+        var tried = false
+        var closed = false
+        compose.setContent { Sheet(SignInUi.Cancelled, onPress = { tried = true }, onClose = { closed = true }) }
+
+        compose.onNodeWithText("Sign-in was cancelled").assertIsDisplayed()
+        compose.onNodeWithText("You can try again or keep looking around.").assertIsDisplayed()
+        compose.onNodeWithText("Continue with Google").performClick()
+        assertTrue(tried)
+        compose.onNodeWithText("Keep looking around").performClick()
+        assertTrue(closed)
+    }
+
+    @Test
+    fun no_internet_says_what_to_check() {
+        show(
+            SignInUi.Offline,
+            "No internet connection",
+            "Sign-in needs the internet. Check your Wi-Fi or mobile data, then try again.",
+        )
         compose.onNodeWithText("Continue with Google").assertIsDisplayed()
     }
 
     @Test
-    fun signing_in_holds_the_button_rather_than_the_sheet() {
-        compose.setContent { TestTrackTheme { SignInSheetBody(reason = reason, busy = true) } }
+    fun no_account_offers_to_add_one_or_try_again() {
+        var added = false
+        var tried = false
+        compose.setContent {
+            Sheet(SignInUi.NoAccount, onPress = { tried = true }, onAddAccount = { added = true })
+        }
 
-        compose.onNodeWithText("Waiting for Google").assertIsDisplayed()
-        // The reason stays put. A sheet that empties itself while it works leaves somebody
-        // looking at a spinner with nothing saying what it is for.
-        compose.onNodeWithText(reason.why).assertIsDisplayed()
+        compose.onNodeWithText("No Google account found").assertIsDisplayed()
+        compose.onNodeWithText("Add a Google account to this phone, then come back and try again.").assertIsDisplayed()
+        compose.onNodeWithText("Add a Google account").performClick()
+        assertTrue(added)
+        compose.onNodeWithText("Try again").performClick()
+        assertTrue(tried)
+    }
+
+    @Test
+    fun a_failure_shows_the_servers_words_when_it_has_them() {
+        show(SignInUi.Failed("This account was deleted."), "Sign-in didn't work", "This account was deleted.")
+    }
+
+    @Test
+    fun a_failure_with_nothing_to_say_shows_the_default_text() {
+        show(SignInUi.Failed(null), "Sign-in didn't work", DEFAULT_FAILURE)
     }
 
     @Test
     fun the_account_is_named_once_it_has_worked() {
         compose.setContent {
-            TestTrackTheme {
-                SignInSheetBody(reason = reason, signedInAs = "tester@example.com")
-            }
+            Sheet(SignInUi.SignedIn("tester@example.com", "Test Er", null, starterUsed = false))
         }
 
-        compose.onNodeWithText("Signed in").assertIsDisplayed()
+        compose.onNodeWithText("You're signed in").assertIsDisplayed()
+        compose.onNodeWithText("Test Er").assertIsDisplayed()
         compose.onNodeWithText("tester@example.com").assertIsDisplayed()
+        // It closes itself, so there is nothing to press.
+        compose.onAllNodesWithText("OK").assertCountEquals(0)
     }
 
     @Test
     fun a_second_account_on_the_phone_is_told_why_it_starts_at_0_and_closes_on_ok() {
         var closed = false
         compose.setContent {
-            TestTrackTheme {
-                SignInSheetBody(
-                    reason = reason,
-                    signedInAs = "second@example.com",
-                    phoneUsedStarter = true,
-                    onOk = { closed = true },
-                )
-            }
+            Sheet(
+                SignInUi.SignedIn("second@example.com", "Second", null, starterUsed = true),
+                onOk = { closed = true },
+            )
         }
 
-        compose.onNodeWithText("This phone already got its 120 starter tix", substring = true).assertIsDisplayed()
-        // The usual line promises 120 tix, which is not true for this account.
-        compose.onAllNodesWithText("A new account gets", substring = true).assertCountEquals(0)
+        compose.onNodeWithText("Starter tix already used").assertIsDisplayed()
+        compose.onNodeWithText("Each phone gets 120 starter tix once", substring = true).assertIsDisplayed()
         compose.onNodeWithText("OK").performClick()
         assertTrue(closed)
     }
@@ -116,17 +204,17 @@ class SignInSheetBodyTest {
      */
     @Test
     fun the_two_halves_cross_rather_than_cut() {
-        var account by mutableStateOf<String?>(null)
+        var ui by mutableStateOf<SignInUi>(SignInUi.Idle)
         compose.mainClock.autoAdvance = false
         compose.setContent {
-            TestTrackTheme { SignInSheetBody(reason = reason, signedInAs = account) }
+            TestTrackTheme { SignInSheetBody(reason = reason, ui = ui) }
         }
         compose.mainClock.advanceTimeBy(64)
 
         val before = compose.onRoot().captureToImage().asAndroidBitmap()
         keep("00-before", before)
 
-        account = "tester@example.com"
+        ui = SignInUi.SignedIn("tester@example.com", "Test Er", null, starterUsed = false)
         compose.mainClock.advanceTimeBy(16)
 
         val middle = mutableListOf<Bitmap>()

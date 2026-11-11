@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,18 +28,31 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
@@ -56,6 +70,12 @@ import kotlinx.coroutines.launch
  * with no half-open stop. [leading] sits before the title, such as the app a sheet is about.
  * [content] gets `close`, which hides the sheet first and then runs what it is given, since a
  * sheet removed while open vanishes on one frame.
+ *
+ * The rest are for the one sheet that needs a different look or a lock, and every one defaults to
+ * what the other sheets use. [containerColor] and [topLine] (a hairline along the top edge) change
+ * the surface; [handleGap] and [headerGap] are the space under the handle and under the title row;
+ * [titleLiveRegion] makes a screen reader read the title again when it changes. [dismissible]
+ * false holds the sheet open: no swipe down, no tap outside, no Back. The caller says when to let go.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,9 +86,22 @@ internal fun PickerSheet(
     tall: Boolean = false,
     skipHalf: Boolean = tall,
     leading: (@Composable () -> Unit)? = null,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    topLine: Color? = null,
+    handleGap: Dp = 14.dp,
+    headerGap: Dp = 14.dp,
+    titleLiveRegion: Boolean = false,
+    dismissible: Boolean = true,
     content: @Composable ColumnScope.(close: (() -> Unit) -> Unit) -> Unit,
 ) {
-    val state = rememberModalBottomSheetState(skipPartiallyExpanded = skipHalf)
+    // Read when asked rather than when the state was made, so letting go of the lock takes effect
+    // on the sheet that is already open.
+    val canDismiss by rememberUpdatedState(dismissible)
+    val state =
+        rememberModalBottomSheetState(
+            skipPartiallyExpanded = skipHalf,
+            confirmValueChange = { it != SheetValue.Hidden || canDismiss },
+        )
     val scope = rememberCoroutineScope()
     val close: (() -> Unit) -> Unit = { next ->
         scope.launch {
@@ -77,21 +110,45 @@ internal fun PickerSheet(
             next()
         }
     }
+    val shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
+    val density = LocalDensity.current
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        // The scrim tap and a swipe past the bottom both end up here.
+        onDismissRequest = { if (canDismiss) onDismiss() },
+        modifier =
+            if (topLine == null) {
+                Modifier
+            } else {
+                Modifier.drawWithContent {
+                    drawContent()
+                    // A stroke twice the hairline, centred on the edge and cut to the top corners,
+                    // so one dp shows above the sheet and nothing runs down its sides.
+                    clipRect(top = -4.dp.toPx(), bottom = 24.dp.toPx()) {
+                        drawOutline(
+                            shape.createOutline(size, layoutDirection, density),
+                            topLine,
+                            style = Stroke(width = 2.dp.toPx()),
+                        )
+                    }
+                }
+            },
         sheetState = state,
-        shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
-        containerColor = MaterialTheme.colorScheme.surface,
+        shape = shape,
+        containerColor = containerColor,
+        properties = ModalBottomSheetProperties(shouldDismissOnBackPress = dismissible),
         dragHandle = {
             Box(
                 Modifier
-                    .padding(top = 10.dp, bottom = 14.dp)
+                    .padding(top = 10.dp, bottom = handleGap)
                     .size(width = 38.dp, height = 4.dp)
                     .clip(CircleShape)
                     .background(Tt.colors.text4.copy(alpha = 0.5f)),
             )
         },
     ) {
+        // The sheet's own back handling is switched off above while locked; this swallows the press
+        // so it cannot fall through to the screen underneath either.
+        BackHandler(enabled = !dismissible) {}
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
             Column(
                 Modifier
@@ -110,6 +167,12 @@ internal fun PickerSheet(
                     Column(Modifier.weight(1f)) {
                         Text(
                             title,
+                            modifier =
+                                if (titleLiveRegion) {
+                                    Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+                                } else {
+                                    Modifier
+                                },
                             style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp, lineHeight = 22.sp),
                             fontWeight = FontWeight.Bold,
                             color = Tt.colors.text,
@@ -120,7 +183,7 @@ internal fun PickerSheet(
                         }
                     }
                 }
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(headerGap))
                 content(close)
             }
         }

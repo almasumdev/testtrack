@@ -1,20 +1,22 @@
 package com.eazyverse.testtrack.viewmodel
 
 import android.app.Activity
+import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.AuthRepo
+import com.eazyverse.testtrack.data.Connectivity
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.data.StarterNotice
-import com.eazyverse.testtrack.data.friendly
 import com.eazyverse.testtrack.domain.completeSignIn
 import com.eazyverse.testtrack.net.ApiAuth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 
 /**
@@ -27,52 +29,48 @@ import kotlinx.coroutines.launch
  */
 class AuthViewModel : ViewModel() {
     private var signInJob: Job? = null
-    var busy by mutableStateOf(false)
-        private set
-
-    var message by mutableStateOf<String?>(null)
-        private set
 
     /**
-     * The account, once there is one. Null until then.
-     *
-     * The sheet shows it for a beat before it goes, so somebody who has three Google accounts on
-     * the phone can see which of them they just picked. Signing in and having the sheet vanish
-     * leaves that unanswered, and the only way to check would be the profile tab.
+     * What the sheet shows. Once there is an account it carries it, and the sheet shows it for a
+     * beat before it goes, so somebody who has three Google accounts on the phone can see which of
+     * them they just picked. Signing in and having the sheet vanish leaves that unanswered, and the
+     * only way to check would be the profile tab.
      */
-    var signedInAs by mutableStateOf<String?>(null)
-        private set
-
-    /** This account starts at 0 because its phone gave the starter tix to another account; said once. */
-    var phoneUsedStarter by mutableStateOf(false)
+    var ui by mutableStateOf<SignInUi>(SignInUi.Idle)
         private set
 
     fun signIn(activity: Activity) {
-        if (busy) return
-        busy = true
-        message = null
-        signedInAs = null
-        phoneUsedStarter = false
+        if (ui is SignInUi.Working) return
+        val context = activity.applicationContext
+        // Asked first, so a phone with no network is told so at once instead of after Google's
+        // chooser has opened and failed. Only the loose check: a network that is not VALIDATED may
+        // still work, so it is never a reason to refuse to try.
+        if (!Connectivity.hasNetwork(context)) {
+            ui = SignInUi.Offline
+            return
+        }
+        ui = SignInUi.Working
         signInJob =
             viewModelScope.launch {
                 try {
                     completeSignIn(
-                        authenticate = {
-                            AuthRepo.signIn(activity).also {
-                                if (AuthRepo.firebaseError != null) error("Sign-in could not be completed. Please try again.")
-                            }
-                        },
-                        establishSession = { ApiAuth.authenticate(activity.applicationContext) },
-                        publish = {
-                            Session.updateEmail(it.email)
-                            phoneUsedStarter = StarterNotice.take(activity.applicationContext, AuthRepo.uid)
-                            signedInAs = it.email
+                        authenticate = { AuthRepo.signIn(activity) },
+                        establishSession = { ApiAuth.authenticate(context) },
+                        publish = { account ->
+                            Session.updateEmail(account.email)
+                            ui =
+                                SignInUi.SignedIn(
+                                    email = account.email,
+                                    name = account.name,
+                                    photo = account.photo,
+                                    starterUsed = StarterNotice.take(context, AuthRepo.uid),
+                                )
                         },
                     )
-                } catch (_: GetCredentialCancellationException) {
-                    // Somebody shut the account picker. That is an answer, not a fault, and it was
-                    // being reported back to them as "you closed the sign-in", which is the app
-                    // narrating what they had just done as though it were a problem.
+                } catch (e: TimeoutCancellationException) {
+                    // Caught before CancellationException on purpose: a timeout is one, and it is
+                    // a failure to sort, not somebody navigating away.
+                    fail(e, context)
                 } catch (e: CancellationException) {
                     // Navigating away cancels this scope, and CancellationException is an Exception,
                     // so the catch below was turning a completely normal sign-in into a failure
@@ -81,20 +79,26 @@ class AuthViewModel : ViewModel() {
                     AuthRepo.undoHalfSignIn()
                     throw e
                 } catch (e: Exception) {
-                    AuthRepo.undoHalfSignIn()
-                    // The sentence for the person; friendly() puts the real cause in the log.
-                    message = e.friendly("Sign-in didn't finish. Try once more.")
+                    fail(e, context)
                 } finally {
-                    busy = false
+                    // A cancelled job never reaches a result, and the sheet must not be left
+                    // working (and unclosable) behind it.
+                    if (ui is SignInUi.Working) ui = SignInUi.Idle
                 }
             }
     }
 
+    private fun fail(
+        e: Exception,
+        context: Context,
+    ) {
+        AuthRepo.undoHalfSignIn()
+        Log.w("TestTrack", "Sign-in did not finish", e)
+        ui = sortSignInFailure(e) { !Connectivity.isOnline(context) }
+    }
+
     fun resetResult() {
         signInJob?.cancel()
-        signedInAs = null
-        phoneUsedStarter = false
-        message = null
-        busy = false
+        ui = SignInUi.Idle
     }
 }

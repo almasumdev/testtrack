@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TestTrack: Google sign-in sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0}
+body{background:#E4E8EB;color:#1D2A33;font-family:Barlow,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.doc{padding:28px 32px 4px;max-width:1180px}
+.doc h1{font:700 26px Barlow;margin:0 0 6px}
+.doc p{font:400 15px/22px Barlow;margin:6px 0;color:#3C4A55;max-width:940px}
+.doc ol{font:400 15px/22px Barlow;color:#3C4A55;margin:6px 0;padding-left:22px;max-width:940px}
+.ctl{display:flex;gap:6px;margin:14px 0 4px;align-items:center;font:600 13px Barlow;color:#56636D;flex-wrap:wrap}
+.ctl button{font:600 13px Barlow;border:1px solid #B9C3CA;background:#fff;border-radius:16px;padding:5px 12px;cursor:pointer;color:#1D2A33}
+.ctl button.on{background:#1D2A33;color:#fff;border-color:#1D2A33}
+.ctl .sep{width:14px}
+.opt{padding:22px 32px 6px}
+.opt h2{font:700 22px Barlow;margin:0}
+.opt .sub{font:400 15px/22px Barlow;color:#3C4A55;margin:4px 0 0;max-width:940px}
+.rowlbl{font:600 13px Barlow;letter-spacing:.4px;color:#56636D;margin:14px 0 8px}
+.strip{display:flex;gap:20px;overflow-x:auto;padding-bottom:10px}
+.strip.dark{background:#060707;margin:0 -32px;padding:16px 32px}
+.cell{flex:none}
+.cap{font:600 12px Barlow;color:#56636D;margin:0 0 6px 4px;white-space:nowrap}
+.strip.dark .cap{color:#8A949C}
+.zoomwrap{zoom:var(--z,.6);display:flex;gap:20px}
+
+/* Light: the app's OceanLight tokens. sheet and sheetLine are new (see the report). */
+.t-light{
+  --bg:#F7FCFF;--ink:#142F43;--ink2:#203A4E;--ink4:#59758A;--line2:#C3CED7;
+  --acc:#1D5C82;--onacc:#FFFFFF;--accInk:#123C56;--dot:#789AAF;--introAcc:#32729B;--introInk:#2A6890;
+  --sheet:#FFFFFF;--sheetLine:#DCE8F0;--handle:rgba(89,117,138,.5);
+  --gFill:#FFFFFF;--gLine:#B7D1E2;
+  --tile:#D5EAF7;--tileInk:#1D5C82;--nTile:#EAF4FB;--nInk:#59758A;
+  --ok:#246B59;--okBg:rgba(36,107,89,.12);--warn:#8A611C;--warnBg:rgba(154,110,36,.12);--warnLine:rgba(154,110,36,.42);
+  --bad:#9E3B2E;--badBg:rgba(158,59,46,.12);--badLine:rgba(158,59,46,.42);--nLine:rgba(89,117,138,.42);
+  --sk:#E4EEF4;--sk2:#F2F7FA;--av:#D9E7F1;--avInk:#295A7A;
+  --scrim:rgba(20,34,48,.46);--gest:rgba(20,47,67,.35);
+  /* today */
+  --oldGlass:#F2F9FD;--oldBtn:#F7FCFF;--oldLine:#B7D1E2;--oldFoot:#789AAF;--oldBad:#9E3B2E;--oldBadBg:rgba(158,59,46,.10);
+}
+.t-dark{
+  --bg:#0F1011;--ink:#EFF7FC;--ink2:#BDD1DF;--ink4:#7F9EB3;--line2:#373C41;
+  --acc:#32729B;--onacc:#FFFFFF;--accInk:#8BCBF7;--dot:#58788E;--introAcc:#32729B;--introInk:#8DB3CE;
+  --sheet:#191B1D;--sheetLine:#2A2E32;--handle:rgba(127,158,179,.45);
+  --gFill:#0F1011;--gLine:#3A3F44;
+  --tile:#1F3A4D;--tileInk:#8BCBF7;--nTile:#24282B;--nInk:#A1BDCF;
+  --ok:#83D8C4;--okBg:rgba(131,216,196,.12);--warn:#D8B774;--warnBg:rgba(216,183,116,.16);--warnLine:rgba(216,183,116,.42);
+  --bad:#E4938A;--badBg:rgba(228,147,138,.16);--badLine:rgba(228,147,138,.42);--nLine:rgba(127,158,179,.42);
+  --sk:#26292D;--sk2:#33383C;--av:#20323F;--avInk:#A9CDE6;
+  --scrim:rgba(0,0,0,.60);--gest:rgba(236,238,240,.35);
+  --oldGlass:#1B3040;--oldBtn:#0F1011;--oldLine:#365568;--oldFoot:#58788E;--oldBad:#E4938A;--oldBadBg:rgba(228,147,138,.10);
+}
+
+/* the phone and the onboarding page behind */
+.phone{position:relative;width:360px;height:800px;border-radius:28px;overflow:hidden;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(0,0,0,.10)}
+.t-dark.phone{box-shadow:0 0 0 1px #24282C}
+.sb{height:28px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font:600 13px Barlow}
+.sb .ic{display:flex;gap:6px;align-items:center}
+.top{height:52px;flex:none;display:flex;align-items:center;padding:0 8px 0 20px;gap:8px}
+.mark{width:28px;height:28px;flex:none}
+.brand{font:700 22px Barlow;flex:1}
+.skip{font:600 15px Barlow;color:var(--ink2);padding:10px 12px}
+.pager{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 16px;min-height:0}
+.art{width:300px;height:302px;flex:none}
+.art img{width:100%;height:100%;display:block}
+.copy{text-align:center;margin-top:16px;padding:0 8px}
+.eyebrow{font:600 12px Barlow;letter-spacing:1.3px;color:var(--introInk)}
+.ptitle{font:600 24px/29px Barlow;margin:8px 0 0}
+.pbody{font:400 15px/22px Barlow;color:var(--ink2);margin:10px 0 0}
+.foot{flex:none;padding:0 24px 4px}
+.dots{display:flex;gap:6px;justify-content:center;padding:14px 0 16px}
+.dot{width:7px;height:7px;border-radius:4px;background:var(--dot)}
+.dot.on{width:24px;background:var(--introAcc)}
+.ibtn{height:52px;border-radius:26px;background:var(--introAcc);color:#fff;font:600 16px Barlow;display:flex;align-items:center;justify-content:center}
+.ilink{height:44px;display:flex;align-items:center;justify-content:center;font:600 15px Barlow;color:var(--introInk);margin-top:4px}
+.gest{height:20px;flex:none}
+.scrim{position:absolute;inset:0;background:var(--scrim)}
+.gbar{position:absolute;left:0;right:0;bottom:0;height:20px;display:flex;justify-content:center;align-items:center;z-index:3}
+.gbar i{width:108px;height:4px;border-radius:2px;background:var(--gest)}
+
+/* the sheet */
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:2;background:var(--sheet);border-radius:22px 22px 0 0;padding:0 16px 40px;box-shadow:0 -1px 0 var(--sheetLine),0 -8px 28px rgba(0,0,0,.10)}
+.t-dark .sheet{box-shadow:0 -1px 0 var(--sheetLine)}
+.handle{width:38px;height:4px;border-radius:2px;background:var(--handle);margin:10px auto 14px}
+.hd{display:flex;align-items:center;gap:12px}
+.hd .mk{width:36px;height:36px;flex:none;display:flex;align-items:center;justify-content:center}
+.hd .mk svg{width:34px;height:34px}
+.tile{width:36px;height:36px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center}
+.tile svg{width:19px;height:19px}
+.tile.n{background:var(--nTile);color:var(--nInk)}
+.tile.w{background:var(--warnBg);color:var(--warn)}
+.tile.b{background:var(--badBg);color:var(--bad)}
+.tile.o{background:var(--okBg);color:var(--ok)}
+.st{font:700 17px/22px Barlow;color:var(--ink);flex:1}
+.why{font:400 14px/20px Barlow;color:var(--ink2);margin:12px 0 0}
+.gb{height:52px;border-radius:26px;background:var(--gFill);border:1px solid var(--gLine);display:flex;align-items:center;justify-content:center;gap:12px;font:600 15px Barlow;color:var(--ink);box-sizing:border-box}
+.gb svg{width:20px;height:20px}
+.pb{height:52px;border-radius:26px;background:var(--acc);color:var(--onacc);display:flex;align-items:center;justify-content:center;gap:10px;font:700 15px Barlow}
+.pb svg{width:18px;height:18px}
+.tb{height:40px;display:flex;align-items:center;justify-content:center;font:600 15px Barlow;color:var(--accInk);margin-top:6px}
+.fn{font:500 12px/16px Barlow;color:var(--ink4);text-align:center;margin-top:12px}
+.gap18{height:18px}.gap10{height:10px}.gap14{height:14px}
+/* note (option A): the app's Notice, a toned hairline */
+.note{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--nLine);border-radius:12px;padding:11px 13px;margin-top:14px}
+.note svg{width:16px;height:16px;flex:none;margin-top:2px}
+.note .tx{font:400 14px/20px Barlow;color:var(--ink)}
+.note.n{border-color:var(--nLine);color:var(--nInk)}
+.note.w{border-color:var(--warnLine);color:var(--warn)}
+.note.b{border-color:var(--badLine);color:var(--bad)}
+.note.o{border-color:var(--warnLine);color:var(--warn)}
+/* account row */
+.acct{height:60px;border:1px solid var(--sheetLine);border-radius:16px;display:flex;align-items:center;gap:12px;padding:0 14px;box-sizing:border-box}
+.t-light .acct{border-color:#D3E3EE}
+.av{width:36px;height:36px;border-radius:18px;background:var(--av);color:var(--avInk);font:700 16px Barlow;display:flex;align-items:center;justify-content:center;flex:none}
+.acct .nm{font:600 15px/19px Barlow;color:var(--ink)}
+.acct .em{font:400 13px/17px Barlow;color:var(--ink4)}
+.acct .ck{margin-left:auto;color:var(--ok);display:flex}
+.acct .ck svg{width:20px;height:20px}
+.sk{background:linear-gradient(90deg,var(--sk) 0%,var(--sk2) 40%,var(--sk) 80%);background-size:300% 100%;animation:sh 1.4s linear infinite}
+@keyframes sh{from{background-position:100% 0}to{background-position:-200% 0}}
+.skc{width:36px;height:36px;border-radius:18px;flex:none}
+.skl{height:11px;border-radius:6px}
+.wait{font:500 13px/18px Barlow;color:var(--ink4);text-align:center;margin-top:12px}
+.load{font:400 14px/20px Barlow;color:var(--ink2);margin:14px 0 0}
+
+/* option B, final pass */
+.t-light{--ring:rgba(20,47,67,.14);--card:#F3F8FB;--cardLine:#E1ECF3;--bar:#32729B;--barTrack:#E4EEF4}
+.t-dark{--ring:rgba(255,255,255,.16);--card:#202326;--cardLine:#2C3034;--bar:#8BCBF7;--barTrack:#2A2E32}
+.vb .handle{margin:10px auto 16px}
+.vb .hd{gap:12px;min-height:36px}
+.vb .st{font:700 17px/22px Barlow;letter-spacing:-.1px}
+.vb .why{font:400 14px/20px Barlow;margin:12px 0 0}
+.vb .act{margin-top:20px}
+.vb .gb,.vb .pb{height:52px}
+.vb .tb{height:44px;margin-top:6px}
+.vb .fn{font:500 12.5px/17px Barlow;margin-top:12px}
+.vb .acct{height:64px;padding:0 14px;gap:12px}
+.vb .acct .nm{font:600 15px/20px Barlow}
+.vb .acct .em{font:400 13px/18px Barlow}
+.t-light.vb .acct{border-color:#D6E4EE}
+.ph{width:36px;height:36px;border-radius:18px;flex:none;position:relative;overflow:hidden}
+.ph svg{width:36px;height:36px;display:block}
+.ph::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 1px var(--ring)}
+.av.r{box-shadow:inset 0 0 0 1px var(--ring)}
+.bar{height:3px;border-radius:2px;background:var(--barTrack);overflow:hidden;margin:14px 2px 0;position:relative}
+.bar i{position:absolute;top:0;bottom:0;width:34%;border-radius:2px;background:var(--bar);animation:bar 1.3s cubic-bezier(.4,0,.2,1) infinite}
+@keyframes bar{from{left:-34%}to{left:100%}}
+.card{display:block;background:var(--card);border:1px solid var(--cardLine);border-radius:16px;padding:14px;margin-top:12px}
+.card .chr{display:flex;align-items:center;gap:10px}
+.tile.sm{width:30px;height:30px;border-radius:9px}
+.tile.sm svg{width:16px;height:16px}
+.card .ch{font:600 15px/20px Barlow;color:var(--ink)}
+.card .cb{font:400 14px/20px Barlow;color:var(--ink2);margin-top:9px}
+/* today, as the code draws it */
+.old .sheet{background:var(--oldGlass);box-shadow:none}
+.old .st{font:700 17px/22px Barlow}
+.old .why{margin-top:14px;font:400 14px/20px Barlow}
+.old .gb{background:var(--oldBtn);border-color:var(--oldLine)}
+.old .gb.dis{color:var(--ink2)}
+.old .fn{color:var(--oldFoot);font:500 11px/16px Barlow}
+.refusal{display:flex;gap:10px;background:var(--oldBadBg);border-radius:13px;padding:12px;margin-top:16px}
+.refusal svg{width:16px;height:16px;flex:none;color:var(--oldBad)}
+.refusal .tx{font:400 12px/16px Barlow;color:var(--oldBad)}
+.spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--ink2);border-right-color:transparent;box-sizing:border-box}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs><linearGradient id="fLbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F99B80"/><stop offset="1" stop-color="#EF806B"/></linearGradient><linearGradient id="fRbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#77D6C2"/><stop offset="1" stop-color="#54C5AC"/></linearGradient><linearGradient id="fLscreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFCF1"/><stop offset="1" stop-color="#FFFCF1"/></linearGradient><linearGradient id="fRscreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFCF1"/><stop offset="1" stop-color="#FFFCF1"/></linearGradient><filter id="fLdrop" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.7"/><feOffset dy="1.8" result="b"/><feFlood flood-color="#0E2E44" flood-opacity="0.22"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="fRdrop" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.7"/><feOffset dy="1.8" result="b"/><feFlood flood-color="#0E2E44" flood-opacity="0.22"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="fsoft" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.1"/><feOffset dy="1.3" result="b"/><feFlood flood-color="#0E2E44" flood-opacity="0.1408"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><g id="ttmark"><g><path d="M39.35 33.10L39.75 32.67L40.15 32.25L40.57 31.84L41.00 31.44L41.44 31.06L41.90 30.69L42.37 30.33L42.84 29.99L43.33 29.66L43.83 29.35L44.34 29.05L44.86 28.77L45.39 28.50L45.92 28.25L46.47 28.01L47.02 27.80L47.57 27.59L48.14 27.41L48.71 27.24L49.28 27.09L49.86 26.96L50.45 26.85L51.04 26.75L51.63 26.67L52.22 26.61L52.82 26.57L53.42 26.54L54.02 26.54L54.62 26.55L55.22 26.58L55.82 26.63L56.42 26.70L57.01 26.78L57.61 26.89L58.20 27.01L58.78 27.15L59.37 27.31L59.95 27.49L60.52 27.68L61.09 27.89L61.65 28.12L62.20 28.37L62.75 28.63L63.29 28.91L63.82 29.21L64.35 29.52L64.86 29.85L65.36 30.20L62.83 33.55L62.45 33.25L62.06 32.96L61.67 32.68L61.26 32.42L60.85 32.16L60.42 31.92L60.00 31.69L59.56 31.48L59.11 31.28L58.66 31.09L58.21 30.91L57.74 30.75L57.28 30.61L56.80 30.47L56.33 30.36L55.85 30.25L55.36 30.16L54.87 30.09L54.38 30.03L53.89 29.99L53.40 29.96L52.90 29.94L52.41 29.94L51.91 29.96L51.42 29.99L50.92 30.04L50.43 30.10L49.93 30.18L49.44 30.27L48.95 30.37L48.47 30.50L47.99 30.63L47.51 30.79L47.04 30.95L46.57 31.13L46.10 31.33L45.65 31.54L45.19 31.76L44.75 32.00L44.31 32.25L43.88 32.52L43.46 32.80L43.04 33.09L42.64 33.40L42.24 33.71L41.85 34.04L41.47 34.39L41.11 34.74A1.20 1.20 0 0 1 39.35 33.10Z" fill="#32729B"/><path d="M68.32 35.07L65.25 28.69L60.48 34.99Z" fill="#32729B" stroke="#32729B" stroke-width="2.2" stroke-linejoin="round"/><path d="M68.65 74.90L68.25 75.33L67.85 75.75L67.43 76.16L67.00 76.56L66.56 76.94L66.10 77.31L65.63 77.67L65.16 78.01L64.67 78.34L64.17 78.65L63.66 78.95L63.14 79.23L62.61 79.50L62.08 79.75L61.53 79.99L60.98 80.20L60.43 80.41L59.86 80.59L59.29 80.76L58.72 80.91L58.14 81.04L57.55 81.15L56.96 81.25L56.37 81.33L55.78 81.39L55.18 81.43L54.58 81.46L53.98 81.46L53.38 81.45L52.78 81.42L52.18 81.37L51.58 81.30L50.99 81.22L50.39 81.11L49.80 80.99L49.22 80.85L48.63 80.69L48.05 80.51L47.48 80.32L46.91 80.11L46.35 79.88L45.80 79.63L45.25 79.37L44.71 79.09L44.18 78.79L43.65 78.48L43.14 78.15L42.64 77.80L45.17 74.45L45.55 74.75L45.94 75.04L46.33 75.32L46.74 75.58L47.15 75.84L47.58 76.08L48.00 76.31L48.44 76.52L48.89 76.72L49.34 76.91L49.79 77.09L50.26 77.25L50.72 77.39L51.20 77.53L51.67 77.64L52.15 77.75L52.64 77.84L53.13 77.91L53.62 77.97L54.11 78.01L54.60 78.04L55.10 78.06L55.59 78.06L56.09 78.04L56.58 78.01L57.08 77.96L57.57 77.90L58.07 77.82L58.56 77.73L59.05 77.63L59.53 77.50L60.01 77.37L60.49 77.21L60.96 77.05L61.43 76.87L61.90 76.67L62.35 76.46L62.81 76.24L63.25 76.00L63.69 75.75L64.12 75.48L64.54 75.20L64.96 74.91L65.36 74.60L65.76 74.29L66.15 73.96L66.53 73.61L66.89 73.26A1.20 1.20 0 0 1 68.65 74.90Z" fill="#32729B"/><path d="M39.68 72.93L42.75 79.31L47.52 73.01Z" fill="#32729B" stroke="#32729B" stroke-width="2.2" stroke-linejoin="round"/></g><g transform="rotate(-9.9 37.50 54.00)">
+    <rect x="27.20" y="38.15" width="20.6" height="31.7" rx="3.8" fill="url(#fLbody)"/>
+    <rect x="29.60" y="42.75" width="15.80" height="21.90" rx="1.9" fill="url(#fLscreen)"/>
+    <rect x="34.70" y="39.90" width="5.6" height="1.2" rx=".6" fill="#FFFCF1"/>
+    <circle cx="37.50" cy="67.25" r="1.15" fill="#FFFCF1"/>
+    <path d="M33.36 55.18L36.24 57.97L41.46 52.03" fill="none" stroke="none" stroke-width="2.61" stroke-linecap="round" stroke-linejoin="round"/>
+  </g><g transform="rotate(-9.9 37.50 54.00)"><g transform="translate(37.50 53.80) scale(0.78)"><g><path d="M-2.5 -0.4L-4.6 -1.8" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M2.5 -0.4L4.6 -1.8" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M-3 1.7L-5.1 1.9" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M3 1.7L5.1 1.9" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M-2.5 3.8L-4.3 5.3" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M2.5 3.8L4.3 5.3" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M-.8 -3.7Q-1.3 -5.6 -2.7 -6M.8 -3.7Q1.3 -5.6 2.7 -6" fill="none" stroke="#17253B" stroke-width=".9" stroke-linecap="round"/><rect x="-3.4" y="-1.1" width="6.8" height="7.3" rx="3.4" fill="#17253B"/><circle cx="0" cy="-2.8" r="2.05" fill="#17253B" stroke="#FFFCF1" stroke-width=".6"/><path d="M0 .1V5.6" stroke="#FFFCF1" stroke-width=".55" stroke-linecap="round"/></g></g></g><g transform="rotate(9.9 70.50 54.00)">
+    <rect x="60.20" y="38.15" width="20.6" height="31.7" rx="3.8" fill="url(#fRbody)"/>
+    <rect x="62.60" y="42.75" width="15.80" height="21.90" rx="1.9" fill="url(#fRscreen)"/>
+    <rect x="67.70" y="39.90" width="5.6" height="1.2" rx=".6" fill="#FFFCF1"/>
+    <circle cx="70.50" cy="67.25" r="1.15" fill="#FFFCF1"/>
+    <path d="M66.36 55.18L69.24 57.97L74.46 52.03" fill="none" stroke="#17253B" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g></g></defs>
+</svg>
+<div class="doc">
+  <h1>TestTrack: the Google sign-in sheet</h1>
+  <p>The sheet over the last onboarding page, in every state it can be in. Option B is the chosen one and has had its final pass. Today's sheet and Option A are kept below it for comparison. Each has a light row and a dark row.</p>
+  <p>In dark, the sheet is one step above the page (#191B1D on #0F1011) instead of today's navy card. Robot blue stays the only accent. The Google button keeps Google's own mark and wording.</p>
+  <div class="ctl">Size
+    <button data-z=".5">S</button><button data-z=".6">M</button><button data-z=".8">L</button><button data-z="1">1:1</button>
+    <span class="sep"></span>Show
+    <button data-o="all">All</button><button data-o="today">Today</button><button data-o="A">Option A</button><button data-o="B">Option B</button>
+  </div>
+</div>
+<div id="root"></div>
+<script>
+const I = {
+  info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  alert:'<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+  wifiOff:'<path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/>',
+  userX:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/>',
+  userPlus:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  checkCircle:'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  ticket:'<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
+  phone:'<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+};
+const ic = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${I[k]}</svg>`;
+const G = `<svg viewBox="0 0 16 16"><path fill="#4285F4" d="M14.9 8.161c0-.476-.039-.954-.121-1.422h-6.64v2.695h3.802a3.24 3.24 0 0 1-1.407 2.127v1.75h2.269c1.332-1.22 2.097-3.02 2.097-5.15z"/><path fill="#34A853" d="M8.14 15c1.898 0 3.499-.62 4.665-1.69l-2.268-1.749c-.631.427-1.446.669-2.395.669-1.836 0-3.393-1.232-3.952-2.888H1.85v1.803A7.044 7.044 0 0 0 8.14 15z"/><path fill="#FBBC04" d="M4.187 9.342a4.17 4.17 0 0 1 0-2.68V4.859H1.849a6.97 6.97 0 0 0 0 6.286l2.338-1.803z"/><path fill="#EA4335" d="M8.14 3.77a3.837 3.837 0 0 1 2.7 1.05l2.01-1.999a6.786 6.786 0 0 0-4.71-1.82 7.042 7.042 0 0 0-6.29 3.858L4.186 6.66c.556-1.658 2.116-2.89 3.952-2.89z"/></svg>`;
+const MARK = (cls='mark') => `<svg class="${cls}" viewBox="24 22 60 64"><use href="#ttmark"/></svg>`;
+const SB = `<div class="sb"><span>9:41</span><span class="ic">
+  <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx=".6"/><rect x="4" y="5" width="3" height="6" rx=".6"/><rect x="8" y="2.5" width="3" height="8.5" rx=".6"/><rect x="12" y="0" width="3" height="11" rx=".6"/></svg>
+  <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2.5" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="12" height="7" rx="1.4" fill="currentColor"/><rect x="19.6" y="3.5" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".5"/></svg>
+</span></div>`;
+
+function page(theme) {
+  const art = theme === 'dark' ? '../onboarding/undraw/dark-sticker/searching_pqji.svg' : '../onboarding/undraw/light/searching_pqji.svg';
+  const dots = [0,1,2,3,4].map(k => `<i class="dot ${k === 4 ? 'on' : ''}"></i>`).join('');
+  return `${SB}<div class="top">${MARK()}<div class="brand">TestTrack</div><div class="skip">Skip</div></div>
+    <div class="pager"><div class="art"><img src="${art}" alt=""></div>
+      <div class="copy"><div class="eyebrow">NO ACCOUNT NEEDED</div><h2 class="ptitle">Look around first</h2><p class="pbody">See how crews and feedback work. No account needed, and nothing to pay.</p></div></div>
+    <div class="foot"><div class="dots">${dots}</div><div class="ibtn">Explore TestTrack</div><div class="ilink">Already here? Sign in</div></div>
+    <div class="gest"></div>`;
+}
+function phone(theme, sheet, extra = '') {
+  return `<div class="phone t-${theme} ${extra}">${page(theme)}<div class="scrim"></div><div class="sheet"><div class="handle"></div>${sheet}</div><div class="gbar"><i></i></div></div>`;
+}
+
+const WHY = 'Your crews, apps and tix are saved to your account, so they are there on any phone you sign in on.';
+const FOOT = 'Google Play links testers by their Google account.';
+const gbtn = `<div class="gb">${G}<span>Continue with Google</span></div>`;
+const head = (lead, title) => `<div class="hd">${lead}<div class="st">${title}</div></div>`;
+const mk = `<div class="mk">${MARK()}</div>`;
+const tile = (tone, k) => `<div class="tile ${tone}">${ic(k)}</div>`;
+const acctSkel = `<div class="acct"><div class="skc sk"></div><div style="flex:1"><div class="skl sk" style="width:46%"></div><div class="skl sk" style="width:72%;margin-top:8px"></div></div></div>`;
+const acct = `<div class="acct"><div class="av">M</div><div><div class="nm">Mina Rahman</div><div class="em">mina.rahman@gmail.com</div></div></div>`;
+const STARTER = 'This phone already got its 120 starter tix with another account, so this account starts at 0. You can still earn tix by reviewing other apps.';
+
+/* ---------- today ---------- */
+const TODAY = [
+  ['Default, and after cancelling (nothing changes)', () =>
+    head('', 'Sign in to TestTrack') + `<p class="why">${WHY}</p><div style="height:20px"></div>${gbtn}<div class="fn">Play ties closed testing to Google accounts.</div>`],
+  ['Waiting (spinner, same words after Google closes)', () =>
+    head('', 'Sign in to TestTrack') + `<p class="why">${WHY}</p><div style="height:20px"></div><div class="gb dis"><div class="spin"></div><span>Waiting for Google</span></div><div class="fn">Play ties closed testing to Google accounts.</div>`],
+  ['Any failure, here a Google error', () =>
+    head('', 'Sign in to TestTrack') + `<p class="why">${WHY}</p><div class="refusal">${ic('alert')}<div class="tx">Google couldn't finish the sign-in. Try once more.</div></div><div style="height:20px"></div>${gbtn}<div class="fn">Play ties closed testing to Google accounts.</div>`],
+  ['Signed in (leaves after 1.1 s)', () =>
+    `<div class="hd"><div class="tile o" style="border-radius:20px;width:40px;height:40px">${ic('check')}</div><div><div class="st">Signed in</div><div style="font:400 12px Barlow;color:var(--ink2)">mina.rahman@gmail.com</div></div></div><p class="why" style="margin-top:16px">Your crews and balance are loading. A new account gets 120 tix to start, once per account and phone. Use them to ask for feedback, or earn more by reviewing other apps.</p><div style="height:20px"></div>`],
+];
+
+/* ---------- option A: a note inside the sheet, the pitch stays ---------- */
+const A_note = (tone, k, text) => `<div class="note ${tone}">${ic(k)}<div class="tx">${text}</div></div>`;
+const A = [
+  ['1. Default', () => head(mk, 'Sign in to TestTrack') + `<p class="why">${WHY}</p><div class="gap18"></div>${gbtn}<div class="fn">${FOOT}</div>`],
+  ['2. Signing in', () => head(mk, 'Sign in to TestTrack') + `<p class="why">${WHY}</p><div class="gap18"></div>${acctSkel}<div class="wait">Signing you in. This takes a few seconds.</div>`],
+  ['3. Cancelled', () => head(mk, 'Sign in to TestTrack') + `<p class="why">${WHY}</p>${A_note('n','info','Sign-in was cancelled. You can try again or keep looking around.')}<div class="gap18"></div>${gbtn}<div class="tb">Keep looking around</div>`],
+  ['4. Failed: no internet', () => head(mk, 'Sign in to TestTrack') + `<p class="why">${WHY}</p>${A_note('w','wifiOff','No internet connection. Check your Wi-Fi or mobile data, then try again.')}<div class="gap18"></div>${gbtn}<div class="fn">${FOOT}</div>`],
+  ['5. Failed: no Google account', () => head(mk, 'Sign in to TestTrack') + `<p class="why">${WHY}</p>${A_note('w','userX','No Google account found on this phone. Add one, then try again.')}<div class="gap18"></div><div class="pb">${ic('userPlus')}<span>Add a Google account</span></div><div class="gap10"></div>${gbtn}`],
+  ['6. Failed: other', () => head(mk, 'Sign in to TestTrack') + `<p class="why">${WHY}</p>${A_note('b','alert',"Sign-in didn't work this time. Your account is fine. Try again in a moment.")}<div class="gap18"></div>${gbtn}<div class="fn">${FOOT}</div>`],
+  ['7. Signed in (leaves on its own)', () => head(tile('o','check'), "You're signed in") + `<div class="gap14"></div>${acct}<p class="load">Your crews and tix are loading.</p>`],
+  ['7b. Signed in, starter tix already used', () => head(tile('o','check'), "You're signed in") + `<div class="gap14"></div>${acct}${A_note('o','phone',STARTER)}<div class="gap18"></div><div class="pb">OK</div>`],
+];
+
+/* ---------- option B: the sheet answers in its own title ---------- */
+const B_body = (t) => `<p class="why">${t}</p>`;
+/* a stand-in profile photo, drawn here: no download */
+const PHOTO = `<div class="ph"><svg viewBox="0 0 36 36"><defs><linearGradient id="pbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9D6CF"/><stop offset="1" stop-color="#A9BDB3"/></linearGradient></defs>
+  <rect width="36" height="36" fill="url(#pbg)"/>
+  <path d="M5 36c1.2-7 6-10.5 13-10.5S29.8 29 31 36Z" fill="#3E5A6E"/>
+  <path d="M15 22.5h6v4.2c-1 1.2-2 1.8-3 1.8s-2-.6-3-1.8Z" fill="#C98F6E"/>
+  <ellipse cx="18" cy="16.2" rx="6.2" ry="7.2" fill="#D9A07D"/>
+  <path d="M11.4 16.4c-.6-6.4 3-9.6 6.8-9.6 4.4 0 7.4 3.2 6.6 9.4-.8-2.6-2.2-4.4-4.4-5.2-2.6 1.4-6 2.4-9 5.4Z" fill="#2E2621"/>
+</svg></div>`;
+const INITIAL = `<div class="av r">M</div>`;
+const acctB = (face) => `<div class="acct">${face}<div><div class="nm">Mina Rahman</div><div class="em">mina.rahman@gmail.com</div></div></div>`;
+const signedHead = head(tile('o','check'), "You're signed in");
+const B = [
+  ['1. Default', () => head(mk, 'Sign in to TestTrack') + B_body(WHY) + `<div class="act">${gbtn}</div><div class="fn">${FOOT}</div>`],
+  ['2. Signing in', () => head(mk, 'Signing you in') + B_body('This takes a few seconds.') + `<div class="act">${acctSkel}</div>`],
+  ['3. Cancelled', () => head(mk, 'Sign-in was cancelled') + B_body('You can try again or keep looking around.') + `<div class="act">${gbtn}</div><div class="tb">Keep looking around</div>`],
+  ['4. Failed: no internet', () => head(tile('w','wifiOff'), 'No internet connection') + B_body('Sign-in needs the internet. Check your Wi-Fi or mobile data, then try again.') + `<div class="act">${gbtn}</div>`],
+  ['5. Failed: no Google account', () => head(tile('w','userX'), 'No Google account found') + B_body('Add a Google account to this phone, then come back and try again.') + `<div class="act"><div class="pb">${ic('userPlus')}<span>Add a Google account</span></div></div><div class="tb">Try again</div>`],
+  ['6. Failed: other', () => head(tile('b','alert'), "Sign-in didn't work") + B_body('Something went wrong between Google and TestTrack. Your account is fine. Try again in a moment.') + `<div class="act">${gbtn}</div>`],
+  ['7a. Signed in, Google photo (closes itself)', () => signedHead + `<div class="act" style="margin-top:16px">${acctB(PHOTO)}</div><div class="bar"><i></i></div>`],
+  ['7b. Signed in, no photo (closes itself)', () => signedHead + `<div class="act" style="margin-top:16px">${acctB(INITIAL)}</div><div class="bar"><i></i></div>`],
+  ['7c. Signed in, starter tix already used', () => signedHead + `<div class="act" style="margin-top:16px">${acctB(PHOTO)}</div>
+     <div class="card"><div class="chr">${tile('w sm','ticket')}<div class="ch">Starter tix already used</div></div><div class="cb">Each phone gets 120 starter tix once, and this one already has. You start at 0 and earn tix by reviewing other apps.</div></div>
+     <div class="act" style="margin-top:20px"><div class="pb">OK</div></div>`],
+];
+
+const SECTIONS = [
+  ['B', 'Option B: the sheet answers in its title (chosen)', 'Final pass. The title and the line under it become the answer, so the first thing you read after Google closes is what happened. A coloured tile appears only when something is wrong; cancelling keeps the TestTrack mark. Signed in shows the Google photo when there is one, the initial when there is not, and a thin bar while the app loads.', B, 'vb'],
+  ['today', 'Today', 'What the code draws now. Cancelling puts the sheet back exactly as it was, with no word about it, and every failure shares one red wash.', TODAY, 'old'],
+  ['A', 'Option A: a note above the button', 'The title and the reason stay put. What happened is one toned note between the reason and the button, using the app\'s Notice style. Grey for cancelled, amber for things you can fix, red for the rest.', A, ''],
+];
+
+const q = new URLSearchParams(location.search);
+const only = q.get('o') || 'all';
+const onlyT = q.get('t');
+let html = '';
+for (const [key, title, sub, states, extra] of SECTIONS) {
+  if (only !== 'all' && only !== key) continue;
+  html += `<section class="opt"><h2>${title}</h2><p class="sub">${sub}</p>`;
+  for (const t of ['light', 'dark']) {
+    if (onlyT && onlyT !== t) continue;
+    html += `<div class="rowlbl">${t === 'light' ? 'Light' : 'Dark'}</div><div class="strip ${t}"><div class="zoomwrap">`;
+    for (const [cap, fn] of states) html += `<div class="cell"><div class="cap">${cap}</div>${phone(t, fn(), extra)}</div>`;
+    html += `</div></div>`;
+  }
+  html += `</section>`;
+}
+document.getElementById('root').innerHTML = html;
+if (q.get('bare')) document.querySelector('.doc').style.display = 'none';
+const z = q.get('z') || '.6';
+document.documentElement.style.setProperty('--z', z);
+document.querySelectorAll('.ctl button[data-z]').forEach(b => {
+  b.classList.toggle('on', b.dataset.z === z);
+  b.onclick = () => { document.documentElement.style.setProperty('--z', b.dataset.z); document.querySelectorAll('.ctl button[data-z]').forEach(x => x.classList.toggle('on', x === b)); };
+});
+document.querySelectorAll('.ctl button[data-o]').forEach(b => {
+  b.classList.toggle('on', b.dataset.o === only);
+  b.onclick = () => { const p = new URLSearchParams(location.search); p.set('o', b.dataset.o); location.search = p.toString(); };
+});
+</script>
+</body>
+</html>

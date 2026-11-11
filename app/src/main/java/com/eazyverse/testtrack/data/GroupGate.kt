@@ -30,7 +30,20 @@ data class GoogleAccount(
     val idToken: String,
     val email: String,
     val name: String,
+    /** The profile picture's address, already sized for the sign-in sheet, or null when there is none. */
+    val photo: String? = null,
 )
+
+/**
+ * Google's picture address at the size the sign-in sheet draws it.
+ *
+ * The address ends in `=s96-c` (or another size) and Google serves whatever number is there, so it
+ * is asked for 144, enough for a 36dp avatar on a 4x screen. An address with no size on the end is
+ * left alone.
+ */
+internal fun sizedGooglePhoto(url: String?): String? = url?.takeIf { it.isNotBlank() }?.replace(PHOTO_SIZE, "=s144-c")
+
+private val PHOTO_SIZE = Regex("=s\\d+(-c)?$")
 
 /**
  * Raised when a step of signing in never came back at all.
@@ -42,6 +55,17 @@ data class GoogleAccount(
 class StalledException(
     message: String,
 ) : Exception(message)
+
+/**
+ * Google said yes but the exchange for a Firebase session failed.
+ *
+ * Its own type, with the real failure as the cause, so the caller can tell a dropped connection
+ * from a refusal instead of getting one generic sentence for both. It used to be a string left in
+ * a field that the screen never read.
+ */
+class FirebaseSignInException(
+    cause: Throwable,
+) : Exception("Firebase sign-in failed", cause)
 
 /** Result of asking the membership service whether this account is in the Google Group. */
 sealed interface GateResult {
@@ -203,7 +227,12 @@ object GroupGate {
                     ).joinToString(" ").takeIf { it.isNotBlank() }
                     ?: email.substringBefore('@')
 
-            return GoogleAccount(google.idToken, email, name)
+            return GoogleAccount(
+                google.idToken,
+                email,
+                name,
+                sizedGooglePhoto(google.profilePictureUri?.toString()),
+            )
         }
         error("Unexpected credential type: ${credential.type}")
     }
