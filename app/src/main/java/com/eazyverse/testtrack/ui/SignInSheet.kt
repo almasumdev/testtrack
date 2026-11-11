@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -175,8 +176,11 @@ internal fun signInTitle(
 internal fun SignInLead(ui: SignInUi) {
     val t = Tt.colors
     when (ui) {
-        SignInUi.Idle, SignInUi.Working, SignInUi.Cancelled ->
-            Image(painterResource(R.drawable.testtrack_mark), null, Modifier.size(36.dp))
+        SignInUi.Idle, SignInUi.Working, SignInUi.Cancelled -> {
+            // As tall as the title's line, and scales with the font size.
+            val markSize = with(LocalDensity.current) { PickerTitleLineHeight.toDp() }
+            Image(painterResource(R.drawable.testtrack_mark), null, Modifier.size(markSize))
+        }
 
         SignInUi.Offline -> StatusTile(Lucide.WifiOff, t.warn, t.warnBg)
 

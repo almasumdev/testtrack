@@ -61,6 +61,9 @@ import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.ui.theme.Tt
 import kotlinx.coroutines.launch
 
+/** The title's line height, which a mark beside the title is sized from so it scales with the font. */
+internal val PickerTitleLineHeight = 22.sp
+
 /**
  * The one frame every picker sheet in the app is drawn in: the sheet surface with top corners of
  * 22, a 38 by 4 handle, the title, and the body under it, never wider than 560.
@@ -173,7 +176,11 @@ internal fun PickerSheet(
                                 } else {
                                     Modifier
                                 },
-                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp, lineHeight = 22.sp),
+                            style =
+                                MaterialTheme.typography.titleMedium.copy(
+                                    fontSize = 17.sp,
+                                    lineHeight = PickerTitleLineHeight,
+                                ),
                             fontWeight = FontWeight.Bold,
                             color = Tt.colors.text,
                         )
