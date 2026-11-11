@@ -146,7 +146,7 @@ fun OnboardingBody(
             Modifier.widthIn(max = 520.dp).fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Image(painterResource(R.drawable.testtrack_robot), null, Modifier.size(44.dp))
+            Image(painterResource(R.drawable.testtrack_mark), null, Modifier.size(44.dp))
             Spacer(Modifier.width(8.dp))
             Text(
                 stringResource(R.string.intro_brand),
