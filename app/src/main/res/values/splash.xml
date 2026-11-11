@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launch screen ground. Kept apart from colors.xml, which is generated from Tokens.kt. -->
+<resources>
+    <color name="splash_background">#FFF7FCFF</color>
+</resources>

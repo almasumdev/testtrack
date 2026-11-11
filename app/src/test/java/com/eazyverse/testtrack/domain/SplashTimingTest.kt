@@ -19,7 +19,7 @@ class SplashTimingTest {
 
     @Test
     fun `unexpected metadata and backwards clock cannot extend the sequence`() {
-        assertEquals(900L, remainingSplashAnimationMillis(1_000, 20_000, 900))
+        assertEquals(1_000L, remainingSplashAnimationMillis(1_000, 20_000, 900))
         assertEquals(300L, remainingSplashAnimationMillis(1_000, 300, 900))
     }
 }

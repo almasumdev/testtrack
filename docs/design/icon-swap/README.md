@@ -1,6 +1,6 @@
 # New app icon: two phones swapping
 
-Chosen on 2026-11-11, bug added the same day after the meaning and ASO review. Nothing is in the app yet.
+Chosen on 2026-11-11, bug added the same day after the meaning and ASO review. Only the launch screen is in the app so far.
 
 ## The choice
 
@@ -54,7 +54,5 @@ The check is at size 0.9 (it was 0.99), so it balances the bug at 0.78.
 
 1. **Build the icon into the app.** In the monochrome version the bug is a solid shape, without the cream details. The coder turns the SVGs into adaptive-icon vector drawables (foreground, background, monochrome) plus the 512 px Play icon.
    - Vector drawables can't use the SVG drop-shadow filters, so either leave the shadows out or bake them into the foreground.
-2. **Build the launch animation.** Turn "Rise and turn" into an animated vector drawable: `drawable-v31/testtrack_splash_vector_animated.xml`, plus a `-night` copy with the #80BCDE arrows.
-   - It uses only what animated vectors support: rotation, translation, scaling and opacity on groups, and trimPathEnd on the check stroke. The bug pops in with a scale animation. The timings are in `source/anim.js` (css block, "C").
-   - The launch-screen icon has to stay inside Android's 2/3 circle. The artwork reaches about 32 of the allowed 36 units from the centre.
+2. **Launch animation: done.** `python scripts/build_swap_splash.py` turns `splash/swap-splash-light.svg` and `-dark.svg` into the animated vector drawables (`drawable-v31`, `drawable-night-v31`), the static icons for Android 11 and older (`drawable`, `drawable-night`) and the easing curves in `res/interpolator`. Backgrounds are `splash_background` (`values/splash.xml`, `values-night/splash.xml`).
 3. **Later:** the app review from onboarding (the UI is too bulky) and a full hand-test setup.

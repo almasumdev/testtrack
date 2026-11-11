@@ -10,7 +10,7 @@ accents. The same source supplies the [onboarding illustrations](../onboarding/p
 Open `preview.html` for a replayable artwork, light splash and dark splash comparison.
 `test-exchange-animated.svg` also plays the motion once when opened in a browser.
 
-Regenerate the Android resources and browser assets after editing the source:
+Regenerate the browser assets and onboarding resources after editing the source:
 
 ```powershell
 python scripts/build_splash.py
@@ -19,17 +19,14 @@ python scripts/build_onboarding.py
 
 ## Native launch
 
+The launch screen no longer shows this robot. It uses the two-phones icon from
+`../icon-swap/`, built by `python scripts/build_swap_splash.py`. What stays true:
+
 - Android 12 / API 31 and newer use a platform AnimatedVectorDrawable.
 - Android 8 to 11 use the same vector in its completed pose through AndroidX SplashScreen.
-- The 900 ms animation tells one story: two app cards arrive, the arrows sweep in opposite
-  directions, then both checks confirm. The eyes follow the apps, the head gives a small nod,
-  and a single blink finishes the sequence at 780 to 900 ms.
-  The last frame preserves the approved artwork. It does not loop.
-- A 288 dp transparent icon canvas uses a 0.78 scale around its centre to keep the visible
-  artwork inside Android's 192 dp circular safe area.
-- The native background matches Compose: `#E9F0F4` in light mode, `#0F1011` in dark mode.
+- The native background is `#F7FCFF` in light mode and `#0F1011` in dark mode (`splash_background`).
 - `installSplashScreen()` runs before `super.onCreate()`. App composition proceeds underneath
-  the splash. The exit listener finishes only the unplayed part of the icon, capped at 900 ms,
+  the splash. The exit listener finishes only the unplayed part of the icon, capped at 1,000 ms,
   then fades the splash for 120 ms. No network request gates the splash.
 - Missing animation metadata, pre-Android-12 devices and disabled system animations skip
   the animation wait. Normal resumes do not create a second in-app splash.

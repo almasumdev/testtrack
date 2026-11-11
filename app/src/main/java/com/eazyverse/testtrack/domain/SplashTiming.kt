@@ -7,7 +7,7 @@ fun remainingSplashAnimationMillis(
     nowMillis: Long,
 ): Long {
     if (startMillis <= 0 || durationMillis <= 0) return 0
-    val duration = durationMillis.coerceAtMost(900)
+    val duration = durationMillis.coerceAtMost(1_000)
     val elapsed = (nowMillis - startMillis).coerceAtLeast(0)
     return (duration - elapsed).coerceAtLeast(0)
 }

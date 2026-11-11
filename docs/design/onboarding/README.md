@@ -38,7 +38,6 @@ Android VectorDrawables. It reuses the canonical robot from `../logo/test-exchan
 the complete app cards and foreground arrow tips. The splash and onboarding robot use the app's Ocean blue.
 
 ```powershell
-python scripts/build_splash.py
 python scripts/build_onboarding.py
 ```
 

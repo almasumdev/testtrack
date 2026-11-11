@@ -1,7 +1,9 @@
-"""Export the editable Test Exchange SVG to native Android splash drawables.
+"""Shared SVG to vector-drawable helpers for the Test Exchange robot, plus its browser preview.
 
-Run from any directory: python scripts/build_splash.py
-Geometry and colours live in the SVG; motion is declared below. No raster conversion.
+The launch screen no longer comes from here. It is built by scripts/build_swap_splash.py from
+docs/design/icon-swap/splash/. This file stays because build_launcher.py, build_onboarding.py and
+build_brand_background.py import its helpers. Running it only refreshes the robot's browser
+preview in docs/design/logo; it never writes Android resources.
 """
 
 from pathlib import Path
@@ -289,16 +291,8 @@ def build_preview(svg):
 
 
 def main():
-    svg = ET.parse(DESIGN / "test-exchange.svg").getroot()
-    write_xml(RES / "drawable/testtrack_splash_icon.xml", build_vector(svg))
-    write_xml(RES / "drawable-v31/testtrack_splash_vector_animated.xml", build_vector(svg, animated=True))
-    write_xml(RES / "drawable-v31/testtrack_splash_icon.xml", build_animation())
-    for name, (x1, y1, x2, y2) in EASING.items():
-        write_xml(RES / f"interpolator/splash_{name}.xml", ET.Element("pathInterpolator", android_attrs(
-            controlX1=x1, controlY1=y1, controlX2=x2, controlY2=y2,
-        )))
-    build_preview(svg)
-    print("Exported static vector, Android 12+ animated vector (900ms), and browser preview.")
+    build_preview(ET.parse(DESIGN / "test-exchange.svg").getroot())
+    print("Refreshed the robot browser preview. The launch screen is built by build_swap_splash.py.")
 
 
 if __name__ == "__main__":
