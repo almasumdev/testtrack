@@ -28,6 +28,7 @@ w("icon-background.svg", wrap(bg));
 w("icon-combined.svg", wrap(bg + fg("#32729B", .22)));
 w("splash-foreground-light.svg", wrap(fg("#32729B", .22)));
 w("splash-foreground-dark.svg", wrap(fg("#80BCDE", .45)));
+
 w("numbers.json", JSON.stringify(P, null, 2));
 console.log("ok");
-`);
+` + fs.readFileSync(__dirname + "/_final_extra.js", "utf8"));

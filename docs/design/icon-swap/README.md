@@ -22,6 +22,16 @@ Chosen on 2026-11-11, bug added the same day after the meaning and ASO review. N
   - Light theme: plain #F7FCFF.
   - Dark theme: plain #0F1011. Here the arrows are light blue #80BCDE, because #32729B disappears on black.
 
+## For Android Studio (Image Asset)
+
+Use the files in `studio/`:
+- **Foreground layer:** `foreground.png` (1024 px, keeps the soft shadows) or `foreground.svg` (vector, no shadows).
+- **Background layer:** `background.png` or `background.svg`, a tile-blue gradient from #E7F4FC to #D5EAF7.
+- **Monochrome layer:** `monochrome.png` or `monochrome.svg`.
+- **Play Console icon:** `play-icon-512.png`.
+
+The check is at size 0.9 (it was 0.99), so it balances the bug at 0.78.
+
 ## Files
 
 | File | What it is |
@@ -31,6 +41,7 @@ Chosen on 2026-11-11, bug added the same day after the meaning and ASO review. N
 | `icon-combined.svg` | Both layers together, for Play (512 px) and previews |
 | `icon-monochrome.svg` | Themed-icon layer: one colour, cut-outs done with evenodd, no masks |
 | `splash-foreground-light.svg` / `splash-foreground-dark.svg` | Launch-screen icon (no background) for the day and night themes |
+| `splash/swap-splash-light.svg`, `splash/swap-splash-dark.svg` | Launch-animation sources. Every moving part is a named group (`arrows`, `arrow_top`, `arrow_bottom`, `phone_left` with `bug`, `phone_right` with `check`), with no filters |
 | `numbers.json` | Every shape number (phone size, tilt, arrow curve and so on) |
 | `pages/launch-animation.html` | The chosen animation, playing on light and dark launch screens |
 | `pages/icon-on-app-backgrounds.html` | The icon on the app's light and dark backgrounds, on the Figma V2 theme, and as themed icons |
