@@ -2,4 +2,8 @@
 <!-- Launch screen ground. Kept apart from colors.xml, which is generated from Tokens.kt. -->
 <resources>
     <color name="splash_background">#FFF7FCFF</color>
+    <!-- EazyVerse.com wordmark colours (drawable/ev_branding). Day and night share one drawable. -->
+    <color name="brand_ink">#142F43</color>
+    <color name="brand_accent">#32729B</color>
+    <color name="brand_soft">#59758A</color>
 </resources>

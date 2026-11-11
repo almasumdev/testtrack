@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.TestTrack.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/testtrack_splash_icon</item>
         <item name="windowSplashScreenAnimationDuration">950</item>
+        <!-- EazyVerse wordmark at the bottom. Platform attr, shows on Android 12+ only. -->
+        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="31">@drawable/ev_branding</item>
         <item name="postSplashScreenTheme">@style/Theme.TestTrack</item>
         <item name="android:windowSplashScreenBehavior">icon_preferred</item>
         <item name="android:statusBarColor">@color/splash_background</item>

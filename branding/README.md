@@ -17,6 +17,7 @@ The launch screen is drawn at the same 0.9 scale that Studio uses for the launch
 
 - `splash-light.svg` and `splash-dark.svg`: the artwork for the launch animation, one per theme. Every moving part is a named group.
 - `scripts/build_swap_splash.py` turns them into the splash drawables under `app/src/main/res` (`drawable`, `drawable-night`, `drawable-v31`, `drawable-night-v31` and `interpolator`). Edit the SVGs here, then run `python scripts/build_swap_splash.py`.
+- `ev-branding.svg` (day) and `ev-branding-dark.svg` (night) are the EazyVerse.com wordmark shown at the bottom of the launch screen on Android 12 and later (`drawable/ev_branding.xml`, set as `android:windowSplashScreenBrandingImage` in the `Theme.TestTrack.Starting` styles). It is one vector for day and night, coloured by `brand_ink`, `brand_accent` and `brand_soft` in `values/splash.xml` and `values-night/splash.xml`. Change those colours and the two SVGs together. Earlier Android versions show no wordmark.
 
 ## Play icon
 

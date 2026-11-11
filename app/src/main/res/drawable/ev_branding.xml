@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EazyVerse.com wordmark for the Android 12 splash branding slot. Source: branding/ev-branding.svg. Colours are brand_* in values/splash.xml and values-night/splash.xml. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" tools:ignore="VectorPath" android:width="200dp" android:height="80dp" android:viewportWidth="200" android:viewportHeight="80">
+    <group android:scaleX="0.25" android:scaleY="0.25" android:translateX="0" android:translateY="0">
+        <group android:translateX="204.58" android:translateY="186" android:scaleX="0.0321" android:scaleY="-0.0321">
+            <path android:pathData="M1024 0H164V1434H991V1171H487V852H956V590H487V262H1024Z" android:fillColor="@color/brand_ink"/>
+        </group>
+        <group android:translateX="239.92" android:translateY="186" android:scaleX="0.0321" android:scaleY="-0.0321">
+            <path android:pathData="M985 0H686V147H682Q579 -25 377 -25Q228 -25 142.5 59.5Q57 144 57 285Q57 583 410 629L688 666Q688 834 506 834Q323 834 158 725V963Q224 997 338.5 1023.0Q453 1049 547 1049Q985 1049 985 612ZM688 416V485L502 461Q348 441 348 322Q348 268 385.5 233.5Q423 199 487 199Q576 199 632.0 260.5Q688 322 688 416Z" android:fillColor="@color/brand_ink"/>
+        </group>
+        <group android:translateX="275.66" android:translateY="186" android:scaleX="0.0321" android:scaleY="-0.0321">
+            <path android:pathData="M944 0H25V131L539 791H76V1024H940V868L453 233H944Z" android:fillColor="@color/brand_ink"/>
+        </group>
+        <group android:translateX="307.47" android:translateY="186" android:scaleX="0.0321" android:scaleY="-0.0321">
+            <path android:pathData="M1108 1024 692 -82Q542 -481 240 -481Q125 -481 51 -455V-203Q114 -240 188 -240Q310 -240 358 -125L412 2L-4 1024H346L537 401Q555 343 565 264H569Q578 322 602 399L795 1024Z" android:fillColor="@color/brand_ink"/>
+        </group>
+        <group android:translateX="343.2" android:translateY="186" android:scaleX="0.0321" android:scaleY="-0.0321">
+            <path android:pathData="M1358 1434 864 0H498L10 1434H358L657 436Q681 355 686 293H692Q699 360 723 440L1020 1434Z" android:fillColor="@color/brand_accent"/>
+        </group>
+        <group android:translateX="387.49" android:translateY="186" android:scaleX="0.0321" android:scaleY="-0.0321">
+            <path android:pathData="M1053 422H385Q401 199 666 199Q835 199 963 279V51Q821 -25 594 -25Q346 -25 209.0 112.5Q72 250 72 496Q72 751 220.0 900.0Q368 1049 584 1049Q808 1049 930.5 916.0Q1053 783 1053 555ZM760 616Q760 836 582 836Q506 836 450.5 773.0Q395 710 383 616Z" android:fillColor="@color/brand_accent"/>
+        </group>
+        <group android:translateX="423.42" android:translateY="186" android:scaleX="0.0321" android:scaleY="-0.0321">
+            <path android:pathData="M801 739Q744 770 668 770Q565 770 507.0 694.5Q449 619 449 489V0H133V1024H449V834H453Q528 1042 723 1042Q773 1042 801 1030Z" android:fillColor="@color/brand_accent"/>
+        </group>
+        <group android:translateX="449.85" android:translateY="186" android:scaleX="0.0321" android:scaleY="-0.0321">
+            <path android:pathData="M66 27V283Q144 236 221.5 213.0Q299 190 368 190Q452 190 500.5 213.0Q549 236 549 283Q549 313 527.0 333.0Q505 353 470.5 368.0Q436 383 395.0 395.0Q354 407 316 422Q255 445 208.5 471.5Q162 498 130.5 533.0Q99 568 82.5 614.0Q66 660 66 723Q66 809 103.5 871.0Q141 933 203.5 972.5Q266 1012 346.5 1030.5Q427 1049 514 1049Q582 1049 652.0 1038.5Q722 1028 790 1008V764Q730 799 661.5 816.5Q593 834 527 834Q496 834 468.5 828.5Q441 823 420.0 812.5Q399 802 387.0 785.5Q375 769 375 748Q375 720 393.0 700.0Q411 680 440.0 665.5Q469 651 504.5 639.5Q540 628 575 616Q638 594 689.0 568.0Q740 542 776.5 507.0Q813 472 832.5 425.0Q852 378 852 313Q852 222 812.5 157.5Q773 93 707.5 52.5Q642 12 556.5 -6.5Q471 -25 379 -25Q210 -25 66 27Z" android:fillColor="@color/brand_accent"/>
+        </group>
+        <group android:translateX="479.06" android:translateY="186" android:scaleX="0.0321" android:scaleY="-0.0321">
+            <path android:pathData="M1053 422H385Q401 199 666 199Q835 199 963 279V51Q821 -25 594 -25Q346 -25 209.0 112.5Q72 250 72 496Q72 751 220.0 900.0Q368 1049 584 1049Q808 1049 930.5 916.0Q1053 783 1053 555ZM760 616Q760 836 582 836Q506 836 450.5 773.0Q395 710 383 616Z" android:fillColor="@color/brand_accent"/>
+        </group>
+        <group android:translateX="514.6" android:translateY="186" android:scaleX="0.0176" android:scaleY="-0.0176">
+            <path android:pathData="M274 -25Q196 -25 144.0 23.0Q92 71 92 141Q92 213 145.5 259.0Q199 305 279 305Q360 305 411.5 258.5Q463 212 463 141Q463 68 410.5 21.5Q358 -25 274 -25Z" android:fillColor="@color/brand_soft"/>
+        </group>
+        <group android:translateX="524.4" android:translateY="186" android:scaleX="0.0176" android:scaleY="-0.0176">
+            <path android:pathData="M909 37Q802 -25 600 -25Q364 -25 218.0 118.0Q72 261 72 487Q72 748 228.5 898.5Q385 1049 647 1049Q828 1049 909 1001V733Q810 807 688 807Q552 807 472.5 727.5Q393 648 393 508Q393 372 469.0 294.5Q545 217 678 217Q796 217 909 291Z" android:fillColor="@color/brand_soft"/>
+        </group>
+        <group android:translateX="541.74" android:translateY="186" android:scaleX="0.0176" android:scaleY="-0.0176">
+            <path android:pathData="M621 -25Q365 -25 218.5 118.5Q72 262 72 508Q72 762 224.0 905.5Q376 1049 635 1049Q890 1049 1035.0 905.5Q1180 762 1180 526Q1180 271 1030.5 123.0Q881 -25 621 -25ZM629 807Q517 807 455.0 730.0Q393 653 393 512Q393 217 631 217Q858 217 858 520Q858 807 629 807Z" android:fillColor="@color/brand_soft"/>
+        </group>
+        <group android:translateX="563.83" android:translateY="186" android:scaleX="0.0176" android:scaleY="-0.0176">
+            <path android:pathData="M1759 0H1444V584Q1444 807 1280 807Q1202 807 1153.0 740.0Q1104 673 1104 573V0H788V590Q788 807 627 807Q546 807 497.5 743.0Q449 679 449 569V0H133V1024H449V864H453Q502 946 590.5 997.5Q679 1049 784 1049Q1001 1049 1081 858Q1198 1049 1425 1049Q1759 1049 1759 637Z" android:fillColor="@color/brand_soft"/>
+        </group>
+    </group>
+</vector>
