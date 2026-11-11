@@ -64,7 +64,11 @@ Changes made by `recolor.py` (the license allows changes):
   14-night calendar card above them.
 - **mobile-application:** the phone's screen content is replaced with a Play-link field,
   the found app and two buttons.
-- **searching:** one of the two blue tiles is grey.
+- **searching:** recomposed. A standing phone with a feed of app cards replaces the tile
+  frame, the woman stands beside it pointing at the highlighted card and holds a magnifier.
+  Her old tiles, the frame and the floating magnifier are gone.
+- **Sticker versions:** `light-sticker/`, `dark-sticker/` and `dark-sticker-a/` add a die-cut
+  border round each picture, built by the same script from a merged copy of the art.
 - **All five:** hair and light clothing are marked so they look natural at night, and each
   file is framed so every standing figure comes out the same height. `measure.html` measures
   the content boxes the framing uses.

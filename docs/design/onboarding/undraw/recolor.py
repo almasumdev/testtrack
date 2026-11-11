@@ -158,6 +158,35 @@ def play_link_screen() -> str:
     )
 
 
+def phone_feed() -> str:
+    """Page 5: a phone standing beside the woman, showing a feed of app cards like Circle.
+    The top card, the one she points at, is the highlighted one."""
+    out = [
+        '<rect x="124" y="132" width="232" height="436" rx="34" fill="#090814"/>',
+        '<rect x="136" y="144" width="208" height="412" rx="24" fill="#ffffff"/>',
+        '<rect x="200" y="144" width="80" height="16" rx="8" fill="#090814"/>',
+        '<rect x="152" y="174" width="84" height="12" rx="6" fill="#3f3d56"/>',
+    ]
+    for n in range(5):
+        y = 200 + n * 70
+        lit = n == 0
+        out.append(
+            f'<rect x="150" y="{y}" width="180" height="58" rx="14" fill="#ffffff" '
+            f'stroke="{"#6c63ff" if lit else "#e6e6e6"}" stroke-width="{3 if lit else 2.5}"/>'
+        )
+        out.append(f'<rect x="160" y="{y + 10}" width="38" height="38" rx="10" fill="{"#6c63ff" if lit else "#e6e6e6"}"/>')
+        out.append(f'<rect x="208" y="{y + 15}" width="{78 - n % 2 * 14}" height="9" rx="4.5" fill="#3f3d56"/>')
+        out.append(f'<rect x="208" y="{y + 33}" width="{56 + n % 3 * 10}" height="8" rx="4" fill="#cccccc"/>')
+    return '<g transform="translate(-20 0)">' + "".join(out) + "</g>"
+
+
+# Page 5: a magnifier in the woman's raised right hand (after she moves 100 to the right).
+MAGNIFIER = (
+    '<path d="M501 262L536 222" fill="none" stroke="#3f3d56" stroke-width="13" stroke-linecap="round"/>'
+    '<circle cx="560" cy="196" r="34" fill="#ffffff" stroke="#6c63ff" stroke-width="13"/>'
+)
+
+
 # Every standing figure is drawn this tall (dp) inside the 328 by 330 art box, unless the
 # scene is too wide to allow it; then it is as large as the box lets it be.
 FIGURE_DP, BOX_W, BOX_H = 195, 328, 330
@@ -205,8 +234,18 @@ PAGES = {
     "mobile-application_uc2q": dict(
         count=27, drop=list(range(14, 27)), hair=[11], cloth=[8, 10], add=play_link_screen(), figure=548
     ),
-    # 5. looking through an app, nothing to sign: the plant and the floor go, one of the two blue tiles turns grey
-    "searching_pqji": dict(count=25, drop=[5, 6], hair=[10, 11], restyle={8: 'fill="#d6d6e3"'}, add="", figure=600),
+    # 5. looking around an app, nothing to sign. Recomposed: a phone with a feed of app cards
+    # stands beside the woman; she points at the top card and holds a magnifier. Her old tiles,
+    # the tile frame, the floating magnifier, the plant and the floor go.
+    "searching_pqji": dict(
+        count=25,
+        drop=[0, 1, 2, 3, 4, 5, 6, 7, 8],
+        hair=[10, 11],
+        shift={i: 100 for i in range(9, 25)},
+        add=phone_feed() + MAGNIFIER,
+        front=list(range(9, 25)),
+        figure=600,
+    ),
 }
 
 # The content box of each edited file (x0, y0, x1, y1), measured in the browser with
@@ -216,7 +255,7 @@ BOXES = {
     "online-review_08y6": (24.0, 54.1, 375.3, 647.6),
     "work-chat_kw8x": (190.2, -126.0, 807.2, 519.9),
     "mobile-application_uc2q": (0.0, 0.0, 600.5, 800.0),
-    "searching_pqji": (107.7, -0.1, 511.2, 800.0),
+    "searching_pqji": (104.0, 132.0, 594.0, 800.0),
 }
 
 SHAPE = re.compile(r"<(path|circle|ellipse|rect|polygon|polyline|line)\b[^>]*/>")
@@ -272,17 +311,58 @@ def edit(name: str, svg: str) -> str:
     return head + ">" + rest.replace("</svg>", page["add"] + "".join(front) + "</svg>")
 
 
-def frame(name: str, svg: str) -> str:
+def scale_of(name: str, margin: float = 8) -> float:
+    """Units to dp: a standing figure FIGURE_DP tall, unless the content would not fit the box."""
+    page, (x0, y0, x1, y1) = PAGES[name], BOXES[name]
+    return min(FIGURE_DP / page["figure"], (BOX_W - margin) / (x1 - x0), (BOX_H - margin) / (y1 - y0))
+
+
+def frame(name: str, svg: str, margin: float = 8) -> str:
     """Set the viewBox so a standing figure is FIGURE_DP tall and the content sits centred in the box."""
-    page, box = PAGES[name], BOXES.get(name)
+    box = BOXES.get(name)
     if not box:
         return svg
     x0, y0, x1, y1 = box
-    scale = min(FIGURE_DP / page["figure"], (BOX_W - 8) / (x1 - x0), (BOX_H - 8) / (y1 - y0))
+    scale = scale_of(name, margin)
     w, h = BOX_W / scale, BOX_H / scale
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
     vb = f"{cx - w / 2:.1f} {cy - h / 2:.1f} {w:.1f} {h:.1f}"
     return re.sub(r'viewBox="[^"]*"', f'viewBox="{vb}"', svg, count=1)
+
+
+# Sticker versions: a die-cut border round the whole picture. Each layer is a copy of the art in
+# one colour, every shape filled and stroked thick with round joins, so the copies merge into one
+# silhouette; the layers sit under the art, widest first. Plain SVG, no filters or masks.
+# Written to <folder>/ for every page; the app build reads only light/ and dark/.
+STICKER_DP = 2.75  # border width at phone size
+STICKERS = {
+    "light-sticker": ("light", [("#DCE5EC", STICKER_DP + 0.8), ("#FFFFFF", STICKER_DP)]),  # white, a faint edge
+    "dark-sticker": ("dark", [("#C9D3DB", STICKER_DP)]),  # chosen: a soft off-white, a sticker edge that does not glare
+    "dark-sticker-a": ("dark", [("#E8EEF2", STICKER_DP)]),  # the whiter tone, kept to compare
+}
+STICKER_MARGIN = 8 + 2 * (STICKER_DP + 1)  # the border needs room inside the art box
+
+
+def with_sticker(name: str, svg: str, layers) -> str:
+    scale = scale_of(name, STICKER_MARGIN)
+    head, rest = svg.split(">", 1)
+    body = rest.rsplit("</svg>", 1)[0]
+    under = []
+    for colour, dp in layers:
+        width = 2 * dp / scale  # half of the stroke lies outside the shape
+
+        def solid(m, colour=colour, width=width):
+            tag = m.group(0)
+            stroke = re.search(r'stroke-width="([0-9.]+)"', tag)
+            own = float(stroke.group(1)) if stroke else 0
+            tag = re.sub(r'\s(fill|stroke|stroke-width|opacity|stroke-linecap|stroke-linejoin)="[^"]*"', "", tag)
+            return tag[:-2] + (
+                f' fill="{colour}" stroke="{colour}" stroke-width="{own + width:.1f}"'
+                ' stroke-linejoin="round" stroke-linecap="round"/>'
+            )
+
+        under.append(SHAPE.sub(solid, body))
+    return head + ">" + "".join(under) + body + "</svg>"
 
 
 def norm(h: str) -> str:
@@ -306,13 +386,18 @@ def recolour(svg: str, table: dict, unknown: set) -> str:
 
 def main() -> int:
     missing = False
-    for theme in ("light", "dark"):
-        (HERE / theme).mkdir(exist_ok=True)
-        for old in (HERE / theme).glob("*.svg"):
+    for folder in ("light", "dark", *STICKERS):
+        (HERE / folder).mkdir(exist_ok=True)
+        for old in (HERE / folder).glob("*.svg"):
             if old.stem not in PAGES:
                 old.unlink()
     for name in PAGES:
-        svg = frame(name, edit(name, (HERE / "original" / f"{name}.svg").read_text(encoding="utf-8")))
+        edited = edit(name, (HERE / "original" / f"{name}.svg").read_text(encoding="utf-8"))
+        svg = frame(name, edited)
+        if name in BOXES:
+            for folder, (theme, layers) in STICKERS.items():
+                text = recolour(frame(name, edited, STICKER_MARGIN), LIGHT if theme == "light" else DARK, set())
+                (HERE / folder / f"{name}.svg").write_text(with_sticker(name, text, layers), encoding="utf-8")
         for theme, table in (("light", LIGHT), ("dark", DARK)):
             unknown: set = set()
             text = recolour(svg, table, unknown)

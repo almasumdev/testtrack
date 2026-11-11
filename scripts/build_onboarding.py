@@ -1,10 +1,11 @@
 """Turn the approved onboarding pictures (unDraw, recoloured) into Android vector drawables.
 
-Source of truth: docs/design/onboarding/undraw/light/*.svg and undraw/dark/*.svg. Those are made
-from undraw/original by undraw/recolor.py; this script only converts them and never edits a colour.
+Source of truth: docs/design/onboarding/undraw/light/*.svg and undraw/dark-sticker/*.svg. Those are
+made from undraw/original by undraw/recolor.py; this script only converts them and never edits a
+colour. Day has no sticker border, night has the soft off-white sticker border.
 
-    light SVG -> app/src/main/res/drawable/onboarding_<page>.xml
-    dark  SVG -> app/src/main/res/drawable-night/onboarding_<page>.xml
+    light        SVG -> app/src/main/res/drawable/onboarding_<page>.xml
+    dark-sticker SVG -> app/src/main/res/drawable-night/onboarding_<page>.xml
 
 Run:  python scripts/build_onboarding.py
 
@@ -36,8 +37,8 @@ PAGES = {
     "explore": "searching_pqji",
 }
 
-#: Drawable out folder per theme.
-THEMES = {"light": "drawable", "dark": "drawable-night"}
+#: Source folder under undraw/ -> drawable out folder.
+THEMES = {"light": "drawable", "dark-sticker": "drawable-night"}
 
 #: The art is shown in a box of this size (dp). The drawable's own size is the picture scaled to fit.
 BOX_W, BOX_H = 328.0, 330.0

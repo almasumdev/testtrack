@@ -87,18 +87,19 @@ const COPY = [
   ['ADD YOUR APP', 'One link is all it takes', 'Paste your Play link or package name, then take a crew seat or ask for feedback.'],
   ['NO ACCOUNT NEEDED', 'Look around first', 'See how crews and feedback work. No account needed, and nothing to pay.'],
 ];
+const STICKER_DARK = 'dark-sticker';
 const ART = ['true-friends_1h3v', 'online-review_08y6', 'work-chat_kw8x', 'mobile-application_uc2q', 'searching_pqji'];
 const MARK = `<svg class="mark" viewBox="24 22 60 64"><use href="#ttmark"/></svg>`;
 const SB = `<div class="sb"><span>9:41</span><span class="ic">
   <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx=".6"/><rect x="4" y="5" width="3" height="6" rx=".6"/><rect x="8" y="2.5" width="3" height="8.5" rx=".6"/><rect x="12" y="0" width="3" height="11" rx=".6"/></svg>
   <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2.5" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="12" height="7" rx="1.4" fill="currentColor"/><rect x="19.6" y="3.5" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".5"/></svg>
 </span></div>`;
-function phone(i, theme) {
+function phone(i, theme, src) {
   const [eb, ti, bo] = COPY[i];
   const last = i === COPY.length - 1;
   const dots = COPY.map((_, k) => `<i class="dot ${k === i ? 'on' : ''}"></i>`).join('');
   return `<div class="phone t-${theme}">${SB}<div class="top">${MARK}<div class="brand">TestTrack</div><div class="skip">Skip</div></div>
-    <div class="pager"><div class="art"><img src="undraw/${theme}/${ART[i]}.svg" alt=""></div>
+    <div class="pager"><div class="art"><img src="${src || `undraw/${theme}/${ART[i]}.svg`}" alt=""></div>
       <div class="copy"><div class="eyebrow">${eb}</div><h2 class="title">${ti}</h2><p class="body">${bo}</p></div></div>
     <div class="foot"><div class="dots">${dots}</div><div class="btn">${last ? 'Explore TestTrack' : 'Next'}</div><div class="link">Already here? Sign in</div></div>
     <div class="gest"><i></i></div></div>`;
@@ -107,12 +108,27 @@ const q = new URLSearchParams(location.search);
 const onlyT = q.get('t');
 let html = '<section class="opt">';
 for (const t of ['light', 'dark']) {
-  if (onlyT && onlyT !== t) continue;
+  if (onlyT && onlyT !== t) continue; if (onlyT === 'p5' || onlyT === 'set') continue;
   html += `<div class="rowlbl">${t === 'light' ? 'Light' : 'Dark'}</div><div class="strip ${t}"><div class="zoomwrap">`;
   COPY.forEach((_, i) => { html += `<div class="cell"><div class="cap">${i + 1}. ${ART[i]}</div>${phone(i, t)}</div>`; });
   html += `</div></div>`;
 }
 html += '</section>';
+if (!onlyT || onlyT === 'p5' || onlyT === 'set') {
+  const P5 = [
+    ['Light', 'light', 'undraw/light/searching_pqji.svg'],
+    ['Dark', 'dark', 'undraw/dark/searching_pqji.svg'],
+    ['Light, sticker', 'light', 'undraw/light-sticker/searching_pqji.svg'],
+    ['Dark, sticker #E8EEF2', 'dark', 'undraw/dark-sticker-a/searching_pqji.svg'],
+    ['Dark, sticker #C9D3DB (chosen)', 'dark', 'undraw/dark-sticker/searching_pqji.svg'],
+  ];
+  html += `<section class="opt"><h2>Page 5, and the sticker border</h2><div class="rowlbl">Without and with a die-cut sticker border, about 2.75 dp</div><div class="strip"><div class="zoomwrap">`;
+  P5.forEach(([cap, th, src]) => { html += `<div class="cell"><div class="cap">${cap}</div>${phone(4, th, src)}</div>`; });
+  html += `</div></div></section>`;
+  html += `<section class="opt"><h2>All five in dark, with the sticker border (#C9D3DB)</h2><div class="rowlbl">Dark</div><div class="strip dark"><div class="zoomwrap">`;
+  ART.forEach((n, i) => { html += `<div class="cell"><div class="cap">${i + 1}. ${n}</div>${phone(i, 'dark', `undraw/${STICKER_DARK}/${n}.svg`)}</div>`; });
+  html += `</div></div></section>`;
+}
 document.getElementById('root').innerHTML = html;
 if (onlyT) document.querySelector('.doc').style.display = 'none';
 const z = q.get('z') || '.62';
