@@ -1,5 +1,5 @@
 // Shared by final.js, _mono.js and anim.js (eval'd after _t.js). The chosen icon's bug and screen helpers.
-const BUG_INK = "#17253B", BUG_CREAM = "#FFFCF1", CHECK_W = 2.3, BUG_SCALE = (typeof process !== "undefined" && process.env.BUG_SCALE) || 0.86;
+const BUG_INK = "#17253B", BUG_CREAM = "#FFFCF1", CHECK_W = 2.3, BUG_SCALE = (typeof process !== "undefined" && process.env.BUG_SCALE) || 0.78;
 // Screen centre of a phone, in the phone's own (unrotated) frame.
 function screenOf(side) {
   const cx = C + side * P.gap / 2, cy = C + P.phoneY, H = P.phoneH, y = cy - H / 2, sy = y + P.topGap, sh = H - P.topGap - 5.2;

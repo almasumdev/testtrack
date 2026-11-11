@@ -10,7 +10,7 @@ Chosen on 2026-11-11, bug added the same day after the meaning and ASO review. N
   - robot-blue arrows #32729B on a tile-blue background #E7F4FC to #D5EAF7.
 - **Bug and check (variant C):** the left phone shows a bug and the right phone a check, so it reads "found it, fixed it" instead of phone transfer.
   - The check stroke is 2.3 (it was 2.9).
-  - The bug is in `source/_bug.js`, at scale 0.86 so it weighs the same as the check (`pages/bug-sizes.png` compares sizes).
+  - The bug is in `source/_bug.js`, at scale 0.78, a little lighter than the check, as the owner asked (`pages/bug-sizes.png` compares sizes).
   - Scores after the change, me / Codex: meaning 8 / 7, ASO 6.5 / 7, craft 8 / 8. Before, Codex had 6 / 6 / 8.
   - The owner kept the pale tile with robot-blue arrows over the deep-blue and other light backgrounds.
 - **No borders:** the phones have no outline lines.
