@@ -20,7 +20,7 @@ const thinChk = s => s.split('stroke-width="' + f(2.9 * P.check) + '"').join('st
 // Left phone: no check, the bug instead (it pops in). Right phone: the thinner check, which draws itself.
 function centrePhone(id, withBug) { const t = P.tilt; P.tilt = 0; let s;
   if (withBug) { const sc = screenOf(0), pp = phone(0, {parts: CREAM, check: 'none'}, id); s = pp.slice(0, pp.lastIndexOf('</g>')) +
-    '<g transform="translate(' + f(sc.mx) + ' ' + f(sc.my - .3) + ') scale(1.12)"><g class="bugmark">' + bugShape(INK, CREAM) + '</g></g></g>'; }
+    '<g transform="translate(' + f(sc.mx) + ' ' + f(sc.my - .3) + ') scale(' + BUG_SCALE + ')"><g class="bugmark">' + bugShape(INK, CREAM) + '</g></g></g>'; }
   else s = thinChk(markCheck(phone(0, L, id)));
   P.tilt = t; return s; }
 const X = P.gap / 2, T = P.tilt;

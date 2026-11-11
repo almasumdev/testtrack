@@ -1,5 +1,5 @@
 // Shared by final.js, _mono.js and anim.js (eval'd after _t.js). The chosen icon's bug and screen helpers.
-const BUG_INK = "#17253B", BUG_CREAM = "#FFFCF1", CHECK_W = 2.3;
+const BUG_INK = "#17253B", BUG_CREAM = "#FFFCF1", CHECK_W = 2.3, BUG_SCALE = (typeof process !== "undefined" && process.env.BUG_SCALE) || 0.86;
 // Screen centre of a phone, in the phone's own (unrotated) frame.
 function screenOf(side) {
   const cx = C + side * P.gap / 2, cy = C + P.phoneY, H = P.phoneH, y = cy - H / 2, sy = y + P.topGap, sh = H - P.topGap - 5.2;
@@ -18,6 +18,6 @@ function bugShape(ink, cream) {
 // The bug placed on the left phone's screen (rotated with the phone). extraClass lets the animation target it.
 function bugOnLeft(ink, cream, extraClass, upright) {
   const s = screenOf(-1);
-  const inner = '<g transform="translate(' + s.mx.toFixed(2) + ' ' + (s.my - .3).toFixed(2) + ') scale(1.12)"><g' + (extraClass ? ' class="' + extraClass + '"' : '') + '>' + bugShape(ink, cream) + '</g></g>';
+  const inner = '<g transform="translate(' + s.mx.toFixed(2) + ' ' + (s.my - .3).toFixed(2) + ') scale(' + BUG_SCALE + ')"><g' + (extraClass ? ' class="' + extraClass + '"' : '') + '>' + bugShape(ink, cream) + '</g></g>';
   return upright ? inner : '<g transform="rotate(' + s.rot + ' ' + s.cx.toFixed(2) + ' ' + s.cy.toFixed(2) + ')">' + inner + '</g>';
 }
