@@ -33,30 +33,30 @@
     <target android:name="arrows_part_1">
         <aapt:attr name="android:animation">
             <set android:ordering="together">
-                <objectAnimator android:propertyName="fillAlpha" android:duration="520" android:startOffset="260" android:valueFrom="0" android:valueTo="1" android:valueType="floatType" android:interpolator="@interpolator/splash_ease_in" />
+                <objectAnimator android:propertyName="fillColor" android:duration="520" android:startOffset="260" android:valueFrom="#FF0F1011" android:valueTo="#FF80BCDE" android:valueType="colorType" android:interpolator="@interpolator/splash_ease_in" />
             </set>
         </aapt:attr>
     </target>
     <target android:name="arrows_part_2">
         <aapt:attr name="android:animation">
             <set android:ordering="together">
-                <objectAnimator android:propertyName="fillAlpha" android:duration="520" android:startOffset="260" android:valueFrom="0" android:valueTo="1" android:valueType="floatType" android:interpolator="@interpolator/splash_ease_in" />
-                <objectAnimator android:propertyName="strokeAlpha" android:duration="520" android:startOffset="260" android:valueFrom="0" android:valueTo="1" android:valueType="floatType" android:interpolator="@interpolator/splash_ease_in" />
+                <objectAnimator android:propertyName="fillColor" android:duration="520" android:startOffset="260" android:valueFrom="#FF0F1011" android:valueTo="#FF80BCDE" android:valueType="colorType" android:interpolator="@interpolator/splash_ease_in" />
+                <objectAnimator android:propertyName="strokeColor" android:duration="520" android:startOffset="260" android:valueFrom="#FF0F1011" android:valueTo="#FF80BCDE" android:valueType="colorType" android:interpolator="@interpolator/splash_ease_in" />
             </set>
         </aapt:attr>
     </target>
     <target android:name="arrows_part_3">
         <aapt:attr name="android:animation">
             <set android:ordering="together">
-                <objectAnimator android:propertyName="fillAlpha" android:duration="520" android:startOffset="260" android:valueFrom="0" android:valueTo="1" android:valueType="floatType" android:interpolator="@interpolator/splash_ease_in" />
+                <objectAnimator android:propertyName="fillColor" android:duration="520" android:startOffset="260" android:valueFrom="#FF0F1011" android:valueTo="#FF80BCDE" android:valueType="colorType" android:interpolator="@interpolator/splash_ease_in" />
             </set>
         </aapt:attr>
     </target>
     <target android:name="arrows_part_4">
         <aapt:attr name="android:animation">
             <set android:ordering="together">
-                <objectAnimator android:propertyName="fillAlpha" android:duration="520" android:startOffset="260" android:valueFrom="0" android:valueTo="1" android:valueType="floatType" android:interpolator="@interpolator/splash_ease_in" />
-                <objectAnimator android:propertyName="strokeAlpha" android:duration="520" android:startOffset="260" android:valueFrom="0" android:valueTo="1" android:valueType="floatType" android:interpolator="@interpolator/splash_ease_in" />
+                <objectAnimator android:propertyName="fillColor" android:duration="520" android:startOffset="260" android:valueFrom="#FF0F1011" android:valueTo="#FF80BCDE" android:valueType="colorType" android:interpolator="@interpolator/splash_ease_in" />
+                <objectAnimator android:propertyName="strokeColor" android:duration="520" android:startOffset="260" android:valueFrom="#FF0F1011" android:valueTo="#FF80BCDE" android:valueType="colorType" android:interpolator="@interpolator/splash_ease_in" />
             </set>
         </aapt:attr>
     </target>

@@ -60,7 +60,8 @@ START_GROUP = {
     "bug_pop": {"scaleX": 0, "scaleY": 0},
 }
 
-# Each fading part: (delay ms, duration ms, easing). All fade from 0 to 1.
+# Each fading part: (delay ms, duration ms, easing). All fade from 0 to 1, except the arrows,
+# which stay opaque and fade their colour from the splash background instead (see ARROW_FADE).
 FADES = {
     "phone_left": (0, 420, "rise"),
     "phone_right": (90, 420, "rise"),
@@ -76,6 +77,29 @@ GROUP_MOTION = [
     ("bug_pop", "scaleY", 0, 1, 560, 300, "pop"),
 ]
 CHECK_DRAW = (690, 240, "ease_out")
+
+
+# The arrow head path has a fill, a round-join stroke and overlaps the shaft, so animating alpha
+# would stack partial alphas and make the head look hollow. The arrows only ever sit on the plain
+# splash background, so they fade their colour from that background to the real colour instead.
+ARROW_FADE = "arrows"
+
+
+def splash_background(folder_suffix):
+    """The #AARRGGBB splash background of a theme, read from res/values[-night]/splash.xml."""
+    values = "values-night" if folder_suffix else "values"
+    root = ET.parse(RES / values / "splash.xml").getroot()
+    color = root.find("color[@name='splash_background']").text.strip()
+    if not re.fullmatch(r"#[0-9A-Fa-f]{8}", color):
+        raise ValueError(f"splash_background must be #AARRGGBB, got {color}")
+    return color
+
+
+def opaque(color):
+    """#RRGGBB from the SVG as #AARRGGBB."""
+    if not re.fullmatch(r"#[0-9A-Fa-f]{6}", color):
+        raise ValueError(f"Arrow colour must be #RRGGBB, got {color}")
+    return "#FF" + color[1:]
 
 
 def android_attrs(**attributes):
@@ -155,12 +179,12 @@ def fade_owner(ancestors, node_id):
     return None
 
 
-def build_vector(svg, animated=False):
+def build_vector(svg, animated=False, background=None):
     gradients = {g.attrib["id"]: g for g in svg.findall(f".//{{{SVG}}}linearGradient")}
     vector = ET.Element("vector", android_attrs(
         width=f"{CANVAS_DP}dp", height=f"{CANVAS_DP}dp", viewportWidth=108, viewportHeight=108,
     ))
-    paths = []  # (name, owner, props) for every path whose alpha is animated
+    paths = []  # (name, owner, props) for every path whose alpha (or arrow colour) is animated
     counter = {}
 
     def convert(node, parent, ancestors):
@@ -211,6 +235,17 @@ def build_vector(svg, animated=False):
             counter[owner] = counter.get(owner, 0) + 1
             attrs["name"] = node.get("id") or f"{owner}_part_{counter[owner]}"
             props = []
+            if owner == ARROW_FADE:
+                # Start on the background colour, end on the SVG colour, always fully opaque.
+                colors = {}
+                for prop in ("fillColor", "strokeColor"):
+                    if prop in attrs:
+                        colors[prop] = opaque(attrs[prop])
+                        attrs[prop] = background
+                        props.append((prop, background, colors[prop]))
+                paths.append((attrs["name"], owner, props))
+                path = ET.SubElement(parent, "path", android_attrs(**attrs))
+                return
             if gradient is not None or "fillColor" in attrs:
                 props.append("fillAlpha")
             if "strokeColor" in attrs:
@@ -263,6 +298,14 @@ def animator(parent, prop, start, end, delay, duration, easing):
     ))
 
 
+def color_animator(parent, prop, start, end, delay, duration, easing):
+    ET.SubElement(parent, "objectAnimator", android_attrs(
+        propertyName=prop, duration=duration, startOffset=delay,
+        valueFrom=start, valueTo=end, valueType="colorType",
+        interpolator=f"@interpolator/splash_{easing}",
+    ))
+
+
 def build_animation(paths):
     root = ET.Element("animated-vector", android_attrs(drawable="@drawable/testtrack_splash_vector_animated"))
     sets = {}
@@ -284,6 +327,10 @@ def build_animation(paths):
             animator(target_set(name), "strokeAlpha", 0, 1, delay, 1, "@android:interpolator/linear")
             continue
         delay, duration, easing = FADES[owner]
+        if owner == ARROW_FADE:
+            for prop, start, end in props:
+                color_animator(target_set(name), prop, start, end, delay, duration, easing)
+            continue
         for prop in props:
             animator(target_set(name), prop, 0, 1, delay, duration, easing)
     return root
@@ -297,7 +344,7 @@ def write_theme(svg_name, folder_suffix):
     write_xml(RES / f"drawable{folder_suffix}/testtrack_splash_icon.xml", static, header)
     # Parse again: build_vector tags the bug group, and the animated copy needs its own pass.
     svg = ET.parse(DESIGN / svg_name).getroot()
-    animated, paths = build_vector(svg, animated=True)
+    animated, paths = build_vector(svg, animated=True, background=splash_background(folder_suffix))
     write_xml(RES / f"drawable{folder_suffix}-v31/testtrack_splash_vector_animated.xml", animated, header)
     write_xml(RES / f"drawable{folder_suffix}-v31/testtrack_splash_icon.xml", build_animation(paths), header)
 
