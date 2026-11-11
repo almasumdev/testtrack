@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -33,12 +34,16 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.BuildConfig
-import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.DebugNotifications
+import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
+
+/** The picture box from the approved mockup (docs/design/onboarding/undraw.html). */
+private val ArtWidth = 328.dp
+private val ArtHeight = 330.dp
 
 private data class IntroPage(
     val image: Int,
@@ -203,14 +208,17 @@ private fun IntroSlide(
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         // Art gives up room first. At large text sizes the slide scrolls, never scales down text.
-        val artSize = minOf(maxWidth - 36.dp, (maxHeight * .63f).coerceIn(130.dp, 340.dp))
+        // Every page gets the same box, at most ArtWidth x ArtHeight, so the pictures match.
+        val artFit = (maxHeight * .54f).coerceAtLeast(130.dp) * (ArtWidth / ArtHeight)
+        val artWidth = minOf(ArtWidth, maxWidth - 32.dp, artFit)
+        val artHeight = artWidth * (ArtHeight / ArtWidth)
         Column(
             Modifier
                 .widthIn(max = 480.dp)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .heightIn(min = maxHeight)
-                .padding(horizontal = 28.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -218,17 +226,20 @@ private fun IntroSlide(
                 painterResource(page.image),
                 contentDescription = null,
                 modifier =
-                    Modifier.size(artSize).graphicsLayer {
+                    Modifier.size(artWidth, artHeight).graphicsLayer {
                         val away = distance.absoluteValue.coerceAtMost(1f)
                         alpha = 1f - away * .35f
                         scaleX = 1f - away * .06f
                         scaleY = scaleX
                         translationX = distance * size.width * .12f * if (rtl) -1f else 1f
                     },
+                contentScale = ContentScale.Fit,
+                alignment = Alignment.Center,
             )
             Spacer(Modifier.height(12.dp))
             Text(
                 stringResource(page.eyebrow),
+                Modifier.padding(horizontal = 12.dp),
                 style = MaterialTheme.typography.labelLarge,
                 color = c.accentInk,
                 letterSpacing = 1.4.sp,
@@ -237,6 +248,7 @@ private fun IntroSlide(
             Spacer(Modifier.height(10.dp))
             Text(
                 stringResource(page.title),
+                Modifier.padding(horizontal = 12.dp),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
@@ -245,6 +257,7 @@ private fun IntroSlide(
             Spacer(Modifier.height(14.dp))
             Text(
                 stringResource(page.body),
+                Modifier.padding(horizontal = 12.dp),
                 style = MaterialTheme.typography.bodyLarge,
                 lineHeight = 24.sp,
                 color = c.text2,

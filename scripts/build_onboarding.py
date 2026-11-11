@@ -1,294 +1,319 @@
-"""Build TestTrack's five editable SVG scenes and matching Android vectors.
+"""Turn the approved onboarding pictures (unDraw, recoloured) into Android vector drawables.
 
-The approved robot is shared with the splash. Everything is a vector path;
-no network assets, bitmap upscaling, or page-specific brand colours.
-Run: python scripts/build_onboarding.py
+Source of truth: docs/design/onboarding/undraw/light/*.svg and undraw/dark/*.svg. Those are made
+from undraw/original by undraw/recolor.py; this script only converts them and never edits a colour.
+
+    light SVG -> app/src/main/res/drawable/onboarding_<page>.xml
+    dark  SVG -> app/src/main/res/drawable-night/onboarding_<page>.xml
+
+Run:  python scripts/build_onboarding.py
+
+Standard library only. It handles what these files use: svg, g (translate, scale), path, rect
+(with rx), circle, ellipse, polygon, polyline, opacity, fill and stroke. Anything else stops the
+build with a message, so a picture is never converted with a part silently dropped.
+
+The viewBox crop is kept: a vector drawable always starts at 0,0, so the whole picture sits in a
+group that moves the viewBox corner to the origin, and the viewport is the viewBox size.
 """
 
-from copy import deepcopy
-from pathlib import Path
-import re
-import xml.etree.ElementTree as ET
+from __future__ import annotations
 
-from build_splash import ANDROID, SVG, android_attrs, build_vector
+import re
+import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "docs/design/onboarding"
-RES = ROOT / "app/src/main/res/drawable"
-BLUE, DEEP, PALE = "#32729B", "#1D5C82", "#D3E4EF"
-INK, PAPER, MINT, CORAL = "#18242E", "#FFFCF1", "#64CBB6", "#F58B73"
-ROBOT = ET.parse(ROOT / "docs/design/logo/test-exchange.svg").getroot()
+SRC = ROOT / "docs/design/onboarding/undraw"
+RES = ROOT / "app/src/main/res"
+
+#: Page order: drawable name used by OnboardingScreen.kt -> unDraw file name (without .svg).
+PAGES = {
+    "together": "true-friends_1h3v",
+    "feedback": "online-review_08y6",
+    "progress": "work-chat_kw8x",
+    "share": "mobile-application_uc2q",
+    "explore": "searching_pqji",
+}
+
+#: Drawable out folder per theme.
+THEMES = {"light": "drawable", "dark": "drawable-night"}
+
+#: The art is shown in a box of this size (dp). The drawable's own size is the picture scaled to fit.
+BOX_W, BOX_H = 328.0, 330.0
+
+SVG_NS = "{http://www.w3.org/2000/svg}"
+NUMBER = re.compile(r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
+ARGS = {"m": 2, "l": 2, "h": 1, "v": 1, "c": 6, "s": 4, "q": 4, "t": 2, "a": 7, "z": 0}
+
+COMMON = {"transform", "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "opacity"}
+ALLOWED = {
+    "path": COMMON | {"d"},
+    "rect": COMMON | {"x", "y", "width", "height", "rx", "ry"},
+    "circle": COMMON | {"cx", "cy", "r"},
+    "ellipse": COMMON | {"cx", "cy", "rx", "ry"},
+    "polygon": COMMON | {"points"},
+    "polyline": COMMON | {"points"},
+    "g": {"transform", "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin"},
+}
 
 
-def path(d, fill="none", stroke=None, width=3, opacity=1):
-    attrs = {"d": d, "fill": fill}
-    if stroke:
-        attrs.update({"stroke": stroke, "stroke-width": str(width),
-                      "stroke-linecap": "round", "stroke-linejoin": "round"})
-    if opacity != 1:
-        attrs["opacity"] = str(opacity)
-    return ET.Element(f"{{{SVG}}}path", attrs)
+def fmt(value: float) -> str:
+    text = f"{round(value, 4):.4f}".rstrip("0").rstrip(".")
+    return "0" if text in ("", "-0") else text
 
 
-def rect(x, y, w, h, r, fill):
-    return path(f"M{x+r} {y} H{x+w-r} Q{x+w} {y} {x+w} {y+r} V{y+h-r} "
-                f"Q{x+w} {y+h} {x+w-r} {y+h} H{x+r} Q{x} {y+h} {x} {y+h-r} "
-                f"V{y+r} Q{x} {y} {x+r} {y} Z", fill)
+def normalize_path(d: str) -> str:
+    """Rewrite path data so every number and arc flag is separated, which every parser accepts."""
+    out: list[str] = []
+    pos, n = 0, len(d)
 
+    def skip() -> None:
+        nonlocal pos
+        while pos < n and (d[pos].isspace() or d[pos] == ","):
+            pos += 1
 
-def ellipse(x, y, rx, ry, fill, opacity=1):
-    return path(f"M{x-rx} {y} A{rx} {ry} 0 1 0 {x+rx} {y} "
-                f"A{rx} {ry} 0 1 0 {x-rx} {y} Z", fill, opacity=opacity)
+    def number() -> float:
+        nonlocal pos
+        skip()
+        m = NUMBER.match(d, pos)
+        if not m:
+            raise ValueError(f"bad path data near {d[pos:pos + 20]!r}")
+        pos = m.end()
+        return float(m.group())
 
+    def flag() -> int:
+        nonlocal pos
+        skip()
+        if d[pos] not in "01":
+            raise ValueError(f"bad arc flag near {d[pos:pos + 20]!r}")
+        pos += 1
+        return int(d[pos - 1])
 
-def check(x, y, size=16, color=DEEP, width=5):
-    return path(f"M{x-size*.45} {y} L{x-size*.1} {y+size*.33} "
-                f"L{x+size*.5} {y-size*.4}", stroke=color, width=width)
-
-
-def group(parent, name, transform=None):
-    attrs = {"id": name}
-    if transform:
-        attrs["transform"] = transform
-    return ET.SubElement(parent, f"{{{SVG}}}g", attrs)
-
-
-def scene(name, orbit=False):
-    """A scene on the page itself: a soft ground shadow and nothing else behind it.
-
-    The pale disc that sat behind every scene was cut through by the phone, the cards and the
-    calendar, so it read as clutter rather than as ground; so did the scattered plus signs and
-    dots. Only the first page keeps a disc, because there it is the circle the three people
-    stand on.
-    """
-    svg = ET.Element(f"{{{SVG}}}svg", {"viewBox": "0 0 400 400", "fill": "none"})
-    svg.append(deepcopy(ROBOT.find(f"{{{SVG}}}defs")))
-    root = group(svg, name)
-    if orbit:
-        root.append(ellipse(200, 203, 158, 152, BLUE, .08))
-    root.append(ellipse(200, 356, 133, 12, DEEP, .10))
-    return svg, root
-
-
-def bot(parent, x, y, scale, exchange=False):
-    holder = group(parent, "mascot_pose", f"translate({x} {y}) scale({scale})")
-    robot = deepcopy(ROBOT.find(f"{{{SVG}}}g"))
-    if not exchange:
-        for child in list(robot):
-            if child.get("id") not in ("torso", "head_rig"):
-                robot.remove(child)
-        robot.extend([
-            ellipse(627, 876, 114, 110, MINT), check(627, 878, 126, PAPER, 34),
-            ellipse(335, 835, 81, 92, BLUE), ellipse(919, 835, 81, 92, BLUE),
-            ellipse(316, 819, 58, 67, "#6CA9CF"), ellipse(938, 819, 58, 67, "#6CA9CF"),
-        ])
-    holder.append(robot)
-
-
-def avatar(parent, name, x, y, shirt, hair):
-    g = group(parent, name, f"translate({x} {y})")
-    g.extend([
-        ellipse(0, 0, 31, 31, PAPER), ellipse(0, 1, 27, 27, PALE),
-        path("M-23 19 Q-22 8 -9 8 H9 Q22 8 23 19 Q0 35 -23 19Z", shirt),
-        ellipse(0, -5, 13, 16, "#F3C3A5"),
-        path("M-13 -5 Q-19 -23 0 -23 Q19 -23 13 -4 L9 -13 Q0 -8 -10 -13 Z", hair),
-        ellipse(-4, -4, 1.3, 1.6, INK), ellipse(5, -4, 1.3, 1.6, INK),
-        path("M-3 2 Q1 6 5 2", stroke=INK, width=1.8),
-    ])
-
-
-def together():
-    svg, g = scene("together", orbit=True)
-    g.append(path("M91 128 C71 226 94 304 172 325 M303 132 C342 222 311 297 247 324 "
-                  "M118 87 Q200 34 281 88", stroke=BLUE, width=2, opacity=.28))
-    avatar(g, "developer_left", 81, 122, CORAL, INK)
-    avatar(g, "developer_top", 200, 63, BLUE, "#463D3A")
-    avatar(g, "developer_right", 320, 129, MINT, INK)
-    bot(g, 18, 52, .29, exchange=True)
-    for x, y in [(57, 236), (345, 295)]:
-        g.append(ellipse(x, y, 15, 15, PAPER))
-        checkmark = check(x, y, 14, BLUE, 3.5)
-        g.append(checkmark)
-    return svg
-
-
-def feedback():
-    svg, g = scene("feedback")
-    # A real test session: app screen, an observation, and a response.
-    phone = group(g, "test_phone", "translate(4 0)")
-    phone.extend([
-        rect(89, 80, 172, 267, 27, "#B7D1E2"), rect(83, 74, 172, 267, 27, DEEP),
-        rect(92, 85, 154, 243, 20, PAPER), rect(137, 84, 64, 14, 7, DEEP),
-        rect(107, 119, 124, 87, 15, PALE), ellipse(169, 153, 22, 22, BLUE),
-        path("M161 142 L182 153 L161 165 Z", PAPER),
-        rect(144, 186, 51, 5, 2.5, "#A0B3C0"),
-        rect(107, 224, 88, 7, 3.5, DEEP), rect(107, 239, 119, 5, 2.5, "#B7CAD6"),
-        rect(107, 251, 100, 5, 2.5, "#B7CAD6"),
-        rect(107, 277, 80, 27, 10, BLUE), check(147, 290, 14, PAPER, 3),
-        rect(149, 317, 40, 3, 1.5, "#B7CAD6"),
-    ])
-    bubble = group(g, "observation", "rotate(-7 85 213)")
-    bubble.extend([
-        path("M37 174 H129 Q143 174 143 188 V226 Q143 239 129 239 H75 L56 253 V239 H37 "
-             "Q24 239 24 226 V188 Q24 174 37 174Z", CORAL),
-        rect(40, 191, 63, 6, 3, PAPER), rect(40, 204, 86, 5, 2.5, PAPER),
-        rect(40, 217, 50, 5, 2.5, PAPER),
-    ])
-    g.extend([
-        path("M234 48 H325 Q340 48 340 64 V102 Q340 116 325 116 H276 L260 131 V116 H234 "
-             "Q218 116 218 102 V64 Q218 48 234 48Z", PAPER),
-        ellipse(244, 80, 14, 14, MINT), check(244, 80, 13, DEEP, 3),
-        rect(268, 68, 52, 6, 3, BLUE), rect(268, 81, 39, 5, 2.5, "#A0B3C0"),
-        rect(235, 99, 85, 4, 2, PALE),
-    ])
-    bot(g, 195, 161, .17)
-    return svg
-
-
-def progress():
-    svg, g = scene("progress")
-    board = group(g, "progress_board", "rotate(5 214 191)")
-    board.extend([
-        rect(98, 87, 233, 211, 21, "#B7D1E2"), rect(92, 78, 233, 211, 21, PAPER),
-        path("M113 78 H304 Q325 78 325 99 V132 H92 V99 Q92 78 113 78Z", BLUE),
-        rect(116, 64, 10, 32, 5, DEEP), rect(289, 64, 10, 32, 5, DEEP),
-        rect(138, 101, 93, 7, 3.5, PAPER), ellipse(292, 105, 8, 8, MINT),
-    ])
-    for row in range(3):
-        for col in range(5):
-            x, y = 110 + col*40, 151 + row*40
-            done = row*5+col < 9
-            board.append(rect(x, y, 28, 28, 8, PALE if not done else "#C3E9DF"))
-            if done:
-                board.append(check(x+14, y+13, 14, DEEP, 3))
-            elif row == 1 and col == 4:
-                board.append(ellipse(x+14, y+14, 5, 5, CORAL))
-    # The same mascot supports the visual, rather than being a second logo.
-    bot(g, -2, 181, .174)
-    g.extend([
-        rect(211, 293, 136, 49, 18, PAPER), ellipse(237, 317, 14, 14, MINT),
-        check(237, 317, 14, DEEP, 3), rect(261, 306, 66, 6, 3, BLUE),
-        rect(261, 319, 51, 5, 2.5, "#A0B3C0"),
-    ])
-    return svg
-
-
-def share():
-    svg, g = scene("share")
-    card = group(g, "app_listing", "rotate(5 225 199)")
-    card.extend([
-        rect(110, 93, 210, 239, 22, "#B7D1E2"), rect(104, 85, 210, 239, 22, PAPER),
-        rect(124, 109, 62, 62, 17, BLUE),
-        path("M142 152 L152 125 Q155 118 159 125 L170 152 H163 L159 142 H149 L146 152 Z", PAPER),
-        rect(198, 116, 91, 8, 4, DEEP), rect(198, 135, 66, 5, 2.5, "#A0B3C0"),
-        rect(198, 150, 46, 5, 2.5, "#B7CAD6"),
-        rect(124, 192, 170, 52, 12, PALE),
-        rect(139, 205, 115, 6, 3, BLUE), rect(139, 221, 139, 5, 2.5, "#A0B3C0"),
-        rect(124, 266, 108, 33, 12, BLUE), check(177, 282, 17, PAPER, 3.5),
-    ])
-    # The input link is separate from the populated app card.
-    link = group(g, "play_link", "rotate(-7 128 82)")
-    link.extend([
-        rect(40, 53, 200, 52, 18, PAPER),
-        path("M72 83 L66 83 C54 83 54 67 66 67 H76 M76 75 H89 "
-             "M89 67 H95 C107 67 107 83 95 83 H85", stroke=BLUE, width=4),
-        rect(119, 70, 99, 6, 3, DEEP), rect(119, 83, 69, 4, 2, "#B7CAD6"),
-    ])
-    g.extend([
-        path("M323 234 L347 259", stroke=DEEP, width=15),
-        ellipse(309, 215, 33, 33, BLUE), ellipse(309, 215, 25, 25, PAPER),
-        ellipse(309, 215, 18, 18, PALE), check(309, 215, 23, DEEP, 4),
-    ])
-    bot(g, -7, 181, .17)
-    return svg
-
-
-def explore():
-    svg, g = scene("explore")
-    # An open community window: browse app tiles, then choose a way in.
-    window = group(g, "community_window", "rotate(-4 184 202)")
-    window.extend([
-        rect(62, 92, 249, 220, 22, "#B7D1E2"), rect(56, 84, 249, 220, 22, PAPER),
-        path("M78 84 H283 Q305 84 305 106 V127 H56 V106 Q56 84 78 84 Z", BLUE),
-    ])
-    for x in [78, 91, 104]:
-        window.append(ellipse(x, 106, 3, 3, PAPER))
-    window.extend([
-        rect(124, 102, 119, 6, 3, "#80BCDE"),
-        rect(76, 148, 90, 108, 14, PALE), rect(181, 148, 104, 108, 14, PALE),
-        rect(94, 161, 54, 54, 15, CORAL),
-        path("M110 188 Q110 173 121 181 Q132 173 132 188 Q131 196 121 202 Q111 196 110 188Z", PAPER),
-        rect(207, 161, 54, 54, 15, MINT),
-        path("M219 199 L231 176 L246 199 Z", PAPER),
-        rect(92, 229, 58, 5, 2.5, BLUE), rect(202, 229, 65, 5, 2.5, BLUE),
-        rect(78, 276, 125, 5, 2.5, "#B7CAD6"),
-    ])
-    compass = group(g, "choose_direction", "rotate(12 291 82)")
-    compass.extend([
-        ellipse(291, 82, 42, 42, DEEP), ellipse(291, 82, 34, 34, PAPER),
-        path("M291 51 V57 M291 107 V113 M260 82 H266 M316 82 H322", stroke=BLUE, width=2),
-        path("M303 64 L298 89 L279 100 L284 75 Z", PALE),
-        path("M303 64 L298 89 L284 75 Z", CORAL), ellipse(291, 82, 4, 4, DEEP),
-    ])
-    g.append(path("M56 317 Q59 343 101 335 Q142 328 168 344", stroke=BLUE, width=3, opacity=.4))
-    g.append(path("M161 333 L171 344 L158 350", stroke=BLUE, width=3))
-    bot(g, 193, 184, .166)
-    return svg
-
-
-def export(svg, name):
-    OUT.mkdir(parents=True, exist_ok=True)
-    ET.register_namespace("", SVG)
-    ET.indent(svg, space="  ")
-    (OUT / f"{name}.svg").write_text(ET.tostring(svg, encoding="unicode") + "\n", encoding="utf-8")
-    vector = build_vector(svg)
-    vector.attrib.update(android_attrs(width="400dp", height="400dp", viewportWidth=400, viewportHeight=400))
-    safe = vector.find("group")
-    safe.attrib = android_attrs(name="illustration")
-    native_groups = {n.get(f"{{{ANDROID}}}name"): n for n in vector.iter("group")}
-    for node in svg.iter(f"{{{SVG}}}g"):
-        dest = native_groups[node.get("id")]
-        for kind, values in re.findall(r"(translate|scale|rotate)\(([^)]+)\)", node.get("transform", "")):
-            values = [float(v) for v in re.split(r"[ ,]+", values)]
-            if kind == "translate":
-                dest.attrib.update(android_attrs(translateX=values[0], translateY=values[1]))
-            elif kind == "scale":
-                dest.attrib.update(android_attrs(scaleX=values[0], scaleY=values[-1]))
+    cmd = ""
+    while True:
+        skip()
+        if pos >= n:
+            break
+        if d[pos].isalpha():
+            cmd = d[pos]
+            pos += 1
+            if cmd.lower() not in ARGS:
+                raise ValueError(f"unsupported path command {cmd!r}")
+            if cmd in "Zz":
+                out.append(cmd)
+                continue
+        elif not cmd or cmd in "Zz":
+            raise ValueError(f"number without a command near {d[pos:pos + 20]!r}")
+        # Extra pairs after a moveto are implicit linetos.
+        letter = cmd
+        count = ARGS[cmd.lower()]
+        values: list[str] = []
+        for i in range(count):
+            if cmd.lower() == "a" and i in (3, 4):
+                values.append(str(flag()))
             else:
-                dest.attrib.update(android_attrs(rotation=values[0], pivotX=values[1], pivotY=values[2]))
-    source_paths = list(svg.find(f"{{{SVG}}}g").iter(f"{{{SVG}}}path"))
-    for src, dst in zip(source_paths, vector.iter("path"), strict=True):
-        if "opacity" in src.attrib:
-            dst.attrib.update(android_attrs(fillAlpha=src.get("opacity"), strokeAlpha=src.get("opacity")))
-    ET.indent(vector, space="    ")
-    (RES / f"onboarding_{name}.xml").write_text(
-        '<?xml version="1.0" encoding="utf-8"?>\n<!-- Generated by scripts/build_onboarding.py. -->\n'
-        + ET.tostring(vector, encoding="unicode") + "\n", encoding="utf-8")
+                values.append(fmt(number()))
+        out.append(letter + " ".join(values))
+        if cmd == "M":
+            cmd = "L"
+        elif cmd == "m":
+            cmd = "l"
+    return " ".join(out)
+
+
+def rect_path(x: float, y: float, w: float, h: float, rx: float, ry: float) -> str:
+    rx, ry = min(rx, w / 2), min(ry, h / 2)
+    if rx <= 0 or ry <= 0:
+        return f"M{fmt(x)} {fmt(y)} H{fmt(x + w)} V{fmt(y + h)} H{fmt(x)} Z"
+    r, b = x + w, y + h
+    arc = f"A{fmt(rx)} {fmt(ry)} 0 0 1 "
+    return (
+        f"M{fmt(x + rx)} {fmt(y)} H{fmt(r - rx)} {arc}{fmt(r)} {fmt(y + ry)} "
+        f"V{fmt(b - ry)} {arc}{fmt(r - rx)} {fmt(b)} "
+        f"H{fmt(x + rx)} {arc}{fmt(x)} {fmt(b - ry)} "
+        f"V{fmt(y + ry)} {arc}{fmt(x + rx)} {fmt(y)} Z"
+    )
+
+
+def ellipse_path(cx: float, cy: float, rx: float, ry: float) -> str:
+    return (
+        f"M{fmt(cx - rx)} {fmt(cy)} A{fmt(rx)} {fmt(ry)} 0 1 0 {fmt(cx + rx)} {fmt(cy)} "
+        f"A{fmt(rx)} {fmt(ry)} 0 1 0 {fmt(cx - rx)} {fmt(cy)} Z"
+    )
+
+
+def points_path(points: str, close: bool) -> str:
+    nums = [float(v) for v in NUMBER.findall(points)]
+    if len(nums) < 4 or len(nums) % 2:
+        raise ValueError(f"bad points {points!r}")
+    pairs = [f"{fmt(nums[i])} {fmt(nums[i + 1])}" for i in range(0, len(nums), 2)]
+    return "M" + " L".join(pairs) + (" Z" if close else "")
+
+
+def color(value: str) -> str | None:
+    """#RRGGBB for a hex colour, None for 'none'. Names and rgb() are not used in these files."""
+    value = value.strip()
+    if value == "none":
+        return None
+    m = re.fullmatch(r"#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})", value)
+    if not m:
+        raise ValueError(f"unsupported colour {value!r}")
+    hexa = m.group(1)
+    if len(hexa) == 3:
+        hexa = "".join(c * 2 for c in hexa)
+    return "#" + hexa.upper()
+
+
+def parse_transform(text: str | None) -> tuple[float, float, float]:
+    """translate(x y) with an optional scale(s), in that order. Returns (tx, ty, scale)."""
+    tx = ty = 0.0
+    scale = 1.0
+    if not text:
+        return tx, ty, scale
+    rest = text.strip()
+    parts = re.findall(r"(\w+)\(([^)]*)\)", rest)
+    if re.sub(r"\s+", "", "".join(f"{n}({a})" for n, a in parts)) != re.sub(r"\s+", "", rest):
+        raise ValueError(f"unsupported transform {text!r}")
+    for i, (name, args) in enumerate(parts):
+        nums = [float(v) for v in NUMBER.findall(args)]
+        if name == "translate" and i == 0 and len(nums) in (1, 2):
+            tx, ty = nums[0], nums[1] if len(nums) == 2 else 0.0
+        elif name == "scale" and i == len(parts) - 1 and len(nums) == 1:
+            scale = nums[0]
+        else:
+            raise ValueError(f"unsupported transform {text!r}")
+    return tx, ty, scale
+
+
+def group_open(tx: float, ty: float, scale: float, indent: str) -> str | None:
+    if tx == 0 and ty == 0 and scale == 1:
+        return None
+    attrs = []
+    if scale != 1:
+        attrs += [f'android:scaleX="{fmt(scale)}"', f'android:scaleY="{fmt(scale)}"']
+    if tx:
+        attrs.append(f'android:translateX="{fmt(tx)}"')
+    if ty:
+        attrs.append(f'android:translateY="{fmt(ty)}"')
+    return f"{indent}<group {' '.join(attrs)}>"
+
+
+def paint(el: ET.Element, inherited: dict[str, str]) -> dict[str, str]:
+    """The fill, stroke and opacity of an element as vector drawable attributes."""
+    get = lambda key, default=None: el.get(key, inherited.get(key, default))
+    out: dict[str, str] = {}
+    fill = color(get("fill", "#000000"))
+    stroke = color(get("stroke", "none"))
+    opacity = float(el.get("opacity", "1"))
+    if fill:
+        out["android:fillColor"] = fill
+        if opacity != 1:
+            out["android:fillAlpha"] = fmt(opacity)
+    if stroke:
+        out["android:strokeColor"] = stroke
+        out["android:strokeWidth"] = fmt(float(get("stroke-width", "1")))
+        if get("stroke-linecap") in ("round", "square"):
+            out["android:strokeLineCap"] = get("stroke-linecap")
+        if get("stroke-linejoin") in ("round", "bevel"):
+            out["android:strokeLineJoin"] = get("stroke-linejoin")
+        if opacity != 1:
+            out["android:strokeAlpha"] = fmt(opacity)
+    if not fill and not stroke:
+        raise ValueError(f"<{el.tag}> paints nothing")
+    return out
+
+
+def element_path(el: ET.Element, tag: str) -> str:
+    num = lambda key, default=0.0: float(el.get(key, default))
+    if tag == "path":
+        return normalize_path(el.get("d", ""))
+    if tag == "rect":
+        rx = num("rx", el.get("ry", 0) or 0)
+        ry = num("ry", rx)
+        return rect_path(num("x"), num("y"), num("width"), num("height"), rx, ry)
+    if tag == "circle":
+        return ellipse_path(num("cx"), num("cy"), num("r"), num("r"))
+    if tag == "ellipse":
+        return ellipse_path(num("cx"), num("cy"), num("rx"), num("ry"))
+    return points_path(el.get("points", ""), close=tag == "polygon")
+
+
+def emit(el: ET.Element, inherited: dict[str, str], depth: int, lines: list[str]) -> None:
+    tag = el.tag.removeprefix(SVG_NS)
+    if tag not in ALLOWED:
+        raise ValueError(f"unsupported element <{tag}>")
+    extra = set(el.attrib) - ALLOWED[tag]
+    if extra:
+        raise ValueError(f"<{tag}> has unsupported attributes {sorted(extra)}")
+    indent = "    " * depth
+    opener = group_open(*parse_transform(el.get("transform")), indent)
+    if opener:
+        lines.append(opener)
+        depth += 1
+        indent = "    " * depth
+    if tag == "g":
+        merged = {**inherited, **{k: v for k, v in el.attrib.items() if k != "transform"}}
+        for child in el:
+            emit(child, merged, depth, lines)
+    else:
+        attrs = {"android:pathData": element_path(el, tag), **paint(el, inherited)}
+        body = " ".join(f'{k}="{v}"' for k, v in attrs.items())
+        lines.append(f"{indent}<path {body} />")
+    if opener:
+        lines.append("    " * (depth - 1) + "</group>")
+
+
+def convert(svg_file: Path, source: str) -> str:
+    root = ET.parse(svg_file).getroot()
+    if root.tag != SVG_NS + "svg":
+        raise ValueError("not an svg file")
+    min_x, min_y, width, height = (float(v) for v in root.get("viewBox", "").replace(",", " ").split())
+    scale = min(BOX_W / width, BOX_H / height)
+    lines: list[str] = []
+    shift = group_open(-min_x, -min_y, 1, "    ")
+    depth = 1
+    if shift:
+        lines.append(shift)
+        depth = 2
+    for child in root:
+        emit(child, {}, depth, lines)
+    if shift:
+        lines.append("    </group>")
+    head = (
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        f"<!-- Generated by scripts/build_onboarding.py from {source}. Do not edit by hand. -->\n"
+        '<vector xmlns:android="http://schemas.android.com/apk/res/android"\n'
+        f'    android:width="{fmt(width * scale)}dp"\n'
+        f'    android:height="{fmt(height * scale)}dp"\n'
+        f'    android:viewportWidth="{fmt(width)}"\n'
+        f'    android:viewportHeight="{fmt(height)}">\n'
+    )
+    return head + "\n".join(lines) + "\n</vector>\n"
+
+
+def main() -> int:
+    written = 0
+    for theme, folder in THEMES.items():
+        out_dir = RES / folder
+        out_dir.mkdir(parents=True, exist_ok=True)
+        for name, stem in PAGES.items():
+            svg = SRC / theme / f"{stem}.svg"
+            if not svg.exists():
+                print(f"missing {svg}", file=sys.stderr)
+                return 1
+            try:
+                xml = convert(svg, f"{svg.relative_to(ROOT).as_posix()}")
+            except ValueError as err:
+                print(f"{svg.name}: {err}", file=sys.stderr)
+                return 1
+            target = out_dir / f"onboarding_{name}.xml"
+            target.write_text(xml, encoding="utf-8", newline="\n")
+            written += 1
+            print(f"{target.relative_to(ROOT).as_posix()}  ({len(xml) // 1024} KB)")
+    print(f"{written} drawables written")
+    return 0
 
 
 if __name__ == "__main__":
-    for name, create in [("together", together), ("feedback", feedback), ("progress", progress),
-                         ("share", share), ("explore", explore)]:
-        export(create(), name)
-    # A tightly framed head for the onboarding wordmark; never downsize the full mascot to 32dp.
-    head = deepcopy(ROBOT)
-    body = head.find(f"{{{SVG}}}g")
-    for child in list(body):
-        if child.get("id") != "head_rig":
-            body.remove(child)
-    mark = build_vector(head)
-    mark.attrib.update(android_attrs(width="40dp", height="40dp", viewportWidth=900, viewportHeight=900))
-    mark.find("group").attrib = android_attrs(name="head_frame", translateX=-177, translateY=-2)
-    ET.indent(mark, space="    ")
-    (RES / "onboarding_mascot.xml").write_text(
-        '<?xml version="1.0" encoding="utf-8"?>\n<!-- Generated by scripts/build_onboarding.py. -->\n'
-        + ET.tostring(mark, encoding="unicode") + "\n", encoding="utf-8")
-    # Full robot for app bars, without the launcher/splash mask padding.
-    full = build_vector(deepcopy(ROBOT))
-    full.attrib.update(android_attrs(width="44dp", height="44dp", viewportWidth=1040, viewportHeight=1040))
-    full.find("group").attrib = android_attrs(name="full_robot_frame", translateX=-107, translateY=-107)
-    ET.indent(full, space="    ")
-    (RES / "testtrack_robot.xml").write_text(
-        '<?xml version="1.0" encoding="utf-8"?>\n<!-- Generated by scripts/build_onboarding.py. -->\n'
-        + ET.tostring(full, encoding="unicode") + "\n", encoding="utf-8")
-    print("Built onboarding scenes, mascot head, and full app-bar robot.")
+    sys.exit(main())

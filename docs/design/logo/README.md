@@ -5,16 +5,14 @@ represent reciprocal app testing. Geometry and gradients have one source, `test-
 The SVG has a transparent background and no embedded raster image.
 
 The robot uses the app's Ocean blue (`#32729B` to `#1D5C82`) with small coral and mint
-accents. The same source supplies the [onboarding illustrations](../onboarding/preview.html).
-
+accents.
 Open `preview.html` for a replayable artwork, light splash and dark splash comparison.
 `test-exchange-animated.svg` also plays the motion once when opened in a browser.
 
-Regenerate the browser assets and onboarding resources after editing the source:
+Regenerate the browser assets after editing the source:
 
 ```powershell
 python scripts/build_splash.py
-python scripts/build_onboarding.py
 ```
 
 ## Native launch

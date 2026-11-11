@@ -1,0 +1,9 @@
+<!doctype html><html><body><pre id="out">measuring</pre><div id="box"></div><script>
+// Prints BOXES for recolor.py: the content box of each light/ file, in its own units.
+// Serve docs/design and open /onboarding/undraw/measure.html after a run with BOXES empty.
+const names=['true-friends_1h3v','online-review_08y6','work-chat_kw8x','mobile-application_uc2q','searching_pqji'];
+(async()=>{let lines=['BOXES = {'];for(const n of names){const t=await (await fetch('light/'+n+'.svg')).text();
+const d=document.createElement('div');d.innerHTML=t;document.getElementById('box').appendChild(d);
+const b=d.querySelector('svg').getBBox();lines.push(`    "${n}": (${b.x.toFixed(1)}, ${b.y.toFixed(1)}, ${(b.x+b.width).toFixed(1)}, ${(b.y+b.height).toFixed(1)}),`);d.remove();}
+lines.push('}');document.getElementById('out').textContent=lines.join('\n');})();
+</script></body></html>

@@ -7,18 +7,19 @@
     <string name="intro_sign_in">Already here? Sign in</string>
     <string name="intro_page">Page %1$d of %2$d</string>
     <string name="intro_together_label">TESTERS FOR YOUR APP</string>
-    <string name="intro_together_title">Developers testing\neach other\'s apps.</string>
-    <string name="intro_together_body">You try other people\'s apps and they try yours, so nobody here has to find testers alone.</string>
+    <string name="intro_together_title">Get your 12 testers, free</string>
+    <string name="intro_together_body">Google Play asks new developers for 12 testers over 14 days. Here, you test other developers\' apps and they test yours. No money involved.</string>
     <string name="intro_feedback_label">FEEDBACK</string>
-    <string name="intro_feedback_title">Find out what\nto fix next.</string>
-    <string name="intro_feedback_body">Ask the Circle to try your app and tell you what works and what doesn\'t. You pay for reviews in tix and earn tix by reviewing other apps.</string>
-    <string name="intro_progress_label">CLOSED TESTING</string>
-    <string name="intro_progress_title">14 days of testing,\none night at a time.</string>
-    <string name="intro_progress_body">Join a crew to get the closed test Google asks for. Each night you open the other apps, and you can see what is left in one place.</string>
+    <string name="intro_feedback_title">Get real user feedback, free</string>
+    <string name="intro_feedback_body">Real people use your app and give feedback on Google Play, aimed at what you ask. Pay in tix, never money.</string>
+    <string name="intro_progress_label">14 DAYS IN A CREW</string>
+    <string name="intro_progress_title">A few minutes a night, no cost</string>
+    <!-- When crew chat ships, append " Chat with your crew along the way." to this body. -->
+    <string name="intro_progress_body">Your crew of 15 opens each other\'s apps every night for 14 nights.</string>
     <string name="intro_share_label">ADD YOUR APP</string>
-    <string name="intro_share_title">Start with\nyour Play link.</string>
-    <string name="intro_share_body">Paste your Play link or package name. We fill in the app\'s name and icon, so you can ask for feedback or take a crew seat.</string>
-    <string name="intro_explore_label">LOOK AROUND FIRST</string>
-    <string name="intro_explore_title">No account needed\nto look around.</string>
-    <string name="intro_explore_body">Browse the Circle and Crew without an account. Sign in when you want to take part.</string>
+    <string name="intro_share_title">One link is all it takes</string>
+    <string name="intro_share_body">Paste your Play link or package name, then take a crew seat or ask for feedback.</string>
+    <string name="intro_explore_label">NO ACCOUNT NEEDED</string>
+    <string name="intro_explore_title">Look around first</string>
+    <string name="intro_explore_body">See how crews and feedback work. No account needed, and nothing to pay.</string>
 </resources>
