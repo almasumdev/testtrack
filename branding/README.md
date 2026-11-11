@@ -8,6 +8,7 @@ Use these in Android Studio (New, Image Asset) to rebuild the launcher icons. Th
 
 - `foreground.svg` and `foreground.png`: the foreground layer. The PNG (1024 px) keeps the soft shadows, the SVG has none.
 - `background.svg` and `background.png`: the background layer, #F7FCFF at the top fading to #D5EAF7.
+- `background-flat.svg` and `background-flat.png`: the alternative background, a single colour #F7FCFF (the same as the light launch screen).
 - `monochrome.svg` and `monochrome.png`: the one-colour layer for themed icons.
 
 ## Launch animation sources
