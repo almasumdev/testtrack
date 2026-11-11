@@ -19,6 +19,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.math.roundToInt
@@ -117,7 +118,7 @@ object AuthRepo {
         preloadPhoto(activity, account.photo)
 
         try {
-            withTimeout(FIREBASE_LIMIT) { signInToFirebase(account.idToken) }
+            firebaseSession(account.idToken)
         } catch (e: TimeoutCancellationException) {
             // Caught before CancellationException on purpose: a timeout is one, so the branch
             // below would rethrow it and the spinner this exists to end would go on turning.
@@ -159,14 +160,41 @@ object AuthRepo {
 
     private const val AVATAR_DP = 36
 
-    private suspend fun signInToFirebase(idToken: String) =
-        suspendCancellableCoroutine { cont ->
+    /** Counts Firebase sign-in attempts, so a late answer can tell whether it is still the current one. */
+    private val firebaseAttempts = AtomicInteger()
+
+    /**
+     * Exchanges the token for a Firebase user, waiting at most [FIREBASE_LIMIT].
+     *
+     * Giving up on the wait does not stop the Firebase task. If it succeeds afterwards, Firebase is
+     * signed in while our own session says signed out, so a wait that ends early leaves a one-shot
+     * listener behind to put that right. See [shouldUndoLateSignIn].
+     */
+    private suspend fun firebaseSession(idToken: String) {
+        val attempt = firebaseAttempts.incrementAndGet()
+        val task =
             FirebaseAuth
                 .getInstance()
                 .signInWithCredential(GoogleAuthProvider.getCredential(idToken, null))
-                .addOnSuccessListener { if (cont.isActive) cont.resume(Unit) }
-                .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
+        try {
+            withTimeout(FIREBASE_LIMIT) {
+                suspendCancellableCoroutine<Unit> { cont ->
+                    task
+                        .addOnSuccessListener { if (cont.isActive) cont.resume(Unit) }
+                        .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
+                }
+            }
+        } catch (e: CancellationException) {
+            // Covers the timeout too, which is one. Cancelled or timed out, so nobody is waiting
+            // for this task any more; undo it if it still lands.
+            task.addOnSuccessListener {
+                if (shouldUndoLateSignIn(attempt, firebaseAttempts.get(), com.eazyverse.testtrack.net.ApiSession.signedIn)) {
+                    undoHalfSignIn()
+                }
+            }
+            throw e
         }
+    }
 
     /**
      * Requests the Drive access token.
@@ -230,3 +258,16 @@ object AuthRepo {
         if (!com.eazyverse.testtrack.net.ApiSession.signedIn) FirebaseAuth.getInstance().signOut()
     }
 }
+
+/**
+ * Whether a Firebase sign-in that finished after its wait was abandoned should be undone.
+ *
+ * Only the latest attempt may be: a newer attempt owns the Firebase session now, and undoing on
+ * behalf of an older one would sign it out. And never when our own session is signed in, because
+ * then the sign-in did complete and Firebase is meant to be signed in.
+ */
+internal fun shouldUndoLateSignIn(
+    attempt: Int,
+    latestAttempt: Int,
+    apiSignedIn: Boolean,
+): Boolean = attempt == latestAttempt && !apiSignedIn

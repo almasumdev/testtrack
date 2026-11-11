@@ -107,10 +107,17 @@ internal fun PickerSheet(
         )
     val scope = rememberCoroutineScope()
     val close: (() -> Unit) -> Unit = { next ->
-        scope.launch {
-            state.hide()
-            onDismiss()
-            next()
+        // A locked sheet is not closed from inside either: a button that is still on screen from
+        // the state before the lock must not remove it. And what follows runs only once the sheet
+        // really is hidden, since the hide can be refused after the check.
+        if (canDismiss) {
+            scope.launch {
+                state.hide()
+                if (!state.isVisible) {
+                    onDismiss()
+                    next()
+                }
+            }
         }
     }
     val shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)

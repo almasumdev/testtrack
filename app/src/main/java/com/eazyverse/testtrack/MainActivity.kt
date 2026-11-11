@@ -184,7 +184,7 @@ class MainActivity : ComponentActivity() {
                             if (Session.signedIn) FeedbackWatch.schedule(this@MainActivity)
                             // Where our server can reach this phone. See [PushRepo.toServer].
                             if (Session.signedIn) PushRepo.toServer()
-                            membership.quietly()
+                            if (Session.signedIn) membership.quietly() else membership.signedOut()
                             // Signed out: stop, and forget what was seen, or the next account on
                             // this phone is told about everything it has that the last one had not.
                             if (!Session.signedIn && wasSignedIn) FeedbackWatch.cancel(this@MainActivity)

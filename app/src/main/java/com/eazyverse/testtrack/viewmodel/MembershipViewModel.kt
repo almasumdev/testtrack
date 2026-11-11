@@ -52,6 +52,8 @@ class MembershipViewModel : ViewModel() {
     private var openedGroup = false
     private var pending: (() -> Unit)? = null
     private var job: Job? = null
+    private var quietJob: Job? = null
+    private var quietFor: String? = null
 
     /** Run [action] if this account is on the group; otherwise check, and run it once it is. */
     fun require(action: () -> Unit) {
@@ -73,9 +75,33 @@ class MembershipViewModel : ViewModel() {
     /** On launch and after signing in, with no dialog: a yes is remembered, a no waits for the next action to say so. */
     fun quietly() {
         if (member || checking || !Session.signedIn) return
-        viewModelScope.launch {
-            if (GroupGate.check("") is GateResult.Member) Session.updateMember(true)
+        val who = Session.email
+        // One at a time, but a run for another account is dropped, not waited for.
+        if (quietJob?.isActive == true) {
+            if (quietFor == who) return
+            cancelQuiet()
         }
+        quietFor = who
+        quietJob =
+            viewModelScope.launch {
+                val answer = GroupGate.check("")
+                // The answer belongs to whoever asked. If the account changed meanwhile, saying
+                // yes would hand the next account a membership it never proved.
+                if (answer is GateResult.Member && sameAccount(who, Session.email)) Session.updateMember(true)
+            }
+    }
+
+    /** The silent check is dropped, so nothing it would have said is remembered. */
+    fun cancelQuiet() {
+        quietJob?.cancel()
+        quietJob = null
+        quietFor = null
+    }
+
+    /** Signed out: no check of either kind may outlive the account it was asked for. */
+    fun signedOut() {
+        cancelQuiet()
+        close()
     }
 
     fun check() {
@@ -83,9 +109,16 @@ class MembershipViewModel : ViewModel() {
         checking = true
         failure = null
         val again = outside
+        val who = Session.email
         job =
             viewModelScope.launch {
-                when (val answer = GroupGate.check("")) {
+                val answer = GroupGate.check("")
+                if (!sameAccount(who, Session.email)) {
+                    // Another account is signed in now; this answer was not about it.
+                    checking = false
+                    return@launch
+                }
+                when (answer) {
                     is GateResult.Member -> {
                         Session.updateMember(true)
                         confirmed = true
@@ -143,3 +176,9 @@ class MembershipViewModel : ViewModel() {
         check()
     }
 }
+
+/** The same account is still signed in as when a check began. Signed out is never the same. */
+internal fun sameAccount(
+    started: String?,
+    now: String?,
+): Boolean = started != null && started == now
