@@ -43,8 +43,10 @@ fun Skeleton(
     height: Dp = 12.dp,
     corner: Dp = 6.dp,
     modifier: Modifier = Modifier,
+    /** The bar's colour when it sits on a ground too close to the default, such as a ticket stub. */
+    ground: Color = Status.upcoming,
 ) {
-    val base = Status.upcoming
+    val base = ground
     // A touch of the accent over it, so a bar still stands off the glass tile it sits on.
     val tint = Tt.colors.accentInk.copy(alpha = 0.07f)
     val highlight = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)

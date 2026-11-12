@@ -75,9 +75,10 @@ internal fun FeedRequestLoadingCard() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Skeleton(width = 16.dp, height = 16.dp, corner = 4.dp)
+            // The stub is the same grey as the default bar, so these sit on card like the real ticket does.
+            Skeleton(width = 16.dp, height = 16.dp, corner = 4.dp, ground = t.card)
             Spacer(Modifier.height(3.dp))
-            Skeleton(width = 24.dp, height = 14.dp, corner = 4.dp)
+            Skeleton(width = 24.dp, height = 14.dp, corner = 4.dp, ground = t.card)
         }
     }
 }

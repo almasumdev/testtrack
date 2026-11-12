@@ -225,7 +225,8 @@ private fun Segment(
                 Box(
                     Modifier
                         .clip(RoundedCornerShape(percent = 50))
-                        .background(t.tile)
+                        // At night the selected pill is the same grey as tile, so the badge sits on card there.
+                        .background(if (current && t.isDark) t.card else t.tile)
                         .padding(horizontal = CountPad),
                     contentAlignment = Alignment.Center,
                 ) {
