@@ -5,10 +5,15 @@ import android.graphics.Paint
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
@@ -43,6 +48,8 @@ internal fun LevelRobotBadge(
     intoLevel: Int,
     forNext: Int,
     onSignIn: (() -> Unit)? = null,
+    /** A level-up not looked at yet: a small dot on the robot's top-right. */
+    news: Boolean = false,
 ) {
     val target = if (level != null && forNext > 0) (intoLevel.toFloat() / forNext).coerceIn(0f, 1f) else 0f
     val progress by animateFloatAsState(target, tween(700), label = "Robot XP")
@@ -159,12 +166,15 @@ internal fun LevelRobotBadge(
                 earned.reset()
                 measure.getSegment(0f, measure.length * progress, earned)
                 drawPath(earned, colors.ok, alpha = badgeAlpha, style = Stroke(19f, cap = StrokeCap.Round))
-                drawPath(
-                    signInMark,
-                    colors.accentInk,
-                    alpha = 1f - badgeAlpha,
-                    style = Stroke(22f, cap = StrokeCap.Round, join = StrokeJoin.Round),
-                )
+                // Only for a signed-out guest. While a signed-in account loads, the plaque stays empty.
+                if (onSignIn != null) {
+                    drawPath(
+                        signInMark,
+                        colors.accentInk,
+                        alpha = 1f - badgeAlpha,
+                        style = Stroke(22f, cap = StrokeCap.Round, join = StrokeJoin.Round),
+                    )
+                }
                 paint.color = colors.text.toArgb()
                 paint.alpha = (255 * badgeAlpha).toInt()
                 paint.textSize = if ((displayedLevel ?: 0) < 100) 186f else 150f
@@ -173,6 +183,18 @@ internal fun LevelRobotBadge(
             }
         }
         Image(painterResource(R.drawable.level_robot_hands), null, Modifier.matchParentSize())
+        if (news) {
+            // 8dp dot inside a 2dp ring in the bar's own colour, so it reads as cut out of the robot.
+            Box(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = (-1).dp, y = 3.dp)
+                    .size(12.dp)
+                    .background(colors.bg, CircleShape)
+                    .padding(2.dp)
+                    .background(colors.leafAccent, CircleShape),
+            )
+        }
     }
 }
 

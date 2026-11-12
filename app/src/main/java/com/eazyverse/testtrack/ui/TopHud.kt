@@ -9,7 +9,6 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -17,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -32,18 +32,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.eazyverse.testtrack.R
+import androidx.compose.ui.unit.sp
+import com.eazyverse.testtrack.domain.grouped
+import com.eazyverse.testtrack.ui.theme.Barlow
 import com.eazyverse.testtrack.ui.theme.Tt
 import kotlinx.coroutines.launch
 import kotlin.math.PI
@@ -64,7 +68,7 @@ import kotlin.math.sin
  * Gold is not drawn, and there is deliberately no switch here for it. There is no way to buy any,
  * so a balance somebody cannot change would be a question on every screen the app has no answer
  * to, and the first thing anybody would do is go looking for the shop that is not there. When
- * there is a shop, this is where it goes: a second chip beside the balance.
+ * there is a shop, this is where it goes: a second figure beside the balance.
  */
 @Composable
 fun TopHud(
@@ -78,6 +82,12 @@ fun TopHud(
     openTaken: Int = 0,
     openSeats: Int = 0,
     onSignIn: () -> Unit = {},
+    /** Opens the You page; the balance is the tap target. */
+    onOpenYou: () -> Unit = {},
+    /** Opens the level sheet from the robot and the level lines. Not wired yet, so null. */
+    onOpenLevel: (() -> Unit)? = null,
+    /** A level-up nobody has looked at yet: a small dot on the robot. */
+    levelNews: Boolean = false,
     /** An optional update Play has for this install; null when there is none. */
     update: UpdateOffer? = null,
 ) {
@@ -100,7 +110,7 @@ fun TopHud(
     if (LocalDensity.current.fontScale > 1.2f) {
         Column(modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                LevelRobotBadge(visibleLevel, intoLevel, forNext, onSignIn = onSignIn.takeIf { !signedIn })
+                LevelRobotBadge(visibleLevel, intoLevel, forNext, onSignIn = onSignIn.takeIf { !signedIn }, news = levelNews)
                 Spacer(Modifier.width(11.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
@@ -126,8 +136,10 @@ fun TopHud(
                     Spacer(Modifier.width(4.dp))
                 }
                 if (visibleLevel != null) {
-                    TixChip(tix)
-                } else if (!signedIn) {
+                    TixFigure(tix, onOpenYou)
+                } else if (signedIn) {
+                    TixLoading()
+                } else {
                     SignInChip(onSignIn)
                 }
             }
@@ -138,7 +150,7 @@ fun TopHud(
         modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 10.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        LevelRobotBadge(visibleLevel, intoLevel, forNext, onSignIn = onSignIn.takeIf { !signedIn })
+        LevelRobotBadge(visibleLevel, intoLevel, forNext, onSignIn = onSignIn.takeIf { !signedIn }, news = levelNews)
         Spacer(Modifier.width(11.dp))
         Crossfade(
             targetState = title to subtitle,
@@ -173,9 +185,9 @@ fun TopHud(
             label = "Header action",
         ) { state ->
             when (state) {
-                2 -> TixChip(tix)
-                0 -> SignInChip(onSignIn)
-                else -> Unit
+                2 -> TixFigure(tix, onOpenYou)
+                1 -> TixLoading()
+                else -> SignInChip(onSignIn)
             }
         }
     }
@@ -207,23 +219,20 @@ private fun SignInChip(onClick: () -> Unit) {
 }
 
 /**
- * What this account has to spend, as a game would show it: a gold ticket over the end of a
- * raised navy pill, with the balance in white.
- *
- * The ticket hangs off the pill's left end rather than sitting inside it, the way a coin counter
- * in a game wears its coin, and it is drawn in the robot's cartoon style so the two belong to the
- * same app. The pill stands on a darker edge a few points below it, which is what makes it read
- * as a thing rather than a label.
+ * What this account has to spend: a drawn ticket, tipped a little, then the figure in plain
+ * numbers. No pill and no frame, so it reads as part of the bar and not as a button sitting in it.
+ * Tapping it opens the You page.
  *
  * Nothing moves at rest, and nothing animates on arrival: the first composition sets the figure
  * and stops, because a balance that counts itself up every time a tab opens is a slot machine.
  * The one moment worth marking is the balance changing. Then the digits roll from the old figure
- * to the new one, the ticket hops and turns over once, and the amount floats up off the pill and
+ * to the new one, the ticket hops and turns over once, and the amount floats up off the figure and
  * fades, green for tix earned and quiet for tix spent.
  */
 @Composable
-private fun TixChip(
+private fun TixFigure(
     tix: Int,
+    onOpenYou: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val t = Tt.colors
@@ -256,28 +265,23 @@ private fun TixChip(
         }
     }
 
-    val shape = RoundedCornerShape(percent = 50)
-    // Read as one thing, the balance and its unit, rather than a bare number and a picture.
-    Box(modifier.clearAndSetSemantics { contentDescription = "$tix tix" }, contentAlignment = Alignment.CenterStart) {
+    Box(
+        modifier
+            .height(48.dp)
+            .clickable(role = Role.Button, onClickLabel = "Open your page", onClick = onOpenYou),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        // Read as one thing, the balance and its unit, rather than a bare number and a picture.
         Row(
             Modifier
-                .padding(start = 16.dp, bottom = 3.dp)
-                // The edge it stands on, drawn under the pill and 3dp lower.
-                .drawBehind {
-                    drawRoundRect(
-                        t.tixEdge,
-                        topLeft = Offset(0f, 3.dp.toPx()),
-                        size = size,
-                        cornerRadius = CornerRadius(size.height / 2f),
-                    )
-                }.clip(shape)
-                .background(Brush.verticalGradient(listOf(t.tixTop, t.tixBottom)))
-                .border(2.dp, t.tixEdge, shape)
-                .padding(start = 27.dp, end = 13.dp, top = 5.dp, bottom = 5.dp),
+                .padding(start = 6.dp)
+                .clearAndSetSemantics { contentDescription = "${grouped(tix)} tix" },
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Ticket(hop)
+            Spacer(Modifier.width(7.dp))
             Text(
-                "$shown",
+                grouped(shown),
                 Modifier.graphicsLayer {
                     // A little swell while it counts, settling as the roll ends.
                     val swell = 1f + 0.16f * sin(PI.toFloat() * (1f - hop.value).coerceIn(0f, 1f)).coerceAtLeast(0f)
@@ -285,35 +289,21 @@ private fun TixChip(
                     scaleY = swell
                 },
                 style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
-                fontWeight = FontWeight.ExtraBold,
-                color = t.onAccent,
+                fontSize = 18.sp,
+                fontFamily = Barlow,
+                fontWeight = FontWeight.SemiBold,
+                color = t.text,
             )
         }
-        Image(
-            painterResource(R.drawable.tix_ticket),
-            null,
-            Modifier
-                .padding(bottom = 3.dp)
-                .size(width = 38.dp, height = 26.dp)
-                .graphicsLayer {
-                    // Up, over once and back down onto the pill.
-                    val p = hop.value
-                    translationY = -10.dp.toPx() * sin(PI.toFloat() * (p / 0.55f).coerceAtMost(1f))
-                    rotationZ = -12f + 360f * FastOutSlowInEasing.transform(((p - 0.15f) / 0.6f).coerceIn(0f, 1f))
-                    val pop = 1f + 0.15f * sin(PI.toFloat() * (p / 0.4f).coerceAtMost(1f))
-                    scaleX = pop
-                    scaleY = pop
-                },
-        )
         if (rise.value < 1f && change != 0) {
             Text(
-                if (change > 0) "+$change" else "$change",
+                if (change > 0) "+${grouped(change)}" else grouped(change),
                 Modifier
                     .align(Alignment.TopEnd)
-                    .padding(end = 8.dp)
+                    .padding(top = 2.dp)
                     .graphicsLayer {
                         val p = rise.value
-                        translationY = -6.dp.toPx() - 22.dp.toPx() * p
+                        translationY = -22.dp.toPx() * p
                         alpha = if (p < 0.2f) p / 0.2f else 1f - (p - 0.2f) / 0.8f
                     },
                 style = MaterialTheme.typography.labelLarge,
@@ -323,3 +313,57 @@ private fun TixChip(
         }
     }
 }
+
+/** The ticket and a bar where the figure goes, while the signed-in account is still loading. */
+@Composable
+private fun TixLoading(modifier: Modifier = Modifier) {
+    Row(modifier.height(48.dp).padding(start = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Ticket(null)
+        Spacer(Modifier.width(7.dp))
+        Skeleton(width = 36.dp, height = 14.dp, corner = 6.dp)
+    }
+}
+
+/** The ticket, resting at -12 degrees. [hop] drives the up, over once and back down. */
+@Composable
+private fun Ticket(hop: Animatable<Float, *>?) {
+    val t = Tt.colors
+    val mark = remember(t.leafAccent, t.leafAccentSoft) { ticketMark(t.leafAccent, t.leafAccentSoft) }
+    Image(
+        mark,
+        null,
+        Modifier
+            .size(22.dp)
+            .graphicsLayer {
+                val p = hop?.value ?: 1f
+                translationY = -10.dp.toPx() * sin(PI.toFloat() * (p / 0.55f).coerceAtMost(1f))
+                rotationZ = -12f + 360f * FastOutSlowInEasing.transform(((p - 0.15f) / 0.6f).coerceIn(0f, 1f))
+                val pop = 1f + 0.15f * sin(PI.toFloat() * (p / 0.4f).coerceAtMost(1f))
+                scaleX = pop
+                scaleY = pop
+            },
+    )
+}
+
+/** A ticket with notched ends and a tear line, on a 24 grid. Built here so it follows the theme. */
+private fun ticketMark(
+    line: Color,
+    fill: Color,
+): ImageVector =
+    ImageVector
+        .Builder("TicketMark", 24.dp, 24.dp, 24f, 24f)
+        .addPath(
+            PathParser()
+                .parsePathString(
+                    "M4.5 4.5H19.5a2.5 2.5 0 0 1 2.5 2.5V9a3 3 0 0 0 0 6v2a2.5 2.5 0 0 1-2.5 2.5H4.5A2.5 2.5 0 0 1 2 17v-2a3 3 0 0 0 0-6V7a2.5 2.5 0 0 1 2.5-2.5Z",
+                ).toNodes(),
+            fill = SolidColor(fill),
+            stroke = SolidColor(line),
+            strokeLineWidth = 1.6f,
+            strokeLineJoin = StrokeJoin.Round,
+        ).addPath(
+            PathParser().parsePathString("M16 7.4v.4M16 11.8v.4M16 16.2v.4").toNodes(),
+            stroke = SolidColor(line),
+            strokeLineWidth = 1.9f,
+            strokeLineCap = StrokeCap.Round,
+        ).build()

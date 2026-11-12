@@ -258,6 +258,7 @@ fun MainShell(
                         openTaken = hudVm.openTaken,
                         openSeats = hudVm.openSeats,
                         onSignIn = { asking = StartReason },
+                        onOpenYou = { show(MainTab.PROFILE) },
                         update = LocalUpdateOffer.current,
                     )
                 },

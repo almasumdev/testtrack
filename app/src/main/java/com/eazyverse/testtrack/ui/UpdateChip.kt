@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ArrowDownToLine
+import com.composables.icons.lucide.CircleArrowDown
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.RotateCw
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -107,17 +108,9 @@ internal fun UpdateChip(offer: UpdateOffer) {
     val t = Tt.colors
     when (offer.state) {
         UpdateOffer.State.READY ->
-            Row(
-                Modifier
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(t.accent)
-                    .clickable(onClickLabel = "Restart to update", role = Role.Button, onClick = offer.onTap)
-                    .padding(start = 11.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Lucide.RotateCw, null, Modifier.size(16.dp), tint = t.onAccent)
-                Spacer(Modifier.width(7.dp))
-                Text("Restart", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = t.onAccent)
+            // Icon only: the words are for screen readers, and the blue says something is waiting.
+            RoundButton("Restart to update", onClick = offer.onTap) {
+                Icon(Lucide.RotateCw, "Restart to update", Modifier.size(20.dp), tint = t.leafAccent)
             }
         UpdateOffer.State.DOWNLOADING -> {
             // A second tap says it is already under way rather than asking Play again.
@@ -149,20 +142,20 @@ internal fun UpdateChip(offer: UpdateOffer) {
             }
         }
         UpdateOffer.State.AVAILABLE ->
-            // A plain round button with a gold dot: there is something new, and nothing is asked of you.
+            // A plain round button with a blue dot: there is something new, and nothing is asked of you.
             Box {
                 RoundButton("Update TestTrack", onClick = offer.onTap) {
-                    Icon(Lucide.ArrowDownToLine, "Update available", Modifier.size(19.dp), tint = t.accentInk)
+                    Icon(Lucide.CircleArrowDown, "Update available", Modifier.size(20.dp), tint = t.text3)
                 }
-                // Placed on the 40dp circle, inside the 48dp it is touched by.
+                // On the edge of the icon's own circle, inside the 48dp it is touched by.
                 Box(
                     Modifier
                         .align(Alignment.TopEnd)
-                        .offset(x = (-3).dp, y = 3.dp)
-                        .size(11.dp)
+                        .offset(x = (-12).dp, y = 12.dp)
+                        .size(12.dp)
                         .clip(CircleShape)
-                        .background(t.gold)
-                        .border(2.dp, t.glass, CircleShape),
+                        .background(t.leafAccent)
+                        .border(2.dp, t.bg, CircleShape),
                 )
             }
     }
@@ -175,13 +168,12 @@ private fun RoundButton(
     content: @Composable () -> Unit,
 ) {
     // 40 to look at, 48 to touch: the extra 4 on each side is the gap the header leaves around it.
+    // No fill, so the icon sits straight on the bar.
     Box(
         Modifier
             .minimumInteractiveComponentSize()
             .size(40.dp)
             .clip(CircleShape)
-            .background(Tt.colors.glass)
-            .border(1.dp, Tt.colors.glassBorder, CircleShape)
             .clickable(onClickLabel = label, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { content() }
