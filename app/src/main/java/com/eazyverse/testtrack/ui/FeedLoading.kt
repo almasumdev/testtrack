@@ -50,17 +50,17 @@ internal fun FeedRequestLoadingCard() {
         Modifier
             .semantics { contentDescription = "Loading Circle content" }
             .fillMaxWidth()
-            .heightIn(min = 60.dp)
+            .heightIn(min = 76.dp)
             .height(IntrinsicSize.Min)
             .clip(shape)
             .background(t.card)
             .border(1.dp, t.cardLine, shape),
     ) {
         Row(
-            Modifier.weight(1f).padding(start = 10.dp, end = 10.dp, top = 9.dp, bottom = 9.dp),
+            Modifier.weight(1f).padding(start = 12.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Skeleton(width = 40.dp, height = 40.dp, corner = 12.dp)
+            Skeleton(width = 52.dp, height = 52.dp, corner = 14.dp)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Skeleton(height = 14.dp, modifier = Modifier.fillMaxWidth(0.62f))
@@ -77,9 +77,11 @@ internal fun FeedRequestLoadingCard() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Skeleton(width = 16.dp, height = 16.dp, corner = 4.dp)
-            Spacer(Modifier.height(3.dp))
-            Skeleton(width = 24.dp, height = 14.dp, corner = 4.dp)
+            Column(Modifier.stubChip(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Skeleton(width = 20.dp, height = 20.dp, corner = 4.dp)
+                Spacer(Modifier.height(2.dp))
+                Skeleton(width = 24.dp, height = 14.dp, corner = 4.dp)
+            }
         }
     }
 }

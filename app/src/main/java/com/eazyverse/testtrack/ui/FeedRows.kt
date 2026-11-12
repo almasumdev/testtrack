@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -29,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -37,8 +34,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,7 +51,6 @@ import com.composables.icons.lucide.MessageSquareText
 import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.Rocket
 import com.composables.icons.lucide.UserPlus
-import com.eazyverse.testtrack.domain.grouped
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.theme.Barlow
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -274,6 +268,9 @@ fun FeedAskBar(onPost: () -> Unit) {
     }
 }
 
+private val RequestTitle = TextStyle(fontFamily = Barlow, fontSize = 17.sp, lineHeight = 22.sp)
+private val RequestNote = TextStyle(fontFamily = Barlow, fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.Normal)
+
 /**
  * One request, anonymous: the app's face, its name, which kind it is, and what it pays, drawn as a
  * ticket. The pay is the stub on the right, torn off along a dashed line between two bites out of
@@ -304,7 +301,7 @@ fun FeedRequestCard(
     Row(
         Modifier
             .fillMaxWidth()
-            .heightIn(min = 60.dp)
+            .heightIn(min = 76.dp)
             .height(IntrinsicSize.Min)
             .clip(shape)
             .background(t.card)
@@ -312,69 +309,26 @@ fun FeedRequestCard(
             .then(if (post.mine) Modifier else Modifier.clickable(onClick = onReview)),
     ) {
         Row(
-            Modifier.weight(1f).padding(start = 10.dp, end = 10.dp, top = 9.dp, bottom = 9.dp),
+            Modifier.weight(1f).padding(start = 12.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AppMark(post.packageName, post.appName, post.icon, size = 40.dp)
+            AppMark(post.packageName, post.appName, post.icon, size = 52.dp)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
                     post.appName,
-                    style = RowTitle,
+                    style = RequestTitle,
                     fontWeight = FontWeight.SemiBold,
                     color = t.text,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(note, style = RowNote, color = t.text3, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(note, style = RequestNote, color = t.text3, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         TicketStub(post.reward, post.mine)
     }
 }
-
-/** What a review pays, on the right of a ticket, behind the tear line. Your own post says so instead. */
-@Composable
-private fun TicketStub(
-    tix: Int,
-    mine: Boolean,
-) {
-    val t = Tt.colors
-    // The stub is leafAccentSoft already, so a ticket in the same fill would vanish; card lifts it.
-    val mark = rememberTicketMark(t.card)
-    Column(
-        Modifier
-            .width(TICKET_STUB)
-            .fillMaxHeight()
-            .background(t.leafAccentSoft)
-            .tearLine(t.glassBorder)
-            .then(if (mine) Modifier else Modifier.clearAndSetSemantics { contentDescription = "$tix tix" }),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        if (mine) {
-            Text("Yours", style = StubNote, fontWeight = FontWeight.Medium, color = t.text3, maxLines = 1)
-        } else {
-            Image(mark, null, Modifier.size(16.dp).rotate(-12f))
-            Spacer(Modifier.height(3.dp))
-            Text(
-                grouped(tix),
-                style =
-                    TextStyle(
-                        fontFamily = Barlow,
-                        fontSize = if (tix >= 1000) 15.sp else 18.sp,
-                        lineHeight = 20.sp,
-                        fontFeatureSettings = "tnum",
-                    ),
-                fontWeight = FontWeight.SemiBold,
-                color = t.tabSelected,
-                maxLines = 1,
-            )
-        }
-    }
-}
-
-private val StubNote = TextStyle(fontFamily = Barlow, fontSize = 11.sp, lineHeight = 13.sp)
 
 /** The uppercase word at the top of a card saying which kind of post this is. */
 @Composable

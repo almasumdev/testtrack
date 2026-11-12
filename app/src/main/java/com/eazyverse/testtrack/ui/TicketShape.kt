@@ -53,7 +53,7 @@ class TicketShape(
 }
 
 /** The width of a ticket's stub, which [TicketShape] cuts its bites in front of. */
-internal val TICKET_STUB = 58.dp
+internal val TICKET_STUB = 64.dp
 
 /** The dashed line where a ticket tears, a hair inside the stub's left edge and clear of the bites. */
 internal fun Modifier.tearLine(color: Color) =
