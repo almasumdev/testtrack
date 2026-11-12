@@ -22,22 +22,13 @@ body{background:#E4E8EB;color:#1D2A33;font-family:Barlow,system-ui,sans-serif;-w
 .opt h2{font:700 22px Barlow;margin:0}
 .opt .sub{font:400 15px/22px Barlow;color:#3C4A55;margin:4px 0 0;max-width:980px}
 .rowlbl{font:600 13px Barlow;letter-spacing:.4px;color:#56636D;margin:14px 0 8px}
-.strip{display:flex;gap:20px;overflow-x:auto;padding-bottom:10px;align-items:flex-start}
+.strip{display:flex;flex-wrap:wrap;gap:20px 20px;padding-bottom:10px;align-items:flex-start}
 .strip.dark{background:#060707;margin:0 -32px;padding:16px 32px}
 .cell{flex:none}
+.sub-grid{display:flex;flex-wrap:wrap;gap:20px;flex:1 1 0;min-width:0}
 .cap{font:600 12.5px Barlow;color:#56636D;margin:0 0 6px 4px;white-space:nowrap}
 .strip.dark .cap{color:#8A949C}
 .pz{zoom:var(--z,.7)}
-.grp{display:flex;flex-direction:column;flex:none}
-.grp .phones{display:flex;gap:16px}
-.gh{width:0;min-width:100%;margin:0 0 12px;box-sizing:border-box;border-left:3px solid #1D2A33;padding:2px 0 2px 12px}
-.gh h3{font:700 19px Barlow;margin:0;color:#1D2A33}
-.gh p{font:400 14.5px/21px Barlow;margin:4px 0 0;color:#3C4A55}
-.strip.dark .gh{border-color:#C9D2D8}
-.strip.dark .gh h3{color:#E8EDF0}
-.strip.dark .gh p{color:#A3AEB6}
-.vsep{width:1px;align-self:stretch;background:#B9C3CA;flex:none;margin:0 8px}
-.strip.dark .vsep{background:#2A2F33}
 
 /* OceanLight / OceanDark, straight from ui/theme/Tokens.kt */
 .t-light{
@@ -110,20 +101,12 @@ svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-l
 .gbar{position:absolute;left:0;right:0;bottom:0;height:20px;display:flex;justify-content:center;align-items:center;z-index:3}
 .gbar i{width:108px;height:4px;border-radius:2px;background:var(--gest)}
 
-/* ---------- the bar: today's left, Option A's right ---------- */
+/* ---------- the app bar ---------- */
 .hud0{display:flex;align-items:center;padding:10px 16px 6px;flex:none}
 .robot{width:44px;height:50px;flex:none}
 .hud0 .tt{flex:1;margin-left:11px;min-width:0}
 .hud0 .t1{font:600 14px/20px Barlow;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hud0 .t2{font:500 11px/16px Barlow;color:var(--ink2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tix0{position:relative;display:flex;align-items:center;flex:none}
-.tix0 .pl{margin-left:16px;margin-bottom:3px;padding:5px 13px 5px 27px;border-radius:999px;background:linear-gradient(var(--tixTop),var(--tixBottom));border:2px solid var(--tixEdge);box-shadow:0 3px 0 var(--tixEdge);color:#fff;font:800 14px/20px Barlow;font-variant-numeric:tabular-nums}
-.tix0 svg{position:absolute;left:0;top:50%;width:38px;height:26px;transform:translateY(calc(-50% - 1.5px)) rotate(-12deg)}
-.rb0{width:40px;height:40px;margin:4px;border-radius:50%;background:var(--glass);border:1px solid var(--glassBorder);box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:var(--accInk);position:relative;flex:none}
-.rb0 svg{width:19px;height:19px}
-.rb0 .gd{position:absolute;top:-1px;right:-1px;width:11px;height:11px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 2px var(--glass)}
-.rs0{display:flex;align-items:center;gap:7px;background:var(--acc);color:var(--onacc);border-radius:999px;padding:8px 14px 8px 11px;font:600 14px/20px Barlow;flex:none}
-.rs0 svg{width:16px;height:16px}
 .si0{display:flex;align-items:center;gap:8px;border:1px solid var(--glassBorder);border-radius:999px;padding:8px 14px 8px 11px;font:600 14px/20px Barlow;color:var(--ink);flex:none}
 .si0 svg{width:16px;height:16px}
 .ib{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink2);position:relative;flex:none;box-sizing:border-box}
@@ -254,15 +237,15 @@ svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-l
 <span aria-hidden="true" style="position:absolute;opacity:0;font:600 14px 'IBM Plex Mono'">0</span><span aria-hidden="true" style="position:absolute;opacity:0;font:500 14px 'IBM Plex Mono'">0</span>
 <div class="doc">
   <h1>TestTrack: levels in the app bar and on people's rows</h1>
-  <p>Levels now mean something. Exp comes from verified testing, reaching level n pays 3 &times; n tix, and from level 4 you can sit on a jury. So the level gets a small "Lv 7" chip next to people's names. This page shows two things to decide.</p>
+  <p>The final design. You earn exp by verified testing, reaching level n pays 3 &times; n tix, and from level 4 you can sit on a jury. Your own level lives in the app bar. Everyone else's level shows as a small chip next to their name.</p>
   <ol>
-    <li><b>The new app bar.</b> The left side stays exactly as today. Only the balance on the right changes.</li>
-    <li><b>The chip at level 1.</b> The same three screens twice, once with the chip hidden at level 1 and once with it shown.</li>
+    <li><b>App bar.</b> The robot with your level and progress on the left, your tix balance on the right.</li>
+    <li><b>Level chip on rows.</b> A quiet "Lv 7" chip after a person's name. Level 1 has no chip.</li>
   </ol>
   <div class="ctl">Size
     <button data-z=".5">S</button><button data-z=".7">M</button><button data-z=".85">L</button><button data-z="1">1:1</button>
     <span class="sep"></span>Show
-    <button data-o="all">All</button><button data-o="bar">1. App bar</button><button data-o="lv1">2. Level 1 chip</button>
+    <button data-o="all">All</button><button data-o="bar">1. App bar</button><button data-o="chip">2. Level chip on rows</button>
   </div>
 </div>
 <div id="root"></div>
@@ -340,19 +323,8 @@ function leftLines(s) {
   if (s.in) return `<span class="skb" style="width:58px;height:12px;margin:4px 0 0"></span><span class="skb" style="width:104px;height:9px;margin:8px 0 3px"></span>`;
   return `<div class="t1">${s.crew} is filling</div><div class="t2">${s.taken} of ${s.seats} seats taken</div>`;
 }
-/* Today, as TopHud.kt draws it, for reference */
-function barToday(s) {
-  let right = '';
-  if (s.update === 'avail') right += `<div class="rb0">${ic('down')}<i class="gd"></i></div><div style="width:2px"></div>`;
-  if (s.update === 'ready') right += `<div class="rs0">${ic('rotate')}<span>Restart</span></div><div style="width:6px"></div>`;
-  if (s.in && !s.loading) right += `<div class="tix0">${TICKET}<div class="pl">${s.tix}</div></div>`;
-  else if (!s.in) right += `<div class="si0">${G}<span>Sign in</span></div>`;
-  const today = s.in && s.loading ? {in:false, crew:'', taken:0, seats:0} : s;
-  const t = s.in && s.loading ? `<div class="t1">TestTrack</div><div class="t2">Signed in</div>` : leftLines(s);
-  return `<div class="hud0">${robot(today)}<div class="tt">${t}</div>${right}</div>`;
-}
-/* New: the same left, the plain balance on the right */
-function barNew(s) {
+/* The bar: robot and level on the left, the plain balance on the right */
+function bar(s) {
   let right = '';
   if (s.update === 'avail') right += `<div class="ib">${ic('down')}<i class="dot"></i></div>`;
   if (s.update === 'ready') right += `<div class="rs">${ic('rotate')}<span>Restart</span></div>`;
@@ -385,11 +357,11 @@ const TABS = [['msg','Circle'],['users','Crew'],['trophy','Ranks'],['grid','My a
 const dock = (sel) => `<div class="dock">${TABS.map(([k, l], i) => i === sel ? `<div class="sel">${ic(k)}<span>${l}</span></div>` : `<div class="dt">${ic(k)}</div>`).join('')}</div><div class="gbar"><i></i></div>`;
 
 /* ================= 2. the level chip ================= */
-const LV = (n, show) => (n === 1 && !show) ? '' : `<span class="lv">Lv <b>${n}</b></span>`;
-const name = (n, lvl, show) => `<div class="nmr"><span class="n">${n}</span>${LV(lvl, show)}</div>`;
+const LV = (n) => n === 1 ? '' : `<span class="lv">Lv <b>${n}</b></span>`;
+const name = (n, lvl) => `<div class="nmr"><span class="n">${n}</span>${LV(lvl)}</div>`;
 const av = (n, size) => `<div class="av" style="width:${size}px;height:${size}px">${n[0]}</div>`;
 
-const PODIUM = [ // place, name, level, points, work, medal, seat, face
+const PODIUM = [ // place, name, level, exp, work, medal, seat, face
   [2, 'Farhana Akter', 7, 142, '38 apps opened, 4 reviews', 'silver', 62, 54],
   [1, 'Tanvir Hasan', 12, 186, '41 apps opened, 9 reviews', 'gold', 88, 68],
   [3, 'Nadia Islam', 3, 121, '36 apps opened, 2 reviews', 'bronze', 46, 54],
@@ -402,19 +374,19 @@ const STANDINGS = [
   [8, 'Kamal Uddin', 9, 66, '19 apps opened, 2 reviews'],
   [9, 'Priya Das', 1, 51, '17 apps opened'],
 ];
-function ranks(theme, show) {
+function ranks(theme) {
   const steps = PODIUM.map(([pl, n, l, pts, wk, m, seat, face]) => `<div class="step">
       ${pl === 1 ? ic('crown', 'cr', `color:var(--${m})`) : ''}
       <div class="face" style="width:${face}px;height:${face}px;border:2.5px solid var(--${m});color:var(--${m})">${n[0]}</div>
-      <div class="pn nmr"><span class="n">${n.split(' ')[0]}</span>${LV(l, show)}</div>
-      <div class="pts"><b style="color:var(--${m})">${pts}</b><span>pts</span></div>
+      <div class="pn nmr"><span class="n">${n.split(' ')[0]}</span>${LV(l)}</div>
+      <div class="pts"><b style="color:var(--${m})">${pts}</b><span>exp</span></div>
       <div class="wk">${wk}</div>
       <div class="block" style="height:${seat}px;background:linear-gradient(color-mix(in srgb, var(--${m}) 24%, transparent),transparent),var(--glass)"><i style="background:var(--${m})"></i><b style="color:var(--${m})">${pl}</b></div>
     </div>`).join('');
   const rows = STANDINGS.map(([pl, n, l, pts, wk]) => `<div class="br"><div class="pl">${pl}</div><div style="width:11px"></div>${av(n, 37)}
-      <div class="mid"><div class="nm">${name(n, l, show)}</div><div class="ln">${wk}</div></div>
-      <div class="pts"><b>${pts}</b><span>pts</span></div></div>`).join('');
-  return `${barNew(S.t120)}<div class="podium">${steps}</div>
+      <div class="mid"><div class="nm">${name(n, l)}</div><div class="ln">${wk}</div></div>
+      <div class="pts"><b>${pts}</b><span>exp</span></div></div>`).join('');
+  return `${bar(S.t120)}<div class="podium">${steps}</div>
     <div style="padding:0 16px"><div class="hd" style="padding-top:6px">Standings<span class="sp"></span><span class="tr">Top 9</span></div><div class="rows">${rows}</div></div>${dock(2)}`;
 }
 
@@ -431,10 +403,10 @@ function thumb(n, theme) {
   const [bg, fg] = tileCols(n + ' app', theme);
   return `<div class="thumb" style="background:linear-gradient(${fg},${bg} 55%)"><i style="top:9px;width:18px"></i><i style="top:17px"></i><i style="top:25px;right:12px"></i></div>`;
 }
-function crew(theme, show) {
+function crew(theme) {
   const end = (k, n) => k === 'pic' ? thumb(n, theme) : k === 'notyet' ? `<span class="sc quiet">Not yet</span>` : `<span class="sc warn">1 missed</span>`;
   const rows = MEMBERS.map(([n, l, line, k], i) => `<div class="mr" style="border-radius:${i === 0 ? '22px 22px 6px 6px' : '6px'}">${av(n, 38)}
-      <div class="mid"><div class="nm">${name(n, l, show)}</div><div class="ln">${line}</div></div><div class="end">${end(k, n)}</div></div>`).join('');
+      <div class="mid"><div class="nm">${name(n, l)}</div><div class="ln">${line}</div></div><div class="end">${end(k, n)}</div></div>`).join('');
   const seg = Array.from({length: 13}, (_, i) => `<i class="${i < 9 ? 'on' : ''}"></i>`).join('');
   return `<div class="pbar0"><div class="nav">${BACK}</div><div class="pt">Crew 12 members</div></div>
     <div class="pg"><div class="hero"><span class="sc acc">${ic('users')}Their day 6</span>
@@ -446,8 +418,8 @@ function crew(theme, show) {
       <div class="rows" style="gap:3px">${rows}</div></div>${dock(1)}`;
 }
 
-function request(theme, show) {
-  const rc = (n, l, st, cls, chev, sub = '') => `<div class="rc"><div class="r">${`<div class="nmr"><span class="n nm">${n}</span>${LV(l, show)}</div>`}<span class="st ${cls}">${st}</span>${ic(chev, 'chev')}</div>${sub}</div>`;
+function request(theme) {
+  const rc = (n, l, st, cls, chev, sub = '') => `<div class="rc"><div class="r">${`<div class="nmr"><span class="n nm">${n}</span>${LV(l)}</div>`}<span class="st ${cls}">${st}</span>${ic(chev, 'chev')}</div>${sub}</div>`;
   return `<div class="pbar0"><div class="nav">${BACK}</div><div class="pt">Your request</div></div>
     <div class="pg"><div class="ahd">${appTile('Pocket Budget', theme)}<div class="tx"><div class="nm">Pocket Budget</div><span class="pill live">${ic('play')}Live app</span></div></div>
       <div class="stats"><div class="stat"><div class="k">Done</div><div class="v">1 of 4</div></div><div class="stat"><div class="k">Open slots</div><div class="v">2</div></div><div class="stat"><div class="k">Pays</div><div class="v">40 tix</div></div></div>
@@ -463,42 +435,29 @@ function request(theme, show) {
 function phone(theme, inner, crop = false) {
   return `<div class="phone t-${theme} ${crop ? 'crop' : ''}">${SB}${inner}</div>`;
 }
-const VERSIONS = [
-  [false, 'Hide at level 1', 'A newcomer\'s row simply has no chip, so nobody looks marked as new. The chip turns up once someone has done verified testing, so it reads as something earned. The catch: people who know the rule can still tell that a row without a chip is level 1.'],
-  [true, 'Show at level 1', 'Every row has a chip, so levels are easy to compare down a list. But on your own request, "Lv 1" next to a review waiting on you can read like a beginner warning, and it may make you stricter with that reviewer than their work deserves.'],
-];
 const SCREENS = [['Ranks', ranks], ['Crew members', crew], ['Your request (what the app owner sees)', request]];
 
 const q = new URLSearchParams(location.search);
-const only = q.get('o') || 'all';
+const only = q.get('o') === 'lv1' ? 'chip' : (q.get('o') || 'all');
 function render() {
   let html = '';
   if (only === 'all' || only === 'bar') {
-    html += `<section class="opt"><h2>1. The new app bar</h2>
-      <p class="sub">The left side is today's, unchanged: the robot with your level and the exp line round its plaque, then "Level 7" and "120 exp to level 8". Signed out it still says how full a crew is, with the Sign in pill. Only the right side changes. The navy pill and gold ticket become a small ticket mark and the balance in plain figures, with thousands separators. The update button keeps its spot, with a robot-blue dot instead of gold. While the account loads, the plaque stays empty instead of showing the sign-in arrow, and the lines and balance shimmer.</p>`;
-    html += `<div class="rowlbl">Today, for comparison (light)</div><div class="strip light">`;
-    for (const [cap, sk] of [['Signed in, 120 tix','t120'],['Update available','upd'],['Signed out','out'],['Signed in, still loading','wait']])
-      html += `<div class="cell"><div class="cap">${cap}</div><div class="pz">${phone('light', barToday(S[sk]) + circle('light', S[sk]), true)}</div></div>`;
-    html += `</div>`;
+    html += `<section class="opt"><h2>1. App bar</h2>
+      <p class="sub">On the left, the robot carries your level on its plaque, with the exp line running round it. Next to it: "Level 7" and how much exp is left to the next level. On the right sits a small ticket mark and your balance in plain figures, with thousands separators. When an update is out, a download button with a blue dot sits before the balance. Once it has downloaded, a Restart pill takes its place. Signed out, the bar says how full a crew is and offers Sign in. While your account loads, the plaque stays empty and the lines and balance shimmer.</p>`;
     for (const t of ['light', 'dark']) {
-      html += `<div class="rowlbl">New bar, ${t}</div><div class="strip ${t}">`;
-      for (const [cap, sk, crop] of CELLS)
-        html += `<div class="cell"><div class="cap">${cap}</div><div class="pz">${phone(t, barNew(S[sk]) + circle(t, S[sk]) + (crop ? '' : dock(0)), crop)}</div></div>`;
+      html += `<div class="rowlbl">${t === 'light' ? 'Light' : 'Dark'}</div><div class="strip ${t}">`;
+      const cell = ([cap, sk, crop]) => `<div class="cell"><div class="cap">${cap}</div><div class="pz">${phone(t, bar(S[sk]) + circle(t, S[sk]) + (crop ? '' : dock(0)), crop)}</div></div>`;
+      html += cell(CELLS[0]) + `<div class="sub-grid">${CELLS.slice(1).map(cell).join('')}</div>`;
       html += `</div>`;
     }
     html += `</section>`;
   }
-  if (only === 'all' || only === 'lv1') {
-    html += `<section class="opt"><h2>2. The level chip at level 1: hide it or show it?</h2>
-      <p class="sub">Everyone starts at level 1, so most new people would carry "Lv 1". Below are the same three screens twice. On the left the chip is hidden at level 1, on the right it is shown. Look at Rakib, Arif and Priya, who are level 1. The chip itself is the same in both: small, outlined, in the quiet label colour, so it never competes with the name.</p>`;
+  if (only === 'all' || only === 'chip') {
+    html += `<section class="opt"><h2>2. Level chip on rows</h2>
+      <p class="sub">A small outlined chip with the person's level follows their name, in the quiet label colour so it never competes with the name. It shows on Ranks, on crew members and on the reviews of your request. Level 1 gets no chip, so nobody looks marked as new, and the chip reads as something earned. Here Rakib, Arif and Priya are level 1. Ranks counts exp.</p>`;
     for (const t of ['light', 'dark']) {
       html += `<div class="rowlbl">${t === 'light' ? 'Light' : 'Dark'}</div><div class="strip ${t}">`;
-      VERSIONS.forEach(([show, title, cap], vi) => {
-        if (vi) html += `<div class="vsep"></div>`;
-        html += `<div class="grp"><div class="gh"><h3>${title}</h3><p>${cap}</p></div><div class="phones">`;
-        for (const [label, fn] of SCREENS) html += `<div class="cell"><div class="cap">${label}</div><div class="pz">${phone(t, fn(t, show))}</div></div>`;
-        html += `</div></div>`;
-      });
+      for (const [label, fn] of SCREENS) html += `<div class="cell"><div class="cap">${label}</div><div class="pz">${phone(t, fn(t))}</div></div>`;
       html += `</div>`;
     }
     html += `</section>`;
