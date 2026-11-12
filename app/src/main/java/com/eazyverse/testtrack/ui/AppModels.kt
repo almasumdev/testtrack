@@ -94,16 +94,25 @@ fun AppEntry.problems(): List<AppProblem> =
         AppProblem.TAKEN_OUT.takeIf { crew?.state == "removed" },
     )
 
-/** One plain sentence for a problem, said in the tile's tooltip. */
-fun AppProblem.sentence(app: AppEntry): String {
-    val crew = app.crew?.crewName?.ifBlank { null } ?: "its crew"
-    return when (this) {
-        AppProblem.UNLISTED -> "Testers couldn't install it, so it's off Circle for now. Open it to fix."
-        AppProblem.NOT_VERIFIED -> "Not verified yet. Add the testers group, then tap Verify."
-        AppProblem.SENT_BACK -> "Sent back by $crew. Fix it, then try again."
-        AppProblem.TAKEN_OUT -> "Taken out of $crew."
+private fun AppEntry.crewLabel(): String = crew?.crewName?.ifBlank { null } ?: "its crew"
+
+/** The short line a problem opens with, in the callout and as the mark's spoken label. */
+fun AppProblem.title(app: AppEntry): String =
+    when (this) {
+        AppProblem.UNLISTED -> "Can't be installed"
+        AppProblem.NOT_VERIFIED -> "Not verified yet"
+        AppProblem.SENT_BACK -> "Sent back by ${app.crewLabel()}"
+        AppProblem.TAKEN_OUT -> "Taken out of ${app.crewLabel()}"
     }
-}
+
+/** One plain sentence for a problem, said under its title in the callout. */
+fun AppProblem.sentence(app: AppEntry): String =
+    when (this) {
+        AppProblem.UNLISTED -> "Testers couldn't install it, so it's off Circle for now."
+        AppProblem.NOT_VERIFIED -> "Add the testers group to your closed test, then tap Verify."
+        AppProblem.SENT_BACK -> "Fix what the crew found, then put it in again."
+        AppProblem.TAKEN_OUT -> "It's no longer in this run."
+    }
 
 /**
  * What an app is doing, in one line. The first that applies wins; problems are never here, they

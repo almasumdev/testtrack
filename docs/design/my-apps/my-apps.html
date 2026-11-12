@@ -174,6 +174,7 @@
   <div class="needs"><span>1. Does this app need me now?</span><span>2. What is running, and how far along?</span><span>3. Closed test or live?</span><span>4. What is already done?</span></div>
   <p class="lead" style="margin-top:12px">Every phone shows the same 16 apps, one for each real state an app row can be in today, newest first. Light and dark side by side at 392 dp, real tokens from Tokens.kt, Barlow, Lucide icons as the app uses them. Tiles in A, B and C are 76 dp with a 52 dp icon, the Requests size. A count bubble only appears where the owner has something to do: reviews to check, a request testers couldn't install, or a closed test that is not verified yet.</p>
 
+  <div id="callout"></div>
   <div id="simple"></div>
   <div id="final"></div>
   <div id="opts"></div>
@@ -814,6 +815,183 @@ function smeasure(){
 }
 smeasure(); document.fonts.ready.then(smeasure);
 window.addEventListener('resize', smeasure);
+})();
+</script>
+
+
+<script>
+/* ================= PROBLEM CALLOUT ================= */
+(function(){
+document.head.insertAdjacentHTML('beforeend', `<style>
+  .light { --sheet:#FFFFFF; --flaskLiquid:#9279D6; --flaskGlass:#4A3B86; --badBorderC:rgba(158,59,46,.30); --warnBorderC:rgba(154,110,36,.32); }
+  .dark  { --sheet:#1C1E20; --flaskLiquid:#8C70D4; --flaskGlass:#CDBEF0; --badBorderC:rgba(228,147,138,.34); --warnBorderC:rgba(216,183,116,.32); }
+  .cph { position:relative; background:var(--bg); color:var(--text); border-radius:30px; overflow:hidden; border:1px solid #C3CFD8; box-shadow:0 10px 30px rgba(16,47,70,.10); height:812px; }
+  .dark.cph { border-color:#2A2D31; }
+  .cph .w { padding:0 16px; } .cph .w + .w { margin-top:8px; }
+  .ct { display:flex; align-items:center; min-height:76px; border-radius:14px; background:var(--bg); box-shadow:inset 0 0 0 1px var(--cardLine); padding:12px; }
+  .ct .ici { position:relative; flex:none; width:52px; height:52px; margin-right:12px; }
+  .ct .src { position:absolute; right:-5px; bottom:-5px; width:20px; height:20px; border-radius:50%; background:var(--sheet); box-shadow:0 0 0 2px var(--bg); display:grid; place-items:center; }
+  .ct .col { flex:1; min-width:0; }
+  .ct .nm { font-size:16px; line-height:19px; font-weight:600; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .ct .st { font-size:12.5px; line-height:14px; font-weight:500; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:4px; }
+  .ct .rt { flex:none; margin-left:10px; display:flex; align-items:center; }
+  .pm { width:32px; height:32px; border-radius:50%; display:grid; place-items:center; margin-right:-6px; }
+  .pm.on.bad { background:var(--badBg); } .pm.on.warn { background:var(--warnBg); }
+  .cdock { position:absolute; left:20px; right:20px; bottom:22px; height:48px; border-radius:999px; background:var(--dock); box-shadow:inset 0 0 0 1px var(--cardLine); display:flex; align-items:center; padding:0 5px; gap:2px; }
+  .cdock .tb { flex:1; height:38px; display:grid; place-items:center; color:var(--dockInk); }
+  .cdock .tb.on { flex:none; width:124px; border-radius:999px; background:var(--leafAccentSoft); color:var(--tabSelected); display:flex; align-items:center; justify-content:center; gap:8px; font-size:14px; font-weight:600; }
+  .co { position:absolute; z-index:5; }
+  .co > svg { position:absolute; left:0; top:0; overflow:visible; z-index:0; }
+  .co .in { position:relative; z-index:1; }
+  .co .row { display:flex; gap:9px; align-items:flex-start; }
+  .co .row + .row { margin-top:10px; }
+  .co .row .ic { margin-top:1px; }
+  .co .tt { font-size:13.5px; line-height:17px; font-weight:600; }
+  .co .ss { font-size:13px; line-height:18px; color:var(--text2); margin-top:1px; }
+  .co .act { margin-top:10px; display:flex; justify-content:flex-end; align-items:center; gap:2px; font-size:13.5px; font-weight:600; color:var(--accentInk); }
+  .co .pill { margin-top:10px; display:inline-flex; align-items:center; height:32px; padding:0 14px; border-radius:999px; box-shadow:inset 0 0 0 1px var(--glassBorder); font-size:13.5px; font-weight:600; color:var(--accentInk); }
+  .co.c .bar { position:absolute; left:0; width:3px; border-radius:2px; }
+  .cframes { display:flex; gap:18px; align-items:flex-end; margin-top:10px; }
+  .cframes .f { position:relative; width:280px; height:178px; overflow:hidden; background:#F7FCFF; border:1px solid #D3DEE6; border-radius:14px; }
+  .cframes .lab { font-size:12.5px; color:#59758A; margin-top:4px; }
+</style>`);
+
+const PLAYL = `<svg width="12" height="12" viewBox="0 0 24 24"><path d="M4 2L13 12L4 22Z" fill="#00A0FF"/><path d="M4 2L16.5 9.35L13 12Z" fill="#00F076"/><path d="M4 22L13 12L16.5 14.65Z" fill="#FF3A44"/><path d="M16.5 9.35L21 12L16.5 14.65L13 12Z" fill="#FFCE00"/></svg>`;
+const FLASK = `<svg width="12" height="12" viewBox="0 0 24 24"><path d="M7.9 14.3Q10 13.2 12 14.3T16.1 14.3L19.1 20.3Q19.4 21.6 18.1 21.6H5.9Q4.6 21.6 4.9 20.3Z" fill="var(--flaskLiquid)"/><path d="M10 3v6.5a2 2 0 0 1-.2.9L4.8 20.4a1 1 0 0 0 .9 1.4h12.6a1 1 0 0 0 .9-1.4L14.2 10.4a2 2 0 0 1-.2-.9V3M8.6 3h6.8" fill="none" stroke="var(--flaskGlass)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const LONG = 'Night Owls Android Testers Crew 12';
+
+/* Problems: a short title (the tone line) and one plain sentence. */
+const PROB = {
+  UNLISTED:     {tone:'bad',  t:"Can't be installed", s:"Testers couldn't install it, so it's off Circle for now."},
+  NOT_VERIFIED: {tone:'warn', t:'Not verified yet', s:'Add the testers group to your closed test, then tap Verify.'},
+  SENT_BACK:    {tone:'bad',  t:c => `Sent back by ${c}`, s:'Fix what the crew found, then put it in again.'},
+  TAKEN_OUT:    {tone:'bad',  t:c => `Taken out of ${c}`, s:"It's no longer in this run."},
+};
+const APPS = [
+  {name:'Pocket Planner', hue:205, live:false, st:'Waiting in Crew 12'},
+  {name:'Lumen Camera', hue:225, live:true, st:'3 of 8 reviews in', probs:['UNLISTED']},
+  {name:'Snap Notes', hue:285, live:false, st:'Not in a crew', probs:['NOT_VERIFIED','SENT_BACK'], crew:'Crew 11'},
+  {name:'Sunny Weather Widget Pro', hue:48, live:true, st:'2 reviews to check', acc:true, count:2},
+  {name:'Tide Notes', hue:190, live:false, st:'Ready for a crew', quiet:true, probs:['NOT_VERIFIED']},
+  {name:'Run Log', hue:12, live:false, st:'Day 6 of 14 in Crew 05'},
+  {name:'Habit Hill', hue:110, live:false, st:'Crew test done', quiet:true, done:true},
+  {name:'Word Garden', hue:175, live:false, st:'Not in a crew', quiet:true, probs:['TAKEN_OUT'], crew:LONG},
+];
+const toneOf = a => (a.probs || []).some(p => PROB[p].tone === 'bad') ? 'bad' : 'warn';
+
+function cmark(a, th){
+  const [f, k] = th === 'dark' ? [`hsl(${a.hue},30%,18%)`,`hsl(${a.hue},55%,76%)`] : [`hsl(${a.hue},45%,89%)`,`hsl(${a.hue},50%,32%)`];
+  return `<div class="mark" style="width:52px;height:52px;border-radius:15.6px;background:${f};color:${k};font-size:19px">${a.name[0]}</div>`;
+}
+function ctile(a, th, i, open){
+  const tone = toneOf(a);
+  const right = a.probs ? `<span class="pm ${tone} ${open ? 'on' : ''}" data-mark="${i}">${ic('alert',20,`var(--${tone})`)}</span>`
+    : a.count ? `<span class="bub">${a.count}</span>` : '';
+  const stc = a.acc ? 'color:var(--accentInk);font-weight:600' : a.quiet ? 'color:var(--text3)' : '';
+  return `<div class="w"><div class="ct"><div class="ici">${cmark(a, th)}<span class="src">${a.live ? PLAYL : FLASK}</span></div>
+    <div class="col"><div class="nm">${a.name}</div><div class="st" style="${stc}">${a.done ? ic('ccheck',12,'var(--ok)') : ''}${a.st}</div></div>${right ? `<div class="rt">${right}</div>` : ''}</div></div>`;
+}
+function cphone(th, w, openIdx, opt, cap){
+  const tiles = APPS.map((a, i) => ctile(a, th, i, i === openIdx)).join('');
+  const dock = `<div class="cdock"><span class="tb">${ic('msg',20)}</span><span class="tb">${ic('users',20)}</span><span class="tb">${ic('trophy',20)}</span><span class="tb on">${ic('grid',20)}My apps</span><span class="tb">${ic('user',20)}</span></div>`;
+  return `<div><div class="cap">${cap}</div><div class="cph ${th}" style="width:${w}px" data-open="${openIdx}" data-opt="${opt}"><div class="sbar"><span>9:41</span><span>5G  86%</span></div><div class="head">Your apps</div>${tiles}${dock}</div></div>`;
+}
+
+/* The callout's content for one app, in each option's style. */
+function body(a, opt){
+  const rows = a.probs.map(p => {
+    const P = PROB[p], t = typeof P.t === 'function' ? P.t(a.crew) : P.t;
+    const tc = opt === 'B' ? `var(--${toneOf(a)})` : 'var(--text)';
+    return `<div class="row">${ic('alert',16,`var(--${P.tone})`)}<div style="min-width:0"><div class="tt" style="color:${tc}">${t}</div><div class="ss">${P.s}</div></div></div>`;
+  }).join('');
+  const act = opt === 'C' ? `<div><span class="pill">Open app</span></div>` : `<div class="act">Open app${ic('chev',16,'var(--accentInk)')}</div>`;
+  return rows + act;
+}
+/* The outline: a 14dp rounded card with a 16 x 8dp caret, one path, so the 1dp border runs round the caret too. */
+function outline(w, h, cx, up){
+  const r = 14, cw = 8, ch = 8, tip = 1.5;
+  if (!up){ // caret on top
+    return `M${r},${ch} H${cx-cw} L${cx-tip},${tip} Q${cx},0 ${cx+tip},${tip} L${cx+cw},${ch} H${w-r} A${r},${r} 0 0 1 ${w},${ch+r} V${ch+h-r} A${r},${r} 0 0 1 ${w-r},${ch+h} H${r} A${r},${r} 0 0 1 0,${ch+h-r} V${ch+r} A${r},${r} 0 0 1 ${r},${ch} Z`;
+  }
+  return `M${r},0 H${w-r} A${r},${r} 0 0 1 ${w},${r} V${h-r} A${r},${r} 0 0 1 ${w-r},${h} H${cx+cw} L${cx+tip},${h+ch-tip} Q${cx},${h+ch} ${cx-tip},${h+ch-tip} L${cx-cw},${h} H${r} A${r},${r} 0 0 1 0,${h-r} V${r} A${r},${r} 0 0 1 ${r},0 Z`;
+}
+const STYLE = {
+  A: () => ({fill:'var(--sheet)', line:'var(--glassBorder)'}),
+  B: a => ({fill:`color-mix(in srgb, var(--${toneOf(a)}) ${toneOf(a) === 'bad' ? 8 : 10}%, var(--sheet))`, line:`var(--${toneOf(a)}BorderC)`}),
+  C: () => ({fill:'var(--bg)', line:'var(--cardLine)'}),
+};
+
+/* Placement: under the mark (caret up), or above it (caret down) when it would run into the dock.
+   A and B: as wide as the content up to 260dp, right edge on the tile's right edge.
+   C: the tile's own width. Always 16dp or more from the screen's sides. */
+function place(ph){
+  ph.querySelector('.co')?.remove();
+  const i = +ph.dataset.open, opt = ph.dataset.opt; if (i < 0) return;
+  const a = APPS[i], pr = ph.getBoundingClientRect();
+  const m = ph.querySelector(`[data-mark="${i}"]`).getBoundingClientRect();
+  const W = ph.clientWidth, cap = Math.min(260, W - 32);
+  const width = opt === 'C' ? W - 32 : cap;
+  const left = W - 16 - width;
+  const el = document.createElement('div');
+  el.className = 'co ' + opt.toLowerCase();
+  el.style.width = width + 'px';
+  el.style.left = left + 'px';
+  const pad = opt === 'C' ? '12px 14px 12px 17px' : '12px 14px';
+  el.innerHTML = `<div class="in" style="padding:${pad}">${body(a, opt)}</div>`;
+  ph.appendChild(el);
+  const h = el.querySelector('.in').offsetHeight;
+  const markCx = m.left + m.width / 2 - pr.left, iconTop = m.top - pr.top + 6, iconBot = m.bottom - pr.top - 6;
+  const dockTop = ph.querySelector('.cdock').getBoundingClientRect().top - pr.top;
+  const up = iconBot + 4 + 8 + h > dockTop - 8;
+  const top = up ? iconTop - 4 - 8 - h : iconBot + 4;
+  el.style.top = top + 'px';
+  el.querySelector('.in').style.marginTop = up ? '0' : '8px';
+  const cx = markCx - left, s = STYLE[opt](a);
+  const bar = opt === 'C' ? `<rect x="9" y="${(up ? 0 : 8) + 12}" width="3" height="${h - 24}" rx="1.5" fill="var(--${toneOf(a)})"/>` : '';
+  el.insertAdjacentHTML('afterbegin', `<svg width="${width}" height="${h + 8}"><path d="${outline(width, h, cx, up)}" fill="${s.fill}" stroke="${s.line}" stroke-width="1"/>${bar}</svg>`);
+  el.dataset.up = up ? '1' : '0';
+}
+
+const OPTS = [
+  {key:'A', title:'Option A. Hairline callout', pick:true,
+   why:"<b>How it reads:</b> a card on the sheet colour with the 1 dp hairline running round its caret, 14 dp corners, no shadow. Each problem is one row: a 16 dp alert in its own tone (red or amber), a short title in the text ink, one plain sentence under it. A quiet \"Open app\" link at the foot. Up to 260 dp wide, its right edge on the tile's right edge, under the mark or above it near the dock.",
+   cost:"<b>Trade-off:</b> the calmest and the closest to the tiles it sits on. Tone lives only in the small icons, so it reads as a note rather than an alarm; for a red problem that is the point, the mark on the tile already said it."},
+  {key:'B', title:'Option B. Tone-tinted callout',
+   why:'<b>How it reads:</b> the same shape and size, but filled with the problem\'s soft tone over the sheet and edged in the tone, with the title in the tone colour, like the "Not verified yet" callout on the app\'s page.',
+   cost:'<b>Trade-off:</b> the loudest of the three and the most like the app page, but a tinted card floating over the list is the wash the tiles moved away from, and with two problems of different tones the card can only take one colour.'},
+  {key:'C', title:'Option C. Full-width note under the tile',
+   why:'<b>How it reads:</b> as wide as the tile, on the page colour with the tile\'s own 1 dp line, a 3 dp tone bar down its left side, the caret under the mark, and an outlined "Open app" pill.',
+   cost:'<b>Trade-off:</b> the most room for the sentences, but it covers the whole next tile, and the bar plus the pill make it read as a second tile rather than a note about this one.'},
+];
+
+let html = `<section class="opt" style="margin-top:28px;border-top:2px solid #3A5B73">
+  <h2>Problem callout <span class="rec">Latest</span></h2>
+  <p class="why">What a tile's alert mark opens. Today it is Material's RichTooltip: the inverse bubble, a shadow and Material's caret, which reads as a system popup laid over the app. All three options below use the app's own pieces instead: the 14 dp TileRadius, a 1 dp line, Barlow, the real tone tokens, no shadow, and a caret whose border is part of the outline. Shown over the real My apps list with the tile from "B, simple" and its Play and flask marks. While a callout is open, the mark it came from sits on its soft tone circle.</p>
+  <p class="why"><b>Shared behaviour:</b> it opens under the mark with its caret pointing up at it, and above the mark (caret down) when there is not room before the dock. It is never wider than 260 dp, sits 16 dp or more inside the screen and keeps its right edge on the tile's. It fades in and grows from 92% from the caret tip over 150 ms, and fades out over 100 ms. It closes on a tap anywhere outside it, on Back, when the list scrolls, and when the mark is tapped again. One callout at a time.</p>`;
+for (const o of OPTS){
+  html += `<section class="opt" style="border-top:1px solid #CBD6DE"><h2 style="font-size:20px">${o.title}${o.pick ? '<span class="rec">My pick</span>' : ''}</h2><p class="why">${o.why}</p><p class="why">${o.cost}</p>
+    <div class="pair">${cphone('light', 392, 1, o.key, '392 dp, light: can\'t be installed')}${cphone('dark', 392, 1, o.key, '392 dp, dark')}${o.pick ? cphone('light', 392, 2, o.key, 'Two problems, two tones') : ''}</div>`;
+  if (o.pick){
+    html += `<div class="pair">${cphone('dark', 360, 4, o.key, '360 dp, dark: only not verified (amber)')}${cphone('light', 392, 7, o.key, 'Mark near the dock: opens above')}${cphone('dark', 392, 7, o.key, 'Above, dark, long crew name')}</div>
+      <p class="why" style="margin-top:16px"><b>Motion:</b> grows from the caret tip, 0 to 150 ms.</p><div class="cframes" id="cframes"></div>`;
+  }
+  html += `</section>`;
+}
+html += `</section>`;
+document.getElementById('callout').innerHTML = html;
+
+function frames(){
+  const box = document.getElementById('cframes'); if (!box) return;
+  const a = APPS[1];
+  box.innerHTML = [[0, .92, 0], [75, .97, .7], [150, 1, 1]].map(([ms, sc, op]) => {
+    const w = 240, cx = 202;
+    return `<div><div class="f light" style="--fs:1"><div class="co a" style="left:20px;top:14px;width:${w}px;transform-origin:${cx}px 0;transform:scale(${sc});opacity:${Math.max(op, .12)}"><svg width="${w}" height="110" style="position:absolute"><path d="${outline(w, 102, cx, false)}" fill="var(--sheet)" stroke="var(--glassBorder)"/></svg><div class="in" style="padding:12px 14px;margin-top:8px">${body(a, 'A')}</div></div></div><div class="lab">${ms} ms${ms === 0 ? ' (drawn faint here so you can see it)' : ''}</div></div>`;
+  }).join('');
+  box.querySelectorAll('.f').forEach(f => { const co = f.querySelector('.co'); const h = co.querySelector('.in').offsetHeight; co.querySelector('path').setAttribute('d', outline(240, h, 202, false)); co.querySelector('svg').setAttribute('height', h + 8); });
+}
+function all(){ document.querySelectorAll('.cph').forEach(place); frames(); }
+all(); document.fonts.ready.then(all);
+window.addEventListener('resize', all);
 })();
 </script>
 

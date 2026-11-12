@@ -4,9 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,16 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,6 +26,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.PlatformTextStyle
@@ -52,11 +45,10 @@ import com.eazyverse.testtrack.ui.theme.PlayGreen
 import com.eazyverse.testtrack.ui.theme.PlayRed
 import com.eazyverse.testtrack.ui.theme.PlayYellow
 import com.eazyverse.testtrack.ui.theme.Tt
-import kotlinx.coroutines.launch
 
 /*
  * The pieces of a My apps tile: its frame, the mark on the icon's corner, the status line and the
- * mark for a problem. The tile itself is AppCard; the loading tile draws the same frame.
+ * mark for a problem (its callout is in ProblemCallout). The tile itself is AppCard; the loading tile draws the same frame.
  */
 
 /** Tags a whole tile, and the text column inside it, so a test can hold the column to the icon's height. */
@@ -69,7 +61,7 @@ internal val AppTilePadding = 12.dp
 // The text column is 19 + 19 + 14 = 52dp at most, the icon's height, with the font's own padding
 // trimmed the way Requests trims it, so a long name cannot make a tile taller than a short one.
 @Suppress("DEPRECATION")
-private fun tileStyle(
+internal fun tileStyle(
     size: Float,
     height: Float,
     weight: FontWeight,
@@ -85,7 +77,6 @@ private fun tileStyle(
 internal val AppTileName = tileStyle(16f, 19f, FontWeight.SemiBold)
 private val AppTileStatus = tileStyle(12.5f, 14f, FontWeight.Medium)
 private val AppTileStatusBold = tileStyle(12.5f, 14f, FontWeight.SemiBold)
-private val TooltipText = tileStyle(13f, 18f, FontWeight.Normal)
 
 /** The tile's outline: at least 76dp tall, on the page colour with a 1dp line. Click and padding go after it. */
 @Composable
@@ -211,50 +202,32 @@ internal fun StatusRow(status: AppStatusLine) {
 }
 
 /**
- * The mark for an app with something wrong: a 20dp alert in a 32dp target. Tapping it shows what is
- * wrong, a sentence for each problem, until the next tap elsewhere; it does not open the app.
- * Red, or amber when the only thing is that the app is not verified yet.
+ * The mark for an app with something wrong: a 20dp alert in a 32dp target. Tapping it opens a
+ * callout saying what is wrong; it never opens the app's page. Red, or amber when the only thing is
+ * that the app is not verified yet. While its callout is open it sits on a soft circle of that tone.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ProblemMark(
-    sentences: List<String>,
-    warnOnly: Boolean,
+    app: AppEntry,
+    problems: List<AppProblem>,
+    open: Boolean,
+    onOpenChange: (Boolean) -> Unit,
+    onOpen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val t = Tt.colors
-    val tip = rememberTooltipState(isPersistent = true)
-    val scope = rememberCoroutineScope()
-    TooltipBox(
-        positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
-        tooltip = {
-            // The bubble is the inverse of the page (dark on light, light on dark); its caret points
-            // at the alert icon.
-            RichTooltip(
-                caretShape = TooltipDefaults.caretShape(),
-                colors = TooltipDefaults.richTooltipColors(containerColor = t.inverse, contentColor = t.onInverse),
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    sentences.forEach { Text(it, style = TooltipText, color = t.onInverse) }
-                }
-            }
-        },
-        state = tip,
-        enableUserInput = false,
+    val warnOnly = problems == listOf(AppProblem.NOT_VERIFIED)
+    val soft = if (warnOnly) t.warnBg else t.badBg
+    Box(
+        modifier
+            .size(32.dp)
+            .clip(CircleShape)
+            .background(if (open) soft else Color.Transparent)
+            .semantics { contentDescription = problems.joinToString(". ") { it.title(app) } }
+            .clickable(onClickLabel = "Show what's wrong", role = Role.Button) { onOpenChange(!open) },
+        contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .clickable { scope.launch { tip.show() } },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                Lucide.CircleAlert,
-                sentences.joinToString(" "),
-                Modifier.size(20.dp),
-                tint = if (warnOnly) t.warn else t.bad,
-            )
-        }
+        Icon(Lucide.CircleAlert, null, Modifier.size(20.dp), tint = if (warnOnly) t.warn else t.bad)
+        ProblemCallout(app, problems, open, onClose = { onOpenChange(false) }, onOpen = onOpen)
     }
 }

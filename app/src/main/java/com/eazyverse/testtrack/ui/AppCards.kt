@@ -74,6 +74,9 @@ internal fun AppMark(
 internal fun AppCard(
     app: AppEntry,
     modifier: Modifier = Modifier,
+    /** Whether this tile's problem callout is open, and how its mark opens or closes it. */
+    problemOpen: Boolean = false,
+    onProblemOpenChange: (Boolean) -> Unit = {},
     onOpen: () -> Unit,
 ) {
     val t = Tt.colors
@@ -109,11 +112,7 @@ internal fun AppCard(
             Spacer(Modifier.width(10.dp))
             if (problems.isNotEmpty()) {
                 // Its 32dp target reaches 6dp into the padding, so the icon itself sits on the gutter.
-                ProblemMark(
-                    problems.map { it.sentence(app) },
-                    warnOnly = problems == listOf(AppProblem.NOT_VERIFIED),
-                    Modifier.offset(x = 6.dp),
-                )
+                ProblemMark(app, problems, problemOpen, onProblemOpenChange, onOpen, Modifier.offset(x = 6.dp))
             } else {
                 CountBadge(toCheck, cap = 99)
             }

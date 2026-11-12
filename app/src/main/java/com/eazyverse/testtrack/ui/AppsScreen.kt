@@ -8,8 +8,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -17,6 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
+import kotlinx.coroutines.flow.filter
 
 /**
  * My apps: the one place an app lives.
@@ -89,6 +96,12 @@ fun AppsBody(
     /** Room kept at the foot for a button floating over the list. */
     addRoom: Dp = 0.dp,
 ) {
+    // Which app's problem callout is open: one at a time, and a scroll closes it.
+    var openProblemFor by remember { mutableStateOf<String?>(null) }
+    val listState = rememberLazyListState()
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }.filter { it }.collect { openProblemFor = null }
+    }
     // Asked for here rather than at the door. Somebody can read the feed, the crews and the board
     // without an account; this is the first screen that cannot answer without knowing who they
     // are, so this is where the question belongs, with the way out attached to it.
@@ -125,13 +138,26 @@ fun AppsBody(
 
     LazyColumn(
         Modifier.fillMaxSize(),
+        state = listState,
         contentPadding = PaddingValues(top = 4.dp, bottom = Gutter + dockRoom() + addRoom),
     ) {
         item { CrewHeading("Your apps") }
         items(apps, key = { it.id }) { app ->
             // Fades in, fades out and glides to its new place when the list changes.
             Box(Modifier.animateItem()) {
-                AppCard(app, Modifier.padding(horizontal = Gutter, vertical = 4.dp), onOpen = { onOpen(app) })
+                AppCard(
+                    app,
+                    Modifier.padding(horizontal = Gutter, vertical = 4.dp),
+                    problemOpen = openProblemFor == app.id,
+                    onProblemOpenChange = { open ->
+                        if (open) {
+                            openProblemFor = app.id
+                        } else if (openProblemFor == app.id) {
+                            openProblemFor = null
+                        }
+                    },
+                    onOpen = { onOpen(app) },
+                )
             }
         }
     }
