@@ -210,6 +210,56 @@ svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-l
 .C .di.on{color:var(--tabSel)}
 .C .di.on::after{content:"";width:4px;height:4px;border-radius:2px;background:var(--tabSel);position:absolute;bottom:5px}
 .C .nb{position:absolute;top:6px;left:26px;background:var(--prim);color:var(--onPrim);font:700 10px/14px Barlow;border-radius:7px;padding:0 4.5px;box-shadow:0 0 0 1.5px var(--card)}
+
+/* ================= FINAL: B tabs, C tickets, B dock ================= */
+.used{font:600 12px Barlow;letter-spacing:.2px;border:1px solid #1D5C82;color:#1D5C82;border-radius:12px;padding:3px 10px}
+.F .seg{display:flex;flex-wrap:nowrap;margin:6px 16px 0;padding:3px;border:1px solid var(--cardLine);background:var(--card);border-radius:21px;flex:none;gap:2px}
+.F .sg{flex:1 1 auto;min-width:0;height:34px;border-radius:17px;display:flex;align-items:center;justify-content:center;gap:5px;font:500 14px Barlow;color:var(--ink2);white-space:nowrap;padding:0 4px}
+.F .sg.on{background:var(--lsoft);color:var(--tabSel);font-weight:600}
+.F .cnt{background:var(--tile);color:var(--tileInk);font:700 11px/16px Barlow;border-radius:8px;padding:0 5px}
+.F .list{padding:12px 16px 0;display:flex;flex-direction:column;gap:8px;flex:1;min-height:0;overflow:hidden}
+.F .ask{display:flex;align-items:center;gap:12px;padding:9px 12px 9px 10px;border:1px solid var(--cardLine);border-radius:14px;flex:none;margin-bottom:4px}
+.F .ask .pt{width:40px;height:40px;border-radius:12px;background:var(--tile);color:var(--tileInk);display:flex;align-items:center;justify-content:center;flex:none}
+.F .ask .pt svg{width:20px;height:20px}
+.F .ask .mid{flex:1;min-width:0}
+.F .ask .a1{font:600 16px/21px Barlow;color:var(--ink)}
+.F .ask .a2{font:400 12.5px/17px Barlow;color:var(--ink3)}
+.F .ask .chev{width:18px;height:18px;color:var(--ink4)}
+/* the ticket: card, tear line, two notches, stub */
+.F .t{display:flex;align-items:stretch;background:var(--card);border:1px solid var(--cardLine);border-radius:14px;flex:none;position:relative}
+.F .t .body{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:9px 10px}
+.F .t .ap{width:40px;height:40px;font-size:15px}
+.F .t .mid{flex:1;min-width:0}
+.F .t .nm{font:600 16px/21px Barlow;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.F .t .ln{font:400 12.5px/17px Barlow;color:var(--ink3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.F .stub{width:58px;flex:none;background:var(--lsoft);border-radius:0 13px 13px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.F .stub::before{content:"";position:absolute;left:0;top:7px;bottom:7px;width:1.5px;background:repeating-linear-gradient(to bottom,var(--glassBorder) 0 4px,transparent 4px 7px)}
+.F .stub .fig{font:600 18px/20px Barlow;color:var(--tabSel)}
+.F .stub small{font:500 11px/13px Barlow;color:var(--ink3)}
+.F .notch{position:absolute;left:calc(100% - 64.25px);width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--bg);border:1px solid var(--cardLine);z-index:1}
+.F .notch.top{top:-8px;clip-path:inset(7px 0 0 0)}
+.F .notch.bot{bottom:-8px;clip-path:inset(0 0 7px 0)}
+.F .t.sk .stub{gap:5px}
+/* Ask for feedback once its row has scrolled away */
+.F .askp{position:absolute;left:50%;transform:translateX(-50%);bottom:98px;height:40px;box-sizing:border-box;border-radius:20px;padding:0 16px 0 12px;display:flex;align-items:center;gap:6px;background:var(--tile);color:var(--tileInk);border:1px solid var(--glassBorder);font:600 14px Barlow;white-space:nowrap;z-index:3}
+.F .askp svg{width:18px;height:18px}
+/* the ground fades in under the dock, so cards never meet it edge to edge */
+.F .fade{position:absolute;left:0;right:0;bottom:0;height:130px;background:linear-gradient(to bottom,transparent,var(--bg) 40%);z-index:1;pointer-events:none}
+/* B's dock */
+.F .dock{position:absolute;left:20px;right:20px;bottom:30px;height:56px;border-radius:28px;background:var(--card);border:1px solid var(--cardLine);display:flex;align-items:center;padding:0 4px;box-sizing:border-box;gap:2px;z-index:2}
+.F .dock .sel{height:46px;border-radius:23px;background:var(--lsoft);color:var(--tabSel);display:flex;align-items:center;justify-content:center;gap:8px;width:118px;font:600 14px Barlow;flex:none}
+.F .dock .dt{flex:1;height:46px;display:flex;align-items:center;justify-content:center;color:var(--tabUn)}
+.F .dock svg{width:21px;height:21px}
+.F .ibx{position:relative}
+.F .nb{position:absolute;top:-6px;left:12px;background:var(--prim);color:var(--onPrim);font:700 10px/14px Barlow;border-radius:7px;padding:0 4.5px;box-shadow:0 0 0 1.5px var(--card)}
+.F .empty{flex:1;display:flex;flex-direction:column;align-items:center;padding:56px 28px 0;text-align:center}
+.F .empty .robo{width:112px;height:125px}
+.F .empty h4{font:700 20px/25px Barlow;margin:14px 0 6px}
+.F .empty p{font:400 14px/20px Barlow;color:var(--ink2);margin:0;max-width:300px}
+.F .empty .btn{margin-top:18px;height:48px;border-radius:24px;background:var(--acc);color:var(--onacc);font:600 15px Barlow;display:flex;align-items:center;padding:0 22px}
+.phone.cropb{height:430px;border-radius:0 0 28px 28px;-webkit-mask-image:linear-gradient(transparent,#000 16%)}
+.phone.cropb .list{padding-top:0}
+.phone.cropb .list>.t:first-child{margin-top:-22px}
 </style>
 </head>
 <body>
@@ -238,7 +288,7 @@ svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-l
 
 <div class="doc">
   <h1>TestTrack: a calmer Circle</h1>
-  <p>Today's Circle first, then three calmer ways to draw it. The finished app bar sits on top of every phone. Each option keeps the same four tabs, the same requests, the same way to ask for feedback and the same tabs at the bottom. Only the look changes. Colours come from Tokens.kt and no option needs a new colour.</p>
+  <p>The final mix comes first: Option B's tabs with Option C's tickets. Below it, today's Circle and the three options as they were. The finished app bar sits on top of every phone. Each option keeps the same four tabs, the same requests, the same way to ask for feedback and the same tabs at the bottom. Only the look changes. Colours come from Tokens.kt and no option needs a new colour.</p>
   <div class="ctl">Size
     <button data-z=".7">S</button><button data-z=".85">M</button><button data-z="1">1:1</button>
   </div>
@@ -355,8 +405,27 @@ function optC(theme) {
   return `<div class="C" style="display:contents">${bar()}${tabs}<div class="list">${ask}${POSTS.slice(0, 8).map(t).join('')}</div>${dock}</div>`;
 }
 
+
+/* ---------------- Final: B tabs, C tickets, B dock ---------------- */
+function optF(theme, state='list') {
+  const seg = `<div class="seg">${FTABS.map(([l, n], k) => `<div class="sg ${k === 0 ? 'on' : ''}">${l}${n ? `<span class="cnt">${n}</span>` : ''}</div>`).join('')}</div>`;
+  const line = (kind, fb) => (kind === 'live' ? 'Live app' : 'Closed test') + (fb ? `, ${fb.toLowerCase()} review` : '');
+  const N = `<i class="notch top"></i><i class="notch bot"></i>`;
+  const t = ([name, kind, fb, pay]) => `<div class="t"><div class="body">${appTile(name, theme, 40)}<div class="mid"><div class="nm">${name}</div><div class="ln">${line(kind, fb)}</div></div></div><div class="stub" aria-label="${pay} tix"><span class="fig">${pay}</span><small>tix</small></div>${N}</div>`;
+  const sk = () => `<div class="t sk"><div class="body"><span class="skb" style="width:40px;height:40px;border-radius:12px"></span><div class="mid"><span class="skb" style="width:62%;height:14px"></span><span class="skb" style="width:42%;height:10px;margin-top:7px"></span></div></div><div class="stub"><span class="skb" style="width:24px;height:14px;border-radius:4px"></span><span class="skb" style="width:16px;height:8px;border-radius:4px"></span></div>${N}</div>`;
+  const ask = `<div class="ask"><span class="pt">${ic('plus')}</span><div class="mid"><div class="a1">Ask for feedback</div><div class="a2">Get reviews of your own app</div></div>${ic('chev', 'chev')}</div>`;
+  const dock = `<div class="dock">${TABS.map(([k, l], i) => i === 0 ? `<div class="sel">${ic(k)}<span>${l}</span></div>` : `<div class="dt"><span class="ibx">${ic(k)}${NAVCOUNT[i] ? `<b class="nb">${NAVCOUNT[i]}</b>` : ''}</span></div>`).join('')}</div><div class="fade"></div>`;
+  if (state === 'scrolled') return `<div class="F" style="display:contents"><div class="list">${POSTS.slice(2, 10).map(t).join('')}</div><div class="askp">${ic('plus')}Ask for feedback</div>${dock}</div>`;
+  let body;
+  if (state === 'loading') body = `<div class="list">${ask}${Array.from({length: 7}, sk).join('')}</div>`;
+  else if (state === 'empty') body = `<div class="empty">${robot('robo', 0)}<h4>Nobody's asking right now</h4><p>When someone wants feedback on their app, it shows up here. You can ask for some yourself.</p><div class="btn">Ask for feedback</div></div>`;
+  else body = `<div class="list">${ask}${POSTS.slice(0, 8).map(t).join('')}</div>`;
+  return `<div class="F" style="display:contents">${bar()}${seg}${body}${dock}</div>`;
+}
+
 /* ---------------- render ---------------- */
 const phone = (theme, inner, crop=false) => `<div class="phone t-${theme} ${crop ? 'crop' : ''}">${SB}${inner}${crop ? '' : GB}</div>`;
+const phoneB = (theme, inner) => `<div class="phone t-${theme} cropb">${inner}${GB}</div>`;
 const cell = (cap, html, cls='') => `<div class="cell ${cls}"><div class="cap">${cap}</div><div class="pz">${html}</div></div>`;
 const notes = (items, cost) => `<div class="notes"><h3>What changes</h3><ul>${items.map(x => `<li>${x}</li>`).join('')}</ul><h3>What it costs</h3><ul>${cost.map(x => `<li>${x}</li>`).join('')}</ul></div>`;
 
@@ -364,13 +433,13 @@ const SECTIONS = [
   { id:'today', title:'Today', idea:'As the app draws Circle now.', fn: today,
     items:['A dashed Ask for feedback slot, 66 high, with the words at 24.','Each card is 72 high with a 48 icon, two filled chips and the gold and navy ticket with its light sweep.','Underlined word tabs with a filled count.','A floating dock with a shadow and a solid selected pill (soft at night), counts in red.'],
     cost:['About six requests fit on one screen.','The gold tickets are the loudest thing on the page, louder than the app names.','At night the navy cards stand out hard against the charcoal ground.'] },
-  { id:'a', title:'Option A: One quiet list', rec:true, idea:'Requests become rows in one group, like Ranks and Crew members, and each one pays with the same small ticket as your balance.', fn: optA,
+  { id:'a', title:'Option A: One quiet list', idea:'Requests become rows in one group, like Ranks and Crew members, and each one pays with the same small ticket as your balance.', fn: optA,
     items:['Rows are 60 high and 3 apart in one group with round outer corners, the same shape as the Standings and Testers lists.','No chips. The kind and the review type are two small grey labels with their icons.','The reward is the bar\'s own drawn ticket and the figure, so tix look the same everywhere.','Ask for feedback is a slim outlined pill, 44 high. Once it scrolls away, a small pill with the same words floats above the nav, as the bar does today.','Tabs keep the underline, thinner, over a hairline. The To check count is a plain blue number.','The bottom nav sits flat on the bottom edge, every tab named, the current one on a soft tint.'],
     cost:['About nine requests on one screen.','The nav change reaches all five tabs, so it is a bigger step than the rest. The floating dock from B fits on top of this list if you want to keep it floating.','The kind is quieter than today; Live app and Closed test are told apart by the words and icon only.'] },
-  { id:'b', title:'Option B: Light cards', idea:'Separate cards on the neutral card colour, one outlined chip, and the reward inside a small ticket outline.', fn: optB,
+  { id:'b', title:'Option B: Light cards', used:'Tabs used in Final', idea:'Separate cards on the neutral card colour, one outlined chip, and the reward inside a small ticket outline.', fn: optB,
     items:['Cards are 64 high and 8 apart on the neutral card colour, so at night the navy slabs are gone.','One outlined chip for the kind. The review type is plain text beside it.','The reward sits inside a ticket outline in the bar\'s soft blue.','The tabs become one segmented control. The count sits in a small tile pill.','Ask for feedback floats bottom right above the nav, always in reach, and takes no room in the list.','The dock keeps floating, loses its shadow, and the current tab is a soft tint.'],
     cost:['About eight requests on one screen.','The floating button covers part of the last cards and sits on every scroll position.','Segmented tabs can get tight in some languages; they wrap to a second line rather than cut a word.'] },
-  { id:'c', title:'Option C: Every request is a ticket', idea:'Each card is drawn as a ticket, and the stub at its end holds what the review pays.', fn: optC,
+  { id:'c', title:'Option C: Every request is a ticket', used:'Tiles used in Final', idea:'Each card is drawn as a ticket, and the stub at its end holds what the review pays.', fn: optC,
     items:['The card has a tear line and two notches. The stub is the soft blue of the bar\'s ticket, with the figure and the word tix.','The kind and the review type are one plain line, such as "Live app, written review".','The tabs are soft pills; the current one is tinted.','Ask for feedback is the first row of the list, with a plus tile, the same height as a request.','A smaller floating dock with icons only and a dot under the current tab.'],
     cost:['About eight requests on one screen.','The most character, and the most custom drawing: the notches and stub are new code in a card nobody else uses.','The nav loses the tab name, so the dot and the icon have to say where you are.'] },
 ];
@@ -378,8 +447,31 @@ const SECTIONS = [
 const z = new URLSearchParams(location.search).get('z') || '1';
 document.documentElement.style.setProperty('--z', z);
 let html = '';
+{
+  const items = [
+    'Tabs: Option B\'s segmented control. Feedback, Activity, My reviews and To check sit in one rounded track; the current one is on the soft blue tint, and To check carries its count in a small tile pill. Signed out, only Feedback and Activity show, as two equal halves.',
+    'Requests: Option C\'s tickets. A tear line and two notches, the stub in the soft blue of the bar\'s ticket with the figure and the word tix, and one plain grey line such as "Live app, written review". The whole ticket opens the review.',
+    'Ask for feedback is the first row, the same height as a ticket, with the plus tile, "Get reviews of your own app" and a chevron.',
+    'Once that row has scrolled off, a small pill with a plus and "Ask for feedback" floats 12 above the dock, centred, in the tile colour with a hairline edge. It slides away when the first row comes back. See "Scrolled down" below.',
+    'Bottom nav: Option B\'s floating dock. No shadow, the current tab on the soft tint with its name, and the Crew count in the primary colour instead of red. With no shadow, a card passing under the dock read as one more card, so the page ground fades in behind the dock. You didn\'t pick a nav, so this is the default for now. A\'s flat bar or C\'s icon dock can go in its place.',
+  ];
+  const cost = [
+    'About eight requests fit on one screen, one more than today.',
+    'The ticket shape is new drawing: one shape with two bites out of it, used only here.',
+    'The dock change shows on all five tabs, not only Circle.',
+    'No new colour. Every colour here is already in Tokens.kt.',
+  ];
+  html += `<section class="opt" id="final"><h2>Final: B tabs, C tickets</h2><p class="idea">Option B's segmented tabs over Option C's ticket list, with Option B's floating dock at the bottom.</p><div class="row">`;
+  html += cell('Light', phone('light', optF('light'))) + cell('Dark', phone('dark', optF('dark')))
+        + `<div class="notes"><h3>What's in it</h3><ul>${items.map(x => `<li>${x}</li>`).join('')}</ul><h3>What it costs</h3><ul>${cost.map(x => `<li>${x}</li>`).join('')}</ul></div>`;
+  html += `</div><div class="row">`;
+  html += cell('Scrolled down, light', phoneB('light', optF('light', 'scrolled')), 'small') + cell('Scrolled down, dark', phoneB('dark', optF('dark', 'scrolled')), 'small')
+        + cell('Loading, light', phone('light', optF('light', 'loading')), 'small') + cell('Loading, dark', phone('dark', optF('dark', 'loading')), 'small')
+        + cell('Nobody asking, light', phone('light', optF('light', 'empty')), 'small') + cell('Nobody asking, dark', phone('dark', optF('dark', 'empty')), 'small');
+  html += `</div></section>`;
+}
 for (const s of SECTIONS) {
-  html += `<section class="opt" id="${s.id}"><h2>${s.title}${s.rec ? '<span class="rec">Recommended</span>' : ''}</h2><p class="idea">${s.idea}</p><div class="row">`;
+  html += `<section class="opt" id="${s.id}"><h2>${s.title}${s.rec ? '<span class="rec">Recommended</span>' : ''}${s.used ? `<span class="used">${s.used}</span>` : ''}</h2><p class="idea">${s.idea}</p><div class="row">`;
   html += cell('Light', phone('light', s.fn('light'))) + cell('Dark', phone('dark', s.fn('dark'))) + notes(s.items, s.cost);
   html += `</div></section>`;
 }
