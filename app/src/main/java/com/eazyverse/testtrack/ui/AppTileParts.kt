@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.semantics.contentDescription
@@ -42,10 +44,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.CircleCheck
-import com.composables.icons.lucide.FlaskConical
 import com.composables.icons.lucide.Hourglass
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Barlow
+import com.eazyverse.testtrack.ui.theme.PlayBlue
+import com.eazyverse.testtrack.ui.theme.PlayGreen
+import com.eazyverse.testtrack.ui.theme.PlayRed
+import com.eazyverse.testtrack.ui.theme.PlayYellow
 import com.eazyverse.testtrack.ui.theme.Tt
 import kotlinx.coroutines.launch
 
@@ -96,8 +101,9 @@ internal fun Modifier.appTileFrame(): Modifier {
 }
 
 /**
- * Where people find the app, on the icon's bottom right corner: a Play triangle on the accent for a
- * live app, a flask on the soft tile for a closed test. A ring in the page colour cuts it out.
+ * Where people find the app, on the icon's bottom right corner: the Play logo for a live app, a
+ * flask of coloured liquid for a closed test, both on a light disc. A ring in the page colour cuts
+ * it out.
  */
 @Composable
 internal fun SourceMark(
@@ -108,33 +114,65 @@ internal fun SourceMark(
     Box(
         modifier
             .size(20.dp)
-            .background(if (live) t.accent else t.tile, CircleShape)
+            .background(t.sheet, CircleShape)
             .border(2.dp, t.bg, CircleShape)
             .semantics { contentDescription = if (live) "Live on Google Play" else "Closed test" },
         contentAlignment = Alignment.Center,
     ) {
         if (live) {
-            Image(rememberPlayTriangle(t.onAccent), null, Modifier.size(10.dp))
+            Image(rememberPlayLogo(), null, Modifier.size(12.dp))
         } else {
-            Icon(Lucide.FlaskConical, null, Modifier.size(11.dp), tint = t.tileInk)
+            Image(rememberFlask(t.flaskLiquid, t.flaskGlass), null, Modifier.size(12.dp))
         }
     }
 }
 
-// Lucide's play is an outline; this one is solid. Drawn in the colour it is given, so nothing here
-// writes a colour of its own.
+// The Play logo as four facets on a 24 grid: blue on the left, green above, red below and the
+// yellow tip between them. Colours come from the brand constants in Tokens.kt.
 @Composable
-private fun rememberPlayTriangle(color: Color): ImageVector =
-    remember(color) {
+private fun rememberPlayLogo(): ImageVector =
+    remember {
         ImageVector
-            .Builder("Play", 10.dp, 10.dp, 24f, 24f)
+            .Builder("PlayLogo", 12.dp, 12.dp, 24f, 24f)
+            .facet(PLAY_BLUE_FACET, PlayBlue)
+            .facet(PLAY_GREEN_FACET, PlayGreen)
+            .facet(PLAY_RED_FACET, PlayRed)
+            .facet(PLAY_YELLOW_FACET, PlayYellow)
+            .build()
+    }
+
+private fun ImageVector.Builder.facet(
+    path: String,
+    color: Color,
+) = addPath(PathParser().parsePathString(path).toNodes(), fill = SolidColor(color))
+
+private const val PLAY_BLUE_FACET = "M4 2L13 12L4 22Z"
+private const val PLAY_GREEN_FACET = "M4 2L16.5 9.35L13 12Z"
+private const val PLAY_RED_FACET = "M4 22L13 12L16.5 14.65Z"
+private const val PLAY_YELLOW_FACET = "M16.5 9.35L21 12L16.5 14.65L13 12Z"
+
+// A flask: the liquid is filled first, then the glass outline is stroked over it.
+@Composable
+private fun rememberFlask(
+    liquid: Color,
+    glass: Color,
+): ImageVector =
+    remember(liquid, glass) {
+        ImageVector
+            .Builder("Flask", 12.dp, 12.dp, 24f, 24f)
+            .addPath(PathParser().parsePathString(FLASK_LIQUID).toNodes(), fill = SolidColor(liquid))
             .addPath(
-                PathParser().parsePathString(PLAY_PATH).toNodes(),
-                fill = SolidColor(color),
+                PathParser().parsePathString(FLASK_GLASS).toNodes(),
+                stroke = SolidColor(glass),
+                strokeLineWidth = 1.9f,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round,
             ).build()
     }
 
-private const val PLAY_PATH = "M7 4.5v15a1 1 0 0 0 1.5.86l12.6-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5Z"
+private const val FLASK_LIQUID = "M7.9 14.3Q10 13.2 12 14.3T16.1 14.3L19.1 20.3Q19.4 21.6 18.1 21.6H5.9Q4.6 21.6 4.9 20.3Z"
+private const val FLASK_GLASS =
+    "M10 3v6.5a2 2 0 0 1-.2.9L4.8 20.4a1 1 0 0 0 .9 1.4h12.6a1 1 0 0 0 .9-1.4L14.2 10.4a2 2 0 0 1-.2-.9V3M8.6 3h6.8"
 
 /**
  * The status line: an optional 12dp icon, the phrase, and after it a crew's name. The phrase never
@@ -190,9 +228,14 @@ internal fun ProblemMark(
     TooltipBox(
         positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
         tooltip = {
-            RichTooltip(colors = TooltipDefaults.richTooltipColors(containerColor = t.card, contentColor = t.text)) {
+            // The bubble is the inverse of the page (dark on light, light on dark); its caret points
+            // at the alert icon.
+            RichTooltip(
+                caretShape = TooltipDefaults.caretShape(),
+                colors = TooltipDefaults.richTooltipColors(containerColor = t.inverse, contentColor = t.onInverse),
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    sentences.forEach { Text(it, style = TooltipText, color = t.text) }
+                    sentences.forEach { Text(it, style = TooltipText, color = t.onInverse) }
                 }
             }
         },

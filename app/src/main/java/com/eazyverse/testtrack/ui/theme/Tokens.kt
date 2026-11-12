@@ -113,6 +113,9 @@ data class TtTokens(
     /** A quiet note card on the sign-in sheet, and its edge. */
     val card: Color,
     val cardLine: Color,
+    /** The closed-test flask on a tile's corner: its liquid, and the glass outline round it. */
+    val flaskLiquid: Color,
+    val flaskGlass: Color,
 ) {
     val primary: Color get() = if (isDark) accentInk else accent
     val onPrimary: Color get() = if (isDark) bg else onAccent
@@ -141,6 +144,12 @@ data class TtTokens(
 }
 
 private fun Color.alpha(value: Float) = copy(alpha = value)
+
+/** The four facets of the Google Play logo. A brand mark, so the same in light and dark. */
+val PlayBlue = Color(0xFF00A0FF)
+val PlayGreen = Color(0xFF00F076)
+val PlayYellow = Color(0xFFFFCE00)
+val PlayRed = Color(0xFFFF3A44)
 
 private val OkLight = Color(0xFF246B59)
 private val WarnLight = Color(0xFF8A611C)
@@ -219,6 +228,8 @@ val OceanLight =
         track = Color(0xFFE4EEF4),
         card = Color(0xFFF3F8FB),
         cardLine = Color(0xFFE1ECF3),
+        flaskLiquid = Color(0xFF9279D6),
+        flaskGlass = Color(0xFF4A3B86),
     )
 
 val OceanDark =
@@ -292,6 +303,8 @@ val OceanDark =
         track = Color(0xFF2D3034),
         card = Color(0xFF1C1E20),
         cardLine = Color(0xFF2D3034),
+        flaskLiquid = Color(0xFF8C70D4),
+        flaskGlass = Color(0xFFCDBEF0),
     )
 
 val LocalTokens = staticCompositionLocalOf { OceanDark }
