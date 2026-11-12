@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TestTrack: the Circle app bar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0}
+body{background:#E4E8EB;color:#1D2A33;font-family:Barlow,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.doc{padding:28px 32px 4px;max-width:1180px}
+.doc h1{font:700 26px Barlow;margin:0 0 6px}
+.doc p{font:400 15px/22px Barlow;margin:6px 0;color:#3C4A55;max-width:980px}
+.doc ul{font:400 15px/22px Barlow;color:#3C4A55;margin:6px 0;padding-left:22px;max-width:980px}
+.ctl{display:flex;gap:6px;margin:14px 0 4px;align-items:center;font:600 13px Barlow;color:#56636D;flex-wrap:wrap}
+.ctl button{font:600 13px Barlow;border:1px solid #B9C3CA;background:#fff;border-radius:16px;padding:5px 12px;cursor:pointer;color:#1D2A33}
+.ctl button.on{background:#1D2A33;color:#fff;border-color:#1D2A33}
+.ctl .sep{width:14px}
+.opt{padding:22px 32px 6px}
+.opt h2{font:700 22px Barlow;margin:0}
+.opt .sub{font:400 15px/22px Barlow;color:#3C4A55;margin:4px 0 0;max-width:980px}
+.rowlbl{font:600 13px Barlow;letter-spacing:.4px;color:#56636D;margin:14px 0 8px}
+.strip{display:flex;gap:20px;overflow-x:auto;padding-bottom:10px}
+.strip.dark{background:#060707;margin:0 -32px;padding:16px 32px}
+.cell{flex:none}
+.cap{font:600 12px Barlow;color:#56636D;margin:0 0 6px 4px;white-space:nowrap}
+.strip.dark .cap{color:#8A949C}
+.zoomwrap{zoom:var(--z,.6);display:flex;gap:20px;align-items:flex-start}
+
+/* OceanLight / OceanDark, straight from ui/theme/Tokens.kt */
+.t-light{
+  --bg:#F7FCFF;--ink:#142F43;--ink2:#203A4E;--ink3:#223D50;--ink4:#59758A;
+  --tabSel:#0C527D;--tabUn:#526B7D;
+  --glass:#F2F9FD;--glass2:#DFEDF6;--glassBorder:#B7D1E2;--gbs:#789AAF;
+  --acc:#1D5C82;--onacc:#FFFFFF;--accInk:#123C56;--prim:#1D5C82;--onPrim:#FFFFFF;
+  --tile:#D5EAF7;--tileInk:#1D5C82;--selFill:#1D5C82;--onSel:#FFFFFF;
+  --dock:#E8F3FA;--dockInk:#304C60;--ok:#246B59;--badgeFill:#1D5C82;
+  --gold:#9A7B1F;--tixTop:#2B6F99;--tixBottom:#1B4F70;--tixEdge:#143A55;--ticketInk:#17405E;
+  --track:#E4EEF4;--card:#F3F8FB;--cardLine:#E1ECF3;--sheet:#FFFFFF;--sheetLine:#DCE8F0;--sheetOutline:#B7D1E2;
+  --robot:#32729B;--hair:#D3E0EA;--mute:#5E7484;
+  --sk:#E4EEF4;--sk2:#F2F7FA;--scrim:rgba(20,34,48,.46);--gest:rgba(20,47,67,.35);--shadow:rgba(16,47,70,.18);
+  --nTile:#EAF1F6;--nInk:#3F5869;
+}
+.t-dark{
+  --bg:#0F1011;--ink:#EFF7FC;--ink2:#BDD1DF;--ink3:#A1BDCF;--ink4:#7F9EB3;
+  --tabSel:#9CD5FF;--tabUn:#93A7B6;
+  --glass:#1B3040;--glass2:#263F51;--glassBorder:#365568;--gbs:#58788E;
+  --acc:#32729B;--onacc:#FFFFFF;--accInk:#8BCBF7;--prim:#8BCBF7;--onPrim:#0F1011;
+  --tile:#24485F;--tileInk:#8BCBF7;--selFill:rgba(139,203,247,.12);--onSel:#8BCBF7;
+  --dock:#172C3C;--dockInk:#BDD1DF;--ok:#83D8C4;--badgeFill:#32729B;
+  --gold:#E3A93C;--tixTop:#3A7FAA;--tixBottom:#235C80;--tixEdge:#0E2A3F;--ticketInk:#17405E;
+  --track:#2A2E32;--card:#202326;--cardLine:#2C3034;--sheet:#191B1D;--sheetLine:#2A2E32;--sheetOutline:#3A3F44;
+  --robot:#8BCBF7;--hair:#33383D;--mute:#9AA7B1;
+  --sk:#26292D;--sk2:#33383C;--scrim:rgba(0,0,0,.60);--gest:rgba(236,238,240,.35);--shadow:rgba(0,0,0,.5);
+  --nTile:#24282B;--nInk:#B3C0CA;
+}
+/* "Calmer cards" preview: the sign-in sheet's charcoal and paper carried down into Circle */
+.t-light.calm{--glass:#FFFFFF;--glassBorder:#DFE8EE;--glass2:#EEF3F6;--tile:#EAF1F6;--tileInk:#3F5869;--dock:#FFFFFF;--gbs:#A9BCC9;--tabSel:#142F43;--tabUn:#5E7484;--selFill:#142F43}
+.t-dark.calm{--glass:#191B1D;--glassBorder:#2A2E32;--glass2:#24282B;--tile:#24282B;--tileInk:#B3C0CA;--dock:#191B1D;--gbs:#3E4449;--tabSel:#EFF7FC;--tabUn:#9AA7B1;--selFill:#2A2E32;--onSel:#EFF7FC}
+
+/* the phone */
+.phone{position:relative;width:360px;height:800px;border-radius:28px;overflow:hidden;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(0,0,0,.10)}
+.t-dark.phone{box-shadow:0 0 0 1px #24282C}
+.phone.crop{height:330px;border-radius:28px 28px 0 0;-webkit-mask-image:linear-gradient(#000 82%,transparent)}
+.sb{height:28px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font:600 13px Barlow}
+.sb .ic{display:flex;gap:6px;align-items:center}
+svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block;flex:none}
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+
+/* Circle under the bar: WordTabs, the Ask slot, request cards */
+.tabs{display:flex;gap:8px;padding:0 16px;flex:none}
+.wt{padding:10px 4px 4px;display:flex;flex-direction:column;color:var(--tabUn);font:500 15px/20px Barlow;white-space:nowrap}
+.wt .l{display:flex;align-items:center;gap:6px}
+.wt.on{color:var(--tabSel);font-weight:700}
+.wt u{display:block;height:2.5px;border-radius:2px;margin-top:4px;background:transparent;text-decoration:none}
+.wt.on u{background:var(--acc)}
+.calm .wt.on u{background:var(--ink)}
+.cnt{background:var(--prim);color:var(--onPrim);font:700 11px/16px Barlow;border-radius:8px;padding:0 6px;min-width:4px;text-align:center}
+.list{padding:16px 16px 0;display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;overflow:hidden}
+.ask{min-height:66px;border:1.5px dashed var(--gbs);border-radius:14px;display:flex;align-items:center;justify-content:center;font:600 24px Barlow;color:var(--ink2);box-sizing:border-box;flex:none}
+.calm .ask{font:600 20px Barlow}
+.rq{background:var(--glass);border:1px solid var(--glassBorder);border-radius:18px;padding:12px 14px;display:flex;align-items:center;gap:12px;flex:none}
+.ap{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font:700 16px Barlow;flex:none}
+.rq .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.rq .nm{font:700 17px/22px Barlow;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pills{display:flex;gap:6px}
+.pill{height:22px;border-radius:11px;padding:0 9px 0 7px;display:flex;align-items:center;gap:4px;font:600 12px/15px Barlow;white-space:nowrap}
+.pill svg{width:12px;height:12px}
+.pill.live{background:var(--tile);color:var(--tileInk)}
+.pill.closed,.pill.fb{background:var(--glass2);color:var(--ink2)}
+.pill.fb{color:var(--accInk);padding:0 9px}
+.calm .pill.fb{color:var(--ink2)}
+.reward{width:52px;height:36px;position:relative;flex:none}
+.reward svg{position:absolute;inset:0;width:52px;height:36px}
+.reward b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 17px Barlow;color:var(--ticketInk);font-variant-numeric:tabular-nums}
+.qreward{display:flex;align-items:center;gap:5px;color:var(--ink);flex:none}
+.qreward svg{width:15px;height:15px;color:var(--ink4)}
+.qreward span{font:600 15px 'IBM Plex Mono',monospace}
+
+/* the dock */
+.dock{position:absolute;left:20px;right:20px;bottom:32px;height:56px;border-radius:32px;background:var(--dock);border:1px solid var(--glassBorder);box-shadow:0 8px 24px var(--shadow);display:flex;align-items:center;padding:0 4px;box-sizing:border-box;gap:2px}
+.dock .sel{height:48px;border-radius:24px;background:var(--selFill);color:var(--onSel);display:flex;align-items:center;justify-content:center;gap:8px;width:124px;font:600 14px Barlow;flex:none}
+.dock .dt{flex:1;height:48px;display:flex;align-items:center;justify-content:center;color:var(--dockInk)}
+.dock svg{width:21px;height:21px}
+.gbar{position:absolute;left:0;right:0;bottom:0;height:20px;display:flex;justify-content:center;align-items:center;z-index:3}
+.gbar i{width:108px;height:4px;border-radius:2px;background:var(--gest)}
+
+/* ---------- today, as the code draws it (TopHud.kt) ---------- */
+.hud0{display:flex;align-items:center;padding:10px 16px 6px;flex:none}
+.robot{width:44px;height:50px;flex:none}
+.hud0 .tt{flex:1;margin-left:11px;min-width:0}
+.hud0 .t1{font:600 14px/20px Barlow;color:var(--ink)}
+.hud0 .t2{font:500 11px/16px Barlow;color:var(--ink2);margin-top:1px}
+.tix0{position:relative;display:flex;align-items:center;flex:none}
+.tix0 .pl{margin-left:16px;margin-bottom:3px;padding:5px 13px 5px 27px;border-radius:999px;background:linear-gradient(var(--tixTop),var(--tixBottom));border:2px solid var(--tixEdge);box-shadow:0 3px 0 var(--tixEdge);color:#fff;font:800 14px/20px Barlow;font-variant-numeric:tabular-nums}
+.tix0 svg{position:absolute;left:0;top:50%;width:38px;height:26px;transform:translateY(calc(-50% - 1.5px)) rotate(-12deg)}
+.rb0{width:40px;height:40px;margin:4px;border-radius:50%;background:var(--glass);border:1px solid var(--glassBorder);box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:var(--accInk);position:relative;flex:none}
+.rb0 svg{width:19px;height:19px}
+.rb0 .gd{position:absolute;top:-1px;right:-1px;width:11px;height:11px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 2px var(--glass)}
+.rs0{display:flex;align-items:center;gap:7px;background:var(--acc);color:var(--onacc);border-radius:999px;padding:8px 14px 8px 11px;font:600 14px/20px Barlow;flex:none}
+.rs0 svg{width:16px;height:16px}
+.si0{display:flex;align-items:center;gap:8px;border:1px solid var(--glassBorder);border-radius:999px;padding:8px 14px 8px 11px;font:600 14px/20px Barlow;color:var(--ink);flex:none}
+.si0 svg,.si svg{width:16px;height:16px}
+
+/* ---------- shared pieces of the new bars ---------- */
+.ib{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink2);position:relative;flex:none;box-sizing:border-box}
+.ib svg{width:20px;height:20px}
+.ib .dot{position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--robot);box-shadow:0 0 0 2px var(--bg)}
+.ib.ring{border:1px solid var(--hair)}
+.ib.ring .dot{top:5px;right:5px}
+.ib.prog::after{content:"";position:absolute;inset:9px;border-radius:50%;border:2px solid var(--track);border-top-color:var(--robot);box-sizing:border-box}
+.rs{display:flex;align-items:center;gap:6px;height:32px;border-radius:16px;background:var(--acc);color:var(--onacc);padding:0 12px 0 10px;font:600 13.5px Barlow;flex:none;box-sizing:border-box}
+.rs svg{width:14px;height:14px}
+.si{display:flex;align-items:center;gap:8px;height:36px;border:1px solid var(--hair);border-radius:18px;padding:0 14px 0 11px;font:600 14px Barlow;color:var(--ink);flex:none;box-sizing:border-box}
+.tixq{display:flex;align-items:center;gap:6px;color:var(--ink);flex:none;height:48px}
+.tixq svg{width:17px;height:17px;color:var(--mute);stroke-width:1.9}
+.tixq span{font:600 16px 'IBM Plex Mono',monospace;letter-spacing:-.2px}
+.skb{border-radius:6px;background:linear-gradient(90deg,var(--sk) 0%,var(--sk2) 40%,var(--sk) 80%);background-size:300% 100%;animation:sh 1.4s linear infinite}
+@keyframes sh{from{background-position:100% 0}to{background-position:-200% 0}}
+.two{display:flex;flex-direction:column;min-width:0}
+.two .a{font:600 15px/19px Barlow;color:var(--ink);white-space:nowrap}
+.two .b{font:500 12.5px/16px Barlow;color:var(--ink4);white-space:nowrap}
+.sp{flex:1}
+
+/* Option A: name and balance */
+.barA{height:56px;display:flex;align-items:center;padding:0 16px;gap:4px;flex:none}
+.barA .mk{width:26px;height:26px;flex:none;margin-right:8px}
+.barA .wm{font:700 20px Barlow;letter-spacing:-.1px;color:var(--ink)}
+.barA .tixq{padding-left:6px}
+
+/* Option B: level line */
+.barB{height:60px;display:flex;align-items:center;padding:0 16px;gap:4px;flex:none}
+.barB .lv{width:36px;height:36px;position:relative;flex:none;margin-right:7px}
+.barB .lv svg{position:absolute;inset:0;width:36px;height:36px}
+.barB .lv b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 13px 'IBM Plex Mono',monospace;color:var(--ink)}
+.barB .mk{width:32px;height:32px;flex:none;margin:0 9px 0 2px}
+.tixp{display:flex;align-items:center;gap:6px;height:32px;border:1px solid var(--hair);border-radius:16px;padding:0 12px 0 10px;flex:none;box-sizing:border-box;margin-left:4px}
+.tixp svg{width:15px;height:15px;color:var(--mute);stroke-width:1.9}
+.tixp span{font:600 14px 'IBM Plex Mono',monospace;color:var(--ink);letter-spacing:-.2px}
+
+/* Option C: mark and one account chip */
+.barC{height:56px;display:flex;align-items:center;padding:0 16px;gap:4px;flex:none}
+.barC .mk{width:28px;height:28px;flex:none}
+.barC .mk2{width:28px;height:28px;flex:none;margin-right:10px}
+.acc{display:flex;align-items:center;height:34px;border:1px solid var(--hair);border-radius:17px;padding:0 12px 0 9px;flex:none;box-sizing:border-box;margin-left:4px}
+.acc .h{display:flex;align-items:center;gap:6px}
+.acc .h svg.rg{width:16px;height:16px}
+.acc .h .lt{font:600 14px Barlow;color:var(--ink);white-space:nowrap}
+.acc .div{width:1px;height:16px;background:var(--hair);margin:0 10px}
+.acc .h svg.i{width:15px;height:15px;color:var(--mute);stroke-width:1.9}
+.acc .h span.mono{font:600 14px 'IBM Plex Mono',monospace;color:var(--ink);letter-spacing:-.2px}
+
+/* the account sheet behind Option C's chip */
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:4}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:5;background:var(--sheet);border-radius:22px 22px 0 0;padding:0 16px 36px;box-shadow:0 -1px 0 var(--sheetLine)}
+.handle{width:38px;height:4px;border-radius:2px;background:var(--gbs);opacity:.6;margin:10px auto 16px}
+.sh-t{display:flex;align-items:baseline;justify-content:space-between}
+.sh-t .st{font:700 17px/22px Barlow;color:var(--ink)}
+.sh-t .sv{font:500 13px 'IBM Plex Mono',monospace;color:var(--ink4)}
+.pbar{height:6px;border-radius:3px;background:var(--track);margin-top:12px;overflow:hidden}
+.pbar i{display:block;height:100%;border-radius:3px;background:var(--robot)}
+.why{font:400 14px/20px Barlow;color:var(--ink2);margin:12px 0 0}
+.scard{background:var(--card);border:1px solid var(--cardLine);border-radius:16px;padding:14px;margin-top:18px}
+.scard .r{display:flex;align-items:center;gap:10px}
+.scard .tl{width:30px;height:30px;border-radius:9px;background:var(--nTile);color:var(--nInk);display:flex;align-items:center;justify-content:center}
+.scard .tl svg{width:16px;height:16px}
+.scard .h1{font:600 15px Barlow;color:var(--ink);flex:1}
+.scard .v{font:600 15px 'IBM Plex Mono',monospace;color:var(--ink)}
+.scard .b{font:400 14px/20px Barlow;color:var(--ink2);margin-top:9px}
+.tb{height:44px;display:flex;align-items:center;justify-content:center;gap:4px;font:600 15px Barlow;color:var(--accInk);margin-top:10px}
+.tb svg{width:16px;height:16px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<linearGradient id="fLbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F99B80"/><stop offset="1" stop-color="#EF806B"/></linearGradient><linearGradient id="fRbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#77D6C2"/><stop offset="1" stop-color="#54C5AC"/></linearGradient><linearGradient id="fLscreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFCF1"/><stop offset="1" stop-color="#FFFCF1"/></linearGradient><linearGradient id="fRscreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFCF1"/><stop offset="1" stop-color="#FFFCF1"/></linearGradient><filter id="fLdrop" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.7"/><feOffset dy="1.8" result="b"/><feFlood flood-color="#0E2E44" flood-opacity="0.22"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="fRdrop" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.7"/><feOffset dy="1.8" result="b"/><feFlood flood-color="#0E2E44" flood-opacity="0.22"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="fsoft" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.1"/><feOffset dy="1.3" result="b"/><feFlood flood-color="#0E2E44" flood-opacity="0.1408"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><g id="ttmark"><g><path d="M39.35 33.10L39.75 32.67L40.15 32.25L40.57 31.84L41.00 31.44L41.44 31.06L41.90 30.69L42.37 30.33L42.84 29.99L43.33 29.66L43.83 29.35L44.34 29.05L44.86 28.77L45.39 28.50L45.92 28.25L46.47 28.01L47.02 27.80L47.57 27.59L48.14 27.41L48.71 27.24L49.28 27.09L49.86 26.96L50.45 26.85L51.04 26.75L51.63 26.67L52.22 26.61L52.82 26.57L53.42 26.54L54.02 26.54L54.62 26.55L55.22 26.58L55.82 26.63L56.42 26.70L57.01 26.78L57.61 26.89L58.20 27.01L58.78 27.15L59.37 27.31L59.95 27.49L60.52 27.68L61.09 27.89L61.65 28.12L62.20 28.37L62.75 28.63L63.29 28.91L63.82 29.21L64.35 29.52L64.86 29.85L65.36 30.20L62.83 33.55L62.45 33.25L62.06 32.96L61.67 32.68L61.26 32.42L60.85 32.16L60.42 31.92L60.00 31.69L59.56 31.48L59.11 31.28L58.66 31.09L58.21 30.91L57.74 30.75L57.28 30.61L56.80 30.47L56.33 30.36L55.85 30.25L55.36 30.16L54.87 30.09L54.38 30.03L53.89 29.99L53.40 29.96L52.90 29.94L52.41 29.94L51.91 29.96L51.42 29.99L50.92 30.04L50.43 30.10L49.93 30.18L49.44 30.27L48.95 30.37L48.47 30.50L47.99 30.63L47.51 30.79L47.04 30.95L46.57 31.13L46.10 31.33L45.65 31.54L45.19 31.76L44.75 32.00L44.31 32.25L43.88 32.52L43.46 32.80L43.04 33.09L42.64 33.40L42.24 33.71L41.85 34.04L41.47 34.39L41.11 34.74A1.20 1.20 0 0 1 39.35 33.10Z" fill="#32729B"/><path d="M68.32 35.07L65.25 28.69L60.48 34.99Z" fill="#32729B" stroke="#32729B" stroke-width="2.2" stroke-linejoin="round"/><path d="M68.65 74.90L68.25 75.33L67.85 75.75L67.43 76.16L67.00 76.56L66.56 76.94L66.10 77.31L65.63 77.67L65.16 78.01L64.67 78.34L64.17 78.65L63.66 78.95L63.14 79.23L62.61 79.50L62.08 79.75L61.53 79.99L60.98 80.20L60.43 80.41L59.86 80.59L59.29 80.76L58.72 80.91L58.14 81.04L57.55 81.15L56.96 81.25L56.37 81.33L55.78 81.39L55.18 81.43L54.58 81.46L53.98 81.46L53.38 81.45L52.78 81.42L52.18 81.37L51.58 81.30L50.99 81.22L50.39 81.11L49.80 80.99L49.22 80.85L48.63 80.69L48.05 80.51L47.48 80.32L46.91 80.11L46.35 79.88L45.80 79.63L45.25 79.37L44.71 79.09L44.18 78.79L43.65 78.48L43.14 78.15L42.64 77.80L45.17 74.45L45.55 74.75L45.94 75.04L46.33 75.32L46.74 75.58L47.15 75.84L47.58 76.08L48.00 76.31L48.44 76.52L48.89 76.72L49.34 76.91L49.79 77.09L50.26 77.25L50.72 77.39L51.20 77.53L51.67 77.64L52.15 77.75L52.64 77.84L53.13 77.91L53.62 77.97L54.11 78.01L54.60 78.04L55.10 78.06L55.59 78.06L56.09 78.04L56.58 78.01L57.08 77.96L57.57 77.90L58.07 77.82L58.56 77.73L59.05 77.63L59.53 77.50L60.01 77.37L60.49 77.21L60.96 77.05L61.43 76.87L61.90 76.67L62.35 76.46L62.81 76.24L63.25 76.00L63.69 75.75L64.12 75.48L64.54 75.20L64.96 74.91L65.36 74.60L65.76 74.29L66.15 73.96L66.53 73.61L66.89 73.26A1.20 1.20 0 0 1 68.65 74.90Z" fill="#32729B"/><path d="M39.68 72.93L42.75 79.31L47.52 73.01Z" fill="#32729B" stroke="#32729B" stroke-width="2.2" stroke-linejoin="round"/></g><g transform="rotate(-9.9 37.50 54.00)">
+    <rect x="27.20" y="38.15" width="20.6" height="31.7" rx="3.8" fill="url(#fLbody)"/>
+    <rect x="29.60" y="42.75" width="15.80" height="21.90" rx="1.9" fill="url(#fLscreen)"/>
+    <rect x="34.70" y="39.90" width="5.6" height="1.2" rx=".6" fill="#FFFCF1"/>
+    <circle cx="37.50" cy="67.25" r="1.15" fill="#FFFCF1"/>
+    <path d="M33.36 55.18L36.24 57.97L41.46 52.03" fill="none" stroke="none" stroke-width="2.61" stroke-linecap="round" stroke-linejoin="round"/>
+  </g><g transform="rotate(-9.9 37.50 54.00)"><g transform="translate(37.50 53.80) scale(0.78)"><g><path d="M-2.5 -0.4L-4.6 -1.8" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M2.5 -0.4L4.6 -1.8" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M-3 1.7L-5.1 1.9" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M3 1.7L5.1 1.9" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M-2.5 3.8L-4.3 5.3" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M2.5 3.8L4.3 5.3" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M-.8 -3.7Q-1.3 -5.6 -2.7 -6M.8 -3.7Q1.3 -5.6 2.7 -6" fill="none" stroke="#17253B" stroke-width=".9" stroke-linecap="round"/><rect x="-3.4" y="-1.1" width="6.8" height="7.3" rx="3.4" fill="#17253B"/><circle cx="0" cy="-2.8" r="2.05" fill="#17253B" stroke="#FFFCF1" stroke-width=".6"/><path d="M0 .1V5.6" stroke="#FFFCF1" stroke-width=".55" stroke-linecap="round"/></g></g></g><g transform="rotate(9.9 70.50 54.00)">
+    <rect x="60.20" y="38.15" width="20.6" height="31.7" rx="3.8" fill="url(#fRbody)"/>
+    <rect x="62.60" y="42.75" width="15.80" height="21.90" rx="1.9" fill="url(#fRscreen)"/>
+    <rect x="67.70" y="39.90" width="5.6" height="1.2" rx=".6" fill="#FFFCF1"/>
+    <circle cx="70.50" cy="67.25" r="1.15" fill="#FFFCF1"/>
+    <path d="M66.36 55.18L69.24 57.97L74.46 52.03" fill="none" stroke="#17253B" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g></g>
+<linearGradient id="glevel_robot_body1" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><g id="level_robot_body"><g transform="translate(-185 -110)"><path d="M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z" fill="url(#glevel_robot_body1)"/></g></g>
+<linearGradient id="glevel_robot_head1" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><linearGradient id="glevel_robot_head2" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><linearGradient id="glevel_robot_head3" gradientUnits="userSpaceOnUse" x1="350" y1="277" x2="910" y2="744"><stop offset="0" stop-color="#32729B"/><stop offset="1" stop-color="#1D5C82"/></linearGradient><g id="level_robot_head"><g transform="translate(-185 -110)"><g transform="translate(0 0)"><g transform="translate(0 0)"><path d="M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z" fill="url(#glevel_robot_head1)"/><path d="M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z" fill="url(#glevel_robot_head2)"/><path d="M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z" fill="#6CA9CF"/><path d="M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z" fill="#6CA9CF"/></g><path d="M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z" fill="url(#glevel_robot_head3)"/><path d="M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z" fill="#FFFCF1"/><path d="M576 594 C602 620 651 620 677 594" fill="#000000" fill-opacity="0.00" stroke="#17253B" stroke-width="31" stroke-linecap="round"/></g></g></g>
+<g id="level_robot_eyes"><g transform="translate(-185 -110)"><g transform="translate(0 0)"><g transform="translate(0 0)"><path d="M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z" fill="#17253B"/><path d="M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z" fill="#17253B"/><path d="M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z" fill="#FFFFFF"/><path d="M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z" fill="#FFFFFF"/></g></g></g></g>
+<linearGradient id="glevel_robot_antenna1" gradientUnits="userSpaceOnUse" x1="310" y1="765" x2="568" y2="1056"><stop offset="0" stop-color="#F99B80"/><stop offset="1" stop-color="#EF806B"/></linearGradient><g id="level_robot_antenna"><g transform="translate(-185 -110)"><g transform="translate(0 0)"><path d="M603 227 H650 V295 H603 Z" fill="#1D5C82"/><path d="M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z" fill="url(#glevel_robot_antenna1)"/><path d="M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z" fill="#FFFFFF"/></g></g></g>
+<linearGradient id="glevel_robot_hands1" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><linearGradient id="glevel_robot_hands2" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE"/><stop offset="1" stop-color="#5E9DC5"/></linearGradient><linearGradient id="glevel_robot_hands3" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><linearGradient id="glevel_robot_hands4" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE"/><stop offset="1" stop-color="#5E9DC5"/></linearGradient><g id="level_robot_hands"><g transform="translate(-185 -110)"><path d="M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z" fill="url(#glevel_robot_hands1)"/><path d="M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z" fill="url(#glevel_robot_hands2)"/><path d="M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z" fill="url(#glevel_robot_hands3)"/><path d="M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z" fill="url(#glevel_robot_hands4)"/></g></g>
+<linearGradient id="gtix_ticket1" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="61" y2="41"><stop offset="0" stop-color="#FFE07A"/><stop offset="1" stop-color="#F2A92E"/></linearGradient><g id="tix_ticket"><path d="M8 3 H56 Q61 3 61 8 V16 A6 6 0 0 0 61 28 V36 Q61 41 56 41 H8 Q3 41 3 36 V28 A6 6 0 0 0 3 16 V8 Q3 3 8 3 Z" fill="url(#gtix_ticket1)" stroke="#17405E" stroke-width="3.5" stroke-linejoin="round"/><path d="M18 9 V12 M18 15 V18 M18 21 V24 M18 27 V30 M18 33 V36" fill="none" stroke="#B97A1E" stroke-width="2.5" stroke-linecap="round"/><path d="M39 12 l3.2 6.6 7.2 1 -5.2 5 1.3 7.2 -6.5 -3.4 -6.5 3.4 1.3 -7.2 -5.2 -5 7.2 -1 Z" fill="#FFF8E1" stroke="#17405E" stroke-width="2" stroke-linejoin="round"/><path d="M8 8 Q9 6 12 6" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-opacity="0.8"/></g>
+<linearGradient id="gtix_ticket_blank1" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="61" y2="41"><stop offset="0" stop-color="#FFE07A"/><stop offset="1" stop-color="#F2A92E"/></linearGradient><g id="tix_ticket_blank"><path d="M8 3 H56 Q61 3 61 8 V16 A6 6 0 0 0 61 28 V36 Q61 41 56 41 H8 Q3 41 3 36 V28 A6 6 0 0 0 3 16 V8 Q3 3 8 3 Z" fill="url(#gtix_ticket_blank1)" stroke="#17405E" stroke-width="3.5" stroke-linejoin="round"/><path d="M8 8 Q9 6 12 6" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-opacity="0.8"/></g>
+</defs></svg>
+<span aria-hidden="true" style="position:absolute;opacity:0;font:600 14px 'IBM Plex Mono'">0</span><span aria-hidden="true" style="position:absolute;opacity:0;font:500 14px 'IBM Plex Mono'">0</span>
+<div class="doc">
+  <h1>TestTrack: the app bar on Circle</h1>
+  <p>The top of the Circle screen with today's bar and three calmer ones. Each has a light row and a dark row. The first phone in a row is the whole screen; the others are the top of it, for the cases the bar has to handle: a new account at 0 tix, a long balance, an update waiting, an update ready, signed out, and still loading.</p>
+  <p>The bar has no notification bell today, so the only dot it ever shows is the one on the update button. The options keep that dot and draw it in robot blue instead of gold.</p>
+  <p>What today's bar does, from <b>ui/TopHud.kt</b>:</p>
+  <ul>
+    <li>The level robot (LevelRobotBadge.kt): your level on a plaque, with exp to the next level drawn as a green line round it. It only does something when signed out, where it opens Sign in.</li>
+    <li>Two lines of text: "Level 7" and "120 exp to level 8". Signed out with a crew filling, they say "Crew 12 is filling" and "9 of 14 seats taken".</li>
+    <li>The update button when Play has one: download with a gold dot, a progress ring while it downloads, then a filled Restart pill that asks before restarting.</li>
+    <li>The tix balance: a raised navy pill with a gold ticket hanging off it. It rolls and hops when the balance changes. Tapping it does nothing.</li>
+    <li>Signed out: a Google Sign in pill in place of the balance.</li>
+  </ul>
+  <div class="ctl">Size
+    <button data-z=".5">S</button><button data-z=".6">M</button><button data-z=".8">L</button><button data-z="1">1:1</button>
+    <span class="sep"></span>Show
+    <button data-o="all">All</button><button data-o="today">Today</button><button data-o="A">A</button><button data-o="B">B</button><button data-o="C">C</button>
+    <span class="sep"></span>Cards under the new bars
+    <button data-c="0">As they are today</button><button data-c="1">Calmer</button>
+  </div>
+</div>
+<div id="root"></div>
+<script>
+const I = {
+  ticket:'<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
+  down:'<path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/>',
+  rotate:'<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
+  play:'<polygon points="6 3 20 12 6 21 6 3"/>',
+  flask:'<path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/>',
+  msg:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  grid:'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  chev:'<path d="m9 18 6-6-6-6"/>',
+};
+const ic = (k, cls='') => `<svg class="i ${cls}" viewBox="0 0 24 24">${I[k]}</svg>`;
+const G = `<svg viewBox="0 0 16 16"><path fill="#4285F4" d="M14.9 8.161c0-.476-.039-.954-.121-1.422h-6.64v2.695h3.802a3.24 3.24 0 0 1-1.407 2.127v1.75h2.269c1.332-1.22 2.097-3.02 2.097-5.15z"/><path fill="#34A853" d="M8.14 15c1.898 0 3.499-.62 4.665-1.69l-2.268-1.749c-.631.427-1.446.669-2.395.669-1.836 0-3.393-1.232-3.952-2.888H1.85v1.803A7.044 7.044 0 0 0 8.14 15z"/><path fill="#FBBC04" d="M4.187 9.342a4.17 4.17 0 0 1 0-2.68V4.859H1.849a6.97 6.97 0 0 0 0 6.286l2.338-1.803z"/><path fill="#EA4335" d="M8.14 3.77a3.837 3.837 0 0 1 2.7 1.05l2.01-1.999a6.786 6.786 0 0 0-4.71-1.82 7.042 7.042 0 0 0-6.29 3.858L4.186 6.66c.556-1.658 2.116-2.89 3.952-2.89z"/></svg>`;
+const MARK = (cls) => `<svg class="${cls}" viewBox="24 22 60 64"><use href="#ttmark"/></svg>`;
+const SB = `<div class="sb"><span>9:41</span><span class="ic">
+  <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx=".6"/><rect x="4" y="5" width="3" height="6" rx=".6"/><rect x="8" y="2.5" width="3" height="8.5" rx=".6"/><rect x="12" y="0" width="3" height="11" rx=".6"/></svg>
+  <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2.5" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="12" height="7" rx="1.4" fill="currentColor"/><rect x="19.6" y="3.5" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".5"/></svg>
+</span></div>`;
+const TICKET = `<svg viewBox="0 0 64 44"><use href="#tix_ticket"/></svg>`;
+const TICKET_BLANK = `<svg viewBox="0 0 64 44"><use href="#tix_ticket_blank"/></svg>`;
+
+/* ---------- the states every bar is shown in ---------- */
+const S = {
+  t120:   {in:true, level:7,  into:180,  next:300,  tix:120},
+  t0:     {in:true, level:1,  into:0,    next:100,  tix:0},
+  t12450: {in:true, level:24, into:2100, next:2600, tix:12450},
+  upd:    {in:true, level:7,  into:180,  next:300,  tix:120, update:'avail'},
+  dl:     {in:true, level:7,  into:180,  next:300,  tix:120, update:'dl'},
+  ready:  {in:true, level:7,  into:180,  next:300,  tix:120, update:'ready'},
+  out:    {in:false, crew:'Crew 12', taken:9, seats:14},
+  wait:   {in:true, loading:true},
+};
+const CELLS = [
+  ['Signed in, 120 tix', 't120', false],
+  ['New account, 0 tix', 't0', true],
+  ['Level 24, 12,450 tix', 't12450', true],
+  ['Update available (the dot)', 'upd', true],
+  ['Update ready', 'ready', true],
+  ['Signed out, a crew filling', 'out', true],
+  ['Signed in, still loading', 'wait', true],
+];
+const fmt = (n) => n.toLocaleString('en-US');
+const toGo = (s) => `${Math.max(0, s.next - s.into)} exp to level ${s.level + 1}`;
+
+/* ---------- today: the robot, as LevelRobotBadge.kt draws it ---------- */
+function robot(s) {
+  const lvl = s.in && !s.loading ? s.level : null;
+  const p = lvl ? Math.min(1, s.into / s.next) : 0;
+  const plaque = lvl
+    ? `<path d="M316 905 V844 A78 78 0 0 1 394 766 H860 A78 78 0 0 1 938 844 V966 A78 78 0 0 1 860 1044 H394 A78 78 0 0 1 316 966 V905" fill="none" style="stroke:var(--gbs)" stroke-width="19"/>
+       <path d="M316 905 V844 A78 78 0 0 1 394 766 H860 A78 78 0 0 1 938 844 V966 A78 78 0 0 1 860 1044 H394 A78 78 0 0 1 316 966 V905" fill="none" style="stroke:var(--ok)" stroke-width="19" stroke-linecap="round" pathLength="1" stroke-dasharray="${p} 1"/>
+       <text x="627" y="912" text-anchor="middle" dominant-baseline="central" style="fill:var(--ink);font:600 ${lvl < 100 ? 186 : 150}px Barlow">${lvl}</text>`
+    : `<path d="M651 833 H699 Q717 833 717 851 V959 Q717 977 699 977 H651 M537 905 H657 M609 857 L657 905 L609 953" fill="none" style="stroke:var(--accInk)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return `<svg class="robot" viewBox="0 0 880 980"><use href="#level_robot_body"/><use href="#level_robot_head"/><use href="#level_robot_eyes"/><use href="#level_robot_antenna"/>
+    <g transform="translate(-185 -110)"><path d="M392 752 H862 Q952 752 952 842 V968 Q952 1058 862 1058 H392 Q302 1058 302 968 V842 Q302 752 392 752 Z" style="fill:var(--badgeFill)"/>
+    <path d="M393 777 H861 Q927 777 927 843 V967 Q927 1033 861 1033 H393 Q327 1033 327 967 V843 Q327 777 393 777 Z" style="fill:var(--glass)"/>${plaque}</g>
+    <use href="#level_robot_hands"/></svg>`;
+}
+function barToday(s) {
+  let t1, t2, right = '';
+  if (s.in && !s.loading) { t1 = `Level ${s.level}`; t2 = toGo(s); }
+  else if (s.in) { t1 = 'TestTrack'; t2 = 'Signed in'; }
+  else { t1 = `${s.crew} is filling`; t2 = `${s.taken} of ${s.seats} seats taken`; }
+  if (s.update === 'avail') right += `<div class="rb0">${ic('down')}<i class="gd"></i></div><div style="width:2px"></div>`;
+  if (s.update === 'ready') right += `<div class="rs0">${ic('rotate')}<span>Restart</span></div><div style="width:6px"></div>`;
+  if (s.in && !s.loading) right += `<div class="tix0">${TICKET}<div class="pl">${s.tix}</div></div>`;
+  else if (!s.in) right += `<div class="si0">${G}<span>Sign in</span></div>`;
+  return `<div class="hud0">${robot(s)}<div class="tt"><div class="t1">${t1}</div><div class="t2">${t2}</div></div>${right}</div>`;
+}
+
+/* ---------- shared bits of the new bars ---------- */
+function updateBtn(s, ringed) {
+  if (s.update === 'avail') return `<div class="ib ${ringed ? 'ring' : ''}">${ic('down')}<i class="dot"></i></div>`;
+  if (s.update === 'dl') return `<div class="ib prog"></div>`;
+  if (s.update === 'ready') return `<div class="rs">${ic('rotate')}<span>Restart</span></div>`;
+  return '';
+}
+const signIn = `<div class="si">${G}<span>Sign in</span></div>`;
+function ring(p, size, stroke) {
+  const r = (size - stroke) / 2, c = size / 2;
+  return `<svg class="rg" viewBox="0 0 ${size} ${size}"><circle cx="${c}" cy="${c}" r="${r}" fill="none" style="stroke:var(--track)" stroke-width="${stroke}"/>
+    ${p > 0 ? `<circle cx="${c}" cy="${c}" r="${r}" fill="none" style="stroke:var(--robot)" stroke-width="${stroke}" stroke-linecap="round" pathLength="100" stroke-dasharray="${p * 100} 100" transform="rotate(-90 ${c} ${c})"/>` : ''}</svg>`;
+}
+const crewLines = (s) => `<div class="two"><div class="a">${s.crew} is filling</div><div class="b">${s.taken} of ${s.seats} seats taken</div></div>`;
+
+/* Option A: the name on the left, the balance as plain figures on the right. Level moves to You. */
+function barA(s) {
+  let left = s.in ? `${MARK('mk')}<div class="wm">TestTrack</div>` : `${MARK('mk')}${crewLines(s)}`;
+  let right = updateBtn(s, false);
+  if (s.in && s.loading) right += `<div class="tixq">${ic('ticket')}<span class="skb" style="width:44px;height:14px"></span></div>`;
+  else if (s.in) right += `<div class="tixq">${ic('ticket')}<span>${fmt(s.tix)}</span></div>`;
+  else right += signIn;
+  return `<div class="barA">${left}<div class="sp"></div>${right}</div>`;
+}
+/* Option B: today's layout made quiet. A thin ring with the level in it, two lines, the balance in a hairline pill. */
+function barB(s) {
+  let left;
+  if (s.in && s.loading) left = `<div class="lv">${ring(0, 36, 3)}</div><div class="two"><span class="skb" style="width:62px;height:13px"></span><span class="skb" style="width:112px;height:10px;margin-top:6px"></span></div>`;
+  else if (s.in) left = `<div class="lv">${ring(s.into / s.next, 36, 3)}<b>${s.level}</b></div><div class="two"><div class="a">Level ${s.level}</div><div class="b">${toGo(s)}</div></div>`;
+  else left = `${MARK('mk')}${crewLines(s)}`;
+  let right = updateBtn(s, true);
+  if (s.in && s.loading) right += `<div class="tixp">${ic('ticket')}<span class="skb" style="width:34px;height:12px"></span></div>`;
+  else if (s.in) right += `<div class="tixp">${ic('ticket')}<span>${fmt(s.tix)}</span></div>`;
+  else right += signIn;
+  return `<div class="barB">${left}<div class="sp"></div>${right}</div>`;
+}
+/* Option C: the mark alone on the left; level and tix in one account chip that opens a sheet. */
+function barC(s) {
+  let left = s.in ? MARK('mk') : `${MARK('mk2')}${crewLines(s)}`;
+  let right = updateBtn(s, false);
+  if (s.in && s.loading) right += `<div class="acc"><div class="h">${ring(0, 16, 2.25)}<span class="skb" style="width:46px;height:12px"></span></div><i class="div"></i><div class="h">${ic('ticket')}<span class="skb" style="width:30px;height:12px"></span></div></div>`;
+  else if (s.in) right += `<div class="acc"><div class="h">${ring(s.into / s.next, 16, 2.25)}<span class="lt">Level ${s.level}</span></div><i class="div"></i><div class="h">${ic('ticket')}<span class="mono">${fmt(s.tix)}</span></div></div>`;
+  else right += signIn;
+  return `<div class="barC">${left}<div class="sp"></div>${right}</div>`;
+}
+const sheetC = (s) => `<div class="scrim"></div><div class="sheet"><div class="handle"></div>
+  <div class="sh-t"><div class="st">Level ${s.level}</div><div class="sv">${s.into} of ${s.next} exp</div></div>
+  <div class="pbar"><i style="width:${Math.round(s.into / s.next * 100)}%"></i></div>
+  <p class="why">${s.next - s.into} more exp to reach level ${s.level + 1}. You get exp for opening crew apps and for reviews that are accepted.</p>
+  <div class="scard"><div class="r"><div class="tl">${ic('ticket')}</div><div class="h1">Tix</div><div class="v">${fmt(s.tix)}</div></div>
+  <div class="b">Spend tix to ask for feedback or to take a seat in a crew. You earn them by reviewing other people's apps.</div></div>
+  <div class="tb"><span>See your record</span>${ic('chev')}</div></div>`;
+
+/* ---------- Circle under the bar ---------- */
+function hue(name) { let h = 0; for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) | 0; return ((h % 360) + 360) % 360; }
+function appTile(name, theme) {
+  const h = hue(name);
+  const [bg, fg] = theme === 'dark' ? [`hsl(${h} 30% 18%)`, `hsl(${h} 55% 76%)`] : [`hsl(${h} 45% 89%)`, `hsl(${h} 50% 32%)`];
+  return `<div class="ap" style="background:${bg};color:${fg}">${name[0]}</div>`;
+}
+const POSTS = [
+  ['Pocket Budget', 'live', 'Written', 40],
+  ['Nightjar Alarm', 'closed', '', 25],
+  ['Sprout Notes', 'live', 'Detailed', 60],
+  ['Tide Tables', 'closed', 'Written', 30],
+  ['Bolt Timer', 'live', '', 20],
+  ['Lumen Reader', 'closed', '', 35],
+];
+function card(p, theme, calm) {
+  const [name, kind, fb, pay] = p;
+  const kp = kind === 'live' ? `<span class="pill live">${ic('play')}Live app</span>` : `<span class="pill closed">${ic('flask')}Closed test</span>`;
+  const fp = fb ? `<span class="pill fb">${fb}</span>` : '';
+  const rw = calm ? `<div class="qreward">${ic('ticket')}<span>${pay}</span></div>` : `<div class="reward">${TICKET_BLANK}<b>${pay}</b></div>`;
+  return `<div class="rq">${appTile(name, theme)}<div class="tx"><div class="nm">${name}</div><div class="pills">${kp}${fp}</div></div>${rw}</div>`;
+}
+function circle(theme, s, calm) {
+  const labels = s.in ? [['Feedback', 0], ['Activity', 0], ['My reviews', 0], ['To check', 2]] : [['Feedback', 0], ['Activity', 0]];
+  const tabs = labels.map(([l, n], k) => `<div class="wt ${k === 0 ? 'on' : ''}"><div class="l"><span>${l}</span>${n ? `<span class="cnt">${n}</span>` : ''}</div><u></u></div>`).join('');
+  return `<div class="tabs">${tabs}</div><div class="list"><div class="ask">Ask for feedback</div>${POSTS.map(p => card(p, theme, calm)).join('')}</div>`;
+}
+const DOCK = `<div class="dock"><div class="sel">${ic('msg')}<span>Circle</span></div><div class="dt">${ic('users')}</div><div class="dt">${ic('trophy')}</div><div class="dt">${ic('grid')}</div><div class="dt">${ic('user')}</div></div><div class="gbar"><i></i></div>`;
+
+function phone(theme, bar, s, { crop = false, calm = false, over = '' } = {}) {
+  return `<div class="phone t-${theme} ${crop ? 'crop' : ''} ${calm ? 'calm' : ''}">${SB}${bar(s)}${circle(theme, s, calm)}${crop ? '' : DOCK}${over}</div>`;
+}
+
+const SECTIONS = [
+  ['today', 'Today', 'Rebuilt from TopHud.kt, LevelRobotBadge.kt and UpdateChip.kt. The robot, two lines of text, and the navy tix pill with its gold ticket. The balance has no thousands separator, so 12,450 reads as 12450. Signed in but not loaded yet, the robot shows the sign-in arrow (badgeAlpha is 0 whenever the level is null).', barToday, false],
+  ['A', 'Option A: name and balance', 'The TestTrack mark and name on the left, the balance on the right as plain figures with a small ticket. No pill, no fill. Level leaves the bar for the You page. Tapping the balance opens You. The cleanest of the three, and the one that looks most like a fintech home screen.', barA, false],
+  ['B', 'Option B: level line', 'Today\'s layout, made quiet. The robot becomes a thin ring with the level number in it and exp as the ring\'s arc, the two lines stay, and the balance sits in a hairline pill. Every element stays where it is today, so nothing has to move to another screen.', barB, false],
+  ['C', 'Option C: mark and account chip', 'The mark alone on the left. Level and tix share one hairline chip on the right: a small ring with "Level 7", a divider, then the balance. Tapping the chip opens a short sheet with exp to the next level and what tix are for. The last phone shows that sheet.', barC, true],
+];
+
+const q = new URLSearchParams(location.search);
+const only = q.get('o') || 'all';
+const onlyT = q.get('t');
+let calm = q.get('c') === '1';
+function render() {
+  let html = '';
+  for (const [key, title, sub, bar, sheet] of SECTIONS) {
+    if (only !== 'all' && only !== key) continue;
+    html += `<section class="opt"><h2>${title}</h2><p class="sub">${sub}</p>`;
+    for (const t of ['light', 'dark']) {
+      if (onlyT && onlyT !== t) continue;
+      const c = key !== 'today' && calm;
+      html += `<div class="rowlbl">${t === 'light' ? 'Light' : 'Dark'}</div><div class="strip ${t}"><div class="zoomwrap">`;
+      for (const [cap, sk, crop] of CELLS) html += `<div class="cell"><div class="cap">${cap}</div>${phone(t, bar, S[sk], { crop, calm: c })}</div>`;
+      if (sheet) html += `<div class="cell"><div class="cap">Tapped the chip</div>${phone(t, bar, S.t120, { calm: c, over: sheetC(S.t120) })}</div>`;
+      html += `</div></div>`;
+    }
+    html += `</section>`;
+  }
+  document.getElementById('root').innerHTML = html;
+}
+render();
+if (q.get('bare')) document.querySelector('.doc').style.display = 'none';
+const z = q.get('z') || '.6';
+document.documentElement.style.setProperty('--z', z);
+document.querySelectorAll('.ctl button[data-z]').forEach(b => {
+  b.classList.toggle('on', b.dataset.z === z);
+  b.onclick = () => { document.documentElement.style.setProperty('--z', b.dataset.z); document.querySelectorAll('.ctl button[data-z]').forEach(x => x.classList.toggle('on', x === b)); };
+});
+document.querySelectorAll('.ctl button[data-o]').forEach(b => {
+  b.classList.toggle('on', b.dataset.o === only);
+  b.onclick = () => { const p = new URLSearchParams(location.search); p.set('o', b.dataset.o); location.search = p.toString(); };
+});
+const markC = () => document.querySelectorAll('.ctl button[data-c]').forEach(b => b.classList.toggle('on', (b.dataset.c === '1') === calm));
+markC();
+document.querySelectorAll('.ctl button[data-c]').forEach(b => { b.onclick = () => { calm = b.dataset.c === '1'; markC(); render(); }; });
+</script>
+</body>
+</html>
