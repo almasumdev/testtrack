@@ -44,6 +44,7 @@ body{background:#E4E8EB;color:#1D2A33;font-family:Barlow,system-ui,sans-serif;-w
   --robot:#32729B;--hair:#D3E0EA;--mute:#5E7484;
   --sk:#E4EEF4;--sk2:#F2F7FA;--gest:rgba(20,47,67,.35);--shadow:rgba(16,47,70,.18);
   --lvLine:#B7D1E2;--lvInk:#59758A;
+  --lacc:#1D5C82;--lsoft:rgba(50,114,155,.16);
 }
 .t-dark{
   --bg:#0F1011;--ink:#EFF7FC;--ink2:#BDD1DF;--ink3:#A1BDCF;--ink4:#7F9EB3;
@@ -58,6 +59,7 @@ body{background:#E4E8EB;color:#1D2A33;font-family:Barlow,system-ui,sans-serif;-w
   --robot:#8BCBF7;--hair:#33383D;--mute:#9AA7B1;
   --sk:#26292D;--sk2:#33383C;--gest:rgba(236,238,240,.35);--shadow:rgba(0,0,0,.5);
   --lvLine:#4A6B80;--lvInk:#A1BDCF;
+  --lacc:#8BCBF7;--lsoft:rgba(139,203,247,.12);
 }
 
 /* the phone */
@@ -115,9 +117,13 @@ svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-l
 .ib svg{width:20px;height:20px}
 .ib .dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--prim);box-shadow:0 0 0 2px var(--bg)}
 .ib.ready{color:var(--prim)}
-.tixq{display:flex;align-items:center;gap:6px;color:var(--ink);flex:none;height:48px;padding-left:6px}
-.tixq svg{width:17px;height:17px;color:var(--mute);stroke-width:1.9}
-.tixq span{font:600 16px 'IBM Plex Mono',monospace;letter-spacing:-.2px}
+/* the balance: a drawn ticket (notched ends, tear line, soft blue tint, tipped back 12 degrees) and the figure in Barlow SemiBold, in a 48 high touch area */
+.gap6{width:6px;flex:none}
+.tixq{display:flex;align-items:center;gap:7px;color:var(--ink);flex:none;height:48px;padding-left:6px}
+.tixq .tk{display:block;flex:none;overflow:visible;width:22px;height:22px;transform:rotate(-12deg)}
+.tixq .tk .f{fill:var(--lsoft);stroke:var(--lacc);stroke-width:1.6;stroke-linejoin:round}
+.tixq .tk .p{fill:none;stroke:var(--lacc);stroke-width:1.9;stroke-linecap:round}
+.tixq .fig{font:600 18px/1.2 Barlow;height:1.2em;font-variant-numeric:tabular-nums;font-feature-settings:"tnum";white-space:nowrap}
 .skb{display:block;border-radius:6px;background:linear-gradient(90deg,var(--sk) 0%,var(--sk2) 40%,var(--sk) 80%);background-size:300% 100%;animation:sh 1.4s linear infinite}
 @keyframes sh{from{background-position:100% 0}to{background-position:-200% 0}}
 .skp{animation:pulse 1.4s ease-in-out infinite}
@@ -277,6 +283,8 @@ const TICKET_BLANK = `<svg viewBox="0 0 64 44"><use href="#tix_ticket_blank"/></
 /* Material Symbols arrow_back_ios_new, the app's one back arrow (res/drawable/ic_arrow_back_ios_new) */
 const BACK = `<svg viewBox="0 -960 960 960"><path d="M400-80 0-480l400-400 71 71-329 329 329 329-71 71Z"/></svg>`;
 const fmt = (n) => n.toLocaleString('en-US');
+/* the balance ticket, drawn on a 24 grid: notched ends, tear line a third from the right (Option A in tix.html) */
+const TK = `<svg class="tk" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M4.5 4.5H19.5a2.5 2.5 0 0 1 2.5 2.5V9a3 3 0 0 0 0 6v2a2.5 2.5 0 0 1-2.5 2.5H4.5A2.5 2.5 0 0 1 2 17v-2a3 3 0 0 0 0-6V7a2.5 2.5 0 0 1 2.5-2.5Z"/><path class="p" d="M16 7.4v.4M16 11.8v.4M16 16.2v.4"/></svg>`;
 
 /* ================= 1. the app bar ================= */
 const S = {
@@ -329,8 +337,9 @@ function bar(s) {
   let right = '';
   if (s.update === 'avail') right += `<div class="ib" role="button" aria-label="Update available" title="Update available">${ic('down')}<i class="dot"></i></div>`;
   if (s.update === 'ready') right += `<div class="ib ready" role="button" aria-label="Restart to update" title="Restart to update">${ic('rotate')}</div>`;
-  if (s.in && s.loading) right += `<div class="tixq">${ic('ticket')}<span class="skb" style="width:40px;height:14px"></span></div>`;
-  else if (s.in) right += `<div class="tixq">${ic('ticket')}<span>${fmt(s.tix)}</span></div>`;
+  if (s.update) right += `<span class="gap6"></span>`;
+  if (s.in && s.loading) right += `<div class="tixq">${TK}<span class="skb" style="width:36px;height:14px"></span></div>`;
+  else if (s.in) right += `<div class="tixq" aria-label="${fmt(s.tix)} tix">${TK}<span class="fig">${fmt(s.tix)}</span></div>`;
   else right += `<div class="si0">${G}<span>Sign in</span></div>`;
   return `<div class="hud0">${robot(s)}<div class="tt">${leftLines(s)}</div>${right}</div>`;
 }
@@ -444,7 +453,7 @@ function render() {
   let html = '';
   if (only === 'all' || only === 'bar') {
     html += `<section class="opt"><h2>1. App bar</h2>
-      <p class="sub">On the left, the robot carries your level on its plaque, with the exp line running round it. Next to it: "Level 7" and how much exp is left to the next level. On the right sits a small ticket mark and your balance in plain figures, with thousands separators. When an update is out, a round download button with a small blue dot sits before the balance. Once it has downloaded, a blue restart button of the same size takes its place, with no words on it. Signed out, the bar says how full a crew is and offers Sign in. While your account loads, the plaque stays empty and the lines and balance shimmer.</p>`;
+      <p class="sub">On the left, the robot carries your level on its plaque, with the exp line running round it. Next to it: "Level 7" and how much exp is left to the next level. On the right sits your balance: a small drawn ticket with notched ends and a tear line, filled with a soft blue tint and tipped a little, then the figure in plain numbers with thousands separators. When an update is out, a round download button with a small blue dot sits before the balance. Once it has downloaded, a blue restart button of the same size takes its place, with no words on it. Signed out, the bar says how full a crew is and offers Sign in. While your account loads, the plaque stays empty, the lines shimmer, and the ticket waits with a shimmering bar where the figure goes.</p>`;
     for (const t of ['light', 'dark']) {
       html += `<div class="rowlbl">${t === 'light' ? 'Light' : 'Dark'}</div><div class="strip ${t}">`;
       const cell = ([cap, sk, crop]) => `<div class="cell"><div class="cap">${cap}</div><div class="pz">${phone(t, bar(S[sk]) + circle(t, S[sk]) + (crop ? '' : dock(0)), crop)}</div></div>`;

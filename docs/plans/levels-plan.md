@@ -238,14 +238,24 @@ fill, 1 dp `glassBorder` outline, 6 dp x 1 dp padding, after the name on the sam
 tiers, no icons. Hidden at level 1 (open, see B2). Screen reader: "Level 7".
 
 **App bar (decided).** Left side unchanged from today, right side Option A's balance:
-- Balance: `Lucide.Ticket` at about 17 dp in `Tt.colors.text3`, 6 dp gap, then the figure in
-  `titleSmall` with tabular figures (`fontFeatureSettings = "tnum"`), SemiBold, `Tt.colors.text`.
-  Thousands separators from the phone's locale. No pill, no fill, no outline, no gold. Touch area at
-  least 48 dp tall. It keeps today's two motions: the digits roll from the old figure to the new
-  one, and the change floats up and fades (green `ok` for earned, `text3` for spent). The ticket
-  hop and the digit swell go with the pill.
-- While signed-in data loads: the ticket and a skeleton bar about 44 x 14 dp in place of the figure
-  (skeletons, not spinners). The left side shows today's "TestTrack" / "Signed in" lines, and the
+- Balance (owner picked option A in `docs/design/levels/tix.html`, final in `levels.html`): a drawn
+  ticket, then the figure. No pill, no frame, no gold.
+  - Ticket: a `TicketMark` ImageVector built in code, 24 viewport, drawn at 22 dp, `rotate(-12f)`.
+    Outline path `M4.5 4.5H19.5a2.5 2.5 0 0 1 2.5 2.5V9a3 3 0 0 0 0 6v2a2.5 2.5 0 0 1-2.5 2.5H4.5A2.5 2.5 0 0 1 2 17v-2a3 3 0 0 0 0-6V7a2.5 2.5 0 0 1 2.5-2.5Z`,
+    fill `leafAccentSoft`, stroke `leafAccent` width 1.6, round joins. Tear dots
+    `M16 7.4v.4M16 11.8v.4M16 16.2v.4`, stroke `leafAccent` width 1.9, round caps.
+  - Row 48 dp tall, 6 dp start padding, ticket, 7 dp gap, figure. After the update button keep the
+    6 dp spacer.
+  - Figure: Barlow SemiBold 18 sp, `fontFeatureSettings = "tnum"`, `Tt.colors.text`, thousands
+    separators from the phone's locale.
+  - Motion stays: the count rolls (650 ms), the figure swells, the ticket keeps its hop and turn
+    (base rotation -12), and the change floats up and fades (green `ok` earned, `text3` spent).
+  - `R.drawable.tix_ticket` stays; `FeedRows.kt` and `ThemeCard.kt` still use it.
+- While signed-in data loads: the same ticket and `Skeleton(36.dp, 14.dp, corner 6.dp)` in place of
+  the figure (skeletons, not spinners).
+- Update button: available = `Lucide.CircleArrowDown` 20 dp in `text3` with an 8 dp `leafAccent`
+  dot and a 2 dp ring in the bar colour; ready = `Lucide.RotateCw` 20 dp in `leafAccent`, icon only,
+  label "Restart to update". Both 48 dp round touch targets, no fill. The left side shows today's "TestTrack" / "Signed in" lines, and the
   robot shows no sign-in arrow and is not tappable.
 - Signed out: exactly as today (robot with the sign-in arrow, crew-filling lines, the Google Sign in
   pill on the right).

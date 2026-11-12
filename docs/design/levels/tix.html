@@ -185,10 +185,10 @@ function frameD(n) {
 }
 
 const OPTS = [
-  {k:'A', name:'Drawn ticket, no frame',
+  {k:'A', name:'Drawn ticket, no frame', chosen:true,
    line:'A properly drawn ticket with notched ends and a tear line, filled with a soft blue tint and tilted a little, then the figure in Barlow SemiBold. The lightest change from today.',
    r:(v) => `<div class="tix oA">${tkOutline}${roll(v)}</div>`},
-  {k:'B', name:'Soft tinted capsule', rec:true,
+  {k:'B', name:'Soft tinted capsule',
    line:'A solid blue ticket and the figure inside a quiet capsule in the theme\'s soft blue wash. No border, no shadow. Reads as one finished thing that belongs to you.',
    r:(v) => `<div class="tix oB"><span class="pill">${tkSolid}${roll(v)}</span></div>`},
   {k:'C', name:'Figure first, with a unit',
@@ -231,7 +231,7 @@ function bar(o, c, theme) {
 
 let html = '';
 for (const o of OPTS) {
-  html += `<section class="opt" id="opt-${o.k}"><h2>Option ${o.k}. ${o.name}${o.rec ? '<span class="rec">RECOMMENDED</span>' : ''}</h2><p class="sub">${o.line}</p>`;
+  html += `<section class="opt" id="opt-${o.k}"><h2>Option ${o.k}. ${o.name}${o.chosen ? '<span class="rec">CHOSEN</span>' : ''}</h2><p class="sub">${o.line}</p>`;
   for (const t of ['light', 'dark']) {
     html += `<div class="strip ${t}"><div>${t === 'dark' ? '<div class="rowlbl">Dark</div>' : '<div class="rowlbl">Light</div>'}<div class="strip">`;
     html += CASES.map(c => `<div><div class="cap">${c.cap}</div>${bar(o, c, t)}</div>`).join('');
