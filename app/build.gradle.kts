@@ -44,6 +44,21 @@ fun secret(key: String): String {
     return value
 }
 
+/*
+ * The live API, and the dev one debug talks to when it is configured.
+ *
+ * `TESTTRACK_DEV_API_BASE` (env var first, then local.properties) is the dev server's API root. It
+ * is read quietly: unlike the secrets above, a blank value is a normal setup and means "use live".
+ * `-PprodApi` forces live even when the key is set, for the odd debug run that needs real data.
+ * The dev URL itself is never written into the repo.
+ */
+val liveApiBase = "https://testtrack.eazyverse.com/api/v1"
+val devApiBase: String =
+    (System.getenv("TESTTRACK_DEV_API_BASE") ?: localProperties.getProperty("TESTTRACK_DEV_API_BASE"))
+        ?.trim()
+        .orEmpty()
+val debugUsesDev = devApiBase.isNotEmpty() && !providers.gradleProperty("prodApi").isPresent
+
 android {
     namespace = "com.eazyverse.testtrack"
     compileSdk = 37
@@ -70,7 +85,7 @@ android {
          * Overridden per build type below. This default is the live one, so a build type that
          * forgets to set it talks to production rather than to nothing.
          */
-        buildConfigField("String", "API_BASE", "\"https://testtrack.eazyverse.com/api/v1\"")
+        buildConfigField("String", "API_BASE", "\"$liveApiBase\"")
     }
 
     /**
@@ -95,6 +110,8 @@ android {
 
     buildTypes {
         release {
+            // Always the live API, whatever local.properties says. Set here rather than inherited.
+            buildConfigField("String", "API_BASE", "\"$liveApiBase\"")
             manifestPlaceholders["crashlytics"] = "true"
             manifestPlaceholders["analytics"] = "true"
             isMinifyEnabled = true
@@ -122,19 +139,21 @@ android {
          */
         debug {
             applicationIdSuffix = ".debug"
-            // Said on the version line, so a screenshot of a debug build is never taken for a release.
-            versionNameSuffix = "-debug"
+            /*
+             * Said on the version line, so a screenshot of a debug build is never taken for a
+             * release, and so it says which server it is talking to: "-dev" is the dev server,
+             * "-debug-live" is a debug build on real data.
+             */
+            versionNameSuffix = if (debugUsesDev) "-dev" else "-debug-live"
 
             /*
-             * The same API, still over HTTPS. Pointing a debug build at a plain HTTP address
-             * on the LAN was the other option and it costs more than it looks: Android blocks
-             * cleartext by default, so it needs a network security exemption that then has to
-             * be kept out of release, and the address changes with the network.
+             * The dev server when TESTTRACK_DEV_API_BASE is set (still HTTPS, so no cleartext
+             * exemption is needed), the live API otherwise or with `-PprodApi`.
              *
-             * Set explicitly anyway rather than inherited, so that pointing debug somewhere
-             * else is one line here and touches nothing that ships.
+             * Set explicitly rather than inherited, so that pointing debug somewhere else touches
+             * nothing that ships.
              */
-            buildConfigField("String", "API_BASE", "\"https://testtrack.eazyverse.com/api/v1\"")
+            buildConfigField("String", "API_BASE", "\"${if (debugUsesDev) devApiBase else liveApiBase}\"")
 
             /*
              * Signed with the release key where there is one, and it is no longer load-bearing.

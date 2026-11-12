@@ -16,6 +16,10 @@ TESTTRACK_GATE_URL=https://script.google.com/macros/s/XXXXXXXX/exec
 # Public URL of the testers Google Group, used for the "open the group" shortcut.
 TESTTRACK_GROUP_URL=https://groups.google.com/g/your-group
 
+# Dev server API root for debug builds, e.g. https://your-dev-host/api/v1. Optional and never
+# committed. Blank (or `-PprodApi` on the gradle command) makes debug talk to the live API.
+TESTTRACK_DEV_API_BASE=
+
 # Release signing. Optional: omit and only debug builds are produced.
 # Google sign-in is bound to the signing certificate, so register this keystore's SHA-1 in the
 # Cloud console or release builds will fail to sign in.
