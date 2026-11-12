@@ -77,11 +77,9 @@ internal fun FeedRequestLoadingCard() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Column(Modifier.stubChip(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Skeleton(width = 20.dp, height = 20.dp, corner = 4.dp)
-                Spacer(Modifier.height(2.dp))
-                Skeleton(width = 24.dp, height = 14.dp, corner = 4.dp)
-            }
+            Skeleton(width = 16.dp, height = 16.dp, corner = 4.dp)
+            Spacer(Modifier.height(3.dp))
+            Skeleton(width = 24.dp, height = 14.dp, corner = 4.dp)
         }
     }
 }
