@@ -64,7 +64,7 @@ fun FeedCard(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(CardRadius))
-            .background(Tt.colors.glass)
+            .background(Tt.colors.bg)
             .border(
                 1.dp,
                 accent ?: Tt.colors.glassBorder,
@@ -141,8 +141,8 @@ private val RowNote = TextStyle(fontFamily = Barlow, fontSize = 12.5.sp, lineHei
  * The way in to posting, a row at the top of the list.
  *
  * Laid out like a request under it, an icon tile, two lines and a chevron, so it reads as the first
- * thing on the list rather than as a button. It has the same card fill and hairline as the
- * requests under it, so it sits on the page the same way in both themes.
+ * thing on the list rather than as a button. What sets it apart is the missing fill: an outline
+ * with nothing in it is the slot your own request goes into.
  *
  * The label and nothing else about cost. What it costs lives in the dialog the tap opens, which is
  * the last moment before anything is spent and so the only moment the number has to be true by.
@@ -158,7 +158,6 @@ fun FeedAskRow(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(t.card)
             .border(1.dp, t.cardLine, shape)
             .clickable(onClick = onPost)
             .padding(start = 10.dp, end = 12.dp, top = 9.dp, bottom = 9.dp),
@@ -203,8 +202,9 @@ fun FeedAskRow(
  * new action rather than as the one already offered at the top of the page: this is that control
  * following you down.
  *
- * Solid, with the same card fill and hairline as [FeedAskRow] at the top and the dock under it, so
- * the three are one surface. The label is in the accent ink the stubs use.
+ * Filled with the page colour, because it floats over the list and cannot be see-through, so it
+ * reads as the same unfilled box as [FeedAskRow] at the top and the dock under it, with the same
+ * hairline. The label is in the accent ink the stubs use.
  */
 @Composable
 fun FeedAskBar(onPost: () -> Unit) {
@@ -214,7 +214,7 @@ fun FeedAskBar(onPost: () -> Unit) {
             .padding(horizontal = Gutter)
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(Tt.colors.card)
+            .background(Tt.colors.bg)
             .border(1.dp, Tt.colors.cardLine, RoundedCornerShape(14.dp))
             .clickable(onClick = onPost)
             .padding(12.dp),
@@ -289,7 +289,7 @@ fun FeedRequestCard(
             .heightIn(min = 76.dp)
             .height(IntrinsicSize.Min)
             .clip(shape)
-            .background(t.card)
+            .background(t.bg)
             .border(1.dp, t.cardLine, shape)
             .then(if (post.mine) Modifier else Modifier.clickable(onClick = onReview)),
     ) {

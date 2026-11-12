@@ -108,7 +108,7 @@ fun MainBar(
                 .widthIn(max = 480.dp)
                 .fillMaxWidth()
                 .clip(shape)
-                .background(t.card)
+                .background(t.bg)
                 .border(1.dp, t.cardLine, shape)
                 .padding(4.dp),
         ) {
@@ -176,7 +176,7 @@ private fun CompactBar(
                         .weight(1f)
                         .heightIn(min = 48.dp)
                         .clip(RoundedCornerShape(24.dp))
-                        .background(if (tab == selected) t.leafAccentSoft else t.card)
+                        .background(if (tab == selected) t.leafAccentSoft else t.bg)
                         .selectable(tab == selected, role = Role.Tab, onClick = { onSelect(tab) }),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -261,7 +261,7 @@ private fun TabIcon(
                     .align(Alignment.TopEnd)
                     .offset(x = 10.dp, y = (-6).dp)
                     .clip(shape)
-                    .background(Tt.colors.card)
+                    .background(Tt.colors.bg)
                     .padding(1.5.dp)
                     .clip(shape)
                     .background(Tt.colors.primary)

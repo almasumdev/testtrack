@@ -51,7 +51,7 @@ internal fun FeedRequestLoadingCard() {
             .heightIn(min = 76.dp)
             .height(IntrinsicSize.Min)
             .clip(shape)
-            .background(t.card)
+            .background(t.bg)
             .border(1.dp, t.cardLine, shape),
     ) {
         Row(
