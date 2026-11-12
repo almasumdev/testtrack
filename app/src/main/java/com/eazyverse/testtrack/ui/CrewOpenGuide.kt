@@ -93,7 +93,7 @@ private fun GuideCard(
     padding: PaddingValues = PaddingValues(16.dp),
     content: @Composable () -> Unit,
 ) {
-    Box(Modifier.padding(start = Gutter, end = Gutter, top = 12.dp)) {
+    Box(Modifier.padding(start = Gutter, end = Gutter, top = 8.dp)) {
         CrewCard(padding = padding) { content() }
     }
 }
@@ -226,7 +226,7 @@ internal fun IconSquare(
         Modifier
             .size(size.dp)
             .clip(RoundedCornerShape((size / 3).dp))
-            .background(if (filled) tone.ink() else tone.soft()),
+            .background(if (filled) tone.ink() else Tt.colors.tile),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, null, Modifier.size((size / 2).dp), tint = if (filled) Tt.colors.inkOn(tone.ink()) else tone.ink())

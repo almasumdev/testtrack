@@ -165,19 +165,18 @@ private fun SheetOption(
     tone: Tone,
     onClick: (() -> Unit)?,
 ) {
-    val shape = RoundedCornerShape(18.dp)
+    val shape = RoundedCornerShape(14.dp)
     Row(
         Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Tt.colors.glass)
-            .border(1.dp, Tt.colors.glassBorder, shape)
+            .border(1.dp, Tt.colors.cardLine, shape)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)).background(tone.soft()), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)).background(Tt.colors.tile), contentAlignment = Alignment.Center) {
             Icon(Lucide.Flag, null, Modifier.size(17.dp), tint = tone.ink())
         }
         Column(Modifier.weight(1f)) {

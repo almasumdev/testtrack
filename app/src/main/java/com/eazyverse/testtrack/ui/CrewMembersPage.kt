@@ -1,37 +1,25 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Users
@@ -91,7 +79,7 @@ fun CrewMembersPage(
                                 "for Google to count the run.",
                         meter = {
                             val lit = Status.posted
-                            SegmentMeter(testers.size.coerceAtLeast(1)) { i -> if (i < opened) lit else Tt.colors.glass2 }
+                            SegmentMeter(testers.size.coerceAtLeast(1)) { i -> if (i < opened) lit else Tt.colors.track }
                             val notYet = testers.size - opened
                             MeterLabels(
                                 if (finished) "$opened every day, $out left" else "$opened opened, $notYet not yet, $out out",
@@ -102,14 +90,14 @@ fun CrewMembersPage(
                 }
             }
             item {
-                Box(Modifier.padding(horizontal = Gutter).padding(top = 10.dp)) {
+                Box(Modifier.padding(horizontal = Gutter).padding(top = 8.dp)) {
                     Secondary("See every night", Modifier.fillMaxWidth(), onClick = onEveryNight)
                 }
             }
             item { CrewHeading("Testers", "${others.size}") }
             itemsIndexed(others, key = { _, m -> m.id }) { index, member ->
-                Box(Modifier.padding(horizontal = Gutter).padding(bottom = if (index < others.size - 1) 3.dp else 0.dp)) {
-                    MemberRow(member, crew, placeOf(index, others.size)) { picture -> open = picture }
+                Box(Modifier.padding(horizontal = Gutter).padding(bottom = if (index < others.size - 1) 8.dp else 0.dp)) {
+                    MemberRow(member, crew) { picture -> open = picture }
                 }
             }
         }
@@ -122,7 +110,6 @@ fun CrewMembersPage(
 private fun MemberRow(
     member: CrewMember,
     crew: Crew,
-    place: TilePlace,
     onPicture: (NightPicture) -> Unit,
 ) {
     val finished = crew.phase == CrewPhase.RECORD
@@ -150,57 +137,32 @@ private fun MemberRow(
                 )
             else -> Triple("Not tonight yet, opened yours on $days ${plural(days, "day")}", "Not yet", Tone.QUIET)
         }
-    val t = Tt.colors
-    val shape = place.shape()
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .clip(shape)
-            .background(t.glass)
-            .border(1.dp, t.glassBorder, shape)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Initial(member.name.take(1).uppercase(), size = 38.dp)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                member.name,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                line,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
-                color = t.text3,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.width(8.dp))
-        // Tonight's picture takes the place of the Opened chip: it is the proof, not a word for it.
-        val picture = member.openedMinePicture
-        if (member.openedMineToday && picture.isNotBlank() && !finished) {
-            PictureThumb(picture, member.openedMineByHand, 40.dp) {
-                onPicture(
-                    NightPicture(
-                        picture,
-                        member.name,
-                        member.day,
-                        member.openedMineAt,
-                        0,
-                        member.openedMineByHand,
-                        crew.mine?.appName.orEmpty(),
-                    ),
-                )
+    // Tonight's picture takes the place of the Opened chip: it is the proof, not a word for it.
+    val picture = member.openedMinePicture
+    HairlineRow(
+        leading = { Initial(member.name.take(1).uppercase(), size = 52.dp, letterStyle = MaterialTheme.typography.titleMedium) },
+        title = member.name,
+        note = AnnotatedString(line),
+        trailing = {
+            if (member.openedMineToday && picture.isNotBlank() && !finished) {
+                PictureThumb(picture, member.openedMineByHand, 40.dp) {
+                    onPicture(
+                        NightPicture(
+                            picture,
+                            member.name,
+                            member.day,
+                            member.openedMineAt,
+                            0,
+                            member.openedMineByHand,
+                            crew.mine?.appName.orEmpty(),
+                        ),
+                    )
+                }
+            } else {
+                StatusChip(chip, tone)
             }
-        } else {
-            StatusChip(chip, tone)
-        }
-    }
+        },
+    )
 }
 
 private fun plural(

@@ -1,30 +1,24 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
@@ -32,6 +26,7 @@ import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
+import com.eazyverse.testtrack.ui.theme.Barlow
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -109,10 +104,10 @@ fun CrewRunTab(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
     ) {
-        item {
-            Column(Modifier.padding(horizontal = Gutter)) {
+        item("hero") {
+            Box(Modifier.padding(horizontal = Gutter)) {
                 CrewHero(
                     chip = if (finishedForMe) "Finished for you" else "Tonight, $crews",
                     tone =
@@ -152,7 +147,7 @@ fun CrewRunTab(
                     lineTone = if (left > 0 && risky.isNotEmpty()) Tone.WARN else null,
                     meter = {
                         val lit = if (left == 0) Status.posted else Tt.colors.accent
-                        SegmentMeter(total.coerceIn(1, 42)) { i -> if (i < done) lit else Tt.colors.glass2 }
+                        SegmentMeter(total.coerceIn(1, 42)) { i -> if (i < done) lit else Tt.colors.track }
                         MeterLabels("$done of $total opened", "$nightsLeft ${if (nightsLeft == 1) "night" else "nights"} to go")
                     },
                     extra = {
@@ -167,6 +162,10 @@ fun CrewRunTab(
                     action = if (ready > 0) "Open all $ready" else null,
                     onAction = { actions.onOpenAll(null) },
                 )
+            }
+        }
+        item("pictures") {
+            Box(Modifier.padding(horizontal = Gutter)) {
                 PicturesDueCard(going.flatMap { it.apps }, actions)
             }
         }
@@ -174,10 +173,8 @@ fun CrewRunTab(
         item { CrewHeading("Your runs", "${runs.size}") }
         itemsIndexed(runs, key = { _, crew -> crew.id }) { index, crew ->
             // Fades in, fades out and glides to its new place when the list changes.
-            Box(Modifier.animateItem()) {
-                ListTile(index, runs.size) {
-                    CrewListRow(crew) { onOpenCrew(crew.id) }
-                }
+            Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) {
+                CrewListRow(crew) { onOpenCrew(crew.id) }
             }
         }
     }
@@ -223,46 +220,44 @@ fun CrewLobbyTab(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(top = HeadedListTop, bottom = Gutter + dockRoom()),
     ) {
-        item { CrewHeading("Your crews", "${lobbies.size}", top = 8.dp) }
+        item { CrewHeading("Your crews", "${lobbies.size}", top = 0.dp) }
         itemsIndexed(lobbies, key = { _, crew -> crew.id }) { index, crew ->
             // Fades in, fades out and glides to its new place when the list changes.
-            Box(Modifier.animateItem()) {
-                ListTile(index, lobbies.size) {
-                    val mine = crew.mine
-                    val (chip, tone) =
+            Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) {
+                val mine = crew.mine
+                val (chip, tone) =
+                    when {
+                        crew.out -> "Sent back" to Tone.BAD
+                        mine?.state == SeatState.CHECKING -> "Checking" to Tone.WARN
+                        mine != null && mine.reports > 0 -> "${mine.reports} of ${CrewRules.REPORTS_TO_RETURN} reports" to Tone.WARN
+                        else -> "In" to Tone.OK
+                    }
+                CrewSummaryRow(
+                    mark = if (crew.filling) "${crew.filled}" else "${CrewRules.SEATS}",
+                    markTone =
+                        if (crew.out) {
+                            Tone.BAD
+                        } else if (crew.filling) {
+                            Tone.ACCENT
+                        } else {
+                            Tone.OK
+                        },
+                    title = crew.name,
+                    line =
                         when {
-                            crew.out -> "Sent back" to Tone.BAD
-                            mine?.state == SeatState.CHECKING -> "Checking" to Tone.WARN
-                            mine != null && mine.reports > 0 -> "${mine.reports} of ${CrewRules.REPORTS_TO_RETURN} reports" to Tone.WARN
-                            else -> "In" to Tone.OK
-                        }
-                    CrewSummaryRow(
-                        mark = if (crew.filling) "${crew.filled}" else "${CrewRules.SEATS}",
-                        markTone =
-                            if (crew.out) {
-                                Tone.BAD
-                            } else if (crew.filling) {
-                                Tone.ACCENT
-                            } else {
-                                Tone.OK
-                            },
-                        title = crew.name,
-                        line =
-                            when {
-                                crew.out -> "Sent your app back"
-                                crew.filling -> {
-                                    val more = CrewRules.SEATS - crew.filled
-                                    "${crew.filled} of ${CrewRules.SEATS} in, $more more to start"
-                                }
-                                else -> "Full, starts in ${untilStart(crew.startsIn)}"
-                            },
-                        chip = chip,
-                        chipTone = tone,
-                        onOpen = { onOpenCrew(crew.id) },
-                    )
-                }
+                            crew.out -> "Sent your app back"
+                            crew.filling -> {
+                                val more = CrewRules.SEATS - crew.filled
+                                "${crew.filled} of ${CrewRules.SEATS} in, $more more to start"
+                            }
+                            else -> "Full, starts in ${untilStart(crew.startsIn)}"
+                        },
+                    chip = chip,
+                    chipTone = tone,
+                    onOpen = { onOpenCrew(crew.id) },
+                )
             }
         }
         if (vm.sentBack.isNotEmpty() && vm.blocked == null) {
@@ -315,15 +310,13 @@ fun CrewRecordTab(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(top = HeadedListTop, bottom = Gutter + dockRoom()),
     ) {
-        item { CrewHeading("Finished", "${finished.size}") }
+        item { CrewHeading("Finished", "${finished.size}", top = 0.dp) }
         itemsIndexed(finished, key = { _, crew -> crew.id }) { index, crew ->
             // Fades in, fades out and glides to its new place when the list changes.
-            Box(Modifier.animateItem()) {
-                ListTile(index, finished.size) {
-                    CrewRecordRow(crew) { onOpenCrew(crew.id) }
-                }
+            Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) {
+                CrewRecordRow(crew) { onOpenCrew(crew.id) }
             }
         }
     }
@@ -395,34 +388,31 @@ private fun CrewSummaryRow(
     onOpen: () -> Unit,
     lineTone: Tone? = null,
 ) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .clickable(onClick = onOpen)
-            .padding(start = 12.dp, end = 6.dp, top = 8.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(markTone.soft()), contentAlignment = Alignment.Center) {
-            Text(mark, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = markTone.ink())
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                title,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                line,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
-                color = lineTone?.ink() ?: Tt.colors.text3,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.width(8.dp))
-        StatusChip(chip, chipTone)
-        Icon(Lucide.ChevronRight, null, Modifier.padding(start = 2.dp).size(18.dp), tint = Tt.colors.text4)
+    HairlineRow(
+        leading = { CrewMark(mark, markTone) },
+        title = title,
+        note = AnnotatedString(line),
+        noteTone = lineTone?.ink() ?: Tt.colors.text3,
+        onClick = onOpen,
+        trailing = {
+            StatusChip(chip, chipTone)
+            Icon(Lucide.ChevronRight, null, Modifier.padding(start = 2.dp).size(18.dp), tint = Tt.colors.text4)
+        },
+    )
+}
+
+/** The crew's number on a neutral tile; the tone lives in the number, not the tile. */
+@Composable
+private fun CrewMark(
+    mark: String,
+    markTone: Tone,
+) {
+    Box(Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(Tt.colors.tile), contentAlignment = Alignment.Center) {
+        Text(
+            mark,
+            style = TextStyle(fontFamily = Barlow, fontSize = 20.sp, lineHeight = 22.sp, fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.SemiBold,
+            color = markTone.ink(),
+        )
     }
 }

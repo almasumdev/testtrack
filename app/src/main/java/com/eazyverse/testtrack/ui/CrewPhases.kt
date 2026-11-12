@@ -51,7 +51,7 @@ private fun <T> LazyListScope.rows(
     id: (T) -> String,
     row: @Composable (T, TilePlace) -> Unit,
 ) = itemsIndexed(list, key = { _, it -> "$key-${id(it)}" }) { index, it ->
-    Box(Modifier.animateItem().padding(horizontal = Gutter).padding(bottom = if (index < list.size - 1) 3.dp else 0.dp)) {
+    Box(Modifier.animateItem().padding(horizontal = Gutter).padding(bottom = if (index < list.size - 1) 8.dp else 0.dp)) {
         row(it, placeOf(index, list.size))
     }
 }
@@ -359,7 +359,7 @@ private fun TestersCard(
                 } else {
                     Status.short
                 }
-            SegmentMeter(testers.coerceAtLeast(1)) { i -> if (i < opened) fill else Tt.colors.glass2 }
+            SegmentMeter(testers.coerceAtLeast(1)) { i -> if (i < opened) fill else Tt.colors.track }
             MeterLabels(if (finished) "${crew.finishedDays} days done" else "Their day ${crew.day}", "${CrewRules.FLOOR} keep it counting")
         },
         action = {

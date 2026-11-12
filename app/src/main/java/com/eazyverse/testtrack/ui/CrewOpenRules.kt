@@ -23,9 +23,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,18 +42,17 @@ import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
- * The Open tab's rules card: a soft band, four figures over its edge, a sample fortnight, where
+ * The Open tab's rules card: a heading, four figures, a sample fortnight, where
  * the seat's tix go, and three things worth knowing. Split from CrewOpenGuide.kt.
  */
 
 @Composable
 internal fun CrewRulesCard() {
-    // A soft band at the head, with the four figures sitting over its lower edge.
+    // The head of the card, then the four figures under it.
     Column(
         Modifier
             .fillMaxWidth()
-            .background(Brush.verticalGradient(listOf(Tt.colors.tile, Tt.colors.glass)))
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 44.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
     ) {
         Eyebrow(Lucide.Scale, "The rules")
         Text(
@@ -65,7 +63,7 @@ internal fun CrewRulesCard() {
         )
         Text("The same for all ${CrewRules.SEATS} apps in the crew.", style = MaterialTheme.typography.bodySmall, color = Tt.colors.text2)
     }
-    Column(Modifier.overlapUp(30).padding(start = 14.dp, end = 14.dp, bottom = 16.dp)) {
+    Column(Modifier.padding(start = 14.dp, end = 14.dp, bottom = 16.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Figure(Lucide.Armchair, Tone.ACCENT, "${CrewRules.SEAT_COST}", "tix", "A seat")
             Figure(Lucide.Star, Tone.OK, "+1", "point", "Every app you open")
@@ -107,14 +105,6 @@ internal fun CrewRulesCard() {
     }
 }
 
-/** Drawn [dp] higher and that much shorter, so the figures sit over the band without a gap below. */
-private fun Modifier.overlapUp(dp: Int) =
-    layout { measurable, constraints ->
-        val shift = dp.dp.roundToPx()
-        val placeable = measurable.measure(constraints)
-        layout(placeable.width, (placeable.height - shift).coerceAtLeast(0)) { placeable.place(0, -shift) }
-    }
-
 @Composable
 private fun RulesHeading(text: String) {
     Text(
@@ -135,13 +125,12 @@ private fun androidx.compose.foundation.layout.RowScope.Figure(
     unit: String,
     label: String,
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val shape = RoundedCornerShape(12.dp)
     Column(
         Modifier
             .weight(1f)
             .clip(shape)
-            .background(Tt.colors.field)
-            .border(1.dp, Tt.colors.glassBorder, shape)
+            .border(1.dp, Tt.colors.cardLine, shape)
             .padding(12.dp),
     ) {
         IconSquare(icon, tone, size = 30)
@@ -173,8 +162,8 @@ private fun DayStrip() {
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Tt.colors.glass2)
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, Tt.colors.cardLine, RoundedCornerShape(12.dp))
             .padding(12.dp),
     ) {
         (0 until 2).forEach { week ->
@@ -192,7 +181,7 @@ private fun DayStrip() {
                             .weight(1f)
                             .aspectRatio(1f)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(fill ?: Tt.colors.field)
+                            .background(fill ?: Color.Transparent)
                             .then(if (fill == null) Modifier.border(1.dp, Tt.colors.glassBorder, RoundedCornerShape(8.dp)) else Modifier),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -233,14 +222,13 @@ private fun androidx.compose.foundation.layout.RowScope.TixCard(
     title: String,
     lines: List<String>,
 ) {
-    val shape = RoundedCornerShape(14.dp)
+    val shape = RoundedCornerShape(12.dp)
     Column(
         Modifier
             .weight(1f)
             .fillMaxHeight()
             .clip(shape)
-            .background(Tt.colors.field)
-            .border(1.dp, Tt.colors.glassBorder, shape)
+            .border(1.dp, Tt.colors.cardLine, shape)
             .padding(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

@@ -31,7 +31,7 @@ fun CrewOpenTab(
     val crew = vm.open
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
     ) {
         // The rules below are the app's own and need nothing from the server; only the card waits.
         item {

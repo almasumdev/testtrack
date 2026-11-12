@@ -71,7 +71,7 @@ fun SeatMeter(
                         when {
                             filled -> MaterialTheme.colorScheme.primary
                             held -> MaterialTheme.colorScheme.primaryContainer
-                            else -> MaterialTheme.colorScheme.surfaceVariant
+                            else -> Tt.colors.track
                         },
                     ),
             )

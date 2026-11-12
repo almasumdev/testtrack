@@ -4,14 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -23,14 +18,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,7 +59,7 @@ internal fun RowPill(
         when (kind) {
             PillKind.SOLID -> Tt.colors.accent to Tt.colors.onAccent
             PillKind.SOFT -> Tt.colors.tile to Tt.colors.accentInk
-            PillKind.GHOST -> Tt.colors.glass to Tt.colors.accentInk
+            PillKind.GHOST -> Tt.colors.bg to Tt.colors.accentInk
             PillKind.OK -> Status.posted to Tt.colors.inkOn(Status.posted)
         }
     // 34 to look at, 48 to touch, the way an icon button is built.
@@ -120,8 +113,8 @@ private fun lateLine() =
 internal fun CrewPageRow(
     packageName: String,
     title: String,
-    line: androidx.compose.ui.text.AnnotatedString,
-    place: TilePlace,
+    line: AnnotatedString,
+    @Suppress("UNUSED_PARAMETER") place: TilePlace,
     onOpen: () -> Unit,
     /** Play's icon, drawn when the app is not on this phone. */
     icon: String = "",
@@ -131,46 +124,18 @@ internal fun CrewPageRow(
     mark: Int = 0,
     trailing: @Composable () -> Unit,
 ) {
-    val t = Tt.colors
-    val shape = place.shape()
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .clip(shape)
-            .background(t.glass)
-            .border(1.dp, t.glassBorder, shape)
-            .clickable(enabled = !out, onClick = onOpen)
-            .padding(start = 12.dp, end = if (out) 12.dp else 6.dp, top = 8.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(if (out) Modifier.alpha(0.5f) else Modifier) { AppMark(packageName, title, icon, size = 40.dp) }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    title,
-                    Modifier.weight(1f, fill = false),
-                    color = if (out) t.text3 else Color.Unspecified,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (mark > 0) QuietMark(mark)
-            }
-            Text(
-                line,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
-                color = t.text3,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.width(8.dp))
-        trailing()
-        if (!out) Icon(Lucide.ChevronRight, null, Modifier.padding(start = 2.dp).size(18.dp), tint = t.text4)
-    }
+    HairlineRow(
+        leading = { Box(if (out) Modifier.alpha(0.5f) else Modifier) { AppMark(packageName, title, icon, size = 52.dp) } },
+        title = title,
+        note = line,
+        titleTone = if (out) Tt.colors.text3 else Tt.colors.text,
+        titleMark = if (mark > 0) ({ QuietMark(mark) }) else null,
+        onClick = if (out) null else onOpen,
+        trailing = {
+            trailing()
+            if (!out) Icon(Lucide.ChevronRight, null, Modifier.padding(start = 2.dp).size(18.dp), tint = Tt.colors.text4)
+        },
+    )
 }
 
 /** The bare count after an app's name: quiet skips of it. Grey and small, and never explained. */

@@ -1,5 +1,7 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -10,18 +12,22 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * The crew tabs' first load, each in the shape of what is coming.
@@ -34,7 +40,7 @@ import androidx.compose.ui.unit.dp
 /** The open crew's card: its name, its fifteen seats, the line under them and the button. */
 @Composable
 fun CrewOpenCardLoading() {
-    Box(Modifier.padding(start = Gutter, end = Gutter, bottom = 12.dp)) {
+    Box(Modifier.padding(start = Gutter, end = Gutter)) {
         CrewCard(Modifier.loading("Loading the open crew"), padding = PaddingValues(16.dp)) {
             Text("Open crew", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
@@ -52,7 +58,7 @@ fun CrewOpenCardLoading() {
 fun CrewRunLoading() {
     LazyColumn(
         Modifier.fillMaxSize().loading("Loading tonight"),
-        contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
         userScrollEnabled = false,
     ) {
         item {
@@ -79,7 +85,9 @@ fun CrewRunLoading() {
             }
         }
         item { CrewHeading("Your runs") }
-        items(2) { index -> ListTile(index, 2) { CrewRowLoading(index) } }
+        items(2) { index ->
+            Box(Modifier.padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) { CrewRowLoading(index) }
+        }
     }
 }
 
@@ -87,7 +95,7 @@ fun CrewRunLoading() {
 @Composable
 fun CrewLobbyLoading() {
     Column(
-        Modifier.fillMaxSize().padding(top = 8.dp).loading("Loading your crews"),
+        Modifier.fillMaxSize().padding(top = 12.dp).loading("Loading your crews"),
     ) {
         Box(Modifier.padding(horizontal = Gutter)) {
             CrewCard(padding = PaddingValues(16.dp)) {
@@ -116,9 +124,11 @@ fun CrewLobbyLoading() {
 /** Finished: the heading, then rows of crews that are over. */
 @Composable
 fun CrewRecordLoading() {
-    Column(Modifier.fillMaxSize().padding(top = 8.dp).loading("Loading finished crews")) {
-        CrewHeading("Finished")
-        repeat(3) { index -> ListTile(index, 3) { CrewRowLoading(index) } }
+    Column(Modifier.fillMaxSize().padding(top = HeadedListTop).loading("Loading finished crews")) {
+        CrewHeading("Finished", top = 0.dp)
+        repeat(3) { index ->
+            Box(Modifier.padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) { CrewRowLoading(index) }
+        }
     }
 }
 
@@ -126,10 +136,16 @@ fun CrewRecordLoading() {
 @Composable
 private fun CrewRowLoading(index: Int) {
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 13.dp),
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 76.dp)
+            .clip(RoundedCornerShape(TileRadius))
+            .background(Tt.colors.bg)
+            .border(1.dp, Tt.colors.cardLine, RoundedCornerShape(TileRadius))
+            .padding(start = 12.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Skeleton(width = 40.dp, height = 40.dp, corner = 12.dp)
+        Skeleton(width = 52.dp, height = 52.dp, corner = 16.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Skeleton(width = if (index % 2 == 0) 110.dp else 88.dp, height = 14.dp)

@@ -77,7 +77,7 @@ fun CrewPicturesPage(
                 LazyColumn(
                     Modifier.fillMaxSize().padding(padding),
                     contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 8.dp, bottom = Gutter + dockRoom()),
-                    verticalArrangement = Arrangement.spacedBy(3.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     item {
                         Text(

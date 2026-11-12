@@ -36,7 +36,7 @@ internal fun PicturesDueCard(
     // Tonight's waiting to send, and any app with an older night's picture still on the phone.
     val sending = apps.filter { actions.sendingPicture(it) || actions.waitingPicture(it.id) }
     if (stuck.isEmpty() && sending.isEmpty()) return
-    Box(Modifier.padding(top = 10.dp)) {
+    Box(Modifier.padding(top = 8.dp)) {
         CrewCard {
             if (stuck.isNotEmpty()) Missing(stuck, actions)
             if (sending.isNotEmpty()) {

@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
@@ -127,7 +128,7 @@ internal fun DayMeter(
             i < from - 1 -> Tt.colors.glassBorderStrong
             i < day - 1 -> past
             i == day - 1 -> if (done) past else now
-            else -> Tt.colors.glass2
+            else -> Tt.colors.track
         }
     }
 }
@@ -189,7 +190,7 @@ internal fun CrewHero(
     }
 }
 
-/** Words members wrote, quoted, in a tinted block; who wrote them is never shown. */
+/** Words members wrote, quoted, in an edged block; who wrote them is never shown. */
 @Composable
 internal fun Quotes(
     lines: List<String>,
@@ -200,8 +201,8 @@ internal fun Quotes(
         Modifier
             .fillMaxWidth()
             .padding(top = 12.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(tone.soft())
+            .clip(RoundedCornerShape(10.dp))
+            .border(1.dp, tone.ink().copy(alpha = 0.42f), RoundedCornerShape(10.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -219,8 +220,8 @@ internal fun TintBox(
     Box(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Tt.colors.glass2)
+            .clip(RoundedCornerShape(10.dp))
+            .border(1.dp, Tt.colors.cardLine, RoundedCornerShape(10.dp))
             .padding(horizontal = 12.dp, vertical = 6.dp),
     ) { content() }
 }
@@ -244,10 +245,9 @@ internal fun StatTiles(vararg pairs: Pair<String, String>) {
         pairs.forEach { (value, label) ->
             Column(
                 Modifier
-                    .weight(
-                        1f,
-                    ).clip(RoundedCornerShape(14.dp))
-                    .background(Tt.colors.glass2)
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .border(1.dp, Tt.colors.cardLine, RoundedCornerShape(10.dp))
                     .padding(horizontal = 12.dp, vertical = 10.dp),
             ) {
                 Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -276,12 +276,18 @@ internal fun YourAppCard(
                 .PaddingValues(horizontal = 16.dp, vertical = 14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            AppMark(seat.packageName, seat.appName, seat.icon, size = 48.dp)
+            AppMark(seat.packageName, seat.appName, seat.icon, size = 52.dp)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(seat.appName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(
+                    seat.appName,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 19.sp),
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 Spacer(Modifier.height(2.dp))
-                Text(status, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text4)
+                Text(status, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text3)
             }
             Spacer(Modifier.width(10.dp))
             StatusChip(chip, tone)
@@ -306,8 +312,8 @@ internal fun MembersButton(
         Modifier
             .minimumInteractiveComponentSize()
             .clip(shape)
-            .background(Tt.colors.glass)
-            .border(1.dp, Tt.colors.glassBorder, shape)
+            .background(Tt.colors.bg)
+            .border(1.dp, Tt.colors.cardLine, shape)
             .clickableRole("$count members", onClick)
             .padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,

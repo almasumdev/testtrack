@@ -33,7 +33,7 @@ internal fun OwnerToolsCard(
     actions: CrewActions,
 ) {
     val blocked = actions.updateBlocked(mine)
-    Box(Modifier.padding(top = 10.dp)) {
+    Box(Modifier.padding(top = 8.dp)) {
         CrewCard {
             Text("Tell your crew", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(
@@ -84,7 +84,7 @@ internal fun PlayFeedbackCard(
     val owed = crew.apps.filter { !it.feedbackSent && !it.reported }
     if (owed.isEmpty()) return
     val late = owed.filter { it.feedbackLate }
-    Box(Modifier.padding(top = 10.dp)) {
+    Box(Modifier.padding(top = 8.dp)) {
         CrewCard {
             StatusChip(
                 if (late.isNotEmpty()) "${late.size} feedback late" else "${owed.size} feedback to send",
