@@ -2,5 +2,5 @@
 <!-- Generated from ui/theme/Tokens.kt. Do not edit. -->
 <resources>
     <color name="paper">#FF0F1011</color>
-    <color name="notification_accent">#FF32729B</color>
+    <color name="notification_accent">#FF3A7BA3</color>
 </resources>
