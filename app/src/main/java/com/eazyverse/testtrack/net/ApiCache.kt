@@ -1,15 +1,16 @@
 package com.eazyverse.testtrack.net
 
 import android.content.Context
+import com.eazyverse.testtrack.data.Connectivity
 import java.io.File
 
 /**
  * The last answer to each of the screens' main questions, kept on the phone.
  *
- * Without it every launch began from nothing: the profile, the board, your apps and the feed all
- * shimmered until the server had answered again, though nothing about them had changed since the
- * last time anybody looked. Now a screen opens on what it showed last time and the fresh answer
- * replaces it a moment later, the way the header already did with its own snapshot.
+ * It is the offline backup, and nothing more. While the phone has a connection a screen shimmers
+ * until the server answers, so it never shows an old list as if it were current. Without a
+ * connection, or when the request fails for want of one, the screen falls back to what it showed
+ * last time. See [online].
  *
  * Kept as the server's own JSON, one file per path, so there is no second format to keep in step:
  * an answer this build cannot read any more is simply not used. Written only by requests that
@@ -19,7 +20,19 @@ import java.io.File
 object ApiCache {
     @Volatile private var dir: File? = null
 
+    @Volatile private var app: Context? = null
+
+    /** A test's say-so about the connection, so a frame does not depend on the machine's. */
+    @Volatile internal var onlineForTest: Boolean? = null
+
+    /**
+     * Whether the phone has a working connection, as Android sees it. Not known yet counts as
+     * offline, so the kept copy is what shows.
+     */
+    fun online(): Boolean = onlineForTest ?: (app?.let(Connectivity::isOnline) == true)
+
     fun load(context: Context) {
+        app = context.applicationContext
         if (dir != null) return
         dir = File(context.applicationContext.filesDir, "api-last").apply { mkdirs() }
     }

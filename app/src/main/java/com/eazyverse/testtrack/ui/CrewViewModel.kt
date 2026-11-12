@@ -232,8 +232,10 @@ class CrewViewModel : ViewModel() {
             } catch (e: ApiError) {
                 message = e.message
                 offline = true
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 offline = true
+                // No connection and nothing shown yet: the kept crews stand in. Not for a server fault.
+                if (e is java.io.IOException && crews.isEmpty() && open == null) seedFromPhone(afterFailure = true)
             } finally {
                 loading = false
                 if (mine == loads) reloading = false
@@ -468,13 +470,17 @@ class CrewViewModel : ViewModel() {
             it.channel.startsWith("crew:") || it.type == "seat.mine" || it.type == "visit.recorded"
         }
 
-    // The kept crews, before the first frame. With none kept the tabs wait for the server rather
-    // than say "nothing running" from memory.
-    init {
-        Api.lastCrews()?.takeIf { it.mine.isNotEmpty() }?.let {
+    // The kept crews, only without a connection; online the tabs shimmer until the server answers.
+    // With none kept the tabs wait for the server rather than say "nothing running" from memory.
+    private fun seedFromPhone(afterFailure: Boolean = false) {
+        Api.lastCrews(afterFailure)?.takeIf { it.mine.isNotEmpty() }?.let {
             apply(it)
             loading = false
         }
+    }
+
+    init {
+        seedFromPhone()
     }
 
     /** Redraw when anything in your crews changes while showing; a burst of events is one fetch. */

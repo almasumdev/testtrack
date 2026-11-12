@@ -78,14 +78,19 @@ class RanksViewModel : ViewModel() {
 
     fun stopLive() = live.stop()
 
-    // The kept board, before the first frame. Only one with people on it: an empty one waits for
-    // the server, since "nobody yet" is a claim about now and could be wrong by the next frame.
-    init {
-        Api.lastBoard()?.takeIf { it.rows.isNotEmpty() }?.let {
+    // The kept board, only without a connection; online it shimmers until the server answers. Only
+    // one with people on it: an empty one waits for the server, since "nobody yet" is a claim about
+    // now and could be wrong by the next frame.
+    private fun seedFromPhone(afterFailure: Boolean = false) {
+        Api.lastBoard(afterFailure)?.takeIf { it.rows.isNotEmpty() }?.let {
             rows = it.rows
             mine = it.mine
             loading = false
         }
+    }
+
+    init {
+        seedFromPhone()
     }
 
     /**
@@ -111,8 +116,10 @@ class RanksViewModel : ViewModel() {
             } catch (_: ApiError) {
                 // A 401 here is no longer the ordinary signed-out case, so it is a real fault.
                 offline = true
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 offline = true
+                // No connection and nothing shown yet: the kept board stands in. Not for a server fault.
+                if (e is java.io.IOException && rows.isEmpty()) seedFromPhone(afterFailure = true)
             } finally {
                 loading = false
                 // Long enough for the arc to be a thing that happened rather than a flicker. Only
@@ -192,12 +199,16 @@ class MeViewModel : ViewModel() {
         }
     }
 
-    // The kept profile, before the first frame.
-    init {
-        Api.lastProfile()?.let {
+    // The kept profile, only without a connection; online it shimmers until the server answers.
+    private fun seedFromPhone(afterFailure: Boolean = false) {
+        Api.lastProfile(afterFailure)?.let {
             profile = it
             loading = false
         }
+    }
+
+    init {
+        seedFromPhone()
     }
 
     fun load(context: Context) {
@@ -212,8 +223,10 @@ class MeViewModel : ViewModel() {
                 offline = false
             } catch (e: ApiError) {
                 if (e.isAuth) signedOut = true else offline = true
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 offline = true
+                // No connection and nothing shown yet: the kept profile stands in. Not for a server fault.
+                if (e is java.io.IOException && profile == null) seedFromPhone(afterFailure = true)
             } finally {
                 loading = false
             }

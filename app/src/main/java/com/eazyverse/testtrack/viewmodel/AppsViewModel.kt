@@ -97,12 +97,17 @@ class AppsViewModel : ViewModel() {
     /** Loads overlap (news, a return to the tab, an action); only the latest started may land. */
     private var loads = 0
 
-    // Your kept apps, before the first frame; none kept waits for the server rather than say so.
-    init {
-        Api.lastApps()?.takeIf { it.apps.isNotEmpty() }?.let {
+    // Your kept apps, only without a connection; online the list shimmers until the server answers.
+    // None kept waits for the server rather than say so.
+    private fun seedFromPhone(afterFailure: Boolean = false) {
+        Api.lastApps(afterFailure)?.takeIf { it.apps.isNotEmpty() }?.let {
             apps = it.apps.map(ApiApp::toEntry)
             loading = false
         }
+    }
+
+    init {
+        seedFromPhone()
         // An app added, put in a crew or up for feedback on another screen: read again.
         viewModelScope.launch { MyAppsChanged.events.collect { context?.let(::load) } }
     }
@@ -130,8 +135,10 @@ class AppsViewModel : ViewModel() {
                 offline = false
             } catch (e: ApiError) {
                 if (e.isAuth) signedOut = true else offline = true
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 offline = true
+                // No connection and nothing shown yet: the kept apps stand in. Not for a server fault.
+                if (e is java.io.IOException && !answered && apps.isEmpty()) seedFromPhone(afterFailure = true)
             } finally {
                 loading = false
                 if (load == loads) reading = false

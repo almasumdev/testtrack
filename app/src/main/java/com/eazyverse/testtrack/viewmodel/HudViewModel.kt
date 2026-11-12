@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.eazyverse.testtrack.data.Connectivity
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
@@ -16,6 +17,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 /**
  * What the header shows, on every screen.
@@ -35,10 +37,11 @@ class HudViewModel(
     private val restored =
         run {
             ApiSession.load(application)
-            ApiSession.cachedHeader(account())
+            // Only without a connection; online the header shimmers until the server answers.
+            ApiSession.cachedHeader(account()).takeIf { !Connectivity.isOnline(application) }
         }
 
-    /** Restored synchronously before the first frame, then refreshed from the server. */
+    /** Restored synchronously before the first frame when offline, else filled by the server. */
     var level by mutableStateOf<Int?>(restored?.level)
         private set
 
@@ -143,8 +146,18 @@ class HudViewModel(
                     tix = me.tix
                 } catch (error: CancellationException) {
                     throw error
+                } catch (e: IOException) {
+                    // No connection and nothing shown yet: the kept header stands in. Auth is a separate state.
+                    if (level == null) {
+                        ApiSession.cachedHeader(account())?.let {
+                            level = it.level
+                            intoLevel = it.intoLevel
+                            forNext = it.forNext
+                            tix = it.tix
+                        }
+                    }
                 } catch (_: Exception) {
-                    // Keep cached profile data during a network failure; auth is a separate state.
+                    // A server fault leaves the header as it was; auth is a separate state.
                 }
             }
     }

@@ -340,28 +340,27 @@ object Api {
 
     // ---------------------------------------------------------------- kept on the phone
 
-    // What each screen's main question returned last time, read back from the phone, or null when
-    // nothing is kept. A screen shows this while the fresh answer is on its way. See [ApiCache].
-    // Plain reads, not suspending: a view model takes them as it is made, so a screen's very first
-    // frame is already the kept answer rather than a placeholder for the moment a read takes. The
-    // files are a few kilobytes of JSON.
-    fun lastPosts(): PostPage? = last(POSTS)
+    // What each screen's main question returned last time, or null when nothing is kept. Only while
+    // offline: online a screen shimmers until the server answers. [afterFailure] reads it anyway,
+    // for a request that has just failed for want of a connection. See [ApiCache]. Plain reads, not
+    // suspending, so a view model's first frame can already hold it; the files are a few kilobytes.
+    fun lastPosts(afterFailure: Boolean = false): PostPage? = last(POSTS, afterFailure)
 
-    fun lastMyPosts(): List<ApiMyPost>? = last(MY_POSTS)
+    fun lastMyPosts(afterFailure: Boolean = false): List<ApiMyPost>? = last(MY_POSTS, afterFailure)
 
-    fun lastMyReviews(): List<ApiReview>? = last(MY_REVIEWS)
+    fun lastMyReviews(afterFailure: Boolean = false): List<ApiReview>? = last(MY_REVIEWS, afterFailure)
 
-    fun lastWaiting(): List<ApiReview>? = last(WAITING)
+    fun lastWaiting(afterFailure: Boolean = false): List<ApiReview>? = last(WAITING, afterFailure)
 
-    fun lastDisputes(): List<ApiDispute>? = last(DISPUTES)
+    fun lastDisputes(afterFailure: Boolean = false): List<ApiDispute>? = last(DISPUTES, afterFailure)
 
-    fun lastCrews(): CrewList? = last(CREWS)
+    fun lastCrews(afterFailure: Boolean = false): CrewList? = last(CREWS, afterFailure)
 
-    fun lastBoard(): ApiBoard? = last(BOARD)
+    fun lastBoard(afterFailure: Boolean = false): ApiBoard? = last(BOARD, afterFailure)
 
-    fun lastProfile(): ApiProfile? = last(PROFILE)
+    fun lastProfile(afterFailure: Boolean = false): ApiProfile? = last(PROFILE, afterFailure)
 
-    fun lastApps(): AppsOut? = last(APPS)
+    fun lastApps(afterFailure: Boolean = false): AppsOut? = last(APPS, afterFailure)
 
     private const val POSTS = "/feed/posts"
     private const val MY_POSTS = "/feed/posts/mine"
@@ -385,10 +384,15 @@ object Api {
         return json.decodeFromString<T>(text)
     }
 
-    /** What [kept] last stored for [path], or null if there is none or it no longer reads. */
+    /** What [kept] last stored for [path], or null if none, unreadable, or online and not [afterFailure]. */
     @PublishedApi
-    internal inline fun <reified T> last(path: String): T? =
-        ApiCache.read(path)?.let { runCatching { json.decodeFromString<T>(it) }.getOrNull() }
+    internal inline fun <reified T> last(
+        path: String,
+        afterFailure: Boolean,
+    ): T? {
+        if (!afterFailure && ApiCache.online()) return null
+        return ApiCache.read(path)?.let { runCatching { json.decodeFromString<T>(it) }.getOrNull() }
+    }
 
     // ---------------------------------------------------------------- plumbing
 

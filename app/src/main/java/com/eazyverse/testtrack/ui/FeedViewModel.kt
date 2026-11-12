@@ -158,23 +158,26 @@ class FeedViewModel : ViewModel() {
     private var paging = false
 
     /**
-     * What every tab showed last time, from the phone, so Circle opens on it rather than on
-     * placeholders. The account's own parts only while somebody is signed in; they are wiped with
-     * the session anyway.
+     * What every tab showed last time, from the phone, but only without a connection: online, Circle
+     * shimmers until the server answers instead of opening on an old list. [afterFailure] is for a
+     * fetch that has just failed for want of one. Only fills what is still empty, never replaces
+     * an answer that has arrived.
      */
-    private fun seedFromPhone() {
+    private fun seedFromPhone(afterFailure: Boolean = false) {
         // Kept requests show at once. None kept means the tab waits for the server, so it never
         // says "nobody's asking" from memory and then has a card arrive under the words.
-        Api.lastPosts()?.takeIf { it.posts.isNotEmpty() }?.let {
-            posts = it.posts
-            cursor = it.nextCursor
-            loading = false
+        if (posts.isEmpty()) {
+            Api.lastPosts(afterFailure)?.takeIf { it.posts.isNotEmpty() }?.let {
+                posts = it.posts
+                cursor = it.nextCursor
+                loading = false
+            }
         }
         if (!ApiSession.signedIn) return
-        Api.lastMyReviews()?.let { mine = it.map(::myReview) }
-        Api.lastWaiting()?.let { waiting = it.map(::waitingOf) }
-        Api.lastDisputes()?.let { disputes = it.map(::caseOf) }
-        Api.lastMyPosts()?.let { requests = it.map(::requestOf) }
+        if (mine.isEmpty()) Api.lastMyReviews(afterFailure)?.let { mine = it.map(::myReview) }
+        if (waiting.isEmpty()) Api.lastWaiting(afterFailure)?.let { waiting = it.map(::waitingOf) }
+        if (disputes.isEmpty()) Api.lastDisputes(afterFailure)?.let { disputes = it.map(::caseOf) }
+        if (requests.isEmpty()) Api.lastMyPosts(afterFailure)?.let { requests = it.map(::requestOf) }
     }
 
     init {
@@ -222,8 +225,10 @@ class FeedViewModel : ViewModel() {
             } catch (e: ApiError) {
                 message = e.message
                 if (e.isAuth) signedOut = true else offline = true
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 offline = true
+                // No connection on the very first fetch: the kept copy stands in. Not for a server fault.
+                if (e is java.io.IOException && !answered) seedFromPhone(afterFailure = true)
             } finally {
                 loading = false
                 answered = true
@@ -353,8 +358,9 @@ class FeedViewModel : ViewModel() {
             if (e.isAuth) throw e
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
-        } catch (_: Exception) {
-            // Kept as it was; the next load tries again.
+        } catch (e: Exception) {
+            // Kept as it was; the next load tries again. With no connection on the first load, the kept copy.
+            if (e is java.io.IOException && !answered) seedFromPhone(afterFailure = true)
         }
     }
 

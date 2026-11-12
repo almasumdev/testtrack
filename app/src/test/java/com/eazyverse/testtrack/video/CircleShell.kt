@@ -98,7 +98,7 @@ internal fun TabShell(
  * Circle's model, opened on the three posts.
  *
  * Through the app's own route: the posts are kept on the phone the way a finished load keeps
- * them, and the model opens on what is kept, as it does on every launch. Its reload then fails
+ * them, and the model opens on what is kept, as it does on a launch without a connection. Its reload then fails
  * offline (see [NoNetwork]) and leaves them standing, which is what an offline phone shows too.
  */
 internal fun feedWith(
@@ -107,6 +107,8 @@ internal fun feedWith(
 ): FeedViewModel {
     ApiSession.load(context)
     ApiCache.load(context)
+    // Offline, which is when the kept copy shows (online, the model waits for the server).
+    ApiCache.onlineForTest = false
     ApiCache.write("/feed/posts", Json.encodeToString(PostPage(posts = posts)), ApiSession.generation)
     assertEquals("kept posts", posts, Api.lastPosts()?.posts)
     return FeedViewModel()
