@@ -258,7 +258,7 @@ fun FeedScreen(
                                         }
                                     }
                                 }
-                                if (hold) items(7) { FeedRequestLoadingCard() }
+                                if (hold) items(SKELETON_ROWS) { FeedRequestLoadingCard() }
                                 items(if (hold) emptyList() else vm.openPosts, key = { it.id }) { post ->
                                     // Fades in, fades out and glides to its new place when the list changes.
                                     Box(Modifier.animateItem()) {

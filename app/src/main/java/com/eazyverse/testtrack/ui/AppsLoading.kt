@@ -2,6 +2,7 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,31 +20,36 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 /**
- * My apps before they have arrived: a page of tiles in the frame [AppCard] draws them, an icon and
- * two bars.
+ * My apps before they have arrived: the way in on top, as the list will have it, then a page of
+ * tiles in the frame [AppCard] draws them, an icon and two bars. [SKELETON_ROWS] of them, more than
+ * the screen holds, so the page does not end before the answer does.
  */
 @Composable
-internal fun AppsLoading() {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .padding(top = 12.dp)
-            .semantics(mergeDescendants = true) { contentDescription = "Loading your apps" },
-    ) {
-        repeat(CARDS) { i ->
-            Row(
-                Modifier
-                    .padding(horizontal = Gutter, vertical = 4.dp)
-                    .appTileFrame()
-                    .padding(AppTilePadding),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Skeleton(width = AppTileIcon, height = AppTileIcon, corner = AppTileIcon * 0.3f)
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Skeleton(width = RowNames[i % RowNames.size].dp, height = 14.dp)
-                    Spacer(Modifier.height(8.dp))
-                    Skeleton(width = RowLines[i % RowLines.size].dp, height = 11.dp)
+internal fun AppsLoading(onAdd: (() -> Unit)? = null) {
+    Column(Modifier.fillMaxSize().padding(top = 12.dp)) {
+        if (onAdd != null) AddAppRow(onAdd, Modifier.padding(horizontal = Gutter).padding(bottom = 8.dp))
+        LazyColumn(
+            Modifier
+                .fillMaxSize()
+                .semantics(mergeDescendants = true) { contentDescription = "Loading your apps" },
+            contentPadding = PaddingValues(bottom = Gutter + dockRoom()),
+            userScrollEnabled = false,
+        ) {
+            items(SKELETON_ROWS) { i ->
+                Row(
+                    Modifier
+                        .padding(horizontal = Gutter, vertical = 4.dp)
+                        .appTileFrame()
+                        .padding(AppTilePadding),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Skeleton(width = AppTileIcon, height = AppTileIcon, corner = AppTileIcon * 0.3f)
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Skeleton(width = RowNames[i % RowNames.size].dp, height = 14.dp)
+                        Spacer(Modifier.height(8.dp))
+                        Skeleton(width = RowLines[i % RowLines.size].dp, height = 11.dp)
+                    }
                 }
             }
         }
@@ -117,9 +125,6 @@ internal fun AppNotThere(
         )
     }
 }
-
-/** Enough cards to carry the page past the dock. */
-private const val CARDS = 5
 
 private val RowNames = listOf(118, 92, 136, 104, 84)
 private val RowLines = listOf(150, 126, 168, 112, 140)

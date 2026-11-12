@@ -48,7 +48,7 @@ internal fun AppPickerSheet(
     ) { close ->
         Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState())) {
             if (waiting) {
-                repeat(2) {
+                repeat(SKELETON_ROWS) {
                     Skeleton(height = 60.dp, corner = 16.dp)
                     Spacer(Modifier.height(3.dp))
                 }

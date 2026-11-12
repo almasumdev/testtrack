@@ -47,7 +47,7 @@ fun CrewMembersPage(
         topBar = { PageBar(crew?.let { "${it.name} members" } ?: "Members", onBack) },
     ) { padding ->
         if (crew == null) {
-            Box(Modifier.fillMaxSize().padding(padding)) { CrewLobbyLoading() }
+            Box(Modifier.fillMaxSize().padding(padding)) { CrewMembersLoading() }
             return@Scaffold
         }
         val finished = crew.phase == CrewPhase.RECORD

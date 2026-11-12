@@ -85,13 +85,13 @@ private const val SLOPE = 0.35f
 private const val SWEEP_MS = 1600L
 
 /**
- * How many rows a skeleton draws.
+ * How many rows a list skeleton draws, never fewer than ten.
  *
  * More than the screen holds on purpose. A list that stops halfway down has already answered the
  * question, and the answer it gives is "there are three of these", which is a thing nobody knows
  * yet.
  */
-const val SKELETON_ROWS = 8
+const val SKELETON_ROWS = 10
 
 private val Titles = listOf(118, 92, 140, 104, 126, 86, 132)
 

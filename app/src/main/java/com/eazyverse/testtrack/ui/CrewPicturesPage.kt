@@ -72,7 +72,7 @@ fun CrewPicturesPage(
         when {
             pictures == null && vm.failed != null ->
                 Box(Modifier.fillMaxSize().padding(padding)) { RobotOffline("The pictures didn't load", onRetry = { vm.load(crewId) }) }
-            pictures == null -> Box(Modifier.fillMaxSize().padding(padding)) { CrewLobbyLoading() }
+            pictures == null -> Box(Modifier.fillMaxSize().padding(padding)) { CrewMembersLoading() }
             else ->
                 LazyColumn(
                     Modifier.fillMaxSize().padding(padding),

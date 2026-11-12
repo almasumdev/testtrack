@@ -67,11 +67,11 @@ internal fun TicketLoadingList() {
         verticalArrangement = Arrangement.spacedBy(8.dp),
         userScrollEnabled = false,
     ) {
-        items(5) { FeedRequestLoadingCard() }
+        items(SKELETON_ROWS) { FeedRequestLoadingCard() }
     }
 }
 
-/** A Circle tab before its list has arrived: three placeholder cards where the first will land. */
+/** A Circle tab before its list has arrived: placeholder cards where the first will land. */
 @Composable
 internal fun FeedLoadingList() {
     LazyColumn(
@@ -80,6 +80,6 @@ internal fun FeedLoadingList() {
         verticalArrangement = Arrangement.spacedBy(12.dp),
         userScrollEnabled = false,
     ) {
-        items(3) { FeedLoadingCard() }
+        items(SKELETON_ROWS) { FeedLoadingCard() }
     }
 }

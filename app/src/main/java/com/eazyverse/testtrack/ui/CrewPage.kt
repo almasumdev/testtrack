@@ -94,7 +94,7 @@ fun CrewPage(
                         action = "Back",
                         onAction = onBack,
                     )
-                crew == null -> CrewLobbyLoading()
+                crew == null -> CrewCardLoading()
                 crew.phase == CrewPhase.LOBBY -> CrewLobbyPhase(crew, actions)
                 crew.phase == CrewPhase.RUN -> CrewRunPhase(crew, actions)
                 else -> CrewRecordPhase(crew, actions)

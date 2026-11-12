@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -79,7 +80,7 @@ internal fun PhoneAppSheet(
         SearchField(search, onSearch, placeholder = "Search by name or package")
         Spacer(Modifier.height(12.dp))
         when {
-            apps == null -> PhoneAppsLoading()
+            apps == null -> PhoneAppsLoading(Modifier.weight(1f))
             apps.isEmpty() ->
                 Text(
                     if (search.isBlank()) {
@@ -139,9 +140,9 @@ private fun PhoneAppRow(
 
 /** Rows in the shape the apps will take, while this phone is asked for them. */
 @Composable
-private fun PhoneAppsLoading() {
-    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        repeat(LOADING_ROWS) { i ->
+private fun PhoneAppsLoading(modifier: Modifier = Modifier) {
+    LazyColumn(modifier, verticalArrangement = Arrangement.spacedBy(3.dp), userScrollEnabled = false) {
+        items(LOADING_ROWS) { i ->
             val shape = placeOf(i, LOADING_ROWS).shape()
             Row(
                 Modifier
@@ -165,7 +166,7 @@ private fun PhoneAppsLoading() {
     }
 }
 
-private const val LOADING_ROWS = 7
+private const val LOADING_ROWS = SKELETON_ROWS
 private val NAMES = listOf(96, 128, 84, 112, 140, 90, 118)
 private val PACKAGES = listOf(170, 150, 186, 140, 160, 176, 132)
 

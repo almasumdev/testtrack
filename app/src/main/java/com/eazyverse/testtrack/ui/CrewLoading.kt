@@ -85,49 +85,85 @@ fun CrewRunLoading() {
             }
         }
         item { CrewHeading("Your runs") }
-        items(2) { index ->
+        items(SKELETON_ROWS) { index ->
             Box(Modifier.padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) { CrewRowLoading(index) }
         }
     }
 }
 
-/** Waiting to start: a crew card with its seats. */
+/** Waiting to start: the heading, then rows of crews that are filling, like [CrewRecordLoading]. */
 @Composable
-fun CrewLobbyLoading() {
-    Column(
-        Modifier.fillMaxSize().padding(top = 12.dp).loading("Loading your crews"),
-    ) {
-        Box(Modifier.padding(horizontal = Gutter)) {
-            CrewCard(padding = PaddingValues(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Skeleton(width = 16.dp, height = 16.dp, corner = 8.dp)
-                    Spacer(Modifier.width(8.dp))
-                    Skeleton(width = 190.dp, height = 17.dp)
-                }
-                Spacer(Modifier.height(10.dp))
-                Skeleton(height = 13.dp)
-                Spacer(Modifier.height(6.dp))
-                Skeleton(width = 180.dp, height = 13.dp)
-                Spacer(Modifier.height(16.dp))
-                SkeletonSeats()
-                Spacer(Modifier.height(16.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Skeleton(width = 120.dp, height = 14.dp)
-                    Spacer(Modifier.weight(1f))
-                    Skeleton(width = 56.dp, height = 22.dp, corner = 11.dp)
-                }
-            }
-        }
-    }
-}
+fun CrewLobbyLoading() = CrewRowsLoading("Loading your crews", "Your crews")
 
 /** Finished: the heading, then rows of crews that are over. */
 @Composable
-fun CrewRecordLoading() {
-    Column(Modifier.fillMaxSize().padding(top = HeadedListTop).loading("Loading finished crews")) {
-        CrewHeading("Finished", top = 0.dp)
-        repeat(3) { index ->
+fun CrewRecordLoading() = CrewRowsLoading("Loading finished crews", "Finished")
+
+/** A heading and [SKELETON_ROWS] crew rows, more than the screen holds. */
+@Composable
+private fun CrewRowsLoading(
+    what: String,
+    heading: String,
+) {
+    LazyColumn(
+        Modifier.fillMaxSize().loading(what),
+        contentPadding = PaddingValues(top = HeadedListTop, bottom = Gutter + dockRoom()),
+        userScrollEnabled = false,
+    ) {
+        item { CrewHeading(heading, top = 0.dp) }
+        items(SKELETON_ROWS) { index ->
             Box(Modifier.padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) { CrewRowLoading(index) }
+        }
+    }
+}
+
+/** One crew's page before it has arrived: a card with its seats. */
+@Composable
+fun CrewCardLoading() {
+    Column(
+        Modifier.fillMaxSize().padding(top = 12.dp).loading("Loading your crews"),
+    ) {
+        CrewCardSkeleton()
+    }
+}
+
+/** The members and pictures pages: the crew's card, then a heading and a row for each member. */
+@Composable
+fun CrewMembersLoading() {
+    LazyColumn(
+        Modifier.fillMaxSize().loading("Loading the members"),
+        contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
+        userScrollEnabled = false,
+    ) {
+        item { CrewCardSkeleton() }
+        item { CrewHeading("Members") }
+        items(SKELETON_ROWS) { index ->
+            Box(Modifier.padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) { CrewRowLoading(index) }
+        }
+    }
+}
+
+@Composable
+private fun CrewCardSkeleton() {
+    Box(Modifier.padding(horizontal = Gutter)) {
+        CrewCard(padding = PaddingValues(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Skeleton(width = 16.dp, height = 16.dp, corner = 8.dp)
+                Spacer(Modifier.width(8.dp))
+                Skeleton(width = 190.dp, height = 17.dp)
+            }
+            Spacer(Modifier.height(10.dp))
+            Skeleton(height = 13.dp)
+            Spacer(Modifier.height(6.dp))
+            Skeleton(width = 180.dp, height = 13.dp)
+            Spacer(Modifier.height(16.dp))
+            SkeletonSeats()
+            Spacer(Modifier.height(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Skeleton(width = 120.dp, height = 14.dp)
+                Spacer(Modifier.weight(1f))
+                Skeleton(width = 56.dp, height = 22.dp, corner = 11.dp)
+            }
         }
     }
 }

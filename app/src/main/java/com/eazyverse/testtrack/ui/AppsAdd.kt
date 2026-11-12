@@ -28,6 +28,15 @@ object MyAppsChanged {
     }
 }
 
+/** The way in at the top of My apps: Circle's ask row, in My apps' words. */
+@Composable
+internal fun AddAppRow(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    AskRow("Add an app", "From this phone or Play", onClick, modifier)
+}
+
 /** The way in on a list that already has apps: Circle's floating bar, with a plus ahead of the words. */
 @Composable
 internal fun AddAppBar(

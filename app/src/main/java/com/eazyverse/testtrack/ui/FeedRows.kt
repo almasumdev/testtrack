@@ -148,6 +148,19 @@ private val RowNote = TextStyle(fontFamily = Barlow, fontSize = 12.5.sp, lineHei
 fun FeedAskRow(
     modifier: Modifier = Modifier,
     onPost: () -> Unit,
+) = AskRow(POST_LABEL, "Get reviews of your own app", onPost, modifier)
+
+/**
+ * The row [FeedAskRow] is, for any list whose one action sits at the top of it: a plus tile, the
+ * [title], a grey [note] under it and a chevron, in an outline with nothing in it. Circle and My
+ * apps both draw their way in with it, so the two read as the same control.
+ */
+@Composable
+fun AskRow(
+    title: String,
+    note: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val t = Tt.colors
     val shape = RoundedCornerShape(14.dp)
@@ -156,7 +169,7 @@ fun FeedAskRow(
             .fillMaxWidth()
             .clip(shape)
             .border(1.dp, t.cardLine, shape)
-            .clickable(onClick = onPost)
+            .clickable(onClick = onClick)
             .padding(start = 10.dp, end = 12.dp, top = 9.dp, bottom = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -172,7 +185,7 @@ fun FeedAskRow(
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                POST_LABEL,
+                title,
                 style = RowTitle,
                 fontWeight = FontWeight.SemiBold,
                 color = t.text,
@@ -180,7 +193,7 @@ fun FeedAskRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                "Get reviews of your own app",
+                note,
                 style = RowNote,
                 color = t.text3,
                 maxLines = 1,
