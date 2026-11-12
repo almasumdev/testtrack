@@ -53,6 +53,13 @@ class MineBodyTest {
     }
 
     @Test
+    fun a_review_only_taken_is_listed_in_progress_at_the_install_step() {
+        open(listOf(review("a", "claimed", "Bluefy")))
+        compose.onNodeWithText("In progress").assertIsDisplayed()
+        compose.onNodeWithText("Install from Play").assertIsDisplayed()
+    }
+
+    @Test
     fun a_review_still_in_progress_can_be_picked_up_again() {
         var opened: String? = null
         open(listOf(review("a", "used", "Bluefy")), onOpen = { opened = it.id })

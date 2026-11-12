@@ -139,7 +139,6 @@ fun WaitingBody(
             item(key = "h-requests") {
                 CrewHeading(
                     "Your requests",
-                    "${requests.size}",
                     top = if (reviews.isEmpty() && disputes.isEmpty()) 0.dp else 20.dp,
                 )
             }

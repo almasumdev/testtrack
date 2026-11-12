@@ -94,7 +94,7 @@ fun CrewMembersPage(
                     Secondary("See every night", Modifier.fillMaxWidth(), onClick = onEveryNight)
                 }
             }
-            item { CrewHeading("Testers", "${others.size}") }
+            item { CrewHeading("Testers") }
             itemsIndexed(others, key = { _, m -> m.id }) { index, member ->
                 Box(Modifier.padding(horizontal = Gutter).padding(bottom = if (index < others.size - 1) 8.dp else 0.dp)) {
                     MemberRow(member, crew) { picture -> open = picture }

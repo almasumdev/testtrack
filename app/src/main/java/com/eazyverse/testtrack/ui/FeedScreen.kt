@@ -195,8 +195,8 @@ fun FeedScreen(
                             shownTabs.map {
                                 when (it) {
                                     FeedTab.WAITING -> owed
-                                    // Taken on and not yet sent: each one is the reader's own next step.
-                                    FeedTab.MINE -> vm.started.count { r -> r.state in InProgressStates }
+                                    // Taken on and not yet sent, claimed included: each one is the reader's own next step.
+                                    FeedTab.MINE -> vm.mine.count { r -> r.state in InProgressStates }
                                     else -> 0
                                 }
                             },
@@ -287,7 +287,7 @@ fun FeedScreen(
                             return@LoadSwap
                         }
                         MineBody(
-                            reviews = vm.started,
+                            reviews = vm.mine,
                             loading = vm.loading,
                             signedOut = vm.signedOut,
                             onSignIn = onSignIn,

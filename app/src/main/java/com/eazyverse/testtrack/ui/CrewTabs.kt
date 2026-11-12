@@ -170,7 +170,7 @@ fun CrewRunTab(
             }
         }
 
-        item { CrewHeading("Your runs", "${runs.size}") }
+        item { CrewHeading("Your runs") }
         itemsIndexed(runs, key = { _, crew -> crew.id }) { index, crew ->
             // Fades in, fades out and glides to its new place when the list changes.
             Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) {
@@ -222,7 +222,7 @@ fun CrewLobbyTab(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = HeadedListTop, bottom = Gutter + dockRoom()),
     ) {
-        item { CrewHeading("Your crews", "${lobbies.size}", top = 0.dp) }
+        item { CrewHeading("Your crews", top = 0.dp) }
         itemsIndexed(lobbies, key = { _, crew -> crew.id }) { index, crew ->
             // Fades in, fades out and glides to its new place when the list changes.
             Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) {
@@ -312,7 +312,7 @@ fun CrewRecordTab(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = HeadedListTop, bottom = Gutter + dockRoom()),
     ) {
-        item { CrewHeading("Finished", "${finished.size}", top = 0.dp) }
+        item { CrewHeading("Finished", top = 0.dp) }
         itemsIndexed(finished, key = { _, crew -> crew.id }) { index, crew ->
             // Fades in, fades out and glides to its new place when the list changes.
             Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) {

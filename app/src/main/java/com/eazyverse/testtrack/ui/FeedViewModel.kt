@@ -44,15 +44,12 @@ class FeedViewModel : ViewModel() {
     /**
      * The Feedback list: requests this account has not started, started meaning the app is
      * installed for it (step 1 done). Until then a request stays here, unchanged, whether or not
-     * Install was tapped; once installed it is in My reviews instead. One given up or run out is
-     * offered again.
+     * Install was tapped. One only taken is also in My reviews, which counts it as a step to do;
+     * once installed it leaves here for My reviews alone. One given up or run out is offered again.
      */
     val openPosts: List<ApiPost> get() = posts.filter { it.myState == null || it.myState in notStarted }
 
     private val notStarted = setOf("claimed", "abandoned", "expired")
-
-    /** My reviews: those started, the app installed for them. One only taken is still on the feed. */
-    val started: List<MyReview> get() = mine.filter { it.state != "claimed" }
 
     /**
      * The post to open one of my reviews through. The live one when it is still on the feed;
@@ -78,7 +75,11 @@ class FeedViewModel : ViewModel() {
                 createdAt = "",
             )
 
-    /** This account's own reviews, for the Mine tab. */
+    /**
+     * This account's own reviews, for the Mine tab, every one taken on, claimed included: a review
+     * taken and not yet installed is a step this account still owes, so it is listed and counted
+     * there as well as being offered on Feedback.
+     */
     var mine by mutableStateOf<List<MyReview>>(emptyList())
         private set
 

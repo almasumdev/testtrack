@@ -104,7 +104,7 @@ fun CrewLobbyPhase(
             rows("ask", asked, { it.id }) { seat, place -> AskedRow(seat, place, actions, onSheet) }
         }
         if (install.isNotEmpty()) {
-            item { CrewHeading("Install these", "${install.size}") }
+            item { CrewHeading("Install these") }
             rows("in", install, { it.id }) { seat, place -> InstallRow(seat, place, actions, onSheet) }
         }
     }
@@ -296,7 +296,7 @@ fun CrewRunPhase(
             rows("t", owed, { it.id }) { app, place -> TonightRow(app, seatOf(app), place, actions, onSheet) }
         }
         if (crew.optional.isNotEmpty()) {
-            item { CrewHeading("Optional tonight", "${crew.optional.size}") }
+            item { CrewHeading("Optional tonight") }
             item { OptionalNote() }
             rows("o", crew.optional, { it.id }) { app, place ->
                 if (app.done || app.reported) {
@@ -307,13 +307,13 @@ fun CrewRunPhase(
             }
         }
         if (settled.isNotEmpty()) {
-            item { CrewHeading("Done", "${settled.size}") }
+            item { CrewHeading("Done") }
             rows("d", settled, { it.id }) { app, place -> DoneRow(app, seatOf(app), place, actions, onSheet) }
         }
         // Taken out: nobody owes them; listed until uninstalled, so the reader knows which they were.
         val left = crew.left.filter { actions.isInstalled(it.packageName) }
         if (left.isNotEmpty()) {
-            item { CrewHeading("Left the run", "${left.size}") }
+            item { CrewHeading("Left the run") }
             item { LeftRunNote() }
             rows("l", left, { it.id }) { app, place -> LeftRow(app, seatOf(app), place, actions) }
         }

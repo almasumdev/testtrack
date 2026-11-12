@@ -127,7 +127,7 @@ fun AppsBody(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 4.dp, bottom = Gutter + dockRoom() + addRoom),
     ) {
-        item { CrewHeading("Your apps", trailing = "${apps.size}") }
+        item { CrewHeading("Your apps") }
         items(apps, key = { it.id }) { app ->
             // Fades in, fades out and glides to its new place when the list changes.
             Box(Modifier.animateItem()) {

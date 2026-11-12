@@ -104,7 +104,7 @@ fun MineBody(
         // The first heading sits where the other tabs' first card does; the gap above a heading
         // is for separating it from the section before, and the first has none.
         val first = listOf(going, pending, history).firstOrNull { it.isNotEmpty() }
-        section("In progress", going, onOpen, first === going)
+        section("In progress", going, onOpen, first === going, counted = true)
         // Every row opens its review: one in progress at its step, a sent one at its outcome.
         section("Waiting for the developer", pending, onOpen, first === pending)
         section("History", history, onOpen, first === history)
@@ -117,9 +117,11 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
     rows: List<MyReview>,
     onOpen: (MyReview) -> Unit,
     first: Boolean,
+    /** Only what the reader still has to do carries a count, the same number the tab and the bar badge add up. */
+    counted: Boolean = false,
 ) {
     if (rows.isEmpty()) return
-    item(key = "h-$title") { CrewHeading(title, "${rows.size}", top = if (first) 0.dp else 20.dp) }
+    item(key = "h-$title") { CrewHeading(title, if (counted) "${rows.size}" else null, top = if (first) 0.dp else 20.dp) }
     items(rows, key = { it.id }) { review ->
         // Fades in, fades out and glides to its new place when the list changes.
         Box(Modifier.animateItem()) {
