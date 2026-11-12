@@ -198,7 +198,7 @@ private fun MineWaiting(review: MyReview) {
     }
 }
 
-/** What the review pays, stamped on the stub for where it stands. */
+/** What the review pays, on the stub, tinted for where it stands. */
 @Composable
 private fun MineStub(review: MyReview) {
     val t = Tt.colors
@@ -210,7 +210,6 @@ private fun MineStub(review: MyReview) {
                 "Held, $reward tix",
                 color = t.warn,
                 fill = t.warnBg,
-                stamp = "Held",
             )
         "submitted" -> {
             // Sent here because Play showed no review box: it pays half.
@@ -218,8 +217,6 @@ private fun MineStub(review: MyReview) {
             TicketStubFigure(
                 "+$pays",
                 "Sent, $pays tix" + if (review.noBox) ", half pay" else "",
-                stamp = "Sent",
-                stampColor = t.accentInk,
                 word = if (review.noBox) "half pay" else null,
             )
         }
@@ -230,21 +227,19 @@ private fun MineStub(review: MyReview) {
                 color = t.ok,
                 fill = t.okBg,
                 tear = null,
-                stamp = "Paid",
             )
-        "rejected" -> MineVoid(reward, "Refused", t.bad)
-        "expired" -> MineVoid(reward, "Ran out", t.text4)
-        "abandoned" -> MineVoid(reward, "Given up", t.text4)
+        "rejected" -> MineVoid(reward, "Refused")
+        "expired" -> MineVoid(reward, "Ran out")
+        "abandoned" -> MineVoid(reward, "Given up")
         else -> TicketStubFigure("+$reward", "$reward tix to earn", word = "to earn")
     }
 }
 
-/** The stub of a review that never paid: stamped with why, the amount struck and quiet. */
+/** The stub of a review that never paid: the amount struck and quiet, the ticket faded. */
 @Composable
 private fun MineVoid(
     reward: Int,
     why: String,
-    stampTone: Color,
 ) {
     val t = Tt.colors
     TicketStubFigure(
@@ -253,7 +248,6 @@ private fun MineVoid(
         color = t.text4,
         struck = true,
         fill = t.bg,
-        stamp = why,
-        stampColor = stampTone,
+        markAlpha = 0.5f,
     )
 }
