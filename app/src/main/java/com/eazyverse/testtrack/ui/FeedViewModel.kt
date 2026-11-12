@@ -22,7 +22,6 @@ import com.eazyverse.testtrack.net.check
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import com.eazyverse.testtrack.viewmodel.PhoneChecks
 import com.eazyverse.testtrack.viewmodel.caseOf
-import com.eazyverse.testtrack.viewmodel.feedEventOf
 import com.eazyverse.testtrack.viewmodel.millis
 import com.eazyverse.testtrack.viewmodel.rejectWithPicture
 import com.eazyverse.testtrack.viewmodel.requestOf
@@ -121,14 +120,6 @@ class FeedViewModel : ViewModel() {
     var signedOut by mutableStateOf(false)
         private set
 
-    /** The Activity tab: what happened in the community lately, from the server. */
-    var events by mutableStateOf<List<FeedEvent>>(emptyList())
-        private set
-
-    /** The Activity tab's own load failed, whatever happened to the rest. */
-    var activityFailed by mutableStateOf(false)
-        private set
-
     fun show(next: FeedTab) {
         tab = next
     }
@@ -179,7 +170,6 @@ class FeedViewModel : ViewModel() {
             cursor = it.nextCursor
             loading = false
         }
-        Api.lastActivity()?.let { events = it.events.mapNotNull(::feedEventOf) }
         if (!ApiSession.signedIn) return
         Api.lastMyReviews()?.let { mine = it.map(::myReview) }
         Api.lastWaiting()?.let { waiting = it.map(::waitingOf) }
@@ -206,15 +196,6 @@ class FeedViewModel : ViewModel() {
                 cursor = page.next ?: page.nextCursor
                 shuffled = page.next != null || page.nextCursor == null
                 pagedPast = false
-                // Readable signed out too, like the posts. Its own failure is its own.
-                try {
-                    events = Api.activity().events.mapNotNull(::feedEventOf)
-                    activityFailed = false
-                } catch (e: kotlinx.coroutines.CancellationException) {
-                    throw e
-                } catch (_: Exception) {
-                    activityFailed = true
-                }
                 if (!named) {
                     tix = 0
                     mine = emptyList()

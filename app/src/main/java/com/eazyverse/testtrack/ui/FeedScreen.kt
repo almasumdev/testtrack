@@ -54,19 +54,18 @@ import kotlinx.serialization.json.Json
 /**
  * What each list adds above its first card.
  *
- * Half a gutter rather than a whole one, and the missing half is not missing: the header row keeps
+ * Half a gutter rather than a whole one, and the missing half is not missing: the tab row keeps
  * its own space below the pill, and the two together are the single gutter that shows on screen.
- * Both tabs use it, so switching between them does not move the first card.
+ * Every list here uses it, so switching tabs does not move the first card. Signed out there is no
+ * tab row, and the first card sits this far below the app bar.
  */
 private val ListTop = 12.dp
 
 /**
  * Circle: the community front page.
  *
- * Two halves under one heading rather than two places in the bar, because they answer the same
- * question at different speeds: Feedback is what somebody wants from you now, Activity is what the
- * group has done lately. Splitting them across the bottom nav would have made a five tab app a six
- * tab one, and made the quieter of the two into somewhere nobody goes.
+ * Feedback, your own reviews and what is waiting on you sit under one heading rather than as places
+ * in the bar, so the bottom nav stays at five tabs.
  *
  * Everything here runs against [FeedViewModel]'s in-memory list. See its own note for why that is
  * deliberate rather than unfinished.
@@ -92,10 +91,7 @@ fun FeedScreen(
     // New requests, reviews of yours and verdicts arrive while the tab is open.
     WhileShown(onShow = { vm.startLive(context) }, onHide = vm::stopLive)
 
-    // One per tab rather than one shared between them. A single state carries its scroll position
-    // across the switch, so Activity opened at whatever row Feedback happened to be resting on.
     val feedbackList = rememberLazyListState()
-    val activityList = rememberLazyListState()
 
     /**
      * The dashed button at the top of Feedback has scrolled off.
@@ -157,15 +153,14 @@ fun FeedScreen(
     }
 
     // Mine and Waiting are this account's own; signed out there is no account, so no tabs for them.
-    val shownTabs = if (vm.signedOut) listOf(FeedTab.FEEDBACK, FeedTab.ACTIVITY) else FeedTab.entries
+    val shownTabs = if (vm.signedOut) listOf(FeedTab.FEEDBACK) else FeedTab.entries
     val tab = if (vm.tab in shownTabs) vm.tab else FeedTab.FEEDBACK
 
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         // Scaffold's own slot rather than a Box over the list, so it is laid out above the list
-        // instead of across it. Only on Feedback: Activity is written by the app, and there is
-        // nothing to post to it.
+        // instead of across it. Only on Feedback, the one tab with something to post.
         //
         // Centred rather than at the end, which for something that fills the width is the only
         // position that means anything: the slot measures its content loosely, so the bar takes
@@ -191,20 +186,23 @@ fun FeedScreen(
                 // have to go looking for is not one. The tabs bring their own gutter and touch
                 // padding, so nothing wraps them.
                 val owed = vm.waiting.size + vm.disputes.size
-                SegmentedTabs(
-                    labels = shownTabs.map { it.label },
-                    selected = shownTabs.indexOf(tab),
-                    counts =
-                        shownTabs.map {
-                            when (it) {
-                                FeedTab.WAITING -> owed
-                                // Taken on and not yet sent: each one is the reader's own next step.
-                                FeedTab.MINE -> vm.started.count { r -> r.state in InProgressStates }
-                                else -> 0
-                            }
-                        },
-                    gap = 14,
-                ) { vm.show(shownTabs[it]) }
+                // Signed out there is only Feedback, and one lone segment is not a choice: no row.
+                if (shownTabs.size > 1) {
+                    SegmentedTabs(
+                        labels = shownTabs.map { it.label },
+                        selected = shownTabs.indexOf(tab),
+                        counts =
+                            shownTabs.map {
+                                when (it) {
+                                    FeedTab.WAITING -> owed
+                                    // Taken on and not yet sent: each one is the reader's own next step.
+                                    FeedTab.MINE -> vm.started.count { r -> r.state in InProgressStates }
+                                    else -> 0
+                                }
+                            },
+                        gap = 14,
+                    ) { vm.show(shownTabs[it]) }
+                }
                 PageMessage(vm.message, vm::clearMessage)
             }
         },
@@ -281,45 +279,6 @@ fun FeedScreen(
                         }
                     }
                 }
-
-                // The same gutter, the same edge and the same air between cards as Feedback.
-                // Nothing about this tab is a different kind of list, so nothing about it is
-                // measured differently: what tells the two apart is what is inside a card.
-                FeedTab.ACTIVITY ->
-                    LoadSwap(DebugLooks.holdLoading || (!vm.answered && vm.events.isEmpty())) { hold ->
-                        if (!hold && !vm.loading && vm.events.isEmpty()) {
-                            if (vm.offline || vm.activityFailed) {
-                                RobotOffline("Activity didn't load", onRetry = { vm.load(context) })
-                            } else {
-                                RobotState(
-                                    Prop.Popcorn,
-                                    "Nothing has happened yet",
-                                    "Crews starting and finishing, first apps, streaks and first reviews show up here.",
-                                )
-                            }
-                        } else {
-                            LazyColumn(
-                                Modifier.fillMaxSize(),
-                                state = if (hold) rememberLazyListState() else activityList,
-                                contentPadding =
-                                    PaddingValues(
-                                        start = Gutter,
-                                        top = ListTop,
-                                        end = Gutter,
-                                        bottom = Gutter + dockRoom(),
-                                    ),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                if (hold) items(4) { FeedLoadingCard(compact = true) }
-                                items(if (hold) emptyList() else vm.events, key = { it.id }) { event ->
-                                    // Fades in, fades out and glides to its new place when the list changes.
-                                    Box(Modifier.animateItem()) {
-                                        FeedEventCard(event)
-                                    }
-                                }
-                            }
-                        }
-                    }
 
                 FeedTab.MINE ->
                     LoadSwap(DebugLooks.holdLoading || (!vm.answered && vm.mine.isEmpty() && !vm.signedOut)) { waiting ->

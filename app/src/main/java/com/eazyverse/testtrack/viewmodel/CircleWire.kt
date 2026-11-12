@@ -5,11 +5,8 @@ import com.eazyverse.testtrack.domain.Evidence
 import com.eazyverse.testtrack.domain.InstallReport
 import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.RequestReview
-import com.eazyverse.testtrack.net.ApiActivityEvent
 import com.eazyverse.testtrack.net.ApiDispute
 import com.eazyverse.testtrack.net.ApiMyPost
-import com.eazyverse.testtrack.ui.FeedEvent
-import com.eazyverse.testtrack.ui.FeedEventKind
 import java.time.Instant
 
 /*
@@ -82,18 +79,3 @@ fun requestOf(it: ApiMyPost) =
 
 /** An ISO time from the server as epoch milliseconds, or null when absent or unreadable. */
 fun millis(iso: String?): Long? = iso?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() }
-
-/** One line of the activity feed, or null for a kind this build does not know. */
-internal fun feedEventOf(it: ApiActivityEvent): FeedEvent? {
-    val kind = FeedEventKind.of(it.kind) ?: return null
-    return FeedEvent(
-        id = it.id,
-        kind = kind,
-        headline = it.headline,
-        detail = it.detail,
-        happenedAt = millis(it.happenedAt) ?: return null,
-        faces = it.faces,
-        moreFaces = it.moreFaces,
-        tix = it.tix,
-    )
-}

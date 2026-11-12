@@ -3,7 +3,6 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -33,7 +32,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -43,16 +41,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
-import com.composables.icons.lucide.Flag
-import com.composables.icons.lucide.Flame
-import com.composables.icons.lucide.Gauge
-import com.composables.icons.lucide.HeartHandshake
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Megaphone
-import com.composables.icons.lucide.MessageSquareText
 import com.composables.icons.lucide.Plus
-import com.composables.icons.lucide.Rocket
-import com.composables.icons.lucide.UserPlus
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.theme.Barlow
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -70,7 +60,7 @@ import com.eazyverse.testtrack.ui.theme.Tt
 fun FeedCard(
     modifier: Modifier = Modifier,
     accent: Color? = null,
-    /** A post needs room to breathe; a one line event does not. Same edge either way. */
+    /** A post needs room to breathe. */
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
     /** A card that does one thing does it from anywhere on it, not only from its chip. */
     onClick: (() -> Unit)? = null,
@@ -353,126 +343,5 @@ fun FeedRequestCard(
             }
         }
         TicketStub(post.reward, post.mine)
-    }
-}
-
-/** The uppercase word at the top of a card saying which kind of post this is. */
-@Composable
-private fun KindLabel(
-    text: String,
-    icon: ImageVector,
-    tone: Color,
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, null, Modifier.size(13.dp), tint = tone)
-        Spacer(Modifier.width(5.dp))
-        Text(
-            text.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.8.sp,
-            color = tone,
-        )
-    }
-}
-
-/** Who was in it, without listing fourteen names nobody reads. */
-@Composable
-private fun FaceStack(
-    faces: List<String>,
-    more: Int,
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        faces.forEach {
-            Initial(it, size = 26.dp)
-            Spacer(Modifier.width(5.dp))
-        }
-        if (more > 0) {
-            Text(
-                "and $more more",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-/**
- * Something that happened, written by the app rather than by a person.
- *
- * The kind in small caps, the event, what it leaves out, and who it was. Four things, in that
- * order, because that is the order they are wanted in: the label says whether this is worth
- * reading, the headline is the thing itself, the detail is there if it was, and the faces are who
- * to recognise.
- *
- * The one change from how this started is the edge. Two of the eight kinds used to have the card
- * outlined in their own tone, and eight cards down a screen with two of them ringed in colour made
- * the rectangle the loudest thing on the page. The border is [ColorScheme.outlineVariant] on every
- * card here and on every card in Feedback, so both tabs are plainly one screen; the tone still
- * lands, on the glyph and the word at the top where it belongs.
- */
-@Composable
-fun FeedEventCard(event: FeedEvent) {
-    // Four tones for seven kinds, grouped by what sort of thing happened rather than one each:
-    // green for a fortnight ending well, amber for one person's own record, the muted tone for a
-    // cohort still on its way, and the accent for anything addressed to the reader now, which is
-    // a group opening, somebody arriving, and the one message a person actually wrote.
-    val tone =
-        when (event.kind) {
-            FeedEventKind.MILESTONE -> Status.posted
-            FeedEventKind.STARTED, FeedEventKind.JOINED, FeedEventKind.FIRST_REVIEW, FeedEventKind.ANNOUNCEMENT ->
-                MaterialTheme.colorScheme.primary
-            FeedEventKind.STREAK, FeedEventKind.HELPED -> Status.short
-            FeedEventKind.HALFWAY -> MaterialTheme.colorScheme.onSurfaceVariant
-        }
-    val icon =
-        when (event.kind) {
-            FeedEventKind.STARTED -> Lucide.Rocket
-            FeedEventKind.HALFWAY -> Lucide.Gauge
-            FeedEventKind.MILESTONE -> Lucide.Flag
-            FeedEventKind.FIRST_REVIEW -> Lucide.MessageSquareText
-            FeedEventKind.STREAK -> Lucide.Flame
-            FeedEventKind.JOINED -> Lucide.UserPlus
-            FeedEventKind.HELPED -> Lucide.HeartHandshake
-            FeedEventKind.ANNOUNCEMENT -> Lucide.Megaphone
-        }
-
-    FeedCard {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            KindLabel(event.kind.label, icon, tone)
-            Spacer(Modifier.weight(1f))
-            Text(
-                feedAge(event.happenedAt),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        Spacer(Modifier.height(10.dp))
-        Text(
-            event.headline,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            event.detail,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        if (event.faces.isNotEmpty() || event.tix > 0) {
-            Spacer(Modifier.height(12.dp))
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                FaceStack(event.faces, event.moreFaces)
-                if (event.tix > 0) {
-                    Pill("+${event.tix} tix", Status.short, Status.shortSoft)
-                }
-            }
-        }
     }
 }

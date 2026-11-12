@@ -10,7 +10,7 @@ deadlines, review state, eligibility and the tix ledger. The app reports Play in
 UsageStats; those reports and its installation hash are not hardware attestation. The server caps
 feedback usage by elapsed server time and bounds submitted durations.
 
-Public feed/activity, open crews and ranking are readable without an account. Personal apps,
+Public feed, open crews and ranking are readable without an account. Personal apps,
 profile, review evidence, crew detail and moderation require the appropriate authenticated identity.
 Guest screens ask for sign-in instead of describing an unqueried account as empty.
 
@@ -50,7 +50,7 @@ an immutable request ID while the form is unchanged. Replacing an already-upload
 leave a discarded user-owned Drive file; users can remove it from the TestTrack Proofs folder.
 
 The backend sweeper runs feedback/claim/dispute deadlines, crew reminders, missed days and closure.
-Those are implemented jobs, not missing features. Activity comes from stored events/records.
+Those are implemented jobs, not missing features.
 
 ## Crews and live updates
 

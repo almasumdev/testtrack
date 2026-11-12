@@ -97,8 +97,8 @@ able to keep every review for nothing, and the reviewer has already done the wor
 A rejection puts the tix on hold for both sides and sends it to three members who decide.
 
 - **Three jurors, majority wins, final.** None of them shares a crew or a device with either side.
-- **Jurors earn tix**, which is what makes anybody do it. It becomes a third thing to do in Circle
-  alongside Feedback and Activity.
+- **Jurors earn tix**, which is what makes anybody do it. It becomes a thing to do in Circle,
+  under the To check tab.
 - **Only somebody who has finished a crew may judge.** Fourteen days is a bar a fresh account
   cannot clear, which is what keeps an owner's alts off their own case.
 

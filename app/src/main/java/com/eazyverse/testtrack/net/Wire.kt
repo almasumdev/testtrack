@@ -136,24 +136,6 @@ data class ApiPost(
     @SerialName("needs_chars") val needsChars: Int = 0,
 )
 
-/** One thing that happened in the community, as the Activity tab shows it. */
-@Serializable
-data class ApiActivityEvent(
-    val id: String,
-    val kind: String,
-    val headline: String,
-    val detail: String = "",
-    @SerialName("happened_at") val happenedAt: String,
-    val faces: List<String> = emptyList(),
-    @SerialName("more_faces") val moreFaces: Int = 0,
-    val tix: Int = 0,
-)
-
-@Serializable
-data class ApiActivity(
-    val events: List<ApiActivityEvent> = emptyList(),
-)
-
 /** A review of one of the reader's own requests, as its owner sees it afterwards. */
 @Serializable
 data class ApiOwnerReview(

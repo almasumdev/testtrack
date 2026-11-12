@@ -173,9 +173,6 @@ object Api {
 
     suspend fun createPost(body: PostIn): ApiPost = post("/feed/posts", body)
 
-    /** What happened in the community over the last month, newest first. Readable signed out. */
-    suspend fun activity(): ApiActivity = kept(ACTIVITY)
-
     /** The reader's own requests, open or closed, each with every review it has had. */
     suspend fun myPosts(): List<ApiMyPost> = kept(MY_POSTS)
 
@@ -350,8 +347,6 @@ object Api {
     // files are a few kilobytes of JSON.
     fun lastPosts(): PostPage? = last(POSTS)
 
-    fun lastActivity(): ApiActivity? = last(ACTIVITY)
-
     fun lastMyPosts(): List<ApiMyPost>? = last(MY_POSTS)
 
     fun lastMyReviews(): List<ApiReview>? = last(MY_REVIEWS)
@@ -369,7 +364,6 @@ object Api {
     fun lastApps(): AppsOut? = last(APPS)
 
     private const val POSTS = "/feed/posts"
-    private const val ACTIVITY = "/feed/activity"
     private const val MY_POSTS = "/feed/posts/mine"
     private const val MY_REVIEWS = "/reviews/mine"
     private const val WAITING = "/reviews/waiting"

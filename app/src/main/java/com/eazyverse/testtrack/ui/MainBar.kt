@@ -8,7 +8,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,7 +35,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.RoundRect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -155,24 +153,6 @@ fun MainBar(
             }
         }
     }
-}
-
-/**
- * The ground fading in under the dock, so a card never meets the dock edge to edge.
- *
- * Clear at the top and solid from 40% down. Drawn under [MainBar] and takes no touches, so the
- * page behind it still scrolls and taps through it.
- */
-@Composable
-internal fun BoxScope.DockFade(dockHeight: Dp) {
-    val bg = Tt.colors.bg
-    Box(
-        Modifier
-            .align(Alignment.BottomCenter)
-            .fillMaxWidth()
-            .height(dockHeight + 40.dp)
-            .background(Brush.verticalGradient(0f to bg.copy(alpha = 0f), 0.4f to bg, 1f to bg)),
-    )
 }
 
 @Composable
