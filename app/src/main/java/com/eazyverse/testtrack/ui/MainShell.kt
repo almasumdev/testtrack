@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -397,6 +398,14 @@ fun MainShell(
                 }
             }
 
+            // Solid page colour from the pill's top to the screen bottom: no fade, shadow or line.
+            Box(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(dockHeight)
+                    .background(Tt.colors.bg),
+            )
             MainBar(
                 tab,
                 show,

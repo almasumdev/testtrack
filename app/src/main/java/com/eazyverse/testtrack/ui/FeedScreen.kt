@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -47,6 +49,7 @@ import coil.ImageLoader
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.eazyverse.testtrack.net.Api
+import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.proofSource
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -60,6 +63,9 @@ import kotlinx.serialization.json.Json
  * tab row, and the first card sits this far below the app bar.
  */
 private val ListTop = 12.dp
+
+/** The gap Material's Scaffold leaves under a floating button. */
+private val FabSpacing = 16.dp
 
 /**
  * Circle: the community front page.
@@ -172,7 +178,17 @@ fun FeedScreen(
                 enter = fadeIn() + slideInVertically { it },
                 exit = fadeOut() + slideOutVertically { it },
             ) {
-                Box(Modifier.padding(bottom = dockRoom())) { FeedAskBar(onAsk) }
+                // A band of the page colour behind the bar, from just above it down to the screen
+                // bottom, so no card shows in the gap between the bar and the dock. Scaffold lifts
+                // the slot by [FabSpacing] (16dp), so the column is pushed back down by the same
+                // amount and the bar keeps its place.
+                Column(
+                    Modifier
+                        .offset(y = FabSpacing)
+                        .fillMaxWidth()
+                        .background(Tt.colors.bg)
+                        .padding(top = 8.dp, bottom = dockRoom() + FabSpacing),
+                ) { FeedAskBar(onAsk) }
             }
         },
         // The tabs sit on the page rather than in a bar, with no title and no rule: the bottom bar
