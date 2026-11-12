@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TestTrack: a better blue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0}
+body{background:#E4E8EB;color:#1D2A33;font-family:Barlow,system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+*{box-sizing:border-box}
+.doc{padding:26px 32px 4px;max-width:1340px}
+.doc h1{font:700 26px Barlow;margin:0 0 6px}
+.doc p{font:400 15px/22px Barlow;margin:6px 0;color:#3C4A55;max-width:1000px}
+.ctl{display:flex;gap:6px;margin:12px 0 0;align-items:center;font:600 13px Barlow;color:#56636D;flex-wrap:wrap}
+.ctl button{font:600 13px Barlow;border:1px solid #B9C3CA;background:#fff;border-radius:16px;padding:5px 12px;cursor:pointer;color:#1D2A33}
+.ctl button.on{background:#1D2A33;color:#fff;border-color:#1D2A33}
+.grid{display:flex;flex-wrap:wrap;gap:28px 22px;padding:18px 32px 24px;align-items:flex-start}
+.col{flex:none;width:calc(360px * var(--z));min-width:0}
+.cap{margin:0 0 8px 2px;min-height:112px}
+.cap .nm{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:700 18px Barlow}
+.cap .feel{font:500 13.5px/19px Barlow;color:#3C4A55;margin-top:3px}
+.cap .hx{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin-top:5px}
+.hxl{font:600 12px Barlow;color:#56636D;width:34px}
+.hxi{display:inline-flex;align-items:center;gap:6px;font:500 12px 'IBM Plex Mono',monospace;color:#1D2A33;white-space:nowrap}
+.hxi i{width:14px;height:14px;border-radius:4px;box-shadow:0 0 0 1px rgba(0,0,0,.2);flex:none}
+.rec{font:700 11px Barlow;letter-spacing:.4px;text-transform:uppercase;background:#1D2A33;color:#fff;border-radius:12px;padding:3px 9px}
+.pz{zoom:var(--z)}
+.gap{height:14px}
+.tag{font:600 11px Barlow;letter-spacing:.5px;text-transform:uppercase;color:#56636D;margin:0 0 5px 2px}
+
+/* ---------------- the phone ---------------- */
+.phone{position:relative;width:360px;height:740px;border-radius:28px;overflow:hidden;background:var(--bg);color:var(--text);box-shadow:0 0 0 1px var(--frame)}
+.sb{height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font:600 13px Barlow;color:var(--text)}
+.sb .ic{display:flex;gap:6px;align-items:center}
+svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block;flex:none}
+.gbar{position:absolute;left:0;right:0;bottom:0;height:16px;display:flex;justify-content:center;align-items:center;z-index:5}
+.gbar i{width:108px;height:4px;border-radius:2px;background:var(--text);opacity:.35}
+.fig{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+.hud{display:flex;align-items:center;padding:10px 16px 6px}
+.robot{width:44px;height:50px;flex:none}
+.hud .t1{flex:1;margin-left:11px;font:600 14px/20px Barlow;color:var(--text)}
+.signin{display:flex;align-items:center;gap:8px;border:1px solid var(--glassBorder);border-radius:20px;padding:8px 14px 8px 11px;font:600 14px/18px Barlow;color:var(--text)}
+.signin svg{width:16px;height:16px}
+
+.seg{display:flex;margin:6px 16px 0;padding:3px;border:1px solid var(--cardLine);background:var(--card);border-radius:21px;gap:2px}
+.sg{flex:1 1 0;min-width:0;height:34px;border-radius:17px;display:flex;align-items:center;justify-content:center;gap:5px;font:500 14px Barlow;color:var(--text2);white-space:nowrap}
+.sg.on{background:var(--soft);color:var(--tabSelected);font-weight:600}
+.cnt{background:var(--tile);color:var(--tileInk);font:700 11px/16px Barlow;border-radius:8px;padding:0 5px}
+.sg.on .cnt{background:var(--cntOn)}
+
+.list{padding:12px 16px 0;display:flex;flex-direction:column;gap:8px}
+.askrow{display:flex;align-items:center;border:1px solid var(--cardLine);border-radius:14px;padding:9px 12px 9px 10px}
+.askrow .pl{width:40px;height:40px;border-radius:12px;background:var(--tile);color:var(--tileInk);display:flex;align-items:center;justify-content:center;flex:none}
+.askrow .mid{flex:1;min-width:0;margin-left:12px}
+.askrow .a{font:600 15px/20px Barlow;color:var(--text)}
+.askrow .b{font:400 12.5px/16px Barlow;color:var(--text3)}
+.askrow .chev{color:var(--text4)}
+
+.t{position:relative;height:76px;display:flex}
+.t > svg.shape{position:absolute;inset:0;overflow:visible}
+.t .body{position:relative;flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:12px 10px 12px 12px}
+.ap{width:52px;height:52px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center}
+.ap svg{width:26px;height:26px;stroke:#fff;stroke-width:2.2}
+.t .mid{flex:1;min-width:0}
+.t .nm{font:600 16px/19px Barlow;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t .ln{font:400 12.5px/14px Barlow;color:var(--text3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stub{position:relative;width:58px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.tk{display:block;width:16px;height:16px;transform:rotate(-12deg);overflow:visible}
+.tk .f{fill:var(--card);stroke:var(--leafAccent);stroke-width:1.6;stroke-linejoin:round}
+.tk .p{fill:none;stroke:var(--leafAccent);stroke-width:1.9;stroke-linecap:round}
+.stub .fig{font:600 18px/20px Barlow;color:var(--tabSelected);margin-top:3px}
+
+.fade{position:absolute;left:0;right:0;bottom:0;height:170px;background:linear-gradient(to bottom,transparent,var(--bg) 34%);z-index:1}
+.askbar{position:absolute;left:16px;right:16px;bottom:100px;height:48px;border-radius:14px;background:var(--bg);border:1px solid var(--cardLine);display:flex;align-items:center;justify-content:center;font:600 16px Barlow;color:var(--tabSelected);z-index:3}
+.dock{position:absolute;left:20px;right:20px;bottom:28px;height:58px;border-radius:29px;background:var(--bg);border:1px solid var(--cardLine);display:flex;align-items:center;padding:4px;z-index:3}
+.dock .sel{height:48px;border-radius:24px;background:var(--soft);color:var(--tabSelected);display:flex;align-items:center;justify-content:center;gap:8px;width:124px;font:600 14px Barlow;flex:none}
+.dock .dt{flex:1;height:48px;display:flex;align-items:center;justify-content:center;color:var(--tabUnselected)}
+.dock svg.i{width:22px;height:22px}
+.ibx{position:relative}
+.nb{position:absolute;top:-7px;left:13px;background:var(--primary);color:var(--onPrimary);font:700 10px/12px Barlow;border-radius:8px;padding:.5px 4.5px;box-shadow:0 0 0 1.5px var(--bg)}
+
+/* controls strip under each phone */
+.strip{width:360px;margin-top:8px;border-radius:18px;background:var(--bg);box-shadow:0 0 0 1px var(--frame);padding:12px 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;font:700 14.5px Barlow;padding:0 18px;background:var(--accent);color:#fff;white-space:nowrap}
+.chipw{height:32px;border-radius:16px;display:flex;align-items:center;font:600 13.5px Barlow;padding:0 14px;background:var(--tile);color:var(--tileInk)}
+.chipb{height:32px;border-radius:16px;display:flex;align-items:center;font:600 13.5px Barlow;padding:0 14px;background:var(--glass2);color:var(--text)}
+.link{font:600 14px Barlow;color:var(--accentInk)}
+
+/* table */
+.tblw{padding:4px 32px 40px;max-width:100%}
+.tblw h2{font:700 20px Barlow;margin:10px 0 4px}
+.tblw p{font:400 14px/20px Barlow;color:#3C4A55;margin:0 0 10px;max-width:1000px}
+.tscroll{max-width:100%;overflow-x:auto}
+table{border-collapse:collapse;font:500 12.5px 'IBM Plex Mono',monospace;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px #CDD4D9}
+th,td{padding:5px 9px;text-align:left;border-bottom:1px solid #E6EAED;white-space:nowrap}
+th{font:700 13px Barlow;background:#F3F5F7}
+td.k{font-weight:600}
+td .hxi{font-size:12px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<linearGradient id="fLbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F99B80"/><stop offset="1" stop-color="#EF806B"/></linearGradient><linearGradient id="fRbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#77D6C2"/><stop offset="1" stop-color="#54C5AC"/></linearGradient><linearGradient id="fLscreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFCF1"/><stop offset="1" stop-color="#FFFCF1"/></linearGradient><linearGradient id="fRscreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFCF1"/><stop offset="1" stop-color="#FFFCF1"/></linearGradient><filter id="fLdrop" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.7"/><feOffset dy="1.8" result="b"/><feFlood flood-color="#0E2E44" flood-opacity="0.22"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="fRdrop" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.7"/><feOffset dy="1.8" result="b"/><feFlood flood-color="#0E2E44" flood-opacity="0.22"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="fsoft" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.1"/><feOffset dy="1.3" result="b"/><feFlood flood-color="#0E2E44" flood-opacity="0.1408"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><g id="ttmark"><g><path d="M39.35 33.10L39.75 32.67L40.15 32.25L40.57 31.84L41.00 31.44L41.44 31.06L41.90 30.69L42.37 30.33L42.84 29.99L43.33 29.66L43.83 29.35L44.34 29.05L44.86 28.77L45.39 28.50L45.92 28.25L46.47 28.01L47.02 27.80L47.57 27.59L48.14 27.41L48.71 27.24L49.28 27.09L49.86 26.96L50.45 26.85L51.04 26.75L51.63 26.67L52.22 26.61L52.82 26.57L53.42 26.54L54.02 26.54L54.62 26.55L55.22 26.58L55.82 26.63L56.42 26.70L57.01 26.78L57.61 26.89L58.20 27.01L58.78 27.15L59.37 27.31L59.95 27.49L60.52 27.68L61.09 27.89L61.65 28.12L62.20 28.37L62.75 28.63L63.29 28.91L63.82 29.21L64.35 29.52L64.86 29.85L65.36 30.20L62.83 33.55L62.45 33.25L62.06 32.96L61.67 32.68L61.26 32.42L60.85 32.16L60.42 31.92L60.00 31.69L59.56 31.48L59.11 31.28L58.66 31.09L58.21 30.91L57.74 30.75L57.28 30.61L56.80 30.47L56.33 30.36L55.85 30.25L55.36 30.16L54.87 30.09L54.38 30.03L53.89 29.99L53.40 29.96L52.90 29.94L52.41 29.94L51.91 29.96L51.42 29.99L50.92 30.04L50.43 30.10L49.93 30.18L49.44 30.27L48.95 30.37L48.47 30.50L47.99 30.63L47.51 30.79L47.04 30.95L46.57 31.13L46.10 31.33L45.65 31.54L45.19 31.76L44.75 32.00L44.31 32.25L43.88 32.52L43.46 32.80L43.04 33.09L42.64 33.40L42.24 33.71L41.85 34.04L41.47 34.39L41.11 34.74A1.20 1.20 0 0 1 39.35 33.10Z" fill="#32729B"/><path d="M68.32 35.07L65.25 28.69L60.48 34.99Z" fill="#32729B" stroke="#32729B" stroke-width="2.2" stroke-linejoin="round"/><path d="M68.65 74.90L68.25 75.33L67.85 75.75L67.43 76.16L67.00 76.56L66.56 76.94L66.10 77.31L65.63 77.67L65.16 78.01L64.67 78.34L64.17 78.65L63.66 78.95L63.14 79.23L62.61 79.50L62.08 79.75L61.53 79.99L60.98 80.20L60.43 80.41L59.86 80.59L59.29 80.76L58.72 80.91L58.14 81.04L57.55 81.15L56.96 81.25L56.37 81.33L55.78 81.39L55.18 81.43L54.58 81.46L53.98 81.46L53.38 81.45L52.78 81.42L52.18 81.37L51.58 81.30L50.99 81.22L50.39 81.11L49.80 80.99L49.22 80.85L48.63 80.69L48.05 80.51L47.48 80.32L46.91 80.11L46.35 79.88L45.80 79.63L45.25 79.37L44.71 79.09L44.18 78.79L43.65 78.48L43.14 78.15L42.64 77.80L45.17 74.45L45.55 74.75L45.94 75.04L46.33 75.32L46.74 75.58L47.15 75.84L47.58 76.08L48.00 76.31L48.44 76.52L48.89 76.72L49.34 76.91L49.79 77.09L50.26 77.25L50.72 77.39L51.20 77.53L51.67 77.64L52.15 77.75L52.64 77.84L53.13 77.91L53.62 77.97L54.11 78.01L54.60 78.04L55.10 78.06L55.59 78.06L56.09 78.04L56.58 78.01L57.08 77.96L57.57 77.90L58.07 77.82L58.56 77.73L59.05 77.63L59.53 77.50L60.01 77.37L60.49 77.21L60.96 77.05L61.43 76.87L61.90 76.67L62.35 76.46L62.81 76.24L63.25 76.00L63.69 75.75L64.12 75.48L64.54 75.20L64.96 74.91L65.36 74.60L65.76 74.29L66.15 73.96L66.53 73.61L66.89 73.26A1.20 1.20 0 0 1 68.65 74.90Z" fill="#32729B"/><path d="M39.68 72.93L42.75 79.31L47.52 73.01Z" fill="#32729B" stroke="#32729B" stroke-width="2.2" stroke-linejoin="round"/></g><g transform="rotate(-9.9 37.50 54.00)">
+    <rect x="27.20" y="38.15" width="20.6" height="31.7" rx="3.8" fill="url(#fLbody)"/>
+    <rect x="29.60" y="42.75" width="15.80" height="21.90" rx="1.9" fill="url(#fLscreen)"/>
+    <rect x="34.70" y="39.90" width="5.6" height="1.2" rx=".6" fill="#FFFCF1"/>
+    <circle cx="37.50" cy="67.25" r="1.15" fill="#FFFCF1"/>
+    <path d="M33.36 55.18L36.24 57.97L41.46 52.03" fill="none" stroke="none" stroke-width="2.61" stroke-linecap="round" stroke-linejoin="round"/>
+  </g><g transform="rotate(-9.9 37.50 54.00)"><g transform="translate(37.50 53.80) scale(0.78)"><g><path d="M-2.5 -0.4L-4.6 -1.8" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M2.5 -0.4L4.6 -1.8" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M-3 1.7L-5.1 1.9" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M3 1.7L5.1 1.9" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M-2.5 3.8L-4.3 5.3" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M2.5 3.8L4.3 5.3" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M-.8 -3.7Q-1.3 -5.6 -2.7 -6M.8 -3.7Q1.3 -5.6 2.7 -6" fill="none" stroke="#17253B" stroke-width=".9" stroke-linecap="round"/><rect x="-3.4" y="-1.1" width="6.8" height="7.3" rx="3.4" fill="#17253B"/><circle cx="0" cy="-2.8" r="2.05" fill="#17253B" stroke="#FFFCF1" stroke-width=".6"/><path d="M0 .1V5.6" stroke="#FFFCF1" stroke-width=".55" stroke-linecap="round"/></g></g></g><g transform="rotate(9.9 70.50 54.00)">
+    <rect x="60.20" y="38.15" width="20.6" height="31.7" rx="3.8" fill="url(#fRbody)"/>
+    <rect x="62.60" y="42.75" width="15.80" height="21.90" rx="1.9" fill="url(#fRscreen)"/>
+    <rect x="67.70" y="39.90" width="5.6" height="1.2" rx=".6" fill="#FFFCF1"/>
+    <circle cx="70.50" cy="67.25" r="1.15" fill="#FFFCF1"/>
+    <path d="M66.36 55.18L69.24 57.97L74.46 52.03" fill="none" stroke="#17253B" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g></g>
+<linearGradient id="glevel_robot_body1" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><g id="level_robot_body"><g transform="translate(-185 -110)"><path d="M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z" fill="url(#glevel_robot_body1)"/></g></g>
+<linearGradient id="glevel_robot_head1" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><linearGradient id="glevel_robot_head2" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><linearGradient id="glevel_robot_head3" gradientUnits="userSpaceOnUse" x1="350" y1="277" x2="910" y2="744"><stop offset="0" stop-color="#32729B"/><stop offset="1" stop-color="#1D5C82"/></linearGradient><g id="level_robot_head"><g transform="translate(-185 -110)"><g transform="translate(0 0)"><g transform="translate(0 0)"><path d="M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z" fill="url(#glevel_robot_head1)"/><path d="M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z" fill="url(#glevel_robot_head2)"/><path d="M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z" fill="#6CA9CF"/><path d="M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z" fill="#6CA9CF"/></g><path d="M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z" fill="url(#glevel_robot_head3)"/><path d="M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z" fill="#FFFCF1"/><path d="M576 594 C602 620 651 620 677 594" fill="#000000" fill-opacity="0.00" stroke="#17253B" stroke-width="31" stroke-linecap="round"/></g></g></g>
+<g id="level_robot_eyes"><g transform="translate(-185 -110)"><g transform="translate(0 0)"><g transform="translate(0 0)"><path d="M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z" fill="#17253B"/><path d="M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z" fill="#17253B"/><path d="M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z" fill="#FFFFFF"/><path d="M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z" fill="#FFFFFF"/></g></g></g></g>
+<linearGradient id="glevel_robot_antenna1" gradientUnits="userSpaceOnUse" x1="310" y1="765" x2="568" y2="1056"><stop offset="0" stop-color="#F99B80"/><stop offset="1" stop-color="#EF806B"/></linearGradient><g id="level_robot_antenna"><g transform="translate(-185 -110)"><g transform="translate(0 0)"><path d="M603 227 H650 V295 H603 Z" fill="#1D5C82"/><path d="M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z" fill="url(#glevel_robot_antenna1)"/><path d="M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z" fill="#FFFFFF"/></g></g></g>
+<linearGradient id="glevel_robot_hands1" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><linearGradient id="glevel_robot_hands2" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE"/><stop offset="1" stop-color="#5E9DC5"/></linearGradient><linearGradient id="glevel_robot_hands3" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><linearGradient id="glevel_robot_hands4" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE"/><stop offset="1" stop-color="#5E9DC5"/></linearGradient><g id="level_robot_hands"><g transform="translate(-185 -110)"><path d="M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z" fill="url(#glevel_robot_hands1)"/><path d="M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z" fill="url(#glevel_robot_hands2)"/><path d="M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z" fill="url(#glevel_robot_hands3)"/><path d="M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z" fill="url(#glevel_robot_hands4)"/></g></g>
+<linearGradient id="gtix_ticket1" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="61" y2="41"><stop offset="0" stop-color="#FFE07A"/><stop offset="1" stop-color="#F2A92E"/></linearGradient><g id="tix_ticket"><path d="M8 3 H56 Q61 3 61 8 V16 A6 6 0 0 0 61 28 V36 Q61 41 56 41 H8 Q3 41 3 36 V28 A6 6 0 0 0 3 16 V8 Q3 3 8 3 Z" fill="url(#gtix_ticket1)" stroke="#17405E" stroke-width="3.5" stroke-linejoin="round"/><path d="M18 9 V12 M18 15 V18 M18 21 V24 M18 27 V30 M18 33 V36" fill="none" stroke="#B97A1E" stroke-width="2.5" stroke-linecap="round"/><path d="M39 12 l3.2 6.6 7.2 1 -5.2 5 1.3 7.2 -6.5 -3.4 -6.5 3.4 1.3 -7.2 -5.2 -5 7.2 -1 Z" fill="#FFF8E1" stroke="#17405E" stroke-width="2" stroke-linejoin="round"/><path d="M8 8 Q9 6 12 6" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-opacity="0.8"/></g>
+<linearGradient id="gtix_ticket_blank1" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="61" y2="41"><stop offset="0" stop-color="#FFE07A"/><stop offset="1" stop-color="#F2A92E"/></linearGradient><g id="tix_ticket_blank"><path d="M8 3 H56 Q61 3 61 8 V16 A6 6 0 0 0 61 28 V36 Q61 41 56 41 H8 Q3 41 3 36 V28 A6 6 0 0 0 3 16 V8 Q3 3 8 3 Z" fill="url(#gtix_ticket_blank1)" stroke="#17405E" stroke-width="3.5" stroke-linejoin="round"/><path d="M8 8 Q9 6 12 6" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-opacity="0.8"/></g>
+</defs></svg>
+
+<div class="doc">
+  <h1>TestTrack: a better blue</h1>
+  <p>Six blues for the same Circle screen. Each column shows the dark theme on top and the light theme under it. The strip under each phone has the main button, the Watch chip and a link, so you see the fill and the ink together.</p>
+  <p>Every colour here passes AA contrast on the page and on the grey ticket stub, in both themes. Only the accent changes. The greys, the page colours and the robot stay as they are.</p>
+  <div class="ctl">Size
+    <button data-z=".6">S</button><button data-z=".8">M</button><button data-z="1">1:1</button>
+  </div>
+</div>
+<div class="grid" id="grid"></div>
+<div class="tblw">
+  <h2>Token values</h2>
+  <p>Dark first, then light. Greys, page colours and the robot are the same in every option.</p>
+  <div class="tscroll" id="tbl"></div>
+</div>
+
+<script>
+const DARK = { bg:'#0F1011', text:'#ECEEF0', text2:'#BCC1C6', text3:'#9DA3A9', text4:'#757C82', tabUnselected:'#989EA4',
+  glassBorder:'#383C41', glass2:'#292C2F', card:'#1C1E20', cardLine:'#2D3034', tile:'#2A2D31', soft:'#2A2D31', frame:'#2A2D31' };
+const LIGHT = { bg:'#F7FCFF', text:'#142F43', text2:'#203A4E', text3:'#223D50', text4:'#59758A', tabUnselected:'#526B7D',
+  glassBorder:'#B7D1E2', glass2:'#DFEDF6', card:'#F3F8FB', cardLine:'#E1ECF3', frame:'#C9D3DA' };
+
+const OPTS = [
+  { id:'A', name:'Now', feel:'Bright sky blue. Clear, but it glows on black and leans cyan.',
+    d:{ leafAccent:'#80BCDE', accentInk:'#80BCDE', tileInk:'#90C6E6', tabSelected:'#A9D4EE', accent:'#3A7BA3', inverseAccent:'#2A6A92' },
+    l:{ leafAccent:'#1D5C82', accentInk:'#123C56', tileInk:'#1D5C82', tabSelected:'#0C527D', accent:'#1D5C82', softBase:'#32729B', tile:'#D5EAF7', onContainer:'#174866', inverseAccent:'#9CCBEA' } },
+  { id:'B', name:'Steel', rec:true, feel:'Same blue family with the colour pulled back. Calm, reads like ink, not like light.',
+    d:{ leafAccent:'#93B3CA', accentInk:'#93B3CA', tileInk:'#A2BED2', tabSelected:'#B6CCDC', accent:'#4A7290', inverseAccent:'#3F6681' },
+    l:{ leafAccent:'#3A5B73', accentInk:'#22394B', tileInk:'#3A5B73', tabSelected:'#2E4E66', accent:'#3A5B73', softBase:'#4A7290', tile:'#DCE6EE', onContainer:'#2D4A5F', inverseAccent:'#A9C3D6' } },
+  { id:'C', name:'Cornflower', feel:'A truer, deeper blue with no cyan in it. Still friendly, less glare.',
+    d:{ leafAccent:'#84A9E6', accentInk:'#84A9E6', tileInk:'#93B4EA', tabSelected:'#AEC7F0', accent:'#3E6CC0', inverseAccent:'#3561B0' },
+    l:{ leafAccent:'#2A56A3', accentInk:'#183A75', tileInk:'#2A56A3', tabSelected:'#1F4A94', accent:'#2A56A3', softBase:'#3E6CC0', tile:'#DAE5F8', onContainer:'#1E4589', inverseAccent:'#A3C1F2' } },
+  { id:'D', name:'Indigo', feel:'Blue with a touch of violet. Soft and a little more personal.',
+    d:{ leafAccent:'#9EA9F2', accentInk:'#9EA9F2', tileInk:'#ABB4F4', tabSelected:'#BEC5F7', accent:'#5560C2', inverseAccent:'#4A55B5' },
+    l:{ leafAccent:'#4049A6', accentInk:'#262C70', tileInk:'#4049A6', tabSelected:'#353D95', accent:'#4049A6', softBase:'#5560C2', tile:'#E1E4FA', onContainer:'#313A8C', inverseAccent:'#B5BDF8' } },
+  { id:'E', name:'Teal blue', feel:'Blue turned toward green. Fresh, sits well beside the mint robot phone.',
+    d:{ leafAccent:'#6CBDCC', accentInk:'#6CBDCC', tileInk:'#80C7D4', tabSelected:'#98D3DE', accent:'#2D7A89', inverseAccent:'#23707E' },
+    l:{ leafAccent:'#1B6472', accentInk:'#0F414C', tileInk:'#1B6472', tabSelected:'#155866', accent:'#1B6472', softBase:'#2D7A89', tile:'#D3ECEF', onContainer:'#135563', inverseAccent:'#92CFDA' } },
+  { id:'F', name:'Quiet', feel:'Off-white words, blue only on the ticket outline, the count badge and links.',
+    d:{ leafAccent:'#84A9E6', accentInk:'#84A9E6', tileInk:'#D2D6DA', tabSelected:'#E3E6E9', accent:'#3E6CC0', inverseAccent:'#3561B0' },
+    l:{ leafAccent:'#2A56A3', accentInk:'#183A75', tileInk:'#2B3640', tabSelected:'#1E2A33', accent:'#2A56A3', softBase:'#5E6C78', tile:'#E6EAED', onContainer:'#2B3640', inverseAccent:'#A3C1F2' } },
+];
+
+/* ---------- helpers ---------- */
+function rgb(h){h=h.replace('#','');return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16));}
+function mix(fg,bg,a){const f=rgb(fg),b=rgb(bg);return '#'+f.map((v,i)=>Math.round(v*a+b[i]*(1-a)).toString(16).padStart(2,'0')).join('').toUpperCase();}
+function lum(h){return rgb(h).map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)}).reduce((s,v,i)=>s+v*[.2126,.7152,.0722][i],0);}
+function cr(a,b){const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}
+
+function vars(o, dark){
+  if (dark) {
+    const v = {...DARK, ...o.d};
+    v.cntOn = DARK.card; v.primary = v.accentInk; v.onPrimary = DARK.bg;
+    return v;
+  }
+  const v = {...LIGHT, ...o.l};
+  v.soft = mix(o.l.softBase, LIGHT.bg, .16);
+  v.cntOn = v.tile; v.primary = v.accent; v.onPrimary = '#FFFFFF';
+  return v;
+}
+const style = v => Object.entries(v).map(([k,x])=>`--${k}:${x}`).join(';');
+
+const I = {
+  msg:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  grid:'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+  chev:'<path d="m9 18 6-6-6-6"/>',
+  leaf:'<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+  wallet:'<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  scan:'<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/>',
+  music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+};
+const ic = (k, cls='i') => `<svg class="${cls}" viewBox="0 0 24 24">${I[k]}</svg>`;
+const TK = `<svg class="tk" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M4.5 4.5H19.5a2.5 2.5 0 0 1 2.5 2.5V9a3 3 0 0 0 0 6v2a2.5 2.5 0 0 1-2.5 2.5H4.5A2.5 2.5 0 0 1 2 17v-2a3 3 0 0 0 0-6V7a2.5 2.5 0 0 1 2.5-2.5Z"/><path class="p" d="M16 7.4v.4M16 11.8v.4M16 16.2v.4"/></svg>`;
+const G = `<svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
+const ROBOT = `<svg class="robot" viewBox="0 0 880 980"><use href="#level_robot_body"/><use href="#level_robot_head"/><use href="#level_robot_eyes"/><use href="#level_robot_antenna"/><use href="#level_robot_hands"/></svg>`;
+
+const SB = `<div class="sb"><span>9:41</span><span class="ic">
+  <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 11.5 .6 4.1a10.5 10.5 0 0 1 14.8 0Z" fill="currentColor"/></svg>
+  <svg width="15" height="12" viewBox="0 0 15 12"><path d="M14.5 .5v11h-14Z" fill="currentColor"/></svg>
+  <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2.5" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="12" height="7" rx="1.4" fill="currentColor"/><rect x="19.6" y="3.5" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".5"/></svg>
+</span></div>`;
+
+const APPS = [
+  { n:'Habit Garden', note:'Closed test, written review', c:'#3E9B6A', g:'leaf', tix:12 },
+  { n:'Pocket Budget', note:'Live app', c:'#E2803A', g:'wallet', tix:20 },
+  { n:'QuickScan PDF', note:'Closed test, detailed review', c:'#D2504A', g:'scan', tix:35 },
+  { n:'Tiny Piano', note:'Live app, written review', c:'#7E5BC6', g:'music', tix:8 },
+];
+
+let uid = 0;
+function ticket(a){
+  const W=328,H=76,r=14,n=7,x=W-58+.75;
+  const P=`M${r} .5H${x-n}A${n} ${n} 0 0 0 ${x+n} .5H${W-r}A${r-.5} ${r-.5} 0 0 1 ${W-.5} ${r}V${H-r}A${r-.5} ${r-.5} 0 0 1 ${W-r} ${H-.5}H${x+n}A${n} ${n} 0 0 0 ${x-n} ${H-.5}H${r}A${r-.5} ${r-.5} 0 0 1 .5 ${H-r}V${r}A${r-.5} ${r-.5} 0 0 1 ${r} .5Z`;
+  const id='c'+(uid++);
+  return `<div class="t"><svg class="shape" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <defs><clipPath id="${id}"><path d="${P}"/></clipPath></defs>
+    <path d="${P}" style="fill:var(--bg)"/>
+    <rect x="${x}" y="0" width="${W-x}" height="${H}" clip-path="url(#${id})" style="fill:var(--soft)"/>
+    <line x1="${x}" y1="7" x2="${x}" y2="${H-7}" style="stroke:var(--glassBorder)" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <path d="${P}" fill="none" style="stroke:var(--cardLine)" stroke-width="1"/>
+  </svg>
+  <div class="body"><div class="ap" style="background:${a.c}">${ic(a.g)}</div>
+    <div class="mid"><div class="nm">${a.n}</div><div class="ln">${a.note}</div></div></div>
+  <div class="stub">${TK}<span class="fig">${a.tix}</span></div></div>`;
+}
+
+function phone(o, dark){
+  const v = vars(o, dark);
+  return `<div class="phone" style="${style(v)}">${SB}
+    <div class="hud">${ROBOT}<div class="t1">TestTrack</div><div class="signin">${G}<span>Sign in</span></div></div>
+    <div class="seg"><div class="sg">Feedback</div><div class="sg on">My reviews <span class="cnt">2</span></div><div class="sg">To check <span class="cnt">3</span></div></div>
+    <div class="list">
+      <div class="askrow"><div class="pl">${ic('plus')}</div><div class="mid"><div class="a">Ask for feedback</div><div class="b">Get reviews of your own app</div></div><span class="chev">${ic('chev')}</span></div>
+      ${APPS.map(ticket).join('')}
+    </div>
+    <div class="fade"></div>
+    <div class="askbar">Ask for feedback</div>
+    <div class="dock">
+      <div class="sel">${ic('msg')}Circle</div>
+      <div class="dt"><span class="ibx">${ic('users')}<span class="nb">1</span></span></div>
+      <div class="dt">${ic('trophy')}</div>
+      <div class="dt"><span class="ibx">${ic('grid')}<span class="nb">4</span></span></div>
+      <div class="dt">${ic('user')}</div>
+    </div>
+    <div class="gbar"><i></i></div>
+  </div>
+  <div class="strip" style="${style(v)}"><span class="btn">Send review</span><span class="chipw">Watch</span><span class="chipb">In Bangla</span><span class="link">How tix work</span></div>`;
+}
+
+const sw = h => `<span class="hxi"><i style="background:${h}"></i>${h}</span>`;
+function col(o){
+  return `<div class="col"><div class="cap">
+      <div class="nm">${o.id}. ${o.name}${o.rec?'<span class="rec">Pick</span>':''}</div>
+      <div class="feel">${o.feel}</div>
+      <div class="hx"><span class="hxl">Dark</span>${sw(o.d.leafAccent)}${sw(o.d.tabSelected)}</div>
+      <div class="hx"><span class="hxl">Light</span>${sw(o.l.leafAccent)}${o.l.tabSelected!==o.l.leafAccent?sw(o.l.tabSelected):''}</div>
+    </div>
+    <div class="pz"><div class="tag">Dark</div>${phone(o,true)}<div class="gap"></div><div class="tag">Light</div>${phone(o,false)}</div></div>`;
+}
+
+function table(){
+  const keys=['leafAccent','accentInk','tileInk','tabSelected','accent','badgeFill','onSelected','inverseAccent'];
+  const lkeys=['leafAccent','accentInk','tileInk','tabSelected','accent','badgeFill','leafAccentSoft','tile','container','onContainer','inverseAccent'];
+  const dv=o=>({...o.d,badgeFill:o.d.accent,onSelected:o.d.leafAccent});
+  const lv=o=>({...o.l,badgeFill:o.l.accent,leafAccentSoft:o.l.softBase+' 16%',container:o.l.tile});
+  const cell=h=>{const hx=h.split(' ')[0];return `<td>${sw(hx)}${h.includes(' ')?' '+h.split(' ')[1]:''}</td>`;};
+  let s='<table><tr><th>Token</th>'+OPTS.map(o=>`<th>${o.id}. ${o.name}</th>`).join('')+'</tr>';
+  s+='<tr><th colspan="7">Dark (OceanDark)</th></tr>';
+  keys.forEach(k=>{s+=`<tr><td class="k">${k}</td>`+OPTS.map(o=>cell(dv(o)[k])).join('')+'</tr>';});
+  s+='<tr><th colspan="7">Light (OceanLight)</th></tr>';
+  lkeys.forEach(k=>{s+=`<tr><td class="k">${k}</td>`+OPTS.map(o=>cell(lv(o)[k])).join('')+'</tr>';});
+  s+='<tr><th colspan="7">Contrast, dark (stub number on grey stub / ticket outline on stub)</th></tr>';
+  s+='<tr><td class="k">AA check</td>'+OPTS.map(o=>`<td>${cr(o.d.tabSelected,'#2A2D31').toFixed(1)} / ${cr(o.d.leafAccent,'#2A2D31').toFixed(1)}</td>`).join('')+'</tr>';
+  s+='<tr><th colspan="7">Contrast, light (stub number on tinted stub / accent on page)</th></tr>';
+  s+='<tr><td class="k">AA check</td>'+OPTS.map(o=>`<td>${cr(o.l.tabSelected,mix(o.l.softBase,LIGHT.bg,.16)).toFixed(1)} / ${cr(o.l.leafAccent,LIGHT.bg).toFixed(1)}</td>`).join('')+'</tr>';
+  return s+'</table>';
+}
+
+document.getElementById('grid').innerHTML = OPTS.map(col).join('');
+document.getElementById('tbl').innerHTML = table();
+function fit(){const z=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--z'))||.8;
+  const c=360*z+22, room=document.documentElement.clientWidth-64+22; let n=Math.max(1,Math.floor(room/c));
+  n = n>=6?6:n>=3?3:n; document.getElementById('grid').style.maxWidth=(n*c-22+64)+'px';}
+addEventListener('resize',fit);
+function setZ(z){document.documentElement.style.setProperty('--z',z);setTimeout(fit);document.querySelectorAll('.ctl button').forEach(b=>b.classList.toggle('on',b.dataset.z==z));}
+document.querySelectorAll('.ctl button').forEach(b=>b.onclick=()=>setZ(b.dataset.z));
+setZ(new URLSearchParams(location.search).get('z')||'.8');
+</script>
+</body>
+</html>
