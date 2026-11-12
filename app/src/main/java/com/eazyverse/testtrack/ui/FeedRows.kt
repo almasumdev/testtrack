@@ -141,8 +141,8 @@ private val RowNote = TextStyle(fontFamily = Barlow, fontSize = 12.5.sp, lineHei
  * The way in to posting, a row at the top of the list.
  *
  * Laid out like a request under it, an icon tile, two lines and a chevron, so it reads as the first
- * thing on the list rather than as a button. What sets it apart is the missing fill: an outline
- * with nothing in it is the slot your own request goes into.
+ * thing on the list rather than as a button. It has the same card fill and hairline as the
+ * requests under it, so it sits on the page the same way in both themes.
  *
  * The label and nothing else about cost. What it costs lives in the dialog the tap opens, which is
  * the last moment before anything is spent and so the only moment the number has to be true by.
@@ -158,6 +158,7 @@ fun FeedAskRow(
         modifier
             .fillMaxWidth()
             .clip(shape)
+            .background(t.card)
             .border(1.dp, t.cardLine, shape)
             .clickable(onClick = onPost)
             .padding(start = 10.dp, end = 12.dp, top = 9.dp, bottom = 9.dp),
@@ -202,9 +203,8 @@ fun FeedAskRow(
  * new action rather than as the one already offered at the top of the page: this is that control
  * following you down.
  *
- * Solid, filled in the soft accent tile, the ground of the cards' own Review chips, with a plain
- * hairline in the cards' own border colour so it reads as a plate laid over the cards and as
- * something to tap, not one more card drifting loose.
+ * Solid, with the same card fill and hairline as [FeedAskRow] at the top and the dock under it, so
+ * the three are one surface. The label is in the accent ink the stubs use.
  */
 @Composable
 fun FeedAskBar(onPost: () -> Unit) {
@@ -214,8 +214,8 @@ fun FeedAskBar(onPost: () -> Unit) {
             .padding(horizontal = Gutter)
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(Tt.colors.tile)
-            .border(1.dp, Tt.colors.glassBorder, RoundedCornerShape(14.dp))
+            .background(Tt.colors.card)
+            .border(1.dp, Tt.colors.cardLine, RoundedCornerShape(14.dp))
             .clickable(onClick = onPost)
             .padding(12.dp),
         contentAlignment = Alignment.Center,
@@ -224,7 +224,7 @@ fun FeedAskBar(onPost: () -> Unit) {
             POST_LABEL,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            color = Tt.colors.tileInk,
+            color = Tt.colors.tabSelected,
         )
     }
 }
