@@ -63,9 +63,15 @@ fun AppIcon(
 
     if (bitmap != null) {
         // A launcher icon that is already round or shaped keeps its own edge; a full square gets ours.
-        val square = remember(bitmap) { isFullSquare(bitmap.asAndroidBitmap()) }
+        val fit = remember(bitmap) { iconFit(bitmap.asAndroidBitmap()) }
+        // One with a wide transparent border is cut down to its artwork so it fills the slot.
+        val shown =
+            remember(bitmap, fit) {
+                fit.crop?.let { cropIcon(bitmap.asAndroidBitmap(), it).asImageBitmap() } ?: bitmap
+            }
+        val square = fit.fullSquare
         ComposeImage(
-            bitmap = bitmap,
+            bitmap = shown,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = if (square) modifier.clip(shape) else modifier,
