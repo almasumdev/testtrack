@@ -109,11 +109,12 @@ svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-l
 .hud0 .t2{font:500 11px/16px Barlow;color:var(--ink2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .si0{display:flex;align-items:center;gap:8px;border:1px solid var(--glassBorder);border-radius:999px;padding:8px 14px 8px 11px;font:600 14px/20px Barlow;color:var(--ink);flex:none}
 .si0 svg{width:16px;height:16px}
-.ib{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink2);position:relative;flex:none;box-sizing:border-box}
+/* update buttons: 40 round to look at, 48 to touch, no fill; the icon is 20 on the 24 grid, stroke 2 */
+.ib{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink3);position:relative;flex:none;box-sizing:border-box;margin:0 -2px 0 4px;cursor:pointer}
+.ib:hover{background:var(--glass2)}
 .ib svg{width:20px;height:20px}
-.ib .dot{position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--robot);box-shadow:0 0 0 2px var(--bg)}
-.rs{display:flex;align-items:center;gap:6px;height:32px;border-radius:16px;background:var(--acc);color:var(--onacc);padding:0 12px 0 10px;font:600 13.5px Barlow;flex:none;box-sizing:border-box;margin-right:2px}
-.rs svg{width:14px;height:14px}
+.ib .dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--prim);box-shadow:0 0 0 2px var(--bg)}
+.ib.ready{color:var(--prim)}
 .tixq{display:flex;align-items:center;gap:6px;color:var(--ink);flex:none;height:48px;padding-left:6px}
 .tixq svg{width:17px;height:17px;color:var(--mute);stroke-width:1.9}
 .tixq span{font:600 16px 'IBM Plex Mono',monospace;letter-spacing:-.2px}
@@ -252,7 +253,7 @@ svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-l
 <script>
 const I = {
   ticket:'<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
-  down:'<path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/>',
+  down:'<circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="m8 12 4 4 4-4"/>',
   rotate:'<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
   play:'<polygon points="6 3 20 12 6 21 6 3"/>',
   flask:'<path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/>',
@@ -326,8 +327,8 @@ function leftLines(s) {
 /* The bar: robot and level on the left, the plain balance on the right */
 function bar(s) {
   let right = '';
-  if (s.update === 'avail') right += `<div class="ib">${ic('down')}<i class="dot"></i></div>`;
-  if (s.update === 'ready') right += `<div class="rs">${ic('rotate')}<span>Restart</span></div>`;
+  if (s.update === 'avail') right += `<div class="ib" role="button" aria-label="Update available" title="Update available">${ic('down')}<i class="dot"></i></div>`;
+  if (s.update === 'ready') right += `<div class="ib ready" role="button" aria-label="Restart to update" title="Restart to update">${ic('rotate')}</div>`;
   if (s.in && s.loading) right += `<div class="tixq">${ic('ticket')}<span class="skb" style="width:40px;height:14px"></span></div>`;
   else if (s.in) right += `<div class="tixq">${ic('ticket')}<span>${fmt(s.tix)}</span></div>`;
   else right += `<div class="si0">${G}<span>Sign in</span></div>`;
@@ -443,7 +444,7 @@ function render() {
   let html = '';
   if (only === 'all' || only === 'bar') {
     html += `<section class="opt"><h2>1. App bar</h2>
-      <p class="sub">On the left, the robot carries your level on its plaque, with the exp line running round it. Next to it: "Level 7" and how much exp is left to the next level. On the right sits a small ticket mark and your balance in plain figures, with thousands separators. When an update is out, a download button with a blue dot sits before the balance. Once it has downloaded, a Restart pill takes its place. Signed out, the bar says how full a crew is and offers Sign in. While your account loads, the plaque stays empty and the lines and balance shimmer.</p>`;
+      <p class="sub">On the left, the robot carries your level on its plaque, with the exp line running round it. Next to it: "Level 7" and how much exp is left to the next level. On the right sits a small ticket mark and your balance in plain figures, with thousands separators. When an update is out, a round download button with a small blue dot sits before the balance. Once it has downloaded, a blue restart button of the same size takes its place, with no words on it. Signed out, the bar says how full a crew is and offers Sign in. While your account loads, the plaque stays empty and the lines and balance shimmer.</p>`;
     for (const t of ['light', 'dark']) {
       html += `<div class="rowlbl">${t === 'light' ? 'Light' : 'Dark'}</div><div class="strip ${t}">`;
       const cell = ([cap, sk, crop]) => `<div class="cell"><div class="cap">${cap}</div><div class="pz">${phone(t, bar(S[sk]) + circle(t, S[sk]) + (crop ? '' : dock(0)), crop)}</div></div>`;
