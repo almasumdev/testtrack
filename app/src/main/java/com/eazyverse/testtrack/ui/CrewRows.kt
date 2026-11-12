@@ -33,9 +33,9 @@ fun CrewCard(
     Column(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(CardRadius))
-            .background(Tt.colors.glass)
-            .border(1.dp, Tt.colors.glassBorder, RoundedCornerShape(CardRadius))
+            .clip(RoundedCornerShape(TileRadius))
+            .background(Tt.colors.bg)
+            .border(1.dp, Tt.colors.cardLine, RoundedCornerShape(TileRadius))
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(padding),
         content = content,

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -96,6 +99,54 @@ internal fun TicketCard(
             }
             Text(note, style = TicketNote, color = noteTone, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
+    }
+}
+
+/** A Circle row with no stub, for rows that carry no tix. */
+@Composable
+internal fun HairlineRow(
+    leading: @Composable () -> Unit,
+    title: String,
+    note: AnnotatedString,
+    modifier: Modifier = Modifier,
+    noteTone: Color = Tt.colors.text3,
+    titleTone: Color = Tt.colors.text,
+    titleMark: (@Composable () -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
+    trailing: @Composable RowScope.() -> Unit = {},
+) {
+    val t = Tt.colors
+    val shape = RoundedCornerShape(TileRadius)
+    Row(
+        modifier
+            .fillMaxWidth()
+            .heightIn(min = 76.dp)
+            .clip(shape)
+            .background(t.bg)
+            .border(1.dp, t.cardLine, shape)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(start = 12.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        leading()
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    title,
+                    Modifier.weight(1f, fill = false),
+                    style = TicketTitle,
+                    fontWeight = FontWeight.SemiBold,
+                    color = titleTone,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                titleMark?.invoke()
+            }
+            Text(note, style = TicketNote, color = noteTone, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Spacer(Modifier.width(8.dp))
+        trailing()
     }
 }
 

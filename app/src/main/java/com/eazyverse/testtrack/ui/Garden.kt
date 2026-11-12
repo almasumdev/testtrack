@@ -284,35 +284,31 @@ val HeadedListTop = 11.5.dp
 /** The corner a card gets: a step under the 22dp panels. */
 val CardRadius = 18.dp
 
+/** The Circle tile's corner: tickets, the ask row, every hairline tile. */
+val TileRadius = 14.dp
+
 /**
  * Row [index] of a list of [count], as a tile of its own.
  *
- * Every list that stands on the page ground is drawn this way, three points apart with only the
- * ends of the run rounded, so nothing is ever read across a contour line and a list reads as a
- * set of tiles rather than rows ruled off on the page.
+ * Every list that stands on the page ground is drawn this way: a hairline tile on the page ground,
+ * all four corners rounded, eight points apart, like the Circle rows. [count] is kept so callers do
+ * not change, but every row is shaped the same.
  */
 @Composable
 fun ListTile(
     index: Int,
-    count: Int,
+    @Suppress("UNUSED_PARAMETER") count: Int,
     content: @Composable () -> Unit,
 ) {
     val t = Tt.colors
-    val place =
-        when {
-            count <= 1 -> TilePlace.ONLY
-            index == 0 -> TilePlace.FIRST
-            index == count - 1 -> TilePlace.LAST
-            else -> TilePlace.MIDDLE
-        }
-    val shape = place.shape()
+    val shape = RoundedCornerShape(TileRadius)
     Box(
         Modifier
-            .padding(start = Gutter, end = Gutter, top = if (index > 0) 3.dp else 0.dp)
+            .padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)
             .fillMaxWidth()
             .clip(shape)
-            .background(t.glass)
-            .border(1.dp, t.glassBorder, shape),
+            .background(t.bg)
+            .border(1.dp, t.cardLine, shape),
     ) {
         content()
     }
