@@ -397,6 +397,7 @@ fun MainShell(
                 }
             }
 
+            DockFade(dockHeight)
             MainBar(
                 tab,
                 show,

@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,7 +35,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -60,7 +58,7 @@ import kotlinx.serialization.json.Json
  * its own space below the pill, and the two together are the single gutter that shows on screen.
  * Both tabs use it, so switching between them does not move the first card.
  */
-private val ListTop = 16.dp
+private val ListTop = 12.dp
 
 /**
  * Circle: the community front page.
@@ -179,61 +177,35 @@ fun FeedScreen(
                 enter = fadeIn() + slideInVertically { it },
                 exit = fadeOut() + slideOutVertically { it },
             ) {
-                Box(Modifier.padding(bottom = dockRoom())) { FeedAskBar(onAsk) }
+                // The dock's own room less 4dp, which puts the pill about 12dp above the dock.
+                Box(Modifier.padding(bottom = dockRoom() - 4.dp)) { FeedAskPill(onAsk) }
             }
         },
-        // Two tabs at the left and a balance at the right, sitting on the page rather than in a
-        // bar. No title, because the bottom bar already says Circle and highlights it; no rule,
-        // because there is nothing here to divide the page from. What separates this from the
-        // first card is space.
-        //
-        // It is in the topBar slot only so it stays put while the list moves under it, which is
-        // the one thing chrome is genuinely for. Everything that made it look like chrome is
-        // gone. The ground it paints is load bearing for that: without it the cards would scroll
-        // through the words.
+        // The tabs sit on the page rather than in a bar, with no title and no rule: the bottom bar
+        // already says Circle, and space is what separates them from the first card. They are in
+        // the topBar slot only so they stay put while the list moves under them.
         topBar = {
             Column {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        // The row keeps its own space below the pill rather than sitting flush on its
-                        // own bottom edge. What comes off to hold the total to one gutter is the
-                        // list's inset above the first card. See [ListTop].
-                        // Two of these three used to be the top of the screen. The header above now
-                        // brings its own space below itself and the tabs bring their own touch
-                        // padding, so this row adds almost nothing of its own or the three stack into
-                        // a gap the size of a card.
-                        // Nothing of its own. The header above brings its space below itself and
-                        // the tabs bring their own, which is their touch target and cannot be given
-                        // up; anything here is a third helping on top of those two.
-                        .padding(start = Gutter, end = Gutter),
-                    // The control takes only the width its two words need and the space between the
-                    // two of them does the rest, so neither is given a weight to stretch into.
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    // The balance used to sit here. It is in the shell's header now, where it is on
-                    // every screen rather than on this one, so what is left is the control.
-                    // The count is the one thing on this screen genuinely owed: reviews of this
-                    // account's apps, and cases it can help decide. It shows from whichever tab you
-                    // are on rather than only from Waiting, because it is an alert, and an alert you
-                    // have to go looking for is not one.
-                    val owed = vm.waiting.size + vm.disputes.size
-                    WordTabs(
-                        labels = shownTabs.map { it.label },
-                        selected = shownTabs.indexOf(tab),
-                        counts =
-                            shownTabs.map {
-                                when (it) {
-                                    FeedTab.WAITING -> owed
-                                    // Taken on and not yet sent: each one is the reader's own next step.
-                                    FeedTab.MINE -> vm.started.count { r -> r.state in InProgressStates }
-                                    else -> 0
-                                }
-                            },
-                        gap = 14,
-                    ) { vm.show(shownTabs[it]) }
-                }
+                // The count is the one thing on this screen genuinely owed: reviews of this
+                // account's apps, and cases it can help decide. It shows from whichever tab you
+                // are on rather than only from Waiting, because it is an alert, and an alert you
+                // have to go looking for is not one. The tabs bring their own gutter and touch
+                // padding, so nothing wraps them.
+                val owed = vm.waiting.size + vm.disputes.size
+                SegmentedTabs(
+                    labels = shownTabs.map { it.label },
+                    selected = shownTabs.indexOf(tab),
+                    counts =
+                        shownTabs.map {
+                            when (it) {
+                                FeedTab.WAITING -> owed
+                                // Taken on and not yet sent: each one is the reader's own next step.
+                                FeedTab.MINE -> vm.started.count { r -> r.state in InProgressStates }
+                                else -> 0
+                            }
+                        },
+                    gap = 14,
+                ) { vm.show(shownTabs[it]) }
                 PageMessage(vm.message, vm::clearMessage)
             }
         },
@@ -271,9 +243,10 @@ fun FeedScreen(
                                         end = Gutter,
                                         bottom = Gutter + 64.dp + dockRoom(),
                                     ),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                item(key = "ask") { FeedAskButton(onPost = onAsk) }
+                                // 4dp more under it than between cards, so it sits apart from the list.
+                                item(key = "ask") { FeedAskRow(Modifier.padding(bottom = 4.dp), onPost = onAsk) }
                                 // Only once the server has answered: saved lists can be last time's,
                                 // and a card shown from them would vanish as the real ones arrive.
                                 if (!hold && howTo && vm.answered && !involved) {
@@ -288,7 +261,7 @@ fun FeedScreen(
                                         }
                                     }
                                 }
-                                if (hold) items(3) { FeedRequestLoadingCard() }
+                                if (hold) items(7) { FeedRequestLoadingCard() }
                                 items(if (hold) emptyList() else vm.openPosts, key = { it.id }) { post ->
                                     // Fades in, fades out and glides to its new place when the list changes.
                                     Box(Modifier.animateItem()) {

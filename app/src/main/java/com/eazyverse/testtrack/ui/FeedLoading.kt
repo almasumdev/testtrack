@@ -1,13 +1,18 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.eazyverse.testtrack.ui.theme.Tt
 
 /** Uses the shared themed shimmer and the same card geometry as the arriving feed. */
 @Composable
@@ -36,22 +41,45 @@ internal fun FeedLoadingCard(compact: Boolean = false) {
     }
 }
 
-/** A request on the Feedback list while it loads, shaped as the card that lands: icon, name, pill, ticket. */
+/** A request on the Feedback list while it loads, shaped as the ticket that lands: icon, two lines, stub. */
 @Composable
 internal fun FeedRequestLoadingCard() {
-    FeedCard(
-        modifier = Modifier.semantics { contentDescription = "Loading Circle content" },
-        padding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+    val t = Tt.colors
+    val shape = remember { TicketShape() }
+    Row(
+        Modifier
+            .semantics { contentDescription = "Loading Circle content" }
+            .fillMaxWidth()
+            .heightIn(min = 60.dp)
+            .height(IntrinsicSize.Min)
+            .clip(shape)
+            .background(t.card)
+            .border(1.dp, t.cardLine, shape),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Skeleton(width = 48.dp, height = 48.dp, corner = 24.dp)
+        Row(
+            Modifier.weight(1f).padding(start = 10.dp, end = 10.dp, top = 9.dp, bottom = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Skeleton(width = 40.dp, height = 40.dp, corner = 12.dp)
             Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Skeleton(height = 16.dp, modifier = Modifier.fillMaxWidth(0.6f))
-                Skeleton(width = 84.dp, height = 20.dp, corner = 10.dp)
+            Column(Modifier.weight(1f)) {
+                Skeleton(height = 14.dp, modifier = Modifier.fillMaxWidth(0.62f))
+                Spacer(Modifier.height(7.dp))
+                Skeleton(height = 10.dp, modifier = Modifier.fillMaxWidth(0.42f))
             }
-            Spacer(Modifier.width(10.dp))
-            Skeleton(width = 52.dp, height = 36.dp, corner = 8.dp)
+        }
+        Column(
+            Modifier
+                .width(TICKET_STUB)
+                .fillMaxHeight()
+                .background(t.leafAccentSoft)
+                .tearLine(t.glassBorder),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Skeleton(width = 24.dp, height = 14.dp, corner = 4.dp)
+            Spacer(Modifier.height(5.dp))
+            Skeleton(width = 16.dp, height = 8.dp, corner = 4.dp)
         }
     }
 }

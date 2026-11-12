@@ -1,9 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import android.animation.ValueAnimator
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,9 +7,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -25,36 +23,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.paint
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.RoundRect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Flag
 import com.composables.icons.lucide.Flame
 import com.composables.icons.lucide.Gauge
@@ -62,13 +45,13 @@ import com.composables.icons.lucide.HeartHandshake
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Megaphone
 import com.composables.icons.lucide.MessageSquareText
+import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.Rocket
 import com.composables.icons.lucide.UserPlus
-import com.eazyverse.testtrack.R
+import com.eazyverse.testtrack.domain.grouped
 import com.eazyverse.testtrack.net.ApiPost
+import com.eazyverse.testtrack.ui.theme.Barlow
 import com.eazyverse.testtrack.ui.theme.Tt
-import kotlinx.coroutines.delay
-import kotlin.random.Random
 
 /**
  * The feed's own container.
@@ -162,110 +145,105 @@ fun AppTile(
 /** What both ways in to posting are labelled. One word for one action, in one place. */
 private const val POST_LABEL = "Ask for feedback"
 
-/**
- * A dashed outline, in the vocabulary [RowDivider] already established.
- *
- * Dashed says "nothing here yet, put something in it" in a way no solid border does, which is
- * exactly what this control is: the empty slot at the top of your own posts. It is also the one
- * shape on the screen that is not a card, so it never reads as a post somebody wrote.
- *
- * Inset by half the stroke, because a stroke is drawn centred on the bounds and the outer half of
- * it would otherwise be clipped away, leaving a line that looks thinner on the corners.
- */
-private fun Modifier.dashedBorder(
-    color: Color,
-    corner: Dp,
-    width: Dp = 1.5.dp,
-) = drawBehind {
-    val inset = width.toPx() / 2f
-    drawRoundRect(
-        color = color,
-        topLeft = Offset(inset, inset),
-        size = Size(size.width - inset * 2f, size.height - inset * 2f),
-        cornerRadius = CornerRadius(corner.toPx()),
-        style =
-            Stroke(
-                width = width.toPx(),
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx())),
-            ),
-    )
-}
+/** The name line and the grey line under it, on a request and on the row that asks for one. */
+private val RowTitle = TextStyle(fontFamily = Barlow, fontSize = 16.sp, lineHeight = 21.sp)
+private val RowNote = TextStyle(fontFamily = Barlow, fontSize = 12.5.sp, lineHeight = 17.sp, fontWeight = FontWeight.Normal)
 
 /**
- * The way in to posting, sitting where the first post would be.
+ * The way in to posting, a row at the top of the list.
  *
- * Sized like a slot rather than a button, because that is what it is: the gap at the top of the
- * list where your own post is going to go. Deep enough to read as a space waiting to be filled,
- * short enough that it does not hold the first real post below the fold. A control this size
- * reading as loud as it is big would fight every card under it, so the word in it is set large
- * and quiet instead. That pairing is what says placeholder rather than action.
+ * Laid out like a request under it, an icon tile, two lines and a chevron, so it reads as the first
+ * thing on the list rather than as a button. What sets it apart is the missing fill: an outline
+ * with nothing in it is the slot your own request goes into.
  *
- * The label and nothing else. What it costs used to sit under it and now lives in the dialog the
- * tap opens, which is the last moment before anything is spent and so the only moment the number
- * has to be true by.
+ * The label and nothing else about cost. What it costs lives in the dialog the tap opens, which is
+ * the last moment before anything is spent and so the only moment the number has to be true by.
  */
 @Composable
-fun FeedAskButton(
+fun FeedAskRow(
     modifier: Modifier = Modifier,
     onPost: () -> Unit,
 ) {
-    Box(
+    val t = Tt.colors
+    val shape = RoundedCornerShape(14.dp)
+    Row(
         modifier
             .fillMaxWidth()
-            .heightIn(min = 66.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .dashedBorder(MaterialTheme.colorScheme.outline, 14.dp)
+            .clip(shape)
+            .border(1.dp, t.cardLine, shape)
             .clickable(onClick = onPost)
-            .padding(16.dp),
-        contentAlignment = Alignment.Center,
+            .padding(start = 10.dp, end = 12.dp, top = 9.dp, bottom = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            POST_LABEL,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Box(
+            Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(t.tile),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Lucide.Plus, null, Modifier.size(20.dp), tint = t.tileInk)
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                POST_LABEL,
+                style = RowTitle,
+                fontWeight = FontWeight.SemiBold,
+                color = t.text,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                "Get reviews of your own app",
+                style = RowNote,
+                color = t.text3,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = t.text4)
     }
 }
 
 /**
- * The same way in again, once [FeedAskButton] has scrolled off.
+ * The same way in again, once [FeedAskRow] has scrolled off.
  *
- * The same bar, the same width, the same dashes and the same word, at a third of the height. Not
- * a floating circle with a plus in it, which would have arrived as a new action rather than as
- * the one already offered at the top of the page: this is that control following you down, and
- * the only thing it gives up on the way is the room to be tall.
- *
- * Filled in the soft accent tile, the ground of the cards' own Review chips, rather than the card
- * surface or the page ground. Over a moving list it has to read as a plate laid over the cards and
- * as something to tap: on the card surface it was one more card drifting loose, and on the page
- * ground it read grey and switched off.
+ * A round pill rather than the row at a smaller size: it floats over the cards, so it is filled in
+ * the soft accent tile, the ground of an icon tile, to read as a plate laid over them and as
+ * something to tap. On the card surface it was one more card drifting loose.
  */
 @Composable
-fun FeedAskBar(onPost: () -> Unit) {
-    Box(
+fun FeedAskPill(onPost: () -> Unit) {
+    val t = Tt.colors
+    val shape = RoundedCornerShape(percent = 50)
+    Row(
         Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Gutter)
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(Tt.colors.tile)
-            .dashedBorder(MaterialTheme.colorScheme.outline, 14.dp)
+            .height(40.dp)
+            .clip(shape)
+            .background(t.tile)
+            .border(1.dp, t.glassBorder, shape)
             .clickable(onClick = onPost)
-            .padding(12.dp),
-        contentAlignment = Alignment.Center,
+            .padding(start = 12.dp, end = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
+        Icon(Lucide.Plus, null, Modifier.size(18.dp), tint = t.tileInk)
+        Spacer(Modifier.width(6.dp))
         Text(
             POST_LABEL,
-            style = MaterialTheme.typography.titleMedium,
+            style = TextStyle(fontFamily = Barlow, fontSize = 14.sp, lineHeight = 18.sp),
             fontWeight = FontWeight.SemiBold,
-            color = Tt.colors.tileInk,
+            color = t.tileInk,
+            maxLines = 1,
         )
     }
 }
 
 /**
- * One request, anonymous: the app's face, its name, which kind it is, and what it pays.
+ * One request, anonymous: the app's face, its name, which kind it is, and what it pays, drawn as a
+ * ticket. The pay is the stub on the right, torn off along a dashed line between two bites out of
+ * the card's edge.
  *
  * Decided October 2026: no owner's name (it invites reviewing friends), no slot count (the feed
  * only lists requests the reader can take), and no question (the review screen shows it). The
@@ -276,104 +254,90 @@ fun FeedRequestCard(
     post: ApiPost,
     onReview: () -> Unit,
 ) {
+    val t = Tt.colors
+    val shape = remember { TicketShape() }
+    // Which kind decides how it is reviewed. Never whose it is: requests are anonymous, and what
+    // the developer asks is on the review itself.
+    val kind = if (post.isLive) CheckKind.PLAY.label else CheckKind.CLOSED.label
+    val note =
+        when (FeedRules.Feedback.of(post.feedback)) {
+            FeedRules.Feedback.STARS -> kind
+            FeedRules.Feedback.WRITTEN -> "$kind, written review"
+            FeedRules.Feedback.DETAILED -> "$kind, detailed review"
+        }
     // The list holds only requests the reader can still start (FeedViewModel.openPosts), so a
     // tile is the same from the moment it appears to the moment it is started and leaves.
-    FeedCard(onClick = if (post.mine) null else onReview, padding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            // As tall as the name and the pill together, as the app's header on its review is.
-            AppMark(post.packageName, post.appName, post.icon, size = HEADER_ICON)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 60.dp)
+            .height(IntrinsicSize.Min)
+            .clip(shape)
+            .background(t.card)
+            .border(1.dp, t.cardLine, shape)
+            .then(if (post.mine) Modifier else Modifier.clickable(onClick = onReview)),
+    ) {
+        Row(
+            Modifier.weight(1f).padding(start = 10.dp, end = 10.dp, top = 9.dp, bottom = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AppMark(post.packageName, post.appName, post.icon, size = 40.dp)
             Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(Modifier.weight(1f)) {
                 Text(
                     post.appName,
-                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp, lineHeight = 22.sp),
-                    fontWeight = FontWeight.Bold,
+                    style = RowTitle,
+                    fontWeight = FontWeight.SemiBold,
+                    color = t.text,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                // Which kind decides how it is reviewed. Never whose it is: requests are anonymous,
-                // and what the developer asks is on the review itself.
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    KindPill(if (post.isLive) CheckKind.PLAY else CheckKind.CLOSED)
-                    FeedbackPill(post.feedback)
-                }
+                Text(note, style = RowNote, color = t.text3, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Spacer(Modifier.width(10.dp))
-            if (!post.mine) TixReward(post.reward)
         }
+        TicketStub(post.reward, post.mine)
     }
 }
 
-/**
- * What a review pays: the tix ticket itself, as the top bar draws it, with the number in it, and a
- * streak of light that sweeps across it every few seconds, as if it caught the light. Still, part
- * way across, where the phone has animations turned off.
- */
+/** What a review pays, on the right of a ticket, behind the tear line. Your own post says so instead. */
 @Composable
-private fun TixReward(tix: Int) {
-    val shine = Tt.colors.ticketShine
-    val moving = remember { ValueAnimator.areAnimatorsEnabled() }
-    // A sweep, then a rest, rather than an endless transition: the rest asks for no frames, so a
-    // screen of these settles for its tests. Each ticket starts at its own moment, so a list of
-    // them does not flash all at once.
-    val sweep = remember { Animatable(0f) }
-    LaunchedEffect(moving) {
-        if (!moving) return@LaunchedEffect
-        delay(Random.nextLong(SHINE_EVERY_MS.toLong()))
-        while (true) {
-            sweep.snapTo(0f)
-            sweep.animateTo(1f, tween(SHINE_MS, easing = FastOutSlowInEasing))
-            delay((SHINE_EVERY_MS - SHINE_MS).toLong())
-        }
-    }
-    Box(
+private fun TicketStub(
+    tix: Int,
+    mine: Boolean,
+) {
+    val t = Tt.colors
+    Column(
         Modifier
-            .clearAndSetSemantics { contentDescription = "$tix tix" }
-            .size(width = 52.dp, height = 36.dp)
-            .paint(painterResource(R.drawable.tix_ticket_blank))
-            .drawWithContent {
-                drawContent()
-                // Inside the navy edge only, leaning like light through a window.
-                val edge = 3.dp.toPx()
-                val inside =
-                    Path().apply {
-                        addRoundRect(
-                            RoundRect(edge, edge, size.width - edge, size.height - edge, CornerRadius(4.dp.toPx())),
-                        )
-                    }
-                clipPath(inside) {
-                    rotate(22f) {
-                        val w = 8.dp.toPx()
-                        val x = if (moving) -w * 2 + (size.width + w * 3) * sweep.value else size.width * 0.14f
-                        drawRect(
-                            Brush.horizontalGradient(
-                                listOf(shine.copy(alpha = 0f), shine.copy(alpha = 0.7f), shine.copy(alpha = 0f)),
-                                startX = x,
-                                endX = x + w,
-                            ),
-                            topLeft = Offset(x, -size.height),
-                            size =
-                                androidx.compose.ui.geometry
-                                    .Size(w, size.height * 3f),
-                        )
-                    }
-                }
-            },
-        contentAlignment = Alignment.Center,
+            .width(TICKET_STUB)
+            .fillMaxHeight()
+            .background(t.leafAccentSoft)
+            .tearLine(t.glassBorder)
+            .then(if (mine) Modifier else Modifier.clearAndSetSemantics { contentDescription = "$tix tix" }),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
-        Text(
-            "$tix",
-            style = MaterialTheme.typography.labelLarge.copy(fontSize = if (tix >= 1000) 13.sp else 17.sp, fontFeatureSettings = "tnum"),
-            fontWeight = FontWeight.ExtraBold,
-            color = Tt.colors.ticketInk,
-            maxLines = 1,
-        )
+        if (mine) {
+            Text("Yours", style = StubNote, fontWeight = FontWeight.Medium, color = t.text3, maxLines = 1)
+        } else {
+            Text(
+                grouped(tix),
+                style =
+                    TextStyle(
+                        fontFamily = Barlow,
+                        fontSize = if (tix >= 1000) 15.sp else 18.sp,
+                        lineHeight = 20.sp,
+                        fontFeatureSettings = "tnum",
+                    ),
+                fontWeight = FontWeight.SemiBold,
+                color = t.tabSelected,
+                maxLines = 1,
+            )
+            Text("tix", style = StubNote, fontWeight = FontWeight.Medium, color = t.text3, maxLines = 1)
+        }
     }
 }
 
-/** How often the ticket's light sweeps across it, and how long one sweep takes. */
-private const val SHINE_EVERY_MS = 3600
-private const val SHINE_MS = 900
+private val StubNote = TextStyle(fontFamily = Barlow, fontSize = 11.sp, lineHeight = 13.sp)
 
 /** The uppercase word at the top of a card saying which kind of post this is. */
 @Composable

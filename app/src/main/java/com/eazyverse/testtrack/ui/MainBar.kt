@@ -8,6 +8,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,9 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -108,10 +109,9 @@ fun MainBar(
             Modifier
                 .widthIn(max = 480.dp)
                 .fillMaxWidth()
-                .shadow(18.dp, shape, ambientColor = t.shadow.copy(alpha = 0.25f), spotColor = t.shadow.copy(alpha = 0.25f))
                 .clip(shape)
-                .background(t.dock)
-                .border(1.dp, t.glassBorder, shape)
+                .background(t.card)
+                .border(1.dp, t.cardLine, shape)
                 .padding(4.dp),
         ) {
             if (maxWidth < Wide + 48.dp * 4 || LocalDensity.current.fontScale > 1.2f) {
@@ -129,7 +129,7 @@ fun MainBar(
             val pillWidth = widths.zip(values).fold(0.dp) { at, (w, s) -> at + w * (s / total) }
 
             // Underneath: the bar's ink, and the only layer that takes taps.
-            BarRow(values, widths, t.dockInk, selected, counts) { tab ->
+            BarRow(values, widths, t.tabUnselected, selected, counts) { tab ->
                 if (tab != selected) {
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                     onSelect(tab)
@@ -148,13 +148,31 @@ fun MainBar(
                 Modifier
                     .matchParentSize()
                     .clip(pill)
-                    .background(t.selectedFill)
+                    .background(t.leafAccentSoft)
                     .clearAndSetSemantics {},
             ) {
-                BarRow(values, widths, t.onSelected, selected = null, counts = counts, onSelect = null)
+                BarRow(values, widths, t.tabSelected, selected = null, counts = counts, onSelect = null)
             }
         }
     }
+}
+
+/**
+ * The ground fading in under the dock, so a card never meets the dock edge to edge.
+ *
+ * Clear at the top and solid from 40% down. Drawn under [MainBar] and takes no touches, so the
+ * page behind it still scrolls and taps through it.
+ */
+@Composable
+internal fun BoxScope.DockFade(dockHeight: Dp) {
+    val bg = Tt.colors.bg
+    Box(
+        Modifier
+            .align(Alignment.BottomCenter)
+            .fillMaxWidth()
+            .height(dockHeight + 40.dp)
+            .background(Brush.verticalGradient(0f to bg.copy(alpha = 0f), 0.4f to bg, 1f to bg)),
+    )
 }
 
 @Composable
@@ -169,7 +187,7 @@ private fun CompactBar(
             selected.label,
             Modifier.padding(top = 6.dp, bottom = 2.dp),
             style = MaterialTheme.typography.labelLarge,
-            color = t.dockInk,
+            color = t.tabUnselected,
         )
         Row(Modifier.fillMaxWidth()) {
             MainTab.entries.forEach { tab ->
@@ -178,11 +196,11 @@ private fun CompactBar(
                         .weight(1f)
                         .heightIn(min = 48.dp)
                         .clip(RoundedCornerShape(24.dp))
-                        .background(if (tab == selected) t.selectedFill else t.dock)
+                        .background(if (tab == selected) t.leafAccentSoft else t.card)
                         .selectable(tab == selected, role = Role.Tab, onClick = { onSelect(tab) }),
                     contentAlignment = Alignment.Center,
                 ) {
-                    TabIcon(tab, counts[tab] ?: 0, if (tab == selected) t.onSelected else t.dockInk, tab.label)
+                    TabIcon(tab, counts[tab] ?: 0, if (tab == selected) t.tabSelected else t.tabUnselected, tab.label)
                 }
             }
         }
@@ -239,9 +257,8 @@ private fun BarRow(
 /**
  * A tab's icon, and over its corner how many things on it wait for this account.
  *
- * The count is the bad colour rather than the accent, because the selected pill is drawn in the
- * accent and a count in it vanished on the very tab it was about. Ringed in the dock's own colour
- * so it lifts off the icon under it. Said with the tab's name for a screen reader.
+ * The count is the primary colour, ringed in the dock's own colour so it lifts off the icon under
+ * it and off the selected pill. Said with the tab's name for a screen reader.
  */
 @Composable
 private fun TabIcon(
@@ -264,10 +281,10 @@ private fun TabIcon(
                     .align(Alignment.TopEnd)
                     .offset(x = 10.dp, y = (-6).dp)
                     .clip(shape)
-                    .background(Tt.colors.dock)
+                    .background(Tt.colors.card)
                     .padding(1.5.dp)
                     .clip(shape)
-                    .background(Tt.colors.bad)
+                    .background(Tt.colors.primary)
                     .padding(horizontal = 4.5.dp, vertical = 0.5.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -275,7 +292,7 @@ private fun TabIcon(
                     if (count > 99) "99+" else "$count",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, lineHeight = 12.sp),
                     fontWeight = FontWeight.Bold,
-                    color = Tt.colors.onBad,
+                    color = Tt.colors.onPrimary,
                 )
             }
         }
