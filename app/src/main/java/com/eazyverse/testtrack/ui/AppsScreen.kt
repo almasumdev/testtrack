@@ -1,11 +1,9 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -64,13 +62,12 @@ fun AppsScreen(
                 )
                 // Over the list, never over the empty state, which has its own button in the middle.
                 if (canAdd && vm.apps.isNotEmpty()) {
-                    AddAppButton(
+                    AddAppBar(
                         onClick = onAddApp,
                         modifier =
                             Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(end = Gutter, bottom = dockRoom() + 12.dp)
-                                .width(IntrinsicSize.Max),
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = dockRoom() + 16.dp),
                     )
                 }
             }
@@ -139,9 +136,8 @@ fun AppsBody(
     LazyColumn(
         Modifier.fillMaxSize(),
         state = listState,
-        contentPadding = PaddingValues(top = 4.dp, bottom = Gutter + dockRoom() + addRoom),
+        contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom() + addRoom),
     ) {
-        item { CrewHeading("Your apps") }
         items(apps, key = { it.id }) { app ->
             // Fades in, fades out and glides to its new place when the list changes.
             Box(Modifier.animateItem()) {

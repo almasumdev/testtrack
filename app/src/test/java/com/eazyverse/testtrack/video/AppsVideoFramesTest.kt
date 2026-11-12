@@ -232,7 +232,7 @@ class AppsVideoFramesTest {
         val vm = apps(listOf(added))
         frame.show { Ground { TabShell(MainTab.APPS, Scene.APPS) { AppsScreen(vm = vm) } } }
         runCatching { frame.target("appRow", tap(focus.name)) }
-        runCatching { frame.target("addApp", tap("Add app")) }
+        runCatching { frame.target("addApp", tap("Add an app")) }
         frame.write("list")
     }
 

@@ -28,11 +28,11 @@ object MyAppsChanged {
     }
 }
 
-/** The way in on a list that already has apps: a pill over the bottom of the list. */
+/** The way in on a list that already has apps: Circle's floating bar, with a plus ahead of the words. */
 @Composable
-internal fun AddAppButton(
+internal fun AddAppBar(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Primary("Add app", modifier, mark = rememberVectorPainter(Lucide.Plus), onClick = onClick)
+    FloatingActionBar("Add an app", onClick, modifier, icon = rememberVectorPainter(Lucide.Plus))
 }

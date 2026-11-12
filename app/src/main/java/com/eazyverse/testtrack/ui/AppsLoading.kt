@@ -18,17 +18,16 @@ import androidx.compose.ui.unit.dp
 
 /**
  * My apps before they have arrived: a page of tiles in the frame [AppCard] draws them, an icon and
- * two bars, under the list's one heading.
+ * two bars.
  */
 @Composable
 internal fun AppsLoading() {
     Column(
         Modifier
             .fillMaxSize()
-            .padding(top = 4.dp)
+            .padding(top = 12.dp)
             .semantics(mergeDescendants = true) { contentDescription = "Loading your apps" },
     ) {
-        HeadingLoading(92)
         repeat(CARDS) { i ->
             Row(
                 Modifier
@@ -116,14 +115,6 @@ internal fun AppNotThere(
             action = "Back",
             onAction = onBack,
         )
-    }
-}
-
-/** A section heading's place, where [CrewHeading] will put its words. */
-@Composable
-private fun HeadingLoading(width: Int) {
-    Box(Modifier.padding(start = Gutter, end = Gutter, top = 20.dp, bottom = 12.dp)) {
-        Skeleton(width = width.dp, height = 15.dp)
     }
 }
 

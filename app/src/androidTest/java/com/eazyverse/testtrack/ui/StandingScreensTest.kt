@@ -274,7 +274,6 @@ class StandingScreensTest {
                 )
             }
         }
-        compose.onNodeWithText("Your apps").assertIsDisplayed()
         compose.onNodeWithText("Running One").assertIsDisplayed()
         compose.onNodeWithText("Old One").assertIsDisplayed()
         compose.onNodeWithText("Crew test done").assertIsDisplayed()

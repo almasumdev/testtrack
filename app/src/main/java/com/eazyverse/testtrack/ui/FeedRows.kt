@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -203,25 +204,49 @@ fun FeedAskRow(
  * hairline. The label is in the accent ink the stubs use.
  */
 @Composable
-fun FeedAskBar(onPost: () -> Unit) {
+fun FeedAskBar(onPost: () -> Unit) = FloatingActionBar(POST_LABEL, onPost)
+
+/**
+ * The bar [FeedAskBar] is, for any tab whose one action should follow you down the list: the same
+ * box, hairline and accent label, with an optional [icon] ahead of the label. Place it centred,
+ * [dockRoom] plus 16dp above the bottom, and keep 64dp clear at the foot of the list under it.
+ */
+@Composable
+fun FloatingActionBar(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: Painter? = null,
+) {
     Box(
-        Modifier
+        modifier
             .fillMaxWidth()
             .padding(horizontal = Gutter)
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(Tt.colors.bg)
             .border(1.dp, Tt.colors.cardLine, RoundedCornerShape(14.dp))
-            .clickable(onClick = onPost)
+            .clickable(onClick = onClick)
             .padding(12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            POST_LABEL,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = Tt.colors.tabSelected,
-        )
+        val text: @Composable () -> Unit = {
+            Text(
+                label,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Tt.colors.tabSelected,
+            )
+        }
+        if (icon == null) {
+            text()
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(icon, contentDescription = null, tint = Tt.colors.tabSelected, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                text()
+            }
+        }
     }
 }
 
