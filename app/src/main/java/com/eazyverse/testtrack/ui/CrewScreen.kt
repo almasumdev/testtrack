@@ -4,14 +4,12 @@ import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -76,15 +74,8 @@ fun CrewScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             Column {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        // Nothing of its own, the same as Circle's: the header above brings its
-                        // space below itself and the tabs bring their own touch padding.
-                        .padding(start = Gutter, end = Gutter),
-                ) {
-                    PhaseTabs(vm.tab, { vm.badge(it) }) { vm.showTab(it) }
-                }
+                // The tabs bring their own gutter and room above, the same as Circle's.
+                PhaseTabs(vm.tab, { vm.badge(it) }) { vm.showTab(it) }
                 PageMessage(vm.message, vm::clearMessage)
             }
         },
@@ -201,7 +192,7 @@ class CrewActions(
 )
 
 /**
- * Crew's four, drawn by the same row Circle's three use. See [WordTabs].
+ * Crew's four, drawn by the same track Circle's three use. See [SegmentedTabs].
  */
 @Composable
 private fun PhaseTabs(
@@ -209,10 +200,9 @@ private fun PhaseTabs(
     badge: (CrewPhase) -> Int,
     onSelect: (CrewPhase) -> Unit,
 ) {
-    WordTabs(
+    SegmentedTabs(
         labels = CrewPhase.entries.map { it.name.lowercase().replaceFirstChar(Char::uppercase) },
         selected = CrewPhase.entries.indexOf(selected),
-        // Four words and their counts have less room than Circle's three, so they sit closer.
         counts = CrewPhase.entries.map(badge),
         gap = 14,
     ) { onSelect(CrewPhase.entries[it]) }

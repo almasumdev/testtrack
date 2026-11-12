@@ -177,8 +177,7 @@ fun FeedScreen(
                 enter = fadeIn() + slideInVertically { it },
                 exit = fadeOut() + slideOutVertically { it },
             ) {
-                // The dock's own room less 4dp, which puts the pill about 12dp above the dock.
-                Box(Modifier.padding(bottom = dockRoom() - 4.dp)) { FeedAskPill(onAsk) }
+                Box(Modifier.padding(bottom = dockRoom())) { FeedAskBar(onAsk) }
             }
         },
         // The tabs sit on the page rather than in a bar, with no title and no rule: the bottom bar

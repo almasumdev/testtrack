@@ -77,9 +77,9 @@ internal fun FeedRequestLoadingCard() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
+            Skeleton(width = 16.dp, height = 16.dp, corner = 4.dp)
+            Spacer(Modifier.height(3.dp))
             Skeleton(width = 24.dp, height = 14.dp, corner = 4.dp)
-            Spacer(Modifier.height(5.dp))
-            Skeleton(width = 16.dp, height = 8.dp, corner = 4.dp)
         }
     }
 }

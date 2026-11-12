@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,7 +28,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -208,34 +216,60 @@ fun FeedAskRow(
 }
 
 /**
+ * A dashed outline, in the vocabulary [RowDivider] already established.
+ *
+ * Dashed says "nothing here yet, put something in it", which is what this control is. Inset by
+ * half the stroke, because a stroke is drawn centred on the bounds and the outer half of it would
+ * otherwise be clipped away.
+ */
+private fun Modifier.dashedBorder(
+    color: Color,
+    corner: Dp,
+    width: Dp = 1.5.dp,
+) = drawBehind {
+    val inset = width.toPx() / 2f
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(inset, inset),
+        size = Size(size.width - inset * 2f, size.height - inset * 2f),
+        cornerRadius = CornerRadius(corner.toPx()),
+        style =
+            Stroke(
+                width = width.toPx(),
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx())),
+            ),
+    )
+}
+
+/**
  * The same way in again, once [FeedAskRow] has scrolled off.
  *
- * A round pill rather than the row at a smaller size: it floats over the cards, so it is filled in
- * the soft accent tile, the ground of an icon tile, to read as a plate laid over them and as
- * something to tap. On the card surface it was one more card drifting loose.
+ * The same dashed bar and the same word, full width. Not a floating circle with a plus in it, which
+ * would have arrived as a new action rather than as the one already offered at the top of the page:
+ * this is that control following you down.
+ *
+ * Filled in the soft accent tile, the ground of the cards' own Review chips, so it reads as a
+ * plate laid over the cards and as something to tap, not one more card drifting loose.
  */
 @Composable
-fun FeedAskPill(onPost: () -> Unit) {
-    val t = Tt.colors
-    val shape = RoundedCornerShape(percent = 50)
-    Row(
+fun FeedAskBar(onPost: () -> Unit) {
+    Box(
         Modifier
-            .height(40.dp)
-            .clip(shape)
-            .background(t.tile)
-            .border(1.dp, t.glassBorder, shape)
+            .fillMaxWidth()
+            .padding(horizontal = Gutter)
+            .heightIn(min = 48.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Tt.colors.tile)
+            .dashedBorder(MaterialTheme.colorScheme.outline, 14.dp)
             .clickable(onClick = onPost)
-            .padding(start = 12.dp, end = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(12.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Icon(Lucide.Plus, null, Modifier.size(18.dp), tint = t.tileInk)
-        Spacer(Modifier.width(6.dp))
         Text(
             POST_LABEL,
-            style = TextStyle(fontFamily = Barlow, fontSize = 14.sp, lineHeight = 18.sp),
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            color = t.tileInk,
-            maxLines = 1,
+            color = Tt.colors.tileInk,
         )
     }
 }
@@ -306,6 +340,8 @@ private fun TicketStub(
     mine: Boolean,
 ) {
     val t = Tt.colors
+    // The stub is leafAccentSoft already, so a ticket in the same fill would vanish; card lifts it.
+    val mark = rememberTicketMark(t.card)
     Column(
         Modifier
             .width(TICKET_STUB)
@@ -319,6 +355,8 @@ private fun TicketStub(
         if (mine) {
             Text("Yours", style = StubNote, fontWeight = FontWeight.Medium, color = t.text3, maxLines = 1)
         } else {
+            Image(mark, null, Modifier.size(16.dp).rotate(-12f))
+            Spacer(Modifier.height(3.dp))
             Text(
                 grouped(tix),
                 style =
@@ -332,7 +370,6 @@ private fun TicketStub(
                 color = t.tabSelected,
                 maxLines = 1,
             )
-            Text("tix", style = StubNote, fontWeight = FontWeight.Medium, color = t.text3, maxLines = 1)
         }
     }
 }
