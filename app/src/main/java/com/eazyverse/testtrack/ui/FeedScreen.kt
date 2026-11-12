@@ -94,7 +94,7 @@ fun FeedScreen(
     val feedbackList = rememberLazyListState()
 
     /**
-     * The dashed button at the top of Feedback has scrolled off.
+     * The ask row at the top of Feedback has scrolled off.
      *
      * Read through [derivedStateOf] so this recomposes when the answer changes rather than on
      * every frame of the scroll that produced it.

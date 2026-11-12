@@ -25,13 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -202,40 +196,15 @@ fun FeedAskRow(
 }
 
 /**
- * A dashed outline, in the vocabulary [RowDivider] already established.
- *
- * Dashed says "nothing here yet, put something in it", which is what this control is. Inset by
- * half the stroke, because a stroke is drawn centred on the bounds and the outer half of it would
- * otherwise be clipped away.
- */
-private fun Modifier.dashedBorder(
-    color: Color,
-    corner: Dp,
-    width: Dp = 1.5.dp,
-) = drawBehind {
-    val inset = width.toPx() / 2f
-    drawRoundRect(
-        color = color,
-        topLeft = Offset(inset, inset),
-        size = Size(size.width - inset * 2f, size.height - inset * 2f),
-        cornerRadius = CornerRadius(corner.toPx()),
-        style =
-            Stroke(
-                width = width.toPx(),
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx())),
-            ),
-    )
-}
-
-/**
  * The same way in again, once [FeedAskRow] has scrolled off.
  *
- * The same dashed bar and the same word, full width. Not a floating circle with a plus in it, which
- * would have arrived as a new action rather than as the one already offered at the top of the page:
- * this is that control following you down.
+ * The same word, full width. Not a floating circle with a plus in it, which would have arrived as a
+ * new action rather than as the one already offered at the top of the page: this is that control
+ * following you down.
  *
- * Filled in the soft accent tile, the ground of the cards' own Review chips, so it reads as a
- * plate laid over the cards and as something to tap, not one more card drifting loose.
+ * Solid, filled in the soft accent tile, the ground of the cards' own Review chips, with a plain
+ * hairline in the cards' own border colour so it reads as a plate laid over the cards and as
+ * something to tap, not one more card drifting loose.
  */
 @Composable
 fun FeedAskBar(onPost: () -> Unit) {
@@ -246,7 +215,7 @@ fun FeedAskBar(onPost: () -> Unit) {
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(Tt.colors.tile)
-            .dashedBorder(MaterialTheme.colorScheme.outline, 14.dp)
+            .border(1.dp, Tt.colors.glassBorder, RoundedCornerShape(14.dp))
             .clickable(onClick = onPost)
             .padding(12.dp),
         contentAlignment = Alignment.Center,
