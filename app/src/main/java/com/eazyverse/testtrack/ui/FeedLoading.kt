@@ -1,14 +1,10 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -43,43 +39,35 @@ internal fun FeedLoadingCard() {
 @Composable
 internal fun FeedRequestLoadingCard() {
     val t = Tt.colors
-    val shape = remember { TicketShape() }
-    Row(
-        Modifier
-            .semantics { contentDescription = "Loading Circle content" }
-            .fillMaxWidth()
-            .heightIn(min = 76.dp)
-            .height(IntrinsicSize.Min)
-            .clip(shape)
-            .background(t.bg)
-            .border(1.dp, t.cardLine, shape),
-    ) {
-        Row(
-            Modifier.weight(1f).padding(start = 12.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Skeleton(width = 52.dp, height = 52.dp, corner = 14.dp)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Skeleton(height = 14.dp, modifier = Modifier.fillMaxWidth(0.62f))
-                Spacer(Modifier.height(7.dp))
-                Skeleton(height = 10.dp, modifier = Modifier.fillMaxWidth(0.42f))
+    TicketFrame(
+        modifier = Modifier.semantics { contentDescription = "Loading Circle content" },
+        onClick = null,
+        leading = { Skeleton(width = 52.dp, height = 52.dp, corner = 14.dp) },
+        stub = {
+            TicketStubFrame(null) {
+                // The stub is the same grey as the default bar, so these sit on card like the real ticket does.
+                Skeleton(width = 16.dp, height = 16.dp, corner = 4.dp, ground = t.card)
+                Spacer(Modifier.height(3.dp))
+                Skeleton(width = 24.dp, height = 14.dp, corner = 4.dp, ground = t.card)
             }
-        }
-        Column(
-            Modifier
-                .width(TICKET_STUB)
-                .fillMaxHeight()
-                .background(t.leafAccentSoft)
-                .tearLine(t.glassBorder),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            // The stub is the same grey as the default bar, so these sit on card like the real ticket does.
-            Skeleton(width = 16.dp, height = 16.dp, corner = 4.dp, ground = t.card)
-            Spacer(Modifier.height(3.dp))
-            Skeleton(width = 24.dp, height = 14.dp, corner = 4.dp, ground = t.card)
-        }
+        },
+    ) {
+        Skeleton(height = 14.dp, modifier = Modifier.fillMaxWidth(0.62f))
+        Spacer(Modifier.height(7.dp))
+        Skeleton(height = 10.dp, modifier = Modifier.fillMaxWidth(0.42f))
+    }
+}
+
+/** The ticket placeholders for the Circle tabs that list tickets (My reviews, To check). */
+@Composable
+internal fun TicketLoadingList() {
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 16.dp, bottom = Gutter + dockRoom()),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        userScrollEnabled = false,
+    ) {
+        items(5) { FeedRequestLoadingCard() }
     }
 }
 

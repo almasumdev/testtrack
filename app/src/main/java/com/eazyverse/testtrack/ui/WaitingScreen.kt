@@ -1,15 +1,26 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Lock
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.domain.Case
 import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.domain.closeTo
+import com.eazyverse.testtrack.domain.grouped
+import com.eazyverse.testtrack.domain.pays
 import com.eazyverse.testtrack.domain.timeLeft
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -56,15 +67,7 @@ fun WaitingBody(
         return
     }
     if (DebugLooks.holdLoading || (loading && reviews.isEmpty() && disputes.isEmpty())) {
-        LazyColumn(
-            Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 16.dp, bottom = Gutter + dockRoom()),
-            verticalArrangement =
-                androidx.compose.foundation.layout.Arrangement
-                    .spacedBy(12.dp),
-        ) {
-            items(3) { FeedLoadingCard() }
-        }
+        TicketLoadingList()
         return
     }
     if (reviews.isEmpty() && disputes.isEmpty() && requests.isEmpty()) {
@@ -76,7 +79,7 @@ fun WaitingBody(
         return
     }
 
-    // A list like Mine: one row each, and the deciding is done on the row's own page, where the
+    // A list like Mine: one ticket each, and the deciding is done on the ticket's own page, where the
     // screenshot can be seen at full size. Cards with the screenshot and both buttons inline took
     // most of a screen each.
     LazyColumn(
@@ -86,23 +89,25 @@ fun WaitingBody(
         val now = System.currentTimeMillis()
         if (reviews.isNotEmpty()) {
             item(key = "h-reviews") { CrewHeading("Reviews of your apps", "${reviews.size}", top = 0.dp) }
-            item(key = "reviews") {
-                CheckGroup(reviews.size) { index ->
-                    val review = reviews[index]
-                    CheckRow(
-                        review.appName,
-                        listOf(
-                            review.reviewerName.ifBlank { "A reviewer" },
-                            if (review.isLive) "live app" else "closed test",
-                        ).joinToString(", "),
-                        onClick = { onOpenReview(review) },
-                        packageName = review.packageName,
-                        icon = review.icon,
-                    ) {
-                        val until = review.decideBy
-                        if (until != null) {
-                            TimeChip(timeLeft(until, now), closeTo(until, now))
-                        }
+            items(reviews, key = { "review-${it.id}" }) { review ->
+                val until = review.decideBy
+                val who = review.reviewerName.ifBlank { "A reviewer" }
+                val kind = if (review.isLive) "live app" else "closed test"
+                CheckCard(
+                    Modifier.animateItem(),
+                    review.appName,
+                    if (until != null) "$who, $kind, ${timeLeft(until, now)} left" else "$who, $kind",
+                    onClick = { onOpenReview(review) },
+                    packageName = review.packageName,
+                    icon = review.icon,
+                    // Time left rides in the note, amber in the last twelve hours.
+                    noteIcon = if (until != null) Lucide.Clock else null,
+                    noteTone = if (until != null && closeTo(until, now)) Tt.colors.warn else Tt.colors.text3,
+                ) {
+                    if (review.pays > 0) {
+                        TicketStubFigure(grouped(review.pays), "${review.pays} tix")
+                    } else {
+                        TicketStubIcon(Lucide.Clock, "Waiting for you")
                     }
                 }
             }
@@ -111,16 +116,20 @@ fun WaitingBody(
             item(key = "h-cases") {
                 CrewHeading("Cases to decide", "${disputes.size}", top = if (reviews.isEmpty()) 0.dp else 20.dp)
             }
-            item(key = "cases") {
-                CheckGroup(disputes.size) { index ->
-                    val case = disputes[index]
-                    CheckRow(
-                        case.appName,
-                        "Disputed, ${case.votesCast} of ${case.votesNeeded} votes in",
-                        onClick = { onOpenCase(case) },
-                        packageName = case.packageName,
-                        icon = case.icon,
-                    ) { Pill("${case.stake} tix", Tt.colors.accentInk, Tt.colors.glass2) }
+            items(disputes, key = { "case-${it.id}" }) { case ->
+                CheckCard(
+                    Modifier.animateItem(),
+                    case.appName,
+                    "Disputed, ${case.votesCast} of ${case.votesNeeded} votes in",
+                    onClick = { onOpenCase(case) },
+                    packageName = case.packageName,
+                    icon = case.icon,
+                ) {
+                    if (case.stake > 0) {
+                        TicketStubFigure(grouped(case.stake), "${case.stake} tix")
+                    } else {
+                        TicketStubIcon(Lucide.Users, "Members are deciding")
+                    }
                 }
             }
         }
@@ -134,27 +143,55 @@ fun WaitingBody(
                     top = if (reviews.isEmpty() && disputes.isEmpty()) 0.dp else 20.dp,
                 )
             }
-            item(key = "requests") {
-                CheckGroup(requests.size) { index ->
-                    val request = requests[index]
-                    CheckRow(
-                        request.appName,
-                        buildList {
-                            add("${request.done} of ${request.bought} done")
-                            if (request.underWay > 0) add("${request.underWay} under way")
-                        }.joinToString(", "),
-                        onClick = { onOpenRequest(request) },
-                        packageName = request.packageName,
-                        icon = request.icon,
-                    ) {
-                        if (request.closed) {
-                            Pill("Closed", Tt.colors.text3, Tt.colors.glass2)
-                        } else {
-                            Pill("${request.open} open", Tt.colors.accentInk, Tt.colors.glass2)
-                        }
+            items(requests, key = { "request-${it.id}" }) { request ->
+                CheckCard(
+                    Modifier.animateItem(),
+                    request.appName,
+                    buildList {
+                        add("${request.done} of ${request.bought} done")
+                        add(if (request.closed) "closed" else "${request.open} open")
+                        if (request.underWay > 0) add("${request.underWay} under way")
+                    }.joinToString(", "),
+                    onClick = { onOpenRequest(request) },
+                    packageName = request.packageName,
+                    icon = request.icon,
+                ) {
+                    if (request.closed) {
+                        TicketStubIcon(Lucide.Lock, "Closed", Tt.colors.text4)
+                    } else {
+                        TicketStubFigure(grouped(request.open), "${request.open} open")
                     }
                 }
             }
+        }
+    }
+}
+
+/** One thing waiting on this account, as a ticket with the stub's figure chosen by the caller. */
+@Composable
+private fun CheckCard(
+    modifier: Modifier,
+    appName: String,
+    note: String,
+    onClick: () -> Unit,
+    packageName: String,
+    icon: String,
+    noteIcon: ImageVector? = null,
+    noteTone: Color = Tt.colors.text3,
+    stub: @Composable () -> Unit,
+) {
+    // The caller's modifier fades the card in and out and glides it to its new place.
+    Box(modifier) {
+        Box(Modifier.padding(horizontal = Gutter, vertical = 4.dp)) {
+            TicketCard(
+                leading = { AppMark(packageName, appName, icon, size = 52.dp) },
+                title = appName,
+                note = note,
+                noteIcon = noteIcon,
+                noteTone = noteTone,
+                onClick = onClick,
+                stub = stub,
+            )
         }
     }
 }

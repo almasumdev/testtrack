@@ -283,7 +283,7 @@ fun FeedScreen(
                 FeedTab.MINE ->
                     LoadSwap(DebugLooks.holdLoading || (!vm.answered && vm.mine.isEmpty() && !vm.signedOut)) { waiting ->
                         if (waiting) {
-                            FeedLoadingList()
+                            TicketLoadingList()
                             return@LoadSwap
                         }
                         MineBody(
@@ -304,7 +304,7 @@ fun FeedScreen(
                             (!vm.answered && vm.waiting.isEmpty() && vm.disputes.isEmpty() && !vm.signedOut),
                     ) { waiting ->
                         if (waiting) {
-                            FeedLoadingList()
+                            TicketLoadingList()
                             return@LoadSwap
                         }
                         WaitingBody(

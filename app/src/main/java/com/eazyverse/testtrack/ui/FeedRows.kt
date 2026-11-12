@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,15 +20,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -229,33 +225,6 @@ fun FeedAskBar(onPost: () -> Unit) {
     }
 }
 
-// The text block (name up to two lines, plus the note) is 19 + 19 + 14 = 52sp, the height of the icon
-// beside it, so a long name never makes the card taller than a short one. Trimmed line heights keep
-// the font's own padding from adding hidden height.
-private val RequestLineHeight =
-    LineHeightStyle(alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both)
-
-@Suppress("DEPRECATION")
-private val RequestTitle =
-    TextStyle(
-        fontFamily = Barlow,
-        fontSize = 16.sp,
-        lineHeight = 19.sp,
-        platformStyle = PlatformTextStyle(includeFontPadding = false),
-        lineHeightStyle = RequestLineHeight,
-    )
-
-@Suppress("DEPRECATION")
-private val RequestNote =
-    TextStyle(
-        fontFamily = Barlow,
-        fontSize = 12.5.sp,
-        lineHeight = 14.sp,
-        fontWeight = FontWeight.Normal,
-        platformStyle = PlatformTextStyle(includeFontPadding = false),
-        lineHeightStyle = RequestLineHeight,
-    )
-
 /**
  * One request, anonymous: the app's face, its name, which kind it is, and what it pays, drawn as a
  * ticket. The pay is the stub on the right, torn off along a dashed line between two bites out of
@@ -270,8 +239,6 @@ fun FeedRequestCard(
     post: ApiPost,
     onReview: () -> Unit,
 ) {
-    val t = Tt.colors
-    val shape = remember { TicketShape() }
     // Which kind decides how it is reviewed. Never whose it is: requests are anonymous, and what
     // the developer asks is on the review itself.
     val kind = if (post.isLive) CheckKind.PLAY.label else CheckKind.CLOSED.label
@@ -283,34 +250,11 @@ fun FeedRequestCard(
         }
     // The list holds only requests the reader can still start (FeedViewModel.openPosts), so a
     // tile is the same from the moment it appears to the moment it is started and leaves.
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 76.dp)
-            .height(IntrinsicSize.Min)
-            .clip(shape)
-            .background(t.bg)
-            .border(1.dp, t.cardLine, shape)
-            .then(if (post.mine) Modifier else Modifier.clickable(onClick = onReview)),
-    ) {
-        Row(
-            Modifier.weight(1f).padding(start = 12.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            AppMark(post.packageName, post.appName, post.icon, size = 52.dp)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    post.appName,
-                    style = RequestTitle,
-                    fontWeight = FontWeight.SemiBold,
-                    color = t.text,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(note, style = RequestNote, color = t.text3, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-        }
-        TicketStub(post.reward, post.mine)
-    }
+    TicketCard(
+        leading = { AppMark(post.packageName, post.appName, post.icon, size = 52.dp) },
+        title = post.appName,
+        note = note,
+        onClick = if (post.mine) null else onReview,
+        stub = { TicketStub(post.reward, post.mine) },
+    )
 }

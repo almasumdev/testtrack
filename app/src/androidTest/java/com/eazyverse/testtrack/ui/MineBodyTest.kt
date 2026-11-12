@@ -48,7 +48,7 @@ class MineBodyTest {
         compose.onNodeWithText("History").assertIsDisplayed()
         compose.onNodeWithText("Sent. Checked within a day").assertIsDisplayed()
         compose.onNodeWithText("Approved. Tix paid").assertIsDisplayed()
-        compose.onNodeWithText("Step 3/4").assertIsDisplayed()
+        compose.onNodeWithText("Step 3 of 4. Send feedback on Google Play").assertIsDisplayed()
     }
 
     @Test

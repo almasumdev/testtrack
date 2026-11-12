@@ -2,9 +2,7 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -32,11 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.ChevronRight
-import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Quote
 import com.composables.icons.lucide.TriangleAlert
@@ -159,99 +154,6 @@ fun CheckScreen(
             },
             onDismiss = { refusing = false },
         )
-    }
-}
-
-/** Rows in one card with hairlines between, like Mine's. */
-@Composable
-internal fun CheckGroup(
-    count: Int,
-    row: @Composable (Int) -> Unit,
-) {
-    val t = Tt.colors
-    val shape = RoundedCornerShape(CardRadius)
-    Column(
-        Modifier
-            .padding(horizontal = Gutter)
-            .fillMaxWidth()
-            .clip(shape)
-            .background(t.glass)
-            .border(1.dp, t.glassBorder, shape),
-    ) {
-        repeat(count) { index ->
-            if (index > 0) {
-                Box(
-                    Modifier
-                        .padding(horizontal = 14.dp)
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(t.glassBorder),
-                )
-            }
-            row(index)
-        }
-    }
-}
-
-/** The app's mark, its name over one line of detail spanning the mark's height, a chip, and a chevron. */
-@Composable
-internal fun CheckRow(
-    appName: String,
-    detail: String,
-    onClick: () -> Unit,
-    /** The app's package, so an installed one shows its own icon rather than a lettered tile. */
-    packageName: String = "",
-    /** The app's icon from the server, for an app not installed here. */
-    icon: String = "",
-    chip: @Composable () -> Unit,
-) {
-    val t = Tt.colors
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(start = 14.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        AppMark(packageName, appName, icon, size = ROW_TILE)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f).height(ROW_TILE), verticalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                appName,
-                style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp, lineHeight = 18.sp),
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                detail,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
-                color = t.text3,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.width(8.dp))
-        chip()
-        Icon(Lucide.ChevronRight, null, Modifier.padding(start = 4.dp).size(18.dp), tint = t.text3)
-    }
-}
-
-/** How long before a review accepts itself; amber in its last twelve hours. */
-@Composable
-internal fun TimeChip(
-    text: String,
-    close: Boolean,
-) {
-    val t = Tt.colors
-    val (ink, ground) = if (close) t.warn to t.warnBg else t.accentInk to t.glass2
-    Row(
-        Modifier.clip(RoundedCornerShape(percent = 50)).background(ground).padding(horizontal = 9.dp, vertical = 5.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(Lucide.Clock, null, Modifier.size(13.dp), tint = ink)
-        Spacer(Modifier.width(4.dp))
-        Text(text, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = ink)
     }
 }
 
@@ -425,5 +327,3 @@ internal fun Said(
         Text(words, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.5.sp, lineHeight = 21.sp), color = t.text)
     }
 }
-
-private val ROW_TILE = 42.dp
