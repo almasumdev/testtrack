@@ -28,7 +28,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.SubcomposeAsyncImage
 import com.composables.icons.lucide.FlaskConical
 import com.composables.icons.lucide.Globe
 import com.composables.icons.lucide.Lucide
@@ -57,10 +56,9 @@ internal fun AppMark(
     ownIcon: Boolean = false,
 ) {
     if (ownIcon && icon.isNotBlank()) {
-        SubcomposeAsyncImage(
+        ShapedIconImage(
             model = icon,
-            contentDescription = null,
-            modifier = Modifier.size(size).clip(RoundedCornerShape(size * 0.3f)),
+            size = size,
             loading = { Skeleton(size, size, size * 0.3f) },
             error = { AppIcon(pkg, name, size = size) { AppTile(name, size) } },
         )
@@ -70,10 +68,9 @@ internal fun AppMark(
         if (icon.isBlank()) {
             AppTile(name, size)
         } else {
-            SubcomposeAsyncImage(
+            ShapedIconImage(
                 model = icon,
-                contentDescription = null,
-                modifier = Modifier.size(size).clip(RoundedCornerShape(size * 0.3f)),
+                size = size,
                 loading = { Skeleton(size, size, size * 0.3f) },
                 error = { AppTile(name, size) },
             )

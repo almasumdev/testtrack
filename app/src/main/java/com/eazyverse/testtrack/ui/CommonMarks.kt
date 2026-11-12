@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -61,11 +62,13 @@ fun AppIcon(
     val shape = RoundedCornerShape(size * 0.3f)
 
     if (bitmap != null) {
+        // A launcher icon that is already round or shaped keeps its own edge; a full square gets ours.
+        val square = remember(bitmap) { isFullSquare(bitmap.asAndroidBitmap()) }
         ComposeImage(
             bitmap = bitmap,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = modifier.clip(shape),
+            modifier = if (square) modifier.clip(shape) else modifier,
         )
     } else if (fallback != null) {
         fallback()
