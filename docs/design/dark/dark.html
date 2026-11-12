@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TestTrack: dark colours on the black ground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0}
+body{background:#E4E8EB;color:#1D2A33;font-family:Barlow,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+.doc{padding:28px 32px 4px;max-width:1340px}
+.doc h1{font:700 26px Barlow;margin:0 0 6px}
+.doc p{font:400 15px/22px Barlow;margin:6px 0;color:#3C4A55;max-width:1040px}
+.ctl{display:flex;gap:6px;margin:14px 0 4px;align-items:center;font:600 13px Barlow;color:#56636D;flex-wrap:wrap}
+.ctl button{font:600 13px Barlow;border:1px solid #B9C3CA;background:#fff;border-radius:16px;padding:5px 12px;cursor:pointer;color:#1D2A33}
+.ctl button.on{background:#1D2A33;color:#fff;border-color:#1D2A33}
+section{padding:22px 32px 12px;border-top:1px solid #CDD4D9;margin-top:10px}
+section h2{font:700 22px Barlow;margin:0 0 4px}
+section>p{font:400 15px/22px Barlow;color:#3C4A55;margin:4px 0 0;max-width:1040px}
+.row{display:flex;flex-wrap:wrap;gap:20px;margin-top:16px;align-items:flex-start}
+.col{flex:none;width:calc(360px * var(--z));min-width:0}
+.cap{display:flex;align-items:flex-start;align-content:flex-start;gap:4px 8px;flex-wrap:wrap;min-height:62px;font:700 16px Barlow;margin:0 0 4px 2px}
+.cap .sub{font:500 13px/18px Barlow;color:#56636D;width:100%}
+.rec{font:700 11px Barlow;letter-spacing:.4px;text-transform:uppercase;background:#1D5C82;color:#fff;border-radius:12px;padding:3px 9px}
+.pz{zoom:var(--z)}
+.notes{font:400 14px/20px Barlow;color:#3C4A55;margin-top:12px}
+.notes h3{font:700 13.5px Barlow;margin:0 0 4px;color:#1D2A33}
+.notes ul{margin:0 0 10px;padding-left:18px}
+.notes li{margin:0 0 4px}
+
+/* ---------------- the phone ---------------- */
+.phone{position:relative;width:360px;height:800px;border-radius:28px;overflow:hidden;background:var(--bg);color:var(--text);display:flex;flex-direction:column;box-shadow:0 0 0 1px #2A2D31}
+.sb{height:28px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font:600 13px Barlow;color:var(--text)}
+.sb .ic{display:flex;gap:6px;align-items:center}
+svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block;flex:none}
+.gbar{position:absolute;left:0;right:0;bottom:0;height:20px;display:flex;justify-content:center;align-items:center;z-index:4}
+.gbar i{width:108px;height:4px;border-radius:2px;background:var(--text);opacity:.35}
+.ap{border-radius:30%;display:flex;align-items:center;justify-content:center;font:700 19px Barlow;flex:none}
+.fig{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* app bar (TopHud) */
+.hud{display:flex;align-items:center;padding:10px 16px 6px;flex:none}
+.robot{width:44px;height:50px;flex:none}
+.hud .tt{flex:1;margin-left:11px;min-width:0}
+.hud .t1{font:600 14px/20px Barlow;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud .t2{font:500 11px/16px Barlow;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tixq{display:flex;align-items:center;gap:7px;color:var(--text);flex:none;height:48px;padding-left:6px}
+.tk{display:block;flex:none;overflow:visible;transform:rotate(-12deg)}
+.tk .f{fill:var(--leafAccentSoft);stroke:var(--leafAccent);stroke-width:1.6;stroke-linejoin:round}
+.tk .p{fill:none;stroke:var(--leafAccent);stroke-width:1.9;stroke-linecap:round}
+.tixq .tk{width:22px;height:22px}
+.tixq .fig{font:600 18px/1.2 Barlow;white-space:nowrap}
+
+/* segmented tabs (SegmentedTabs) */
+.seg{display:flex;flex-wrap:nowrap;margin:6px 16px 0;padding:3px;border:1px solid var(--cardLine);background:var(--card);border-radius:21px;flex:none;gap:2px}
+.sg{flex:1 1 auto;min-width:0;height:34px;border-radius:17px;display:flex;align-items:center;justify-content:center;gap:5px;font:500 14px Barlow;color:var(--text2);white-space:nowrap;padding:0 4px}
+.sg.on{background:var(--leafAccentSoft);color:var(--tabSelected);font-weight:600}
+.cnt{background:var(--tile);color:var(--tileInk);font:700 11px/16px Barlow;border-radius:8px;padding:0 5px}
+
+/* request tickets (FeedRequestCard + TicketStub) */
+.list{padding:12px 16px 0;display:flex;flex-direction:column;gap:8px;flex:1;min-height:0;overflow:hidden}
+.t{display:flex;align-items:stretch;min-height:76px;background:var(--card);border:1px solid var(--cardLine);border-radius:14px;flex:none;position:relative}
+.t .body{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:12px 10px 12px 12px}
+.t .ap{width:52px;height:52px}
+.t .mid{flex:1;min-width:0}
+.t .nm{font:600 17px/22px Barlow;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.t .ln{font:400 13px/18px Barlow;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stub{width:64px;flex:none;background:var(--leafAccentSoft);border-radius:0 13px 13px 0;display:flex;align-items:center;justify-content:center;position:relative}
+.stub::before{content:"";position:absolute;left:0;top:7px;bottom:7px;width:1.5px;background:repeating-linear-gradient(to bottom,var(--glassBorder) 0 4px,transparent 4px 7px)}
+.chip{border-radius:10px;background:var(--card);border:1px solid var(--glassBorder);padding:5px 6px;display:flex;flex-direction:column;align-items:center}
+.chip .tk{width:20px;height:20px}
+.chip .fig{font:600 17px/20px Barlow;color:var(--tabSelected);margin-top:2px}
+.notch{position:absolute;left:calc(100% - 71px);width:14px;height:14px;border-radius:50%;background:var(--bg);border:1px solid var(--cardLine);z-index:1}
+.notch.top{top:-8px;clip-path:inset(7px 0 0 0)}
+.notch.bot{bottom:-8px;clip-path:inset(0 0 7px 0)}
+
+/* the ask bar once the first row has scrolled away (FeedAskBar) */
+.askbar{position:absolute;left:16px;right:16px;bottom:100px;min-height:48px;border-radius:14px;background:var(--tile);border:1.5px dashed var(--glassBorderStrong);display:flex;align-items:center;justify-content:center;font:600 16px Barlow;color:var(--tileInk);z-index:3}
+.fade{position:absolute;left:0;right:0;bottom:0;height:150px;background:linear-gradient(to bottom,transparent,var(--bg) 40%);z-index:1;pointer-events:none}
+
+/* dock (MainBar) */
+.dock{position:absolute;left:20px;right:20px;bottom:30px;height:56px;border-radius:28px;background:var(--card);border:1px solid var(--cardLine);display:flex;align-items:center;padding:0 4px;gap:2px;z-index:2}
+.dock .sel{height:48px;border-radius:24px;background:var(--leafAccentSoft);color:var(--tabSelected);display:flex;align-items:center;justify-content:center;gap:8px;width:118px;font:600 14px Barlow;flex:none}
+.dock .dt{flex:1;height:48px;display:flex;align-items:center;justify-content:center;color:var(--tabUnselected)}
+.dock svg{width:21px;height:21px}
+.ibx{position:relative}
+.nb{position:absolute;top:-6px;left:12px;background:var(--accentInk);color:var(--bg);font:700 10px/14px Barlow;border-radius:7px;padding:0 4.5px;box-shadow:0 0 0 1.5px var(--card)}
+
+/* ---------------- the surfaces strip ---------------- */
+.strip{width:360px;margin-top:12px;border-radius:22px;overflow:hidden;background:var(--bg);color:var(--text);box-shadow:0 0 0 1px #2A2D31}
+.strip .top{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.lab{font:600 11px/14px Barlow;letter-spacing:.6px;text-transform:uppercase;color:var(--text3)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.pill{height:24px;border-radius:12px;padding:0 10px;display:flex;align-items:center;gap:5px;font:600 12.5px Barlow;white-space:nowrap}
+.pill svg{width:13px;height:13px}
+.pill.ok{background:var(--okBg);color:var(--ok)}
+.pill.warn{background:var(--warnBg);color:var(--warn);box-shadow:inset 0 0 0 1px var(--warnBorder)}
+.pill.bad{background:var(--badBg);color:var(--bad);box-shadow:inset 0 0 0 1px var(--badBorder)}
+.pill.soft{background:var(--tile);color:var(--tileInk)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;font:700 15px Barlow;padding:0 18px;white-space:nowrap}
+.btn.pri{flex:1 1 150px;background:var(--accentInk);color:var(--bg)}
+.btn.sec{flex:0 1 auto;background:var(--glass2);color:var(--text);font-weight:600}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld .box{height:46px;border-radius:12px;background:var(--field);border:1.2px solid var(--fieldBorder);display:flex;align-items:center;padding:0 14px;font:400 15px Barlow;color:var(--text)}
+.fld .box.focus{border:1.6px solid var(--text)}
+.fld .box .cur{width:1.5px;height:20px;background:var(--accentInk);margin-left:1px}
+.fld .hint{font:400 12.5px/16px Barlow;color:var(--text3)}
+.under{position:relative;height:300px;background:var(--bg);overflow:hidden}
+.under .ghost{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.under .ghost i{display:block;height:64px;border-radius:14px;background:var(--card);border:1px solid var(--cardLine)}
+.scrim{position:absolute;inset:0;background:var(--scrim)}
+.sheet{position:absolute;left:0;right:0;bottom:0;top:22px;background:var(--glass);border-radius:22px 22px 0 0;padding:0 16px 12px}
+.handle{width:38px;height:4px;border-radius:2px;background:var(--handle);margin:10px auto 12px}
+.sheet h4{font:700 18px/24px Barlow;margin:0 0 10px;color:var(--text)}
+.search{height:44px;border-radius:22px;background:var(--field);border:1.2px solid var(--fieldBorder);display:flex;align-items:center;gap:8px;padding:0 14px;font:400 15px Barlow;color:var(--text3)}
+.search svg{width:18px;height:18px;color:var(--text3)}
+.trow{display:flex;align-items:center;gap:12px;min-height:52px;padding:6px 10px;border-radius:14px;margin-top:4px}
+.trow.on{background:var(--leafAccentSoft)}
+.trow .tl{width:34px;height:34px;border-radius:10px;background:var(--tile);color:var(--tileInk);display:flex;align-items:center;justify-content:center;font:700 13px Barlow;flex:none}
+.trow .mid{flex:1;min-width:0}
+.trow .a{font:600 15px/20px Barlow;color:var(--text)}
+.trow .b{font:400 12.5px/16px Barlow;color:var(--text3)}
+.trow .ck{width:20px;height:20px;color:var(--accentInk)}
+
+/* ---------------- tables ---------------- */
+.tbl-wrap{max-width:100%;overflow-x:auto;margin-top:14px}
+table{border-collapse:collapse;font:500 13px Barlow;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px #CDD4D9}
+th,td{padding:5px 10px;text-align:left;border-bottom:1px solid #E6EAED;white-space:nowrap}
+th{font:700 13px Barlow;background:#F3F5F7;position:sticky;top:0}
+td.k{font:600 13px 'IBM Plex Mono',monospace;color:#1D2A33}
+.sw{display:inline-flex;align-items:center;gap:7px;font:500 12.5px 'IBM Plex Mono',monospace;color:#1D2A33}
+.sw i{width:18px;height:18px;border-radius:5px;box-shadow:0 0 0 1px rgba(0,0,0,.18);background-image:linear-gradient(45deg,#ccc 25%,transparent 25%,transparent 75%,#ccc 75%),linear-gradient(45deg,#ccc 25%,transparent 25%,transparent 75%,#ccc 75%);background-size:8px 8px;background-position:0 0,4px 4px;position:relative;overflow:hidden;flex:none}
+.sw i b{position:absolute;inset:0}
+.same{opacity:.45}
+.pass{color:#1E6B4E;font-weight:700}
+.fail{color:#A23B2E;font-weight:700}
+details{margin-top:12px;max-width:1000px}
+summary{font:700 15px Barlow;cursor:pointer;padding:6px 0}
+pre{font:500 12.5px/18px 'IBM Plex Mono',monospace;background:#16191B;color:#E4E7EA;border-radius:12px;padding:14px 16px;overflow-x:auto;max-width:100%;margin:6px 0 0}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<linearGradient id="fLbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F99B80"/><stop offset="1" stop-color="#EF806B"/></linearGradient><linearGradient id="fRbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#77D6C2"/><stop offset="1" stop-color="#54C5AC"/></linearGradient><linearGradient id="fLscreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFCF1"/><stop offset="1" stop-color="#FFFCF1"/></linearGradient><linearGradient id="fRscreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFCF1"/><stop offset="1" stop-color="#FFFCF1"/></linearGradient><filter id="fLdrop" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.7"/><feOffset dy="1.8" result="b"/><feFlood flood-color="#0E2E44" flood-opacity="0.22"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="fRdrop" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.7"/><feOffset dy="1.8" result="b"/><feFlood flood-color="#0E2E44" flood-opacity="0.22"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="fsoft" x="-40%" y="-30%" width="180%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.1"/><feOffset dy="1.3" result="b"/><feFlood flood-color="#0E2E44" flood-opacity="0.1408"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><g id="ttmark"><g><path d="M39.35 33.10L39.75 32.67L40.15 32.25L40.57 31.84L41.00 31.44L41.44 31.06L41.90 30.69L42.37 30.33L42.84 29.99L43.33 29.66L43.83 29.35L44.34 29.05L44.86 28.77L45.39 28.50L45.92 28.25L46.47 28.01L47.02 27.80L47.57 27.59L48.14 27.41L48.71 27.24L49.28 27.09L49.86 26.96L50.45 26.85L51.04 26.75L51.63 26.67L52.22 26.61L52.82 26.57L53.42 26.54L54.02 26.54L54.62 26.55L55.22 26.58L55.82 26.63L56.42 26.70L57.01 26.78L57.61 26.89L58.20 27.01L58.78 27.15L59.37 27.31L59.95 27.49L60.52 27.68L61.09 27.89L61.65 28.12L62.20 28.37L62.75 28.63L63.29 28.91L63.82 29.21L64.35 29.52L64.86 29.85L65.36 30.20L62.83 33.55L62.45 33.25L62.06 32.96L61.67 32.68L61.26 32.42L60.85 32.16L60.42 31.92L60.00 31.69L59.56 31.48L59.11 31.28L58.66 31.09L58.21 30.91L57.74 30.75L57.28 30.61L56.80 30.47L56.33 30.36L55.85 30.25L55.36 30.16L54.87 30.09L54.38 30.03L53.89 29.99L53.40 29.96L52.90 29.94L52.41 29.94L51.91 29.96L51.42 29.99L50.92 30.04L50.43 30.10L49.93 30.18L49.44 30.27L48.95 30.37L48.47 30.50L47.99 30.63L47.51 30.79L47.04 30.95L46.57 31.13L46.10 31.33L45.65 31.54L45.19 31.76L44.75 32.00L44.31 32.25L43.88 32.52L43.46 32.80L43.04 33.09L42.64 33.40L42.24 33.71L41.85 34.04L41.47 34.39L41.11 34.74A1.20 1.20 0 0 1 39.35 33.10Z" fill="#32729B"/><path d="M68.32 35.07L65.25 28.69L60.48 34.99Z" fill="#32729B" stroke="#32729B" stroke-width="2.2" stroke-linejoin="round"/><path d="M68.65 74.90L68.25 75.33L67.85 75.75L67.43 76.16L67.00 76.56L66.56 76.94L66.10 77.31L65.63 77.67L65.16 78.01L64.67 78.34L64.17 78.65L63.66 78.95L63.14 79.23L62.61 79.50L62.08 79.75L61.53 79.99L60.98 80.20L60.43 80.41L59.86 80.59L59.29 80.76L58.72 80.91L58.14 81.04L57.55 81.15L56.96 81.25L56.37 81.33L55.78 81.39L55.18 81.43L54.58 81.46L53.98 81.46L53.38 81.45L52.78 81.42L52.18 81.37L51.58 81.30L50.99 81.22L50.39 81.11L49.80 80.99L49.22 80.85L48.63 80.69L48.05 80.51L47.48 80.32L46.91 80.11L46.35 79.88L45.80 79.63L45.25 79.37L44.71 79.09L44.18 78.79L43.65 78.48L43.14 78.15L42.64 77.80L45.17 74.45L45.55 74.75L45.94 75.04L46.33 75.32L46.74 75.58L47.15 75.84L47.58 76.08L48.00 76.31L48.44 76.52L48.89 76.72L49.34 76.91L49.79 77.09L50.26 77.25L50.72 77.39L51.20 77.53L51.67 77.64L52.15 77.75L52.64 77.84L53.13 77.91L53.62 77.97L54.11 78.01L54.60 78.04L55.10 78.06L55.59 78.06L56.09 78.04L56.58 78.01L57.08 77.96L57.57 77.90L58.07 77.82L58.56 77.73L59.05 77.63L59.53 77.50L60.01 77.37L60.49 77.21L60.96 77.05L61.43 76.87L61.90 76.67L62.35 76.46L62.81 76.24L63.25 76.00L63.69 75.75L64.12 75.48L64.54 75.20L64.96 74.91L65.36 74.60L65.76 74.29L66.15 73.96L66.53 73.61L66.89 73.26A1.20 1.20 0 0 1 68.65 74.90Z" fill="#32729B"/><path d="M39.68 72.93L42.75 79.31L47.52 73.01Z" fill="#32729B" stroke="#32729B" stroke-width="2.2" stroke-linejoin="round"/></g><g transform="rotate(-9.9 37.50 54.00)">
+    <rect x="27.20" y="38.15" width="20.6" height="31.7" rx="3.8" fill="url(#fLbody)"/>
+    <rect x="29.60" y="42.75" width="15.80" height="21.90" rx="1.9" fill="url(#fLscreen)"/>
+    <rect x="34.70" y="39.90" width="5.6" height="1.2" rx=".6" fill="#FFFCF1"/>
+    <circle cx="37.50" cy="67.25" r="1.15" fill="#FFFCF1"/>
+    <path d="M33.36 55.18L36.24 57.97L41.46 52.03" fill="none" stroke="none" stroke-width="2.61" stroke-linecap="round" stroke-linejoin="round"/>
+  </g><g transform="rotate(-9.9 37.50 54.00)"><g transform="translate(37.50 53.80) scale(0.78)"><g><path d="M-2.5 -0.4L-4.6 -1.8" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M2.5 -0.4L4.6 -1.8" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M-3 1.7L-5.1 1.9" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M3 1.7L5.1 1.9" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M-2.5 3.8L-4.3 5.3" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M2.5 3.8L4.3 5.3" stroke="#17253B" stroke-width="1.3" stroke-linecap="round"/><path d="M-.8 -3.7Q-1.3 -5.6 -2.7 -6M.8 -3.7Q1.3 -5.6 2.7 -6" fill="none" stroke="#17253B" stroke-width=".9" stroke-linecap="round"/><rect x="-3.4" y="-1.1" width="6.8" height="7.3" rx="3.4" fill="#17253B"/><circle cx="0" cy="-2.8" r="2.05" fill="#17253B" stroke="#FFFCF1" stroke-width=".6"/><path d="M0 .1V5.6" stroke="#FFFCF1" stroke-width=".55" stroke-linecap="round"/></g></g></g><g transform="rotate(9.9 70.50 54.00)">
+    <rect x="60.20" y="38.15" width="20.6" height="31.7" rx="3.8" fill="url(#fRbody)"/>
+    <rect x="62.60" y="42.75" width="15.80" height="21.90" rx="1.9" fill="url(#fRscreen)"/>
+    <rect x="67.70" y="39.90" width="5.6" height="1.2" rx=".6" fill="#FFFCF1"/>
+    <circle cx="70.50" cy="67.25" r="1.15" fill="#FFFCF1"/>
+    <path d="M66.36 55.18L69.24 57.97L74.46 52.03" fill="none" stroke="#17253B" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g></g>
+<linearGradient id="glevel_robot_body1" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><g id="level_robot_body"><g transform="translate(-185 -110)"><path d="M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z" fill="url(#glevel_robot_body1)"/></g></g>
+<linearGradient id="glevel_robot_head1" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><linearGradient id="glevel_robot_head2" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><linearGradient id="glevel_robot_head3" gradientUnits="userSpaceOnUse" x1="350" y1="277" x2="910" y2="744"><stop offset="0" stop-color="#32729B"/><stop offset="1" stop-color="#1D5C82"/></linearGradient><g id="level_robot_head"><g transform="translate(-185 -110)"><g transform="translate(0 0)"><g transform="translate(0 0)"><path d="M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z" fill="url(#glevel_robot_head1)"/><path d="M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z" fill="url(#glevel_robot_head2)"/><path d="M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z" fill="#6CA9CF"/><path d="M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z" fill="#6CA9CF"/></g><path d="M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z" fill="url(#glevel_robot_head3)"/><path d="M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z" fill="#FFFCF1"/><path d="M576 594 C602 620 651 620 677 594" fill="#000000" fill-opacity="0.00" stroke="#17253B" stroke-width="31" stroke-linecap="round"/></g></g></g>
+<g id="level_robot_eyes"><g transform="translate(-185 -110)"><g transform="translate(0 0)"><g transform="translate(0 0)"><path d="M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z" fill="#17253B"/><path d="M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z" fill="#17253B"/><path d="M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z" fill="#FFFFFF"/><path d="M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z" fill="#FFFFFF"/></g></g></g></g>
+<linearGradient id="glevel_robot_antenna1" gradientUnits="userSpaceOnUse" x1="310" y1="765" x2="568" y2="1056"><stop offset="0" stop-color="#F99B80"/><stop offset="1" stop-color="#EF806B"/></linearGradient><g id="level_robot_antenna"><g transform="translate(-185 -110)"><g transform="translate(0 0)"><path d="M603 227 H650 V295 H603 Z" fill="#1D5C82"/><path d="M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z" fill="url(#glevel_robot_antenna1)"/><path d="M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z" fill="#FFFFFF"/></g></g></g>
+<linearGradient id="glevel_robot_hands1" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><linearGradient id="glevel_robot_hands2" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE"/><stop offset="1" stop-color="#5E9DC5"/></linearGradient><linearGradient id="glevel_robot_hands3" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84"/><stop offset="1" stop-color="#174866"/></linearGradient><linearGradient id="glevel_robot_hands4" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE"/><stop offset="1" stop-color="#5E9DC5"/></linearGradient><g id="level_robot_hands"><g transform="translate(-185 -110)"><path d="M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z" fill="url(#glevel_robot_hands1)"/><path d="M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z" fill="url(#glevel_robot_hands2)"/><path d="M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z" fill="url(#glevel_robot_hands3)"/><path d="M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z" fill="url(#glevel_robot_hands4)"/></g></g>
+<linearGradient id="gtix_ticket1" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="61" y2="41"><stop offset="0" stop-color="#FFE07A"/><stop offset="1" stop-color="#F2A92E"/></linearGradient><g id="tix_ticket"><path d="M8 3 H56 Q61 3 61 8 V16 A6 6 0 0 0 61 28 V36 Q61 41 56 41 H8 Q3 41 3 36 V28 A6 6 0 0 0 3 16 V8 Q3 3 8 3 Z" fill="url(#gtix_ticket1)" stroke="#17405E" stroke-width="3.5" stroke-linejoin="round"/><path d="M18 9 V12 M18 15 V18 M18 21 V24 M18 27 V30 M18 33 V36" fill="none" stroke="#B97A1E" stroke-width="2.5" stroke-linecap="round"/><path d="M39 12 l3.2 6.6 7.2 1 -5.2 5 1.3 7.2 -6.5 -3.4 -6.5 3.4 1.3 -7.2 -5.2 -5 7.2 -1 Z" fill="#FFF8E1" stroke="#17405E" stroke-width="2" stroke-linejoin="round"/><path d="M8 8 Q9 6 12 6" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-opacity="0.8"/></g>
+<linearGradient id="gtix_ticket_blank1" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="61" y2="41"><stop offset="0" stop-color="#FFE07A"/><stop offset="1" stop-color="#F2A92E"/></linearGradient><g id="tix_ticket_blank"><path d="M8 3 H56 Q61 3 61 8 V16 A6 6 0 0 0 61 28 V36 Q61 41 56 41 H8 Q3 41 3 36 V28 A6 6 0 0 0 3 16 V8 Q3 3 8 3 Z" fill="url(#gtix_ticket_blank1)" stroke="#17405E" stroke-width="3.5" stroke-linejoin="round"/><path d="M8 8 Q9 6 12 6" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-opacity="0.8"/></g>
+</defs></svg>
+
+<div class="doc">
+  <h1>TestTrack: dark colours on the black ground</h1>
+  <p>The dark page is now the plain near-black of the launch screen (#0F1011), but the cards, tiles and lines still carry the old navy. Below, the Circle screen as it is now, then three calmer sets that keep the blue only for what you act on. The blue starts from the launch screen's dark arrow blue, #80BCDE.</p>
+  <p>Under each phone is a strip with the other surfaces: a picker sheet with its search field, a text field, the three status chips and the buttons. The full token lists, a contrast check and code you can paste sit at the bottom.</p>
+  <div class="ctl">Size
+    <button data-z=".7">S</button><button data-z=".85">M</button><button data-z="1">1:1</button>
+  </div>
+</div>
+<div id="root"></div>
+
+<script>
+/* ---------------- the palettes: every dark token in Tokens.kt, in its order ---------------- */
+const NAMES = ['bg','text','text2','text3','text4','tabSelected','tabUnselected','glass','glass2','glassBorder','glassBorderStrong','hair','accent','onAccent','accentInk','badgeFill','tile','tileInk','leafAccent','leafAccentSoft','onSelected','dock','dockInk','contour','contourDeep','glow','ok','okBg','warn','warnBg','warnBorder','bad','badBg','badBorder','onWarn','onBad','field','fieldBorder','scrim','container','onContainer','surface2','surface3','shadow','inverse','onInverse','inverseAccent','panelTop','panelBottom','panelGlow','panelLine','panelOutline','gold','silver','bronze','tixTop','tixBottom','tixEdge','ticketInk','ticketShine','sheet','sheetLine','sheetOutline','ring','track','card','cardLine'];
+
+/* Shared by every option: the state colours, the podium, the drawn ticket. Already tuned for dark. */
+const KEEP = {
+  ok:'#83D8C4', okBg:'#83D8C4/0.12', warn:'#D8B774', warnBg:'#D8B774/0.14', warnBorder:'#D8B774/0.26',
+  bad:'#E4938A', badBg:'#E4938A/0.15', badBorder:'#E4938A/0.30', onWarn:'#2A1D04', onBad:'#3F0D06',
+  scrim:'#000000/0.60', gold:'#E3A93C', silver:'#B4BCCB', bronze:'#C58455',
+  ticketInk:'#17405E', ticketShine:'#FFFFFF', ring:'#FFFFFF/0.16', onAccent:'#FFFFFF', bg:'#0F1011',
+};
+
+const NOW = {
+  bg:'#0F1011', text:'#EFF7FC', text2:'#BDD1DF', text3:'#A1BDCF', text4:'#7F9EB3',
+  tabSelected:'#9CD5FF', tabUnselected:'#93A7B6',
+  glass:'#1B3040', glass2:'#263F51', glassBorder:'#365568', glassBorderStrong:'#58788E', hair:'#365568',
+  accent:'#32729B', onAccent:'#FFFFFF', accentInk:'#8BCBF7', badgeFill:'#32729B',
+  tile:'#24485F', tileInk:'#8BCBF7', leafAccent:'#8BCBF7', leafAccentSoft:'#8BCBF7/0.12', onSelected:'#8BCBF7',
+  dock:'#172C3C', dockInk:'#BDD1DF', contour:'#1B3040', contourDeep:'#263F51', glow:'#21394A',
+  ok:'#83D8C4', okBg:'#83D8C4/0.12', warn:'#D8B774', warnBg:'#D8B774/0.14', warnBorder:'#D8B774/0.26',
+  bad:'#E4938A', badBg:'#E4938A/0.15', badBorder:'#E4938A/0.30', onWarn:'#2A1D04', onBad:'#3F0D06',
+  field:'#152A39', fieldBorder:'#58788E', scrim:'#000000/0.60', container:'#24485F', onContainer:'#D8EEFC',
+  surface2:'#203849', surface3:'#304D61', shadow:'#07131D', inverse:'#E8F3FA', onInverse:'#142F43', inverseAccent:'#1D5C82',
+  panelTop:'#243F52', panelBottom:'#1B3040', panelGlow:'#8BCBF7/0.08', panelLine:'#8BCBF7/0.10', panelOutline:'#42647A',
+  gold:'#E3A93C', silver:'#B4BCCB', bronze:'#C58455', tixTop:'#3A7FAA', tixBottom:'#235C80', tixEdge:'#0E2A3F',
+  ticketInk:'#17405E', ticketShine:'#FFFFFF', sheet:'#191B1D', sheetLine:'#2A2E32', sheetOutline:'#3A3F44',
+  ring:'#FFFFFF/0.16', track:'#2A2E32', card:'#202326', cardLine:'#2C3034',
+};
+
+/* A: neutral grey with the same faint cool tilt as #0F1011 */
+const A = { ...KEEP,
+  text:'#ECEEF0', text2:'#BCC1C6', text3:'#9DA3A9', text4:'#757C82',
+  tabSelected:'#A9D4EE', tabUnselected:'#989EA4',
+  glass:'#1C1E20', glass2:'#292C2F', glassBorder:'#383C41', glassBorderStrong:'#666D74', hair:'#2B2E32',
+  accent:'#3A7BA3', accentInk:'#80BCDE', badgeFill:'#3A7BA3',
+  tile:'#28333C', tileInk:'#90C6E6', leafAccent:'#80BCDE', leafAccentSoft:'#80BCDE/0.14', onSelected:'#80BCDE',
+  dock:'#1C1E20', dockInk:'#BCC1C6', contour:'#1C1E20', contourDeep:'#292C2F', glow:'#1D2023',
+  field:'#141618', fieldBorder:'#666D74', container:'#28333C', onContainer:'#D6EAF6',
+  surface2:'#212427', surface3:'#2E3236', shadow:'#000000', inverse:'#E8EBEE', onInverse:'#15181A', inverseAccent:'#2A6A92',
+  panelTop:'#1F2225', panelBottom:'#18191B', panelGlow:'#80BCDE/0.06', panelLine:'#80BCDE/0.10', panelOutline:'#40464C',
+  tixTop:'#3F80A8', tixBottom:'#2B6388', tixEdge:'#14232E',
+  sheet:'#1C1E20', sheetLine:'#2D3034', sheetOutline:'#3E4348', track:'#2D3034', card:'#1C1E20', cardLine:'#2D3034',
+};
+
+/* B: slightly warm graphite, same blue */
+const B = { ...KEEP,
+  text:'#EEECE8', text2:'#C3BFB8', text3:'#A6A199', text4:'#7B766F',
+  tabSelected:'#A9D4EE', tabUnselected:'#9D9890',
+  glass:'#1C1B19', glass2:'#292725', glassBorder:'#383531', glassBorderStrong:'#6E6962', hair:'#2F2D2A',
+  accent:'#3A7BA3', accentInk:'#80BCDE', badgeFill:'#3A7BA3',
+  tile:'#2A3236', tileInk:'#90C6E6', leafAccent:'#80BCDE', leafAccentSoft:'#80BCDE/0.14', onSelected:'#80BCDE',
+  dock:'#1C1B19', dockInk:'#C3BFB8', contour:'#1C1B19', contourDeep:'#292725', glow:'#201F1C',
+  field:'#151413', fieldBorder:'#6E6962', container:'#2A3236', onContainer:'#D6EAF6',
+  surface2:'#232220', surface3:'#312F2B', shadow:'#000000', inverse:'#EEEBE6', onInverse:'#1A1917', inverseAccent:'#2A6A92',
+  panelTop:'#221F1C', panelBottom:'#1A1917', panelGlow:'#80BCDE/0.06', panelLine:'#80BCDE/0.10', panelOutline:'#46423C',
+  tixTop:'#3F80A8', tixBottom:'#2B6388', tixEdge:'#1A1F22',
+  sheet:'#1C1B19', sheetLine:'#2F2D2A', sheetOutline:'#433F3A', track:'#2F2D2A', card:'#1C1B19', cardLine:'#2F2D2A',
+};
+
+/* C: true black, cards barely raised, hairlines do the work */
+const C = { ...KEEP,
+  text:'#F0F2F4', text2:'#BFC4C9', text3:'#A0A6AC', text4:'#777E84',
+  tabSelected:'#A3D1EE', tabUnselected:'#989EA4',
+  glass:'#141617', glass2:'#222528', glassBorder:'#32363A', glassBorderStrong:'#656C72', hair:'#2A2E32',
+  accent:'#3A7BA3', accentInk:'#8AC3E3', badgeFill:'#3A7BA3',
+  tile:'#1E2830', tileInk:'#8FC6E6', leafAccent:'#8AC3E3', leafAccentSoft:'#8AC3E3/0.12', onSelected:'#8AC3E3',
+  dock:'#141617', dockInk:'#BFC4C9', contour:'#141617', contourDeep:'#1E2124', glow:'#17191B',
+  field:'#0F1011', fieldBorder:'#656C72', container:'#1E2830', onContainer:'#D6EAF6',
+  surface2:'#1A1C1E', surface3:'#26292C', shadow:'#000000', inverse:'#ECEFF1', onInverse:'#121415', inverseAccent:'#2A6A92',
+  panelTop:'#191B1D', panelBottom:'#121314', panelGlow:'#8AC3E3/0.05', panelLine:'#8AC3E3/0.10', panelOutline:'#3A3F44',
+  tixTop:'#3F80A8', tixBottom:'#2B6388', tixEdge:'#121A20',
+  sheet:'#161819', sheetLine:'#2A2E32', sheetOutline:'#3A3F44', track:'#26292C', card:'#141617', cardLine:'#2E3236',
+};
+
+const OPTS = [
+  { id:'now', title:'Now', p:NOW, sub:'OceanDark as it ships today, on the new black ground.',
+    good:['The blue reads clearly everywhere.'],
+    cost:['Navy tiles, tab counts and the ask bar sit as blue blocks on black.','The stub chip edge, the tear line and the robot plaque are navy lines on neutral cards.','Text greys are blue-tinted, so they look washed next to the neutral cards.'] },
+  { id:'a', title:'Option A: Neutral grey', p:A, rec:true, sub:'Cool-neutral greys that follow #0F1011, the launch screen blue #80BCDE.',
+    good:['Cards, lines and greys all come from the same grey as the ground, so the page reads as one surface.','Blue is left only on the tabs, the tix, the stub and the main button, so it points at what you can tap.','Tiles and the ask bar are a faint blue wash on grey, not navy.'],
+    cost:['Cards step up from the ground less than today, so the borders matter more.','Every grey token changes, so every dark screen needs a quick look.'] },
+  { id:'b', title:'Option B: Warm graphite', p:B, sub:'The same blue on greys with a little warmth in them.',
+    good:['Feels softer and calmer at night, a bit like paper under a lamp.','Blue pops more against warm greys.'],
+    cost:['The ground itself stays the cool #0F1011 of the launch screen, so warm cards on it can look slightly brown.','The robot and app icons are cool blues and teals, which drift from the warm cards.'] },
+  { id:'c', title:'Option C: True black, hairlines', p:C, sub:'Cards barely lift off the black. Thin lines draw the shapes.',
+    good:['The most OLED-like and the quietest; the page almost disappears.','A touch brighter blue so the few accents carry on pure dark.'],
+    cost:['Cards and the dock are close to the ground, so shapes rest on 1dp lines; on dim phones they can blur together.','The sheet and fields sit very close to the page, so focus states have to work harder.'] },
+];
+
+/* ---------------- colour helpers ---------------- */
+const parse = v => { const [h, a] = v.split('/'); const n = parseInt(h.slice(1), 16); return { r:(n>>16)&255, g:(n>>8)&255, b:n&255, a: a === undefined ? 1 : parseFloat(a), hex:h.toUpperCase() }; };
+const css = v => { const c = parse(v); return c.a === 1 ? c.hex : `rgba(${c.r},${c.g},${c.b},${c.a})`; };
+const over = (top, base) => { const t = parse(top), b = typeof base === 'string' ? parse(base) : base; return { r:t.r*t.a+b.r*(1-t.a), g:t.g*t.a+b.g*(1-t.a), b:t.b*t.a+b.b*(1-t.a), a:1 }; };
+const lum = c => { const f = x => { x /= 255; return x <= .03928 ? x/12.92 : Math.pow((x+.055)/1.055, 2.4); }; return .2126*f(c.r)+.7152*f(c.g)+.0722*f(c.b); };
+const ratio = (fg, bgc) => { const a = lum(fg), b = lum(bgc); return (Math.max(a,b)+.05)/(Math.min(a,b)+.05); };
+const solid = (v, base) => { const c = parse(v); return c.a === 1 ? c : over(v, base); };
+function vars(p) {
+  let s = NAMES.map(n => `--${n}:${css(p[n])}`).join(';');
+  const t4 = parse(p.text4);
+  s += `;--handle:rgba(${t4.r},${t4.g},${t4.b},.5)`;
+  return s;
+}
+
+/* ---------------- the Circle screen ---------------- */
+const I = {
+  play:'<polygon points="6 3 20 12 6 21 6 3"/>',
+  msg:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  grid:'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  search:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  circleCheck:'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  x:'<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
+};
+const ic = (k, cls='') => `<svg class="i ${cls}" viewBox="0 0 24 24">${I[k]}</svg>`;
+const SB = `<div class="sb"><span>9:41</span><span class="ic">
+  <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx=".6"/><rect x="4" y="5" width="3" height="6" rx=".6"/><rect x="8" y="2.5" width="3" height="8.5" rx=".6"/><rect x="12" y="0" width="3" height="11" rx=".6"/></svg>
+  <svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2.5" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="12" height="7" rx="1.4" fill="currentColor"/><rect x="19.6" y="3.5" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".5"/></svg>
+</span></div>`;
+const TK = `<svg class="tk" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M4.5 4.5H19.5a2.5 2.5 0 0 1 2.5 2.5V9a3 3 0 0 0 0 6v2a2.5 2.5 0 0 1-2.5 2.5H4.5A2.5 2.5 0 0 1 2 17v-2a3 3 0 0 0 0-6V7a2.5 2.5 0 0 1 2.5-2.5Z"/><path class="p" d="M16 7.4v.4M16 11.8v.4M16 16.2v.4"/></svg>`;
+
+function robot(lvl=7, prog=0.6) {
+  const P = 'M316 905 V844 A78 78 0 0 1 394 766 H860 A78 78 0 0 1 938 844 V966 A78 78 0 0 1 860 1044 H394 A78 78 0 0 1 316 966 V905';
+  return `<svg class="robot" viewBox="0 0 880 980"><use href="#level_robot_body"/><use href="#level_robot_head"/><use href="#level_robot_eyes"/><use href="#level_robot_antenna"/>
+    <g transform="translate(-185 -110)"><path d="M392 752 H862 Q952 752 952 842 V968 Q952 1058 862 1058 H392 Q302 1058 302 968 V842 Q302 752 392 752 Z" style="fill:var(--badgeFill)"/>
+    <path d="M393 777 H861 Q927 777 927 843 V967 Q927 1033 861 1033 H393 Q327 1033 327 967 V843 Q327 777 393 777 Z" style="fill:var(--glass)"/>
+    <path d="${P}" fill="none" style="stroke:var(--glassBorderStrong)" stroke-width="19"/>
+    <path d="${P}" fill="none" style="stroke:var(--ok)" stroke-width="19" stroke-linecap="round" pathLength="1" stroke-dasharray="${prog} 1"/>
+    <text x="627" y="912" text-anchor="middle" dominant-baseline="central" style="fill:var(--text);font:600 186px Barlow">${lvl}</text></g>
+    <use href="#level_robot_hands"/></svg>`;
+}
+const bar = () => `<div class="hud">${robot()}<div class="tt"><div class="t1">Level 7</div><div class="t2">120 exp to level 8</div></div><div class="tixq" aria-label="120 tix">${TK}<span class="fig">120</span></div></div>`;
+
+function hue(name) { let h = 0; for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) | 0; return ((h % 360) + 360) % 360; }
+const appTile = name => { const h = hue(name); return `<div class="ap" style="background:hsl(${h} 30% 18%);color:hsl(${h} 55% 76%)">${name[0]}</div>`; };
+
+const POSTS = [
+  ['Pocket Budget','Live app, written review',40],
+  ['Nightjar Alarm','Closed test',25],
+  ['Sprout Notes','Live app, detailed review',60],
+  ['Tide Tables','Closed test, written review',30],
+  ['Pebble Habit Tracker for Busy People','Live app',1200],
+  ['Kite Weather','Closed test, detailed review',55],
+];
+const FTABS = [['Feedback',0],['Activity',0],['My reviews',0],['To check',2]];
+const TABS = [['msg','Circle'],['users','Crew'],['trophy','Ranks'],['grid','My apps'],['user','You']];
+
+function circle() {
+  const seg = `<div class="seg">${FTABS.map(([l, n], k) => `<div class="sg ${k === 0 ? 'on' : ''}">${l}${n ? `<span class="cnt">${n}</span>` : ''}</div>`).join('')}</div>`;
+  const t = ([name, line, pay]) => `<div class="t"><div class="body">${appTile(name)}<div class="mid"><div class="nm">${name}</div><div class="ln">${line}</div></div></div><div class="stub" aria-label="${pay} tix"><div class="chip">${TK}<span class="fig" style="${pay >= 1000 ? 'font-size:14px' : ''}">${pay.toLocaleString('en-US')}</span></div></div><i class="notch top"></i><i class="notch bot"></i></div>`;
+  const dock = `<div class="dock">${TABS.map(([k, l], i) => i === 0 ? `<div class="sel">${ic(k)}<span>${l}</span></div>` : `<div class="dt"><span class="ibx">${ic(k)}${i === 1 ? '<b class="nb">1</b>' : ''}</span></div>`).join('')}</div>`;
+  return `${SB}${bar()}${seg}<div class="list">${POSTS.map(t).join('')}</div><div class="fade"></div><div class="askbar">Ask for feedback</div>${dock}<div class="gbar"><i></i></div>`;
+}
+
+function strip() {
+  const chips = `<div class="chips"><span class="pill ok">${ic('circleCheck')}On time</span><span class="pill warn">${ic('clock')}1 day short</span><span class="pill bad">${ic('x')}Missed</span><span class="pill soft">+40 tix</span></div>`;
+  const btns = `<div class="btns"><div class="btn pri">Start review</div><div class="btn sec">Later</div></div>`;
+  const field = `<div class="fld"><span class="lab">Your note</span><div class="box focus">Works well on my Pixel<span class="cur"></span></div><span class="hint">Say what you tried and what happened.</span></div>`;
+  const rows = [['EN','English','English',true],['BN','বাংলা','Bangla',false],['HI','हिन्दी','Hindi',false]]
+    .map(([c, a, b, on]) => `<div class="trow ${on ? 'on' : ''}"><span class="tl">${c}</span><div class="mid"><div class="a">${a}</div><div class="b">${b}</div></div>${on ? ic('check', 'ck') : ''}</div>`).join('');
+  const sheet = `<div class="under"><div class="ghost"><i></i><i></i><i></i></div><div class="scrim"></div><div class="sheet"><div class="handle"></div><h4>Language</h4><div class="search">${ic('search')}Search languages</div>${rows}</div></div>`;
+  return `<div class="strip"><div class="top"><span class="lab">Status and buttons</span>${chips}${btns}${field}</div>${sheet}</div>`;
+}
+
+/* ---------------- contrast check ---------------- */
+function checks(p) {
+  const bg = parse(p.bg), card = parse(p.card), glass = parse(p.glass), field = parse(p.field);
+  const softOnCard = over(p.leafAccentSoft, card), softOnGlass = over(p.leafAccentSoft, glass);
+  return [
+    ['Title text on the ground', parse(p.text), bg, 4.5],
+    ['Title text on a card', parse(p.text), card, 4.5],
+    ['Grey line (text3) on a card', parse(p.text3), card, 4.5],
+    ['Unselected tab (text2) on the tab track', parse(p.text2), card, 4.5],
+    ['Selected tab on its soft wash', parse(p.tabSelected), softOnCard, 4.5],
+    ['Tix figure on the stub chip', parse(p.tabSelected), card, 4.5],
+    ['Count and ask bar (tileInk on tile)', parse(p.tileInk), parse(p.tile), 4.5],
+    ['Main button words (ground on accentInk)', bg, parse(p.accentInk), 4.5],
+    ['Soft button words (text on glass2)', parse(p.text), parse(p.glass2), 4.5],
+    ['Dock icons (tabUnselected on card)', parse(p.tabUnselected), card, 3],
+    ['Chevrons (text4 on card)', parse(p.text4), card, 3],
+    ['ok on okBg over a card', parse(p.ok), over(p.okBg, card), 4.5],
+    ['warn on warnBg over a card', parse(p.warn), over(p.warnBg, card), 4.5],
+    ['bad on badBg over a card', parse(p.bad), over(p.badBg, card), 4.5],
+    ['Field edge against the field', parse(p.fieldBorder), field, 3],
+    ['Field hint (text3) on the field', parse(p.text3), field, 4.5],
+    ['Chosen sheet row (text on wash)', parse(p.text), softOnGlass, 4.5],
+    ['Check mark (accentInk on wash)', parse(p.accentInk), softOnGlass, 3],
+  ].map(([label, f, b, need]) => ({ label, r: ratio(f, b), need }));
+}
+
+/* ---------------- Kotlin for a coder ---------------- */
+const NAMED = { '#83D8C4':'OkDark', '#D8B774':'WarnDark', '#E4938A':'BadDark' };
+function kotlin(p) {
+  const lit = (v) => { const c = parse(v); const base = NAMED[c.hex] || `Color(0xFF${c.hex.slice(1)})`; return c.a === 1 ? base : `${base}.alpha(${String(c.a).replace(/^0\./, '0.')}f)`; };
+  const lines = NAMES.map(n => `        ${n} = ${lit(p[n])},`);
+  return `val OceanDark =\n    TtTokens(\n        isDark = true,\n${lines.join('\n')}\n    )`;
+}
+
+/* ---------------- render ---------------- */
+const z = new URLSearchParams(location.search).get('z') || '.85';
+document.documentElement.style.setProperty('--z', z);
+let html = `<section><h2>Circle at night, four ways</h2><p>Same screen, same layout, only the colours change. The ask bar is shown as it floats once the first row has scrolled off.</p><div class="row">`;
+for (const o of OPTS) {
+  html += `<div class="col"><div class="cap">${o.title}${o.rec ? '<span class="rec">Recommended</span>' : ''}<span class="sub">${o.sub}</span></div>
+    <div class="pz" style="${vars(o.p)}"><div class="phone">${circle()}</div>${strip()}</div>
+    <div class="notes"><h3>${o.id === 'now' ? 'What is off' : 'What it does well'}</h3><ul>${o.good.map(x => `<li>${x}</li>`).join('')}</ul>
+    <h3>${o.id === 'now' ? 'Why it changes' : 'What it costs'}</h3><ul>${o.cost.map(x => `<li>${x}</li>`).join('')}</ul></div></div>`;
+}
+html += `</div></section>`;
+
+/* contrast */
+html += `<section><h2>Contrast check</h2><p>Worked out from the token values on this page. Text needs 4.5 to 1, icons and edges 3 to 1. Soft washes are blended onto the surface they sit on first.</p><div class="tbl-wrap"><table><tr><th>Pair</th><th>Needs</th>${OPTS.map(o => `<th>${o.title.replace('Option ', '')}</th>`).join('')}</tr>`;
+const all = OPTS.map(o => checks(o.p));
+all[0].forEach((row, i) => {
+  html += `<tr><td>${row.label}</td><td>${row.need}:1</td>${all.map(c => { const r = c[i].r; return `<td class="${r >= c[i].need ? 'pass' : 'fail'}">${r.toFixed(1)}</td>`; }).join('')}</tr>`;
+});
+html += `</table></div></section>`;
+
+/* tokens */
+const sw = (v, dim) => `<span class="sw ${dim ? 'same' : ''}"><i><b style="background:${css(v)}"></b></i>${parse(v).hex}${parse(v).a < 1 ? ` at ${Math.round(parse(v).a * 100)}%` : ''}</span>`;
+html += `<section><h2>Every dark token</h2><p>All 67 colours of OceanDark in Tokens.kt, in file order. Faded cells are the same as now. The light set does not change.</p><div class="tbl-wrap"><table><tr><th>Token</th>${OPTS.map(o => `<th>${o.title}</th>`).join('')}</tr>`;
+for (const n of NAMES) html += `<tr><td class="k">${n}</td>${OPTS.map((o, k) => `<td>${sw(o.p[n], k > 0 && o.p[n].toUpperCase() === NOW[n].toUpperCase())}</td>`).join('')}</tr>`;
+html += `</table></div>`;
+for (const o of OPTS.slice(1)) html += `<details ${o.rec ? 'open' : ''}><summary>${o.title}: Kotlin to paste over OceanDark</summary><pre>${kotlin(o.p)}</pre></details>`;
+html += `</section>`;
+
+document.getElementById('root').innerHTML = html;
+document.querySelectorAll('.ctl button[data-z]').forEach(b => {
+  b.classList.toggle('on', b.dataset.z === z);
+  b.onclick = () => { document.documentElement.style.setProperty('--z', b.dataset.z); document.querySelectorAll('.ctl button[data-z]').forEach(x => x.classList.toggle('on', x === b)); };
+});
+</script>
+</body>
+</html>
