@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TestTrack. My reviews tile options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Real values from ui/theme/Tokens.kt */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSelected:#2E4E66; --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
+    --badgeFill:#3A5B73; --tile:#DCE6EE; --tileInk:#3A5B73; --leafAccent:#3A5B73;
+    --leafAccentSoft:rgba(74,114,144,.16); --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --card:#F3F8FB; --cardLine:#E1ECF3; --track:#E4EEF4; --glass2:#DFEDF6;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12);
+    --warn:#8A611C; --warnBg:rgba(154,110,36,.12); --warnBorder:rgba(154,110,36,.24);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --panelTop:#F7FCFF; --panelBottom:#E3F0F8; --panelOutline:#94B8CF;
+    --skel:#E4EEF4;
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSelected:#B6CCDC; --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
+    --badgeFill:#4A7290; --tile:#2A2D31; --tileInk:#A2BED2; --leafAccent:#93B3CA;
+    --leafAccentSoft:#2A2D31; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --card:#1C1E20; --cardLine:#2D3034; --track:#2D3034; --glass2:#292C2F;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12);
+    --warn:#D8B774; --warnBg:rgba(216,183,116,.14); --warnBorder:rgba(216,183,116,.26);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --panelTop:#1F2225; --panelBottom:#18191B; --panelOutline:#40464C;
+    --skel:#24272A;
+  }
+
+  * { box-sizing:border-box; }
+  body { margin:0; background:#E7ECEF; font-family:Barlow, system-ui, sans-serif; color:#142F43; }
+  .doc { max-width:1180px; margin:0 auto; padding:36px 28px 80px; }
+  .doc > h1 { font-size:30px; margin:0 0 6px; font-weight:700; }
+  .doc > p.lead { font-size:16px; margin:0 0 6px; color:#2D4A5F; max-width:900px; line-height:1.45; }
+  .needs { display:flex; gap:10px; flex-wrap:wrap; margin:14px 0 4px; }
+  .needs span { background:#fff; border:1px solid #D3DEE6; border-radius:999px; padding:5px 12px; font-size:14px; font-weight:500; }
+
+  section.opt { margin-top:44px; padding-top:26px; border-top:1px solid #CBD6DE; }
+  section.opt h2 { font-size:23px; margin:0 0 4px; font-weight:700; display:flex; align-items:center; gap:10px; }
+  .rec { font-size:13px; font-weight:700; background:#3A5B73; color:#fff; border-radius:999px; padding:3px 11px; }
+  .why { font-size:15.5px; margin:2px 0; color:#203A4E; max-width:980px; line-height:1.45; }
+  .why b { font-weight:600; }
+  .pair { display:flex; gap:28px; flex-wrap:wrap; margin-top:16px; align-items:flex-start; }
+  .cap { font-size:13px; font-weight:600; color:#59758A; margin:0 0 6px 4px; text-transform:none; }
+
+  /* ---------- phone ---------- */
+  .phone { width:392px; background:var(--bg); color:var(--text); border-radius:30px; overflow:hidden;
+           border:1px solid #C3CFD8; box-shadow:0 10px 30px rgba(16,47,70,.10); padding-bottom:22px; }
+  .dark.phone { border-color:#2A2D31; }
+  .sbar { height:30px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; font-size:13px; font-weight:600; color:var(--text2); }
+  .tabs { margin:6px 16px 0; padding:4px; border-radius:999px; background:var(--card); border:1px solid var(--cardLine); display:flex; gap:2px; }
+  .seg { flex:1; height:34px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500; color:var(--text2); white-space:nowrap; }
+  .seg.on { background:var(--leafAccentSoft); color:var(--tabSelected); font-weight:600; }
+  .seg .cnt { margin-left:5px; padding:0 5px; border-radius:999px; background:var(--tile); color:var(--tileInk); font-size:11px; font-weight:700; line-height:16px; }
+  .dark .seg.on .cnt { background:var(--card); }
+  .list { padding-top:11.5px; padding-top:calc(16px + 11.5px - 16px); }
+  .head { display:flex; align-items:center; padding:20px 16px 10px; font-size:16px; line-height:19px; font-weight:700; color:var(--text); }
+  .head.first { padding-top:11.5px; }
+  .head .badge { margin-left:5px; min-width:22px; height:22px; border-radius:999px; background:var(--badgeFill); color:var(--onAccent); font-size:12px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; padding:0 7px; }
+  .head .trail { margin-left:auto; font-size:12.5px; font-weight:500; color:var(--text3); }
+  .w { padding:4px 16px; }
+  .tnum { font-feature-settings:"tnum"; }
+  .ic { display:inline-block; vertical-align:middle; flex:none; }
+
+  .mark { display:grid; place-items:center; font-weight:700; flex:none; }
+
+  /* ---------- ticket (current + A) ---------- */
+  .ticket { position:relative; min-height:76px; display:flex; }
+  .ticket > svg.shape { position:absolute; inset:0; width:100%; height:100%; z-index:0; overflow:visible; }
+  .ticket > .tmain, .ticket > .stub { position:relative; z-index:1; }
+  .tmain { flex:1; min-width:0; display:flex; align-items:center; gap:12px; padding:12px 10px 12px 12px; }
+  .tcol { flex:1; min-width:0; display:flex; flex-direction:column; gap:0; }
+  .t-title { font-size:16px; line-height:19px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .t-note { font-size:12.5px; line-height:14px; display:flex; align-items:center; gap:4px; white-space:nowrap; overflow:hidden; }
+  .t-note span { overflow:hidden; text-overflow:ellipsis; }
+  .stub { width:58px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .stub .fig { font-size:18px; line-height:20px; font-weight:600; font-feature-settings:"tnum"; }
+  .stub .word { font-size:10.5px; line-height:12px; font-weight:500; margin-top:1px; }
+  .struck { text-decoration:line-through; }
+
+  /* A: step meter */
+  .meter { display:flex; align-items:center; gap:3px; }
+  .meter i { width:16px; height:3px; border-radius:2px; background:var(--track); display:block; }
+  .meter i.done { background:var(--leafAccent); }
+  .meter i.now { background:var(--leafAccent); opacity:.4; }
+  .meter.warn i.now { background:var(--warn); opacity:1; }
+  .a-steprow { display:flex; align-items:center; gap:7px; margin:6px 0 5px; font-size:11.5px; line-height:13px; color:var(--text3); font-weight:500; }
+  .a-steprow .left { margin-left:auto; display:flex; align-items:center; gap:3px; }
+
+  /* ---------- B: next step tile ---------- */
+  .htile { border:1px solid var(--cardLine); border-radius:14px; background:var(--bg); min-height:76px; display:flex; align-items:center; gap:12px; padding:12px 12px 12px 12px; }
+  .htile.attn { border-color:var(--warnBorder); background:linear-gradient(var(--warnBg),var(--warnBg)), var(--bg); }
+  .b-col { flex:1; min-width:0; }
+  .b-act { font-size:13.5px; line-height:17px; font-weight:500; color:var(--text2); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .b-meta { display:flex; align-items:center; gap:8px; font-size:12px; line-height:15px; color:var(--text3); margin-top:4px; white-space:nowrap; }
+  .b-meta .grp { display:flex; align-items:center; gap:4px; }
+  .dots { display:flex; gap:3px; }
+  .dots i { width:6px; height:6px; border-radius:50%; background:var(--track); display:block; }
+  .dots i.done { background:var(--leafAccent); }
+  .dots i.now { background:transparent; box-shadow:inset 0 0 0 1.5px var(--leafAccent); }
+  .dots.warn i.now { box-shadow:inset 0 0 0 1.5px var(--warn); }
+  .pill { height:34px; border-radius:999px; padding:0 14px; display:inline-flex; align-items:center; font-size:14px; font-weight:700; white-space:nowrap; flex:none; }
+  .pill.soft { background:var(--tile); color:var(--accentInk); }
+  .pill.warn { background:var(--warnBg); color:var(--warn); box-shadow:inset 0 0 0 1px var(--warnBorder); }
+  .pill.quiet { background:transparent; color:var(--text3); font-weight:600; padding:0 4px; gap:4px; font-size:13px; }
+  .amt { text-align:right; flex:none; min-width:44px; }
+  .amt .n { font-size:17px; line-height:20px; font-weight:600; font-feature-settings:"tnum"; }
+  .amt .l { font-size:10.5px; line-height:12px; color:var(--text3); font-weight:500; }
+
+  /* ---------- C: journey card ---------- */
+  .jcard { border:1px solid var(--cardLine); border-radius:14px; background:var(--bg); padding:14px 14px 12px; }
+  .jcard.attn { border-color:var(--warnBorder); }
+  .jtop { display:flex; align-items:center; gap:12px; }
+  .jtop .col { flex:1; min-width:0; }
+  .jsub { font-size:12.5px; line-height:15px; color:var(--text3); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chip { height:28px; border-radius:999px; background:var(--leafAccentSoft); display:inline-flex; align-items:center; gap:5px; padding:0 10px 0 8px; flex:none; }
+  .chip .n { font-size:15px; font-weight:600; color:var(--tabSelected); font-feature-settings:"tnum"; }
+  .chip .s { font-size:11px; font-weight:600; color:var(--text3); }
+  .chip.warn { background:var(--warnBg); }
+  .chip.warn .n { color:var(--warn); }
+  .track { position:relative; display:grid; grid-template-columns:repeat(5,1fr); margin-top:14px; }
+  .stop { display:flex; flex-direction:column; align-items:center; position:relative; }
+  .stop .line { position:absolute; top:5px; height:2px; left:calc(-50% + 9px); right:calc(50% + 9px); background:var(--track); border-radius:1px; }
+  .stop .line.done { background:var(--leafAccent); }
+  .stop .dot { width:12px; height:12px; border-radius:50%; background:var(--track); position:relative; z-index:1; display:grid; place-items:center; }
+  .stop .dot.done { background:var(--leafAccent); }
+  .stop .dot.done svg { color:var(--bg); }
+  .stop .dot.now { background:var(--bg); box-shadow:inset 0 0 0 2px var(--leafAccent); }
+  .stop .dot.now::after { content:""; width:4px; height:4px; border-radius:50%; background:var(--leafAccent); }
+  .stop .dot.now.warn { box-shadow:inset 0 0 0 2px var(--warn); }
+  .stop .dot.now.warn::after { background:var(--warn); }
+  .stop .lab { font-size:10.5px; line-height:12px; margin-top:5px; color:var(--text4); font-weight:500; }
+  .stop .lab.done { color:var(--text3); }
+  .stop .lab.now { color:var(--tabSelected); font-weight:700; }
+  .stop .lab.now.warn { color:var(--warn); }
+  .jnext { display:flex; align-items:center; gap:8px; margin-top:12px; padding-top:10px; border-top:1px solid var(--cardLine); }
+  .jnext .what { flex:1; min-width:0; display:flex; align-items:center; gap:6px; font-size:14px; line-height:17px; font-weight:600; color:var(--text); }
+  .jnext .what span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .jnext .when { display:flex; align-items:center; gap:4px; font-size:12.5px; color:var(--text3); white-space:nowrap; font-weight:500; }
+  .warnink { color:var(--warn) !important; }
+  .crow { border:1px solid var(--cardLine); border-radius:14px; background:var(--bg); min-height:60px; display:flex; align-items:center; gap:12px; padding:10px 14px 10px 12px; }
+  .crow .col { flex:1; min-width:0; }
+  .crow .nm { font-size:15px; line-height:18px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .crow .sb { font-size:12.5px; line-height:15px; color:var(--text3); display:flex; align-items:center; gap:4px; margin-top:2px; white-space:nowrap; overflow:hidden; }
+  .crow .sb span { overflow:hidden; text-overflow:ellipsis; }
+  .crow .amt .n { font-size:16px; }
+
+  /* ---------- D: ring + ledger ---------- */
+  .panel { margin:0 16px 4px; border-radius:22px; border:1.5px dashed var(--panelOutline); background:linear-gradient(135deg,var(--panelTop),var(--panelBottom)); display:flex; padding:14px 6px; }
+  .panel .cell { flex:1; text-align:center; }
+  .panel .cell + .cell { border-left:1px solid var(--cardLine); }
+  .panel .big { font-size:21px; line-height:24px; font-weight:700; font-feature-settings:"tnum"; color:var(--tabSelected); }
+  .panel .big.ok { color:var(--ok); }
+  .panel .small { font-size:12px; line-height:14px; color:var(--text3); font-weight:500; margin-top:2px; }
+  .ring { position:relative; width:58px; height:58px; flex:none; display:grid; place-items:center; }
+  .ring svg { position:absolute; inset:0; }
+  .chev { color:var(--text4); flex:none; }
+  .group { margin:0 16px; display:flex; flex-direction:column; gap:3px; }
+  .grow { background:var(--card); border:1px solid var(--cardLine); border-radius:6px; min-height:56px; display:flex; align-items:center; gap:12px; padding:9px 14px 9px 12px; }
+  .grow:first-child { border-top-left-radius:22px; border-top-right-radius:22px; }
+  .grow:last-child { border-bottom-left-radius:22px; border-bottom-right-radius:22px; }
+  .grow .col { flex:1; min-width:0; }
+  .grow .nm { font-size:15px; line-height:18px; font-weight:600; }
+  .grow .sb { font-size:12.5px; line-height:15px; color:var(--text3); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .grow .n { font-size:16px; font-weight:600; font-feature-settings:"tnum"; }
+
+  /* ---------- skeletons (pick's loading state) ---------- */
+  .sk { background:var(--skel); border-radius:6px; }
+  .mini { padding-bottom:16px; }
+  .states { display:flex; gap:28px; flex-wrap:wrap; margin-top:18px; }
+  .note-s { font-size:14px; color:#2D4A5F; margin:6px 0 0; max-width:900px; line-height:1.45; }
+
+  /* ===== Round 2: real tickets ===== */
+  .light { --hole:#DFEDF6; --holeEdge:#789AAF; }
+  .dark  { --hole:#292C2F; --holeEdge:#666D74; }
+  details#earlier { margin-top:56px; border-top:2px solid #CBD6DE; padding-top:18px; }
+  details#earlier > summary { cursor:pointer; font-size:20px; font-weight:700; color:#2D4A5F; }
+  .round { margin-top:22px; }
+  .round h2.rh { font-size:26px; margin:0 0 4px; }
+  .legend { display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 0; }
+  .legend span { background:#fff; border:1px solid #D3DEE6; border-radius:10px; padding:6px 12px; font-size:14px; }
+  .tk { position:relative; min-height:76px; display:flex; }
+  .tk > svg.shape { position:absolute; left:0; top:0; z-index:0; overflow:visible; pointer-events:none; }
+  .tk > .tmain, .tk > .stub, .tk > .ghost { position:relative; z-index:1; }
+  .tk.void .mark { filter:grayscale(1); opacity:.55; }
+  .tk.void .t-title { color:var(--text2); }
+  .stamp { display:inline-block; border:1.2px solid currentColor; border-radius:4px; padding:0 4px; font-size:9.5px; line-height:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-8deg); white-space:nowrap; }
+  .stamp.big { font-size:11px; line-height:16px; padding:0 6px; letter-spacing:.08em; }
+  .bodystamp { position:absolute; right:12px; top:50%; transform:translateY(-50%) rotate(-8deg); }
+  .bodystamp .stamp { transform:none; }
+  .punches { display:flex; margin:7px 0 6px -14px; }
+  .pc { width:48px; display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .hole { width:12px; height:12px; border-radius:50%; flex:none; display:block; }
+  .hole.done { background:var(--leafAccent); }
+  .hole.now { box-shadow:inset 0 0 0 1.5px var(--leafAccent); }
+  .hole.now.warn { box-shadow:inset 0 0 0 1.5px var(--warn); }
+  .hole.todo { border:1px dashed var(--glassBorder); }
+  .pl { font-size:10px; line-height:11px; font-weight:500; color:var(--text4); white-space:nowrap; }
+  .pl.done { color:var(--text3); }
+  .pl.now { color:var(--tabSelected); font-weight:700; }
+  .pl.now.warn { color:var(--warn); }
+  .sm { display:flex; gap:4px; align-items:center; }
+  .sm .hole { width:9px; height:9px; }
+  .act { display:flex; align-items:center; gap:6px; font-size:12.5px; line-height:15px; }
+  .act .a { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; color:var(--text2); }
+  .act .tl { display:flex; align-items:center; gap:3px; color:var(--text3); white-space:nowrap; font-size:12px; }
+  .meta2 { display:flex; align-items:center; gap:8px; font-size:12px; line-height:15px; color:var(--text3); margin-top:4px; white-space:nowrap; overflow:hidden; }
+  .ghost { width:58px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; }
+
+  /* ===== Round 3: compact ===== */
+  .c-l1 { font-size:16px; line-height:19px; height:19px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tk.void .c-l1 { color:var(--text2); }
+  .c-l2 { display:flex; align-items:center; gap:5px; height:15px; margin-top:2px; font-size:12.5px; line-height:15px; }
+  .c-l2.gap4 { margin-top:4px; gap:6px; }
+  .c-l2 .a, .c-l3 .a { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; color:var(--text2); }
+  .c-l3 { display:flex; align-items:center; gap:7px; height:14px; margin-top:2px; font-size:11.5px; line-height:14px; color:var(--text3); white-space:nowrap; font-weight:500; }
+  .c-l3 .a { font-weight:400; color:var(--text3); }
+  .c-l3 .tl, .c-l2 .tl { display:flex; align-items:center; gap:3px; white-space:nowrap; color:var(--text3); font-size:11.5px; font-weight:500; }
+  .c-l3 .tl { margin-left:auto; }
+  .cp { display:inline-flex; gap:3px; align-items:center; flex:none; }
+  .cp .hole { width:var(--d); height:var(--d); }
+  .cp .hole.now { box-shadow:inset 0 0 0 1.5px var(--leafAccent); }
+  .cp .hole.now.warn { box-shadow:inset 0 0 0 1.5px var(--warn); }
+  .measure { font-size:14px; margin:6px 0 0; color:#2D4A5F; }
+</style>
+</head>
+<body>
+<div class="doc">
+  <h1>My reviews: tile options</h1>
+  <p class="lead">Requests is a list of offers, so a ticket with a price stub fits it. My reviews is the reader's own work: reviews they have taken on, sent, or finished. When they open this tab they want four answers, so every option is judged on them.</p>
+  <div class="needs"><span>1. What do I do next?</span><span>2. How far along am I?</span><span>3. What will I get, or what did I get?</span><span>4. Does anything need me now?</span></div>
+  <p class="lead" style="margin-top:12px">Every phone shows the same 11 reviews: four in progress (steps 1 to 4, one held up because the developer can't find it), three waiting (one normal, one sent here at half pay, one disputed) and four in history (paid, refused, ran out, given up). Light and dark side by side, 392 dp wide, real tokens from Tokens.kt.</p>
+
+  <div id="compact"></div>
+  <div id="tickets"></div>
+  <details id="earlier"><summary>Earlier options (round 1: current tile, A to D)</summary><div id="root"></div></details>
+</div>
+
+<script>
+/* ---------- icons (Lucide, as the app uses) ---------- */
+const P = {
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  hourglass:'<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  ccheck:'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  cx:'<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
+  chev:'<path d="m9 18 6-6-6-6"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+  phone:'<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+  pen:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  calendar:'<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+};
+function ic(name, size, color, sw){ return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color||'currentColor'}" stroke-width="${sw||2}" stroke-linecap="round" stroke-linejoin="round">${P[name]}</svg>`; }
+/* The app's ticket mark (TicketMark.kt): outline leafAccent, body card. */
+function ticketMark(size, rot){ return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" style="${rot?'transform:rotate(-12deg)':''}"><path d="M4.5 4.5H19.5a2.5 2.5 0 0 1 2.5 2.5V9a3 3 0 0 0 0 6v2a2.5 2.5 0 0 1-2.5 2.5H4.5A2.5 2.5 0 0 1 2 17v-2a3 3 0 0 0 0-6V7a2.5 2.5 0 0 1 2.5-2.5Z" fill="var(--card)" stroke="var(--leafAccent)" stroke-width="1.6" stroke-linejoin="round"/><path d="M16 7.4v.4M16 11.8v.4M16 16.2v.4" stroke="var(--leafAccent)" stroke-width="1.9" stroke-linecap="round"/></svg>`; }
+
+/* AppTile: hue off the name, fixed saturation/lightness per theme (Tokens.nameTile). */
+function mark(r, th, size){
+  const [f, k] = th==='dark' ? [`hsl(${r.hue},30%,18%)`,`hsl(${r.hue},55%,76%)`] : [`hsl(${r.hue},45%,89%)`,`hsl(${r.hue},50%,32%)`];
+  return `<div class="mark" style="width:${size}px;height:${size}px;border-radius:${size*0.3}px;background:${f};color:${k};font-size:${Math.round(size*0.36)}px">${r.name[0]}</div>`;
+}
+
+/* ---------- the 11 reviews ---------- */
+const R = [
+  // In progress
+  {sec:'go', name:'Pocket Planner', hue:205, live:false, fb:'written', state:'claimed', step:1, reward:40,
+   next:'Install it from Play', curLine:'Install it from Play', verb:'Install', vIcon:'download', left:'23h left'},
+  {sec:'go', name:'Bloom Journal', hue:330, live:true, fb:'stars', state:'installed', step:2, reward:60,
+   next:'Use it again tomorrow from 9:40', curLine:'Opens tomorrow at 9:40', verb:null, wait:'Tomorrow', left:'1d 20h left'},
+  {sec:'go', name:'Tidy Tasks', hue:150, live:false, fb:'detailed', state:'used', step:3, reward:50,
+   next:'Send feedback on Google Play', curLine:'Send feedback on Google Play', verb:'Write', left:'9h left', leftWarn:true},
+  {sec:'go', name:'Coin Jar', hue:40, live:true, fb:'written', state:'checking', step:4, reward:45, attn:true,
+   next:'Take a new screenshot of your review', curLine:"Developer can't find it. Take a new screenshot",
+   why:"The developer can't find it on Play", verb:'Retake', left:'1d 17h left'},
+  // Waiting
+  {sec:'wait', name:'Quiet Hours', hue:255, live:false, fb:'stars', state:'submitted', reward:30,
+   curLine:'Sent. Checked within a day', line:'With the developer', by:'Paid by 14:00 tomorrow unless refused', byShort:'Decided by 14:00 tomorrow'},
+  {sec:'wait', name:'Run Log', hue:12, live:true, fb:'written', state:'submitted', noBox:true, reward:50, pays:25,
+   curLine:'Sent. With the developer', line:'With the developer', by:'Sent here, not on Play. Pays half', byShort:'Decided by Sunday'},
+  {sec:'wait', name:'Snap Notes', hue:285, live:false, fb:'written', state:'disputed', reward:40,
+   curLine:'Disputed. Members are deciding', line:'Members are deciding', by:'Refused. You asked for a second look', byShort:''},
+  // History
+  {sec:'hist', name:'Habit Hill', hue:110, live:false, fb:'stars', state:'approved', reward:40, curLine:'Approved. Tix paid', date:'Paid on 9 Nov'},
+  {sec:'hist', name:'Word Garden', hue:175, live:false, fb:'written', state:'rejected', reward:35, curLine:'Screenshot shows a different app', reason:'Screenshot shows a different app', date:'7 Nov'},
+  {sec:'hist', name:'Lumen Camera', hue:225, live:true, fb:'stars', state:'expired', reward:30, curLine:'Ran out after three days', date:'5 Nov'},
+  {sec:'hist', name:'Fit Steps', hue:95, live:false, fb:'stars', state:'abandoned', reward:40, curLine:'Given up', date:'2 Nov'},
+];
+const SECTIONS = [['go','In progress'],['wait','Waiting for the developer'],['hist','History']];
+const unpaid = r => ['rejected','abandoned','expired'].includes(r.state);
+const kindLine = r => (r.live?'Live app':'Closed test') + (r.fb==='written'?', written review':r.fb==='detailed'?', detailed review':'');
+const stepNames = r => ['Install','Use', r.live?'Review':'Feedback', 'Proof'];
+
+/* ---------- shared frame ---------- */
+function phone(th, body, opts={}){
+  const tabs = `<div class="tabs"><div class="seg">Feedback</div><div class="seg on">My reviews<span class="cnt">4</span></div><div class="seg">To check</div></div>`;
+  return `<div><div class="cap">${th==='dark'?'Dark':'Light'}</div><div class="phone ${th}"><div class="sbar"><span>9:41</span><span>5G  86%</span></div>${opts.noTabs?'':tabs}<div class="list">${body}</div></div></div>`;
+}
+function head(title, n, first, trail){
+  return `<div class="head ${first?'first':''}">${title}${n!=null?`<span class="badge tnum">${n}</span>`:''}${trail?`<span class="trail">${trail}</span>`:''}</div>`;
+}
+function list(th, render, opts={}){
+  let out = '', first = true;
+  if (opts.top) { out += opts.top(th); }
+  for (const [k, title] of SECTIONS){
+    const rows = R.filter(r => r.sec===k);
+    if (opts.group && opts.group[k]) { out += head(title, rows.length, first && !opts.top, opts.trail && opts.trail[k]); out += opts.group[k](rows, th); first=false; continue; }
+    out += head(title, rows.length, first && !opts.top, opts.trail && opts.trail[k]);
+    first = false;
+    for (const r of rows) out += `<div class="w">${render(r, th)}</div>`;
+  }
+  return out;
+}
+
+/* ---------- ticket outline (TicketShape.kt): rounded 14, two 7dp bites, tear line ---------- */
+function drawTickets(){
+  document.querySelectorAll('.ticket').forEach(el => {
+    el.querySelector('svg.shape')?.remove();
+    const w = el.offsetWidth, h = el.offsetHeight, r = 14, n = 7, x = w - 58 - 0.75;
+    const d = `M${r},0 H${x-n} A${n},${n} 0 0 0 ${x+n},0 H${w-r} A${r},${r} 0 0 1 ${w},${r} V${h-r} A${r},${r} 0 0 1 ${w-r},${h} H${x+n} A${n},${n} 0 0 0 ${x-n},${h} H${r} A${r},${r} 0 0 1 0,${h-r} V${r} A${r},${r} 0 0 1 ${r},0 Z`;
+    const id = 'c' + Math.random().toString(36).slice(2);
+    const stubFill = el.dataset.stub || 'var(--leafAccentSoft)';
+    const tear = el.dataset.tear || 'var(--glassBorder)';
+    const border = el.dataset.border || 'var(--cardLine)';
+    el.insertAdjacentHTML('afterbegin', `<svg class="shape" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><defs><clipPath id="${id}"><path d="${d}"/></clipPath></defs>
+      <path d="${d}" fill="var(--bg)"/><rect x="${w-58}" y="0" width="58" height="${h}" fill="${stubFill}" clip-path="url(#${id})"/>
+      <line x1="${w-58+0.75}" y1="7" x2="${w-58+0.75}" y2="${h-7}" stroke="${tear}" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <path d="${d}" fill="none" stroke="${border}" stroke-width="1"/></svg>`);
+  });
+}
+
+/* ================= CURRENT ================= */
+function curTone(r){
+  switch(r.state){
+    case 'submitted': return ['hourglass','var(--accentInk)'];
+    case 'disputed': return ['users','var(--warn)'];
+    case 'checking': return ['camera','var(--warn)'];
+    case 'approved': return ['ccheck','var(--ok)'];
+    case 'rejected': return ['cx','var(--bad)'];
+    case 'abandoned': case 'expired': return ['cx','var(--text4)'];
+    default: return [null,'var(--text3)'];
+  }
+}
+function renderCurrent(r, th){
+  const [icn, tone] = curTone(r);
+  const note = r.sec==='go' ? `Step ${r.step} of 4. ${r.curLine}` : r.curLine;
+  const figColor = r.state==='approved' ? 'var(--ok)' : unpaid(r) ? 'var(--text4)' : 'var(--tabSelected)';
+  return `<div class="ticket"><div class="tmain">${mark(r,th,52)}<div class="tcol" style="gap:0">
+      <div class="t-title">${r.name}</div>
+      <div class="t-note" style="color:${tone}">${icn?ic(icn,12,tone):''}<span>${note}</span></div></div></div>
+    <div class="stub">${ticketMark(16,true)}<div class="fig ${unpaid(r)?'struck':''}" style="color:${figColor};margin-top:3px">+${r.reward}</div></div></div>`;
+}
+
+/* ================= OPTION A: ticket with a status stub ================= */
+function renderA(r, th){
+  let stub = {}, fig = `+${r.reward}`, figColor = 'var(--tabSelected)', word = 'to earn', wordColor='var(--text3)', struck = false;
+  let body = '';
+  if (r.sec==='go'){
+    const warn = r.attn;
+    const meter = [1,2,3,4].map(i => `<i class="${i<r.step?'done':i===r.step?'now':''}"></i>`).join('');
+    body = `<div class="t-title">${r.name}</div>
+      <div class="a-steprow"><div class="meter ${warn?'warn':''}">${meter}</div><span>Step ${r.step} of 4</span>
+        <span class="left ${r.leftWarn?'warnink':''}">${ic('clock',11,r.leftWarn?'var(--warn)':'var(--text3)')}${r.left}</span></div>
+      <div class="t-note" style="color:${warn?'var(--warn)':'var(--text2)'};font-weight:500">${warn?ic('camera',12,'var(--warn)'):''}<span>${r.next}</span></div>`;
+    if (warn){ stub = {fill:'var(--warnBg)', tear:'var(--warnBorder)', border:'var(--warnBorder)'}; figColor='var(--warn)'; wordColor='var(--warn)'; }
+  } else {
+    const [icn, tone] = curTone(r);
+    let line = r.sec==='wait' ? r.line : (r.state==='approved'?'Paid':r.state==='rejected'?'Refused':r.state==='expired'?'Ran out':'Given up');
+    let meta = r.sec==='wait' ? r.by : (r.state==='rejected' ? r.reason : r.date);
+    if (r.state==='expired') meta = `Not finished in three days. ${r.date}`;
+    if (r.state==='abandoned') meta = `You gave it up on ${r.date}`;
+    if (r.state==='rejected') meta = `${r.reason}`;
+    body = `<div class="t-title">${r.name}</div>
+      <div class="t-note" style="color:${tone};margin-top:6px;font-weight:500">${icn?ic(icn,12,tone):''}<span>${line}</span></div>
+      <div class="t-note" style="color:var(--text3);margin-top:4px"><span>${meta}</span></div>`;
+    if (r.sec==='wait'){ word = r.noBox ? 'half pay' : 'pending'; if (r.noBox) fig = `+${r.pays}`; if (r.state==='disputed'){ figColor='var(--warn)'; word='on hold'; wordColor='var(--warn)'; } }
+    if (r.state==='approved'){ stub={fill:'var(--okBg)', tear:'var(--ok)'}; figColor='var(--ok)'; word='paid'; wordColor='var(--ok)'; }
+    if (unpaid(r)){ stub={fill:'var(--bg)'}; figColor='var(--text4)'; struck=true; word='not paid'; wordColor='var(--text4)'; fig = `${r.reward}`; }
+  }
+  return `<div class="ticket" ${stub.fill?`data-stub="${stub.fill}"`:''} ${stub.tear?`data-tear="${stub.tear}"`:''} ${stub.border?`data-border="${stub.border}"`:''}>
+    <div class="tmain">${mark(r,th,52)}<div class="tcol">${body}</div></div>
+    <div class="stub">${ticketMark(15,true)}<div class="fig ${struck?'struck':''}" style="color:${figColor};margin-top:2px;font-size:17px">${fig}</div><div class="word" style="color:${wordColor}">${word}</div></div></div>`;
+}
+
+/* ================= OPTION B: next step tile ================= */
+function renderB(r, th){
+  let col = '', trail = '', attn = false;
+  if (r.sec==='go'){
+    attn = !!r.attn;
+    const dots = [1,2,3,4].map(i => `<i class="${i<r.step?'done':i===r.step?'now':''}"></i>`).join('');
+    col = `<div class="t-title">${r.name}</div>
+      <div class="b-act" style="${attn?'color:var(--warn)':''}">${r.next}</div>
+      <div class="b-meta"><span class="grp"><span class="dots ${attn?'warn':''}">${dots}</span>&nbsp;Step ${r.step} of 4</span>
+        <span class="grp ${r.leftWarn?'warnink':''}">${ic('clock',12,r.leftWarn?'var(--warn)':'var(--text3)')}${r.left}</span>
+        <span class="grp" style="margin-left:auto">${ticketMark(13)}<b class="tnum" style="color:var(--tabSelected);font-weight:600">${r.reward}</b></span></div>`;
+    if (r.verb) trail = `<span class="pill ${attn?'warn':'soft'}">${r.verb}</span>`;
+    else trail = `<span class="pill quiet">${ic('calendar',14,'var(--text3)')}${r.wait}</span>`;
+  } else {
+    const [icn, tone] = curTone(r);
+    let line, meta;
+    if (r.sec==='wait'){ line = r.line; meta = r.by; }
+    else { line = r.state==='approved'?'Paid':r.state==='rejected'?'Refused':r.state==='expired'?'Ran out':'Given up';
+           meta = r.state==='rejected'? r.reason : r.state==='approved'? r.date : r.state==='expired' ? `Not finished in three days, ${r.date}` : `You gave it up on ${r.date}`; }
+    col = `<div class="t-title">${r.name}</div>
+      <div class="b-act" style="display:flex;align-items:center;gap:5px;color:${tone}">${icn?ic(icn,13,tone):''}<span>${line}</span></div>
+      <div class="b-meta"><span style="overflow:hidden;text-overflow:ellipsis">${meta}</span></div>`;
+    let n = `+${r.reward}`, c='var(--tabSelected)', l='pending', s='';
+    if (r.noBox){ n = `+${r.pays}`; l='half pay'; }
+    if (r.state==='disputed'){ c='var(--warn)'; l='on hold'; }
+    if (r.state==='approved'){ c='var(--ok)'; l='paid'; }
+    if (unpaid(r)){ n=`${r.reward}`; c='var(--text4)'; l='not paid'; s='struck'; }
+    trail = `<div class="amt"><div class="n ${s}" style="color:${c}">${n}</div><div class="l">${l}</div></div>`;
+  }
+  return `<div class="htile ${attn?'attn':''}">${mark(r,th,44)}<div class="b-col">${col}</div>${trail}</div>`;
+}
+
+/* ================= OPTION C: journey card + compact history ================= */
+function trackHtml(r){
+  const names = [...stepNames(r), 'Paid'];
+  // which stop is current: in progress = step; waiting = 5 (Paid)
+  const cur = r.sec==='go' ? r.step : 5;
+  const warn = r.attn || r.state==='disputed';
+  return `<div class="track">` + names.map((nm, i) => {
+    const k = i + 1;
+    const st = k < cur ? 'done' : k === cur ? 'now' : '';
+    const line = i===0 ? '' : `<div class="line ${k<=cur?'done':''}"></div>`;
+    const dotInner = st==='done' ? ic('check',8,null,4) : '';
+    return `<div class="stop">${line}<div class="dot ${st} ${st==='now'&&warn?'warn':''}">${dotInner}</div><div class="lab ${st} ${st==='now'&&warn?'warn':''}">${nm}</div></div>`;
+  }).join('') + `</div>`;
+}
+function renderC(r, th){
+  if (r.sec==='hist') return renderCHist(r, th);
+  const warn = r.attn || r.state==='disputed';
+  const chipN = r.noBox ? r.pays : r.reward;
+  const chip = `<span class="chip ${r.attn?'warn':''}">${ticketMark(14)}<span class="n">${chipN}</span>${r.noBox?'<span class="s">half</span>':''}</span>`;
+  let what, when;
+  if (r.sec==='go'){
+    const icn = r.attn ? 'camera' : r.state==='claimed' ? 'download' : r.state==='installed' ? 'phone' : 'pen';
+    const col = r.attn ? 'var(--warn)' : 'var(--accentInk)';
+    what = `${ic(icn,15,col)}<span ${r.attn?'class="warnink"':''}>${r.next}</span>`;
+    when = `<span class="when ${r.leftWarn||r.attn?'warnink':''}">${ic('clock',12,r.leftWarn||r.attn?'var(--warn)':'var(--text3)')}${r.left}</span>`;
+  } else {
+    const [icn, tone] = curTone(r);
+    what = `${ic(icn,15,tone)}<span>${r.line}</span>`;
+    when = `<span class="when">${r.state==='disputed'?'':ic('clock',12,'var(--text3)')}${r.byShort}</span>`;
+  }
+  const sub = r.sec==='wait' && r.state!=='submitted' || r.noBox ? r.by : kindLine(r);
+  return `<div class="jcard ${r.attn?'attn':''}"><div class="jtop">${mark(r,th,40)}<div class="col"><div class="t-title">${r.name}</div><div class="jsub" ${r.attn?'':''}>${r.attn ? r.why : sub}</div></div>${chip}</div>
+    ${trackHtml(r)}<div class="jnext"><div class="what">${what}</div>${when}</div></div>`;
+}
+function renderCHist(r, th){
+  const [icn, tone] = curTone(r);
+  let sb = r.state==='approved' ? r.date : r.state==='rejected' ? `Refused. ${r.reason}` : r.state==='expired' ? `Ran out, ${r.date}` : `Given up, ${r.date}`;
+  let n = `+${r.reward}`, c = 'var(--ok)', s = '';
+  if (unpaid(r)){ n = `${r.reward}`; c = 'var(--text4)'; s = 'struck'; }
+  return `<div class="crow">${mark(r,th,36)}<div class="col"><div class="nm">${r.name}</div><div class="sb">${ic(icn,12,tone)}<span>${sb}</span></div></div>
+    <div class="amt"><div class="n ${s}" style="color:${c}">${n}</div></div></div>`;
+}
+
+/* ================= OPTION D: progress ring + earnings ledger ================= */
+function ringHtml(r, th){
+  const pct = r.sec==='wait' ? 4 : r.step - 1;
+  const warn = r.attn || r.state==='disputed';
+  const seg = '22.5 2.5';
+  const done = Array(pct).fill(seg).join(' ') + ' 0 100';
+  const col = warn ? 'var(--warn)' : 'var(--leafAccent)';
+  // the current step as a faint segment
+  const nowArr = r.sec==='go' ? Array(r.step-1).fill('0 25').join(' ') + ' 22.5 100' : '0 100';
+  const d = 'M29 1.5H39.5A17 17 0 0 1 56.5 18.5V39.5A17 17 0 0 1 39.5 56.5H18.5A17 17 0 0 1 1.5 39.5V18.5A17 17 0 0 1 18.5 1.5Z';
+  const a = `pathLength="100" fill="none" stroke-width="3" stroke-dashoffset="-1.25"`;
+  return `<div class="ring"><svg viewBox="0 0 58 58"><path d="${d}" ${a} stroke="var(--track)" stroke-dasharray="${seg}"/>
+    <path d="${d}" ${a} stroke="${col}" stroke-opacity=".35" stroke-dasharray="${nowArr}"/>
+    <path d="${d}" ${a} stroke="${col}" stroke-dasharray="${done}"/></svg>${mark(r,th,44)}</div>`;
+}
+function renderD(r, th){
+  let col, trail;
+  if (r.sec==='go'){
+    col = `<div class="t-title">${r.name}</div>
+      <div class="b-act" style="${r.attn?'color:var(--warn)':''}">${r.next}</div>
+      <div class="b-meta"><span class="grp ${r.leftWarn||r.attn?'warnink':''}">${ic('clock',12,r.leftWarn||r.attn?'var(--warn)':'var(--text3)')}${r.left}</span><span>Step ${r.step} of 4</span></div>`;
+    trail = `<div class="amt"><div class="n" style="color:${r.attn?'var(--warn)':'var(--tabSelected)'}">+${r.reward}</div></div>${ic('chev',18,'var(--text4)')}`;
+  } else {
+    const [icn, tone] = curTone(r);
+    col = `<div class="t-title">${r.name}</div>
+      <div class="b-act" style="display:flex;align-items:center;gap:5px;color:${tone}">${ic(icn,13,tone)}<span>${r.line}</span></div>
+      <div class="b-meta"><span style="overflow:hidden;text-overflow:ellipsis">${r.by}</span></div>`;
+    trail = `<div class="amt"><div class="n" style="color:${r.state==='disputed'?'var(--warn)':'var(--tabSelected)'}">+${r.noBox?r.pays:r.reward}</div></div>${ic('chev',18,'var(--text4)')}`;
+  }
+  return `<div class="htile ${r.attn?'attn':''}" style="padding:10px 8px 10px 10px">${ringHtml(r,th)}<div class="b-col">${col}</div>${trail}</div>`;
+}
+function ledger(rows, th){
+  return `<div class="group">` + rows.map(r => {
+    let sb = r.state==='approved' ? r.date : r.state==='rejected' ? `Refused. ${r.reason}` : r.state==='expired' ? `Ran out, ${r.date}` : `Given up, ${r.date}`;
+    let n = `+${r.reward}`, c = 'var(--ok)', s='';
+    if (unpaid(r)){ n = `${r.reward}`; c='var(--text4)'; s='struck'; }
+    return `<div class="grow">${mark(r,th,36)}<div class="col"><div class="nm">${r.name}</div><div class="sb">${sb}</div></div><div class="n ${s}" style="color:${c}">${n}</div></div>`;
+  }).join('') + `</div>`;
+}
+function summary(th){
+  return `<div style="height:16px"></div><div class="panel"><div class="cell"><div class="big tnum">195</div><div class="small">tix in progress</div></div>
+    <div class="cell"><div class="big tnum">95</div><div class="small">tix waiting</div></div>
+    <div class="cell"><div class="big ok tnum">40</div><div class="small">tix earned</div></div></div>`;
+}
+
+/* ================= loading skeletons for the pick ================= */
+function skelJourney(){
+  const stops = [0,1,2,3,4].map(()=>`<div class="stop"><div class="sk" style="width:12px;height:12px;border-radius:50%"></div><div class="sk" style="width:30px;height:8px;margin-top:6px"></div></div>`).join('');
+  return `<div class="w"><div class="jcard"><div class="jtop"><div class="sk" style="width:40px;height:40px;border-radius:12px"></div><div class="col"><div class="sk" style="width:58%;height:14px"></div><div class="sk" style="width:40%;height:10px;margin-top:7px"></div></div><div class="sk" style="width:56px;height:28px;border-radius:999px"></div></div>
+    <div class="track">${stops}</div><div class="jnext"><div class="sk" style="width:55%;height:12px"></div><div class="sk" style="width:60px;height:10px;margin-left:auto"></div></div></div></div>`;
+}
+function skelRow(){ return `<div class="w"><div class="crow"><div class="sk" style="width:36px;height:36px;border-radius:11px"></div><div class="col"><div class="sk" style="width:48%;height:13px"></div><div class="sk" style="width:62%;height:10px;margin-top:7px"></div></div><div class="sk" style="width:34px;height:14px"></div></div></div>`; }
+function loadingPhone(th){
+  return `<div><div class="cap">${th==='dark'?'Dark':'Light'}, loading</div><div class="phone ${th} mini"><div class="sbar"><span>9:41</span><span>5G  86%</span></div><div class="tabs"><div class="seg">Feedback</div><div class="seg on">My reviews</div><div class="seg">To check</div></div><div class="list"><div style="height:16px"></div>${skelJourney()}${skelJourney()}${skelRow()}${skelRow()}${skelRow()}</div></div></div>`;
+}
+
+/* ================= page ================= */
+const OPTS = [
+  {id:'cur', title:'Current tile', render:renderCurrent,
+   why:'<b>For comparison.</b> The same ticket as Requests. One note line has to carry the step, the next action and the outcome, so it truncates ("Developer can\'t find it..."), there is no time left, and +40 looks the same whether it is coming, held or already paid.'},
+  {id:'a', title:'Option A. Ticket with a status stub', render:renderA,
+   why:'<b>Why it suits:</b> keeps the ticket that ties the Circle tabs together, but adds a four-part step meter with time left, and the stub says what the tix are doing (to earn, pending, half pay, paid, not paid), tinted amber when held and green when paid.',
+   cost:'<b>Trade-off:</b> still reads as an offer at a glance, and the 58 dp stub leaves little room for the next action and deadline, so lines stay short and tight.'},
+  {id:'b', title:'Option B. Next step tile', render:renderB,
+   why:'<b>Why it suits:</b> answers "what do I do next" first: the action is the second line and a verb pill (Install, Write, Retake) sits where the price was. Step dots, time left and pay share one meta line. History drops to a quiet amount on the right.',
+   cost:'<b>Trade-off:</b> the pill looks like a direct action but only opens the review page at that step, and the pay becomes a small number in the meta line, so the "earning" feel of Circle is weaker.'},
+  {id:'c', title:'Option C. Journey card, compact history', render:renderC, rec:true,
+   why:'<b>Why it suits:</b> the purpose of this tab is a journey, so the card draws it: Install, Use, Review, Proof, Paid. One glance gives how far, the next action with its deadline, and the pay chip. Waiting reviews sit on the last stop, Paid, so both sections read as one path. History shrinks to 60 dp rows with a signed amount.',
+   cost:'<b>Trade-off:</b> active cards are about 132 dp tall (three fit on a screen), and it is new code: a track composable and a compact row instead of the shared ticket.'},
+  {id:'d', title:'Option D. Progress ring and earnings ledger', render:renderD,
+   why:'<b>Why it suits:</b> leads with what the reader earns: a dashed summary panel totals tix in progress, waiting and earned. Active rows wear a four-part ring round the app icon for progress, and History becomes one grouped ledger, like a statement.',
+   cost:'<b>Trade-off:</b> the totals only cover what the list has loaded and sit next to the tix counter in the top bar; the ring is subtle at 3 dp and needs a custom shape around the rounded icon.'},
+];
+
+let html = '';
+for (const o of OPTS){
+  let opts = {};
+  if (o.id==='d') opts = {top:summary, group:{hist:ledger}, trail:{hist:'40 tix earned'}};
+  html += `<section class="opt"><h2>${o.title}${o.rec?'<span class="rec">Recommended</span>':''}</h2>
+    <p class="why">${o.why}</p>${o.cost?`<p class="why">${o.cost}</p>`:''}
+    <div class="pair">${phone('light', list('light', o.render, opts))}${phone('dark', list('dark', o.render, opts))}</div>`;
+  if (o.rec){
+    html += `<h3 style="margin:30px 0 0;font-size:18px">Option C, other states</h3>
+      <p class="note-s">Loading uses skeletons shaped like the cards (two journey cards, three history rows), never a spinner. Signed out, offline with nothing saved, and no reviews yet keep today's robot screens with their buttons (Sign in, Try again, Find an app to review).</p>
+      <div class="states">${loadingPhone('light')}${loadingPhone('dark')}</div>`;
+  }
+  html += `</section>`;
+}
+document.getElementById('root').innerHTML = html;
+document.fonts.ready.then(drawTickets);
+window.addEventListener('resize', drawTickets);
+drawTickets();
+</script>
+
+<script>
+/* ================= ROUND 2: a review is a real ticket ================= */
+const N = 7, RAD = 14, STUB = 58;
+const stateKind = r => r.sec==='go' ? (r.attn ? 'held' : 'todo') : r.sec==='wait' ? (r.state==='disputed' ? 'held' : 'sent') : (r.state==='approved' ? 'paid' : 'void');
+const stampWord = r => ({submitted:'Sent', disputed:'Held', checking:'Held', approved:'Paid', rejected:'Refused', expired:'Ran out', abandoned:'Given up'})[r.state];
+const stampColor = r => ({sent:'var(--accentInk)', held:'var(--warn)', paid:'var(--ok)', void: r.state==='rejected'?'var(--bad)':'var(--text4)'})[stateKind(r)];
+const stepWords = r => ['Install','Use', r.live?'Review':'Feedback', 'Prove'];
+const punchState = (r, i) => {
+  if (r.sec==='wait') return 'done';
+  if (r.sec==='hist') return r.state==='approved' ? 'done' : 'todo';
+  return i < r.step ? 'done' : i === r.step ? 'now' : 'todo';
+};
+const histLine = r => r.state==='approved' ? r.date : r.state==='rejected' ? `Refused. ${r.reason}` : r.state==='expired' ? `Ran out on ${r.date}` : `Given up on ${r.date}`;
+
+function wholePath(w, h, cut){
+  const xb = w - STUB;
+  return `M${RAD},0 H${xb-N} A${N},${N} 0 0 0 ${xb+N},0 H${w-RAD} A${RAD},${RAD} 0 0 1 ${w},${RAD} V${cut?h-16:h-RAD} ${cut?`L${w-16},${h}`:`A${RAD},${RAD} 0 0 1 ${w-RAD},${h}`} H${xb+N} A${N},${N} 0 0 0 ${xb-N},${h} H${RAD} A${RAD},${RAD} 0 0 1 0,${h-RAD} V${RAD} A${RAD},${RAD} 0 0 1 ${RAD},0 Z`;
+}
+function zigPts(xb, h){ const pts=[]; let k=0; for(let y=N+3.5; y<h-N-1; y+=3.5){ pts.push([xb + (k++%2 ? 1.6 : -1.6), y]); } return pts; }
+function edges(kind, xb, h, holes){
+  if (kind==='zig'){
+    const p = zigPts(xb,h);
+    return [p.map(q=>`L${q[0]},${q[1]}`).join(' ') + ` L${xb},${h-N}`, [...p].reverse().map(q=>`L${q[0]},${q[1]}`).join(' ') + ` L${xb},${N}`];
+  }
+  const rh = 3.5; let down='', up='';
+  for (const y of holes) down += ` L${xb},${y-rh} A${rh},${rh} 0 0 0 ${xb},${y+rh}`;
+  down += ` L${xb},${h-N}`;
+  for (const y of [...holes].reverse()) up += ` L${xb},${y+rh} A${rh},${rh} 0 0 0 ${xb},${y-rh}`;
+  up += ` L${xb},${N}`;
+  return [down, up];
+}
+function bodyPath(w, h, down, xb){ return `M${RAD},0 H${xb-N} A${N},${N} 0 0 0 ${xb},${N} ${down} A${N},${N} 0 0 0 ${xb-N},${h} H${RAD} A${RAD},${RAD} 0 0 1 0,${h-RAD} V${RAD} A${RAD},${RAD} 0 0 1 ${RAD},0 Z`; }
+function stubPath(w, h, up, xb){ return `M${xb},${N} A${N},${N} 0 0 0 ${xb+N},0 H${w-RAD} A${RAD},${RAD} 0 0 1 ${w},${RAD} V${h-RAD} A${RAD},${RAD} 0 0 1 ${w-RAD},${h} H${xb+N} A${N},${N} 0 0 0 ${xb},${h-N} ${up} Z`; }
+function perfHoles(h){ const a=N+9, b=h-N-9, out=[]; for(let i=0;i<4;i++) out.push(a + (b-a)*i/3); return out; }
+
+function drawNew(){
+  document.querySelectorAll('.tk').forEach(el => {
+    el.querySelector('svg.shape')?.remove();
+    const w = el.offsetWidth, h = el.offsetHeight; if (!w) return;
+    const xb = w - STUB, mode = el.dataset.mode || 'whole';
+    const fill = el.dataset.stub || 'var(--leafAccentSoft)', line = el.dataset.line || 'var(--cardLine)';
+    const id = 'k' + Math.random().toString(36).slice(2);
+    let g = '';
+    const tear = `<line x1="${xb+0.75}" y1="${N}" x2="${xb+0.75}" y2="${h-N}" stroke="var(--glassBorder)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+    if (mode==='whole' || mode==='cut'){
+      const d = wholePath(w, h, mode==='cut');
+      g += `<defs><clipPath id="${id}"><path d="${d}"/></clipPath></defs><path d="${d}" fill="var(--bg)"/>
+            <rect x="${xb}" y="0" width="${STUB}" height="${h}" fill="${fill}" clip-path="url(#${id})"/>${tear}`;
+      if (el.dataset.perf){
+        const st = JSON.parse(el.dataset.perf);
+        perfHoles(h).forEach((y, i) => {
+          const s = st[i], cx = xb + 0.75;
+          g += s==='done' ? `<circle cx="${cx}" cy="${y}" r="3.6" fill="var(--leafAccent)"/>`
+             : (s==='now' || s==='nowwarn') ? `<circle cx="${cx}" cy="${y}" r="3.6" fill="var(--bg)" stroke="${s==='nowwarn'?'var(--warn)':'var(--leafAccent)'}" stroke-width="1.5"/>`
+             : `<circle cx="${cx}" cy="${y}" r="3.5" fill="var(--bg)" stroke="var(--glassBorder)" stroke-width="1" stroke-dasharray="1.6 1.4"/>`;
+        });
+      }
+      g += `<path d="${d}" fill="none" stroke="${line}" stroke-width="1"/>`;
+      if (mode==='cut') g += `<line x1="${w-16}" y1="${h}" x2="${w}" y2="${h-16}" stroke="var(--glassBorderStrong)" stroke-width="1"/>`;
+    } else {
+      const ex = mode==='scallop' ? xb + 0.75 : xb;
+      const [down, up] = edges(mode==='scallop' ? 'scallop' : 'zig', ex, h, perfHoles(h));
+      g += `<path d="${bodyPath(w,h,down,ex)}" fill="var(--bg)" stroke="${line}" stroke-width="1"/>`;
+      if (mode==='torn'){
+        g += `<g transform="translate(6 2) rotate(4 ${xb+29} ${h/2})"><path d="${stubPath(w,h,up,ex)}" fill="${fill}" stroke="${line}" stroke-width="1"/></g>`;
+      } else if (mode==='scallop'){
+        g += `<g transform="translate(6 0)"><path d="${stubPath(w,h,up,ex)}" fill="${fill}" stroke="${line}" stroke-width="1"/></g>`;
+      } else if (mode==='ghost'){
+        g += `<rect x="${xb+6}" y="6" width="${STUB-9}" height="${h-12}" rx="9" fill="none" stroke="var(--glassBorder)" stroke-width="1" stroke-dasharray="3 3"/>`;
+      }
+    }
+    el.insertAdjacentHTML('afterbegin', `<svg class="shape" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${g}</svg>`);
+  });
+}
+
+function stubInner(r, opts={}){
+  const k = stateKind(r);
+  const fig = r.noBox ? r.pays : r.reward;
+  if (k==='todo') return `${ticketMark(16,true)}<div class="fig" style="color:var(--tabSelected);margin-top:3px">+${fig}</div><div class="word" style="color:var(--text3)">to earn</div>`;
+  if (k==='sent' || k==='held') return `<span class="stamp" style="color:${stampColor(r)}">${stampWord(r)}</span><div class="fig" style="color:${k==='held'?'var(--warn)':'var(--tabSelected)'};margin-top:5px">+${fig}</div>${r.noBox?'<div class="word" style="color:var(--text3)">half pay</div>':''}`;
+  if (k==='paid') return `<span class="stamp" style="color:var(--ok)">Paid</span><div class="fig" style="color:var(--ok);margin-top:5px">+${fig}</div>`;
+  return opts.stampOnStub
+    ? `<span class="stamp" style="color:${stampColor(r)};font-size:8.5px;padding:0 3px">${stampWord(r)}</span><div class="fig struck" style="color:var(--text4);margin-top:5px">${fig}</div>`
+    : `${opts.noMark?'':ticketMark(16,true)}<div class="fig struck" style="color:var(--text4);margin-top:3px">${fig}</div><div class="word" style="color:var(--text4)">not paid</div>`;
+}
+function stubAttrs(r){
+  const k = stateKind(r);
+  if (k==='held') return `data-stub="var(--warnBg)" data-line="${r.attn?'var(--warnBorder)':'var(--cardLine)'}"`;
+  if (k==='paid') return `data-stub="var(--okBg)"`;
+  if (k==='void') return `data-stub="var(--bg)"`;
+  return '';
+}
+function statusLine(r){
+  if (r.sec==='hist'){
+    const icn = r.state==='approved' ? 'ccheck' : 'cx';
+    const c = r.state==='approved' ? 'var(--ok)' : r.state==='rejected' ? 'var(--bad)' : 'var(--text4)';
+    return `<div class="act">${ic(icn,12,c)}<span class="a" style="color:var(--text3);font-weight:400">${histLine(r)}</span></div>`;
+  }
+  const icn = r.state==='disputed' ? 'users' : 'hourglass';
+  const c = r.state==='disputed' ? 'var(--warn)' : 'var(--accentInk)';
+  return `<div class="act">${ic(icn,12,c)}<span class="a" style="color:${c}">${r.line}</span></div>`;
+}
+const waitText = r => r.state==='submitted' && !r.noBox ? r.byShort : r.by;
+function titleRow(r){
+  if (r.sec!=='go') return `<div class="t-title">${r.name}</div>`;
+  const warnT = r.leftWarn || r.attn;
+  return `<div style="display:flex;align-items:center;gap:8px"><div class="t-title" style="flex:1;min-width:0">${r.name}</div><span class="act"><span class="tl" style="${warnT?'color:var(--warn)':''}">${ic('clock',11,warnT?'var(--warn)':'var(--text3)')}${r.left}</span></span></div>`;
+}
+function nextLine(r){
+  const warnT = r.leftWarn || r.attn;
+  return `<div class="act"><span class="a" style="${r.attn?'color:var(--warn)':''}">${r.next}</span></div>`;
+}
+
+/* Ticket 1: labelled punch row; paid = stub torn off and set aside; void = thin stamp across the ticket */
+function renderT1(r, th){
+  const k = stateKind(r);
+  let body = titleRow(r);
+  if (r.sec!=='hist'){
+    body += `<div class="punches">` + stepWords(r).map((l, i) => {
+      const s = punchState(r, i+1); const warn = s==='now' && r.attn ? 'warn' : '';
+      return `<div class="pc"><span class="hole ${s} ${warn}"></span><div class="pl ${s} ${warn}">${l}</div></div>`;
+    }).join('') + `</div>`;
+    body += r.sec==='go' ? nextLine(r) : statusLine(r);
+  } else {
+    body += `<div style="height:5px"></div>` + statusLine(r);
+  }
+  const mode = k==='paid' ? 'torn' : 'whole';
+  const stamp = '';
+  return `<div class="tk ${k==='void'?'void':''}" data-mode="${mode}" ${stubAttrs(r)}><div class="tmain" style="position:relative">${mark(r,th,52)}<div class="tcol">${body}</div>${stamp}</div>
+    <div class="stub" ${mode==='torn'?'style="transform:translate(6px,2px) rotate(4deg)"':''}>${stubInner(r, {stampOnStub:true})}</div></div>`;
+}
+
+/* Ticket 2: small punches on the step line; paid = stub gone (you kept it); void = corner clipped */
+function renderT2(r, th){
+  const k = stateKind(r);
+  let body = titleRow(r);
+  const holes = `<span class="sm">` + [1,2,3,4].map(i => { const s = punchState(r,i); return `<span class="hole ${s} ${s==='now'&&r.attn?'warn':''}"></span>`; }).join('') + `</span>`;
+  if (r.sec==='go') body += `<div style="height:3px"></div>${nextLine(r)}<div class="meta2">${holes}<span>Step ${r.step} of 4</span></div>`;
+  else if (r.sec==='wait') body += `<div style="height:3px"></div>${statusLine(r)}<div class="meta2">${holes}<span style="overflow:hidden;text-overflow:ellipsis">${waitText(r)}</span></div>`;
+  else body += `<div style="height:5px"></div>${statusLine(r)}`;
+  const mode = k==='paid' ? 'ghost' : k==='void' ? 'cut' : 'whole';
+  const stub = k==='paid'
+    ? `<div class="ghost"><span class="stamp" style="color:var(--ok)">Paid</span><div class="fig" style="color:var(--ok);font-size:17px;font-weight:600">+${r.reward}</div></div>`
+    : `<div class="stub">${stubInner(r)}</div>`;
+  return `<div class="tk ${k==='void'?'void':''}" data-mode="${mode}" ${stubAttrs(r)}><div class="tmain">${mark(r,th,52)}<div class="tcol">${body}</div></div>${stub}</div>`;
+}
+
+/* Ticket 3: the perforation is the punch row; paid tears along the holes */
+function renderT3(r, th){
+  const k = stateKind(r);
+  let body = titleRow(r) + `<div style="height:3px"></div>`;
+  if (r.sec==='go') body += `${nextLine(r)}<div class="meta2"><span>Step ${r.step} of 4</span></div>`;
+  else if (r.sec==='wait') body += `${statusLine(r)}<div class="meta2"><span style="overflow:hidden;text-overflow:ellipsis">${waitText(r)}</span></div>`;
+  else body += `<div style="height:2px"></div>${statusLine(r)}`;
+  const perf = JSON.stringify([1,2,3,4].map(i => { const s = punchState(r,i); return s==='now' && r.attn ? 'nowwarn' : s; }));
+  const mode = k==='paid' ? 'scallop' : 'whole';
+  const cancel = k==='void' ? 'data-cancel="1"' : '';
+  return `<div class="tk ${k==='void'?'void':''}" data-mode="${mode}" ${cancel} ${mode==='whole'?`data-perf='${perf}'`:''} ${stubAttrs(r)}><div class="tmain">${mark(r,th,52)}<div class="tcol">${body}</div></div>
+    <div class="stub" ${mode==='scallop'?'style="transform:translateX(6px)"':''}>${stubInner(r, {stampOnStub: k!=='void', noMark:true})}</div></div>`;
+}
+
+const TV = [
+  {title:'Ticket 1. Punch row, stub torn off when paid (too tall, see compact above)', render:renderT1,
+   why:'<b>How it reads:</b> a whole ticket while there is work to do, with a labelled punch for each step: punched, the next one ringed, the rest blank. Sent: every punch made, stub still on, stamped Sent (Held in amber). Paid: the stub is torn along the perforation and sits a little apart, stamped Paid. Refused, ran out or given up: greyed, the stub stamped with why and the amount struck.',
+   cost:'<b>Trade-off:</b> the labelled punch row makes active tickets about 96 dp tall instead of 76, and the torn stub needs two drawn shapes (body and stub) instead of one.'},
+  {title:'Ticket 2. Small punches, stub kept by you', render:renderT2,
+   why:'<b>How it reads:</b> keeps today\'s 76 dp ticket. Four small punches sit on the step line. When paid, the stub is gone (you kept it) and a dashed outline marks where it was, with Paid and the amount. A cancelled ticket has its stub corner clipped, the way a conductor cancels one.',
+   cost:'<b>Trade-off:</b> the punches have no labels, so the step words live only in the text, and the clipped corner is a quiet signal that leans on the greyed text and struck amount.'},
+  {title:'Ticket 3. The perforation is the punch row', render:renderT3,
+   why:'<b>How it reads:</b> the four punches sit on the tear line itself, so the ticket keeps its exact current layout. Paid tears along those holes, leaving a scalloped edge on both pieces. Stamps sit on the stub. A cancelled ticket keeps its holes empty and its amount struck.',
+   cost:'<b>Trade-off:</b> the most compact and the most physical, but 7 dp holes on the perforation are small and easy to miss, so progress leans on the "Step 2 of 4" text.'},
+];
+
+let th2 = `<div class="round" style="margin-top:56px;padding-top:22px;border-top:2px solid #CBD6DE"><h2 class="rh">Round 2: each review is a real ticket</h2>
+  <p class="why">You take a ticket, it gets punched as you go, you hand it in, and then you either keep the stub (paid) or it is cancelled. Same notched TicketShape, tear line and stub as Requests, flat on the page with a 1 dp line. Stamps are thin outlined words.</p>
+  <div class="legend"><span>To do: whole ticket, punches show the steps</span><span>Sent: all punched, stub stamped Sent, or Held in amber</span><span>Got it: stub torn off, Paid</span><span>Not paid: greyed and cancelled</span></div></div>`;
+for (const o of TV){
+  th2 += `<section class="opt"><h2>${o.title}${o.rec?'<span class="rec">Recommended</span>':''}</h2><p class="why">${o.why}</p><p class="why">${o.cost}</p>
+    <div class="pair">${phone('light', list('light', o.render))}${phone('dark', list('dark', o.render))}</div></section>`;
+}
+document.getElementById('tickets').innerHTML = th2;
+drawNew();
+document.fonts.ready.then(drawNew);
+window.addEventListener('resize', drawNew);
+document.getElementById('earlier').addEventListener('toggle', () => { drawTickets(); });
+</script>
+
+<script>
+/* ================= ROUND 3: Ticket 1, compact (text column no taller than the 52 dp icon) ================= */
+function punchDots(r, size){
+  return `<span class="cp" style="--d:${size}px">` + [1,2,3,4].map(i => { const s = punchState(r,i); return `<span class="hole ${s} ${s==='now'&&r.attn?'warn':''}"></span>`; }).join('') + `</span>`;
+}
+function clockBit(r){
+  const warnT = r.leftWarn || r.attn;
+  return `<span class="tl" style="${warnT?'color:var(--warn)':''}">${ic('clock',11,warnT?'var(--warn)':'var(--text3)')}${r.left}</span>`;
+}
+const shortAct = r => ({claimed:'Install it', used: r.live?'Review it on Play':'Send feedback on Play', checking:'New screenshot'})[r.state]
+  || (r.state==='installed' ? (r.live ? 'Use again tomorrow, 9:40' : 'Use it for 2 minutes') : '');
+const histShort = r => r.state==='approved' ? r.date : r.state==='rejected' ? `Refused. ${r.reason}` : r.state==='expired' ? `Ran out on ${r.date}` : `Given up on ${r.date}`;
+function waitLine3(r){
+  if (r.noBox) return 'Sent here, so it pays half';
+  if (r.state==='disputed') return 'You asked for a second look';
+  return r.byShort;
+}
+function shell(r, th, body){
+  const k = stateKind(r);
+  const mode = k==='paid' ? 'torn' : 'whole';
+  return `<div class="tk ${k==='void'?'void':''}" data-mode="${mode}" ${stubAttrs(r)}><div class="tmain">${mark(r,th,52)}<div class="tcol">${body}</div></div>
+    <div class="stub" ${mode==='torn'?'style="transform:translate(6px,2px) rotate(4deg)"':''}>${stubInner(r, {stampOnStub:true})}</div></div>`;
+}
+const L1 = r => `<div class="c-l1">${r.name}</div>`;
+function statusBit(r){
+  if (r.sec==='hist'){
+    const icn = r.state==='approved' ? 'ccheck' : 'cx';
+    const c = r.state==='approved' ? 'var(--ok)' : r.state==='rejected' ? 'var(--bad)' : 'var(--text4)';
+    return `${ic(icn,12,c)}<span class="a" style="color:var(--text3);font-weight:400">${histShort(r)}</span>`;
+  }
+  const icn = r.state==='disputed' ? 'users' : 'hourglass';
+  const c = r.state==='disputed' ? 'var(--warn)' : 'var(--accentInk)';
+  return `${ic(icn,12,c)}<span class="a" style="color:${c}">${r.line}</span>`;
+}
+
+/* Compact A: three lines, 19 + 2 + 15 + 2 + 14 = 52 */
+function renderCA(r, th){
+  let b = L1(r);
+  if (r.sec==='go'){
+    b += `<div class="c-l2"><span class="a" style="${r.attn?'color:var(--warn)':''}">${r.next}</span></div>`;
+    b += `<div class="c-l3">${punchDots(r,9)}<span>Step ${r.step} of 4</span>${clockBit(r)}</div>`;
+  } else if (r.sec==='wait'){
+    b += `<div class="c-l2">${statusBit(r)}</div>`;
+    b += `<div class="c-l3">${punchDots(r,9)}<span class="a">${waitLine3(r)}</span></div>`;
+  } else {
+    b += `<div class="c-l2">${statusBit(r)}</div>`;
+  }
+  return shell(r, th, b);
+}
+
+/* Compact B: two lines, 19 + 4 + 15 = 38; the punches lead the second line */
+function renderCB(r, th){
+  let b = L1(r);
+  if (r.sec==='go'){
+    b += `<div class="c-l2 gap4">${punchDots(r,10)}<span class="a" style="${r.attn?'color:var(--warn)':''}">${shortAct(r)}</span>${clockBit(r)}</div>`;
+  } else if (r.sec==='wait'){
+    b += `<div class="c-l2 gap4">${punchDots(r,10)}${statusBit(r)}</div>`;
+  } else {
+    b += `<div class="c-l2 gap4">${statusBit(r)}</div>`;
+  }
+  return shell(r, th, b);
+}
+
+const CV = [
+  {title:'Ticket 1, compact A. Three lines, punches on the last', render:renderCA, rec:true,
+   why:'<b>How it reads:</b> the name on one line, the next action in full on the second, and on the third four 9 dp punches, the step and the time left. It fills the 52 dp beside the icon exactly the way a two-line name does on Requests. Stubs as in Ticket 1: to earn, SENT, HELD, PAID torn off, REFUSED, RAN OUT, GIVEN UP.',
+   cost:'<b>Trade-off:</b> three small lines is as dense as a tile can get here, and the 11.5 sp third line is the smallest text on the ticket.'},
+  {title:'Ticket 1, compact B. Two lines, punches lead the action', render:renderCB,
+   why:'<b>How it reads:</b> the name, then one line that starts with four 10 dp punches, then a short action ("Install it", "New screenshot") and the time left at the end. The calmest version: lots of air, same height as every other ticket.',
+   cost:'<b>Trade-off:</b> actions have to be cut short to share the line with the punches and the clock, and "Step 2 of 4" is only told by the punches.'},
+];
+
+let c3 = `<div class="round"><h2 class="rh">Round 3: Ticket 1, compact</h2>
+  <p class="why">Same Ticket 1 states, now held to the house rule: the text column is never taller than the 52 dp icon, so every tile is the 76 dp of a Requests ticket. Punch labels are gone; the step lives in the text.</p></div>`;
+for (const o of CV){
+  c3 += `<section class="opt"><h2>${o.title}${o.rec?'<span class="rec">Recommended</span>':''}</h2><p class="why">${o.why}</p><p class="why">${o.cost}</p>
+    <p class="measure" data-for="${o.title}"></p>
+    <div class="pair" data-measure="${o.title}">${phone('light', list('light', o.render))}${phone('dark', list('dark', o.render))}</div></section>`;
+}
+document.getElementById('compact').innerHTML = c3;
+drawNew();
+function measure(){
+  document.querySelectorAll('[data-measure]').forEach(p => {
+    let col = 0, tile = 0, tmin = 1e9, icon = 0;
+    p.querySelectorAll('.tk').forEach(t => {
+      col = Math.max(col, t.querySelector('.tcol').offsetHeight);
+      icon = Math.max(icon, t.querySelector('.mark').offsetHeight);
+      tile = Math.max(tile, t.offsetHeight); tmin = Math.min(tmin, t.offsetHeight);
+    });
+    const out = p.parentElement.querySelector('.measure');
+    const okk = col <= icon;
+    out.innerHTML = `<b style="color:${okk?'#246B59':'#9E3B2E'}">Measured in this render:</b> tallest text column ${col} dp, icon ${icon} dp, every tile ${tmin === tile ? tile : tmin + ' to ' + tile} dp tall (22 tiles, light and dark).`;
+  });
+}
+document.fonts.ready.then(() => { drawNew(); measure(); });
+measure();
+</script>
+</body>
+</html>

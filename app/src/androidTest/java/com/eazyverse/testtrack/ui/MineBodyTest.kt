@@ -46,9 +46,10 @@ class MineBodyTest {
         compose.onNodeWithText("In progress").assertIsDisplayed()
         compose.onNodeWithText("Waiting for the developer").assertIsDisplayed()
         compose.onNodeWithText("History").assertIsDisplayed()
-        compose.onNodeWithText("Sent. Checked within a day").assertIsDisplayed()
-        compose.onNodeWithText("Approved. Tix paid").assertIsDisplayed()
-        compose.onNodeWithText("Step 3 of 4. Send feedback on Google Play").assertIsDisplayed()
+        compose.onNodeWithText("With the developer").assertIsDisplayed()
+        compose.onNodeWithText("Paid").assertIsDisplayed()
+        compose.onNodeWithText("Send feedback on Play").assertIsDisplayed()
+        compose.onNodeWithText("Step 3 of 4").assertIsDisplayed()
     }
 
     @Test
@@ -70,7 +71,7 @@ class MineBodyTest {
     @Test
     fun a_refused_review_says_why() {
         open(listOf(review("c", "rejected", reason = "The screenshot is of another app.")))
-        compose.onNodeWithText("The screenshot is of another app.").assertIsDisplayed()
+        compose.onNodeWithText("Refused. The screenshot is of another app.").assertIsDisplayed()
     }
 
     @Test
@@ -89,6 +90,6 @@ class MineBodyTest {
     fun a_review_given_up_or_run_out_stays_in_history_and_says_so() {
         open(listOf(review("x", "abandoned", "Porua"), review("y", "expired", "Bluefy")))
         compose.onNodeWithText("Given up").assertIsDisplayed()
-        compose.onNodeWithText("Ran out after a day").assertIsDisplayed()
+        compose.onNodeWithText("Ran out").assertIsDisplayed()
     }
 }

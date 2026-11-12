@@ -3,6 +3,8 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -24,7 +26,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
@@ -39,7 +44,7 @@ import com.eazyverse.testtrack.ui.theme.Tt
 // The text block (name up to two lines, plus the note) is 19 + 19 + 14 = 52sp, the height of the icon
 // beside it, so a long name never makes the card taller than a short one. Trimmed line heights keep
 // the font's own padding from adding hidden height.
-private val TicketLineHeight =
+internal val TicketLineHeight =
     LineHeightStyle(alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both)
 
 @Suppress("DEPRECATION")
@@ -150,16 +155,62 @@ internal fun HairlineRow(
     }
 }
 
-/** The ticket's outline and layout, with its text block left to the caller (the loading card fills it with bars). */
+/**
+ * The ticket's outline and layout, with its text block left to the caller (the loading card fills it with bars).
+ *
+ * With [torn] the stub has come away from the body along a zigzag: each piece is its own shape,
+ * and the stub, in [stubFill], is drawn a little down and to the right and turned a few degrees.
+ * That is drawing only, so the layout is the same as a whole ticket's. [line] is the border.
+ */
 @Composable
 internal fun TicketFrame(
     modifier: Modifier,
     onClick: (() -> Unit)?,
     leading: @Composable () -> Unit,
     stub: @Composable () -> Unit,
+    torn: Boolean = false,
+    stubFill: Color = Tt.colors.leafAccentSoft,
+    line: Color = Tt.colors.cardLine,
     text: @Composable ColumnScope.() -> Unit,
 ) {
     val t = Tt.colors
+    if (torn) {
+        val body = remember { TornTicketShape(TornPart.BODY) }
+        val piece = remember { TornTicketShape(TornPart.STUB) }
+        Box(modifier.fillMaxWidth().heightIn(min = 76.dp)) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 76.dp)
+                    .clip(body)
+                    .background(t.bg)
+                    .border(1.dp, line, body)
+                    .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+            ) {
+                TicketFace(leading, text)
+                Spacer(Modifier.width(TICKET_STUB))
+            }
+            Row(
+                Modifier
+                    .matchParentSize()
+                    .graphicsLayer {
+                        translationX = 6.dp.toPx()
+                        translationY = 2.dp.toPx()
+                        rotationZ = 4f
+                        // Turns about the middle of the stub, not of the whole ticket.
+                        transformOrigin = TransformOrigin(1f - TICKET_STUB.toPx() / 2f / size.width, 0.5f)
+                    }.clip(piece)
+                    .background(stubFill)
+                    .border(1.dp, line, piece)
+                    // Taps on the stub open the review too; no second button for a screen reader.
+                    .pointerInput(onClick) { if (onClick != null) detectTapGestures { onClick() } },
+            ) {
+                Spacer(Modifier.weight(1f))
+                stub()
+            }
+        }
+        return
+    }
     val shape = remember { TicketShape() }
     Row(
         modifier
@@ -168,17 +219,26 @@ internal fun TicketFrame(
             .height(IntrinsicSize.Min)
             .clip(shape)
             .background(t.bg)
-            .border(1.dp, t.cardLine, shape)
+            .border(1.dp, line, shape)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
     ) {
-        Row(
-            Modifier.weight(1f).padding(start = 12.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            leading()
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f), content = text)
-        }
+        TicketFace(leading, text)
         stub()
+    }
+}
+
+/** The ticket's body side: the mark and the text column, padded the same whole or torn. */
+@Composable
+private fun RowScope.TicketFace(
+    leading: @Composable () -> Unit,
+    text: @Composable ColumnScope.() -> Unit,
+) {
+    Row(
+        Modifier.weight(1f).padding(start = 12.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        leading()
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f), content = text)
     }
 }

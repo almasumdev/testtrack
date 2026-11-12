@@ -8,16 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Camera
-import com.composables.icons.lucide.CircleCheck
-import com.composables.icons.lucide.CircleX
-import com.composables.icons.lucide.Hourglass
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Users
-import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * Circle's "Mine" tab: every review this account has taken on, in three groups.
@@ -43,6 +34,13 @@ data class MyReview(
     val usedEnough: Boolean = false,
     /** A live review waiting on its second day: when it opens, as the server says. */
     val opensAt: String? = null,
+    /** Sent in TestTrack because Play showed no review box: pays half. */
+    val noBox: Boolean = false,
+    /** Checking: by when the new screenshot is due. */
+    val checkBy: String? = null,
+    /** When the review was decided, and when it was sent, as the server says. */
+    val decidedAt: String? = null,
+    val submittedAt: String? = null,
 )
 
 /**
@@ -127,104 +125,5 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
         Box(Modifier.animateItem()) {
             Box(Modifier.padding(horizontal = Gutter, vertical = 4.dp)) { MineCard(review, onOpen) }
         }
-    }
-}
-
-/**
- * One review as a ticket: the app's mark, its name over where the review has got to, and what it
- * is worth on the stub. A review in progress leads its line with the step, out of four.
- */
-@Composable
-private fun MineCard(
-    review: MyReview,
-    onOpen: (MyReview) -> Unit,
-) {
-    val t = Tt.colors
-    val (icon, tone) = mineMark(review)
-    val line = mineLine(review)
-    val note = if (review.state in InProgressStates) "Step ${mineStep(review)} of 4. $line" else line
-    // Refused, given up and run out never paid: the figure stays, struck through and quiet.
-    val unpaid = review.state in setOf("rejected", "abandoned", "expired")
-    TicketCard(
-        leading = { AppMark(review.packageName, review.appName, review.icon, size = 52.dp) },
-        title = review.appName.ifBlank { "An app" },
-        note = note,
-        noteIcon = icon,
-        noteTone = tone,
-        onClick = { onOpen(review) },
-        stub = {
-            TicketStubFigure(
-                "+${review.reward}",
-                "${review.reward} tix",
-                color =
-                    when {
-                        review.state == "approved" -> t.ok
-                        unpaid -> t.text4
-                        else -> t.tabSelected
-                    },
-                struck = unpaid,
-            )
-        },
-    )
-}
-
-/** Where a review in progress has got to, out of the four steps. */
-private fun mineStep(review: MyReview): Int =
-    when (review.state) {
-        "claimed" -> 1
-        "installed" -> 2
-        "checking" -> 4
-        else -> 3
-    }
-
-private fun mineLine(review: MyReview): String =
-    when (review.state) {
-        "claimed" -> "Install it from Play"
-        "installed" -> if (review.isLive) liveUseLine(review) else "Use it for two minutes"
-        "used" -> if (review.isLive) "Review it on Google Play" else "Send feedback on Google Play"
-        "submitted" -> if (review.isLive) "Sent. With the developer" else "Sent. Checked within a day"
-        "disputed" -> "Disputed. Members are deciding"
-        "checking" -> "Developer can't find it. Take a new screenshot"
-        "approved" -> "Approved. Tix paid"
-        "rejected" -> review.reason.ifBlank { "Not paid" }
-        "abandoned" -> "Given up"
-        "expired" -> if (review.isLive) "Ran out after three days" else "Ran out after a day"
-        else -> ""
-    }
-
-/** Where a live review is with its two days, so a row never asks for what is already done. */
-internal fun liveUseLine(
-    review: MyReview,
-    now: java.time.Instant = java.time.Instant.now(),
-): String {
-    val opens =
-        review.opensAt?.let {
-            runCatching {
-                java.time.OffsetDateTime
-                    .parse(it)
-                    .toInstant()
-            }.getOrNull()
-        }
-    return when {
-        review.daysUsed >= 2 && opens != null && opens.isAfter(now) -> "Opens ${opensWhen(opens, now)}"
-        review.daysUsed >= 2 && review.usedEnough -> "Ready for your review"
-        review.daysUsed >= 2 -> "A little more time in the app"
-        review.usedEnough || review.daysUsed == 1 -> "Open it again on another day"
-        else -> "Use it on two days"
-    }
-}
-
-/** The small mark before the state line, and the colour both are in. */
-@Composable
-private fun mineMark(review: MyReview): Pair<ImageVector?, Color> {
-    val t = Tt.colors
-    return when (review.state) {
-        "submitted" -> Lucide.Hourglass to t.accentInk
-        "disputed" -> Lucide.Users to t.warn
-        "checking" -> Lucide.Camera to t.warn
-        "approved" -> Lucide.CircleCheck to t.ok
-        "rejected" -> Lucide.CircleX to t.bad
-        "abandoned", "expired" -> Lucide.CircleX to t.text4
-        else -> null to t.text3
     }
 }

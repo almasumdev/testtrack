@@ -378,6 +378,10 @@ class FeedViewModel : ViewModel() {
             daysUsed = it.daysUsed,
             usedEnough = it.usedMs >= it.neededMs,
             opensAt = it.returnsAt,
+            noBox = it.noBox,
+            checkBy = it.checkBy,
+            decidedAt = it.decidedAt,
+            submittedAt = it.submittedAt,
         )
 
     // Mapped here rather than drawn raw: a post id means nothing on a card, and the screen should

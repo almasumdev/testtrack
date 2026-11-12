@@ -20,7 +20,7 @@ class LiveUseLineTest {
 
     @Test
     fun one_day_used_asks_for_another() {
-        assertEquals("Open it again on another day", liveUseLine(row.copy(daysUsed = 1, usedEnough = true), now))
+        assertEquals("Open it on another day", liveUseLine(row.copy(daysUsed = 1, usedEnough = true), now))
     }
 
     @Test
