@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -154,6 +155,9 @@ fun FeedAskRow(
  * The row [FeedAskRow] is, for any list whose one action sits at the top of it: a plus tile, the
  * [title], a grey [note] under it and a chevron, in an outline with nothing in it. Circle and My
  * apps both draw their way in with it, so the two read as the same control.
+ *
+ * A row that is about something other than adding passes its own [icon], and a [trailing] pill in
+ * place of the chevron. The pill is only a look; the whole row is the target.
  */
 @Composable
 fun AskRow(
@@ -161,6 +165,8 @@ fun AskRow(
     note: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    icon: ImageVector = Lucide.Plus,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     val t = Tt.colors
     val shape = RoundedCornerShape(14.dp)
@@ -170,7 +176,7 @@ fun AskRow(
             .clip(shape)
             .border(1.dp, t.cardLine, shape)
             .clickable(onClick = onClick)
-            .padding(start = 10.dp, end = 12.dp, top = 9.dp, bottom = 9.dp),
+            .padding(start = 10.dp, end = if (trailing != null) 10.dp else 12.dp, top = 9.dp, bottom = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -180,7 +186,7 @@ fun AskRow(
                 .background(t.tile),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Lucide.Plus, null, Modifier.size(20.dp), tint = t.tileInk)
+            Icon(icon, null, Modifier.size(20.dp), tint = t.tileInk)
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
@@ -201,7 +207,7 @@ fun AskRow(
             )
         }
         Spacer(Modifier.width(8.dp))
-        Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = t.text4)
+        if (trailing != null) trailing() else Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = t.text4)
     }
 }
 
@@ -223,6 +229,7 @@ fun FeedAskBar(onPost: () -> Unit) = FloatingActionBar(POST_LABEL, onPost)
  * The bar [FeedAskBar] is, for any tab whose one action should follow you down the list: the same
  * box, hairline and accent label, with an optional [icon] ahead of the label. Place it centred,
  * [dockRoom] plus 16dp above the bottom, and keep 64dp clear at the foot of the list under it.
+ * Inside a card, pass `gutter = 0.dp` and it fills the card's width.
  */
 @Composable
 fun FloatingActionBar(
@@ -230,11 +237,13 @@ fun FloatingActionBar(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     icon: Painter? = null,
+    /** The room either side: the page's gutter when it floats, none inside a card that has its own. */
+    gutter: Dp = Gutter,
 ) {
     Box(
         modifier
             .fillMaxWidth()
-            .padding(horizontal = Gutter)
+            .padding(horizontal = gutter)
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(Tt.colors.bg)

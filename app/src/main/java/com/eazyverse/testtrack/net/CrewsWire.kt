@@ -234,6 +234,10 @@ data class ApiCrew(
     @SerialName("created_at") val createdAt: String,
     /** Only sent for a crew this account is in. */
     val members: List<ApiSeat> = emptyList(),
+    /** When a filling crew will probably be full (an ISO time); null with no estimate or an older server. */
+    @SerialName("likely_full_at") val likelyFullAt: String? = null,
+    /** What the estimate rests on: "pace" (recent crews) or "new" (no history yet); null from an older server. */
+    @SerialName("likely_basis") val likelyBasis: String? = null,
 )
 
 @Serializable
@@ -243,4 +247,6 @@ data class CrewList(
     val open: ApiCrew? = null,
     /** Why a seat cannot be taken right now, in words the screen can show as they arrive. */
     val blocked: String? = null,
+    /** The crew this account's waiting app is in, when that is why a seat is blocked; null from an older server. */
+    @SerialName("blocked_crew") val blockedCrew: String? = null,
 )

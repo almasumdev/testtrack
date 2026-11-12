@@ -96,8 +96,10 @@ class CrewViewModel : ViewModel() {
     var signedOut by mutableStateOf(false)
         private set
 
-    /** The server's reason a seat cannot be taken, shown as it arrives. */
+    /** The server's reason a seat cannot be taken, shown as it arrives, and the crew the waiting app is in (null from an older server). */
     var blocked by mutableStateOf<String?>(null)
+        private set
+    var blockedCrew by mutableStateOf<String?>(null)
         private set
 
     /**
@@ -186,14 +188,13 @@ class CrewViewModel : ViewModel() {
         if (previewInstalled == null) InstalledApps.refresh(context)
     }
 
-    /**
-     * Crews put in directly, for the screen gallery in androidTest. Nothing in the app calls this.
-     */
+    /** Crews put in directly, for the screen gallery in androidTest. Nothing in the app calls this. */
     @VisibleForTesting
     internal fun preview(
         mine: List<Crew>,
         open: Crew? = null,
         blocked: String? = null,
+        blockedCrew: String? = null,
         signedOut: Boolean = false,
         tab: CrewPhase = CrewPhase.OPEN,
         installed: Set<String> = emptySet(),
@@ -203,6 +204,7 @@ class CrewViewModel : ViewModel() {
         crews = mine
         this.open = open
         this.blocked = blocked
+        this.blockedCrew = blockedCrew
         this.signedOut = signedOut
         this.tab = tab
         opened = null
@@ -247,6 +249,7 @@ class CrewViewModel : ViewModel() {
         crews = answer.mine.map { it.toCrew() }
         open = answer.open?.toCrew(member = false)
         blocked = answer.blocked
+        blockedCrew = answer.blockedCrew
         live.channels(crews.map { "crew:${it.id}" }.toSet())
 
         // Opened on whichever has something owed rather than always the same one, and only the

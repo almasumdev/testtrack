@@ -173,6 +173,8 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
         finishedDays = if (phase == CrewPhase.RECORD) (minOf(day, nights) - firstNight + 1).coerceAtLeast(0) else 0,
         firstNight = firstNight,
         runDays = nights,
+        likelyFullAt = likelyFullAt,
+        likelyBasis = likelyBasis,
     )
 }
 

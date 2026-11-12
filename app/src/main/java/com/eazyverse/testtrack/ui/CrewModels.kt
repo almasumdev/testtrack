@@ -288,6 +288,9 @@ data class Crew(
     val firstNight: Int = 1,
     /** How many nights the crew runs: [CrewRules.RUN_DAYS] unless the team extended it. */
     val runDays: Int = CrewRules.RUN_DAYS,
+    /** When a filling crew will probably be full (an ISO time) and what that rests on; see [startEstimate]. */
+    val likelyFullAt: String? = null,
+    val likelyBasis: String? = null,
 ) {
     /** Days of the run that are this account's: all of them, or what was left when it joined. */
     val ownNights: Int get() = (runDays - firstNight + 1).coerceAtLeast(0)

@@ -17,15 +17,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -37,18 +34,45 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * shimmer marks only the holes the answer will fill.
  */
 
-/** The open crew's card: its name, its fifteen seats, the line under them and the button. */
+/**
+ * The open crew's card in the shape it will have: the icon tile and two lines, the fifteen seats,
+ * the terms (the first starting with the info mark's dot) and the way in as a hairline bar.
+ */
 @Composable
 fun CrewOpenCardLoading() {
     Box(Modifier.padding(start = Gutter, end = Gutter)) {
         CrewCard(Modifier.loading("Loading the open crew"), padding = PaddingValues(16.dp)) {
-            Text("Open crew", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Skeleton(width = 40.dp, height = 40.dp, corner = 12.dp)
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Skeleton(width = 180.dp, height = 15.dp)
+                    Spacer(Modifier.height(6.dp))
+                    Skeleton(width = 150.dp, height = 11.dp)
+                }
+            }
+            Spacer(Modifier.height(14.dp))
             SkeletonSeats()
-            Spacer(Modifier.height(13.dp))
-            Skeleton(width = 150.dp, height = 13.dp)
-            Spacer(Modifier.height(18.dp))
-            Skeleton(height = 48.dp, corner = 24.dp)
+            Spacer(Modifier.height(14.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Skeleton(width = 12.dp, height = 12.dp, corner = 6.dp)
+                Spacer(Modifier.width(6.dp))
+                Skeleton(height = 12.dp)
+            }
+            Spacer(Modifier.height(6.dp))
+            Skeleton(width = 220.dp, height = 12.dp)
+            Spacer(Modifier.height(6.dp))
+            Skeleton(width = 260.dp, height = 12.dp)
+            Spacer(Modifier.height(14.dp))
+            val shape = RoundedCornerShape(TileRadius)
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .clip(shape)
+                    .border(1.dp, Tt.colors.cardLine, shape),
+                contentAlignment = Alignment.Center,
+            ) { Skeleton(width = 110.dp, height = 14.dp) }
         }
     }
 }

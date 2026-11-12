@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crew, Open tab top: two options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  /* ui/theme/Tokens.kt, OceanLight and OceanDark (the Steel accent set). */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSel:#2E4E66; --card:#F3F8FB; --cardLine:#E1ECF3; --leafSoft:rgba(74,114,144,.16);
+    --accent:#3A5B73; --onAccent:#FFFFFF; --primary:#3A5B73; --primaryRGB:58,91,115; --onPrimaryRGB:255,255,255;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --accentInk:#22394B; --accentInkRGB:34,57,75;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --glassBorderStrong:#789AAF; --skel:#E4EEF4;
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSel:#B6CCDC; --card:#1C1E20; --cardLine:#2D3034; --leafSoft:#2A2D31;
+    --accent:#4A7290; --onAccent:#FFFFFF; --primary:#93B3CA; --primaryRGB:147,179,202; --onPrimaryRGB:15,16,17;
+    --tile:#2A2D31; --tileInk:#A2BED2; --accentInk:#93B3CA; --accentInkRGB:147,179,202;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --glassBorderStrong:#666D74; --skel:#24272A;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E7ECEF; color: #142F43; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; }
+  .doc { max-width: 1240px; margin: 0 auto; padding: 34px 28px 90px; }
+  h1 { font-size: 30px; margin: 0 0 6px; }
+  .lead { font-size: 16px; line-height: 1.45; color: #2D4A5F; max-width: 980px; margin: 4px 0; }
+  section.opt { margin-top: 40px; padding-top: 24px; border-top: 2px solid #3A5B73; }
+  section.opt > h2 { font-size: 25px; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
+  .rec { font-size: 13px; font-weight: 700; background: #3A5B73; color: #fff; border-radius: 999px; padding: 3px 11px; }
+  .why { font-size: 15.5px; line-height: 1.45; color: #203A4E; max-width: 1040px; margin: 3px 0; }
+  .check { font-size: 14px; font-weight: 600; margin: 8px 0 0; }
+  .check.good { color: #246B59; } .check.bad { color: #9E3B2E; }
+  h3.grp { font-size: 19px; margin: 30px 0 2px; color: #142F43; }
+  .state { margin-top: 22px; }
+  .state h4 { font-size: 16px; margin: 0 0 3px; display: flex; align-items: center; gap: 8px; }
+  .sid { font-size: 12.5px; font-weight: 700; color: #fff; background: #59758A; border-radius: 6px; padding: 1px 7px; }
+  .what { font-size: 13.5px; line-height: 1.45; color: #45505a; max-width: 980px; margin-bottom: 8px; }
+  .pair { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  .cap { font-size: 12px; font-weight: 600; color: #59758A; letter-spacing: .3px; text-transform: uppercase; margin: 0 0 5px 4px; }
+  code { font-family: Consolas, monospace; font-size: 12.5px; background: #dbe3e9; padding: 1px 5px; border-radius: 4px; }
+  table.data { border-collapse: collapse; margin-top: 10px; font-size: 14.5px; background: #fff; border: 1px solid #D3DEE6; }
+  table.data th, table.data td { text-align: left; padding: 7px 12px; border-bottom: 1px solid #E3EAEF; vertical-align: top; line-height: 1.4; }
+  table.data th { background: #F2F6F9; font-weight: 600; }
+  ol.spec, ul.spec { font-size: 15px; line-height: 1.55; color: #203A4E; max-width: 1040px; }
+
+  /* ---------- phone ---------- */
+  .phone { background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #C3CFD8; padding-bottom: 16px; }
+  .dark.phone { border-color: #2A2D31; }
+  .barnote { height: 22px; font-size: 10.5px; color: var(--text4); display: flex; align-items: center; justify-content: center; border-bottom: 1px dashed var(--cardLine); }
+  .tabs { padding: 6px 16px 0; }
+  .track { height: 42px; border-radius: 999px; background: var(--card); border: 1px solid var(--cardLine); padding: 3px; display: flex; gap: 2px; }
+  .seg { flex: 1; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: var(--text2); }
+  .seg.on { background: var(--leafSoft); color: var(--tabSel); font-weight: 600; }
+  .seg .count { margin-left: 5px; padding: 0 5px; border-radius: 999px; background: var(--tile); color: var(--tileInk); font-size: 11px; line-height: 16px; font-weight: 700; }
+  .list { padding-top: 12px; }
+  .w { padding: 0 16px; }
+  .w + .w { margin-top: 8px; }
+  .below { margin: 10px 16px 0; height: 24px; border: 1px dashed var(--cardLine); border-radius: 10px; font-size: 11px; color: var(--text4); display: flex; align-items: center; justify-content: center; }
+  svg.i { display: block; flex: none; }
+
+  /* hairline tile: page ground, 1dp cardLine, TileRadius 14 */
+  .tile { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; }
+
+  /* text styles with font padding trimmed, as AppTileParts / MineCards */
+  .t16 { font-size: 16px; line-height: 19px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .t125 { font-size: 12.5px; line-height: 15px; font-weight: 500; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .t115 { font-size: 11.5px; line-height: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+  .t115 span { overflow: hidden; text-overflow: ellipsis; }
+  .gap2 { margin-top: 2px; }
+
+  /* AskRow geometry: 40dp icon tile, two lines 21 + 17 = 38 */
+  .ask { display: flex; align-items: center; padding: 9px 10px 9px 10px; }
+  .ask .ic40 { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .ask .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .ask .rt { font-size: 16px; line-height: 21px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ask .rn { font-size: 12.5px; line-height: 17px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ask .chev { color: var(--text4); margin-left: 8px; }
+  .pill { flex: none; margin-left: 8px; height: 34px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; font-size: 14px; font-weight: 700; }
+  .pill.soft { background: var(--tile); color: var(--accentInk); }
+  .pill.ghost { background: var(--bg); color: var(--accentInk); box-shadow: inset 0 0 0 1.5px var(--glassBorderStrong); }
+
+  /* the crew header: 52dp icon, 19 + 2 + 15 + 2 + 14 = 52 */
+  .head { display: flex; align-items: center; }
+  .ic52 { width: 52px; height: 52px; border-radius: 17px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .head .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .est { color: var(--accentInk); }
+  .est.none { color: var(--text3); font-weight: 400; }
+  .est svg { flex: none; }
+
+  /* seats: fixed 36dp squares, 5dp apart, 5 across = 200dp */
+  .grid { display: grid; grid-template-columns: repeat(5, 36px); grid-auto-rows: 36px; gap: 5px; flex: none; }
+  .seat { width: 36px; height: 36px; border-radius: 9px; position: relative; overflow: hidden; display: grid; place-items: center; }
+  .seat.conf { background: var(--primary); }
+  .seat.chk { background: var(--tile); }
+  .seat.conf .mk { color: rgba(var(--onPrimaryRGB), .85); }
+  .seat.chk .mk { color: rgba(var(--primaryRGB), .6); }
+  .seat .ico { position: absolute; inset: 0; }
+  .seat .ico i { position: absolute; left: 28%; top: 28%; width: 44%; height: 44%; border-radius: 30%; background: rgba(255,255,255,.88); }
+  .seat.chk .ico { opacity: .45; }
+  .seat svg.dash { position: absolute; inset: 0; }
+  .seat .plus { color: rgba(var(--accentInkRGB), .7); position: relative; }
+
+  .key { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+  .key.row { flex-direction: row; justify-content: center; gap: 16px; }
+  .ki { display: flex; align-items: center; gap: 7px; font-size: 12.5px; line-height: 15px; font-weight: 500; color: var(--text2); white-space: nowrap; }
+  .ki b { font-weight: 700; color: var(--text); font-feature-settings: "tnum"; }
+  .sw { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+  .sw.conf { background: var(--primary); }
+  .sw.chk { background: var(--tile); box-shadow: inset 0 0 0 1px rgba(var(--primaryRGB), .35); }
+  .sw.free { box-shadow: inset 0 0 0 1.5px rgba(var(--accentInkRGB), .45); }
+
+  .terms { font-size: 12.5px; line-height: 17px; color: var(--text3); }
+  .primary { height: 52px; border-radius: 999px; background: var(--primary); color: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+  .light .primary { color: #fff; }
+  .bar { min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--tabSel); font-size: 16px; line-height: 21px; font-weight: 600; padding: 12px; }
+
+  /* small row inside the card: 36dp icon, 19 + 15 = 34 */
+  .inrow { display: flex; align-items: center; padding: 10px 10px 10px 10px; }
+  .ic36 { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; flex: none; background: var(--tile); color: var(--tileInk); }
+  .ic36.ok { background: var(--okBg); color: var(--ok); }
+  .inrow .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .inrow .a { font-size: 14px; line-height: 19px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inrow .b { font-size: 12.5px; line-height: 15px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inrow .chev { color: var(--text4); margin-left: 8px; }
+
+  /* final: two-line header (19 + 19 + 14 = 52), terms with an info icon, hairline action bar */
+  .fl1 { font-size: 16px; line-height: 19px; font-weight: 600; color: var(--text); display: flex; white-space: nowrap; min-width: 0; }
+  .fl1 .fn { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .fl1 .fs { flex: none; }
+  .fl2 { margin-top: 2px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--accentInk); display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; }
+  .head .ic40 { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .fl2 span { overflow: hidden; text-overflow: ellipsis; }
+  .fl2.none { color: var(--text3); font-weight: 400; display: block; text-overflow: ellipsis; }
+  .fterms { display: block; }
+  .fterms .ii { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; color: var(--accentInk); }
+  .fterms .ii svg { display: block; }
+  .tseats { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
+  .tseat { aspect-ratio: 1; border-radius: 9px; position: relative; overflow: hidden; display: grid; place-items: center; }
+  .tseat.conf { background: var(--primary); }
+  .tseat.chk { background: var(--tile); }
+  .tseat.conf .mk { color: rgba(var(--onPrimaryRGB), .85); }
+  .tseat.chk .mk { color: rgba(var(--primaryRGB), .6); }
+  .tseat .mk svg { width: 20px; height: 20px; }
+  .tseat .ico { position: absolute; inset: 0; }
+  .tseat .ico i { position: absolute; left: 28%; top: 28%; width: 44%; height: 44%; border-radius: 30%; background: rgba(255,255,255,.88); }
+  .tseat.chk .ico { opacity: .45; }
+  .tseat svg.dash { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .tseat .plus { color: rgba(var(--accentInkRGB), .7); position: relative; }
+  .fterms p { margin: 0; font-size: 13px; line-height: 18px; color: var(--text2); }
+  .fterms p + p { margin-top: 6px; }
+  .fterms b { font-weight: 600; color: var(--text); }
+  .fbar { min-height: 48px; font-size: 16px; line-height: 24px; }
+
+  /* skeleton */
+  .sk { background: var(--skel); border-radius: 6px; position: relative; overflow: hidden; }
+  .sk::after { content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); animation: sweep 1.6s linear infinite; }
+  .dark .sk::after { background: linear-gradient(100deg, transparent, rgba(255,255,255,.05), transparent); }
+  @keyframes sweep { to { left: 120%; } }
+
+  /* failure page, unchanged from today */
+  .robot-page { min-height: 440px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 16px; }
+  .robot { width: 112px; height: 112px; border-radius: 50%; border: 1.5px dashed var(--text4); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text4); font-size: 10.5px; line-height: 13px; gap: 4px; }
+  .robot-title { margin-top: 14px; font-size: 20px; line-height: 25px; font-weight: 700; }
+  .robot-line { margin-top: 6px; max-width: 300px; font-size: 14px; line-height: 20px; color: var(--text2); }
+  .outlined { margin-top: 18px; height: 52px; border-radius: 999px; border: 1.5px solid var(--accentInk); color: var(--accentInk); padding: 0 22px; display: inline-flex; align-items: center; font-size: 14.5px; font-weight: 700; }
+  .pmsg { margin: 6px 16px; border-radius: 14px; background: var(--bg); border: 1px solid var(--cardLine); padding: 11px 10px 11px 14px; display: flex; align-items: center; gap: 10px; font-size: 14px; line-height: 19px; }
+  .pmsg span { flex: 1; }
+</style>
+</head>
+<body>
+<div class="doc">
+<h1>Crew, Open tab top: final option, then the two earlier ones</h1>
+<p class="lead">The notification button and the open crew box, in the app's calm flat look: page-ground tiles with a 1dp cardLine edge, 14dp corners, the Steel accent, Barlow, no washes, no shadows and no status stamps. Every option adds the start estimate and fixes three things from <code>current.html</code>:</p>
+<ol class="spec">
+  <li>"Sign in to take a seat" now goes to sign-in. Today it starts Google Drive connect (<code>CrewOpenTab.kt:73</code> with <code>CrewScreen.kt:138</code>).</li>
+  <li>Notifications that Android will no longer ask about get a stable "Reminders are off" state with a Settings button. It is worked out the same way every time, so it no longer flips back after a restart.</li>
+  <li>"1 of 15 seats left" becomes "1 seat left".</li>
+</ol>
+<p class="lead">Every state from <code>current.html</code> (N1 to N5, C1 to C10, L1 to L3) is drawn for each option, plus the three estimate states, light and dark at 392dp, and one 360dp check per option. The final option is first and keeps today's seat rows (8 and 7); the two earlier ones, with 3 rows of 5 at 36dp, follow for reference. Seat icons are stand-ins for real app icons. A line under each option reports whether any text column came out taller than its icon.</p>
+
+<div id="opts"></div>
+
+<section class="opt" style="border-top-color:#59758A">
+  <h2>Start estimate: what the server sends and how the app says it</h2>
+  <p class="why"><b>Field.</b> On <code>CrewOut</code> (so on <code>open</code> in <code>GET /crews</code>): <code>likely_full_at: datetime | None</code>, the moment the 15th seat is likely to be confirmed, in UTC, and <code>likely_basis: "pace" | "new" | None</code>. The app works out the start from it, because the start is the first midnight after the crew is full in each reader's own zone (<code>Crew.filled_at</code>, <code>services/days.py</code>).</p>
+  <ol class="spec">
+    <li><b>Seats still needed.</b> <code>R = 15 - taken</code>, live seats (checking or confirmed). Seats still checking count as taken, as the open list does.</li>
+    <li><b>History rate.</b> Take the last 10 crews with <code>filled_at</code> set and <code>cancelled_at</code> empty, filled in the last 120 days. For each, <code>rate = 14 / hours(filled_at - created_at)</code>: a crew is created by its first seat, so its fill time covers the other 14. <code>r_hist</code> is the median. It needs at least 3 such crews.</li>
+    <li><b>Recent rate.</b> Over the last 7 days, across all crews: <code>n</code> = seats created, minus seats withdrawn or rejected in the same 7 days (by <code>decided_at</code>, or <code>updated_at</code> for withdrawn). <code>r_recent = max(n, 0) / 168</code> seats an hour.</li>
+    <li><b>Blend.</b> <code>w = n / (n + 8)</code>, so a busy week counts for more than a quiet one. <code>r = w * r_recent + (1 - w) * r_hist</code>. With fewer than 3 filled crews but <code>n &gt;= 5</code>, use <code>r_recent</code> alone. With neither, send <code>likely_basis = "new"</code> and no time.</li>
+    <li><b>Play check lag.</b> <code>lag</code> is the median hours from <code>created_at</code> to <code>decided_at</code> for confirmed seats in those same crews, capped at 24. It is added once, because the last seat still has to be seen on Play.</li>
+    <li><b>Result.</b> <code>hours = R / r + lag</code>, at least 0.5. <code>likely_full_at = now + hours</code>, rounded up to the next whole hour. The rounding keeps the answer steady between reloads and works with the URL cache, since signed-out reads of this endpoint are cached.</li>
+    <li><b>Hide it</b> (both fields null): when the crew is not FILLING, when <code>r</code> is 0, or when <code>hours</code> is over 60 days. Older servers send neither field, and the app hides the line then too.</li>
+    <li><b>Cost.</b> Work it out once per crew and keep it for 10 minutes in memory. It is two small queries over the crews and seats tables, and the indexes they need are already there.</li>
+  </ol>
+  <p class="why"><b>How the app says it.</b> <code>start</code> is the first local midnight after the later of <code>likely_full_at</code> and now. <code>days = round((start - now) / 24 h)</code>.</p>
+  <table class="data">
+    <tr><th>When</th><th>Line</th></tr>
+    <tr><td>start is the coming midnight</td><td>Likely starts tonight</td></tr>
+    <tr><td>start is the midnight after</td><td>Likely starts tomorrow night</td></tr>
+    <tr><td>days 2 to 13</td><td>Likely starts in about 4 days</td></tr>
+    <tr><td>days 14 to 34</td><td>Likely starts in about 3 weeks (weeks = round(days / 7))</td></tr>
+    <tr><td>days 35 or more</td><td>Likely starts in over a month</td></tr>
+    <tr><td><code>likely_basis = "new"</code></td><td>No start estimate yet (quiet ink, no clock)</td></tr>
+    <tr><td>both null, or no crew filling</td><td>No line; the header drops to two lines and stays centred</td></tr>
+  </table>
+  <p class="why" style="margin-top:8px">It shows the same for everyone, signed in or out, in the crew or not. It is an estimate, so the word "Likely" stays in every version, and nothing on the page promises a date.</p>
+</section>
+</div>
+
+<script>
+const P = (d, s = 24, w = 2) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const I = {
+  users: s => P('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', s),
+  bell: s => P('<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>', s),
+  bellOff: s => P('<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M17 17H4a1 1 0 0 1-.74-1.673C4.59 13.956 6 12.499 6 8a6 6 0 0 1 .258-1.742"/><path d="m2 2 20 20"/><path d="M8.668 3.01A6 6 0 0 1 18 8c0 2.687.77 4.653 1.707 6.05"/>', s),
+  chev: s => P('<path d="m9 18 6-6-6-6"/>', s),
+  clock: s => P('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', s, 2.4),
+  plus: s => P('<path d="M5 12h14"/><path d="M12 5v14"/>', s),
+  check: s => P('<path d="M20 6 9 17l-5-5"/>', s),
+  hourglass: s => P('<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>', s),
+  login: s => P('<path d="m10 17 5-5-5-5"/><path d="M15 12H3"/><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>', s),
+  appWindow: s => P('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/>', s),
+  plug: s => P('<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/>', s),
+  info: s => P('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>', s),
+};
+const SAMPLE = ['#ff8a3d,#e8453c','#3ec7a6,#1f8f86','#6d7cff,#4433c9','#ffd34d,#f0a020','#ff6fa8,#c2367a','#47b3ff,#1667d9','#9be15d,#3fa34d','#b07cff,#7a3fd6','#ff9f6b,#d9622b','#5ee0e6,#2a9fbf','#f76b8a,#c43d5c','#8fd3fe,#3b8de0','#c2e86f,#7bb431','#ffb86b,#e07b1f'];
+
+function seats({ taken = 0, filled = 0, noIcon = [] }) {
+  let h = '<div class="grid">';
+  for (let i = 0; i < 15; i++) {
+    if (i >= taken) {
+      const next = i === taken, a = next ? .55 : .28;
+      h += `<div class="seat"><svg class="dash" width="36" height="36"><rect x=".75" y=".75" width="34.5" height="34.5" rx="8.25" fill="none" stroke="rgba(var(--accentInkRGB),${a})" stroke-width="1.5" stroke-dasharray="4 3"/></svg>${next ? `<span class="plus">${I.plus(14)}</span>` : ''}</div>`;
+    } else {
+      const cls = i < filled ? 'conf' : 'chk';
+      h += `<div class="seat ${cls}">${noIcon.includes(i) ? `<span class="mk">${I.appWindow(20)}</span>` : `<div class="ico" style="background:linear-gradient(135deg,${SAMPLE[i % 14]})"><i></i></div>`}</div>`;
+    }
+  }
+  return h + '</div>';
+}
+
+function key(c, row) {
+  const inn = c.filled || 0, chk = (c.taken || 0) - inn, free = 15 - (c.taken || 0);
+  const items = [];
+  if (inn) items.push(`<div class="ki"><span class="sw conf"></span><span><b>${inn}</b> in</span></div>`);
+  if (chk) items.push(`<div class="ki"><span class="sw chk"></span><span><b>${chk}</b> checking</span></div>`);
+  items.push(`<div class="ki"><span class="sw free"></span><span><b>${free}</b> free</span></div>`);
+  return `<div class="key${row ? ' row' : ''}">${items.join('')}</div>`;
+}
+
+const left = n => n === 1 ? '1 seat left' : `${n} seats left`;
+
+function estLine(e) {
+  if (!e) return '';
+  if (e === 'new') return `<div class="t115 est none gap2"><span>No start estimate yet</span></div>`;
+  return `<div class="t115 est gap2">${I.clock(11)}<span>${e}</span></div>`;
+}
+
+function header(s) {
+  const c = s.crew;
+  const title = c ? c.name : 'No crew is filling';
+  const l2 = c ? left(15 - c.taken) : 'The next app put in starts one';
+  const est = c ? s.est : null;
+  return `<div class="head"><div class="ic52">${I.users(24)}</div><div class="col">
+    <div class="t16">${title}</div><div class="t125 gap2">${l2}</div>${estLine(est)}</div></div>`;
+}
+
+const TERMS = 'Starts at midnight, your time, the day it is full. A seat costs 100 tix, back in full if you take it out while it fills or open every app every night.';
+
+function inRow(boxed) {
+  return `<div class="inrow${boxed ? ' tile' : ''}"><div class="ic36 ok">${I.check(18)}</div><div class="col"><div class="a">You are in this crew</div><div class="b">See it in your Lobby</div></div><span class="chev">${I.chev(18)}</span></div>`;
+}
+function blockRow(s, boxed) {
+  return `<div class="inrow${boxed ? ' tile' : ''}"><div class="ic36">${I.hourglass(18)}</div><div class="col"><div class="a">Your app waits in ${s.blockedIn}</div><div class="b">Take another seat once it is full</div></div></div>`;
+}
+const label = s => s.signedOut ? 'Sign in to take a seat' : 'Take a seat';
+
+/* ---------- Option A: one tile ---------- */
+function cardA(s) {
+  const c = s.crew || { taken: 0, filled: 0 };
+  let act;
+  if (s.inOpen) act = `<div style="margin-top:14px">${inRow(true)}</div>`;
+  else if (s.blockedIn) act = `<div style="margin-top:14px">${blockRow(s, true)}</div>`;
+  else act = `<div class="terms" style="margin-top:14px">${TERMS}</div><div class="primary" style="margin-top:14px">${label(s)}</div>`;
+  return `<div class="w"><div class="tile" style="padding:16px">${header(s)}
+    <div style="display:flex;align-items:center;gap:18px;margin-top:16px">${seats(c)}${key(c)}</div>${act}</div></div>`;
+}
+function notifA(n) {
+  const ask = n === 'ask';
+  return `<div class="w"><div class="tile ask"><div class="ic40">${ask ? I.bell(20) : I.bellOff(20)}</div><div class="col">
+    <div class="rt">${ask ? 'Turn on reminders' : 'Reminders are off'}</div><div class="rn">${ask ? 'When apps are left at 8 pm' : 'Off in Android settings'}</div></div>
+    <span class="pill ${ask ? 'soft' : 'ghost'}">${ask ? 'Turn on' : 'Settings'}</span></div></div>`;
+}
+function skelA() {
+  let g = ''; for (let i = 0; i < 15; i++) g += '<div class="sk" style="width:36px;height:36px;border-radius:9px"></div>';
+  return `<div class="w"><div class="tile" style="padding:16px">
+    <div class="head"><div class="sk" style="width:52px;height:52px;border-radius:17px"></div><div class="col"><div class="sk" style="width:90px;height:15px"></div><div class="sk" style="width:110px;height:12px;margin-top:6px"></div><div class="sk" style="width:150px;height:11px;margin-top:6px"></div></div></div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:16px"><div class="grid">${g}</div><div class="key"><div class="sk" style="width:48px;height:12px"></div><div class="sk" style="width:70px;height:12px"></div><div class="sk" style="width:52px;height:12px"></div></div></div>
+    <div class="sk" style="height:12px;margin-top:16px"></div><div class="sk" style="width:70%;height:12px;margin-top:6px"></div>
+    <div class="sk" style="height:52px;border-radius:26px;margin-top:14px"></div></div></div>`;
+}
+
+/* ---------- Option B: three stacked tiles, nothing filled ---------- */
+function cardB(s) {
+  const c = s.crew || { taken: 0, filled: 0 };
+  const head = `<div class="w"><div class="tile" style="padding:12px;min-height:76px;display:flex;align-items:center"><div style="flex:1;min-width:0">${header(s)}</div></div></div>`;
+  const showTerms = !s.inOpen && !s.blockedIn;
+  const grid = `<div class="w"><div class="tile" style="padding:16px 16px 14px"><div style="display:flex;justify-content:center">${seats(c)}</div>
+    <div style="margin-top:12px">${key(c, true)}</div>${showTerms ? `<div class="terms" style="margin-top:12px">${TERMS}</div>` : ''}</div></div>`;
+  let act;
+  if (s.inOpen) act = `<div class="w">${inRow(true).replace('class="inrow tile"', 'class="inrow tile" style="padding:9px 12px 9px 10px"')}</div>`;
+  else if (s.blockedIn) act = `<div class="w">${blockRow(s, true)}</div>`;
+  else act = `<div class="w"><div class="tile bar">${s.signedOut ? I.login(20) : I.plus(20)}<span>${label(s)}</span></div></div>`;
+  return head + grid + act;
+}
+function notifB(n) {
+  const ask = n === 'ask';
+  return `<div class="w"><div class="tile ask"><div class="ic40">${ask ? I.bell(20) : I.bellOff(20)}</div><div class="col">
+    <div class="rt">${ask ? 'Turn on reminders' : 'Reminders are off'}</div><div class="rn">${ask ? 'When apps are left at 8 pm' : 'Tap to open Android settings'}</div></div>
+    <span class="chev">${I.chev(18)}</span></div></div>`;
+}
+function skelB() {
+  let g = ''; for (let i = 0; i < 15; i++) g += '<div class="sk" style="width:36px;height:36px;border-radius:9px"></div>';
+  return `<div class="w"><div class="tile" style="padding:12px;min-height:76px;display:flex;align-items:center"><div class="sk" style="width:52px;height:52px;border-radius:17px"></div><div style="margin-left:12px"><div class="sk" style="width:90px;height:15px"></div><div class="sk" style="width:110px;height:12px;margin-top:6px"></div><div class="sk" style="width:150px;height:11px;margin-top:6px"></div></div></div></div>
+    <div class="w"><div class="tile" style="padding:16px"><div style="display:flex;justify-content:center"><div class="grid">${g}</div></div><div class="sk" style="width:200px;height:12px;margin:12px auto 0"></div><div class="sk" style="height:12px;margin-top:14px"></div><div class="sk" style="width:70%;height:12px;margin-top:6px"></div></div></div>
+    <div class="w"><div class="tile" style="height:52px;display:grid;place-items:center"><div class="sk" style="width:110px;height:14px"></div></div></div>`;
+}
+
+/* ---------- Final: Option A refined ---------- */
+// Header in the "B, simple" tile build: first line up to two lines (19 + 19), then the estimate (14) = 52dp.
+function headerF(s) {
+  const c = s.crew;
+  const free = c ? 15 - c.taken : 15;
+  const l1 = c
+    ? `<span class="fn">${c.name},</span><span class="fs">&nbsp;${free === 1 ? '1 seat left' : `${free} of 15 seats left`}</span>`
+    : '<span class="fn">No crew is filling</span>';
+  let l2 = '';
+  if (!c) l2 = `<div class="fl2 none">The next app put in starts one</div>`;
+  else if (s.est === 'new') l2 = `<div class="fl2 none">No start estimate yet</div>`;
+  else if (s.est) l2 = `<div class="fl2">${I.clock(11)}<span>${s.est}</span></div>`;
+  return `<div class="head"><div class="ic40">${I.users(20)}</div><div class="col"><div class="fl1">${l1}</div>${l2}</div></div>`;
+}
+const TERMS_F = `<div class="fterms">
+  <p><span class="ii">${I.info(16)}</span>A seat is <b>100 tix</b>, <b>back in full</b> if you take it out while it fills or open every app every night.</p>
+  <p>It starts at <b>midnight</b>, your time, the day it is full.</p></div>`;
+
+// Today's SeatCountTiles: 8 to a row (8 + 7), each seat weight(1f) and square, 5dp apart, across the card's width.
+function seatsToday({ taken = 0, filled = 0, noIcon = [] }) {
+  let h = '<div class="tseats">';
+  for (let i = 0; i < 15; i++) {
+    if (i >= taken) {
+      const next = i === taken, a = next ? .55 : .28;
+      h += `<div class="tseat"><svg class="dash" viewBox="0 0 36 36" preserveAspectRatio="none"><rect x=".75" y=".75" width="34.5" height="34.5" rx="8.25" fill="none" stroke="rgba(var(--accentInkRGB),${a})" stroke-width="1.5" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/></svg>${next ? `<span class="plus">${I.plus(14)}</span>` : ''}</div>`;
+    } else {
+      const cls = i < filled ? 'conf' : 'chk';
+      h += `<div class="tseat ${cls}">${noIcon.includes(i) ? `<span class="mk">${I.appWindow(20)}</span>` : `<div class="ico" style="background:linear-gradient(135deg,${SAMPLE[i % 14]})"><i></i></div>`}</div>`;
+    }
+  }
+  return h + '<div></div></div>';
+}
+function cardF(s) {
+  const c = s.crew || { taken: 0, filled: 0 };
+  let act;
+  if (s.inOpen) act = `<div style="margin-top:16px">${inRow(true)}</div>`;
+  else if (s.blockedIn) act = `<div style="margin-top:16px">${blockRow(s, true)}</div>`;
+  else act = `<div style="margin-top:16px">${TERMS_F}</div><div class="tile bar fbar" style="margin-top:14px">${s.signedOut ? I.login(20) : I.plus(20)}<span>${label(s)}</span></div>`;
+  return `<div class="w"><div class="tile" style="padding:16px">${headerF(s)}
+    <div style="margin-top:16px">${seatsToday(c)}</div>${act}</div></div>`;
+}
+function skelF() {
+  let g = ''; for (let i = 0; i < 15; i++) g += '<div class="sk" style="width:36px;height:36px;border-radius:9px"></div>';
+  return `<div class="w"><div class="tile" style="padding:16px">
+    <div class="head"><div class="sk" style="width:40px;height:40px;border-radius:12px"></div><div class="col"><div class="sk" style="width:180px;height:15px"></div><div class="sk" style="width:150px;height:11px;margin-top:6px"></div></div></div>
+    <div class="tseats" style="margin-top:16px">${g.replaceAll('width:36px;height:36px;', 'aspect-ratio:1;')}<div></div></div>
+    <div style="margin-top:16px"><div style="display:flex;gap:6px"><div class="sk" style="width:16px;height:12px;border-radius:6px;flex:none"></div><div class="sk" style="flex:1;height:12px"></div></div><div class="sk" style="width:60%;height:12px;margin-top:6px"></div><div class="sk" style="width:75%;height:12px;margin-top:12px"></div></div>
+    <div class="tile" style="height:48px;display:grid;place-items:center;margin-top:14px"><div class="sk" style="width:110px;height:14px"></div></div></div></div>`;
+}
+
+const OPT = { F: { card: cardF, notif: notifA, skel: skelF }, A: { card: cardA, notif: notifA, skel: skelA }, B: { card: cardB, notif: notifB, skel: skelB } };
+
+function tabs(run) {
+  return '<div class="tabs"><div class="track">' + ['Open', 'Lobby', 'Run', 'Record'].map(n =>
+    `<div class="seg${n === 'Open' ? ' on' : ''}">${n}${n === 'Run' && run ? '<span class="count">14</span>' : ''}</div>`).join('') + '</div></div>';
+}
+function robot(msg) {
+  return `${msg ? `<div class="pmsg">${I.info(17)}<span>(the server's message)</span></div>` : ''}<div class="robot-page"><div class="robot">${I.plug(26)}<span>robot holding<br>the plug prop</span></div>
+    <div class="robot-title">Crews didn't load</div><div class="robot-line">Check your connection, then try again.</div><div class="outlined">Try again</div></div>`;
+}
+function phone(o, theme, s, width = 392) {
+  const O = OPT[o];
+  let body;
+  if (s.offline) body = robot(s.msg);
+  else body = `<div class="list">${s.notif ? O.notif(s.notif) : ''}${s.loading ? O.skel() : O.card(s)}</div><div class="below">guide cards start here</div>`;
+  return `<div><div class="cap">${theme} ${width}dp</div><div class="phone ${theme}" style="width:${width}px" data-check="1"><div class="barnote">app bar above, not shown</div>${tabs(s.run)}${body}</div></div>`;
+}
+
+const some = { name: 'Crew 07', taken: 6, filled: 5, noIcon: [3] };
+const STATES = [
+  { g: 'Notification button' },
+  { id: 'N1', name: 'Hidden: none of your crews is running', what: 'Same rule as today: nothing is drawn while <code>running == 0</code>.', crew: some, est: 'Likely starts in about 2 days' },
+  { id: 'N2', name: 'Hidden: a crew is running, notifications on', what: 'Nothing drawn. Rechecked on every return to the app.', crew: some, est: 'Likely starts in about 2 days', run: 1 },
+  { id: 'N3', name: 'Off, Android can still ask (13 and up)', what: 'Never asked, or denied once (Android allows one more ask). Tap shows the system dialog. Allowed: the tile goes away. Denied for good: it becomes N5.', crew: some, est: 'Likely starts in about 2 days', run: 1, notif: 'ask' },
+  { id: 'N4', name: 'Off, Android 12 and lower', what: 'No runtime permission there, so it goes straight to the settings version. Tap opens TestTrack\'s notification settings.', crew: some, est: 'Likely starts in about 2 days', run: 1, notif: 'settings' },
+  { id: 'N5', name: 'Off for good: denied twice, or turned off in Settings', what: 'Stable: worked out from a saved "asked" flag plus Android\'s answer, so it reads the same after a restart. Tap opens notification settings.', crew: some, est: 'Likely starts in about 2 days', run: 1, notif: 'settings' },
+  { g: 'Crew box' },
+  { id: 'C1', name: 'Taking seats, a few taken', what: '5 in (one without an icon shows the app mark), 1 still being checked, 9 free.', crew: some, est: 'Likely starts in about 2 days' },
+  { id: 'C2', name: 'Taking seats, nobody in yet', what: 'Every seat dashed, the plus on the first.', crew: { name: 'Crew 08', taken: 0, filled: 0 }, est: 'Likely starts in about 2 weeks' },
+  { id: 'C3', name: 'Three or fewer seats left', what: 'Today this was the green "Starts soonest" stamp. The estimate line now says how soon instead.', crew: { name: 'Crew 07', taken: 12, filled: 10, noIcon: [] }, est: 'Likely starts tomorrow night' },
+  { id: 'C4', name: 'One seat left', what: '"1 seat left", fixing the plural.', crew: { name: 'Crew 07', taken: 14, filled: 14 }, est: 'Likely starts tonight' },
+  { id: 'C5', name: 'Signed out, a crew is filling', what: '"Sign in to take a seat" now opens sign-in.', crew: some, est: 'Likely starts in about 2 days', signedOut: true },
+  { id: 'C6', name: 'You are in this crew', what: 'No button. A row that opens the Lobby tab. Your seat looks like the others: faint while checking, solid once in.', crew: { name: 'Crew 07', taken: 7, filled: 5 }, est: 'Likely starts in about 2 days', inOpen: true },
+  { id: 'C7', name: 'Blocked: your app waits in another crew', what: 'No button. Two short lines from a new <code>blocked_crew</code> field; with an older server the server\'s sentence is shown as the second line instead.', crew: some, est: 'Likely starts in about 2 days', blockedIn: 'Crew 06' },
+  { id: 'C8', name: 'No crew is filling', what: 'No estimate line, all seats dashed.', crew: null },
+  { id: 'C9', name: 'No crew is filling, signed out', what: '', crew: null, signedOut: true },
+  { id: 'C10', name: 'No crew is filling, and you are blocked', what: 'Your app waits in a full crew that has not started.', crew: null, blockedIn: 'Crew 07' },
+  { g: 'Start estimate' },
+  { id: 'E1', name: 'With an estimate', what: 'Enough history or a busy week.', crew: { name: 'Crew 07', taken: 8, filled: 8 }, est: 'Likely starts in about 4 days' },
+  { id: 'E2', name: 'Tonight', what: 'Likely full before the coming midnight.', crew: { name: 'Crew 07', taken: 13, filled: 12 }, est: 'Likely starts tonight' },
+  { id: 'E3', name: 'No history yet', what: '<code>likely_basis = "new"</code>: quiet ink, no clock.', crew: { name: 'Crew 01', taken: 3, filled: 3 }, est: 'new' },
+  { g: 'Loading and failure' },
+  { id: 'L1', name: 'Loading', what: 'Skeleton in the new shape, no spinner.', loading: true },
+  { id: 'L2', name: 'Did not load, nothing kept', what: 'Unchanged from today: the failure page replaces the tab.', offline: true },
+  { id: 'L3', name: 'Did not load, server refused', what: 'As L2, with the server\'s words in the page message line (now on the page ground with a hairline, no glass).', offline: true, msg: true },
+];
+
+const OPTIONS = [
+  { k: 'F', title: 'Final. Option A refined', pick: true,
+    why: '<b>How it reads:</b> one hairline tile. The header is two single lines beside a 40dp icon tile (12dp corners, the bell tile\'s size): "Crew 07, 9 of 15 seats left" (or "Crew 07, 1 seat left"), where only the crew name gives way to an ellipsis, then the estimate. That is 19 + 2 + 14 = 35dp, under the 40dp icon. The seats are laid out as today: 8 on the first row and 7 on the second, each as wide as an eighth of the card, with no key. Under them are the terms as two short sentences, a 16dp info icon inline at the start of the first so wrapped lines run back to the left edge, with <b>100 tix</b>, <b>back in full</b> and <b>midnight</b> in semibold. The action is the Feed\'s Post bar inside the tile: page ground, hairline, a Steel label with a plus, or a sign-in mark when signed out. The notification tile is the same as in A.',
+    cost: '<b>Changed from A:</b> the key is gone, the seats keep today\'s two rows, the header is two lines instead of three, the filled button is now the hairline bar, and the terms are split and emphasised. Only the confirmed seats are filled now.' },
+  { k: 'A', title: 'Earlier: Option A. One tile, seats with a key', pick: false,
+    why: '<b>How it reads:</b> one hairline tile. At the top, the crew header in the tile build used on My apps: a 52dp icon, then the name, seats left and the estimate (19 + 2 + 15 + 2 + 14 = 52dp). Under it the 3 by 5 seats with a key beside them (in, checking, free), which uses the room the narrower grid leaves. Then the terms and the one filled Steel button. The notification tile above it has a soft "Turn on" pill or an outlined "Settings" pill.',
+    cost: '<b>Cost:</b> one filled button stays on the page, the only fill. The key column is about 80dp wide at 360dp, which is enough for "1 checking" but leaves no room for longer words.' },
+  { k: 'B', title: 'Earlier: Option B. Three tiles, nothing filled', pick: false,
+    why: '<b>How it reads:</b> the same header as its own 76dp tile, a second tile with the seats centred and the key on one line under them, and a third tile that is the action, drawn like the Feed\'s floating "Post" bar: page ground, hairline, Steel label. The notification tile is an AskRow with a chevron, the whole row tappable.',
+    cost: '<b>Cost:</b> the flattest, but the seat decision loses its weight: "Take a seat" looks the same as any row. It takes three tiles and about 60dp more height, so the guide starts lower.' },
+];
+
+let html = '';
+for (const o of OPTIONS) {
+  html += `<section class="opt"${o.pick ? '' : ' style="border-top-color:#9AAAB6"'}><h2>${o.title}${o.pick ? '<span class="rec">Final, my pick</span>' : ''}</h2><p class="why">${o.why}</p><p class="why">${o.cost}</p><p class="check" id="chk${o.k}"></p>`;
+  html += `<div class="state"><h4><span class="sid">360</span>Narrow check: N3 with C1 (light), C7 blocked (dark)</h4><div class="pair">${phone(o.k, 'light', { ...STATES[3] }, 360)}${phone(o.k, 'dark', { ...STATES[13] }, 360)}</div></div>`;
+  for (const s of STATES) {
+    if (s.g) { html += `<h3 class="grp">${s.g}</h3>`; continue; }
+    html += `<div class="state"><h4><span class="sid">${s.id}</span>${s.name}</h4>${s.what ? `<div class="what">${s.what}</div>` : ''}<div class="pair">${phone(o.k, 'light', s)}${phone(o.k, 'dark', s)}</div></div>`;
+  }
+  html += '</section>';
+}
+document.getElementById('opts').innerHTML = html;
+
+// The rule: a tile's text column is never taller than its icon. Also: nothing cut that should not be.
+function check() {
+  for (const o of OPTIONS) {
+    const sec = document.getElementById('chk' + o.k).closest('section');
+    let bad = [], n = 0;
+    sec.querySelectorAll('.head, .ask, .inrow').forEach(row => {
+      const icon = row.querySelector('.ic52, .ic40, .ic36, .sk');
+      const col = row.querySelector('.col');
+      if (!icon || !col) return;
+      n++;
+      col.querySelectorAll('.fl1').forEach(t => { const fs = t.querySelector('.fs'); if (fs && fs.getBoundingClientRect().right > t.getBoundingClientRect().right + 1) bad.push('seats cut: ' + t.textContent.trim()); });
+      if (col.offsetHeight > icon.offsetHeight + 0.5) bad.push(`${col.textContent.trim().slice(0, 30)} (${col.offsetHeight} > ${icon.offsetHeight})`);
+      col.querySelectorAll('.t16, .t125, .t115 span, .fl2 span, .fl2.none, .rt, .rn, .a, .b').forEach(t => { if (t.scrollWidth > t.clientWidth + 1) bad.push('cut: ' + t.textContent.trim()); });
+    });
+    const el = document.getElementById('chk' + o.k);
+    el.className = 'check ' + (bad.length ? 'bad' : 'good');
+    el.textContent = bad.length ? `Problems: ${[...new Set(bad)].join('; ')}` : `Checked ${n} rows at 392dp and 360dp: every text column fits its icon's height and no line is cut.`;
+  }
+}
+check(); document.fonts.ready.then(check);
+</script>
+</body>
+</html>

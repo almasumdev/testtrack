@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crew, Open tab: the top as it is today</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* The app's own Barlow first, from the repo; Google Fonts only if the files are not found. */
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  /* Tokens copied from ui/theme/Tokens.kt (OceanLight, OceanDark) and the Material mapping in Theme.kt. */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSel:#2E4E66; --card:#F3F8FB; --cardLine:#E1ECF3; --leafSoft:rgba(74,114,144,.16);
+    --primary:#3A5B73; --primaryRGB:58,91,115; --onPrimary:#FFFFFF; --onPrimaryRGB:255,255,255;
+    --primaryC:#DCE6EE; --tileInk:#3A5B73; --badgeBgCurrent:#DCE6EE;
+    --accentInk:#22394B; --accentInkRGB:34,57,75;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12);
+    --glass:#F2F9FD; --glassBorder:#B7D1E2; --glass2:#DFEDF6;
+    --skelHi:rgba(242,249,253,.8);
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSel:#B6CCDC; --card:#1C1E20; --cardLine:#2D3034; --leafSoft:#2A2D31;
+    --primary:#93B3CA; --primaryRGB:147,179,202; --onPrimary:#0F1011; --onPrimaryRGB:15,16,17;
+    --primaryC:#2A2D31; --tileInk:#A2BED2; --badgeBgCurrent:#1C1E20;
+    --accentInk:#93B3CA; --accentInkRGB:147,179,202;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12);
+    --glass:#1C1E20; --glassBorder:#383C41; --glass2:#292C2F;
+    --skelHi:rgba(28,30,32,.8);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 40px 80px; background: #E9EDF0; color: #1d2329;
+    font-family: "BarlowApp", "Barlow", system-ui, sans-serif;
+  }
+  h1 { font-size: 28px; margin: 0 0 6px; }
+  h2 { font-size: 21px; margin: 44px 0 4px; padding-top: 16px; border-top: 2px solid #c9d2d9; }
+  .intro { max-width: 900px; font-size: 15px; line-height: 1.5; color: #39434c; }
+  .intro p { margin: 6px 0; }
+  code { font-family: "IBM Plex Mono", Consolas, monospace; font-size: 12.5px; background: #dde4e9; padding: 1px 5px; border-radius: 4px; }
+
+  .state { margin: 26px 0 8px; }
+  .state h3 { font-size: 17px; margin: 0 0 4px; }
+  .state .id { display: inline-block; min-width: 34px; font-size: 13px; font-weight: 700; color: #fff; background: #3A5B73; border-radius: 6px; padding: 1px 6px; margin-right: 8px; text-align: center; }
+  .trigger { font-size: 13.5px; line-height: 1.5; color: #45505a; max-width: 880px; margin-bottom: 10px; }
+  .trigger b { color: #1d2329; }
+  .pair { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  .frame-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .frame-label { font-size: 12px; font-weight: 600; color: #5d6872; letter-spacing: .3px; text-transform: uppercase; }
+
+  /* One phone at 392dp. Starts under the app bar (TopHud), which is not part of this tab. */
+  .phone {
+    width: 392px; background: var(--bg); color: var(--text); border-radius: 18px;
+    box-shadow: 0 1px 0 rgba(0,0,0,.05), 0 6px 22px rgba(20,40,60,.12);
+    overflow: hidden; padding-bottom: 18px; position: relative;
+  }
+  .appbar-note { height: 22px; font-size: 10.5px; color: var(--text4); display: flex; align-items: center; justify-content: center; border-bottom: 1px dashed var(--cardLine); letter-spacing: .3px; }
+
+  /* SegmentedTabs.kt */
+  .tabs { padding: 6px 16px 0; }
+  .track { height: 42px; border-radius: 999px; background: var(--card); border: 1px solid var(--cardLine); padding: 3px; display: flex; gap: 2px; }
+  .seg { flex: 1; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 14px; line-height: 20px; letter-spacing: .1px; font-weight: 500; color: var(--text2); }
+  .seg.on { background: var(--leafSoft); color: var(--tabSel); font-weight: 600; }
+  .seg .count { margin-left: 5px; padding: 0 5px; border-radius: 999px; background: var(--primaryC); color: var(--tileInk); font-size: 11px; line-height: 16px; font-weight: 700; }
+
+  /* PageMessage.kt */
+  .pmsg { margin: 6px 16px; border-radius: 14px; background: var(--glass); border: 1px solid var(--glassBorder); padding: 11px 10px 11px 14px; display: flex; align-items: center; gap: 10px; }
+  .pmsg .t { flex: 1; font-size: 14px; line-height: 19px; color: var(--text); }
+  .pmsg svg { flex: none; }
+
+  /* TestingAccess.kt: a stock Material 3 TextButton, padded by the gutter. */
+  .notify { margin: 0 16px; height: 40px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 999px; color: var(--primary); font-size: 14px; line-height: 20px; font-weight: 600; letter-spacing: .1px; }
+  .notify-row { display: block; }
+
+  .content { padding-top: 12px; }
+
+  /* CrewCard (CrewRows.kt:27): page ground, 1dp cardLine edge, TileRadius 14. */
+  .card { margin: 0 16px 4px; background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; padding: 16px; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; line-height: 16px; font-weight: 700; letter-spacing: .5px; }
+  .chip.accent { background: var(--primaryC); color: var(--accentInk); }
+  .chip.ok { background: var(--okBg); color: var(--ok); }
+  .headline { margin-top: 10px; font-size: 23px; line-height: 27px; font-weight: 700; }
+  .line { margin-top: 4px; font-size: 14px; line-height: 20px; letter-spacing: .25px; color: var(--text2); font-weight: 400; }
+  .line.accent { color: var(--accentInk); font-weight: 600; }
+  .seats { margin-top: 14px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
+  .seat { aspect-ratio: 1; border-radius: 9px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .seat.conf { background: var(--primary); }
+  .seat.chk { background: var(--primaryC); }
+  .seat.conf .mark { color: rgba(var(--onPrimaryRGB), .85); }
+  .seat.chk .mark { color: rgba(var(--primaryRGB), .6); }
+  .seat .mark svg { width: 20px; height: 20px; display: block; }
+  .seat .ico { position: absolute; inset: 0; }
+  .seat .ico i { position: absolute; left: 28%; top: 28%; width: 44%; height: 44%; border-radius: 30%; background: rgba(255,255,255,.88); }
+  .seat.chk .ico { opacity: .45; }
+  .seat.empty { background: none; }
+  .seat.empty svg.dash { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .seat.empty .plus { color: rgba(var(--accentInkRGB), .7); position: relative; }
+  .primary { margin-top: 14px; height: 52px; border-radius: 999px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; letter-spacing: .1px; padding: 8px 24px; text-align: center; }
+
+  /* CrewLoading.kt:42 and CommonLoading.kt Skeleton */
+  .sk-title { font-size: 16px; line-height: 24px; font-weight: 700; letter-spacing: .15px; }
+  .sk { background: var(--glass2); position: relative; overflow: hidden; }
+  .sk::before { content: ""; position: absolute; inset: 0; background: rgba(var(--accentInkRGB), .07); }
+  .sk::after { content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 60%; background: linear-gradient(100deg, transparent, var(--skelHi), transparent); animation: sweep 1.6s linear infinite; }
+  @keyframes sweep { to { left: 120%; } }
+  .sk-seats { margin-top: 12px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
+  .sk-seats .sk { aspect-ratio: 1; border-radius: 9px; }
+
+  /* RobotState.kt, the failed look */
+  .robot-page { min-height: 470px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 16px; }
+  .robot { width: 112px; height: 112px; border-radius: 50%; border: 1.5px dashed var(--text4); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text4); font-size: 10.5px; line-height: 13px; gap: 4px; }
+  .robot-title { margin-top: 14px; font-size: 20px; line-height: 25px; font-weight: 700; }
+  .robot-line { margin-top: 6px; max-width: 300px; font-size: 14px; line-height: 20px; color: var(--text2); }
+  .outlined { margin-top: 18px; height: 52px; border-radius: 999px; border: 1.5px solid var(--accentInk); color: var(--accentInk); padding: 0 22px; display: inline-flex; align-items: center; font-size: 14.5px; font-weight: 700; }
+
+  .below { margin: 10px 16px 0; height: 26px; border: 1px dashed var(--cardLine); border-radius: 10px; font-size: 11px; color: var(--text4); display: flex; align-items: center; justify-content: center; }
+  .tap-note { margin: 8px 16px 0; font-size: 11px; color: var(--text4); text-align: center; }
+
+  table { border-collapse: collapse; margin-top: 10px; max-width: 1100px; font-size: 14px; background: #f6f8f9; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 12px; border-bottom: 1px solid #d5dde3; line-height: 1.45; }
+  th { background: #dfe6eb; font-weight: 700; }
+  ul.src { font-size: 14px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<h1>Crew, Open tab: the top as it is today</h1>
+<div class="intro">
+  <p>A record of what the top of the Open tab shows today: the notification button and the open crew card. Nothing here is a proposal. Copy, colours, sizes and spacing are read from the code at commit <code>9fa2c13</code> (13 Nov 2026).</p>
+  <p>Each state is drawn at 392dp, light on the left and dark on the right, in Barlow with the Ocean tokens from <code>ui/theme/Tokens.kt</code>. Each frame starts just under the app bar. The Crew tabs are drawn only to show where the top sits; the dashed strip at the bottom of each frame is where the guide cards begin (How-to video first), which this page leaves out.</p>
+  <p>Seat tiles show real app icons in the app. Here a coloured square with a white shape stands in for an icon.</p>
+</div>
+
+<h2>1. The notification button</h2>
+<div class="intro"><p>It sits above every Crew tab, Open included, under the tabs and above the card. It only exists while one of your crews is in its run. It is a plain Material text button in the primary colour: no icon, no card, no explanation line.</p></div>
+<div id="notif"></div>
+
+<h2>2. The open crew card</h2>
+<div class="intro"><p>One <code>CrewHero</code> card: a chip, a headline, one line, the 15 seat tiles (8 on the first row, 7 on the second), and at most one full-width button. Seats confirmed on Play are solid, seats still being checked are faint, free seats are dashed, and the next free one carries a plus.</p></div>
+<div id="card"></div>
+
+<h2>3. Loading and failure</h2>
+<div id="load"></div>
+
+<h2>4. Things that do not change the top</h2>
+<div class="intro"><p>These were checked because they sound like they should, but the code draws the top the same way for them. Where they show up is listed.</p></div>
+<table>
+  <tr><th>Condition</th><th>What the top does</th><th>Where it shows instead</th></tr>
+  <tr><td>Not enough tix for a seat</td><td>Nothing. The card still says "Take a seat".</td><td>Refused after the tap, inside the take-a-seat flow (<code>CrewViewModel.kt:317-318</code> puts the server's refusal in <code>seatError</code>).</td></tr>
+  <tr><td>No app in My apps, or no app checked on Play</td><td>Nothing.</td><td>The Get ready card further down, row "An app checked on Play" with Add or Check (<code>CrewOpenGuide.kt:166-173</code>).</td></tr>
+  <tr><td>Not on the testers group, usage access or overlay off</td><td>Nothing.</td><td>Get ready card rows Join and Allow (<code>CrewOpenGuide.kt:174-182</code>).</td></tr>
+  <tr><td>Google Drive not connected</td><td>Looks the same. Only where the button goes changes: the tap starts Drive connect instead of the seat flow.</td><td><code>CrewOpenTab.kt:73</code>. Drive still unknown (null) goes to the seat flow.</td></tr>
+  <tr><td>Your seat in the open crew is checking or confirmed</td><td>Same copy either way ("You are in this one..."). Your tile is faint while checking and solid once confirmed, like everyone else's. Your tile is not marked as yours.</td><td><code>CrewSeats.kt:107-121</code></td></tr>
+  <tr><td>Your app was sent back from the open crew</td><td>Shows the normal "Take a seat" card. A rejected seat counts as out, so you are not "in" it (<code>CrewModels.kt:314</code>, <code>CrewViewModelReads.kt:24</code>) and the server sets no block for it.</td><td>The Lobby tab.</td></tr>
+  <tr><td>The crew just filled, or is starting</td><td>Never shown as such. The server only sends crews still under 15 seats (<code>repositories/crews.py:72</code>), so the card moves on to the next filling crew, or to "No crew is filling". "0 of 15 seats left" cannot appear.</td><td>Lobby and Run tabs.</td></tr>
+  <tr><td>No connection, with crews kept on the phone</td><td>Shows the kept answer as if it were live, with no offline mark. The failure page only appears when no crews are kept.</td><td><code>CrewViewModel.kt:236-238</code>, <code>CrewScreen.kt:86</code></td></tr>
+  <tr><td>Notifications state (any) with no crew running</td><td>The button is never drawn.</td><td><code>CrewScreen.kt:84</code></td></tr>
+</table>
+
+<h2>Sources read</h2>
+<ul class="src">
+  <li><code>ui/CrewScreen.kt</code> (tab host, notification button placement, offline page)</li>
+  <li><code>ui/TestingAccess.kt</code> (the notification button)</li>
+  <li><code>ui/CrewOpenTab.kt</code> (the card and its branches)</li>
+  <li><code>ui/CrewPageParts.kt</code> (CrewHero, StatusChip, Tone), <code>ui/CrewSeats.kt</code> (SeatCountTiles), <code>ui/CrewRows.kt</code> (CrewCard)</li>
+  <li><code>ui/CrewLoading.kt</code>, <code>ui/CommonLoading.kt</code> (skeleton), <code>ui/RobotState.kt</code> (failure page), <code>ui/PageMessage.kt</code></li>
+  <li><code>ui/CrewViewModel.kt</code>, <code>ui/CrewViewModelReads.kt</code>, <code>ui/CrewModels.kt</code>, <code>ui/CrewWire.kt</code>, <code>net/CrewsWire.kt</code></li>
+  <li><code>ui/SegmentedTabs.kt</code>, <code>ui/Common.kt</code> (Primary), <code>ui/Garden.kt</code>, <code>ui/theme/Tokens.kt</code>, <code>Theme.kt</code>, <code>Type.kt</code></li>
+  <li>Backend <code>test_track_backend/app/api/v1/crews.py:74-92</code> (the only "blocked" reason), <code>repositories/seats.py:107</code>, <code>repositories/crews.py:55</code>, <code>db/models/crew.py:81</code> (names like "Crew 07")</li>
+</ul>
+
+<script>
+const ICON = {
+  users: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  appWindow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/></svg>',
+  plus: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
+  info: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accentInk)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
+  x: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+  plug: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></svg>',
+};
+
+// Stand-ins for the apps' own icons: same in both themes, as real icons are.
+const SAMPLE = [
+  'linear-gradient(135deg,#ff8a3d,#e8453c)', 'linear-gradient(135deg,#3ec7a6,#1f8f86)',
+  'linear-gradient(135deg,#6d7cff,#4433c9)', 'linear-gradient(135deg,#ffd34d,#f0a020)',
+  'linear-gradient(135deg,#ff6fa8,#c2367a)', 'linear-gradient(135deg,#47b3ff,#1667d9)',
+  'linear-gradient(135deg,#9be15d,#3fa34d)', 'linear-gradient(135deg,#b07cff,#7a3fd6)',
+  'linear-gradient(135deg,#ff9f6b,#d9622b)', 'linear-gradient(135deg,#5ee0e6,#2a9fbf)',
+  'linear-gradient(135deg,#f76b8a,#c43d5c)', 'linear-gradient(135deg,#8fd3fe,#3b8de0)',
+  'linear-gradient(135deg,#c2e86f,#7bb431)', 'linear-gradient(135deg,#ffb86b,#e07b1f)',
+];
+
+const SEATS = 15, SEAT_COST = 100;
+
+// icons: per taken seat, true = has an icon, false = no icon (app mark). Confirmed first.
+function seatTiles({ filled = 0, taken = 0, icons = [] }) {
+  const s = 36.375, st = 1.5;
+  let html = '<div class="seats">';
+  for (let i = 0; i < SEATS; i++) {
+    if (i >= taken) {
+      const next = i === taken;
+      const a = next ? .55 : .28;
+      html += `<div class="seat empty"><svg class="dash" viewBox="0 0 ${s} ${s}" preserveAspectRatio="none"><rect x="${st/2}" y="${st/2}" width="${s-st}" height="${s-st}" rx="${9-st/2}" fill="none" stroke="rgba(var(--accentInkRGB),${a})" stroke-width="${st}" stroke-dasharray="4 3"/></svg>${next ? '<span class="plus">' + ICON.plus + '</span>' : ''}</div>`;
+    } else {
+      const cls = i < filled ? 'conf' : 'chk';
+      const hasIcon = icons[i] !== false;
+      const inner = hasIcon
+        ? `<div class="ico" style="background:${SAMPLE[i % SAMPLE.length]}"><i></i></div>`
+        : `<span class="mark">${ICON.appWindow}</span>`;
+      html += `<div class="seat ${cls}">${inner}</div>`;
+    }
+  }
+  return html + '<div></div></div>';
+}
+
+function tabs(badges = {}) {
+  const names = ['Open', 'Lobby', 'Run', 'Record'];
+  return '<div class="tabs"><div class="track">' + names.map(n =>
+    `<div class="seg${n === 'Open' ? ' on' : ''}">${n}${badges[n] ? `<span class="count">${badges[n]}</span>` : ''}</div>`
+  ).join('') + '</div></div>';
+}
+
+// CrewOpenTab.kt:43-74, with the same branch order.
+function hero(o) {
+  const crew = o.crew; // null or { name, taken, filled, icons }
+  const free = SEATS - (crew ? crew.taken : 0);
+  const chip = crew == null ? 'Nothing filling' : free <= 3 ? 'Starts soonest' : 'Taking seats';
+  const tone = crew != null && free <= 3 ? 'ok' : 'accent';
+  const headline = crew ? `${crew.name}, ${free} of ${SEATS} seats left` : 'No crew is filling';
+  let line;
+  if (o.inOpen) line = 'You are in this one. It is in your Lobby.';
+  else if (o.blocked) line = o.blocked;
+  else if (crew == null) line = 'The next app put in starts one.';
+  else line = `It starts at midnight, your time, the day it is full. A seat costs ${SEAT_COST} tix, back in full if you take it out while the crew fills or open every app on every night.`;
+  let action = null;
+  if (o.inOpen || o.blocked) action = null;
+  else if (o.signedOut) action = 'Sign in to take a seat';
+  else action = 'Take a seat';
+  return `<div class="card">
+    <span class="chip ${tone}">${ICON.users}${chip}</span>
+    <div class="headline">${headline}</div>
+    <div class="line${o.inOpen ? ' accent' : ''}">${line}</div>
+    ${seatTiles(crew || {})}
+    ${action ? `<div class="primary">${action}</div>` : ''}
+  </div>`;
+}
+
+function skeleton() {
+  let seats = '';
+  for (let i = 0; i < SEATS; i++) seats += '<div class="sk"></div>';
+  return `<div class="card">
+    <div class="sk-title">Open crew</div>
+    <div class="sk-seats">${seats}<div></div></div>
+    <div class="sk" style="margin-top:13px;width:150px;height:13px;border-radius:6px"></div>
+    <div class="sk" style="margin-top:18px;height:48px;border-radius:24px"></div>
+  </div>`;
+}
+
+function offlinePage() {
+  return `<div class="robot-page">
+    <div class="robot">${ICON.plug}<span>robot holding<br>the plug prop</span></div>
+    <div class="robot-title">Crews didn't load</div>
+    <div class="robot-line">Check your connection, then try again.</div>
+    <div class="outlined">Try again</div>
+  </div>`;
+}
+
+function phone(theme, s) {
+  const notify = s.notify ? `<div class="notify-row"><span class="notify">${s.notify}</span></div>` : '';
+  const msg = s.message ? `<div class="pmsg">${ICON.info}<span class="t">${s.message}</span>${ICON.x}</div>` : '';
+  let body;
+  if (s.offline) body = offlinePage();
+  else body = `<div class="content">${s.loading ? skeleton() : hero(s)}</div><div class="below">guide cards start here</div>`;
+  return `<div class="frame-wrap"><div class="frame-label">${theme}</div>
+    <div class="phone ${theme}"><div class="appbar-note">app bar above, not shown</div>${tabs(s.badges)}${msg}${notify}${body}
+    ${s.tapNote ? `<div class="tap-note">${s.tapNote}</div>` : ''}</div></div>`;
+}
+
+function render(target, list) {
+  document.getElementById(target).innerHTML = list.map(s => `
+    <div class="state">
+      <h3><span class="id">${s.id}</span>${s.name}</h3>
+      <div class="trigger">${s.trigger}</div>
+      <div class="pair">${phone('light', s)}${phone('dark', s)}</div>
+    </div>`).join('');
+}
+
+// A typical filling crew: 6 taken, 5 confirmed (one without an icon), 1 still being checked.
+const some = { name: 'Crew 07', taken: 6, filled: 5, icons: [true, true, true, false, true, true] };
+const running = { Run: 14 }; // illustrative: tonight's apps across your running crews
+
+render('notif', [
+  { id: 'N1', name: 'Hidden: none of your crews is running',
+    trigger: '<b>Trigger:</b> <code>vm.running == 0</code>, so <code>TestingNotifications()</code> is never called (<code>CrewScreen.kt:84</code>; <code>running</code> counts crews in RUN, <code>CrewViewModelReads.kt:48-49</code>). Applies whether notifications are on or off, and when signed out.',
+    crew: some },
+  { id: 'N2', name: 'Hidden: a crew is running and notifications are on',
+    trigger: '<b>Trigger:</b> <code>running &gt; 0</code> and <code>areNotificationsEnabled()</code> is true (<code>TestingAccess.kt:30, 42</code>). Re-read on every resume (<code>:37</code>), so turning them on in Settings hides it on return.',
+    crew: some, badges: running },
+  { id: 'N3', name: '"Enable testing notifications", not tapped yet',
+    trigger: '<b>Trigger:</b> <code>running &gt; 0</code>, notifications off, <code>asked == false</code> (<code>TestingAccess.kt:42, 55</code>). On Android 13 and up a tap shows the system permission dialog (<code>:46-48</code>). "Off" also covers notifications turned off for the app in Settings while the permission is granted.',
+    crew: some, badges: running, notify: 'Enable testing notifications',
+    tapNote: 'Tap on Android 13+: system "Allow notifications?" dialog.' },
+  { id: 'N4', name: '"Enable testing notifications" on Android 12 and lower',
+    trigger: '<b>Trigger:</b> same as N3 on <code>SDK_INT &lt; 33</code>. The tap skips the dialog and opens the app\'s notification settings (<code>TestingAccess.kt:49-52</code>). <code>asked</code> is never set on this path, so the label never changes to N5.',
+    crew: some, badges: running, notify: 'Enable testing notifications',
+    tapNote: 'Tap: opens Android\'s notification settings for TestTrack.' },
+  { id: 'N5', name: '"Open notification settings", after one tap on Android 13+',
+    trigger: '<b>Trigger:</b> <code>running &gt; 0</code>, still off, <code>asked == true</code> (<code>TestingAccess.kt:47, 55</code>). Reached after the dialog is denied or dismissed, and also when the permission is permanently denied: then the first tap shows no dialog at all and only the label changes. Tap opens notification settings. <code>asked</code> is <code>rememberSaveable</code>, so it is lost once the button leaves the screen, and the label goes back to N3.',
+    crew: some, badges: running, notify: 'Open notification settings',
+    tapNote: 'Tap: opens Android\'s notification settings for TestTrack.' },
+]);
+
+render('card', [
+  { id: 'C1', name: 'Taking seats, a few taken',
+    trigger: '<b>Trigger:</b> <code>open != null</code>, more than 3 seats free, not in it, no block, signed in (<code>CrewOpenTab.kt:47-51, 59-62, 70</code>). Chip in the accent tone (<code>:52</code>). Shown with 5 confirmed (one has no icon, so it shows the app mark) and 1 still being checked (faint).',
+    crew: some },
+  { id: 'C2', name: 'Taking seats, nobody in yet',
+    trigger: '<b>Trigger:</b> as C1 with <code>taken == 0</code>, so free = 15. Every tile is dashed and the first carries the plus (<code>CrewSeats.kt:99-100, 197</code>). Only possible if every seat in a filling crew was taken out again; a brand new crew is only made by somebody taking a seat.',
+    crew: { name: 'Crew 08', taken: 0, filled: 0, icons: [] } },
+  { id: 'C3', name: 'Starts soonest: 3 or fewer seats left',
+    trigger: '<b>Trigger:</b> <code>free &lt;= 3</code> (<code>CrewOpenTab.kt:49</code>); chip turns to the OK tone, green (<code>:52</code>). Everything else as C1. Shown with 12 taken, 10 confirmed and 2 checking.',
+    crew: { name: 'Crew 07', taken: 12, filled: 10, icons: [] } },
+  { id: 'C4', name: 'Starts soonest: one seat left',
+    trigger: '<b>Trigger:</b> <code>free == 1</code>. Same as C3. The headline keeps the plural: "1 of 15 seats left" (<code>CrewOpenTab.kt:54</code>).',
+    crew: { name: 'Crew 07', taken: 14, filled: 14, icons: [] } },
+  { id: 'C5', name: 'Signed out, a crew is filling',
+    trigger: '<b>Trigger:</b> <code>vm.signedOut</code> (<code>CrewOpenTab.kt:69</code>). The server answers a stranger with the open crew and its counts (<code>crews.py:45-62</code>). See the open question on where this button goes.',
+    crew: some, signedOut: true },
+  { id: 'C6', name: 'You are in this crew',
+    trigger: '<b>Trigger:</b> <code>vm.inOpen</code>: one of your crews is the open crew and your seat is not out (<code>CrewViewModelReads.kt:23-24</code>). Line in SemiBold accent ink (<code>CrewOpenTab.kt:57, 64</code>), no button (<code>:68</code>). The server also sets a block in this case, but <code>inOpen</code> is checked first. Chip and headline follow the seat count as in C1, C3 and C4. Your tile is not marked; it is faint while checking, solid once confirmed.',
+    crew: { name: 'Crew 07', taken: 7, filled: 5, icons: [] }, inOpen: true },
+  { id: 'C7', name: 'Blocked: your app is waiting in another crew',
+    trigger: '<b>Trigger:</b> <code>vm.blocked != null</code> and not <code>inOpen</code> (<code>CrewOpenTab.kt:58, 68</code>). The text is the server\'s; today it sends only this one, when you hold a live seat in any crew still filling (<code>test_track_backend app/api/v1/crews.py:74-83</code>). No button.',
+    crew: some, blocked: 'You already have an app waiting in Crew 06. Take the next seat once that crew is full.' },
+  { id: 'C8', name: 'No crew is filling',
+    trigger: '<b>Trigger:</b> <code>open == null</code>, signed in, no block (<code>CrewOpenTab.kt:48, 54, 59</code>). All 15 tiles dashed, plus on the first.',
+    crew: null },
+  { id: 'C9', name: 'No crew is filling, signed out',
+    trigger: '<b>Trigger:</b> <code>open == null</code> and <code>vm.signedOut</code> (<code>CrewOpenTab.kt:48, 69</code>).',
+    crew: null, signedOut: true },
+  { id: 'C10', name: 'No crew is filling, and you are blocked',
+    trigger: '<b>Trigger:</b> <code>open == null</code> and <code>blocked != null</code>. Happens when your app waits in a crew that is full but has not started yet (still FILLING on the server, so it blocks you, but full, so it is not offered as open) and no other crew is filling.',
+    crew: null, blocked: 'You already have an app waiting in Crew 07. Take the next seat once that crew is full.' },
+]);
+
+render('load', [
+  { id: 'L1', name: 'Loading: first answer not in yet',
+    trigger: '<b>Trigger:</b> <code>vm.firstLoad</code> = <code>loading &amp;&amp; crews.isEmpty() &amp;&amp; open == null</code>, or the debug switch <code>DebugLooks.holdLoading</code> (<code>CrewViewModel.kt:82-83</code>; drawn by <code>CrewOpenTab.kt:38-41</code>, <code>CrewLoading.kt:42-54</code>). Shimmering bars, no spinner. Crossfades to the card in 320ms (<code>CommonLoading.kt:108-117</code>). Not shown when crews are kept on the phone from last time.',
+    loading: true },
+  { id: 'L2', name: 'Did not load, nothing kept',
+    trigger: '<b>Trigger:</b> <code>vm.offline &amp;&amp; vm.crews.isEmpty()</code> (<code>CrewScreen.kt:86</code>). Replaces the whole tab, card and guide alike, with the grey failure page (<code>RobotState.kt:107-130</code>). The robot holds the plug prop; it is drawn by <code>RobotHolding</code> and not reproduced here. "Try again" reloads.',
+    offline: true },
+  { id: 'L3', name: 'Did not load, server refused, nothing kept',
+    trigger: '<b>Trigger:</b> as L2 but the failure was an <code>ApiError</code>, which also puts the server\'s message in the page message line under the tabs (<code>CrewViewModel.kt:232-234</code>, <code>CrewScreen.kt:79</code>). The line closes itself after 5 seconds or on a tap (<code>PageMessage.kt:60, 79, 98</code>). The words are whatever the server said.',
+    offline: true, message: '(the server\'s message)' },
+]);
+</script>
+</body>
+</html>
