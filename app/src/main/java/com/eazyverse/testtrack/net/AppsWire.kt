@@ -45,6 +45,10 @@ data class AppFeedback(
     @SerialName("post_id") val postId: String,
     val done: Int = 0,
     val bought: Int = 0,
+    /** Reviews of this request waiting for the owner. Absent from an older server's answer. */
+    @SerialName("to_check") val toCheck: Int = 0,
+    /** Taken off Circle after testers could not install the app. Absent from an older server's answer. */
+    val unlisted: Boolean = false,
 )
 
 @Serializable

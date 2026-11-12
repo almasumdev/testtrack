@@ -90,9 +90,12 @@ fun IconTile(
     }
 }
 
-/** A count in a small filled pill, beside a heading. */
+/** A count in a small filled pill, beside a heading. Above [cap] it reads "cap+". */
 @Composable
-fun CountBadge(count: Int) {
+fun CountBadge(
+    count: Int,
+    cap: Int = Int.MAX_VALUE,
+) {
     val t = Tt.colors
     Box(
         Modifier
@@ -103,7 +106,7 @@ fun CountBadge(count: Int) {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            "$count",
+            if (count > cap) "$cap+" else "$count",
             style = MaterialTheme.typography.labelMedium.tabular(),
             fontWeight = FontWeight.Bold,
             color = t.onAccent,

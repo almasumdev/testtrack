@@ -22,8 +22,8 @@ import com.eazyverse.testtrack.viewmodel.AppsViewModel
  * My apps: the one place an app lives.
  *
  * An app is added here once, and its crews and feedback start from its own page, so this is a
- * plain list of apps rather than a list of what was sent where. Each app says what is happening
- * to it in badges: a crew and a feedback request can both be running, and either can be done.
+ * plain list of apps rather than a list of what was sent where. Each tile says what is happening
+ * to it in one line, with a mark on the right when something needs the owner.
  */
 @Composable
 fun AppsScreen(
@@ -131,7 +131,7 @@ fun AppsBody(
         items(apps, key = { it.id }) { app ->
             // Fades in, fades out and glides to its new place when the list changes.
             Box(Modifier.animateItem()) {
-                AppCard(app, Modifier.padding(horizontal = Gutter, vertical = 5.dp), onOpen = { onOpen(app) })
+                AppCard(app, Modifier.padding(horizontal = Gutter, vertical = 4.dp), onOpen = { onOpen(app) })
             }
         }
     }

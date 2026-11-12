@@ -246,7 +246,7 @@ fun ApiApp.toEntry(): AppEntry =
                 )
             },
         crewsDone = crewsDone,
-        feedback = feedback?.let { AppFeedbackStatus(it.state, it.postId, it.done, it.bought) },
+        feedback = feedback?.let { AppFeedbackStatus(it.state, it.postId, it.done, it.bought, it.toCheck, it.unlisted) },
         reviewsReceived = reviewsReceived,
         canCrew = canCrew,
         canFeedback = canFeedback,

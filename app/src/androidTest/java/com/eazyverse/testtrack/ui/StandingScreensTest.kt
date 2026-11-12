@@ -240,7 +240,7 @@ class StandingScreensTest {
     // ------------------------------------------------------------------ my apps
 
     @Test
-    fun an_app_says_what_is_happening_to_it_in_badges() {
+    fun an_app_says_what_is_happening_to_it_in_one_line() {
         compose.setContent {
             TestTrackTheme {
                 AppsBody(
@@ -256,8 +256,8 @@ class StandingScreensTest {
         }
         compose.onNodeWithText("Nikosh Budget").assertIsDisplayed()
         compose.onNodeWithContentDescription("Closed test").assertIsDisplayed()
-        compose.onNodeWithText("Day 6 of 14 in Crew 07").assertIsDisplayed()
-        compose.onNodeWithText("Feedback 2 of 3").assertIsDisplayed()
+        compose.onNodeWithText("Day 6 of 14 in ").assertIsDisplayed()
+        compose.onNodeWithText("Crew 07").assertIsDisplayed()
     }
 
     @Test
@@ -278,15 +278,17 @@ class StandingScreensTest {
         compose.onNodeWithText("Running One").assertIsDisplayed()
         compose.onNodeWithText("Old One").assertIsDisplayed()
         compose.onNodeWithText("Crew test done").assertIsDisplayed()
-        compose.onNodeWithText("Not verified").assertIsDisplayed()
+        compose.onNodeWithText("Ready for a crew").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Not verified yet. Add the testers group, then tap Verify.").assertExists()
     }
 
     @Test
-    fun an_app_sent_back_says_to_fix_it() {
+    fun an_app_sent_back_says_so_on_its_mark_not_in_its_line() {
         compose.setContent {
             TestTrackTheme { AppsBody(apps = listOf(myApp(crew = AppCrewStatus("rejected", "c1", "Crew 07")))) }
         }
-        compose.onNodeWithText("Sent back to be fixed").assertIsDisplayed()
+        compose.onNodeWithText("Not in a crew").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Sent back by Crew 07. Fix it, then try again.").assertExists()
     }
 
     @Test

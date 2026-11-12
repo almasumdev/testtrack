@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TestTrack. My apps tile options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Real values from ui/theme/Tokens.kt (OceanLight / OceanDark) */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSelected:#2E4E66; --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
+    --badgeFill:#3A5B73; --tile:#DCE6EE; --tileInk:#3A5B73; --leafAccent:#3A5B73;
+    --leafAccentSoft:rgba(74,114,144,.16); --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --glass2:#DFEDF6; --card:#F3F8FB; --cardLine:#E1ECF3; --track:#E4EEF4;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12);
+    --warn:#8A611C; --warnBg:rgba(154,110,36,.12); --warnBorder:rgba(154,110,36,.24);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12); --badBorder:rgba(158,59,46,.24);
+    --dock:#E8F3FA; --dockInk:#304C60; --tixTop:#3F6680; --tixBottom:#2B4A60;
+    --skel:#E4EEF4;
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSelected:#B6CCDC; --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
+    --badgeFill:#4A7290; --tile:#2A2D31; --tileInk:#A2BED2; --leafAccent:#93B3CA;
+    --leafAccentSoft:#2A2D31; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --glass2:#292C2F; --card:#1C1E20; --cardLine:#2D3034; --track:#2D3034;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12);
+    --warn:#D8B774; --warnBg:rgba(216,183,116,.14); --warnBorder:rgba(216,183,116,.26);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15); --badBorder:rgba(228,147,138,.3);
+    --dock:#1C1E20; --dockInk:#BCC1C6; --tixTop:#4A7290; --tixBottom:#355A75;
+    --skel:#24272A;
+  }
+
+  * { box-sizing:border-box; }
+  body { margin:0; background:#E7ECEF; font-family:Barlow, system-ui, sans-serif; color:#142F43; }
+  .doc { max-width:1180px; margin:0 auto; padding:36px 28px 80px; }
+  .doc > h1 { font-size:30px; margin:0 0 6px; font-weight:700; }
+  p.lead { font-size:16px; margin:0 0 6px; color:#2D4A5F; max-width:940px; line-height:1.45; }
+  .needs { display:flex; gap:10px; flex-wrap:wrap; margin:14px 0 4px; }
+  .needs span { background:#fff; border:1px solid #D3DEE6; border-radius:999px; padding:5px 12px; font-size:14px; font-weight:500; }
+  section.opt { margin-top:44px; padding-top:26px; border-top:1px solid #CBD6DE; }
+  section.opt h2 { font-size:23px; margin:0 0 4px; font-weight:700; display:flex; align-items:center; gap:10px; }
+  .rec { font-size:13px; font-weight:700; background:#3A5B73; color:#fff; border-radius:999px; padding:3px 11px; }
+  .why { font-size:15.5px; margin:2px 0; color:#203A4E; max-width:1000px; line-height:1.45; }
+  .why b { font-weight:600; }
+  .measure { font-size:14px; margin:8px 0 0; color:#2D4A5F; }
+  .srv { font-size:13.5px; margin:4px 0 0; color:#59758A; }
+  .pair { display:flex; gap:28px; flex-wrap:wrap; margin-top:16px; align-items:flex-start; }
+  .cap { font-size:13px; font-weight:600; color:#59758A; margin:0 0 6px 4px; }
+  table.data { border-collapse:collapse; margin-top:12px; font-size:14.5px; background:#fff; border:1px solid #D3DEE6; }
+  table.data th, table.data td { text-align:left; padding:7px 12px; border-bottom:1px solid #E3EAEF; vertical-align:top; }
+  table.data th { font-weight:600; background:#F2F6F9; }
+  .have { color:#246B59; font-weight:600; } .need { color:#9E3B2E; font-weight:600; }
+
+  /* ---------- phone ---------- */
+  .phone { width:392px; background:var(--bg); color:var(--text); border-radius:30px; overflow:hidden;
+           border:1px solid #C3CFD8; box-shadow:0 10px 30px rgba(16,47,70,.10); padding-bottom:18px; }
+  .dark.phone { border-color:#2A2D31; }
+  .sbar { height:30px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; font-size:13px; font-weight:600; color:var(--text2); }
+  .hud { display:flex; align-items:center; justify-content:space-between; padding:6px 16px 0; height:44px; }
+  .lvl { display:flex; align-items:center; gap:9px; }
+  .lvl .bot { width:32px; height:32px; border-radius:10px; background:var(--tile); display:grid; place-items:center; }
+  .lvl .lv { font-size:13px; font-weight:600; color:var(--text2); line-height:15px; }
+  .lvl .xp { width:84px; height:4px; border-radius:2px; background:var(--track); margin-top:4px; overflow:hidden; }
+  .lvl .xp i { display:block; height:100%; background:var(--leafAccent); }
+  .tix { display:flex; align-items:center; gap:6px; height:30px; padding:0 12px 0 9px; border-radius:999px; background:linear-gradient(var(--tixTop),var(--tixBottom)); color:#fff; font-weight:700; font-size:14px; font-feature-settings:"tnum"; }
+  .head { display:flex; align-items:center; padding:20px 16px 10px; font-size:16px; line-height:19px; font-weight:700; color:var(--text); }
+  .list { padding-top:4px; }
+  .w { padding:0 16px; }
+  .g8 .w + .w { margin-top:8px; }
+  .g10 .w { padding:5px 16px; }
+  .foot { display:flex; justify-content:flex-end; padding:16px 16px 0; }
+  .addbtn { height:48px; padding:0 20px 0 16px; border-radius:999px; background:var(--accent); color:var(--onAccent); display:inline-flex; align-items:center; gap:8px; font-size:15px; font-weight:600; }
+  .dock { margin:14px 20px 0; height:48px; border-radius:999px; background:var(--dock); box-shadow:inset 0 0 0 1px var(--cardLine); display:flex; align-items:center; padding:0 5px; gap:2px; }
+  .dock .tb { flex:1; height:38px; display:grid; place-items:center; color:var(--dockInk); }
+  .dock .tb.on { flex:none; width:124px; border-radius:999px; background:var(--leafAccentSoft); color:var(--tabSelected); display:flex; align-items:center; justify-content:center; gap:8px; font-size:14px; font-weight:600; }
+  .ic { display:inline-block; vertical-align:middle; flex:none; }
+  .tn { font-feature-settings:"tnum"; }
+
+  .mark { display:grid; place-items:center; font-weight:700; flex:none; }
+
+  /* ---------- CURRENT (AppCard as it is) ---------- */
+  .cur { border-radius:14px; background:var(--bg); box-shadow:inset 0 0 0 1px var(--cardLine); overflow:hidden; }
+  .cur-top { display:flex; align-items:center; gap:12px; padding:14px 16px 12px; }
+  .cur-col { flex:1; min-width:0; }
+  .cur-name { display:flex; align-items:center; gap:6px; font-size:14px; line-height:20px; font-weight:700; }
+  .cur-name .t { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .cur-dev { font-size:12px; line-height:16px; color:var(--text3); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cur-band { background:color-mix(in srgb, var(--tile) 55%, transparent); padding:10px 16px; display:flex; flex-wrap:wrap; gap:6px; }
+  .bdg { border-radius:999px; padding:5px 10px; font-size:12.5px; line-height:15px; font-weight:600; white-space:nowrap; }
+
+  /* ---------- hairline tile (A, B): HairlineRow geometry ---------- */
+  .ht { display:flex; align-items:center; min-height:76px; border-radius:14px; background:var(--bg);
+        box-shadow:inset 0 0 0 1px var(--cardLine); padding:12px 8px 12px 12px; }
+  .ht.attn { box-shadow:inset 0 0 0 1px var(--warnBorder); }
+  .ht .mark { margin-right:12px; }
+  .tcol { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .trail { margin-left:8px; flex:none; display:flex; align-items:center; justify-content:center; min-width:22px; }
+  .bub { min-width:22px; height:22px; border-radius:999px; background:var(--badgeFill); color:var(--onAccent); font-size:12px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; padding:0 7px; font-feature-settings:"tnum"; }
+  .nm { display:flex; align-items:center; gap:5px; font-size:16px; line-height:19px; font-weight:600; color:var(--text); white-space:nowrap; }
+  .nm .t, .l2 .t, .l3 .t, .note .t { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .l2 { margin-top:2px; display:flex; align-items:center; gap:5px; font-size:12.5px; line-height:15px; font-weight:500; white-space:nowrap; }
+  .l3 { margin-top:2px; display:flex; align-items:center; gap:5px; font-size:11.5px; line-height:14px; font-weight:500; color:var(--text3); white-space:nowrap; }
+  .a3 { font-size:12.5px; }
+  .sp { width:7px; flex:none; }
+
+  /* B trackers */
+  .strip { display:inline-flex; gap:2px; flex:none; }
+  .strip i { width:3px; height:8px; border-radius:1.5px; background:var(--glassBorder); display:block; }
+  .strip i.d { background:var(--leafAccent); }
+  .strip i.n { background:var(--leafAccent); opacity:.4; }
+  .pips { display:inline-flex; gap:3px; flex:none; }
+  .pips i { width:6px; height:6px; border-radius:50%; background:var(--glassBorder); display:block; }
+  .pips i.d { background:var(--leafAccent); }
+  .pips i.c { background:transparent; box-shadow:inset 0 0 0 1.5px var(--accentInk); }
+  .pbar { width:60px; height:4px; border-radius:2px; background:var(--glassBorder); overflow:hidden; flex:none; display:flex; }
+  .pbar i { display:block; height:100%; background:var(--leafAccent); }
+
+  /* ---------- C: ticket (TicketFrame geometry) ---------- */
+  .tk { position:relative; min-height:76px; display:flex; }
+  .tk > svg.shape { position:absolute; left:0; top:0; z-index:0; overflow:visible; pointer-events:none; }
+  .tk > .tmain, .tk > .stub { position:relative; z-index:1; }
+  .tmain { flex:1; min-width:0; display:flex; align-items:center; gap:12px; padding:12px 10px 12px 12px; }
+  .c-title { font-size:16px; line-height:19px; font-weight:600; color:var(--text); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .note { display:flex; align-items:center; gap:4px; font-size:12.5px; line-height:14px; white-space:nowrap; }
+  .stub { width:58px; display:flex; flex-direction:column; align-items:center; justify-content:center; flex:none; }
+  .stub .fig { font-weight:600; font-feature-settings:"tnum"; line-height:20px; margin-top:3px; }
+  .stub .word { font-size:10.5px; line-height:12px; font-weight:500; margin-top:1px; }
+
+  /* skeleton */
+  .sk { background:var(--skel); border-radius:6px; }
+  /* ---------- B final: corner cases (sizes scale with --fs like sp; dp stays) ---------- */
+  .fwrap { display:flex; gap:22px; flex-wrap:wrap; margin-top:16px; align-items:flex-start; }
+  .fph { background:var(--bg); color:var(--text); border-radius:30px; overflow:hidden; border:1px solid #C3CFD8; box-shadow:0 10px 30px rgba(16,47,70,.10); padding-bottom:16px; }
+  .dark.fph { border-color:#2A2D31; }
+  .fph .head { font-size:calc(16px*var(--fs)); line-height:calc(19px*var(--fs)); }
+  .f-w { padding:0 16px; } .f-w + .f-w { margin-top:8px; }
+  .f-ht { display:flex; align-items:center; min-height:76px; border-radius:14px; background:var(--bg); box-shadow:inset 0 0 0 1px var(--cardLine); padding:12px 8px 12px 12px; }
+  .f-ht.broke { box-shadow:inset 0 0 0 2px #E0453A; }
+  .f-mk { margin-right:12px; flex:none; display:grid; place-items:center; font-weight:700; }
+  .f-col { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .f-nm { display:flex; align-items:center; font-size:calc(16px*var(--fs)); line-height:calc(19px*var(--fs)); font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; }
+  .f-l2 { margin-top:2px; display:flex; align-items:center; font-size:calc(12.5px*var(--fs)); line-height:calc(15px*var(--fs)); white-space:nowrap; overflow:hidden; }
+  .f-l3 { margin-top:2px; display:flex; align-items:center; font-size:calc(11.5px*var(--fs)); line-height:calc(14px*var(--fs)); font-weight:500; color:var(--text3); white-space:nowrap; overflow:hidden; }
+  .f-nm > *, .f-l2 > *, .f-l3 > * { flex:none; }
+  .f-nm > .ic { margin-left:5px; } .f-l2 > .ic { margin-right:5px; }
+  .f-l3 > .ic { margin-right:4px; } .f-l3 .tr { margin-right:5px; } .f-l3 .gap { width:7px; }
+  .shr { flex:0 1 auto !important; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:pre; }
+  .fx { white-space:pre; }
+  .f-tr { margin-left:8px; flex:none; display:flex; align-items:center; justify-content:center; min-width:22px; }
+  .f-bub { min-width:22px; height:22px; border-radius:999px; background:var(--badgeFill); color:var(--onAccent); font-size:calc(12px*var(--fs)); font-weight:700; display:inline-flex; align-items:center; justify-content:center; padding:0 7px; font-feature-settings:"tnum"; }
+  .fstrip { display:inline-flex; align-items:center; }
+  .fstrip i { height:8px; border-radius:1.5px; background:var(--glassBorder); display:block; }
+  .fstrip i.d { background:var(--leafAccent); } .fstrip i.n { background:var(--leafAccent); opacity:.4; }
+  .fdots { display:inline-flex; align-items:center; }
+  .fdots i { border-radius:50%; background:var(--glassBorder); display:block; }
+  .fdots i.d { background:var(--leafAccent); } .fdots i.c { background:transparent; box-shadow:inset 0 0 0 1.5px var(--accentInk); }
+  .fbar { height:4px; border-radius:2px; background:var(--glassBorder); overflow:hidden; display:inline-flex; }
+  .fbar i { display:block; height:100%; background:var(--leafAccent); } .fbar i.n { opacity:.4; } .fbar i.c { background:var(--accentInk); opacity:.5; }
+  .rules { margin:12px 0 0; padding:0 0 0 22px; font-size:15px; line-height:1.5; color:#203A4E; max-width:1040px; }
+  .rules li { margin:3px 0; } .rules b { font-weight:600; }
+  table.res { border-collapse:collapse; margin-top:14px; font-size:13px; background:#fff; border:1px solid #D3DEE6; }
+  table.res th, table.res td { text-align:left; padding:5px 9px; border-bottom:1px solid #E3EAEF; vertical-align:top; }
+  table.res th { background:#F2F6F9; font-weight:600; }
+  td.bad { background:#FBE9E7; color:#9E3B2E; font-weight:600; }
+  .verdict { font-size:15px; font-weight:600; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="doc">
+  <h1>My apps: tile options</h1>
+  <p class="lead">My apps is the owner's own shelf. Each app can be in a crew, have a feedback request on Circle, both, or neither, and it can be a closed test or live, verified or not. When the owner opens this tab they want four answers from each tile, so every option is judged on them.</p>
+  <div class="needs"><span>1. Does this app need me now?</span><span>2. What is running, and how far along?</span><span>3. Closed test or live?</span><span>4. What is already done?</span></div>
+  <p class="lead" style="margin-top:12px">Every phone shows the same 16 apps, one for each real state an app row can be in today, newest first. Light and dark side by side at 392 dp, real tokens from Tokens.kt, Barlow, Lucide icons as the app uses them. Tiles in A, B and C are 76 dp with a 52 dp icon, the Requests size. A count bubble only appears where the owner has something to do: reviews to check, a request testers couldn't install, or a closed test that is not verified yet.</p>
+
+  <div id="simple"></div>
+  <div id="final"></div>
+  <div id="opts"></div>
+
+  <section class="opt">
+    <h2>What the tiles need from the server</h2>
+    <p class="why">Most of it is on the app row already (net/AppsWire.kt, backend services/apps.py <code>row()</code>). Two facts the owner most needs are not, so the current tile cannot show them.</p>
+    <table class="data">
+      <tr><th>Fact</th><th>On the row today?</th><th>Used for</th></tr>
+      <tr><td>source (closed or live), verified_by</td><td class="have">Yes</td><td>Flask or globe after the name; "Add the testers group" for an unverified closed test</td></tr>
+      <tr><td>crew state, crew_name, day, run_days, crews_done</td><td class="have">Yes</td><td>Crew line and the day strip</td></tr>
+      <tr><td>feedback state, done, bought</td><td class="have">Yes</td><td>Review dots, "All 5 reviews in", "Closed at 3 of 6 reviews"</td></tr>
+      <tr><td>feedback.to_check: reviews of this request waiting for the owner to accept or refuse</td><td class="need">No (new)</td><td>"2 reviews to check", the hollow dots and the bubble. Same rows GET /reviews/waiting returns, grouped by post</td></tr>
+      <tr><td>feedback.unlisted (and report count): taken off Circle after testers couldn't install it</td><td class="need">No (new)</td><td>"Testers can't install it" and the bubble. Same as post_repo.unlisted_count, per post</td></tr>
+      <tr><td>needs_you per app (optional)</td><td class="need">No (new)</td><td>The bubble number, so the tiles and the My apps tab count always agree (see the report)</td></tr>
+      <tr><td>crew seats filled and seats (optional)</td><td class="need">No</td><td>Could turn "Starts when it's full" into "9 of 15 seats taken". Not needed for any option</td></tr>
+    </table>
+  </section>
+</div>
+
+<script>
+/* ---------- icons (Lucide, as the app uses) ---------- */
+const P = {
+  flask:'<path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/>',
+  globe:'<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  msg:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  alert:'<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+  ccheck:'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  cx:'<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
+  hourglass:'<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+  moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  chev:'<path d="m9 18 6-6-6-6"/>',
+  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+  grid:'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  bot:'<path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>',
+};
+function ic(n, s, c, sw){ return `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c||'currentColor'}" stroke-width="${sw||2}" stroke-linecap="round" stroke-linejoin="round">${P[n]}</svg>`; }
+function ticketMark(size){ return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" style="transform:rotate(-12deg)"><path d="M4.5 4.5H19.5a2.5 2.5 0 0 1 2.5 2.5V9a3 3 0 0 0 0 6v2a2.5 2.5 0 0 1-2.5 2.5H4.5A2.5 2.5 0 0 1 2 17v-2a3 3 0 0 0 0-6V7a2.5 2.5 0 0 1 2.5-2.5Z" fill="#fff" stroke="#17405E" stroke-width="1.6" stroke-linejoin="round"/><path d="M16 7.4v.4M16 11.8v.4M16 16.2v.4" stroke="#17405E" stroke-width="1.9" stroke-linecap="round"/></svg>`; }
+/* AppTile: hue off the name, fixed saturation/lightness per theme (Tokens.nameTile). */
+function mark(a, th, size){
+  const [f, k] = th==='dark' ? [`hsl(${a.hue},30%,18%)`,`hsl(${a.hue},55%,76%)`] : [`hsl(${a.hue},45%,89%)`,`hsl(${a.hue},50%,32%)`];
+  return `<div class="mark" style="width:${size}px;height:${size}px;border-radius:${size*0.3}px;background:${f};color:${k};font-size:${Math.round(size*0.36)}px">${a.name[0]}</div>`;
+}
+
+/* ---------- trackers ---------- */
+function strip(run, day){ // day: the owner's day; > run means all done
+  let s = '<span class="strip">';
+  for (let i = 1; i <= run; i++) s += `<i class="${day > run || i < day ? 'd' : i === day ? 'n' : ''}"></i>`;
+  return s + '</span>';
+}
+function pips(bought, done, check){
+  if (bought > 10) return `<span class="pbar"><i style="width:${done/bought*100}%"></i></span>`;
+  let s = '<span class="pips">';
+  for (let i = 0; i < bought; i++) s += `<i class="${i < done ? 'd' : i < done + (check||0) ? 'c' : ''}"></i>`;
+  return s + '</span>';
+}
+
+/* ---------- the 16 apps: one per real state ---------- */
+const C = {t2:'var(--text2)', t3:'var(--text3)', t4:'var(--text4)', acc:'var(--accentInk)', ok:'var(--ok)', warn:'var(--warn)', bad:'var(--bad)'};
+const APPS = [
+  {name:'Tide Notes', hue:190, live:false, verified:null, needs:1, srv:false,
+   A:{l2:['alert',C.warn,'Add the testers group',C.warn,600], l3:['msg',C.t4,'No feedback asked yet',C.t4]},
+   B:{l2:['alert',C.warn,'Add the testers group',C.warn,600], l3:`<span class="t">Then tap Verify now</span>`},
+   Cc:{note:'Add the testers group', ni:'alert', nc:C.warn, stub:['icon','alert',C.warn], fill:'var(--warnBg)', line:'var(--warnBorder)'}},
+  {name:'Pocket Planner', hue:205, live:false, verified:'play', crew:{state:'waiting', name:'Crew 12'},
+   A:{l2:['users',C.t3,'Crew 12 is filling up',C.t2], l3:['msg',C.t4,'No feedback asked yet',C.t4]},
+   B:{l2:[null,null,'Crew 12 is filling up',C.t2], l3:`${ic('hourglass',11,C.t3)}<span class="t">Starts when it's full</span>`},
+   Cc:{note:'Crew 12 is filling up', nc:C.t2, stub:['icon','hourglass','var(--tabSelected)']}},
+  {name:'Bloom Journal', hue:330, live:false, verified:'play', crew:{state:'checking', name:'Crew 09'},
+   A:{l2:['users',C.t3,'Crew 09 is checking it',C.t2], l3:['msg',C.t4,'No feedback asked yet',C.t4]},
+   B:{l2:[null,null,'Crew 09 is checking it',C.t2], l3:`<span class="t">Members install it first</span>`},
+   Cc:{note:'Crew 09 is checking it', nc:C.t2, stub:['icon','hourglass','var(--tabSelected)']}},
+  {name:'Quiet Hours', hue:255, live:false, verified:'play', crew:{state:'starting', name:'Crew 07', day:0, run:14},
+   A:{l2:['users',C.t3,'Day 1 starts at midnight',C.t2], l3:['msg',C.t4,'No feedback asked yet',C.t4]},
+   B:{l2:[null,null,'Crew 07 starts tonight',C.t2], l3:`${ic('users',11,C.t3)}${strip(14,0)}<span class="t">Day 1 at midnight</span>`},
+   Cc:{note:'Crew 07 starts tonight', nc:C.t2, stub:['icon','moon','var(--tabSelected)']}},
+  {name:'Run Log', hue:12, live:false, verified:'crew', needs:1, srv:true, crew:{state:'testing', name:'Crew 05', day:6, run:14}, fb:{state:'collecting', done:2, bought:5, check:1},
+   A:{l2:['users',C.t3,'Day 6 of 14 in Crew 05',C.t2], l3:['msg',C.acc,'2 of 5 in, 1 to check',C.acc,600]},
+   B:{l2:[null,null,'1 review to check',C.acc,600], l3:`${ic('users',11,C.t3)}${strip(14,6)}<span class="tn">Day 6</span><span class="sp"></span>${ic('msg',11,C.t3)}${pips(5,2,1)}<span class="tn">2 of 5</span>`},
+   Cc:{note:'Day 6 of 14 in Crew 05', nc:C.t2, stub:['fig','1','to check','var(--onAccent)'], fill:'var(--badgeFill)'}},
+  {name:'Coin Jar', hue:40, live:false, verified:'crew', crew:{state:'testing', name:'Crew 03', day:15, run:14},
+   A:{l2:['users',C.t3,'Your 14 days are done',C.t2], l3:['msg',C.t4,'No feedback asked yet',C.t4]},
+   B:{l2:[null,null,'Your 14 days are done',C.t2], l3:`${ic('users',11,C.t3)}${strip(14,15)}<span class="t">Crew 03 is finishing</span>`},
+   Cc:{note:'Your 14 days are done', nc:C.t2, stub:['fig','14/14','days','var(--tabSelected)']}},
+  {name:'Habit Hill', hue:110, live:false, verified:'crew', crew:{state:'finished', name:'Crew 02'}, crewsDone:1,
+   A:{l2:['ccheck',C.ok,'Crew test done',C.t3,400], l3:['msg',C.t4,'No feedback asked yet',C.t4]},
+   B:{l2:['ccheck',C.ok,'Crew test done',C.t3,400]},
+   Cc:{note:'Crew test done', ni:'ccheck', nic:C.ok, nc:C.t3, stub:['icon','ccheck',C.ok], fill:'var(--okBg)', mode:'torn'}},
+  {name:'Snap Notes', hue:285, live:false, verified:'play', crew:{state:'rejected', name:'Crew 11'},
+   A:{l2:['cx',C.bad,'Crew 11 sent it back',C.bad], l3:['msg',C.t4,'No feedback asked yet',C.t4]},
+   B:{l2:['cx',C.bad,'Crew 11 sent it back',C.bad], l3:`<span class="t">Fix it, then try again</span>`},
+   Cc:{note:'Crew 11 sent it back', ni:'cx', nc:C.bad, stub:['icon','cx',C.t4], fill:'var(--bg)'}},
+  {name:'Word Garden', hue:175, live:false, verified:'crew', crew:{state:'removed', name:'Crew 04'}, fb:{state:'done', done:3, bought:3},
+   A:{l2:['cx',C.bad,'Taken out of Crew 04',C.bad], l3:['ccheck',C.ok,'All 3 reviews in',C.t3,400]},
+   B:{l2:['cx',C.bad,'Taken out of Crew 04',C.bad], l3:`${ic('ccheck',11,C.ok)}<span class="t">All 3 reviews in</span>`},
+   Cc:{note:'Taken out of Crew 04', ni:'cx', nc:C.bad, stub:['icon','cx',C.t4], fill:'var(--bg)'}},
+  {name:'Lumen Camera', hue:225, live:true, verified:'play', needs:1, srv:true, fb:{state:'collecting', done:3, bought:8, unlisted:true},
+   A:{l2:['globe',C.t3,'Live on Google Play',C.t3,400], l3:['alert',C.bad,"3 of 8 in, can't install",C.bad]},
+   B:{l2:['alert',C.bad,"Testers can't install it",C.bad,600], l3:`${ic('msg',11,C.t3)}${pips(8,3,0)}<span class="tn">3 of 8</span><span class="sp"></span><span class="t">Off Circle for now</span>`},
+   Cc:{note:"Testers can't install it", ni:'alert', nc:C.bad, stub:['fig','3/8','reviews',C.bad], fill:'var(--badBg)', line:'var(--badBorder)'}},
+  {name:'Sunny Weather Widget Pro', hue:48, live:true, verified:'play', needs:2, srv:true, fb:{state:'collecting', done:4, bought:10, check:2},
+   A:{l2:['globe',C.t3,'Live on Google Play',C.t3,400], l3:['msg',C.acc,'4 of 10 in, 2 to check',C.acc,600]},
+   B:{l2:[null,null,'2 reviews to check',C.acc,600], l3:`${ic('msg',11,C.t3)}${pips(10,4,2)}<span class="tn">4 of 10 in</span>`},
+   Cc:{note:'4 of 10 reviews in', nc:C.t2, stub:['fig','2','to check','var(--onAccent)'], fill:'var(--badgeFill)'}},
+  {name:'Fit Steps', hue:95, live:true, verified:'review', fb:{state:'done', done:5, bought:5},
+   A:{l2:['globe',C.t3,'Live on Google Play',C.t3,400], l3:['ccheck',C.ok,'All 5 reviews in',C.t3,400]},
+   B:{l2:['ccheck',C.ok,'All 5 reviews in',C.t3,400]},
+   Cc:{note:'All 5 reviews in', ni:'ccheck', nic:C.ok, nc:C.t3, stub:['fig','5/5','reviews',C.ok], fill:'var(--okBg)', mode:'torn'}},
+  {name:'Tidy Tasks', hue:150, live:true, verified:'play', fb:{state:'closed', done:3, bought:6},
+   A:{l2:['globe',C.t3,'Live on Google Play',C.t3,400], l3:['msg',C.t4,'Closed at 3 of 6 reviews',C.t4,400]},
+   B:{l2:[null,null,'Closed at 3 of 6 reviews',C.t4,400]},
+   Cc:{note:'Closed at 3 of 6 reviews', nc:C.t4, stub:['fig','3/6','reviews',C.t4], fill:'var(--bg)'}},
+  {name:'Daily Verse', hue:20, live:true, verified:'play',
+   A:{l2:['globe',C.t3,'Live on Google Play',C.t3,400], l3:['msg',C.t4,'No feedback asked yet',C.t4]},
+   B:{l2:[null,null,'Ready for feedback',C.t3,400]},
+   Cc:{note:'Ready for feedback', nc:C.t3, stub:['icon','plus','var(--tabSelected)']}},
+  {name:'Sky Diary', hue:300, live:true, verified:null,
+   A:{l2:['hourglass',C.t3,"Play hasn't answered yet",C.t3,400], l3:['msg',C.t4,'No feedback asked yet',C.t4]},
+   B:{l2:['hourglass',C.t3,"Play hasn't answered yet",C.t3,400]},
+   Cc:{note:"Play hasn't answered yet", ni:'hourglass', nc:C.t3, stub:['icon','hourglass',C.t4], fill:'var(--bg)'}},
+  {name:'Mint Budget', hue:135, live:false, verified:'play',
+   A:{l2:['users',C.t4,'Not in a crew yet',C.t4], l3:['msg',C.t4,'No feedback asked yet',C.t4]},
+   B:{l2:[null,null,'Ready for a crew',C.t3,400]},
+   Cc:{note:'Ready for a crew', nc:C.t3, stub:['icon','plus','var(--tabSelected)']}},
+];
+
+/* ---------- shared frame ---------- */
+function phone(th, body, opts={}){
+  const hud = `<div class="hud"><div class="lvl"><div class="bot">${ic('bot',18,'var(--tileInk)')}</div><div><div class="lv">Level 4</div><div class="xp"><i style="width:62%"></i></div></div></div><div class="tix">${ticketMark(16)}240</div></div>`;
+  const dock = `<div class="foot"><span class="addbtn">${ic('plus',18,'var(--onAccent)')}Add app</span></div>
+    <div class="dock"><span class="tb">${ic('msg',20)}</span><span class="tb">${ic('users',20)}</span><span class="tb">${ic('trophy',20)}</span><span class="tb on">${ic('grid',20)}My apps</span><span class="tb">${ic('user',20)}</span></div>`;
+  return `<div><div class="cap">${th==='dark'?'Dark':'Light'}</div><div class="phone ${th}"><div class="sbar"><span>9:41</span><span>5G  86%</span></div>${hud}<div class="list ${opts.gap||'g8'}"><div class="head">${opts.heading||'Your apps'}</div>${body}</div>${opts.noFoot?'':dock}</div></div>`;
+}
+const rows = (th, render) => APPS.map(a => `<div class="w">${render(a, th)}</div>`).join('');
+const glyph = (a, s) => ic(a.live ? 'globe' : 'flask', s, 'var(--text4)');
+const trail = a => `<div class="trail">${a.needs ? `<span class="bub">${a.needs}</span>` : ic('chev',18,'var(--text4)')}</div>`;
+function line(cls, spec){
+  const [i, ic2, t, c, w] = spec;
+  return `<div class="${cls}" style="color:${c};${w?`font-weight:${w}`:''}">${i?ic(i,12,ic2):''}<span class="t">${t}</span></div>`;
+}
+
+/* ================= CURRENT: AppCard with the badge band ================= */
+function curBadges(a){
+  const out = [], cr = a.crew, f = a.fb;
+  const tone = {run:['var(--accentInk)','var(--tile)'], done:['var(--ok)','var(--okBg)'], attn:['var(--warn)','var(--warnBg)'], prob:['var(--bad)','var(--badBg)'], quiet:['var(--text3)','var(--glass2)']};
+  if (cr){
+    const m = {waiting:[`${cr.name} is filling`,'run'], checking:[`${cr.name}, members checking`,'attn'], starting:[`${cr.name} starts at midnight, your time`,'run'],
+      testing: cr.day > cr.run ? [`Your nights in ${cr.name} are done`,'run'] : [`Day ${cr.day} of ${cr.run} in ${cr.name}`,'run'],
+      finished:['Crew test done','done'], rejected:['Sent back to be fixed','prob'], removed:[`Out of ${cr.name}`,'prob']}[cr.state];
+    out.push(m);
+  }
+  if (f) out.push(f.state==='collecting' ? [`Feedback ${f.done} of ${f.bought}`,'run'] : f.state==='done' ? ['Feedback done','done'] : [`Feedback closed at ${f.done} of ${f.bought}`,'quiet']);
+  if (!a.verified) out.push(['Not verified','attn']);
+  if (!out.length) out.push(['Nothing running','quiet']);
+  return out.map(([t,k]) => `<span class="bdg" style="color:${tone[k][0]};background:${tone[k][1]}">${t}</span>`).join('');
+}
+function renderCur(a, th){
+  return `<div class="cur" data-tile><div class="cur-top">${mark(a,th,44)}<div class="cur-col tcol"><div class="cur-name"><span class="t">${a.name}</span>${glyph(a,14)}</div><div class="cur-dev">Pine Hill Apps</div></div></div><div class="cur-band">${curBadges(a)}</div></div>`;
+}
+
+/* ================= A: two lanes ================= */
+function renderA(a, th){
+  return `<div class="ht" data-tile>${mark(a,th,52)}<div class="tcol"><div class="nm"><span class="t">${a.name}</span></div>${line('l2', a.A.l2)}${line('l3 a3', a.A.l3)}</div>${trail(a)}</div>`;
+}
+
+/* ================= B: what matters, then the tracker ================= */
+function renderB(a, th){
+  return `<div class="ht" data-tile>${mark(a,th,52)}<div class="tcol"><div class="nm"><span class="t">${a.name}</span>${glyph(a,13)}</div>${line('l2', a.B.l2)}${a.B.l3?`<div class="l3">${a.B.l3}</div>`:''}</div>${trail(a)}</div>`;
+}
+
+/* ================= C: ticket, the stub holds the number ================= */
+function stubHtml(s){
+  if (s[0]==='icon') return ic(s[1], 22, s[2]);
+  const [_, fig, word, col] = s;
+  const wc = col==='var(--onAccent)' ? 'var(--onAccent)' : 'var(--text3)';
+  return `<div class="fig" style="color:${col};font-size:${fig.length>4?15:18}px">${fig}</div><div class="word" style="color:${wc};opacity:${col==='var(--onAccent)'?.9:1}">${word}</div>`;
+}
+function renderC(a, th){
+  const c = a.Cc, torn = c.mode==='torn';
+  const note = `<div class="note" style="color:${c.nc}">${c.ni?ic(c.ni,12,c.nic||c.nc):''}<span class="t">${c.note}</span></div>`;
+  return `<div class="tk" data-tile data-mode="${c.mode||'whole'}" ${c.fill?`data-stub="${c.fill}"`:''} ${c.line?`data-line="${c.line}"`:''}><div class="tmain">${mark(a,th,52)}<div class="tcol"><div class="c-title">${a.name} <span style="display:inline-block;vertical-align:-1px">${glyph(a,13)}</span></div>${note}</div></div>
+    <div class="stub" ${torn?'style="transform:translate(6px,2px) rotate(4deg)"':''}>${stubHtml(c.stub)}</div></div>`;
+}
+
+/* ---------- loading for B ---------- */
+function loadingB(th){
+  const names=[118,92,136,104,84,126], l2=[150,126,168,112,140,132], l3=[96,0,120,0,88,0];
+  let s = '';
+  for (let i=0;i<6;i++) s += `<div class="w"><div class="ht">${`<div class="sk mark" style="width:52px;height:52px;border-radius:15.6px;margin-right:12px"></div>`}<div class="tcol"><div class="sk" style="width:${names[i]}px;height:14px;margin:2.5px 0"></div><div class="sk" style="width:${l2[i]}px;height:11px;margin-top:6px"></div>${l3[i]?`<div class="sk" style="width:${l3[i]}px;height:9px;margin-top:6px"></div>`:''}</div><div class="trail">${ic('chev',18,'var(--track)')}</div></div></div>`;
+  return phone(th, s, {heading:'<span class="sk" style="width:92px;height:15px;display:inline-block"></span>', noFoot:true});
+}
+
+/* ---------- ticket outline (TicketShape.kt + torn stub from MineCard) ---------- */
+const N = 7, RAD = 14, STUB = 58;
+function wholePath(w, h){ const xb = w - STUB;
+  return `M${RAD},0 H${xb-N} A${N},${N} 0 0 0 ${xb+N},0 H${w-RAD} A${RAD},${RAD} 0 0 1 ${w},${RAD} V${h-RAD} A${RAD},${RAD} 0 0 1 ${w-RAD},${h} H${xb+N} A${N},${N} 0 0 0 ${xb-N},${h} H${RAD} A${RAD},${RAD} 0 0 1 0,${h-RAD} V${RAD} A${RAD},${RAD} 0 0 1 ${RAD},0 Z`; }
+function zigPts(xb, h){ const pts=[]; let k=0; for(let y=N+3.5; y<h-N-1; y+=3.5){ pts.push([xb + (k++%2 ? 1.6 : -1.6), y]); } return pts; }
+function bodyPath(w, h, down, xb){ return `M${RAD},0 H${xb-N} A${N},${N} 0 0 0 ${xb},${N} ${down} A${N},${N} 0 0 0 ${xb-N},${h} H${RAD} A${RAD},${RAD} 0 0 1 0,${h-RAD} V${RAD} A${RAD},${RAD} 0 0 1 ${RAD},0 Z`; }
+function stubPath(w, h, up, xb){ return `M${xb},${N} A${N},${N} 0 0 0 ${xb+N},0 H${w-RAD} A${RAD},${RAD} 0 0 1 ${w},${RAD} V${h-RAD} A${RAD},${RAD} 0 0 1 ${w-RAD},${h} H${xb+N} A${N},${N} 0 0 0 ${xb},${h-N} ${up} Z`; }
+function drawTickets(){
+  document.querySelectorAll('.tk').forEach(el => {
+    el.querySelector('svg.shape')?.remove();
+    const w = el.offsetWidth, h = el.offsetHeight; if (!w) return;
+    const xb = w - STUB, mode = el.dataset.mode || 'whole';
+    const fill = el.dataset.stub || 'var(--leafAccentSoft)', line = el.dataset.line || 'var(--cardLine)';
+    const id = 'k' + Math.random().toString(36).slice(2);
+    let g = '';
+    if (mode === 'whole'){
+      const d = wholePath(w, h);
+      g += `<defs><clipPath id="${id}"><path d="${d}"/></clipPath></defs><path d="${d}" fill="var(--bg)"/>
+            <rect x="${xb}" y="0" width="${STUB}" height="${h}" fill="${fill}" clip-path="url(#${id})"/>
+            <line x1="${xb+0.75}" y1="${N}" x2="${xb+0.75}" y2="${h-N}" stroke="var(--glassBorder)" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <path d="${d}" fill="none" stroke="${line}" stroke-width="1"/>`;
+    } else {
+      const p = zigPts(xb, h);
+      const down = p.map(q=>`L${q[0]},${q[1]}`).join(' ') + ` L${xb},${h-N}`;
+      const up = [...p].reverse().map(q=>`L${q[0]},${q[1]}`).join(' ') + ` L${xb},${N}`;
+      g += `<path d="${bodyPath(w,h,down,xb)}" fill="var(--bg)" stroke="${line}" stroke-width="1"/>`;
+      g += `<g transform="translate(6 2) rotate(4 ${xb+29} ${h/2})"><path d="${stubPath(w,h,up,xb)}" fill="${fill}" stroke="${line}" stroke-width="1"/></g>`;
+    }
+    el.insertAdjacentHTML('afterbegin', `<svg class="shape" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${g}</svg>`);
+  });
+}
+
+/* ---------- options ---------- */
+const OPTS = [
+  {key:'cur', title:'Current tile (for comparison)', render:renderCur, gap:'g10',
+   why:'<b>How it reads:</b> name with a flask or globe, the developer under it (always the owner\'s own name on this tab), then a tinted band of pill badges that wraps when there are two or more.',
+   cost:'<b>Trade-off:</b> tiles are about 115 dp, half again the 76 dp of Requests, and grow a row whenever the pills wrap, the pills are the badge look the owner moved away from, and it cannot say that reviews are waiting to be checked or that testers couldn\'t install a request, because the row does not carry either.'},
+  {key:'A', title:'Option A. Two lanes', render:renderA,
+   why:'<b>How it reads:</b> the name, then two fixed lanes. Lane one is the crew for a closed test, or Google Play for a live app. Lane two is always feedback. Each lane leads with its own small icon, and colour says how it stands: steel for something to do, amber or red for a problem, a green check for done, faint grey for nothing yet. A count bubble replaces the chevron when the owner has something to act on.',
+   cost:'<b>Trade-off:</b> every tile is a full three lines even when nothing is happening, so "No feedback asked yet" and "Live on Google Play" repeat down the list, and progress is words only, with no picture of how far a run has got.'},
+  {key:'B', title:'Option B. What matters, then the tracker', render:renderB, rec:true,
+   why:'<b>How it reads:</b> the name with its flask or globe, then one line saying the single thing that matters most (something to do first, then a problem, then what is running, then the record), then a small tracker for what is running: a strip of days for the crew run and a dot per review for feedback, hollow dots for reviews waiting to be checked. A tile with nothing running drops to two lines and goes quiet. The same three-line build as the My reviews ticket the owner accepted.',
+   cost:'<b>Trade-off:</b> when a crew and feedback both run, the third line is tight (day strip and review dots side by side, numbers shortened to "Day 6" and "2 of 5"), and an app with 11 or more reviews bought gets a thin bar instead of dots.'},
+  {key:'C', title:'Option C. A ticket whose stub holds the number', render:renderC,
+   why:'<b>How it reads:</b> the same notched ticket as Requests and My reviews, the name (two lines allowed) over one status line, and the stub showing the one number that matters: reviews to check on a solid steel stub, else days or reviews so far. Done tears the stub off in green, as a paid review does. Ended work leaves a blank stub.',
+   cost:'<b>Trade-off:</b> everywhere else the stub means tix, here it means progress, so the same shape says two things. The stub holds one number, so an app with a crew and feedback running shows only one of them, and the tile has the least room for text.'},
+];
+
+let html = '';
+for (const o of OPTS){
+  html += `<section class="opt"><h2>${o.title}${o.rec?'<span class="rec">My pick</span>':''}</h2><p class="why">${o.why}</p><p class="why">${o.cost}</p>
+    <p class="measure" data-for="${o.key}"></p>
+    ${o.key!=='cur' ? '<p class="srv">Needs new server data: Run Log and Sunny Weather Widget Pro (reviews to check), Lumen Camera (testers couldn\'t install it). Everything else is on the row today.</p>' : ''}
+    <div class="pair" data-measure="${o.key}">${phone('light', rows('light', o.render), {gap:o.gap})}${phone('dark', rows('dark', o.render), {gap:o.gap})}</div></section>`;
+  if (o.rec){
+    html += `<section class="opt" style="border-top:none;margin-top:18px;padding-top:0"><h2 style="font-size:19px">Option B while loading</h2><p class="why">Skeleton tiles in the new 76 dp shape, no spinner: a 52 dp icon block, a name bar and one or two line bars, as AppsLoading draws today but in the tile's own shape. Empty, signed out and offline keep today's robot states.</p>
+      <div class="pair">${loadingB('light')}${loadingB('dark')}</div></section>`;
+  }
+}
+document.getElementById('opts').innerHTML = html;
+
+function measure(){
+  document.querySelectorAll('[data-measure]').forEach(p => {
+    let col = 0, icon = 0, tmax = 0, tmin = 1e9, cut = [], tiles = 0;
+    p.querySelectorAll('[data-tile]').forEach(t => {
+      tiles++;
+      col = Math.max(col, t.querySelector('.tcol').offsetHeight);
+      icon = Math.max(icon, t.querySelector('.mark').offsetHeight);
+      tmax = Math.max(tmax, t.offsetHeight); tmin = Math.min(tmin, t.offsetHeight);
+      t.querySelectorAll('.l2 .t, .l3 .t, .note .t').forEach(s => { if (s.scrollWidth > s.clientWidth + 1) cut.push(s.textContent); });
+    });
+    const okk = col <= icon;
+    const out = document.querySelector(`.measure[data-for="${p.dataset.measure}"]`);
+    out.innerHTML = `<b style="color:${okk?'#246B59':'#9E3B2E'}">Measured in this render:</b> tallest text column ${col} dp, icon ${icon} dp, ` +
+      `tiles ${tmin === tmax ? tmax : tmin + ' to ' + tmax} dp tall (${tiles} tiles, light and dark). ` +
+      (p.dataset.measure==='cur' ? 'The badge band sits under the text and the icon, so the tile height is set by the band, not the icon.' :
+       cut.length ? `<span style="color:#9E3B2E">Status lines cut short: ${[...new Set(cut)].join(', ')}</span>` : 'No status line is cut short; only the long app name ends in an ellipsis.');
+  });
+}
+drawTickets(); measure();
+document.fonts.ready.then(() => { drawTickets(); measure(); });
+window.addEventListener('resize', () => { drawTickets(); measure(); });
+</script>
+
+<script>
+/* ================= B FINAL: corner cases, rules coded the way the app should code them ================= */
+(function(){
+const LONG = 'Night Owls Android Testers Crew 12';
+const K = {t2:'var(--text2)', t3:'var(--text3)', t4:'var(--text4)', acc:'var(--accentInk)', ok:'var(--ok)', warn:'var(--warn)', bad:'var(--bad)'};
+const cap = n => n > 99 ? '99+' : String(n);
+const needs = a => { const f = a.fb || {}; return (f.check || 0) + (f.unlisted ? 1 : 0) + (!a.live && !a.verified ? 1 : 0); };
+
+/* Rule: the headline is a fixed phrase (never cut, 20 chars at most) and, for crew states, the crew name LAST,
+   which is the only part that may end in an ellipsis. */
+function headline(a){
+  const c = a.crew, f = a.fb;
+  if (f && f.unlisted) return {i:'alert', fixed:"Can't be installed", col:K.bad, w:600, about:'fb', says:'unlisted'};
+  if (f && f.check) return {fixed:`${cap(f.check)} review${f.check > 1 ? 's' : ''} to check`, col:K.acc, w:600, about:'fb', says:'check'};
+  if (!a.live && !a.verified) return {i:'alert', fixed:'Not verified yet', col:K.warn, w:600, about:'verify'};
+  if (c){
+    const n = c.name;
+    switch (c.state){
+      case 'rejected': return {i:'cx', fixed:'Sent back by ', name:n, col:K.bad, about:'crew'};
+      case 'removed':  return {i:'cx', fixed:'Taken out of ', name:n, col:K.bad, about:'crew'};
+      case 'waiting':  return {fixed:'Waiting in ', name:n, col:K.t2, about:'crew'};
+      case 'checking': return {fixed:'Being checked in ', name:n, col:K.t2, about:'crew'};
+      case 'starting': return {fixed:'Starts tonight in ', name:n, col:K.t2, about:'crew'};
+      case 'testing':  return c.day > c.run ? {fixed:`All ${c.run} days done`, col:K.t2, about:'crew'} : {fixed:'Testing in ', name:n, col:K.t2, about:'crew'};
+    }
+  }
+  if (f && f.state === 'collecting') return {fixed:'Collecting feedback', col:K.t2, about:'fb'};
+  if (c && c.state === 'finished') return {i:'ccheck', ic:K.ok, fixed: a.crewsDone > 1 ? `${a.crewsDone} crew tests done` : 'Crew test done', col:K.t3, w:400, about:'crew'};
+  if (f && f.state === 'done') return {i:'ccheck', ic:K.ok, fixed:`All ${f.bought} reviews in`, col:K.t3, w:400, about:'fb'};
+  if (f && f.state === 'closed') return {fixed:'Feedback closed', col:K.t4, w:400, about:'fb'};
+  if (a.live && !a.verified) return {i:'hourglass', fixed:'Waiting for Play', col:K.t3, w:400, about:'verify'};
+  return {fixed: a.live ? 'Ready for feedback' : 'Ready for a crew', col:K.t3, w:400, about:'none'};
+}
+
+/* Day strip: at most W dp wide. Gap 2 up to 14 days, else 1; segment = min(6, fitted); under 1.5 dp it becomes a bar. */
+function strip(n, day, W){
+  const gap = n <= 14 ? 2 : 1, seg = Math.min(6, (W - gap * (n - 1)) / n);
+  if (seg < 1.5){
+    const done = day > n ? 1 : Math.max(0, day - 1) / n, today = day >= 1 && day <= n ? 1 / n : 0;
+    return `<span class="fbar tr" style="width:${W}px"><i style="width:${done*100}%"></i><i class="n" style="width:${today*100}%"></i></span>`;
+  }
+  let s = `<span class="fstrip tr">`;
+  for (let i = 1; i <= n; i++) s += `<i class="${day > n || i < day ? 'd' : i === day ? 'n' : ''}" style="width:${seg}px;${i < n ? `margin-right:${gap}px` : ''}"></i>`;
+  return s + '</span>';
+}
+/* Review dots: 6 dp (5 dp when small) while they fit in W, else a bar W wide. */
+function dots(b, d, c, W, small){
+  const s = small ? 5 : 6, g = small ? 2 : 3;
+  if (b <= 10 && b * s + (b - 1) * g <= W){
+    let h = `<span class="fdots tr">`;
+    for (let i = 0; i < b; i++) h += `<i class="${i < d ? 'd' : i < d + c ? 'c' : ''}" style="width:${s}px;height:${s}px;${i < b - 1 ? `margin-right:${g}px` : ''}"></i>`;
+    return h + '</span>';
+  }
+  return `<span class="fbar tr" style="width:${W}px"><i style="width:${d/b*100}%"></i><i class="c" style="width:${Math.min(c, b - d)/b*100}%"></i></span>`;
+}
+const T = t => `<span class="fx">${t}</span>`;
+
+/* Line 3 parts in three sizes: full, short (numbers only), small (short and smaller trackers). */
+function crewPart(a, h, size){
+  const c = a.crew; if (!c) return null;
+  const W = size === 'small' ? 48 : 70;
+  if (c.state === 'testing' && c.day <= c.run) return ic('users',11,K.t3) + strip(c.run, c.day, W) + T(size === 'full' ? `Day ${c.day} of ${c.run}` : `Day ${c.day}`);
+  if (c.state === 'testing') return ic('users',11,K.t3) + strip(c.run, c.day, W) + T('Others still testing');
+  if (c.state === 'starting') return ic('users',11,K.t3) + strip(c.run, 0, W) + T('Day 1 at midnight');
+  if (h.about !== 'crew') return null;
+  if (c.state === 'waiting') return ic('hourglass',11,K.t3) + T("Starts when it's full");
+  if (c.state === 'checking') return T('Members install it first');
+  if (c.state === 'rejected') return T('Fix it, then try again');
+  return null;
+}
+function fbPart(a, h, size, extra){
+  const f = a.fb; if (!f) return null;
+  if (f.state === 'collecting'){
+    if (!f.bought) return null;
+    const W = size === 'small' ? 40 : 70;
+    const chk = f.check && h.says !== 'check' ? `<span class="fx" style="color:${K.acc};font-weight:600">${cap(f.check)} to check</span>` : '';
+    const nums = chk ? (size === 'full' ? T(`${f.done} of ${f.bought}, `) + chk : chk)
+                     : T(size === 'full' ? `${f.done} of ${f.bought} in` : `${f.done} of ${f.bought}`);
+    return ic('msg',11,K.t3) + dots(f.bought, f.done, f.check || 0, W, size === 'small') + nums
+      + (extra && f.unlisted ? `<span class="gap"></span>` + T('Off Circle for now') : '');
+  }
+  if (f.state === 'done' && h.about !== 'fb') return ic('ccheck',11,K.ok) + T(`All ${f.bought} reviews in`);
+  if (f.state === 'closed') return ic('msg',11,K.t3) + T(`${f.done} of ${f.bought} reviews in`);
+  return null;
+}
+/* The fallback chain: the first version that fits the line wins. */
+function line3Variants(a, h){
+  const v = [];
+  const add = (label, parts) => { const p = parts.filter(Boolean); if (p.length) v.push([label, p.join('<span class="gap"></span>')]); };
+  const both = crewPart(a, h, 'full') && fbPart(a, h, 'full');
+  if (both){
+    add('full', [crewPart(a,h,'full'), fbPart(a,h,'full',true)]);
+    if (a.fb.unlisted) add('drop "Off Circle"', [crewPart(a,h,'full'), fbPart(a,h,'full',false)]);
+    add('short numbers', [crewPart(a,h,'short'), fbPart(a,h,'short',false)]);
+    add('small trackers', [crewPart(a,h,'small'), fbPart(a,h,'small',false)]);
+    if (a.fb.check && h.says !== 'check'){
+      add('feedback only', [fbPart(a,h,'full',false)]);
+      add('feedback only, short', [fbPart(a,h,'short',false)]);
+      add('feedback only, small', [fbPart(a,h,'small',false)]);
+    }
+    add('crew only', [crewPart(a,h,'full')]);
+    add('crew only, short', [crewPart(a,h,'short')]);
+    add('crew only, small', [crewPart(a,h,'small')]);
+  } else if (crewPart(a,h,'full') || fbPart(a,h,'full')){
+    const one = crewPart(a,h,'full') ? 'crew' : 'fb';
+    const part = (s, x) => one === 'crew' ? crewPart(a,h,s) : fbPart(a,h,s,x);
+    add('full', [part('full', true)]);
+    if (a.fb && a.fb.unlisted) add('drop "Off Circle"', [part('full', false)]);
+    add('short numbers', [part('short', false)]);
+    add('small trackers', [part('small', false)]);
+  } else if (!a.live && !a.verified && !a.crew){
+    add('full', [T('Add the testers group')]);
+  }
+  return v;
+}
+
+/* ---------- the corner cases ---------- */
+const CASES = [
+  {id:1,  why:'Name of 44 characters, live, 1 review to check', name:'Prayer Times Pro: Azan, Qibla & Quran Reader', hue:150, live:true, verified:'play', fb:{state:'collecting', done:3, bought:8, check:1}},
+  {id:2,  why:'Name with no spaces, closed, not verified', name:'SuperLongPackageStyleNameWithNoSpacesAtAll', hue:200, live:false, verified:null},
+  {id:3,  why:"Busiest tile: crew, feedback, to check and can't install, long crew name", name:'Night Shift Notes', hue:12, live:false, verified:'crew', crew:{state:'testing', name:LONG, day:6, run:14}, fb:{state:'collecting', done:2, bought:5, check:1, unlisted:true}},
+  {id:4,  why:"Busiest at its worst: 30-day run, 120 bought, 99+ to check, can't install, 44-char name", name:'Prayer Times Pro: Azan, Qibla & Quran Reader', hue:150, live:false, verified:'crew', crew:{state:'testing', name:LONG, day:30, run:30}, fb:{state:'collecting', done:12, bought:120, check:104, unlisted:true}},
+  {id:5,  why:'99+ reviews to check, 150 bought (bar)', name:'Habit Hero', hue:95, live:true, verified:'play', fb:{state:'collecting', done:12, bought:150, check:104}},
+  {id:6,  why:'120 bought, collecting (bar)', name:'Bloom Journal', hue:330, live:true, verified:'play', fb:{state:'collecting', done:47, bought:120}},
+  {id:7,  why:'Collecting just started, 0 of 5', name:'Fresh Start', hue:60, live:true, verified:'play', fb:{state:'collecting', done:0, bought:5}},
+  {id:8,  why:'0 reviews bought (old or odd data)', name:'Edge Case App', hue:280, live:true, verified:'play', fb:{state:'collecting', done:0, bought:0}},
+  {id:9,  why:'30-day run, day 17, long crew name', name:'Coin Jar', hue:40, live:false, verified:'crew', crew:{state:'testing', name:LONG, day:17, run:30}},
+  {id:10, why:'30-day run, last day (30 of 30)', name:'Tidy Tasks', hue:170, live:false, verified:'crew', crew:{state:'testing', name:LONG, day:30, run:30}},
+  {id:11, why:'30-day run, all days done, crew still running', name:'Quiet Hours', hue:255, live:false, verified:'crew', crew:{state:'testing', name:LONG, day:31, run:30}},
+  {id:12, why:'7-day run, day 3', name:'Run Log', hue:20, live:false, verified:'crew', crew:{state:'testing', name:'Crew 07', day:3, run:7}},
+  {id:13, why:'1-day run', name:'One Night App', hue:220, live:false, verified:'crew', crew:{state:'testing', name:'Crew 03', day:1, run:1}},
+  {id:14, why:'Starting tonight, 30-day run, long crew name', name:'Pocket Planner', hue:205, live:false, verified:'play', crew:{state:'starting', name:LONG, day:0, run:30}},
+  {id:15, why:'Waiting, long crew name', name:'Sky Diary', hue:300, live:false, verified:'play', crew:{state:'waiting', name:LONG}},
+  {id:16, why:'Checking, long crew name', name:'Mint Budget', hue:135, live:false, verified:'play', crew:{state:'checking', name:LONG}},
+  {id:17, why:'Sent back, long crew name', name:'Snap Notes', hue:285, live:false, verified:'play', crew:{state:'rejected', name:LONG}},
+  {id:18, why:'Taken out, long crew name, 150 reviews done', name:'Word Garden', hue:175, live:false, verified:'crew', crew:{state:'removed', name:LONG}, fb:{state:'done', done:150, bought:150}},
+  {id:19, why:'Closed early at 117 of 150', name:'Lumen Camera', hue:225, live:true, verified:'play', fb:{state:'closed', done:117, bought:150}},
+  {id:20, why:"Can't be installed, live, 3 of 8", name:'Daily Verse', hue:20, live:true, verified:'play', fb:{state:'collecting', done:3, bought:8, unlisted:true}},
+  {id:21, why:"Live, Play hasn't answered", name:'Sunny Weather Widget Pro', hue:48, live:true, verified:null},
+  {id:22, why:'3 crew tests done, all 50 reviews in', name:'Habit Hill', hue:110, live:false, verified:'crew', crew:{state:'finished', name:'Crew 02'}, crewsDone:3, fb:{state:'done', done:50, bought:50}},
+];
+
+window.FCASES = CASES;
+function fmark(a, th, size){
+  const [f, k] = th === 'dark' ? [`hsl(${a.hue},30%,18%)`,`hsl(${a.hue},55%,76%)`] : [`hsl(${a.hue},45%,89%)`,`hsl(${a.hue},50%,32%)`];
+  return `<div class="f-mk mark" style="width:${size}px;height:${size}px;border-radius:${size*0.3}px;background:${f};color:${k};font-size:${Math.round(size*0.36)}px">${a.name[0]}</div>`;
+}
+function ftile(a, th, fs){
+  const h = headline(a), n = needs(a);
+  const icon = 52 * Math.min(Math.max(fs, 1), 1.3);   // the icon grows with the font up to 1.3x
+  const l2 = `<div class="f-l2" style="color:${h.col};font-weight:${h.w || 500}">${h.i ? ic(h.i,12,h.ic || h.col) : ''}<span class="fx">${h.fixed}</span>${h.name ? `<span class="shr nmc">${h.name}</span>` : ''}</div>`;
+  const v = line3Variants(a, h);
+  const enc = encodeURIComponent(JSON.stringify(v));
+  const trail = `<div class="f-tr">${n ? `<span class="f-bub">${cap(n)}</span>` : ic('chev',18,'var(--text4)')}</div>`;
+  return `<div class="f-ht" data-case="${a.id}" data-v="${enc}">${fmark(a, th, icon)}<div class="f-col"><div class="f-nm"><span class="shr nmn">${a.name}</span>${ic(a.live ? 'globe' : 'flask',13,'var(--text4)')}</div>${l2}${v.length ? '<div class="f-l3"></div>' : ''}</div>${trail}</div>`;
+}
+const PH = [
+  {key:'392L', w:392, th:'light', fs:1, cap:'392 dp, light, font 1x'},
+  {key:'392D', w:392, th:'dark', fs:1, cap:'392 dp, dark, font 1x'},
+  {key:'360L', w:360, th:'light', fs:1, cap:'360 dp, light, font 1x'},
+  {key:'392L13', w:392, th:'light', fs:1.3, cap:'392 dp, light, font 1.3x'},
+  {key:'360D13', w:360, th:'dark', fs:1.3, cap:'360 dp, dark, font 1.3x (worst)'},
+];
+function fphone(p){
+  return `<div><div class="cap">${p.cap}</div><div class="fph ${p.th}" data-ph="${p.key}" style="width:${p.w}px;--fs:${p.fs}"><div class="sbar"><span>9:41</span><span>5G  86%</span></div><div class="head">Your apps</div>${CASES.map(a => `<div class="f-w">${ftile(a, p.th, p.fs)}</div>`).join('')}</div></div>`;
+}
+
+const RULES = `
+<ol class="rules">
+  <li><b>App name:</b> one line, ends in an ellipsis. The flask or globe after it always stays on the tile. A name with no spaces is cut at the character, never wrapped.</li>
+  <li><b>Headline order:</b> can't be installed, then reviews to check, then not verified, then crew trouble, then what is running, then the record. A request testers can't install comes first because it stops the request; reviews left unchecked accept themselves at their deadline.</li>
+  <li><b>Headline:</b> a fixed phrase that is never cut (20 characters at most), with any number at the front: "99+ reviews to check", "All 30 days done". A crew name only appears at the end of a crew headline ("Testing in", "Sent back by", "Taken out of", "Waiting in", "Being checked in", "Starts tonight in"), and only the name ends in an ellipsis, so the verb always shows.</li>
+  <li><b>Long numbers stay off line 2:</b> "Closed at 117 of 150 reviews" became "Feedback closed" with "117 of 150 reviews in" on line 3. "Testers can't install it" became "Can't be installed", "Play hasn't answered yet" became "Waiting for Play", and "Add the testers group" moved to line 3 under "Not verified yet".</li>
+  <li><b>Line 3 is never cut.</b> It picks the first version that fits: (1) the crew part and the feedback part in full, (2) without "Off Circle for now", (3) short numbers ("Day 6", "2 of 5"), (4) smaller trackers, (5) the part alone that holds an action the headline doesn't say ("1 to check" under "Can't be installed"), (6) otherwise the crew part alone: full, then short, then small, because the crew run is on a clock. Every action the bubble counts is always said in words somewhere on the tile.</li>
+  <li><b>Day strip:</b> 70 dp wide at most (48 dp small). Gap 2 dp up to 14 days, 1 dp above. Each day gets up to 6 dp; when that leaves under 1.5 dp a day it becomes a 4 dp bar, today at 40%.</li>
+  <li><b>Review dots:</b> 6 dp with a 3 dp gap (5 and 2 when small) while they fit the same 70 dp (40 dp small): up to 8 dots, or 6 small ones. Beyond that, a 4 dp bar: accepted in steel, waiting to be checked in faded steel. 0 bought shows no tracker.</li>
+  <li><b>Numbers:</b> any count over 99 shows as "99+", in the bubble and in the headline. Review totals on line 3 are shown in full (MAX_REVIEWS is 50 today; 150 still fits).</li>
+  <li><b>Bubble:</b> 22 dp high, at least 22 dp wide and never wider than "99+" (about 34 dp at 1x). The text column gives up that room, and line 3 falls back a step if it has to.</li>
+  <li><b>Font size:</b> every row stays one line at any size. Up to 1.3x the icon grows with the text (52 dp times the font scale, capped at 1.3), so the text column is still no taller than the icon and the tile grows from 76 to about 92 dp. Above 1.3x the icon stops at 68 dp and the tile grows with the text; at that size being readable comes before the height rule.</li>
+</ol>`;
+
+document.getElementById('final').innerHTML = `<section class="opt" style="margin-top:28px;border-top:2px solid #3A5B73">
+  <h2>B, final: corner cases <span class="rec">Owner's pick</span></h2>
+  <p class="why">Option B under the worst real data: long names, long crew names, the busiest tile, 99+ counts, 120 and 150 reviews bought, 30-day and 1-day runs, at 392 dp and 360 dp and at 1.3x font. The rules below are coded into this page the way the app should code them: every tile picks its own line 3, and the table under the phones says which version it used and what was cut. A red outline marks a tile that breaks. This section replaces the round-one copy in Option B further down.</p>
+  ${RULES}
+  <p class="verdict" id="fverdict"></p>
+  <div class="fwrap">${PH.map(fphone).join('')}</div>
+  <div id="ftable"></div>
+</section>`;
+
+function settle(){
+  document.querySelectorAll('.f-ht').forEach(t => {
+    const l3 = t.querySelector('.f-l3'); if (!l3) { t.dataset.pick = 'none'; return; }
+    const v = JSON.parse(decodeURIComponent(t.dataset.v)); let pick = -1;
+    for (let i = 0; i < v.length; i++){ l3.innerHTML = v[i][1]; if (l3.scrollWidth <= l3.clientWidth + 0.5){ pick = i; break; } }
+    if (pick < 0){ pick = v.length - 1; l3.innerHTML = v[pick][1]; t.dataset.l3broke = '1'; } else delete t.dataset.l3broke;
+    t.dataset.pick = v[pick][0];
+  });
+}
+function fmeasure(){
+  let rows = '', broke = 0, total = 0;
+  for (const a of CASES){
+    let r = `<tr><td>${a.id}</td><td>${a.why}</td>`;
+    for (const p of PH){
+      const t = document.querySelector(`[data-ph="${p.key}"] .f-ht[data-case="${a.id}"]`);
+      const col = t.querySelector('.f-col').offsetHeight, icon = t.querySelector('.f-mk').offsetHeight;
+      const l2 = t.querySelector('.f-l2'), nm = t.querySelector('.nmn'), cn = t.querySelector('.nmc');
+      const cuts = [];
+      if (nm.scrollWidth > nm.clientWidth + 0.5) cuts.push('name');
+      if (cn && cn.scrollWidth > cn.clientWidth + 0.5) cuts.push(cn.clientWidth < 24 ? 'crew name GONE' : 'crew name');
+      const said = l2.textContent + ' ' + (t.querySelector('.f-l3') ? t.querySelector('.f-l3').textContent : '');
+      const f = a.fb || {};
+      const hidden = [];
+      if (f.check && !/to check/.test(said)) hidden.push('reviews to check');
+      if (f.unlisted && !/installed/.test(said)) hidden.push("can't be installed");
+      if (!a.live && !a.verified && !/Not verified/.test(said)) hidden.push('not verified');
+      if (hidden.length) cuts.push('ACTION HIDDEN: ' + hidden.join(', '));
+      const bad = col > icon || l2.scrollWidth > l2.clientWidth + 0.5 || t.dataset.l3broke || (cn && cn.clientWidth < 24) || hidden.length;
+      t.classList.toggle('broke', !!bad); total++; if (bad) broke++;
+      r += `<td class="${bad ? 'bad' : ''}">${col}/${icon}, tile ${t.offsetHeight}<br>line 3: ${t.dataset.pick}${cuts.length ? '<br>cut: ' + cuts.join(', ') : ''}${bad ? '<br>BREAKS' : ''}</td>`;
+    }
+    rows += r + '</tr>';
+  }
+  document.getElementById('ftable').innerHTML = `<table class="res"><tr><th>#</th><th>Case</th>${PH.map(p => `<th>${p.cap}<br><span style="font-weight:400">column/icon dp, tile dp</span></th>`).join('')}</tr>${rows}</table>`;
+  document.getElementById('fverdict').innerHTML = broke ? `<span style="color:#9E3B2E">${broke} of ${total} tiles break.</span>` :
+    `<span style="color:#246B59">Measured: all ${total} tiles hold (${CASES.length} cases on 5 phones). No headline phrase, number or line 3 is cut, every action the bubble counts is said on the tile, and no text column is taller than its icon. Only app names and crew names end in an ellipsis.</span>`;
+}
+function run(){ settle(); fmeasure(); }
+run(); document.fonts.ready.then(run);
+window.addEventListener('resize', run);
+})();
+</script>
+
+
+<script>
+/* ================= B SIMPLE: name up to two lines, one status ================= */
+(function(){
+const CASES = window.FCASES;
+document.head.insertAdjacentHTML('beforeend', `<style>
+  .s-ht { display:flex; align-items:center; min-height:76px; border-radius:14px; background:var(--bg); box-shadow:inset 0 0 0 1px var(--cardLine); padding:12px; }
+  .s-ht.broke { box-shadow:inset 0 0 0 2px #E0453A; }
+  .s-ic { position:relative; flex:none; margin-right:12px; }
+  .s-col { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .s-nm { font-size:calc(16px*var(--fs)); line-height:calc(19px*var(--fs)); font-weight:600; color:var(--text); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; }
+  .s-st { display:flex; align-items:center; font-size:calc(12.5px*var(--fs)); line-height:calc(14px*var(--fs)); white-space:nowrap; overflow:hidden; }
+  .s-st > * { flex:none; } .s-st > .ic { margin-right:4px; }
+  .s-tr { margin-left:10px; flex:none; display:flex; align-items:center; justify-content:flex-end; }
+  .s-disc { position:absolute; right:-5px; bottom:-5px; width:20px; height:20px; border-radius:50%; box-shadow:0 0 0 2px var(--bg); display:grid; place-items:center; }
+  .s-edge { position:absolute; inset:-3.5px; pointer-events:none; }
+  .s-word { position:absolute; left:50%; bottom:-6px; transform:translateX(-50%); height:14px; padding:0 5px; border-radius:999px; box-shadow:0 0 0 2px var(--bg); font-size:calc(9.5px*var(--fs)); line-height:14px; font-weight:700; letter-spacing:.2px; white-space:nowrap; }
+</style>`);
+const K = {t2:'var(--text2)', t3:'var(--text3)', t4:'var(--text4)', acc:'var(--accentInk)', ok:'var(--ok)', warn:'var(--warn)', bad:'var(--bad)'};
+const cap = n => n > 99 ? '99+' : String(n);
+const needs = a => { const f = a.fb || {}; return (f.check || 0) + (f.unlisted ? 1 : 0) + (!a.live && !a.verified ? 1 : 0); };
+
+/* One status, first match wins. fixed is never cut; only name (a crew name) ends in an ellipsis. */
+function status(a){
+  const c = a.crew, f = a.fb;
+  if (f && f.unlisted) return {i:'alert', fixed:"Can't be installed", col:K.bad, w:600};
+  if (f && f.check) return {fixed:`${cap(f.check)} review${f.check > 1 ? 's' : ''} to check`, col:K.acc, w:600};
+  if (!a.live && !a.verified) return {i:'alert', fixed:'Not verified yet', col:K.warn, w:600};
+  if (c){
+    switch (c.state){
+      case 'rejected': return {i:'cx', fixed:'Sent back by ', name:c.name, col:K.bad};
+      case 'removed':  return {i:'cx', fixed:'Taken out of ', name:c.name, col:K.bad};
+      case 'testing':  return c.day > c.run ? {fixed:`All ${c.run} days done`, col:K.t2} : {fixed:`Day ${c.day} of ${c.run} in `, name:c.name, col:K.t2};
+      case 'starting': return {fixed:'Starts tonight in ', name:c.name, col:K.t2};
+      case 'checking': return {fixed:'Being checked in ', name:c.name, col:K.t2};
+      case 'waiting':  return {fixed:'Waiting in ', name:c.name, col:K.t2};
+    }
+  }
+  if (f && f.state === 'collecting') return f.bought ? {fixed:`${f.done} of ${f.bought} reviews in`, col:K.t2} : {fixed:'Collecting feedback', col:K.t2};
+  if (c && c.state === 'finished') return {i:'ccheck', ic:K.ok, fixed: a.crewsDone > 1 ? `${a.crewsDone} crew tests done` : 'Crew test done', col:K.t3, w:400};
+  if (f && f.state === 'done') return {i:'ccheck', ic:K.ok, fixed:`All ${f.bought} reviews in`, col:K.t3, w:400};
+  if (f && f.state === 'closed') return {fixed:'Feedback closed', col:K.t4, w:400};
+  if (a.live && !a.verified) return {i:'hourglass', fixed:'Waiting for Play', col:K.t3, w:400};
+  return {fixed: a.live ? 'Ready for feedback' : 'Ready for a crew', col:K.t3, w:400};
+}
+
+const PLAY = s => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.6-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5Z" fill="currentColor"/></svg>`;
+function indicator(kind, a, size){
+  const r = size * 0.3 + 3.5;
+  if (kind === 'disc') return a.live
+    ? `<span class="s-disc" style="background:var(--accent);color:var(--onAccent)" title="Live on Google Play">${PLAY(10)}</span>`
+    : `<span class="s-disc" style="background:var(--tile)" title="Closed test">${ic('flask',11,'var(--tileInk)',2.2)}</span>`;
+  if (kind === 'edge') return a.live
+    ? `<span class="s-edge" style="border-radius:${r}px;box-shadow:inset 0 0 0 2px var(--ok)"></span>`
+    : `<span class="s-edge" style="border-radius:${r}px;border:1.5px dashed var(--glassBorderStrong)"></span>`;
+  return a.live
+    ? `<span class="s-word" style="background:var(--accent);color:var(--onAccent)">LIVE</span>`
+    : `<span class="s-word" style="background:var(--tile);color:var(--tileInk)">TEST</span>`;
+}
+function smark(a, th, size){
+  const [f, k] = th === 'dark' ? [`hsl(${a.hue},30%,18%)`,`hsl(${a.hue},55%,76%)`] : [`hsl(${a.hue},45%,89%)`,`hsl(${a.hue},50%,32%)`];
+  return `<div class="mark" style="width:${size}px;height:${size}px;border-radius:${size*0.3}px;background:${f};color:${k};font-size:${Math.round(size*0.36)}px">${a.name[0]}</div>`;
+}
+function stile(a, th, fs, kind){
+  const st = status(a), n = needs(a);
+  const icon = 52 * Math.min(Math.max(fs, 1), 1.3);
+  return `<div class="s-ht" data-scase="${a.id}"><div class="s-ic" style="width:${icon}px;height:${icon}px">${smark(a, th, icon)}${indicator(kind, a, icon)}</div>`
+    + `<div class="s-col"><div class="s-nm">${a.name}</div>`
+    + `<div class="s-st" style="color:${st.col};font-weight:${st.w || 500}">${st.i ? ic(st.i,12,st.ic || st.col) : ''}<span class="fx">${st.fixed}</span>${st.name ? `<span class="shr nmc">${st.name}</span>` : ''}</div></div>`
+    + `<div class="s-tr">${n ? `<span class="f-bub">${cap(n)}</span>` : ic('chev',18,'var(--text4)')}</div></div>`;
+}
+const PH = [
+  {key:'s392L', w:392, th:'light', fs:1, cap:'392 dp, light, font 1x'},
+  {key:'s392D', w:392, th:'dark', fs:1, cap:'392 dp, dark, font 1x'},
+  {key:'s360D13', w:360, th:'dark', fs:1.3, cap:'360 dp, dark, font 1.3x (worst)'},
+];
+const phoneHtml = (p, kind, list, tag) => `<div><div class="cap">${p.cap}</div><div class="fph ${p.th}" ${tag ? `data-sph="${p.key}"` : ''} style="width:${p.w}px;--fs:${p.fs}"><div class="sbar"><span>9:41</span><span>5G  86%</span></div><div class="head">Your apps</div>${list.map(a => `<div class="f-w">${stile(a, p.th, p.fs, kind)}</div>`).join('')}</div></div>`;
+const FEW = [1, 3, 6, 17, 21, 22].map(id => CASES.find(c => c.id === id));
+const IND = [
+  {kind:'disc', title:'1. Corner mark on the icon', pick:true, why:"A 20 dp disc on the icon's bottom-right corner, cut out by a 2 dp ring in the page colour: a white Play triangle on steel for live, a steel flask on the soft tile for a closed test. Two different shapes and two weights, so it reads at a glance in light and dark, and the name gets the whole width."},
+  {kind:'edge', title:'2. A thin edge round the icon', why:'Live gets a 2 dp green ring, a closed test a dashed grey one. The calmest of the three, but colour and dashes alone have to be learned, and green can be read as "done".'},
+  {kind:'word', title:'3. A tiny word on the icon', why:'LIVE or TEST on a small pill across the bottom of the icon. Plain to read, but it puts a stamp-like word on every tile, the look the owner moved away from.'},
+];
+
+document.getElementById('simple').innerHTML = `<section class="opt" style="margin-top:28px;border-top:2px solid #3A5B73">
+  <h2>B, simple <span class="rec">Latest</span></h2>
+  <p class="why">The app's name on up to two lines, and one short status under it with no gap: 19 + 19 + 14 = 52 dp, the Requests ticket's text block. A one-line name keeps the column centred. A count bubble when the app needs the owner, otherwise a chevron. Crew days, review dots and install reports live on the app's own page. Same 76 dp tile and 52 dp icon, 12 dp padding on both sides, so the bubble or chevron sits as far from the right edge as the icon does from the left.</p>
+  <ol class="rules">
+    <li><b>One status, first match wins:</b> can't be installed, reviews to check, not verified, sent back, taken out, crew running (day, all days done, starting, checking, waiting), feedback collecting, crew test done, all reviews in, feedback closed, waiting for Play, ready.</li>
+    <li><b>Never cut:</b> the status phrase and its numbers ("Day 30 of 30 in", "117 of 150 reviews in", "99+ reviews to check"). Only a crew name at the end ends in an ellipsis. The app name ends in an ellipsis after two lines.</li>
+    <li><b>Bubble:</b> the count of everything that needs the owner (reviews to check, can't be installed, not verified), "99+" above 99. The status names the most urgent one; the app's page lists them all.</li>
+    <li><b>Font size:</b> up to 1.3x the icon grows with the text (52 dp times the scale), so the column still fits beside it; the tile grows from 76 to about 92 dp.</li>
+  </ol>
+  <h3 style="font-size:18px;margin:22px 0 4px">Closed test or live: three ways</h3>
+  ${IND.map(o => `<p class="why"><b>${o.title}${o.pick ? ' (my pick)' : ''}.</b> ${o.why}</p>`).join('')}
+  <div class="fwrap">${IND.map(o => `<div><div class="cap" style="font-size:14px;color:#203A4E">${o.title}${o.pick ? ' (my pick)' : ''}</div><div style="display:flex;gap:14px">${phoneHtml({cap:'Light', w:392, th:'light', fs:1}, o.kind, FEW)}${phoneHtml({cap:'Dark', w:392, th:'dark', fs:1}, o.kind, FEW)}</div></div>`).join('')}</div>
+  <h3 style="font-size:18px;margin:26px 0 4px">All 22 corner cases with the corner mark</h3>
+  <p class="verdict" id="sverdict"></p>
+  <div class="fwrap">${PH.map(p => phoneHtml(p, 'disc', CASES, true)).join('')}</div>
+  <div id="stable"></div>
+</section>`;
+
+function smeasure(){
+  let rows = '', broke = 0, total = 0;
+  for (const a of CASES){
+    let r = `<tr><td>${a.id}</td><td>${a.why}</td>`;
+    for (const p of PH){
+      const t = document.querySelector(`[data-sph="${p.key}"] [data-scase="${a.id}"]`);
+      const col = t.querySelector('.s-col').offsetHeight, icon = t.querySelector('.s-ic').offsetHeight;
+      const st = t.querySelector('.s-st'), nm = t.querySelector('.s-nm'), cn = t.querySelector('.nmc');
+      const cuts = [];
+      if (nm.scrollHeight > nm.clientHeight + 1) cuts.push('name after 2 lines'); else if (nm.offsetHeight > 25 * p.fs) cuts.push('name on 2 lines');
+      if (cn && cn.scrollWidth > cn.clientWidth + 0.5) cuts.push(cn.clientWidth < 24 ? 'crew name GONE' : 'crew name');
+      const right = t.getBoundingClientRect().right - t.querySelector('.s-tr').lastElementChild.getBoundingClientRect().right;
+      const asym = Math.abs(right - 12) > 1.5;
+      if (asym) cuts.push('right gap ' + right.toFixed(1));
+      const bad = asym || col > icon || st.scrollWidth > st.clientWidth + 0.5 || (cn && cn.clientWidth < 24);
+      t.classList.toggle('broke', !!bad); total++; if (bad) broke++;
+      r += `<td class="${bad ? 'bad' : ''}">${col}/${icon}, tile ${t.offsetHeight}${cuts.length ? '<br>' + cuts.join(', ') : ''}${bad ? '<br>BREAKS' : ''}</td>`;
+    }
+    rows += r + '</tr>';
+  }
+  document.getElementById('stable').innerHTML = `<table class="res"><tr><th>#</th><th>Case</th>${PH.map(p => `<th>${p.cap}<br><span style="font-weight:400">column/icon dp, tile dp</span></th>`).join('')}</tr>${rows}</table>`;
+  document.getElementById('sverdict').innerHTML = broke ? `<span style="color:#9E3B2E">${broke} of ${total} tiles break.</span>` :
+    `<span style="color:#246B59">Measured: all ${total} tiles hold (${CASES.length} cases on 3 phones). No status phrase or number is cut, no text column is taller than its icon, and the bubble or chevron ends 12 dp from the right edge on every tile.</span>`;
+}
+smeasure(); document.fonts.ready.then(smeasure);
+window.addEventListener('resize', smeasure);
+})();
+</script>
+
+</body>
+</html>

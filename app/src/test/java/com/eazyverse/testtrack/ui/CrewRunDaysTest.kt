@@ -91,6 +91,9 @@ class CrewRunDaysTest {
     @Test
     fun `the app list says a member's nights are done`() {
         val status = AppCrewStatus("testing", "c1", "Crew 07", day = 17, runDays = 16)
-        assertEquals("Your nights in Crew 07 are done", crewBadge(status).text)
+        assertEquals(
+            "Your nights in Crew 07 are done",
+            crewStatus(AppEntry(id = "a", pkg = "com.example.app", name = "Lapse", crew = status)),
+        )
     }
 }

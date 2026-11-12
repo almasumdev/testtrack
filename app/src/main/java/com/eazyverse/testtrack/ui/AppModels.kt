@@ -1,10 +1,10 @@
 package com.eazyverse.testtrack.ui
 
 /*
- * My apps as the screens draw it: each app added once, and the badges that say where it is.
+ * My apps as the screens draw it: each app added once, one status line and the problems it has.
  *
  * Mapped from the server's answer in the view model, so no screen here reaches the network to
- * be drawn, and every word a badge says is worked out by plain functions a test can call.
+ * be drawn, and every word a tile says is worked out by plain functions a test can call.
  */
 
 /** Where an app is with crews: the newest seat that was not simply given up. */
@@ -24,6 +24,10 @@ data class AppFeedbackStatus(
     val postId: String,
     val done: Int = 0,
     val bought: Int = 0,
+    /** Reviews of this request waiting for the owner to accept or refuse. */
+    val toCheck: Int = 0,
+    /** Taken off Circle because testers could not install the app. */
+    val unlisted: Boolean = false,
 )
 
 /** One app on My apps. */
@@ -52,51 +56,96 @@ data class AppEntry(
     val collecting: Boolean get() = feedback?.state == "collecting"
 }
 
-/** How a badge is coloured: the word decides what it says, the tone how loudly. */
-enum class BadgeTone { RUNNING, DONE, ATTENTION, PROBLEM, QUIET }
+/** What the status line under an app's name is coloured and weighted as. */
+enum class StatusTone { ACCENT, BODY, QUIET, FAINT }
 
-/** What a badge is about, which decides where tapping it goes. */
-enum class BadgeKind { CREW, FEEDBACK, VERIFY, IDLE }
+/** The small icon that may lead the status line. */
+enum class StatusMark { NONE, DONE, WAITING }
 
-data class AppBadge(
+/**
+ * The one line under an app's name. [text] is never cut; [crew] is the crew's name that follows it,
+ * the only part that may end in an ellipsis when the line is short of room.
+ */
+data class AppStatusLine(
     val text: String,
-    val tone: BadgeTone,
-    val kind: BadgeKind,
+    val crew: String = "",
+    val tone: StatusTone = StatusTone.BODY,
+    val mark: StatusMark = StatusMark.NONE,
 )
 
-/** The badges a tile shows, in the order they are read: crew, then feedback, then unverified. */
-fun AppEntry.badges(): List<AppBadge> =
-    listOfNotNull(crew?.let(::crewBadge), feedback?.let(::feedbackBadge)) +
-        listOfNotNull(
-            if (!verified) AppBadge("Not verified", BadgeTone.ATTENTION, BadgeKind.VERIFY) else null,
-        )
+/** What is wrong with an app, shown by a mark on the right of its tile rather than in its status. */
+enum class AppProblem { UNLISTED, NOT_VERIFIED, SENT_BACK, TAKEN_OUT }
 
-/** A tile's badges: the same, or one quiet one when nothing is happening, so the row is never empty. */
-fun AppEntry.tileBadges(): List<AppBadge> = badges().ifEmpty { listOf(AppBadge("Nothing running", BadgeTone.QUIET, BadgeKind.IDLE)) }
+/** A count as a tile says it: the number, or "99+" above the cap. */
+fun cappedCount(
+    count: Int,
+    cap: Int = 99,
+): String = if (count > cap) "$cap+" else "$count"
 
-fun crewBadge(crew: AppCrewStatus): AppBadge =
-    when (crew.state) {
-        "waiting" -> AppBadge("${crew.crewName} is filling", BadgeTone.RUNNING, BadgeKind.CREW)
-        "checking" -> AppBadge("${crew.crewName}, members checking", BadgeTone.ATTENTION, BadgeKind.CREW)
-        "starting" -> AppBadge("${crew.crewName} starts at midnight, your time", BadgeTone.RUNNING, BadgeKind.CREW)
-        "testing" ->
-            if (crew.day > crew.runDays) {
-                AppBadge("Your nights in ${crew.crewName} are done", BadgeTone.RUNNING, BadgeKind.CREW)
-            } else {
-                AppBadge("Day ${crew.day} of ${crew.runDays} in ${crew.crewName}", BadgeTone.RUNNING, BadgeKind.CREW)
-            }
-        "finished" -> AppBadge("Crew test done", BadgeTone.DONE, BadgeKind.CREW)
-        "rejected" -> AppBadge("Sent back to be fixed", BadgeTone.PROBLEM, BadgeKind.CREW)
-        "removed" -> AppBadge("Out of ${crew.crewName}", BadgeTone.PROBLEM, BadgeKind.CREW)
-        else -> AppBadge(crew.crewName, BadgeTone.QUIET, BadgeKind.CREW)
+/** Reviews of this app's request that wait for its owner to accept or refuse. */
+val AppEntry.toCheck: Int get() = feedback?.toCheck?.coerceAtLeast(0) ?: 0
+
+/** The problems an app has, in the order a tile lists them. */
+fun AppEntry.problems(): List<AppProblem> =
+    listOfNotNull(
+        AppProblem.UNLISTED.takeIf { feedback?.unlisted == true },
+        AppProblem.NOT_VERIFIED.takeIf { !live && !verified },
+        AppProblem.SENT_BACK.takeIf { crew?.state == "rejected" },
+        AppProblem.TAKEN_OUT.takeIf { crew?.state == "removed" },
+    )
+
+/** One plain sentence for a problem, said in the tile's tooltip. */
+fun AppProblem.sentence(app: AppEntry): String {
+    val crew = app.crew?.crewName?.ifBlank { null } ?: "its crew"
+    return when (this) {
+        AppProblem.UNLISTED -> "Testers couldn't install it, so it's off Circle for now. Open it to fix."
+        AppProblem.NOT_VERIFIED -> "Not verified yet. Add the testers group, then tap Verify."
+        AppProblem.SENT_BACK -> "Sent back by $crew. Fix it, then try again."
+        AppProblem.TAKEN_OUT -> "Taken out of $crew."
     }
+}
 
-fun feedbackBadge(feedback: AppFeedbackStatus): AppBadge =
-    when (feedback.state) {
-        "collecting" -> AppBadge("Feedback ${feedback.done} of ${feedback.bought}", BadgeTone.RUNNING, BadgeKind.FEEDBACK)
-        "done" -> AppBadge("Feedback done", BadgeTone.DONE, BadgeKind.FEEDBACK)
-        else -> AppBadge("Feedback closed at ${feedback.done} of ${feedback.bought}", BadgeTone.QUIET, BadgeKind.FEEDBACK)
+/**
+ * What an app is doing, in one line. The first that applies wins; problems are never here, they
+ * have their own mark. The crew's length comes from the server, never from a number written here.
+ */
+fun AppEntry.statusLine(): AppStatusLine {
+    val crew = crew
+    val feedback = feedback
+    val state = crew?.state
+    val name = crew?.crewName.orEmpty()
+    return when {
+        toCheck > 0 ->
+            AppStatusLine(if (toCheck == 1) "1 review to check" else "${cappedCount(toCheck)} reviews to check", tone = StatusTone.ACCENT)
+        crew != null && state == "testing" && crew.day <= crew.runDays ->
+            AppStatusLine("Day ${crew.day} of ${crew.runDays} in ", name)
+        crew != null && state == "testing" -> AppStatusLine("All ${crew.runDays} days done")
+        state == "starting" -> AppStatusLine("Starts tonight in ", name)
+        state == "checking" -> AppStatusLine("Being checked in ", name)
+        state == "waiting" -> AppStatusLine("Waiting in ", name)
+        feedback?.state == "collecting" ->
+            AppStatusLine(if (feedback.done > 0) "${feedback.done} of ${feedback.bought} reviews in" else "Collecting feedback")
+        state == "finished" ->
+            AppStatusLine(
+                if (crewsDone >
+                    1
+                ) {
+                    "$crewsDone crew tests done"
+                } else {
+                    "Crew test done"
+                },
+                tone = StatusTone.QUIET,
+                mark = StatusMark.DONE,
+            )
+        feedback?.state == "done" ->
+            AppStatusLine("All ${feedback.bought} reviews in", tone = StatusTone.QUIET, mark = StatusMark.DONE)
+        feedback?.state == "closed" -> AppStatusLine("Feedback closed", tone = StatusTone.FAINT)
+        live && !verified -> AppStatusLine("Waiting for Play", tone = StatusTone.QUIET, mark = StatusMark.WAITING)
+        state == "rejected" || state == "removed" -> AppStatusLine("Not in a crew", tone = StatusTone.QUIET)
+        live -> AppStatusLine("Ready for feedback", tone = StatusTone.QUIET)
+        else -> AppStatusLine("Ready for a crew", tone = StatusTone.QUIET)
     }
+}
 
 /** How the app is known to be real, in the chip under its name. */
 fun verifiedChip(app: AppEntry): String =
