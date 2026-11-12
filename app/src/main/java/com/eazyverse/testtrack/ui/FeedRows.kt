@@ -34,8 +34,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -268,8 +270,32 @@ fun FeedAskBar(onPost: () -> Unit) {
     }
 }
 
-private val RequestTitle = TextStyle(fontFamily = Barlow, fontSize = 17.sp, lineHeight = 22.sp)
-private val RequestNote = TextStyle(fontFamily = Barlow, fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.Normal)
+// The text block (name up to two lines, plus the note) is 19 + 19 + 14 = 52sp, the height of the icon
+// beside it, so a long name never makes the card taller than a short one. Trimmed line heights keep
+// the font's own padding from adding hidden height.
+private val RequestLineHeight =
+    LineHeightStyle(alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both)
+
+@Suppress("DEPRECATION")
+private val RequestTitle =
+    TextStyle(
+        fontFamily = Barlow,
+        fontSize = 16.sp,
+        lineHeight = 19.sp,
+        platformStyle = PlatformTextStyle(includeFontPadding = false),
+        lineHeightStyle = RequestLineHeight,
+    )
+
+@Suppress("DEPRECATION")
+private val RequestNote =
+    TextStyle(
+        fontFamily = Barlow,
+        fontSize = 12.5.sp,
+        lineHeight = 14.sp,
+        fontWeight = FontWeight.Normal,
+        platformStyle = PlatformTextStyle(includeFontPadding = false),
+        lineHeightStyle = RequestLineHeight,
+    )
 
 /**
  * One request, anonymous: the app's face, its name, which kind it is, and what it pays, drawn as a
@@ -320,7 +346,7 @@ fun FeedRequestCard(
                     style = RequestTitle,
                     fontWeight = FontWeight.SemiBold,
                     color = t.text,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(note, style = RequestNote, color = t.text3, maxLines = 1, overflow = TextOverflow.Ellipsis)
