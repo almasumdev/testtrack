@@ -31,6 +31,9 @@ data class SeatFacts(
     val blockCrew: String? = null,
 )
 
+/** The small mark before a tile's status line: ready, a step still to do, locked, or waiting. */
+enum class SeatMark { READY, TODO, LOCK, WAIT }
+
 /** Why an app can't take a seat now. */
 enum class SeatBlockKind { LIVE, WAITING, APPEAL }
 
@@ -38,6 +41,9 @@ data class SeatBlock(
     val kind: SeatBlockKind,
     val crew: String = "",
 ) {
+    /** The mark before [line]: a lock for a live app, an hourglass while it waits. */
+    val mark: SeatMark get() = if (kind == SeatBlockKind.LIVE) SeatMark.LOCK else SeatMark.WAIT
+
     /** The one line a greyed row says. */
     val line: String
         get() =
@@ -94,12 +100,15 @@ fun seatNeed(
         else -> SeatNeed.NONE
     }
 
+/** The mark before [line]: a tick once ready, a dashed ring while a step is left. */
+val SeatNeed.mark: SeatMark get() = if (this == SeatNeed.NONE) SeatMark.READY else SeatMark.TODO
+
 /** The status line a pickable row says: what it needs next, or that it is ready. */
 fun SeatNeed.line(): String =
     when (this) {
         SeatNeed.GROUP -> "Add the group to its closed track"
         SeatNeed.BOXES -> "Confirm two things in Play Console"
-        SeatNeed.NONE -> "Ready"
+        SeatNeed.NONE -> "Ready to go in"
     }
 
 /**

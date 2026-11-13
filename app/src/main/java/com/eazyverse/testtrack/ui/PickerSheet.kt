@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -47,6 +48,7 @@ import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -70,7 +72,9 @@ internal val PickerTitleLineHeight = 22.sp
  *
  * [tall] is for a long list with search: the sheet takes 82% of the screen at once, rather than
  * growing and shrinking as the search narrows the list. [skipHalf] opens a short sheet fully,
- * with no half-open stop. [leading] sits before the title, such as the app a sheet is about.
+ * with no half-open stop. [fitMax] is for a sheet that sizes itself to what it holds: the column
+ * is as tall as its content up to that share of the window, and scrolls inside past it; ignored
+ * when [tall] is set. [leading] sits before the title, such as the app a sheet is about.
  * [content] gets `close`, which hides the sheet first and then runs what it is given, since a
  * sheet removed while open vanishes on one frame.
  *
@@ -88,6 +92,7 @@ internal fun PickerSheet(
     subtitle: String? = null,
     tall: Boolean = false,
     skipHalf: Boolean = tall,
+    fitMax: Float? = null,
     leading: (@Composable () -> Unit)? = null,
     containerColor: Color = MaterialTheme.colorScheme.surface,
     topLine: Color? = null,
@@ -122,6 +127,11 @@ internal fun PickerSheet(
     }
     val shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
     val density = LocalDensity.current
+    val windowHeight =
+        with(density) {
+            LocalWindowInfo.current.containerSize.height
+                .toDp()
+        }
     ModalBottomSheet(
         // The scrim tap and a swipe past the bottom both end up here.
         onDismissRequest = { if (canDismiss) onDismiss() },
@@ -164,8 +174,13 @@ internal fun PickerSheet(
                 Modifier
                     .widthIn(max = 560.dp)
                     .fillMaxWidth()
-                    .then(if (tall) Modifier.fillMaxHeight(0.82f) else Modifier)
-                    .padding(horizontal = Gutter)
+                    .then(
+                        when {
+                            tall -> Modifier.fillMaxHeight(0.82f)
+                            fitMax != null -> Modifier.heightIn(max = windowHeight * fitMax)
+                            else -> Modifier
+                        },
+                    ).padding(horizontal = Gutter)
                     .navigationBarsPadding()
                     .imePadding(),
             ) {

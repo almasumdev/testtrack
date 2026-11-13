@@ -3,17 +3,25 @@ package com.eazyverse.testtrack.ui
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -24,16 +32,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.RefreshCw
+import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -131,136 +141,144 @@ internal fun CrewSeatSheet(
                 inApp && stage == SeatStage.STEPS -> app?.let { stepsLeftLine(stepsLeft(it.verified, boxes)) }
                 inApp -> "Your app goes in with ${CrewRules.SEATS - 1} others"
                 loading && apps.apps.isEmpty() -> "Getting your apps."
+                apps.offline && apps.apps.isEmpty() -> "Couldn't load your apps."
                 apps.apps.isEmpty() -> "You haven't added an app yet."
                 else -> open?.let { "Take a seat in $it" } ?: "Start a new crew"
             },
         onDismiss = onDismiss,
-        tall = true,
+        tall = false,
+        skipHalf = true,
+        fitMax = 0.9f,
         leading = if (inApp) ({ BackMark { stage = SeatStage.LIST } }) else null,
         titleLiveRegion = true,
     ) { close ->
         BackHandler(enabled = inApp) { stage = SeatStage.LIST }
-        when {
-            inApp && stage == SeatStage.STEPS && app != null ->
-                key(SeatStage.STEPS) {
-                    Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                        val facts = apps.facts[app.id]
-                        val failedAt = apps.failedChecks[app.id]
-                        // The newer of what the server kept and what this run was told.
-                        val newestFailed = failedAt != null && (facts?.checkedAt == null || failedAt >= facts.checkedAt)
-                        val checkedAt = if (newestFailed) failedAt else facts?.checkedAt
-                        val checkedOk = if (newestFailed) false else facts?.checkedOk
-                        val checking = apps.acting == app.id && apps.actingOn == AppAction.VERIFY
-                        CrewSeatSteps(
-                            SeatStepsState(
-                                app = app,
-                                boxes = boxes,
-                                groupOpen = !app.verified || notVisible != null,
-                                checkLine = lastCheckLine(checkedAt, checkedOk, System.currentTimeMillis(), notVisible),
-                                checkFailed = notVisible != null || checkedOk == false,
-                                checking = checking,
-                                error = apps.actionError.takeIf { failedAt == null },
-                                boxesMessage = boxesMessage,
-                            ),
-                            onVerify = {
-                                if (apps.acting == null) {
-                                    apps.verify(context, app.id) { notVisible = null }
-                                }
-                            },
-                            onBoxes = {
-                                boxesMessage = null
-                                apps.setBoxes(context, app, it)
-                            },
-                            onContinue = { stage = SeatStage.DETAILS },
-                        )
-                        Spacer(Modifier.height(20.dp))
-                    }
-                }
-            inApp && app != null ->
-                key(SeatStage.DETAILS) {
-                    LaunchedEffect(app.id) { vm.start(app) }
-                    Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                        val take = {
-                            shortTix = false
-                            waitingIn = null
-                            crews.takeSeat(
-                                context,
-                                app.pkg,
-                                vm.name.trim(),
-                                vm.notes.trim(),
-                                appId = app.id,
-                                // A refused seat goes to what it is about, in the server's own words.
-                                onRefused = { error ->
-                                    when (error.code) {
-                                        "not_visible" -> {
-                                            notVisible = error.message
-                                            stage = SeatStage.STEPS
-                                        }
-                                        "boxes_unticked" -> {
-                                            boxesMessage = error.message
-                                            apps.clearBoxes(context, app)
-                                            stage = SeatStage.STEPS
-                                        }
-                                        "short_tix" -> shortTix = true
-                                        "already_waiting" ->
-                                            waitingIn = SeatWaiting(error.details["crew_name"].orEmpty(), error.details["crew_id"])
+        // The sheet is as tall as its content, so a change of view grows or shrinks it smoothly.
+        Column(Modifier.weight(1f, fill = false).animateContentSize()) {
+            when {
+                inApp && stage == SeatStage.STEPS && app != null ->
+                    key(SeatStage.STEPS) {
+                        Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                            val facts = apps.facts[app.id]
+                            val failedAt = apps.failedChecks[app.id]
+                            // The newer of what the server kept and what this run was told.
+                            val newestFailed = failedAt != null && (facts?.checkedAt == null || failedAt >= facts.checkedAt)
+                            val checkedAt = if (newestFailed) failedAt else facts?.checkedAt
+                            val checkedOk = if (newestFailed) false else facts?.checkedOk
+                            val checking = apps.acting == app.id && apps.actingOn == AppAction.VERIFY
+                            CrewSeatSteps(
+                                SeatStepsState(
+                                    app = app,
+                                    boxes = boxes,
+                                    groupOpen = !app.verified || notVisible != null,
+                                    checkLine = lastCheckLine(checkedAt, checkedOk, System.currentTimeMillis(), notVisible),
+                                    checkFailed = notVisible != null || checkedOk == false,
+                                    checking = checking,
+                                    error = apps.actionError.takeIf { failedAt == null },
+                                    boxesMessage = boxesMessage,
+                                ),
+                                onVerify = {
+                                    if (apps.acting == null) {
+                                        apps.verify(context, app.id) { notVisible = null }
                                     }
                                 },
-                                onDone = { close {} },
+                                onBoxes = {
+                                    boxesMessage = null
+                                    apps.setBoxes(context, app, it)
+                                },
+                                onContinue = { stage = SeatStage.DETAILS },
+                            )
+                            Spacer(Modifier.height(20.dp))
+                        }
+                    }
+                inApp && app != null ->
+                    key(SeatStage.DETAILS) {
+                        LaunchedEffect(app.id) { vm.start(app) }
+                        Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                            val take = {
+                                shortTix = false
+                                waitingIn = null
+                                crews.takeSeat(
+                                    context,
+                                    app.pkg,
+                                    vm.name.trim(),
+                                    vm.notes.trim(),
+                                    appId = app.id,
+                                    // A refused seat goes to what it is about, in the server's own words.
+                                    onRefused = { error ->
+                                        when (error.code) {
+                                            "not_visible" -> {
+                                                notVisible = error.message
+                                                stage = SeatStage.STEPS
+                                            }
+                                            "boxes_unticked" -> {
+                                                boxesMessage = error.message
+                                                apps.clearBoxes(context, app)
+                                                stage = SeatStage.STEPS
+                                            }
+                                            "short_tix" -> shortTix = true
+                                            "already_waiting" ->
+                                                waitingIn = SeatWaiting(error.details["crew_name"].orEmpty(), error.details["crew_id"])
+                                        }
+                                    },
+                                    onDone = { close {} },
+                                )
+                            }
+                            val needsDrive = drive.connected == false
+                            CrewSeatDetails(
+                                SeatDetailsState(
+                                    app = app,
+                                    crewName = open,
+                                    busy = crews.seating || drive.busy,
+                                    needsDrive = needsDrive,
+                                    driveMessage = drive.message,
+                                    held = appealWaitingIn(crews.crews),
+                                    refusal =
+                                        crews.seatError.takeIf {
+                                            notVisible == null &&
+                                                boxesMessage == null &&
+                                                !shortTix &&
+                                                waitingIn == null
+                                        },
+                                    shortTix = shortTix,
+                                    waiting = waitingIn,
+                                    onOpenCrew = { id -> close { onOpenCrew(id) } },
+                                ),
+                                crews = crews,
+                                vm = vm,
+                                onChange = { stage = SeatStage.LIST },
+                                onOpenCircle = { close(onOpenCircle) },
+                                onTake = {
+                                    if (drive.connected == true) {
+                                        take()
+                                    } else {
+                                        afterDrive = take
+                                        drive.connect(activity, driveSheet::launch, take)
+                                    }
+                                },
                             )
                         }
-                        val needsDrive = drive.connected == false
-                        CrewSeatDetails(
-                            SeatDetailsState(
-                                app = app,
-                                crewName = open,
-                                busy = crews.seating || drive.busy,
-                                needsDrive = needsDrive,
-                                driveMessage = drive.message,
-                                held = appealWaitingIn(crews.crews),
-                                refusal =
-                                    crews.seatError.takeIf {
-                                        notVisible == null &&
-                                            boxesMessage == null &&
-                                            !shortTix &&
-                                            waitingIn == null
-                                    },
-                                shortTix = shortTix,
-                                waiting = waitingIn,
-                                onOpenCrew = { id -> close { onOpenCrew(id) } },
-                            ),
+                    }
+                else ->
+                    key(SeatStage.LIST) {
+                        CrewSeatList(
                             crews = crews,
-                            vm = vm,
-                            onChange = { stage = SeatStage.LIST },
-                            onOpenCircle = { close(onOpenCircle) },
-                            onTake = {
-                                if (drive.connected == true) {
-                                    take()
-                                } else {
-                                    afterDrive = take
-                                    drive.connect(activity, driveSheet::launch, take)
-                                }
+                            apps = apps,
+                            waiting = stage == SeatStage.START || (loading && apps.apps.isEmpty()),
+                            chosenId = pickedId,
+                            onPick = { picked ->
+                                pickedId = picked.id
+                                notVisible = null
+                                boxesMessage = null
+                                shortTix = false
+                                waitingIn = null
+                                stage = if (seatNeed(picked, apps.boxes(picked)) == SeatNeed.NONE) SeatStage.DETAILS else SeatStage.STEPS
                             },
+                            onAdd = { close(onAddApp) },
+                            onRetry = { apps.load(context) },
                         )
                     }
-                }
-            else ->
-                key(SeatStage.LIST) {
-                    CrewSeatList(
-                        crews = crews,
-                        apps = apps,
-                        waiting = stage == SeatStage.START || (loading && apps.apps.isEmpty()),
-                        onPick = { picked ->
-                            pickedId = picked.id
-                            notVisible = null
-                            boxesMessage = null
-                            shortTix = false
-                            waitingIn = null
-                            stage = if (seatNeed(picked, apps.boxes(picked)) == SeatNeed.NONE) SeatStage.DETAILS else SeatStage.STEPS
-                        },
-                        onAdd = { close(onAddApp) },
-                    )
-                }
+            }
         }
     }
 }
@@ -296,61 +314,95 @@ private class SeatRow(
         }
 }
 
-/** "Which app goes in?": your apps, ready first, and a way to add another. */
+/** "Which app goes in?": your apps, ready first, then those that can't go in, and a way to add another. */
 @Composable
 private fun ColumnScope.CrewSeatList(
     crews: CrewViewModel,
     apps: AppsViewModel,
     waiting: Boolean,
+    chosenId: String?,
     onPick: (AppEntry) -> Unit,
     onAdd: () -> Unit,
+    onRetry: () -> Unit,
 ) {
-    Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-        if (waiting) {
-            repeat(SKELETON_ROWS) {
-                Skeleton(height = 60.dp, corner = 16.dp)
-                Spacer(Modifier.height(3.dp))
-            }
-            Spacer(Modifier.height(20.dp))
-            return@Column
-        }
-        val rows =
-            apps.apps
-                .map { SeatRow(it, seatBlock(it, apps.facts[it.id], appealCrewFor(crews.crews, it.pkg)), seatNeed(it, apps.boxes(it))) }
-                .sortedBy { it.rank }
-        TileGroup(count = rows.size + 1) { index, place ->
-            if (index < rows.size) {
-                val row = rows[index]
-                val app = row.app
-                val icon: @Composable () -> Unit = { AppMark(app.pkg, app.name, app.icon, size = 36.dp, ownIcon = true) }
-                when {
-                    row.block != null ->
-                        TileRow(
-                            Lucide.Plus,
-                            app.name,
-                            place,
-                            Modifier.alpha(0.5f),
-                            subtitle = row.block.line,
-                            leading = icon,
-                        )
-                    row.need == SeatNeed.NONE ->
-                        TileRow(
-                            Lucide.Plus,
-                            app.name,
-                            place,
-                            subtitle = row.need.line(),
-                            subtitleIcon = Lucide.Check,
-                            subtitleTone = Tt.colors.ok,
-                            leading = icon,
-                            onClick = { onPick(app) },
-                        )
-                    else ->
-                        TileRow(Lucide.Plus, app.name, place, subtitle = row.need.line(), leading = icon, onClick = { onPick(app) })
+    val t = Tt.colors
+    val scroll = rememberScrollState()
+    val failed = !waiting && apps.apps.isEmpty() && apps.offline
+    Column(Modifier.weight(1f, fill = false).verticalScroll(scroll)) {
+        when {
+            waiting ->
+                // Three tiles, not SKELETON_ROWS: this sheet sizes itself to its content, and ten
+                // would open it tall and then shrink it once the apps arrive.
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SeatTileSkeleton(120.dp, 160.dp)
+                    SeatTileSkeleton(96.dp, 182.dp)
+                    SeatTileSkeleton(134.dp, 146.dp)
                 }
-            } else {
-                TileRow(Lucide.Plus, "Add a new app", place, subtitle = "From this phone or Play", onClick = onAdd)
+            failed ->
+                Row(Modifier.padding(horizontal = 2.dp), verticalAlignment = Alignment.Top) {
+                    Icon(Lucide.TriangleAlert, null, Modifier.padding(top = 1.dp).size(16.dp), tint = t.warn)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Check your connection, then try again.", style = SeatNoteStyle, color = t.text2)
+                }
+            apps.apps.isEmpty() ->
+                Text(
+                    "Add the app you want tested. It needs a closed test on Play.",
+                    Modifier.padding(horizontal = 2.dp),
+                    style = SeatNoteStyle,
+                    color = t.text2,
+                )
+            else -> {
+                val rows =
+                    apps.apps
+                        .map {
+                            SeatRow(
+                                it,
+                                seatBlock(it, apps.facts[it.id], appealCrewFor(crews.crews, it.pkg)),
+                                seatNeed(it, apps.boxes(it)),
+                            )
+                        }.sortedBy { it.rank }
+                val (blocked, ready) = rows.partition { it.block != null }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ready.forEach { row ->
+                        SeatAppTile(
+                            app = row.app,
+                            line = row.need.line(),
+                            mark = row.need.mark,
+                            blocked = false,
+                            chosen = row.app.id == chosenId,
+                            onClick = { onPick(row.app) },
+                        )
+                    }
+                }
+                if (blocked.isNotEmpty()) {
+                    Text(
+                        "Can't go in now",
+                        Modifier.padding(start = 2.dp, top = 16.dp, bottom = 8.dp),
+                        style = SeatNoteStyle.copy(fontSize = 13.sp, lineHeight = 16.sp),
+                        fontWeight = FontWeight.SemiBold,
+                        color = t.text3,
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        blocked.forEach { row ->
+                            val block = row.block ?: return@forEach
+                            SeatAppTile(app = row.app, line = block.line, mark = block.mark, blocked = true)
+                        }
+                    }
+                }
             }
         }
-        Spacer(Modifier.height(20.dp))
     }
+    // A hairline over the bar only while there is more list than shows.
+    if (scroll.canScrollForward || scroll.canScrollBackward) {
+        Box(Modifier.fillMaxWidth().height(1.dp).background(t.hair))
+    }
+    Spacer(Modifier.height(12.dp))
+    if (failed) {
+        SeatBar("Try again", Lucide.RefreshCw, onClick = onRetry)
+    } else {
+        SeatBar("Add a new app", Lucide.Plus, onClick = onAdd)
+    }
+    Spacer(Modifier.height(16.dp))
 }
+
+private val SeatNoteStyle = tileStyle(13f, 18f, FontWeight.Normal)

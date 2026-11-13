@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crew, Open tab: the seat sheet's app list</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  /* ui/theme/Tokens.kt, OceanLight and OceanDark. The sheet is PickerSheet's default, colorScheme.surface = glass. */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSel:#2E4E66; --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --hair:#B7D1E2;
+    --card:#F3F8FB; --cardLine:#E1ECF3; --leafSoft:rgba(74,114,144,.16);
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
+    --tile:#DCE6EE; --tileInk:#3A5B73;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --bad:#9E3B2E;
+    --skel:#E4EEF4; --scrim:rgba(20,34,48,.46);
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSel:#B6CCDC; --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --hair:#2B2E32;
+    --card:#1C1E20; --cardLine:#2D3034; --leafSoft:#2A2D31;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
+    --tile:#2A2D31; --tileInk:#A2BED2;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --bad:#E4938A;
+    --skel:#24272A; --scrim:rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E7ECEF; color: #142F43; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; }
+  .doc { max-width: 1320px; margin: 0 auto; padding: 34px 28px 90px; }
+  h1 { font-size: 30px; margin: 0 0 6px; }
+  .lead { font-size: 16px; line-height: 1.45; color: #2D4A5F; max-width: 1060px; margin: 4px 0; }
+  section.opt { margin-top: 40px; padding-top: 24px; border-top: 2px solid #3A5B73; }
+  section.opt > h2 { font-size: 25px; margin: 0 0 6px; display: flex; align-items: center; gap: 12px; }
+  .rec { font-size: 13px; font-weight: 700; color: #fff; background: #246B59; border-radius: 999px; padding: 3px 12px; }
+  .why { font-size: 15.5px; line-height: 1.45; color: #203A4E; max-width: 1080px; margin: 3px 0; }
+  .gc { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 26px; max-width: 1080px; margin: 10px 0 4px; font-size: 15px; line-height: 1.45; }
+  .gc .g b { color: #246B59; } .gc .c b { color: #9E3B2E; }
+  .check { font-size: 14px; font-weight: 600; margin: 8px 0 0; }
+  .check.good { color: #246B59; } .check.bad { color: #9E3B2E; }
+  .state { margin-top: 24px; }
+  .state h4 { font-size: 16px; margin: 0 0 3px; display: flex; align-items: center; gap: 8px; }
+  .sid { font-size: 12.5px; font-weight: 700; color: #fff; background: #59758A; border-radius: 6px; padding: 1px 7px; }
+  .what { font-size: 13.5px; line-height: 1.45; color: #45505a; max-width: 1060px; margin-bottom: 8px; }
+  .pair { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  .cap { font-size: 12px; font-weight: 600; color: #59758A; letter-spacing: .3px; margin: 0 0 5px 4px; }
+  .cap .h { color: #142F43; font-weight: 700; letter-spacing: 0; }
+  .cap .h.big { color: #9E3B2E; }
+  code { font-family: Consolas, monospace; font-size: 12.5px; background: #dbe3e9; padding: 1px 5px; border-radius: 4px; }
+  ul.spec, ol.spec { font-size: 15px; line-height: 1.55; color: #203A4E; max-width: 1080px; }
+  ul.spec li + li, ol.spec li + li { margin-top: 4px; }
+
+  /* the phone, with the Open tab under the scrim */
+  .phone { background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #C3CFD8; position: relative; height: 844px; }
+  .dark.phone { border-color: #2A2D31; }
+  .sbar { height: 24px; }
+  .abar { height: 52px; display: flex; align-items: center; padding: 0 16px; font-size: 22px; font-weight: 700; }
+  .tabs { padding: 6px 16px 0; }
+  .track { height: 42px; border-radius: 999px; background: var(--card); border: 1px solid var(--cardLine); padding: 3px; display: flex; gap: 2px; }
+  .seg { flex: 1; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: var(--text2); }
+  .seg.on { background: var(--leafSoft); color: var(--tabSel); font-weight: 600; }
+  .ghost { margin: 12px 16px 0; border: 1px solid var(--cardLine); border-radius: 14px; padding: 16px; background: var(--bg); }
+  .gh { display: flex; align-items: center; gap: 12px; }
+  .gh i { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); }
+  .gl { height: 12px; border-radius: 6px; background: var(--tile); }
+  .gseats { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; margin-top: 16px; }
+  .gseats i { aspect-ratio: 1; border-radius: 9px; background: var(--tile); }
+  .scrim { position: absolute; inset: 0; background: var(--scrim); }
+
+  /* PickerSheet: surface, 22dp top corners, 38x4 handle, title 17/22 w700, 16dp gutters */
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--glass); border-radius: 22px 22px 0 0; display: flex; flex-direction: column; max-height: 760px; }
+  .sheet.tall { height: 678px; }
+  .sin { display: flex; flex-direction: column; min-height: 0; flex: 0 1 auto; padding: 0 16px; }
+  .sheet.tall .sin { flex: 1 1 auto; }
+  .handle { width: 38px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .5; margin: 10px auto 14px; flex: none; }
+  .shead { display: flex; align-items: center; flex: none; }
+  .back { width: 36px; height: 36px; margin-right: 12px; color: var(--text); display: grid; place-items: center; flex: none; }
+  .stitle { font-size: 17px; line-height: 22px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ssub { margin-top: 4px; font-size: 12px; line-height: 16px; color: var(--text3); }
+  .hgap { height: 14px; flex: none; }
+  .sbody { overflow-y: auto; min-height: 0; flex: 0 1 auto; scrollbar-width: none; }
+  .sbody::-webkit-scrollbar { display: none; }
+  .sheet.tall .sbody { flex: 1 1 auto; }
+  .sfoot { flex: none; padding-top: 12px; }
+  .sfoot.line { border-top: 1px solid var(--hair); }
+  .endgap { height: 16px; flex: none; }
+  .nav { height: 24px; flex: none; }
+  svg.i { display: block; flex: none; }
+
+  /* today: TileRow in a TileGroup. 60dp, glass with a glassBorder line, 3dp apart, outer corners 22, inner 6 */
+  .tg { display: flex; flex-direction: column; gap: 3px; }
+  .tr { display: flex; align-items: center; min-height: 60px; padding: 7px 11px 7px 13px; background: var(--glass); border: 1px solid var(--glassBorder); border-radius: 6px; }
+  .tr.first { border-radius: 22px 22px 6px 6px; } .tr.last { border-radius: 6px 6px 22px 22px; } .tr.only { border-radius: 22px; }
+  .tr .col { flex: 1; min-width: 0; margin-left: 14px; }
+  .tt { font-size: 16px; line-height: 20px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ts { font-size: 12.5px; line-height: 16px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; }
+  .ts span { overflow: hidden; text-overflow: ellipsis; }
+  .ts.ok { color: var(--ok); }
+  .ts.todo { color: var(--text2); } .ts.todo svg { color: var(--accentInk); }
+  .ts.off { color: var(--text3); } .ts.off svg { color: var(--text4); }
+  .tr.fade { opacity: .5; }
+  .tr.chosen { background: linear-gradient(var(--leafSoft), var(--leafSoft)), var(--glass); }
+  .tr.chosen .tt { font-weight: 700; }
+  .tr.dim .ai { filter: grayscale(1); opacity: .5; }
+  .tr.dim .tt { color: var(--text3); }
+  .trail { width: 20px; margin-left: 6px; color: var(--text4); display: grid; place-items: center; flex: none; }
+  .trail.ck { color: var(--accentInk); }
+  .itile { border-radius: 30.5%; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+
+  /* app icons: stand-ins with the ShapedIconImage corner (30%) */
+  .ai { border-radius: 30%; flex: none; position: relative; overflow: hidden; }
+  .ai i { position: absolute; left: 28%; top: 28%; width: 44%; height: 44%; border-radius: 30%; background: rgba(255,255,255,.88); }
+
+  /* Option B and C: the seat tile. 44dp icon, 12 padding, 14 corner, page ground with the card line, 8 apart */
+  .st { display: flex; align-items: center; min-height: 66px; padding: 10px 11px; border-radius: 14px; background: var(--bg); border: 1px solid var(--cardLine); }
+  .st + .st { margin-top: 8px; }
+  .st .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .nm { font-size: 16px; line-height: 19px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ln { margin-top: 5px; font-size: 12.5px; line-height: 14px; font-weight: 500; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; }
+  .ln span { overflow: hidden; text-overflow: ellipsis; }
+  .ln.ok { color: var(--ok); font-weight: 600; }
+  .ln.todo { color: var(--text2); } .ln.todo svg { color: var(--accentInk); }
+  .ln.off { color: var(--text3); } .ln.off svg { color: var(--text4); }
+  .st.chosen { background: linear-gradient(var(--leafSoft), var(--leafSoft)), var(--bg); }
+  .st.chosen .nm { font-weight: 700; }
+  .st.off { background: transparent; }
+  .st.off .ai { filter: grayscale(1); opacity: .45; }
+  .st.off .nm { color: var(--text3); }
+  .st .trail { margin-left: 8px; }
+  .sh2 { font-size: 13px; line-height: 16px; font-weight: 600; color: var(--text3); margin: 16px 2px 8px; }
+  .fold { cursor: pointer; }
+
+  /* SeatBar: the Feed's Post bar, 48dp, 14 corner, surface with the card line, tabSelected ink */
+  .bar { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--tabSel); font-size: 16px; line-height: 24px; font-weight: 600; padding: 11px; white-space: nowrap; border: 1px solid var(--cardLine); border-radius: 14px; background: var(--glass); }
+
+  /* notes inside the sheet */
+  .note { font-size: 13px; line-height: 18px; color: var(--text2); display: flex; gap: 8px; align-items: flex-start; margin: 2px 2px 0; }
+  .note svg { margin-top: 1px; color: var(--text3); }
+  .note.warn svg { color: var(--warn); }
+
+  /* the steps view, as built (CrewSeatSteps) */
+  .step { display: flex; align-items: center; min-height: 36px; }
+  .dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 12px; font-weight: 700; }
+  .dot.now { background: var(--accent); color: var(--onAccent); }
+  .dot.todo { box-shadow: inset 0 0 0 1.5px var(--cardLine); color: var(--text4); }
+  .sl { margin-left: 12px; flex: 1; min-width: 0; font-size: 14px; line-height: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sl.todo { color: var(--text3); } .sl.now { color: var(--text); font-weight: 600; font-size: 15px; }
+  .cur { border: 1px solid var(--cardLine); border-radius: 12px; padding: 7px 12px 12px; margin: 4px 0; }
+  .body { margin-top: 2px; font-size: 13px; line-height: 18px; color: var(--text2); }
+  .addr { margin-top: 10px; display: flex; align-items: center; gap: 6px; border: 1px solid var(--cardLine); border-radius: 10px; padding: 3px 3px 3px 8px; }
+  .addr .ad { flex: 1; min-width: 0; font-size: 12px; line-height: 15px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .addr .cp { flex: none; width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; color: var(--accentInk); background: var(--tile); }
+  .lastck { margin-top: 10px; font-size: 12.5px; line-height: 17px; color: var(--text3); }
+
+  /* skeleton */
+  .sk { background: var(--skel); border-radius: 6px; position: relative; overflow: hidden; }
+  .sk::after { content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); animation: sweep 1.6s linear infinite; }
+  .dark .sk::after { background: linear-gradient(100deg, transparent, rgba(255,255,255,.05), transparent); }
+  @keyframes sweep { to { left: 120%; } }
+
+  /* the tile, up close */
+  .board { padding: 16px; border-radius: 22px; background: var(--glass); width: 392px; }
+  .anat { font-size: 14px; line-height: 1.5; color: #203A4E; max-width: 440px; }
+  .anat dt { font-weight: 700; margin-top: 8px; } .anat dd { margin: 0; }
+  table.copy { border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  table.copy td, table.copy th { border-bottom: 1px solid #cfd9e0; padding: 6px 12px 6px 0; text-align: left; vertical-align: top; }
+  table.copy th { font-size: 12px; text-transform: uppercase; letter-spacing: .3px; color: #59758A; }
+</style>
+</head>
+<body>
+<div class="doc">
+<h1>Crew, Open tab: the seat sheet's app list</h1>
+<p class="lead">"Take a seat" opens the sheet on "Which app goes in?". Today it always opens at 82% of the screen, even for one app, and the rows look like settings rows with the apps that can't go in faded out. Below: the sheet as built, then three options where the sheet is only as tall as what it holds (up to 90% of the screen, then the list scrolls), each with 1, 3 and 8 apps. Light theme at 392dp; the recommended option also in dark, its other states and a 360dp check.</p>
+<p class="lead">App names and icons are stand-ins. Each frame's caption gives the sheet's measured height. The line under each part says whether any row's text came out taller than its icon or got cut.</p>
+
+<section class="opt" style="border-top-color:#9E3B2E">
+  <h2>Today, as built</h2>
+  <p class="why">What the code does, and why it looks this way:</p>
+  <ul class="spec">
+    <li><b>Always tall.</b> <code>CrewSeatSheet.kt:138</code> passes <code>tall = true</code>, so <code>PickerSheet.kt:167</code> sets <code>fillMaxHeight(0.82f)</code> and the sheet opens fully at that height. <code>tall</code> is meant for a long list with search (Pick your app); this list has no search and most people have one to three apps.</li>
+    <li><b>Every view stretches.</b> The list, steps and details each sit in <code>Modifier.weight(1f)</code> (lines 146, 182, 308), so each fills that 82% whatever it holds.</li>
+    <li><b>Loading fills it too.</b> Line 310 draws ten 60dp skeleton bars.</li>
+    <li><b>The rows.</b> Shared <code>TileRow</code> in a <code>TileGroup</code> with a 36dp icon. Apps that can't go in are faded to 50% as a whole (line 332), so the reason, the one thing worth reading there, is the hardest line to read. In light, the status line's ink (<code>text3</code> #223D50) is almost the title's (#142F43), and only "Ready" has a mark. "Add a new app" is one more row in the same group. The app you went into and came back from is not marked.</li>
+  </ul>
+  <p class="check" id="chkNow"></p>
+  <div id="now"></div>
+</section>
+
+<section class="opt">
+  <h2>Option A: grouped rows, sized to fit</h2>
+  <p class="why">The sheet wraps its list. Rows stay the shared <code>TileRow</code>, so they match the other pickers (Pick your app, Feedback on which app?). The app icon grows to 40dp, every status line gets a mark, and apps that can't go in move to their own group under "Can't go in now", at full strength with a greyed icon. "Add a new app" stays the last row of the first group.</p>
+  <div class="gc"><div class="g"><b>Does well:</b> smallest change, one flag on the sheet and a few row arguments. Same look as the app's other pickers.</div><div class="c"><b>Costs:</b> still reads as a settings list. "Add a new app" weighs the same as your apps, and with 8 apps it lands in the middle of the sheet.</div></div>
+  <p class="check" id="chkA"></p>
+  <div id="optA"></div>
+</section>
+
+<section class="opt" style="border-top-color:#246B59">
+  <h2>Option B: app tiles, with the add bar under the list <span class="rec">Recommended</span></h2>
+  <p class="why">The sheet wraps its list. Each app is its own tile, drawn like a My apps tile at picker size: a 44dp icon, the name on one line, and one status line with a mark. Apps that can't go in sit under "Can't go in now" with a greyed icon and the reason in full. "Add a new app" leaves the list and becomes the quiet bar under it, the same bar as "Take a seat" on the Open tab, so it stays in view when the list scrolls.</p>
+  <div class="gc"><div class="g"><b>Does well:</b> your apps look the way they do on My apps, so the right one is found by its icon. The list and the one action are clearly apart, and the reasons are readable.</div><div class="c"><b>Costs:</b> one new tile composable. Tiles are 66dp, so at 8 apps the sheet reaches the 90% cap and the list scrolls.</div></div>
+  <p class="check" id="chkB"></p>
+  <div id="optB"></div>
+</section>
+
+<section class="opt">
+  <h2>Option C: ready first, the rest folded</h2>
+  <p class="why">Same tiles as B. Apps that can't go in fold into one row, "3 apps can't go in now", which opens in place. "Add a new app" is the last tile. One app that can't go in is shown as it is, since folding one saves nothing.</p>
+  <div class="gc"><div class="g"><b>Does well:</b> the shortest sheet with many apps: 8 apps fit without scrolling.</div><div class="c"><b>Costs:</b> the reasons hide behind a tap, which is where people look when an app is missing. One more state to build and test.</div></div>
+  <p class="check" id="chkC"></p>
+  <div id="optC"></div>
+</section>
+
+<section class="opt" style="border-top-color:#246B59">
+  <h2>Option B: dark, other states, and 360dp</h2>
+  <p class="check" id="chkB2"></p>
+  <div id="optB2"></div>
+</section>
+
+<section class="opt">
+  <h2>The app tile, up close (Option B)</h2>
+  <p class="why">Every state the tile has, on the sheet's own colour, light and dark. The text column is 19 + 5 + 14 = 38dp next to a 44dp icon, so a long name ends in an ellipsis and never makes a tile taller.</p>
+  <p class="check" id="chkT"></p>
+  <div class="pair" id="tiles"></div>
+  <table class="copy">
+    <tr><th>App is</th><th>Mark</th><th>Status line</th><th>Tap</th></tr>
+    <tr><td>Ready (verified, both boxes ticked)</td><td>Circle check, ok green</td><td>Ready to go in</td><td>Seat details</td></tr>
+    <tr><td>Not verified</td><td>Dashed circle, accent ink</td><td>Add the group to its closed track</td><td>Its steps</td></tr>
+    <tr><td>Verified, a box unticked</td><td>Dashed circle, accent ink</td><td>Confirm two things in Play Console</td><td>Its steps</td></tr>
+    <tr><td>Live on Play</td><td>Lock, faint</td><td>Live on Play, so it can't go in</td><td>Nothing</td></tr>
+    <tr><td>Waiting in a crew</td><td>Hourglass, faint</td><td>Waits in Crew 06</td><td>Nothing</td></tr>
+    <tr><td>Taken out, appeal open</td><td>Hourglass, faint</td><td>Taken out of Crew 05, appeal open</td><td>Nothing</td></tr>
+  </table>
+</section>
+
+<section class="opt" style="border-top-color:#59758A">
+  <h2>Build spec (Option B)</h2>
+  <ol class="spec">
+    <li><b><code>PickerSheet.kt</code>:</b> add <code>fitMax: Float? = null</code>. When set (and <code>tall</code> is false), the column gets <code>heightIn(max = window height x fitMax)</code> instead of <code>fillMaxHeight</code>. Read the height from <code>LocalWindowInfo.current.containerSize.height</code> through <code>LocalDensity</code>. Other sheets pass nothing and do not change.</li>
+    <li><b><code>CrewSeatSheet.kt</code>:</b> call <code>PickerSheet(tall = false, skipHalf = true, fitMax = 0.9f, ...)</code>. <code>skipHalf</code> must stay true, or a long list opens half-way. Change the three <code>Modifier.weight(1f)</code> (lines 146, 182, 308) to <code>Modifier.weight(1f, fill = false)</code>. Put <code>animateContentSize()</code> on the column that holds the <code>when</code>, so going from the list to the steps grows the sheet instead of jumping.</li>
+    <li><b><code>CrewSeatList</code></b> becomes: a scrolling column (<code>weight(1f, fill = false)</code>) with the pickable apps as <code>SeatAppTile</code>s 8dp apart, then, if any, the heading "Can't go in now" (13sp w600 <code>text3</code>, 16 above, 8 below) and the blocked tiles. Under the scrolling column, outside it: 12dp, then <code>SeatBar("Add a new app", Lucide.Plus)</code>, then 16dp. While the list can scroll, a 1dp <code>hair</code> line sits on top of the bar's 12dp gap. Pass <code>chosenId = pickedId</code> in.</li>
+    <li><b>New <code>SeatAppTile</code></b> (new file <code>CrewSeatTile.kt</code>): row, <code>heightIn(min = 66.dp)</code>, corner 14 (<code>TileRadius</code>), background <code>bg</code>, 1dp <code>cardLine</code> border, padding 12 horizontal, 11 vertical. <code>AppMark(size = 44.dp, ownIcon = true)</code>, 12 gap, column: name <code>AppTileName</code> (16/19 SemiBold, 1 line, ellipsis), 5dp, status row (12dp mark, 4 gap, <code>tileStyle(12.5f, 14f, Medium)</code>, 1 line). Trailing: a 20dp box, 8 before it, holding <code>Lucide.ChevronRight</code> 18 <code>text4</code>, or <code>Lucide.Check</code> 18 <code>accentInk</code> when chosen, or empty when blocked. Chosen: <code>leafAccentSoft</code> over the background and the name in Bold, as <code>TileRow(chosen)</code> does. Blocked: no click, transparent background, icon through a 0-saturation <code>ColorFilter</code> at 45% alpha, name in <code>text3</code>. Semantics: one merged node, role Button, "Sunrise Notes, Ready to go in"; blocked ones read the reason and are not clickable.</li>
+    <li><b><code>CrewSeatRules.kt</code>:</b> <code>SeatNeed.NONE</code> line becomes "Ready to go in". Add a <code>SeatMark</code> (READY, TODO, LOCK, WAIT) next to the lines: LIVE is LOCK, WAITING and APPEAL are WAIT. Marks: <code>Lucide.CircleCheck</code> <code>ok</code>, <code>Lucide.CircleDashed</code> <code>accentInk</code>, <code>Lucide.Lock</code> and <code>Lucide.Hourglass</code> in <code>text4</code>. Status ink: ready <code>ok</code> SemiBold, to-do <code>text2</code>, blocked <code>text3</code>.</li>
+    <li><b>Loading:</b> three skeleton tiles in the tile's frame (44dp square at corner 13, bars 14 and 11 high, 8 apart), with the add bar showing. Three, not <code>SKELETON_ROWS</code>: this sheet sizes itself, and ten would open it tall and then shrink it.</li>
+    <li><b>No apps:</b> subtitle "You haven't added an app yet.", one line "Add the app you want tested. It needs a closed test on Play.", then the add bar.</li>
+    <li><b>Couldn't load</b> (<code>apps.offline</code> with no apps): subtitle "Couldn't load your apps.", a line with <code>TriangleAlert</code> in <code>warn</code>, "Check your connection, then try again.", and <code>SeatBar("Try again", Lucide.RefreshCw)</code> calling <code>apps.load(context)</code>. No add bar.</li>
+    <li><b>Leave alone:</b> the steps and details views (only their weight changes), <code>TileRow</code>, <code>TileGroup</code>, <code>AppCard</code>, the Circle picker in <code>AppPicker.kt</code> (it can take <code>SeatAppTile</code> later so both app pickers match).</li>
+  </ol>
+</section>
+</div>
+
+<script>
+const P = (d, s = 24, w = 2) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const I = {
+  chev: s => P('<path d="m9 18 6-6-6-6"/>', s),
+  chevDown: s => P('<path d="m6 9 6 6 6-6"/>', s),
+  plus: s => P('<path d="M5 12h14"/><path d="M12 5v14"/>', s),
+  check: (s, w = 2.4) => P('<path d="M20 6 9 17l-5-5"/>', s, w),
+  circleCheck: s => P('<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>', s, 2.4),
+  circleDashed: s => P('<path d="M10.1 2.182a10 10 0 0 1 3.8 0"/><path d="M13.9 21.818a10 10 0 0 1-3.8 0"/><path d="M17.609 3.721a10 10 0 0 1 2.69 2.7"/><path d="M2.182 13.9a10 10 0 0 1 0-3.8"/><path d="M20.279 17.609a10 10 0 0 1-2.7 2.69"/><path d="M21.818 10.1a10 10 0 0 1 0 3.8"/><path d="M3.721 6.391a10 10 0 0 1 2.7-2.69"/><path d="M6.391 20.279a10 10 0 0 1-2.69-2.7"/>', s, 2.6),
+  lock: s => P('<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', s, 2.4),
+  hourglass: s => P('<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>', s, 2.4),
+  alert: s => P('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>', s),
+  refresh: s => P('<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>', s),
+  copy: s => P('<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>', s),
+  backIos: s => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`,
+};
+const SAMPLE = ['#ff8a3d,#e8453c','#3ec7a6,#1f8f86','#6d7cff,#4433c9','#ffd34d,#f0a020','#ff6fa8,#c2367a','#47b3ff,#1667d9','#9be15d,#3fa34d','#b07cff,#7a3fd6'];
+
+/* ---------- the apps ---------- */
+const APPS = {
+  sunrise: { name: 'Sunrise Notes', c: 0, k: 'ready' },
+  recipe: { name: 'Recipe Box', c: 6, k: 'ready' },
+  budget: { name: 'Pocket Budget', c: 5, k: 'group' },
+  habit: { name: 'Habit Garden', c: 1, k: 'boxes' },
+  focus: { name: 'Focus Timer for Deep Work and Study', c: 2, k: 'group' },
+  weather: { name: 'Weather Mate', c: 3, k: 'live' },
+  trip: { name: 'Trip Splitter', c: 4, k: 'wait', crew: 'Crew 06' },
+  plant: { name: 'Plant Diary', c: 7, k: 'appeal', crew: 'Crew 05' },
+};
+const ONE = ['sunrise'];
+const THREE = ['sunrise', 'budget', 'weather'];
+const EIGHT = ['sunrise', 'recipe', 'budget', 'habit', 'focus', 'weather', 'trip', 'plant'];
+const blocked = k => ['live', 'wait', 'appeal'].includes(APPS[k].k);
+
+// What the code says today (CrewSeatRules.kt), and the one change B makes ("Ready to go in").
+function line(k, newCopy) {
+  const a = APPS[k];
+  switch (a.k) {
+    case 'ready': return { t: newCopy ? 'Ready to go in' : 'Ready', tone: 'ok', mark: newCopy ? I.circleCheck(12) : I.check(13, 2.6) };
+    case 'group': return { t: 'Add the group to its closed track', tone: 'todo', mark: I.circleDashed(12) };
+    case 'boxes': return { t: 'Confirm two things in Play Console', tone: 'todo', mark: I.circleDashed(12) };
+    case 'live': return { t: "Live on Play, so it can't go in", tone: 'off', mark: I.lock(12) };
+    case 'wait': return { t: `Waits in ${a.crew}`, tone: 'off', mark: I.hourglass(12) };
+    case 'appeal': return { t: `Taken out of ${a.crew}, appeal open`, tone: 'off', mark: I.hourglass(12) };
+  }
+}
+const aico = (k, s) => `<div class="ai" style="width:${s}px;height:${s}px;background:linear-gradient(135deg,${SAMPLE[APPS[k].c]})"><i></i></div>`;
+const placeCls = (i, n) => n === 1 ? 'only' : i === 0 ? 'first' : i === n - 1 ? 'last' : '';
+
+/* ---------- today ---------- */
+function nowList(keys) {
+  const n = keys.length + 1;
+  let h = '<div class="tg">';
+  keys.forEach((k, i) => {
+    const l = line(k, false), off = blocked(k);
+    const sub = l.tone === 'ok' ? `<div class="ts ok">${l.mark}<span>${l.t}</span></div>` : `<div class="ts">${l.t}</div>`;
+    h += `<div class="tr ${placeCls(i, n)}${off ? ' fade' : ''}">${aico(k, 36)}<div class="col"><div class="tt">${APPS[k].name}</div>${sub}</div>${off ? '' : `<span class="trail">${I.chev(18)}</span>`}</div>`;
+  });
+  h += `<div class="tr ${placeCls(n - 1, n)}"><div class="itile" style="width:36px;height:36px">${I.plus(19)}</div><div class="col"><div class="tt">Add a new app</div><div class="ts">From this phone or Play</div></div><span class="trail">${I.chev(18)}</span></div>`;
+  return h + '</div><div style="height:20px"></div>';
+}
+
+/* ---------- Option A: TileRow, 40dp icon, marks, blocked group ---------- */
+function aRow(k, cls, chosen) {
+  const l = line(k, true), off = blocked(k);
+  const trail = off ? '' : chosen ? `<span class="trail ck">${I.check(18)}</span>` : `<span class="trail">${I.chev(18)}</span>`;
+  return `<div class="tr ${cls}${off ? ' dim' : ''}${chosen ? ' chosen' : ''}">${aico(k, 40)}<div class="col"><div class="tt">${APPS[k].name}</div><div class="ts ${l.tone}">${l.mark}<span>${l.t}</span></div></div>${trail}</div>`;
+}
+function aList(keys, chosen) {
+  const can = keys.filter(k => !blocked(k)), cant = keys.filter(blocked);
+  const n = can.length + 1;
+  let h = '<div class="tg">' + can.map((k, i) => aRow(k, placeCls(i, n), k === chosen)).join('');
+  h += `<div class="tr ${placeCls(n - 1, n)}"><div class="itile" style="width:40px;height:40px">${I.plus(20)}</div><div class="col"><div class="tt">Add a new app</div><div class="ts">From this phone or Play</div></div><span class="trail">${I.chev(18)}</span></div></div>`;
+  if (cant.length) h += `<div class="sh2">Can't go in now</div><div class="tg">${cant.map((k, i) => aRow(k, placeCls(i, cant.length))).join('')}</div>`;
+  return h + '<div style="height:20px"></div>';
+}
+
+/* ---------- Option B and C: the seat tile ---------- */
+function bTile(k, chosen) {
+  const l = line(k, true), off = blocked(k);
+  const trail = off ? '<span class="trail"></span>' : chosen ? `<span class="trail ck">${I.check(18)}</span>` : `<span class="trail">${I.chev(18)}</span>`;
+  return `<div class="st${off ? ' off' : ''}${chosen ? ' chosen' : ''}">${aico(k, 44)}<div class="col"><div class="nm">${APPS[k].name}</div><div class="ln ${l.tone}">${l.mark}<span>${l.t}</span></div></div>${trail}</div>`;
+}
+function bList(keys, chosen) {
+  const can = keys.filter(k => !blocked(k)), cant = keys.filter(blocked);
+  let h = can.map(k => bTile(k, k === chosen)).join('');
+  if (cant.length) h += `<div class="sh2">Can't go in now</div>` + cant.map(k => bTile(k)).join('');
+  return h;
+}
+const addBar = `<div class="bar">${I.plus(20)}<span>Add a new app</span></div>`;
+function cList(keys, open) {
+  const can = keys.filter(k => !blocked(k)), cant = keys.filter(blocked);
+  let h = can.map(k => bTile(k)).join('');
+  if (cant.length === 1) h += `<div class="sh2">Can't go in now</div>` + bTile(cant[0]);
+  else if (cant.length > 1) {
+    h += `<div class="st fold" style="margin-top:8px"><div class="itile" style="width:44px;height:44px">${I.lock(22)}</div><div class="col"><div class="nm">${cant.length} apps can't go in now</div><div class="ln off"><span>Live on Play, or already in a crew</span></div></div><span class="trail">${open ? P('<path d="m18 15-6-6-6 6"/>', 18) : I.chevDown(18)}</span></div>`;
+    if (open) h += cant.map(k => bTile(k)).join('');
+  }
+  h += `<div class="st" style="margin-top:8px"><div class="itile" style="width:44px;height:44px">${I.plus(22)}</div><div class="col"><div class="nm">Add a new app</div><div class="ln off" style="color:var(--text3)"><span>From this phone or Play</span></div></div><span class="trail">${I.chev(18)}</span></div>`;
+  return h + '<div style="height:20px"></div>';
+}
+function bSkel() {
+  const w = [[120, 160], [96, 182], [134, 146]];
+  return w.map(([a, b]) => `<div class="st"><div class="sk" style="width:44px;height:44px;border-radius:13px;flex:none"></div><div class="col"><div class="sk" style="width:${a}px;height:14px"></div><div class="sk" style="width:${b}px;height:11px;margin-top:8px"></div></div></div>`).join('');
+}
+const stepsBody = `<div class="cur"><div class="step"><span class="dot now">1</span><span class="sl now">Add the group to its closed track</span></div>
+  <div class="body">In Play Console, add this group as testers on your app's closed track, then roll out a release to it.</div>
+  <div class="addr"><span class="ad">googleclosetesting@googlegroups.com</span><span class="cp">${I.copy(16)}</span></div>
+  <div class="lastck">Not checked yet.</div>
+  <div style="margin-top:12px" class="bar">${I.refresh(20)}<span>Verify on Play</span></div></div>
+  <div class="step"><span class="dot todo">2</span><span class="sl todo">Confirm two things in Play Console</span></div>
+  <div class="step"><span class="dot todo">3</span><span class="sl todo">Seat details</span></div><div style="height:20px"></div>`;
+
+/* ---------- frames ---------- */
+function behind() {
+  let seats = ''; for (let i = 0; i < 15; i++) seats += '<i></i>';
+  return `<div class="sbar"></div><div class="abar">Crew</div><div class="tabs"><div class="track">${['Open', 'Lobby', 'Run', 'Record'].map(n => `<div class="seg${n === 'Open' ? ' on' : ''}">${n}</div>`).join('')}</div></div>
+    <div class="ghost"><div class="gh"><i></i><div style="flex:1"><div class="gl" style="width:70%"></div><div class="gl" style="width:45%;margin-top:8px"></div></div></div><div class="gseats">${seats}<i style="background:none"></i></div>
+    <div class="gl" style="margin-top:18px"></div><div class="gl" style="width:60%;margin-top:8px"></div><div class="gl" style="margin-top:18px;height:48px;border-radius:14px"></div></div>`;
+}
+// s: { title, sub, back, body, foot, footLine, tall }
+function phone(theme, label, s, width = 392) {
+  const head = `<div class="shead">${s.back ? `<span class="back">${I.backIos(20)}</span>` : ''}<div style="flex:1;min-width:0"><div class="stitle">${s.title}</div><div class="ssub">${s.sub}</div></div></div>`;
+  const foot = s.foot ? `<div class="sfoot${s.footLine ? ' line' : ''}">${s.foot}</div><div class="endgap"></div>` : '';
+  return `<div class="frame"><div class="cap">${label} <span class="h"></span></div><div class="phone ${theme}" style="width:${width}px">${behind()}<div class="scrim"></div>
+    <div class="sheet${s.tall ? ' tall' : ''}"><div class="sin"><div class="handle"></div>${head}<div class="hgap"></div><div class="sbody">${s.body}</div>${foot}</div><div class="nav"></div></div></div></div>`;
+}
+const LIST = { title: 'Which app goes in?', sub: 'Take a seat in Crew 07' };
+const set3 = (theme, make, cnt = ['1 app', '3 apps', '8 apps']) => [ONE, THREE, EIGHT].map((keys, i) => phone(theme, `${theme}, ${cnt[i]}`, make(keys))).join('');
+const block = (id, name, what, frames) => `<div class="state"><h4><span class="sid">${id}</span>${name}</h4>${what ? `<div class="what">${what}</div>` : ''}<div class="pair">${frames}</div></div>`;
+
+document.getElementById('now').innerHTML = block('Now', 'Which app goes in?, as built', 'The sheet is 678dp tall however many apps there are. With 1 app, about two thirds of it is empty.',
+  set3('light', keys => ({ ...LIST, tall: true, body: nowList(keys) })));
+
+document.getElementById('optA').innerHTML = block('A', 'Sized to fit, grouped rows', '',
+  set3('light', keys => ({ ...LIST, body: aList(keys) })));
+
+const bFrame = (keys, extra = {}) => ({ ...LIST, body: bList(keys, extra.chosen), foot: addBar, footLine: keys.length > 6, ...extra });
+document.getElementById('optB').innerHTML = block('B', 'Sized to fit, app tiles, add bar under the list', 'At 8 apps the list scrolls under the title and the add bar stays put. A hairline sits over the bar only while the list can scroll.',
+  set3('light', keys => bFrame(keys)));
+
+document.getElementById('optC').innerHTML = block('C', 'Sized to fit, blocked apps folded', 'The third frame is 8 apps folded; tapping the fold opens the three in place.',
+  set3('light', keys => ({ ...LIST, body: cList(keys) })) + phone('light', 'light, 8 apps, fold opened', { ...LIST, body: cList(EIGHT, true) }));
+
+document.getElementById('optB2').innerHTML =
+  block('B-dark', 'Dark, 1, 3 and 8 apps', '', set3('dark', keys => bFrame(keys))) +
+  block('B1', 'Back from an app', 'Pocket Budget was picked, then Back. Its tile is marked the one way every picker in the app marks the chosen row: the soft wash, a bolder name, and a check where the chevron was.',
+    phone('light', 'light', bFrame(THREE, { chosen: 'budget' })) + phone('dark', 'dark', bFrame(THREE, { chosen: 'budget' }))) +
+  block('B2', 'Loading', 'Three skeleton tiles in the tile\'s own shape, not ten, so the sheet opens at a modest height. The add bar is there from the start.',
+    phone('light', 'light', { ...LIST, sub: 'Getting your apps.', body: bSkel(), foot: addBar }) + phone('dark', 'dark', { ...LIST, sub: 'Getting your apps.', body: bSkel(), foot: addBar })) +
+  block('B3', 'No apps yet', '',
+    phone('light', 'light', { ...LIST, sub: "You haven't added an app yet.", body: `<div class="note">Add the app you want tested. It needs a closed test on Play.</div>`, foot: addBar }) +
+    phone('dark', 'dark', { ...LIST, sub: "You haven't added an app yet.", body: `<div class="note">Add the app you want tested. It needs a closed test on Play.</div>`, foot: addBar })) +
+  block('B4', "Couldn't load the apps", 'Offline with nothing loaded yet. Offline with apps already loaded shows the list as usual.',
+    phone('light', 'light', { ...LIST, sub: "Couldn't load your apps.", body: `<div class="note warn">${I.alert(16)}<span>Check your connection, then try again.</span></div>`, foot: `<div class="bar">${I.refresh(20)}<span>Try again</span></div>` }) +
+    phone('dark', 'dark', { ...LIST, sub: "Couldn't load your apps.", body: `<div class="note warn">${I.alert(16)}<span>Check your connection, then try again.</span></div>`, foot: `<div class="bar">${I.refresh(20)}<span>Try again</span></div>` })) +
+  block('B5', 'The steps view fits too', 'Pocket Budget picked. Same sheet, same rule: it grows to what the steps hold, with the back arrow (arrow_back_ios_new) on the gutter. The details view, with its fields, usually reaches the cap and scrolls as today.',
+    phone('light', 'light', { title: 'Pocket Budget', sub: '3 steps before it can go in', back: true, body: stepsBody }) + phone('dark', 'dark', { title: 'Pocket Budget', sub: '3 steps before it can go in', back: true, body: stepsBody })) +
+  block('360', 'Narrow check, 8 apps', 'The long name ends in an ellipsis; no status line is cut.',
+    phone('light', 'light 360dp', bFrame(EIGHT), 360) + phone('dark', 'dark 360dp', bFrame(EIGHT), 360));
+
+/* ---------- tiles up close ---------- */
+function board(theme) {
+  return `<div><div class="cap">${theme}</div><div class="board ${theme}">${bTile('sunrise')}${bTile('budget')}${bTile('habit')}${bTile('budget', true)}${bTile('focus')}<div class="sh2">Can't go in now</div>${bTile('weather')}${bTile('trip')}${bTile('plant')}<div style="height:8px"></div>${bSkel().split('</div></div></div>')[0]}</div></div></div></div></div>`;
+}
+document.getElementById('tiles').innerHTML = board('light') + board('dark') + `<dl class="anat">
+  <dt>Tile</dt><dd>66dp at least, corner 14, the page ground with a 1dp card line, 8dp apart, 12dp inside.</dd>
+  <dt>Icon</dt><dd>The app's own icon at 44dp. Greyed at 45% when it can't go in.</dd>
+  <dt>Text</dt><dd>Name 16/19 SemiBold on one line. Status 12.5/14 Medium on one line, with a 12dp mark. 38dp in all, under the icon's 44.</dd>
+  <dt>End</dt><dd>A 20dp slot: chevron to go in, check when it is the one you picked, empty when it can't go in. Names never move between states.</dd>
+  <dt>Chosen</dt><dd>Soft wash, bold name, check. The same mark as Pick your app.</dd>
+</dl>`;
+
+/* ---------- measure and check ---------- */
+document.querySelectorAll('.frame').forEach(f => {
+  const sh = f.querySelector('.sheet'), out = f.querySelector('.cap .h');
+  const measure = () => { const h = Math.round(sh.offsetHeight); const pct = Math.round(h / 844 * 100); out.textContent = `sheet ${h}dp, ${pct}% of the screen`; out.className = 'h' + (pct > 60 && f.closest('#now') ? ' big' : ''); };
+  measure(); document.fonts.ready.then(measure);
+});
+function checkIn(rootId, outId) {
+  const root = document.getElementById(rootId);
+  const bad = []; let n = 0;
+  root.querySelectorAll('.st, .tr').forEach(row => {
+    const icon = row.querySelector('.ai, .itile, .sk');
+    const col = row.querySelector('.col');
+    if (!icon || !col) return;
+    n++;
+    if (col.offsetHeight > icon.offsetHeight + 0.5) bad.push(`${col.textContent.trim().slice(0, 30)} (${col.offsetHeight} > ${icon.offsetHeight})`);
+    col.querySelectorAll('.ln span, .ts span, .ts:not(:has(span))').forEach(t => { if (t.scrollWidth > t.clientWidth + 1) bad.push('cut: ' + t.textContent.trim()); });
+    col.querySelectorAll('.nm, .tt').forEach(t => { if (t.scrollWidth > t.clientWidth + 1 && !t.textContent.startsWith('Focus Timer')) bad.push('name cut: ' + t.textContent.trim()); });
+  });
+  root.querySelectorAll('.bar, .stitle').forEach(b => { if (b.scrollWidth > b.clientWidth + 1) bad.push('cut: ' + b.textContent.trim()); });
+  const el = document.getElementById(outId);
+  el.className = 'check ' + (bad.length ? 'bad' : 'good');
+  el.textContent = bad.length ? `Problems: ${[...new Set(bad)].join('; ')}` : `Checked ${n} rows: every text column fits its icon's height, and no status line, title or bar is cut. Only the long stand-in name ends in an ellipsis, on purpose.`;
+}
+function check() { [['now', 'chkNow'], ['optA', 'chkA'], ['optB', 'chkB'], ['optC', 'chkC'], ['optB2', 'chkB2'], ['tiles', 'chkT']].forEach(([a, b]) => checkIn(a, b)); }
+check(); document.fonts.ready.then(check);
+</script>
+</body>
+</html>
