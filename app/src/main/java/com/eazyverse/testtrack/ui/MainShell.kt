@@ -114,14 +114,14 @@ fun MainShell(
     onOpenAbout: () -> Unit = {},
     /** A crew's own page. */
     onOpenCrew: (String) -> Unit = {},
-    /** The page that puts this app from My apps into a crew. */
-    onCrewForApp: (String) -> Unit = {},
     /** Ask for feedback on this app from My apps. */
     onAskForApp: (String) -> Unit = {},
     /** An app's own page. */
     onOpenApp: (String) -> Unit = {},
     /** Adding an app to My apps. */
     onAddApp: () -> Unit = {},
+    /** The Open tab's rules card, on a page of its own. */
+    onOpenRules: () -> Unit = {},
     /** Set by a tapped crew notification; cleared once the Crew tab is showing. */
     openCrew: MutableState<Boolean> = remember { mutableStateOf(false) },
     hudVm: HudViewModel = viewModel(),
@@ -129,14 +129,15 @@ fun MainShell(
     val context = LocalContext.current
     var tab by rememberSaveable { mutableStateOf(MainTab.CIRCLE) }
 
-    // Putting an app into a crew: on the testers group first, wherever it is asked from.
-    val membership = rememberMembership()
-
-    // My apps, shared by its tab and the pickers Crew and Circle open: one list, everywhere.
+    // My apps, shared by its tab, Crew's seat sheet and Circle's picker: one list, everywhere.
     val apps: AppsViewModel = viewModel()
 
-    /** Which app, for Crew's Take a seat or Circle's Ask for feedback; null when not asking. */
-    var picking by remember { mutableStateOf<PickFor?>(null) }
+    /** Which app, for Circle's Ask for feedback. */
+    var pickingFeedback by remember { mutableStateOf(false) }
+
+    // The seat sheet, opened by Crew's Take a seat, on the Crew tab's own model.
+    val crews: CrewViewModel = viewModel()
+    var seating by remember { mutableStateOf(false) }
 
     /** Where Back from the profile goes, so it lands where you actually came from. */
     var cameFrom by rememberSaveable { mutableStateOf(MainTab.CIRCLE) }
@@ -293,7 +294,7 @@ fun MainShell(
                                             onAsk = {
                                                 val pick = {
                                                     apps.load(context)
-                                                    picking = PickFor.FEEDBACK
+                                                    pickingFeedback = true
                                                 }
                                                 if (Session.signedIn) {
                                                     pick()
@@ -330,26 +331,27 @@ fun MainShell(
                                         )
 
                                     MainTab.GROUPS -> {
-                                        // Get ready asks whether an app is set for a crew, so My apps is read here too.
+                                        // The Open tab's join steps ask whether there is a closed app, so My apps is read here too.
                                         LaunchedEffect(Unit) { apps.load(context) }
                                         CrewScreen(
                                             onOpenCrew = onOpenCrew,
                                             myApps = apps.apps.takeIf { it.isNotEmpty() || !apps.loading },
                                             onAddApp = onAddApp,
-                                            onOpenApp = onOpenApp,
+                                            onOpenCircle = { show(MainTab.CIRCLE) },
+                                            onOpenRules = onOpenRules,
                                             // Signed in and on the testers group already: which app goes in.
                                             onAddToCrew = {
                                                 apps.load(context)
-                                                picking = PickFor.CREW
+                                                seating = true
                                             },
                                             onSignIn = {
                                                 asking =
                                                     SignInReason(
-                                                        title = "Sign in to see your crews",
+                                                        title = "Sign in to join a crew",
                                                         why =
-                                                            "Here you see your seats, the apps to open tonight and the " +
-                                                                "crews you have finished. You can look at the Open " +
-                                                                "tab without signing in.",
+                                                            "A seat, the apps to open each night and the crews you " +
+                                                                "have finished all belong to your account. You can " +
+                                                                "look at the Open tab without signing in.",
                                                     )
                                             },
                                         )
@@ -417,16 +419,23 @@ fun MainShell(
         }
     }
 
-    picking?.let { purpose ->
+    if (pickingFeedback) {
         AppPickerSheet(
-            purpose = purpose,
             apps = apps.apps,
             loading = apps.loading || apps.reading,
-            onPick = { app ->
-                if (purpose == PickFor.CREW) membership.require { onCrewForApp(app.id) } else onAskForApp(app.id)
-            },
+            onPick = { app -> onAskForApp(app.id) },
             onAdd = onAddApp,
-            onDismiss = { picking = null },
+            onDismiss = { pickingFeedback = false },
+        )
+    }
+    if (seating) {
+        CrewSeatSheet(
+            crews = crews,
+            apps = apps,
+            startAppId = null,
+            onAddApp = onAddApp,
+            onOpenCircle = { show(MainTab.CIRCLE) },
+            onDismiss = { seating = false },
         )
     }
 

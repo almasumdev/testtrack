@@ -71,6 +71,20 @@ data class ApiApp(
     @SerialName("can_delete") val canDelete: Boolean = false,
     @SerialName("why_not_delete") val whyNotDelete: String = "",
     @SerialName("created_at") val createdAt: String = "",
+    /*
+     * What a seat needs besides Play showing the app. All absent from an older server's answer,
+     * which is why the two boxes are nullable: null means "not kept by the server", and the phone
+     * keeps them instead.
+     */
+    @SerialName("all_countries") val allCountries: Boolean? = null,
+    @SerialName("all_devices") val allDevices: Boolean? = null,
+    /** When Play was last asked whether it shows the app to the group, and what it said. */
+    @SerialName("last_check_at") val lastCheckAt: String? = null,
+    @SerialName("last_check_ok") val lastCheckOk: Boolean? = null,
+    /** live, waiting or appeal: why the app can't take a seat now. Null when it can. */
+    @SerialName("crew_block_reason") val crewBlockReason: String? = null,
+    /** The crew's name, for waiting and appeal. */
+    @SerialName("crew_block_crew") val crewBlockCrew: String? = null,
 ) {
     val live: Boolean get() = source == "live"
     val verified: Boolean get() = verifiedBy != null
@@ -86,4 +100,11 @@ data class AppAdded(
     val app: ApiApp,
     /** It was on My apps already: adding it again found the one there. */
     val existing: Boolean = false,
+)
+
+/** The two boxes an owner confirms for an app, set together. */
+@Serializable
+data class AppBoxesIn(
+    @SerialName("all_countries") val allCountries: Boolean,
+    @SerialName("all_devices") val allDevices: Boolean,
 )

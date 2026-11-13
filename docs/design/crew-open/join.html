@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crew, Open tab: Join a crew and the seat sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  /* ui/theme/Tokens.kt, OceanLight and OceanDark */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSel:#2E4E66; --card:#F3F8FB; --cardLine:#E1ECF3; --leafSoft:rgba(74,114,144,.16);
+    --accent:#3A5B73; --primary:#3A5B73; --primaryRGB:58,91,115; --onPrimaryRGB:255,255,255; --onAccent:#FFFFFF; --onPrimary:#FFFFFF;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --accentInk:#22394B; --accentInkRGB:34,57,75;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBorder:rgba(154,110,36,.24);
+    --glassBorderStrong:#789AAF; --skel:#E4EEF4; --sheet:#FFFFFF; --sheetLine:#DCE8F0; --scrim:rgba(20,34,48,.46); --field:#F7FCFF; --fieldBorder:#789AAF;
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSel:#B6CCDC; --card:#1C1E20; --cardLine:#2D3034; --leafSoft:#2A2D31;
+    --accent:#4A7290; --primary:#93B3CA; --primaryRGB:147,179,202; --onPrimaryRGB:15,16,17; --onAccent:#FFFFFF; --onPrimary:#0F1011;
+    --tile:#2A2D31; --tileInk:#A2BED2; --accentInk:#93B3CA; --accentInkRGB:147,179,202;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBorder:rgba(216,183,116,.26);
+    --glassBorderStrong:#666D74; --skel:#24272A; --sheet:#1C1E20; --sheetLine:#2D3034; --scrim:rgba(0,0,0,.6); --field:#141618; --fieldBorder:#666D74;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E7ECEF; color: #142F43; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; }
+  .doc { max-width: 1260px; margin: 0 auto; padding: 34px 28px 90px; }
+  h1 { font-size: 30px; margin: 0 0 6px; }
+  .lead { font-size: 16px; line-height: 1.45; color: #2D4A5F; max-width: 1020px; margin: 4px 0; }
+  section.opt { margin-top: 38px; padding-top: 24px; border-top: 2px solid #3A5B73; }
+  section.opt > h2 { font-size: 25px; margin: 0 0 6px; }
+  .why { font-size: 15.5px; line-height: 1.45; color: #203A4E; max-width: 1060px; margin: 3px 0; }
+  .check { font-size: 14px; font-weight: 600; margin: 8px 0 0; }
+  .check.good { color: #246B59; } .check.bad { color: #9E3B2E; }
+  h3.grp { font-size: 19px; margin: 28px 0 2px; }
+  .state { margin-top: 22px; }
+  .state h4 { font-size: 16px; margin: 0 0 3px; display: flex; align-items: center; gap: 8px; }
+  .sid { font-size: 12.5px; font-weight: 700; color: #fff; background: #59758A; border-radius: 6px; padding: 1px 7px; }
+  .what { font-size: 13.5px; line-height: 1.45; color: #45505a; max-width: 1000px; margin-bottom: 8px; }
+  .pair { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  .cap { font-size: 12px; font-weight: 600; color: #59758A; letter-spacing: .3px; text-transform: uppercase; margin: 0 0 5px 4px; }
+  code { font-family: Consolas, monospace; font-size: 12.5px; background: #dbe3e9; padding: 1px 5px; border-radius: 4px; }
+  ul.spec, ol.spec { font-size: 15px; line-height: 1.55; color: #203A4E; max-width: 1060px; }
+
+  /* phone */
+  .phone { background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #C3CFD8; padding-bottom: 16px; position: relative; }
+  .dark.phone { border-color: #2A2D31; }
+  .barnote { height: 22px; font-size: 10.5px; color: var(--text4); display: flex; align-items: center; justify-content: center; border-bottom: 1px dashed var(--cardLine); }
+  .tabs { padding: 6px 16px 0; }
+  .track { height: 42px; border-radius: 999px; background: var(--card); border: 1px solid var(--cardLine); padding: 3px; display: flex; gap: 2px; }
+  .seg { flex: 1; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: var(--text2); }
+  .seg.on { background: var(--leafSoft); color: var(--tabSel); font-weight: 600; }
+  .seg .count { margin-left: 5px; padding: 0 5px; border-radius: 999px; background: var(--tile); color: var(--tileInk); font-size: 11px; line-height: 16px; font-weight: 700; }
+  .list { padding-top: 12px; }
+  .w { padding: 0 16px; }
+  .w + .w { margin-top: 8px; }
+  .more { margin: 10px 16px 0; height: 24px; border: 1px dashed var(--cardLine); border-radius: 10px; font-size: 11px; color: var(--text4); display: flex; align-items: center; justify-content: center; }
+  svg.i { display: block; flex: none; }
+  .tile { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; }
+
+  /* AskRow: 40dp tile, 21 + 17 */
+  .ask { display: flex; align-items: center; padding: 9px 10px; }
+  .ic40 { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .ask .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .rt { font-size: 16px; line-height: 21px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rn { font-size: 12.5px; line-height: 17px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rn.ok { color: var(--ok); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+  .rn.warn { color: var(--warn); }
+  .chev { color: var(--text4); margin-left: 8px; flex: none; }
+  .pill { flex: none; margin-left: 8px; height: 34px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; font-size: 14px; font-weight: 700; }
+  .pill.soft { background: var(--tile); color: var(--accentInk); }
+
+  /* crew header: 40dp icon, 19 + 2 + 14 = 35 */
+  .head { display: flex; align-items: center; }
+  .head .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .fl1 { font-size: 16px; line-height: 19px; font-weight: 600; color: var(--text); display: flex; white-space: nowrap; min-width: 0; }
+  .fl1 .fn { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .fl1 .fs { flex: none; }
+  .fl2 { margin-top: 2px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--accentInk); display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; }
+  .fl2 span { overflow: hidden; text-overflow: ellipsis; }
+  .fl2.none { color: var(--text3); font-weight: 400; display: block; text-overflow: ellipsis; }
+
+  /* today's seats: 8 + 7 */
+  .tseats { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
+  .tseat { aspect-ratio: 1; border-radius: 9px; position: relative; overflow: hidden; display: grid; place-items: center; }
+  .tseat.conf { background: var(--primary); }
+  .tseat.chk { background: var(--tile); }
+  .tseat.conf .mk { color: rgba(var(--onPrimaryRGB), .85); }
+  .tseat.chk .mk { color: rgba(var(--primaryRGB), .6); }
+  .tseat .ico { position: absolute; inset: 0; }
+  .tseat .ico i { position: absolute; left: 28%; top: 28%; width: 44%; height: 44%; border-radius: 30%; background: rgba(255,255,255,.88); }
+  .tseat.chk .ico { opacity: .45; }
+  .tseat svg.dash { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .tseat .plus { color: rgba(var(--accentInkRGB), .7); position: relative; }
+
+  /* terms with the icon inline */
+  .fterms p { margin: 0; font-size: 13px; line-height: 18px; color: var(--text2); }
+  .fterms p + p { margin-top: 6px; }
+  .fterms b { font-weight: 600; color: var(--text); }
+  .ii { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; color: var(--accentInk); }
+  .ii.sm { width: 13px; height: 13px; vertical-align: -2px; margin-right: 5px; color: var(--warn); }
+  .ii svg { display: block; }
+
+  /* the action bar: the Feed's Post bar, inline */
+  .bar { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--tabSel); font-size: 16px; line-height: 24px; font-weight: 600; padding: 12px; white-space: nowrap; }
+  .bar .nx { color: var(--text3); font-weight: 500; }
+  .bar.off { color: var(--text4); }
+
+  /* small row inside a card: 36dp icon, 19 + 15 = 34 */
+  .inrow { display: flex; align-items: center; padding: 10px; }
+  .ic36 { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; flex: none; background: var(--tile); color: var(--tileInk); }
+  .ic36.ok { background: var(--okBg); color: var(--ok); }
+  .inrow .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .a { font-size: 14px; line-height: 19px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .b { font-size: 12.5px; line-height: 15px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* missing steps */
+  .jt { font-size: 16px; line-height: 19px; font-weight: 600; color: var(--text); }
+  .steps { margin-top: 6px; }
+  .step { display: flex; align-items: center; min-height: 36px; }
+  .dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 12px; font-weight: 700; font-feature-settings: "tnum"; }
+  .dot.done { background: var(--okBg); color: var(--ok); }
+  .dot.now { background: var(--accent); color: var(--onAccent); }
+  .dot.todo { box-shadow: inset 0 0 0 1.5px var(--cardLine); color: var(--text4); }
+  .sl { margin-left: 12px; flex: 1; min-width: 0; font-size: 14px; line-height: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sl.done { color: var(--text2); }
+  .sl.todo { color: var(--text3); }
+  .sl.now { color: var(--text); font-weight: 600; font-size: 15px; }
+  .cur { border: 1px solid var(--cardLine); border-radius: 12px; padding: 7px 12px 12px; margin: 4px 0; }
+  .body { margin-top: 2px; font-size: 13px; line-height: 18px; color: var(--text2); }
+  .body.plain { margin: 2px 0 8px; }
+  .body b { font-weight: 600; color: var(--text); }
+  .addr { margin-top: 10px; display: flex; align-items: center; gap: 6px; border: 1px solid var(--cardLine); border-radius: 10px; padding: 3px 3px 3px 8px; }
+  .addr .ad { flex: 1; min-width: 0; font-size: 12px; line-height: 15px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .addr .cp { flex: none; width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; color: var(--accentInk); background: var(--tile); }
+  .tick { display: flex; align-items: center; margin-top: 10px; font-size: 14px; line-height: 19px; color: var(--text); }
+  .box { width: 20px; height: 20px; border-radius: 6px; flex: none; margin-right: 10px; box-shadow: inset 0 0 0 1.5px var(--glassBorderStrong); display: grid; place-items: center; }
+  .box.on { background: var(--accent); box-shadow: none; color: var(--onAccent); }
+  .why2 { margin-top: 4px; font-size: 12.5px; line-height: 17px; color: var(--warn); }
+  .how { margin-top: 3px; font-size: 12.5px; line-height: 17px; color: var(--text3); }
+  .lastck { margin-top: 10px; font-size: 12.5px; line-height: 17px; color: var(--text3); }
+  .lastck.warn { color: var(--warn); display: flex; gap: 6px; align-items: flex-start; }
+  .lastck.warn svg { margin-top: 1px; }
+
+  /* the seat sheet (PickerSheet: sheet colour, 22dp top corners, handle) */
+  .scrimtop { height: 64px; background: var(--scrim); position: relative; }
+  .scrimtop::before { content: "the Open tab, dimmed"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 10.5px; color: rgba(255,255,255,.7); }
+  .sheet { background: var(--sheet); border-radius: 22px 22px 0 0; border-top: 1px solid var(--sheetLine); margin-top: -2px; padding: 0 16px 6px; }
+  .sheet .tile, .sheet .prow { background: var(--sheet); }
+  .handle { width: 38px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .5; margin: 10px auto 14px; }
+  .shead { display: flex; align-items: center; }
+  .back { width: 32px; height: 32px; margin: 0 8px 0 -6px; color: var(--text); display: grid; place-items: center; flex: none; }
+  .stitle { font-size: 17px; line-height: 22px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ssub { margin-top: 4px; font-size: 12px; line-height: 16px; color: var(--text3); }
+  .sbody { margin-top: 14px; }
+  .prow { display: flex; align-items: center; padding: 9px 10px; border: 1px solid var(--cardLine); border-radius: 14px; }
+  .prow + .prow { margin-top: 8px; }
+  .prow .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .prow.off { opacity: .5; }
+  .aico { width: 40px; height: 40px; border-radius: 12px; flex: none; position: relative; overflow: hidden; }
+  .aico i { position: absolute; left: 28%; top: 28%; width: 44%; height: 44%; border-radius: 30%; background: rgba(255,255,255,.88); }
+  .chg { font-size: 14px; font-weight: 700; color: var(--accentInk); margin-left: 8px; flex: none; }
+  .flabel { font-size: 12.5px; line-height: 16px; color: var(--text3); margin: 16px 0 6px; }
+  .field { height: 52px; border: 1px solid var(--fieldBorder); border-radius: 12px; background: var(--field); display: flex; align-items: center; padding: 0 14px; font-size: 16px; color: var(--text); }
+  .two { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--card); border: 1px solid var(--cardLine); }
+  .two span { flex: 1; height: 34px; border-radius: 999px; display: grid; place-items: center; font-size: 14px; font-weight: 500; color: var(--text2); }
+  .two span.on { background: var(--leafSoft); color: var(--tabSel); font-weight: 600; }
+  .price { margin-top: 18px; display: flex; align-items: baseline; justify-content: space-between; }
+  .price .pt { font-size: 14px; font-weight: 600; color: var(--text); }
+  .price .pv { font-size: 20px; font-weight: 700; color: var(--text); font-feature-settings: "tnum"; }
+  .pline { margin-top: 4px; font-size: 12.5px; line-height: 17px; color: var(--text3); }
+  .short { margin-top: 12px; border: 1px solid var(--warnBorder); border-radius: 12px; padding: 10px 12px; display: flex; gap: 10px; align-items: flex-start; }
+  .short svg { color: var(--warn); margin-top: 1px; }
+  .short .st { font-size: 14px; line-height: 19px; font-weight: 600; color: var(--text); }
+  .short .sn { font-size: 12.5px; line-height: 17px; color: var(--text2); }
+  .primary { margin-top: 16px; height: 52px; border-radius: 999px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+  .primary.off { background: var(--tile); color: var(--text4); }
+
+  /* lower page */
+  .sec { padding: 16px; }
+  .eb { font-size: 11px; line-height: 14px; font-weight: 700; letter-spacing: .8px; color: var(--text4); text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+  .p { font-size: 14px; line-height: 20px; color: var(--text2); margin-top: 8px; }
+  .p b { font-weight: 600; color: var(--accentInk); }
+  .jrow { display: flex; align-items: center; margin-top: 12px; }
+  .jrow .col { margin-left: 12px; min-width: 0; flex: 1; }
+
+  /* skeleton */
+  .sk { background: var(--skel); border-radius: 6px; position: relative; overflow: hidden; }
+  .sk::after { content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); animation: sweep 1.6s linear infinite; }
+  .dark .sk::after { background: linear-gradient(100deg, transparent, rgba(255,255,255,.05), transparent); }
+  @keyframes sweep { to { left: 120%; } }
+</style>
+</head>
+<body>
+<div class="doc">
+<h1>Crew, Open tab: Join a crew, and the seat sheet</h1>
+<p class="lead">The Open tab shows only what your account still needs before you can join, and nothing once you are ready. Whether an app is ready moves to the moment you take a seat: "Take a seat" opens a sheet that asks which app goes in, and walks that one app through what it still needs before the seat details and the confirm button.</p>
+<p class="lead">Drawn in the accepted look from <code>options.html</code>, light and dark at 392dp, with a 360dp check for each part. App names, emails and icons are stand-ins. The line under each part's heading reports whether any row's text came out taller than its icon or got cut.</p>
+
+<section class="opt">
+  <h2>1. The Open tab</h2>
+  <p class="why"><b>How it reads:</b> the crew box keeps its header and seats. Under them, while anything is missing, comes "2 steps before you can join" with the account steps still to do as plain rows: the first one is open with its line under it, no box around it, and one "Next" bar sits under the list. The steps, in order, are Sign in, Join the testers group, Add an app in a closed test (only if you have no closed app at all), Connect Google Drive, and Have 100 tix. Done steps are not listed. When nothing is missing the box has just the terms and "Take a seat".</p>
+  <p class="check" id="chkPage"></p>
+  <div id="page"></div>
+</section>
+
+<section class="opt">
+  <h2>2. The seat sheet</h2>
+  <p class="why"><b>How it reads:</b> one PickerSheet, opened by "Take a seat". First, "Which app goes in?" lists your apps, ready ones first, each with one status line. Apps that can't go in are greyed with the reason and can't be picked. Picking an app shows that app's own steps in the same sheet, with the back arrow returning to the list: add the group to its closed track and verify, then two required boxes, then the seat details and the confirm button. Each unticked box says what goes wrong and how to fix it, and both lines go away once it is ticked. A ready app with both boxes already ticked goes straight to the seat details.</p>
+  <p class="check" id="chkSheet"></p>
+  <div id="sheet"></div>
+</section>
+
+<section class="opt" style="border-top-color:#59758A">
+  <h2>Notes</h2>
+  <ul class="spec">
+    <li><b>Why the boxes are per app:</b> whether an app is in all countries and on all devices is set per app in Play Console, so the answer belongs to the app. It is asked here and on the app's own page, and kept once ticked. Both are required.</li>
+    <li><b>The boxes are the owner's word.</b> Nothing checks them on Play; members trying to install still do, and two can't-install answers send the seat back, which is what the amber lines say.</li>
+    <li><b>Short of tix in the sheet:</b> the Open tab only offers "Take a seat" with 100 tix or more, but tix can be spent elsewhere while the sheet is open, so the sheet still says it and holds the button.</li>
+    <li><b>The confirm button</b> stays the filled pill (<code>Primary</code>), as on today's seat page: it spends 100 tix, and it is the only filled button in the flow.</li>
+  </ul>
+</section>
+</div>
+
+<script>
+const P = (d, s = 24, w = 2) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const I = {
+  users: s => P('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', s),
+  bell: s => P('<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>', s),
+  chev: s => P('<path d="m9 18 6-6-6-6"/>', s),
+  clock: s => P('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', s, 2.4),
+  plus: s => P('<path d="M5 12h14"/><path d="M12 5v14"/>', s),
+  check: (s, w = 2.6) => P('<path d="M20 6 9 17l-5-5"/>', s, w),
+  hourglass: s => P('<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>', s),
+  login: s => P('<path d="m10 17 5-5-5-5"/><path d="M15 12H3"/><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>', s),
+  arrow: s => P('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>', s),
+  appWindow: s => P('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/>', s),
+  info: s => P('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>', s),
+  copy: s => P('<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>', s),
+  moon: s => P('<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>', s),
+  play: s => P('<polygon points="6 3 20 12 6 21 6 3"/>', s),
+  scale: s => P('<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>', s),
+  armchair: s => P('<path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/><path d="M3 16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z"/><path d="M5 18v2"/><path d="M19 18v2"/>', s),
+  download: s => P('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>', s),
+  trophy: s => P('<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>', s),
+  refresh: s => P('<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>', s),
+  alert: s => P('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>', s),
+  backIos: s => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`,
+};
+const SAMPLE = ['#ff8a3d,#e8453c','#3ec7a6,#1f8f86','#6d7cff,#4433c9','#ffd34d,#f0a020','#ff6fa8,#c2367a','#47b3ff,#1667d9','#9be15d,#3fa34d','#b07cff,#7a3fd6','#ff9f6b,#d9622b','#5ee0e6,#2a9fbf','#f76b8a,#c43d5c','#8fd3fe,#3b8de0','#c2e86f,#7bb431','#ffb86b,#e07b1f'];
+
+/* ---------- the crew box pieces ---------- */
+function seats({ taken = 0, filled = 0, noIcon = [] }) {
+  let h = '<div class="tseats">';
+  for (let i = 0; i < 15; i++) {
+    if (i >= taken) {
+      const next = i === taken, a = next ? .55 : .28;
+      h += `<div class="tseat"><svg class="dash" viewBox="0 0 36 36" preserveAspectRatio="none"><rect x=".75" y=".75" width="34.5" height="34.5" rx="8.25" fill="none" stroke="rgba(var(--accentInkRGB),${a})" stroke-width="1.5" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/></svg>${next ? `<span class="plus">${I.plus(14)}</span>` : ''}</div>`;
+    } else {
+      const cls = i < filled ? 'conf' : 'chk';
+      h += `<div class="tseat ${cls}">${noIcon.includes(i) ? `<span class="mk">${I.appWindow(20)}</span>` : `<div class="ico" style="background:linear-gradient(135deg,${SAMPLE[i % 14]})"><i></i></div>`}</div>`;
+    }
+  }
+  return h + '<div></div></div>';
+}
+function header(s) {
+  const c = s.crew;
+  if (!c) return `<div class="head"><div class="ic40">${I.users(20)}</div><div class="col"><div class="fl1"><span class="fn">No crew is filling</span></div><div class="fl2 none">Your seat starts a new one</div></div></div>`;
+  const free = 15 - c.taken;
+  return `<div class="head"><div class="ic40">${I.users(20)}</div><div class="col"><div class="fl1"><span class="fn">${c.name},</span><span class="fs">&nbsp;${free === 1 ? '1 seat left' : `${free} of 15 seats left`}</span></div><div class="fl2">${I.clock(11)}<span>${c.est}</span></div></div></div>`;
+}
+const TERMS = `<div class="fterms"><p><span class="ii">${I.info(16)}</span>A seat is <b>100 tix</b>, <b>back in full</b> if you take it out while it fills or open every app every night.</p><p>It starts at <b>midnight</b>, your time, the day it is full.</p></div>`;
+const bar = (label, icon, next, off) => `<div class="tile bar${off ? ' off' : ''}">${icon}<span>${next ? `<span class="nx">Next:</span> ${label}` : label}</span></div>`;
+const inRow = `<div class="inrow tile"><div class="ic36 ok">${I.check(18, 2)}</div><div class="col"><div class="a">You are in this crew</div><div class="b">See it in your Lobby</div></div><span class="chev">${I.chev(18)}</span></div>`;
+const blockRow = w => `<div class="inrow tile"><div class="ic36">${I.hourglass(18)}</div><div class="col"><div class="a">Your app waits in ${w}</div><div class="b">Take another seat once it is full</div></div></div>`;
+const reminders = `<div class="w"><div class="tile ask"><div class="ic40">${I.bell(20)}</div><div class="col"><div class="rt">Turn on reminders</div><div class="rn">When apps are left at 8 pm</div></div><span class="pill soft">Turn on</span></div></div>`;
+const firstNight = `<div class="w"><div class="tile ask"><div class="ic40">${I.moon(20)}</div><div class="col"><div class="rt">Before your first night</div><div class="rn">Allow usage access and the timer</div></div><span class="pill soft">Allow</span></div></div>`;
+
+/* ---------- missing account steps: plain rows, no boxes ---------- */
+const STEP = {
+  signin: { title: 'Sign in', bar: 'Sign in', icon: 'login', body: 'Use the Google account you test apps with.' },
+  group: { title: 'Join the testers group', bar: 'Join the testers group', icon: 'arrow', body: 'Your account joins it, so you can install the other apps in your crew from Play.' },
+  app: { title: 'Add an app in a closed test', bar: 'Add an app', icon: 'arrow', body: 'Add the app you want tested, from your phone or from Play. It has to be in a closed test.' },
+  drive: { title: 'Connect Google Drive', bar: 'Connect Drive', icon: 'arrow', body: 'Each night\'s proof pictures are saved there, for the app owners.' },
+  tix: { title: 'Have 100 tix', bar: 'Earn tix in Circle', icon: 'arrow', body: 'A seat is <b>100 tix</b>. You have <b>40</b>. Review apps in Circle to earn the rest.' },
+};
+function missing(keys, signedOut) {
+  const head = signedOut ? 'Before you can join' : (keys.length === 1 ? '1 step before you can join' : `${keys.length} steps before you can join`);
+  const rows = keys.map((k, i) => i === 0
+    ? `<div class="step"><span class="dot now">${i + 1}</span><span class="sl now">${STEP[k].title}</span></div><div class="body plain">${STEP[k].body}</div>`
+    : `<div class="step"><span class="dot todo">${i + 1}</span><span class="sl todo">${STEP[k].title}</span></div>`).join('');
+  return `<div class="jt">${head}</div><div class="steps">${rows}</div>`;
+}
+function crewBox(s) {
+  let tail;
+  if (s.inOpen) tail = `<div style="margin-top:16px">${inRow}</div>`;
+  else if (s.blocked) tail = `<div style="margin-top:16px">${blockRow(s.blocked)}</div>`;
+  else if (!s.missing.length) tail = `<div style="margin-top:16px">${TERMS}</div><div style="margin-top:14px">${bar(s.crew ? 'Take a seat' : 'Take a seat and start one', I.plus(20), false)}</div>`;
+  else { const k = s.missing[0]; tail = `<div style="margin-top:18px">${missing(s.missing, s.signedOut)}</div><div style="margin-top:12px">${bar(STEP[k].bar, I[STEP[k].icon](20), true)}</div>`; }
+  return `<div class="w"><div class="tile" style="padding:16px">${header(s)}<div style="margin-top:16px">${seats(s.crew || {})}</div>${tail}</div></div>`;
+}
+function skel() {
+  let g = ''; for (let i = 0; i < 15; i++) g += '<div class="sk" style="aspect-ratio:1;border-radius:9px"></div>';
+  return `<div class="w"><div class="tile" style="padding:16px"><div class="head"><div class="sk" style="width:40px;height:40px;border-radius:12px"></div><div class="col"><div class="sk" style="width:180px;height:15px"></div><div class="sk" style="width:150px;height:11px;margin-top:6px"></div></div></div><div class="tseats" style="margin-top:16px">${g}<div></div></div><div class="sk" style="height:12px;margin-top:18px"></div><div class="sk" style="width:70%;height:12px;margin-top:8px"></div><div class="sk" style="width:55%;height:12px;margin-top:8px"></div></div></div>`;
+}
+const lower = `
+  <div class="w"><div class="tile ask"><div class="ic40">${I.play(18)}</div><div class="col"><div class="rt">Watch how a crew works</div><div class="rn">A short video, start to finish</div></div><span class="chev">${I.chev(18)}</span></div></div>
+  <div class="w"><div class="tile sec"><div class="eb">${I.users(14)}What a crew is</div>
+    <div class="p"><b>15 developers</b> put their apps in and open each other's <b>every day for 14 days</b>. Everyone gets real testers on real phones.</div>
+    <div class="p">Google asks for 12 testers over 14 days before production. A crew is 15, so it still counts if a couple drop out.</div></div></div>
+  <div class="w"><div class="tile sec"><div class="eb">How it goes</div>
+    ${[['armchair', 'Fill up', 'Wait in the Lobby until all 15 are in'], ['download', 'Install the other 14', 'From Play, while the crew fills'], ['play', 'Open them every day', '20 seconds each, for 14 days'], ['trophy', 'Apply for production', 'Your app has its testers']]
+      .map(([ic, t, n]) => `<div class="jrow"><div class="ic40">${I[ic](20)}</div><div class="col"><div class="rt">${t}</div><div class="rn">${n}</div></div></div>`).join('')}
+  </div></div>
+  <div class="w"><div class="tile ask"><div class="ic40">${I.scale(20)}</div><div class="col"><div class="rt">The rules</div><div class="rn">What you agree to, with the numbers</div></div><span class="chev">${I.chev(18)}</span></div></div>`;
+
+function tabs(run) {
+  return '<div class="tabs"><div class="track">' + ['Open', 'Lobby', 'Run', 'Record'].map(n =>
+    `<div class="seg${n === 'Open' ? ' on' : ''}">${n}${n === 'Run' && run ? '<span class="count">14</span>' : ''}</div>`).join('') + '</div></div>';
+}
+function pagePhone(theme, s, width = 392, whole = false) {
+  let body = '';
+  if (s.run) body += reminders;
+  body += s.loading ? skel() : crewBox(s);
+  if (!s.loading && !s.signedOut && s.perms) body += firstNight;
+  if (whole) body += lower;
+  return `<div><div class="cap">${theme} ${width}dp${whole ? ', whole tab' : ''}</div><div class="phone ${theme}" style="width:${width}px"><div class="barnote">app bar above, not shown</div>${tabs(s.run)}<div class="list">${body}</div>${whole ? '' : '<div class="more">the rest of the tab continues here</div>'}</div></div>`;
+}
+
+/* ---------- the seat sheet ---------- */
+const APPS = {
+  sunrise: { name: 'Sunrise Notes', c: 0 },
+  budget: { name: 'Pocket Budget', c: 5 },
+  weather: { name: 'Weather Mate', c: 3 },
+};
+const GROUP = 'googleclosetesting@googlegroups.com';
+const aico = k => `<div class="aico" style="background:linear-gradient(135deg,${SAMPLE[APPS[k].c]})"><i></i></div>`;
+function pickRow(k, line, off = false) {
+  return `<div class="prow${off ? ' off' : ''}">${aico(k)}<div class="col"><div class="rt">${APPS[k].name}</div>${line}</div>${off ? '' : `<span class="chev">${I.chev(18)}</span>`}</div>`;
+}
+const okLine = t => `<div class="rn ok">${I.check(12, 2.6)}<span>${t}</span></div>`;
+function sheetHead(title, sub, back) {
+  return `<div class="shead">${back ? `<span class="back">${I.backIos(20)}</span>` : ''}<div style="flex:1;min-width:0"><div class="stitle">${title}</div><div class="ssub">${sub}</div></div></div>`;
+}
+// Both boxes are required. An unticked one says what goes wrong and where to fix it; ticking hides both lines.
+const BOXES = [
+  { label: 'Available in all countries', why: 'Members in other countries can\'t install it, and two can\'t-install answers send your seat back.', how: 'In Play Console: Closed testing, Countries/regions, add all countries.' },
+  { label: 'Not limited to some devices', why: 'Members on excluded phones can\'t install it, and two can\'t-install answers send your seat back.', how: 'In Play Console: Device catalog, remove excluded devices.' },
+];
+function tickRow(b, on) {
+  return `<div class="tick"><span class="box${on ? ' on' : ''}">${on ? I.check(13, 3) : ''}</span>${b.label}</div>` +
+    (on ? '' : `<div class="why2"><span class="ii sm">${I.alert(13)}</span>${b.why}</div><div class="how">${b.how}</div>`);
+}
+function appSteps(k, st, ticks) {
+  const done = t => `<div class="step"><span class="dot done">${I.check(13, 3)}</span><span class="sl done">${t}</span></div>`;
+  const todo = (n, t) => `<div class="step"><span class="dot todo">${n}</span><span class="sl todo">${t}</span></div>`;
+  let out = '';
+  if (st === 'verify' || st === 'failed') {
+    out += `<div class="cur"><div class="step"><span class="dot now">1</span><span class="sl now">Add the group to its closed track</span></div>
+      <div class="body">In Play Console, add this group as testers on ${APPS[k].name}'s closed track, then roll out a release to it.</div>
+      <div class="addr"><span class="ad">${GROUP}</span><span class="cp" title="Copy">${I.copy(16)}</span></div>
+      ${st === 'failed'
+        ? `<div class="lastck warn">${I.alert(14)}<span>Checked 4 min ago: Play doesn't show it to the group yet. A new rollout can take a few hours to show.</span></div>`
+        : `<div class="lastck">Not checked yet.</div>`}
+      <div style="margin-top:12px">${bar(st === 'failed' ? 'Check again' : 'Verify on Play', I.refresh(20), false)}</div></div>`;
+    out += todo(2, 'Confirm two things in Play Console') + todo(3, 'Seat details');
+  } else {
+    out += done('Play shows it to the group');
+    out += `<div class="cur"><div class="step"><span class="dot now">2</span><span class="sl now">Confirm two things in Play Console</span></div>
+      <div class="body">Both are needed, so every member can install it.</div>
+      ${tickRow(BOXES[0], ticks > 0)}${tickRow(BOXES[1], ticks > 1)}
+      <div style="margin-top:12px">${bar('Tick both to continue', I.arrow(20), false, true)}</div></div>`;
+    out += todo(3, 'Seat details');
+  }
+  return out;
+}
+function seatDetails(k, short) {
+  return `<div class="prow">${aico(k)}<div class="col"><div class="rt">${APPS[k].name}</div>${okLine('Ready for a crew')}</div><span class="chg">Change</span></div>
+    <div class="flabel">Name the crew sees</div><div class="field">${APPS[k].name}</div>
+    <div class="flabel">Does your app need a sign-in?</div><div class="two"><span class="on">No sign-in</span><span>Needs a sign-in</span></div>
+    <div class="price"><span class="pt">A seat costs</span><span class="pv">100 tix</span></div>
+    <div class="pline">${short ? 'You have 40 tix.' : 'You have 240 tix.'} Back in full if you take it out while the crew fills, or finish every day.</div>
+    ${short ? `<div class="short">${I.alert(16)}<div><div class="st">Not enough tix yet</div><div class="sn">Review somebody's app in Circle to earn the rest.</div></div><span class="pill soft" style="align-self:center">Circle</span></div>` : ''}
+    <div class="primary${short ? ' off' : ''}">Take a seat in Crew 07</div>`;
+}
+function sheet(t) {
+  let h;
+  if (t.view === 'list') {
+    h = sheetHead('Which app goes in?', 'Take a seat in Crew 07', false) + `<div class="sbody">
+      ${pickRow('sunrise', okLine('Ready'))}
+      ${pickRow('budget', '<div class="rn">Add the group to its closed track</div>')}
+      ${pickRow('weather', '<div class="rn">Live on Play, so it can\'t go in</div>', true)}
+      <div class="prow"><div class="ic40">${I.plus(20)}</div><div class="col"><div class="rt">Add a new app</div><div class="rn">From this phone or Play</div></div><span class="chev">${I.chev(18)}</span></div></div>`;
+  } else if (t.view === 'steps') {
+    const left = t.st === 'ticks' ? '2 steps before it can go in' : '3 steps before it can go in';
+    h = sheetHead(APPS[t.app].name, left, true) + `<div class="sbody">${appSteps(t.app, t.st, t.ticks || 0)}</div>`;
+  } else {
+    h = sheetHead('Take a seat in Crew 07', 'Your app goes in with 14 others', true) + `<div class="sbody">${seatDetails(t.app, t.short)}</div>`;
+  }
+  return `<div class="sheet"><div class="handle"></div>${h}</div>`;
+}
+function sheetPhone(theme, t, width = 392) {
+  return `<div><div class="cap">${theme} ${width}dp</div><div class="phone ${theme}" style="width:${width}px;padding-bottom:0"><div class="scrimtop"></div>${sheet(t)}<div style="height:16px;background:var(--sheet)"></div></div></div>`;
+}
+
+/* ---------- states ---------- */
+const filling = { name: 'Crew 07', taken: 6, filled: 5, noIcon: [3], est: 'Likely starts in about 2 days' };
+const PAGE = [
+  { id: 'P1', name: 'Signed out', what: 'Only "Sign in" is listed: nothing else can be known yet. The crew and its seats still show to anyone.', crew: filling, missing: ['signin'], signedOut: true },
+  { id: 'P2', name: 'One step missing', what: 'Here only Drive. The title counts what is left.', crew: filling, missing: ['drive'], perms: true },
+  { id: 'P3', name: 'Three steps missing', what: 'The first missing step is open with its line under it, no box; the others are one line each, numbered from 1.', crew: filling, missing: ['group', 'drive', 'tix'], perms: true },
+  { id: 'P4', name: 'No closed app at all', what: '"Add an app in a closed test" shows only when you have no closed app. Whether an app is ready is asked later, in the seat sheet.', crew: filling, missing: ['app', 'tix'], perms: true },
+  { id: 'P5', name: 'All done', what: 'No checklist and no "ready" line: the terms and "Take a seat", which opens the seat sheet. Shown with a crew running elsewhere, so the reminders tile is on top.', crew: { name: 'Crew 07', taken: 12, filled: 11, est: 'Likely starts tomorrow night' }, missing: [], run: true, perms: true },
+  { id: 'P6', name: 'Already in this crew', what: 'The row opens the Lobby.', crew: { name: 'Crew 07', taken: 7, filled: 5, est: 'Likely starts in about 2 days' }, missing: [], inOpen: true, perms: true },
+  { id: 'P7', name: 'Blocked: your app waits in another crew', what: '', crew: filling, missing: [], blocked: 'Crew 06' },
+  { id: 'P8', name: 'No crew is filling', what: 'All done here, so the bar reads "Take a seat and start one". With steps missing, the list shows the same way as above.', crew: null, missing: [], perms: true },
+  { id: 'P9', name: 'Loading', what: 'A general skeleton: the header, the seats and a few text bars. No step or button placeholders.', loading: true },
+];
+const SHEET = [
+  { id: 'T1', name: 'Which app goes in?', what: 'Ready apps first. Pocket Budget is not verified yet, so it says what it needs. Weather Mate is live, so it is greyed with the reason and can\'t be picked. The other reasons use the same row: "Waits in Crew 06", "Taken out of Crew 05, appeal open".', view: 'list' },
+  { id: 'T2', name: 'Picked an app that is not verified', what: 'Its steps, in the same sheet. Only the step it is on is open. The back arrow returns to the list.', view: 'steps', app: 'budget', st: 'verify' },
+  { id: 'T3', name: 'The check failed', what: 'The last check\'s time and result in plain words, and the bar becomes "Check again".', view: 'steps', app: 'budget', st: 'failed' },
+  { id: 'T4', name: 'Verified, neither box ticked', what: 'Both boxes are required. Each unticked box says what goes wrong and where to fix it. The bar stays quiet until both are ticked.', view: 'steps', app: 'sunrise', st: 'ticks', ticks: 0 },
+  { id: 'T4b', name: 'Verified, one box ticked', what: 'The ticked box loses its two lines; the bar waits for the other.', view: 'steps', app: 'sunrise', st: 'ticks', ticks: 1 },
+  { id: 'T5', name: 'Ready to confirm', what: 'A ready app with both boxes ticked comes straight here from the list. The seat details are today\'s: the name the crew sees, sign-in details, the price, and the confirm button.', view: 'details', app: 'sunrise' },
+  { id: 'T6', name: 'Short of tix in the sheet', what: 'Only if tix were spent elsewhere after "Take a seat" was tapped. The button is held, and Circle is one tap away.', view: 'details', app: 'sunrise', short: true },
+];
+
+let ph = `<div class="state"><h4><span class="sid">360</span>Narrow check: P3 (light), P4 (dark)</h4><div class="pair">${pagePhone('light', PAGE[2], 360)}${pagePhone('dark', PAGE[3], 360)}</div></div>`;
+ph += `<div class="state"><h4><span class="sid">Tab</span>The whole Open tab, three steps missing</h4><div class="what">Under the box: the video as a row, what a crew is, how it goes in four one-line steps, and the rules behind a row that opens today's rules card as its own page.</div><div class="pair">${pagePhone('light', PAGE[2], 392, true)}${pagePhone('dark', PAGE[2], 392, true)}</div></div>`;
+for (const s of PAGE) ph += `<div class="state"><h4><span class="sid">${s.id}</span>${s.name}</h4>${s.what ? `<div class="what">${s.what}</div>` : ''}<div class="pair">${pagePhone('light', s)}${pagePhone('dark', s)}</div></div>`;
+document.getElementById('page').innerHTML = ph;
+
+let sh = `<div class="state"><h4><span class="sid">360</span>Narrow check: T4 (light), T5 (dark)</h4><div class="pair">${sheetPhone('light', SHEET[3], 360)}${sheetPhone('dark', SHEET[5], 360)}</div></div>`;
+for (const t of SHEET) sh += `<div class="state"><h4><span class="sid">${t.id}</span>${t.name}</h4>${t.what ? `<div class="what">${t.what}</div>` : ''}<div class="pair">${sheetPhone('light', t)}${sheetPhone('dark', t)}</div></div>`;
+document.getElementById('sheet').innerHTML = sh;
+
+// Rule check: a row's text is never taller than its icon, and no line that matters is cut.
+function checkIn(rootId, outId) {
+  const root = document.getElementById(rootId);
+  const bad = []; let n = 0;
+  root.querySelectorAll('.head, .ask, .inrow, .prow, .step, .jrow').forEach(row => {
+    const icon = row.querySelector('.ic40, .ic36, .aico, .dot, .sk');
+    const col = row.querySelector('.col, .sl');
+    if (!icon || !col) return;
+    n++;
+    if (col.offsetHeight > icon.offsetHeight + 0.5) bad.push(`${col.textContent.trim().slice(0, 34)} (${col.offsetHeight} > ${icon.offsetHeight})`);
+    const lines = col.matches('.sl') ? [col] : [...col.querySelectorAll('.rt, .rn, .a, .b, .fl2 span, .fl2.none')];
+    lines.forEach(t => { if (t.scrollWidth > t.clientWidth + 1) bad.push('cut: ' + t.textContent.trim()); });
+    col.querySelectorAll('.fl1').forEach(t => { const fs = t.querySelector('.fs'); if (fs && fs.getBoundingClientRect().right > t.getBoundingClientRect().right + 1) bad.push('seats cut: ' + t.textContent.trim()); });
+  });
+  root.querySelectorAll('.addr .ad, .stitle').forEach(t => { if (t.scrollWidth > t.clientWidth + 1) bad.push('cut: ' + t.textContent.trim()); });
+  root.querySelectorAll('.bar').forEach(b => { if (b.scrollWidth > b.clientWidth + 1) bad.push('bar cut: ' + b.textContent.trim()); });
+  const el = document.getElementById(outId);
+  el.className = 'check ' + (bad.length ? 'bad' : 'good');
+  el.textContent = bad.length ? `Problems: ${[...new Set(bad)].join('; ')}` : `Checked ${n} rows at 392dp and 360dp: every text fits its icon's height, and no bar, title, address or line is cut.`;
+}
+function check() { checkIn('page', 'chkPage'); checkIn('sheet', 'chkSheet'); }
+check(); document.fonts.ready.then(check);
+</script>
+</body>
+</html>

@@ -26,9 +26,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -239,6 +242,8 @@ fun FloatingActionBar(
     icon: Painter? = null,
     /** The room either side: the page's gutter when it floats, none inside a card that has its own. */
     gutter: Dp = Gutter,
+    /** A quieter word ahead of the label, such as "Next:". */
+    lead: String? = null,
 ) {
     Box(
         modifier
@@ -254,7 +259,10 @@ fun FloatingActionBar(
     ) {
         val text: @Composable () -> Unit = {
             Text(
-                label,
+                buildAnnotatedString {
+                    if (lead != null) withStyle(SpanStyle(color = Tt.colors.text3, fontWeight = FontWeight.Medium)) { append("$lead ") }
+                    append(label)
+                },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = Tt.colors.tabSelected,

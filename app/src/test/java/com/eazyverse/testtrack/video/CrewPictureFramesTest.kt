@@ -21,13 +21,16 @@ import com.eazyverse.testtrack.data.RoundStore
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.net.ApiSession
 import com.eazyverse.testtrack.ui.Crew
+import com.eazyverse.testtrack.ui.CrewActions
 import com.eazyverse.testtrack.ui.CrewApp
+import com.eazyverse.testtrack.ui.CrewGuide
+import com.eazyverse.testtrack.ui.CrewJoinState
 import com.eazyverse.testtrack.ui.CrewMember
 import com.eazyverse.testtrack.ui.CrewMembersPage
+import com.eazyverse.testtrack.ui.CrewOpenTab
 import com.eazyverse.testtrack.ui.CrewPage
 import com.eazyverse.testtrack.ui.CrewPhase
 import com.eazyverse.testtrack.ui.CrewPicturesPage
-import com.eazyverse.testtrack.ui.CrewReady
 import com.eazyverse.testtrack.ui.CrewSeat
 import com.eazyverse.testtrack.ui.CrewViewModel
 import com.eazyverse.testtrack.ui.DockUi
@@ -37,7 +40,6 @@ import com.eazyverse.testtrack.ui.NightPicture
 import com.eazyverse.testtrack.ui.PictureViewer
 import com.eazyverse.testtrack.ui.Scene
 import com.eazyverse.testtrack.ui.VisitDockContent
-import com.eazyverse.testtrack.ui.crewGuide
 import com.eazyverse.testtrack.viewmodel.AppNights
 import com.eazyverse.testtrack.viewmodel.CrewPicturesViewModel
 import com.eazyverse.testtrack.viewmodel.MemberNight
@@ -192,19 +194,16 @@ class CrewPictureFramesTest {
 
     @Test
     fun p01_ready() {
-        crews()
+        val vm = crews()
         show {
             Ground {
                 TabShell(MainTab.GROUPS, Scene.CREW) {
-                    androidx.compose.foundation.lazy.LazyColumn {
-                        crewGuide(
-                            CrewReady(app = true, member = true, permissions = true, drive = false),
-                            hasApps = true,
-                            onApp = {},
-                            onJoin = {},
-                            onAllow = {},
-                        )
-                    }
+                    // Everything set but Drive, which is the one step this video is about.
+                    CrewOpenTab(
+                        vm,
+                        CrewActions({}, {}, {}, {}, {}, {}),
+                        CrewGuide(CrewJoinState(closedApp = true, drive = false, tix = 240)),
+                    )
                 }
             }
         }
@@ -220,7 +219,7 @@ class CrewPictureFramesTest {
         Session.init(compose.activity)
         Session.updateDriveConnected(true)
         vm.pictures.ask(stops(), float = true)
-        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}) } }
         frame.settle(800)
         frame.write("ask")
     }
@@ -231,7 +230,7 @@ class CrewPictureFramesTest {
         Session.init(compose.activity)
         Session.updateDriveConnected(false)
         vm.pictures.ask(stops(), float = true)
-        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}) } }
         frame.settle(800)
         frame.write("drive")
     }
@@ -286,7 +285,7 @@ class CrewPictureFramesTest {
     @Test
     fun p06_due() {
         val vm = crews()
-        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}) } }
         frame.settle(800)
         frame.write("due")
     }
@@ -368,7 +367,7 @@ class CrewPictureFramesTest {
         }
         set("queue", listOf(waiting))
         set("failure", "We could not reach TestTrack. Tonight's pictures will go by themselves when you are back online.")
-        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}) } }
         frame.settle(800)
         // Opening the page tries to send, and without Google here it asks to reconnect Drive.
         vm.pictures.clearDriveAsk()
@@ -383,7 +382,7 @@ class CrewPictureFramesTest {
     @Test
     fun p12_feedback() {
         val vm = crews()
-        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}) } }
         frame.settle(800)
         vm.pictures.clearDriveAsk()
         compose

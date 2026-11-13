@@ -44,8 +44,8 @@ import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Hourglass
 import com.composables.icons.lucide.Info
-import com.composables.icons.lucide.LogIn
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Moon
 import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Barlow
@@ -57,9 +57,10 @@ internal const val CREW_HEAD_TAG = "crew-open-head"
 /**
  * The crew taking seats, and what taking one means.
  *
- * One card: the crew nearest to starting and when it likely starts, how full it is, what a seat
- * means, and one way in. When none is filling the card says the next app starts one, because that
- * is what happens, and a tab with nothing on it would read as there being nowhere to go.
+ * One card: the crew nearest to starting and when it likely starts, how full it is, and then either
+ * what the account still needs before a seat (CrewJoinChecklist) or what a seat means with one way
+ * in. When none is filling the card says a seat starts one, because that is what happens, and a tab
+ * with nothing on it would read as there being nowhere to go.
  *
  * No roster here. Who is already in a crew you have not joined is a list of strangers, and the
  * server does not send it to anybody outside the crew anyway. What takes its place is the deal
@@ -69,13 +70,13 @@ internal const val CREW_HEAD_TAG = "crew-open-head"
 fun CrewOpenTab(
     vm: CrewViewModel,
     actions: CrewActions,
-    guide: CrewGuide = CrewGuide(CrewReady(app = null, member = true, permissions = true)),
+    guide: CrewGuide = CrewGuide(),
 ) {
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
     ) {
-        // The rules below are the app's own and need nothing from the server; only the card waits.
+        // The guide below is the app's own words and needs nothing from the server; only the box waits.
         item {
             LoadSwap(vm.firstLoad) { waiting ->
                 if (waiting) {
@@ -85,12 +86,25 @@ fun CrewOpenTab(
                 Box(Modifier.padding(start = Gutter, end = Gutter, bottom = 4.dp)) { OpenCrewCard(vm, actions, guide) }
             }
         }
+        // A reminder, not a step: nothing stops a seat, but the first night needs both switches.
+        if (!vm.firstLoad && !guide.join.signedOut && !guide.join.permissions) {
+            item(key = "allow") {
+                AskRow(
+                    "Before your first night",
+                    "Allow usage access and the timer",
+                    guide.onAllow,
+                    Modifier.padding(start = Gutter, end = Gutter, top = 8.dp),
+                    icon = Lucide.Moon,
+                    trailing = { LookOnlyPill("Allow", PillKind.SOFT, guide.onAllow) },
+                )
+            }
+        }
 
-        crewGuide(guide.ready, guide.hasApps, guide.onApp, guide.onJoin, guide.onAllow, guide.onDrive)
+        crewGuide(guide.onRules)
     }
 }
 
-/** The card: the crew and when it likely starts, its seats, then the terms and the way in (or why not). */
+/** The card: the crew and when it likely starts, its seats, then what is still missing, or the terms and the way in. */
 @Composable
 private fun OpenCrewCard(
     vm: CrewViewModel,
@@ -103,21 +117,30 @@ private fun OpenCrewCard(
         Spacer(Modifier.height(14.dp))
         SeatCountTiles(filled = crew?.filled ?: 0, taken = crew?.taken ?: 0, icons = crew?.icons.orEmpty())
         Spacer(Modifier.height(14.dp))
+        val steps = guide.join.missing
         when {
             vm.inOpen -> OpenStatusRow(ok = true, "You are in this crew", "See it in your Lobby", onClick = { vm.showTab(CrewPhase.LOBBY) })
             vm.blockedCrew != null ->
                 OpenStatusRow(ok = false, "Your app waits in ${vm.blockedCrew}", "Take another seat once it is full")
             // An older server sends only its sentence, which can run long, so it gets three lines.
             vm.blocked != null -> OpenStatusRow(ok = false, "Your app is waiting", vm.blocked.orEmpty(), noteLines = 3)
+            steps.isNotEmpty() ->
+                CrewJoinChecklist(steps, guide.join.signedOut, guide.join.tix) { step ->
+                    when (step) {
+                        JoinStep.SIGN_IN -> guide.onSignIn()
+                        JoinStep.GROUP -> guide.onJoin()
+                        JoinStep.APP -> guide.onAddApp()
+                        JoinStep.DRIVE -> guide.onDrive()
+                        JoinStep.TIX -> guide.onCircle()
+                    }
+                }
             else -> {
                 CrewSeatTerms()
                 Spacer(Modifier.height(14.dp))
                 FloatingActionBar(
-                    label = if (vm.signedOut) "Sign in to take a seat" else "Take a seat",
-                    // No Drive, no seat: a night counts only with its pictures, and they go there.
-                    // Signed out, Drive always reads as missing, so that tap goes to sign-in instead.
-                    onClick = if (!vm.signedOut && guide.ready.drive == false) guide.onDrive else actions.onTakeSeat,
-                    icon = rememberVectorPainter(if (vm.signedOut) Lucide.LogIn else Lucide.Plus),
+                    label = if (crew != null) "Take a seat" else "Take a seat and start one",
+                    onClick = actions.onTakeSeat,
+                    icon = rememberVectorPainter(Lucide.Plus),
                     gutter = 0.dp,
                 )
             }
@@ -167,7 +190,7 @@ internal fun CrewOpenHeader(crew: Crew?) {
             }
             if (crew == null || estimate != null) Spacer(Modifier.height(2.dp))
             when {
-                crew == null -> QuietLine("The next app put in starts one")
+                crew == null -> QuietLine("Your seat starts a new one")
                 estimate == null -> Unit
                 !estimate.known -> QuietLine(estimate.text)
                 else ->
@@ -305,12 +328,17 @@ private fun OpenStatusRow(
     }
 }
 
-/** What the guide under the card needs from outside the crew: My apps, the group, the phone. */
+/** What the Open tab needs from outside the crew: what the account has, and what each step does. */
 class CrewGuide(
-    val ready: CrewReady,
-    val hasApps: Boolean = true,
-    val onApp: () -> Unit = {},
+    val join: CrewJoinState = CrewJoinState(),
+    val onSignIn: () -> Unit = {},
+    /** The testers group: its dialog. */
     val onJoin: () -> Unit = {},
-    val onAllow: () -> Unit = {},
+    val onAddApp: () -> Unit = {},
     val onDrive: () -> Unit = {},
+    /** Circle, where reviews earn tix. */
+    val onCircle: () -> Unit = {},
+    val onAllow: () -> Unit = {},
+    /** The rules card, as its own page. */
+    val onRules: () -> Unit = {},
 )

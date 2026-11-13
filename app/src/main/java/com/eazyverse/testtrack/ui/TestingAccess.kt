@@ -115,7 +115,7 @@ fun TestingNotifications() {
 
 /** A row's pill drawn at 34dp: the row around it is the target, so it asks for no 48dp of its own. */
 @Composable
-private fun LookOnlyPill(
+internal fun LookOnlyPill(
     label: String,
     kind: PillKind,
     onClick: () -> Unit,

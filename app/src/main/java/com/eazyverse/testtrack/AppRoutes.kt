@@ -12,39 +12,15 @@ import androidx.navigation.navArgument
 import com.eazyverse.testtrack.ui.AppAddScreen
 import com.eazyverse.testtrack.ui.AppPage
 import com.eazyverse.testtrack.ui.AskScreen
-import com.eazyverse.testtrack.ui.CrewAddScreen
 import com.eazyverse.testtrack.ui.CrewViewModel
-import com.eazyverse.testtrack.ui.rememberMembership
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 
 /**
- * The pages about one app on My apps: its own page, adding one, and the two things it can be put
- * up for, a crew and feedback. Each borrows My apps' model from the home entry underneath, so an
+ * The pages about one app on My apps: its own page, adding one, and feedback. Putting it in a crew is
+ * the seat sheet, opened from its page. Each borrows My apps' model from the home entry underneath, so an
  * app added or changed on one is the same app on all of them.
  */
 internal fun NavGraphBuilder.appRoutes(nav: NavHostController) {
-    composable(Routes.CREW_ADD, arguments = listOf(navArgument("app") { type = NavType.StringType })) { entry ->
-        // Taken on the Crew tab's model, so the seat is already there on the way back; the
-        // app is My apps' own, so nothing about it is asked again.
-        val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
-        val crews: CrewViewModel = viewModel(home)
-        val apps: AppsViewModel = viewModel(home)
-        val context = LocalContext.current
-        val appId = requireNotNull(entry.arguments?.getString("app"))
-        LaunchedEffect(appId) { if (apps.byId(appId) == null) apps.load(context) }
-        Inset {
-            CrewAddScreen(
-                crews,
-                apps.byId(appId),
-                onDone = { nav.popBackStack() },
-                onBack = { nav.popBackStack() },
-                loading = apps.loading || apps.reading,
-                offline = apps.offline,
-                onRetry = { apps.load(context) },
-            )
-        }
-    }
-
     composable(Routes.ASK_APP, arguments = listOf(navArgument("app") { type = NavType.StringType })) { entry ->
         val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
         val apps: AppsViewModel = viewModel(home)
@@ -66,7 +42,8 @@ internal fun NavGraphBuilder.appRoutes(nav: NavHostController) {
     composable(Routes.APP, arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
         val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
         val apps: AppsViewModel = viewModel(home)
-        val membership = rememberMembership()
+        // The Crew tab's own model: the seat sheet takes the seat on it, so the tab shows it on the way back.
+        val crews: CrewViewModel = viewModel(home)
         Inset {
             AppPage(
                 apps,
@@ -74,8 +51,10 @@ internal fun NavGraphBuilder.appRoutes(nav: NavHostController) {
                 onBack = { nav.popBackStack() },
                 onOpenCrew = { nav.push(Routes.crew(it)) },
                 onOpenRequest = { nav.push(Routes.check(it)) },
-                onCrew = { appId -> membership.require { nav.push(Routes.crewAdd(appId)) } },
                 onFeedback = { nav.push(Routes.askFor(it)) },
+                crews = crews,
+                onAddApp = { nav.push(Routes.APP_ADD) },
+                onOpenCircle = { nav.popBackStack(Routes.HOME, false) },
             )
         }
     }

@@ -73,6 +73,9 @@ object Routes {
 
     /** Asking the circle to look at your app. A page, because finding the app is its own step. */
     const val ABOUT = "about"
+
+    /** The crew rules card, from the Open tab. */
+    const val CREW_RULES = "crew-rules"
     const val REVIEW = "review?post={post}"
 
     fun review(post: String) = "review?post=${Uri.encode(post)}"
@@ -92,11 +95,6 @@ object Routes {
     fun crewMembers(id: String) = "crew/${Uri.encode(id)}/members"
 
     fun crewPictures(id: String) = "crew/${Uri.encode(id)}/pictures"
-
-    /** Putting an app from My apps into a crew: its name for the crew, its sign-in, the seat. */
-    const val CREW_ADD = "crew-add/{app}"
-
-    fun crewAdd(appId: String) = "crew-add/${Uri.encode(appId)}"
 
     /** Asking for feedback on an app from My apps. */
     const val ASK_APP = "ask/{app}"
@@ -345,10 +343,10 @@ fun AppNav(
                 onCheck = { nav.push(Routes.check(it)) },
                 onOpenAbout = { nav.push(Routes.ABOUT) },
                 onOpenCrew = { nav.push(Routes.crew(it)) },
-                onCrewForApp = { nav.push(Routes.crewAdd(it)) },
                 onAskForApp = { nav.push(Routes.askFor(it)) },
                 onOpenApp = { nav.push(Routes.app(it)) },
                 onAddApp = { nav.push(Routes.APP_ADD) },
+                onOpenRules = { nav.push(Routes.CREW_RULES) },
                 openCrew = openCrew,
                 // The same teardown the other two do, and for the same reason: `replace` pops
                 // everything above the graph root, so the shell does not survive underneath a
@@ -406,16 +404,10 @@ fun AppNav(
                     id,
                     onBack = { nav.popBackStack() },
                     onSignIn = { nav.popBackStack() },
-                    // Put it in again: the same app, from My apps, or added first if it is not there.
-                    onAddToCrew = {
-                        val pkg =
-                            crews.crews
-                                .firstOrNull { it.id == id }
-                                ?.mine
-                                ?.packageName
-                        val app = apps.apps.firstOrNull { it.pkg == pkg }
-                        nav.push(if (app != null) Routes.crewAdd(app.id) else Routes.APP_ADD)
-                    },
+                    apps = apps,
+                    // Put it in again: the seat sheet, on the same app from My apps when it is there.
+                    onAddApp = { nav.push(Routes.APP_ADD) },
+                    onOpenCircle = { nav.popBackStack(Routes.HOME, false) },
                     onMembers = { nav.push(Routes.crewMembers(id)) },
                 )
             }
@@ -441,6 +433,10 @@ fun AppNav(
 
         composable(Routes.ABOUT) {
             Inset { AboutScreen(onBack = { nav.popBackStack() }) }
+        }
+
+        composable(Routes.CREW_RULES) {
+            Inset { CrewRulesPage(onBack = { nav.popBackStack() }) }
         }
     }
 }

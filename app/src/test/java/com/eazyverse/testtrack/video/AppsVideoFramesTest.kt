@@ -247,7 +247,6 @@ class AppsVideoFramesTest {
                     onBack = {},
                     onOpenCrew = {},
                     onOpenRequest = {},
-                    onCrew = {},
                     onFeedback = {},
                 )
             }

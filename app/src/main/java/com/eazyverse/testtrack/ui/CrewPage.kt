@@ -23,7 +23,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.findActivity
+import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.leave
 import com.eazyverse.testtrack.viewmodel.report
 import com.eazyverse.testtrack.viewmodel.vote
@@ -43,7 +45,11 @@ fun CrewPage(
     id: String,
     onBack: () -> Unit,
     onSignIn: () -> Unit,
-    onAddToCrew: () -> Unit,
+    apps: AppsViewModel = viewModel(),
+    /** Adding an app to My apps, from the seat sheet's list. */
+    onAddApp: () -> Unit = {},
+    /** Circle, for somebody short of tix. */
+    onOpenCircle: () -> Unit = {},
     /** The crew's members, and what each did with your app. */
     onMembers: () -> Unit = {},
 ) {
@@ -66,7 +72,13 @@ fun CrewPage(
         }
     }
     CrewLifecycle(vm)
-    val actions = crewActions(vm, dialogs, onSignIn, onAddToCrew, onMembers)
+    // Put it in again: the seat sheet, on the same app when it is on My apps.
+    var seating by remember { mutableStateOf(false) }
+    val actions =
+        crewActions(vm, dialogs, onSignIn, onAddToCrew = {
+            apps.load(context)
+            seating = true
+        }, onMembers = onMembers)
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -102,6 +114,17 @@ fun CrewPage(
         }
     }
     CrewDialogsHost(vm, dialogs)
+    if (seating) {
+        val pkg = crew?.mine?.packageName
+        CrewSeatSheet(
+            crews = vm,
+            apps = apps,
+            startAppId = apps.apps.firstOrNull { it.pkg == pkg }?.id,
+            onAddApp = onAddApp,
+            onOpenCircle = onOpenCircle,
+            onDismiss = { seating = false },
+        )
+    }
 }
 
 /** The seat a dialog is about, for each dialog a crew's rows can open. */
@@ -149,7 +172,7 @@ internal fun crewActions(
             onReport = { dialogs.reporting = it },
             onLeave = { dialogs.leaving = it },
             onVote = { seat, yes -> if (yes) vm.vote(context, seat, installed = true) else dialogs.refusing = seat },
-            // Signed in and on the testers group first, then the page that puts an app in.
+            // Signed in and on the testers group first, then the sheet that puts an app in.
             onTakeSeat = { if (vm.signedOut) onSignIn() else membership.require { onAddToCrew() } },
             isInstalled = { pkg -> vm.isInstalled(context, pkg) },
             onMembers = onMembers,

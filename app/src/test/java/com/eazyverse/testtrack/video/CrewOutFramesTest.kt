@@ -90,7 +90,7 @@ class CrewOutFramesTest {
         appeal: SeatAppeal?,
     ) {
         val vm = ownerOut(appeal)
-        frame.show { Pushed { CrewPage(vm = vm, id = "crew-05", onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        frame.show { Pushed { CrewPage(vm = vm, id = "crew-05", onBack = {}, onSignIn = {}) } }
         frame.settle(600)
         frame.write(name)
     }

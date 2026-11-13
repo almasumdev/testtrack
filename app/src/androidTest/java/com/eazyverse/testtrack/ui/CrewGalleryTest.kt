@@ -533,7 +533,7 @@ class CrewGalleryTest {
         compose.setContent { screen?.invoke() }
         val vm = CrewViewModel()
         vm.preview(emptyList(), open = open(taken = 12), tab = CrewPhase.OPEN)
-        val guide = CrewGuide(CrewReady(app = true, member = true, permissions = false))
+        val guide = CrewGuide(CrewJoinState(closedApp = true, permissions = false))
         screen =
             {
                 key(

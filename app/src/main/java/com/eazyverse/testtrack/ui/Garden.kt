@@ -28,6 +28,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -180,6 +181,9 @@ fun TileRow(
     /** Drawn instead of the icon tile, at its size: an app's own icon in a list of apps. */
     leading: (@Composable () -> Unit)? = null,
     chosen: Boolean = false,
+    /** A small mark and a colour for the subtitle, such as the green tick on a ready row. */
+    subtitleIcon: ImageVector? = null,
+    subtitleTone: Color? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val t = Tt.colors
@@ -212,13 +216,25 @@ fun TileRow(
             )
             val sub = subtitleRich ?: subtitle?.let { AnnotatedString(it) }
             if (sub != null) {
-                Text(
-                    sub,
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
-                    color = t.text3,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                val tone = subtitleTone ?: t.text3
+                val line: @Composable () -> Unit = {
+                    Text(
+                        sub,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
+                        color = tone,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (subtitleIcon == null) {
+                    line()
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(subtitleIcon, null, Modifier.size(13.dp), tint = tone)
+                        Spacer(Modifier.width(5.dp))
+                        line()
+                    }
+                }
             }
         }
         if (value != null) {

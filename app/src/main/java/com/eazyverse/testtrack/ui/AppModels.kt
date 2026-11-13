@@ -152,6 +152,8 @@ fun AppEntry.statusLine(): AppStatusLine {
         live && !verified -> AppStatusLine("Waiting for Play", tone = StatusTone.QUIET, mark = StatusMark.WAITING)
         state == "rejected" || state == "removed" -> AppStatusLine("Not in a crew", tone = StatusTone.QUIET)
         live -> AppStatusLine("Ready for feedback", tone = StatusTone.QUIET)
+        // A closed app Play has not shown to the group yet is not ready for anything; its mark says why.
+        !verified -> AppStatusLine("Add the group to its track", tone = StatusTone.QUIET)
         else -> AppStatusLine("Ready for a crew", tone = StatusTone.QUIET)
     }
 }

@@ -277,7 +277,7 @@ class StandingScreensTest {
         compose.onNodeWithText("Running One").assertIsDisplayed()
         compose.onNodeWithText("Old One").assertIsDisplayed()
         compose.onNodeWithText("Crew test done").assertIsDisplayed()
-        compose.onNodeWithText("Ready for a crew").assertIsDisplayed()
+        compose.onNodeWithText("Add the group to its track").assertIsDisplayed()
         compose.onNodeWithContentDescription("Not verified yet. Add the testers group, then tap Verify.").assertExists()
     }
 

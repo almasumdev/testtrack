@@ -21,7 +21,6 @@ import com.eazyverse.testtrack.ui.FeedTab
 import com.eazyverse.testtrack.ui.Gutter
 import com.eazyverse.testtrack.ui.JoinGroupAsk
 import com.eazyverse.testtrack.ui.OverlayPermissionDialog
-import com.eazyverse.testtrack.ui.PickFor
 import com.eazyverse.testtrack.ui.RequestCheck
 import com.eazyverse.testtrack.ui.ReviewBody
 import com.eazyverse.testtrack.ui.ReviewCheck
@@ -227,7 +226,7 @@ class CircleVideoFramesTest {
         frame.show {
             Ground {
                 CircleShell(feed)
-                AppPickerSheet(PickFor.FEEDBACK, listOf(s.focus), loading = false, onPick = {}, onAdd = {}, onDismiss = {})
+                AppPickerSheet(listOf(s.focus), loading = false, onPick = {}, onAdd = {}, onDismiss = {})
             }
         }
         frame.target("pickFocus", text(s.focus.name, clickable = true))

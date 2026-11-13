@@ -12,18 +12,15 @@ import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 
-/** Which of the two things an app is being picked for. */
-enum class PickFor { CREW, FEEDBACK }
-
 /**
- * Choosing which app, from Crew's Take a seat or Circle's Ask for feedback.
+ * Choosing which app, from Circle's Ask for feedback. Crew's Take a seat has its own sheet,
+ * [CrewSeatSheet], which also walks the app through what it needs.
  *
- * Every app lives on My apps now, so those buttons ask which one rather than for a link: the apps
+ * Every app lives on My apps now, so the button asks which one rather than for a link: the apps
  * that can go there, then a way to add a new one, which opens the add page.
  */
 @Composable
 internal fun AppPickerSheet(
-    purpose: PickFor,
     apps: List<AppEntry>,
     /** My apps has not answered yet, so an empty list says nothing about what there is. */
     loading: Boolean,
@@ -31,17 +28,15 @@ internal fun AppPickerSheet(
     onAdd: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val fits = apps.filter { if (purpose == PickFor.CREW) it.canCrew else it.canFeedback }
+    val fits = apps.filter { it.canFeedback }
     val waiting = loading && fits.isEmpty()
     PickerSheet(
-        title = if (purpose == PickFor.CREW) "Which app goes in?" else "Feedback on which app?",
+        title = "Feedback on which app?",
         subtitle =
             when {
                 waiting -> "Getting your apps."
                 fits.isNotEmpty() -> "Your apps that can go now."
                 apps.isEmpty() -> "You haven't added an app yet."
-                purpose == PickFor.CREW ->
-                    "None of your apps can go into a crew now: live apps can't, and one already in a crew waits."
                 else -> "Each of your apps already has a request open."
             },
         onDismiss = onDismiss,

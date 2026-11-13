@@ -35,8 +35,8 @@ import com.eazyverse.testtrack.ui.theme.Tt
  */
 
 /**
- * The open crew's card in the shape it will have: the icon tile and two lines, the fifteen seats,
- * the terms (the first starting with the info mark's dot) and the way in as a hairline bar.
+ * The open crew's card as a general shape: the icon tile and two lines, the fifteen seats and three
+ * text bars. Nothing about steps or the button, since which of them there will be is not known yet.
  */
 @Composable
 fun CrewOpenCardLoading() {
@@ -53,26 +53,12 @@ fun CrewOpenCardLoading() {
             }
             Spacer(Modifier.height(14.dp))
             SkeletonSeats()
-            Spacer(Modifier.height(14.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Skeleton(width = 12.dp, height = 12.dp, corner = 6.dp)
-                Spacer(Modifier.width(6.dp))
-                Skeleton(height = 12.dp)
-            }
-            Spacer(Modifier.height(6.dp))
-            Skeleton(width = 220.dp, height = 12.dp)
-            Spacer(Modifier.height(6.dp))
-            Skeleton(width = 260.dp, height = 12.dp)
-            Spacer(Modifier.height(14.dp))
-            val shape = RoundedCornerShape(TileRadius)
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .clip(shape)
-                    .border(1.dp, Tt.colors.cardLine, shape),
-                contentAlignment = Alignment.Center,
-            ) { Skeleton(width = 110.dp, height = 14.dp) }
+            Spacer(Modifier.height(16.dp))
+            Skeleton(height = 12.dp)
+            Spacer(Modifier.height(8.dp))
+            Skeleton(width = 230.dp, height = 12.dp)
+            Spacer(Modifier.height(8.dp))
+            Skeleton(width = 180.dp, height = 12.dp)
         }
     }
 }

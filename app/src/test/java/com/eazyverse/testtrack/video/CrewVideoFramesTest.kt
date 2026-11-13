@@ -13,28 +13,31 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.net.ApiSession
 import com.eazyverse.testtrack.ui.Crew
-import com.eazyverse.testtrack.ui.CrewAddScreen
+import com.eazyverse.testtrack.ui.CrewActions
 import com.eazyverse.testtrack.ui.CrewApp
+import com.eazyverse.testtrack.ui.CrewGuide
+import com.eazyverse.testtrack.ui.CrewJoinState
 import com.eazyverse.testtrack.ui.CrewMember
 import com.eazyverse.testtrack.ui.CrewMembersPage
+import com.eazyverse.testtrack.ui.CrewOpenTab
 import com.eazyverse.testtrack.ui.CrewPage
 import com.eazyverse.testtrack.ui.CrewPhase
-import com.eazyverse.testtrack.ui.CrewReady
 import com.eazyverse.testtrack.ui.CrewReportDialog
 import com.eazyverse.testtrack.ui.CrewScreen
 import com.eazyverse.testtrack.ui.CrewSeat
+import com.eazyverse.testtrack.ui.CrewSeatSheet
 import com.eazyverse.testtrack.ui.CrewViewModel
 import com.eazyverse.testtrack.ui.DockUi
 import com.eazyverse.testtrack.ui.MainTab
 import com.eazyverse.testtrack.ui.Scene
+import com.eazyverse.testtrack.ui.SeatBoxes
 import com.eazyverse.testtrack.ui.VisitDockContent
-import com.eazyverse.testtrack.ui.crewGuide
+import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
@@ -259,7 +262,7 @@ class CrewVideoFramesTest {
     @Test
     fun c02_tonight() {
         val vm = crews()
-        frame.show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        frame.show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}) } }
         frame.settle(800)
         runCatching { frame.target("openAll", compose.onNode(hasText("Open all", substring = true) and hasClickAction())) }
         runCatching { frame.target("left", compose.onNodeWithText("left tonight", substring = true)) }
@@ -269,39 +272,40 @@ class CrewVideoFramesTest {
 
     @Test
     fun c04_ready() {
-        // The Open tab's own guide cards, drawn from the top, with nothing done yet. Scrolled to
-        // in the tab, the seat tiles above them keep it from ever going still.
-        crews(list = emptyList())
+        // The Open tab with nothing done yet: the join steps in the crew box, the first one open.
+        val vm = crews(list = emptyList())
         frame.show {
             Ground {
                 TabShell(MainTab.GROUPS, Scene.CREW) {
-                    androidx.compose.foundation.lazy.LazyColumn {
-                        crewGuide(
-                            CrewReady(app = false, member = false, permissions = false),
-                            hasApps = true,
-                            onApp = {},
-                            onJoin = {},
-                            onAllow = {},
-                        )
-                    }
+                    CrewOpenTab(
+                        vm,
+                        CrewActions({}, {}, {}, {}, {}, {}),
+                        CrewGuide(CrewJoinState(member = false, closedApp = false, drive = false, tix = 40, permissions = false)),
+                    )
                 }
             }
         }
         frame.settle(800)
-        runCatching { frame.target("readyApp", compose.onNodeWithText("checked on Play", substring = true)) }
-        runCatching { frame.target("readyGroup", compose.onAllNodesWithText("testers group", substring = true)[0]) }
-        runCatching { frame.target("readyPerms", compose.onNodeWithText("permissions", substring = true)) }
-        runCatching { frame.target("check", compose.onNode(hasText("Check") and hasClickAction())) }
-        runCatching { frame.target("join", compose.onNode(hasText("Join") and hasClickAction())) }
+        runCatching { frame.target("steps", compose.onNodeWithText("steps before you can join", substring = true)) }
+        runCatching { frame.target("next", compose.onNode(hasText("Next:", substring = true) and hasClickAction())) }
         runCatching { frame.target("allow", compose.onNode(hasText("Allow") and hasClickAction())) }
-        runCatching { frame.target("getReady", compose.onNodeWithText("Before you take a seat")) }
         frame.write("ready")
+    }
+
+    /** My apps with one ready app, both boxes ticked, so the seat sheet opens on the seat details. */
+    private fun readyApps(): AppsViewModel {
+        ApiSession.load(compose.activity)
+        return AppsViewModel().apply {
+            setState("apps", listOf(CircleSamples.focus))
+            setState("loading", false)
+            setState("ticked", mapOf(CircleSamples.focus.id to SeatBoxes(countries = true, devices = true)))
+        }
     }
 
     @Test
     fun c05_seat() {
         val vm = crews(list = emptyList())
-        frame.show { Pushed { CrewAddScreen(crews = vm, app = CircleSamples.focus, onDone = {}, onBack = {}) } }
+        frame.show { Pushed { CrewSeatSheet(vm, readyApps(), CircleSamples.focus.id, onAddApp = {}, onOpenCircle = {}, onDismiss = {}) } }
         frame.settle(800)
         runCatching { frame.target("seatName", compose.onNodeWithText("Name the crew sees", substring = true)) }
         runCatching { frame.target("takeSeat", compose.onNode(hasText("Take a seat", substring = true) and hasClickAction())) }
@@ -323,7 +327,7 @@ class CrewVideoFramesTest {
     @Test
     fun c05b_seatLogin() {
         val vm = crews(list = emptyList())
-        frame.show { Pushed { CrewAddScreen(crews = vm, app = CircleSamples.focus, onDone = {}, onBack = {}) } }
+        frame.show { Pushed { CrewSeatSheet(vm, readyApps(), CircleSamples.focus.id, onAddApp = {}, onOpenCircle = {}, onDismiss = {}) } }
         compose.onNode(hasText("Needs a sign-in") and hasClickAction()).performClick()
         frame.settle(800)
         runCatching {
@@ -343,7 +347,7 @@ class CrewVideoFramesTest {
     @Test
     fun c05c_seatSubmit() {
         val vm = crews(list = emptyList())
-        frame.show { Pushed { CrewAddScreen(crews = vm, app = CircleSamples.focus, onDone = {}, onBack = {}) } }
+        frame.show { Pushed { CrewSeatSheet(vm, readyApps(), CircleSamples.focus.id, onAddApp = {}, onOpenCircle = {}, onDismiss = {}) } }
         compose.onNode(hasText("Needs a sign-in") and hasClickAction()).performClick()
         frame.settle(400)
         frame.scrollTo(compose.onNode(hasText("Take a seat", substring = true) and hasClickAction()))
@@ -356,7 +360,7 @@ class CrewVideoFramesTest {
     @Test
     fun c06_lobby() {
         val vm = crews(list = listOf(lobby), installed = false)
-        frame.show { Pushed { CrewPage(vm = vm, id = lobby.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        frame.show { Pushed { CrewPage(vm = vm, id = lobby.id, onBack = {}, onSignIn = {}) } }
         frame.settle(800)
         runCatching { frame.target("install", compose.onAllNodes(hasText("Install") and hasClickAction())[0]) }
         runCatching { frame.target("rowWeather", compose.onNode(hasText("Pixel Weather", substring = true) and hasClickAction())) }
@@ -370,7 +374,7 @@ class CrewVideoFramesTest {
         val vm = crews(list = listOf(lobby), installed = false)
         frame.show {
             Pushed {
-                CrewPage(vm = vm, id = lobby.id, onBack = {}, onSignIn = {}, onAddToCrew = {})
+                CrewPage(vm = vm, id = lobby.id, onBack = {}, onSignIn = {})
                 CrewReportDialog(seat = lobby.seats.first(), onReport = {}, onDismiss = {})
             }
         }
@@ -383,7 +387,7 @@ class CrewVideoFramesTest {
     @Test
     fun c08_waiting() {
         val vm = crews()
-        frame.show { Pushed { CrewPage(vm = vm, id = waiting.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        frame.show { Pushed { CrewPage(vm = vm, id = waiting.id, onBack = {}, onSignIn = {}) } }
         frame.settle(800)
         runCatching { frame.target("starts", compose.onNodeWithText("Starts in", substring = true)) }
         frame.write("waiting")
@@ -452,7 +456,7 @@ class CrewVideoFramesTest {
     @Test
     fun c12_missed() {
         val vm = crews(list = listOf(slipping))
-        frame.show(idle = false) { Pushed { CrewPage(vm = vm, id = slipping.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        frame.show(idle = false) { Pushed { CrewPage(vm = vm, id = slipping.id, onBack = {}, onSignIn = {}) } }
         runCatching { frame.target("warning", compose.onNodeWithText("Miss tonight too", substring = true)) }
         frame.write("missed", idle = false)
     }
@@ -460,7 +464,7 @@ class CrewVideoFramesTest {
     @Test
     fun c13_record() {
         val vm = crews()
-        frame.show { Pushed { CrewPage(vm = vm, id = finished.id, onBack = {}, onSignIn = {}, onAddToCrew = {}) } }
+        frame.show { Pushed { CrewPage(vm = vm, id = finished.id, onBack = {}, onSignIn = {}) } }
         frame.settle(800)
         runCatching { frame.target("finished", compose.onNodeWithText("finished", substring = true)) }
         frame.write("record")

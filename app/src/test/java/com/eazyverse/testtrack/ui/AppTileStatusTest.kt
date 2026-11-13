@@ -117,7 +117,7 @@ class AppTileStatusTest {
             val said = line(broken).lowercase()
             assertFalse(said, "install" in said || "verified" in said || "sent back" in said || "taken out" in said)
         }
-        assertEquals("Ready for a crew", line(app(verifiedBy = null)))
+        assertEquals("Add the group to its track", line(app(verifiedBy = null)))
         assertEquals("Collecting feedback", line(app(feedback = feedback("collecting", unlisted = true))))
     }
 

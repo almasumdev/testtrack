@@ -12,15 +12,20 @@ import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiApp
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
+import com.eazyverse.testtrack.net.AppBoxesIn
 import com.eazyverse.testtrack.net.IconIn
 import com.eazyverse.testtrack.ui.AppCrewStatus
 import com.eazyverse.testtrack.ui.AppEntry
 import com.eazyverse.testtrack.ui.AppFeedbackStatus
 import com.eazyverse.testtrack.ui.CrewRules
 import com.eazyverse.testtrack.ui.MyAppsChanged
+import com.eazyverse.testtrack.ui.SeatBoxStore
+import com.eazyverse.testtrack.ui.SeatBoxes
+import com.eazyverse.testtrack.ui.SeatFacts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.OffsetDateTime
 
 /**
  * My apps: every app added, where each is with crews and feedback, and the two things done to an
@@ -68,6 +73,70 @@ class AppsViewModel : ViewModel() {
 
     fun byId(id: String): AppEntry? = apps.firstOrNull { it.id == id }
 
+    /** What the server says about each app beyond its entry: the boxes, the last check, why it can't go in. */
+    var facts by mutableStateOf<Map<String, SeatFacts>>(emptyMap())
+        private set
+
+    /** The boxes kept on the phone, for a server that does not keep them yet. */
+    private var stored by mutableStateOf<Map<String, SeatBoxes>>(emptyMap())
+
+    /** Boxes just ticked here, shown at once; dropped once the server has them. */
+    private var ticked by mutableStateOf<Map<String, SeatBoxes>>(emptyMap())
+
+    /** Checks of Play that refused, this run, in epoch milliseconds, for an app whose server does not say. */
+    var failedChecks by mutableStateOf<Map<String, Long>>(emptyMap())
+        private set
+
+    /**
+     * The two boxes for [app]: just ticked here, else the server's, else the phone's. Both unticked
+     * until somebody says otherwise.
+     */
+    fun boxes(app: AppEntry): SeatBoxes = ticked[app.id] ?: facts[app.id]?.boxes ?: stored[app.pkg] ?: SeatBoxes()
+
+    /** Read what the phone keeps; once, and cheap. */
+    fun attach(context: Context) {
+        if (stored.isEmpty()) stored = SeatBoxStore.all(context.applicationContext)
+    }
+
+    /**
+     * Keep the two boxes for [app]. On the phone first, so they hold with no connection or an older
+     * server; then sent to the server, which is what a seat is checked against.
+     */
+    fun setBoxes(
+        context: Context,
+        app: AppEntry,
+        next: SeatBoxes,
+    ) {
+        val appContext = context.applicationContext
+        SeatBoxStore.write(appContext, app.pkg, next)
+        stored = stored + (app.pkg to next)
+        ticked = ticked + (app.id to next)
+        viewModelScope.launch {
+            try {
+                ApiAuth.ensure(appContext)
+                val saved = Api.patch<AppBoxesIn, ApiApp>("/apps/${app.id}", AppBoxesIn(next.countries, next.devices)).toSeatFacts()
+                // The server has them now: its own answer is the one shown from here.
+                if (saved.boxes != null && ticked[app.id] == next) {
+                    facts = facts + (app.id to saved)
+                    ticked = ticked - app.id
+                }
+            } catch (_: Exception) {
+                // An older server has no such call, or there is no connection: the phone holds them,
+                // and the seat's own refusal says so if the server needed them after all.
+            }
+        }
+    }
+
+    /** The server refused a seat for unticked boxes: show them unticked, so ticking sends them again. */
+    fun clearBoxes(
+        context: Context,
+        app: AppEntry,
+    ) {
+        SeatBoxStore.write(context.applicationContext, app.pkg, SeatBoxes())
+        stored = stored + (app.pkg to SeatBoxes())
+        ticked = ticked + (app.id to SeatBoxes())
+    }
+
     /**
      * An app the server has just answered with, shown before the list is read again: the page
      * opened for a newly added app otherwise found nothing and said it had been deleted.
@@ -102,6 +171,7 @@ class AppsViewModel : ViewModel() {
     private fun seedFromPhone(afterFailure: Boolean = false) {
         Api.lastApps(afterFailure)?.takeIf { it.apps.isNotEmpty() }?.let {
             apps = it.apps.map(ApiApp::toEntry)
+            facts = it.apps.associate { app -> app.id to app.toSeatFacts() }
             loading = false
         }
     }
@@ -126,10 +196,12 @@ class AppsViewModel : ViewModel() {
                     return@launch
                 }
                 signedOut = false
-                val read = Api.apps().apps.map(ApiApp::toEntry)
+                val answer = Api.apps()
+                val read = answer.apps.map(ApiApp::toEntry)
                 // An older answer landing after a newer one would bring back an app just deleted.
                 if (load != loads) return@launch
                 apps = read
+                facts = answer.apps.associate { it.id to it.toSeatFacts() }
                 answered = true
                 live.channels(apps.mapNotNull { it.crew?.crewId }.map { "crew:$it" }.toSet())
                 offline = false
@@ -156,7 +228,8 @@ class AppsViewModel : ViewModel() {
     fun verify(
         context: Context,
         id: String,
-    ) = act(context, id, AppAction.VERIFY) { Api.verifyApp(id) }
+        onDone: () -> Unit = {},
+    ) = act(context, id, AppAction.VERIFY, onDone) { Api.verifyApp(id) }
 
     fun delete(
         context: Context,
@@ -204,10 +277,13 @@ class AppsViewModel : ViewModel() {
                 // A pair the server stopped taking is traded for a new one here, not refused.
                 ApiAuth.ensure(context)
                 call()
+                if (what == AppAction.VERIFY) failedChecks = failedChecks - id
                 onDone()
                 load(context)
             } catch (e: ApiError) {
                 actionError = e.message
+                // Play was asked and said no: the sheet says when, even if the server does not keep it.
+                if (what == AppAction.VERIFY && !e.isAuth) failedChecks = failedChecks + (id to System.currentTimeMillis())
             } catch (_: UnusablePicture) {
                 actionError = "That picture could not be used. Try another one."
             } catch (_: Exception) {
@@ -252,4 +328,14 @@ fun ApiApp.toEntry(): AppEntry =
         canFeedback = canFeedback,
         canDelete = canDelete,
         whyNotDelete = whyNotDelete,
+    )
+
+/** What the server says about an app beyond its entry: its boxes, its last check, and why it can't go in. */
+fun ApiApp.toSeatFacts(): SeatFacts =
+    SeatFacts(
+        boxes = if (allCountries != null || allDevices != null) SeatBoxes(allCountries == true, allDevices == true) else null,
+        checkedAt = lastCheckAt?.let { runCatching { OffsetDateTime.parse(it).toInstant().toEpochMilli() }.getOrNull() },
+        checkedOk = lastCheckOk,
+        blockReason = crewBlockReason,
+        blockCrew = crewBlockCrew,
     )

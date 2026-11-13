@@ -13,7 +13,7 @@ import com.eazyverse.testtrack.ui.signInNotes
 import kotlinx.coroutines.launch
 
 /**
- * Putting an app from My apps into a crew: the name the crew sees, how they get past its sign-in,
+ * Putting an app from My apps into a crew, from the seat sheet: the name the crew sees, how they get past its sign-in,
  * and the price. The app itself was found and confirmed when it was added, so nothing is looked
  * up here; the server checks it on Play again as the seat is taken.
  */
@@ -50,9 +50,26 @@ class CrewAddViewModel : ViewModel() {
         viewModelScope.launch { runCatching { tix = Api.me().tix } }
     }
 
-    /** The app this page is for: its name, until somebody types another. */
+    /** The app the fields below are for; they start over when another is picked. */
+    private var forApp: String? = null
+
+    /** The app these details are for: its name, until somebody types another. Another app starts clean. */
     fun start(app: AppEntry) {
+        if (forApp != app.id) {
+            reset()
+            forApp = app.id
+        }
         if (name.isBlank()) name = app.name.take(FeedRules.APP_NAME_MAX)
+    }
+
+    /** Nothing kept: the sheet is gone, and a sign-in typed into it goes with it. */
+    fun reset() {
+        forApp = null
+        name = ""
+        needsSignIn = false
+        username = ""
+        password = ""
+        also = ""
     }
 
     fun rename(next: String) {
