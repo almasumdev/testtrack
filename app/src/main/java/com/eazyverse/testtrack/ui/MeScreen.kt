@@ -50,6 +50,7 @@ import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.net.ApiProfile
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.DebugSwitches
 import com.eazyverse.testtrack.viewmodel.TestingDriveViewModel
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -115,6 +116,23 @@ fun MeScreen(
                 drive.connect(activity, driveSheet::launch) {}
             }
         },
+        debug = {
+            if (DebugSwitches.visible) {
+                MeDebug(
+                    noGroup = DebugSwitches.noGroup,
+                    onNoGroup = {
+                        DebugSwitches.setNoGroup(it)
+                        // Off again: the remembered yes is gone, so ask the server as on launch.
+                        if (!it) membership.quietly()
+                    },
+                    noDrive = DebugSwitches.noDrive,
+                    onNoDrive = {
+                        DebugSwitches.setNoDrive(it)
+                        if (!it) drive.check(activity)
+                    },
+                )
+            }
+        },
     )
 
     if (editing) {
@@ -161,6 +179,8 @@ fun MeBody(
     group: Boolean = false,
     onGroup: () -> Unit = {},
     onRetry: () -> Unit = {},
+    /** Under the settings, for the debug section; nothing in a release build. */
+    debug: @Composable () -> Unit = {},
 ) {
     if (signedOut) {
         // The sign-in ask, then what needs no account: About, rating and feedback, and the version.
@@ -226,6 +246,7 @@ fun MeBody(
                 onAbout = onAbout,
             )
         }
+        item { debug() }
         item { VersionLine() }
     }
 }

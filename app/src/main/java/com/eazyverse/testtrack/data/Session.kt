@@ -22,8 +22,9 @@ object Session {
         prefs = context.applicationContext.getSharedPreferences("testtrack", Context.MODE_PRIVATE)
         onboardingDone = prefs.getBoolean(KEY_ONBOARDED, false)
         email = prefs.getString(KEY_EMAIL, null)
-        isGroupMember = prefs.getBoolean(KEY_MEMBER, false)
-        driveConnected = prefs.getBoolean(KEY_DRIVE, false)
+        DebugOverrides.init(context)
+        memberCached = prefs.getBoolean(KEY_MEMBER, false)
+        driveCached = prefs.getBoolean(KEY_DRIVE, false)
         cachedUpdateAvailableBuild = prefs.getInt(KEY_UPDATE_CACHE_AVAILABLE, 0)
         cachedUpdateStalenessDays = prefs.getInt(KEY_UPDATE_CACHE_STALENESS, 0)
         cachedUpdateLatestBuild = prefs.getInt(KEY_UPDATE_CACHE_LATEST, 0)
@@ -40,11 +41,14 @@ object Session {
     var email by mutableStateOf<String?>(null)
         private set
 
-    var isGroupMember by mutableStateOf(false)
-        private set
+    private var memberCached by mutableStateOf(false)
+    private var driveCached by mutableStateOf(false)
 
-    var driveConnected by mutableStateOf(false)
-        private set
+    /** The remembered yes, except while the debug switch pretends to be outside the group. */
+    val isGroupMember: Boolean get() = memberCached && !DebugOverrides.noGroup
+
+    /** The cached Drive flag, except while the debug switch pretends Drive is not connected. */
+    val driveConnected: Boolean get() = driveCached && !DebugOverrides.noDrive
 
     /**
      * Whether Settings > Special access > Usage access is on for TestTrack.
@@ -147,7 +151,7 @@ object Session {
 
     fun updateMember(value: Boolean) {
         prefs.edit().putBoolean(KEY_MEMBER, value).apply()
-        isGroupMember = value
+        memberCached = value
     }
 
     /**
@@ -159,7 +163,7 @@ object Session {
      */
     fun updateDriveConnected(value: Boolean) {
         prefs.edit().putBoolean(KEY_DRIVE, value).apply()
-        driveConnected = value
+        driveCached = value
     }
 
     /**
@@ -180,8 +184,8 @@ object Session {
             .putInt(KEY_UPDATE_CACHE_NUDGE_AFTER, cachedUpdateNudgeAfterDays)
             .apply()
         email = null
-        isGroupMember = false
-        driveConnected = false
+        memberCached = false
+        driveCached = false
         onboardingDone = true
     }
 

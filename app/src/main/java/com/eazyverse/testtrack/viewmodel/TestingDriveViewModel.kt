@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.AuthRepo
+import com.eazyverse.testtrack.data.DebugOverrides
 import com.eazyverse.testtrack.data.Session
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -21,16 +22,17 @@ class TestingDriveViewModel : ViewModel() {
     var message by mutableStateOf<String?>(null)
         private set
 
+    private var granted by mutableStateOf<Boolean?>(null)
+
     /** Whether proof can go to Drive. Null until Google has been asked. */
-    var connected by mutableStateOf<Boolean?>(null)
-        private set
+    val connected: Boolean? get() = if (DebugOverrides.noDrive) false else granted
 
     /** Ask Google without showing anything. The grant lives on the account, not on this phone. */
     fun check(activity: Activity) {
         viewModelScope.launch {
-            val granted = AuthRepo.hasDriveAccess(activity)
-            Session.updateDriveConnected(granted)
-            connected = granted
+            val answer = AuthRepo.hasDriveAccess(activity)
+            Session.updateDriveConnected(answer)
+            granted = answer
         }
     }
 
@@ -78,7 +80,13 @@ class TestingDriveViewModel : ViewModel() {
         onConnected: () -> Unit,
     ) {
         Session.updateDriveConnected(granted)
-        connected = granted
-        if (granted) onConnected() else message = "Drive access wasn't granted. Your pending proof is kept so you can try again."
+        this.granted = granted
+        // Google keeps the grant, so no consent screen can show while it exists: say so, not nothing.
+        when {
+            granted && DebugOverrides.noDrive ->
+                message = "Debug: Drive is already granted, so Google shows no consent screen. Turn the override off to use it."
+            granted -> onConnected()
+            else -> message = "Drive access wasn't granted. Your pending proof is kept so you can try again."
+        }
     }
 }

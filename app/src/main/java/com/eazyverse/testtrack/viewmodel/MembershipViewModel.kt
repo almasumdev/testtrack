@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eazyverse.testtrack.data.DebugOverrides
 import com.eazyverse.testtrack.data.GateResult
 import com.eazyverse.testtrack.data.GroupGate
 import com.eazyverse.testtrack.data.Session
@@ -84,7 +85,7 @@ class MembershipViewModel : ViewModel() {
         quietFor = who
         quietJob =
             viewModelScope.launch {
-                val answer = GroupGate.check("")
+                val answer = DebugOverrides.group(GroupGate.check(""))
                 // The answer belongs to whoever asked. If the account changed meanwhile, saying
                 // yes would hand the next account a membership it never proved.
                 if (answer is GateResult.Member && sameAccount(who, Session.email)) Session.updateMember(true)
@@ -112,7 +113,7 @@ class MembershipViewModel : ViewModel() {
         val who = Session.email
         job =
             viewModelScope.launch {
-                val answer = GroupGate.check("")
+                val answer = DebugOverrides.group(GroupGate.check(""))
                 if (!sameAccount(who, Session.email)) {
                     // Another account is signed in now; this answer was not about it.
                     checking = false
