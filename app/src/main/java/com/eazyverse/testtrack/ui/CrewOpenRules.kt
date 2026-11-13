@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -68,7 +72,7 @@ private val HeadingStyle = TextStyle(fontFamily = Barlow, fontSize = 15.sp, line
 internal fun CrewRulesCard(runDays: Int = CrewRules.RUN_DAYS) {
     var open by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth()) {
-        RulesHead(open) { open = !open }
+        Eyebrow(Lucide.Scale, "The rules")
         Column(Modifier.padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FactTile("${CrewRules.SEATS}", "apps", "in a crew")
@@ -88,26 +92,39 @@ internal fun CrewRulesCard(runDays: Int = CrewRules.RUN_DAYS) {
         ) {
             AllRules()
         }
+        RulesToggle(open) { open = !open }
     }
 }
 
-/** The label on the left, plain text; on the right the one control that opens the rest. */
+/** The one control that opens the rest: a full-width soft row at the bottom of the card. */
 @Composable
-private fun RulesHead(
+private fun RulesToggle(
     open: Boolean,
     onToggle: () -> Unit,
 ) {
     val turn by animateFloatAsState(if (open) 180f else 0f, label = "rulesChevron")
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.weight(1f)) { Eyebrow(Lucide.Scale, "The rules") }
-        RowPill(
-            label = if (open) "Less" else "All rules",
-            kind = PillKind.SOFT,
-            shape = RoundedCornerShape(10.dp),
-            trailing = Lucide.ChevronDown,
-            trailingTurn = turn,
-            onClick = onToggle,
-        )
+    val shape = RoundedCornerShape(10.dp)
+    Box(
+        Modifier
+            .padding(top = 12.dp)
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(shape)
+            .background(Tt.colors.tile)
+            .clickable(onClick = onToggle),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                if (open) "Show less" else "All rules",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Tt.colors.accentInk,
+                maxLines = 1,
+            )
+            Spacer(Modifier.width(4.dp))
+            Icon(Lucide.ChevronDown, null, Modifier.size(18.dp).rotate(turn), tint = Tt.colors.accentInk)
+        }
     }
 }
 
