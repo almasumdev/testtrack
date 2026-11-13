@@ -23,6 +23,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.CircleAlert
@@ -70,6 +73,11 @@ internal const val GROUP_JOINED_MS = 1_200
  * Nothing locks it. Swipe, Back and a tap outside close it at any time, and closing forgets what
  * was waiting. A yes that arrives after that is kept on the phone and not shown. See
  * [MembershipViewModel].
+ *
+ * Which sheet is up and which face it wears live in the view model, not here. Going to the group
+ * page takes the app away, and the dialog window under the sheet can report a dismiss while that
+ * happens. Such a dismiss is not somebody's hand: the view model refuses it, and the sheet is
+ * built again from the state it still holds, so the person comes back to the same face.
  */
 @Composable
 fun GroupSheet(vm: MembershipViewModel = rememberMembership()) {
@@ -77,7 +85,14 @@ fun GroupSheet(vm: MembershipViewModel = rememberMembership()) {
     val context = LocalContext.current
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner) {
-        val watcher = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) vm.returned() }
+        val watcher =
+            LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_PAUSE -> vm.paused()
+                    Lifecycle.Event.ON_RESUME -> vm.returned()
+                    else -> Unit
+                }
+            }
         owner.lifecycle.addObserver(watcher)
         onDispose { owner.lifecycle.removeObserver(watcher) }
     }
@@ -86,24 +101,46 @@ fun GroupSheet(vm: MembershipViewModel = rememberMembership()) {
     // Set just before the sheet closes itself after a yes, so that close ends in proceed rather
     // than in close, which would forget whatever was waiting.
     var done by remember { mutableStateOf(false) }
-    GroupSheetFrame(ui, onDismiss = { if (done) vm.proceed() else vm.close() }) { close ->
-        LaunchedEffect(ui is GroupUi.Joined) {
-            if (ui is GroupUi.Joined) {
-                delay(GROUP_JOINED_MS.toLong())
-                done = true
-                close {}
-            }
-        }
-        GroupSheetBody(
-            ui = ui,
-            email = vm.email,
-            onOpenGroup = {
-                vm.openedGroup()
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(groupLink(Config.GROUP_URL, vm.email))))
+    // Set when the sheet is closed from one of its own buttons, which is always a hand.
+    var byButton by remember { mutableStateOf(false) }
+    // Bumped when a dismiss was refused, so the sheet is built again and slides back in.
+    var rebuilt by remember { mutableIntStateOf(0) }
+    key(rebuilt) {
+        GroupSheetFrame(
+            ui,
+            onDismiss = {
+                when {
+                    done -> vm.proceed()
+                    byButton -> vm.close()
+                    !vm.dismiss() -> rebuilt++
+                }
             },
-            onCheck = vm::check,
-            onClose = { close {} },
-        )
+        ) { close ->
+            LaunchedEffect(ui is GroupUi.Joined) {
+                if (ui is GroupUi.Joined) {
+                    // Only while the app is in front, so a yes that lands behind the browser is
+                    // still on the sheet when the person is back.
+                    owner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                        delay(GROUP_JOINED_MS.toLong())
+                        done = true
+                        close {}
+                    }
+                }
+            }
+            GroupSheetBody(
+                ui = ui,
+                email = vm.email,
+                onOpenGroup = {
+                    vm.openGroup()
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(groupLink(Config.GROUP_URL, vm.email))))
+                },
+                onCheck = vm::check,
+                onClose = {
+                    byButton = true
+                    close {}
+                },
+            )
+        }
     }
 }
 

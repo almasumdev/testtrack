@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import com.eazyverse.testtrack.data.GateResult
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -8,6 +9,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -49,7 +51,11 @@ class MembershipViewModelTest {
     private val offline = GateResult.Failed("Couldn't check the testers group. Check your connection and try again.")
     private var ran = 0
 
-    private fun vm(holdMs: Long = 0) = MembershipViewModel(port, CoroutineScope(Dispatchers.Unconfined + SupervisorJob()), holdMs)
+    private var now = 10_000L
+    private var saved = SavedStateHandle()
+
+    private fun vm(holdMs: Long = 0) =
+        MembershipViewModel(port, CoroutineScope(Dispatchers.Unconfined + SupervisorJob()), holdMs, saved) { now }
 
     private fun MembershipViewModel.gate() = require { ran++ }
 
@@ -85,7 +91,7 @@ class MembershipViewModelTest {
         vm.gate()
         port.answer(0, no)
         assertEquals(GroupUi.Join(opened = false), vm.ui)
-        vm.openedGroup()
+        vm.openGroup()
         assertEquals(GroupUi.Join(opened = true), vm.ui)
         vm.check()
         assertEquals(GroupUi.Rechecking, vm.ui)
@@ -296,7 +302,7 @@ class MembershipViewModelTest {
         vm.startJoin()
         vm.returned()
         assertEquals(GroupUi.Join(opened = false), vm.ui)
-        vm.openedGroup()
+        vm.openGroup()
         vm.returned()
         assertEquals(GroupUi.Rechecking, vm.ui)
         port.answer(1, no)
@@ -304,6 +310,121 @@ class MembershipViewModelTest {
         // A second resume without going to the group again does not look again.
         vm.returned()
         assertEquals(GroupUi.StillOut, vm.ui)
+    }
+
+    // ---------------------------------------------------------------- going to the group page
+
+    @Test
+    fun openingTheGroupStartsNoCheckAndTicksStepOne() {
+        val vm = vm()
+        vm.startJoin()
+        // The one ask so far is the quiet look at opening; tapping Open the group adds none.
+        assertEquals(1, port.asks.size)
+        vm.openGroup()
+        assertEquals(1, port.asks.size)
+        assertEquals(GroupUi.Join(opened = true), vm.ui)
+    }
+
+    @Test
+    fun comingBackAfterOpeningTheGroupStartsExactlyOneCheck() {
+        val vm = vm()
+        vm.startJoin()
+        vm.openGroup()
+        vm.paused()
+        assertEquals(1, port.asks.size)
+        vm.returned()
+        assertEquals(GroupUi.Rechecking, vm.ui)
+        assertEquals(2, port.asks.size)
+        // Another resume while it runs, or after, adds none.
+        vm.returned()
+        assertEquals(2, port.asks.size)
+        port.answer(1, no)
+        assertEquals(GroupUi.StillOut, vm.ui)
+        vm.returned()
+        assertEquals(2, port.asks.size)
+    }
+
+    @Test
+    fun comingBackWithoutOpeningTheGroupStartsNoCheck() {
+        val vm = vm()
+        vm.startJoin()
+        vm.paused()
+        vm.returned()
+        assertEquals(GroupUi.Join(opened = false), vm.ui)
+        assertEquals(1, port.asks.size)
+    }
+
+    @Test
+    fun theReturnLandsOnJoinedOrStillOutOrFailed() {
+        for ((answer, face) in listOf(yes to GroupUi.Joined, no to GroupUi.StillOut, offline to GroupUi.Failed(offline.reason))) {
+            port.asks.clear()
+            val vm = vm()
+            vm.startJoin()
+            vm.openGroup()
+            vm.paused()
+            vm.returned()
+            assertEquals(GroupUi.Rechecking, vm.ui)
+            port.answer(1, answer)
+            assertEquals(face, vm.ui)
+        }
+    }
+
+    @Test
+    fun theSheetFaceSurvivesThePauseAndADismissFromTheWindowComingDown() {
+        val vm = vm()
+        vm.startJoin()
+        vm.openGroup()
+        vm.paused()
+        // The window reporting a dismiss while the browser is in front is not a hand.
+        assertFalse(vm.dismiss())
+        assertEquals(GroupUi.Join(opened = true), vm.ui)
+        now += 100
+        vm.returned()
+        // Nor is one in the moment right after coming back, and the check still runs.
+        assertFalse(vm.dismiss())
+        assertEquals(GroupUi.Rechecking, vm.ui)
+        now += DISMISS_GRACE_MS + 1
+        // A real swipe later closes it, and forgets the page was opened.
+        assertTrue(vm.dismiss())
+        assertNull(vm.ui)
+    }
+
+    @Test
+    fun aDismissWithNoPauseInvolvedClosesTheSheet() {
+        val vm = vm()
+        vm.startJoin()
+        assertTrue(vm.dismiss())
+        assertNull(vm.ui)
+    }
+
+    @Test
+    fun aKilledProcessComesBackToTheSameSheetAndLooksOnResume() {
+        val first = vm()
+        first.startJoin()
+        first.openGroup()
+        // The phone ends the process while the browser is up; the saved state is what survives.
+        port.asks.clear()
+        val second = vm()
+        assertEquals(GroupUi.Join(opened = true), second.ui)
+        assertEquals(0, port.asks.size)
+        second.returned()
+        assertEquals(GroupUi.Rechecking, second.ui)
+        assertEquals(1, port.asks.size)
+    }
+
+    @Test
+    fun aClosedSheetLeavesNothingToRestore() {
+        val first = vm()
+        first.startJoin()
+        first.openGroup()
+        first.close()
+        assertNull(vm().ui)
+        // And one saved for another account is dropped, not shown.
+        val other = vm()
+        other.startJoin()
+        other.openGroup()
+        port.email = "b@x.com"
+        assertNull(vm().ui)
     }
 
     @Test

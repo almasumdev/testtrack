@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.viewmodel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.DebugOverrides
@@ -74,6 +75,15 @@ internal object LivePort : GroupPort {
 internal const val CHECKING_HOLD_MS = 600L
 
 /**
+ * A dismiss that arrives this soon after the app came back from being away is the window settling,
+ * not somebody putting the sheet away. See [MembershipViewModel.dismiss].
+ */
+internal const val DISMISS_GRACE_MS = 800L
+
+/** Saved with the activity: the account the sheet was left open for while the group page is in front. */
+private const val SAVED_WAITING = "group_sheet_waiting_for"
+
+/**
  * Whether this account is on the testers group, and the one sheet that gets it there.
  *
  * Being on the group is what lets an owner add somebody to a closed test, so a review or a crew
@@ -92,8 +102,11 @@ class MembershipViewModel internal constructor(
     private val port: GroupPort,
     private val injected: CoroutineScope?,
     private val holdMs: Long,
+    private val saved: SavedStateHandle = SavedStateHandle(),
+    private val clock: () -> Long = { System.nanoTime() / 1_000_000 },
 ) : ViewModel() {
-    constructor() : this(LivePort, null, CHECKING_HOLD_MS)
+    /** What the framework builds, handing the activity's saved state so a killed process can come back to the sheet. */
+    constructor(saved: SavedStateHandle) : this(LivePort, null, CHECKING_HOLD_MS, saved)
 
     private val scope: CoroutineScope get() = injected ?: viewModelScope
 
@@ -109,8 +122,22 @@ class MembershipViewModel internal constructor(
 
     private var pending: (() -> Unit)? = null
 
-    /** The group page was opened and nothing has looked since. */
+    /**
+     * The group page was opened and nothing has looked since. Kept in the saved state too: the phone
+     * may end this process while the browser is in front, and the sheet must still be there, on the
+     * same step, when the person comes back.
+     */
     private var visited = false
+        set(value) {
+            field = value
+            saved[SAVED_WAITING] = if (value) sheetFor else null
+        }
+
+    /** The app is in the background (paused), so a dismiss now was not somebody's hand. */
+    private var away = false
+
+    /** When the app last came back from being away. */
+    private var backAt: Long? = null
 
     /** A no has been shown (or the sheet opened on the way to join), so the next no is "still". */
     private var sawOut = false
@@ -123,6 +150,20 @@ class MembershipViewModel internal constructor(
     private val jobs: MutableSet<Job> = ConcurrentHashMap.newKeySet()
     private var quietJob: Job? = null
     private var quietFor: String? = null
+
+    init {
+        // Back after the process was ended while the group page was in front: the same sheet, on
+        // the same step. The resume that follows looks again, as it does after any return.
+        val waiting = saved.get<String>(SAVED_WAITING)
+        if (waiting != null && sameAccount(waiting, port.email)) {
+            sheetFor = waiting
+            sawOut = true
+            visited = true
+            ui = GroupUi.Join(opened = true)
+        } else if (waiting != null) {
+            saved[SAVED_WAITING] = null
+        }
+    }
 
     /** Run [action] if this account is on the group; otherwise check, and run it once it is. */
     fun require(action: () -> Unit) {
@@ -197,20 +238,48 @@ class MembershipViewModel internal constructor(
         runCheck()
     }
 
-    /** "Open the group" was tapped. */
-    fun openedGroup() {
+    /**
+     * "Open the group" was tapped. It only notes that the page is open (step one ticked); no check
+     * starts until the app is back in front, see [returned].
+     */
+    fun openGroup() {
         if (ui == null) return
         visited = true
         if (ui is GroupUi.Join) ui = GroupUi.Join(opened = true)
     }
 
-    /** Back from the group page: look again without waiting to be asked. */
+    /** The app left the foreground, for the group page or for anything else. */
+    fun paused() {
+        away = true
+    }
+
+    /**
+     * The app is in front again. If the group page was opened from the sheet, look now: this is the
+     * only place that check starts. Without that visit a resume does nothing.
+     */
     fun returned() {
+        if (away) {
+            away = false
+            backAt = clock()
+        }
         if (!visited) return
         if (ui is GroupUi.Join || ui is GroupUi.StillOut) {
             visited = false
             check()
         }
+    }
+
+    /**
+     * The sheet reports it was dismissed (swipe, Back, tap outside). True when that was somebody's
+     * hand and the sheet is now closed. False when the app was in the background or had only just
+     * come back: a window being torn down and rebuilt around the browser also reports a dismiss,
+     * and acting on it would lose the sheet. The caller then shows the sheet again from [ui].
+     */
+    fun dismiss(): Boolean {
+        if (ui == null) return true
+        if (away || backAt?.let { clock() - it < DISMISS_GRACE_MS } == true) return false
+        close()
+        return true
     }
 
     /**
