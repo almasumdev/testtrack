@@ -10,12 +10,81 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+VERSION_URL = "https://testtrack.eazyverse.com/api/v1/version"
+SKIP_FLAG = "--skip-server-check"
+
+
+def leading_number(text: str) -> int:
+    """The migration number at the front of a name such as "0032_app_boxes_and_checks"."""
+    match = re.match(r"\s*(\d+)", text)
+    if match is None:
+        raise ValueError(f"No migration number in {text!r}")
+    return int(match.group(1))
+
+
+def schema_problem(live: str, needed: str) -> str | None:
+    """None when the live server has the schema the build needs, otherwise the message to show."""
+    live_number = leading_number(live)
+    needed_number = leading_number(needed)
+    if live_number >= needed_number:
+        return None
+    return (f"Live server is on {live_number:04d}. This build needs {needed_number:04d}. "
+            "Promote the backend first.")
+
+
+def needed_schema() -> str:
+    for line in (ROOT / "gradle.properties").read_text(encoding="utf-8").splitlines():
+        key, _, value = line.partition("=")
+        if key.strip() == "TESTTRACK_SERVER_SCHEMA":
+            return value.strip()
+    raise ValueError("TESTTRACK_SERVER_SCHEMA is missing from gradle.properties")
+
+
+def live_schema() -> str:
+    try:
+        with urllib.request.urlopen(VERSION_URL, timeout=10) as response:
+            return str(json.load(response)["schema"])
+    except urllib.error.HTTPError as error:
+        reason = (f"{VERSION_URL} answered {error.code}; the endpoint may not be live yet"
+                  if error.code == 404 else f"{VERSION_URL} answered {error.code}")
+    except (urllib.error.URLError, TimeoutError, OSError) as error:
+        reason = f"{error}"
+    except (ValueError, KeyError, TypeError):
+        reason = f"{VERSION_URL} did not return a schema"
+    raise ValueError(f"Couldn't read the live server's version ({reason}). "
+                     "Check it and promote the backend first.")
+
+
+def check_server_schema() -> None:
+    problem = schema_problem(live_schema(), needed_schema())
+    if problem:
+        raise ValueError(problem)
+    print("Live server schema is new enough.", flush=True)
+
+
+def self_test() -> None:
+    assert leading_number("0032_app_boxes_and_checks") == 32
+    assert leading_number("0032") == 32
+    assert schema_problem("0032_app_boxes_and_checks", "0032") is None
+    assert schema_problem("0040_later", "0032") is None
+    assert schema_problem("0031_older", "0032") == (
+        "Live server is on 0031. This build needs 0032. Promote the backend first.")
+    try:
+        leading_number("latest")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("a name without a number must be rejected")
+    print("check_release self-test passed.")
 
 
 def run(argv: list[str], *, capture: bool = False,
@@ -42,6 +111,16 @@ def mkit(executable: str, *command: str, allow_drift: bool = False) -> dict:
 
 
 def main() -> int:
+    if "--self-test" in sys.argv:
+        self_test()
+        return 0
+    if SKIP_FLAG in sys.argv:
+        print("WARNING: " + SKIP_FLAG + " is on. The live server's schema was NOT checked. "
+              "Releasing before the backend is promoted can break the app for everyone.",
+              file=sys.stderr, flush=True)
+    else:
+        check_server_schema()
+
     executable = shutil.which("mkit.exe" if os.name == "nt" else "mkit")
     if executable is None:
         print("mkit is not installed. It is the maintainer's release tool; building the app does not need it.", file=sys.stderr)

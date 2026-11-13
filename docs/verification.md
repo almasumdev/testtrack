@@ -49,6 +49,13 @@ sign-out.
 Release signing reads the keys listed in `local.properties.example`. Without them only debug builds
 are produced.
 
+The release hook (`scripts/check_release.py`) also refuses to run while the live server is behind the
+app. It reads `https://testtrack.eazyverse.com/api/v1/version` and compares its schema number with
+`TESTTRACK_SERVER_SCHEMA` in `gradle.properties`. Raise that number whenever an app change needs a new
+server migration, and promote the backend before releasing the app. If the version can't be read, the
+check fails too. `--skip-server-check` skips it for an emergency and prints a warning. The comparison
+logic has a self-check: `python scripts/check_release.py --self-test`.
+
 ## Emulators
 
 Decided 1 November 2026: an emulator gets a block screen and never reaches our server. It is decided on the phone alone, with no server and no Play Integrity, in `domain/EmulatorSigns.kt`.
