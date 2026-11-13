@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
@@ -61,6 +62,9 @@ internal fun RowPill(
     /** A small icon before the word, in the pill's own text colour. */
     leading: ImageVector? = null,
     shape: Shape = RoundedCornerShape(percent = 50),
+    /** A small icon after the word, turned by [trailingTurn] degrees. */
+    trailing: ImageVector? = null,
+    trailingTurn: Float = 0f,
     onClick: () -> Unit,
 ) {
     val (bg, fg) =
@@ -96,6 +100,10 @@ internal fun RowPill(
                 color = ink,
                 maxLines = 1,
             )
+            if (trailing != null) {
+                Spacer(Modifier.width(4.dp))
+                Icon(trailing, null, Modifier.size(16.dp).rotate(trailingTurn), tint = ink)
+            }
         }
         if (busy) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = fg)
     }

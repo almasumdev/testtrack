@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,9 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -72,7 +69,7 @@ private val TileFigure =
 private val TileUnit = TextStyle(fontFamily = Barlow, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
 private val TileLabel = TextStyle(fontFamily = Barlow, fontSize = 11.5.sp, lineHeight = 14.sp)
 private val LineStyle = TextStyle(fontFamily = Barlow, fontSize = 13.sp, lineHeight = 17.sp)
-private val MoreStyle = TextStyle(fontFamily = Barlow, fontSize = 13.5.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold)
+private val HeadingStyle = TextStyle(fontFamily = Barlow, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold)
 
 @Composable
 internal fun CrewRulesCard(runDays: Int = CrewRules.RUN_DAYS) {
@@ -101,25 +98,23 @@ internal fun CrewRulesCard(runDays: Int = CrewRules.RUN_DAYS) {
     }
 }
 
-/** The label and the control to open the rest: a 24dp row, the whole width of it a tap. */
+/** The label on the left, plain text; on the right the one control that opens the rest. */
 @Composable
 private fun RulesHead(
     open: Boolean,
     onToggle: () -> Unit,
 ) {
     val turn by animateFloatAsState(if (open) 180f else 0f, label = "rulesChevron")
-    val ink = Tt.colors.tabSelected
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .height(24.dp)
-            .clickable(role = Role.Button, onClickLabel = if (open) "Show fewer rules" else "Show all rules", onClick = onToggle),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.weight(1f)) { Eyebrow(Lucide.Scale, "The rules") }
-        Text(if (open) "Less" else "All rules", style = MoreStyle, color = ink)
-        Spacer(Modifier.width(2.dp))
-        Icon(Lucide.ChevronDown, null, Modifier.size(16.dp).rotate(turn), tint = ink)
+        RowPill(
+            label = if (open) "Less" else "All rules",
+            kind = PillKind.SOFT,
+            shape = RoundedCornerShape(10.dp),
+            trailing = Lucide.ChevronDown,
+            trailingTurn = turn,
+            onClick = onToggle,
+        )
     }
 }
 
@@ -166,8 +161,8 @@ private fun AllRules() {
 
     fun line(build: androidx.compose.ui.text.AnnotatedString.Builder.() -> Unit) = buildAnnotatedString(build)
 
-    Column(Modifier.padding(top = 4.dp)) {
-        RuleGroup(Lucide.CalendarDays, "The run") {
+    Column {
+        RuleGroup(Lucide.CalendarDays, Tone.ACCENT, "The run", first = true) {
             RuleLine(
                 Lucide.CalendarDays,
                 Tone.ACCENT,
@@ -179,7 +174,7 @@ private fun AllRules() {
             )
             RuleLine(Lucide.RefreshCw, Tone.ACCENT, line { append("An app sent back puts the crew back to filling.") })
         }
-        RuleGroup(Lucide.Moon, "Each night") {
+        RuleGroup(Lucide.Moon, Tone.ACCENT, "Each night") {
             RuleLine(
                 Lucide.Clock,
                 Tone.ACCENT,
@@ -215,7 +210,7 @@ private fun AllRules() {
                 },
             )
         }
-        RuleGroup(Lucide.TriangleAlert, "Missed days") {
+        RuleGroup(Lucide.TriangleAlert, Tone.WARN, "Missed days") {
             RuleLine(
                 Lucide.TriangleAlert,
                 Tone.WARN,
@@ -236,7 +231,7 @@ private fun AllRules() {
                 },
             )
         }
-        RuleGroup(Lucide.Coins, "Your ${CrewRules.SEAT_COST} tix") {
+        RuleGroup(Lucide.Coins, Tone.ACCENT, "Your ${CrewRules.SEAT_COST} tix") {
             RuleLine(Lucide.RotateCcw, Tone.OK, line { append("All back if you leave while the crew fills.") })
             RuleLine(
                 Lucide.RotateCcw,
@@ -263,16 +258,28 @@ private fun AllRules() {
     }
 }
 
-/** A section: its eyebrow, 6dp, then its lines 6dp apart, with 16dp of air above. */
+/**
+ * A section: a 28dp icon square and its heading, 8dp, then its lines 6dp apart and indented to the
+ * heading's text. 16dp of air above (12dp for the first).
+ */
 @Composable
 private fun RuleGroup(
     icon: ImageVector,
+    tone: Tone,
     title: String,
+    first: Boolean = false,
     lines: @Composable () -> Unit,
 ) {
-    Column(Modifier.padding(top = 16.dp)) {
-        Eyebrow(icon, title)
-        Column(Modifier.padding(top = 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) { lines() }
+    Column(Modifier.padding(top = if (first) 12.dp else 16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconSquare(icon, tone, size = 28)
+            Spacer(Modifier.width(10.dp))
+            Text(title, style = HeadingStyle, color = Tt.colors.text)
+        }
+        Column(
+            Modifier.padding(start = 38.dp, top = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) { lines() }
     }
 }
 
