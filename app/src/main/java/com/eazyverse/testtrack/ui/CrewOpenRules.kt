@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -40,9 +41,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.CalendarDays
 import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.Coins
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Moon
 import com.composables.icons.lucide.Scale
+import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.ui.theme.Barlow
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -150,7 +155,7 @@ private fun AllRules() {
     fun line(build: androidx.compose.ui.text.AnnotatedString.Builder.() -> Unit) = buildAnnotatedString(build)
 
     Column {
-        RuleGroup("The run") {
+        RuleGroup(Lucide.CalendarDays, Tone.ACCENT, "The run") {
             RuleLine(
                 line {
                     append("Starts at each member's first midnight after all ")
@@ -160,7 +165,7 @@ private fun AllRules() {
             )
             RuleLine(line { append("An app sent back puts the crew back to filling.") })
         }
-        RuleGroup("Each night") {
+        RuleGroup(Lucide.Moon, Tone.ACCENT, "Each night") {
             RuleLine(
                 line {
                     append("Each app is open ")
@@ -186,7 +191,7 @@ private fun AllRules() {
                 },
             )
         }
-        RuleGroup("Missed days") {
+        RuleGroup(Lucide.TriangleAlert, Tone.WARN, "Missed days") {
             RuleLine(
                 line {
                     append("Only apps you owed that night count. A day is missed when ")
@@ -203,7 +208,7 @@ private fun AllRules() {
                 },
             )
         }
-        RuleGroup("Your ${CrewRules.SEAT_COST} tix") {
+        RuleGroup(Lucide.Coins, Tone.ACCENT, "Your ${CrewRules.SEAT_COST} tix") {
             RuleLine(line { append("All back if you leave while the crew fills.") })
             RuleLine(
                 line {
@@ -220,14 +225,20 @@ private fun AllRules() {
     }
 }
 
-/** A section: its heading, then its lines 6dp apart. 16dp of air above every group. */
+/** A section: a 28dp icon square and its heading, then its lines 6dp apart. 16dp of air above every group. */
 @Composable
 private fun RuleGroup(
+    icon: ImageVector,
+    tone: Tone,
     title: String,
     lines: @Composable () -> Unit,
 ) {
     Column(Modifier.padding(top = 16.dp)) {
-        Text(title, style = HeadingStyle, color = Tt.colors.text)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconSquare(icon, tone, size = 28)
+            Spacer(Modifier.width(10.dp))
+            Text(title, style = HeadingStyle, color = Tt.colors.text)
+        }
         Column(
             Modifier.padding(top = 6.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
