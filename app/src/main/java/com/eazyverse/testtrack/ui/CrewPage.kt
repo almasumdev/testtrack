@@ -50,6 +50,8 @@ fun CrewPage(
     onAddApp: () -> Unit = {},
     /** Circle, for somebody short of tix. */
     onOpenCircle: () -> Unit = {},
+    /** Another crew's page, for the crew an app already waits in. */
+    onOpenCrew: (String) -> Unit = {},
     /** The crew's members, and what each did with your app. */
     onMembers: () -> Unit = {},
 ) {
@@ -123,6 +125,7 @@ fun CrewPage(
             onAddApp = onAddApp,
             onOpenCircle = onOpenCircle,
             onDismiss = { seating = false },
+            onOpenCrew = onOpenCrew,
         )
     }
 }

@@ -18,6 +18,8 @@ data class SeatIn(
     @SerialName("device_fp") val deviceFp: String,
     val timezone: String = "UTC",
     @SerialName("app_id") val appId: String? = null,
+    /** The owner has ticked the app's two boxes in Play Console; the server enforces them only when this is sent. */
+    @SerialName("confirm_boxes") val confirmBoxes: Boolean = false,
 )
 
 @Serializable

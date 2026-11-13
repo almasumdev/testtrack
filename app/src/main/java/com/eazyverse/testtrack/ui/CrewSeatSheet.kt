@@ -58,10 +58,12 @@ private enum class SeatStage { START, LIST, STEPS, DETAILS }
 internal fun CrewSeatSheet(
     crews: CrewViewModel,
     apps: AppsViewModel,
-    startAppId: String?,
+    startAppId: String? = null,
     onAddApp: () -> Unit,
     onOpenCircle: () -> Unit,
     onDismiss: () -> Unit,
+    /** A crew's own page, for the crew an app already waits in. */
+    onOpenCrew: (String) -> Unit = {},
     vm: CrewAddViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -74,6 +76,9 @@ internal fun CrewSeatSheet(
     // The server's own words when Play could not see the app at the seat, and for unticked boxes.
     var notVisible by remember { mutableStateOf<String?>(null) }
     var boxesMessage by remember { mutableStateOf<String?>(null) }
+    // The other refusals that have a place in the details: short of tix, and another app already waiting.
+    var shortTix by remember { mutableStateOf(false) }
+    var waitingIn by remember { mutableStateOf<SeatWaiting?>(null) }
     val app = pickedId?.let(apps::byId)
 
     LaunchedEffect(Unit) {
@@ -176,22 +181,30 @@ internal fun CrewSeatSheet(
                     LaunchedEffect(app.id) { vm.start(app) }
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                         val take = {
+                            shortTix = false
+                            waitingIn = null
                             crews.takeSeat(
                                 context,
                                 app.pkg,
                                 vm.name.trim(),
                                 vm.notes.trim(),
                                 appId = app.id,
-                                // A refused seat goes to the step it is about, with the server's own words.
-                                onRefused = { code, message ->
-                                    when (code) {
-                                        "not_visible" -> notVisible = message
-                                        "boxes_unticked" -> {
-                                            boxesMessage = message
-                                            apps.clearBoxes(context, app)
+                                // A refused seat goes to what it is about, in the server's own words.
+                                onRefused = { error ->
+                                    when (error.code) {
+                                        "not_visible" -> {
+                                            notVisible = error.message
+                                            stage = SeatStage.STEPS
                                         }
+                                        "boxes_unticked" -> {
+                                            boxesMessage = error.message
+                                            apps.clearBoxes(context, app)
+                                            stage = SeatStage.STEPS
+                                        }
+                                        "short_tix" -> shortTix = true
+                                        "already_waiting" ->
+                                            waitingIn = SeatWaiting(error.details["crew_name"].orEmpty(), error.details["crew_id"])
                                     }
-                                    if (code == "not_visible" || code == "boxes_unticked") stage = SeatStage.STEPS
                                 },
                                 onDone = { close {} },
                             )
@@ -205,7 +218,16 @@ internal fun CrewSeatSheet(
                                 needsDrive = needsDrive,
                                 driveMessage = drive.message,
                                 held = appealWaitingIn(crews.crews),
-                                refusal = crews.seatError.takeIf { notVisible == null && boxesMessage == null },
+                                refusal =
+                                    crews.seatError.takeIf {
+                                        notVisible == null &&
+                                            boxesMessage == null &&
+                                            !shortTix &&
+                                            waitingIn == null
+                                    },
+                                shortTix = shortTix,
+                                waiting = waitingIn,
+                                onOpenCrew = { id -> close { onOpenCrew(id) } },
                             ),
                             crews = crews,
                             vm = vm,
@@ -232,6 +254,8 @@ internal fun CrewSeatSheet(
                             pickedId = picked.id
                             notVisible = null
                             boxesMessage = null
+                            shortTix = false
+                            waitingIn = null
                             stage = if (seatNeed(picked, apps.boxes(picked)) == SeatNeed.NONE) SeatStage.DETAILS else SeatStage.STEPS
                         },
                         onAdd = { close(onAddApp) },

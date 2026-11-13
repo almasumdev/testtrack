@@ -40,6 +40,17 @@ internal class SeatDetailsState(
     val held: Pair<String, String>?,
     /** The server's refusal, for the ones that are not about a step. */
     val refusal: String?,
+    /** The server said tix are short, even if the balance on this phone did not. */
+    val shortTix: Boolean = false,
+    /** Another app of theirs already waits in a crew that has not started. */
+    val waiting: SeatWaiting? = null,
+    val onOpenCrew: (String) -> Unit = {},
+)
+
+/** The crew an app already waits in, and its id when the server gave one, for the link to it. */
+internal class SeatWaiting(
+    val crewName: String,
+    val crewId: String?,
 )
 
 @Composable
@@ -80,9 +91,34 @@ internal fun CrewSeatDetails(
     }
     Spacer(Modifier.height(18.dp))
     SeatPrice(vm.tix, crews.running)
-    if (vm.short) {
+    if (vm.short || state.shortTix) {
         Spacer(Modifier.height(12.dp))
         ShortOfTix(onOpenCircle)
+    }
+    state.waiting?.let { waiting ->
+        Spacer(Modifier.height(12.dp))
+        Notice(Tt.colors.warn, Lucide.TriangleAlert) {
+            Text(
+                "Your app waits in ${waiting.crewName.ifBlank { "a crew" }}",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = Tt.colors.text,
+            )
+            Text(
+                "Take the next seat once that crew is full.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Tt.colors.text2,
+            )
+            waiting.crewId?.let { id ->
+                Text(
+                    "Open the crew",
+                    Modifier.clickable { state.onOpenCrew(id) }.padding(top = 6.dp, bottom = 4.dp, end = 12.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Tt.colors.accentInk,
+                )
+            }
+        }
     }
     Spacer(Modifier.height(14.dp))
     if (crews.seating) {
@@ -108,7 +144,7 @@ internal fun CrewSeatDetails(
     Primary(
         if (state.needsDrive) "Connect Drive and take a seat" else seat,
         busy = state.busy,
-        enabled = vm.name.isNotBlank() && vm.signInReady && !vm.short && state.held == null,
+        enabled = vm.name.isNotBlank() && vm.signInReady && !vm.short && !state.shortTix && state.held == null,
         onClick = onTake,
     )
     state.driveMessage?.let {

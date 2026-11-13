@@ -93,7 +93,7 @@ class CrewJourneyTest {
                     Api.takeSeat(SeatIn(packageName = uniquePackage(), deviceFp = fingerprint(), timezone = "Asia/Dhaka"))
                     fail("A package Play does not show should be refused.")
                 } catch (e: ApiError) {
-                    assertEquals("listing_not_visible", e.code)
+                    assertEquals("not_visible", e.code)
                 }
                 assumeTrue("No crewPackage argument: nothing on Play to take a seat with.", false)
             }
@@ -153,7 +153,7 @@ class CrewJourneyTest {
                 fail("Holding an unstarted seat should stop a second one.")
             } catch (e: ApiError) {
                 assertEquals(409, e.status)
-                assertEquals("conflict", e.code)
+                assertEquals("already_waiting", e.code)
             }
         }
 

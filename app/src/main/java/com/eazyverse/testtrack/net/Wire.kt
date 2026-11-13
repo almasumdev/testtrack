@@ -2,6 +2,9 @@ package com.eazyverse.testtrack.net
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 
 /*
  * What the API sends and expects, as Kotlin.
@@ -385,7 +388,12 @@ data class VoteIn(
 data class ApiErrorBody(
     val code: String,
     val message: String,
-)
+    val details: Map<String, JsonElement> = emptyMap(),
+) {
+    /** The details that are plain values, as text; nested ones and nulls are left out. */
+    fun plainDetails(): Map<String, String> =
+        details.mapNotNull { (key, value) -> (value as? JsonPrimitive)?.takeIf { it !is JsonNull }?.let { key to it.content } }.toMap()
+}
 
 @Serializable
 data class ApiErrorOut(

@@ -11,6 +11,8 @@ class ApiError(
     val status: Int,
     val code: String,
     override val message: String,
+    /** What else the server said about the refusal, such as `crew_name` or `have`; empty when nothing. */
+    val details: Map<String, String> = emptyMap(),
 ) : Exception(message) {
     /** The session is gone or was never valid. The one case worth handling everywhere. */
     val isAuth: Boolean get() = status == 401 || code == "unauthenticated" || code == AccountGone.CODE

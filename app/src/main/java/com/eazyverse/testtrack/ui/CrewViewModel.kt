@@ -272,8 +272,7 @@ class CrewViewModel : ViewModel() {
      *
      * The crew is not named. The server checks the app on Play for the testers group and puts it
      * into whichever crew is nearest to starting; a client that picks its own crew is a client
-     * picking which fourteen people test its app. A refusal is said where the fix is, and
-     * [onRefused] gets its code and words, so the caller can send somebody to the step it is about.
+     * picking which fourteen people test its app. [onRefused] gets a refusal's code and details.
      */
     fun takeSeat(
         context: Context,
@@ -281,7 +280,7 @@ class CrewViewModel : ViewModel() {
         appName: String,
         notes: String,
         appId: String? = null,
-        onRefused: (code: String, message: String) -> Unit = { _, _ -> },
+        onRefused: (ApiError) -> Unit = {},
         onDone: () -> Unit,
     ) {
         val fingerprint = Device.fingerprint(context)
@@ -303,6 +302,7 @@ class CrewViewModel : ViewModel() {
                             deviceFp = fingerprint,
                             timezone = TimeZone.getDefault().id,
                             appId = appId,
+                            confirmBoxes = true,
                         ),
                     )
                 message =
@@ -318,7 +318,7 @@ class CrewViewModel : ViewModel() {
                 load(context)
                 MyAppsChanged.tell()
             } catch (e: ApiError) {
-                seatError = e.message.also { onRefused(e.code, it) }
+                seatError = e.message.also { onRefused(e) }
             } catch (_: Exception) {
                 seatError = "We could not reach TestTrack. Check your connection."
             } finally {

@@ -487,7 +487,7 @@ object Api {
         val error =
             try {
                 val body = json.decodeFromString<ApiErrorOut>(text).error
-                ApiError(status, body.code, body.message)
+                ApiError(status, body.code, body.message, body.plainDetails())
             } catch (_: Exception) {
                 ApiError(status, "unknown", "Something went wrong. Try again in a moment.")
             }

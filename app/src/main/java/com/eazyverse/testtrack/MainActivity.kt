@@ -408,6 +408,7 @@ fun AppNav(
                     // Put it in again: the seat sheet, on the same app from My apps when it is there.
                     onAddApp = { nav.push(Routes.APP_ADD) },
                     onOpenCircle = { nav.popBackStack(Routes.HOME, false) },
+                    onOpenCrew = { nav.push(Routes.crew(it)) },
                     onMembers = { nav.push(Routes.crewMembers(id)) },
                 )
             }

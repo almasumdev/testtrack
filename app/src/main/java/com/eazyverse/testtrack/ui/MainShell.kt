@@ -432,10 +432,10 @@ fun MainShell(
         CrewSeatSheet(
             crews = crews,
             apps = apps,
-            startAppId = null,
             onAddApp = onAddApp,
             onOpenCircle = { show(MainTab.CIRCLE) },
             onDismiss = { seating = false },
+            onOpenCrew = onOpenCrew,
         )
     }
 

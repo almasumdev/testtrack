@@ -114,10 +114,12 @@ class AppsViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 ApiAuth.ensure(appContext)
-                val saved = Api.patch<AppBoxesIn, ApiApp>("/apps/${app.id}", AppBoxesIn(next.countries, next.devices)).toSeatFacts()
-                // The server has them now: its own answer is the one shown from here.
+                val row = Api.patch<AppBoxesIn, ApiApp>("/apps/${app.id}", AppBoxesIn(next.countries, next.devices))
+                val saved = row.toSeatFacts()
+                // The server has them now: its updated row replaces ours and is the one shown from here.
                 if (saved.boxes != null && ticked[app.id] == next) {
-                    facts = facts + (app.id to saved)
+                    apps = apps.map { if (it.id == row.id) row.toEntry() else it }
+                    facts = facts + (row.id to saved)
                     ticked = ticked - app.id
                 }
             } catch (_: Exception) {

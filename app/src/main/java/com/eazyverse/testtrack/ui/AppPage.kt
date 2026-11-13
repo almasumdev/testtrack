@@ -167,6 +167,7 @@ fun AppPage(
             onAddApp = onAddApp,
             onOpenCircle = onOpenCircle,
             onDismiss = { seating = false },
+            onOpenCrew = onOpenCrew,
         )
     }
     if (askLive && app != null) {

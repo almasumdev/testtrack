@@ -354,7 +354,7 @@ class CrewGalleryTest {
         vm: CrewViewModel,
         id: String,
         scrolled: Boolean = false,
-    ) = shot(name, scrolled) { CrewPage(vm, id, onBack = {}, onSignIn = {}, onAddToCrew = {}) }
+    ) = shot(name, scrolled) { CrewPage(vm, id, onBack = {}, onSignIn = {}) }
 
     @Test
     fun draw_every_crew_state() {
