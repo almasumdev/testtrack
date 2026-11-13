@@ -118,12 +118,32 @@
   .xl b { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
   .optset h3 { display: flex; gap: 10px; align-items: center; }
   .rec { font-size: 13px; font-weight: 700; background: #3A5B73; color: #fff; border-radius: 999px; padding: 3px 11px; }
+
+  .fin { padding: 16px; }
+  .fh { display: flex; align-items: center; justify-content: space-between; height: 48px; margin: -7px 0; }
+  .rpill { height: 34px; border-radius: 10px; background: var(--tile); color: var(--accentInk); display: flex; align-items: center; gap: 4px; padding: 0 12px 0 14px; font-size: 14px; font-weight: 700; }
+  .fin .ft { margin-top: 10px; }
+  .grp { margin-top: 16px; }
+  .gh { font-size: 15px; line-height: 18px; font-weight: 600; color: var(--text); }
+  .bl { position: relative; padding-left: 12px; font-size: 13px; line-height: 17px; color: var(--text2); }
+  .bl::before { content: ""; position: absolute; left: 0; top: 6.5px; width: 4px; height: 4px; border-radius: 50%; background: var(--text4); }
+  .gh + .bl { margin-top: 6px; }
+  .bl + .bl { margin-top: 6px; }
+  .bl b { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+  .edge { position: relative; }
+  .edge::after { content: ""; position: absolute; top: 0; bottom: 0; left: 16px; border-left: 1px dashed rgba(31,95,191,.55); pointer-events: none; }
 </style>
 </head>
 <body>
 <div class="doc">
 <h1>Crew, Open tab: the rules card</h1>
 <p class="lead">The rules card as built in <code>a08661e</code> (<code>ui/CrewOpenRules.kt</code>) next to a compact version. Every line of the compact card was checked against the server (<code>test_track_backend</code>). The figure with a dashed blue outline comes from the crew the server sends; the rest come from <code>CrewRules</code>, which mirrors <code>app/core/rules.py</code>.</p>
+
+<section style="margin-top:20px" class="optset">
+  <h2>Final: the rules card, closed and open</h2>
+  <p class="why">Built copy and numbers from <code>CrewOpenRules.kt</code> (<code>2266fab</code>). Open, the four headings are plain text and every bullet dot sits on the card's content edge, drawn here as a dashed blue line. A wrapped line hangs under its own text. Spacing: 16dp above each heading, 6dp from a heading to its first bullet, 6dp between bullets. No icons, no dividers.</p>
+  <div id="final"></div>
+</section>
 
 <section style="margin-top:20px" class="optset">
   <h2>Three options</h2>
@@ -296,6 +316,41 @@ document.getElementById('opts').innerHTML =
   block('Option B. A run timeline', 'Fill, start, the nights and the finish along one line, then the miss rule and the Play duty as two rows. It shows the order of things, but the four steps carry small text and get tight at 360dp.', optB) +
   block('Option C. Five icon rows', 'Five rows, each a 32dp tinted icon, a bold title and one short note. Each rule is a whole sentence, so it is the clearest, but it is the tallest closed and still mostly text.', optC);
 document.querySelectorAll('.meas2').forEach(m => { const t = m.previousElementSibling.querySelector('.tile'); const cut = [...m.previousElementSibling.querySelectorAll('.it,.in,.fn')].filter(e => e.scrollWidth > e.clientWidth + 1).length; m.textContent = `card ${Math.round(t.getBoundingClientRect().height)}dp tall, cut lines: ${cut}`; m.style.cssText = 'font-size:10.5px;color:#6B7682;margin:4px 0 0 4px'; });
+</script>
+
+<script>
+(() => {
+  const N = 14;
+  const fc = (n, u, label, bad) => `<div class="fc"><div class="fn"><b ${bad ? 'style="color:var(--bad)"' : ''}>${n}</b><span>${u}</span></div><div class="fx">${label}</div></div>`;
+  const chev = `<svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
+  const chevU = `<svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>`;
+  const g = (title, lines) => `<div class="grp"><div class="gh">${title}</div>${lines.map(l => `<div class="bl">${l}</div>`).join('')}</div>`;
+  const all = () =>
+    g('The run', [
+      'Starts at each member\u2019s first midnight after all <b>15</b> apps are checked in. Each day runs midnight to midnight, your time.',
+      'An app sent back puts the crew back to filling.']) +
+    g('Each night', [
+      'Each app is open <b>20</b> seconds. It counts with <b>10</b> in front and its picture.',
+      'Only installs from Google Play count. A copy from anywhere else doesn\u2019t.',
+      'An old version stops counting <b>24</b> hours after the owner\u2019s update.',
+      'Send private feedback on Play by night <b>7</b> with each app, or its opens stop counting.']) +
+    g('Missed days', [
+      'Only apps you owed that night count. A day is missed when <b>3</b> or more of them stay unopened, or you open none.',
+      '<b>One</b> missed day is a warning. <b>2</b> in a row and your app leaves the run.']) +
+    g('Your 100 tix', [
+      'All back if you leave while the crew fills.',
+      'All back if <b>2</b> members can\u2019t install it before the run starts.',
+      'All back if the Play check fails, or the crew starts before Play could check it.',
+      'All back if the team takes it out before the run.',
+      'All back if you open every app on your list, every night until the end.',
+      'Otherwise they are kept, even for one app on your list left unopened on one night.']);
+  const card = open => `<div class="tile fin edge"><div class="fh"><div class="eb">${I.scale(14)}The rules</div><span class="rpill">${open ? 'Less' : 'All rules'}${open ? chevU : chev}</span></div>
+    <div class="ft">${fc('15', 'apps', 'in a crew')}${fc(N, 'nights', 'from your midnight')}${fc('100', 'tix', 'a seat')}${fc('20', 's', 'each app, each night')}${fc('7', 'nights', 'to send Play feedback')}${fc('2', 'misses', "in a row and you're out", true)}</div>${open ? all() : ''}</div>`;
+  const fr = (theme, w, cap, inner) => `<div><div class="cap fix">${cap}</div><div class="phone ${theme}${w === 360 ? ' w360' : ''}">${inner}</div><div class="meas3" style="font-size:10.5px;color:#6B7682;margin:4px 0 0 4px"></div></div>`;
+  const set = open => ['light', 'dark'].flatMap(t => [392, 360].map(w => fr(t, w, `${open ? 'Open' : 'Closed'}, ${t} ${w}dp`, card(open)))).join('');
+  document.getElementById('final').innerHTML = `<h3>Closed</h3><div class="row">${set(false)}</div><h3>Open</h3><div class="row">${set(true)}</div>`;
+  document.querySelectorAll('.meas3').forEach(m => { const t = m.previousElementSibling.querySelector('.tile'); m.textContent = `card ${Math.round(t.getBoundingClientRect().height)}dp tall`; });
+})();
 </script>
 </body>
 </html>

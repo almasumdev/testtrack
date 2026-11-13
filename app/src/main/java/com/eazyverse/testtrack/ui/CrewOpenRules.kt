@@ -6,6 +6,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,15 +15,14 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -41,20 +40,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.CalendarDays
 import com.composables.icons.lucide.ChevronDown
-import com.composables.icons.lucide.Clock
-import com.composables.icons.lucide.Coins
-import com.composables.icons.lucide.Download
-import com.composables.icons.lucide.Lock
-import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.MessageCircle
-import com.composables.icons.lucide.Moon
-import com.composables.icons.lucide.RefreshCw
-import com.composables.icons.lucide.RotateCcw
 import com.composables.icons.lucide.Scale
-import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.ui.theme.Barlow
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -162,22 +150,18 @@ private fun AllRules() {
     fun line(build: androidx.compose.ui.text.AnnotatedString.Builder.() -> Unit) = buildAnnotatedString(build)
 
     Column {
-        RuleGroup(Lucide.CalendarDays, Tone.ACCENT, "The run", first = true) {
+        RuleGroup("The run") {
             RuleLine(
-                Lucide.CalendarDays,
-                Tone.ACCENT,
                 line {
                     append("Starts at each member's first midnight after all ")
                     withStyle(bold) { append(n(CrewRules.SEATS)) }
                     append(" apps are checked in. Each day runs midnight to midnight, your time.")
                 },
             )
-            RuleLine(Lucide.RefreshCw, Tone.ACCENT, line { append("An app sent back puts the crew back to filling.") })
+            RuleLine(line { append("An app sent back puts the crew back to filling.") })
         }
-        RuleGroup(Lucide.Moon, Tone.ACCENT, "Each night") {
+        RuleGroup("Each night") {
             RuleLine(
-                Lucide.Clock,
-                Tone.ACCENT,
                 line {
                     append("Each app is open ")
                     withStyle(bold) { append(n(CrewRules.OPEN_SECONDS)) }
@@ -186,14 +170,8 @@ private fun AllRules() {
                     append(" in front and its picture.")
                 },
             )
+            RuleLine(line { append("Only installs from Google Play count. A copy from anywhere else doesn't.") })
             RuleLine(
-                Lucide.Download,
-                Tone.ACCENT,
-                line { append("Only installs from Google Play count. A copy from anywhere else doesn't.") },
-            )
-            RuleLine(
-                Lucide.RefreshCw,
-                Tone.ACCENT,
                 line {
                     append("An old version stops counting ")
                     withStyle(bold) { append(n(CrewRules.UPDATE_GRACE_HOURS)) }
@@ -201,8 +179,6 @@ private fun AllRules() {
                 },
             )
             RuleLine(
-                Lucide.MessageCircle,
-                Tone.ACCENT,
                 line {
                     append("Send private feedback on Play by night ")
                     withStyle(bold) { append(n(CrewRules.FEEDBACK_BY_NIGHT)) }
@@ -210,10 +186,8 @@ private fun AllRules() {
                 },
             )
         }
-        RuleGroup(Lucide.TriangleAlert, Tone.WARN, "Missed days") {
+        RuleGroup("Missed days") {
             RuleLine(
-                Lucide.TriangleAlert,
-                Tone.WARN,
                 line {
                     append("Only apps you owed that night count. A day is missed when ")
                     withStyle(bold) { append(n(CrewRules.MISS_UNOPENED)) }
@@ -221,8 +195,6 @@ private fun AllRules() {
                 },
             )
             RuleLine(
-                Lucide.LogOut,
-                Tone.BAD,
                 line {
                     withStyle(bold) { append("One") }
                     append(" missed day is a warning. ")
@@ -231,69 +203,50 @@ private fun AllRules() {
                 },
             )
         }
-        RuleGroup(Lucide.Coins, Tone.ACCENT, "Your ${CrewRules.SEAT_COST} tix") {
-            RuleLine(Lucide.RotateCcw, Tone.OK, line { append("All back if you leave while the crew fills.") })
+        RuleGroup("Your ${CrewRules.SEAT_COST} tix") {
+            RuleLine(line { append("All back if you leave while the crew fills.") })
             RuleLine(
-                Lucide.RotateCcw,
-                Tone.OK,
                 line {
                     append("All back if ")
                     withStyle(bold) { append(n(CrewRules.REPORTS_TO_RETURN)) }
                     append(" members can't install it before the run starts.")
                 },
             )
-            RuleLine(
-                Lucide.RotateCcw,
-                Tone.OK,
-                line { append("All back if the Play check fails, or the crew starts before Play could check it.") },
-            )
-            RuleLine(Lucide.RotateCcw, Tone.OK, line { append("All back if the team takes it out before the run.") })
-            RuleLine(Lucide.RotateCcw, Tone.OK, line { append("All back if you open every app on your list, every night until the end.") })
-            RuleLine(
-                Lucide.Lock,
-                Tone.BAD,
-                line { append("Otherwise they are kept, even for one app on your list left unopened on one night.") },
-            )
+            RuleLine(line { append("All back if the Play check fails, or the crew starts before Play could check it.") })
+            RuleLine(line { append("All back if the team takes it out before the run.") })
+            RuleLine(line { append("All back if you open every app on your list, every night until the end.") })
+            RuleLine(line { append("Otherwise they are kept, even for one app on your list left unopened on one night.") })
         }
     }
 }
 
-/**
- * A section: a 28dp icon square and its heading, 8dp, then its lines 6dp apart and indented to the
- * heading's text. 16dp of air above (12dp for the first).
- */
+/** A section: its heading, then its lines 6dp apart. 16dp of air above every group. */
 @Composable
 private fun RuleGroup(
-    icon: ImageVector,
-    tone: Tone,
     title: String,
-    first: Boolean = false,
     lines: @Composable () -> Unit,
 ) {
-    Column(Modifier.padding(top = if (first) 12.dp else 16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconSquare(icon, tone, size = 28)
-            Spacer(Modifier.width(10.dp))
-            Text(title, style = HeadingStyle, color = Tt.colors.text)
-        }
+    Column(Modifier.padding(top = 16.dp)) {
+        Text(title, style = HeadingStyle, color = Tt.colors.text)
         Column(
-            Modifier.padding(start = 38.dp, top = 8.dp),
+            Modifier.padding(top = 6.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) { lines() }
     }
 }
 
+/** A 4dp dot flush at the content edge; wrapped lines hang under the text. */
 @Composable
-private fun RuleLine(
-    icon: ImageVector,
-    tone: Tone,
-    text: androidx.compose.ui.text.AnnotatedString,
-) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-        Box(Modifier.size(width = 16.dp, height = 17.dp), contentAlignment = Alignment.Center) {
-            Icon(icon, null, Modifier.size(14.dp), tint = tone.ink())
-        }
+private fun RuleLine(text: androidx.compose.ui.text.AnnotatedString) {
+    Row(Modifier.fillMaxWidth()) {
+        Box(
+            Modifier
+                .padding(top = 6.5.dp)
+                .size(4.dp)
+                .clip(CircleShape)
+                .background(Tt.colors.text4),
+        )
         Spacer(Modifier.width(8.dp))
-        Text(text, Modifier.defaultMinSize(minHeight = 17.dp), style = LineStyle, color = Tt.colors.text2)
+        Text(text, Modifier.weight(1f), style = LineStyle, color = Tt.colors.text2)
     }
 }
