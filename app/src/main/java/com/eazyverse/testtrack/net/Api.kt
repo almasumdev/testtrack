@@ -142,11 +142,13 @@ object Api {
      * of the member list, so this is usually a database read; when it is not, the server refreshes
      * the whole list and answers from that. The phone knowing the script's address at all was the
      * older arrangement, and it put the group's name, the failure wording and the retry policy in
-     * two places.
-     *
-     * Only your own address is accepted, which is the server's rule, not a convenience here.
+     * two places. Only your own address is accepted, which is the server's rule, not a convenience here.
+     * [afterJoin] marks a check that follows the person acting on the join steps.
      */
-    suspend fun groupCheck(email: String): GroupOut = post("/group/check", GroupIn(email = email))
+    suspend fun groupCheck(
+        email: String,
+        afterJoin: Boolean = false,
+    ): GroupOut = post("/group/check", GroupIn(email, afterJoin))
 
     // ---------------------------------------------------------------- feed
 

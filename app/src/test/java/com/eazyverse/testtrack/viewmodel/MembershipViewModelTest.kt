@@ -26,7 +26,11 @@ class MembershipViewModelTest {
         val saved = mutableListOf<Boolean>()
         val asks = mutableListOf<CompletableDeferred<GateResult>>()
 
-        override suspend fun check(): GateResult {
+        /** The afterJoin flag of every check, in the order they were asked. */
+        val flags = mutableListOf<Boolean>()
+
+        override suspend fun check(afterJoin: Boolean): GateResult {
+            flags += afterJoin
             val ask = CompletableDeferred<GateResult>()
             asks += ask
             return ask.await()
@@ -440,5 +444,57 @@ class MembershipViewModelTest {
         port.email = "b@x.com"
         port.answer(1, yes)
         assertTrue(port.saved.isEmpty())
+    }
+
+    // ---------------------------------------------------------------- the after_join flag
+
+    @Test
+    fun gateStartJoinAndQuietChecksDoNotSendAfterJoin() {
+        val vm = vm()
+        vm.gate()
+        port.answer(0, no)
+        vm.quietly()
+        vm.startJoin()
+        assertEquals(listOf(false, false), port.flags)
+        val other = vm()
+        other.quietly()
+        assertEquals(listOf(false, false, false), port.flags)
+    }
+
+    @Test
+    fun iAlreadyJoinedAndCheckAgainSendAfterJoin() {
+        val vm = vm()
+        vm.gate()
+        port.answer(0, no)
+        vm.check()
+        assertEquals(listOf(false, true), port.flags)
+        port.answer(1, no)
+        assertEquals(GroupUi.StillOut, vm.ui)
+        vm.check()
+        assertEquals(listOf(false, true, true), port.flags)
+    }
+
+    @Test
+    fun comingBackFromTheGroupPageSendsAfterJoin() {
+        val vm = vm()
+        vm.startJoin()
+        vm.openGroup()
+        vm.paused()
+        vm.returned()
+        assertEquals(listOf(false, true), port.flags)
+    }
+
+    @Test
+    fun tryAgainRepeatsTheFailedChecksFlag() {
+        val vm = vm()
+        vm.gate()
+        port.answer(0, offline)
+        vm.check()
+        assertEquals(listOf(false, false), port.flags)
+        port.answer(1, no)
+        vm.check()
+        port.answer(2, offline)
+        vm.check()
+        assertEquals(listOf(false, false, true, true), port.flags)
     }
 }

@@ -60,6 +60,9 @@ data class Listing(
 @Serializable
 data class GroupIn(
     val email: String,
+    // Only sent when true (the default is not encoded): this check follows the tester acting on
+    // the join steps. Older servers ignore the field.
+    @SerialName("after_join") val afterJoin: Boolean = false,
 )
 
 /**

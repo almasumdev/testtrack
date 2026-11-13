@@ -56,7 +56,8 @@ internal interface GroupPort {
     val email: String?
     val member: Boolean
 
-    suspend fun check(): GateResult
+    /** [afterJoin]: this look follows the person acting on the join steps (not a gate, launch or quiet look). */
+    suspend fun check(afterJoin: Boolean): GateResult
 
     fun saveMember(value: Boolean)
 }
@@ -66,7 +67,7 @@ internal object LivePort : GroupPort {
     override val email: String? get() = Session.email
     override val member: Boolean get() = Session.isGroupMember
 
-    override suspend fun check(): GateResult = DebugOverrides.group(GroupGate.check(""))
+    override suspend fun check(afterJoin: Boolean): GateResult = DebugOverrides.group(GroupGate.check("", afterJoin))
 
     override fun saveMember(value: Boolean) = Session.updateMember(value)
 }
@@ -151,6 +152,9 @@ class MembershipViewModel internal constructor(
     private var quietJob: Job? = null
     private var quietFor: String? = null
 
+    /** Whether the newest sheet check was an after-join one, so "Try again" on a failure repeats it as it was. */
+    private var lastAfterJoin = false
+
     init {
         // Back after the process was ended while the group page was in front: the same sheet, on
         // the same step. The resume that follows looks again, as it does after any return.
@@ -199,7 +203,7 @@ class MembershipViewModel internal constructor(
         quietFor = who
         quietJob =
             scope.launch {
-                val answer = port.check()
+                val answer = port.check(afterJoin = false)
                 // The answer belongs to whoever asked. If the account changed meanwhile, saying
                 // yes would hand the next account a membership it never proved.
                 if (answer is GateResult.Member && sameAccount(who, port.email)) port.saveMember(true)
@@ -226,16 +230,25 @@ class MembershipViewModel internal constructor(
         if (ui != null && !sameAccount(sheetFor, port.email)) close()
     }
 
-    /** From "I already joined", "Check again" and "Try again". */
+    /**
+     * From "I already joined", "Check again" and "Try again", and after the group page. The first
+     * two (and the return) are the person acting on the join steps, so they tell the server so. A
+     * retry after a failure repeats the check that failed, with the same flag.
+     */
     fun check() {
+        var afterJoin = true
         ui =
             when (val now = ui) {
                 is GroupUi.Join, GroupUi.StillOut -> GroupUi.Rechecking
-                is GroupUi.Failed -> if (now.retrying) return else now.copy(retrying = true)
+                is GroupUi.Failed -> {
+                    if (now.retrying) return
+                    afterJoin = lastAfterJoin
+                    now.copy(retrying = true)
+                }
                 // Nothing to look again at, or a look already under way.
                 else -> return
             }
-        runCheck()
+        runCheck(afterJoin = afterJoin)
     }
 
     /**
@@ -319,17 +332,19 @@ class MembershipViewModel internal constructor(
         ui = first
     }
 
-    /** One check for the open sheet. [hold] keeps the Checking face up, [quiet] shows nothing unless it is a yes. */
+    /** One check for the open sheet. [hold] keeps the Checking face up, [quiet] shows nothing unless it is a yes, [afterJoin] is sent to the server. */
     private fun runCheck(
         hold: Boolean = false,
         quiet: Boolean = false,
+        afterJoin: Boolean = false,
     ) {
+        lastAfterJoin = afterJoin
         val id = ++checkId
         val who = port.email
         val started = System.nanoTime()
         val job =
             scope.launch {
-                val answer = port.check()
+                val answer = port.check(afterJoin)
                 if (hold && id == checkId) {
                     val left = holdMs - (System.nanoTime() - started) / 1_000_000
                     if (left > 0) delay(left)

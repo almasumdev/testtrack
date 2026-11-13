@@ -252,11 +252,14 @@ object GroupGate {
      * ripple through five call sites for no gain. It is no longer sent anywhere: the server knows
      * who is asking from our own session, which is a stronger claim than a token the phone chose.
      */
-    suspend fun check(idToken: String): GateResult =
+    suspend fun check(
+        idToken: String,
+        afterJoin: Boolean = false,
+    ): GateResult =
         withContext(Dispatchers.IO) {
             try {
                 val me = Api.me()
-                val answer = Api.groupCheck(me.email)
+                val answer = Api.groupCheck(me.email, afterJoin)
                 if (answer.isMember) GateResult.Member(answer.email) else GateResult.NotMember(answer.email)
             } catch (e: ApiError) {
                 // Never a negative. The server separates "could not ask" from "not a member" and
