@@ -75,7 +75,9 @@ fun CrewScreen(
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            if (vm.running > 0) TestingNotifications()
+            if (vm.running > 0 && vm.tab != CrewPhase.OPEN) {
+                TestingNotifications(Modifier.padding(start = Gutter, end = Gutter, top = 12.dp))
+            }
             when {
                 vm.offline && vm.crews.isEmpty() -> RobotOffline("Crews didn't load", onRetry = { vm.load(context) })
                 vm.tab == CrewPhase.RUN ->

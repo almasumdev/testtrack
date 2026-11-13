@@ -72,19 +72,15 @@ fun CrewOpenTab(
     actions: CrewActions,
     guide: CrewGuide = CrewGuide(),
 ) {
+    val notificationsOff = rememberNotificationsOff()
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        // The guide below is the app's own words and needs nothing from the server; only the box waits.
-        item {
-            LoadSwap(vm.firstLoad) { waiting ->
-                if (waiting) {
-                    CrewOpenCardLoading()
-                    return@LoadSwap
-                }
-                Box(Modifier.padding(start = Gutter, end = Gutter, bottom = 4.dp)) { OpenCrewCard(vm, actions, guide) }
-            }
+        // The notification tile lives here, in the list, and only while it draws, so no empty item adds a gap.
+        if (vm.running > 0 && notificationsOff) {
+            item(key = "notifications") { TestingNotifications(Modifier.padding(horizontal = Gutter)) }
         }
         // A reminder, not a step: nothing stops a seat, but the first night needs both switches.
         if (!vm.firstLoad && !guide.join.signedOut && !guide.join.permissions) {
@@ -93,10 +89,20 @@ fun CrewOpenTab(
                     "Before your first night",
                     "Allow usage access and the timer",
                     guide.onAllow,
-                    Modifier.padding(start = Gutter, end = Gutter, top = 8.dp),
+                    Modifier.padding(horizontal = Gutter),
                     icon = Lucide.Moon,
                     trailing = { LookOnlyPill("Allow", PillKind.SOFT, guide.onAllow) },
                 )
+            }
+        }
+        // The guide below is the app's own words and needs nothing from the server; only the box waits.
+        item {
+            LoadSwap(vm.firstLoad) { waiting ->
+                if (waiting) {
+                    CrewOpenCardLoading()
+                    return@LoadSwap
+                }
+                Box(Modifier.padding(horizontal = Gutter)) { OpenCrewCard(vm, actions, guide) }
             }
         }
 

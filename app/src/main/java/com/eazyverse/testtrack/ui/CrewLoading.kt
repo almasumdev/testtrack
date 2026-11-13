@@ -53,7 +53,7 @@ fun CrewOpenCardLoading() {
             }
             Spacer(Modifier.height(14.dp))
             SkeletonSeats()
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(14.dp))
             Skeleton(height = 12.dp)
             Spacer(Modifier.height(8.dp))
             Skeleton(width = 230.dp, height = 12.dp)

@@ -7,7 +7,6 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -20,7 +19,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.edit
@@ -36,6 +34,26 @@ private const val PREFS = "testing_notifications"
 private const val ASKED = "asked"
 
 /**
+ * Whether Android has notifications off for the app, read again on every resume. A list uses it to
+ * emit the tile's item only when the tile will draw, so an empty one leaves no gap behind.
+ */
+@Composable
+fun rememberNotificationsOff(): Boolean {
+    val context = LocalContext.current
+    var off by remember { mutableStateOf(!NotificationManagerCompat.from(context).areNotificationsEnabled()) }
+    val owner = LocalLifecycleOwner.current
+    DisposableEffect(owner) {
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) off = !NotificationManagerCompat.from(context).areNotificationsEnabled()
+            }
+        owner.lifecycle.addObserver(observer)
+        onDispose { owner.lifecycle.removeObserver(observer) }
+    }
+    return off
+}
+
+/**
  * An opt-in tile above the crew tabs while a crew is running, never a launch or sign-in
  * requirement. Drawn only while notifications are off.
  *
@@ -48,7 +66,7 @@ private const val ASKED = "asked"
  * same as one that had not, and flip when the tab is left and come back.
  */
 @Composable
-fun TestingNotifications() {
+fun TestingNotifications(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var granted by remember { mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled()) }
     var asked by remember { mutableStateOf(wasAsked(context)) }
@@ -91,13 +109,12 @@ fun TestingNotifications() {
             Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
         )
     }
-    val row = Modifier.padding(start = Gutter, end = Gutter, top = 12.dp)
     if (canAsk) {
         AskRow(
             "Turn on reminders",
             "When apps are left at 8 pm",
             ask,
-            row,
+            modifier,
             icon = Lucide.Bell,
             trailing = { LookOnlyPill("Turn on", PillKind.SOFT, ask) },
         )
@@ -106,7 +123,7 @@ fun TestingNotifications() {
             "Reminders are off",
             "Off in Android settings",
             settings,
-            row,
+            modifier,
             icon = Lucide.BellOff,
             trailing = { LookOnlyPill("Settings", PillKind.GHOST, settings) },
         )

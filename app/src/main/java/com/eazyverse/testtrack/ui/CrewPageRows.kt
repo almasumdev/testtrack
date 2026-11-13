@@ -4,9 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -18,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -52,9 +57,12 @@ internal fun RowPill(
     kind: PillKind,
     /** Sent and not answered yet: a spinner in place of the word, and nothing to tap. */
     busy: Boolean = false,
+    modifier: Modifier = Modifier,
+    /** A small icon before the word, in the pill's own text colour. */
+    leading: ImageVector? = null,
+    shape: Shape = RoundedCornerShape(percent = 50),
     onClick: () -> Unit,
 ) {
-    val shape = RoundedCornerShape(percent = 50)
     val (bg, fg) =
         when (kind) {
             PillKind.SOLID -> Tt.colors.accent to Tt.colors.onAccent
@@ -64,24 +72,31 @@ internal fun RowPill(
         }
     // 34 to look at, 48 to touch, the way an icon button is built.
     Box(
-        Modifier
+        modifier
             .minimumInteractiveComponentSize()
             .heightIn(min = 34.dp)
             .clip(shape)
             .background(bg)
             .then(if (kind == PillKind.GHOST) Modifier.border(1.5.dp, Tt.colors.glassBorderStrong, shape) else Modifier)
             .clickable(enabled = !busy, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 7.dp),
+            .padding(horizontal = if (leading != null) 12.dp else 14.dp, vertical = 7.dp),
         contentAlignment = Alignment.Center,
     ) {
         // The word stays, unseen, so the pill keeps its width while the spinner is in it.
-        Text(
-            label,
-            style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
-            fontWeight = FontWeight.Bold,
-            color = if (busy) fg.copy(alpha = 0f) else fg,
-            maxLines = 1,
-        )
+        val ink = if (busy) fg.copy(alpha = 0f) else fg
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (leading != null) {
+                Icon(leading, null, Modifier.size(13.dp), tint = ink)
+                Spacer(Modifier.width(6.dp))
+            }
+            Text(
+                label,
+                style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                fontWeight = FontWeight.Bold,
+                color = ink,
+                maxLines = 1,
+            )
+        }
         if (busy) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = fg)
     }
 }

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crew, Open tab: polish</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSel:#2E4E66; --card:#F3F8FB; --cardLine:#E1ECF3; --leafSoft:rgba(74,114,144,.16);
+    --accent:#3A5B73; --primary:#3A5B73; --onAccent:#FFFFFF; --onPrimaryRGB:255,255,255;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --accentInk:#22394B; --accentInkRGB:34,57,75; --glass2:#DFEDF6;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --scrim:rgba(20,34,48,.46);
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSel:#B6CCDC; --card:#1C1E20; --cardLine:#2D3034; --leafSoft:#2A2D31;
+    --accent:#4A7290; --primary:#93B3CA; --onAccent:#FFFFFF; --onPrimaryRGB:15,16,17;
+    --tile:#2A2D31; --tileInk:#A2BED2; --accentInk:#93B3CA; --accentInkRGB:147,179,202; --glass2:#292C2F;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --scrim:rgba(0,0,0,.6);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E7ECEF; color: #142F43; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; }
+  .doc { max-width: 1900px; margin: 0 auto; padding: 34px 28px 90px; }
+  h1 { font-size: 30px; margin: 0 0 6px; }
+  .lead { font-size: 16px; line-height: 1.45; color: #2D4A5F; max-width: 1100px; margin: 4px 0; }
+  section.opt { margin-top: 36px; padding-top: 22px; border-top: 2px solid #3A5B73; }
+  section.opt > h2 { font-size: 25px; margin: 0 0 6px; display: flex; gap: 10px; align-items: center; }
+  .rec { font-size: 13px; font-weight: 700; background: #3A5B73; color: #fff; border-radius: 999px; padding: 3px 11px; }
+  .why { font-size: 15.5px; line-height: 1.45; color: #203A4E; max-width: 1100px; margin: 3px 0; }
+  table.data { border-collapse: collapse; margin-top: 10px; font-size: 14.5px; background: #fff; border: 1px solid #D3DEE6; }
+  table.data th, table.data td { text-align: left; padding: 7px 12px; border-bottom: 1px solid #E3EAEF; vertical-align: top; line-height: 1.4; }
+  table.data th { background: #F2F6F9; font-weight: 600; }
+  .bad { color: #B03A2E; font-weight: 600; } .good { color: #1F5FBF; font-weight: 600; }
+  .state { margin-top: 26px; }
+  .state h3 { font-size: 19px; margin: 0 0 6px; }
+  .row4 { display: flex; gap: 14px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; align-items: flex-start; }
+  .cap { font-size: 12px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; margin: 0 0 5px 4px; color: #59758A; }
+  .cap.now { color: #B03A2E; } .cap.fix { color: #1F5FBF; }
+  table.data { max-width: 1300px; } table.data code { white-space: normal; overflow-wrap: anywhere; }
+  code { font-family: Consolas, monospace; font-size: 12.5px; background: #dbe3e9; padding: 1px 5px; border-radius: 4px; }
+  .legend { display: flex; gap: 18px; font-size: 13.5px; margin: 8px 0; color: #45505a; }
+  .legend i { display: inline-block; width: 22px; height: 10px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+
+  /* phone */
+  .phone { width: 392px; background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #C3CFD8; position: relative; }
+  .dark.phone { border-color: #2A2D31; }
+  .barnote { height: 22px; font-size: 10.5px; color: var(--text4); display: flex; align-items: center; justify-content: center; border-bottom: 1px dashed var(--cardLine); }
+  .tabs { padding: 6px 16px 0; }
+  .track { height: 42px; border-radius: 999px; background: var(--card); border: 1px solid var(--cardLine); padding: 3px; display: flex; gap: 2px; }
+  .seg { flex: 1; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: var(--text2); }
+  .seg.on { background: var(--leafSoft); color: var(--tabSel); font-weight: 600; }
+  .seg .count { margin-left: 5px; padding: 0 5px; border-radius: 999px; background: var(--tile); color: var(--tileInk); font-size: 11px; line-height: 16px; font-weight: 700; }
+  .w { padding: 0 16px; }
+  .tile { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; }
+  .dock { height: 64px; margin: 0 20px 14px; border-radius: 999px; border: 1px dashed var(--cardLine); display: grid; place-items: center; font-size: 11px; color: var(--text4); }
+  svg.i { display: block; flex: none; }
+
+  /* spacing marks */
+  .g { position: relative; }
+  .g.n { background: repeating-linear-gradient(135deg, rgba(176,58,46,.16) 0 4px, transparent 4px 8px); }
+  .g.f { background: repeating-linear-gradient(135deg, rgba(31,95,191,.13) 0 4px, transparent 4px 8px); }
+  .g.k { background: repeating-linear-gradient(135deg, rgba(120,130,140,.12) 0 4px, transparent 4px 8px); }
+  .g span { position: absolute; right: -4px; top: 50%; transform: translate(100%, -50%); font-size: 10px; font-weight: 700; line-height: 1; padding: 2px 4px; border-radius: 4px; color: #fff; white-space: nowrap; z-index: 2; }
+  .g.n span { background: #B03A2E; } .g.f span { background: #1F5FBF; } .g.k span { background: #6B7682; }
+  .inner .g span { right: auto; left: -4px; transform: translate(-100%, -50%); }
+  .phone { overflow: visible; }
+  .clip { border-radius: 26px; overflow: hidden; }
+  .holder { padding-right: 48px; }
+
+  /* AskRow */
+  .ask { display: flex; align-items: center; padding: 9px 10px; }
+  .ic40 { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .rt { font-size: 16px; line-height: 21px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rn { font-size: 12.5px; line-height: 17px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chev { color: var(--text4); margin-left: 8px; flex: none; }
+  .pill { flex: none; margin-left: 8px; height: 34px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; font-size: 14px; font-weight: 700; background: var(--tile); color: var(--accentInk); }
+
+  /* crew card */
+  .card { padding: 16px; }
+  .head { display: flex; align-items: center; }
+  .fl1 { font-size: 16px; line-height: 19px; font-weight: 600; white-space: nowrap; }
+  .fl2 { margin-top: 2px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--accentInk); display: flex; align-items: center; gap: 4px; }
+  .tseats { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
+  .tseat { aspect-ratio: 1; border-radius: 9px; position: relative; overflow: hidden; display: grid; place-items: center; }
+  .tseat.conf { background: var(--primary); }
+  .tseat.chk { background: var(--tile); }
+  .tseat .ico { position: absolute; inset: 0; }
+  .tseat .ico i { position: absolute; left: 28%; top: 28%; width: 44%; height: 44%; border-radius: 30%; background: rgba(255,255,255,.88); }
+  .tseat.chk .ico { opacity: .45; }
+  .tseat svg.dash { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .tseat .plus { color: rgba(var(--accentInkRGB), .7); position: relative; }
+  .hr { height: 1px; background: var(--cardLine); }
+  .jt { font-size: 16px; line-height: 19px; font-weight: 600; }
+  .step { display: flex; align-items: center; min-height: 36px; }
+  .dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 12px; font-weight: 700; }
+  .dot.now { background: var(--accent); color: var(--onAccent); }
+  .dot.todo { box-shadow: inset 0 0 0 1.5px var(--cardLine); color: var(--text4); }
+  .sl { margin-left: 12px; font-size: 14px; line-height: 19px; color: var(--text3); }
+  .sl.now { color: var(--text); font-weight: 600; font-size: 15px; }
+  .body { font-size: 13px; line-height: 18px; color: var(--text2); }
+  .bar { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--tabSel); font-size: 16px; line-height: 24px; font-weight: 600; padding: 12px; border: 1px solid var(--cardLine); border-radius: 14px; }
+  .bar .nx { color: var(--text3); font-weight: 500; }
+  .terms p { margin: 0; font-size: 13px; line-height: 18px; color: var(--text2); }
+  .terms b { font-weight: 600; color: var(--text); }
+  .terms .bl { padding-left: 22px; position: relative; }
+  .terms .bl::before { content: ""; position: absolute; left: 22px; top: 7px; width: 4px; height: 4px; border-radius: 50%; background: var(--text3); }
+  .terms .bl span { display: block; padding-left: 12px; }
+  .ii { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; color: var(--accentInk); }
+  .ii svg { display: block; }
+  .inrow { display: flex; align-items: center; padding: 10px; border: 1px solid var(--cardLine); border-radius: 14px; }
+  .ic36 { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; flex: none; background: var(--okBg); color: var(--ok); }
+  .a { font-size: 14px; line-height: 19px; font-weight: 600; }
+  .b { font-size: 12.5px; line-height: 15px; color: var(--text3); }
+
+  /* guide cards */
+  .eb { font-size: 11px; line-height: 14px; font-weight: 700; letter-spacing: .8px; color: var(--text4); text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+  .p { font-size: 14px; line-height: 20px; color: var(--text2); }
+  .p b { font-weight: 600; color: var(--accentInk); }
+  .jrow { display: flex; align-items: center; }
+  .jt16 { font-size: 16px; line-height: 19px; font-weight: 600; }
+  .jn { font-size: 12.5px; line-height: 15px; color: var(--text3); }
+
+  /* video entry */
+  .vthumb { width: 112px; height: 63px; border-radius: 10px; flex: none; position: relative; overflow: hidden; background: #2b3a46 center/cover no-repeat; background-image: url("../../../app/src/main/res/drawable-nodpi/howto_crew.webp"); }
+  .vthumb .pl { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: var(--scrim); display: grid; place-items: center; color: #fff; }
+  .vthumb .len { position: absolute; right: 4px; bottom: 4px; font-size: 10px; line-height: 14px; font-weight: 600; color: #fff; background: var(--scrim); padding: 0 4px; border-radius: 4px; }
+  .vt { font-size: 16px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vt19 { font-size: 16px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vl { font-size: 12.5px; line-height: 16px; color: var(--text3); }
+  .vl15 { font-size: 12.5px; line-height: 15px; color: var(--text3); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chipbox { height: 48px; display: flex; align-items: center; }
+  .chip { height: 34px; border-radius: 9px; padding: 0 13px; display: flex; align-items: center; font-size: 14px; font-weight: 600; }
+  .chip.en { background: var(--tile); color: var(--tileInk); }
+  .chip.bn { background: var(--glass2); color: var(--text); }
+
+  .light { --tabSel:#2E4E66; --gbs:#789AAF; } .dark { --gbs:#666D74; }
+  .bn { font-family: "BarlowApp", "Barlow", "Noto Sans Bengali", sans-serif; }
+  .vc { padding: 16px 16px 9px; }
+  .vc.tight { padding: 16px; }
+  .tb { height: 48px; display: flex; align-items: center; min-width: 0; }
+  .wpill { height: 34px; width: 100%; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--accentInk); white-space: nowrap; overflow: hidden; padding: 0 12px; }
+  .wpill.soft { background: var(--tile); }
+  .wpill.ghost { background: var(--bg); box-shadow: inset 0 0 0 1.5px var(--gbs); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .seg2 { height: 34px; border-radius: 999px; background: var(--card); border: 1px solid var(--cardLine); padding: 3px; display: inline-flex; gap: 2px; }
+  .seg2 span { border-radius: 999px; padding: 0 12px; display: flex; align-items: center; font-size: 13.5px; font-weight: 500; color: var(--text2); white-space: nowrap; }
+  .seg2 span.on { background: var(--leafSoft); color: var(--tabSel); font-weight: 600; }
+  .split { height: 34px; border-radius: 999px; background: var(--tile); color: var(--accentInk); display: inline-flex; align-items: stretch; font-size: 14px; font-weight: 700; overflow: hidden; }
+  .split > span { display: flex; align-items: center; gap: 6px; padding: 0 12px; white-space: nowrap; }
+  .split > span + span { border-left: 1px solid rgba(var(--accentInkRGB), .25); font-weight: 600; padding: 0 10px 0 12px; gap: 4px; }
+  .hcap { font-size: 10px; color: #6B7682; margin: 4px 0 0 4px; }
+  .phone.w360 { width: 360px; }
+</style>
+</head>
+<body>
+<div class="doc">
+<h1>Crew, Open tab: polish</h1>
+<p class="lead">The Open tab as built in <code>7921384</code> and <code>c81cbf1</code>, next to the fixed version, for three states. Every vertical gap is drawn as a striped band with its dp value. Red marks a gap that is wrong or uneven today, blue marks a gap the fix changes or adds, and grey marks a gap that stays as it is.</p>
+<div class="legend"><span><i style="background:#B03A2E"></i>wrong or uneven today</span><span><i style="background:#1F5FBF"></i>set by the fix</span><span><i style="background:#6B7682"></i>unchanged</span></div>
+
+<section class="opt" style="margin-top:22px">
+  <h2>Video card buttons: three options</h2>
+  <p class="why">The grey "Watch" and "বাংলায় দেখুন" chips under the thumbnail look weak. Each option is shown at 392dp and 360dp, light and dark. All use the app's own pill colours (SOFT and GHOST from <code>RowPill</code>, the tab track for the switch), keep 48dp touch targets, and stay within today's Option A height of 141dp. Only the English length (3:31) is in the video data, so no option shows a length for the Bangla video.</p>
+  <div id="btnopts"></div>
+</section>
+
+<section class="opt">
+  <h2>Polish: what changes</h2>
+  <table class="data">
+    <tr><th>#</th><th>Where</th><th>Today</th><th>Fix</th></tr>
+    <tr><td>1</td><td>Order</td><td>Crew box first. "Before your first night" under it. The reminders tile sits outside the list (<code>CrewScreen.kt:78</code>), so it does not scroll.</td><td>Reminders tile, then "Before your first night", then the crew box. All three are items in the one list, so they scroll together.</td></tr>
+    <tr><td>2</td><td>Reminders tile to the crew box</td><td><span class="bad">24</span>: the tile's own top 12 plus the list's top 12</td><td><span class="good">8</span>, like every other gap between tiles</td></tr>
+    <tr><td>3</td><td>Tabs to the first tile</td><td>12 (list top) or 12 (the tile's own top)</td><td><span class="good">12</span>, from the list's top only, as on every other tab</td></tr>
+    <tr><td>4</td><td>Crew box to the next tile</td><td><span class="bad">12</span>: the box's bottom 4 plus the next item's top 8</td><td><span class="good">8</span></td></tr>
+    <tr><td>5</td><td>Every other gap between tiles</td><td>8, each item adding its own top 8</td><td><span class="good">8</span> from <code>verticalArrangement = spacedBy(8.dp)</code>. Items carry no top or bottom padding of their own.</td></tr>
+    <tr><td>6</td><td>Video entry</td><td>A one-line AskRow with a play icon, which lost the thumbnail and the Bangla button</td><td>The older card back: thumbnail, title, line, and the two buttons. The empty band under the thumbnail is gone (see the options below).</td></tr>
+    <tr><td>7</td><td>Eyebrow to the first line, inside "What a crew is" and "How it goes"</td><td><span class="bad">8</span> in one card and <span class="bad">12</span> in the other</td><td><span class="good">10</span> in both. Paragraphs stay 8 apart and the four rows 12 apart.</td></tr>
+    <tr><td>8</td><td>Open step's line to what follows, in the checklist</td><td>Line bottom 8, then the bar's 12: <span class="bad">20</span> when the open step is the only one, 8 to the next row otherwise</td><td>Line bottom <span class="good">6</span> when more steps follow, <span class="good">0</span> when it is the last. The bar always sits <span class="good">14</span> under the list.</td></tr>
+    <tr><td>9</td><td>Inside the crew box</td><td>16 padding, 14 between header, seats and what follows, 14 between the terms and the bar</td><td>Unchanged: 16 padding and 14 between blocks is the box's rhythm. The checklist's 14 spacer, hairline, 14, heading and 6 also stay.</td></tr>
+    <tr><td>10</td><td>Loading skeleton</td><td>Seats to the first bar <span class="bad">16</span></td><td><span class="good">14</span>, the box's rhythm</td></tr>
+    <tr><td>11</td><td>Bottom</td><td>Gutter 16 plus <code>dockRoom()</code></td><td>Unchanged. It matches every other tab, so the last tile clears the dock by 16.</td></tr>
+  </table>
+  <div id="states"></div>
+</section>
+
+<section class="opt">
+  <h2>The video entry: two options</h2>
+  <p class="why">The older card (<code>7921384^</code>, <code>HowToBody</code> in a CrewCard) put the title, line and buttons in a column beside a 63dp thumbnail. The buttons each take 48dp of touch height, so the column ran about 100dp tall and left an empty band under the thumbnail. Both options keep the thumbnail with its play mark and length, and leave no blank area.</p>
+  <div id="video"></div>
+</section>
+
+<section class="opt" style="border-top-color:#59758A">
+  <h2>Build spec</h2>
+  <table class="data">
+    <tr><th>File</th><th>Change</th></tr>
+    <tr><td><code>ui/CrewOpenTab.kt</code></td><td><code>LazyColumn(contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()), verticalArrangement = Arrangement.spacedBy(8.dp))</code>. Items in this order: <code>TestingNotifications</code> (when a crew is running and reminders are off), the "Before your first night" AskRow, the crew card, then <code>crewGuide</code>. Each item gets <code>Modifier.padding(horizontal = Gutter)</code> only. Remove the crew card's <code>bottom = 4.dp</code> and the allow row's <code>top = 8.dp</code>.</td></tr>
+    <tr><td><code>ui/TestingAccess.kt</code></td><td><code>TestingNotifications(modifier: Modifier = Modifier)</code>. The caller passes the padding, and the row's own <code>top = 12.dp</code> goes. Other tabs pass <code>Modifier.padding(start = Gutter, end = Gutter, top = 12.dp)</code>, so they look as they do today.</td></tr>
+    <tr><td><code>ui/CrewScreen.kt</code></td><td><code>if (vm.running &gt; 0 &amp;&amp; vm.tab != CrewPhase.OPEN) TestingNotifications(...)</code>. On Open the tile is drawn inside the list.</td></tr>
+    <tr><td><code>ui/CrewOpenGuide.kt</code></td><td>Drop <code>GuideRow</code>'s <code>top = 8.dp</code>; the list's 8 does it. <code>VideoRow</code> becomes the chosen video card (spec below). <code>CrewStory</code>: first paragraph <code>top = 10.dp</code>, second <code>top = 8.dp</code>. <code>CrewJourney</code>: first row <code>top = 10.dp</code>, the rest <code>top = 12.dp</code>.</td></tr>
+    <tr><td><code>ui/CrewJoinChecklist.kt</code></td><td><code>StepLine</code>: <code>padding(top = 2.dp, bottom = if (more) 6.dp else 0.dp)</code>, where <code>more = steps.size &gt; 1</code>. The spacer before the bar goes from <code>12.dp</code> to <code>14.dp</code>.</td></tr>
+    <tr><td><code>ui/CrewLoading.kt</code></td><td><code>CrewOpenCardLoading</code>: the spacer after <code>SkeletonSeats()</code> goes from <code>16.dp</code> to <code>14.dp</code>.</td></tr>
+    <tr><td><code>ui/HowToVideos.kt</code></td><td>Option A: a new <code>HowToCard(video)</code> that reuses <code>Thumb</code> and <code>ActionChip</code>, in a <code>CrewCard(padding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 9.dp))</code>. Inside it: a <code>Row(verticalAlignment = CenterVertically)</code> with the 112x63dp thumbnail, a 12dp gap, then a Column with the title (16/20 SemiBold, 1 line) and, 2dp below, the line (12.5/16, up to 2 lines). Then a <code>Spacer(5.dp)</code> and the <code>FlowRow(spacedBy(8.dp))</code> with "Watch" and "বাংলায় দেখুন" at 34dp. The chips' own 7dp of touch room above and below makes the gaps you see 12 and 16. <code>HowToBody</code> stays as it is for the You sheet.</td></tr>
+  </table>
+</section>
+</div>
+
+<script>
+const P = (d, s = 24, w = 2) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const I = {
+  users: s => P('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', s),
+  bell: s => P('<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>', s),
+  chev: s => P('<path d="m9 18 6-6-6-6"/>', s),
+  clock: s => P('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', s, 2.4),
+  plus: s => P('<path d="M5 12h14"/><path d="M12 5v14"/>', s),
+  check: (s, w = 2) => P('<path d="M20 6 9 17l-5-5"/>', s, w),
+  arrow: s => P('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>', s),
+  info: s => P('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>', s),
+  moon: s => P('<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>', s),
+  play: s => P('<polygon points="6 3 20 12 6 21 6 3"/>', s),
+  playFill: s => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20 7 4"/></svg>`,
+  scale: s => P('<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>', s),
+  armchair: s => P('<path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/><path d="M3 16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z"/><path d="M5 18v2"/><path d="M19 18v2"/>', s),
+  download: s => P('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>', s),
+  trophy: s => P('<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>', s),
+};
+const SAMPLE = ['#ff8a3d,#e8453c','#3ec7a6,#1f8f86','#6d7cff,#4433c9','#ffd34d,#f0a020','#ff6fa8,#c2367a','#47b3ff,#1667d9','#9be15d,#3fa34d','#b07cff,#7a3fd6','#ff9f6b,#d9622b','#5ee0e6,#2a9fbf','#f76b8a,#c43d5c','#8fd3fe,#3b8de0','#c2e86f,#7bb431','#ffb86b,#e07b1f'];
+
+// A gap of h dp: kind n = wrong today, f = set by the fix, k = unchanged. inner = label on the left (inside a card).
+const gap = (h, kind, label) => `<div class="g ${kind}" style="height:${h}px"><span>${label ?? h}</span></div>`;
+
+function seats(taken, filled) {
+  let h = '<div class="tseats">';
+  for (let i = 0; i < 15; i++) {
+    if (i >= taken) {
+      const next = i === taken, a = next ? .55 : .28;
+      h += `<div class="tseat"><svg class="dash" viewBox="0 0 36 36" preserveAspectRatio="none"><rect x=".75" y=".75" width="34.5" height="34.5" rx="8.25" fill="none" stroke="rgba(var(--accentInkRGB),${a})" stroke-width="1.5" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/></svg>${next ? `<span class="plus">${I.plus(14)}</span>` : ''}</div>`;
+    } else h += `<div class="tseat ${i < filled ? 'conf' : 'chk'}"><div class="ico" style="background:linear-gradient(135deg,${SAMPLE[i % 14]})"><i></i></div></div>`;
+  }
+  return h + '<div></div></div>';
+}
+const askRow = (icon, t, n, trail) => `<div class="tile ask"><div class="ic40">${icon}</div><div class="col"><div class="rt">${t}</div><div class="rn">${n}</div></div>${trail}</div>`;
+const reminders = askRow(I.bell(20), 'Turn on reminders', 'When apps are left at 8 pm', '<span class="pill">Turn on</span>');
+const allow = askRow(I.moon(20), 'Before your first night', 'Allow usage access and the timer', '<span class="pill">Allow</span>');
+const videoNow = askRow(I.play(18), 'Watch how a crew works', 'A short video, start to finish', `<span class="chev">${I.chev(18)}</span>`);
+const rules = askRow(I.scale(20), 'The rules', 'What you agree to, with the numbers', `<span class="chev">${I.chev(18)}</span>`);
+
+// The crew card, with its inner gaps marked. fix = the fixed checklist spacing.
+function crewCard(st, fix, crew) {
+  const k = fix ? 'f' : 'n';
+  let tail = '';
+  if (st === 'steps') {
+    tail = gap(14, 'k') + `<div class="hr"></div>` + gap(14, 'k') + `<div class="jt">2 steps before you can join</div>` + gap(6, 'k') +
+      `<div class="step"><span class="dot now">1</span><span class="sl now">Join the testers group</span></div>` + gap(2, 'k') +
+      `<div class="body">Your account joins it, so you can install the other apps in your crew from Play.</div>` + gap(fix ? 6 : 8, fix ? 'f' : 'k') +
+      `<div class="step"><span class="dot todo">2</span><span class="sl">Connect Google Drive</span></div>` + gap(fix ? 14 : 12, k) +
+      `<div class="bar">${I.arrow(20)}<span><span class="nx">Next:</span> Join the testers group</span></div>`;
+  } else if (st === 'done') {
+    tail = gap(14, 'k') + `<div class="terms"><p><span class="ii">${I.info(16)}</span>A seat costs <b>100 tix</b>. You get all 100 back in either case:</p>` + gap(6, 'k') +
+      `<p class="bl"><span><b>Leave early:</b> take your app out before the crew is full.</span></p>` + gap(6, 'k') +
+      `<p class="bl"><span><b>Finish the run:</b> open every app, every night, until the run ends.</span></p>` + gap(6, 'k') +
+      `<p><b>Start:</b> the run begins at midnight, your local time, after the last seat is taken.</p></div>` + gap(14, 'k') +
+      `<div class="bar">${I.plus(20)}<span>Take a seat</span></div>`;
+  } else {
+    tail = gap(14, 'k') + `<div class="inrow"><div class="ic36">${I.check(18)}</div><div class="col"><div class="a">You are in this crew</div><div class="b">See it in your Lobby</div></div><span class="chev">${I.chev(18)}</span></div>`;
+  }
+  return `<div class="tile card inner"><div class="head"><div class="ic40">${I.users(20)}</div><div class="col"><div class="fl1">${crew.name}, ${crew.left}</div><div class="fl2">${I.clock(11)}<span>${crew.est}</span></div></div></div>` +
+    gap(14, 'k') + seats(crew.taken, crew.filled) + tail + `</div>`;
+}
+function storyCard(fix) {
+  return `<div class="tile card inner"><div class="eb">${I.users(14)}What a crew is</div>${gap(fix ? 10 : 8, fix ? 'f' : 'n')}
+    <div class="p"><b>15 developers</b> put their apps in and open each other's <b>every day for 14 days</b>. Everyone gets real testers on real phones.</div>${gap(8, 'k')}
+    <div class="p">Google asks for 12 testers over 14 days before production. A crew is 15, so it still counts if a couple drop out.</div></div>`;
+}
+function journeyCard(fix) {
+  const rows = [['armchair', 'Fill up', 'Wait in the Lobby until all 15 are in'], ['download', 'Install the other 14', 'From Play, while the crew fills'], ['play', 'Open them every day', '20 seconds each, for 14 days'], ['trophy', 'Apply for production', 'Your app has its testers']];
+  return `<div class="tile card inner"><div class="eb">How it goes</div>` + rows.map(([ic, t, n], i) =>
+    (i === 0 ? gap(fix ? 10 : 12, fix ? 'f' : 'n') : gap(12, 'k')) + `<div class="jrow"><div class="ic40">${I[ic](20)}</div><div class="col"><div class="jt16">${t}</div><div class="jn">${n}</div></div></div>`).join('') + `</div>`;
+}
+function videoA() {
+  return `<div class="tile inner" style="padding:16px 16px 9px">
+    <div style="display:flex;align-items:center"><div class="vthumb"><div class="pl">${I.playFill(14)}</div><span class="len">3:31</span></div>
+      <div class="col"><div class="vt">How Crew works</div><div class="vl" style="margin-top:2px">Taking a seat, the nightly round, and the finish</div></div></div>
+    ${gap(5, 'f', '5 + 7 = 12')}
+    <div class="chips"><div class="chipbox"><span class="chip en">Watch</span></div><div class="chipbox"><span class="chip bn">বাংলায় দেখুন</span></div></div></div>`;
+}
+function videoB() {
+  return `<div class="tile" style="padding:12px;display:flex;align-items:center"><div class="vthumb"><div class="pl">${I.playFill(14)}</div><span class="len">3:31</span></div>
+    <div class="col"><div class="vt19">How Crew works</div><div class="vl15" style="margin-top:2px">Taking a seat, the nightly round, and the finish</div></div><span class="chev">${I.chev(18)}</span></div>`;
+}
+function videoOld() {
+  return `<div class="tile inner" style="padding:16px"><div style="display:flex;align-items:flex-start"><div><div class="vthumb"><div class="pl">${I.playFill(14)}</div><span class="len">3:31</span></div><div class="g n" style="height:41px;margin-top:0"><span>empty</span></div></div>
+    <div class="col" style="margin-left:14px"><div class="vt">How Crew works</div><div class="vl" style="margin-top:2px">Taking a seat, the nightly round, and the finish</div><div style="height:8px"></div>
+    <div class="chips"><div class="chipbox"><span class="chip en">Watch</span></div><div class="chipbox"><span class="chip bn">বাংলায় দেখুন</span></div></div></div></div></div>`;
+}
+
+const tabs = run => '<div class="tabs"><div class="track">' + ['Open', 'Lobby', 'Run', 'Record'].map(n =>
+  `<div class="seg${n === 'Open' ? ' on' : ''}">${n}${n === 'Run' && run ? '<span class="count">14</span>' : ''}</div>`).join('') + '</div></div>';
+
+// The whole tab, today: reminders outside the list (top 12) then list top 12, card bottom 4 + next top 8.
+function now(s) {
+  let h = tabs(s.run);
+  if (s.run) h += gap(12, 'n', '12, outside the list') + `<div class="w">${reminders}</div>` + gap(12, 'n', '12 list top: 24 in all');
+  else h += gap(12, 'k', '12 list top');
+  h += `<div class="w">${crewCard(s.st, false, s.crew)}</div>`;
+  h += gap(12, 'n', '4 + 8 = 12');
+  if (s.allow) h += `<div class="w">${allow}</div>` + gap(8, 'k');
+  h += `<div class="w">${videoNow}</div>` + gap(8, 'k') + `<div class="w">${storyCard(false)}</div>` + gap(8, 'k') + `<div class="w">${journeyCard(false)}</div>` + gap(8, 'k') + `<div class="w">${rules}</div>`;
+  h += gap(16, 'k', '16 + dock') + `<div class="dock">dock</div>`;
+  return h;
+}
+// The whole tab, fixed: one list, 12 top, 8 between everything, reminders and allow first.
+function fixed(s) {
+  let h = tabs(s.run) + gap(12, 'f', '12 list top');
+  if (s.run) h += `<div class="w">${reminders}</div>` + gap(8, 'f');
+  if (s.allow) h += `<div class="w">${allow}</div>` + gap(8, 'f');
+  h += `<div class="w">${crewCard(s.st, true, s.crew)}</div>` + gap(8, 'f');
+  h += `<div class="w">${videoA()}</div>` + gap(8, 'f') + `<div class="w">${storyCard(true)}</div>` + gap(8, 'f') + `<div class="w">${journeyCard(true)}</div>` + gap(8, 'f') + `<div class="w">${rules}</div>`;
+  h += gap(16, 'k', '16 + dock') + `<div class="dock">dock</div>`;
+  return h;
+}
+const frame = (theme, cls, cap, inner) => `<div class="holder"><div class="cap ${cls}">${cap}</div><div class="phone ${theme}"><div class="clip" style="overflow:visible"><div class="barnote">app bar above, not shown</div>${inner}</div></div></div>`;
+
+const filling = { name: 'Crew 07', left: '9 of 15 seats left', taken: 6, filled: 5, est: 'Likely starts in about 2 days' };
+const STATES = [
+  { t: 'Signed in, two steps missing', st: 'steps', allow: true, run: false, crew: filling },
+  { t: 'All done, with a crew running elsewhere', st: 'done', allow: true, run: true, crew: { name: 'Crew 07', left: '3 of 15 seats left', taken: 12, filled: 11, est: 'Likely starts tomorrow night' } },
+  { t: 'Already in this crew', st: 'in', allow: true, run: false, crew: { name: 'Crew 07', left: '8 of 15 seats left', taken: 7, filled: 5, est: 'Likely starts in about 2 days' } },
+];
+document.getElementById('states').innerHTML = STATES.map(s => `<div class="state"><h3>${s.t}</h3><div class="row4">
+  ${frame('light', 'now', 'Today, light', now(s))}${frame('light', 'fix', 'Fixed, light', fixed(s))}
+  ${frame('dark', 'now', 'Today, dark', now(s))}${frame('dark', 'fix', 'Fixed, dark', fixed(s))}</div></div>`).join('');
+
+const vframe = (theme, cap, inner, cls = '') => `<div class="holder"><div class="cap ${cls}">${cap}</div><div class="phone ${theme}" style="padding:12px 0"><div class="w">${inner}</div></div></div>`;
+document.getElementById('video').innerHTML = `
+  <div class="state"><h3>For reference</h3><div class="row4">${vframe('light', 'Older card (7921384^)', videoOld(), 'now')}${vframe('light', 'Built today', videoNow, 'now')}</div></div>
+  <div class="state"><h3 style="display:flex;gap:10px;align-items:center">Option A. The older card, tightened <span class="rec">My pick</span></h3>
+    <p class="why">The thumbnail and the text sit side by side and centred, so neither leaves a gap. The two buttons move under them, starting at the left edge. "Watch" and "বাংলায় দেখুন" both stay, which is the point of the older card: the Bangla video is one tap away for the readers it was made for. About 141dp tall at 392dp.</p>
+    <div class="row4">${vframe('light', 'Light 392dp', videoA(), 'fix')}${vframe('dark', 'Dark 392dp', videoA(), 'fix')}</div></div>
+  <div class="state"><h3>Option B. A thumbnail row</h3>
+    <p class="why">The thumbnail takes the place of the icon in a row: title, a line of up to two lines, and a chevron. Tapping anywhere plays the English video. It is the most compact at 89dp, but the Bangla video is only under You, as it is today.</p>
+    <div class="row4">${vframe('light', 'Light 392dp', videoB())}${vframe('dark', 'Dark 392dp', videoB())}</div></div>`;
+</script>
+
+<script>
+const playF = (s=14) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20 7 4"/></svg>`;
+const caret = `<svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
+const thumb = `<div class="vthumb"><div class="pl">${playF(14)}</div><span class="len">3:31</span></div>`;
+const B1 = () => `<div class="tile vc"><div style="display:flex;align-items:center">${thumb}
+  <div class="col"><div class="vt">How Crew works</div><div class="vl" style="margin-top:2px">Taking a seat, the nightly round, and the finish</div></div></div>
+  <div style="height:5px"></div>
+  <div class="two"><div class="tb"><span class="wpill soft">${playF(13)}<span class="lab">Watch</span></span></div><div class="tb"><span class="wpill ghost bn">${playF(13)}<span class="lab">বাংলায় দেখুন</span></span></div></div></div>`;
+const B2 = (bn) => `<div class="tile vc tight"><div style="display:flex;align-items:center">${thumb}
+  <div class="col"><div class="vt19">How Crew works</div><div style="height:6px"></div>
+  <div class="seg2 bn"><span class="${bn ? '' : 'on'}">English</span><span class="${bn ? 'on' : ''}">বাংলা</span></div></div></div></div>`;
+const B3 = () => `<div class="tile vc tight"><div style="display:flex;align-items:center">${thumb}
+  <div class="col"><div class="vt19">How Crew works</div><div style="height:6px"></div>
+  <div class="split"><span>${playF(13)}Watch</span><span class="bn">English${caret}</span></div></div></div></div>`;
+const bf = (theme, w, cap, inner, cls='') => `<div class="holder" style="padding-right:0"><div class="cap ${cls}">${cap}</div><div class="phone ${theme}${w===360?' w360':''}" style="padding:12px 0"><div class="w">${inner}</div></div><div class="hcap meas"></div></div>`;
+const set = (f) => `<div class="row4">${bf('light',392,'Light 392dp',f())}${bf('dark',392,'Dark 392dp',f())}${bf('light',360,'Light 360dp',f())}${bf('dark',360,'Dark 360dp',f())}</div>`;
+document.getElementById('btnopts').innerHTML = `
+ <div class="state"><h3 style="display:flex;gap:10px;align-items:center">Option 1. Two equal pills <span class="rec">My pick</span></h3>
+  <p class="why">"Watch" is the soft pill and "বাংলায় দেখুন" the outlined one. They're the same width and each has a play mark, so they read as two real buttons. Each language is one tap and both are always in view. The card stays 141dp, the same as today's A.</p>${set(B1)}</div>
+ <div class="state"><h3>Option 2. Tap the thumbnail, with a language switch</h3>
+  <p class="why">Tapping the thumbnail or the title plays the video in the language picked on the switch next to it. The app remembers the choice. The card drops to 95dp, but the line under the title goes, and the first Bangla watch takes two taps. The second frame shows বাংলা picked.</p>
+  <div class="row4">${bf('light',392,'Light 392dp',B2(false))}${bf('dark',392,'Dark 392dp, বাংলা picked',B2(true))}${bf('light',360,'Light 360dp',B2(false))}${bf('dark',360,'Dark 360dp',B2(false))}</div></div>
+ <div class="state"><h3>Option 3. One split button</h3>
+  <p class="why">"Watch" plays the video. "English" with a caret opens a small PickerSheet to choose English or বাংলা, and the app remembers the choice. The card is 95dp, but a sheet for two choices is heavy, and Bangla readers have to find the caret first.</p>${set(B3)}</div>`;
+// fit check: no label cut, card height within 141
+document.querySelectorAll('#btnopts .holder').forEach(h => {
+  const card = h.querySelector('.tile'); const cut = [...h.querySelectorAll('.lab,.seg2 span,.split > span,.vt,.vt19')].filter(e => e.scrollWidth > e.clientWidth + 1).length;
+  h.querySelector('.meas').textContent = `card ${Math.round(card.getBoundingClientRect().height)}dp, cut labels: ${cut}`;
+});
+</script>
+</body>
+</html>

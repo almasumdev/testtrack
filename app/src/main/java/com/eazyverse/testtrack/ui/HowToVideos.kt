@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -173,6 +174,59 @@ internal fun HowToBody(
             ) {
                 Icon(Lucide.X, "Hide", Modifier.size(16.dp), tint = t.text4)
             }
+        }
+    }
+}
+
+/**
+ * One video as a card of its own, for the Open tab's guide: thumbnail and what it shows on top, a
+ * Watch button and a Bangla one side by side under them. Less round than the row pills, to read
+ * as buttons rather than chips.
+ */
+@Composable
+internal fun HowToCard(video: HowTo) {
+    val context = LocalContext.current
+    val t = Tt.colors
+    val corner = RoundedCornerShape(10.dp)
+    CrewCard(padding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 9.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Thumb(video) { watch(context, video, bangla = false, fromList = false) }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    video.title,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
+                    fontWeight = FontWeight.SemiBold,
+                    color = t.text,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    video.line,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
+                    color = t.text3,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        Spacer(Modifier.height(5.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            RowPill(
+                "Watch",
+                PillKind.SOFT,
+                modifier = Modifier.weight(1f),
+                leading = Lucide.Play,
+                shape = corner,
+            ) { watch(context, video, bangla = false, fromList = false) }
+            RowPill(
+                IN_BANGLA,
+                PillKind.GHOST,
+                modifier = Modifier.weight(1f),
+                leading = Lucide.Play,
+                shape = corner,
+            ) { watch(context, video, bangla = true, fromList = false) }
         }
     }
 }

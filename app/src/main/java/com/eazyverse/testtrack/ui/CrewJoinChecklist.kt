@@ -127,9 +127,9 @@ internal fun CrewJoinChecklist(
         Spacer(Modifier.height(6.dp))
         steps.forEachIndexed { index, step ->
             StepRow(index + 1, step.title, now = index == 0)
-            if (index == 0) StepLine(step, tix)
+            if (index == 0) StepLine(step, tix, more = steps.size > 1)
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(14.dp))
         FloatingActionBar(
             label = steps.first().next,
             onClick = { onNext(steps.first()) },
@@ -174,6 +174,7 @@ private fun StepRow(
 private fun StepLine(
     step: JoinStep,
     tix: Int?,
+    more: Boolean,
 ) {
     val t = Tt.colors
     val bold = SpanStyle(fontWeight = FontWeight.SemiBold, color = t.text)
@@ -193,5 +194,5 @@ private fun StepLine(
                 }
             }
         }
-    Text(text, Modifier.padding(top = 2.dp, bottom = 8.dp), style = BodyStyle, color = t.text2)
+    Text(text, Modifier.padding(top = 2.dp, bottom = if (more) 6.dp else 0.dp), style = BodyStyle, color = t.text2)
 }

@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -47,7 +46,7 @@ import com.eazyverse.testtrack.ui.theme.Tt
 
 /** The guide's parts, in the order somebody reads them. [onRules] opens the rules card as its page. */
 internal fun LazyListScope.crewGuide(onRules: () -> Unit = {}) {
-    item(key = "video") { GuideRow { VideoRow() } }
+    item(key = "video") { GuideRow { HowToCard(HowTo.CREW) } }
     item(key = "story") { GuideRow { CrewCard(padding = PaddingValues(16.dp)) { CrewStory() } } }
     item(key = "journey") { GuideRow { CrewCard(padding = PaddingValues(16.dp)) { CrewJourney() } } }
     item(key = "rules") {
@@ -59,19 +58,7 @@ internal fun LazyListScope.crewGuide(onRules: () -> Unit = {}) {
 
 @Composable
 private fun GuideRow(content: @Composable () -> Unit) {
-    Box(Modifier.padding(start = Gutter, end = Gutter, top = 8.dp)) { content() }
-}
-
-/** The crew video, English; the Bangla one is in the how-to videos under You. */
-@Composable
-private fun VideoRow() {
-    val context = LocalContext.current
-    AskRow(
-        "Watch how a crew works",
-        "A short video, start to finish",
-        { watch(context, HowTo.CREW, bangla = false, fromList = false) },
-        icon = Lucide.Play,
-    )
+    Box(Modifier.padding(horizontal = Gutter)) { content() }
 }
 
 /** A section's small capital label, with its icon when it has one. */
@@ -107,7 +94,7 @@ private fun CrewStory() {
             withStyle(strong) { append("every day for ${CrewRules.RUN_DAYS} days") }
             append(". Everyone gets real testers on real phones.")
         },
-        Modifier.padding(top = 8.dp),
+        Modifier.padding(top = 10.dp),
         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
         color = Tt.colors.text2,
     )
@@ -157,16 +144,19 @@ private fun CrewJourney() {
             Step(Lucide.Play, "Open them every day", "${CrewRules.OPEN_SECONDS} seconds each, for ${CrewRules.RUN_DAYS} days"),
             Step(Lucide.Trophy, "Apply for production", "Your app has its testers"),
         )
-    steps.forEach { JourneyRow(it) }
+    steps.forEachIndexed { index, step -> JourneyRow(step, first = index == 0) }
 }
 
 private val JourneyTitle = tileStyle(16f, 19f, FontWeight.SemiBold)
 private val JourneyNote = tileStyle(12.5f, 15f, FontWeight.Normal)
 
 @Composable
-private fun JourneyRow(step: Step) {
+private fun JourneyRow(
+    step: Step,
+    first: Boolean,
+) {
     val t = Tt.colors
-    Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.padding(top = if (first) 10.dp else 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(
             Modifier
                 .size(40.dp)
