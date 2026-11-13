@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -30,6 +32,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ArrowRight
+import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.LogIn
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Barlow
@@ -142,27 +145,51 @@ internal fun CrewJoinChecklist(
 
 /** A numbered dot and the step's name: the one being done is filled and bolder, the others a ring. */
 @Composable
-private fun StepRow(
+internal fun StepRow(
     number: Int,
     title: String,
     now: Boolean,
+    done: Boolean = false,
+) = StepRow(number, AnnotatedString(title), now, done)
+
+/**
+ * The same row with a title that can carry bold words. A [done] step shows a tick on the soft
+ * green instead of its number, in the plain ink of a step still to come.
+ */
+@Composable
+internal fun StepRow(
+    number: Int,
+    title: AnnotatedString,
+    now: Boolean,
+    done: Boolean = false,
 ) {
     val t = Tt.colors
+    val current = now && !done
     Row(Modifier.fillMaxWidth().heightIn(min = 36.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(
             Modifier
                 .size(22.dp)
-                .then(if (now) Modifier.background(t.accent, CircleShape) else Modifier.border(1.5.dp, t.cardLine, CircleShape)),
+                .then(
+                    when {
+                        done -> Modifier.background(t.okBg, CircleShape)
+                        current -> Modifier.background(t.accent, CircleShape)
+                        else -> Modifier.border(1.5.dp, t.cardLine, CircleShape)
+                    },
+                ),
             contentAlignment = Alignment.Center,
         ) {
-            Text("$number", style = DotStyle, color = if (now) t.onAccent else t.text4, textAlign = TextAlign.Center)
+            if (done) {
+                Icon(Lucide.Check, null, Modifier.size(13.dp), tint = t.ok)
+            } else {
+                Text("$number", style = DotStyle, color = if (current) t.onAccent else t.text4, textAlign = TextAlign.Center)
+            }
         }
         Spacer(Modifier.width(12.dp))
         Text(
             title,
             Modifier.weight(1f),
-            style = if (now) NowStyle else TodoStyle,
-            color = if (now) t.text else t.text3,
+            style = if (current) NowStyle else TodoStyle,
+            color = if (current) t.text else t.text3,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )

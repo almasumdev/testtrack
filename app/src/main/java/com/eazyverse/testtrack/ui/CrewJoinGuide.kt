@@ -66,7 +66,7 @@ internal fun rememberCrewGuide(
                 permissions = permissions,
             ),
         onSignIn = onSignIn,
-        onJoin = { membership.show() },
+        onJoin = { membership.startJoin() },
         onAddApp = onAddApp,
         onDrive = { drive.connect(activity, driveSheet::launch) {} },
         onCircle = onOpenCircle,

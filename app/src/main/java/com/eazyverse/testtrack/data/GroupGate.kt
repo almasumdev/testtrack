@@ -82,6 +82,9 @@ sealed interface GateResult {
     ) : GateResult
 }
 
+/** What a dropped connection says. The sheet tells it apart from a message the server sent. */
+const val GROUP_OFFLINE = "Couldn't check the testers group. Check your connection and try again."
+
 /** The address the service resolved from the token, or empty when it did not name one. */
 fun GateResult.address(): String =
     when (this) {
@@ -264,7 +267,7 @@ object GroupGate {
             } catch (e: IOException) {
                 // A dropped connection is not a verdict, and OkHttp's message for one names an IP
                 // address, which reads like the deployment is broken rather than the network.
-                GateResult.Failed("Couldn't check the testers group. Check your connection and try again.")
+                GateResult.Failed(GROUP_OFFLINE)
             } catch (e: Exception) {
                 GateResult.Failed(e.message ?: "Couldn't check the testers group. Try again.")
             }

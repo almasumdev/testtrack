@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TestTrack: the testers group, one sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  /* ui/theme/Tokens.kt, OceanLight and OceanDark. --primary is TtTokens.primary (accent in light, accentInk in dark). */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSel:#2E4E66; --card:#F3F8FB; --cardLine:#E1ECF3; --leafSoft:rgba(74,114,144,.16);
+    --accent:#3A5B73; --primary:#3A5B73; --onPrimary:#FFFFFF; --accentInk:#22394B;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --glass:#F2F9FD; --glass2:#DFEDF6; --hair:#B7D1E2;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --sheet:#FFFFFF; --sheetLine:#DCE8F0; --sheetOutline:#B7D1E2; --track:#E4EEF4; --ring:rgba(20,47,67,.14);
+    --skel:#E4EEF4; --scrim:rgba(20,34,48,.46); --gest:rgba(20,47,67,.35);
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSel:#B6CCDC; --card:#1C1E20; --cardLine:#2D3034; --leafSoft:#2A2D31;
+    --accent:#4A7290; --primary:#93B3CA; --onPrimary:#0F1011; --accentInk:#93B3CA;
+    --tile:#2A2D31; --tileInk:#A2BED2; --glass:#1C1E20; --glass2:#292C2F; --hair:#2B2E32;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --sheet:#1C1E20; --sheetLine:#2D3034; --sheetOutline:#3E4348; --track:#2D3034; --ring:rgba(255,255,255,.16);
+    --skel:#24272A; --scrim:rgba(0,0,0,.6); --gest:rgba(236,238,240,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E7ECEF; color: #142F43; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .doc { max-width: 1720px; margin: 0 auto; padding: 34px 28px 90px; }
+  h1 { font-size: 30px; margin: 0 0 6px; }
+  .lead { font-size: 16px; line-height: 1.45; color: #2D4A5F; max-width: 1040px; margin: 4px 0; }
+  section.opt { margin-top: 38px; padding-top: 24px; border-top: 2px solid #3A5B73; }
+  section.opt > h2 { font-size: 25px; margin: 0 0 6px; }
+  .why { font-size: 15.5px; line-height: 1.45; color: #203A4E; max-width: 1060px; margin: 3px 0; }
+  .check { font-size: 14px; font-weight: 600; margin: 8px 0 0; }
+  .check.good { color: #246B59; } .check.bad { color: #9E3B2E; }
+  .state { margin-top: 24px; }
+  .state h4 { font-size: 16px; margin: 0 0 3px; display: flex; align-items: center; gap: 8px; }
+  .sid { font-size: 12.5px; font-weight: 700; color: #fff; background: #59758A; border-radius: 6px; padding: 1px 7px; }
+  .sid.rec { background: #246B59; }
+  .what { font-size: 13.5px; line-height: 1.45; color: #45505a; max-width: 1000px; margin-bottom: 8px; }
+  .pair { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  .cap { font-size: 12px; font-weight: 600; color: #59758A; letter-spacing: .3px; text-transform: uppercase; margin: 0 0 5px 4px; }
+  code { font-family: Consolas, monospace; font-size: 12.5px; background: #dbe3e9; padding: 1px 5px; border-radius: 4px; }
+  ul.spec, ol.spec { font-size: 15px; line-height: 1.55; color: #203A4E; max-width: 1060px; }
+  table.today { border-collapse: collapse; font-size: 14px; line-height: 1.45; color: #203A4E; max-width: 1180px; margin-top: 10px; }
+  table.today th, table.today td { text-align: left; vertical-align: top; padding: 7px 12px; border-bottom: 1px solid #CBD6DE; }
+  table.today th { font-size: 12.5px; text-transform: uppercase; letter-spacing: .4px; color: #59758A; }
+  table.today td.q { font-style: italic; color: #2D4A5F; }
+  .verdict { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; max-width: 1180px; margin-top: 12px; }
+  .vbox { background: #F3F7FA; border: 1px solid #CBD6DE; border-radius: 12px; padding: 14px 16px; font-size: 14.5px; line-height: 1.5; color: #203A4E; }
+  .vbox h3 { margin: 0 0 6px; font-size: 17px; }
+  .vbox.win { border-color: #246B59; box-shadow: inset 0 0 0 1px #246B59; }
+
+  /* ---------- phone ---------- */
+  .phone { position: relative; height: 800px; border-radius: 28px; overflow: hidden; background: var(--bg); color: var(--text); border: 1px solid #C3CFD8; }
+  .dark.phone { border-color: #2A2D31; }
+  .sb { height: 28px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; font-size: 13px; font-weight: 600; }
+  .appbar { height: 52px; display: flex; align-items: center; padding: 0 16px; font-size: 21px; font-weight: 700; }
+  .tabs { padding: 2px 16px 0; }
+  .track { height: 42px; border-radius: 999px; background: var(--card); border: 1px solid var(--cardLine); padding: 3px; display: flex; gap: 2px; }
+  .seg { flex: 1; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: var(--text2); }
+  .seg.on { background: var(--leafSoft); color: var(--tabSel); font-weight: 600; }
+  .bgtile { margin: 12px 16px 0; height: 300px; border: 1px solid var(--cardLine); border-radius: 14px; padding: 16px; }
+  .bgtile.s { height: 64px; }
+  .bgl { height: 12px; border-radius: 6px; background: var(--skel); margin-bottom: 10px; }
+  .scrim { position: absolute; inset: 0; background: var(--scrim); }
+  .scrim span { position: absolute; top: 160px; left: 0; right: 0; text-align: center; font-size: 11px; color: rgba(255,255,255,.75); }
+  .gbar { position: absolute; left: 0; right: 0; bottom: 0; height: 22px; display: flex; justify-content: center; align-items: center; z-index: 3; }
+  .gbar i { width: 108px; height: 4px; border-radius: 2px; background: var(--gest); }
+
+  /* ---------- the sheet: PickerSheet frame, sheet colour, sheetLine on top ---------- */
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; background: var(--sheet); border-radius: 22px 22px 0 0; box-shadow: 0 -1px 0 var(--sheetLine); padding: 0 16px 42px; }
+  .handle { width: 38px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .5; margin: 10px auto 16px; }
+  .hd { display: flex; align-items: center; gap: 12px; }
+  .lt { width: 36px; height: 36px; border-radius: 11px; flex: none; display: grid; place-items: center; }
+  .lt.n { background: var(--tile); color: var(--tileInk); }
+  .lt.o { background: var(--okBg); color: var(--ok); }
+  .lt.w { background: var(--warnBg); color: var(--warn); }
+  .lt.b { background: var(--badBg); color: var(--bad); }
+  .st { font-size: 17px; line-height: 22px; font-weight: 700; color: var(--text); flex: 1; min-width: 0; }
+  .wy { margin-top: 12px; font-size: 14px; line-height: 20px; color: var(--text2); }
+  svg.i { display: block; flex: none; }
+
+  /* account row: 64 high, TileRadius 14, one cardLine hairline; 20 + 16 = 36 = the avatar */
+  .acct { margin-top: 16px; height: 64px; border: 1px solid var(--cardLine); border-radius: 14px; display: flex; align-items: center; padding: 0 14px; position: relative; overflow: hidden; }
+  .av { width: 36px; height: 36px; border-radius: 50%; background: var(--tile); color: var(--tileInk); font-size: 16px; font-weight: 700; display: grid; place-items: center; flex: none; box-shadow: 0 0 0 1px var(--ring); }
+  .acct .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .em { font-size: 15px; line-height: 20px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ss { font-size: 12.5px; line-height: 16px; color: var(--text3); display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden; }
+  .ss span { overflow: hidden; text-overflow: ellipsis; }
+  .ss.o { color: var(--ok); font-weight: 500; }
+  .ss.w { color: var(--warn); }
+  .ss.b { color: var(--bad); }
+  /* the thin line along the row's foot while checking */
+  .runline { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--track); overflow: hidden; }
+  .runline i { position: absolute; top: 0; bottom: 0; left: -40%; width: 40%; background: var(--primary); border-radius: 2px; animation: run 1.3s ease-in-out infinite; }
+  @keyframes run { to { left: 100%; } }
+  .fillline { margin-top: 14px; height: 3px; border-radius: 2px; background: var(--track); overflow: hidden; }
+  .fillline i { display: block; height: 100%; width: 62%; background: var(--primary); border-radius: 2px; }
+  .fillline.go i { width: 0; animation: fill 1.2s linear forwards; }
+  @keyframes fill { to { width: 100%; } }
+
+  /* steps: CrewJoinChecklist's StepRow, 22 dot, 36 high */
+  .steps { margin-top: 12px; }
+  .step { display: flex; align-items: center; min-height: 36px; }
+  .dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 12px; font-weight: 700; font-feature-settings: "tnum"; }
+  .dot.now { background: var(--accent); color: #FFFFFF; }
+  .dot.todo { box-shadow: inset 0 0 0 1.5px var(--cardLine); color: var(--text4); }
+  .dot.done { background: var(--okBg); color: var(--ok); }
+  .sl { margin-left: 12px; flex: 1; min-width: 0; font-size: 14px; line-height: 19px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sl.now { color: var(--text); font-weight: 600; font-size: 15px; }
+  .sl.done { color: var(--text3); }
+  .sl b { font-weight: 600; color: var(--text); }
+  .sub { margin: -5px 0 4px 34px; font-size: 12.5px; line-height: 17px; color: var(--text3); }
+  .sub b { font-weight: 600; color: var(--text2); }
+
+  /* what to check, after a second no: one card, one hairline, two plain rows */
+  .hints { margin-top: 14px; border: 1px solid var(--cardLine); border-radius: 14px; }
+  .hrow { display: flex; align-items: center; padding: 10px 12px; }
+  .hrow + .hrow { border-top: 1px solid var(--cardLine); }
+  .hic { width: 32px; height: 32px; border-radius: 10px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .hrow .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .ha { font-size: 14px; line-height: 17px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hb { font-size: 12.5px; line-height: 15px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hb b { font-weight: 600; color: var(--text2); }
+
+  /* actions: Primary (52 pill) and TextAction (44, accent ink) */
+  .acts { margin-top: 20px; }
+  .pb { height: 52px; border-radius: 999px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 700; }
+  .pb.busy { opacity: .72; }
+  .spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite; flex: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ta { height: 44px; margin-top: 6px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: var(--accentInk); }
+  .ta.off { color: var(--text4); }
+
+  /* ---------- option B: the Ask dialog frame, for comparison ---------- */
+  .dlgwrap { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; padding: 0 22px; }
+  .dlg { width: 100%; background: var(--glass); border-radius: 18px; padding: 18px 16px 14px; }
+  .dlg .dt { font-size: 16px; line-height: 21px; font-weight: 700; }
+  .dlg .db { margin-top: 6px; font-size: 13.5px; line-height: 19.5px; color: var(--text2); }
+  .dlg .acct { margin-top: 12px; height: 56px; }
+  .dlg .btns { margin-top: 14px; display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+  .dbtn { height: 52px; padding: 0 18px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 600; }
+  .dbtn.o { border: 1px solid var(--hair); color: var(--accentInk); }
+  .dbtn.f { background: var(--accent); color: #fff; }
+  .robot { position: absolute; top: -26px; right: 22px; width: 54px; height: 30px; border-radius: 16px 16px 4px 4px; background: #9fb3c2; opacity: .55; font-size: 9px; color: #fff; display: grid; place-items: center; }
+
+  /* ---------- the morph demo ---------- */
+  .demo { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+  .ctl { display: flex; flex-direction: column; gap: 8px; max-width: 360px; }
+  .ctl .row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ctl button { font: 600 13.5px "BarlowApp", Barlow, sans-serif; border: 1px solid #B9C3CA; background: #fff; border-radius: 16px; padding: 6px 12px; cursor: pointer; color: #1D2A33; }
+  .ctl button.on { background: #1D2A33; color: #fff; border-color: #1D2A33; }
+  .ctl button.go { background: #3A5B73; color: #fff; border-color: #3A5B73; }
+  .ctl .lbl { font-size: 12px; font-weight: 600; color: #59758A; text-transform: uppercase; letter-spacing: .3px; margin-top: 6px; }
+  .ctl .log { font-size: 13.5px; line-height: 1.45; color: #203A4E; min-height: 60px; }
+  .morph { transition: height .3s cubic-bezier(.2,.8,.2,1); overflow: visible; }
+  .morph > .face { transition: opacity .15s ease-out, transform .3s cubic-bezier(.2,.8,.2,1); }
+  .morph > .face.out { opacity: 0; }
+  .morph > .face.pre { opacity: 0; transform: translateY(14px); }
+  .demo .sheet { transition: transform .32s cubic-bezier(.2,.8,.2,1); }
+  .demo .sheet.gone { transform: translateY(105%); }
+  .demo .scrim { transition: opacity .3s; }
+  .demo .scrim.gone { opacity: 0; }
+</style>
+</head>
+<body>
+<div class="doc">
+<h1>The testers group: one sheet, every state</h1>
+<p class="lead">Today the group check is drawn by five separate <code>Ask</code> calls, one per state, and each <code>Ask</code> is its own <code>Dialog</code> window. Every time the state changes, one window closes and another opens: the "Checking your tester access" box goes, the join box comes, then the result box. That is the "multiple dialogs" feeling.</p>
+<p class="lead">The new flow is one sheet in the same frame as the sign-in sheet. It opens once, stays open while you go to the browser and back, and only its inside changes, with a short cross-fade and the height easing between states. Light and dark at 392dp, one 360dp check. The email is a stand-in.</p>
+
+<!-- ======================================================= -->
+<section class="opt">
+  <h2>Sheet or dialog</h2>
+  <p class="why">Both options carry the same states and copy. They differ only in the frame.</p>
+  <div class="verdict">
+    <div class="vbox win"><h3>Option A: a sheet (recommended)</h3>
+      Same frame, colour and motion as the sign-in sheet (<code>PickerSheet</code> with <code>sheet</code>, <code>sheetLine</code>, live-region title, <code>AnimatedContent</code>). Joining the group is step 2 of the same checklist that sign-in is step 1 of, so the two read as one family. The button sits at the bottom under the thumb, the sheet grows smoothly as the content changes, and it waits calmly behind the browser.<br><b>Cost:</b> one new file in the sign-in pattern; the old <code>JoinGroupAsk</code> test needs rewriting.</div>
+    <div class="vbox"><h3>Option B: one dialog</h3>
+      The current <code>Ask</code> frame, but drawn once with the content switching inside it. Smaller change, keeps the robot head.<br><b>Cost:</b> the account row, three steps and two hints make it tall for a dialog (the house rule keeps dialogs for a question with a few answers); a centred card that grows moves in both directions; two side-by-side pills squeeze at 360dp; and it looks unlike the sign-in sheet that comes right before it.</div>
+  </div>
+  <div class="state"><h4><span class="sid">A vs B</span>The join step in both frames</h4>
+    <div class="pair" id="ab"></div></div>
+</section>
+
+<!-- ======================================================= -->
+<section class="opt">
+  <h2>Try the morph</h2>
+  <p class="why">One sheet. Pick a state, or play a whole run. Watch that the sheet never leaves: the old face fades out first (150 ms), the new one fades in and lifts slightly (240 ms after a 70 ms wait), and the height follows. The joined state fills its line and the sheet slides away by itself.</p>
+  <div class="demo">
+    <div id="demoPhone"></div>
+    <div class="ctl">
+      <div class="lbl">Theme</div>
+      <div class="row"><button data-th="light" class="on">Light</button><button data-th="dark">Dark</button></div>
+      <div class="lbl">Jump to a state</div>
+      <div class="row" id="jump"></div>
+      <div class="lbl">Play a run</div>
+      <div class="row"><button class="go" id="runGate">From a gate</button><button class="go" id="runList">From the checklist</button><button class="go" id="runFail">Offline, then fine</button></div>
+      <div class="log" id="log">Pick a state or play a run.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= -->
+<section class="opt">
+  <h2>Option A: every state</h2>
+  <p class="why"><b>How it reads:</b> the title says where things stand, the tile beside it takes the tone (neutral, green, amber, red), and the account row stays in the same place in every state so the eye has an anchor. Only the line under the email, the steps and the button change. One filled button per state at most.</p>
+  <p class="check" id="chkA"></p>
+  <div id="states"></div>
+</section>
+
+<!-- ======================================================= -->
+<section class="opt">
+  <h2>Where it opens, and which state it starts on</h2>
+  <ol class="spec">
+    <li><b>Crew, Open tab, "Next: Join the testers group"</b> and <b>Me, Testers group row</b> (not a member): straight to <b>S2 Join</b>. No checking face. A quiet check runs behind it; a yes moves the sheet to <b>S4</b>, anything else leaves S2 alone (a failed background check is not shown).</li>
+    <li><b>A gate</b> (take a seat, open, open all, install, update, feedback in a crew, a review in Circle or the Feed, "Put it in a crew" on an app page) when the phone has no remembered yes: <b>S1 Checking</b>, then <b>S4</b> (and the tapped action runs), <b>S2</b>, or <b>S6</b>.</li>
+    <li><b>Back from the browser</b> after "Open the group": <b>S3</b> right away, then <b>S4</b>, <b>S5</b> or <b>S6</b>.</li>
+    <li><b>"I already joined"</b> on S2: S3, then the same three outcomes.</li>
+    <li><b>Signed out:</b> never opens. A gate signed out goes to sign-in first, as today, and the checklist shows "Sign in" before the group. If the account signs out or changes while the sheet is up, it closes and the answer is dropped.</li>
+    <li><b>Closing</b> by swipe, scrim or Back at any point leaves the account unverified, as today. Nothing is locked.</li>
+  </ol>
+</section>
+
+<!-- ======================================================= -->
+<section class="opt" style="border-top-color:#59758A">
+  <h2>Today, for reference</h2>
+  <p class="why">From <code>JoinGroupDialog.kt</code> and <code>MembershipViewModel.kt</code>. Each row is a separate <code>Ask</code>, so a separate dialog window.</p>
+  <table class="today">
+    <tr><th>State</th><th>Title</th><th>Body and content</th><th>Buttons</th></tr>
+    <tr><td>Checking</td><td class="q">Checking your tester access</td><td class="q">Owners can only add you to closed tests through the testers group. Ticked list: Signed in (email), Looking you up in the group (spinner), Unlock reviews and testing (waiting). Robot eyes move.</td><td>Cancel</td></tr>
+    <tr><td>Not a member</td><td class="q">Join the testers group</td><td class="q">Owners can only add you to their closed tests once this account is in the group. Email with a "Not joined" tag. 1 Open the group with this account. 2 Tap Join group. 3 Come back, we check again. Note: If the page says you don't have permission, tap Join anyway. Link line: Already joined? Check now</td><td>Not now, Open group</td></tr>
+    <tr><td>Rechecking</td><td>same</td><td class="q">Tag turns to "Checking" with a spinner; the link line becomes "Looking you up in the group".</td><td>Cancel, Open group (off)</td></tr>
+    <tr><td>Still not a member</td><td>same</td><td class="q">Amber line: Still not in the group. Google can take a minute or two after you join. Check again</td><td>Not now, Open group</td></tr>
+    <tr><td>Check failed</td><td class="q">Couldn't check the group</td><td class="q">{reason} Reviews and crew testing need this check first. Reasons: "Couldn't check the testers group. Check your connection and try again." or the server's message.</td><td>Not now, Try again</td></tr>
+    <tr><td>Member</td><td class="q">You're all set</td><td class="q">Reviews and crew testing are open to you. Ticked: Signed in, In the testers group, Reviews and testing unlocked.</td><td>Continue (waits for it)</td></tr>
+    <tr><td>Signed out</td><td colspan="3">No state. <code>require</code> runs the action, which leads to sign-in; <code>signedOut()</code> closes the dialog.</td></tr>
+    <tr><td>Wrong account</td><td colspan="3">No state and no hint. The browser may open the group under a different Google account than the one signed in to TestTrack; nothing says so.</td></tr>
+  </table>
+</section>
+</div>
+
+<script>
+const P = (d, s = 24, w = 2) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const I = {
+  users: s => P('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', s),
+  check: (s, w = 2.4) => P('<path d="M20 6 9 17l-5-5"/>', s, w),
+  ext: s => P('<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>', s),
+  hourglass: s => P('<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>', s),
+  wifiOff: s => P('<path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/>', s),
+  lock: s => P('<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', s),
+  userRound: s => P('<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>', s),
+  alert: s => P('<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>', s),
+  clock: s => P('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', s),
+};
+const EMAIL = 'sam.tester@gmail.com';
+
+/* ---------- the faces of the sheet ---------- */
+const STATES = {
+  S1: { name: 'Checking', lead: ['n', 'users'], title: 'Checking the testers group',
+        why: 'Reviews and crew testing need it. This takes a few seconds.',
+        acct: { tone: '', text: 'Checking now', run: true }, acts: { text: 'Not now' } },
+  S2: { name: 'Join', lead: ['n', 'users'], title: 'Join the testers group',
+        why: 'App owners share their closed tests with this group. Join it once and you can install them from Play.',
+        acct: { tone: '', text: 'Not in the group yet' }, steps: 'fresh',
+        acts: { primary: 'Open the group', mark: 'ext', text: 'I already joined' } },
+  S3: { name: 'Back from the group, checking', lead: ['n', 'users'], title: 'Join the testers group',
+        why: 'App owners share their closed tests with this group. Join it once and you can install them from Play.',
+        acct: { tone: '', text: 'Checking now', run: true }, steps: 'opened',
+        acts: { primary: 'Checking', busy: true, text: 'I already joined', textOff: true } },
+  S4: { name: 'Joined', lead: ['o', 'check'], title: "You're in the testers group",
+        why: 'Reviews and crew testing are open to you.',
+        acct: { tone: 'o', text: 'In the testers group', icon: 'check' }, fill: true },
+  S5: { name: 'Still not in', lead: ['w', 'hourglass'], title: 'Not in the group yet',
+        why: 'Google can take a minute or two after you tap Join group. If it still says no, check these two things.',
+        acct: { tone: 'w', text: 'Checked just now' }, hints: true,
+        acts: { primary: 'Check again', text: 'Open the group again' } },
+  S6: { name: "Couldn't check", lead: ['b', 'wifiOff'], title: "Couldn't check the group",
+        why: "Check your connection and try again. If you already joined, you're still in.",
+        acct: { tone: 'b', text: "Couldn't check", icon: 'alert' },
+        acts: { primary: 'Try again', text: 'Not now' } },
+  S6b: { name: "Couldn't check, trying again", lead: ['b', 'wifiOff'], title: "Couldn't check the group",
+        why: "Check your connection and try again. If you already joined, you're still in.",
+        acct: { tone: '', text: 'Checking now', run: true },
+        acts: { primary: 'Checking', busy: true, text: 'Not now' } },
+};
+
+function acct(a) {
+  const ic = a.icon ? I[a.icon](13, 2.4) : '';
+  return `<div class="acct"><div class="av">${EMAIL[0].toUpperCase()}</div><div class="col"><div class="em">${EMAIL}</div><div class="ss ${a.tone}">${ic}<span>${a.text}</span></div></div>${a.run ? '<div class="runline"><i></i></div>' : ''}</div>`;
+}
+function steps(kind) {
+  const first = kind === 'opened'
+    ? `<div class="step"><span class="dot done">${I.check(13, 3)}</span><span class="sl done">Open the group with this account</span></div>`
+    : `<div class="step"><span class="dot now">1</span><span class="sl now">Open the group with this account</span></div>`;
+  const second = kind === 'opened'
+    ? `<div class="step"><span class="dot now">2</span><span class="sl now">Tap Join group</span></div>`
+    : `<div class="step"><span class="dot todo">2</span><span class="sl">Tap <b>Join group</b></span></div>`;
+  return `<div class="steps">${first}${second}<div class="sub">If it says you don't have permission, tap <b>Join anyway</b>.</div><div class="step"><span class="dot todo">3</span><span class="sl">Come back here and we'll check again</span></div></div>`;
+}
+const HINTS = `<div class="hints">
+  <div class="hrow"><div class="hic">${I.lock(17)}</div><div class="col"><div class="ha">Said you don't have permission?</div><div class="hb">Open it again and tap <b>Join anyway</b></div></div></div>
+  <div class="hrow"><div class="hic">${I.userRound(17)}</div><div class="col"><div class="ha">Showed a different account?</div><div class="hb">Switch to this one at the top, then join</div></div></div>
+</div>`;
+function acts(a) {
+  if (!a) return '';
+  let h = '<div class="acts">';
+  if (a.primary) h += `<div class="pb${a.busy ? ' busy' : ''}">${a.busy ? '<span class="spin"></span>' : (a.mark ? I[a.mark](18) : '')}<span>${a.primary}</span></div>`;
+  if (a.text) h += `<div class="ta${a.textOff ? ' off' : ''}">${a.text}</div>`;
+  return h + '</div>';
+}
+function face(k, animateFill) {
+  const s = STATES[k];
+  return `<div class="hd"><div class="lt ${s.lead[0]}">${I[s.lead[1]](19)}</div><div class="st">${s.title}</div></div>
+    <div class="wy">${s.why}</div>${acct(s.acct)}
+    ${s.steps ? steps(s.steps) : ''}${s.hints ? HINTS : ''}
+    ${s.fill ? `<div class="fillline${animateFill ? ' go' : ''}"><i></i></div>` : ''}${acts(s.acts)}`;
+}
+function behind() {
+  return `<div class="sb"><span>9:41</span><span>5G 84%</span></div><div class="appbar">Crew</div>
+    <div class="tabs"><div class="track">${['Open', 'Lobby', 'Run', 'Record'].map(n => `<div class="seg${n === 'Open' ? ' on' : ''}">${n}</div>`).join('')}</div></div>
+    <div class="bgtile"><div class="bgl" style="width:60%"></div><div class="bgl" style="width:40%"></div></div><div class="bgtile s"></div>`;
+}
+function sheetPhone(theme, k, width = 392) {
+  return `<div><div class="cap">${theme} ${width}dp</div><div class="phone ${theme}" style="width:${width}px">${behind()}<div class="scrim"><span>the screen that opened it, dimmed</span></div>
+    <div class="sheet"><div class="handle"></div>${face(k)}</div><div class="gbar"><i></i></div></div></div>`;
+}
+
+/* ---------- option B, the dialog frame ---------- */
+function dialogPhone(theme, width = 392) {
+  return `<div><div class="cap">Option B, ${theme} ${width}dp</div><div class="phone ${theme}" style="width:${width}px">${behind()}<div class="scrim"></div>
+    <div class="dlgwrap"><div class="dlg" style="position:relative"><div class="robot">robot</div>
+      <div class="dt">Join the testers group</div>
+      <div class="db">App owners share their closed tests with this group. Join it once and you can install them from Play.</div>
+      ${acct(STATES.S2.acct)}${steps('fresh')}
+      <div class="ta" style="justify-content:flex-start;height:36px;font-size:13.5px">I already joined</div>
+      <div class="btns"><span class="dbtn o">Not now</span><span class="dbtn f">Open the group ${I.ext(13)}</span></div>
+    </div></div><div class="gbar"><i></i></div></div></div>`;
+}
+document.getElementById('ab').innerHTML =
+  sheetPhone('light', 'S2').replace('light 392dp', 'Option A, light 392dp') + dialogPhone('light') +
+  sheetPhone('dark', 'S2').replace('dark 392dp', 'Option A, dark 392dp') + dialogPhone('dark');
+
+/* ---------- every state ---------- */
+const NOTES = {
+  S1: 'Only from a gate, when the phone has no remembered yes. The account is known, so it is drawn at once; a thin line runs along its foot instead of a spinner dialog. Held at least 600 ms so a fast answer does not flash. No filled button: there is nothing to do but wait or leave.',
+  S2: 'From the checklist or the Me row this is the first face, with no check in front of it. Three plain numbered steps; the Join anyway case sits under step 2, where it happens. The button opens the group in the browser for this account (see the build spec on the account hint).',
+  S3: 'Back from the browser the sheet checks by itself. Step 1 is ticked because we know the group was opened; step 2 becomes the one in focus. The same button shows "Checking" with a small spinner, so nothing jumps.',
+  S4: 'A tick, the account marked green, and a thin line that fills over 1.2 s; then the sheet slides away and whatever was tapped goes ahead. No Continue button, the same as the sign-in sheet.',
+  S5: 'A second no after coming back. Gentle wording, the time it was checked, and the two things that usually went wrong: the permission page (Join anyway) and the browser using another Google account. "Check again" is the one filled button.',
+  S6: 'Never worded as a no. The reason comes from the check (offline shown; a server message replaces the first sentence, with a CircleAlert tile instead of WifiOff).',
+  S6b: 'Try again keeps the face and only the button and the account line change while it runs.',
+};
+let h = `<div class="state"><h4><span class="sid">360</span>Narrow check: S2 (light), S5 (dark)</h4><div class="pair">${sheetPhone('light', 'S2', 360)}${sheetPhone('dark', 'S5', 360)}</div></div>`;
+for (const k of Object.keys(STATES)) {
+  h += `<div class="state"><h4><span class="sid">${k}</span>${STATES[k].name}</h4><div class="what">${NOTES[k]}</div><div class="pair">${sheetPhone('light', k)}${sheetPhone('dark', k)}</div></div>`;
+}
+document.getElementById('states').innerHTML = h;
+
+/* ---------- the morph demo ---------- */
+let theme = 'light', cur = 'S2', timers = [];
+function demoShell() {
+  document.getElementById('demoPhone').innerHTML = `<div class="cap">one sheet, ${theme} 392dp</div><div class="phone ${theme}" style="width:392px">${behind()}<div class="scrim" id="dScrim"><span>the screen that opened it, dimmed</span></div>
+    <div class="sheet" id="dSheet"><div class="handle"></div><div class="morph" id="morph"><div class="face">${face(cur)}</div></div></div><div class="gbar"><i></i></div></div>`;
+  const m = document.getElementById('morph'); m.style.height = m.firstElementChild.offsetHeight + 'px';
+}
+function show(k) {
+  const sheet = document.getElementById('dSheet'), scrim = document.getElementById('dScrim');
+  if (sheet.classList.contains('gone')) { sheet.classList.remove('gone'); scrim.classList.remove('gone'); }
+  if (k === cur) return;
+  cur = k;
+  const m = document.getElementById('morph'), old = m.firstElementChild;
+  m.style.height = old.offsetHeight + 'px';
+  old.classList.add('out');
+  setTimeout(() => {
+    const f = document.createElement('div'); f.className = 'face pre'; f.innerHTML = face(k, true);
+    f.style.position = 'absolute'; f.style.visibility = 'hidden'; f.style.width = m.offsetWidth + 'px';
+    m.appendChild(f); const nh = f.offsetHeight; f.remove();
+    f.style.position = ''; f.style.visibility = ''; f.style.width = '';
+    m.innerHTML = ''; m.appendChild(f); m.style.height = nh + 'px';
+    setTimeout(() => f.classList.remove('pre'), 70);
+    if (k === 'S4') timers.push(setTimeout(() => { sheet.classList.add('gone'); scrim.classList.add('gone'); log('The sheet slides away by itself, and what was tapped goes ahead.'); }, 1400));
+  }, 150);
+  document.querySelectorAll('#jump button').forEach(b => b.classList.toggle('on', b.dataset.k === k));
+}
+function log(t) { document.getElementById('log').textContent = t; }
+function stop() { timers.forEach(clearTimeout); timers = []; }
+function run(seq) {
+  stop(); let t = 0;
+  seq.forEach(([k, wait, msg]) => { timers.push(setTimeout(() => { show(k); log(msg); }, t)); t += wait; });
+}
+document.getElementById('jump').innerHTML = Object.keys(STATES).map(k => `<button data-k="${k}">${k} ${STATES[k].name}</button>`).join('');
+document.querySelectorAll('#jump button').forEach(b => b.onclick = () => { stop(); show(b.dataset.k); log(`${b.dataset.k}: ${STATES[b.dataset.k].name}`); });
+document.querySelectorAll('[data-th]').forEach(b => b.onclick = () => {
+  theme = b.dataset.th; document.querySelectorAll('[data-th]').forEach(x => x.classList.toggle('on', x === b)); stop(); demoShell();
+});
+document.getElementById('runGate').onclick = () => { cur = ''; run([
+  ['S1', 1300, 'Tapped Install in a crew. Membership unknown, so the sheet opens on the check.'],
+  ['S2', 2600, 'Not in the group: the same sheet turns into the join steps.'],
+  ['S3', 1600, 'Opened the group, came back. The sheet checks on its own.'],
+  ['S5', 2600, 'Google has not added them yet. Gentle note and Check again.'],
+  ['S3', 1500, 'Tapped Check again a minute later.'],
+  ['S4', 0, 'In. The line fills, then Play opens on the app they wanted to install.'],
+]); };
+document.getElementById('runList').onclick = () => { cur = ''; run([
+  ['S2', 2800, 'From the checklist: straight to the steps, no check first.'],
+  ['S3', 1600, 'Back from the browser: checking.'],
+  ['S4', 0, 'In. The checklist step disappears behind the sheet as it closes.'],
+]); };
+document.getElementById('runFail').onclick = () => { cur = ''; run([
+  ['S1', 1300, 'A gate, on a bad connection.'],
+  ['S6', 2400, 'The check failed. Never worded as a no.'],
+  ['S6b', 1500, 'Try again.'],
+  ['S4', 0, 'Already a member. Straight through.'],
+]); };
+cur = 'S2'; demoShell();
+
+/* ---------- rule check ---------- */
+function check() {
+  const root = document.getElementById('states'), bad = []; let n = 0;
+  root.querySelectorAll('.acct, .hrow').forEach(row => {
+    const icon = row.querySelector('.av, .hic'), col = row.querySelector('.col'); n++;
+    if (col.offsetHeight > icon.offsetHeight + 0.5) bad.push(`${col.textContent.trim().slice(0, 30)} (${col.offsetHeight} > ${icon.offsetHeight})`);
+    col.querySelectorAll('.em, .ss span, .ha, .hb').forEach(t => { if (t.scrollWidth > t.clientWidth + 1) bad.push('cut: ' + t.textContent.trim()); });
+  });
+  root.querySelectorAll('.sl').forEach(t => { n++; if (t.scrollWidth > t.clientWidth + 1) bad.push('step cut: ' + t.textContent.trim()); });
+  root.querySelectorAll('.st').forEach(t => { if (t.offsetHeight > 23) bad.push('title wraps: ' + t.textContent.trim()); });
+  const el = document.getElementById('chkA');
+  el.className = 'check ' + (bad.length ? 'bad' : 'good');
+  el.textContent = bad.length ? `Problems: ${[...new Set(bad)].join('; ')}` : `Checked ${n} rows at 392dp and 360dp: every row's text fits its icon's height, no step, email or hint line is cut, and no title wraps.`;
+}
+check(); document.fonts.ready.then(check);
+</script>
+</body>
+</html>

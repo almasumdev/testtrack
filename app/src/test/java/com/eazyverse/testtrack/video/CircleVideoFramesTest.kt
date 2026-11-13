@@ -18,14 +18,16 @@ import com.eazyverse.testtrack.ui.AskViewModel
 import com.eazyverse.testtrack.ui.CaseCheck
 import com.eazyverse.testtrack.ui.FeedRefuseDialog
 import com.eazyverse.testtrack.ui.FeedTab
+import com.eazyverse.testtrack.ui.GroupSheetBody
+import com.eazyverse.testtrack.ui.GroupSheetFrame
 import com.eazyverse.testtrack.ui.Gutter
-import com.eazyverse.testtrack.ui.JoinGroupAsk
 import com.eazyverse.testtrack.ui.OverlayPermissionDialog
 import com.eazyverse.testtrack.ui.RequestCheck
 import com.eazyverse.testtrack.ui.ReviewBody
 import com.eazyverse.testtrack.ui.ReviewCheck
 import com.eazyverse.testtrack.ui.ReviewGuideDialog
 import com.eazyverse.testtrack.ui.ReviewJob
+import com.eazyverse.testtrack.viewmodel.GroupUi
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
@@ -83,22 +85,16 @@ class CircleVideoFramesTest {
     @Test
     fun f02_group() {
         val feed = feedWith(compose.activity, s.feed)
-        // Over the page, as MainActivity puts it, so it takes the app's theme like every dialog.
+        // Over the page, as MainActivity puts it, so it takes the app's theme like every sheet.
         frame.show {
             Ground {
                 CircleShell(feed)
-                JoinGroupAsk(
-                    email = "sam.taylor@example.com",
-                    checking = false,
-                    outside = true,
-                    failure = null,
-                    onCheck = {},
-                    onOpenGroup = {},
-                    onClose = {},
-                )
+                GroupSheetFrame(GroupUi.Join(opened = false), onDismiss = {}) {
+                    GroupSheetBody(ui = GroupUi.Join(opened = false), email = "sam.taylor@example.com")
+                }
             }
         }
-        frame.target("openGroup", text("Open group", clickable = true))
+        frame.target("openGroup", text("Open the group", clickable = true))
         frame.write("group")
     }
 

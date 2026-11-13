@@ -107,7 +107,7 @@ fun MeScreen(
         drive = if (drive.busy) null else drive.connected,
         group = membership.member,
         // Joined, it opens the group itself; otherwise the check, and the way to join.
-        onGroup = { if (membership.member) links.openUri(Config.GROUP_URL) else membership.show() },
+        onGroup = { if (membership.member) links.openUri(Config.GROUP_URL) else membership.startJoin() },
         // Connected, it opens the account's own page, where the access can be seen and removed.
         onDrive = {
             if (drive.connected == true) {

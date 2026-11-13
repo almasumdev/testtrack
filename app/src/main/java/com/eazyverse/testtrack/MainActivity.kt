@@ -53,7 +53,7 @@ import com.eazyverse.testtrack.domain.launchDestination
 import com.eazyverse.testtrack.net.AccountGone
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.*
-import com.eazyverse.testtrack.ui.JoinGroupDialog
+import com.eazyverse.testtrack.ui.GroupSheet
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
@@ -186,7 +186,7 @@ class MainActivity : ComponentActivity() {
                             if (!Session.signedIn && wasSignedIn) FeedbackWatch.cancel(this@MainActivity)
                             wasSignedIn = Session.signedIn
                         }
-                        JoinGroupDialog(membership)
+                        GroupSheet(membership)
 
                         // Said once, in the server's own words, after the account was signed out.
                         val gone by AccountGone.notice.collectAsState()

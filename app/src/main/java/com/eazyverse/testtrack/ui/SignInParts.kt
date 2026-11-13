@@ -106,26 +106,27 @@ internal fun Footnote(text: String) {
 
 /**
  * A second choice that is not the main one: 44 high, in the accent as ink, no fill.
- * Six below whatever it sits under.
+ * Six below whatever it sits under. Greyed and not pressable while it is not [enabled].
  */
 @Composable
 internal fun TextAction(
     label: String,
     onClick: () -> Unit,
+    enabled: Boolean = true,
 ) {
     Spacer(Modifier.height(6.dp))
     Box(
         Modifier
             .fillMaxWidth()
             .height(44.dp)
-            .clickable(role = Role.Button, onClick = onClick),
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             label,
             style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp),
             fontWeight = FontWeight.SemiBold,
-            color = Tt.colors.accentInk,
+            color = if (enabled) Tt.colors.accentInk else Tt.colors.text4,
         )
     }
 }
