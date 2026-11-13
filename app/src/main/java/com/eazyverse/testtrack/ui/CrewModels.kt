@@ -88,6 +88,9 @@ object CrewRules {
     /** Apps left unopened that make a day a miss. Fewer still cost the seat's refund. */
     const val MISS_UNOPENED = 3
 
+    /** Missed days in a row that take an app out of the run (rules.MISSES_IN_A_ROW). One missed day is only a warning. */
+    const val MISSES_IN_A_ROW = 2
+
     /** Answers that decide an app Play could not check: this many Yes and it is in, this many No and it goes back. */
     const val VOTES_TO_DECIDE = 2
 

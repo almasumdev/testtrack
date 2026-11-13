@@ -36,7 +36,7 @@ import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * The Open tab's guide, under the crew that is filling: the how-to video as a row, what a crew is,
- * how the fortnight goes in four lines, and the rules card.
+ * how the fortnight goes in four lines, and the rules card (closed to six fact tiles).
  *
  * Every number is the server's rule (CrewRules mirrors app/core/rules.py), so the page cannot
  * promise what the server will not do. What an account still needs before a seat is not here: it
@@ -44,11 +44,11 @@ import com.eazyverse.testtrack.ui.theme.Tt
  */
 
 /** The guide's parts, in the order somebody reads them. */
-internal fun LazyListScope.crewGuide() {
+internal fun LazyListScope.crewGuide(runDays: Int = CrewRules.RUN_DAYS) {
     item(key = "video") { GuideRow { HowToCard(HowTo.CREW) } }
     item(key = "story") { GuideRow { CrewCard(padding = PaddingValues(16.dp)) { CrewStory() } } }
     item(key = "journey") { GuideRow { CrewCard(padding = PaddingValues(16.dp)) { CrewJourney() } } }
-    item(key = "rules") { GuideRow { CrewCard(padding = PaddingValues(0.dp)) { CrewRulesCard() } } }
+    item(key = "rules") { GuideRow { CrewCard(padding = PaddingValues(16.dp)) { CrewRulesCard(runDays) } } }
 }
 
 @Composable

@@ -106,7 +106,7 @@ fun CrewOpenTab(
             }
         }
 
-        crewGuide()
+        crewGuide(vm.open?.runDays ?: CrewRules.RUN_DAYS)
     }
 }
 
@@ -242,18 +242,18 @@ internal fun CrewSeatTerms(modifier: Modifier = Modifier) {
                 appendInlineContent(INFO_MARK, "Info")
                 append("A seat costs ")
                 withStyle(bold) { append("$cost tix") }
-                append(". You get all $cost back in either case:")
+                append(". You get all $cost back if:")
             },
             style = TermsStyle,
             color = t.text2,
             inlineContent = icon,
         )
         TermsBullet(bold, "Leave early:", " take your app out before the crew is full.")
-        TermsBullet(bold, "Finish the run:", " open every app, every night, until the run ends.")
+        TermsBullet(bold, "Finish the run:", " open every app on your list, every night, until the run ends.")
         Text(
             buildAnnotatedString {
                 withStyle(bold) { append("Start:") }
-                append(" the run begins at midnight, your local time, after the last seat is taken.")
+                append(" the run begins at midnight, your local time, once all ${CrewRules.SEATS} apps are checked in.")
             },
             style = TermsStyle,
             color = t.text2,

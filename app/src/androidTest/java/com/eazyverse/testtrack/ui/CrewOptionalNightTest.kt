@@ -130,11 +130,16 @@ class CrewOptionalNightTest {
             }
         }
 
-        reach("If any app stays unopened on any night")
-        compose.onNodeWithText("If any app stays unopened on any night").assertIsDisplayed()
+        // Closed it is the fact tiles; "All rules" opens the full list.
+        reach("All rules")
+        compose.onNodeWithText("All rules").performClick()
+        val refund = "All back if you open every app on your list, every night until the end."
+        reach(refund)
+        compose.onNodeWithText(refund).assertIsDisplayed()
         save("rules-refund")
-        compose.onNode(hasText("Or if you open every app on all ${CrewRules.RUN_DAYS} days")).assertExists()
-        val miss = "A day is missed when ${CrewRules.MISS_UNOPENED} or more apps stay unopened, or you open none."
+        val miss =
+            "Only apps you owed that night count. A day is missed when " +
+                "${CrewRules.MISS_UNOPENED} or more of them stay unopened, or you open none."
         reach(miss)
         compose.onNodeWithText(miss).assertIsDisplayed()
         save("rules-miss")

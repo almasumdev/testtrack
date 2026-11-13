@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crew, Open tab: the rules card</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  .light { --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A; --cardLine:#E1ECF3; --glassBorder:#B7D1E2;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --accentInk:#22394B; --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12); --bad:#9E3B2E; --badBg:rgba(158,59,46,.12); }
+  .dark { --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82; --cardLine:#2D3034; --glassBorder:#3A3E43;
+    --tile:#2A2D31; --tileInk:#A2BED2; --accentInk:#93B3CA; --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.12); --bad:#E4938A; --badBg:rgba(228,147,138,.12); }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E7ECEF; color: #142F43; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; }
+  .doc { max-width: 1900px; margin: 0 auto; padding: 34px 28px 90px; }
+  h1 { font-size: 30px; margin: 0 0 6px; }
+  h2 { font-size: 24px; margin: 0 0 6px; }
+  h3 { font-size: 18px; margin: 18px 0 6px; }
+  .lead, .why { font-size: 15.5px; line-height: 1.45; color: #203A4E; max-width: 1150px; margin: 4px 0; }
+  section { margin-top: 30px; padding-top: 20px; border-top: 2px solid #3A5B73; }
+  .row { display: flex; gap: 16px; align-items: flex-start; overflow-x: auto; padding-bottom: 6px; }
+  .cap { font-size: 12px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; margin: 0 0 5px 4px; color: #59758A; }
+  .cap.now { color: #B03A2E; } .cap.fix { color: #1F5FBF; }
+  .meas { font-size: 10.5px; color: #6B7682; margin: 4px 0 0 4px; }
+  code { font-family: Consolas, monospace; font-size: 12.5px; background: #dbe3e9; padding: 1px 5px; border-radius: 4px; }
+  table.data { border-collapse: collapse; margin-top: 10px; font-size: 14px; background: #fff; border: 1px solid #D3DEE6; max-width: 1500px; }
+  table.data th, table.data td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #E3EAEF; vertical-align: top; line-height: 1.4; }
+  table.data th { background: #F2F6F9; font-weight: 600; }
+  table.data code { white-space: normal; overflow-wrap: anywhere; }
+  .mm { color: #B03A2E; font-weight: 700; } .ok { color: #246B59; font-weight: 700; } .un { color: #8A611C; font-weight: 700; }
+
+  .phone { width: 392px; background: var(--bg); color: var(--text); border-radius: 22px; border: 1px solid #C3CFD8; padding: 12px 16px; }
+  .phone.w360 { width: 360px; }
+  .dark.phone { border-color: #2A2D31; }
+  .tile { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; }
+  svg.i { display: block; flex: none; }
+
+  /* current card */
+  .cur .hd { padding: 16px 16px 4px; }
+  .eb { font-size: 11px; line-height: 14px; font-weight: 700; letter-spacing: .8px; color: var(--text4); text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+  .cur .t20 { margin-top: 6px; font-size: 20px; line-height: 26px; font-weight: 700; }
+  .bs { font-size: 12px; line-height: 16px; color: var(--text2); }
+  .cur .bd { padding: 0 14px 16px; }
+  .figs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .fig { border: 1px solid var(--cardLine); border-radius: 12px; padding: 12px; }
+  .sq { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; }
+  .fv { margin-top: 8px; display: flex; align-items: flex-end; gap: 4px; }
+  .fv b { font-size: 25px; line-height: 26px; font-weight: 800; }
+  .fv span { font-size: 12px; font-weight: 600; color: var(--text4); padding-bottom: 3px; }
+  .fl { margin-top: 4px; font-size: 12px; line-height: 16px; color: var(--text2); }
+  .rh { padding: 18px 2px 8px; font-size: 11px; font-weight: 700; letter-spacing: .7px; color: var(--text4); text-transform: uppercase; }
+  .strip { border: 1px solid var(--cardLine); border-radius: 12px; padding: 12px; }
+  .wk { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .wk + .wk { margin-top: 5px; }
+  .dy { aspect-ratio: 1; border-radius: 8px; display: grid; place-items: center; font-size: 11px; font-weight: 600; color: var(--text4); border: 1px solid var(--glassBorder); }
+  .dy.o { background: color-mix(in srgb, var(--ok) 75%, transparent); border: 0; color: #fff; }
+  .dark .dy.o { color: #0F1011; }
+  .dy.w { background: color-mix(in srgb, var(--warn) 70%, transparent); border: 0; color: #fff; }
+  .dark .dy.w { color: #0F1011; }
+  .lg { margin-top: 10px; display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--text2); }
+  .lg i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .tix { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tc { border: 1px solid var(--cardLine); border-radius: 12px; padding: 12px; }
+  .tct { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; }
+  .tc p { margin: 5px 0 0; font-size: 12px; line-height: 16px; color: var(--text2); }
+  .gk { display: flex; align-items: center; padding: 7px 0; }
+  .gn { width: 26px; height: 26px; border-radius: 8px; background: var(--tile); color: var(--accentInk); display: grid; place-items: center; font-size: 12px; font-weight: 700; flex: none; }
+  .gt { flex: 1; margin: 0 10px; font-size: 14px; line-height: 20px; color: var(--text2); }
+
+  /* compact card */
+  .cp { padding: 16px; }
+  .ch { display: flex; align-items: center; }
+  .ic40 { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .ct { font-size: 16px; line-height: 19px; font-weight: 600; }
+  .cn { margin-top: 2px; font-size: 12.5px; line-height: 15px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sec { margin-top: 14px; }
+  .sec .eb { margin-bottom: 6px; }
+  .ln { position: relative; padding-left: 14px; font-size: 13.5px; line-height: 18px; color: var(--text2); }
+  .ln + .ln { margin-top: 6px; }
+  .ln::before { content: ""; position: absolute; left: 2px; top: 7px; width: 4px; height: 4px; border-radius: 50%; background: var(--text4); }
+  .ln b { font-weight: 600; color: var(--text); }
+  .srv { outline: 1.5px dashed #1F5FBF; outline-offset: 0; border-radius: 3px; padding: 0 1px; }
+
+  .light { --tabSel:#2E4E66; } .dark { --tabSel:#B6CCDC; }
+  .op { padding: 14px; }
+  .oh { display: flex; align-items: center; justify-content: space-between; height: 24px; }
+  .more { display: flex; align-items: center; gap: 2px; font-size: 13.5px; font-weight: 600; color: var(--tabSel); height: 24px; padding-left: 12px; }
+  .ft { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .fc { border: 1px solid var(--cardLine); border-radius: 12px; padding: 9px 10px 10px; min-width: 0; }
+  .fn { display: flex; align-items: baseline; gap: 3px; white-space: nowrap; overflow: hidden; }
+  .fn b { font-size: 21px; line-height: 24px; font-weight: 700; color: var(--tabSel); font-variant-numeric: tabular-nums; }
+  .fn span { font-size: 12px; font-weight: 600; color: var(--text3); }
+  .fx { margin-top: 3px; font-size: 11.5px; line-height: 14px; color: var(--text3); }
+  .tl { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 12px; position: relative; }
+  .tl::before { content: ""; position: absolute; top: 14px; left: 12.5%; right: 12.5%; height: 1.5px; background: var(--cardLine); }
+  .ts { text-align: center; position: relative; padding: 0 2px; }
+  .ts .dotc { width: 28px; height: 28px; border-radius: 9px; margin: 0 auto; display: grid; place-items: center; }
+  .ts .tt { margin-top: 6px; font-size: 13.5px; line-height: 16px; font-weight: 600; }
+  .ts .tx { margin-top: 2px; font-size: 11.5px; line-height: 14px; color: var(--text3); }
+  .ir { display: flex; align-items: center; }
+  .ir + .ir { margin-top: 8px; }
+  .sq32 { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+  .ic { flex: 1; min-width: 0; margin-left: 10px; }
+  .it { font-size: 14px; line-height: 17px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .it b { color: var(--tabSel); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .it b.w { color: var(--warn); } .it b.g { color: var(--ok); }
+  .in { font-size: 12px; line-height: 14px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dv { height: 1px; background: var(--cardLine); margin: 12px 0 0; }
+  .xg { margin-top: 12px; }
+  .xg .eb { margin-bottom: 6px; }
+  .xl { display: flex; align-items: flex-start; font-size: 13px; line-height: 17px; color: var(--text2); }
+  .xl + .xl { margin-top: 6px; }
+  .xl .xi { width: 16px; height: 17px; display: grid; place-items: center; flex: none; margin-right: 8px; }
+  .xl b { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+  .optset h3 { display: flex; gap: 10px; align-items: center; }
+  .rec { font-size: 13px; font-weight: 700; background: #3A5B73; color: #fff; border-radius: 999px; padding: 3px 11px; }
+</style>
+</head>
+<body>
+<div class="doc">
+<h1>Crew, Open tab: the rules card</h1>
+<p class="lead">The rules card as built in <code>a08661e</code> (<code>ui/CrewOpenRules.kt</code>) next to a compact version. Every line of the compact card was checked against the server (<code>test_track_backend</code>). The figure with a dashed blue outline comes from the crew the server sends; the rest come from <code>CrewRules</code>, which mirrors <code>app/core/rules.py</code>.</p>
+
+<section style="margin-top:20px" class="optset">
+  <h2>Three options</h2>
+  <p class="why">Each card shows its key facts closed, and "All rules" opens the full, checked list in place. The open part is the same in all three. Figures come from <code>CrewRules</code>; the night count comes from the crew's <code>run_days</code>. Heights are measured under each frame.</p>
+  <div id="opts"></div>
+</section>
+
+<section>
+  <h2>For reference: today, and the rejected first compact card</h2>
+  <h3>392dp</h3>
+  <div class="row" id="r392"></div>
+  <h3>360dp</h3>
+  <div class="row" id="r360"></div>
+</section>
+
+<section>
+  <h2>Audit: what the card says vs what the code does</h2>
+  <p class="why">Mismatches first, then the lines that are true but unclear, then the matches. Backend paths are in <code>H:\_group_projects\test_track_backend</code>.</p>
+  <table class="data">
+    <tr><th>#</th><th>Where</th><th>Says now</th><th>What the code does</th><th>Result</th></tr>
+    <tr><td>1</td><td>Open tab terms</td><td>"You get all 100 back in either case:" (then two cases)</td><td>There are more: 2 members can't install it before the run (<code>crews.py:268-272</code>), the Play check refuses it or the crew starts before Play is checked (<code>crew_sweep.py:60-70</code>), the team takes it out before the run (<code>crews.py:373-393</code>)</td><td class="mm">Mismatch</td></tr>
+    <tr><td>2</td><td>Open tab terms</td><td>"Start: the run begins at midnight, your local time, after the last seat is taken."</td><td>Starts when 15 apps are <em>checked in</em> (confirmed), at each member's first midnight after that (<code>crews.py:456-466</code>, <code>days.py:3-5</code>). A taken seat can still be waiting on its check, and a returned app sends the crew back to filling (<code>crews.py:279-284</code>)</td><td class="mm">Mismatch</td></tr>
+    <tr><td>3</td><td>Tix card, Kept</td><td>"If any app stays unopened on any night"</td><td>Only apps you owed that night. A night the owner marked down, a night the team let off, an app you reported that night and a quiet skip are not owed (<code>visits.py:107-118</code>, <code>visits.py:149-152</code>)</td><td class="mm">Mismatch</td></tr>
+    <tr><td>4</td><td>Tix card, Come back</td><td>"Or if 2 reports send it back"</td><td>Only before the run starts. Once it has started, reports go to the owner and the team and the app stays (<code>crews.py:258-268</code>)</td><td class="mm">Mismatch</td></tr>
+    <tr><td>5</td><td>Tix card and heading</td><td>"all 14 days", "Your 14 days" from <code>CrewRules.RUN_DAYS</code></td><td>The crew's own <code>run_days</code>, which the team can extend by 7 up to 28 (<code>rules.py:166-172</code>, <code>crew_sweep.py:177</code>). The server sends it (<code>schemas/crew.py:212</code>)</td><td class="mm">Mismatch when extended</td></tr>
+    <tr><td>6</td><td>Open tab terms</td><td>"Finish the run: open every app, every night, until the run ends."</td><td>Every app on your list that night, same as row 3 (<code>crew_sweep.py:154-177</code>)</td><td class="un">Close, say "on your list"</td></tr>
+    <tr><td>7</td><td>Good to know 2 and the journey card</td><td>"counts with 10 seconds in front and its picture" here, "20 seconds each" in How it goes</td><td>Both true: each app is open 20 seconds in a round (<code>CrewRules.OPEN_SECONDS</code>), and it counts with 10 of them in front (<code>rules.py:178</code>) plus its picture (<code>docs/crew.md:209-216</code>). Read side by side they look like a conflict</td><td class="un">Unclear, put both in one line</td></tr>
+    <tr><td>8</td><td>Good to know 3</td><td>"One app waiting at a time."</td><td>One of your apps in a crew that has not started yet; the next seat opens once that crew is full (<code>seat_gate.py:25-34</code>)</td><td class="un">Unclear</td></tr>
+    <tr><td>9</td><td>Day strip legend</td><td>"2nd in a row: out" in red, with no red day in the strip</td><td>True (<code>rules.py:190</code>), but the strip never shows it, and it shows no night with 1 or 2 apps left (no miss, refund gone)</td><td class="un">Unclear</td></tr>
+    <tr><td>10</td><td>Figure</td><td>"+1 point, every app you open"</td><td><code>OPEN_POINTS = 1</code> (<code>rules.py:239</code>), the leaderboard's score, not a crew rule. Nothing on the tab explains points</td><td class="un">True, not a rule</td></tr>
+    <tr><td>11</td><td>Card</td><td>Says nothing on installing from Play, updates, Play feedback</td><td>Opens of a copy not from Play don't count (<code>crew_rules.py:148-154</code>). An old version stops counting 24 hours after the owner's update (<code>crew_rules.py:155-165</code>, <code>rules.py:205</code>). Private Play feedback is due by your 7th night with each app, after which its opens don't count until sent (<code>crew_rules.py:166-174</code>, <code>rules.py:213</code>)</td><td class="mm">Missing</td></tr>
+    <tr><td>12</td><td>Open tab terms, card figure</td><td>"A seat costs 100 tix", "100 tix"</td><td><code>SEAT_COST = 100</code> (<code>rules.py:31</code>), charged at <code>crews.py:166</code></td><td class="ok">Match</td></tr>
+    <tr><td>13</td><td>Open tab terms, tix card</td><td>"Leave early: take your app out before the crew is full", "Back in full if you take it out while the crew fills"</td><td>Only while filling, refunded (<code>crews.py:299-314</code>)</td><td class="ok">Match</td></tr>
+    <tr><td>14</td><td>Tix card, Come back</td><td>"Or if you open every app on all 14 days"</td><td>Refund when no night was short (<code>crew_sweep.py:128-133</code>); see rows 3 and 5</td><td class="ok">Match, with rows 3 and 5</td></tr>
+    <tr><td>15</td><td>Tix card, Kept</td><td>"Or if your app leaves for missed days"</td><td>Refund only for seats still confirmed (<code>crew_sweep.py:128</code>)</td><td class="ok">Match</td></tr>
+    <tr><td>16</td><td>Figures</td><td>"1 day, Missed: a warning", "2 in a row, your app leaves"</td><td><code>MISSES_IN_A_ROW = 2</code>, warning on one (<code>crew_sweep.py:236-268</code>)</td><td class="ok">Match (the 2 is a literal in the app)</td></tr>
+    <tr><td>17</td><td>Good to know 4</td><td>"A day is missed when 3 or more apps stay unopened, or you open none."</td><td><code>visits.py:159</code>, <code>MISS_UNOPENED = 3</code> (<code>rules.py:194</code>)</td><td class="ok">Match</td></tr>
+    <tr><td>18</td><td>Good to know 1</td><td>"A day runs from midnight, your time."</td><td>Each member's own calendar (<code>days.py:1-8</code>)</td><td class="ok">Match</td></tr>
+    <tr><td>19</td><td>Card header</td><td>"The same for all 15 apps in the crew."</td><td><code>SEATS = 15</code> (<code>rules.py:153</code>)</td><td class="ok">Match</td></tr>
+  </table>
+  <p class="why">Left out of the compact card on purpose: quiet skips (<code>docs/crew.md:188</code> says nothing on screen explains them), the owner's 2 down nights (the owner's own tool, shown where it's used), extending a run (the team's call), and appeals.</p>
+</section>
+
+<section style="border-top-color:#59758A">
+  <h2>Build spec</h2>
+  <table class="data">
+    <tr><th>File</th><th>Change</th></tr>
+    <tr><td><code>ui/CrewOpenRules.kt</code></td><td>Replace the body of <code>CrewRulesCard(runDays: Int = CrewRules.RUN_DAYS)</code>. Drop <code>Figure</code>, <code>DayStrip</code>, <code>Legend</code>, <code>TixCard</code>, <code>GoodToKnow</code>, <code>RulesHeading</code>. New layout inside the existing <code>CrewCard</code> with padding 16: a header row (40dp <code>IconSquare</code> with <code>Lucide.Scale</code>, 12dp gap, title 16/19 SemiBold, 2dp, line 12.5/15 text3, one line), then four sections, each with a 14dp space above, an <code>Eyebrow(icon, text)</code>, 6dp, then lines 6dp apart. A line is a Row: a 4dp text4 dot at top 7dp, 10dp gap, then text 13.5/18 text2 with figures in SemiBold text (an <code>AnnotatedString</code>). Every figure comes from <code>CrewRules</code> or <code>runDays</code>, never a literal.</td></tr>
+    <tr><td><code>ui/CrewOpenGuide.kt</code></td><td><code>crewGuide(..., runDays)</code>; the rules item becomes <code>CrewCard(padding = PaddingValues(16.dp)) { CrewRulesCard(runDays) }</code>.</td></tr>
+    <tr><td><code>ui/CrewOpenTab.kt</code></td><td>Pass the shown crew's <code>runDays</code> (falls back to <code>CrewRules.RUN_DAYS</code> while loading). Terms copy: "You get all ${SEAT_COST} back if:", the finish line "open every app on your list, every night, until the run ends.", and the start line "the run begins at midnight, your time, once all ${SEATS} apps are checked in."</td></tr>
+    <tr><td><code>ui/CrewModels.kt</code></td><td>Add <code>MISSES_IN_A_ROW = 2</code> (rules.MISSES_IN_A_ROW). The others already exist: <code>SEATS</code>, <code>NIGHTLY</code>, <code>SEAT_COST</code>, <code>REPORTS_TO_RETURN</code>, <code>MISS_UNOPENED</code>, <code>VISIT_SECONDS</code>, <code>OPEN_SECONDS</code>, <code>UPDATE_GRACE_HOURS</code>, <code>FEEDBACK_BY_NIGHT</code>.</td></tr>
+  </table>
+</section>
+</div>
+
+<script>
+const P = (d, s = 24, w = 2) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const I = {
+  scale: s => P('<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>', s),
+  armchair: s => P('<path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/><path d="M3 16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z"/><path d="M5 18v2"/><path d="M19 18v2"/>', s),
+  star: s => P('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>', s),
+  alert: s => P('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>', s),
+  logout: s => P('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>', s),
+  rotate: s => P('<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>', s),
+  lock: s => P('<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', s),
+  cal: s => P('<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>', s),
+  info: s => P('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>', s),
+  hour: s => P('<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>', s),
+  users: s => P('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', s),
+  moon: s => P('<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>', s),
+  coins: s => P('<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>', s),
+};
+const tone = { ACCENT: ['var(--tile)', 'var(--accentInk)'], OK: ['var(--okBg)', 'var(--ok)'], WARN: ['var(--warnBg)', 'var(--warn)'], BAD: ['var(--badBg)', 'var(--bad)'] };
+const fig = (ic, t, v, u, l) => `<div class="fig"><div class="sq" style="background:${tone[t][0]};color:${tone[t][1]}">${I[ic](16)}</div><div class="fv"><b style="color:${tone[t][1]}">${v}</b><span>${u}</span></div><div class="fl">${l}</div></div>`;
+function strip() {
+  let h = '<div class="strip">';
+  for (let w = 0; w < 2; w++) { h += '<div class="wk">'; for (let d = 1; d <= 7; d++) { const n = w * 7 + d; h += `<div class="dy ${n === 4 ? 'w' : n <= 8 ? 'o' : ''}">${n}</div>`; } h += '</div>'; }
+  return h + `<div class="lg"><span><i style="background:color-mix(in srgb,var(--ok) 75%,transparent)"></i>All opened</span><span><i style="background:color-mix(in srgb,var(--warn) 70%,transparent)"></i>Missed: warning</span><span><i style="background:var(--bad)"></i>2nd in a row: out</span></div></div>`;
+}
+const tc = (ic, t, title, lines) => `<div class="tc"><div class="tct" style="color:${tone[t][1]}">${I[ic](15)}${title}</div>${lines.map(l => `<p>${l}</p>`).join('')}</div>`;
+const gk = (n, ic, t) => `<div class="gk"><span class="gn">${n}</span><span class="gt">${t}</span><span style="color:var(--text4)">${I[ic](16)}</span></div>`;
+const current = () => `<div class="tile cur"><div class="hd"><div class="eb">${I.scale(14)}The rules</div><div class="t20">What you agree to</div><div class="bs">The same for all 15 apps in the crew.</div></div>
+  <div class="bd"><div class="figs">${fig('armchair', 'ACCENT', '100', 'tix', 'A seat')}${fig('star', 'OK', '+1', 'point', 'Every app you open')}${fig('alert', 'WARN', '1', 'day', 'Missed: a warning')}${fig('logout', 'BAD', '2', 'in a row', 'Missed: your app leaves')}</div>
+  <div class="rh">Your 14 days</div>${strip()}
+  <div class="rh">Your 100 tix</div><div class="tix">${tc('rotate', 'OK', 'Come back', ['Back in full if you take it out while the crew fills', 'Or if 2 reports send it back', 'Or if you open every app on all 14 days'])}${tc('lock', 'BAD', 'Kept', ['If any app stays unopened on any night', 'Or if your app leaves for missed days'])}</div>
+  <div class="rh">Good to know</div>${gk(1, 'cal', 'A day runs from midnight, your time.')}${gk(2, 'info', 'An open counts with 10 seconds in front and its picture.')}${gk(3, 'hour', 'One app waiting at a time.')}${gk(4, 'alert', 'A day is missed when 3 or more apps stay unopened, or you open none.')}</div></div>`;
+
+const sec = (ic, title, lines) => `<div class="sec"><div class="eb">${I[ic](14)}${title}</div>${lines.map(l => `<div class="ln">${l}</div>`).join('')}</div>`;
+const D = '<b class="srv">14</b>';
+const compact = () => `<div class="tile cp"><div class="ch"><div class="ic40">${I.scale(20)}</div><div class="col"><div class="ct">The rules</div><div class="cn">The same for all 15 apps in the crew</div></div></div>
+  ${sec('cal', 'The run', [
+    `<b>15</b> apps. You open the other <b>14</b> every day for ${D} days.`,
+    `It starts at your midnight once all <b>15</b> are checked in. Each day runs midnight to midnight, your time.`])}
+  ${sec('moon', 'Every day', [
+    `TestTrack opens each app for <b>20</b> seconds and takes a picture. It counts with <b>10</b> seconds in front.`,
+    `Install each app from Google Play, and get an owner's update within <b>24</b> hours.`,
+    `Send private feedback on Play for each app by your <b>7th</b> night with it, or its opens stop counting.`])}
+  ${sec('alert', 'Missed days', [
+    `A day is missed when you leave <b>3</b> or more apps unopened, or open none.`,
+    `<b>1</b> missed day is a warning. <b>2</b> in a row and your app leaves the run.`])}
+  ${sec('coins', 'Your 100 tix', [
+    `All back if you take your app out before the crew is full, or <b>2</b> members can't install it before the run starts.`,
+    `All back if you open every app on your list, every night of the run.`,
+    `Otherwise they're kept, even for one app left unopened on one night.`])}</div>`;
+
+const fr = (theme, w, cls, cap, inner) => `<div><div class="cap ${cls}">${cap}</div><div class="phone ${theme}${w === 360 ? ' w360' : ''}">${inner}</div><div class="meas"></div></div>`;
+for (const w of [392, 360]) {
+  document.getElementById('r' + w).innerHTML =
+    fr('light', w, 'now', `Today, light ${w}dp`, current()) + fr('light', w, 'fix', `Compact, light ${w}dp`, compact()) +
+    fr('dark', w, 'now', `Today, dark ${w}dp`, current()) + fr('dark', w, 'fix', `Compact, dark ${w}dp`, compact());
+}
+document.querySelectorAll('.meas').forEach(m => { const t = m.previousElementSibling.querySelector('.tile'); m.textContent = `card ${Math.round(t.getBoundingClientRect().height)}dp tall`; });
+</script>
+
+<script>
+const T = { ACC: ['var(--tile)', 'var(--tileInk)'], OK: ['var(--okBg)', 'var(--ok)'], WARN: ['var(--warnBg)', 'var(--warn)'], BAD: ['var(--badBg)', 'var(--bad)'] };
+const X = {
+  clock: s => P('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', s),
+  dl: s => P('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>', s),
+  upd: s => P('<path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>', s),
+  msg: s => P('<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>', s),
+  flag: s => P('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>', s),
+  chevD: s => P('<path d="m6 9 6 6 6-6"/>', s),
+  chevU: s => P('<path d="m18 15-6-6-6 6"/>', s),
+};
+const N = 14; // the crew's run_days
+const head = open => `<div class="oh"><div class="eb">${I.scale(14)}The rules</div><span class="more">${open ? 'Less' : 'All rules'}${open ? X.chevU(16) : X.chevD(16)}</span></div>`;
+const xl = (ic, t, txt) => `<div class="xl"><span class="xi" style="color:${T[t][1]}">${ic(14)}</span><span>${txt}</span></div>`;
+const xg = (ic, title, lines) => `<div class="xg"><div class="eb">${ic(14)}${title}</div>${lines.join('')}</div>`;
+const details = () => `<div class="dv"></div>
+  ${xg(I.cal, 'The run', [xl(I.cal, 'ACC', `Starts at your midnight once all <b>15</b> apps are checked in. Each day runs midnight to midnight, your time.`)])}
+  ${xg(I.moon, 'Each night', [
+    xl(X.clock, 'ACC', `Each app is open <b>20</b> seconds. It counts with <b>10</b> in front and its picture.`),
+    xl(X.dl, 'ACC', `Install from Google Play. A copy from anywhere else doesn't count.`),
+    xl(X.upd, 'ACC', `When an owner sends an update, get it within <b>24</b> hours.`),
+    xl(X.msg, 'ACC', `Send private feedback on Play by your <b>7th</b> night with each app, or its opens stop counting.`)])}
+  ${xg(I.alert, 'Missed days', [
+    xl(I.alert, 'WARN', `A day is missed when <b>3</b> or more apps stay unopened, or you open none.`),
+    xl(I.logout, 'BAD', `<b>1</b> missed day is a warning. <b>2</b> in a row and your app leaves the run.`)])}
+  ${xg(I.coins, 'Your 100 tix', [
+    xl(I.rotate, 'OK', `All back if you take your app out before the crew is full.`),
+    xl(I.rotate, 'OK', `All back if <b>2</b> members can't install it before the run starts.`),
+    xl(I.rotate, 'OK', `All back if you open every app on your list, every night of the run.`),
+    xl(I.lock, 'BAD', `Kept if one app on your list stays unopened on any night.`)])}`;
+
+const fc = (n, u, label, tone) => `<div class="fc"><div class="fn"><b ${tone ? `style="color:${T[tone][1]}"` : ''}>${n}</b><span>${u}</span></div><div class="fx">${label}</div></div>`;
+const optA = open => `<div class="tile op">${head(open)}<div class="ft">
+  ${fc('15', 'apps', 'in a crew')}${fc(N, 'nights', 'from your midnight')}${fc('100', 'tix', 'a seat')}
+  ${fc('20', 's', 'each app, each night')}${fc('7', 'nights', 'to send Play feedback')}${fc('2', 'misses', "in a row and you're out", 'BAD')}</div>${open ? details() : ''}</div>`;
+
+const ts = (ic, tone, t, x) => `<div class="ts"><div class="dotc" style="background:${T[tone][0]};color:${T[tone][1]}">${ic(15)}</div><div class="tt">${t}</div><div class="tx">${x}</div></div>`;
+const ir = (ic, tone, title, note) => `<div class="ir"><div class="sq32" style="background:${T[tone][0]};color:${T[tone][1]}">${ic(16)}</div><div class="ic"><div class="it">${title}</div><div class="in">${note}</div></div></div>`;
+const optB = open => `<div class="tile op">${head(open)}<div class="tl">
+  ${ts(I.armchair, 'ACC', 'Fill', '15 apps, 100 tix a seat')}${ts(I.cal, 'ACC', 'Start', 'at your midnight')}${ts(I.moon, 'ACC', `${N} nights`, 'open each app 20 s')}${ts(X.flag, 'OK', 'Finish', 'tix back if all opened')}</div>
+  <div style="height:12px"></div>${ir(I.alert, 'WARN', '<b class="w">3</b> or more left is a missed day', "One is a warning, two in a row and you're out")}${ir(X.msg, 'ACC', 'Play feedback by night <b>7</b>', 'Install from Play, update within 24 hours')}${open ? details() : ''}</div>`;
+
+const optC = open => `<div class="tile op">${head(open)}<div style="height:10px"></div>
+  ${ir(I.users, 'ACC', `<b>15</b> apps, <b>${N}</b> nights`, 'Starts at your midnight once all are in')}
+  ${ir(I.moon, 'ACC', 'Open each app every night', '20 seconds each, with a picture')}
+  ${ir(I.alert, 'WARN', 'Leave <b class="w">3</b> or more: a missed day', "One is a warning, two in a row and you're out")}
+  ${ir(X.msg, 'ACC', 'Play feedback by night <b>7</b>', 'Install from Play, update within 24 hours')}
+  ${ir(I.coins, 'OK', '<b class="g">100</b> tix back if you open them all', 'Every app, every night, or leave before it fills')}${open ? details() : ''}</div>`;
+
+const ofr = (theme, w, cap, inner) => `<div><div class="cap">${cap}</div><div class="phone ${theme}${w === 360 ? ' w360' : ''}">${inner}</div><div class="meas2"></div></div>`;
+const block = (title, why, f, pick) => `<h3>${title}${pick ? ' <span class="rec">My pick</span>' : ''}</h3><p class="why">${why}</p>
+  <div class="row">${ofr('light', 392, 'Closed, light 392dp', f(false))}${ofr('dark', 392, 'Closed, dark 392dp', f(false))}${ofr('light', 360, 'Closed, light 360dp', f(false))}${ofr('dark', 360, 'Closed, dark 360dp', f(false))}</div>
+  <div class="row" style="margin-top:10px">${ofr('light', 392, 'Open, light 392dp', f(true))}${ofr('dark', 360, 'Open, dark 360dp', f(true))}</div>`;
+document.getElementById('opts').innerHTML =
+  block('Option A. Fact tiles', 'Six small tiles, each a big figure and a short label. The miss rule is the only one in red. It reads at a glance and is the shortest, but a figure says less than a sentence, so the refund cases live under All rules.', optA, true) +
+  block('Option B. A run timeline', 'Fill, start, the nights and the finish along one line, then the miss rule and the Play duty as two rows. It shows the order of things, but the four steps carry small text and get tight at 360dp.', optB) +
+  block('Option C. Five icon rows', 'Five rows, each a 32dp tinted icon, a bold title and one short note. Each rule is a whole sentence, so it is the clearest, but it is the tallest closed and still mostly text.', optC);
+document.querySelectorAll('.meas2').forEach(m => { const t = m.previousElementSibling.querySelector('.tile'); const cut = [...m.previousElementSibling.querySelectorAll('.it,.in,.fn')].filter(e => e.scrollWidth > e.clientWidth + 1).length; m.textContent = `card ${Math.round(t.getBoundingClientRect().height)}dp tall, cut lines: ${cut}`; m.style.cssText = 'font-size:10.5px;color:#6B7682;margin:4px 0 0 4px'; });
+</script>
+</body>
+</html>
