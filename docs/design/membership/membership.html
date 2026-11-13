@@ -240,7 +240,7 @@
   <table class="today">
     <tr><th>State</th><th>Title</th><th>Body and content</th><th>Buttons</th></tr>
     <tr><td>Checking</td><td class="q">Checking your tester access</td><td class="q">Owners can only add you to closed tests through the testers group. Ticked list: Signed in (email), Looking you up in the group (spinner), Unlock reviews and testing (waiting). Robot eyes move.</td><td>Cancel</td></tr>
-    <tr><td>Not a member</td><td class="q">Join the testers group</td><td class="q">Owners can only add you to their closed tests once this account is in the group. Email with a "Not joined" tag. 1 Open the group with this account. 2 Tap Join group. 3 Come back, we check again. Note: If the page says you don't have permission, tap Join anyway. Link line: Already joined? Check now</td><td>Not now, Open group</td></tr>
+    <tr><td>Not a member</td><td class="q">Join the testers group</td><td class="q">Owners can only add you to their closed tests once this account is in the group. Email with a "Not joined" tag. 1 Open the group with this account. 2 Tap Join group. 3 Come back, we check again. Note: After you join, Google may say you can't see posts. That's normal, you're in. Link line: Already joined? Check now</td><td>Not now, Open group</td></tr>
     <tr><td>Rechecking</td><td>same</td><td class="q">Tag turns to "Checking" with a spinner; the link line becomes "Looking you up in the group".</td><td>Cancel, Open group (off)</td></tr>
     <tr><td>Still not a member</td><td>same</td><td class="q">Amber line: Still not in the group. Google can take a minute or two after you join. Check again</td><td>Not now, Open group</td></tr>
     <tr><td>Check failed</td><td class="q">Couldn't check the group</td><td class="q">{reason} Reviews and crew testing need this check first. Reasons: "Couldn't check the testers group. Check your connection and try again." or the server's message.</td><td>Not now, Try again</td></tr>
@@ -307,10 +307,9 @@ function steps(kind) {
   const second = kind === 'opened'
     ? `<div class="step"><span class="dot now">2</span><span class="sl now">Tap Join group</span></div>`
     : `<div class="step"><span class="dot todo">2</span><span class="sl">Tap <b>Join group</b></span></div>`;
-  return `<div class="steps">${first}${second}<div class="sub">If it says you don't have permission, tap <b>Join anyway</b>.</div><div class="step"><span class="dot todo">3</span><span class="sl">Come back here and we'll check again</span></div></div>`;
+  return `<div class="steps">${first}${second}<div class="sub">After you join, Google may say you can't see posts. That's normal, you're in.</div><div class="step"><span class="dot todo">3</span><span class="sl">Come back here and we'll check again</span></div></div>`;
 }
 const HINTS = `<div class="hints">
-  <div class="hrow"><div class="hic">${I.lock(17)}</div><div class="col"><div class="ha">Said you don't have permission?</div><div class="hb">Open it again and tap <b>Join anyway</b></div></div></div>
   <div class="hrow"><div class="hic">${I.userRound(17)}</div><div class="col"><div class="ha">Showed a different account?</div><div class="hb">Switch to this one at the top, then join</div></div></div>
 </div>`;
 function acts(a) {
@@ -355,10 +354,10 @@ document.getElementById('ab').innerHTML =
 /* ---------- every state ---------- */
 const NOTES = {
   S1: 'Only from a gate, when the phone has no remembered yes. The account is known, so it is drawn at once; a thin line runs along its foot instead of a spinner dialog. Held at least 600 ms so a fast answer does not flash. No filled button: there is nothing to do but wait or leave.',
-  S2: 'From the checklist or the Me row this is the first face, with no check in front of it. Three plain numbered steps; the Join anyway case sits under step 2, where it happens. The button opens the group in the browser for this account (see the build spec on the account hint).',
+  S2: 'From the checklist or the Me row this is the first face, with no check in front of it. Three plain numbered steps; the can't-see-posts note sits under step 2, where it happens. The button opens the group in the browser for this account (see the build spec on the account hint).',
   S3: 'Back from the browser the sheet checks by itself. Step 1 is ticked because we know the group was opened; step 2 becomes the one in focus. The same button shows "Checking" with a small spinner, so nothing jumps.',
   S4: 'A tick, the account marked green, and a thin line that fills over 1.2 s; then the sheet slides away and whatever was tapped goes ahead. No Continue button, the same as the sign-in sheet.',
-  S5: 'A second no after coming back. Gentle wording, the time it was checked, and the two things that usually went wrong: the permission page (Join anyway) and the browser using another Google account. "Check again" is the one filled button.',
+  S5: 'A second no after coming back. Gentle wording, the time it was checked, and the two things that usually went wrong: the browser using another Google account. "Check again" is the one filled button.',
   S6: 'Never worded as a no. The reason comes from the check (offline shown; a server message replaces the first sentence, with a CircleAlert tile instead of WifiOff).',
   S6b: 'Try again keeps the face and only the button and the account line change while it runs.',
 };

@@ -82,7 +82,7 @@ class JoinGroupAskTest {
     @Test
     fun still_out_says_what_to_check_and_offers_another_look() {
         open(GroupUi.StillOut)
-        compose.onNodeWithText("Said you don't have permission?").assertIsDisplayed()
+        assertEquals(0, compose.onAllNodesWithText("Join anyway", substring = true).fetchSemanticsNodes().size)
         compose.onNodeWithText("Showed a different account?").assertIsDisplayed()
         compose.onNodeWithText("Check again").performClick()
         assertEquals(1, checks)

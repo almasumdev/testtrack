@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +40,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.User
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -126,7 +124,7 @@ internal fun GroupSteps(opened: Boolean) {
         StepRow(1, "Open the group with this account", now = !opened, done = opened)
         StepRow(2, bold("Tap ", "Join group", "", t.text), now = opened)
         Text(
-            bold("If it says you don't have permission, tap ", "Join anyway", ".", t.text2),
+            "After you join, Google may say you can't see posts. That's normal, you're in.",
             Modifier.padding(start = 34.dp).offset(y = (-5).dp),
             style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
             color = t.text3,
@@ -135,20 +133,10 @@ internal fun GroupSteps(opened: Boolean) {
     }
 }
 
-/** What to check after a second no: one card, one hairline, two plain rows. */
+/** What to check after a second no: one plain row, no card. */
 @Composable
 internal fun GroupHints() {
-    val t = Tt.colors
-    val shape = RoundedCornerShape(TileRadius)
-    Column(Modifier.fillMaxWidth().clip(shape).border(1.dp, t.cardLine, shape)) {
-        HintRow(
-            Lucide.Lock,
-            "Said you don't have permission?",
-            bold("Open it again and tap ", "Join anyway", "", t.text2),
-        )
-        Box(Modifier.fillMaxWidth().height(1.dp).background(t.cardLine))
-        HintRow(Lucide.User, "Showed a different account?", AnnotatedString("Switch to this one at the top, then join"))
-    }
+    HintRow(Lucide.User, "Showed a different account?", AnnotatedString("Switch to this one at the top, then join"))
 }
 
 @Composable
