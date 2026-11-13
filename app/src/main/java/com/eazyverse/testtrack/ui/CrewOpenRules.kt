@@ -6,24 +6,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -51,26 +45,6 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * The Open tab's rules card: a heading, four figures, a sample fortnight, where
  * the seat's tix go, and three things worth knowing. Split from CrewOpenGuide.kt.
  */
-
-/** The rules card on a page of its own, from the Open tab's "The rules" row. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CrewRulesPage(onBack: () -> Unit) {
-    Scaffold(
-        containerColor = Color.Transparent,
-        topBar = { PageBar("The rules", onBack = onBack) },
-    ) { padding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 28.dp),
-        ) {
-            CrewCard(padding = PaddingValues(0.dp)) { CrewRulesCard() }
-        }
-    }
-}
 
 @Composable
 internal fun CrewRulesCard() {

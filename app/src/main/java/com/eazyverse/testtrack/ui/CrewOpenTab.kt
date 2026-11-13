@@ -106,7 +106,7 @@ fun CrewOpenTab(
             }
         }
 
-        crewGuide(guide.onRules)
+        crewGuide()
     }
 }
 
@@ -345,6 +345,4 @@ class CrewGuide(
     /** Circle, where reviews earn tix. */
     val onCircle: () -> Unit = {},
     val onAllow: () -> Unit = {},
-    /** The rules card, as its own page. */
-    val onRules: () -> Unit = {},
 )

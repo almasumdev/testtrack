@@ -120,8 +120,6 @@ fun MainShell(
     onOpenApp: (String) -> Unit = {},
     /** Adding an app to My apps. */
     onAddApp: () -> Unit = {},
-    /** The Open tab's rules card, on a page of its own. */
-    onOpenRules: () -> Unit = {},
     /** Set by a tapped crew notification; cleared once the Crew tab is showing. */
     openCrew: MutableState<Boolean> = remember { mutableStateOf(false) },
     hudVm: HudViewModel = viewModel(),
@@ -338,7 +336,6 @@ fun MainShell(
                                             myApps = apps.apps.takeIf { it.isNotEmpty() || !apps.loading },
                                             onAddApp = onAddApp,
                                             onOpenCircle = { show(MainTab.CIRCLE) },
-                                            onOpenRules = onOpenRules,
                                             // Signed in and on the testers group already: which app goes in.
                                             onAddToCrew = {
                                                 apps.load(context)

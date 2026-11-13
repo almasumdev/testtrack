@@ -30,30 +30,25 @@ import com.composables.icons.lucide.Armchair
 import com.composables.icons.lucide.Download
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
-import com.composables.icons.lucide.Scale
 import com.composables.icons.lucide.Trophy
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * The Open tab's guide, under the crew that is filling: the how-to video as a row, what a crew is,
- * how the fortnight goes in four lines, and the rules behind a row of their own.
+ * how the fortnight goes in four lines, and the rules card.
  *
  * Every number is the server's rule (CrewRules mirrors app/core/rules.py), so the page cannot
  * promise what the server will not do. What an account still needs before a seat is not here: it
  * sits in the crew box (CrewJoinChecklist.kt).
  */
 
-/** The guide's parts, in the order somebody reads them. [onRules] opens the rules card as its page. */
-internal fun LazyListScope.crewGuide(onRules: () -> Unit = {}) {
+/** The guide's parts, in the order somebody reads them. */
+internal fun LazyListScope.crewGuide() {
     item(key = "video") { GuideRow { HowToCard(HowTo.CREW) } }
     item(key = "story") { GuideRow { CrewCard(padding = PaddingValues(16.dp)) { CrewStory() } } }
     item(key = "journey") { GuideRow { CrewCard(padding = PaddingValues(16.dp)) { CrewJourney() } } }
-    item(key = "rules") {
-        GuideRow {
-            AskRow("The rules", "What you agree to, with the numbers", onRules, icon = Lucide.Scale)
-        }
-    }
+    item(key = "rules") { GuideRow { CrewCard(padding = PaddingValues(0.dp)) { CrewRulesCard() } } }
 }
 
 @Composable

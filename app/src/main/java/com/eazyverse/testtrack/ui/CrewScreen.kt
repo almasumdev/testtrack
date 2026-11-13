@@ -50,8 +50,6 @@ fun CrewScreen(
     onAddApp: () -> Unit = {},
     /** Circle, where reviews earn the tix a seat costs. */
     onOpenCircle: () -> Unit = {},
-    /** The rules card, on a page of its own. */
-    onOpenRules: () -> Unit = {},
     vm: CrewViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -86,7 +84,7 @@ fun CrewScreen(
                     LoadSwap(vm.firstLoad) { if (it) CrewLobbyLoading() else CrewLobbyTab(vm, onSignIn, actions, onOpenCrew) }
                 vm.tab == CrewPhase.RECORD ->
                     LoadSwap(vm.firstLoad) { if (it) CrewRecordLoading() else CrewRecordTab(vm, onSignIn, onOpenCrew) }
-                else -> CrewOpenTab(vm, actions, rememberCrewGuide(vm, myApps, onSignIn, onAddApp, onOpenCircle, onOpenRules))
+                else -> CrewOpenTab(vm, actions, rememberCrewGuide(vm, myApps, onSignIn, onAddApp, onOpenCircle))
             }
         }
     }

@@ -33,7 +33,6 @@ internal fun rememberCrewGuide(
     onSignIn: () -> Unit,
     onAddApp: () -> Unit,
     onOpenCircle: () -> Unit,
-    onOpenRules: () -> Unit,
 ): CrewGuide {
     val context = LocalContext.current
     val membership = rememberMembership()
@@ -72,6 +71,5 @@ internal fun rememberCrewGuide(
         onDrive = { drive.connect(activity, driveSheet::launch) {} },
         onCircle = onOpenCircle,
         onAllow = { vm.allowPermissions(activity) },
-        onRules = onOpenRules,
     )
 }

@@ -74,8 +74,6 @@ object Routes {
     /** Asking the circle to look at your app. A page, because finding the app is its own step. */
     const val ABOUT = "about"
 
-    /** The crew rules card, from the Open tab. */
-    const val CREW_RULES = "crew-rules"
     const val REVIEW = "review?post={post}"
 
     fun review(post: String) = "review?post=${Uri.encode(post)}"
@@ -346,7 +344,6 @@ fun AppNav(
                 onAskForApp = { nav.push(Routes.askFor(it)) },
                 onOpenApp = { nav.push(Routes.app(it)) },
                 onAddApp = { nav.push(Routes.APP_ADD) },
-                onOpenRules = { nav.push(Routes.CREW_RULES) },
                 openCrew = openCrew,
                 // The same teardown the other two do, and for the same reason: `replace` pops
                 // everything above the graph root, so the shell does not survive underneath a
@@ -434,10 +431,6 @@ fun AppNav(
 
         composable(Routes.ABOUT) {
             Inset { AboutScreen(onBack = { nav.popBackStack() }) }
-        }
-
-        composable(Routes.CREW_RULES) {
-            Inset { CrewRulesPage(onBack = { nav.popBackStack() }) }
         }
     }
 }
