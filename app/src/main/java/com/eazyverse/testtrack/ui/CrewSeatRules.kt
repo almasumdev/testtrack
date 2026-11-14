@@ -171,23 +171,20 @@ fun seatHint(
 private const val PLAY_DOESNT_SHOW = "Play doesn't show it to the group yet. A new rollout can take a few hours to show."
 
 /**
- * The line under the group address: when Play was last asked and what it said. [message] is the
- * server's own words after a refused seat, which replace the stock sentence.
+ * The line under the group address, only when the check failed: when Play was last asked and what it
+ * said. [message] is the server's own words after a refused seat, which replace the stock sentence.
+ * Null when there is nothing wrong to say, so the page shows no line at all.
  */
 fun lastCheckLine(
     checkedAt: Long?,
     ok: Boolean?,
     now: Long,
     message: String? = null,
-): String {
-    if (checkedAt == null && message == null) return "Not checked yet."
+): String? {
+    if (message != null) return message
+    if (ok != false) return null
     val ago = checkedAt?.let { "Checked ${agoWords(now - it)}: " }.orEmpty()
-    return when {
-        message != null -> message
-        ok == false -> "$ago$PLAY_DOESNT_SHOW"
-        ok == true -> "${ago}Play shows it to the group."
-        else -> "${ago.removeSuffix(": ")}."
-    }
+    return "$ago$PLAY_DOESNT_SHOW"
 }
 
 /** A duration as the last check says it: "just now", "4 min ago", "3 h ago", "2 days ago". */

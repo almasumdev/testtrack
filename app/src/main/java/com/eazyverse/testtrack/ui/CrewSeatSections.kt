@@ -15,24 +15,35 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.Copy
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.RefreshCw
 import com.composables.icons.lucide.TriangleAlert
+import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.ui.theme.Tt
+import kotlinx.coroutines.delay
 
 /*
  * The seat page's own sections: the testers group (add it to the closed track and ask Play), and the
@@ -110,8 +121,8 @@ private val BodyLine
 internal class SeatGroupState(
     /** Play does not show the app to the group yet, or a seat was just refused for it. */
     val open: Boolean,
-    /** The line under the address: when Play was last asked and what it said. */
-    val checkLine: String,
+    /** The line under the steps, only when the check failed: when Play was last asked and what it said. */
+    val checkLine: String?,
     val checkFailed: Boolean,
     val checking: Boolean,
     /** A failure that is not a check's answer, such as no connection; null when none. */
@@ -136,17 +147,29 @@ internal fun CrewSeatGroup(
         color = t.text2,
     )
     Spacer(Modifier.height(4.dp))
-    GroupAddress(flat = true)
-    GroupSteps("Roll out a release to that track.", textStyle = BodyLine)
+    SeatGroupAddress()
+    GroupStepList(
+        listOf(
+            boldParts(
+                "In Play Console, open ",
+                "Closed testing",
+                ", then your track's ",
+                "Testers",
+                " tab. Under ",
+                "Google Groups",
+                ", paste the address and save.",
+            ),
+            AnnotatedString("Roll out a release to that track."),
+        ),
+        textStyle = BodyLine,
+    )
     Spacer(Modifier.height(16.dp))
-    if (state.checkFailed) {
+    if (state.checkFailed && state.checkLine != null) {
         Row(verticalAlignment = Alignment.Top) {
             Icon(Lucide.TriangleAlert, null, Modifier.padding(top = 1.5.dp).size(14.dp), tint = t.warn)
             Spacer(Modifier.width(6.dp))
             Text(state.checkLine, style = SmallLine, color = t.warn)
         }
-    } else {
-        Text(state.checkLine, style = SmallLine, color = t.text3)
     }
     state.error?.let { Text(it, Modifier.padding(top = 8.dp), style = SmallLine, color = t.bad) }
     Spacer(Modifier.height(8.dp))
@@ -163,6 +186,52 @@ internal fun CrewSeatGroup(
         enabled = !state.checking,
         onClick = onVerify,
     )
+}
+
+/**
+ * The group address on its own full-width line, which may wrap, with a small Copy pill under it.
+ * Only this page stacks them: on a small phone the address and Copy side by side ran out of room.
+ */
+@Composable
+private fun SeatGroupAddress() {
+    val t = Tt.colors
+    val clipboard = LocalClipboardManager.current
+    var copied by remember { mutableStateOf(false) }
+    LaunchedEffect(copied) {
+        if (copied) {
+            delay(1_500)
+            copied = false
+        }
+    }
+    SelectionContainer(Modifier.fillMaxWidth()) {
+        Text(
+            Config.GROUP_EMAIL,
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.5.sp),
+            fontWeight = FontWeight.SemiBold,
+            color = t.accentInk,
+        )
+    }
+    Spacer(Modifier.height(8.dp))
+    Row(
+        Modifier
+            .heightIn(min = 36.dp)
+            .clip(RoundedCornerShape(percent = 50))
+            .background(t.accent)
+            .clickable(onClickLabel = "Copy the testers group address") {
+                clipboard.setText(AnnotatedString(Config.GROUP_EMAIL))
+                copied = true
+            }.padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(if (copied) Lucide.Check else Lucide.Copy, null, Modifier.size(14.dp), tint = t.onAccent)
+        Spacer(Modifier.width(6.dp))
+        Text(
+            if (copied) "Copied" else "Copy",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = t.onAccent,
+        )
+    }
 }
 
 /** Before you submit: the two boxes only the app's owner can confirm, and the server's words if it refused for them. */

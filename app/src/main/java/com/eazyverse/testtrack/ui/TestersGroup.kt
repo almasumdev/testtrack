@@ -61,11 +61,7 @@ private const val WHY = "Crew members and reviewers install your closed test thr
 
 /** The testers group's address, and Copy. Selectable too, for whoever long-presses it. */
 @Composable
-internal fun GroupAddress(
-    modifier: Modifier = Modifier,
-    /** No field box around the address, for a page that keeps no boxes: the address and Copy on the page. */
-    flat: Boolean = false,
-) {
+internal fun GroupAddress(modifier: Modifier = Modifier) {
     val clipboard = LocalClipboardManager.current
     var copied by remember { mutableStateOf(false) }
     LaunchedEffect(copied) {
@@ -78,17 +74,10 @@ internal fun GroupAddress(
     Row(
         modifier
             .fillMaxWidth()
-            .then(
-                if (flat) {
-                    Modifier
-                } else {
-                    Modifier
-                        .clip(shape)
-                        .background(Tt.colors.field)
-                        .border(1.dp, Tt.colors.fieldBorder, shape)
-                        .padding(start = 12.dp, end = 4.dp)
-                },
-            ),
+            .clip(shape)
+            .background(Tt.colors.field)
+            .border(1.dp, Tt.colors.fieldBorder, shape)
+            .padding(start = 12.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SelectionContainer(Modifier.weight(1f)) {
@@ -146,6 +135,15 @@ internal fun GroupSteps(
             boldParts("Under ", "Google Groups", ", paste the address and save."),
             AnnotatedString(last),
         )
+    GroupStepList(steps, textStyle)
+}
+
+/** Numbered steps in the shared look; the list is the caller's own. */
+@Composable
+internal fun GroupStepList(
+    steps: List<AnnotatedString>,
+    textStyle: TextStyle? = null,
+) {
     steps.forEachIndexed { index, step ->
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.Top) {
             Box(

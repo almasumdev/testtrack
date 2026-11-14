@@ -86,12 +86,12 @@ class CrewSeatRulesTest {
     @Test
     fun theCheckLineSaysWhenAndWhat() {
         val now = 10_000_000L
-        assertEquals("Not checked yet.", lastCheckLine(null, null, now))
+        assertNull(lastCheckLine(null, null, now))
         assertEquals(
             "Checked 4 min ago: Play doesn't show it to the group yet. A new rollout can take a few hours to show.",
             lastCheckLine(now - 4 * 60_000L, false, now),
         )
-        assertEquals("Checked just now: Play shows it to the group.", lastCheckLine(now - 20_000L, true, now))
+        assertNull(lastCheckLine(now - 20_000L, true, now))
     }
 
     @Test
