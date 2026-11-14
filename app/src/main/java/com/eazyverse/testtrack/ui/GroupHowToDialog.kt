@@ -25,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.RefreshCw
 import com.composables.icons.lucide.X
@@ -80,7 +84,11 @@ internal fun GroupHowToDialog(
     val t = Tt.colors
     // The zoom hint sits under the first picture until a picture is zoomed once.
     var hintSeen by rememberSaveable { mutableStateOf(false) }
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+    ) {
+        DialogSystemBars(t.isDark)
         val scroll = rememberScrollState()
         Column(Modifier.fillMaxSize().background(t.bg).safeDrawingPadding()) {
             val hair = t.hair
@@ -131,6 +139,29 @@ internal fun GroupHowToDialog(
                 Spacer(Modifier.height(28.dp))
                 SeatBar(state.verifyLabel, Lucide.RefreshCw, busy = state.checking, enabled = !state.checking, onClick = onVerify)
             }
+        }
+    }
+}
+
+/**
+ * Makes this dialog's own window an edge-to-edge page like the rest of the app: no dim, clear bars,
+ * and bar icons in the ink the theme needs. A dialog window is not the activity's, so the
+ * [TestTrackTheme] flags do not reach it. Call it inside the Dialog content.
+ */
+@Composable
+internal fun DialogSystemBars(dark: Boolean) {
+    val view = LocalView.current
+    SideEffect {
+        val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
+        window.setDimAmount(0f)
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
+        WindowCompat.getInsetsController(window, view).apply {
+            isAppearanceLightStatusBars = !dark
+            isAppearanceLightNavigationBars = !dark
         }
     }
 }
