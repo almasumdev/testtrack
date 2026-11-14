@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,16 +40,17 @@ import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.CrewAddViewModel
 import com.eazyverse.testtrack.viewmodel.TestingDriveViewModel
 
-/** Where the seat screen is: waiting for My apps, the app's steps, or the seat's details and button. */
-private enum class SeatStage { START, STEPS, DETAILS }
+/** The part of the page a refused seat is about, so the page can scroll to it. */
+private enum class SeatSpot { GROUP, BOXES }
 
 /**
- * Taking a seat, on a page of its own: the app picked in [CrewSeatSheet], what it still needs, then
- * the seat's details with the one filled button pinned under them.
+ * Taking a seat, on one page with everything open: the app picked in [CrewSeatSheet], the testers
+ * group, the seat's details, and at the very end the two Play Console boxes right above the one
+ * filled button, which is pinned. The button waits for the group, both boxes and the details.
  *
  * Everything the screen holds across a rotation or a trip to Play Console or the browser is saved:
- * the stage and the server's refusals here, the two boxes in My apps' model (which also keeps them
- * on the phone), the name and sign-in in this page's own model. The crew itself is not chosen; the
+ * the server's refusals here, the two boxes in My apps' model (which also keeps them on the phone),
+ * the name and sign-in in this page's own model. The crew itself is not chosen; the
  * server puts the app into whichever is nearest to starting, and the crew's own model takes the seat.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,7 +72,6 @@ internal fun CrewSeatScreen(
     val loading = apps.loading || apps.reading
     val app = apps.byId(appId)
 
-    var stage by rememberSaveable { mutableStateOf(SeatStage.START) }
     // The server's own words when Play could not see the app at the seat, and for unticked boxes.
     var notVisible by rememberSaveable { mutableStateOf<String?>(null) }
     var boxesMessage by rememberSaveable { mutableStateOf<String?>(null) }
@@ -91,13 +93,6 @@ internal fun CrewSeatScreen(
     DisposableEffect(Unit) {
         onDispose { if (!activity.isChangingConfigurations) crews.clearSeatError() }
     }
-    // Decided once My apps has the app: ready goes straight to its details.
-    LaunchedEffect(app?.id, loading) {
-        if (stage != SeatStage.START) return@LaunchedEffect
-        if (app != null) {
-            stage = if (seatNeed(app, apps.boxes(app)) == SeatNeed.NONE) SeatStage.DETAILS else SeatStage.STEPS
-        }
-    }
     // After the process was recreated My apps starts empty: read it, rather than call the app gone.
     LaunchedEffect(appId) { if (apps.byId(appId) == null) apps.load(context) }
     // An app deleted while the screen is open leaves nothing to take a seat with.
@@ -117,6 +112,19 @@ internal fun CrewSeatScreen(
         }
 
     val boxes = app?.let(apps::boxes) ?: SeatBoxes()
+    // A refused seat scrolls to the part it is about.
+    val groupSpot = remember { BringIntoViewRequester() }
+    val boxesSpot = remember { BringIntoViewRequester() }
+    var jump by remember { mutableStateOf<SeatSpot?>(null) }
+    LaunchedEffect(jump) {
+        when (jump) {
+            SeatSpot.GROUP -> groupSpot.bringIntoView()
+            SeatSpot.BOXES -> boxesSpot.bringIntoView()
+            null -> Unit
+        }
+        jump = null
+    }
+    val groupOpen = app != null && (!app.verified || notVisible != null)
     val waiting = waitingName?.let { SeatWaiting(it, waitingId) }
     val details =
         app?.let {
@@ -124,6 +132,8 @@ internal fun CrewSeatScreen(
                 app = it,
                 crewName = crews.open?.name,
                 busy = crews.seating || drive.busy,
+                groupReady = !groupOpen,
+                boxesReady = boxes.both,
                 needsDrive = drive.connected == false,
                 driveMessage = drive.message,
                 held = appealWaitingIn(crews.crews),
@@ -156,56 +166,57 @@ internal fun CrewSeatScreen(
                     Text("Check your connection, then try again.", style = MaterialTheme.typography.bodySmall, color = Tt.colors.text2)
                     Spacer(Modifier.height(12.dp))
                     SeatBar("Try again", Lucide.RefreshCw, onClick = { apps.load(context) })
-                } else if (app == null || stage == SeatStage.START) {
+                } else if (app == null || details == null) {
                     SeatTileSkeleton(120.dp, 160.dp)
                 } else {
                     FoundApp(app.pkg, app.name, app.icon, app.developer, unchecked = false, onChange = null)
                     Text(
-                        if (stage == SeatStage.STEPS) {
-                            stepsLeftLine(stepsLeft(app.verified, boxes))
-                        } else {
-                            "Your app goes in with ${CrewRules.SEATS - 1} others"
-                        },
+                        "Your app goes in with ${CrewRules.SEATS - 1} others",
                         Modifier.padding(top = 2.dp, bottom = 10.dp),
                         style = MaterialTheme.typography.bodySmall,
                         color = Tt.colors.text2,
                     )
-                    if (stage == SeatStage.STEPS) {
-                        val facts = apps.facts[app.id]
-                        val failedAt = apps.failedChecks[app.id]
-                        // The newer of what the server kept and what this run was told.
-                        val newestFailed = failedAt != null && (facts?.checkedAt == null || failedAt >= facts.checkedAt)
-                        val checkedAt = if (newestFailed) failedAt else facts?.checkedAt
-                        val checkedOk = if (newestFailed) false else facts?.checkedOk
-                        CrewSeatSteps(
-                            SeatStepsState(
-                                app = app,
-                                boxes = boxes,
-                                groupOpen = !app.verified || notVisible != null,
+                    val facts = apps.facts[app.id]
+                    val failedAt = apps.failedChecks[app.id]
+                    // The newer of what the server kept and what this run was told.
+                    val newestFailed = failedAt != null && (facts?.checkedAt == null || failedAt >= facts.checkedAt)
+                    val checkedAt = if (newestFailed) failedAt else facts?.checkedAt
+                    val checkedOk = if (newestFailed) false else facts?.checkedOk
+                    Column(Modifier.fillMaxWidth().bringIntoViewRequester(groupSpot)) {
+                        CrewSeatGroup(
+                            SeatGroupState(
+                                open = groupOpen,
                                 checkLine = lastCheckLine(checkedAt, checkedOk, System.currentTimeMillis(), notVisible),
                                 checkFailed = notVisible != null || checkedOk == false,
                                 checking = apps.acting == app.id && apps.actingOn == AppAction.VERIFY,
                                 error = apps.actionError.takeIf { failedAt == null },
-                                boxesMessage = boxesMessage,
                             ),
                             onVerify = {
                                 if (apps.acting == null) {
                                     apps.verify(context, app.id) { notVisible = null }
                                 }
                             },
+                        )
+                    }
+                    Spacer(Modifier.height(24.dp))
+                    Column(Modifier.fillMaxWidth()) {
+                        CrewSeatDetails(details, crews = crews, vm = vm, onOpenCircle = onOpenCircle)
+                    }
+                    Spacer(Modifier.height(24.dp))
+                    Column(Modifier.fillMaxWidth().bringIntoViewRequester(boxesSpot)) {
+                        CrewSeatConfirm(
+                            boxes = boxes,
+                            boxesMessage = boxesMessage,
                             onBoxes = {
                                 boxesMessage = null
                                 apps.setBoxes(context, app, it)
                             },
-                            onContinue = { stage = SeatStage.DETAILS },
                         )
-                    } else if (details != null) {
-                        CrewSeatDetails(details, crews = crews, vm = vm, onOpenCircle = onOpenCircle)
                     }
                 }
                 Spacer(Modifier.height(20.dp))
             }
-            if (app != null && details != null && stage == SeatStage.DETAILS) {
+            if (app != null && details != null) {
                 val take = {
                     shortTix = false
                     waitingName = null
@@ -221,12 +232,12 @@ internal fun CrewSeatScreen(
                             when (error.code) {
                                 "not_visible" -> {
                                     notVisible = error.message
-                                    stage = SeatStage.STEPS
+                                    jump = SeatSpot.GROUP
                                 }
                                 "boxes_unticked" -> {
                                     boxesMessage = error.message
                                     apps.clearBoxes(context, app)
-                                    stage = SeatStage.STEPS
+                                    jump = SeatSpot.BOXES
                                 }
                                 "short_tix" -> shortTix = true
                                 "already_waiting" -> {
@@ -238,7 +249,7 @@ internal fun CrewSeatScreen(
                         onDone = onDone,
                     )
                 }
-                // Pinned under the details, above the bar and keyboard the route already clears.
+                // Pinned under the page, above the bar and keyboard the route already clears.
                 Spacer(Modifier.fillMaxWidth().height(1.dp).background(Tt.colors.hair))
                 Column(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 12.dp, bottom = 12.dp)) {
                     CrewSeatSubmit(details, vm) {

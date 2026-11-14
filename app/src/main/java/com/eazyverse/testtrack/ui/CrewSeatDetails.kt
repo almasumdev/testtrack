@@ -23,22 +23,26 @@ import com.eazyverse.testtrack.viewmodel.AskFailure
 import com.eazyverse.testtrack.viewmodel.CrewAddViewModel
 
 /*
- * The seat screen's last view: the details of the seat and the one filled button that takes it.
- * The name the crew sees, how they get past a sign-in, what the seat costs, and the notes that can
- * hold the button. The details scroll; the button is [CrewSeatSubmit], pinned under them.
+ * The seat page's details: the name the crew sees, how they get past a sign-in, what the seat costs,
+ * and the notes that can hold the button. They scroll with the page; the one filled button that takes
+ * the seat is [CrewSeatSubmit], pinned under it.
  */
 
-/** What the details view reads from the seat screen, so the screen owns every launcher and callback. */
+/** What the details and the button read from the seat screen, so the screen owns every launcher and callback. */
 internal class SeatDetailsState(
     val app: AppEntry,
     /** The crew a seat goes into; null when none is filling and this seat starts one. */
     val crewName: String?,
     val busy: Boolean,
+    /** Play shows the app to the testers group: the seat can't be submitted before. */
+    val groupReady: Boolean,
+    /** Both Play Console boxes are ticked: the seat can't be submitted before. */
+    val boxesReady: Boolean,
     val needsDrive: Boolean,
     val driveMessage: String?,
     /** An appeal is waiting on the team, so no new seat anywhere: the app and crew it is about. */
     val held: Pair<String, String>?,
-    /** The server's refusal, for the ones that are not about a step. */
+    /** The server's refusal, for the ones that are not about the group or the boxes. */
     val refusal: String?,
     /** The server said tix are short, even if the balance on this phone did not. */
     val shortTix: Boolean = false,
@@ -61,7 +65,8 @@ internal fun CrewSeatDetails(
     onOpenCircle: () -> Unit,
 ) {
     val app = state.app
-    Spacer(Modifier.height(14.dp))
+    SeatHeading("Seat details")
+    Spacer(Modifier.height(4.dp))
     DialogField(
         value = vm.name,
         onValueChange = vm::rename,
@@ -132,7 +137,6 @@ internal fun CrewSeatDetails(
         }
         Spacer(Modifier.height(12.dp))
     }
-    Spacer(Modifier.height(16.dp))
 }
 
 /** The button that takes the seat, with the Drive note above it and its message under it. Pinned by the screen. */
@@ -146,11 +150,29 @@ internal fun CrewSeatSubmit(
         DialogNote("Each night's pictures go to your own Google Drive, so it is connected before you take a seat.")
         Spacer(Modifier.height(12.dp))
     }
+    // What is still missing from the two sections above, said once, the group first.
+    val missing =
+        when {
+            !state.groupReady -> "Verify the testers group first"
+            !state.boxesReady -> "Tick both boxes to submit"
+            else -> null
+        }
+    missing?.let {
+        DialogNote(it)
+        Spacer(Modifier.height(8.dp))
+    }
     val seat = state.crewName?.let { "Take a seat in $it" } ?: "Take a seat"
     Primary(
         if (state.needsDrive) "Connect Drive and take a seat" else seat,
         busy = state.busy,
-        enabled = vm.name.isNotBlank() && vm.signInReady && !vm.short && !state.shortTix && state.held == null,
+        enabled =
+            state.groupReady &&
+                state.boxesReady &&
+                vm.name.isNotBlank() &&
+                vm.signInReady &&
+                !vm.short &&
+                !state.shortTix &&
+                state.held == null,
         onClick = onTake,
     )
     state.driveMessage?.let {

@@ -87,18 +87,10 @@ fun seatBlock(
     }
 }
 
-/** What an app that can be picked still needs before its seat details. */
-enum class SeatNeed { GROUP, BOXES, NONE }
+/** What an app that can be picked still needs: Play showing it to the group, or nothing. */
+enum class SeatNeed { GROUP, NONE }
 
-fun seatNeed(
-    app: AppEntry,
-    boxes: SeatBoxes,
-): SeatNeed =
-    when {
-        !app.verified -> SeatNeed.GROUP
-        !boxes.both -> SeatNeed.BOXES
-        else -> SeatNeed.NONE
-    }
+fun seatNeed(app: AppEntry): SeatNeed = if (app.verified) SeatNeed.NONE else SeatNeed.GROUP
 
 /** The mark before [line]: a tick once ready, a dashed ring while a step is left. */
 val SeatNeed.mark: SeatMark get() = if (this == SeatNeed.NONE) SeatMark.READY else SeatMark.TODO
@@ -107,22 +99,10 @@ val SeatNeed.mark: SeatMark get() = if (this == SeatNeed.NONE) SeatMark.READY el
 fun SeatNeed.line(): String =
     when (this) {
         SeatNeed.GROUP -> "Add the group to its closed track"
-        SeatNeed.BOXES -> "Confirm two things in Play Console"
         SeatNeed.NONE -> "Ready to go in"
     }
 
-/**
- * "2 steps before it can go in": the steps still to do, with the seat details always one of them.
- * Step one is done once Play shows the app, step two once both boxes are ticked.
- */
-fun stepsLeft(
-    verified: Boolean,
-    boxes: SeatBoxes,
-): Int = (if (verified) 0 else 1) + (if (boxes.both) 0 else 1) + 1
-
-fun stepsLeftLine(left: Int): String = if (left == 1) "1 step before it can go in" else "$left steps before it can go in"
-
-/** The amber line under an unticked box, and where to fix it. */
+/** The amber line under an unticked box, and where to fix it. Asked only when a seat is submitted. */
 object SeatBoxCopy {
     const val COUNTRIES = "Available in all countries"
     const val DEVICES = "Not limited to some devices"

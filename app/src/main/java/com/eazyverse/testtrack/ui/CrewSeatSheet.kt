@@ -36,7 +36,7 @@ import com.eazyverse.testtrack.viewmodel.AppsViewModel
 /**
  * Which app goes in: the picker for Take a seat, opened after the testers group is checked. It only
  * lists apps. Tapping one that can go in closes the sheet and hands its id to [onPick], which opens
- * the seat screen ([CrewSeatScreen]) where its steps, details and the button are.
+ * the seat screen ([CrewSeatScreen]) where its group check, details and the button are.
  *
  * The crew itself is not chosen; the server puts the app into whichever is nearest to starting.
  */
@@ -85,7 +85,7 @@ private class SeatRow(
     val block: SeatBlock?,
     val need: SeatNeed,
 ) {
-    /** Ready ones first, then those a step or two away, then those that can't go in. */
+    /** Ready ones first, then those that still need the group, then those that can't go in. */
     val rank: Int get() =
         if (block != null) {
             2
@@ -139,7 +139,7 @@ private fun ColumnScope.CrewSeatList(
                             SeatRow(
                                 it,
                                 seatBlock(it, apps.facts[it.id], appealCrewFor(crews.crews, it.pkg)),
-                                seatNeed(it, apps.boxes(it)),
+                                seatNeed(it),
                             )
                         }.sortedBy { it.rank }
                 val (blocked, ready) = rows.partition { it.block != null }

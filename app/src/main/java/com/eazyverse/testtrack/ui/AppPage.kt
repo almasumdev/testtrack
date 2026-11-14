@@ -145,7 +145,6 @@ fun AppPage(
                         AskMessage(AskFailure("That didn't work", it))
                     }
                     Testing(app, onOpenCrew, onOpenRequest, onCrew = { membership.require { onSeat(app.id) } }, onFeedback)
-                    if (app.takesBoxes()) AppSeatBoxes(app, vm, context)
                     Manage(app, busy, running, onLive = { askLive = true }, onDelete = { askDelete = true })
                     Spacer(Modifier.height(28.dp))
                 }

@@ -69,13 +69,11 @@ class CrewSeatRulesTest {
     }
 
     @Test
-    fun whatAnAppNeedsComesInOrder() {
-        assertEquals(SeatNeed.GROUP, seatNeed(app(verifiedBy = null), both))
-        assertEquals(SeatNeed.BOXES, seatNeed(app(), SeatBoxes(countries = true)))
-        assertEquals(SeatNeed.BOXES, seatNeed(app(), SeatBoxes()))
-        assertEquals(SeatNeed.NONE, seatNeed(app(), both))
-        // Unverified wins over unticked: Play has to show it before the boxes mean anything.
-        assertEquals(SeatNeed.GROUP, seatNeed(app(verifiedBy = null), SeatBoxes()))
+    fun anAppWhosGroupIsSetIsReadyAndTheBoxesAreNotAskedInThePicker() {
+        assertEquals(SeatNeed.GROUP, seatNeed(app(verifiedBy = null)))
+        assertEquals(SeatNeed.NONE, seatNeed(app()))
+        assertEquals("Ready to go in", seatNeed(app()).line())
+        assertEquals("Add the group to its closed track", seatNeed(app(verifiedBy = null)).line())
     }
 
     @Test
@@ -83,16 +81,6 @@ class CrewSeatRulesTest {
         assertFalse(SeatBoxes(countries = true).both)
         assertFalse(SeatBoxes(devices = true).both)
         assertTrue(both.both)
-    }
-
-    @Test
-    fun theSeatDetailsAreAlwaysOneOfTheStepsLeft() {
-        assertEquals(3, stepsLeft(verified = false, boxes = SeatBoxes()))
-        assertEquals(2, stepsLeft(verified = true, boxes = SeatBoxes()))
-        assertEquals(2, stepsLeft(verified = true, boxes = SeatBoxes(countries = true)))
-        assertEquals(1, stepsLeft(verified = true, boxes = both))
-        assertEquals("3 steps before it can go in", stepsLeftLine(3))
-        assertEquals("1 step before it can go in", stepsLeftLine(1))
     }
 
     @Test

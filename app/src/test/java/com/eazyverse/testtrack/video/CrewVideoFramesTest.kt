@@ -292,7 +292,7 @@ class CrewVideoFramesTest {
         frame.write("ready")
     }
 
-    /** My apps with one ready app, both boxes ticked, so the seat screen opens on the seat details. */
+    /** My apps with one ready app, both boxes ticked, so the seat page has its group row and the submit open. */
     private fun readyApps(): AppsViewModel {
         ApiSession.load(compose.activity)
         return AppsViewModel().apply {
