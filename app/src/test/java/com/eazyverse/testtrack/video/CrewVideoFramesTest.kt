@@ -30,7 +30,7 @@ import com.eazyverse.testtrack.ui.CrewPhase
 import com.eazyverse.testtrack.ui.CrewReportDialog
 import com.eazyverse.testtrack.ui.CrewScreen
 import com.eazyverse.testtrack.ui.CrewSeat
-import com.eazyverse.testtrack.ui.CrewSeatSheet
+import com.eazyverse.testtrack.ui.CrewSeatScreen
 import com.eazyverse.testtrack.ui.CrewViewModel
 import com.eazyverse.testtrack.ui.DockUi
 import com.eazyverse.testtrack.ui.MainTab
@@ -292,7 +292,7 @@ class CrewVideoFramesTest {
         frame.write("ready")
     }
 
-    /** My apps with one ready app, both boxes ticked, so the seat sheet opens on the seat details. */
+    /** My apps with one ready app, both boxes ticked, so the seat screen opens on the seat details. */
     private fun readyApps(): AppsViewModel {
         ApiSession.load(compose.activity)
         return AppsViewModel().apply {
@@ -305,7 +305,9 @@ class CrewVideoFramesTest {
     @Test
     fun c05_seat() {
         val vm = crews(list = emptyList())
-        frame.show { Pushed { CrewSeatSheet(vm, readyApps(), CircleSamples.focus.id, onAddApp = {}, onOpenCircle = {}, onDismiss = {}) } }
+        frame.show {
+            Pushed { CrewSeatScreen(vm, readyApps(), CircleSamples.focus.id, onBack = {}, onDone = {}, onOpenCircle = {}, onOpenCrew = {}) }
+        }
         frame.settle(800)
         runCatching { frame.target("seatName", compose.onNodeWithText("Name the crew sees", substring = true)) }
         runCatching { frame.target("takeSeat", compose.onNode(hasText("Take a seat", substring = true) and hasClickAction())) }
@@ -327,7 +329,9 @@ class CrewVideoFramesTest {
     @Test
     fun c05b_seatLogin() {
         val vm = crews(list = emptyList())
-        frame.show { Pushed { CrewSeatSheet(vm, readyApps(), CircleSamples.focus.id, onAddApp = {}, onOpenCircle = {}, onDismiss = {}) } }
+        frame.show {
+            Pushed { CrewSeatScreen(vm, readyApps(), CircleSamples.focus.id, onBack = {}, onDone = {}, onOpenCircle = {}, onOpenCrew = {}) }
+        }
         compose.onNode(hasText("Needs a sign-in") and hasClickAction()).performClick()
         frame.settle(800)
         runCatching {
@@ -343,14 +347,16 @@ class CrewVideoFramesTest {
         frame.write("seatLogin")
     }
 
-    /** The same page scrolled to its end, the price and Take a seat in view. */
+    /** The same page scrolled to its end, the price in view and Take a seat pinned under it. */
     @Test
     fun c05c_seatSubmit() {
         val vm = crews(list = emptyList())
-        frame.show { Pushed { CrewSeatSheet(vm, readyApps(), CircleSamples.focus.id, onAddApp = {}, onOpenCircle = {}, onDismiss = {}) } }
+        frame.show {
+            Pushed { CrewSeatScreen(vm, readyApps(), CircleSamples.focus.id, onBack = {}, onDone = {}, onOpenCircle = {}, onOpenCrew = {}) }
+        }
         compose.onNode(hasText("Needs a sign-in") and hasClickAction()).performClick()
         frame.settle(400)
-        frame.scrollTo(compose.onNode(hasText("Take a seat", substring = true) and hasClickAction()))
+        frame.scrollTo(compose.onNodeWithText("A seat costs"))
         frame.settle(800)
         runCatching { frame.target("takeSeat", compose.onNode(hasText("Take a seat", substring = true) and hasClickAction())) }
         runCatching { frame.target("price", compose.onNodeWithText("A seat costs")) }

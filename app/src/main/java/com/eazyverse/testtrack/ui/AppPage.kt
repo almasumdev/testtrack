@@ -44,7 +44,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.ArrowUpRight
 import com.composables.icons.lucide.BadgeCheck
 import com.composables.icons.lucide.ChevronRight
@@ -78,17 +77,12 @@ fun AppPage(
     onOpenCrew: (String) -> Unit,
     onOpenRequest: (String) -> Unit,
     onFeedback: (String) -> Unit,
-    /** The Crew tab's model: the seat sheet takes the seat on it. */
-    crews: CrewViewModel = viewModel(),
-    /** Adding an app to My apps, from the seat sheet's list. */
-    onAddApp: () -> Unit = {},
-    /** Circle, for somebody short of tix. */
-    onOpenCircle: () -> Unit = {},
+    /** The seat screen for this app. */
+    onSeat: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
-    // Putting it in a crew: on the testers group first, then the seat sheet on this app.
+    // Putting it in a crew: on the testers group first, then the seat screen on this app.
     val membership = rememberMembership()
-    var seating by remember { mutableStateOf(false) }
     // Deleted here: still drawn while the page leaves, rather than flashing the not-found state.
     var leaving by remember { mutableStateOf<AppEntry?>(null) }
     val app = vm.byId(id) ?: leaving
@@ -150,7 +144,7 @@ fun AppPage(
                         Spacer(Modifier.height(10.dp))
                         AskMessage(AskFailure("That didn't work", it))
                     }
-                    Testing(app, onOpenCrew, onOpenRequest, onCrew = { membership.require { seating = true } }, onFeedback)
+                    Testing(app, onOpenCrew, onOpenRequest, onCrew = { membership.require { onSeat(app.id) } }, onFeedback)
                     if (app.takesBoxes()) AppSeatBoxes(app, vm, context)
                     Manage(app, busy, running, onLive = { askLive = true }, onDelete = { askDelete = true })
                     Spacer(Modifier.height(28.dp))
@@ -159,17 +153,6 @@ fun AppPage(
         }
     }
 
-    if (seating && app != null) {
-        CrewSeatSheet(
-            crews = crews,
-            apps = vm,
-            startAppId = app.id,
-            onAddApp = onAddApp,
-            onOpenCircle = onOpenCircle,
-            onDismiss = { seating = false },
-            onOpenCrew = onOpenCrew,
-        )
-    }
     if (askLive && app != null) {
         Ask(
             title = "Mark ${app.name} live?",

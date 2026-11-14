@@ -39,12 +39,13 @@ internal fun FoundApp(
     icon: String,
     developer: String,
     unchecked: Boolean,
-    onChange: () -> Unit,
+    /** Null when the app is fixed, as on the seat screen: no Change, and the row is not tapped. */
+    onChange: (() -> Unit)?,
 ) {
     Row(
         Modifier
             .fillMaxWidth()
-            .clickable(onClick = onChange)
+            .then(if (onChange != null) Modifier.clickable(onClick = onChange) else Modifier)
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -74,13 +75,15 @@ internal fun FoundApp(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Spacer(Modifier.width(10.dp))
-        Text(
-            "Change",
-            style = MaterialTheme.typography.bodySmall,
-            color = Tt.colors.accentInk,
-            fontWeight = FontWeight.Medium,
-        )
+        if (onChange != null) {
+            Spacer(Modifier.width(10.dp))
+            Text(
+                "Change",
+                style = MaterialTheme.typography.bodySmall,
+                color = Tt.colors.accentInk,
+                fontWeight = FontWeight.Medium,
+            )
+        }
     }
     if (unchecked) {
         Spacer(Modifier.height(8.dp))

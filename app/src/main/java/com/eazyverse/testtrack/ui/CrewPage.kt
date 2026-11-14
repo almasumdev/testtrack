@@ -46,12 +46,10 @@ fun CrewPage(
     onBack: () -> Unit,
     onSignIn: () -> Unit,
     apps: AppsViewModel = viewModel(),
-    /** Adding an app to My apps, from the seat sheet's list. */
+    /** Adding an app to My apps, from the seat picker's list. */
     onAddApp: () -> Unit = {},
-    /** Circle, for somebody short of tix. */
-    onOpenCircle: () -> Unit = {},
-    /** Another crew's page, for the crew an app already waits in. */
-    onOpenCrew: (String) -> Unit = {},
+    /** The seat screen, for the app picked or put back in. */
+    onSeat: (String) -> Unit = {},
     /** The crew's members, and what each did with your app. */
     onMembers: () -> Unit = {},
 ) {
@@ -74,7 +72,7 @@ fun CrewPage(
         }
     }
     CrewLifecycle(vm)
-    // Put it in again: the seat sheet, on the same app when it is on My apps.
+    // Put it in again: the seat screen on the same app when it is on My apps, else the picker.
     var seating by remember { mutableStateOf(false) }
     val actions =
         crewActions(vm, dialogs, onSignIn, onAddToCrew = {
@@ -116,16 +114,22 @@ fun CrewPage(
         }
     }
     CrewDialogsHost(vm, dialogs)
-    if (seating) {
-        val pkg = crew?.mine?.packageName
+    val pkg = crew?.mine?.packageName
+    val startId = apps.apps.firstOrNull { it.pkg == pkg }?.id
+    LaunchedEffect(seating, startId) {
+        if (seating && startId != null) {
+            seating = false
+            onSeat(startId)
+        }
+    }
+    // While My apps is read for the crew's own app there is nothing to pick yet.
+    if (seating && startId == null && !(pkg != null && (apps.loading || apps.reading))) {
         CrewSeatSheet(
             crews = vm,
             apps = apps,
-            startAppId = apps.apps.firstOrNull { it.pkg == pkg }?.id,
+            onPick = onSeat,
             onAddApp = onAddApp,
-            onOpenCircle = onOpenCircle,
             onDismiss = { seating = false },
-            onOpenCrew = onOpenCrew,
         )
     }
 }

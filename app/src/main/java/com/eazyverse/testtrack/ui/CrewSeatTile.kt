@@ -34,7 +34,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.CircleDashed
@@ -55,8 +54,7 @@ private val SeatLineBold = tileStyle(12.5f, 14f, FontWeight.SemiBold)
 
 /**
  * An app that can go in is tapped; one that can't ([blocked]) is drawn flat and quiet, with its
- * icon in grey, and does nothing. [chosen] marks the app picked before Back: a soft wash, a bolder
- * name and a check where the chevron was.
+ * icon in grey, and does nothing.
  */
 @Composable
 internal fun SeatAppTile(
@@ -65,7 +63,6 @@ internal fun SeatAppTile(
     mark: SeatMark,
     blocked: Boolean,
     modifier: Modifier = Modifier,
-    chosen: Boolean = false,
     onClick: () -> Unit = {},
 ) {
     val t = Tt.colors
@@ -82,7 +79,6 @@ internal fun SeatAppTile(
             .heightIn(min = 66.dp)
             .clip(shape)
             .background(if (blocked) Color.Transparent else t.bg)
-            .then(if (chosen) Modifier.background(t.leafAccentSoft) else Modifier)
             .border(1.dp, t.cardLine, shape)
             .then(if (blocked) Modifier else Modifier.clickable(role = Role.Button, onClick = onClick))
             .padding(horizontal = 12.dp, vertical = 11.dp)
@@ -97,7 +93,6 @@ internal fun SeatAppTile(
             Text(
                 app.name,
                 style = SeatNameStyle,
-                fontWeight = if (chosen) FontWeight.Bold else null,
                 color = if (blocked) t.text3 else t.text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -133,7 +128,6 @@ internal fun SeatAppTile(
         Box(Modifier.size(20.dp), contentAlignment = Alignment.Center) {
             when {
                 blocked -> Unit
-                chosen -> Icon(Lucide.Check, null, Modifier.size(18.dp), tint = t.accentInk)
                 else -> Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = t.text4)
             }
         }

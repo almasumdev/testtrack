@@ -120,8 +120,12 @@ fun MainShell(
     onOpenApp: (String) -> Unit = {},
     /** Adding an app to My apps. */
     onAddApp: () -> Unit = {},
+    /** The seat screen, for the app picked in Take a seat's list. */
+    onSeat: (String) -> Unit = {},
     /** Set by a tapped crew notification; cleared once the Crew tab is showing. */
     openCrew: MutableState<Boolean> = remember { mutableStateOf(false) },
+    /** Set by the seat screen's Open Circle. */
+    openCircle: MutableState<Boolean> = remember { mutableStateOf(false) },
     hudVm: HudViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -133,7 +137,7 @@ fun MainShell(
     /** Which app, for Circle's Ask for feedback. */
     var pickingFeedback by remember { mutableStateOf(false) }
 
-    // The seat sheet, opened by Crew's Take a seat, on the Crew tab's own model.
+    // The seat picker, opened by Crew's Take a seat, on the Crew tab's own model.
     val crews: CrewViewModel = viewModel()
     var seating by remember { mutableStateOf(false) }
 
@@ -156,11 +160,11 @@ fun MainShell(
         tab = next
     }
 
-    LaunchedEffect(openCrew.value) {
-        if (openCrew.value) {
-            show(MainTab.GROUPS)
-            openCrew.value = false
-        }
+    LaunchedEffect(openCrew.value, openCircle.value) {
+        if (openCrew.value) show(MainTab.GROUPS)
+        if (openCircle.value) show(MainTab.CIRCLE)
+        openCrew.value = false
+        openCircle.value = false
     }
 
     // Whether notifications are allowed can change in Settings while the app is away.
@@ -429,10 +433,9 @@ fun MainShell(
         CrewSeatSheet(
             crews = crews,
             apps = apps,
+            onPick = onSeat,
             onAddApp = onAddApp,
-            onOpenCircle = { show(MainTab.CIRCLE) },
             onDismiss = { seating = false },
-            onOpenCrew = onOpenCrew,
         )
     }
 

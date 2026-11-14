@@ -104,6 +104,11 @@ object Routes {
 
     fun app(id: String) = "app/${Uri.encode(id)}"
 
+    /** Taking a seat with one app of My apps, on its own screen. */
+    const val CREW_SEAT = "seat/{app}"
+
+    fun crewSeat(appId: String) = "seat/${Uri.encode(appId)}"
+
     /** Adding an app to My apps. */
     const val APP_ADD = "app-add"
 }
@@ -303,6 +308,8 @@ fun AppNav(
     update: UpdateOffer? = null,
 ) {
     val nav = rememberNavController()
+    // Set by the seat screen's Open Circle, read by the shell once it is back on screen.
+    val openCircle = remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     /**
@@ -344,7 +351,9 @@ fun AppNav(
                 onAskForApp = { nav.push(Routes.askFor(it)) },
                 onOpenApp = { nav.push(Routes.app(it)) },
                 onAddApp = { nav.push(Routes.APP_ADD) },
+                onSeat = { nav.push(Routes.crewSeat(it)) },
                 openCrew = openCrew,
+                openCircle = openCircle,
                 // The same teardown the other two do, and for the same reason: `replace` pops
                 // everything above the graph root, so the shell does not survive underneath a
                 // signed-out profile for Back to land on.
@@ -402,10 +411,9 @@ fun AppNav(
                     onBack = { nav.popBackStack() },
                     onSignIn = { nav.popBackStack() },
                     apps = apps,
-                    // Put it in again: the seat sheet, on the same app from My apps when it is there.
+                    // Put it in again: the seat screen on the same app from My apps when it is there, else the picker.
                     onAddApp = { nav.push(Routes.APP_ADD) },
-                    onOpenCircle = { nav.popBackStack(Routes.HOME, false) },
-                    onOpenCrew = { nav.push(Routes.crew(it)) },
+                    onSeat = { nav.push(Routes.crewSeat(it)) },
                     onMembers = { nav.push(Routes.crewMembers(id)) },
                 )
             }
@@ -427,7 +435,7 @@ fun AppNav(
             Inset { CrewPicturesPage(pictures, id, name, onBack = { nav.popBackStack() }) }
         }
 
-        appRoutes(nav)
+        appRoutes(nav, openCrew, openCircle)
 
         composable(Routes.ABOUT) {
             Inset { AboutScreen(onBack = { nav.popBackStack() }) }

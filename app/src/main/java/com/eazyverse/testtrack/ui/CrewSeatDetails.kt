@@ -23,12 +23,12 @@ import com.eazyverse.testtrack.viewmodel.AskFailure
 import com.eazyverse.testtrack.viewmodel.CrewAddViewModel
 
 /*
- * The seat sheet's last view: the details of the seat and the one filled button that takes it.
- * What the old Add to a crew page held, in the sheet: the name the crew sees, how they get past a
- * sign-in, what the seat costs, and the notes that can hold the button.
+ * The seat screen's last view: the details of the seat and the one filled button that takes it.
+ * The name the crew sees, how they get past a sign-in, what the seat costs, and the notes that can
+ * hold the button. The details scroll; the button is [CrewSeatSubmit], pinned under them.
  */
 
-/** What the details view reads from the sheet, so the sheet owns every launcher and callback. */
+/** What the details view reads from the seat screen, so the screen owns every launcher and callback. */
 internal class SeatDetailsState(
     val app: AppEntry,
     /** The crew a seat goes into; null when none is filling and this seat starts one. */
@@ -58,13 +58,9 @@ internal fun CrewSeatDetails(
     state: SeatDetailsState,
     crews: CrewViewModel,
     vm: CrewAddViewModel,
-    onChange: () -> Unit,
     onOpenCircle: () -> Unit,
-    onTake: () -> Unit,
 ) {
     val app = state.app
-    Spacer(Modifier.height(4.dp))
-    FoundApp(app.pkg, app.name, app.icon, app.developer, unchecked = false, onChange = onChange)
     Spacer(Modifier.height(14.dp))
     DialogField(
         value = vm.name,
@@ -136,6 +132,16 @@ internal fun CrewSeatDetails(
         }
         Spacer(Modifier.height(12.dp))
     }
+    Spacer(Modifier.height(16.dp))
+}
+
+/** The button that takes the seat, with the Drive note above it and its message under it. Pinned by the screen. */
+@Composable
+internal fun CrewSeatSubmit(
+    state: SeatDetailsState,
+    vm: CrewAddViewModel,
+    onTake: () -> Unit,
+) {
     if (state.needsDrive) {
         DialogNote("Each night's pictures go to your own Google Drive, so it is connected before you take a seat.")
         Spacer(Modifier.height(12.dp))
@@ -151,7 +157,6 @@ internal fun CrewSeatDetails(
         Spacer(Modifier.height(10.dp))
         DialogNote(it)
     }
-    Spacer(Modifier.height(24.dp))
 }
 
 /**
