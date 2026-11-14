@@ -14,34 +14,59 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.CircleDashed
 import com.composables.icons.lucide.Coins
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -54,6 +79,8 @@ import com.eazyverse.testtrack.ui.theme.Tt
 
 private val HeadingStyle = tileStyle(16f, 19f, FontWeight.Bold)
 private val HeadNameStyle = tileStyle(16f, 18f, FontWeight.SemiBold)
+private val HeadEditStyle = tileStyle(16f, 17f, FontWeight.SemiBold)
+private val CountStyle = tileStyle(11.5f, 14f, FontWeight.Normal)
 private val StatusStyle = tileStyle(12.5f, 14f, FontWeight.SemiBold)
 private val DeveloperStyle = tileStyle(12.5f, 14f, FontWeight.Medium)
 private val HintStyle = tileStyle(12.5f, 16f, FontWeight.SemiBold)
@@ -99,29 +126,153 @@ internal fun SeatHeading(
 
 /**
  * The app the seat is for, as a My apps tile without the box: its icon with the closed-test flask on
- * the corner, its name on up to two lines and its developer. The text is at most 18 + 18 + 2 + 14 =
- * 52dp, the icon's height.
+ * the corner, the name the crew sees on up to two lines, its developer, and a pencil. Tapping the row
+ * edits the name in place: a field of up to two lines with a 2dp underline under the last, the count on
+ * the developer's line, and a check that saves it. Done, the check or leaving the field saves it and goes
+ * back to resting; a blank name stays open, with the app's own name as its hint. [focusAsk] goes up each
+ * time the page's hint asks for the name, which puts the cursor in it. Resting, the text is at most
+ * 18 + 18 + 2 + 14 = 52dp; editing, 17 + 17 + 4 + 14 = 52dp: the icon's height either way.
  */
 @Composable
-internal fun SeatAppHead(app: AppEntry) {
+internal fun SeatAppHead(
+    app: AppEntry,
+    name: String,
+    onRename: (String) -> Unit,
+    focusAsk: Int,
+    modifier: Modifier = Modifier,
+) {
+    val t = Tt.colors
     // Scales with the text, but only up to 1.3x, as a My apps tile does, so the column keeps fitting.
     val icon = AppTileIcon * LocalDensity.current.fontScale.coerceIn(1f, 1.3f)
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    var editing by rememberSaveable { mutableStateOf(false) }
+    val open = editing || name.isBlank()
+    val focus = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+    var field by remember { mutableStateOf(TextFieldValue(name, TextRange(name.length))) }
+    var wantFocus by remember { mutableStateOf(false) }
+    var hadFocus by remember { mutableStateOf(false) }
+    LaunchedEffect(name) {
+        if (field.text != name) field = TextFieldValue(name, TextRange(name.length))
+    }
+    // Only a new ask focuses it, not the count it already had when the head came back on screen.
+    var asked by remember { mutableIntStateOf(focusAsk) }
+    LaunchedEffect(focusAsk) {
+        if (focusAsk != asked) {
+            asked = focusAsk
+            editing = true
+            wantFocus = true
+        }
+    }
+    LaunchedEffect(open, wantFocus) {
+        if (open && wantFocus) {
+            wantFocus = false
+            runCatching { focus.requestFocus() }
+        }
+    }
+    val done = {
+        onRename(field.text.trim())
+        editing = false
+        focusManager.clearFocus()
+    }
+    val developer = app.developer.ifBlank { app.pkg }
+    Row(
+        modifier
+            .fillMaxWidth()
+            .then(
+                if (open) {
+                    Modifier
+                } else {
+                    Modifier.clickable(onClickLabel = "Change the name the crew sees") {
+                        editing = true
+                        wantFocus = true
+                    }
+                },
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Box(Modifier.size(icon)) {
             AppMark(app.pkg, app.name, app.icon, size = icon, ownIcon = true)
             SourceMark(live = false, Modifier.align(Alignment.BottomEnd).offset(5.dp, 5.dp))
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(app.name, style = HeadNameStyle, color = Tt.colors.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(2.dp))
-            Text(
-                app.developer.ifBlank { app.pkg },
-                style = DeveloperStyle,
-                color = Tt.colors.text3,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            if (open) {
+                val line = t.primary
+                BasicTextField(
+                    value = field,
+                    onValueChange = { typed ->
+                        val text = typed.text.take(FeedRules.APP_NAME_MAX)
+                        field = if (text == typed.text) typed else TextFieldValue(text, TextRange(text.length))
+                        onRename(text)
+                    },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focus)
+                            .onFocusChanged {
+                                if (it.isFocused) {
+                                    hadFocus = true
+                                } else if (hadFocus) {
+                                    // Leaving the field saves it, trimmed, and goes back to resting.
+                                    hadFocus = false
+                                    onRename(field.text.trim())
+                                    editing = false
+                                }
+                            }.drawBehind {
+                                // Under the last line, whether the name takes one line or two.
+                                val high = 2.dp.toPx()
+                                drawRect(line, Offset(0f, size.height - high), Size(size.width, high))
+                            }.padding(bottom = 4.dp),
+                    maxLines = 2,
+                    textStyle = HeadEditStyle.copy(color = t.text),
+                    cursorBrush = SolidColor(t.primary),
+                    keyboardOptions =
+                        KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { done() }),
+                    decorationBox = { inner ->
+                        Box {
+                            if (field.text.isEmpty()) {
+                                Text(app.name, style = HeadEditStyle, color = t.text4, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            }
+                            inner()
+                        }
+                    },
+                )
+                // The developer and the count share a baseline, with no gap under the underline.
+                Row {
+                    Text(
+                        developer,
+                        Modifier.weight(1f).alignByBaseline(),
+                        style = DeveloperStyle,
+                        color = t.text3,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "${field.text.length}/${FeedRules.APP_NAME_MAX}",
+                        Modifier.alignByBaseline(),
+                        style = CountStyle,
+                        color = t.text4,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                }
+            } else {
+                Text(name, style = HeadNameStyle, color = t.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(2.dp))
+                Text(developer, style = DeveloperStyle, color = t.text3, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        Spacer(Modifier.width(4.dp))
+        if (open) {
+            IconButton(onClick = done, modifier = Modifier.size(40.dp)) {
+                Icon(Lucide.Check, "Save the name", Modifier.size(20.dp), tint = t.accentInk)
+            }
+        } else {
+            Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                Icon(Lucide.Pencil, null, Modifier.size(18.dp), tint = t.text4)
+            }
         }
     }
 }

@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.CircleAlert
+import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Coins
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
@@ -41,8 +40,8 @@ import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.CrewAddViewModel
 
 /*
- * The seat page's details: the name the crew sees, how they get past a sign-in, what the seat costs,
- * and the notes that can hold the button. They scroll with the page; the one filled button that takes
+ * The seat page's details: the testers group once it is done, the crew, how they get past a sign-in,
+ * what the seat costs, and the notes that can hold the button. They scroll with the page; the one filled button that takes
  * the seat is [CrewSeatSubmit], the page's last part.
  */
 
@@ -85,22 +84,16 @@ internal fun CrewSeatDetails(
     crews: CrewViewModel,
     vm: CrewAddViewModel,
     onOpenCircle: () -> Unit,
-    /** Where the page scrolls to for the name, and a count that goes up each time the hint asks for it. */
-    nameSpot: BringIntoViewRequester,
-    nameAsk: Int,
+    /** Play shows the app to the testers group: the group's part is gone and its tile row leads the details. */
+    groupDone: Boolean,
 ) {
-    val app = state.app
     val short = vm.short || state.shortTix
     SeatHeading("Seat details", if (short) SeatStatus.warn(shortHeadline(vm.tix)) else null)
+    if (groupDone) {
+        SeatGroupDoneRow()
+        Spacer(Modifier.height(16.dp))
+    }
     CrewOpenHeader(crews.open)
-    Spacer(Modifier.height(16.dp))
-    SeatNameRow(
-        name = vm.name,
-        placeholder = app.name,
-        onRename = vm::rename,
-        focusAsk = nameAsk,
-        modifier = Modifier.bringIntoViewRequester(nameSpot),
-    )
     Spacer(Modifier.height(20.dp))
     SignInFields(
         needed = vm.needsSignIn,
@@ -164,6 +157,34 @@ internal fun CrewSeatDetails(
             MaterialTheme.colorScheme.onSurface,
             iconSize = 16.dp,
         )
+    }
+}
+
+private val GroupDoneLine = tileStyle(12.5f, 14f, FontWeight.Medium)
+
+/** The testers group once Play shows the app to it: one quiet tile row at the top of the details. */
+@Composable
+private fun SeatGroupDoneRow() {
+    val t = Tt.colors
+    Row(Modifier.fillMaxWidth().heightIn(min = 40.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(t.okBg),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Lucide.CircleCheck, null, Modifier.size(20.dp), tint = t.ok)
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text("Testers group added", style = AppTileName, color = t.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(2.dp))
+            Text(
+                "Play shows your app to the group",
+                style = GroupDoneLine,
+                color = t.text3,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 

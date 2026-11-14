@@ -192,33 +192,40 @@ internal fun CrewSeatScreen(
                 } else if (app == null || details == null) {
                     SeatPageSkeleton()
                 } else {
-                    SeatAppHead(app)
+                    SeatAppHead(
+                        app,
+                        name = vm.name,
+                        onRename = vm::rename,
+                        focusAsk = nameAsk,
+                        modifier = Modifier.bringIntoViewRequester(nameSpot),
+                    )
                     Spacer(Modifier.height(24.dp))
-                    Column(Modifier.fillMaxWidth().bringIntoViewRequester(groupSpot)) {
-                        CrewSeatGroup(
-                            SeatGroupState(
-                                open = groupOpen,
-                                checkLine = lastCheckLine(checkedAt, checkedOk, System.currentTimeMillis(), notVisible),
-                                checkFailed = checkFailed,
-                                checking = apps.acting == app.id && apps.actingOn == AppAction.VERIFY,
-                                error = apps.actionError.takeIf { failedAt == null },
-                            ),
-                            onVerify = {
-                                if (apps.acting == null) {
-                                    apps.verify(context, app.id) { notVisible = null }
-                                }
-                            },
-                        )
+                    // Once Play shows the app to the group, the group is a tile row at the top of the details.
+                    if (groupOpen) {
+                        Column(Modifier.fillMaxWidth().bringIntoViewRequester(groupSpot)) {
+                            CrewSeatGroup(
+                                SeatGroupState(
+                                    checkLine = lastCheckLine(checkedAt, checkedOk, System.currentTimeMillis(), notVisible),
+                                    checkFailed = checkFailed,
+                                    checking = apps.acting == app.id && apps.actingOn == AppAction.VERIFY,
+                                    error = apps.actionError.takeIf { failedAt == null },
+                                ),
+                                onVerify = {
+                                    if (apps.acting == null) {
+                                        apps.verify(context, app.id) { notVisible = null }
+                                    }
+                                },
+                            )
+                        }
+                        Spacer(Modifier.height(32.dp))
                     }
-                    Spacer(Modifier.height(32.dp))
                     Column(Modifier.fillMaxWidth().bringIntoViewRequester(detailsSpot)) {
                         CrewSeatDetails(
                             details,
                             crews = crews,
                             vm = vm,
                             onOpenCircle = onOpenCircle,
-                            nameSpot = nameSpot,
-                            nameAsk = nameAsk,
+                            groupDone = !groupOpen,
                         )
                     }
                     Spacer(Modifier.height(32.dp))

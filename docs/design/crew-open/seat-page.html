@@ -241,6 +241,22 @@
   .vdots { position: absolute; left: 0; right: 0; bottom: 52px; display: flex; justify-content: center; gap: 6px; z-index: 3; }
   .vdots i { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.35); }
   .vdots i.on { background: #fff; width: 16px; }
+  /* head that edits the crew name, and the verified group */
+  .ah .slot { width: 40px; height: 40px; display: grid; place-items: center; flex: none; color: var(--text4); margin-left: 4px; }
+  .hed { font-size: 16px; line-height: 18px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; box-shadow: inset 0 -2px 0 var(--primary); padding-bottom: 4px; }
+  .sub.okl { color: var(--ok); font-weight: 600; }
+  .t40.okt { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); }
+  /* editing head: field up to 2 lines, underline under the last, counter on the developer's row */
+  .hed2 { font-size: 16px; line-height: 17px; font-weight: 600; color: var(--text); box-shadow: inset 0 -2px 0 var(--primary); padding-bottom: 4px; overflow-wrap: anywhere; }
+  .hed2 .caret { height: 14px; vertical-align: -2px; }
+  .devrow { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--text3); }
+  .devrow .one { flex: 1; min-width: 0; }
+  .devrow .cn { font-size: 11.5px; line-height: 14px; }
+  .ah .slot.done { color: var(--accentInk); }
+  .big .hed2 { font-size: 20.8px; line-height: 22.1px; }
+  .big .devrow { font-size: 16.25px; line-height: 18.2px; }
+  .big .devrow .cn { font-size: 14.95px; line-height: 18.2px; }
+  .big .ah .slot svg { width: 26px; height: 26px; }
 </style>
 </head>
 <body>
@@ -448,6 +464,39 @@ const GROUP_NEW = `<div class="nsec state"><h2>Testers group, new</h2>
   <div class="row">${cell('How to, top, light', howPhone('light', 'top'))}${cell('How to, top, dark', howPhone('dark', 'top'))}${cell('How to, scrolled, light', howPhone('light', 'end'))}${cell('How to, scrolled, dark', howPhone('dark', 'end'))}</div>
   <div class="row">${cell('Viewer, fit', viewer(false))}${cell('Viewer, zoomed', viewer(true))}</div></div>`;
 
+
+/* Head and verified: the head edits the crew name; three ways to show a verified group */
+const head2 = (name, mode, statusA) => {
+  const col = mode === 'edit'
+    ? `<div class="hed2">${name}<span class="caret"></span></div><div class="devrow"><span class="one">Brightleaf Studio</span><span class="cn">${name.length}/30</span></div>`
+    : `<div class="hn">${name}</div><div class="sub"><span class="one">Brightleaf Studio</span></div>${statusA ? `<div class="sub okl">${I.circleCheck(12)}<span class="one">Play shows it to the testers group</span></div>` : ''}`;
+  const slot = mode === 'edit' ? I.check(20, 2.4) : ICN.pencil(18);
+  return `<div class="ah" data-tile>${icon(BASE)}<div class="col">${col}</div><span class="slot${mode === 'edit' ? ' done' : ''}">${slot}</span></div>`;
+};
+const okRow = `<div class="r40" data-tile><span class="t40 okt">${I.circleCheck(20)}</span><div class="col"><div class="nm one">Testers group added</div><div class="sub"><span class="one">Play shows your app to the group</span></div></div></div><div style="height:16px"></div>`;
+const crewRow = `<div class="r40" data-tile><span class="t40">${I.users(20)}</span><div class="col"><div class="nm one">Crew 07, 6 of 15 seats left</div><div class="sub acc">${I.clock(11)}<span class="one">Likely starts Friday</span></div></div></div>`;
+function top2(o) {
+  const name = o.name || 'Sunrise Notes';
+  let h = head2(name, o.mode, o.v === 'a');
+  if (o.v === 'old') h += `<div class="sec first"><div class="sh done"><h3>Testers group</h3><span class="st ok">${I.circleCheck(14)}Play shows it</span></div></div>`;
+  h += `<div class="sec ${o.v === 'old' ? '' : 'first'}"><div class="sh"><h3>Seat details</h3></div>${o.v === 'b' ? okRow : ''}${crewRow}
+    <div style="height:20px"></div><div class="q">Does your app need a sign-in?</div><div class="tc"><div class="chc on">No sign-in</div><div class="chc">Needs a sign-in</div></div>
+    <div style="height:24px"></div><div class="r40" data-tile><span class="t40">${I.coins(20)}</span><div class="col"><div class="nm one">A seat is ${COST} tix</div><div class="sub"><span class="one">You have 240 tix</span></div></div></div></div>`;
+  return h;
+}
+function phone2(o, w) {
+  const h = w === 412 ? 915 : 800;
+  return `<div class="phone light${o.big ? ' big' : ''}" style="width:${w}px;height:${h}px" data-scroll="top" data-pop=""><div class="sbar"></div><div class="pbar"><span class="back">${I.backIos(24)}</span><span class="pt">Take a seat</span></div>
+    <div class="vp" style="height:${h - 112}px"><div class="scroll">${top2(o)}</div></div><div class="nav"></div>${o.mode === 'edit' ? keyboard() : ''}</div>`;
+}
+const snip = (o, w) => `<div class="opt light" style="width:${w}px;padding-top:12px">${top2(o)}</div>`;
+const cell2 = (cap, html, rec) => `<div><div class="cap">${cap}${rec ? '<span class="rec">Recommended</span>' : ''}</div>${html}</div>`;
+const HEAD_NEW = `<div class="nsec state"><h2>Head and verified</h2>
+  <div class="row">${cell2('Head, resting, 412', snip({ v: 'b' }, 412))}${cell2('Head, resting, 360', snip({ v: 'b' }, 360))}${cell2('Head, long name, 360', snip({ v: 'b', name: 'Sunrise Notes: Daily Journal 2' }, 360))}</div>
+  <div class="row">${cell2('Editing, 412', phone2({ v: 'b', mode: 'edit' }, 412))}${cell2('Editing, 360', phone2({ v: 'b', mode: 'edit' }, 360))}${cell2('Resting, 2 lines, 360', phone2({ v: 'b', name: 'Mindful Moments: Wellness Hubs' }, 360))}${cell2('Editing, 2 lines, 360', phone2({ v: 'b', mode: 'edit', name: 'Mindful Moments: Wellness Hubs' }, 360))}</div>
+  <div class="row">${cell2('Editing, 1.3x, 412', phone2({ v: 'b', mode: 'edit', big: true, name: 'Mindful Moments: Wellness Hubs' }, 412))}${cell2('Editing, 1.3x, 360', phone2({ v: 'b', mode: 'edit', big: true, name: 'Mindful Moments: Wellness Hubs' }, 360))}</div>
+  <div class="row">${cell2('Now', snip({ v: 'old' }, 412))}${cell2('a. In the head, 412', snip({ v: 'a' }, 412))}${cell2('b. Tile row, 412', snip({ v: 'b' }, 412), true)}${cell2('b. Tile row, 360', snip({ v: 'b' }, 360), true)}${cell2('c. Hidden, 412', snip({ v: 'c' }, 412))}</div></div>`;
+
 const H412 = 915, H360 = 800;
 const STATES = [
   ['Group not shown', { group: 'new' }, true],
@@ -460,7 +509,7 @@ const STATES = [
   ['Long name', { group: 'new', app: 'Sunrise Notes: Daily Journal 2', dev: 'Brightleaf Creative Studio Ltd' }, 'big'],
   ['Whole page', { group: 'new' }, false, true],
 ];
-document.getElementById('doc').innerHTML = GROUP_NEW + STATES.map(([label, st, narrow, whole]) => {
+document.getElementById('doc').innerHTML = HEAD_NEW + GROUP_NEW + STATES.map(([label, st, narrow, whole]) => {
   const s = { ...BASE, ...st };
   const hh = whole ? null : H412;
   let h = `<div class="state"><div class="lbl">${label}</div><div class="pair">`
@@ -530,7 +579,7 @@ function check() {
   document.querySelectorAll('.bx').forEach(r => { if (r.offsetHeight > 48.5 || r.scrollWidth > r.clientWidth + 1) bad.push('box row ' + r.textContent.trim()); });
   document.querySelectorAll('.phone:not(.big) .af').forEach(f => { const a = f.querySelector('.a'); if (a.scrollWidth > a.clientWidth + 1 || f.offsetHeight > 56.5) bad.push('addr ' + f.closest('.phone, .opt').style.width + ' h' + f.offsetHeight); });
   document.querySelectorAll('.pop').forEach(p => { const ph = p.closest('.phone').getBoundingClientRect(), r = p.getBoundingClientRect(); if (r.right > ph.right - 15 || r.left < ph.left + 15 || r.bottom > ph.bottom - 24) bad.push('pop out'); });
-  const names = [...document.querySelectorAll('.ah')].map(n => n.querySelector('.hn').offsetHeight + '/' + n.querySelector('.col').offsetHeight + '/' + n.querySelector('.ai').offsetHeight + '@' + n.closest('.phone, .opt').style.width + (n.closest('.big') ? 'big' : ''));
+  const names = [...document.querySelectorAll('.ah')].map(n => n.querySelector('.hn, .hed, .hed2').offsetHeight + '/' + n.querySelector('.col').offsetHeight + '/' + n.querySelector('.ai').offsetHeight + '@' + n.closest('.phone, .opt').style.width + (n.closest('.big') ? 'big' : ''));
   const gaps = [...document.querySelectorAll('.bx')].slice(0, 2).map(r => Math.round(r.querySelector('.ib svg').getBoundingClientRect().left - r.querySelector('.bl').getBoundingClientRect().right));
   document.getElementById('chk').textContent = (bad.length ? 'BAD ' + [...new Set(bad)].join('; ') : 'OK') + ' | names ' + [...new Set(names)].join(',') + ' | addr sp ' + [...new Set([...document.querySelectorAll('.addr')].map(a => a.dataset.sp + '@' + a.closest('.phone, .opt').style.width + (a.closest('.big') ? 'big' : '')))].join(',') + ' | align ' + [...new Set([...document.querySelectorAll('.phone')].filter(ph => ph.querySelector('.addr') && ph.querySelector('.gt')).map(ph => { const L = ph.getBoundingClientRect().left; const a = ph.querySelector('.addr').getBoundingClientRect().left - L, t = ph.querySelector('.gt').getBoundingClientRect().left - L; const tc = ph.querySelector('[data-fit]').closest('.r40').querySelector('.t40').getBoundingClientRect(), gc = ph.querySelector('.gn').getBoundingClientRect(); return Math.round(a) + '/' + Math.round(t) + ' c' + Math.round(tc.left + tc.width / 2 - L) + '/' + Math.round(gc.left + gc.width / 2 - L); }))].join(',') + ' | label-to-glyph ' + gaps.join(',') + ' | rects ' + [...document.querySelectorAll('.state')].map(e => { const r = e.getBoundingClientRect(); return [r.left, r.top + scrollY, r.width, r.height].map(Math.round).join(':'); }).join(';');
 }

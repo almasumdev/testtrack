@@ -165,8 +165,6 @@ private val BodyLine
 
 /** What the testers group section needs to draw and to ask. */
 internal class SeatGroupState(
-    /** Play does not show the app to the group yet, or a seat was just refused for it. */
-    val open: Boolean,
     /** The amber line, only when the check failed: when Play was last asked and what it said. */
     val checkLine: String?,
     val checkFailed: Boolean,
@@ -185,8 +183,9 @@ internal class SeatGroupState(
 }
 
 /**
- * Testers group: the address to copy, the way to the steps and the check, or only its heading once
- * Play shows the app to the group. The steps open full screen, with a picture of each.
+ * Testers group, while Play does not show the app to it yet: the address to copy, the way to the steps
+ * and the check. Once it does, the page drops this part for a tile row in the details. The steps open
+ * full screen, with a picture of each.
  */
 @Composable
 internal fun CrewSeatGroup(
@@ -194,10 +193,6 @@ internal fun CrewSeatGroup(
     onVerify: () -> Unit,
 ) {
     val t = Tt.colors
-    if (!state.open) {
-        SeatHeading("Testers group", SeatStatus.ok("Play shows it"), gap = 0.dp)
-        return
-    }
     var howTo by rememberSaveable { mutableStateOf(false) }
     SeatHeading("Testers group", if (state.checkFailed) SeatStatus.warn("Not shown yet") else null)
     // Once Play was asked and said no, the last check's own words take the plain line's place.
