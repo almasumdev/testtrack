@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TestTrack. Bottom nav options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  /* Real values from ui/theme/Tokens.kt (OceanLight / OceanDark) */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSelected:#2E4E66; --tabUnselected:#526B7D; --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
+    --primary:#3A5B73; --onPrimary:#FFFFFF;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --leafAccent:#3A5B73; --leafAccentSoft:rgba(74,114,144,.16);
+    --glassBorder:#B7D1E2; --glass2:#DFEDF6; --card:#F3F8FB; --cardLine:#E1ECF3; --track:#E4EEF4;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --tixTop:#3F6680; --tixBottom:#2B4A60; --gold:#9A7B1F; --frame:#C3CFD8;
+    --ts:89%; --tl:32%; --tsat:45%; --tlsat:50%;
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSelected:#B6CCDC; --tabUnselected:#989EA4; --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
+    --primary:#93B3CA; --onPrimary:#0F1011;
+    --tile:#2A2D31; --tileInk:#A2BED2; --leafAccent:#93B3CA; --leafAccentSoft:#2A2D31;
+    --glassBorder:#383C41; --glass2:#292C2F; --card:#1C1E20; --cardLine:#2D3034; --track:#2D3034;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --tixTop:#4A7290; --tixBottom:#355A75; --gold:#E3A93C; --frame:#2A2D31;
+    --ts:18%; --tl:76%; --tsat:30%; --tlsat:55%;
+  }
+
+  * { box-sizing:border-box; }
+  body { margin:0; background:#E7ECEF; font-family:Barlow, system-ui, sans-serif; color:#142F43; }
+  .doc { max-width:1840px; margin:0 auto; padding:32px 28px 80px; }
+  h1 { font-size:30px; margin:0 0 10px; font-weight:700; }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; margin:6px 0; align-items:center; }
+  .chips .k { font-size:14px; font-weight:700; color:#2D4A5F; margin-right:4px; }
+  .chips span.c { background:#fff; border:1px solid #D3DEE6; border-radius:999px; padding:4px 12px; font-size:14px; font-weight:500; }
+  .chips span.c b { font-family:'IBM Plex Mono', monospace; font-weight:600; margin-right:6px; color:#3A5B73; }
+  section.opt { margin-top:40px; padding-top:22px; border-top:1px solid #CBD6DE; }
+  section.opt h2 { font-size:23px; margin:0 0 6px; font-weight:700; display:flex; align-items:center; gap:10px; }
+  .rec { font-size:13px; font-weight:700; background:#3A5B73; color:#fff; border-radius:999px; padding:3px 11px; }
+  .pros { display:flex; gap:8px; flex-wrap:wrap; margin:2px 0; }
+  .pros span { font-size:14px; border-radius:999px; padding:3px 11px; font-weight:500; }
+  .pros .p { background:rgba(36,107,89,.12); color:#1d5848; }
+  .pros .m { background:rgba(158,59,46,.10); color:#8a3328; }
+  .row { display:flex; gap:26px; flex-wrap:wrap; margin-top:14px; align-items:flex-start; }
+  .cap { font-size:13px; font-weight:600; color:#59758A; margin:0 0 6px 4px; }
+
+  /* ---------- phone ---------- */
+  .phone { --pw:412px; width:var(--pw); height:800px; position:relative; background:var(--bg); color:var(--text);
+           border-radius:30px; overflow:hidden; border:1px solid var(--frame); box-shadow:0 10px 30px rgba(16,47,70,.10); }
+  .sbar { height:30px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; font-size:13px; font-weight:600; color:var(--text2); }
+  .hud { display:flex; align-items:center; justify-content:space-between; padding:6px 16px 0; height:50px; }
+  .lvl { display:flex; align-items:center; gap:9px; }
+  .bot { width:34px; height:34px; border-radius:11px; background:var(--tile); display:grid; place-items:center; color:var(--tileInk); }
+  .lv { font-size:14px; font-weight:600; color:var(--text2); line-height:16px; }
+  .xp { width:84px; height:4px; border-radius:2px; background:var(--track); margin-top:5px; overflow:hidden; }
+  .xp i { display:block; height:100%; width:62%; background:var(--leafAccent); }
+  .rank { display:flex; align-items:center; gap:5px; height:30px; padding:0 11px 0 9px; border-radius:999px; background:var(--glass2); color:var(--text2); font:600 13.5px 'IBM Plex Mono', monospace; margin-left:6px; }
+  .rank svg { color:var(--gold); }
+  .tix { display:flex; align-items:center; gap:6px; height:30px; padding:0 12px 0 9px; border-radius:999px; background:linear-gradient(var(--tixTop),var(--tixBottom)); color:#fff; font:600 14px 'IBM Plex Mono', monospace; }
+  .head { padding:18px 16px 10px; font-size:16px; line-height:19px; font-weight:700; }
+  .w { padding:0 16px; }
+  .w + .w { margin-top:8px; }
+  .ht { display:flex; align-items:center; min-height:72px; border-radius:14px; background:var(--bg); box-shadow:inset 0 0 0 1px var(--cardLine); padding:12px 10px 12px 12px; }
+  .mark { width:44px; height:44px; border-radius:12px; display:grid; place-items:center; font-weight:700; font-size:18px; flex:none; margin-right:12px;
+          background:hsl(var(--h) var(--tsat) var(--ts)); color:hsl(var(--h) var(--tlsat) var(--tl)); }
+  .tcol { flex:1; min-width:0; }
+  .nm { font-size:16px; line-height:19px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .l2 { margin-top:3px; font-size:13px; line-height:16px; font-weight:500; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .l2.ok { color:var(--ok); } .l2.warn { color:var(--warn); }
+  .bub { min-width:22px; height:22px; border-radius:999px; background:var(--primary); color:var(--onPrimary); font:700 12px 'IBM Plex Mono', monospace; display:inline-flex; align-items:center; justify-content:center; padding:0 7px; margin-left:8px; }
+  .chev { color:var(--text4); margin-left:6px; flex:none; }
+  .addbtn { position:absolute; right:16px; height:48px; padding:0 20px 0 16px; border-radius:999px; background:var(--accent); color:var(--onAccent); display:inline-flex; align-items:center; gap:8px; font-size:15px; font-weight:600; }
+  .seg { display:flex; gap:14px; padding:8px 16px 4px; }
+  .seg span { height:36px; padding:0 14px; border-radius:999px; display:inline-flex; align-items:center; gap:6px; font-size:14px; font-weight:600; color:var(--text3); }
+  .seg span.on { background:var(--selFill, var(--leafAccent)); color:var(--onAccent); }
+  .dark .seg span.on { background:var(--leafAccentSoft); color:var(--leafAccent); }
+  .seg .n { font:700 11px 'IBM Plex Mono', monospace; background:var(--primary); color:var(--onPrimary); border-radius:999px; padding:1px 6px; }
+  .pay { display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 9px; border-radius:999px; background:var(--glass2); color:var(--text2); font:600 12.5px 'IBM Plex Mono', monospace; margin-left:8px; flex:none; }
+  .gest { position:absolute; bottom:6px; left:50%; transform:translateX(-50%); width:110px; height:4px; border-radius:2px; background:var(--text4); opacity:.55; }
+
+  /* ---------- docks ---------- */
+  .dockwrap { position:absolute; left:0; right:0; bottom:16px; padding:0 var(--inset,20px); }
+  .dock { border-radius:28px; background:var(--bg); box-shadow:inset 0 0 0 1px var(--cardLine), 0 4px 18px rgba(16,47,70,.06); padding:4px; display:flex; }
+  .dark .dock { box-shadow:inset 0 0 0 1px var(--cardLine); }
+  .tab { flex:1; min-width:0; height:60px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:var(--tabUnselected); }
+  .tab .ind { width:52px; height:30px; border-radius:15px; display:grid; place-items:center; position:relative; }
+  .tab .lb { font-size:12px; line-height:15px; font-weight:500; white-space:nowrap; letter-spacing:.1px; }
+  .tab.on { color:var(--tabSelected); }
+  .tab.on .ind { background:var(--leafAccentSoft); }
+  .tab.on .lb { font-weight:600; }
+  .badge { position:absolute; left:calc(50% + 4px); top:-2px; min-width:18px; height:18px; border-radius:999px; background:var(--primary); color:var(--onPrimary);
+           font:700 10px/12px 'IBM Plex Mono', monospace; display:grid; place-items:center; padding:0 4.5px; box-shadow:0 0 0 1.5px var(--bg); }
+  /* B: centre tab always filled */
+  .tab.hero .ind { width:54px; height:32px; border-radius:16px; background:var(--accent); color:var(--onAccent); }
+  .tab.hero.on .ind { box-shadow:0 0 0 2px var(--bg), 0 0 0 3.5px var(--accent); }
+  .tab.hero { gap:4px; }
+  /* Now: the current expanding pill */
+  .dock.now { height:56px; border-radius:32px; align-items:center; }
+  .dock.now .t { flex:1; height:48px; display:grid; place-items:center; color:var(--tabUnselected); position:relative; }
+  .dock.now .t.on { flex:none; width:124px; border-radius:999px; background:var(--leafAccentSoft); color:var(--tabSelected); display:flex; justify-content:center; gap:8px; align-items:center; font-size:14px; font-weight:600; }
+  .dock.now .badge { left:calc(50% + 2px); top:6px; }
+  .dock.now .t.on .badge { left:28px; }
+
+  .strip { width:var(--sw); background:var(--bg); border-radius:18px; border:1px solid var(--frame); position:relative; height:96px; overflow:hidden; }
+  .strip .dockwrap { bottom:14px; }
+  .strip .w360 { position:absolute; top:6px; left:12px; font:600 11px 'IBM Plex Mono', monospace; color:var(--text4); }
+  svg.i { display:block; }
+
+  /* ---------- plain bar + Add ---------- */
+  h2.big { font-size:27px; margin:26px 0 4px; font-weight:700; }
+  .pbar { position:absolute; left:0; right:0; bottom:0; height:84px; }
+  .pbar .ground { position:absolute; inset:0; background:var(--bg); box-shadow:0 -1px 0 var(--cardLine), 0 -6px 16px rgba(16,47,70,.04); }
+  .dark .pbar .ground { box-shadow:0 -1px 0 var(--cardLine); }
+  .pbar svg.cut { position:absolute; left:0; top:0; overflow:visible; }
+  .pbar .ptabs { position:absolute; left:0; right:0; top:0; height:64px; display:flex; }
+  .pbar .gest { bottom:8px; }
+  .ptab { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; padding-top:8px; gap:3px; color:var(--tabUnselected); position:relative; }
+  .ptab .ind { width:52px; height:30px; border-radius:15px; display:grid; place-items:center; position:relative; }
+  .ptab .lb { font-size:12px; line-height:15px; font-weight:500; white-space:nowrap; }
+  .ptab.on { color:var(--tabSelected); } .ptab.on .ind { background:var(--leafAccentSoft); } .ptab.on .lb { font-weight:600; }
+  .ptab .badge { left:calc(50% + 4px); top:-2px; }
+  /* take 1: raised circle in a cradle */
+  .add1 .fab { position:absolute; left:50%; top:-24px; width:56px; height:56px; margin-left:-28px; border-radius:50%; background:var(--accent); color:var(--onAccent);
+               display:grid; place-items:center; box-shadow:0 4px 10px rgba(16,47,70,.18); }
+  .dark .add1 .fab { box-shadow:0 4px 10px rgba(0,0,0,.5); }
+  .add1 .lb { position:absolute; top:41px; color:var(--text2); font-weight:600; }
+  .add1.pressed .fab { transform:scale(.93); filter:brightness(.88); }
+  /* take 2: inline tile */
+  .add2 { padding-top:3px; }
+  .add2 .tilebtn { width:56px; height:40px; border-radius:14px; background:var(--accent); color:var(--onAccent); display:grid; place-items:center; }
+  .add2 .lb { color:var(--text2); font-weight:600; margin-top:-5px; }
+  .add2.pressed .tilebtn { transform:scale(.93); filter:brightness(.88); }
+  /* take 3: tix ticket */
+  .add3 { padding-top:3px; }
+  .add3 .tk { width:62px; height:42px; position:relative; color:#fff; }
+  .add3 .tk svg.shape { position:absolute; inset:0; overflow:visible; }
+  .add3 .tk .pl { position:absolute; left:0; right:0; top:0; height:40px; display:grid; place-items:center; }
+  .add3 .lb { color:var(--text2); font-weight:600; margin-top:-7px; }
+  .add3.pressed .tk .top { transform:translateY(2px); }
+  .add3.pressed .tk .pl { transform:translateY(2px); }
+  .add3.pressed .tk .sheen { opacity:0; }
+  .light { --tixEdge:#1E3749; } .dark { --tixEdge:#14232E; }
+  /* states strip */
+  .states { display:flex; gap:12px; flex-wrap:wrap; }
+  .st { width:200px; height:110px; position:relative; overflow:hidden; border-radius:16px; border:1px solid var(--frame); background:var(--bg); }
+  .st .inner { position:absolute; left:50%; bottom:0; width:412px; margin-left:-206px; height:84px; }
+  .st .tag { position:absolute; top:6px; left:10px; font:600 11px 'IBM Plex Mono', monospace; color:var(--text4); z-index:3; }
+  /* sheet */
+  .scrim { position:absolute; inset:0; background:rgba(20,34,48,.46); }
+  .dark .scrim { background:rgba(0,0,0,.6); }
+  .sheet { position:absolute; left:0; right:0; bottom:0; background:#fff; border-radius:28px 28px 0 0; padding:10px 0 40px; box-shadow:0 -1px 0 #DCE8F0; }
+  .dark .sheet { background:#1C1E20; box-shadow:0 -1px 0 #2D3034; }
+  .sheet .hdl { width:36px; height:4px; border-radius:2px; background:#789AAF; margin:0 auto 14px; }
+  .sheet .ttl { font-size:20px; font-weight:700; padding:0 20px 12px; }
+  .trow { display:flex; align-items:center; gap:14px; padding:10px 20px; min-height:64px; }
+  .trow .ti { width:40px; height:40px; border-radius:12px; background:var(--tile); color:var(--tileInk); display:grid; place-items:center; flex:none; }
+  .trow .tt { font-size:16px; font-weight:600; line-height:19px; }
+  .trow .ts { font-size:13px; line-height:16px; color:var(--text3); margin-top:3px; }
+  .trow .ts.gate { color:var(--warn); }
+  .trow .chev { margin-left:auto; }
+</style>
+</head>
+<body>
+<div class="doc">
+  <h1>Bottom nav options</h1>
+  <p><a href="bottom-nav-five-preview.html" style="color:#3A5B73;font-weight:600">Explore five new interactive designs: Ticket dock, Floating orbit, Quiet tile, Split capsule, and Corner compose</a></p>
+  <div class="chips"><span class="k">Opened most</span>
+    <span class="c"><b>1</b>Circle: earn tix, default tab</span>
+    <span class="c"><b>2</b>Crew: tonight's opens, badge</span>
+    <span class="c"><b>3</b>My apps: check progress</span>
+    <span class="c"><b>4</b>You: settings</span>
+    <span class="c"><b>5</b>Ranks: now and then</span>
+  </div>
+  <div class="chips"><span class="k">Badges today</span>
+    <span class="c">Circle</span><span class="c">Crew</span><span class="c">My apps</span>
+  </div>
+  <section class="opt" style="border-top:none;margin-top:18px;padding-top:0">
+    <h2 class="big">Plain bar + Add</h2>
+    <div class="chips"><span class="k">Bar</span><span class="c">Full width, edge to edge</span><span class="c">1dp top line</span><span class="c">All names shown</span><span class="c">Ranks inside You</span></div>
+    <div class="chips"><span class="k">Screen buttons</span><span class="c">Remove: Add an app, Ask for feedback</span><span class="c">Keep: Take a seat on Crew's Open tab</span><span class="c">Keep: empty-state Add an app</span></div>
+    <div id="plain"></div>
+  </section>
+  <h2 class="big" style="margin-top:56px">Earlier options</h2>
+  <div class="row" id="now"></div>
+  <div id="opts"></div>
+  <section class="opt">
+    <h2>Check at 360</h2>
+    <div class="row" id="narrow"></div>
+  </section>
+</div>
+
+<script>
+const P = (d) => `<svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICON = {
+  circle: P('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'),
+  crew:   P('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
+  ranks:  P('<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>'),
+  apps:   P('<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>'),
+  you:    P('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
+};
+const small = (d, s=16, w=2) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const CHEV = small('<path d="m9 18 6-6-6-6"/>', 18);
+const PLUS = small('<path d="M5 12h14"/><path d="M12 5v14"/>', 20, 2.2);
+const TICKET = small('<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>', 17);
+const TROPHY = small('<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>', 15, 2.2);
+const BOT = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="4"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/><circle cx="9" cy="14" r=".8" fill="currentColor"/><circle cx="15" cy="14" r=".8" fill="currentColor"/></svg>`;
+
+const LABEL = { circle:'Circle', crew:'Crew', ranks:'Ranks', apps:'My apps', you:'You' };
+const BADGES = { circle:2, crew:3, apps:1 };
+
+const ORDERS = {
+  now: ['circle','crew','ranks','apps','you'],
+  A:   ['circle','crew','apps','ranks','you'],
+  B:   ['circle','crew','apps','ranks','you'],
+  C:   ['circle','crew','apps','you'],
+  D:   ['circle','crew','apps','you'],
+};
+
+function badge(k) { return BADGES[k] ? `<span class="badge">${BADGES[k]}</span>` : ''; }
+
+function dock(opt, sel) {
+  const order = ORDERS[opt];
+  if (opt === 'now') {
+    return `<div class="dockwrap"><div class="dock now">${order.map(k =>
+      k === sel ? `<div class="t on">${ICON[k]}${LABEL[k]}${badge(k)}</div>`
+                : `<div class="t">${ICON[k]}${badge(k)}</div>`).join('')}</div></div>`;
+  }
+  return `<div class="dockwrap"><div class="dock">${order.map(k => {
+    const hero = opt === 'B' && k === 'apps';
+    return `<div class="tab${k === sel ? ' on' : ''}${hero ? ' hero' : ''}"><div class="ind">${ICON[k]}${badge(k)}</div><div class="lb">${LABEL[k]}</div></div>`;
+  }).join('')}</div></div>`;
+}
+
+function hud(opt) {
+  return `<div class="hud"><div class="lvl"><div class="bot">${BOT}</div><div><div class="lv">Level 3</div><div class="xp"><i></i></div></div>${opt === 'D' ? `<div class="rank">${TROPHY}#12</div>` : ''}</div><div class="tix">${TICKET}100</div></div>`;
+}
+
+function appsScreen() {
+  const rows = [
+    ['D', 205, 'Daytone', 'Crew 4, night 6 of 14', '', ''],
+    ['B', 210, 'Bluefy', '1 new review', '', 1],
+    ['P', 30, 'Picumo', 'Waiting for a seat', 'warn', ''],
+    ['L', 140, 'ListKin', 'Closed test done', 'ok', ''],
+  ];
+  return `<div class="head">My apps</div>` + rows.map(r =>
+    `<div class="w"><div class="ht"><div class="mark" style="--h:${r[1]}">${r[0]}</div><div class="tcol"><div class="nm">${r[2]}</div><div class="l2 ${r[4]}">${r[3]}</div></div>${r[5] ? `<span class="bub">${r[5]}</span>` : ''}<span class="chev">${CHEV}</span></div></div>`).join('')
+    + `<div class="addbtn" style="bottom:var(--fab)">${PLUS}Add an app</div>`;
+}
+
+function circleScreen() {
+  const rows = [
+    ['S', 330, 'Step Count Pro', 'Try the new goal screen', 8],
+    ['N', 20, 'Notely', 'Is sign in clear?', 6],
+    ['W', 180, 'Weatherly', 'First run, then the widget', 10],
+    ['Q', 260, 'Quiz Night', 'Play two rounds', 6],
+  ];
+  return `<div class="seg"><span class="on">Feedback</span><span>My reviews</span><span>To check <i class="n">2</i></span></div><div style="height:10px"></div>` + rows.map(r =>
+    `<div class="w"><div class="ht"><div class="mark" style="--h:${r[1]}">${r[0]}</div><div class="tcol"><div class="nm">${r[2]}</div><div class="l2">${r[3]}</div></div><span class="pay">${TICKET.replace('width="17" height="17"','width="14" height="14"')}${r[4]}</span></div></div>`).join('')
+    + `<div class="addbtn" style="bottom:var(--fab)">${PLUS}Ask for feedback</div>`;
+}
+
+function phone(opt, theme, sel, cap) {
+  const fab = opt === 'now' ? '88px' : '102px';
+  return `<div><div class="cap">${cap}</div><div class="phone ${theme}" style="--fab:${fab}">
+    <div class="sbar"><span>12:13</span><span>62%</span></div>
+    ${hud(opt)}
+    ${sel === 'apps' ? appsScreen() : circleScreen()}
+    ${dock(opt, sel)}<div class="gest"></div></div></div>`;
+}
+
+const OPTS = [
+  { id:'A', title:'Option A. Reorder, labels always', pros:['My apps in the middle','Every tab named','Small change'], cons:['Still 5 tabs','Middle spot goes to a check-in tab'] },
+  { id:'B', title:'Option B. My apps as the centre button', pros:['My apps easy to find','Labels always'], cons:['Reads as an add button','Selected tab harder to tell','Pulls focus from Circle and Crew'] },
+  { id:'C', title:'Option C. Four tabs, Ranks moves into You', rec:true, pros:['Least to read','Wider tabs, no cut labels','You already opens Ranks'], cons:['Ranks one tap deeper'] },
+  { id:'D', title:'Option D. Four tabs, your rank in the top bar', pros:['Rank seen on every screen','Four calm tabs'], cons:['Busier top bar','Rank must load with the top bar'] },
+];
+
+document.getElementById('now').innerHTML =
+  `<div><div class="cap">Now</div><div class="strip light" style="--sw:412px">${dock('now','apps')}</div></div>` +
+  `<div><div class="cap">Now</div><div class="strip light" style="--sw:412px">${dock('now','circle')}</div></div>`;
+
+document.getElementById('opts').innerHTML = OPTS.map(o => `
+  <section class="opt">
+    <h2>${o.title}${o.rec ? '<span class="rec">Recommended</span>' : ''}</h2>
+    <div class="pros">${o.pros.map(p => `<span class="p">${p}</span>`).join('')}${o.cons.map(p => `<span class="m">${p}</span>`).join('')}</div>
+    ${o.rec ? `<div class="pros"><span class="p" style="background:#fff;color:#203A4E;border:1px solid #D3DEE6">Why: Circle and Crew are the daily jobs, so they lead. My apps sits next to You, the side that is about you. Ranks is a glance, not a job.</span></div>` : ''}
+    <div class="row">
+      ${phone(o.id, 'light', 'apps', 'My apps selected')}
+      ${phone(o.id, 'light', 'circle', 'Circle selected')}
+      ${o.rec ? phone(o.id, 'dark', 'apps', 'Dark, My apps') + phone(o.id, 'dark', 'circle', 'Dark, Circle') : ''}
+    </div>
+  </section>`).join('');
+
+document.getElementById('narrow').innerHTML = ['now','A','B','C','D'].map(o =>
+  `<div><div class="cap">${o === 'now' ? 'Now' : 'Option ' + o}</div>
+    <div class="strip light" style="--sw:360px"><span class="w360">360</span>${dock(o,'apps')}</div>
+    <div style="height:8px"></div>
+    <div class="strip light" style="--sw:360px"><span class="w360">360</span>${dock(o,'circle')}</div></div>`).join('');
+
+// ---------- plain bar + Add ----------
+const ICON_PLUS = (s=24, w=2.4) => small('<path d="M5 12h14"/><path d="M12 5v14"/>', s, w);
+const PORDER = ['circle','crew','add','apps','you'];
+
+function cradle(W) {
+  const cx = W/2, cy = 4, r = 35;
+  const dx = Math.sqrt(r*r - (6-cy)*(6-cy));
+  const a = cx - dx, b = cx + dx;
+  const top = `M0 0 H${a-10} C${a-3} 0 ${a-1} 2 ${a} 6 A${r} ${r} 0 1 0 ${b} 6 C${b+1} 2 ${b+3} 0 ${b+10} 0 H${W}`;
+  return `<svg class="cut" width="${W}" height="84" viewBox="0 0 ${W} 84">
+    <path d="${top} V84 H0 Z" fill="var(--bg)"/>
+    <path d="${top}" fill="none" stroke="var(--cardLine)" stroke-width="1"/></svg>`;
+}
+
+let tgId = 0;
+function ticket() {
+  const id = 'tg' + (tgId++);
+  const d = 'M10 0 H52 A10 10 0 0 1 62 10 V14 A6 6 0 0 0 62 26 V30 A10 10 0 0 1 52 40 H10 A10 10 0 0 1 0 30 V26 A6 6 0 0 0 0 14 V10 A10 10 0 0 1 10 0 Z';
+  return `<div class="tk"><svg class="shape" width="62" height="42" viewBox="0 0 62 42">
+      <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--tixTop)"/><stop offset="1" stop-color="var(--tixBottom)"/></linearGradient></defs>
+      <path d="${d}" transform="translate(0 2)" fill="var(--tixEdge)"/>
+      <g class="top"><path d="${d}" fill="url(#${id})"/><path class="sheen" d="M14 3.5 H48" stroke="rgba(255,255,255,.28)" stroke-width="1.6" stroke-linecap="round"/></g>
+    </svg><div class="pl">${ICON_PLUS(22, 2.4)}</div></div>`;
+}
+
+function plainBar(take, sel, W, pressed) {
+  const tabs = PORDER.map(k => {
+    if (k === 'add') {
+      const pc = pressed ? ' pressed' : '';
+      if (take === 1) return `<div class="ptab add1${pc}"><div class="fab">${ICON_PLUS(26, 2.4)}</div><div class="lb">Add</div></div>`;
+      if (take === 2) return `<div class="ptab add2${pc}"><div class="tilebtn">${ICON_PLUS(24, 2.4)}</div><div class="lb">Add</div></div>`;
+      return `<div class="ptab add3${pc}">${ticket()}<div class="lb">Add</div></div>`;
+    }
+    return `<div class="ptab${k === sel ? ' on' : ''}"><div class="ind">${ICON[k]}${badge(k)}</div><div class="lb">${LABEL[k]}</div></div>`;
+  }).join('');
+  const ground = take === 1 ? cradle(W) : '<div class="ground"></div>';
+  return `<div class="pbar">${ground}<div class="ptabs">${tabs}</div><div class="gest"></div></div>`;
+}
+
+const stripFab = (html) => html.replace(/<div class="addbtn"[\s\S]*$/, '');
+
+function plainPhone(take, theme, sel, cap, W=412) {
+  const body = stripFab(sel === 'apps' ? appsScreen() : circleScreen());
+  return `<div><div class="cap">${cap}</div><div class="phone ${theme}" style="--pw:${W}px">
+    <div class="sbar"><span>12:13</span><span>62%</span></div>${hud('C')}${body}${plainBar(take, sel, W, false)}</div></div>`;
+}
+
+const SQ_PLUS = small('<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/>', 22);
+const MSG_PLUS = small('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v6"/><path d="M9 10h6"/>', 22);
+const SEAT = small('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/>', 22);
+
+function sheetPhone(take, theme, cap) {
+  const rows = [
+    [SQ_PLUS, 'Add an app', 'From this phone or Play', ''],
+    [MSG_PLUS, 'Ask for feedback', 'On one of your apps, paid in tix', ''],
+    [SEAT, 'Take a seat', 'Join the testers group first', 'gate'],
+  ];
+  const body = stripFab(appsScreen());
+  return `<div><div class="cap">${cap}</div><div class="phone ${theme}">
+    <div class="sbar"><span>12:13</span><span>62%</span></div>${hud('C')}${body}${plainBar(take, 'apps', 412, false)}
+    <div class="scrim"></div>
+    <div class="sheet"><div class="hdl"></div><div class="ttl">Add</div>
+      ${rows.map(r => `<div class="trow"><div class="ti">${r[0]}</div><div><div class="tt">${r[1]}</div><div class="ts ${r[3]}">${r[2]}</div></div><span class="chev">${CHEV}</span></div>`).join('')}
+    </div></div></div>`;
+}
+
+function statesStrip(take, theme) {
+  const one = (pressed, tag) => `<div class="st ${theme}"><span class="tag">${tag}</span><div class="inner">${plainBar(take, 'apps', 412, pressed)}</div></div>`;
+  return `<div><div class="cap">${theme === 'dark' ? 'Dark, Add button' : 'Add button'}</div><div class="states">${one(false, 'Rest')}${one(true, 'Pressed')}</div></div>`;
+}
+
+const TAKES = [
+  { n:1, title:'Take 1. Raised circle in a cradle', pros:['Reads as Add at once','Classic, people know it'], cons:['Covers 24dp of the list','Cut-out bar to draw','Heaviest look on a calm bar'] },
+  { n:2, title:'Take 2. Filled tile in the row', rec:true, pros:['Calm and flat, fits the garden look','Names line up','Simplest to build'], cons:['Less of a show than a raised button'] },
+  { n:3, title:'Take 3. Tix ticket', pros:['Uses the tix counter look','Presses down like a real button'], cons:['Can read as tix or a shop','Two navy tickets on screen'] },
+];
+
+document.getElementById('plain').innerHTML = TAKES.map(t => `
+  <section class="opt">
+    <h2>${t.title}${t.rec ? '<span class="rec">Recommended</span>' : ''}</h2>
+    <div class="pros">${t.pros.map(p => `<span class="p">${p}</span>`).join('')}${t.cons.map(p => `<span class="m">${p}</span>`).join('')}</div>
+    ${t.rec ? `<div class="pros"><span class="p" style="background:#fff;color:#203A4E;border:1px solid #D3DEE6">Why: Add is one tap from every tab and does not shout over Circle and Crew, the daily jobs. It sits in the row, so the bar stays plain.</span></div>` : ''}
+    <div class="row">
+      ${plainPhone(t.n, 'light', 'apps', 'My apps selected')}
+      ${plainPhone(t.n, 'light', 'circle', 'Circle selected')}
+      ${t.rec ? plainPhone(t.n, 'dark', 'apps', 'Dark, My apps') + plainPhone(t.n, 'dark', 'circle', 'Dark, Circle') : ''}
+    </div>
+    ${t.rec ? `<div class="row">
+      ${plainPhone(t.n, 'light', 'apps', '360, My apps', 360)}
+      ${plainPhone(t.n, 'light', 'circle', '360, Circle', 360)}
+      ${sheetPhone(t.n, 'light', 'What Add opens')}
+      ${sheetPhone(t.n, 'dark', 'Dark, what Add opens')}
+    </div>` : ''}
+    <div class="row">${statesStrip(t.n, 'light')}${t.rec ? statesStrip(t.n, 'dark') : ''}</div>
+  </section>`).join('');
+</script>
+</body>
+</html>

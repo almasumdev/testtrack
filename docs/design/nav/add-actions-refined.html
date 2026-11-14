@@ -1,0 +1,122 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<div id="tt-action-designs">
+ <div class="viz-carousel viz-dotted-background" aria-label="Add button action designs">
+  <section data-variant="Branch fan"><div class="ad-stage" data-design="keys"></div></section>
+  <section data-variant="Folded tabs" hidden><div class="ad-stage" data-design="toolbar"></div></section>
+  <section data-variant="Text links" hidden><div class="ad-stage" data-design="circles"></div></section>
+  <section data-variant="Floating flags" hidden><div class="ad-stage" data-design="tickets"></div></section>
+  <section data-variant="Action strip" hidden><div class="ad-stage" data-design="chips"></div></section>
+ </div>
+</div>
+<style>
+#tt-action-designs { --ad-bg:light-dark(#f7fcff,#0f1011); --ad-panel:light-dark(#fff,#1c1e20); --ad-text:light-dark(#142f43,#eceef0); --ad-sub:light-dark(#526b7d,#989ea4); --ad-ink:light-dark(#3a5b73,#b6ccdc); --ad-soft:light-dark(#e1eaf2,#29353e); --ad-accent:light-dark(#3a5b73,#4a7290); --ad-onaccent:#fff; --ad-line:light-dark(#dce7ef,#34383d); --ad-shadow:light-dark(#142f4317,#00000040); font-family:Barlow,system-ui,sans-serif; }
+#tt-action-designs * { box-sizing:border-box; }
+#tt-action-designs .ad-stage { min-height:532px; padding:20px 0 28px; display:flex; justify-content:center; align-items:center; }
+#tt-action-designs .ad-phone { position:relative; isolation:isolate; width:360px; max-width:100%; height:450px; overflow:hidden; background:var(--ad-bg); color:var(--ad-text); border:1px solid var(--ad-line); border-radius:28px; box-shadow:0 12px 32px var(--ad-shadow); }
+#tt-action-designs .ad-phone button { font-family:inherit; -webkit-tap-highlight-color:transparent; }
+#tt-action-designs svg { width:22px; height:22px; display:block; flex-shrink:0; stroke-width:1.8; }
+#tt-action-designs .ad-screen { padding:20px 18px; }
+#tt-action-designs .ad-hud { display:flex; justify-content:space-between; align-items:center; color:var(--ad-sub); font-size:12px; margin-bottom:20px; }
+#tt-action-designs .ad-hud span { display:flex; align-items:center; gap:7px; }
+#tt-action-designs .ad-hud svg { width:18px; height:18px; }
+#tt-action-designs .ad-title { font-size:24px; font-weight:600; letter-spacing:-.5px; margin-bottom:12px; }
+#tt-action-designs .ad-app { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--ad-line); }
+#tt-action-designs .ad-letter { width:40px; height:40px; border-radius:12px; display:grid; place-items:center; background:var(--ad-soft); color:var(--ad-ink); font-size:17px; font-weight:600; }
+#tt-action-designs .ad-app-name { font-size:15px; font-weight:600; }
+#tt-action-designs .ad-meta { color:var(--ad-sub); font-size:12px; margin-top:3px; }
+#tt-action-designs .ad-app > svg { margin-left:auto; width:16px; height:16px; color:var(--ad-sub); }
+#tt-action-designs .ad-dismiss { position:absolute; z-index:1; inset:0 0 90px; border:0; background:var(--ad-bg); opacity:.7; transition:opacity .2s; }
+#tt-action-designs .ad-menu { position:absolute; z-index:2; bottom:104px; left:16px; right:16px; transform-origin:50% calc(100% + 44px); transition:transform .32s cubic-bezier(.2,.85,.28,1.15),opacity .18s; }
+#tt-action-designs .ad-actions { display:flex; gap:8px; align-items:stretch; }
+#tt-action-designs .ad-action { position:relative; flex:1; min-width:0; border:0; padding:13px 6px; min-height:80px; border-radius:13px; background:var(--ad-soft); color:var(--ad-ink); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; transition:transform .16s,background .16s; }
+#tt-action-designs .ad-action:active { transform:scale(.94); }
+#tt-action-designs .ad-action-name { font-size:12px; line-height:16px; font-weight:600; white-space:nowrap; }
+#tt-action-designs .ad-action-icon { display:grid; place-items:center; }
+#tt-action-designs .ad-nav { position:absolute; z-index:3; bottom:18px; left:0; right:0; height:72px; display:flex; align-items:center; padding:0 4px; border-top:1px solid var(--ad-line); background:var(--ad-bg); }
+#tt-action-designs .ad-tab { flex:1; min-width:0; height:64px; padding:5px 0; border:0; background:transparent; color:var(--ad-sub); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-size:11px; line-height:15px; }
+#tt-action-designs .ad-nav-icon { width:48px; height:30px; display:grid; place-items:center; border-radius:8px; }
+#tt-action-designs .ad-tab[aria-current="page"] { color:var(--ad-ink); font-weight:600; }
+#tt-action-designs .ad-tab[aria-current="page"] .ad-nav-icon { background:var(--ad-soft); }
+#tt-action-designs .ad-plus { flex:1; min-width:0; height:64px; display:grid; place-items:center; border:0; background:transparent; }
+#tt-action-designs .ad-plus-shape { width:48px; height:36px; border-radius:11px; display:grid; place-items:center; background:var(--ad-accent); color:var(--ad-onaccent); transition:transform .15s; }
+#tt-action-designs .ad-plus:active .ad-plus-shape { transform:scale(.94); }
+#tt-action-designs .ad-plus svg { transform:rotate(45deg); transition:transform .25s cubic-bezier(.2,.85,.28,1.15); }
+#tt-action-designs .ad-home { position:absolute; bottom:7px; left:50%; transform:translateX(-50%); width:90px; height:4px; border-radius:4px; background:var(--ad-sub); opacity:.4; }
+#tt-action-designs .ad-notice { position:absolute; top:66px; left:18px; right:18px; z-index:2; color:var(--ad-ink); background:var(--ad-panel); border:1px solid var(--ad-line); border-radius:10px; font-size:12px; padding:10px 12px; }
+#tt-action-designs .ad-notice:empty { display:none; }
+#tt-action-designs .ad-phone.ad-closed .ad-menu { transform:translateY(30px) scale(.28); opacity:0; pointer-events:none; }
+#tt-action-designs .ad-phone.ad-closed .ad-dismiss { opacity:0; pointer-events:none; }
+#tt-action-designs .ad-phone.ad-closed .ad-plus svg { transform:rotate(0deg); }
+/* A small branching launcher: just marks, names, and a fine connecting line. */
+#tt-action-designs [data-design="keys"] .ad-actions { position:relative; gap:6px; }
+#tt-action-designs [data-design="keys"] .ad-actions:before { content:''; position:absolute; left:16%; right:16%; top:20px; height:1px; background:var(--ad-ink); opacity:.25; }
+#tt-action-designs [data-design="keys"] .ad-action { background:transparent; border-radius:0; min-height:64px; padding:0; gap:9px; justify-content:flex-start; }
+#tt-action-designs [data-design="keys"] .ad-action-icon { width:40px; height:40px; border-radius:9px; background:var(--ad-panel); border:1px solid var(--ad-line); box-shadow:0 2px 6px var(--ad-shadow); }
+#tt-action-designs [data-design="keys"] .ad-action svg { width:19px; height:19px; }
+#tt-action-designs [data-design="keys"] .ad-action-name { background:var(--ad-bg); padding:0 4px; }
+/* A short row of folded tabs, attached directly to the top of the navigation. */
+#tt-action-designs [data-design="toolbar"] .ad-menu { bottom:90px; left:12px; right:12px; }
+#tt-action-designs [data-design="toolbar"] .ad-actions { gap:4px; }
+#tt-action-designs [data-design="toolbar"] .ad-action { min-height:63px; padding:12px 4px 10px; gap:5px; border-radius:0; clip-path:polygon(0 10px,12px 0,100% 0,100% 100%,0 100%); background:var(--ad-soft); border-bottom:2px solid var(--ad-ink); }
+#tt-action-designs [data-design="toolbar"] .ad-action svg { width:18px; height:18px; }
+/* An airy inline menu, with no individual button surfaces. */
+#tt-action-designs [data-design="circles"] .ad-menu { bottom:108px; background:var(--ad-panel); border:1px solid var(--ad-line); border-radius:8px; box-shadow:0 4px 12px var(--ad-shadow); }
+#tt-action-designs [data-design="circles"] .ad-actions { gap:0; }
+#tt-action-designs [data-design="circles"] .ad-action { min-height:46px; padding:8px 3px; background:transparent; border-radius:0; flex-direction:row; gap:5px; }
+#tt-action-designs [data-design="circles"] .ad-action + .ad-action:before { content:''; position:absolute; left:0; top:14px; bottom:14px; width:1px; background:var(--ad-line); }
+#tt-action-designs [data-design="circles"] .ad-action svg { width:15px; height:15px; }
+#tt-action-designs [data-design="circles"] .ad-action-name { font-size:11px; }
+/* Each action is a small flag pointing back to the navigation. */
+#tt-action-designs [data-design="tickets"] .ad-actions { gap:7px; }
+#tt-action-designs [data-design="tickets"] .ad-action { min-height:68px; padding:10px 4px 18px; gap:5px; border-radius:7px; background:var(--ad-panel); color:var(--ad-ink); clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),58% calc(100% - 8px),50% 100%,42% calc(100% - 8px),0 calc(100% - 8px)); }
+#tt-action-designs [data-design="tickets"] .ad-action svg { width:18px; height:18px; }
+/* A single compact word bar: the lightest visual reading load. */
+#tt-action-designs [data-design="chips"] .ad-menu { left:24px; right:24px; border-radius:9px; background:var(--ad-accent); box-shadow:0 4px 12px var(--ad-shadow); }
+#tt-action-designs [data-design="chips"] .ad-actions { gap:0; }
+#tt-action-designs [data-design="chips"] .ad-action { min-height:48px; padding:10px 4px; border:0; background:transparent; color:var(--ad-onaccent); border-radius:0; }
+#tt-action-designs [data-design="chips"] .ad-action-icon { display:none; }
+#tt-action-designs [data-design="chips"] .ad-action + .ad-action:before { content:''; position:absolute; left:0; top:15px; bottom:15px; width:1px; background:currentColor; opacity:.2; }
+#tt-action-designs [data-design="chips"] .ad-action-name { font-size:13px; }
+@media(max-width:350px) { #tt-action-designs .ad-menu { left:10px; right:10px; } #tt-action-designs .ad-actions { gap:6px; } #tt-action-designs .ad-action-name { font-size:11px; } }
+@media(prefers-reduced-motion:reduce) { #tt-action-designs * { transition:none!important; } }
+</style>
+<script>
+(() => {
+ const root=document.getElementById('tt-action-designs');
+ const icon=name=>`<i data-lucide="${name}" aria-hidden="true"></i>`;
+ const saved=window.openai?.widgetState?.privateContent||{};
+ const state={appearance:saved.appearance||'light dark',closed:saved.closed||{}};
+ const actions=[['message-square','Feedback','Ask for feedback'],['square-plus','Add app','Add an app'],['users','Take seat','Take a seat']];
+ const tab=(key,label,i)=>`<button type="button" class="ad-tab cursor-interaction" data-tab="${key}" ${key==='apps'?'aria-current="page"':''}><span class="ad-nav-icon">${icon(i)}</span>${label}</button>`;
+ root.querySelectorAll('.ad-stage').forEach(stage=>{
+  const key=stage.dataset.design;
+  stage.innerHTML=`<div class="ad-phone${state.closed[key]?' ad-closed':''}" aria-label="TestTrack Add actions"><div class="ad-screen"><div class="ad-hud"><span>${icon('bot')}Level 3</span><span>${icon('ticket')}100</span></div><div class="ad-title">My apps</div>${[['D','Daytone','Crew 4, night 6 of 14'],['B','Bluefy','1 new review'],['P','Picumo','Waiting for a seat']].map(r=>`<div class="ad-app"><div class="ad-letter">${r[0]}</div><div><div class="ad-app-name">${r[1]}</div><div class="ad-meta">${r[2]}</div></div>${icon('chevron-right')}</div>`).join('')}</div><button type="button" class="ad-dismiss cursor-interaction" aria-label="Close Add actions"></button><div class="ad-menu" role="group" aria-label="Add actions"><div class="ad-actions">${actions.map(a=>`<button type="button" class="ad-action cursor-interaction" aria-label="${a[2]}" data-action="${a[2]}"><span class="ad-action-icon">${icon(a[0])}</span><span class="ad-action-name">${a[1]}</span></button>`).join('')}</div></div><div class="ad-notice" role="status"></div><nav class="ad-nav" aria-label="Main navigation">${tab('circle','Circle','message-square')}${tab('crew','Crew','users')}<button type="button" class="ad-plus cursor-interaction" aria-label="Toggle Add actions" aria-expanded="${!state.closed[key]}"><span class="ad-plus-shape">${icon('plus')}</span></button>${tab('apps','My apps','layout-grid')}${tab('you','You','user-round')}</nav><div class="ad-home"></div></div>`;
+ });
+ function render(){
+  root.style.colorScheme=state.appearance;
+  root.querySelectorAll('.ad-stage').forEach(stage=>{
+   const closed=!!state.closed[stage.dataset.design];
+   stage.querySelector('.ad-phone').classList.toggle('ad-closed',closed);
+   stage.querySelector('.ad-menu').inert=closed;
+   stage.querySelector('.ad-dismiss').inert=closed;
+   stage.querySelector('.ad-plus').setAttribute('aria-expanded',String(!closed));
+  });
+ }
+ function save(){window.openai?.setWidgetState?.({modelContent:{lastAction:state.lastAction||null},privateContent:state})?.catch(()=>{});}
+ root.addEventListener('click',event=>{
+  const stage=event.target.closest('.ad-stage');if(!stage)return;
+  const key=stage.dataset.design;
+  const button=event.target.closest('button');if(!button)return;
+  if(button.classList.contains('ad-plus')){state.closed[key]=!state.closed[key];stage.querySelector('.ad-notice').textContent='';}
+  if(button.classList.contains('ad-dismiss'))state.closed[key]=true;
+  if(button.dataset.tab){stage.querySelectorAll('[data-tab]').forEach(b=>{if(b===button)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});state.closed[key]=true;}
+  if(button.dataset.action){state.lastAction=button.dataset.action;state.closed[key]=true;stage.querySelector('.ad-notice').textContent=button.dataset.action+' selected · Preview';}
+  render();save();
+ });
+ root.addEventListener('keydown',event=>{if(event.key==='Escape'){const stage=event.target.closest('.ad-stage');if(stage){state.closed[stage.dataset.design]=true;render();stage.querySelector('.ad-plus').focus();save();}}});
+ window.addEventListener('openai:set_globals',event=>{const s=event.detail?.globals?.widgetState?.privateContent;if(s){state.appearance=s.appearance||'light dark';state.closed=s.closed||{};render();}});
+ render();
+ if(globalThis.lucide)lucide.createIcons();
+ if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:()=>{render();save();}});tweak.addSelect(state,'appearance',{label:'Appearance',options:[{label:'Follow app',value:'light dark'},{label:'Light',value:'light'},{label:'Dark',value:'dark'}]});}
+})();
+</script>

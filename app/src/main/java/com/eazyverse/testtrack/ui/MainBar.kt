@@ -43,7 +43,6 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -59,8 +58,6 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import com.eazyverse.testtrack.ui.theme.Tt
-import kotlin.math.PI
-import kotlin.math.sin
 
 /** The bar starts at its top line; lists reserve its entire measured height. */
 internal val DockTop = 0.dp
@@ -79,6 +76,7 @@ fun MainBar(
     /** What waits on this account, by tab; a tab missing or at 0 shows no number. */
     counts: Map<MainTab, Int> = emptyMap(),
     onAdd: () -> Unit = {},
+    addExpanded: Boolean = false,
 ) {
     val t = Tt.colors
     val haptic = LocalHapticFeedback.current
@@ -88,7 +86,7 @@ fun MainBar(
     val selection by movement.animateFloat(
         transitionSpec = {
             if (initialState.crossesAdd(targetState)) {
-                tween(720, easing = LinearEasing)
+                tween(600, easing = LinearEasing)
             } else {
                 spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 500f)
             }
@@ -110,36 +108,36 @@ fun MainBar(
                         val to = movement.targetState
                         val crossing = from.crossesAdd(to)
                         val progress = if (crossing) ((selection - from) / (to - from)).coerceIn(0f, 1f) else 0f
-                        // Compress before takeoff, then fly at a steady horizontal speed under
-                        // constant gravity. Reserve the last beat for a grounded landing squash.
-                        val flight = ((progress - 0.12f) / 0.76f).coerceIn(0f, 1f)
-                        val travel = if (crossing) from + (to - from) * flight else selection
-                        val position = if (rtl) tabs.lastIndex - travel else travel
-                        val lift = 4f * 64.dp.toPx() * flight * (1f - flight)
-                        val squash = when {
-                            progress < 0.12f -> sin(progress / 0.12f * PI).toFloat() * 0.18f
-                            progress > 0.88f -> sin((progress - 0.88f) / 0.12f * PI).toFloat() * 0.22f
-                            else -> 0f
-                        }
-                        val stretch = sin(flight * PI).toFloat()
-                        val direction = (if (to > from) 1f else -1f) * (if (rtl) -1f else 1f)
-                        val centre = Offset(slot * (position + 0.5f), 22.dp.toPx() - lift + 16.dp.toPx() * squash)
-                        rotate(360f * flight * direction, pivot = centre) {
-                            scale(1f + squash - 0.04f * stretch, 1f - squash + 0.08f * stretch, pivot = centre) {
-                                drawRoundRect(
-                                    color = t.leafAccentSoft,
-                                    topLeft = centre - Offset(26.dp.toPx(), 16.dp.toPx()),
-                                    size = Size(52.dp.toPx(), 32.dp.toPx()),
-                                    cornerRadius = CornerRadius(8.dp.toPx()),
-                                )
+                        // Tuck into the old centre, switch only while invisible, then pop out
+                        // past the destination's normal size and settle back into place.
+                        val openness =
+                            when {
+                                !crossing -> 1f
+                                progress < 0.42f -> selectionPop(1f - progress / 0.42f)
+                                progress > 0.58f -> selectionPop((progress - 0.58f) / 0.42f)
+                                else -> 0f
                             }
+                        val location = if (crossing) (if (progress < 0.5f) from else to).toFloat() else selection
+                        val position = if (rtl) tabs.lastIndex - location else location
+                        val centre = Offset(slot * (position + 0.5f), 22.dp.toPx())
+                        scale(openness, openness, pivot = centre) {
+                            drawRoundRect(
+                                color = t.leafAccentSoft.copy(alpha = t.leafAccentSoft.alpha * openness.coerceIn(0f, 1f)),
+                                topLeft = centre - Offset(26.dp.toPx(), 16.dp.toPx()),
+                                size = Size(52.dp.toPx(), 32.dp.toPx()),
+                                cornerRadius = CornerRadius(8.dp.toPx()),
+                            )
                         }
-                    }
-                    .selectableGroup(),
+                    }.selectableGroup(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 tabs.forEach { tab ->
                     if (tab == null) {
+                        val rotation by animateFloatAsState(
+                            if (addExpanded) 45f else 0f,
+                            spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 500f),
+                            label = "add-toggle",
+                        )
                         val source = remember { MutableInteractionSource() }
                         val pressed by source.collectIsPressedAsState()
                         val scale by animateFloatAsState(
@@ -157,7 +155,7 @@ fun MainBar(
                                     interactionSource = source,
                                     indication = null,
                                     role = Role.Button,
-                                    onClickLabel = "Open Add menu",
+                                    onClickLabel = if (addExpanded) "Close Add menu" else "Open Add menu",
                                     onClick = onAdd,
                                 ),
                             contentAlignment = Alignment.Center,
@@ -171,7 +169,14 @@ fun MainBar(
                                     }.clip(RoundedCornerShape(11.dp))
                                     .background(t.accent),
                                 contentAlignment = Alignment.Center,
-                            ) { Icon(Lucide.Plus, "Add", Modifier.size(24.dp), tint = t.onAccent) }
+                            ) {
+                                Icon(
+                                    Lucide.Plus,
+                                    if (addExpanded) "Close Add menu" else "Add",
+                                    Modifier.size(24.dp).graphicsLayer { rotationZ = rotation },
+                                    tint = t.onAccent,
+                                )
+                            }
                         }
                     } else {
                         val chosen = tab == active
@@ -239,8 +244,14 @@ fun MainBar(
     }
 }
 
-/** The centre slot is an action; changing sides takes the selection over it. */
+/** Changing sides tucks and pops the selection rather than moving it across the Add action. */
 private fun Int.crossesAdd(other: Int): Boolean = (this < 2 && other > 2) || (this > 2 && other < 2)
+
+/** A small overshoot, ending exactly at normal size. Reversed, it anticipates the collapse. */
+private fun selectionPop(progress: Float): Float {
+    val remaining = progress - 1f
+    return 1f + 2.4f * remaining * remaining * remaining + 1.4f * remaining * remaining
+}
 
 /**
  * A tab's icon, and over its corner how many things on it wait for this account.

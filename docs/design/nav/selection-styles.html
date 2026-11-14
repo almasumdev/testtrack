@@ -1,0 +1,91 @@
+<div id="tt-selection">
+  <div class="viz-carousel viz-dotted-background" aria-label="Quiet tile selection styles">
+    <section data-variant="Soft icon pill"><div class="ts-stage" data-style="pill"></div></section>
+    <section data-variant="Whole tab wash" hidden><div class="ts-stage" data-style="wash"></div></section>
+    <section data-variant="Bold icon and dot" hidden><div class="ts-stage" data-style="dot"></div></section>
+    <section data-variant="Current underline" hidden><div class="ts-stage" data-style="line"></div></section>
+  </div>
+</div>
+<style>
+#tt-selection { --ts-bg:light-dark(#f7fcff,#0f1011); --ts-text:light-dark(#142f43,#eceef0); --ts-sub:light-dark(#526b7d,#989ea4); --ts-selected:light-dark(#2e4e66,#b6ccdc); --ts-soft:light-dark(#e1eaf2,#2a2d31); --ts-line:light-dark(#e1ecf3,#2d3034); --ts-accent:light-dark(#3a5b73,#4a7290); --ts-onaccent:#fff; --ts-badge:light-dark(#3a5b73,#93b3ca); --ts-onbadge:light-dark(#fff,#0f1011); font-family:Barlow,system-ui,sans-serif; }
+#tt-selection * { box-sizing:border-box; }
+#tt-selection .ts-stage { min-height:432px; padding:20px 0 30px; display:flex; justify-content:center; align-items:center; }
+#tt-selection .ts-phone { width:360px; max-width:100%; height:360px; overflow:hidden; position:relative; isolation:isolate; background:var(--ts-bg); color:var(--ts-text); border:1px solid var(--ts-line); border-radius:28px; box-shadow:0 10px 25px light-dark(#142f4312,#00000030); }
+#tt-selection .ts-phone button { font-family:inherit; color:inherit; }
+#tt-selection .ts-screen { padding:22px 18px 0; }
+#tt-selection .ts-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; font-size:12px; font-weight:500; color:var(--ts-sub); }
+#tt-selection .ts-top span { display:flex; align-items:center; gap:6px; }
+#tt-selection .ts-top svg { width:17px; height:17px; }
+#tt-selection .ts-title { margin:0 0 14px; font-size:21px; font-weight:600; line-height:1.3; letter-spacing:-.3px; }
+#tt-selection .ts-row { display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--ts-line); padding:12px 0; }
+#tt-selection .ts-letter { width:38px; height:38px; border-radius:11px; background:var(--ts-soft); color:var(--ts-selected); display:grid; place-items:center; font-size:16px; font-weight:600; flex-shrink:0; }
+#tt-selection .ts-name { font-size:14px; font-weight:600; }
+#tt-selection .ts-meta { font-size:12px; color:var(--ts-sub); margin-top:3px; }
+#tt-selection .ts-row > svg { margin-left:auto; width:16px; height:16px; color:var(--ts-sub); }
+#tt-selection svg { display:block; width:22px; height:22px; stroke-width:1.8; flex-shrink:0; }
+#tt-selection .ts-nav { display:flex; align-items:center; position:absolute; bottom:18px; left:0; right:0; height:72px; padding:0 3px; background:var(--ts-bg); border-top:1px solid var(--ts-line); }
+#tt-selection .ts-tab { position:relative; flex:1; min-width:0; height:66px; padding:5px 0; border:0; background:transparent; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-size:12px; line-height:15px; font-weight:500; white-space:nowrap; }
+#tt-selection .ts-tab .ts-icon { position:relative; display:grid; place-items:center; width:52px; height:32px; border-radius:18px; color:var(--ts-sub); transition:background-color .2s ease,color .2s ease; }
+#tt-selection .ts-label { position:relative; color:var(--ts-sub); }
+#tt-selection .ts-tab[aria-current="page"] .ts-label { color:var(--ts-selected); font-weight:600; }
+#tt-selection .ts-tab[aria-current="page"] .ts-icon { color:var(--ts-selected); }
+#tt-selection .ts-count { position:absolute; right:0; top:-2px; min-width:16px; height:16px; padding:0 4px; border-radius:9px; background:var(--ts-badge); color:var(--ts-onbadge); box-shadow:0 0 0 2px var(--ts-bg); font:600 10px/16px ui-monospace,monospace; text-align:center; }
+#tt-selection [data-style="pill"] .ts-tab[aria-current="page"] .ts-icon { background:var(--ts-soft); }
+#tt-selection .ts-tab:before { content:''; position:absolute; inset:3px 4px; border-radius:14px; background:transparent; transition:background-color .2s ease; }
+#tt-selection [data-style="wash"] .ts-tab[aria-current="page"]:before { background:var(--ts-soft); }
+#tt-selection [data-style="dot"] .ts-tab[aria-current="page"] .ts-icon svg { stroke-width:2.7; }
+#tt-selection [data-style="dot"] .ts-tab:after { content:''; position:absolute; bottom:0; width:4px; height:4px; border-radius:50%; background:transparent; transition:background-color .2s ease; }
+#tt-selection [data-style="dot"] .ts-tab[aria-current="page"]:after { background:var(--ts-selected); }
+#tt-selection [data-style="line"] .ts-tab:after { content:''; position:absolute; bottom:0; width:18px; height:3px; border-radius:2px; background:transparent; }
+#tt-selection [data-style="line"] .ts-tab[aria-current="page"]:after { background:var(--ts-selected); }
+#tt-selection .ts-add { flex:1; height:66px; min-width:0; display:grid; place-items:center; background:transparent; border:0; padding:0; }
+#tt-selection .ts-plus { width:48px; height:36px; border-radius:11px; display:grid; place-items:center; background:var(--ts-accent); color:var(--ts-onaccent); transition:transform .15s ease; }
+#tt-selection .ts-plus svg { width:24px; height:24px; stroke-width:2.2; }
+#tt-selection .ts-add:active .ts-plus { transform:scale(.94); }
+#tt-selection .ts-gesture { position:absolute; bottom:7px; left:50%; width:90px; height:4px; border-radius:3px; background:var(--ts-sub); opacity:.45; transform:translateX(-50%); }
+#tt-selection .ts-overlay[hidden] { display:none; }
+#tt-selection .ts-overlay { position:absolute; inset:0; z-index:3; background:#07131d66; display:flex; align-items:flex-end; }
+#tt-selection .ts-sheet { width:100%; background:var(--ts-bg); padding:14px 18px 24px; border-radius:24px 24px 0 0; }
+#tt-selection .ts-sheet-top { display:flex; align-items:center; justify-content:space-between; font-size:18px; font-weight:600; margin-bottom:10px; }
+#tt-selection .ts-close { border:0; border-radius:50%; background:var(--ts-soft); display:grid; place-items:center; width:36px; height:36px; }
+#tt-selection .ts-action { display:flex; align-items:center; gap:12px; min-height:48px; font-size:14px; }
+#tt-selection .ts-action svg { color:var(--ts-selected); }
+@media(max-width:360px) { #tt-selection .ts-tab .ts-icon { width:44px; } #tt-selection .ts-tab { font-size:11px; } }
+@media(prefers-reduced-motion:reduce) { #tt-selection * { transition:none!important; } }
+</style>
+<script>
+(() => {
+ const root=document.getElementById('tt-selection');
+ const labels={circle:'Circle',crew:'Crew',apps:'My apps',you:'You'};
+ const icons={circle:'message-square',crew:'users',apps:'layout-grid',you:'user-round'};
+ const counts={circle:2,crew:3,apps:1};
+ const saved=window.openai?.widgetState?.privateContent || {};
+ const state={selected:labels[saved.selected]?saved.selected:'apps',appearance:saved.appearance||'light dark'};
+ const icon=name=>`<i data-lucide="${name}" aria-hidden="true"></i>`;
+ const rows={apps:[['D','Daytone','Crew 4, night 6 of 14'],['B','Bluefy','1 new review']],circle:[['S','Step Count Pro','Try the new goal screen'],['N','Notely','Is sign in clear?']],crew:[['4','Crew 4','3 opens waiting tonight'],['D','Daytone','Night 6 of 14']],you:[['N','Your profile','Level 3'],['12','Ranks','Your place this week']]};
+ const content=key=>`<div class="ts-title">${labels[key]}</div>${rows[key].map(r=>`<div class="ts-row"><div class="ts-letter">${r[0]}</div><div><div class="ts-name">${r[1]}</div><div class="ts-meta">${r[2]}</div></div>${icon('chevron-right')}</div>`).join('')}`;
+ const tab=key=>`<button type="button" class="ts-tab cursor-interaction" data-tab="${key}" aria-label="${labels[key]}${counts[key]?`, ${counts[key]} to do`:''}" ${state.selected===key?'aria-current="page"':''}><span class="ts-icon">${icon(icons[key])}${counts[key]?`<span class="ts-count" aria-hidden="true">${counts[key]}</span>`:''}</span><span class="ts-label">${labels[key]}</span></button>`;
+ root.querySelectorAll('.ts-stage').forEach(stage=>{
+  stage.innerHTML=`<div class="ts-phone" aria-label="Quiet tile navigation preview"><div class="ts-screen"><div class="ts-top"><span>${icon('bot')}Level 3</span><span>${icon('ticket')}100</span></div><div class="ts-content" aria-live="polite">${content(state.selected)}</div></div><nav class="ts-nav" aria-label="Main navigation">${tab('circle')}${tab('crew')}<button type="button" class="ts-add cursor-interaction" aria-label="Add" aria-haspopup="dialog"><span class="ts-plus">${icon('plus')}</span></button>${tab('apps')}${tab('you')}</nav><div class="ts-gesture"></div><div class="ts-overlay" hidden><div class="ts-sheet" role="dialog" aria-modal="true" aria-label="Add menu"><div class="ts-sheet-top">Add<button type="button" class="ts-close cursor-interaction" aria-label="Close Add menu">${icon('x')}</button></div><div class="ts-action">${icon('square-plus')}Add an app</div><div class="ts-action">${icon('message-square')}Ask for feedback</div><div class="ts-action">${icon('users')}Take a seat</div></div></div></div>`;
+ });
+ const drawIcons=()=>{if(globalThis.lucide)lucide.createIcons();};
+ function update(){
+  root.style.colorScheme=state.appearance;
+  root.querySelectorAll('[data-tab]').forEach(b=>{if(b.dataset.tab===state.selected)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+  root.querySelectorAll('.ts-content').forEach(e=>e.innerHTML=content(state.selected));
+  drawIcons();
+ }
+ function save(){window.openai?.setWidgetState?.({modelContent:{selectedTab:labels[state.selected]},privateContent:state})?.catch(()=>{});}
+ const close=phone=>{phone.querySelector('.ts-overlay').hidden=true;phone.querySelector('.ts-add').focus();};
+ root.addEventListener('click',event=>{
+  const b=event.target.closest('button'); const phone=event.target.closest('.ts-phone'); if(!phone)return;
+  if(b?.dataset.tab){state.selected=b.dataset.tab;update();save();}
+  if(b?.classList.contains('ts-add')){phone.querySelector('.ts-overlay').hidden=false;phone.querySelector('.ts-close').focus();}
+  if(b?.classList.contains('ts-close')||event.target.classList.contains('ts-overlay'))close(phone);
+ });
+ root.addEventListener('keydown',event=>{const overlay=event.target.closest('.ts-overlay');if(!overlay||overlay.hidden)return;if(event.key==='Escape')close(event.target.closest('.ts-phone'));if(event.key==='Tab'){event.preventDefault();overlay.querySelector('.ts-close').focus();}});
+ window.addEventListener('openai:set_globals',event=>{const s=event.detail?.globals?.widgetState?.privateContent;if(s){if(labels[s.selected])state.selected=s.selected;if(s.appearance)state.appearance=s.appearance;update();}});
+ update();
+ if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:()=>{update();save();}});tweak.addSelect(state,'appearance',{label:'Appearance',options:[{label:'Follow app',value:'light dark'},{label:'Light',value:'light'},{label:'Dark',value:'dark'}]});}
+})();
+</script>

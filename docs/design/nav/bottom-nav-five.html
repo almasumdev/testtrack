@@ -1,0 +1,139 @@
+<div id="tt-nav-lab">
+  <div class="viz-carousel viz-dotted-background" aria-label="TestTrack bottom navigation designs">
+    <section data-variant="Ticket dock" aria-label="Ticket dock design"><div class="tt-stage" data-design="ticket"></div></section>
+    <section data-variant="Floating orbit" aria-label="Floating orbit design" hidden><div class="tt-stage" data-design="orbit"></div></section>
+    <section data-variant="Quiet tile" aria-label="Quiet tile design" hidden><div class="tt-stage" data-design="tile"></div></section>
+    <section data-variant="Split capsule" aria-label="Split capsule design" hidden><div class="tt-stage" data-design="split"></div></section>
+    <section data-variant="Corner compose" aria-label="Corner compose design" hidden><div class="tt-stage" data-design="corner"></div></section>
+  </div>
+</div>
+<style>
+#tt-nav-lab { --tt-ink:light-dark(#142f43,#eceef0); --tt-sub:light-dark(#526b7d,#a6afb8); --tt-paper:light-dark(#f7fcff,#0f1011); --tt-panel:light-dark(#ffffff,#1c1e20); --tt-line:light-dark(#dce7ee,#34383d); --tt-soft:light-dark(#e5eef4,#29353e); --tt-blue:light-dark(#3a5b73,#a9c9df); --tt-onblue:light-dark(#ffffff,#142f43); --tt-shadow:light-dark(#183b5317,#00000055); font-family:Barlow,system-ui,sans-serif; }
+#tt-nav-lab * { box-sizing:border-box; }
+#tt-nav-lab .tt-stage { min-height:620px; padding:22px 8px 30px; display:flex; justify-content:center; align-items:center; }
+#tt-nav-lab .tt-phone { width:360px; max-width:100%; height:550px; position:relative; isolation:isolate; overflow:hidden; border-radius:32px; background:var(--tt-paper); color:var(--tt-ink); border:1px solid var(--tt-line); box-shadow:0 16px 44px var(--tt-shadow); font-size:14px; line-height:1.4; }
+#tt-nav-lab .tt-phone button { font-family:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+#tt-nav-lab .tt-phone button:focus-visible { outline:2px solid var(--tt-blue); outline-offset:3px; }
+#tt-nav-lab .tt-status { display:flex; justify-content:space-between; align-items:center; padding:14px 22px 10px; font-size:12px; font-weight:600; }
+#tt-nav-lab .tt-status span:last-child { display:flex; gap:5px; align-items:center; }
+#tt-nav-lab .tt-status svg { width:14px; height:14px; }
+#tt-nav-lab .tt-top { display:flex; align-items:center; gap:9px; padding:8px 20px 16px; }
+#tt-nav-lab .tt-bot { width:36px; height:36px; background:var(--tt-soft); color:var(--tt-blue); border-radius:12px; display:grid; place-items:center; }
+#tt-nav-lab .tt-level { font-size:12px; font-weight:600; }
+#tt-nav-lab .tt-track { margin-top:5px; height:4px; width:68px; background:var(--tt-soft); border-radius:4px; overflow:hidden; }
+#tt-nav-lab .tt-track:before { content:''; display:block; height:100%; width:62%; background:var(--tt-blue); }
+#tt-nav-lab .tt-balance { margin-left:auto; display:flex; gap:6px; align-items:center; padding:7px 11px; background:var(--tt-soft); color:var(--tt-blue); border-radius:11px; font-size:13px; font-weight:600; }
+#tt-nav-lab svg { width:21px; height:21px; stroke-width:1.8; flex-shrink:0; }
+#tt-nav-lab .tt-balance svg { width:17px; height:17px; }
+#tt-nav-lab .tt-content { padding:0 20px 115px; }
+#tt-nav-lab .tt-heading { font-size:25px; letter-spacing:-.8px; font-weight:600; margin:3px 0 2px; }
+#tt-nav-lab .tt-subtitle { color:var(--tt-sub); font-size:12px; margin-bottom:20px; }
+#tt-nav-lab .tt-app { display:flex; gap:11px; align-items:center; padding:13px 0; border-bottom:1px solid var(--tt-line); }
+#tt-nav-lab .tt-app:last-child { border-bottom:0; }
+#tt-nav-lab .tt-mark { width:42px; height:42px; border-radius:13px; background:var(--tt-soft); color:var(--tt-blue); display:grid; place-items:center; flex-shrink:0; font-weight:600; font-size:18px; }
+#tt-nav-lab .tt-app-name { font-size:14px; font-weight:600; }
+#tt-nav-lab .tt-app-meta { color:var(--tt-sub); font-size:11px; margin-top:3px; }
+#tt-nav-lab .tt-app > svg { margin-left:auto; width:16px; color:var(--tt-sub); }
+#tt-nav-lab .tt-progress { height:3px; width:98px; margin-top:7px; background:var(--tt-soft); border-radius:3px; overflow:hidden; }
+#tt-nav-lab .tt-progress:before { content:''; display:block; height:100%; width:43%; background:var(--tt-blue); }
+#tt-nav-lab .tt-hint { margin-top:22px; display:flex; align-items:center; gap:7px; font-size:11px; color:var(--tt-sub); }
+#tt-nav-lab .tt-hint svg { width:14px; height:14px; }
+#tt-nav-lab .tt-nav { position:absolute; z-index:2; bottom:24px; left:12px; right:12px; height:72px; display:flex; align-items:center; padding:5px 6px; background:var(--tt-panel); border:1px solid var(--tt-line); border-radius:24px; box-shadow:0 5px 20px var(--tt-shadow); }
+#tt-nav-lab .tt-tab { background:transparent; border:0; flex:1; min-width:0; height:58px; color:var(--tt-sub); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:0; position:relative; font-size:10px; font-weight:500; white-space:nowrap; }
+#tt-nav-lab .tt-icon { width:43px; height:28px; display:grid; place-items:center; position:relative; border-radius:10px; transition:background .18s; }
+#tt-nav-lab .tt-tab[aria-current="page"] { color:var(--tt-blue); font-weight:600; }
+#tt-nav-lab .tt-tab[aria-current="page"] .tt-icon { background:var(--tt-soft); }
+#tt-nav-lab .tt-dot { position:absolute; right:7px; top:0; width:6px; height:6px; background:var(--tt-blue); border-radius:50%; box-shadow:0 0 0 2px var(--tt-panel); }
+#tt-nav-lab .tt-add { color:var(--tt-blue); font-weight:600; }
+#tt-nav-lab .tt-add-shape { width:52px; height:36px; display:grid; place-items:center; background:var(--tt-blue); color:var(--tt-onblue); border-radius:12px; transition:transform .15s; }
+#tt-nav-lab .tt-add:active .tt-add-shape { transform:translateY(2px) scale(.94); }
+#tt-nav-lab .tt-add svg { width:23px; height:23px; stroke-width:2.3; }
+#tt-nav-lab .tt-home { position:absolute; bottom:8px; left:50%; width:96px; height:4px; transform:translateX(-50%); background:var(--tt-ink); opacity:.25; border-radius:4px; }
+#tt-nav-lab [data-look="ticket"] .tt-add-shape { border-radius:9px; mask:radial-gradient(circle 5px at 0 50%,transparent 98%,#000) left,radial-gradient(circle 5px at 100% 50%,transparent 98%,#000) right; mask-size:51% 100%; mask-repeat:no-repeat; }
+#tt-nav-lab [data-look="orbit"] .tt-nav { bottom:24px; height:68px; border-radius:26px; }
+#tt-nav-lab [data-look="orbit"] .tt-add { justify-content:flex-end; padding-bottom:4px; }
+#tt-nav-lab [data-look="orbit"] .tt-add-shape { position:absolute; width:54px; height:54px; border-radius:50%; bottom:25px; box-shadow:0 0 0 6px var(--tt-paper),0 8px 18px var(--tt-shadow); }
+#tt-nav-lab [data-look="tile"] .tt-nav { left:0; right:0; bottom:18px; height:74px; border-radius:0; border-width:1px 0 0; box-shadow:none; background:var(--tt-paper); padding:5px 8px; }
+#tt-nav-lab [data-look="tile"] .tt-add-shape { width:48px; height:34px; border-radius:11px; }
+#tt-nav-lab [data-look="tile"] .tt-tab[aria-current="page"] .tt-icon { background:transparent; }
+#tt-nav-lab [data-look="tile"] .tt-tab[aria-current="page"]:after { content:''; position:absolute; bottom:-3px; width:17px; height:3px; border-radius:3px; background:var(--tt-blue); }
+#tt-nav-lab [data-look="split"] .tt-nav { background:transparent; border:0; box-shadow:none; padding:0; gap:10px; }
+#tt-nav-lab .tt-wing { display:flex; flex:1; height:68px; padding:5px 2px; border-radius:22px; border:1px solid var(--tt-line); background:var(--tt-panel); box-shadow:0 4px 14px var(--tt-shadow); }
+#tt-nav-lab [data-look="split"] .tt-add { flex:0 0 50px; }
+#tt-nav-lab [data-look="split"] .tt-add-shape { width:46px; height:46px; border-radius:16px; }
+#tt-nav-lab [data-look="split"] .tt-add .tt-add-label { display:none; }
+#tt-nav-lab [data-look="corner"] .tt-nav { left:16px; right:16px; height:68px; border-radius:22px; }
+#tt-nav-lab [data-look="corner"] .tt-compose { position:absolute; right:20px; bottom:112px; flex:none; width:92px; height:46px; border:0; border-radius:16px; color:var(--tt-onblue); background:var(--tt-blue); display:flex; flex-direction:row; gap:7px; font-size:13px; box-shadow:0 5px 14px var(--tt-shadow); }
+#tt-nav-lab [data-look="corner"] .tt-compose .tt-add-shape { width:auto; height:auto; }
+#tt-nav-lab .tt-overlay[hidden] { display:none; }
+#tt-nav-lab .tt-overlay { position:absolute; z-index:5; inset:0; background:#07131d66; display:flex; align-items:flex-end; }
+#tt-nav-lab .tt-sheet { width:100%; background:var(--tt-panel); border-radius:26px 26px 0 0; padding:10px 20px 28px; box-shadow:0 -10px 40px #00000015; }
+#tt-nav-lab .tt-handle { width:30px; height:4px; border-radius:4px; background:var(--tt-line); margin:0 auto 16px; }
+#tt-nav-lab .tt-sheet-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:20px; font-weight:600; }
+#tt-nav-lab .tt-close { border:0; background:var(--tt-soft); color:var(--tt-ink); border-radius:50%; width:32px; height:32px; display:grid; place-items:center; }
+#tt-nav-lab .tt-action { border:0; background:transparent; color:var(--tt-ink); text-align:left; width:100%; padding:12px 0; display:flex; gap:12px; align-items:center; }
+#tt-nav-lab .tt-action-icon { width:42px; height:42px; display:grid; place-items:center; border-radius:13px; background:var(--tt-soft); color:var(--tt-blue); }
+#tt-nav-lab .tt-action strong { display:block; font-size:14px; font-weight:600; }
+#tt-nav-lab .tt-action small { display:block; font-size:11px; margin-top:3px; color:var(--tt-sub); }
+#tt-nav-lab .tt-action > svg { margin-left:auto; width:16px; }
+#tt-nav-lab .tt-action-note { margin-top:8px; font-size:12px; color:var(--tt-sub); }
+@media(max-width:380px) { #tt-nav-lab .tt-stage { padding-left:0; padding-right:0; } #tt-nav-lab .tt-nav { left:8px; right:8px; } #tt-nav-lab .tt-icon { width:36px; } #tt-nav-lab .tt-content { padding-left:16px; padding-right:16px; } }
+@media(prefers-reduced-motion:reduce) { #tt-nav-lab * { transition:none!important; } }
+</style>
+<script>
+(() => {
+  const root = document.getElementById('tt-nav-lab');
+  const icon = name => `<i data-lucide="${name}" aria-hidden="true"></i>`;
+  const labels = { circle:'Circle', crew:'Crew', apps:'My apps', you:'You' };
+  const icons = { circle:'message-circle', crew:'users', apps:'layout-grid', you:'user-round' };
+  const descriptions = { circle:'Give feedback. Earn tix.', crew:'Your testing circle, every night.', apps:'A little progress, every day.', you:'Your profile and preferences.' };
+  const saved = window.openai?.widgetState?.privateContent || {};
+  const state = { selected:labels[saved.selected] ? saved.selected : 'apps', badges:saved.badges !== false };
+  const tab = key => `<button type="button" class="tt-tab" data-tab="${key}" aria-label="${labels[key]}" ${key===state.selected?'aria-current="page"':''}><span class="tt-icon">${icon(icons[key])}${key==='crew'?'<span class="tt-dot"></span>':''}</span><span>${labels[key]}</span></button>`;
+  const add = (corner=false) => `<button type="button" class="tt-tab tt-add ${corner?'tt-compose':''}" aria-label="Add" aria-haspopup="dialog"><span class="tt-add-shape">${icon('plus')}</span><span class="tt-add-label">Add</span></button>`;
+  const rows = {
+    apps:[['D','Daytone','Crew 4 · Night 6 of 14'],['B','Bluefy','1 new review'],['P','Picumo','Waiting for a seat']],
+    circle:[['S','Step Count Pro','Try the new goal screen · 8 tix'],['N','Notely','Is sign in clear? · 6 tix'],['W','Weatherly','First run and widget · 10 tix']],
+    crew:[['4','Crew 4','Tonight’s opens · 3 left'],['D','Daytone','Night 6 of 14'],['N','Notely','Ready for tonight']],
+    you:[['N','Your profile','Level 3 · Member'],['12','Ranks','Your place this week'],['S','Settings','Appearance and notifications']]
+  };
+  const content = key => `<div class="tt-heading">${labels[key]}</div><div class="tt-subtitle">${descriptions[key]}</div>${rows[key].map((r,i)=>`<div class="tt-app"><div class="tt-mark">${r[0]}</div><div><div class="tt-app-name">${r[1]}</div><div class="tt-app-meta">${r[2]}</div>${key==='apps'&&i===0?'<div class="tt-progress"></div>':''}</div>${icon('chevron-right')}</div>`).join('')}<div class="tt-hint">${icon('shield-check')}Made for people who build.</div>`;
+  root.querySelectorAll('.tt-stage').forEach(stage => {
+    const design = stage.dataset.design;
+    const nav = design==='split' ? `<div class="tt-wing">${tab('circle')}${tab('crew')}</div>${add()}<div class="tt-wing">${tab('apps')}${tab('you')}</div>` : `${tab('circle')}${tab('crew')}${design==='corner'?'':add()}${tab('apps')}${tab('you')}`;
+    stage.innerHTML = `<div class="tt-phone" data-look="${design}" aria-label="TestTrack ${design} preview">
+      <div class="tt-status"><span>9:41</span><span>${icon('signal')}${icon('wifi')}${icon('battery-full')}</span></div>
+      <div class="tt-top"><span class="tt-bot">${icon('bot')}</span><div><div class="tt-level">Level 3</div><div class="tt-track"></div></div><div class="tt-balance">${icon('ticket')}100</div></div>
+      <div class="tt-content" aria-live="polite">${content(state.selected)}</div>
+      ${design==='corner'?add(true):''}<nav class="tt-nav" aria-label="Main navigation">${nav}</nav><div class="tt-home"></div>
+      <div class="tt-overlay" hidden><div class="tt-sheet" role="dialog" aria-modal="true" aria-label="Add menu"><div class="tt-handle"></div><div class="tt-sheet-head">Add<button type="button" class="tt-close" aria-label="Close Add menu">${icon('x')}</button></div>
+      ${[['square-plus','Add an app','From this phone or Google Play'],['message-circle-plus','Ask for feedback','Get another pair of eyes on your app'],['user-round-plus','Take a seat','Join a crew and test together']].map(r=>`<button type="button" class="tt-action" data-action="${r[1]}"><span class="tt-action-icon">${icon(r[0])}</span><span><strong>${r[1]}</strong><small>${r[2]}</small></span>${icon('chevron-right')}</button>`).join('')}<div class="tt-action-note" role="status"></div></div></div>
+    </div>`;
+  });
+  const refreshIcons = () => { if(globalThis.lucide) lucide.createIcons(); };
+  function persist() { window.openai?.setWidgetState?.({ modelContent:{ selectedTab:state.selected }, privateContent:state })?.catch(()=>{}); }
+  function update() {
+    root.querySelectorAll('[data-tab]').forEach(btn=> { if(btn.dataset.tab===state.selected) btn.setAttribute('aria-current','page'); else btn.removeAttribute('aria-current'); });
+    root.querySelectorAll('.tt-content').forEach(el=>el.innerHTML=content(state.selected));
+    root.querySelectorAll('.tt-dot').forEach(el=>el.hidden=!state.badges);
+    refreshIcons();
+  }
+  function close(phone) { phone.querySelector('.tt-overlay').hidden=true; phone.querySelector('.tt-add').focus(); }
+  root.addEventListener('click',event=> {
+    const phone=event.target.closest('.tt-phone'); if(!phone) return;
+    const btn=event.target.closest('button');
+    if(btn?.dataset.tab) { state.selected=btn.dataset.tab; update(); persist(); }
+    if(btn?.classList.contains('tt-add')) { phone.querySelector('.tt-overlay').hidden=false; phone.querySelector('.tt-close').focus(); }
+    if(btn?.classList.contains('tt-close') || event.target.classList.contains('tt-overlay')) close(phone);
+    if(btn?.dataset.action) phone.querySelector('.tt-action-note').textContent=`${btn.dataset.action} selected. Preview only.`;
+  });
+  root.addEventListener('keydown',event=> {
+    const overlay=event.target.closest('.tt-overlay'); if(!overlay || overlay.hidden) return;
+    if(event.key==='Escape') close(event.target.closest('.tt-phone'));
+    if(event.key==='Tab') { const buttons=[...overlay.querySelectorAll('button')]; const first=buttons[0],last=buttons[buttons.length-1]; if(event.shiftKey&&document.activeElement===first) { event.preventDefault(); last.focus(); } else if(!event.shiftKey&&document.activeElement===last) { event.preventDefault(); first.focus(); } }
+  });
+  window.addEventListener('openai:set_globals',event=> { const saved=event.detail?.globals?.widgetState?.privateContent; if(saved) { if(labels[saved.selected])state.selected=saved.selected; state.badges=saved.badges!==false; update(); } });
+  update();
+  if(globalThis.Tweak) { const tweak=new Tweak({container:root,onChange:update}); tweak.addToggle(state,'badges',{label:'Crew notification dot'}); }
+})();
+</script>

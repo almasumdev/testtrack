@@ -394,13 +394,39 @@ fun MainShell(
                 }
             }
 
+            MainAddMenu(
+                visible = adding,
+                bottom = dockHeight,
+                onAddApp = {
+                    if (Session.signedIn) {
+                        onAddApp()
+                    } else {
+                        afterSignIn = onAddApp
+                        asking =
+                            SignInReason(
+                                title = "Sign in to add an app",
+                                why = "The apps you add belong to your account, so you need to sign in first.",
+                            )
+                    }
+                },
+                onAsk = askForFeedback,
+                onTakeSeat = {
+                    crews.showTab(CrewPhase.OPEN)
+                    show(MainTab.GROUPS)
+                },
+                onDismiss = { adding = false },
+            )
             MainBar(
                 tab,
-                show,
+                { next ->
+                    adding = false
+                    show(next)
+                },
                 Modifier
                     .align(Alignment.BottomCenter)
                     .onSizeChanged { dockHeight = with(density) { it.height.toDp() } - DockTop },
-                onAdd = { adding = true },
+                onAdd = { adding = !adding },
+                addExpanded = adding,
                 counts =
                     counts.actions?.let {
                         mapOf(MainTab.CIRCLE to it.circle, MainTab.GROUPS to it.crew, MainTab.APPS to it.apps)
@@ -413,29 +439,6 @@ fun MainShell(
                     .padding(bottom = dockHeight + 10.dp),
             )
         }
-    }
-
-    if (adding) {
-        MainAddSheet(
-            onAddApp = {
-                if (Session.signedIn) {
-                    onAddApp()
-                } else {
-                    afterSignIn = onAddApp
-                    asking =
-                        SignInReason(
-                            title = "Sign in to add an app",
-                            why = "The apps you add belong to your account, so you need to sign in first.",
-                        )
-                }
-            },
-            onAsk = askForFeedback,
-            onTakeSeat = {
-                crews.showTab(CrewPhase.OPEN)
-                show(MainTab.GROUPS)
-            },
-            onDismiss = { adding = false },
-        )
     }
 
     if (pickingFeedback) {
