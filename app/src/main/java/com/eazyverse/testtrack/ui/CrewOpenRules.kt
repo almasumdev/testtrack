@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,8 +24,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,8 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.Placeholder
-import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -71,7 +66,6 @@ private val TileFigure =
 private val TileUnit = TextStyle(fontFamily = Barlow, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
 private val TileLabel = TextStyle(fontFamily = Barlow, fontSize = 11.5.sp, lineHeight = 14.sp)
 private val LineStyle = TextStyle(fontFamily = Barlow, fontSize = 13.sp, lineHeight = 17.sp)
-private const val DOT = "dot"
 private val HeadingStyle = TextStyle(fontFamily = Barlow, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold)
 
 @Composable
@@ -269,43 +263,9 @@ private fun RuleGroup(
     }
 }
 
-/**
- * A 4dp dot flush at the content edge; wrapped lines hang under the text. With [inlineDot] (the
- * seat page) the dot is the line's first glyph instead, so a wrap runs back to the left edge.
- */
+/** A 4dp dot flush at the content edge; wrapped lines hang under the text. */
 @Composable
-internal fun RuleLine(
-    text: androidx.compose.ui.text.AnnotatedString,
-    inlineDot: Boolean = false,
-) {
-    if (inlineDot) {
-        val dot = Tt.colors.text4
-        Text(
-            buildAnnotatedString {
-                appendInlineContent(DOT, " ")
-                append(text)
-            },
-            Modifier.fillMaxWidth(),
-            style = LineStyle,
-            color = Tt.colors.text2,
-            inlineContent =
-                mapOf(
-                    DOT to
-                        InlineTextContent(Placeholder(12.sp, 4.sp, PlaceholderVerticalAlign.TextCenter)) {
-                            Box(Modifier.fillMaxSize()) {
-                                Box(
-                                    Modifier
-                                        .align(Alignment.CenterStart)
-                                        .size(4.dp)
-                                        .clip(CircleShape)
-                                        .background(dot),
-                                )
-                            }
-                        },
-                ),
-        )
-        return
-    }
+internal fun RuleLine(text: androidx.compose.ui.text.AnnotatedString) {
     Row(Modifier.fillMaxWidth()) {
         Box(
             Modifier

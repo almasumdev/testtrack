@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Take a seat</title>
+<title>Take a seat, every state</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -16,247 +16,227 @@
     --tabSel:#2E4E66; --glass:#F2F9FD; --gbs:#789AAF; --gb:#B7D1E2; --hair:#B7D1E2;
     --cardLine:#E1ECF3; --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
     --primary:#3A5B73; --onPrimary:#FFFFFF; --tile:#DCE6EE; --tileInk:#3A5B73;
-    --ok:#246B59; --warn:#8A611C; --bad:#9E3B2E;
+    --ok:#246B59; --warn:#8A611C; --bad:#9E3B2E; --surface:#F7FCFF;
     --fieldBorder:#789AAF; --sheet:#FFFFFF; --flaskL:#9279D6; --flaskG:#4A3B86;
+    --kb:#E3E9EE; --key:#FFFFFF; --keyW:#C9D3DB;
   }
   .dark {
     --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
     --tabSel:#B6CCDC; --glass:#1C1E20; --gbs:#666D74; --gb:#383C41; --hair:#2B2E32;
     --cardLine:#2D3034; --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
     --primary:#93B3CA; --onPrimary:#0F1011; --tile:#2A2D31; --tileInk:#A2BED2;
-    --ok:#83D8C4; --warn:#D8B774; --bad:#E4938A;
+    --ok:#83D8C4; --warn:#D8B774; --bad:#E4938A; --surface:#0F1011;
     --fieldBorder:#666D74; --sheet:#1C1E20; --flaskL:#8C70D4; --flaskG:#CDBEF0;
+    --kb:#1B1D1F; --key:#34373B; --keyW:#26292C;
   }
 
   * { box-sizing: border-box; }
   body { margin: 0; background: #E7ECEF; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; }
-  .doc { padding: 28px; display: flex; flex-wrap: wrap; gap: 48px 56px; align-items: flex-start; }
+  .doc { padding: 28px; display: flex; flex-wrap: wrap; gap: 44px 40px; align-items: flex-start; }
   .state { display: flex; flex-direction: column; }
-  .lbl { font-size: 17px; font-weight: 700; color: #2D4A5F; margin: 0 0 10px 4px; }
+  .lbl { font-size: 16px; font-weight: 700; color: #2D4A5F; margin: 0 0 8px 4px; }
   .pair { display: flex; gap: 16px; align-items: flex-start; }
-  .cap { font-size: 12px; font-weight: 600; color: #6B8396; margin: 0 0 6px 4px; }
   svg.i { display: block; flex: none; }
   svg.il { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .one { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  b { font-weight: 600; color: var(--text); }
 
-  .phone { background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #C3CFD8; display: flex; flex-direction: column; }
+  /* phone */
+  .phone { width: 412px; background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #C3CFD8; display: flex; flex-direction: column; position: relative; }
   .dark.phone { border-color: #2A2D31; }
   .sbar { height: 24px; flex: none; }
   .pbar { height: 64px; position: relative; flex: none; background: var(--bg); z-index: 2; }
   .pbar .back { position: absolute; left: 16px; top: 20px; color: var(--text); }
   .pbar .pt { position: absolute; left: 56px; top: 18px; font-size: 22px; line-height: 28px; font-weight: 700; }
-  .vp { position: relative; overflow: hidden; flex: none; }
+  .fbar { height: 64px; display: flex; align-items: center; padding: 0 4px 0 16px; flex: none; background: var(--bg); position: relative; z-index: 2; }
+  .fbar .t { flex: 1; font-size: 22px; line-height: 28px; font-weight: 700; }
+  .xbtn { width: 48px; height: 48px; display: grid; place-items: center; color: var(--text); flex: none; }
+  .vp { position: relative; overflow: hidden; flex: 1 1 auto; }
   .scroll { padding: 8px 16px 20px; }
-  .nav { height: 24px; flex: none; background: var(--bg); z-index: 2; }
-  .one { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .navb { height: 24px; flex: none; background: var(--bg); z-index: 2; }
 
-  .ai { border-radius: 30%; flex: none; position: relative; }
+  /* head */
+  .ah { display: flex; align-items: center; }
+  .ah .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .ai { width: 52px; height: 52px; border-radius: 30%; flex: none; position: relative; background: linear-gradient(135deg, #ff8a3d, #e8453c); }
   .ai i { position: absolute; left: 28%; top: 28%; width: 44%; height: 44%; border-radius: 30%; background: rgba(255,255,255,.88); }
   .ai .mk { position: absolute; right: -5px; bottom: -5px; width: 20px; height: 20px; border-radius: 50%; background: var(--sheet); box-shadow: 0 0 0 2px var(--bg); display: grid; place-items: center; }
+  .hn { font-size: 16px; line-height: 18px; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .hed { font-size: 16px; line-height: 17px; font-weight: 600; box-shadow: inset 0 -2px 0 var(--primary); padding-bottom: 4px; overflow-wrap: anywhere; }
+  .caret { display: inline-block; width: 1.5px; height: 14px; background: var(--primary); vertical-align: -2px; margin-left: 1px; }
+  .dev { margin-top: 2px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--text3); }
+  .devrow { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--text3); }
+  .devrow .one { flex: 1; min-width: 0; }
+  .cnt { font-size: 11.5px; line-height: 14px; font-weight: 400; color: var(--text4); white-space: nowrap; }
+  .slot { width: 40px; height: 40px; display: grid; place-items: center; flex: none; margin-left: 4px; color: var(--text4); }
+  .slot.acc { color: var(--accentInk); }
 
-  .ah, .r40 { display: flex; align-items: center; }
-  .r40 { min-height: 40px; }
-  .ah .col, .r40 .col { flex: 1; min-width: 0; margin-left: 12px; }
-  .nm { font-size: 16px; line-height: 19px; font-weight: 600; color: var(--text); }
-  .hn { font-size: 16px; line-height: 18px; font-weight: 600; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  /* heading, lines */
+  .sh { display: flex; align-items: center; min-height: 19px; margin-bottom: 8px; gap: 8px; }
+  .sh h3 { margin: 0; flex: 1; font-size: 16px; line-height: 19px; font-weight: 700; }
+  .st { display: flex; align-items: center; gap: 4px; font-size: 12.5px; line-height: 14px; font-weight: 600; white-space: nowrap; }
+  .st.ok { color: var(--ok); } .st.warn { color: var(--warn); }
+  .body { font-size: 13px; line-height: 18px; color: var(--text2); }
+  .small { font-size: 12.5px; line-height: 17px; }
+  .warnc { color: var(--warn); } .badc { color: var(--bad); }
+
+  /* tile rows */
+  .r40 { display: flex; align-items: center; min-height: 40px; }
+  .r40 .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .t40 { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .t40.ok { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); }
+  .nm { font-size: 16px; line-height: 19px; font-weight: 600; }
   .sub { margin-top: 2px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--text3); display: flex; align-items: center; gap: 4px; }
   .sub.acc { color: var(--accentInk); }
   .sub.warn { color: var(--warn); font-weight: 600; }
 
-  .sec { margin-top: 32px; }
-  .sec.first { margin-top: 24px; }
-  .sh { display: flex; align-items: center; min-height: 19px; margin-bottom: 8px; gap: 8px; }
-  .sh h3 { margin: 0; flex: 1; font-size: 16px; line-height: 19px; font-weight: 700; color: var(--text); }
-  .sh .st { display: flex; align-items: center; gap: 4px; font-size: 12.5px; line-height: 14px; font-weight: 600; white-space: nowrap; }
-  .sh.done { margin-bottom: 0; }
-  .st.ok { color: var(--ok); } .st.warn { color: var(--warn); }
-  .body { font-size: 13px; line-height: 18px; color: var(--text2); }
-  .gt b, .rl b, .pop b, .il-line b { font-weight: 600; color: var(--text); }
+  /* address */
+  .ar { display: flex; align-items: center; min-height: 40px; }
+  .ar .col { flex: 1; min-width: 0; }
+  .addr { font-size: 15px; line-height: 18px; font-weight: 600; color: var(--accentInk); white-space: nowrap; overflow: hidden; }
+  .copy { width: 40px; height: 40px; display: grid; place-items: center; color: var(--accentInk); margin-left: 4px; flex: none; }
 
-  .afl { margin-top: 12px; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text4); margin-bottom: 4px; }
-  .af { min-height: 56px; border: 1px solid var(--fieldBorder); border-radius: 8px; padding: 7px 4px 7px 16px; display: flex; align-items: center; gap: 4px; }
-  .af .a { flex: 1; min-width: 0; font-size: 13.5px; line-height: 18px; font-weight: 600; color: var(--accentInk); }
-  .af .cbtn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--accentInk); flex: none; }
-  .af .cbtn.done { color: var(--ok); }
-  /* steps share the address row's columns: a 40 lead with the badge centred, text at 52 */
-  .gs { display: flex; align-items: flex-start; margin-top: 8px; min-height: 32px; }
-  .gs .lead { width: 40px; height: 32px; display: grid; place-items: center; flex: none; }
-  .gn { width: 24px; height: 24px; border-radius: 7px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; font-size: 12px; font-weight: 700; flex: none; }
-  .gt { margin-left: 12px; flex: 1; padding: 7px 0; font-size: 13px; line-height: 18px; color: var(--text2); }
-  .big .gt { padding: 4.3px 0; }
-  .bar { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--tabSel); font-size: 16px; line-height: 24px; font-weight: 600; padding: 11px; white-space: nowrap; border: 1px solid var(--cardLine); border-radius: 14px; background: var(--glass); }
-
-  /* a line whose icon is the first glyph of its text: a wrap runs back to the left edge */
-  .il-line { font-size: 12.5px; line-height: 17px; color: var(--warn); }
-
-  .t40 { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  /* pills, bars, buttons */
+  .pills { display: flex; gap: 8px; }
+  .pt48 { flex: 1; height: 48px; display: flex; align-items: center; }
+  .pill { width: 100%; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; line-height: 20px; font-weight: 700; white-space: nowrap; }
+  .pill.soft { background: var(--tile); color: var(--accentInk); }
+  .pill.solid { background: var(--accent); color: var(--onAccent); }
   .rp { height: 34px; border-radius: 17px; background: var(--tile); color: var(--accentInk); padding: 0 14px; display: flex; align-items: center; font-size: 14px; font-weight: 700; flex: none; margin-left: 8px; white-space: nowrap; }
+  .bar { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--tabSel); font-size: 16px; line-height: 24px; font-weight: 600; padding: 11px; white-space: nowrap; border: 1px solid var(--cardLine); border-radius: 14px; background: var(--surface); }
+  .prim { min-height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; font-size: 15px; line-height: 20px; font-weight: 700; white-space: nowrap; }
+  .prim.off { background: color-mix(in srgb, var(--text) 12%, transparent); color: color-mix(in srgb, var(--text) 38%, transparent); }
+  .spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; flex: none; }
+  .spin.l { width: 22px; height: 22px; border-width: 2.5px; }
 
+  /* sign-in */
+  .q { font-size: 14px; line-height: 20px; font-weight: 600; }
+  .tc { display: flex; gap: 8px; margin-top: 8px; }
+  .chc { flex: 1; min-height: 48px; border-radius: 10px; border: 1px solid var(--gbs); display: grid; place-items: center; font-size: 14px; line-height: 20px; font-weight: 600; color: var(--text2); }
+  .chc.on { background: var(--tile); border-color: var(--tileInk); color: var(--tileInk); }
   .fl { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text4); margin-bottom: 4px; }
-  .fd { min-height: 56px; border: 1px solid var(--fieldBorder); border-radius: 8px; padding: 0 16px; display: flex; align-items: center; font-size: 15px; line-height: 21px; font-weight: 500; color: var(--text); }
+  .fd { min-height: 56px; border: 1px solid var(--fieldBorder); border-radius: 8px; padding: 0 16px; display: flex; align-items: center; font-size: 15px; line-height: 21px; font-weight: 500; }
   .fd.tall { min-height: 72px; align-items: flex-start; padding-top: 16px; }
   .fd.focus { border: 2px solid var(--primary); padding: 0 15px; }
   .fd .ph { color: var(--text4); opacity: .8; font-weight: 400; }
   .fc { display: flex; justify-content: flex-end; margin-top: 4px; font-size: 11.5px; line-height: 16px; color: var(--text2); }
-  .q { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--text); }
-  .tc { display: flex; gap: 8px; margin-top: 8px; }
-  .chc { flex: 1; min-height: 48px; border-radius: 10px; border: 1px solid var(--gbs); display: grid; place-items: center; font-size: 14px; line-height: 20px; font-weight: 600; color: var(--text2); }
-  .chc.on { background: var(--tile); border-color: var(--tileInk); color: var(--tileInk); }
-  .sinote { margin-top: 8px; font-size: 13px; line-height: 18px; color: var(--text2); }
 
-  /* rule line: the dot is the first glyph, so a wrap runs back to the left edge too */
-  .rl { font-size: 13px; line-height: 17px; color: var(--text2); }
-  .rl .dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--text4); vertical-align: 3px; margin-right: 8px; }
+  /* price rules: classic hanging bullets */
+  .rl { display: flex; font-size: 13px; line-height: 17px; color: var(--text2); }
+  .rl::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--text4); margin: 6.5px 8px 0 0; flex: none; }
   .rl + .rl { margin-top: 6px; }
 
-  /* checkbox row: box, label, then the (i) on the same row */
+  /* notices */
+  .ttl { font-size: 14px; line-height: 20px; font-weight: 600; }
+  .bs { font-size: 12px; line-height: 16px; }
+  .link { font-size: 14px; line-height: 20px; font-weight: 700; color: var(--accentInk); padding: 6px 12px 0 0; display: inline-block; }
+
+  /* boxes */
   .bx { display: flex; align-items: center; min-height: 48px; }
   .cb { width: 22px; height: 22px; border-radius: 6px; box-shadow: inset 0 0 0 1.5px var(--gbs); display: grid; place-items: center; flex: none; color: var(--onAccent); }
   .cb.on { background: var(--accent); box-shadow: none; }
-  .bl { margin-left: 12px; font-size: 15px; line-height: 20px; font-weight: 500; color: var(--text); white-space: nowrap; }
-  .ib { width: 40px; height: 40px; margin-left: -6px; display: grid; place-items: center; color: var(--text4); flex: none; border-radius: 50%; }
+  .bl { margin-left: 12px; font-size: 15px; line-height: 20px; font-weight: 500; white-space: nowrap; }
+  .ib { width: 40px; height: 40px; margin-left: -6px; display: grid; place-items: center; color: var(--text4); flex: none; position: relative; }
   .ib.on { color: var(--accentInk); }
   .ib.on::before { content: ""; position: absolute; width: 30px; height: 30px; border-radius: 50%; background: color-mix(in srgb, var(--accentInk) 10%, transparent); }
-  .ib { position: relative; }
   .ib svg { position: relative; }
 
-  .end { margin-top: 32px; }
-  .hint { text-align: center; font-size: 12.5px; line-height: 16px; font-weight: 600; color: var(--text2); margin-bottom: 8px; min-height: 20px; padding-top: 2px; white-space: nowrap; }
-  .hint.todo .il { color: var(--accentInk); }
+  /* hint */
+  .hint { text-align: center; font-size: 12.5px; line-height: 16px; font-weight: 600; color: var(--text2); min-height: 20px; padding-top: 2px; white-space: nowrap; margin-bottom: 8px; }
+  .hint.todo .ic { color: var(--accentInk); }
   .hint.warn { color: var(--warn); }
   .hint.quiet { color: var(--text3); font-weight: 500; }
-  .prim { min-height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; font-size: 15px; line-height: 20px; font-weight: 700; padding: 0 24px; white-space: nowrap; }
-  .prim.off { background: color-mix(in srgb, var(--text) 12%, transparent); color: color-mix(in srgb, var(--text) 38%, transparent); }
 
-  /* the box's callout, as ProblemCallout draws it */
+  /* callout */
   .pop { position: absolute; z-index: 3; }
   .pop svg.shape { position: absolute; left: 0; top: 0; overflow: visible; }
-  .pop .pc { position: relative; padding: 0 14px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 18px; color: var(--text2); }
-  .pop .pw { color: var(--warn); }
+  .pop .pc { position: relative; padding: 20px 14px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 18px; color: var(--text2); }
 
-  /* system text at 1.3x: sp grows, dp stays; the app icon grows with it up to 1.3x */
-  .big .pbar .pt { font-size: 28.6px; line-height: 36.4px; top: 14px; }
-  .big .hn { font-size: 20.8px; line-height: 23.4px; }
-  .big .ah .sub { font-size: 16.25px; line-height: 18.2px; margin-top: 2.6px; }
-  .big .ah .ai { width: 67.6px !important; height: 67.6px !important; }
-  .big .sh h3 { font-size: 20.8px; line-height: 24.7px; }
-  .big .body { font-size: 16.9px; line-height: 23.4px; }
-  .big .afl { font-size: 15.6px; line-height: 20.8px; }
-  .big .af .a { font-size: 17.55px; line-height: 23.4px; }
-  .big .gt { font-size: 16.9px; line-height: 23.4px; }
-  .big .gn { font-size: 15.6px; }
-  .big .bar { font-size: 20.8px; line-height: 31.2px; }
-  .big .nm { font-size: 20.8px; line-height: 24.7px; }
-  .big .r40 .sub { font-size: 16.25px; line-height: 18.2px; }
-  .big .fl { font-size: 15.6px; line-height: 20.8px; }
-  .big .fd { font-size: 19.5px; line-height: 27.3px; }
-  .big .fc { font-size: 15px; line-height: 20.8px; }
-  .big .q, .big .chc { font-size: 18.2px; line-height: 26px; }
+  /* skeleton */
+  .sk { background: color-mix(in srgb, var(--text) 9%, transparent); border-radius: 6px; }
 
-  /* tile rows: name and group address */
-  .r40 .slot { width: 40px; height: 40px; display: grid; place-items: center; flex: none; color: var(--text4); margin-left: 4px; border-radius: 50%; }
-  .r40 .slot.copy { color: var(--accentInk); }
-  .r40 .slot.copy.done { color: var(--ok); }
-  .addr { font-size: 14px; line-height: 17px; font-weight: 600; color: var(--accentInk); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ed { box-shadow: inset 0 -2px 0 var(--primary); white-space: nowrap; overflow: hidden; padding-bottom: 4px; }
-  .caret { display: inline-block; width: 1.5px; height: 17px; background: var(--primary); vertical-align: -3px; margin-left: 1px; }
-  .sub.edl { color: var(--accentInk); font-weight: 600; }
-  .cn { font-size: 11.5px; line-height: 16px; color: var(--text4); white-space: nowrap; }
-  .big .addr { line-height: 22px; }
-  /* the keyboard, only so the editing frame reads true */
-  .phone { position: relative; }
-  .kb { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; padding: 10px 4px 34px; background: #E3E9EE; display: flex; flex-direction: column; gap: 10px; }
-  .dark .kb { background: #1B1D1F; }
-  .kb .kr { display: flex; gap: 6px; justify-content: center; }
-  .kb .k { height: 42px; flex: 0 0 calc((100% - 54px) / 10); border-radius: 6px; background: #FFFFFF; }
-  .dark .kb .k { background: #34373B; }
-  .kb .k.w { flex-basis: calc((100% - 54px) / 10 * 1.5); background: #C9D3DB; }
-  .dark .kb .k.w { background: #26292C; }
-  .kb .k.sp { flex-basis: 50%; }
-  /* Testers group, new directions */
-  .nsec { width: 100%; display: flex; flex-direction: column; gap: 26px; }
-  .nsec h2 { margin: 0; font-size: 20px; font-weight: 700; color: #2D4A5F; }
-  .nsec .row { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
-  .cap .rec { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 10px; background: #246B59; color: #fff; font-size: 11px; font-weight: 700; vertical-align: 1px; }
-  .opt { background: var(--bg); color: var(--text); border: 1px solid #C3CFD8; border-radius: 20px; padding: 16px; position: relative; overflow: hidden; }
-  .sr { display: flex; align-items: center; min-height: 36px; }
-  .sr .lead40 { width: 40px; display: grid; place-items: center; flex: none; }
-  .dot { width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--cardLine); display: grid; place-items: center; font-size: 12px; line-height: 14px; font-weight: 700; color: var(--text4); flex: none; font-variant-numeric: tabular-nums; }
-  .dot.now { background: var(--accent); box-shadow: none; color: var(--onAccent); }
-  .stt { margin-left: 12px; flex: 1; min-width: 0; font-size: 14px; line-height: 19px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .stt.now { font-size: 15px; font-weight: 600; color: var(--text); }
-  .stt b { font-weight: 600; color: var(--text); }
-  .under { padding-left: 34px; }
-  .under40 { padding-left: 52px; }
-  .pill { height: 34px; border-radius: 10px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; line-height: 20px; font-weight: 700; white-space: nowrap; }
-  .pill.soft { background: var(--tile); color: var(--accentInk); }
-  .pill.solid { background: var(--accent); color: var(--onAccent); }
-  .pill.addr2 { gap: 8px; max-width: 100%; }
-  .pills { display: flex; gap: 8px; }
-  .pills .pill { flex: 1; }
-  .chev { width: 40px; height: 40px; display: grid; place-items: center; color: var(--text4); flex: none; margin-left: 4px; }
-  .scrim { position: absolute; inset: 0; background: rgba(15, 25, 35, .32); }
-  .sheet { position: relative; margin: 0 -16px -16px; background: var(--sheet); border-radius: 22px 22px 0 0; padding: 10px 16px 20px; }
-  .handle { width: 38px; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--text4) 50%, transparent); margin: 0 auto 14px; }
-  .sheet .stl { font-size: 18px; line-height: 22px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
-  /* A, picked: address row without a tile, full-screen how-to, viewer */
-  .ar .col { margin-left: 0 !important; }
-  .ar .addr { line-height: 18px; }
-  .fbar { height: 64px; display: flex; align-items: center; padding: 0 4px 0 16px; flex: none; background: var(--bg); position: relative; z-index: 2; }
-  .fbar.line { box-shadow: 0 1px 0 var(--hair); }
-  .fbar .t { flex: 1; font-size: 22px; line-height: 28px; font-weight: 700; color: var(--text); }
-  .xbtn { width: 48px; height: 48px; display: grid; place-items: center; color: var(--text); flex: none; }
+  /* how-to */
   .hs { display: flex; align-items: center; gap: 12px; min-height: 32px; }
   .hnum { width: 24px; height: 24px; border-radius: 50%; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; font-size: 12.5px; font-weight: 700; flex: none; }
-  .ht { font-size: 15px; line-height: 20px; font-weight: 600; color: var(--text); }
-  .shot { position: relative; border-radius: 12px; box-shadow: 0 0 0 1px var(--gb); overflow: hidden; aspect-ratio: 16 / 10; background: #FFFFFF; margin-top: 10px; }
-  .shot .zb { position: absolute; right: 8px; bottom: 8px; width: 30px; height: 30px; border-radius: 15px; background: rgba(32, 33, 36, .62); color: #fff; display: grid; place-items: center; }
-  /* a Play Console look-alike, in percentages so it zooms */
-  .pcx { position: absolute; inset: 0; font-size: 0; }
-  .pcx .top { position: absolute; left: 0; right: 0; top: 0; height: 10%; background: #fff; border-bottom: 1px solid #E3E6E8; }
-  .pcx .top .lg { position: absolute; left: 2.5%; top: 28%; width: 3.2%; height: 44%; border-radius: 2px; background: #34A853; }
-  .pcx .top .tx { position: absolute; left: 7%; top: 38%; width: 14%; height: 24%; border-radius: 2px; background: #C4C9CE; }
-  .pcx .top .av { position: absolute; right: 2.5%; top: 25%; width: 3.6%; height: 50%; border-radius: 50%; background: #D2D7DB; }
-  .pcx .nav { position: absolute; left: 0; top: 10%; bottom: 0; height: auto; z-index: auto; width: 22%; background: #F7F8F9; border-right: 1px solid #E3E6E8; padding-top: 4%; }
-  .pcx .nav i { display: block; height: 4.2%; margin: 0 9% 5.4% 9%; border-radius: 2px; background: #D6DBDF; }
-  .pcx .nav i.sub { margin-left: 18%; background: #E1E5E8; }
-  .pcx .main { position: absolute; left: 22%; right: 0; top: 10%; bottom: 0; background: #FBFCFC; }
-  .pcx .h1 { position: absolute; left: 5%; top: 7%; width: 34%; height: 5%; border-radius: 2px; background: #5F6368; opacity: .55; }
-  .pcx .tabs { position: absolute; left: 5%; right: 5%; top: 17%; height: 8%; border-bottom: 1px solid #E3E6E8; }
-  .pcx .tabs i { position: absolute; top: 30%; height: 30%; border-radius: 2px; background: #BCC2C7; }
-  .pcx .card { position: absolute; left: 5%; right: 5%; top: 31%; bottom: 7%; background: #fff; border: 1px solid #E3E6E8; border-radius: 3px; }
-  .pcx .card i { position: absolute; left: 5%; height: 6%; border-radius: 2px; background: #DADFE3; }
-  .pcx .fld { position: absolute; left: 5%; width: 62%; top: 44%; height: 14%; border: 1px solid #BCC2C7; border-radius: 3px; background: #fff; }
-  .pcx .btn { position: absolute; border-radius: 3px; background: #01875F; }
-  .pcx .hl { position: absolute; border: 2px solid #E37400; border-radius: 4px; box-shadow: 0 0 0 3px rgba(227, 116, 0, .18); }
-  /* viewer */
-  .viewer.phone { background: #000; border-color: #000; color: #fff; }
-  .viewer > .sbar, .viewer > .nav { background: #000; }
-  .vbar { position: absolute; left: 0; right: 0; top: 0; height: 64px; display: flex; align-items: center; padding: 0 4px 0 16px; z-index: 3; }
-  .vbar .cnt { flex: 1; font-size: 15px; line-height: 20px; font-weight: 600; color: rgba(255,255,255,.85); }
-  .vbar .xbtn { color: #fff; }
-  .vimg { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); }
-  .vimg .shot { margin: 0; border-radius: 0; box-shadow: none; }
-  .vcap { position: absolute; left: 16px; right: 16px; bottom: 20px; z-index: 3; color: #fff; font-size: 15px; line-height: 20px; font-weight: 600; }
-  .vhint { position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%); z-index: 3; display: flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 16px; background: rgba(255,255,255,.14); color: rgba(255,255,255,.9); font-size: 12.5px; line-height: 16px; font-weight: 600; white-space: nowrap; }
-  .vdots { position: absolute; left: 0; right: 0; bottom: 52px; display: flex; justify-content: center; gap: 6px; z-index: 3; }
-  .vdots i { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.35); }
-  .vdots i.on { background: #fff; width: 16px; }
-  /* head that edits the crew name, and the verified group */
-  .ah .slot { width: 40px; height: 40px; display: grid; place-items: center; flex: none; color: var(--text4); margin-left: 4px; }
-  .hed { font-size: 16px; line-height: 18px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; box-shadow: inset 0 -2px 0 var(--primary); padding-bottom: 4px; }
-  .sub.okl { color: var(--ok); font-weight: 600; }
-  .t40.okt { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); }
-  /* editing head: field up to 2 lines, underline under the last, counter on the developer's row */
-  .hed2 { font-size: 16px; line-height: 17px; font-weight: 600; color: var(--text); box-shadow: inset 0 -2px 0 var(--primary); padding-bottom: 4px; overflow-wrap: anywhere; }
-  .hed2 .caret { height: 14px; vertical-align: -2px; }
-  .devrow { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--text3); }
-  .devrow .one { flex: 1; min-width: 0; }
-  .devrow .cn { font-size: 11.5px; line-height: 14px; }
-  .ah .slot.done { color: var(--accentInk); }
-  .big .hed2 { font-size: 20.8px; line-height: 22.1px; }
-  .big .devrow { font-size: 16.25px; line-height: 18.2px; }
-  .big .devrow .cn { font-size: 14.95px; line-height: 18.2px; }
-  .big .ah .slot svg { width: 26px; height: 26px; }
+  .ht { font-size: 15px; line-height: 20px; font-weight: 600; }
+  .pic { border-radius: 12px; box-shadow: inset 0 0 0 1px var(--gb); overflow: hidden; position: relative; margin-top: 10px; background: #fff; }
+  .pic img { display: block; width: 100%; height: auto; }
+  .pic::after { content: ""; position: absolute; inset: 0; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--gb); pointer-events: none; }
+  .zhint { margin-top: 8px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--text3); }
+
+  /* keyboard */
+  .kb { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; padding: 10px 4px 34px; background: var(--kb); display: flex; flex-direction: column; gap: 10px; }
+  .kb .kr { display: flex; gap: 6px; justify-content: center; }
+  .kb .k { height: 42px; flex: 0 0 calc((100% - 54px) / 10); border-radius: 6px; background: var(--key); }
+  .kb .k.w { flex-basis: calc((100% - 54px) / 10 * 1.5); background: var(--keyW); }
+  .kb .k.sp { flex-basis: 50%; }
+  /* RobotOffline in CenteredState */
+  .cstate { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px 16px; text-align: center; }
+  .robot { width: 112px; height: 142.6px; position: relative; }
+  .rfig { position: absolute; left: 0; bottom: 11.2px; }
+  .rfig svg { display: block; }
+  .rshadow { position: absolute; left: 22.4px; bottom: 0; width: 67.2px; height: 11.2px; border-radius: 50%; background: rgba(15, 30, 45, .18); }
+  .ctitle { font-size: 20px; line-height: 25px; font-weight: 700; }
+  .cline { max-width: 300px; font-size: 14px; line-height: 20px; color: var(--text2); }
+  .obtn { min-height: 52px; padding: 0 22px; border-radius: 26px; border: 1.5px solid var(--accentInk); color: var(--accentInk); font-size: 14.5px; font-weight: 700; display: flex; align-items: center; }
+  .vp > .scroll.full { position: absolute; inset: 0; padding: 0; }
+  /* Text fields: three options */
+  .tsec { width: 100%; display: flex; flex-direction: column; gap: 22px; }
+  .tsec h2 { margin: 0; font-size: 20px; font-weight: 700; color: #2D4A5F; }
+  .tsec .row { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+  .cap { font-size: 12px; font-weight: 600; color: #6B8396; margin: 0 0 6px 4px; }
+  .cap .rec { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 10px; background: #246B59; color: #fff; font-size: 11px; font-weight: 700; vertical-align: 1px; }
+  .opt { width: 412px; background: var(--bg); color: var(--text); border: 1px solid #C3CFD8; border-radius: 20px; padding: 16px; }
+  .opt.dark { border-color: #2A2D31; }
+  .tcaret { display: inline-block; width: 1.5px; height: 16px; background: var(--primary); vertical-align: -3px; margin-left: 1px; }
+  .terr { margin-top: 4px; font-size: 12.5px; line-height: 16px; font-weight: 600; color: var(--bad); }
+  .tcnt { display: flex; justify-content: flex-end; margin-top: 4px; font-size: 11.5px; line-height: 14px; color: var(--text4); }
+  .eye { width: 40px; height: 40px; display: grid; place-items: center; color: var(--text4); flex: none; }
+  /* A: outlined 48, label inside, floats on focus or once filled */
+  .fa { position: relative; min-height: 48px; border: 1px solid var(--fieldBorder); border-radius: 10px; padding: 0 4px 0 14px; display: flex; align-items: center; }
+  .fa.focus { border: 2px solid var(--primary); padding-left: 13px; }
+  .fa.err { border: 1.5px solid var(--bad); padding-left: 13.5px; }
+  .fa .in { flex: 1; min-width: 0; position: relative; align-self: stretch; }
+  .fa .lab { position: absolute; left: 0; top: 50%; transform: translateY(-50%); font-size: 15px; line-height: 20px; color: var(--text4); white-space: nowrap; }
+  .fa .lab.up { top: 5px; transform: none; font-size: 11.5px; line-height: 14px; font-weight: 600; }
+  .fa.focus .lab.up { color: var(--accentInk); }
+  .fa.err .lab { color: var(--bad); }
+  .fa .val { padding: 19px 0 5px; font-size: 15px; line-height: 20px; font-weight: 500; white-space: nowrap; overflow: hidden; }
+  .fa.tall { align-items: stretch; }
+  .fa.tall .val { white-space: normal; }
+  /* B: soft filled 48, label above, focus is a 2dp line along the bottom */
+  .flb { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text4); margin-bottom: 4px; }
+  .flb.focus { color: var(--accentInk); } .flb.err { color: var(--bad); }
+  .fb { position: relative; min-height: 48px; background: var(--tile); border-radius: 10px; padding: 0 4px 0 14px; display: flex; align-items: center; overflow: hidden; }
+  .fb .v { flex: 1; min-width: 0; font-size: 15px; line-height: 20px; font-weight: 500; white-space: nowrap; overflow: hidden; }
+  .fb .ph { color: var(--text4); font-weight: 400; }
+  .fb.focus::after, .fb.err::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--primary); }
+  .fb.err::after { background: var(--bad); }
+  .fb.tall { padding-top: 14px; padding-bottom: 14px; }
+  .fb.tall .v { white-space: normal; }
+  /* C: tile-row field, the head's own editing language */
+  .fcr { display: flex; align-items: center; min-height: 48px; }
+  .fcr.top { align-items: flex-start; padding-top: 4px; }
+  .fcr .t40.err { background: color-mix(in srgb, var(--bad) 12%, transparent); color: var(--bad); }
+  .fcr .col { flex: 1; min-width: 0; margin-left: 12px; }
+  .fcr .v { font-size: 15px; line-height: 19px; font-weight: 500; padding-bottom: 4px; box-shadow: inset 0 -1px 0 var(--fieldBorder); white-space: nowrap; overflow: hidden; }
+  .fcr .v.ml { white-space: normal; }
+  .fcr .v .ph { color: var(--text4); font-weight: 400; }
+  .fcr.focus .v { box-shadow: inset 0 -2px 0 var(--primary); }
+  .fcr.err .v { box-shadow: inset 0 -2px 0 var(--bad); }
+  .fcr .lb { margin-top: 2px; display: flex; gap: 8px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--text3); }
+  .fcr .lb .one { flex: 1; }
+  .fcr.focus .lb { color: var(--accentInk); font-weight: 600; }
+  .fcr.err .lb { color: var(--bad); font-weight: 600; }
+  /* Now: the DialogField as built, label above a 56dp box */
+  .fn { min-height: 56px; border: 1px solid var(--fieldBorder); border-radius: 8px; padding: 0 4px 0 16px; display: flex; align-items: center; font-size: 15px; line-height: 21px; font-weight: 500; }
+  .fn .v { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; }
+  .fn .ph { color: var(--text4); opacity: .8; font-weight: 400; }
+  .fn.focus { border: 2px solid var(--primary); padding-left: 15px; }
+  .fn.err { border: 2px solid var(--bad); padding-left: 15px; }
+  .fn.tall { min-height: 72px; align-items: flex-start; padding-top: 16px; }
+  .fn.tall .v { white-space: normal; }
+  .fnl { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text4); margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -268,334 +248,303 @@ const P = (d, s = 24, w = 2) => `<svg class="i" width="${s}" height="${s}" viewB
 const inl = svg => svg.replace('class="i"', 'class="il"');
 const I = {
   check: (s, w = 2.6) => P('<path d="M20 6 9 17l-5-5"/>', s, w),
-  circleCheck: s => P('<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>', s, 2.4),
-  circleAlert: s => P('<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>', s, 2.4),
+  circleCheck: (s, w = 2.4) => P('<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>', s, w),
+  circleAlert: (s, w = 2.4) => P('<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>', s, w),
   circleDashed: s => P('<path d="M10.1 2.182a10 10 0 0 1 3.8 0"/><path d="M13.9 21.818a10 10 0 0 1-3.8 0"/><path d="M17.609 3.721a10 10 0 0 1 2.69 2.7"/><path d="M2.182 13.9a10 10 0 0 1 0-3.8"/><path d="M20.279 17.609a10 10 0 0 1-2.7 2.69"/><path d="M21.818 10.1a10 10 0 0 1 0 3.8"/><path d="M3.721 6.391a10 10 0 0 1 2.7-2.69"/><path d="M6.391 20.279a10 10 0 0 1-2.69-2.7"/>', s, 2.6),
   alert: s => P('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>', s, 2.2),
   info: (s, w = 2) => P('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>', s, w),
+  help: s => P('<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>', s),
   refresh: s => P('<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>', s),
   copy: s => P('<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>', s, 2.2),
   users: s => P('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', s),
   coins: s => P('<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>', s),
   clock: s => P('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', s, 2.4),
+  pencil: s => P('<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>', s),
+  x: s => P('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', s),
   backIos: s => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`,
   flask: s => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M7.9 14.3Q10 13.2 12 14.3T16.1 14.3L19.1 20.3Q19.4 21.6 18.1 21.6H5.9Q4.6 21.6 4.9 20.3Z" fill="var(--flaskL)"/><path d="M10 3v6.5a2 2 0 0 1-.2.9L4.8 20.4a1 1 0 0 0 .9 1.4h12.6a1 1 0 0 0 .9-1.4L14.2 10.4a2 2 0 0 1-.2-.9V3M8.6 3h6.8" fill="none" stroke="var(--flaskG)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 };
 
-const ICN = {
-  tag: s => P('<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>', s),
-  pencil: s => P('<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>', s),
-  mail: s => P('<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>', s),
-};
 const COST = 100, SEATS = 15, DAYS = 14;
-const BASE = { group: 'new', app: 'Sunrise Notes', dev: 'Brightleaf Studio', grad: '#ff8a3d,#e8453c', signIn: false, tix: 240, boxes: [false, false], pop: null };
-const icon = s => `<div class="ai" style="width:52px;height:52px;background:linear-gradient(135deg,${s.grad})"><i></i><span class="mk">${I.flask(12)}</span></div>`;
-
-/* the two boxes, and what their (i) says: the lines that used to sit under an unticked box */
-const BOXES = [
-  { label: 'Available in all countries', id: 'countries',
-    why: "Members in other countries can't install it. If two of them report that, you lose your seat.",
-    how: 'In Play Console, open <b>Closed testing</b>, then <b>Countries/regions</b>, and add all countries.' },
-  { label: 'Not limited to some devices', id: 'devices',
-    why: "Members on excluded phones can't install it. If two of them report that, you lose your seat.",
-    how: 'In Play Console, open <b>Device catalog</b> and remove excluded devices.' },
-];
+const ADDR = 'googleclosetesting@googlegroups.com';
+const IMG = n => `../../../app/src/main/res/drawable-nodpi/play_step${n}.webp`;
+const STEPS = ['Open Closed testing in Play Console', 'Open your track, then its Testers tab', 'Pick Google Groups, paste the address and save', 'Roll out a release to that track'];
+const BASE = { name: 'Sunrise Notes', dev: 'Brightleaf Studio', group: 'open', tix: 240, boxes: [false, false], signIn: false };
 
 /* seatHint() in CrewSeatRules.kt, first match wins */
 function hint(s) {
-  if (s.group === 'failed') return { t: "Play doesn't show it to the group yet", k: 'warn', i: I.alert(14) };
-  if (s.group === 'new') return { t: 'Verify the testers group first', k: 'todo', i: I.circleDashed(14) };
-  if (s.tix < COST) return { t: `You need ${COST - s.tix} more tix`, k: 'warn', i: I.alert(14) };
-  if (!(s.boxes[0] && s.boxes[1])) return { t: 'Tick both Play Console boxes', k: 'todo', i: I.circleDashed(14) };
-  return null;
+  if (s.seating) return { k: 'quiet', t: 'Checking it on Play the way the crew will see it' };
+  if (s.group === 'failed') return { k: 'warn', t: "Play doesn't show it to the group yet", i: I.alert(14) };
+  if (s.group !== 'done') return { k: 'todo', t: 'Verify the testers group first', i: I.circleDashed(14) };
+  if (!s.name.trim()) return { k: 'todo', t: 'Give it a name the crew sees', i: I.circleDashed(14) };
+  if (s.signIn && !s.user) return { k: 'todo', t: "Add the test account's username", i: I.circleDashed(14) };
+  if (s.tix < COST) return { k: 'warn', t: `You need ${COST - s.tix} more tix`, i: I.alert(14) };
+  if (s.held) return { k: 'warn', t: 'Wait for the team to answer your appeal', i: I.alert(14) };
+  if (!(s.boxes[0] && s.boxes[1])) return { k: 'todo', t: 'Tick both Play Console boxes', i: I.circleDashed(14) };
+  return { k: 'quiet', t: `${COST} tix come off your ${s.tix}`, i: I.coins(14), ready: true };
 }
 
-const head = s => `<div class="ah" data-tile>${icon(s)}<div class="col"><div class="hn">${s.app}</div><div class="sub"><span class="one">${s.dev}</span></div></div></div>`;
-
-function groupPart(s) {
-  if (s.group === 'ok') {
-    return `<div class="sec first"><div class="sh done"><h3>Testers group</h3><span class="st ok">${I.circleCheck(14)}Play shows it</span></div></div>`;
+const appIcon = () => `<div class="ai"><i></i><span class="mk">${I.flask(12)}</span></div>`;
+function head(s) {
+  if (s.editing) {
+    return `<div class="ah" data-tile>${appIcon()}<div class="col"><div class="hed">${s.name}<span class="caret"></span></div><div class="devrow"><span class="one">${s.dev}</span><span class="cnt">${s.name.length}/30</span></div></div><span class="slot acc">${I.check(20, 2.4)}</span></div>`;
   }
-  const failed = s.group === 'failed';
-  return `<div class="sec first"><div class="sh"><h3>Testers group</h3>${failed ? `<span class="st warn">${I.circleAlert(14)}Not shown yet</span>` : ''}</div>
-    <div class="body">Crew members install your app through this Google Group. Play has to show your app to it first.</div>
-    <div style="height:12px"></div>
-    <div class="r40" data-tile><span class="t40">${ICN.mail(20)}</span><div class="col"><div class="addr" data-fit>googleclosetesting@googlegroups.com</div><div class="sub"><span class="one">Testers group address</span></div></div><span class="slot copy${s.copied ? ' done' : ''}">${s.copied ? I.check(18, 2.4) : I.copy(18)}</span></div>
-    <div class="gs"><span class="lead"><span class="gn">1</span></span><span class="gt">In Play Console, open <b>Test and release</b>, then <b>Closed testing</b>.</span></div>
-    <div class="gs"><span class="lead"><span class="gn">2</span></span><span class="gt">Open your track's <b>Testers</b> tab.</span></div>
-    <div class="gs"><span class="lead"><span class="gn">3</span></span><span class="gt">Under <b>Google Groups</b>, paste the address and save.</span></div>
-    <div class="gs"><span class="lead"><span class="gn">4</span></span><span class="gt">Roll out a release to that track.</span></div>
-    <div style="height:16px"></div>
-    ${failed ? `<div class="il-line" data-anchor="check">${inl(I.alert(14))}Checked 5 min ago: Play doesn't show it to the group yet. A new rollout can take a few hours to show.</div><div style="height:8px"></div>` : ''}
-    <div class="bar">${I.refresh(20)}<span>${failed ? 'Check again' : 'Verify on Play'}</span></div></div>`;
+  return `<div class="ah" data-tile>${appIcon()}<div class="col"><div class="hn">${s.name}</div><div class="dev one">${s.dev}</div></div><span class="slot">${I.pencil(18)}</span></div>`;
 }
 
-function detailsPart(s) {
+const addrRow = copied => `<div class="ar"><div class="col"><div class="addr" data-fit>${ADDR}</div><div class="sub"><span class="one">Testers group address</span></div></div><span class="copy"${copied ? ' style="color:var(--ok)"' : ''}>${copied ? I.check(18, 2.4) : I.copy(18)}</span></div>`;
+
+function group(s) {
+  if (s.group === 'done') return '';
+  const failed = s.group === 'failed', checking = s.group === 'checking';
+  const line = failed ? "Checked 5 min ago: Play doesn't show it to the group yet. A new rollout can take a few hours to show." : "Play doesn't show your app to the group yet";
+  const verify = checking ? '<span class="spin"></span>' : `${I.refresh(16)}${failed ? 'Check again' : 'Verify on Play'}`;
+  return `<div style="height:24px"></div><div data-anchor="group"><div class="sh"><h3>Testers group</h3></div>
+    <div class="small warnc">${inl(I.alert(14))}${line}</div>
+    <div style="height:6px"></div>${addrRow(false)}<div style="height:12px"></div>
+    <div class="pills"><span class="pt48"><span class="pill soft">${I.help(16)}How to add it</span></span><span class="pt48"><span class="pill solid">${verify}</span></span></div></div>`;
+}
+
+function details(s) {
   const short = s.tix < COST;
-  let h = `<div class="sec"><div class="sh"><h3>Seat details</h3>${short ? `<span class="st warn">${I.circleAlert(14)}${COST - s.tix} tix short</span>` : ''}</div>
-    <div class="r40" data-tile><span class="t40">${I.users(20)}</span><div class="col"><div class="nm one">Crew 07, 6 of 15 seats left</div><div class="sub acc">${I.clock(11)}<span class="one">Likely starts Friday</span></div></div></div>
+  let h = `<div style="height:24px"></div><div class="sh"><h3>Seat details</h3>${short ? `<span class="st warn">${I.circleAlert(14)}${COST - s.tix} tix short</span>` : ''}</div>`;
+  if (s.group === 'done') h += `<div class="r40" data-tile><span class="t40 ok">${I.circleCheck(20)}</span><div class="col"><div class="nm one">Testers group added</div><div class="sub"><span class="one">Play shows your app to the group</span></div></div></div><div style="height:16px"></div>`;
+  h += `<div class="r40" data-tile><span class="t40">${I.users(20)}</span><div class="col"><div class="nm one">Crew 07, 6 of 15 seats left</div><div class="sub acc">${I.clock(11)}<span class="one">Likely starts in about 3 days</span></div></div></div>
     <div style="height:16px"></div>
-    ${s.editing
-      ? `<div class="r40" data-tile data-anchor="name"><span class="t40">${ICN.tag(20)}</span><div class="col"><div class="nm ed">${s.app}<span class="caret"></span></div><div class="sub edl"><span class="one">Name the crew sees</span></div></div><span class="slot"><span class="cn">${s.app.length}/30</span></span></div>`
-      : `<div class="r40" data-tile data-anchor="name"><span class="t40">${ICN.tag(20)}</span><div class="col"><div class="nm one">${s.app}</div><div class="sub"><span class="one">Name the crew sees</span></div></div><span class="slot">${ICN.pencil(18)}</span></div>`}
-    <div style="height:20px"></div>
     <div class="q">Does your app need a sign-in?</div><div class="tc"><div class="chc${s.signIn ? '' : ' on'}">No sign-in</div><div class="chc${s.signIn ? ' on' : ''}">Needs a sign-in</div></div>`;
   if (s.signIn) {
-    h += `<div class="sinote">A test account the crew can use, as Play Console's App access asks for. Fourteen testers see it, so never your own.</div>
-      <div style="height:16px"></div>
-      <div class="fl">Username, email or phone</div><div class="fd">${s.user || '<span class="ph">test@example.com</span>'}</div>
-      <div style="height:16px"></div>
-      <div class="fl">Password</div><div class="fd"><span class="ph">The test account's password</span></div>
-      <div style="height:16px"></div>
-      <div class="fl">Anything else needed (optional)</div><div class="fd tall"><span class="ph">A one-time code, or which screen to skip</span></div><div class="fc">0/90</div>`;
+    h += `<div style="height:8px"></div><div class="body">A test account the crew can use, as Play Console's App access asks for. Fourteen testers see it, so never your own.</div>
+      <div style="height:16px"></div><div class="fl">Username, email or phone</div><div class="fd focus"><span class="ph">test@example.com</span></div>
+      <div style="height:16px"></div><div class="fl">Password</div><div class="fd"><span class="ph">The test account's password</span></div>
+      <div style="height:16px"></div><div class="fl">Anything else needed (optional)</div><div class="fd tall"><span class="ph">A one-time code, or which screen to skip</span></div><div class="fc">0/90</div>`;
   }
   const sub = short ? `<div class="sub warn"><span class="one">You have ${s.tix} tix, ${COST - s.tix} short</span></div>` : `<div class="sub"><span class="one">You have ${s.tix} tix</span></div>`;
-  h += `<div style="height:24px"></div>
-    <div class="r40" data-tile data-anchor="price"><span class="t40">${I.coins(20)}</span><div class="col"><div class="nm one">A seat is ${COST} tix</div>${sub}</div>${short ? '<span class="rp">Open Circle</span>' : ''}</div>
+  h += `<div style="height:16px"></div>
+    <div class="r40" data-tile><span class="t40">${I.coins(20)}</span><div class="col"><div class="nm one">A seat is ${COST} tix</div>${sub}</div>${short ? '<span class="rp">Open Circle</span>' : ''}</div>
     <div style="height:16px"></div>
-    <div class="rl"><span class="dot"></span>All <b>${COST} tix</b> come back if you take it out while the crew fills, or open every app every night to the end.</div>
-    <div class="rl"><span class="dot"></span>You open the other <b>${SEATS - 1}</b> apps every day for <b>${DAYS}</b> days, and they open yours.</div>
-    <div class="rl"><span class="dot"></span>That puts you on <b>${SEATS - 1}</b> apps a night.</div>`;
-  return h + '</div>';
+    <div class="rl"><span>All <b>${COST} tix</b> come back if you take it out while the crew fills, or open every app every night to the end.</span></div>
+    <div class="rl"><span>You open the other <b>${SEATS - 1}</b> apps every day for <b>${DAYS}</b> days, and they open yours.</span></div>
+    <div class="rl"><span>That puts you on <b>${SEATS - 1}</b> apps a night.</span></div>`;
+  if (s.refused) h += `<div style="height:16px"></div><div class="ttl badc">${inl(I.circleAlert(16, 2.2))}Couldn't take the seat</div><div style="height:4px"></div><div class="bs badc">Crew 07 filled a moment ago. Take a seat again to go into the next crew.</div>`;
+  if (s.waiting) h += `<div style="height:16px"></div><div class="ttl"><span class="warnc">${inl(I.alert(16))}</span>Your app waits in Crew 04</div><div class="bs" style="color:var(--text2)">Take the next seat once that crew is full.</div><span class="link">Open the crew</span>`;
+  if (s.held) h += `<div style="height:16px"></div><div class="bs" style="font-size:12px;line-height:16px"><span class="warnc">${inl(I.alert(16))}</span>You asked to get ${s.name} back into Crew 03. You can take a new seat once the team answers.</div>`;
+  return h;
 }
 
-function boxesPart(s) {
-  let h = `<div class="sec" data-anchor="boxes"><div class="sh"><h3>Before you submit</h3></div>
+function boxes(s) {
+  const rows = [['Available in all countries', 'countries'], ['Not limited to some devices', 'devices']];
+  let h = `<div style="height:32px"></div><div data-anchor="boxes"><div class="sh"><h3>Before you submit</h3></div>
     <div class="body">You set both in Play Console. Every member needs them to install your app.</div><div style="height:8px"></div>`;
-  BOXES.forEach((b, i) => {
+  rows.forEach(([label, id], i) => {
     const on = s.boxes[i];
-    h += `<div class="bx"><span class="cb${on ? ' on' : ''}">${on ? I.check(14, 3) : ''}</span><span class="bl">${b.label}</span><span class="ib${s.pop === b.id ? ' on' : ''}" data-info="${b.id}">${I.info(20, 2)}</span></div>`;
+    h += `<div class="bx"><span class="cb${on ? ' on' : ''}">${on ? I.check(14, 3) : ''}</span><span class="bl">${label}</span><span class="ib${s.pop === id ? ' on' : ''}" data-info="${id}">${I.info(20)}</span></div>`;
   });
   return h + '</div>';
 }
 
-function endPart(s) {
+function submit(s) {
   const m = hint(s);
-  const h = m ? `<div class="hint ${m.k}"><span class="il">${inl(m.i)}</span>${m.t}</div>`
-              : `<div class="hint quiet">${inl(I.coins(14))}${COST} tix come off your ${s.tix}</div>`;
-  return `<div class="end">${h}<div class="prim${m ? ' off' : ''}">Take a seat in Crew 07</div></div>`;
+  const enabled = m.ready || (s.waiting || s.refused) && m.ready;
+  const icon = m.i ? `<span class="ic">${inl(m.i)}</span>` : '';
+  const btn = s.seating
+    ? `<div class="prim off" style="color:var(--text3)"><span class="spin l"></span></div>`
+    : `<div class="prim${enabled ? '' : ' off'}">Take a seat in Crew 07</div>`;
+  return `<div style="height:16px"></div><div data-anchor="end"><div class="hint ${m.k}">${icon}${m.t}</div>${btn}</div>`;
 }
 
-const page = s => head(s) + groupPart(s) + detailsPart(s) + boxesPart(s) + endPart(s);
+const pageBody = s => head(s) + group(s) + details(s) + boxes(s) + submit(s);
 
-function phone(theme, s, w, h, extra = '') {
-  const vh = h == null ? null : h - 24 - 64 - 24;
-  return `<div class="phone ${theme}${extra}" style="width:${w}px${h ? `;height:${h}px` : ''}" data-scroll="${s.scroll || 'top'}" data-pop="${s.pop || ''}"><div class="sbar"></div><div class="pbar"><span class="back">${I.backIos(24)}</span><span class="pt">Take a seat</span></div>
-    <div class="vp"${vh ? ` style="height:${vh}px"` : ''}><div class="scroll">${page(s)}</div></div><div class="nav"></div>${s.editing ? keyboard() : ''}</div>`;
-}
 function keyboard() {
   const row = (n, pre = '', post = '') => `<div class="kr">${pre}${'<span class="k"></span>'.repeat(n)}${post}</div>`;
   return `<div class="kb">${row(10)}${row(9)}${row(7, '<span class="k w"></span>', '<span class="k w"></span>')}<div class="kr"><span class="k w"></span><span class="k"></span><span class="k sp"></span><span class="k"></span><span class="k w"></span></div></div>`;
 }
 
-
-
-
-
-/* Testers group, new: direction A as picked, the full-screen how-to and the viewer */
-ICN.help = s => P('<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>', s);
-ICN.x = s => P('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', s);
-ICN.max = s => P('<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>', s);
-ICN.pinch = s => P('<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/>', s);
-const ADDRX = 'googleclosetesting@googlegroups.com';
-const STEPS = [
-  'Open Closed testing in Play Console',
-  'Open its Testers tab',
-  'Under Google Groups, paste the address and save',
-  'Roll out a release to that track',
-];
-const addrRowA = () => `<div class="r40 ar"><div class="col"><div class="addr" data-fit data-max="15">${ADDRX}</div><div class="sub"><span class="one">Testers group address</span></div></div><span class="slot copy">${I.copy(18)}</span></div>`;
-const verifyPill = () => `<span class="pill solid">${I.refresh(16)}Verify on Play</span>`;
-const seatCtx = `<div style="height:32px"></div><div class="sh"><h3>Seat details</h3></div><div class="r40" data-tile><span class="t40">${I.users(20)}</span><div class="col"><div class="nm one">Crew 07, 6 of 15 seats left</div><div class="sub acc">${I.clock(11)}<span class="one">Likely starts Friday</span></div></div></div>`;
-const ctx = (inner, w) => `<div class="opt light" style="width:${w}px">${head(BASE)}<div style="height:24px"></div>${inner}${seatCtx}</div>`;
-const GA = `<div class="sh"><h3>Testers group</h3></div>
-  <div class="il-line">${inl(I.alert(14))}Play doesn't show your app to the group yet</div>
-  <div style="height:6px"></div>${addrRowA()}<div style="height:12px"></div>
-  <div class="pills"><span class="pill soft">${ICN.help(16)}How to add it</span>${verifyPill()}</div>`;
-
-/* a stand-in for each step's Play Console screenshot; the orange ring is where to tap */
-function pc(n) {
-  const nav = [0, 0, 0, 1, 1, 1, 0, 0, 0].map(sub => `<i${sub ? ' class="sub"' : ''}></i>`).join('');
-  let main = '<span class="h1"></span>';
-  let hl = '';
-  if (n === 1) {
-    main += '<span class="card"><i style="top:12%;width:40%"></i><i style="top:30%;width:70%"></i><i style="top:48%;width:55%"></i><i style="top:66%;width:62%"></i></span>';
-    hl = '<span class="hl" style="left:1.2%;top:44.5%;width:19.6%;height:6.4%"></span>';
-  } else {
-    main += `<span class="tabs"><i style="left:0;width:12%"></i><i style="left:17%;width:10%;${n === 2 ? 'background:#01875F' : ''}"></i><i style="left:32%;width:14%"></i><i style="left:51%;width:9%"></i></span>`;
-    if (n === 2) {
-      main += '<span class="card"><i style="top:12%;width:40%"></i><i style="top:30%;width:70%"></i><i style="top:48%;width:55%"></i></span>';
-      hl = '<span class="hl" style="left:33.5%;top:26%;width:11%;height:8%"></span>';
-    } else if (n === 3) {
-      main += '<span class="card"><i style="top:12%;width:30%"></i><i style="top:26%;width:60%"></i><span class="fld"></span><span class="btn" style="right:5%;bottom:10%;width:16%;height:12%"></span></span>';
-      hl = '<span class="hl" style="left:25%;top:44.5%;width:47%;height:13%"></span>';
-    } else {
-      main += '<span class="btn" style="right:5%;top:6%;width:20%;height:6.5%"></span><span class="card"><i style="top:12%;width:40%"></i><i style="top:30%;width:65%"></i><i style="top:48%;width:50%"></i><i style="top:66%;width:58%"></i></span>';
-      hl = '<span class="hl" style="right:3%;top:13.5%;width:17.5%;height:9.5%"></span>';
-    }
-  }
-  return `<div class="pcx"><div class="top"><span class="lg"></span><span class="tx"></span><span class="av"></span></div><div class="nav">${nav}</div><div class="main">${main}</div>${hl}</div>`;
-}
-const shot = (n, badge = true) => `<div class="shot">${pc(n)}${badge ? `<span class="zb">${ICN.max(14)}</span>` : ''}</div>`;
-
-const howBody = () => `${addrRowA()}` + STEPS.map((t, i) => `<div style="height:${i ? 28 : 20}px"></div><div class="hs"><span class="hnum">${i + 1}</span><span class="ht">${t}</span></div>${shot(i + 1)}`).join('')
-  + `<div style="height:28px"></div><div class="bar">${I.refresh(20)}<span>Verify on Play</span></div>`;
-function howPhone(theme, scroll) {
-  return `<div class="phone ${theme}" style="width:412px;height:915px" data-scroll="${scroll}" data-pop=""><div class="sbar"></div>
-    <div class="fbar${scroll === 'end' ? ' line' : ''}"><span class="t">Add the testers group</span><span class="xbtn">${ICN.x(24)}</span></div>
-    <div class="vp" style="height:${915 - 24 - 64 - 24}px"><div class="scroll">${howBody()}</div></div><div class="nav"></div></div>`;
-}
-function viewer(zoom) {
-  const img = zoom
-    ? `<div class="vimg" style="transform:translateY(-50%) scale(2.7);transform-origin:9% 47%">${shot(1, false)}</div>`
-    : `<div class="vimg">${shot(1, false)}</div>`;
-  return `<div class="phone viewer" style="width:412px;height:915px" data-scroll="top" data-pop=""><div class="sbar"></div>
-    <div class="vp" style="height:${915 - 24 - 24}px;overflow:hidden"><div class="scroll" style="padding:0"></div>
-      <div class="vbar"><span class="cnt">1 / 4</span><span class="xbtn">${ICN.x(24)}</span></div>
-      ${img}
-      ${zoom ? '' : `<div class="vhint">${ICN.pinch(14)}Pinch to zoom, drag to move</div>`}
-      <div class="vdots"><i class="on"></i><i></i><i></i><i></i></div>
-      <div class="vcap">1. ${STEPS[0]}</div></div><div class="nav"></div></div>`;
+function phone(theme, body, o = {}) {
+  const fixed = (o.h ? `;height:${o.h}px` : '') + (o.w ? `;width:${o.w}px` : '');
+  const bar = o.how
+    ? `<div class="fbar"><span class="t">Add the testers group</span><span class="xbtn">${I.x(24)}</span></div>`
+    : `<div class="pbar"><span class="back">${I.backIos(24)}</span><span class="pt">Take a seat</span></div>`;
+  return `<div class="phone ${theme}" style="${fixed}" data-scroll="${o.scroll || 'top'}" data-pop="${o.pop || ''}"><div class="sbar"></div>${bar}
+    <div class="vp"><div class="scroll${o.full ? ' full' : ''}">${body}</div></div><div class="navb"></div>${o.kb ? keyboard() : ''}</div>`;
 }
 
-const cell = (cap, html) => `<div><div class="cap">${cap}</div>${html}</div>`;
-const GROUP_NEW = `<div class="nsec state"><h2>Testers group, new</h2>
-  <div class="row">${cell('Page, 412', ctx(GA, 412))}${cell('Page, 360', ctx(GA, 360))}</div>
-  <div class="row">${cell('How to, top, light', howPhone('light', 'top'))}${cell('How to, top, dark', howPhone('dark', 'top'))}${cell('How to, scrolled, light', howPhone('light', 'end'))}${cell('How to, scrolled, dark', howPhone('dark', 'end'))}</div>
-  <div class="row">${cell('Viewer, fit', viewer(false))}${cell('Viewer, zoomed', viewer(true))}</div></div>`;
-
-
-/* Head and verified: the head edits the crew name; three ways to show a verified group */
-const head2 = (name, mode, statusA) => {
-  const col = mode === 'edit'
-    ? `<div class="hed2">${name}<span class="caret"></span></div><div class="devrow"><span class="one">Brightleaf Studio</span><span class="cn">${name.length}/30</span></div>`
-    : `<div class="hn">${name}</div><div class="sub"><span class="one">Brightleaf Studio</span></div>${statusA ? `<div class="sub okl">${I.circleCheck(12)}<span class="one">Play shows it to the testers group</span></div>` : ''}`;
-  const slot = mode === 'edit' ? I.check(20, 2.4) : ICN.pencil(18);
-  return `<div class="ah" data-tile>${icon(BASE)}<div class="col">${col}</div><span class="slot${mode === 'edit' ? ' done' : ''}">${slot}</span></div>`;
+const skeleton = () => {
+  const b = (w, h, r = 6) => `<div class="sk" style="width:${w};height:${h}px;border-radius:${r}px;flex:none"></div>`;
+  const gap = h => `<div style="height:${h}px"></div>`;
+  const col = (...x) => `<div style="display:flex;flex-direction:column;gap:8px">${x.join('')}</div>`;
+  const tileRow = (a, c) => `<div style="display:flex;align-items:center;gap:12px">${b('40px', 40, 12)}${col(b(a, 14), b(c, 11))}</div>`;
+  const two = (h, r) => `<div style="display:flex;gap:8px"><div style="flex:1">${b('100%', h, r)}</div><div style="flex:1">${b('100%', h, r)}</div></div>`;
+  const box = w => `<div style="display:flex;align-items:center;gap:12px;height:48px">${b('22px', 22, 6)}${b(w, 14)}</div>`;
+  return `<div style="display:flex;align-items:center;gap:12px">${b('52px', 52, 16)}${col(b('130px', 14), b('90px', 11))}</div>`
+    + gap(24) + b('120px', 16) + gap(12) + b('70%', 12) + gap(12) + col(b('230px', 14), b('120px', 11)) + gap(19) + two(34, 10)
+    + gap(31) + b('100px', 16) + gap(14) + tileRow('150px', '110px') + gap(16) + tileRow('170px', '130px')
+    + gap(16) + b('180px', 14) + gap(12) + two(48, 10)
+    + gap(16) + tileRow('120px', '90px') + gap(16) + b('92%', 12) + gap(10) + b('80%', 12) + gap(10) + b('60%', 12)
+    + gap(32) + b('130px', 16) + gap(14) + b('95%', 12) + gap(8) + b('40%', 12) + gap(8) + box('180px') + box('200px')
+    + gap(16) + `<div style="display:flex;justify-content:center">${b('170px', 12)}</div>` + gap(12) + b('100%', 52, 26)
+    + gap(24) + b('110px', 16) + gap(14) + tileRow('160px', '100px') + gap(16) + tileRow('140px', '120px');
 };
-const okRow = `<div class="r40" data-tile><span class="t40 okt">${I.circleCheck(20)}</span><div class="col"><div class="nm one">Testers group added</div><div class="sub"><span class="one">Play shows your app to the group</span></div></div></div><div style="height:16px"></div>`;
-const crewRow = `<div class="r40" data-tile><span class="t40">${I.users(20)}</span><div class="col"><div class="nm one">Crew 07, 6 of 15 seats left</div><div class="sub acc">${I.clock(11)}<span class="one">Likely starts Friday</span></div></div></div>`;
-function top2(o) {
-  const name = o.name || 'Sunrise Notes';
-  let h = head2(name, o.mode, o.v === 'a');
-  if (o.v === 'old') h += `<div class="sec first"><div class="sh done"><h3>Testers group</h3><span class="st ok">${I.circleCheck(14)}Play shows it</span></div></div>`;
-  h += `<div class="sec ${o.v === 'old' ? '' : 'first'}"><div class="sh"><h3>Seat details</h3></div>${o.v === 'b' ? okRow : ''}${crewRow}
-    <div style="height:20px"></div><div class="q">Does your app need a sign-in?</div><div class="tc"><div class="chc on">No sign-in</div><div class="chc">Needs a sign-in</div></div>
-    <div style="height:24px"></div><div class="r40" data-tile><span class="t40">${I.coins(20)}</span><div class="col"><div class="nm one">A seat is ${COST} tix</div><div class="sub"><span class="one">You have 240 tix</span></div></div></div></div>`;
+const ROBOT = `<svg viewBox="0 0 880 980" width="112" height="124.7" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g1" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.000"/><stop offset="1" stop-color="#174866" stop-opacity="1.000"/></linearGradient><linearGradient id="g2" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.000"/><stop offset="1" stop-color="#174866" stop-opacity="1.000"/></linearGradient><linearGradient id="g3" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.000"/><stop offset="1" stop-color="#174866" stop-opacity="1.000"/></linearGradient><linearGradient id="g4" gradientUnits="userSpaceOnUse" x1="350" y1="277" x2="910" y2="744"><stop offset="0" stop-color="#32729B" stop-opacity="1.000"/><stop offset="1" stop-color="#1D5C82" stop-opacity="1.000"/></linearGradient><linearGradient id="g5" gradientUnits="userSpaceOnUse" x1="310" y1="765" x2="568" y2="1056"><stop offset="0" stop-color="#F99B80" stop-opacity="1.000"/><stop offset="1" stop-color="#EF806B" stop-opacity="1.000"/></linearGradient><linearGradient id="g6" gradientUnits="userSpaceOnUse" x1="486" y1="860" x2="584" y2="952"><stop offset="0" stop-color="#FFFFFF" stop-opacity="1.000"/><stop offset="1" stop-color="#E3ECF3" stop-opacity="1.000"/></linearGradient><linearGradient id="g7" gradientUnits="userSpaceOnUse" x1="584" y1="876" x2="636" y2="892"><stop offset="0" stop-color="#E6EDF3" stop-opacity="1.000"/><stop offset="1" stop-color="#AFC0CE" stop-opacity="1.000"/></linearGradient><linearGradient id="g8" gradientUnits="userSpaceOnUse" x1="584" y1="920" x2="636" y2="936"><stop offset="0" stop-color="#E6EDF3" stop-opacity="1.000"/><stop offset="1" stop-color="#AFC0CE" stop-opacity="1.000"/></linearGradient><linearGradient id="g9" gradientUnits="userSpaceOnUse" x1="668" y1="852" x2="766" y2="960"><stop offset="0" stop-color="#F99B80" stop-opacity="1.000"/><stop offset="1" stop-color="#EF806B" stop-opacity="1.000"/></linearGradient><linearGradient id="g10" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.000"/><stop offset="1" stop-color="#174866" stop-opacity="1.000"/></linearGradient><linearGradient id="g11" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE" stop-opacity="1.000"/><stop offset="1" stop-color="#5E9DC5" stop-opacity="1.000"/></linearGradient><linearGradient id="g12" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.000"/><stop offset="1" stop-color="#174866" stop-opacity="1.000"/></linearGradient><linearGradient id="g13" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE" stop-opacity="1.000"/><stop offset="1" stop-color="#5E9DC5" stop-opacity="1.000"/></linearGradient></defs><g transform="translate(-185 -110)"><path d="M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z" fill="url(#g1)"/></g><g transform="translate(-185 -110)"><g><g><path d="M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z" fill="url(#g2)"/><path d="M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z" fill="url(#g3)"/><path d="M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z" fill="#6CA9CF"/><path d="M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z" fill="#6CA9CF"/></g><path d="M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z" fill="url(#g4)"/><path d="M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z" fill="#FFFCF1"/><path d="M576 594 C602 620 651 620 677 594" fill="#000000" fill-opacity="0.000" stroke="#17253B" stroke-width="31" stroke-linecap="round"/></g></g><g transform="translate(-185 -110)"><path d="M433 535 A48 48 0 1 0 529 535 A48 48 0 1 0 433 535 Z" fill="#17253B"/><path d="M452.6 519 A14.4 14.4 0 1 0 481.4 519 A14.4 14.4 0 1 0 452.6 519 Z" fill="#FFFFFF"/><path d="M491.6 551.8 A6.2 6.2 0 1 0 504 551.8 A6.2 6.2 0 1 0 491.6 551.8 Z" fill="#FFFFFF"/><path d="M724 535 A48 48 0 1 0 820 535 A48 48 0 1 0 724 535 Z" fill="#17253B"/><path d="M743.6 519 A14.4 14.4 0 1 0 772.4 519 A14.4 14.4 0 1 0 743.6 519 Z" fill="#FFFFFF"/><path d="M782.6 551.8 A6.2 6.2 0 1 0 795 551.8 A6.2 6.2 0 1 0 782.6 551.8 Z" fill="#FFFFFF"/><path d="M424 470 Q470 462 524 446" fill="none" stroke="#17253B" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/><path d="M829 470 Q783 462 729 446" fill="none" stroke="#17253B" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/><path d="M572 578 H682 A20 20 0 0 1 702 598 V614 A20 20 0 0 1 682 634 H572 A20 20 0 0 1 552 614 V598 A20 20 0 0 1 572 578 Z" fill="#FFFCF1"/><path d="M615 606 A12 13.8 0 1 0 639 606 A12 13.8 0 1 0 615 606 Z" fill="#17253B"/></g><g transform="translate(-185 -110)"><g><path d="M603 227 H650 V295 H603 Z" fill="#1D5C82"/><path d="M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z" fill="url(#g5)"/><path d="M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z" fill="#FFFFFF"/></g></g><g transform="translate(-185 -110)"><g transform="translate(627 906) scale(1.3 1.3) translate(-627.0 -906.0)"><path d="M402 940 C440 946 452 906 496 906" fill="none" stroke="#17405E" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/><path d="M402 940 C440 946 452 906 496 906" fill="none" stroke="#DDE7EF" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><path d="M510 860 H560 A24 24 0 0 1 584 884 V928 A24 24 0 0 1 560 952 H510 A24 24 0 0 1 486 928 V884 A24 24 0 0 1 510 860 Z" fill="none" stroke="#17405E" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><path d="M510 860 H560 A24 24 0 0 1 584 884 V928 A24 24 0 0 1 560 952 H510 A24 24 0 0 1 486 928 V884 A24 24 0 0 1 510 860 Z" fill="url(#g6)"/><path d="M591 876 H629 A7 7 0 0 1 636 883 V885 A7 7 0 0 1 629 892 H591 A7 7 0 0 1 584 885 V883 A7 7 0 0 1 591 876 Z" fill="none" stroke="#17405E" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/><path d="M591 876 H629 A7 7 0 0 1 636 883 V885 A7 7 0 0 1 629 892 H591 A7 7 0 0 1 584 885 V883 A7 7 0 0 1 591 876 Z" fill="url(#g7)"/><path d="M591 920 H629 A7 7 0 0 1 636 927 V929 A7 7 0 0 1 629 936 H591 A7 7 0 0 1 584 929 V927 A7 7 0 0 1 591 920 Z" fill="none" stroke="#17405E" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/><path d="M591 920 H629 A7 7 0 0 1 636 927 V929 A7 7 0 0 1 629 936 H591 A7 7 0 0 1 584 929 V927 A7 7 0 0 1 591 920 Z" fill="url(#g8)"/><path d="M506 878 V928" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.8"/></g></g><g transform="translate(-185 -110)"><g transform="translate(627 906) scale(1.3 1.3) translate(-627.0 -906.0)"><path d="M852 940 C814 946 802 906 758 906" fill="none" stroke="#17405E" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/><path d="M852 940 C814 946 802 906 758 906" fill="none" stroke="#DDE7EF" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><path d="M694 852 H740 A26 26 0 0 1 766 878 V934 A26 26 0 0 1 740 960 H694 A26 26 0 0 1 668 934 V878 A26 26 0 0 1 694 852 Z" fill="none" stroke="#17405E" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><path d="M694 852 H740 A26 26 0 0 1 766 878 V934 A26 26 0 0 1 740 960 H694 A26 26 0 0 1 668 934 V878 A26 26 0 0 1 694 852 Z" fill="url(#g9)"/><path d="M693 876 H701 A7 7 0 0 1 708 883 V885 A7 7 0 0 1 701 892 H693 A7 7 0 0 1 686 885 V883 A7 7 0 0 1 693 876 Z" fill="#5A2A20"/><path d="M693 920 H701 A7 7 0 0 1 708 927 V929 A7 7 0 0 1 701 936 H693 A7 7 0 0 1 686 929 V927 A7 7 0 0 1 693 920 Z" fill="#5A2A20"/></g></g><g transform="translate(-185 -110)"><g transform="translate(627 906) scale(1.3 1.3) translate(-627.0 -906.0)"><path d="M664 784 L642 826 L668 826 L646 868" fill="none" stroke="#FFC23D" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><path d="M605 806 A7 7 0 1 0 619 806 A7 7 0 1 0 605 806 Z" fill="#FFC23D"/><path d="M684 846 A6 6 0 1 0 696 846 A6 6 0 1 0 684 846 Z" fill="#FFC23D"/></g></g><g transform="translate(-185 -110)"><path d="M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z" fill="url(#g10)"/><path d="M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z" fill="url(#g11)"/><path d="M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z" fill="url(#g12)"/><path d="M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z" fill="url(#g13)"/></g></svg>`;
+const offline = () => `<div class="cstate"><div class="robot"><div class="rfig">${ROBOT}</div><div class="rshadow"></div></div><div style="height:14px"></div><div class="ctitle">Couldn't load your app</div><div style="height:6px"></div><div class="cline">Check your connection, then try again.</div><div style="height:18px"></div><div class="obtn">Try again</div></div>`;
+
+function howBody(zoom) {
+  let h = addrRow(false);
+  STEPS.forEach((t, i) => {
+    const z = zoom && i === 0;
+    h += `<div style="height:${i ? 24 : 20}px"></div><div class="hs"><span class="hnum">${i + 1}</span><span class="ht">${t}</span></div>
+      <div class="pic"><img src="${IMG(i + 1)}" alt=""${z ? ' style="transform:scale(2.2);transform-origin:4% 80%"' : ''}></div>`;
+    if (i === 0 && !zoom) h += '<div class="zhint">Pinch or double-tap to zoom</div>';
+  });
+  return h + `<div style="height:28px"></div><div class="bar">${I.refresh(20)}<span>Verify on Play</span></div>`;
+}
+
+
+/* Text fields: three styles, in the sign-in context */
+const TI = {
+  user: s => P('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', s),
+  lock: s => P('<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', s),
+  note: s => P('<path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/>', s),
+  eye: s => P('<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>', s),
+  eyeOff: s => P('<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>', s),
+};
+const F = [
+  { key: 'user', label: 'Username, email or phone', ph: 'test@example.com', icon: TI.user },
+  { key: 'pass', label: 'Password', ph: "The test account's password", icon: TI.lock },
+  { key: 'note', label: 'Anything else needed (optional)', ph: 'A one-time code, or which screen to skip', icon: TI.note },
+];
+const ERR = "Add the test account's username";
+/* the two sets of states shown per option */
+const SET1 = { user: { st: 'focus', v: 'crewtest@sunr' }, pass: { st: 'filled', v: '••••••••••', eye: 'eye' }, note: { st: 'empty' } };
+const SET2 = { user: { st: 'err' }, pass: { st: 'filled', v: 'Garden#2026', eye: 'eyeOff' }, note: { st: 'filled', v: 'Code 4412 goes to the test number' } };
+const tval = (f, x) => x.st === 'focus' ? `${x.v}<span class="tcaret"></span>` : x.v;
+
+function fieldA(f, x) {
+  const tall = f.key === 'note';
+  const up = x.st !== 'empty' && x.st !== 'err' || x.st === 'err' && false;
+  const cls = x.st === 'focus' ? ' focus' : x.st === 'err' ? ' err' : '';
+  const val = x.v ? `<div class="val">${tval(f, x)}</div>` : '';
+  const eye = f.key === 'pass' ? `<span class="eye">${TI[x.eye || 'eye'](20)}</span>` : '';
+  let h = `<div class="fa${cls}${tall ? ' tall' : ''}"><div class="in"><span class="lab${x.v ? ' up' : ''}">${f.label}</span>${val}</div>${eye}</div>`;
+  if (x.st === 'err') h += `<div class="terr">${inl(I.circleAlert(13, 2.2))}${ERR}</div>`;
+  if (tall) h += `<div class="tcnt">${(x.v || '').length}/90</div>`;
   return h;
 }
-function phone2(o, w) {
-  const h = w === 412 ? 915 : 800;
-  return `<div class="phone light${o.big ? ' big' : ''}" style="width:${w}px;height:${h}px" data-scroll="top" data-pop=""><div class="sbar"></div><div class="pbar"><span class="back">${I.backIos(24)}</span><span class="pt">Take a seat</span></div>
-    <div class="vp" style="height:${h - 112}px"><div class="scroll">${top2(o)}</div></div><div class="nav"></div>${o.mode === 'edit' ? keyboard() : ''}</div>`;
+function fieldB(f, x) {
+  const tall = f.key === 'note';
+  const cls = x.st === 'focus' ? ' focus' : x.st === 'err' ? ' err' : '';
+  const v = x.v ? tval(f, x) : `<span class="ph">${f.ph}</span>`;
+  const eye = f.key === 'pass' ? `<span class="eye">${TI[x.eye || 'eye'](20)}</span>` : '';
+  let h = `<div class="flb${cls}">${f.label}</div><div class="fb${cls}${tall ? ' tall' : ''}"><span class="v">${v}</span>${eye}</div>`;
+  if (x.st === 'err') h += `<div class="terr">${inl(I.circleAlert(13, 2.2))}${ERR}</div>`;
+  if (tall) h += `<div class="tcnt">${(x.v || '').length}/90</div>`;
+  return h;
 }
-const snip = (o, w) => `<div class="opt light" style="width:${w}px;padding-top:12px">${top2(o)}</div>`;
-const cell2 = (cap, html, rec) => `<div><div class="cap">${cap}${rec ? '<span class="rec">Recommended</span>' : ''}</div>${html}</div>`;
-const HEAD_NEW = `<div class="nsec state"><h2>Head and verified</h2>
-  <div class="row">${cell2('Head, resting, 412', snip({ v: 'b' }, 412))}${cell2('Head, resting, 360', snip({ v: 'b' }, 360))}${cell2('Head, long name, 360', snip({ v: 'b', name: 'Sunrise Notes: Daily Journal 2' }, 360))}</div>
-  <div class="row">${cell2('Editing, 412', phone2({ v: 'b', mode: 'edit' }, 412))}${cell2('Editing, 360', phone2({ v: 'b', mode: 'edit' }, 360))}${cell2('Resting, 2 lines, 360', phone2({ v: 'b', name: 'Mindful Moments: Wellness Hubs' }, 360))}${cell2('Editing, 2 lines, 360', phone2({ v: 'b', mode: 'edit', name: 'Mindful Moments: Wellness Hubs' }, 360))}</div>
-  <div class="row">${cell2('Editing, 1.3x, 412', phone2({ v: 'b', mode: 'edit', big: true, name: 'Mindful Moments: Wellness Hubs' }, 412))}${cell2('Editing, 1.3x, 360', phone2({ v: 'b', mode: 'edit', big: true, name: 'Mindful Moments: Wellness Hubs' }, 360))}</div>
-  <div class="row">${cell2('Now', snip({ v: 'old' }, 412))}${cell2('a. In the head, 412', snip({ v: 'a' }, 412))}${cell2('b. Tile row, 412', snip({ v: 'b' }, 412), true)}${cell2('b. Tile row, 360', snip({ v: 'b' }, 360), true)}${cell2('c. Hidden, 412', snip({ v: 'c' }, 412))}</div></div>`;
+function fieldC(f, x) {
+  const tall = f.key === 'note';
+  const cls = x.st === 'focus' ? ' focus' : x.st === 'err' ? ' err' : '';
+  const v = x.v ? tval(f, x) : `<span class="ph">${f.ph}</span>`;
+  const eye = f.key === 'pass' ? `<span class="eye">${TI[x.eye || 'eye'](20)}</span>` : '';
+  const label = x.st === 'err' ? ERR : f.label;
+  const cnt = tall ? `<span class="cnt">${(x.v || '').length}/90</span>` : '';
+  return `<div class="fcr${cls}${tall ? ' top' : ''}" data-tile><span class="t40${x.st === 'err' ? ' err' : ''}">${f.icon(20)}</span><div class="col"><div class="v${tall ? ' ml' : ''}">${v}</div><div class="lb"><span class="one">${label}</span>${cnt}</div></div>${eye}</div>`;
+}
+function fieldNow(f, x) {
+  const tall = f.key === 'note';
+  const cls = x.st === 'focus' ? ' focus' : x.st === 'err' ? ' err' : '';
+  const v = x.v ? tval(f, x) : `<span class="ph">${f.ph}</span>`;
+  const eye = f.key === 'pass' && x.eye ? `<span class="eye">${TI[x.eye](20)}</span>` : '';
+  let h = `<div class="fnl">${f.label}</div><div class="fn${cls}${tall ? ' tall' : ''}"><span class="v">${v}</span>${eye}</div>`;
+  if (x.st === 'err') h += `<div class="terr" style="font-weight:500">${ERR}</div>`;
+  if (tall) h += `<div class="tcnt">${(x.v || '').length}/90</div>`;
+  return h;
+}
+function fieldSet(kind, set) {
+  const fn = { N: fieldNow, A: fieldA, B: fieldB, C: fieldC }[kind];
+  const gap = kind === 'C' ? 12 : 16;
+  return F.map(f => fn(f, set[f.key])).join(`<div style="height:${gap}px"></div>`);
+}
+const signCtx = (kind, set, theme = 'light') => `<div class="opt ${theme}"><div class="q">Does your app need a sign-in?</div><div class="tc"><div class="chc">No sign-in</div><div class="chc on">Needs a sign-in</div></div>
+  <div style="height:8px"></div><div class="body">A test account the crew can use, as Play Console's App access asks for. Fourteen testers see it, so never your own.</div>
+  <div style="height:16px"></div>${fieldSet(kind, set)}</div>`;
+const tcell = (cap, html, rec) => `<div><div class="cap">${cap}${rec ? '<span class="rec">Recommended</span>' : ''}</div>${html}</div>`;
+const FIELDS = `<div class="tsec state"><h2>Text fields</h2>
+  <div class="row">${tcell('Now, focused, filled, empty', signCtx('N', SET1))}${tcell('Now, error, filled', signCtx('N', SET2))}</div>
+  <div class="row">${tcell('A. Floating label, focused, filled, empty', signCtx('A', SET1))}${tcell('A. Floating label, error, filled', signCtx('A', SET2))}</div>
+  <div class="row">${tcell('B. Soft filled, focused, filled, empty', signCtx('B', SET1))}${tcell('B. Soft filled, error, filled', signCtx('B', SET2))}</div>
+  <div class="row">${tcell('C. Tile row, focused, filled, empty', signCtx('C', SET1), true)}${tcell('C. Tile row, error, filled', signCtx('C', SET2), true)}${tcell('C. Tile row, dark', signCtx('C', SET1, 'dark'), true)}</div></div>`;
 
-const H412 = 915, H360 = 800;
+const S = o => ({ ...BASE, ...o });
 const STATES = [
-  ['Group not shown', { group: 'new' }, true],
-  ['Address copied', { group: 'new', copied: true }],
-  ['Check failed', { group: 'failed', scroll: 'check' }],
-  ['Ready to submit', { group: 'ok', boxes: [true, true], scroll: 'end' }],
-  ['Short of tix', { group: 'ok', boxes: [true, false], tix: 60, scroll: 'end' }],
-  ['Box info open', { group: 'ok', boxes: [false, false], pop: 'countries', scroll: 'end' }, true],
-  ['Editing name', { group: 'ok', editing: true }, true],
-  ['Long name', { group: 'new', app: 'Sunrise Notes: Daily Journal 2', dev: 'Brightleaf Creative Studio Ltd' }, 'big'],
-  ['Whole page', { group: 'new' }, false, true],
+  ['Loading', [['light', skeleton(), { h: 915 }], ['dark', skeleton(), { h: 915 }]]],
+  ['Offline', [['light', offline(), { h: 915, full: true }], ['dark', offline(), { h: 915, full: true }]]],
+  ['Group not shown', [['light', pageBody(S({}))], ['dark', pageBody(S({}))]]],
+  ['Check failed', [['light', pageBody(S({ group: 'failed' }))]]],
+  ['Verifying', [['light', pageBody(S({ group: 'checking' }))]]],
+  ['Group added, boxes unticked', [['light', pageBody(S({ group: 'done' }))]]],
+  ['Box (i) open', [['light', pageBody(S({ group: 'done', pop: 'countries' })), { pop: 'countries' }]]],
+  ['Name editing', [['light', pageBody(S({ group: 'done', editing: true })), { h: 915, kb: true }]]],
+  ['Name editing, 2 lines, 360', [['light', pageBody(S({ group: 'done', editing: true, name: 'Mindful Moments: Wellness Hubs' })), { h: 800, w: 360, kb: true }]]],
+  ['Sign-in needed', [['light', pageBody(S({ group: 'done', signIn: true, boxes: [true, true] }))]]],
+  ['Short of tix', [['light', pageBody(S({ group: 'done', tix: 60, boxes: [true, true] }))]]],
+  ['Waiting in another crew', [['light', pageBody(S({ group: 'done', waiting: true, boxes: [true, true] }))]]],
+  ['Appeal open', [['light', pageBody(S({ group: 'done', held: true, boxes: [true, true] }))]]],
+  ['Server refused', [['light', pageBody(S({ group: 'done', refused: true, boxes: [true, true] }))]]],
+  ['Ready to submit', [['light', pageBody(S({ group: 'done', boxes: [true, true] }))], ['dark', pageBody(S({ group: 'done', boxes: [true, true] }))]]],
+  ['Submitting', [['light', pageBody(S({ group: 'done', boxes: [true, true], seating: true }))]]],
+  ['How to add it', [['light', howBody(false), { how: true }]]],
+  ['How to add it, zoomed', [['light', howBody(true), { how: true, h: 915 }]]],
 ];
-document.getElementById('doc').innerHTML = HEAD_NEW + GROUP_NEW + STATES.map(([label, st, narrow, whole]) => {
-  const s = { ...BASE, ...st };
-  const hh = whole ? null : H412;
-  let h = `<div class="state"><div class="lbl">${label}</div><div class="pair">`
-    + `<div><div class="cap">412 light</div>${phone('light', s, 412, hh)}</div>`
-    + `<div><div class="cap">412 dark</div>${phone('dark', s, 412, hh)}</div>`;
-  if (narrow === 'big') h += `<div><div class="cap">360, large text</div>${phone('light', s, 360, H360, ' big')}</div>`;
-  else if (narrow) h += `<div><div class="cap">360 light</div>${phone('light', s, 360, H360)}</div>`;
-  return h + '</div></div>';
-}).join('');
+document.getElementById('doc').innerHTML = FIELDS + STATES.map(([label, frames]) =>
+  `<div class="state"><div class="lbl">${label}</div><div class="pair">${frames.map(f => phone(f[0], f[1], f[2] || {})).join('')}</div></div>`).join('');
 
-/* scroll each frame, then draw the open callout over it */
-function layout() {
+/* fit the address: 15sp down to 10sp in 0.5 steps */
+function fit() {
+  document.querySelectorAll('[data-fit]').forEach(a => {
+    let sz = 15; a.style.fontSize = sz + 'px';
+    while (a.scrollWidth > a.clientWidth + 0.5 && sz > 10) { sz -= 0.5; a.style.fontSize = sz + 'px'; }
+  });
+}
+/* draw the open callout, as ProblemCallout's shape: right edge 16 in, caret at the (i) */
+function callouts() {
   document.querySelectorAll('.phone').forEach(ph => {
-    const vp = ph.querySelector('.vp'), sc = ph.querySelector('.scroll');
-    sc.style.transform = '';
     ph.querySelectorAll('.pop').forEach(p => p.remove());
-    if (!vp.style.height) return;
-    const max = Math.max(0, sc.offsetHeight - vp.clientHeight);
-    let off = 0;
-    const mode = ph.dataset.scroll;
-    if (mode === 'end') off = max;
-    else if (mode !== 'top') {
-      const a = sc.querySelector(`[data-anchor="${mode}"]`);
-      off = Math.min(max, Math.max(0, a.getBoundingClientRect().top - sc.getBoundingClientRect().top - 420));
-    }
-    sc.style.transform = `translateY(${-off}px)`;
-    const id = ph.dataset.pop;
-    if (!id) return;
-    const btn = sc.querySelector(`[data-info="${id}"]`);
-    const box = BOXES.find(b => b.id === id);
+    const id = ph.dataset.pop; if (!id) return;
+    const vp = ph.querySelector('.vp'), btn = ph.querySelector(`[data-info="${id}"]`);
     const vr = vp.getBoundingClientRect(), br = btn.getBoundingClientRect();
-    const W = Math.min(260, ph.clientWidth - 32);
+    const W = 260, CH = 8, R = 14, HALF = 8, TIP = 1.5;
     const pop = document.createElement('div');
-    pop.className = 'pop';
-    pop.style.width = W + 'px';
-    pop.innerHTML = `<div class="pc"><div class="pw">${box.why}</div><div>${box.how}</div></div>`;
+    pop.className = 'pop'; pop.style.width = W + 'px';
+    pop.innerHTML = `<div class="pc"><div style="color:var(--warn)">Members in other countries can't install it. If two of them report that, you lose your seat.</div><div>In Play Console, open <b>Closed testing</b>, then <b>Countries/regions</b>, and add all countries.</div></div>`;
     vp.appendChild(pop);
-    const CH = 8, R = 14, HALF = 8, TIP = 1.5, INSET = 10, GAP = 4;
-    const pc = pop.querySelector('.pc');
-    pc.style.paddingTop = (12 + CH) + 'px'; pc.style.paddingBottom = '12px';
-    const h = pop.offsetHeight;
-    const x = ph.clientWidth - 16 - W;
-    const y = br.bottom - vr.top - INSET + GAP;
+    const h = pop.offsetHeight, x = ph.clientWidth - 16 - W, y = br.bottom - vr.top - 10 + 4;
     pop.style.left = x + 'px'; pop.style.top = y + 'px';
-    const keep = R + HALF;
-    const cx = Math.min(W - keep, Math.max(keep, (br.left + br.right) / 2 - vr.left - x));
-    const t = CH, b = h;
-    const d = `M${R} ${t} L${cx - HALF} ${t} L${cx - TIP} ${TIP} Q${cx} 0 ${cx + TIP} ${TIP} L${cx + HALF} ${t} L${W - R} ${t} A${R} ${R} 0 0 1 ${W} ${t + R} L${W} ${b - R} A${R} ${R} 0 0 1 ${W - R} ${b} L${R} ${b} A${R} ${R} 0 0 1 0 ${b - R} L0 ${t + R} A${R} ${R} 0 0 1 ${R} ${t} Z`;
+    const keep = R + HALF, cx = Math.min(W - keep, Math.max(keep, (br.left + br.right) / 2 - vr.left - x));
+    const d = `M${R} ${CH} L${cx - HALF} ${CH} L${cx - TIP} ${TIP} Q${cx} 0 ${cx + TIP} ${TIP} L${cx + HALF} ${CH} L${W - R} ${CH} A${R} ${R} 0 0 1 ${W} ${CH + R} L${W} ${h - R} A${R} ${R} 0 0 1 ${W - R} ${h} L${R} ${h} A${R} ${R} 0 0 1 0 ${h - R} L0 ${CH + R} A${R} ${R} 0 0 1 ${R} ${CH} Z`;
     pop.insertAdjacentHTML('afterbegin', `<svg class="shape" width="${W}" height="${h}"><path d="${d}" fill="var(--sheet)" stroke="var(--gb)" stroke-width="1"/></svg>`);
   });
 }
-
-/* layout check for the headless run, kept out of sight */
 function check() {
   const bad = [];
-  document.querySelectorAll('.phone:not(.big) [data-tile], .big .ah').forEach(row => {
-    const ic = row.querySelector('.ai, .t40'), col = row.querySelector('.col');
-    if (col.offsetHeight > ic.offsetHeight + 0.5) bad.push('tall: ' + col.textContent.trim().slice(0, 30) + ' ' + col.offsetHeight);
+  document.querySelectorAll('[data-tile]').forEach(r => { const ic = r.querySelector('.ai, .t40'), col = r.querySelector('.col'); if (col.offsetHeight > ic.offsetHeight + 0.5) bad.push('tall ' + col.textContent.trim().slice(0, 24) + ' ' + col.offsetHeight); });
+  document.querySelectorAll('.one, .pill, .prim, .bar, .rp, .st, .bl, .addr').forEach(t => { if (t.scrollWidth > t.clientWidth + 1) bad.push('cut ' + t.textContent.trim().slice(0, 30)); });
+  document.querySelectorAll('.hint').forEach(h => { if (h.offsetHeight > 22.5) bad.push('hint wraps ' + h.textContent.trim()); });
+  document.querySelectorAll('.pop').forEach(p => { const ph = p.closest('.phone').getBoundingClientRect(), r = p.getBoundingClientRect(); if (r.right > ph.right - 15 || r.left < ph.left + 15) bad.push('pop out'); });
+  const heads = [...document.querySelectorAll('.ah')].map(a => a.querySelector('.col').offsetHeight);
+  /* seen gaps: ink to ink, the touch boxes' empty edges counted */
+  const seen = [];
+  document.querySelectorAll('.phone').forEach(ph => {
+    const ink = [...ph.querySelectorAll('.scroll .pill, .scroll .sh h3, .scroll .cb, .scroll .hint, .scroll .prim, .scroll .rl, .scroll .link, .scroll .t40, .scroll .chc, .scroll .ai, .scroll .addr, .scroll .body, .scroll .q, .scroll .ttl, .scroll .bs, .scroll .pic, .scroll .ht, .scroll .zhint, .scroll .bar, .scroll .fd, .scroll .fl, .scroll .fc, .scroll .sub, .scroll .small, .scroll .obtn, .scroll .robot, .scroll .ctitle, .scroll .cline')]
+      .map(e => [e, e.getBoundingClientRect()]).filter(x => x[1].height > 0).sort((x, y) => x[1].top - y[1].top);
+    let low = null, lowE = null;
+    const lbl = (ph.closest('.state').querySelector('.lbl') || { textContent: '' }).textContent;
+    ink.forEach(([e, r]) => { if (low !== null && r.top - low > 32.5 && r.top < ph.getBoundingClientRect().bottom - 24) seen.push(lbl + ':' + lowE.className + '>' + e.className + '=' + Math.round(r.top - low)); if (low === null || r.bottom > low) { low = r.bottom; lowE = e; } });
   });
-  document.querySelectorAll('.one, .prim, .bar, .rp, .sh .st, .bl').forEach(t => {
-    if (t.scrollWidth > t.clientWidth + 1) bad.push('cut: ' + t.textContent.trim().slice(0, 40));
-  });
-  document.querySelectorAll('.opt').forEach(o => { o.querySelectorAll('.fu .v, .nm:not(.ed)').forEach(v => { if (v.scrollWidth > v.clientWidth + 1) bad.push('name cut ' + o.style.width + ' ' + v.textContent.slice(0, 20)); }); });
-  document.querySelectorAll('.addr').forEach(a => { if (a.scrollWidth > a.clientWidth + 0.5) bad.push('addr cut ' + a.closest('.phone, .opt').style.width); });
-  document.querySelectorAll('.stt, .pill').forEach(t => { if (t.scrollWidth > t.clientWidth + 1) bad.push('cut ' + t.textContent.trim().slice(0, 30) + ' @' + t.closest('.opt').style.width); });
-  document.querySelectorAll('.hint').forEach(h => { if (h.offsetHeight > 20.5) bad.push('wraps: ' + h.textContent.trim()); });
-  document.querySelectorAll('.bx').forEach(r => { if (r.offsetHeight > 48.5 || r.scrollWidth > r.clientWidth + 1) bad.push('box row ' + r.textContent.trim()); });
-  document.querySelectorAll('.phone:not(.big) .af').forEach(f => { const a = f.querySelector('.a'); if (a.scrollWidth > a.clientWidth + 1 || f.offsetHeight > 56.5) bad.push('addr ' + f.closest('.phone, .opt').style.width + ' h' + f.offsetHeight); });
-  document.querySelectorAll('.pop').forEach(p => { const ph = p.closest('.phone').getBoundingClientRect(), r = p.getBoundingClientRect(); if (r.right > ph.right - 15 || r.left < ph.left + 15 || r.bottom > ph.bottom - 24) bad.push('pop out'); });
-  const names = [...document.querySelectorAll('.ah')].map(n => n.querySelector('.hn, .hed, .hed2').offsetHeight + '/' + n.querySelector('.col').offsetHeight + '/' + n.querySelector('.ai').offsetHeight + '@' + n.closest('.phone, .opt').style.width + (n.closest('.big') ? 'big' : ''));
-  const gaps = [...document.querySelectorAll('.bx')].slice(0, 2).map(r => Math.round(r.querySelector('.ib svg').getBoundingClientRect().left - r.querySelector('.bl').getBoundingClientRect().right));
-  document.getElementById('chk').textContent = (bad.length ? 'BAD ' + [...new Set(bad)].join('; ') : 'OK') + ' | names ' + [...new Set(names)].join(',') + ' | addr sp ' + [...new Set([...document.querySelectorAll('.addr')].map(a => a.dataset.sp + '@' + a.closest('.phone, .opt').style.width + (a.closest('.big') ? 'big' : '')))].join(',') + ' | align ' + [...new Set([...document.querySelectorAll('.phone')].filter(ph => ph.querySelector('.addr') && ph.querySelector('.gt')).map(ph => { const L = ph.getBoundingClientRect().left; const a = ph.querySelector('.addr').getBoundingClientRect().left - L, t = ph.querySelector('.gt').getBoundingClientRect().left - L; const tc = ph.querySelector('[data-fit]').closest('.r40').querySelector('.t40').getBoundingClientRect(), gc = ph.querySelector('.gn').getBoundingClientRect(); return Math.round(a) + '/' + Math.round(t) + ' c' + Math.round(tc.left + tc.width / 2 - L) + '/' + Math.round(gc.left + gc.width / 2 - L); }))].join(',') + ' | label-to-glyph ' + gaps.join(',') + ' | rects ' + [...document.querySelectorAll('.state')].map(e => { const r = e.getBoundingClientRect(); return [r.left, r.top + scrollY, r.width, r.height].map(Math.round).join(':'); }).join(';');
+  document.getElementById('chk').textContent = (bad.length ? 'BAD ' + [...new Set(bad)].join('; ') : 'OK') + ' | heads ' + [...new Set(heads)].join(',') + ' | fieldH ' + ['.fn', '.fa', '.fb', '.fcr'].map(c => c + '=' + [...new Set([...document.querySelectorAll(c)].map(e => e.offsetHeight))].join('/')).join(' ') + ' | gaps>32 ' + [...new Set(seen)].join(',') + ' | rects ' + [...document.querySelectorAll('.state')].map(e => { const r = e.getBoundingClientRect(); return [r.left, r.top + scrollY, r.width, r.height].map(Math.round).join(':'); }).join(';');
 }
-function fit() {
-  document.querySelectorAll('[data-fit]').forEach(a => {
-    const k = a.closest('.big') ? 1.3 : 1;
-    if (a.closest('.pill')) { const pill = a.closest('.pill'); a.style.maxWidth = (pill.parentElement.clientWidth - 24 - 16 - 8) + 'px'; }
-    let sz = +(a.dataset.max || 14);
-    a.style.fontSize = sz * k + 'px';
-    while (a.scrollWidth > a.clientWidth + 0.5 && sz > 10) { sz -= 0.5; a.style.fontSize = sz * k + 'px'; }
-    a.dataset.sp = sz;
-  });
-}
-function run() { fit(); layout(); check(); }
+function run() { fit(); callouts(); check(); }
 run();
 document.fonts.ready.then(run);
+window.addEventListener('load', run);
 </script>
 </body>
 </html>

@@ -94,7 +94,7 @@ internal fun CrewSeatDetails(
         Spacer(Modifier.height(16.dp))
     }
     CrewOpenHeader(crews.open)
-    Spacer(Modifier.height(20.dp))
+    Spacer(Modifier.height(16.dp))
     SignInFields(
         needed = vm.needsSignIn,
         onNeeded = vm::chooseSignIn,
@@ -106,7 +106,7 @@ internal fun CrewSeatDetails(
         onAlso = vm::typeAlso,
         seatSpacing = true,
     )
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(16.dp))
     SeatPrice(vm.tix, short, crews.running, onOpenCircle)
     // Every notice goes under the rules, 16dp apart.
     // Each icon is the first glyph of its line, so a wrap runs back to the left edge.
@@ -310,7 +310,6 @@ private fun SeatPrice(
                 withStyle(bold) { append("${CrewRules.SEAT_COST} tix") }
                 append(" come back if you take it out while the crew fills, or open every app every night to the end.")
             },
-            inlineDot = true,
         )
         RuleLine(
             buildAnnotatedString {
@@ -320,7 +319,6 @@ private fun SeatPrice(
                 withStyle(bold) { append("${CrewRules.RUN_DAYS}") }
                 append(" days, and they open yours.")
             },
-            inlineDot = true,
         )
         RuleLine(
             buildAnnotatedString {
@@ -328,7 +326,6 @@ private fun SeatPrice(
                 withStyle(bold) { append("${CrewRules.nightly(running + 1)}") }
                 append(" apps a night.")
             },
-            inlineDot = true,
         )
     }
 }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
@@ -25,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,6 +40,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -105,26 +110,41 @@ private fun BoxRow(
 ) {
     val t = Tt.colors
     Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
-        Row(
-            Modifier
-                .weight(1f, fill = false)
-                .heightIn(min = 48.dp)
-                .toggleable(value = on, role = Role.Checkbox, onValueChange = onChange),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val shape = RoundedCornerShape(6.dp)
+        // Only the box is tapped: a 48dp target centred on it, spilling into the gutter, with a round ripple.
+        // The label is its description, so the text itself is left out of what a screen reader reads.
+        Box(Modifier.size(22.dp), contentAlignment = Alignment.Center) {
             Box(
                 Modifier
-                    .size(22.dp)
-                    .clip(shape)
-                    .then(if (on) Modifier.background(t.accent) else Modifier.border(1.5.dp, t.glassBorderStrong, shape)),
+                    .requiredSize(48.dp)
+                    .semantics { contentDescription = label }
+                    .toggleable(
+                        value = on,
+                        interactionSource = null,
+                        indication = ripple(bounded = false, radius = 20.dp),
+                        role = Role.Checkbox,
+                        onValueChange = onChange,
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
-                if (on) Icon(Lucide.Check, null, Modifier.size(14.dp), tint = t.onAccent)
+                val shape = RoundedCornerShape(6.dp)
+                Box(
+                    Modifier
+                        .size(22.dp)
+                        .clip(shape)
+                        .then(if (on) Modifier.background(t.accent) else Modifier.border(1.5.dp, t.glassBorderStrong, shape)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (on) Icon(Lucide.Check, null, Modifier.size(14.dp), tint = t.onAccent)
+                }
             }
-            Spacer(Modifier.width(12.dp))
-            Text(label, style = tileStyle(15f, 20f, FontWeight.Medium), color = t.text)
         }
+        Spacer(Modifier.width(12.dp))
+        Text(
+            label,
+            Modifier.weight(1f, fill = false).clearAndSetSemantics {},
+            style = tileStyle(15f, 20f, FontWeight.Medium),
+            color = t.text,
+        )
         // The callout is anchored to this box: its 20dp icon sits 10dp inside the 40dp button.
         Box(Modifier.offset(x = (-6).dp)) {
             IconButton(onClick = { onInfo(!open) }, modifier = Modifier.size(40.dp)) {
@@ -194,7 +214,7 @@ internal fun CrewSeatGroup(
 ) {
     val t = Tt.colors
     var howTo by rememberSaveable { mutableStateOf(false) }
-    SeatHeading("Testers group", if (state.checkFailed) SeatStatus.warn("Not shown yet") else null)
+    SeatHeading("Testers group")
     // Once Play was asked and said no, the last check's own words take the plain line's place.
     val line = state.checkLine.takeIf { state.checkFailed } ?: "Play doesn't show your app to the group yet"
     IconLine(Lucide.TriangleAlert, t.warn, AnnotatedString(line), SmallLine, t.warn)

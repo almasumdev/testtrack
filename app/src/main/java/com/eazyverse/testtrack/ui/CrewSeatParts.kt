@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.KeyboardActions
@@ -32,6 +34,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -92,8 +95,6 @@ internal class SeatStatus(
     val ok: Boolean,
 ) {
     companion object {
-        fun ok(text: String) = SeatStatus(text, true)
-
         fun warn(text: String) = SeatStatus(text, false)
     }
 }
@@ -363,53 +364,88 @@ internal fun IconLine(
     )
 }
 
-/** The page before its app has arrived, in the page's own shapes: the head, the group, then the details. */
+/**
+ * The page before its app has arrived, in the page's own shapes from top to bottom: the head, a
+ * heading, the tile rows, the sign-in choice, the price and its three rules, the boxes, the hint and
+ * the button. A taller screen gets more tile rows under them, so the whole page is filled.
+ */
 @Composable
-internal fun SeatPageSkeleton() {
-    Column(Modifier.fillMaxWidth().semantics { contentDescription = "Loading the seat page" }) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Skeleton(width = AppTileIcon, height = AppTileIcon, corner = AppTileIcon * 0.3f)
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Skeleton(width = 130.dp, height = 14.dp)
-                Spacer(Modifier.height(8.dp))
-                Skeleton(width = 90.dp, height = 11.dp)
+internal fun SeatPageSkeleton(modifier: Modifier = Modifier) {
+    BoxWithConstraints(modifier.clipToBounds().semantics { contentDescription = "Loading the seat page" }) {
+        val extra = ((maxHeight - SkeletonPageHeight) / SkeletonRowStep).toInt().coerceAtLeast(0) + 1
+        Column(Modifier.fillMaxWidth().wrapContentHeight(Alignment.Top, unbounded = true)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Skeleton(width = AppTileIcon, height = AppTileIcon, corner = AppTileIcon * 0.3f)
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Skeleton(width = 130.dp, height = 14.dp)
+                    Spacer(Modifier.height(8.dp))
+                    Skeleton(width = 90.dp, height = 11.dp)
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+            SkeletonHeading()
+            SkeletonTileRow(150.dp, 100.dp)
+            Spacer(Modifier.height(16.dp))
+            SkeletonTileRow(120.dp, 110.dp)
+            Spacer(Modifier.height(16.dp))
+            Skeleton(width = 180.dp, height = 12.dp)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.weight(1f)) { Skeleton(height = 48.dp, corner = 12.dp) }
+                Box(Modifier.weight(1f)) { Skeleton(height = 48.dp, corner = 12.dp) }
+            }
+            Spacer(Modifier.height(16.dp))
+            SkeletonTileRow(110.dp, 90.dp)
+            Spacer(Modifier.height(16.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(Modifier.fillMaxWidth(0.9f)) { Skeleton(height = 11.dp) }
+                Box(Modifier.fillMaxWidth(0.8f)) { Skeleton(height = 11.dp) }
+                Box(Modifier.fillMaxWidth(0.55f)) { Skeleton(height = 11.dp) }
+            }
+            Spacer(Modifier.height(32.dp))
+            SkeletonHeading()
+            repeat(2) {
+                Row(Modifier.height(48.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Skeleton(width = 22.dp, height = 22.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Skeleton(width = 170.dp, height = 13.dp)
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Skeleton(width = 160.dp, height = 12.dp) }
+            Spacer(Modifier.height(12.dp))
+            Skeleton(height = 52.dp, corner = 14.dp)
+            repeat(extra) {
+                Spacer(Modifier.height(24.dp))
+                SkeletonTileRow(if (it % 2 == 0) 140.dp else 110.dp, if (it % 2 == 0) 95.dp else 120.dp)
             }
         }
-        Spacer(Modifier.height(24.dp))
-        Skeleton(width = 120.dp, height = 16.dp)
-        Spacer(Modifier.height(14.dp))
-        Box(Modifier.fillMaxWidth(0.7f)) { Skeleton(height = 12.dp) }
-        Spacer(Modifier.height(12.dp))
-        Skeleton(width = 220.dp, height = 14.dp)
-        Spacer(Modifier.height(8.dp))
-        Skeleton(width = 120.dp, height = 11.dp)
-        Spacer(Modifier.height(16.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(Modifier.weight(1f)) { Skeleton(height = 34.dp, corner = 10.dp) }
-            Box(Modifier.weight(1f)) { Skeleton(height = 34.dp, corner = 10.dp) }
-        }
-        Spacer(Modifier.height(32.dp))
-        Skeleton(width = 100.dp, height = 16.dp)
-        Spacer(Modifier.height(14.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Skeleton(width = 40.dp, height = 40.dp, corner = 12.dp)
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Skeleton(width = 150.dp, height = 14.dp)
-                Spacer(Modifier.height(8.dp))
-                Skeleton(width = 100.dp, height = 11.dp)
-            }
-        }
-        Spacer(Modifier.height(16.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Skeleton(width = 40.dp, height = 40.dp, corner = 12.dp)
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Skeleton(width = 120.dp, height = 14.dp)
-                Spacer(Modifier.height(8.dp))
-                Skeleton(width = 110.dp, height = 11.dp)
-            }
+    }
+}
+
+/** Roughly the height of the page's own shapes above, before the extra rows; one extra row and its gap. */
+private val SkeletonPageHeight = 700.dp
+private val SkeletonRowStep = 64.dp
+
+@Composable
+private fun SkeletonHeading() {
+    Skeleton(width = 110.dp, height = 16.dp)
+    Spacer(Modifier.height(11.dp))
+}
+
+@Composable
+private fun SkeletonTileRow(
+    top: Dp,
+    under: Dp,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Skeleton(width = 40.dp, height = 40.dp, corner = 12.dp)
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Skeleton(width = top, height = 14.dp)
+            Spacer(Modifier.height(8.dp))
+            Skeleton(width = under, height = 11.dp)
         }
     }
 }

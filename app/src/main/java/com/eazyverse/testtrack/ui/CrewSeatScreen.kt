@@ -170,6 +170,18 @@ internal fun CrewSeatScreen(
         topBar = { PageBar("Take a seat", onBack) },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
+            // The skeleton stands outside the scroll, so it knows the page's height and fills all of it.
+            val offline = app == null && !loading && apps.offline
+            if (!offline && (app == null || details == null)) {
+                SeatPageSkeleton(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = Gutter)
+                        .padding(top = 8.dp),
+                )
+                return@Column
+            }
             Column(
                 Modifier
                     .weight(1f)
@@ -178,7 +190,7 @@ internal fun CrewSeatScreen(
                     .padding(horizontal = Gutter),
             ) {
                 Spacer(Modifier.height(8.dp))
-                if (app == null && !loading && apps.offline) {
+                if (offline) {
                     IconLine(
                         Lucide.TriangleAlert,
                         Tt.colors.warn,
@@ -189,9 +201,7 @@ internal fun CrewSeatScreen(
                     )
                     Spacer(Modifier.height(16.dp))
                     SeatBar("Try again", Lucide.RefreshCw, onClick = { apps.load(context) })
-                } else if (app == null || details == null) {
-                    SeatPageSkeleton()
-                } else {
+                } else if (app != null && details != null) {
                     SeatAppHead(
                         app,
                         name = vm.name,
@@ -271,8 +281,9 @@ internal fun CrewSeatScreen(
                             onDone = onDone,
                         )
                     }
-                    // The last part of the page: 32 under the boxes, the hint, then the button.
-                    Spacer(Modifier.height(32.dp))
+                    // The last part of the page: the hint 16 under the boxes (the 48dp rows add 13 under the
+                    // last box, so about 31 show), then the button.
+                    Spacer(Modifier.height(16.dp))
                     CrewSeatSubmit(details, vm, onSpot = { jump = it }) {
                         if (drive.connected == true) {
                             take()
