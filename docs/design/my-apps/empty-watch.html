@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My apps, empty: the watch block</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSel:#2E4E66; --leafSoft:rgba(74,114,144,.16); --dock:#E8F3FA; --dockInk:#304C60; --dockLine:#D3E3EE;
+    --primary:#3A5B73; --onPrimary:#FFFFFF; --accentInk:#22394B;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --gbs:#789AAF; --hair:#B7D1E2; --scrim:rgba(20,34,48,.46);
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSel:#B6CCDC; --leafSoft:#2A2D31; --dock:#1C1E20; --dockInk:#BCC1C6; --dockLine:#2D3034;
+    --primary:#93B3CA; --onPrimary:#0F1011; --accentInk:#93B3CA;
+    --tile:#2A2D31; --tileInk:#A2BED2; --gbs:#666D74; --hair:#2B2E32; --scrim:rgba(0,0,0,.6);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E7ECEF; color: #142F43; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; }
+  .doc { padding: 28px 28px 60px; }
+  h1 { font-size: 26px; margin: 0 0 18px; }
+  .grid { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+  .grid + h2 { margin-top: 34px; }
+  h2 { font-size: 20px; margin: 0 0 12px; display: flex; gap: 10px; align-items: center; }
+  .rec { font-size: 12px; font-weight: 700; background: #3A5B73; color: #fff; border-radius: 999px; padding: 3px 11px; letter-spacing: .2px; }
+  .cap { font-size: 13px; font-weight: 700; margin: 0 0 6px 4px; color: #2D4A5F; display: flex; gap: 8px; align-items: center; }
+  .cap .rec { font-size: 11px; padding: 2px 9px; }
+  .cap.now { color: #9E3B2E; }
+  .meas { font-size: 10.5px; color: #6B7682; margin: 5px 0 0 4px; }
+
+  /* phone */
+  .phone { width: 412px; height: 892px; background: var(--bg); color: var(--text); border-radius: 30px; overflow: hidden; border: 1px solid #C3CFD8; position: relative; display: flex; flex-direction: column; }
+  .phone.w360 { width: 360px; height: 780px; }
+  .dark.phone { border-color: #2A2D31; }
+  .sb { height: 34px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; font-size: 15px; font-weight: 500; color: var(--text); }
+  .sb .bat { width: 26px; height: 13px; border-radius: 7px; background: var(--text); opacity: .75; }
+  .top { height: 64px; flex: none; display: flex; align-items: center; padding: 0 16px; }
+  .top img.av { width: 48px; height: auto; display: block; }
+  .lv { margin-left: 12px; }
+  .lv b { display: block; font-size: 17px; line-height: 21px; font-weight: 600; }
+  .lv span { display: block; font-size: 13px; line-height: 17px; color: var(--text2); letter-spacing: .2px; }
+  .tix { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 21px; font-weight: 600; }
+  .tix img { width: 29px; display: block; }
+  .mid { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 16px; min-height: 0; }
+  .robot { width: 114px; display: block; margin-bottom: 11px; }
+  .title { font-size: 20px; line-height: 25px; font-weight: 700; text-align: center; }
+  .line { margin-top: 6px; max-width: 300px; font-size: 14px; line-height: 20px; color: var(--text2); text-align: center; letter-spacing: .1px; }
+  .btn { margin-top: 18px; width: 100%; max-width: 240px; height: 52px; border-radius: 999px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; flex: none; }
+  .foot { margin-top: 10px; flex: none; }
+  .dock { flex: none; height: 58px; margin: 0 22px 10px; border-radius: 999px; background: var(--dock); border: 1px solid var(--dockLine); display: flex; align-items: center; justify-content: space-around; padding: 0 4px; color: var(--dockInk); }
+  .dock .on { background: var(--leafSoft); color: var(--tabSel); border-radius: 999px; height: 46px; padding: 0 18px; display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; }
+  .gest { flex: none; height: 20px; display: grid; place-items: center; }
+  .gest i { width: 116px; height: 4px; border-radius: 4px; background: var(--text4); opacity: .55; }
+  svg.i { display: block; flex: none; }
+  .bn { font-family: "BarlowApp", "Barlow", "Noto Sans Bengali", sans-serif; }
+
+  /* Today: two stacked text buttons */
+  .tbtn { height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--accentInk); font-size: 14.5px; font-weight: 600; padding: 0 12px; }
+
+  /* A: two equal pills, the HowToCard pair */
+  .pair { width: 100%; max-width: 240px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pair.wide { max-width: 272px; }
+  .tb { height: 48px; display: flex; align-items: center; min-width: 0; }
+  .wpill { height: 34px; width: 100%; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--accentInk); white-space: nowrap; overflow: hidden; padding: 0 12px; }
+  .wpill.soft { background: var(--tile); }
+  .wpill.ghost { background: var(--bg); box-shadow: inset 0 0 0 1.5px var(--gbs); }
+
+  /* B: a video row with its own Bangla pill */
+  .vrow { height: 56px; display: flex; align-items: center; padding: 8px 4px 8px 8px; border-radius: 14px; max-width: 328px; }
+  .ic40 { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .vcol { margin-left: 12px; min-width: 0; text-align: left; }
+  .vt { font-size: 15px; line-height: 19px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vn { font-size: 12.5px; line-height: 16px; color: var(--text3); white-space: nowrap; }
+  .spill { margin-left: 12px; height: 34px; padding: 0 12px; border-radius: 10px; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--accentInk); background: var(--bg); box-shadow: inset 0 0 0 1.5px var(--gbs); flex: none; white-space: nowrap; }
+
+  /* C: one quiet line */
+  .lrow { display: flex; align-items: center; justify-content: center; }
+  .lrow .tbtn { padding: 0 12px; }
+  .vbar { width: 1px; height: 18px; background: var(--hair); flex: none; }
+</style>
+</head>
+<body>
+<div class="doc">
+<h1>My apps, empty: the watch block</h1>
+
+<div class="grid" id="row1"></div>
+<h2>Option A. Two equal pills <span class="rec">Recommended</span></h2>
+<div class="grid" id="rowA"></div>
+</div>
+
+<script>
+const P = (d, s = 24, w = 2) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const I = {
+  circlePlay: s => P('<circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>', s),
+  play: s => P('<polygon points="6 3 20 12 6 21 6 3"/>', s, 2.4),
+  playFill: s => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20 7 4"/></svg>`,
+  chat: s => P('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', s, 1.8),
+  users: s => P('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', s, 1.8),
+  trophy: s => P('<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>', s, 1.8),
+  grid: s => P('<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>', s, 1.8),
+  user: s => P('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', s, 1.8),
+};
+const BN = 'বাংলায় দেখুন';
+
+const FOOT = {
+  today: () => `<div class="tbtn">${I.circlePlay(18)}<span class="lab">Watch how to add your app</span></div>
+                <div class="tbtn bn">${I.circlePlay(18)}<span class="lab">${BN}</span></div>`,
+  A: () => `<div class="pair"><div class="tb"><span class="wpill soft">${I.play(13)}<span class="lab">Watch how</span></span></div>
+            <div class="tb"><span class="wpill ghost bn">${I.play(13)}<span class="lab">${BN}</span></span></div></div>`,
+  B: () => `<div class="vrow"><div class="ic40">${I.playFill(17)}</div>
+            <div class="vcol"><div class="vt lab">How to add your app</div><div class="vn">1:43 video in English</div></div>
+            <span class="spill bn">${I.play(13)}বাংলা</span></div>`,
+  C: () => `<div class="lrow"><div class="tbtn">${I.circlePlay(18)}<span class="lab">Watch how</span></div><span class="vbar"></span>
+            <div class="tbtn bn">${I.circlePlay(18)}<span class="lab">${BN}</span></div></div>`,
+};
+
+const screen = (theme, w, foot) => `
+  <div class="phone ${theme}${w === 360 ? ' w360' : ''}">
+    <div class="sb"><span>12:13</span><span class="bat"></span></div>
+    <div class="top"><img class="av" src="empty-watch/avatar.png" alt=""><div class="lv"><b>Level 1</b><span>25 exp to level 2</span></div>
+      <div class="tix"><img src="empty-watch/ticket.png" alt="">100</div></div>
+    <div class="mid">
+      <img class="robot" src="empty-watch/robot.png" alt="">
+      <div class="title">Nothing added yet</div>
+      <div class="line">Add your app once. Then put it in a crew for Play's closed test, or ask other developers for feedback, from its page.</div>
+      <div class="btn">Add an app</div>
+      <div class="foot">${foot}</div>
+    </div>
+    <div class="dock">${I.chat(24)}${I.users(24)}${I.trophy(24)}<span class="on">${I.grid(22)}My apps</span>${I.user(24)}</div>
+    <div class="gest"><i></i></div>
+  </div>`;
+
+const frame = (cap, theme, w, foot, cls = '') => `<div><div class="cap ${cls}">${cap}</div>${screen(theme, w, foot)}<div class="meas"></div></div>`;
+
+document.getElementById('row1').innerHTML =
+  frame('Today', 'light', 412, FOOT.today(), 'now') +
+  frame('Option A. Two equal pills <span class="rec">Recommended</span>', 'light', 412, FOOT.A()) +
+  frame('Option B. Video row with a Bangla pill', 'light', 412, FOOT.B()) +
+  frame('Option C. One quiet line', 'light', 412, FOOT.C());
+
+document.getElementById('rowA').innerHTML =
+  frame('Light 412', 'light', 412, FOOT.A()) +
+  frame('Dark 412', 'dark', 412, FOOT.A()) +
+  frame('Light 360', 'light', 360, FOOT.A()) +
+  frame('Dark 360', 'dark', 360, FOOT.A());
+
+// Fit check: a cut label, and the block's own height.
+const measure = () => document.querySelectorAll('.meas').forEach(m => {
+  const f = m.previousElementSibling.querySelector('.foot');
+  const cut = [...f.querySelectorAll('.lab')].filter(e => e.scrollWidth > e.clientWidth + 1).length;
+  const r = f.getBoundingClientRect();
+  m.textContent = `watch block ${Math.round(r.width)} x ${Math.round(r.height)}dp, cut labels: ${cut}`;
+});
+document.fonts.ready.then(measure);
+</script>
+</body>
+</html>

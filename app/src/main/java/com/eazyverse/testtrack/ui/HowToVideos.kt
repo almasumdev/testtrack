@@ -19,13 +19,12 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,7 +37,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
-import com.composables.icons.lucide.CirclePlay
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.X
@@ -273,24 +271,31 @@ private fun Thumb(
 }
 
 /**
- * The video for an empty screen, as two quiet links under its one button: the button stays the
+ * The video for an empty screen, as two equal pills under the one button: the button stays the
  * thing to do, and the video is there for whoever wants to see how first.
  */
 @Composable
 internal fun HowToLinks(video: HowTo) {
     val context = LocalContext.current
-    val ink = ButtonDefaults.textButtonColors(contentColor = Tt.colors.accentInk)
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        TextButton(onClick = { watch(context, video, bangla = false, fromList = false) }, colors = ink) {
-            Icon(Lucide.CirclePlay, null, Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("Watch ${video.title.replaceFirstChar { it.lowercase() }}", fontWeight = FontWeight.SemiBold, fontSize = 14.5.sp)
-        }
-        TextButton(onClick = { watch(context, video, bangla = true, fromList = false) }, colors = ink) {
-            Icon(Lucide.CirclePlay, null, Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text(IN_BANGLA, fontWeight = FontWeight.SemiBold, fontSize = 14.5.sp)
-        }
+    val corner = RoundedCornerShape(10.dp)
+    Row(
+        Modifier.widthIn(max = 240.dp).fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        RowPill(
+            "Watch how",
+            PillKind.SOFT,
+            modifier = Modifier.weight(1f),
+            leading = Lucide.Play,
+            shape = corner,
+        ) { watch(context, video, bangla = false, fromList = false) }
+        RowPill(
+            IN_BANGLA,
+            PillKind.GHOST,
+            modifier = Modifier.weight(1f),
+            leading = Lucide.Play,
+            shape = corner,
+        ) { watch(context, video, bangla = true, fromList = false) }
     }
 }
 
