@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -62,6 +63,10 @@ internal fun OutlinedField(
     placeholder: String? = null,
     error: String? = null,
     singleLine: Boolean = true,
+    /** Only for a multi-line box: it starts this tall, grows to [maxLines], then scrolls inside. */
+    minLines: Int = 1,
+    maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
+    capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
     /** Hidden behind dots, with an eye to show it. */
     password: Boolean = false,
     imeAction: ImeAction = ImeAction.Done,
@@ -117,10 +122,13 @@ internal fun OutlinedField(
             textStyle = typography.bodyLarge.copy(fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.Medium, color = t.text),
             cursorBrush = SolidColor(t.primary),
             singleLine = singleLine,
+            minLines = minLines,
+            maxLines = maxLines,
             visualTransformation = transformation,
             interactionSource = interaction,
             keyboardOptions =
                 KeyboardOptions(
+                    capitalization = capitalization,
                     keyboardType = if (password) KeyboardType.Password else keyboardType,
                     imeAction = imeAction,
                 ),
