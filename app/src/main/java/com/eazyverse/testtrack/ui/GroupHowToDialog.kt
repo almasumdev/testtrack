@@ -127,7 +127,7 @@ internal fun GroupHowToDialog(
             ) {
                 SeatAddressRow()
                 PlaySteps.forEachIndexed { index, step ->
-                    Spacer(Modifier.height(if (index == 0) 20.dp else 28.dp))
+                    Spacer(Modifier.height(if (index == 0) 20.dp else 24.dp))
                     StepHeading(index + 1, step.text)
                     Spacer(Modifier.height(10.dp))
                     StepPicture(step) { hintSeen = true }

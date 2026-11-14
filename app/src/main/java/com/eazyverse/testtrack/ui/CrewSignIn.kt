@@ -119,7 +119,7 @@ internal fun SignInFields(
     onPassword: (String) -> Unit,
     also: String,
     onAlso: (String) -> Unit,
-    /** The seat page's rhythm: 8 under the choice and 16 between fields, instead of the shared 10, 14 and 12. */
+    /** The seat page's look: 8 under the choice, then [OutlinedField]s 20 apart, instead of the shared 10, 14 and 12. */
     seatSpacing: Boolean = false,
 ) {
     TwoChoice("Does your app need a sign-in?", "No sign-in", "Needs a sign-in", !needed) { onNeeded(!it) }
@@ -136,8 +136,11 @@ internal fun SignInFields(
             },
         color = if (seatSpacing) Tt.colors.text2 else Tt.colors.text3,
     )
-    val between = if (seatSpacing) 16.dp else 12.dp
-    Spacer(Modifier.height(if (seatSpacing) 16.dp else 14.dp))
+    if (seatSpacing) {
+        SeatSignInFields(username, onUsername, password, onPassword, also, onAlso)
+        return
+    }
+    Spacer(Modifier.height(14.dp))
     DialogField(
         value = username,
         onValueChange = { onUsername(it.take(SIGN_IN_USER_MAX)) },
@@ -146,7 +149,7 @@ internal fun SignInFields(
         keyboardType = KeyboardType.Email,
         imeAction = ImeAction.Next,
     )
-    Spacer(Modifier.height(between))
+    Spacer(Modifier.height(12.dp))
     DialogField(
         value = password,
         onValueChange = { onPassword(it.take(SIGN_IN_PASS_MAX)) },
@@ -154,7 +157,7 @@ internal fun SignInFields(
         placeholder = "The test account's password",
         imeAction = ImeAction.Next,
     )
-    Spacer(Modifier.height(between))
+    Spacer(Modifier.height(12.dp))
     DialogField(
         value = also,
         onValueChange = { onAlso(it.take(SIGN_IN_ALSO_MAX)) },
@@ -162,6 +165,46 @@ internal fun SignInFields(
         placeholder = "A one-time code, or which screen to skip",
         singleLine = false,
         minHeight = 72.dp,
+        maxLength = SIGN_IN_ALSO_MAX,
+    )
+}
+
+/** The seat page's three fields: notched outlined boxes, 20 apart and 20 under the line above. */
+@Composable
+private fun SeatSignInFields(
+    username: String,
+    onUsername: (String) -> Unit,
+    password: String,
+    onPassword: (String) -> Unit,
+    also: String,
+    onAlso: (String) -> Unit,
+) {
+    Spacer(Modifier.height(20.dp))
+    OutlinedField(
+        value = username,
+        onValueChange = { onUsername(it.take(SIGN_IN_USER_MAX)) },
+        label = "Username, email or phone",
+        placeholder = "test@example.com",
+        keyboardType = KeyboardType.Email,
+        imeAction = ImeAction.Next,
+    )
+    Spacer(Modifier.height(20.dp))
+    OutlinedField(
+        value = password,
+        onValueChange = { onPassword(it.take(SIGN_IN_PASS_MAX)) },
+        label = "Password",
+        placeholder = "The test account's password",
+        password = true,
+        imeAction = ImeAction.Next,
+    )
+    Spacer(Modifier.height(20.dp))
+    OutlinedField(
+        value = also,
+        onValueChange = { onAlso(it.take(SIGN_IN_ALSO_MAX)) },
+        label = "Anything else needed (optional)",
+        placeholder = "A one-time code, or which screen to skip",
+        singleLine = false,
+        imeAction = ImeAction.Done,
         maxLength = SIGN_IN_ALSO_MAX,
     )
 }

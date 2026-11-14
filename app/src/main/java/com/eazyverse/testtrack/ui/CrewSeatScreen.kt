@@ -14,7 +14,6 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -28,14 +27,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.RefreshCw
-import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.findActivity
-import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AppAction
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.CrewAddViewModel
@@ -171,8 +165,12 @@ internal fun CrewSeatScreen(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             // The skeleton stands outside the scroll, so it knows the page's height and fills all of it.
-            val offline = app == null && !loading && apps.offline
-            if (!offline && (app == null || details == null)) {
+            // Offline stands outside the scroll too, so its CenteredState centres it in the space left.
+            if (app == null && !loading && apps.offline) {
+                RobotOffline("Couldn't load your app", onRetry = { apps.load(context) }, Modifier.weight(1f).fillMaxWidth())
+                return@Column
+            }
+            if (app == null || details == null) {
                 SeatPageSkeleton(
                     Modifier
                         .weight(1f)
@@ -190,107 +188,94 @@ internal fun CrewSeatScreen(
                     .padding(horizontal = Gutter),
             ) {
                 Spacer(Modifier.height(8.dp))
-                if (offline) {
-                    IconLine(
-                        Lucide.TriangleAlert,
-                        Tt.colors.warn,
-                        AnnotatedString("Check your connection, then try again."),
-                        MaterialTheme.typography.bodySmall,
-                        Tt.colors.text2,
-                        iconSize = 16.dp,
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    SeatBar("Try again", Lucide.RefreshCw, onClick = { apps.load(context) })
-                } else if (app != null && details != null) {
-                    SeatAppHead(
-                        app,
-                        name = vm.name,
-                        onRename = vm::rename,
-                        focusAsk = nameAsk,
-                        modifier = Modifier.bringIntoViewRequester(nameSpot),
-                    )
-                    Spacer(Modifier.height(24.dp))
-                    // Once Play shows the app to the group, the group is a tile row at the top of the details.
-                    if (groupOpen) {
-                        Column(Modifier.fillMaxWidth().bringIntoViewRequester(groupSpot)) {
-                            CrewSeatGroup(
-                                SeatGroupState(
-                                    checkLine = lastCheckLine(checkedAt, checkedOk, System.currentTimeMillis(), notVisible),
-                                    checkFailed = checkFailed,
-                                    checking = apps.acting == app.id && apps.actingOn == AppAction.VERIFY,
-                                    error = apps.actionError.takeIf { failedAt == null },
-                                ),
-                                onVerify = {
-                                    if (apps.acting == null) {
-                                        apps.verify(context, app.id) { notVisible = null }
-                                    }
-                                },
-                            )
-                        }
-                        Spacer(Modifier.height(32.dp))
-                    }
-                    Column(Modifier.fillMaxWidth().bringIntoViewRequester(detailsSpot)) {
-                        CrewSeatDetails(
-                            details,
-                            crews = crews,
-                            vm = vm,
-                            onOpenCircle = onOpenCircle,
-                            groupDone = !groupOpen,
-                        )
-                    }
-                    Spacer(Modifier.height(32.dp))
-                    Column(Modifier.fillMaxWidth().bringIntoViewRequester(boxesSpot)) {
-                        CrewSeatConfirm(
-                            boxes = boxes,
-                            boxesMessage = boxesMessage,
-                            onBoxes = {
-                                boxesMessage = null
-                                apps.setBoxes(context, app, it)
-                            },
-                        )
-                    }
-                    val take = {
-                        shortTix = false
-                        waitingName = null
-                        waitingId = null
-                        crews.takeSeat(
-                            context,
-                            app.pkg,
-                            vm.name.trim(),
-                            vm.notes.trim(),
-                            appId = app.id,
-                            // A refused seat goes to what it is about, in the server's own words.
-                            onRefused = { error ->
-                                when (error.code) {
-                                    "not_visible" -> {
-                                        notVisible = error.message
-                                        jump = SeatSpot.GROUP
-                                    }
-                                    "boxes_unticked" -> {
-                                        boxesMessage = error.message
-                                        apps.clearBoxes(context, app)
-                                        jump = SeatSpot.BOXES
-                                    }
-                                    "short_tix" -> shortTix = true
-                                    "already_waiting" -> {
-                                        waitingName = error.details["crew_name"].orEmpty()
-                                        waitingId = error.details["crew_id"]
-                                    }
+                SeatAppHead(
+                    app,
+                    name = vm.name,
+                    onRename = vm::rename,
+                    focusAsk = nameAsk,
+                    modifier = Modifier.bringIntoViewRequester(nameSpot),
+                )
+                Spacer(Modifier.height(24.dp))
+                // Once Play shows the app to the group, the group is a tile row at the top of the details.
+                if (groupOpen) {
+                    Column(Modifier.fillMaxWidth().bringIntoViewRequester(groupSpot)) {
+                        CrewSeatGroup(
+                            SeatGroupState(
+                                checkLine = lastCheckLine(checkedAt, checkedOk, System.currentTimeMillis(), notVisible),
+                                checkFailed = checkFailed,
+                                checking = apps.acting == app.id && apps.actingOn == AppAction.VERIFY,
+                                error = apps.actionError.takeIf { failedAt == null },
+                            ),
+                            onVerify = {
+                                if (apps.acting == null) {
+                                    apps.verify(context, app.id) { notVisible = null }
                                 }
                             },
-                            onDone = onDone,
                         )
                     }
-                    // The last part of the page: the hint 16 under the boxes (the 48dp rows add 13 under the
-                    // last box, so about 31 show), then the button.
-                    Spacer(Modifier.height(16.dp))
-                    CrewSeatSubmit(details, vm, onSpot = { jump = it }) {
-                        if (drive.connected == true) {
-                            take()
-                        } else {
-                            afterDrive = take
-                            drive.connect(activity, driveSheet::launch, take)
-                        }
+                    Spacer(Modifier.height(24.dp))
+                }
+                Column(Modifier.fillMaxWidth().bringIntoViewRequester(detailsSpot)) {
+                    CrewSeatDetails(
+                        details,
+                        crews = crews,
+                        vm = vm,
+                        onOpenCircle = onOpenCircle,
+                        groupDone = !groupOpen,
+                    )
+                }
+                Spacer(Modifier.height(32.dp))
+                Column(Modifier.fillMaxWidth().bringIntoViewRequester(boxesSpot)) {
+                    CrewSeatConfirm(
+                        boxes = boxes,
+                        boxesMessage = boxesMessage,
+                        onBoxes = {
+                            boxesMessage = null
+                            apps.setBoxes(context, app, it)
+                        },
+                    )
+                }
+                val take = {
+                    shortTix = false
+                    waitingName = null
+                    waitingId = null
+                    crews.takeSeat(
+                        context,
+                        app.pkg,
+                        vm.name.trim(),
+                        vm.notes.trim(),
+                        appId = app.id,
+                        // A refused seat goes to what it is about, in the server's own words.
+                        onRefused = { error ->
+                            when (error.code) {
+                                "not_visible" -> {
+                                    notVisible = error.message
+                                    jump = SeatSpot.GROUP
+                                }
+                                "boxes_unticked" -> {
+                                    boxesMessage = error.message
+                                    apps.clearBoxes(context, app)
+                                    jump = SeatSpot.BOXES
+                                }
+                                "short_tix" -> shortTix = true
+                                "already_waiting" -> {
+                                    waitingName = error.details["crew_name"].orEmpty()
+                                    waitingId = error.details["crew_id"]
+                                }
+                            }
+                        },
+                        onDone = onDone,
+                    )
+                }
+                // The last part of the page: the hint 16 under the boxes (the 48dp rows add 13 under the
+                // last box, so about 31 show), then the button.
+                Spacer(Modifier.height(16.dp))
+                CrewSeatSubmit(details, vm, onSpot = { jump = it }) {
+                    if (drive.connected == true) {
+                        take()
+                    } else {
+                        afterDrive = take
+                        drive.connect(activity, driveSheet::launch, take)
                     }
                 }
                 Spacer(Modifier.height(20.dp))

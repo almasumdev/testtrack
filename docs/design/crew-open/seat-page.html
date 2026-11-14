@@ -237,6 +237,27 @@
   .fn.tall { min-height: 72px; align-items: flex-start; padding-top: 16px; }
   .fn.tall .v { white-space: normal; }
   .fnl { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text4); margin-bottom: 4px; }
+  /* A variants: 48dp outlined, label inside when empty */
+  .ax { position: relative; height: 48px; border: 1px solid var(--fieldBorder); border-radius: 10px; padding: 0 4px 0 14px; display: flex; align-items: center; }
+  .ax.focus { border: 2px solid var(--primary); padding-left: 13px; }
+  .ax.err { border: 2px solid var(--bad); padding-left: 13px; }
+  .ax.ml { height: auto; min-height: 48px; padding-top: 13px; padding-bottom: 13px; align-items: flex-start; }
+  .ax .v { flex: 1; min-width: 0; font-size: 15px; line-height: 20px; font-weight: 500; white-space: nowrap; overflow: hidden; }
+  .ax.ml .v { white-space: normal; }
+  .ax .ph { color: var(--text4); font-weight: 400; }
+  /* A1: the label sits in the top border, which breaks round it */
+  .ax .notch { position: absolute; left: 10px; top: -9px; padding: 0 4px; background: var(--bg); font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); white-space: nowrap; }
+  .ax.focus .notch { color: var(--accentInk); left: 9px; top: -10px; }
+  .ax.err .notch { color: var(--bad); left: 9px; top: -10px; }
+  /* A2: the label line above, kept even while empty so nothing jumps */
+  .alab { height: 16px; margin-bottom: 4px; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); }
+  .alab.focus { color: var(--accentInk); } .alab.err { color: var(--bad); }
+  /* the line under a box: error, counter, and in A3 the label */
+  .help { display: flex; gap: 8px; min-height: 14px; margin-top: 4px; font-size: 12px; line-height: 14px; font-weight: 600; color: var(--text3); }
+  .help .one { flex: 1; min-width: 0; }
+  .help.focus { color: var(--accentInk); }
+  .help.err { color: var(--bad); }
+  .help .cn { font-size: 11.5px; font-weight: 400; color: var(--text4); }
 </style>
 </head>
 <body>
@@ -473,6 +494,39 @@ const FIELDS = `<div class="tsec state"><h2>Text fields</h2>
   <div class="row">${tcell('B. Soft filled, focused, filled, empty', signCtx('B', SET1))}${tcell('B. Soft filled, error, filled', signCtx('B', SET2))}</div>
   <div class="row">${tcell('C. Tile row, focused, filled, empty', signCtx('C', SET1), true)}${tcell('C. Tile row, error, filled', signCtx('C', SET2), true)}${tcell('C. Tile row, dark', signCtx('C', SET1, 'dark'), true)}</div></div>`;
 
+
+/* Option A, three ways for the label once the field has text */
+function fieldX(kind, f, x) {
+  const ml = f.key === 'note';
+  const st = x.st === 'focus' ? 'focus' : x.st === 'err' ? 'err' : '';
+  const has = !!x.v || x.st === 'focus';
+  const ph = kind === 'A2' ? f.label : f.label;
+  const v = x.v ? tval(f, x) : (x.st === 'focus' ? '<span class="tcaret"></span>' : `<span class="ph">${ph}</span>`);
+  const eye = f.key === 'pass' ? `<span class="eye">${TI[x.eye || 'eye'](20)}</span>` : '';
+  const notch = kind === 'A1' && has ? `<span class="notch">${f.label}</span>` : '';
+  const box = `<div class="ax ${st}${ml ? ' ml' : ''}">${notch}<span class="v">${v}</span>${eye}</div>`;
+  const above = kind === 'A2' ? `<div class="alab ${st}">${has ? f.label : ''}</div>` : '';
+  const cnt = ml ? `<span class="cn">${(x.v || '').length}/90</span>` : '';
+  let help = '';
+  if (x.st === 'err') help = `<div class="help err"><span class="one">${inl(I.circleAlert(13, 2.2))}${ERR}</span>${cnt}</div>`;
+  else if (kind === 'A3') help = `<div class="help ${st}"><span class="one">${has ? f.label : ''}</span>${cnt}</div>`;
+  else if (cnt) help = `<div class="help"><span class="one"></span>${cnt}</div>`;
+  return above + box + help;
+}
+const XSET = { A1: SET1, A2: SET1, A3: SET1 };
+function fieldSetX(kind, set) {
+  const gap = { A1: 20, A2: 12, A3: 10 }[kind];
+  return F.map(f => fieldX(kind, f, set[f.key])).join(`<div style="height:${gap}px"></div>`);
+}
+const signX = (kind, set, theme = 'light') => `<div class="opt ${theme}"><div class="q">Does your app need a sign-in?</div><div class="tc"><div class="chc">No sign-in</div><div class="chc on">Needs a sign-in</div></div>
+  <div style="height:8px"></div><div class="body">A test account the crew can use, as Play Console's App access asks for. Fourteen testers see it, so never your own.</div>
+  <div style="height:${kind === 'A1' ? 20 : 16}px"></div>${fieldSetX(kind, set)}</div>`;
+const FIELDS2 = `<div class="tsec state"><h2>Text fields, option A</h2>
+  <div class="row">${tcell('Now, typing, filled, empty', signCtx('N', SET1))}${tcell('Now, error, filled', signCtx('N', SET2))}</div>
+  <div class="row">${tcell('A1. Notched, typing, filled, empty', signX('A1', SET1), true)}${tcell('A1. Notched, error, filled', signX('A1', SET2), true)}${tcell('A1. Notched, dark', signX('A1', SET1, 'dark'), true)}</div>
+  <div class="row">${tcell('A2. Label above, typing, filled, empty', signX('A2', SET1))}${tcell('A2. Label above, error, filled', signX('A2', SET2))}</div>
+  <div class="row">${tcell('A3. Label below, typing, filled, empty', signX('A3', SET1))}${tcell('A3. Label below, error, filled', signX('A3', SET2))}</div></div>`;
+
 const S = o => ({ ...BASE, ...o });
 const STATES = [
   ['Loading', [['light', skeleton(), { h: 915 }], ['dark', skeleton(), { h: 915 }]]],
@@ -494,7 +548,7 @@ const STATES = [
   ['How to add it', [['light', howBody(false), { how: true }]]],
   ['How to add it, zoomed', [['light', howBody(true), { how: true, h: 915 }]]],
 ];
-document.getElementById('doc').innerHTML = FIELDS + STATES.map(([label, frames]) =>
+document.getElementById('doc').innerHTML = FIELDS2 + STATES.map(([label, frames]) =>
   `<div class="state"><div class="lbl">${label}</div><div class="pair">${frames.map(f => phone(f[0], f[1], f[2] || {})).join('')}</div></div>`).join('');
 
 /* fit the address: 15sp down to 10sp in 0.5 steps */
@@ -539,7 +593,7 @@ function check() {
     const lbl = (ph.closest('.state').querySelector('.lbl') || { textContent: '' }).textContent;
     ink.forEach(([e, r]) => { if (low !== null && r.top - low > 32.5 && r.top < ph.getBoundingClientRect().bottom - 24) seen.push(lbl + ':' + lowE.className + '>' + e.className + '=' + Math.round(r.top - low)); if (low === null || r.bottom > low) { low = r.bottom; lowE = e; } });
   });
-  document.getElementById('chk').textContent = (bad.length ? 'BAD ' + [...new Set(bad)].join('; ') : 'OK') + ' | heads ' + [...new Set(heads)].join(',') + ' | fieldH ' + ['.fn', '.fa', '.fb', '.fcr'].map(c => c + '=' + [...new Set([...document.querySelectorAll(c)].map(e => e.offsetHeight))].join('/')).join(' ') + ' | gaps>32 ' + [...new Set(seen)].join(',') + ' | rects ' + [...document.querySelectorAll('.state')].map(e => { const r = e.getBoundingClientRect(); return [r.left, r.top + scrollY, r.width, r.height].map(Math.round).join(':'); }).join(';');
+  document.getElementById('chk').textContent = (bad.length ? 'BAD ' + [...new Set(bad)].join('; ') : 'OK') + ' | heads ' + [...new Set(heads)].join(',') + ' | fieldH ' + ['.fn', '.ax'].map(c => c + '=' + [...new Set([...document.querySelectorAll(c)].map(e => e.offsetHeight))].join('/')).join(' ') + ' | gaps>32 ' + [...new Set(seen)].join(',') + ' | rects ' + [...document.querySelectorAll('.state')].map(e => { const r = e.getBoundingClientRect(); return [r.left, r.top + scrollY, r.width, r.height].map(Math.round).join(':'); }).join(';');
 }
 function run() { fit(); callouts(); check(); }
 run();

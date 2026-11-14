@@ -138,7 +138,7 @@ internal fun CrewSeatDetails(
             waiting.crewId?.let { id ->
                 Text(
                     "Open the crew",
-                    Modifier.clickable { state.onOpenCrew(id) }.padding(top = 6.dp, bottom = 4.dp, end = 12.dp),
+                    Modifier.clickable { state.onOpenCrew(id) }.padding(top = 6.dp, end = 12.dp),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = Tt.colors.accentInk,
