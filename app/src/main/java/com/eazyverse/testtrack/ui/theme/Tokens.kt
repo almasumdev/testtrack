@@ -151,10 +151,6 @@ val PlayGreen = Color(0xFF00F076)
 val PlayYellow = Color(0xFFFFCE00)
 val PlayRed = Color(0xFFFF3A44)
 
-/** A picture viewer's ground and the ink on it: black and white in both themes, as photos are shown. */
-val ViewerBlack = Color(0xFF000000)
-val ViewerInk = Color(0xFFFFFFFF)
-
 private val OkLight = Color(0xFF246B59)
 private val WarnLight = Color(0xFF8A611C)
 private val BadLight = Color(0xFF9E3B2E)

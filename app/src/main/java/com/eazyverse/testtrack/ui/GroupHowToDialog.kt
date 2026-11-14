@@ -1,10 +1,8 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,7 +35,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,17 +43,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Maximize2
 import com.composables.icons.lucide.RefreshCw
 import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
-import com.eazyverse.testtrack.ui.theme.ViewerBlack
-import com.eazyverse.testtrack.ui.theme.ViewerInk
 
 /*
  * How to add the testers group, full screen from the seat page: the address again, then each step
- * in Play Console with a picture of where to tap. A picture opens larger in [StepImageViewer].
+ * in Play Console with a picture of where to tap. A picture zooms where it is, see [ZoomableImage].
  */
 
 /** One step of adding the testers group in Play Console, and its picture. */
@@ -69,12 +63,13 @@ internal class PlayStep(
 internal val PlaySteps =
     listOf(
         PlayStep("Open Closed testing in Play Console", R.drawable.play_step1),
-        PlayStep("Open its Testers tab", R.drawable.play_step2),
-        PlayStep("Under Google Groups, paste the address and save", R.drawable.play_step3),
+        PlayStep("Open your track, then its Testers tab", R.drawable.play_step2),
+        PlayStep("Pick Google Groups, paste the address and save", R.drawable.play_step3),
         PlayStep("Roll out a release to that track", R.drawable.play_step4),
     )
 
 private val StepStyle = tileStyle(15f, 20f, FontWeight.SemiBold)
+private val HintStyle = tileStyle(12.5f, 14f, FontWeight.Medium)
 
 @Composable
 internal fun GroupHowToDialog(
@@ -83,8 +78,7 @@ internal fun GroupHowToDialog(
     onDismiss: () -> Unit,
 ) {
     val t = Tt.colors
-    var viewing by rememberSaveable { mutableStateOf<Int?>(null) }
-    // The zoom hint shows the first time a picture is opened here, not every time.
+    // The zoom hint sits under the first picture until a picture is zoomed once.
     var hintSeen by rememberSaveable { mutableStateOf(false) }
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         val scroll = rememberScrollState()
@@ -128,17 +122,15 @@ internal fun GroupHowToDialog(
                     Spacer(Modifier.height(if (index == 0) 20.dp else 28.dp))
                     StepHeading(index + 1, step.text)
                     Spacer(Modifier.height(10.dp))
-                    StepPicture(step) { viewing = index }
+                    StepPicture(step) { hintSeen = true }
+                    if (index == 0 && !hintSeen) {
+                        Spacer(Modifier.height(8.dp))
+                        Text("Pinch or double-tap to zoom", style = HintStyle, color = t.text3)
+                    }
                 }
                 Spacer(Modifier.height(28.dp))
                 SeatBar(state.verifyLabel, Lucide.RefreshCw, busy = state.checking, enabled = !state.checking, onClick = onVerify)
             }
-        }
-    }
-    viewing?.let { start ->
-        StepImageViewer(start, showHint = !hintSeen) {
-            viewing = null
-            hintSeen = true
         }
     }
 }
@@ -158,36 +150,25 @@ private fun StepHeading(
     }
 }
 
-/** A step's picture across the page at its own shape, with the enlarge mark on its corner. */
+/** A step's picture across the page at its own shape. It zooms in place; [onZoomed] on the first zoom. */
 @Composable
 private fun StepPicture(
     step: PlayStep,
-    onOpen: () -> Unit,
+    onZoomed: () -> Unit,
 ) {
     val t = Tt.colors
     val painter = painterResource(step.picture)
     val size = painter.intrinsicSize
     val ratio = if (size.isSpecified && size.height > 0f) size.width / size.height else 16f / 10f
     val shape = RoundedCornerShape(12.dp)
-    Box(
+    ZoomableImage(
+        painter,
+        step.text,
         Modifier
             .fillMaxWidth()
             .aspectRatio(ratio)
             .clip(shape)
-            .border(1.dp, t.glassBorder, shape)
-            .clickable(onClickLabel = "Open the picture larger", onClick = onOpen),
-    ) {
-        Image(painter, step.text, Modifier.fillMaxSize(), contentScale = ContentScale.FillWidth)
-        Box(
-            Modifier
-                .align(Alignment.BottomEnd)
-                .padding(8.dp)
-                .size(30.dp)
-                .clip(CircleShape)
-                .background(ViewerBlack.copy(alpha = 0.62f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Lucide.Maximize2, null, Modifier.size(14.dp), tint = ViewerInk)
-        }
-    }
+            .border(1.dp, t.glassBorder, shape),
+        onZoomed = onZoomed,
+    )
 }

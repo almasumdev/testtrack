@@ -1,0 +1,53 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How to add it</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F2F9FD;--ink:#142F43;--t2:#3d5566;--t3:#6b8091;--tile:#DCE8F0;--line:#B7D1E2;--acc:#1D5C82}
+body{margin:0;background:#E9F0F4;font-family:Barlow,sans-serif;display:flex;gap:32px;justify-content:center;padding:24px;flex-wrap:wrap}
+.phone{width:412px;height:860px;background:var(--bg);border-radius:28px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 2px 12px #0001}
+.bar{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 16px;border-bottom:1px solid #d8e4ec}
+.bar h1{font-size:22px;line-height:28px;margin:0;color:var(--ink)}
+.x{width:48px;height:48px;display:grid;place-items:center;font-size:26px;color:var(--ink)}
+.scroll{overflow:auto;padding:12px 16px 24px}
+.addr{display:flex;align-items:center;min-height:40px;margin-bottom:8px}
+.addr .t{flex:1}.addr b{color:var(--acc);font-size:15px}.addr small{display:block;color:var(--t3);font-size:12.5px}
+.copy{width:40px;height:40px;display:grid;place-items:center;color:var(--acc)}
+.step{display:flex;align-items:center;gap:12px;margin:20px 0 10px}
+.n{width:24px;height:24px;border-radius:50%;background:var(--tile);color:var(--ink);font-weight:700;font-size:12px;display:grid;place-items:center;flex:none}
+.step span{font-size:15px;line-height:20px;font-weight:600;color:var(--ink)}
+.img{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;touch-action:none;cursor:zoom-in}
+.img img{width:100%;display:block;transform-origin:0 0;transition:transform .2s}
+.img.z{cursor:grab}.img.z img{transform:scale(2.5)}
+.hint{font-size:12.5px;color:var(--t3);margin-top:6px}
+.verify{margin-top:24px;height:48px;border:1px solid var(--line);border-radius:14px;display:grid;place-items:center;font-weight:600;color:var(--acc);background:#fff}
+.lbl{width:100%;text-align:center;color:#556;font-size:13px;margin-bottom:-20px}
+</style></head><body>
+<div class="lbl">Double-click a picture to zoom in place, drag to pan (on the phone: pinch or double-tap)</div>
+<div class="phone">
+ <div class="bar"><h1>Add the testers group</h1><div class="x">&#10005;</div></div>
+ <div class="scroll">
+  <div class="addr"><div class="t"><b>googleclosetesting@googlegroups.com</b><small>Testers group address</small></div><div class="copy">&#10697;</div></div>
+  <div class="step"><div class="n">1</div><span>Open Closed testing in Play Console</span></div>
+  <div class="img"><img src="play_step1.png"></div><div class="hint">Pinch or double-tap to zoom</div>
+  <div class="step"><div class="n">2</div><span>Open your track, then its Testers tab</span></div>
+  <div class="img"><img src="play_step2.png"></div>
+  <div class="step"><div class="n">3</div><span>Pick Google Groups, paste the address and save</span></div>
+  <div class="img"><img src="play_step3.png"></div>
+  <div class="step"><div class="n">4</div><span>Roll out a release to that track</span></div>
+  <div class="img"><img src="play_step4.png"></div>
+  <div class="verify">&#8635; Verify on Play</div>
+ </div>
+</div>
+<script>
+document.querySelectorAll('.img').forEach(box=>{
+ const im=box.querySelector('img');let z=false,sx=0,sy=0,ox=0,oy=0,drag=false;
+ const apply=()=>{im.style.transform=z?`translate(${ox}px,${oy}px) scale(2.5)`:'none'};
+ box.addEventListener('dblclick',e=>{const r=box.getBoundingClientRect();z=!z;ox=z?-(e.clientX-r.left)*1.5:0;oy=z?-(e.clientY-r.top)*1.5:0;clamp();apply();box.classList.toggle('z',z)});
+ const clamp=()=>{const w=box.clientWidth,h=box.clientHeight;ox=Math.min(0,Math.max(ox,-w*1.5));oy=Math.min(0,Math.max(oy,-h*1.5))};
+ box.addEventListener('mousedown',e=>{if(!z)return;drag=true;sx=e.clientX-ox;sy=e.clientY-oy;e.preventDefault()});
+ addEventListener('mousemove',e=>{if(!drag)return;ox=e.clientX-sx;oy=e.clientY-sy;clamp();im.style.transition='none';apply()});
+ addEventListener('mouseup',()=>{drag=false;im.style.transition=''});
+});
+</script>
+</body></html>
