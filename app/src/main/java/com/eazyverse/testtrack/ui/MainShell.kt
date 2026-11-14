@@ -122,6 +122,9 @@ fun MainShell(
     val apps: AppsViewModel = viewModel()
 
     var adding by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(adding) {
+        if (adding && Session.signedIn && !apps.reading) apps.load(context)
+    }
 
     /** Which app, for Ask for feedback. */
     var pickingFeedback by remember { mutableStateOf(false) }
@@ -169,7 +172,7 @@ fun MainShell(
 
     val askForFeedback: () -> Unit = {
         val pick = {
-            apps.load(context)
+            if (!apps.reading) apps.load(context)
             pickingFeedback = true
         }
         if (Session.signedIn) {
@@ -444,7 +447,7 @@ fun MainShell(
     if (pickingFeedback) {
         AppPickerSheet(
             apps = apps.apps,
-            loading = apps.loading || apps.reading,
+            loading = apps.loading,
             onPick = { app -> onAskForApp(app.id) },
             onAdd = onAddApp,
             onDismiss = { pickingFeedback = false },

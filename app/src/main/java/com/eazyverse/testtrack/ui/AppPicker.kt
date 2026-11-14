@@ -1,16 +1,55 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
+import com.eazyverse.testtrack.ui.theme.Tt
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+
+private enum class AppPickerPhase { OPENING, LOADING, READY }
 
 /**
  * Choosing which app, from Circle's Ask for feedback. Crew's Take a seat has its own sheet,
@@ -29,53 +68,110 @@ internal fun AppPickerSheet(
     onDismiss: () -> Unit,
 ) {
     val fits = apps.filter { it.canFeedback }
-    val waiting = loading && fits.isEmpty()
+    val waiting = loading && apps.isEmpty()
+    val waitingNow by rememberUpdatedState(waiting)
+    var phase by remember { mutableStateOf(if (waiting) AppPickerPhase.OPENING else AppPickerPhase.READY) }
+    // Fast replies replace the quiet opening frame immediately, without ever starting shimmer.
+    LaunchedEffect(waiting) {
+        if (!waiting && phase == AppPickerPhase.OPENING) phase = AppPickerPhase.READY
+    }
+    LaunchedEffect(Unit) {
+        if (phase == AppPickerPhase.READY) return@LaunchedEffect
+        delay(180)
+        if (!waitingNow || phase == AppPickerPhase.READY) return@LaunchedEffect
+        phase = AppPickerPhase.LOADING
+        // Once visible, don't flash the skeleton for only a frame or two.
+        delay(300)
+        snapshotFlow { waitingNow }.first { !it }
+        phase = AppPickerPhase.READY
+    }
     PickerSheet(
         title = "Feedback on which app?",
         subtitle =
             when {
-                waiting -> "Getting your apps."
-                fits.isNotEmpty() -> "Your apps that can go now."
+                phase != AppPickerPhase.READY || fits.isNotEmpty() -> "Your apps that can go now."
                 apps.isEmpty() -> "You haven't added an app yet."
                 else -> "Each of your apps already has a request open."
             },
         onDismiss = onDismiss,
+        skipHalf = true,
     ) { close ->
-        Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState())) {
-            if (waiting) {
-                repeat(SKELETON_ROWS) {
-                    Skeleton(height = 60.dp, corner = 16.dp)
-                    Spacer(Modifier.height(3.dp))
+        Crossfade(
+            targetState = phase,
+            modifier = Modifier.fillMaxWidth().animateContentSize(tween(180)).heightIn(max = 560.dp),
+            animationSpec = tween(180),
+            label = "app-picker-load",
+        ) { shown ->
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                when (shown) {
+                    AppPickerPhase.OPENING -> Spacer(Modifier.height(180.dp))
+                    AppPickerPhase.LOADING -> {
+                        // A short picker, not a whole page of placeholders that abruptly shrinks.
+                        repeat(3) {
+                            Skeleton(height = AppTileIcon + AppTilePadding * 2, corner = TileRadius)
+                            Spacer(Modifier.height(8.dp))
+                        }
+                    }
+                    AppPickerPhase.READY -> {
+                        fits.forEach { app ->
+                            PickRow(app) { close { onPick(app) } }
+                            Spacer(Modifier.height(8.dp))
+                        }
+                        OutlinedButton(
+                            onClick = { close(onAdd) },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Tt.colors.cardLine),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Tt.colors.accentInk),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                        ) {
+                            Icon(Lucide.Plus, null, Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Add a new app", style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
                 }
                 Spacer(Modifier.height(20.dp))
-                return@Column
             }
-            TileGroup(count = fits.size + 1) { index, place ->
-                if (index < fits.size) {
-                    val app = fits[index]
-                    PickRow(app, place) { close { onPick(app) } }
-                } else {
-                    TileRow(Lucide.Plus, "Add a new app", place, subtitle = "From this phone or Play") { close(onAdd) }
-                }
-            }
-            Spacer(Modifier.height(20.dp))
         }
     }
 }
 
-/** An app to pick, drawn as a settings row with its own icon. */
+private val PickerPackageStyle = tileStyle(12.5f, 14f, FontWeight.Medium)
+
+/** The same outline and source mark as My apps, with the package ID in place of its status. */
 @Composable
 private fun PickRow(
     app: AppEntry,
-    place: TilePlace,
     onClick: () -> Unit,
 ) {
-    TileRow(
-        icon = Lucide.Plus,
-        title = app.name,
-        place = place,
-        subtitle = if (app.live) "Live, ${app.pkg}" else "Closed test, ${app.pkg}",
-        leading = { AppMark(app.pkg, app.name, app.icon, size = 36.dp, ownIcon = true) },
-        onClick = onClick,
-    )
+    val t = Tt.colors
+    // Two 19sp title lines and one 14sp package line fit the icon, also at larger text sizes.
+    val icon = AppTileIcon * LocalDensity.current.fontScale.coerceAtLeast(1f)
+    Row(
+        Modifier
+            .appTileFrame()
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics(mergeDescendants = true) {}
+            .padding(AppTilePadding),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(icon)) {
+            AppMark(app.pkg, app.name, app.icon, size = icon, ownIcon = true)
+            SourceMark(app.live, Modifier.align(Alignment.BottomEnd).offset(5.dp, 5.dp))
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f).height(icon), verticalArrangement = Arrangement.Center) {
+            Text(app.name, style = AppTileName, color = t.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(
+                app.pkg,
+                style = PickerPackageStyle,
+                color = t.text3,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = t.text4)
+    }
 }

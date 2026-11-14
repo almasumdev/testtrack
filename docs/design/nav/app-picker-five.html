@@ -1,0 +1,114 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<div id="tt-picker-designs">
+ <div class="viz-carousel viz-dotted-background" aria-label="Feedback app picker designs">
+  <section data-variant="Clean rows"><div class="pk-stage" data-style="clean"></div></section>
+  <section data-variant="Compact cards" hidden><div class="pk-stage" data-style="cards"></div></section>
+  <section data-variant="App identity" hidden><div class="pk-stage" data-style="identity"></div></section>
+  <section data-variant="Grouped by type" hidden><div class="pk-stage" data-style="groups"></div></section>
+  <section data-variant="Quick grid" hidden><div class="pk-stage" data-style="grid"></div></section>
+ </div>
+</div>
+<style>
+#tt-picker-designs { --pk-bg:light-dark(#f7fcff,#0f1011); --pk-panel:light-dark(#fff,#1c1e20); --pk-text:light-dark(#142f43,#eceef0); --pk-sub:light-dark(#59758a,#9da3a9); --pk-ink:light-dark(#3a5b73,#b6ccdc); --pk-soft:light-dark(#e5eef4,#2a2d31); --pk-line:light-dark(#e1ecf3,#34383d); --pk-shadow:light-dark(#142f431a,#00000055); font-family:Barlow,system-ui,sans-serif; }
+#tt-picker-designs * { box-sizing:border-box; }
+#tt-picker-designs .pk-stage { min-height:660px; padding:20px 0 24px; display:flex; align-items:center; justify-content:center; }
+#tt-picker-designs .pk-phone { width:360px; max-width:100%; height:590px; position:relative; isolation:isolate; overflow:hidden; border:1px solid var(--pk-line); border-radius:28px; background:var(--pk-bg); color:var(--pk-text); box-shadow:0 10px 32px var(--pk-shadow); }
+#tt-picker-designs button { font-family:inherit; }
+#tt-picker-designs svg { display:block; width:20px; height:20px; flex-shrink:0; stroke-width:1.8; }
+#tt-picker-designs .pk-status { display:flex; align-items:center; justify-content:space-between; padding:15px 22px; font-size:12px; font-weight:600; }
+#tt-picker-designs .pk-status span:last-child { display:flex; gap:5px; }
+#tt-picker-designs .pk-status svg { width:14px; height:14px; }
+#tt-picker-designs .pk-backdrop { padding:16px 18px; }
+#tt-picker-designs .pk-background-title { font-size:24px; font-weight:600; margin-bottom:14px; }
+#tt-picker-designs .pk-background-card { height:64px; border:1px solid var(--pk-line); border-radius:12px; padding:14px; font-size:15px; background:var(--pk-panel); }
+#tt-picker-designs .pk-scrim { position:absolute; inset:0; background:light-dark(#14223066,#00000080); }
+#tt-picker-designs .pk-sheet { position:absolute; left:0; right:0; bottom:0; background:var(--pk-panel); border-radius:22px 22px 0 0; padding:10px 16px 22px; }
+#tt-picker-designs .pk-handle { height:4px; width:38px; border-radius:3px; background:var(--pk-sub); opacity:.5; margin:0 auto 18px; }
+#tt-picker-designs .pk-heading { font-size:19px; font-weight:600; line-height:24px; margin-bottom:3px; letter-spacing:-.2px; }
+#tt-picker-designs .pk-subtitle { font-size:13px; color:var(--pk-sub); line-height:18px; min-height:18px; margin-bottom:15px; }
+#tt-picker-designs .pk-list { display:flex; flex-direction:column; }
+#tt-picker-designs .pk-row { width:100%; min-width:0; min-height:61px; display:flex; align-items:center; gap:11px; text-align:left; background:transparent; color:var(--pk-text); border:0; border-radius:0; padding:9px 0; position:relative; transition:background-color .16s,transform .16s; }
+#tt-picker-designs .pk-row:active { transform:scale(.98); }
+#tt-picker-designs .pk-mark { width:38px; height:38px; display:grid; place-items:center; flex-shrink:0; border-radius:11px; background:var(--pk-soft); color:var(--pk-ink); }
+#tt-picker-designs .pk-mark svg { width:21px; height:21px; }
+#tt-picker-designs .pk-copy { flex:1; min-width:0; }
+#tt-picker-designs .pk-name { display:block; font-size:15px; line-height:19px; font-weight:600; }
+#tt-picker-designs .pk-meta { display:block; color:var(--pk-sub); font-size:12px; line-height:16px; margin-top:3px; }
+#tt-picker-designs .pk-arrow { color:var(--pk-sub); margin-left:auto; display:grid; place-items:center; }
+#tt-picker-designs .pk-arrow svg { width:17px; height:17px; }
+#tt-picker-designs .pk-type { font-size:11px; line-height:15px; padding:3px 7px; border-radius:5px; background:var(--pk-soft); color:var(--pk-ink); white-space:nowrap; }
+#tt-picker-designs .pk-row.pk-chosen { background:var(--pk-soft); }
+#tt-picker-designs .pk-add { width:100%; display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--pk-line); background:var(--pk-panel); color:var(--pk-ink); border-radius:10px; padding:11px; min-height:44px; font-size:13px; font-weight:600; margin-top:16px; }
+#tt-picker-designs .pk-add svg { width:17px; height:17px; }
+#tt-picker-designs .pk-group-title { color:var(--pk-sub); font-size:12px; line-height:16px; font-weight:600; margin:13px 0 5px; }
+#tt-picker-designs .pk-group-title:first-child { margin-top:0; }
+#tt-picker-designs [data-style="clean"] .pk-row + .pk-row { border-top:1px solid var(--pk-line); }
+#tt-picker-designs [data-style="clean"] .pk-meta { display:none; }
+#tt-picker-designs [data-style="clean"] .pk-name { font-size:16px; }
+#tt-picker-designs [data-style="clean"] .pk-type { background:transparent; padding:0; color:var(--pk-sub); }
+#tt-picker-designs [data-style="cards"] .pk-list { gap:6px; }
+#tt-picker-designs [data-style="cards"] .pk-row { background:var(--pk-bg); border:1px solid var(--pk-line); border-radius:12px; padding:9px 11px; }
+#tt-picker-designs [data-style="cards"] .pk-row.pk-chosen { background:var(--pk-soft); border-color:var(--pk-ink); }
+#tt-picker-designs [data-style="cards"] .pk-type { display:none; }
+#tt-picker-designs [data-style="identity"] .pk-row { min-height:64px; }
+#tt-picker-designs [data-style="identity"] .pk-row + .pk-row { border-top:1px solid var(--pk-line); }
+#tt-picker-designs [data-style="identity"] .pk-mark { width:44px; height:44px; border-radius:13px; }
+#tt-picker-designs [data-style="identity"] .pk-name { display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+#tt-picker-designs [data-style="identity"] .pk-type { font-size:10px; line-height:13px; padding:1px 5px; }
+#tt-picker-designs [data-style="identity"] .pk-meta { font-size:11px; overflow-wrap:anywhere; }
+#tt-picker-designs [data-style="groups"] .pk-row { min-height:53px; padding:8px; background:var(--pk-bg); border-radius:9px; margin:2px 0; }
+#tt-picker-designs [data-style="groups"] .pk-mark { width:32px; height:32px; border-radius:9px; }
+#tt-picker-designs [data-style="groups"] .pk-mark svg { width:18px; height:18px; }
+#tt-picker-designs [data-style="groups"] .pk-meta, #tt-picker-designs [data-style="groups"] .pk-type { display:none; }
+#tt-picker-designs [data-style="grid"] .pk-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+#tt-picker-designs [data-style="grid"] .pk-row { min-height:94px; flex-direction:column; align-items:flex-start; justify-content:center; gap:8px; border:1px solid var(--pk-line); border-radius:12px; padding:12px; }
+#tt-picker-designs [data-style="grid"] .pk-mark { width:34px; height:34px; border-radius:10px; }
+#tt-picker-designs [data-style="grid"] .pk-name { font-size:14px; }
+#tt-picker-designs [data-style="grid"] .pk-meta { font-size:11px; margin-top:2px; }
+#tt-picker-designs [data-style="grid"] .pk-type { display:none; }
+#tt-picker-designs [data-style="grid"] .pk-arrow { position:absolute; top:14px; right:12px; }
+@media(max-width:350px) { #tt-picker-designs .pk-sheet { padding-left:12px; padding-right:12px; } #tt-picker-designs .pk-name { font-size:14px; } #tt-picker-designs [data-style="clean"] .pk-name { font-size:15px; } #tt-picker-designs .pk-row { gap:9px; } }
+@media(prefers-reduced-motion:reduce) { #tt-picker-designs * { transition:none!important; } }
+</style>
+<script>
+(() => {
+ const root=document.getElementById('tt-picker-designs');
+ const icon=name=>`<i data-lucide="${name}" aria-hidden="true"></i>`;
+ const apps=[
+  {id:'notes',name:'Quick Notes Lite',type:'Closed test',pkg:'hidden.seedapps.unverified',icon:'sticky-note'},
+  {id:'recipe',name:'Recipe Shelf',type:'Closed test',pkg:'dev.seedapps.sentback',icon:'cooking-pot'},
+  {id:'habit',name:'Habit Streak',type:'Closed test',pkg:'dev.seedapps.takenout',icon:'calendar-check'},
+  {id:'chess',name:'Pocket Chess',type:'Live',pkg:'dev.seedapps.chess',icon:'crown'},
+  {id:'budget',name:'Budget Buddy',type:'Live',pkg:'dev.seedapps.budget',icon:'wallet'},
+  {id:'study',name:'Study Planner',type:'Closed test',pkg:'dev.seedapps.study',icon:'book-open'}
+ ];
+ const saved=window.openai?.widgetState?.privateContent||{};
+ const state={appearance:saved.appearance||'light dark',selected:saved.selected||null};
+ function row(app,style){
+  const badge=`<span class="pk-type">${app.type}</span>`;
+  return `<button type="button" class="pk-row cursor-interaction" data-app="${app.id}" aria-label="${app.name}, ${app.type}"><span class="pk-mark">${icon(app.icon)}</span><span class="pk-copy"><span class="pk-name">${app.name}${style==='identity'?badge:''}</span><span class="pk-meta">${style==='identity'?app.pkg:app.type}</span></span>${style==='identity'?'':badge}<span class="pk-arrow">${icon('chevron-right')}</span></button>`;
+ }
+ root.querySelectorAll('.pk-stage').forEach(stage=>{
+  const style=stage.dataset.style;
+  const shown=style==='grid'?apps:apps.slice(0,5);
+  const rows=style==='groups'?['Closed test','Live'].map(type=>`<div class="pk-group-title">${type==='Live'?'Live on Play':'Closed tests'}</div>${shown.filter(a=>a.type===type).map(a=>row(a,style)).join('')}`).join(''):shown.map(a=>row(a,style)).join('');
+  stage.innerHTML=`<div class="pk-phone" aria-label="TestTrack app picker"><div class="pk-status"><span>9:41</span><span>${icon('signal')}${icon('wifi')}${icon('battery-full')}</span></div><div class="pk-backdrop"><div class="pk-background-title">My apps</div><div class="pk-background-card">Quick Notes Lite</div></div><div class="pk-scrim"></div><div class="pk-sheet" role="group" aria-label="Feedback on which app?"><div class="pk-handle"></div><div class="pk-heading">Feedback on which app?</div><div class="pk-subtitle" role="status">Your apps that can go now.</div><div class="pk-list">${rows}</div><button type="button" class="pk-add cursor-interaction">${icon('plus')}Add a new app</button></div></div>`;
+ });
+ function render(){
+  root.style.colorScheme=state.appearance;
+  root.querySelectorAll('[data-app]').forEach(button=>button.classList.toggle('pk-chosen',button.dataset.app===state.selected));
+ }
+ function save(){window.openai?.setWidgetState?.({modelContent:{selectedApp:apps.find(a=>a.id===state.selected)?.name||state.selected},privateContent:state})?.catch(()=>{});}
+ root.addEventListener('click',event=>{
+  const button=event.target.closest('button');if(!button)return;
+  const stage=button.closest('.pk-stage');
+  if(button.dataset.app){state.selected=button.dataset.app;stage.querySelector('.pk-subtitle').textContent=apps.find(a=>a.id===state.selected).name+' selected · Preview';}
+  if(button.classList.contains('pk-add'))stage.querySelector('.pk-subtitle').textContent='Add a new app selected · Preview';
+  render();save();
+ });
+ window.addEventListener('openai:set_globals',event=>{const s=event.detail?.globals?.widgetState?.privateContent;if(s){state.appearance=s.appearance||'light dark';state.selected=s.selected||null;render();}});
+ render();
+ if(globalThis.lucide)lucide.createIcons();
+ if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:()=>{render();save();}});tweak.addSelect(state,'appearance',{label:'Appearance',options:[{label:'Follow app',value:'light dark'},{label:'Light',value:'light'},{label:'Dark',value:'dark'}]});}
+})();
+</script>
