@@ -1,0 +1,193 @@
+package com.eazyverse.testtrack.ui
+
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Maximize2
+import com.composables.icons.lucide.RefreshCw
+import com.composables.icons.lucide.X
+import com.eazyverse.testtrack.R
+import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.ui.theme.ViewerBlack
+import com.eazyverse.testtrack.ui.theme.ViewerInk
+
+/*
+ * How to add the testers group, full screen from the seat page: the address again, then each step
+ * in Play Console with a picture of where to tap. A picture opens larger in [StepImageViewer].
+ */
+
+/** One step of adding the testers group in Play Console, and its picture. */
+internal class PlayStep(
+    val text: String,
+    @param:DrawableRes val picture: Int,
+)
+
+/** The four steps, in order. The pictures keep these names when they are replaced. */
+internal val PlaySteps =
+    listOf(
+        PlayStep("Open Closed testing in Play Console", R.drawable.play_step1),
+        PlayStep("Open its Testers tab", R.drawable.play_step2),
+        PlayStep("Under Google Groups, paste the address and save", R.drawable.play_step3),
+        PlayStep("Roll out a release to that track", R.drawable.play_step4),
+    )
+
+private val StepStyle = tileStyle(15f, 20f, FontWeight.SemiBold)
+
+@Composable
+internal fun GroupHowToDialog(
+    state: SeatGroupState,
+    onVerify: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val t = Tt.colors
+    var viewing by rememberSaveable { mutableStateOf<Int?>(null) }
+    // The zoom hint shows the first time a picture is opened here, not every time.
+    var hintSeen by rememberSaveable { mutableStateOf(false) }
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        val scroll = rememberScrollState()
+        Column(Modifier.fillMaxSize().background(t.bg).safeDrawingPadding()) {
+            val hair = t.hair
+            val lined = scroll.value > 0
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .drawBehind {
+                        if (lined) {
+                            val y = size.height - 0.5.dp.toPx()
+                            drawLine(hair, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
+                        }
+                    }.padding(start = Gutter, end = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Add the testers group",
+                    Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp, lineHeight = 28.sp),
+                    fontWeight = FontWeight.Bold,
+                    color = t.text,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                IconButton(onClick = onDismiss, modifier = Modifier.size(48.dp)) {
+                    Icon(Lucide.X, "Close", Modifier.size(24.dp), tint = t.text)
+                }
+            }
+            Column(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(scroll)
+                    .padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 20.dp),
+            ) {
+                SeatAddressRow()
+                PlaySteps.forEachIndexed { index, step ->
+                    Spacer(Modifier.height(if (index == 0) 20.dp else 28.dp))
+                    StepHeading(index + 1, step.text)
+                    Spacer(Modifier.height(10.dp))
+                    StepPicture(step) { viewing = index }
+                }
+                Spacer(Modifier.height(28.dp))
+                SeatBar(state.verifyLabel, Lucide.RefreshCw, busy = state.checking, enabled = !state.checking, onClick = onVerify)
+            }
+        }
+    }
+    viewing?.let { start ->
+        StepImageViewer(start, showHint = !hintSeen) {
+            viewing = null
+            hintSeen = true
+        }
+    }
+}
+
+@Composable
+private fun StepHeading(
+    number: Int,
+    text: String,
+) {
+    val t = Tt.colors
+    Row(Modifier.fillMaxWidth().heightIn(min = 32.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(24.dp).clip(CircleShape).background(t.tile), contentAlignment = Alignment.Center) {
+            Text("$number", style = tileStyle(12.5f, 14f, FontWeight.Bold), color = t.tileInk)
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(text, style = StepStyle, color = t.text)
+    }
+}
+
+/** A step's picture across the page at its own shape, with the enlarge mark on its corner. */
+@Composable
+private fun StepPicture(
+    step: PlayStep,
+    onOpen: () -> Unit,
+) {
+    val t = Tt.colors
+    val painter = painterResource(step.picture)
+    val size = painter.intrinsicSize
+    val ratio = if (size.isSpecified && size.height > 0f) size.width / size.height else 16f / 10f
+    val shape = RoundedCornerShape(12.dp)
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .aspectRatio(ratio)
+            .clip(shape)
+            .border(1.dp, t.glassBorder, shape)
+            .clickable(onClickLabel = "Open the picture larger", onClick = onOpen),
+    ) {
+        Image(painter, step.text, Modifier.fillMaxSize(), contentScale = ContentScale.FillWidth)
+        Box(
+            Modifier
+                .align(Alignment.BottomEnd)
+                .padding(8.dp)
+                .size(30.dp)
+                .clip(CircleShape)
+                .background(ViewerBlack.copy(alpha = 0.62f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Lucide.Maximize2, null, Modifier.size(14.dp), tint = ViewerInk)
+        }
+    }
+}

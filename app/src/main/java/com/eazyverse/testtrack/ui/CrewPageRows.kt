@@ -31,6 +31,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
@@ -61,6 +62,8 @@ internal fun RowPill(
     modifier: Modifier = Modifier,
     /** A small icon before the word, in the pill's own text colour. */
     leading: ImageVector? = null,
+    /** The leading icon's size: 13 on a row, 16 on the seat page's group pills. */
+    leadingSize: Dp = 13.dp,
     shape: Shape = RoundedCornerShape(percent = 50),
     /** A small icon after the word, turned by [trailingTurn] degrees. */
     trailing: ImageVector? = null,
@@ -90,7 +93,7 @@ internal fun RowPill(
         val ink = if (busy) fg.copy(alpha = 0f) else fg
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (leading != null) {
-                Icon(leading, null, Modifier.size(13.dp), tint = ink)
+                Icon(leading, null, Modifier.size(leadingSize), tint = ink)
                 Spacer(Modifier.width(6.dp))
             }
             Text(

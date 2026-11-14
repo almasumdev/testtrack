@@ -228,7 +228,7 @@ class AppAddViewModel : ViewModel() {
     // ------------------------------------------------------------------ from this phone
 
     fun searchFor(next: String) {
-        search = next.take(FeedRules.APP_NAME_MAX)
+        search = next.take(SEARCH_MAX)
     }
 
     private fun loadPhoneApps(
@@ -334,5 +334,8 @@ class AppAddViewModel : ViewModel() {
 
     private companion object {
         const val QUERY_MAX = 2048
+
+        /** The phone app search also matches package names, which run longer than a name. */
+        const val SEARCH_MAX = 100
     }
 }

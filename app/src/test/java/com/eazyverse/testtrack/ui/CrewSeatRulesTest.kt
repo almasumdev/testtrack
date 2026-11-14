@@ -187,7 +187,7 @@ class CrewSeatRulesTest {
 
     @Test
     fun theNameThenTheSignInAreAskedInOrder() {
-        assertEquals(SeatHint(SeatHintKind.TODO, "Give it a name the crew sees", SeatSpot.DETAILS), hint(name = "  ", tix = 10))
+        assertEquals(SeatHint(SeatHintKind.TODO, "Give it a name the crew sees", SeatSpot.NAME), hint(name = "  ", tix = 10))
         assertEquals("Add the test account's username", hint(signInNeeded = true, pass = "x").text)
         assertEquals("Add the test account's password", hint(signInNeeded = true, user = "u").text)
         // A free note stands in for both, as the button's own rule allows.

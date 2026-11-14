@@ -108,8 +108,8 @@ object FeedRules {
     /** The focus question on the post form: a sentence. */
     const val ASK_MAX = 200
 
-    /** An app's name on a post, as the server takes it (PostIn.app_name). */
-    const val APP_NAME_MAX = 60
+    /** An app's name as typed in the app: 30, so it fits a row. The server still takes up to 60 (PostIn.app_name). */
+    const val APP_NAME_MAX = 30
 
     /** Members who decide a refused review, and what each is paid (rules.JURORS, rules.JUROR_FEE). */
     const val JURORS = 3

@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -21,24 +23,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.Coins
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.ui.theme.Tt
-import com.eazyverse.testtrack.viewmodel.AskFailure
 import com.eazyverse.testtrack.viewmodel.CrewAddViewModel
 
 /*
  * The seat page's details: the name the crew sees, how they get past a sign-in, what the seat costs,
  * and the notes that can hold the button. They scroll with the page; the one filled button that takes
- * the seat is [CrewSeatSubmit], pinned under it.
+ * the seat is [CrewSeatSubmit], the page's last part.
  */
 
 /** What the details and the button read from the seat screen, so the screen owns every launcher and callback. */
@@ -80,21 +85,23 @@ internal fun CrewSeatDetails(
     crews: CrewViewModel,
     vm: CrewAddViewModel,
     onOpenCircle: () -> Unit,
+    /** Where the page scrolls to for the name, and a count that goes up each time the hint asks for it. */
+    nameSpot: BringIntoViewRequester,
+    nameAsk: Int,
 ) {
     val app = state.app
     val short = vm.short || state.shortTix
     SeatHeading("Seat details", if (short) SeatStatus.warn(shortHeadline(vm.tix)) else null)
     CrewOpenHeader(crews.open)
     Spacer(Modifier.height(16.dp))
-    DialogField(
-        value = vm.name,
-        onValueChange = vm::rename,
-        label = "Name the crew sees",
+    SeatNameRow(
+        name = vm.name,
         placeholder = app.name,
-        imeAction = ImeAction.Next,
-        maxLength = FeedRules.APP_NAME_MAX,
+        onRename = vm::rename,
+        focusAsk = nameAsk,
+        modifier = Modifier.bringIntoViewRequester(nameSpot),
     )
-    Spacer(Modifier.height(16.dp))
+    Spacer(Modifier.height(20.dp))
     SignInFields(
         needed = vm.needsSignIn,
         onNeeded = vm::chooseSignIn,
@@ -109,18 +116,26 @@ internal fun CrewSeatDetails(
     Spacer(Modifier.height(24.dp))
     SeatPrice(vm.tix, short, crews.running, onOpenCircle)
     // Every notice goes under the rules, 16dp apart.
+    // Each icon is the first glyph of its line, so a wrap runs back to the left edge.
     state.refusal?.let {
         Spacer(Modifier.height(16.dp))
-        AskMessage(AskFailure("Couldn't take the seat", it))
+        val tone = Tt.colors.bad
+        Column(Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite }) {
+            IconLine(Lucide.CircleAlert, tone, AnnotatedString("Couldn't take the seat"), TitleLine, tone, iconSize = 16.dp)
+            Spacer(Modifier.height(4.dp))
+            Text(it, style = MaterialTheme.typography.bodySmall, color = tone)
+        }
     }
     state.waiting?.let { waiting ->
         Spacer(Modifier.height(16.dp))
-        Notice(Tt.colors.warn, Lucide.TriangleAlert, boxed = false) {
-            Text(
-                "Your app waits in ${waiting.crewName.ifBlank { "a crew" }}",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = Tt.colors.text,
+        Column(Modifier.fillMaxWidth()) {
+            IconLine(
+                Lucide.TriangleAlert,
+                Tt.colors.warn,
+                AnnotatedString("Your app waits in ${waiting.crewName.ifBlank { "a crew" }}"),
+                TitleLine,
+                Tt.colors.text,
+                iconSize = 16.dp,
             )
             Text(
                 "Take the next seat once that crew is full.",
@@ -141,21 +156,25 @@ internal fun CrewSeatDetails(
     // While an appeal waits, no new seat anywhere: the answer decides which way they go.
     state.held?.let { (appName, crewName) ->
         Spacer(Modifier.height(16.dp))
-        Notice(Status.short, Lucide.TriangleAlert, boxed = false) {
-            Text(
-                "You asked to get $appName back into $crewName. You can take a new seat once the team answers.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
+        IconLine(
+            Lucide.TriangleAlert,
+            Status.short,
+            AnnotatedString("You asked to get $appName back into $crewName. You can take a new seat once the team answers."),
+            MaterialTheme.typography.bodySmall,
+            MaterialTheme.colorScheme.onSurface,
+            iconSize = 16.dp,
+        )
     }
 }
 
 /** The details heading's status when tix are short: how many, once the balance is known. */
+private val TitleLine
+    @Composable get() = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+
 private fun shortHeadline(tix: Int?): String =
     if (tix != null && tix < CrewRules.SEAT_COST) "${CrewRules.SEAT_COST - tix} tix short" else "Not enough tix"
 
-/** The button that takes the seat, with the Drive note and the hint above it and its message under it. Pinned by the screen. */
+/** The button that takes the seat, with the Drive note and the hint above it and its message under it. The page's last part. */
 @Composable
 internal fun CrewSeatSubmit(
     state: SeatDetailsState,
@@ -270,6 +289,7 @@ private fun SeatPrice(
                 withStyle(bold) { append("${CrewRules.SEAT_COST} tix") }
                 append(" come back if you take it out while the crew fills, or open every app every night to the end.")
             },
+            inlineDot = true,
         )
         RuleLine(
             buildAnnotatedString {
@@ -279,6 +299,7 @@ private fun SeatPrice(
                 withStyle(bold) { append("${CrewRules.RUN_DAYS}") }
                 append(" days, and they open yours.")
             },
+            inlineDot = true,
         )
         RuleLine(
             buildAnnotatedString {
@@ -286,6 +307,7 @@ private fun SeatPrice(
                 withStyle(bold) { append("${CrewRules.nightly(running + 1)}") }
                 append(" apps a night.")
             },
+            inlineDot = true,
         )
     }
 }

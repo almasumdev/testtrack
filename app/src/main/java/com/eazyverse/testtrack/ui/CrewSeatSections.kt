@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,11 +11,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,11 +39,17 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.CircleHelp
 import com.composables.icons.lucide.Copy
+import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.RefreshCw
 import com.composables.icons.lucide.TriangleAlert
@@ -46,13 +58,13 @@ import com.eazyverse.testtrack.ui.theme.Tt
 import kotlinx.coroutines.delay
 
 /*
- * The seat page's own sections: the testers group (add it to the closed track and ask Play), and the
+ * The seat page's own sections: the testers group (its address, the how-to and the check), and the
  * two boxes only the app's owner can confirm, which stand right above the submit button.
  */
 
 /**
- * The two boxes every member's install depends on, each with what goes wrong and where to fix it
- * while it is unticked. Both lines go once it is ticked.
+ * The two boxes every member's install depends on. Each has an info button whose callout says what
+ * goes wrong and where to fix it; one callout is open at a time.
  */
 @Composable
 internal fun CrewSeatBoxes(
@@ -60,13 +72,24 @@ internal fun CrewSeatBoxes(
     onChange: (SeatBoxes) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var info by remember { mutableStateOf<String?>(null) }
     Column(modifier.fillMaxWidth()) {
-        BoxRow(SeatBoxCopy.COUNTRIES, boxes.countries, SeatBoxCopy.COUNTRIES_WHY, SeatBoxCopy.COUNTRIES_HOW) {
-            onChange(boxes.copy(countries = it))
-        }
-        BoxRow(SeatBoxCopy.DEVICES, boxes.devices, SeatBoxCopy.DEVICES_WHY, SeatBoxCopy.DEVICES_HOW) {
-            onChange(boxes.copy(devices = it))
-        }
+        BoxRow(
+            SeatBoxCopy.COUNTRIES,
+            boxes.countries,
+            SeatBoxCopy.COUNTRIES_WHY,
+            SeatBoxCopy.COUNTRIES_HOW,
+            open = info == SeatBoxCopy.COUNTRIES,
+            onInfo = { info = if (it) SeatBoxCopy.COUNTRIES else null },
+        ) { onChange(boxes.copy(countries = it)) }
+        BoxRow(
+            SeatBoxCopy.DEVICES,
+            boxes.devices,
+            SeatBoxCopy.DEVICES_WHY,
+            SeatBoxCopy.DEVICES_HOW,
+            open = info == SeatBoxCopy.DEVICES,
+            onInfo = { info = if (it) SeatBoxCopy.DEVICES else null },
+        ) { onChange(boxes.copy(devices = it)) }
     }
 }
 
@@ -76,38 +99,61 @@ private fun BoxRow(
     on: Boolean,
     why: String,
     how: Array<String>,
+    open: Boolean,
+    onInfo: (Boolean) -> Unit,
     onChange: (Boolean) -> Unit,
 ) {
     val t = Tt.colors
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .toggleable(value = on, role = Role.Checkbox, onValueChange = onChange),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val shape = RoundedCornerShape(6.dp)
-        Box(
+    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
             Modifier
-                .size(22.dp)
-                .clip(shape)
-                .then(if (on) Modifier.background(t.accent) else Modifier.border(1.5.dp, t.glassBorderStrong, shape)),
-            contentAlignment = Alignment.Center,
+                .weight(1f, fill = false)
+                .heightIn(min = 48.dp)
+                .toggleable(value = on, role = Role.Checkbox, onValueChange = onChange),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (on) Icon(Lucide.Check, null, Modifier.size(14.dp), tint = t.onAccent)
+            val shape = RoundedCornerShape(6.dp)
+            Box(
+                Modifier
+                    .size(22.dp)
+                    .clip(shape)
+                    .then(if (on) Modifier.background(t.accent) else Modifier.border(1.5.dp, t.glassBorderStrong, shape)),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (on) Icon(Lucide.Check, null, Modifier.size(14.dp), tint = t.onAccent)
+            }
+            Spacer(Modifier.width(12.dp))
+            Text(label, style = tileStyle(15f, 20f, FontWeight.Medium), color = t.text)
         }
-        Spacer(Modifier.width(12.dp))
-        Text(label, style = tileStyle(15f, 20f, FontWeight.Medium), color = t.text)
+        // The callout is anchored to this box: its 20dp icon sits 10dp inside the 40dp button.
+        Box(Modifier.offset(x = (-6).dp)) {
+            IconButton(onClick = { onInfo(!open) }, modifier = Modifier.size(40.dp)) {
+                Box(
+                    Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .then(if (open) Modifier.background(t.accentInk.copy(alpha = 0.1f)) else Modifier),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Lucide.Info, "Why it matters", Modifier.size(20.dp), tint = if (open) t.accentInk else t.text4)
+                }
+            }
+            Callout(open, onClose = { onInfo(false) }, paneTitle = label, iconInset = 10.dp, spacing = 6.dp) {
+                Text(why, style = BodyLine, color = t.warn)
+                Text(inkParts(how), style = BodyLine, color = t.text2)
+            }
+        }
     }
-    if (!on) {
-        // Lined up with the label: the box and its gap are 34dp.
-        Row(Modifier.padding(start = 34.dp), verticalAlignment = Alignment.Top) {
-            Icon(Lucide.TriangleAlert, null, Modifier.padding(top = 2.dp).size(13.dp), tint = t.warn)
-            Spacer(Modifier.width(6.dp))
-            Text(why, style = SmallLine, color = t.warn)
+}
+
+/** Plain and bold in turn, starting plain, with the bold parts in the main ink. */
+@Composable
+private fun inkParts(parts: Array<String>): AnnotatedString {
+    val bold = SpanStyle(fontWeight = FontWeight.SemiBold, color = Tt.colors.text)
+    return buildAnnotatedString {
+        parts.forEachIndexed { index, part ->
+            if (index % 2 == 1) withStyle(bold) { append(part) } else append(part)
         }
-        Text(boldParts(*how), Modifier.padding(start = 34.dp, top = 2.dp), style = SmallLine, color = t.text3)
-        Spacer(Modifier.height(8.dp))
     }
 }
 
@@ -121,15 +167,27 @@ private val BodyLine
 internal class SeatGroupState(
     /** Play does not show the app to the group yet, or a seat was just refused for it. */
     val open: Boolean,
-    /** The line under the steps, only when the check failed: when Play was last asked and what it said. */
+    /** The amber line, only when the check failed: when Play was last asked and what it said. */
     val checkLine: String?,
     val checkFailed: Boolean,
     val checking: Boolean,
     /** A failure that is not a check's answer, such as no connection; null when none. */
     val error: String?,
-)
+) {
+    /** The check's button: what it is doing, or what it does next. */
+    val verifyLabel: String
+        get() =
+            when {
+                checking -> "Asking Play"
+                checkFailed -> "Check again"
+                else -> "Verify on Play"
+            }
+}
 
-/** Testers group: what to add in Play Console and the check, or only its heading once Play shows the app to the group. */
+/**
+ * Testers group: the address to copy, the way to the steps and the check, or only its heading once
+ * Play shows the app to the group. The steps open full screen, with a picture of each.
+ */
 @Composable
 internal fun CrewSeatGroup(
     state: SeatGroupState,
@@ -140,54 +198,49 @@ internal fun CrewSeatGroup(
         SeatHeading("Testers group", SeatStatus.ok("Play shows it"), gap = 0.dp)
         return
     }
+    var howTo by rememberSaveable { mutableStateOf(false) }
     SeatHeading("Testers group", if (state.checkFailed) SeatStatus.warn("Not shown yet") else null)
-    Text(
-        "Crew members install your app through this Google Group. Play has to show your app to it first.",
-        style = BodyLine,
-        color = t.text2,
-    )
+    // Once Play was asked and said no, the last check's own words take the plain line's place.
+    val line = state.checkLine.takeIf { state.checkFailed } ?: "Play doesn't show your app to the group yet"
+    IconLine(Lucide.TriangleAlert, t.warn, AnnotatedString(line), SmallLine, t.warn)
+    Spacer(Modifier.height(6.dp))
+    SeatAddressRow()
     Spacer(Modifier.height(12.dp))
-    SeatGroupAddress()
-    GroupStepList(
-        listOf(
-            boldParts("In Play Console, open ", "Test and release", ", then ", "Closed testing", "."),
-            boldParts("Open your track's ", "Testers", " tab."),
-            boldParts("Under ", "Google Groups", ", paste the address and save."),
-            AnnotatedString("Roll out a release to that track."),
-        ),
-        textStyle = BodyLine,
-    )
-    Spacer(Modifier.height(16.dp))
-    if (state.checkFailed && state.checkLine != null) {
-        Row(verticalAlignment = Alignment.Top) {
-            Icon(Lucide.TriangleAlert, null, Modifier.padding(top = 1.5.dp).size(14.dp), tint = t.warn)
-            Spacer(Modifier.width(6.dp))
-            Text(state.checkLine, style = SmallLine, color = t.warn)
-        }
+    val pill = RoundedCornerShape(10.dp)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        RowPill(
+            "How to add it",
+            PillKind.SOFT,
+            modifier = Modifier.weight(1f),
+            leading = Lucide.CircleHelp,
+            leadingSize = 16.dp,
+            shape = pill,
+        ) { howTo = true }
+        RowPill(
+            state.verifyLabel,
+            PillKind.SOLID,
+            busy = state.checking,
+            modifier = Modifier.weight(1f),
+            leading = Lucide.RefreshCw,
+            leadingSize = 16.dp,
+            shape = pill,
+            onClick = onVerify,
+        )
     }
     state.error?.let { Text(it, Modifier.padding(top = 8.dp), style = SmallLine, color = t.bad) }
-    Spacer(Modifier.height(8.dp))
-    SeatBar(
-        if (state.checking) {
-            "Asking Play"
-        } else if (state.checkFailed) {
-            "Check again"
-        } else {
-            "Verify on Play"
-        },
-        Lucide.RefreshCw,
-        busy = state.checking,
-        enabled = !state.checking,
-        onClick = onVerify,
-    )
+    // Only while the group is open: once Play shows the app the steps close with it.
+    if (howTo) GroupHowToDialog(state, onVerify, onDismiss = { howTo = false })
 }
 
+private val AddressStyle = tileStyle(15f, 18f, FontWeight.SemiBold)
+private val AddressLabelStyle = tileStyle(12.5f, 14f, FontWeight.Medium)
+
 /**
- * The group address in a field-like box with a copy button at its end, in the same label and
- * border as a dialog field. The address may wrap, and only ever breaks before the @.
+ * The group address on one line, shrinking to fit a narrow phone, over what it is, with copy at the
+ * end. The whole row copies it.
  */
 @Composable
-private fun SeatGroupAddress() {
+internal fun SeatAddressRow() {
     val t = Tt.colors
     val clipboard = LocalClipboardManager.current
     var copied by remember { mutableStateOf(false) }
@@ -201,31 +254,30 @@ private fun SeatGroupAddress() {
         clipboard.setText(AnnotatedString(Config.GROUP_EMAIL))
         copied = true
     }
-    Text(
-        "Group address",
-        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp, lineHeight = 16.sp),
-        fontWeight = FontWeight.SemiBold,
-        color = t.text4,
-    )
-    Spacer(Modifier.height(4.dp))
-    val shape = RoundedCornerShape(8.dp)
     Row(
         Modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .clip(shape)
-            .border(1.dp, t.glassBorderStrong, shape)
-            .clickable(onClickLabel = "Copy the testers group address") { copy() }
-            .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+            .heightIn(min = 40.dp)
+            .clickable(onClickLabel = "Copy the testers group address") { copy() },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            Config.GROUP_EMAIL.replace("@", "​@"),
-            Modifier.weight(1f),
-            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.5.sp, lineHeight = 18.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = t.accentInk,
-        )
+        Column(Modifier.weight(1f)) {
+            BasicText(
+                Config.GROUP_EMAIL,
+                style = AddressStyle.copy(color = t.accentInk),
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 15.sp, stepSize = 0.5.sp),
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                "Testers group address",
+                style = AddressLabelStyle,
+                color = t.text3,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.width(4.dp))
         IconButton(onClick = { copy() }, modifier = Modifier.size(40.dp)) {
             Icon(
                 if (copied) Lucide.Check else Lucide.Copy,
@@ -253,7 +305,9 @@ internal fun CrewSeatConfirm(
     )
     Spacer(Modifier.height(8.dp))
     CrewSeatBoxes(boxes, onBoxes)
-    boxesMessage?.let { Text(it, Modifier.padding(top = 8.dp), style = SmallLine, color = t.warn) }
+    boxesMessage?.let {
+        IconLine(Lucide.TriangleAlert, t.warn, AnnotatedString(it), SmallLine, t.warn, Modifier.padding(top = 8.dp))
+    }
 }
 
 /**

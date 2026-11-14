@@ -12,6 +12,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -60,7 +61,8 @@ import kotlin.math.roundToInt
 /*
  * What a tile's alert mark opens: a card on the sheet colour with a caret pointing at the mark, a
  * row for each problem and a link to the app's page. Drawn as one path so the 1dp line runs round
- * the caret. See docs/design/my-apps/my-apps.html, Problem callout, Option A.
+ * the caret. See docs/design/my-apps/my-apps.html, Problem callout, Option A. The card itself is
+ * [Callout], which the seat page's box info uses too.
  */
 
 private val CalloutMaxWidth = 260.dp
@@ -70,7 +72,7 @@ private val CaretHeight = 8.dp
 private val CaretTip = 1.5.dp
 
 // The mark's 20dp icon sits 6dp inside its 32dp target; the callout is measured from the icon.
-private val MarkInset = 6.dp
+internal val MarkInset = 6.dp
 private val MarkGap = 4.dp
 private val DockGap = 8.dp
 
@@ -103,9 +105,11 @@ internal fun placeCallout(
     popup: IntSize,
     density: Float,
     dockRoomPx: Int,
+    /** How far inside the anchor its icon sits: 6dp for a tile's mark, 10dp for a 40dp button's 20dp icon. */
+    iconInset: Dp = MarkInset,
 ): CalloutPlacement {
     val gap = (CalloutScreenGap.value * density).roundToInt()
-    val inset = MarkInset.value * density
+    val inset = iconInset.value * density
     val between = MarkGap.value * density
     val x = (window.width - gap - popup.width).coerceAtLeast(gap)
     val below = (anchor.bottom - inset + between).roundToInt()
@@ -177,6 +181,7 @@ internal class CalloutShape(
 internal class CalloutPositionProvider(
     private val density: Float,
     private val dockRoomPx: Int,
+    private val iconInset: Dp = MarkInset,
 ) : PopupPositionProvider {
     var caretX by mutableFloatStateOf(0f)
         private set
@@ -189,7 +194,7 @@ internal class CalloutPositionProvider(
         layoutDirection: LayoutDirection,
         popupContentSize: IntSize,
     ): IntOffset {
-        val placed = placeCallout(anchorBounds, windowSize, popupContentSize, density, dockRoomPx)
+        val placed = placeCallout(anchorBounds, windowSize, popupContentSize, density, dockRoomPx, iconInset)
         caretX = placed.caretX
         caretUp = placed.caretUp
         return IntOffset(placed.x, placed.y)
@@ -208,62 +213,8 @@ internal fun ProblemCallout(
     onClose: () -> Unit,
     onOpen: () -> Unit,
 ) {
-    val shown = remember { MutableTransitionState(false) }
-    shown.targetState = open
-    if (!shown.currentState && !shown.targetState) return
-
-    val density = LocalDensity.current.density
-    val dockPx = (dockRoom().value * density).roundToInt()
-    val provider = remember(density, dockPx) { CalloutPositionProvider(density, dockPx) }
-    val width = minOf(CalloutMaxWidth, (LocalConfiguration.current.screenWidthDp - 32).dp)
-    val widthPx = width.value * density
-    val originX = clampCaret(provider.caretX, widthPx, density) / widthPx
-    val originY = if (provider.caretUp) 0f else 1f
-    Popup(
-        popupPositionProvider = provider,
-        onDismissRequest = onClose,
-        properties = PopupProperties(focusable = true, dismissOnBackPress = true, dismissOnClickOutside = true),
-    ) {
-        AnimatedVisibility(
-            visibleState = shown,
-            enter =
-                fadeIn(tween(150, easing = FastOutSlowInEasing)) +
-                    scaleIn(tween(150, easing = FastOutSlowInEasing), 0.92f, TransformOrigin(originX, originY)),
-            exit = fadeOut(tween(100)),
-        ) {
-            CalloutCard(app, problems, width, provider.caretX, provider.caretUp, onClose, onOpen)
-        }
-    }
-}
-
-@Composable
-private fun CalloutCard(
-    app: AppEntry,
-    problems: List<AppProblem>,
-    width: Dp,
-    caretX: Float,
-    caretUp: Boolean,
-    onClose: () -> Unit,
-    onOpen: () -> Unit,
-) {
     val t = Tt.colors
-    val shape = remember(caretX, caretUp) { CalloutShape(caretX, caretUp) }
-    Column(
-        Modifier
-            .width(width)
-            .background(t.sheet, shape)
-            .border(1.dp, t.glassBorder, shape)
-            .semantics {
-                paneTitle = "What's wrong with ${app.name}"
-                liveRegion = LiveRegionMode.Polite
-            }.padding(
-                start = 14.dp,
-                end = 14.dp,
-                top = 12.dp + if (caretUp) CaretHeight else 0.dp,
-                bottom = 12.dp + if (caretUp) 0.dp else CaretHeight,
-            ),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
+    Callout(open, onClose, paneTitle = "What's wrong with ${app.name}", spacing = 10.dp) {
         problems.forEach { problem ->
             Row {
                 Icon(
@@ -292,4 +243,76 @@ private fun CalloutCard(
             Icon(Lucide.ChevronRight, null, Modifier.size(16.dp), tint = t.accentInk)
         }
     }
+}
+
+/**
+ * A card on the sheet colour with a caret pointing at what it is called from, anchored to the
+ * composable it sits in. Stays composed until its fade out ends. A tap outside, Back or [onClose]
+ * closes it. [iconInset] is how far inside that anchor its icon sits, so the caret meets the icon.
+ */
+@Composable
+internal fun Callout(
+    open: Boolean,
+    onClose: () -> Unit,
+    paneTitle: String,
+    iconInset: Dp = MarkInset,
+    spacing: Dp = 10.dp,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val shown = remember { MutableTransitionState(false) }
+    shown.targetState = open
+    if (!shown.currentState && !shown.targetState) return
+
+    val density = LocalDensity.current.density
+    val dockPx = (dockRoom().value * density).roundToInt()
+    val provider = remember(density, dockPx, iconInset) { CalloutPositionProvider(density, dockPx, iconInset) }
+    val width = minOf(CalloutMaxWidth, (LocalConfiguration.current.screenWidthDp - 32).dp)
+    val widthPx = width.value * density
+    val originX = clampCaret(provider.caretX, widthPx, density) / widthPx
+    val originY = if (provider.caretUp) 0f else 1f
+    Popup(
+        popupPositionProvider = provider,
+        onDismissRequest = onClose,
+        properties = PopupProperties(focusable = true, dismissOnBackPress = true, dismissOnClickOutside = true),
+    ) {
+        AnimatedVisibility(
+            visibleState = shown,
+            enter =
+                fadeIn(tween(150, easing = FastOutSlowInEasing)) +
+                    scaleIn(tween(150, easing = FastOutSlowInEasing), 0.92f, TransformOrigin(originX, originY)),
+            exit = fadeOut(tween(100)),
+        ) {
+            CalloutCard(paneTitle, width, provider.caretX, provider.caretUp, spacing, content)
+        }
+    }
+}
+
+@Composable
+private fun CalloutCard(
+    title: String,
+    width: Dp,
+    caretX: Float,
+    caretUp: Boolean,
+    spacing: Dp,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val t = Tt.colors
+    val shape = remember(caretX, caretUp) { CalloutShape(caretX, caretUp) }
+    Column(
+        Modifier
+            .width(width)
+            .background(t.sheet, shape)
+            .border(1.dp, t.glassBorder, shape)
+            .semantics {
+                paneTitle = title
+                liveRegion = LiveRegionMode.Polite
+            }.padding(
+                start = 14.dp,
+                end = 14.dp,
+                top = 12.dp + if (caretUp) CaretHeight else 0.dp,
+                bottom = 12.dp + if (caretUp) 0.dp else CaretHeight,
+            ),
+        verticalArrangement = Arrangement.spacedBy(spacing),
+        content = content,
+    )
 }

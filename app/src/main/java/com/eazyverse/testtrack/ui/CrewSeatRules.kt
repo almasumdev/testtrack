@@ -103,7 +103,7 @@ fun SeatNeed.line(): String =
     }
 
 /**
- * The amber line under an unticked box, and where to fix it. Asked only when a seat is submitted.
+ * Why a box matters and where to fix it, said in the callout from the box's info button.
  * The "how" lines alternate plain and bold, starting plain, so the names to look for stand out.
  */
 object SeatBoxCopy {
@@ -115,8 +115,8 @@ object SeatBoxCopy {
     val DEVICES_HOW = arrayOf("In Play Console, open ", "Device catalog", " and remove excluded devices.")
 }
 
-/** The part of the seat page a hint or a refused seat is about, so the page can scroll to it. */
-enum class SeatSpot { GROUP, DETAILS, BOXES }
+/** The part of the seat page a hint or a refused seat is about, so the page can scroll to it. NAME also puts the cursor in the name. */
+enum class SeatSpot { GROUP, DETAILS, NAME, BOXES }
 
 /** How the line over the button looks: a step to do, something wrong, all done, or working. */
 enum class SeatHintKind { TODO, WARN, READY, BUSY }
@@ -157,7 +157,7 @@ fun seatHint(
         busy -> SeatHint(SeatHintKind.BUSY, "Checking it on Play the way the crew will see it", null)
         !groupReady && groupFailed -> SeatHint(SeatHintKind.WARN, "Play doesn't show it to the group yet", SeatSpot.GROUP)
         !groupReady -> SeatHint(SeatHintKind.TODO, "Verify the testers group first", SeatSpot.GROUP)
-        name.isBlank() -> SeatHint(SeatHintKind.TODO, "Give it a name the crew sees", SeatSpot.DETAILS)
+        name.isBlank() -> SeatHint(SeatHintKind.TODO, "Give it a name the crew sees", SeatSpot.NAME)
         signInOpen && user.isBlank() -> SeatHint(SeatHintKind.TODO, "Add the test account's username", SeatSpot.DETAILS)
         signInOpen && pass.isBlank() -> SeatHint(SeatHintKind.TODO, "Add the test account's password", SeatSpot.DETAILS)
         tix != null && tix < cost -> SeatHint(SeatHintKind.WARN, "You need ${cost - tix} more tix", SeatSpot.DETAILS)
