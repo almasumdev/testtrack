@@ -15,9 +15,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -146,19 +146,13 @@ internal fun CrewSeatGroup(
         style = BodyLine,
         color = t.text2,
     )
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(12.dp))
     SeatGroupAddress()
     GroupStepList(
         listOf(
-            boldParts(
-                "In Play Console, open ",
-                "Closed testing",
-                ", then your track's ",
-                "Testers",
-                " tab. Under ",
-                "Google Groups",
-                ", paste the address and save.",
-            ),
+            boldParts("In Play Console, open ", "Test and release", ", then ", "Closed testing", "."),
+            boldParts("Open your track's ", "Testers", " tab."),
+            boldParts("Under ", "Google Groups", ", paste the address and save."),
             AnnotatedString("Roll out a release to that track."),
         ),
         textStyle = BodyLine,
@@ -189,8 +183,8 @@ internal fun CrewSeatGroup(
 }
 
 /**
- * The group address on its own full-width line, which may wrap, with a small Copy pill under it.
- * Only this page stacks them: on a small phone the address and Copy side by side ran out of room.
+ * The group address in a field-like box with a copy button at its end, in the same label and
+ * border as a dialog field. The address may wrap, and only ever breaks before the @.
  */
 @Composable
 private fun SeatGroupAddress() {
@@ -203,34 +197,43 @@ private fun SeatGroupAddress() {
             copied = false
         }
     }
-    SelectionContainer(Modifier.fillMaxWidth()) {
+    val copy = {
+        clipboard.setText(AnnotatedString(Config.GROUP_EMAIL))
+        copied = true
+    }
+    Text(
+        "Group address",
+        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp, lineHeight = 16.sp),
+        fontWeight = FontWeight.SemiBold,
+        color = t.text4,
+    )
+    Spacer(Modifier.height(4.dp))
+    val shape = RoundedCornerShape(8.dp)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clip(shape)
+            .border(1.dp, t.glassBorderStrong, shape)
+            .clickable(onClickLabel = "Copy the testers group address") { copy() }
+            .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Text(
-            Config.GROUP_EMAIL,
-            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.5.sp),
+            Config.GROUP_EMAIL.replace("@", "​@"),
+            Modifier.weight(1f),
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.5.sp, lineHeight = 18.sp),
             fontWeight = FontWeight.SemiBold,
             color = t.accentInk,
         )
-    }
-    Spacer(Modifier.height(8.dp))
-    Row(
-        Modifier
-            .heightIn(min = 36.dp)
-            .clip(RoundedCornerShape(percent = 50))
-            .background(t.accent)
-            .clickable(onClickLabel = "Copy the testers group address") {
-                clipboard.setText(AnnotatedString(Config.GROUP_EMAIL))
-                copied = true
-            }.padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(if (copied) Lucide.Check else Lucide.Copy, null, Modifier.size(14.dp), tint = t.onAccent)
-        Spacer(Modifier.width(6.dp))
-        Text(
-            if (copied) "Copied" else "Copy",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = t.onAccent,
-        )
+        IconButton(onClick = { copy() }, modifier = Modifier.size(40.dp)) {
+            Icon(
+                if (copied) Lucide.Check else Lucide.Copy,
+                if (copied) "Copied" else "Copy the address",
+                Modifier.size(18.dp),
+                tint = if (copied) t.ok else t.accentInk,
+            )
+        }
     }
 }
 

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Crew: the Take a seat page</title>
+<title>Take a seat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -11,70 +11,49 @@
   @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
   @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
 
-  /* ui/theme/Tokens.kt, OceanLight and OceanDark. primary = accent by day, accentInk by night (TtTokens.primary). */
   .light {
     --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
-    --tabSel:#2E4E66; --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --gbs:#789AAF; --hair:#B7D1E2;
+    --tabSel:#2E4E66; --glass:#F2F9FD; --gbs:#789AAF; --hair:#B7D1E2;
     --cardLine:#E1ECF3; --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
     --primary:#3A5B73; --onPrimary:#FFFFFF; --tile:#DCE6EE; --tileInk:#3A5B73;
-    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12); --bad:#9E3B2E;
-    --fieldBorder:#789AAF; --skel:#E4EEF4; --sheet:#FFFFFF; --flaskL:#9279D6; --flaskG:#4A3B86;
+    --ok:#246B59; --warn:#8A611C; --bad:#9E3B2E;
+    --fieldBorder:#789AAF; --sheet:#FFFFFF; --flaskL:#9279D6; --flaskG:#4A3B86;
   }
   .dark {
     --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
-    --tabSel:#B6CCDC; --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --gbs:#666D74; --hair:#2B2E32;
+    --tabSel:#B6CCDC; --glass:#1C1E20; --gbs:#666D74; --hair:#2B2E32;
     --cardLine:#2D3034; --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
     --primary:#93B3CA; --onPrimary:#0F1011; --tile:#2A2D31; --tileInk:#A2BED2;
-    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14); --bad:#E4938A;
-    --fieldBorder:#666D74; --skel:#24272A; --sheet:#1C1E20; --flaskL:#8C70D4; --flaskG:#CDBEF0;
+    --ok:#83D8C4; --warn:#D8B774; --bad:#E4938A;
+    --fieldBorder:#666D74; --sheet:#1C1E20; --flaskL:#8C70D4; --flaskG:#CDBEF0;
   }
 
   * { box-sizing: border-box; }
-  body { margin: 0; background: #E7ECEF; color: #142F43; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; }
-  .doc { max-width: 1840px; margin: 0 auto; padding: 34px 28px 90px; }
-  h1 { font-size: 30px; margin: 0 0 6px; }
-  .lead { font-size: 16px; line-height: 1.45; color: #2D4A5F; max-width: 1100px; margin: 4px 0; }
-  section.opt { margin-top: 40px; padding-top: 24px; border-top: 2px solid #3A5B73; }
-  section.opt > h2 { font-size: 25px; margin: 0 0 6px; display: flex; align-items: center; gap: 12px; }
-  .rec { font-size: 13px; font-weight: 700; color: #fff; background: #246B59; border-radius: 999px; padding: 3px 12px; }
-  .why { font-size: 15.5px; line-height: 1.45; color: #203A4E; max-width: 1100px; margin: 3px 0; }
-  .check { font-size: 14px; font-weight: 600; margin: 8px 0 0; }
-  .check.good { color: #246B59; } .check.bad { color: #9E3B2E; }
-  .state { margin-top: 28px; }
-  .state h4 { font-size: 17px; margin: 0 0 3px; display: flex; align-items: center; gap: 8px; }
-  .sid { font-size: 12.5px; font-weight: 700; color: #fff; background: #59758A; border-radius: 6px; padding: 1px 8px; }
-  .what { font-size: 14px; line-height: 1.45; color: #45505a; max-width: 1100px; margin-bottom: 10px; }
-  .pair { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
-  .cap { font-size: 12px; font-weight: 600; color: #59758A; letter-spacing: .3px; margin: 0 0 5px 4px; }
-  code { font-family: Consolas, monospace; font-size: 12.5px; background: #dbe3e9; padding: 1px 5px; border-radius: 4px; }
-  ul.spec, ol.spec { font-size: 15px; line-height: 1.55; color: #203A4E; max-width: 1120px; }
-  ul.spec li + li, ol.spec li + li { margin-top: 5px; }
-  table.copy { border-collapse: collapse; font-size: 14px; margin-top: 8px; background: #fff; }
-  table.copy td, table.copy th { border-bottom: 1px solid #d6e0e7; padding: 6px 12px; text-align: left; vertical-align: top; }
-  table.copy th { font-size: 12px; text-transform: uppercase; letter-spacing: .3px; color: #59758A; background: #F2F6F9; }
+  body { margin: 0; background: #E7ECEF; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; }
+  .doc { padding: 28px; display: flex; flex-direction: column; gap: 48px; }
+  .state { display: flex; flex-direction: column; }
+  .lbl { font-size: 15px; font-weight: 700; color: #2D4A5F; margin: 0 0 8px 4px; }
+  .pair { display: flex; gap: 16px; align-items: flex-start; }
+  .row { display: flex; flex-wrap: wrap; gap: 40px 48px; align-items: flex-start; width: 100%; }
   svg.i { display: block; flex: none; }
 
-  /* ---------- the phone: status bar, PageBar, the scrolling page, the pinned foot ---------- */
-  .phone { background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #C3CFD8; position: relative; display: flex; flex-direction: column; }
+  .phone { background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #C3CFD8; display: flex; flex-direction: column; }
   .dark.phone { border-color: #2A2D31; }
-  .sbar { height: 24px; flex: none; }
-  .pbar { height: 64px; flex: none; position: relative; }
+  .sbar { height: 24px; }
+  .pbar { height: 64px; position: relative; }
   .pbar .back { position: absolute; left: 16px; top: 20px; color: var(--text); }
   .pbar .pt { position: absolute; left: 56px; top: 18px; font-size: 22px; line-height: 28px; font-weight: 700; }
-  .scroll { padding: 8px 16px 20px; position: relative; }
-  .foot { border-top: 1px solid var(--hair); padding: 12px 16px; flex: none; }
-  .nav { height: 24px; flex: none; }
-  .fold { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px dashed #D9487A; pointer-events: none; }
-  .fold span { position: absolute; right: 6px; top: -8px; font-size: 10px; line-height: 14px; font-weight: 700; color: #fff; background: #D9487A; border-radius: 4px; padding: 0 5px; letter-spacing: .2px; }
+  .scroll { padding: 8px 16px 20px; }
+  .foot { border-top: 1px solid var(--hair); padding: 12px 16px; }
+  .nav { height: 24px; }
   .one { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  /* app icons: stand-ins with the ShapedIconImage corner (30%) */
   .ai { border-radius: 30%; flex: none; position: relative; }
   .ai i { position: absolute; left: 28%; top: 28%; width: 44%; height: 44%; border-radius: 30%; background: rgba(255,255,255,.88); }
   .ai .mk { position: absolute; right: -5px; bottom: -5px; width: 20px; height: 20px; border-radius: 50%; background: var(--sheet); box-shadow: 0 0 0 2px var(--bg); display: grid; place-items: center; }
 
-  /* ---------- recommended ---------- */
-  .ah { display: flex; align-items: center; }
+  .ah, .r40 { display: flex; align-items: center; }
+  .r40 { min-height: 40px; }
   .ah .col, .r40 .col { flex: 1; min-width: 0; margin-left: 12px; }
   .nm { font-size: 16px; line-height: 19px; font-weight: 600; color: var(--text); }
   .sub { margin-top: 2px; font-size: 12.5px; line-height: 14px; font-weight: 500; color: var(--text3); display: flex; align-items: center; gap: 4px; }
@@ -84,26 +63,25 @@
   .sec { margin-top: 32px; }
   .sec.first { margin-top: 24px; }
   .sh { display: flex; align-items: center; min-height: 19px; margin-bottom: 8px; gap: 8px; }
-  .sh h3 { margin: 0; font-size: 16px; line-height: 19px; font-weight: 700; color: var(--text); flex: none; }
-  .sh .st { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 12.5px; line-height: 14px; font-weight: 600; white-space: nowrap; }
+  .sh h3 { margin: 0; flex: 1; font-size: 16px; line-height: 19px; font-weight: 700; color: var(--text); }
+  .sh .st { display: flex; align-items: center; gap: 4px; font-size: 12.5px; line-height: 14px; font-weight: 600; white-space: nowrap; }
   .sh.done { margin-bottom: 0; }
   .st.ok { color: var(--ok); } .st.warn { color: var(--warn); }
   .body { font-size: 13px; line-height: 18px; color: var(--text2); }
-  .body b, .gt b, .rl b, .bh b { font-weight: 600; color: var(--text); }
+  .gt b, .rl b, .bh b { font-weight: 600; color: var(--text); }
 
-  .addr { display: flex; align-items: center; min-height: 48px; margin-top: 4px; }
-  .addr .a { flex: 1; min-width: 0; font-size: 13.5px; line-height: 18px; font-weight: 600; color: var(--accentInk); }
-  .cpy { height: 36px; border-radius: 18px; background: var(--accent); color: var(--onAccent); padding: 0 12px; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; flex: none; margin-left: 8px; }
+  .afl { margin-top: 12px; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text4); margin-bottom: 4px; }
+  .af { min-height: 56px; border: 1px solid var(--fieldBorder); border-radius: 8px; padding: 7px 4px 7px 16px; display: flex; align-items: center; gap: 4px; }
+  .af .a { flex: 1; min-width: 0; font-size: 13.5px; line-height: 18px; font-weight: 600; color: var(--accentInk); }
+  .af .cbtn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--accentInk); flex: none; }
+  .af .cbtn.done { color: var(--ok); }
   .gs { display: flex; align-items: flex-start; margin-top: 8px; }
   .gn { width: 22px; height: 22px; border-radius: 7px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; font-size: 12px; font-weight: 700; flex: none; }
   .gt { margin-left: 10px; flex: 1; padding-top: 2px; font-size: 13px; line-height: 18px; color: var(--text2); }
-  .ck { margin-top: 16px; display: flex; gap: 6px; align-items: flex-start; font-size: 12.5px; line-height: 17px; color: var(--text3); }
-  .ck.warn { color: var(--warn); }
+  .ck { display: flex; gap: 6px; align-items: flex-start; font-size: 12.5px; line-height: 17px; color: var(--warn); }
   .ck svg { margin-top: 1.5px; }
-  .bar { margin-top: 8px; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--tabSel); font-size: 16px; line-height: 24px; font-weight: 600; padding: 11px; white-space: nowrap; border: 1px solid var(--cardLine); border-radius: 14px; background: var(--glass); }
-  .spin { width: 18px; height: 18px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; flex: none; }
+  .bar { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--tabSel); font-size: 16px; line-height: 24px; font-weight: 600; padding: 11px; white-space: nowrap; border: 1px solid var(--cardLine); border-radius: 14px; background: var(--glass); }
 
-  .r40 { display: flex; align-items: center; min-height: 40px; }
   .t40 { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
   .rp { height: 34px; border-radius: 17px; background: var(--tile); color: var(--accentInk); padding: 0 14px; display: flex; align-items: center; font-size: 14px; font-weight: 700; flex: none; margin-left: 8px; white-space: nowrap; }
 
@@ -112,7 +90,6 @@
   .fd.tall { min-height: 72px; align-items: flex-start; padding-top: 16px; }
   .fd.focus { border: 2px solid var(--primary); padding: 0 15px; }
   .fd .ph { color: var(--text4); opacity: .8; font-weight: 400; }
-  .fd .cur { display: inline-block; width: 1.5px; height: 20px; background: var(--primary); margin-left: 1px; vertical-align: -4px; }
   .fc { display: flex; justify-content: flex-end; margin-top: 4px; font-size: 11.5px; line-height: 16px; color: var(--text2); }
   .q { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--text); }
   .tc { display: flex; gap: 8px; margin-top: 8px; }
@@ -124,12 +101,6 @@
   .rl::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--text4); margin: 6.5px 8px 0 0; flex: none; }
   .rl + .rl { margin-top: 6px; }
 
-  .nt { display: flex; gap: 10px; align-items: flex-start; }
-  .nt > svg { margin-top: 2px; }
-  .ntt { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--text); }
-  .ntb { font-size: 13px; line-height: 18px; color: var(--text2); }
-  .lk { margin-top: 6px; font-size: 14px; line-height: 20px; font-weight: 700; color: var(--accentInk); }
-
   .bxb.open { padding-bottom: 8px; }
   .bx { display: flex; align-items: center; min-height: 48px; }
   .cb { width: 22px; height: 22px; border-radius: 6px; box-shadow: inset 0 0 0 1.5px var(--gbs); display: grid; place-items: center; flex: none; color: var(--onAccent); }
@@ -138,122 +109,18 @@
   .bw { padding-left: 34px; display: flex; gap: 6px; align-items: flex-start; font-size: 12.5px; line-height: 17px; color: var(--warn); }
   .bw svg { margin-top: 2px; }
   .bh { padding-left: 34px; margin-top: 2px; font-size: 12.5px; line-height: 17px; color: var(--text3); }
-  .bm { margin-top: 8px; }
 
-  .hint { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12.5px; line-height: 16px; font-weight: 600; color: var(--text2); margin-bottom: 8px; min-height: 20px; text-align: center; }
-    .hint.todo svg { color: var(--accentInk); }
+  .hint { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12.5px; line-height: 16px; font-weight: 600; color: var(--text2); margin-bottom: 8px; min-height: 20px; }
+  .hint.todo svg { color: var(--accentInk); }
   .hint.warn { color: var(--warn); }
   .hint.quiet { color: var(--text3); font-weight: 500; }
-  .prim { min-height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; line-height: 20px; font-weight: 700; padding: 0 24px; white-space: nowrap; }
+  .prim { min-height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; font-size: 15px; line-height: 20px; font-weight: 700; padding: 0 24px; white-space: nowrap; }
   .prim.off { background: color-mix(in srgb, var(--text) 12%, transparent); color: color-mix(in srgb, var(--text) 38%, transparent); }
-
-  .sk { background: var(--skel); border-radius: 6px; }
-
-  /* ---------- as built ---------- */
-  .o-fa { display: flex; align-items: center; padding: 4px 0; }
-  .o-fa .col { margin-left: 13px; flex: 1; min-width: 0; }
-  .o-nm { font-size: 14px; line-height: 20px; font-weight: 600; }
-  .o-dv { margin-top: 2px; font-size: 12px; line-height: 16px; color: var(--text2); }
-  .o-sm { font-size: 12px; line-height: 16px; color: var(--text2); }
-  .o-h { font-size: 15px; line-height: 19px; font-weight: 600; margin-bottom: 8px; }
-  .o-b { font-size: 13px; line-height: 18px; color: var(--text2); }
-  .o-ok { display: flex; align-items: center; min-height: 36px; font-size: 14px; line-height: 19px; color: var(--text2); }
-  .o-ok i { width: 22px; height: 22px; border-radius: 50%; background: var(--okBg); color: var(--ok); display: grid; place-items: center; margin-right: 12px; }
-  .o-ck { margin-top: 10px; font-size: 12.5px; line-height: 17px; color: var(--text3); }
-  .o-pr { display: flex; align-items: center; }
-  .o-pr .col { flex: 1; }
-  .o-pt { font-size: 14px; line-height: 20px; font-weight: 600; }
-  .o-ps { margin-top: 2px; font-size: 12px; line-height: 16px; color: var(--text3); }
-  .o-pv { margin-left: 12px; font-size: 16px; line-height: 24px; font-weight: 700; color: var(--accentInk); }
-  .o-bx { display: flex; align-items: center; min-height: 44px; margin-top: 4px; }
-  .o-cb { width: 20px; height: 20px; border-radius: 6px; box-shadow: inset 0 0 0 1.5px var(--gbs); flex: none; }
-  .o-bl { margin-left: 10px; font-size: 14px; line-height: 19px; }
-  .o-bw { margin-top: 2px; display: flex; gap: 5px; font-size: 12.5px; line-height: 17px; color: var(--warn); }
-  .o-bw svg { margin-top: 2px; }
-  .o-bh { margin-top: 3px; font-size: 12.5px; line-height: 17px; color: var(--text3); }
-  .o-note { font-size: 12px; line-height: 16px; color: var(--text4); margin-bottom: 8px; }
-  .o-addr { display: flex; align-items: center; min-height: 48px; }
 </style>
 </head>
 <body>
-<div class="doc">
-<h1>Crew: the Take a seat page</h1>
-<p class="lead">The full page you reach from "Take a seat", as built today, then one recommended design in six states. Every frame shows the whole page from top to bottom with the button pinned under it. The pink dashed line marks where the first screen ends on that phone (412 x 915 and 360 x 800), so you can see what is in view without scrolling.</p>
-<p class="lead">Colours, type and parts are the app's own: Ocean tokens from <code>Tokens.kt</code>, Barlow from <code>res/font</code>, Lucide icons, and composables that already exist (<code>CrewOpenHeader</code>, <code>GroupAddress</code>, <code>GroupSteps</code>, <code>SeatBar</code>, <code>TwoChoice</code>, <code>DialogField</code>, <code>RowPill</code>, <code>Notice</code>, <code>Primary</code>). App names and icons are stand-ins.</p>
-
-<section class="opt" style="border-top-color:#9E3B2E">
-  <h2>Today, as built</h2>
-  <p class="why">What reads as basic and uneven, from the code:</p>
-  <ul class="spec">
-    <li><b>Three heading styles on one path.</b> The seat page uses <code>SeatHeading</code> (15sp SemiBold). The Open tab and My apps use 16sp Bold (<code>CrewHeading</code>, <code>SectionTitle</code>). Next to each other the page looks like a draft.</li>
-    <li><b>The app at the top is small.</b> <code>FoundApp</code> draws the name at 14sp, the size of body text, so the page has no clear top. My apps tiles use 52dp and 16sp.</li>
-    <li><b>The price is a paragraph.</b> "A seat costs" with a long grey sentence, "100 tix" floating at the right, and one more sentence under it. Your balance is buried in the middle of a line, and short of tix only turns that line red.</li>
-    <li><b>No sense of where you are.</b> Nothing says which part is done. A finished testers group still takes a heading and a row. The hint over the button only knows two things (group, boxes), so a disabled button with no reason is possible (empty name, half-filled sign-in, short of tix).</li>
-    <li><b>Spacing has no rhythm.</b> 2, 4, 10, 12, 14, 18, 20 and 24dp gaps in one column.</li>
-  </ul>
-  <p class="check" id="chkNow"></p>
-  <div id="now"></div>
-</section>
-
-<section class="opt" style="border-top-color:#246B59">
-  <h2>Recommended <span class="rec">One design, six states</span></h2>
-  <p class="why">Same order, same content, same logic. What changes:</p>
-  <ul class="spec">
-    <li><b>The app on top as a My apps tile, without the box.</b> 52dp icon with the closed-test flask on its corner, name 16/19 SemiBold, developer under it. The text column is 35dp, under the icon's 52.</li>
-    <li><b>One heading style</b>, the app's <code>CrewHeading</code> look (16/19 Bold). Each heading can carry one short status at its far end: green "Play shows it" when the group is done, amber "Not shown yet" when Play said no, amber "40 tix short" on the details. You can see what is left without reading.</li>
-    <li><b>The testers group folds to one line when it is done</b> (the owner's "steps only when something is missing"). When it is missing, the instruction is three numbered one-action steps (the shared <code>GroupSteps</code>, the same steps as Add an app and the How to add it sheet), with the address and Copy above them.</li>
-    <li><b>Seat details open with the crew row from the Open tab</b> (<code>CrewOpenHeader</code>: crew name, seats left, likely start), so "where it goes" looks the same in both places.</li>
-    <li><b>The price becomes a row</b> with the same 40dp tile as the crew row: "A seat is 100 tix", "You have 240 tix" under it. Short of tix turns that line amber and puts an "Open Circle" pill (the Open tab's soft <code>RowPill</code>) at the row's end. The seat rules follow as three short dot lines in the Open tab's rules style.</li>
-    <li><b>Before you submit stays last</b>, with bigger checkboxes (22dp, 48dp rows) and the warning and the Play Console path under each unticked box, lined up with the label.</li>
-    <li><b>The hint over the button always says the first thing missing</b>, in order: group, name, sign-in, tix, boxes. Tapping it scrolls to that part. When nothing is missing it says what the seat takes from your balance.</li>
-    <li><b>Spacing on 8:</b> 32 between parts, 8 under a heading, 16 between blocks inside a part, 8 inside a block. No cards, no hairlines between parts, no box inside a box.</li>
-  </ul>
-  <p class="check" id="chkNew"></p>
-  <div id="rec"></div>
-</section>
-
-<section class="opt" style="border-top-color:#59758A">
-  <h2>Loading and offline</h2>
-  <p class="why">Skeletons in the page's own shapes, no spinner. Offline with nothing loaded: one line and a Try again bar, no button.</p>
-  <div id="other"></div>
-</section>
-
-<section class="opt" style="border-top-color:#59758A">
-  <h2>Copy</h2>
-  <table class="copy">
-    <tr><th>Where</th><th>Words</th></tr>
-    <tr><td>Group heading status</td><td>Play shows it (ok) / Not shown yet (warn, after a failed check or a refused seat) / nothing while not checked</td></tr>
-    <tr><td>Group intro</td><td>Crew members install your app through this Google Group. Play has to show your app to it first.</td></tr>
-    <tr><td>Group steps</td><td>1. In Play Console, open <b>Test and release</b>, then <b>Closed testing</b>, then your track's <b>Testers</b> tab.<br>2. Under <b>Google Groups</b>, paste the address and save.<br>3. Roll out a release to that track.</td></tr>
-    <tr><td>Check line</td><td>Not checked yet. / Checked 5 min ago: Play doesn't show it to the group yet. A new rollout can take a few hours to show. / the server's own words after a refused seat</td></tr>
-    <tr><td>Group button</td><td>Verify on Play / Asking Play (busy) / Check again (after a failed check)</td></tr>
-    <tr><td>Price row</td><td>A seat is 100 tix / You have 240 tix / You have 60 tix, 40 short (bad) / Not enough tix for a seat (bad, when only the server said so)</td></tr>
-    <tr><td>Seat rules</td><td>All <b>100 tix</b> come back if you take it out while the crew fills, or open every app every night to the end.<br>You open the other <b>14</b> apps every day for <b>14</b> days, and they open yours.<br>That puts you on <b>14</b> apps a night.</td></tr>
-    <tr><td>Boxes intro</td><td>You set both in Play Console. Every member needs them to install your app.</td></tr>
-    <tr><td>Box help</td><td>In Play Console, open <b>Closed testing</b>, then <b>Countries/regions</b>, and add all countries.<br>In Play Console, open <b>Device catalog</b> and remove excluded devices.</td></tr>
-    <tr><td>Footer hint, first match wins</td><td>Verify the testers group first / Play doesn't show it to the group yet (warn) / Give it a name the crew sees / Add the test account's username / Add the test account's password / You need 40 more tix (warn) / Wait for the team to answer your appeal (warn) / Tick both Play Console boxes / ready: 100 tix come off your 240 / busy: Checking it on Play the way the crew will see it</td></tr>
-    <tr><td>Button</td><td>Take a seat in Crew 07 / Take a seat (no crew filling) / Connect Drive and take a seat</td></tr>
-  </table>
-</section>
-<section class="opt" style="border-top-color:#59758A">
-  <h2>Build spec</h2>
-  <ol class="spec">
-    <li><b>App head</b> (new <code>SeatAppHead</code> in <code>CrewSeatSections.kt</code>, replaces <code>FoundApp</code> and the "goes in with 14 others" line on this page only): a Row, centred. <code>Box(size 52)</code> with <code>AppMark(pkg, name, icon, size = AppTileIcon, ownIcon = true)</code> and <code>SourceMark(live = false, Modifier.align(BottomEnd).offset(5.dp, 5.dp))</code>, as <code>AppCards.kt:96</code>. 12dp, then a Column: name in <code>AppTileName</code> (16/19 SemiBold, text, 1 line, ellipsis), 2dp, developer (or package) in <code>tileStyle(12.5f, 14f, Medium)</code>, text3, 1 line. 35dp of text beside 52.</li>
-    <li><b>Headings:</b> <code>SeatHeading(text, status: SeatStatus? = null)</code>: Row, centred, min 19dp; text 16/19 Bold <code>text</code>; status at the far end: 14dp icon, 4dp, 12.5/14 SemiBold, one line, in <code>ok</code> (CircleCheck) or <code>warn</code> (CircleAlert). 8dp under it, none when the part is only its heading.</li>
-    <li><b>Spacing:</b> 8 above the head, 24 head to first heading, 32 between parts, 8 under a heading, 16 between blocks, 8 inside one. 20 under the last part, as now.</li>
-    <li><b>Testers group, done:</b> only <code>SeatHeading("Testers group", SeatStatus.ok("Play shows it"))</code>. <b>Open:</b> heading with "Not shown yet" (warn) when <code>checkFailed</code>; intro 13/18 text2; <code>GroupAddress(flat = true)</code> (48dp row); <code>GroupSteps("Roll out a release to that track.")</code>; 16dp; check line 12.5/17, text3, or warn with TriangleAlert 14; 8dp; <code>SeatBar</code> as now (Verify on Play, Asking Play, Check again).</li>
-    <li><b>Seat details:</b> heading with "N tix short" (warn) when short; <code>CrewOpenHeader(crews.open)</code> from <code>CrewOpenTab.kt</code> as is; 16; <code>DialogField</code> name; 16; <code>SignInFields</code>; 24; price row; 16; three rule lines; notices 16 apart.</li>
-    <li><b>Price row</b> (rewrite <code>SeatPrice</code>): Row, centred: 40dp tile, corner 12, <code>tile</code> ground, <code>Lucide.Coins</code> 20 <code>tileInk</code> (the same tile as <code>CrewOpenHeader</code>); 12; Column: "A seat is 100 tix" in <code>AppTileName</code>, 2dp, "You have 240 tix" in 12.5/14 Medium text3. Short: "You have 60 tix, 40 short" in warn SemiBold, and <code>RowPill("Open Circle", PillKind.SOFT)</code> at the end, 8dp before it. Server said short but the balance did not: "Not enough tix for a seat". <code>ShortOfTix</code> goes.</li>
-    <li><b>Seat rules:</b> make <code>RuleLine</code> in <code>CrewOpenRules.kt</code> internal and use it: 4dp dot text4, 13/17 text2, 6dp apart, figures SemiBold text. Three lines, see Copy.</li>
-    <li><b>Notices</b> (waiting, appeal, refusal, Drive) stay <code>Notice(boxed = false)</code> and <code>AskMessage</code>, under the rules, 16dp apart. The "checking on Play" note leaves the page and becomes the footer hint while busy.</li>
-    <li><b>Before you submit:</b> heading; intro 13/18 text2; 8dp; <code>BoxRow</code>: Row min 48, 22dp box corner 6, off = 1.5dp <code>glassBorderStrong</code> inset, on = <code>accent</code> fill with Check 14 <code>onAccent</code>; 12dp; label 15/20 Medium text. Unticked: warn line and how line at start 34dp (12.5/17, warn with TriangleAlert 13 and 6dp, then text3 with SemiBold names), 8dp under the block. Ticked rows sit with no gap. The server's <code>boxesMessage</code> stays under the boxes in warn.</li>
-    <li><b>Footer:</b> 1dp <code>hair</code>, padding 12/16/12. Hint row, centred, min 20, 8 under: 14dp icon, 6dp, 12.5/16 SemiBold. Kind todo = CircleDashed in accentInk with text2 words; warn = TriangleAlert, warn; ready = Coins, text3 Medium; busy = words only, text3. Tapping a todo or warn hint scrolls to its part (<code>SeatSpot.GROUP</code>, new <code>DETAILS</code>, <code>BOXES</code>). Then <code>Primary</code> as now. Keep <code>DialogNote</code> for Drive above the hint.</li>
-    <li><b>Hint as a pure function</b> in <code>CrewSeatRules.kt</code>: <code>seatHint(groupReady, groupFailed, name, signInNeeded, user, pass, tix, shortServer, held, boxes, busy, cost): SeatHint(kind, text, spot)</code>, first match wins in the order of the Copy table, with a unit test in <code>CrewSeatRulesTest.kt</code>.</li>
-    <li><b>Loading:</b> <code>SeatTileSkeleton</code> becomes the page's shapes: 52 square + two bars, a heading bar, two text bars, a 48dp bar, then a 40 square row and a 56dp field. <b>Offline:</b> a TriangleAlert line and <code>SeatBar("Try again")</code>, no footer.</li>
-    <li><b>Leave alone:</b> all logic in <code>CrewSeatScreen</code> (refusal codes, jumps, Drive, saved state), <code>SeatBar</code>, <code>GroupAddress</code>, <code>TwoChoice</code>, <code>DialogField</code>, <code>Primary</code>, <code>FoundApp</code> (Ask for feedback still uses it).</li>
-  </ol>
-</section>
-</div>
+<div class="doc" id="doc"></div>
+<div id="chk" hidden></div>
 
 <script>
 const P = (d, s = 24, w = 2) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -268,7 +135,6 @@ const I = {
   users: s => P('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', s),
   coins: s => P('<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>', s),
   clock: s => P('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', s, 2.4),
-  hourglass: s => P('<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>', s),
   backIos: s => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`,
   flask: s => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M7.9 14.3Q10 13.2 12 14.3T16.1 14.3L19.1 20.3Q19.4 21.6 18.1 21.6H5.9Q4.6 21.6 4.9 20.3Z" fill="var(--flaskL)"/><path d="M10 3v6.5a2 2 0 0 1-.2.9L4.8 20.4a1 1 0 0 0 .9 1.4h12.6a1 1 0 0 0 .9-1.4L14.2 10.4a2 2 0 0 1-.2-.9V3M8.6 3h6.8" fill="none" stroke="var(--flaskG)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 };
@@ -276,55 +142,19 @@ const I = {
 const APP = { name: 'Sunrise Notes', dev: 'Brightleaf Studio', grad: '#ff8a3d,#e8453c' };
 const ADDR = 'googleclosetesting@googlegroups.com';
 const COST = 100, SEATS = 15, DAYS = 14;
-const icon = (s, mark) => `<div class="ai" style="width:${s}px;height:${s}px;background:linear-gradient(135deg,${APP.grad})"><i></i>${mark ? `<span class="mk">${I.flask(12)}</span>` : ''}</div>`;
+const icon = s => `<div class="ai" style="width:${s}px;height:${s}px;background:linear-gradient(135deg,${APP.grad})"><i></i><span class="mk">${I.flask(12)}</span></div>`;
 
-/* ---------------- the page as built ---------------- */
-function built(s) {
-  const groupOpen = s.group !== 'ok';
-  let b = `<div class="o-fa"><div class="ai" style="width:48px;height:48px;border-radius:11px;background:linear-gradient(135deg,${APP.grad})"><i></i></div><div class="col"><div class="o-nm">${APP.name}</div><div class="o-dv">${APP.dev}</div></div></div>
-    <div class="o-sm" style="margin:2px 0 10px">Your app goes in with ${SEATS - 1} others</div>
-    <div class="o-h">Testers group</div>`;
-  if (!groupOpen) {
-    b += `<div class="o-ok"><i>${I.check(13)}</i>Play shows it to the group</div>`;
-  } else {
-    b += `<div class="o-b">In Play Console, add this group as testers on your app's closed track, then roll out a release to it.</div>
-      <div style="height:10px"></div>
-      <div class="o-addr"><span class="a one" style="flex:1;min-width:0;font-size:13.5px;font-weight:600;color:var(--accentInk)">${ADDR}</span><span class="cpy">${I.copy(15)}Copy</span></div>
-      <div class="o-ck">Not checked yet.</div>
-      <div class="bar" style="margin-top:12px">${I.refresh(20)}<span>Verify on Play</span></div>`;
-  }
-  b += `<div style="height:24px"></div><div class="o-h">Seat details</div><div style="height:4px"></div>
-    <div class="fl">Name the crew sees</div><div class="fd">${APP.name}</div><div class="fc">13/60</div>
-    <div style="height:20px"></div>
-    <div class="q">Does your app need a sign-in?</div><div class="tc"><div class="chc on">No sign-in</div><div class="chc">Needs a sign-in</div></div>
-    <div style="height:18px"></div>
-    <div class="o-pr"><div class="col"><div class="o-pt">A seat costs</div><div class="o-ps">You have 240 tix. Back in full if you take it out while the crew fills, or finish every day.</div></div><div class="o-pv">${COST} tix</div></div>
-    <div class="o-ps" style="margin-top:8px">You open theirs every day for ${DAYS} days, and they open yours. That puts you on ${SEATS - 1} apps a night.</div>
-    <div style="height:14px"></div>
-    <div style="height:24px"></div><div class="o-h">Before you submit</div>
-    <div class="o-b">Both are needed, so every member can install it.</div>
-    <div class="o-bx"><span class="o-cb"></span><span class="o-bl">Available in all countries</span></div>
-    <div class="o-bw">${I.alert(13)}<span>Members in other countries can't install it. If two of them report that, you lose your seat.</span></div>
-    <div class="o-bh">In Play Console: Closed testing, Countries/regions, add all countries.</div>
-    <div class="o-bx"><span class="o-cb"></span><span class="o-bl">Not limited to some devices</span></div>
-    <div class="o-bw">${I.alert(13)}<span>Members on excluded phones can't install it. If two of them report that, you lose your seat.</span></div>
-    <div class="o-bh">In Play Console: Device catalog, remove excluded devices.</div>`;
-  const note = groupOpen ? 'Verify the testers group first' : 'Tick both boxes to submit';
-  const foot = `<div class="o-note">${note}</div><div class="prim off">Take a seat in Crew 07</div>`;
-  return { body: b, foot };
-}
+const BASE = { group: 'new', name: APP.name, signIn: false, user: '', pass: '', tix: 240, boxes: [false, false] };
 
-/* ---------------- the recommended page ---------------- */
-const BASE = { group: 'new', name: APP.name, signIn: false, user: '', pass: '', also: '', tix: 240, boxes: [false, false], busy: false, checkAgo: null };
-
-function missing(s) {
-  if (s.group === 'new') return { t: 'Verify the testers group first', k: 'todo', icon: I.circleDashed(14) };
-  if (s.group !== 'ok') return { t: "Play doesn't show it to the group yet", k: 'warn', icon: I.alert(14) };
-  if (!s.name.trim()) return { t: 'Give it a name the crew sees', k: 'todo', icon: I.circleDashed(14) };
-  if (s.signIn && !s.user.trim()) return { t: "Add the test account's username", k: 'todo', icon: I.circleDashed(14) };
-  if (s.signIn && !s.pass.trim()) return { t: "Add the test account's password", k: 'todo', icon: I.circleDashed(14) };
-  if (s.tix < COST) return { t: `You need ${COST - s.tix} more tix`, k: 'warn', icon: I.alert(14) };
-  if (!(s.boxes[0] && s.boxes[1])) return { t: 'Tick both Play Console boxes', k: 'todo', icon: I.circleDashed(14) };
+/* seatHint() in CrewSeatRules.kt, first match wins */
+function hint(s) {
+  if (s.group === 'failed') return { t: "Play doesn't show it to the group yet", k: 'warn', i: I.alert(14) };
+  if (s.group === 'new') return { t: 'Verify the testers group first', k: 'todo', i: I.circleDashed(14) };
+  if (!s.name.trim()) return { t: 'Give it a name the crew sees', k: 'todo', i: I.circleDashed(14) };
+  if (s.signIn && !s.user.trim()) return { t: "Add the test account's username", k: 'todo', i: I.circleDashed(14) };
+  if (s.signIn && !s.pass.trim()) return { t: "Add the test account's password", k: 'todo', i: I.circleDashed(14) };
+  if (s.tix < COST) return { t: `You need ${COST - s.tix} more tix`, k: 'warn', i: I.alert(14) };
+  if (!(s.boxes[0] && s.boxes[1])) return { t: 'Tick both Play Console boxes', k: 'todo', i: I.circleDashed(14) };
   return null;
 }
 
@@ -332,31 +162,27 @@ function groupPart(s) {
   if (s.group === 'ok') {
     return `<div class="sec first"><div class="sh done"><h3>Testers group</h3><span class="st ok">${I.circleCheck(14)}Play shows it</span></div></div>`;
   }
-  const failed = s.group === 'failed' || s.group === 'refused';
-  const st = failed ? `<span class="st warn">${I.circleAlert(14)}Not shown yet</span>` : '';
-  const ckText = s.group === 'refused'
-    ? "Play doesn't show Sunrise Notes to the testers group yet. Roll out a release to the closed track, then check again."
-    : s.group === 'failed' ? "Checked 5 min ago: Play doesn't show it to the group yet. A new rollout can take a few hours to show." : 'Not checked yet.';
-  const ck = failed ? `<div class="ck warn">${I.alert(14)}<span>${ckText}</span></div>` : `<div class="ck">${ckText}</div>`;
-  const barLabel = s.checking ? 'Asking Play' : failed ? 'Check again' : 'Verify on Play';
-  const barIcon = s.checking ? '<span class="spin"></span>' : I.refresh(20);
-  return `<div class="sec first"><div class="sh"><h3>Testers group</h3>${st}</div>
+  const failed = s.group === 'failed';
+  return `<div class="sec first"><div class="sh"><h3>Testers group</h3>${failed ? `<span class="st warn">${I.circleAlert(14)}Not shown yet</span>` : ''}</div>
     <div class="body">Crew members install your app through this Google Group. Play has to show your app to it first.</div>
-    <div class="addr"><span class="a one">${ADDR}</span><span class="cpy">${I.copy(15)}Copy</span></div>
-    <div class="gs"><span class="gn">1</span><span class="gt">In Play Console, open <b>Test and release</b>, then <b>Closed testing</b>, then your track's <b>Testers</b> tab.</span></div>
-    <div class="gs"><span class="gn">2</span><span class="gt">Under <b>Google Groups</b>, paste the address and save.</span></div>
-    <div class="gs"><span class="gn">3</span><span class="gt">Roll out a release to that track.</span></div>
-    ${ck}
-    <div class="bar">${barIcon}<span>${barLabel}</span></div></div>`;
+    <div class="afl">Group address</div>
+    <div class="af"><span class="a">googleclosetesting<wbr>@googlegroups.com</span><span class="cbtn${s.copied ? ' done' : ''}">${s.copied ? I.check(18, 2.4) : I.copy(18)}</span></div>
+    <div class="gs"><span class="gn">1</span><span class="gt">In Play Console, open <b>Test and release</b>, then <b>Closed testing</b>.</span></div>
+    <div class="gs"><span class="gn">2</span><span class="gt">Open your track's <b>Testers</b> tab.</span></div>
+    <div class="gs"><span class="gn">3</span><span class="gt">Under <b>Google Groups</b>, paste the address and save.</span></div>
+    <div class="gs"><span class="gn">4</span><span class="gt">Roll out a release to that track.</span></div>
+    <div style="height:16px"></div>
+    ${failed ? `<div class="ck">${I.alert(14)}<span>Checked 5 min ago: Play doesn't show it to the group yet. A new rollout can take a few hours to show.</span></div>` : ''}
+    <div style="height:8px"></div>
+    <div class="bar">${I.refresh(20)}<span>${failed ? 'Check again' : 'Verify on Play'}</span></div></div>`;
 }
 
 function detailsPart(s) {
   const short = s.tix < COST;
-  const st = short ? `<span class="st warn">${I.circleAlert(14)}${COST - s.tix} tix short</span>` : '';
-  let h = `<div class="sec"><div class="sh"><h3>Seat details</h3>${st}</div>
+  let h = `<div class="sec"><div class="sh"><h3>Seat details</h3>${short ? `<span class="st warn">${I.circleAlert(14)}${COST - s.tix} tix short</span>` : ''}</div>
     <div class="r40" data-tile><span class="t40">${I.users(20)}</span><div class="col"><div class="nm one">Crew 07, 6 seats left</div><div class="sub acc">${I.clock(11)}<span class="one">Likely starts Friday</span></div></div></div>
     <div style="height:16px"></div>
-    <div class="fl">Name the crew sees</div><div class="fd">${s.name || `<span class="ph">${APP.name}</span>`}</div><div class="fc">${s.name.length}/60</div>
+    <div class="fl">Name the crew sees</div><div class="fd">${s.name}</div><div class="fc">${s.name.length}/60</div>
     <div style="height:16px"></div>
     <div class="q">Does your app need a sign-in?</div><div class="tc"><div class="chc${s.signIn ? '' : ' on'}">No sign-in</div><div class="chc${s.signIn ? ' on' : ''}">Needs a sign-in</div></div>`;
   if (s.signIn) {
@@ -364,20 +190,17 @@ function detailsPart(s) {
       <div style="height:16px"></div>
       <div class="fl">Username, email or phone</div><div class="fd">${s.user || '<span class="ph">test@example.com</span>'}</div>
       <div style="height:16px"></div>
-      <div class="fl">Password</div><div class="fd${s.focusPass ? ' focus' : ''}">${s.pass || '<span class="ph">The test account\'s password</span>'}${s.focusPass ? '' : ''}</div>
+      <div class="fl">Password</div><div class="fd focus"><span class="ph">The test account's password</span></div>
       <div style="height:16px"></div>
       <div class="fl">Anything else needed (optional)</div><div class="fd tall"><span class="ph">A one-time code, or which screen to skip</span></div><div class="fc">0/90</div>`;
   }
-  const subLine = short ? `<div class="sub warn"><span class="one">You have ${s.tix} tix, ${COST - s.tix} short</span></div>` : `<div class="sub"><span class="one">You have ${s.tix} tix</span></div>`;
+  const sub = short ? `<div class="sub warn"><span class="one">You have ${s.tix} tix, ${COST - s.tix} short</span></div>` : `<div class="sub"><span class="one">You have ${s.tix} tix</span></div>`;
   h += `<div style="height:24px"></div>
-    <div class="r40" data-tile><span class="t40">${I.coins(20)}</span><div class="col"><div class="nm one">A seat is ${COST} tix</div>${subLine}</div>${short ? '<span class="rp">Open Circle</span>' : ''}</div>
+    <div class="r40" data-tile><span class="t40">${I.coins(20)}</span><div class="col"><div class="nm one">A seat is ${COST} tix</div>${sub}</div>${short ? '<span class="rp">Open Circle</span>' : ''}</div>
     <div style="height:16px"></div>
     <div class="rl"><span>All <b>${COST} tix</b> come back if you take it out while the crew fills, or open every app every night to the end.</span></div>
     <div class="rl"><span>You open the other <b>${SEATS - 1}</b> apps every day for <b>${DAYS}</b> days, and they open yours.</span></div>
     <div class="rl"><span>That puts you on <b>${SEATS - 1}</b> apps a night.</span></div>`;
-  if (s.waiting) {
-    h += `<div style="height:16px"></div><div class="nt" style="color:var(--warn)">${I.alert(16)}<div><div class="ntt">Your app waits in Crew 06</div><div class="ntb">Take the next seat once that crew is full.</div><div class="lk">Open the crew</div></div></div>`;
-  }
   return h + '</div>';
 }
 
@@ -397,87 +220,52 @@ function boxesPart(s) {
   return h + '</div>';
 }
 
-function recommended(s) {
+function page(s) {
   s = { ...BASE, ...s };
-  const body = `<div class="ah" data-tile>${icon(52, true)}<div class="col"><div class="nm one">${APP.name}</div><div class="sub"><span class="one">${APP.dev}</span></div></div></div>`
+  const body = `<div class="ah" data-tile>${icon(52)}<div class="col"><div class="nm one">${APP.name}</div><div class="sub"><span class="one">${APP.dev}</span></div></div></div>`
     + groupPart(s) + detailsPart(s) + boxesPart(s);
-  const m = missing(s);
-  const hint = s.busy
-    ? `<div class="hint quiet"><span>Checking it on Play the way the crew will see it</span></div>`
-    : m ? `<div class="hint ${m.k}">${m.icon}<span>${m.t}</span></div>`
-        : `<div class="hint quiet">${I.coins(14)}<span>${COST} tix come off your ${s.tix}</span></div>`;
-  const ready = !m;
-  const foot = hint + `<div class="prim${ready || s.busy ? '' : ' off'}">${s.busy ? '<span class="spin" style="width:16px;height:16px"></span>' : ''}Take a seat in Crew 07</div>`;
-  return { body, foot };
+  const m = hint(s);
+  const h = m ? `<div class="hint ${m.k}">${m.i}<span>${m.t}</span></div>`
+              : `<div class="hint quiet">${I.coins(14)}<span>${COST} tix come off your ${s.tix}</span></div>`;
+  return { body, foot: h + `<div class="prim${m ? ' off' : ''}">Take a seat in Crew 07</div>` };
 }
 
-function loading() {
-  const body = `<div class="ah" data-tile><div class="sk" style="width:52px;height:52px;border-radius:15px;flex:none"></div><div class="col"><div class="sk" style="width:130px;height:14px"></div><div class="sk" style="width:90px;height:11px;margin-top:8px"></div></div></div>
-    <div class="sec first"><div class="sk" style="width:120px;height:16px"></div><div class="sk" style="height:12px;margin-top:14px"></div><div class="sk" style="width:70%;height:12px;margin-top:8px"></div><div class="sk" style="height:48px;margin-top:16px;border-radius:14px"></div></div>
-    <div class="sec"><div class="sk" style="width:100px;height:16px"></div><div class="ah" style="margin-top:14px"><div class="sk" style="width:40px;height:40px;border-radius:12px;flex:none"></div><div class="col"><div class="sk" style="width:150px;height:14px"></div><div class="sk" style="width:100px;height:11px;margin-top:8px"></div></div></div><div class="sk" style="height:56px;margin-top:16px;border-radius:8px"></div></div>`;
-  return { body, foot: '' };
-}
-function offline() {
-  const body = `<div class="nt" style="color:var(--warn);margin-top:8px">${I.alert(16)}<div class="ntb">Check your connection, then try again.</div></div><div class="bar" style="margin-top:16px">${I.refresh(20)}<span>Try again</span></div>`;
-  return { body, foot: '' };
+function phone(theme, p, w) {
+  return `<div class="phone ${theme}" style="width:${w}px"><div class="sbar"></div><div class="pbar"><span class="back">${I.backIos(24)}</span><span class="pt">Take a seat</span></div>
+    <div class="scroll">${p.body}</div><div class="foot">${p.foot}</div><div class="nav"></div></div>`;
 }
 
-/* ---------------- frames ---------------- */
-function phone(theme, w, page, label) {
-  const screenH = w >= 412 ? 915 : 800;
-  return `<div class="frame"><div class="cap">${label}</div><div class="phone ${theme}" style="width:${w}px" data-h="${screenH}">
-    <div class="sbar"></div><div class="pbar"><span class="back">${I.backIos(24)}</span><span class="pt">Take a seat</span></div>
-    <div class="scroll">${page.body}</div>${page.foot ? `<div class="foot">${page.foot}</div>` : ''}<div class="nav"></div></div></div>`;
-}
-const four = (page, cap = '') => [['light', 412], ['dark', 412], ['light', 360], ['dark', 360]].map(([t, w]) => phone(t, w, page, `${t}, ${w}dp${cap}`)).join('');
-const block = (id, name, what, frames) => `<div class="state"><h4><span class="sid">${id}</span>${name}</h4>${what ? `<div class="what">${what}</div>` : ''}<div class="pair">${frames}</div></div>`;
+const STATES = [
+  ['Group not shown', { group: 'new' }],
+  ['Check failed', { group: 'failed', copied: true }],
+  ['Boxes unticked', { group: 'ok' }],
+  ['Ready', { group: 'ok', boxes: [true, true] }],
+  ['Short of tix', { group: 'ok', boxes: [true, true], tix: 60 }],
+  ['Sign-in open', { group: 'ok', boxes: [true, true], signIn: true, user: 'crewtest@sunrisenotes.app' }],
+];
+const frames = (list, w) => '<div class="row">' + list.map(([label, st]) => {
+  const p = page(st);
+  return `<div class="state"><div class="lbl">${label}</div><div class="pair">${phone('light', p, w)}${phone('dark', p, w)}</div></div>`;
+}).join('') + '</div>';
+document.getElementById('doc').innerHTML =
+  frames([['Group not shown, 360', { group: 'new' }], ['Check failed, 360', { group: 'failed', copied: true }]], 360) +
+  frames(STATES, 412);
 
-document.getElementById('now').innerHTML =
-  block('Now', 'Group not shown yet', 'The first thing anyone sees on the way in. Note the app name at body size, the 15sp headings, and the price paragraph.', four(built({ group: 'new' }))) +
-  block('Now', 'Group done, boxes unticked', 'A finished group still takes a heading and a row; the hint knows only the group and the boxes.', [['light', 412], ['dark', 360]].map(([t, w]) => phone(t, w, built({ group: 'ok' }), `${t}, ${w}dp`)).join(''));
-
-document.getElementById('rec').innerHTML =
-  block('1', 'Testers group not shown yet', 'Never checked. The group part is open: address with Copy, three steps, the check line, Verify on Play. The hint names the group first and scrolls to it when tapped.', four(recommended({ group: 'new' }))) +
-  block('2', 'Group done, boxes unticked', 'The group folds to one heading line with a green status. Seat details move up into the first screen. Both boxes show their warning and where to fix it.', four(recommended({ group: 'ok' }))) +
-  block('3', 'Ready to submit', 'Everything done. The warnings under the boxes are gone, the button is filled, and the hint says what the seat takes from the balance.', four(recommended({ group: 'ok', boxes: [true, true] }))) +
-  block('4', 'Short of tix', '60 tix. The details heading says "40 tix short", the price line turns red with the Open Circle pill at its end, and the hint says how many are missing.', four(recommended({ group: 'ok', boxes: [true, true], tix: 60 }))) +
-  block('5', 'Server refused: not_visible', 'Take a seat was tapped and the server said Play can\'t see the app. The group part opens again, the page scrolls to it, the heading says "Not shown yet", the check line carries the server\'s own words in amber, and the bar says Check again.', four(recommended({ group: 'refused', boxes: [true, true] }))) +
-  block('6', 'Needs a sign-in, fields open', 'Needs a sign-in chosen, the username typed, the password still empty. The hint says exactly that. Fields are the shared DialogField, 16dp apart.', four(recommended({ group: 'ok', boxes: [true, true], signIn: true, user: 'crewtest@sunrisenotes.app', focusPass: true })));
-
-document.getElementById('other').innerHTML =
-  block('L', 'Loading', 'My apps not read yet (after the process was recreated).', phone('light', 412, loading(), 'light, 412dp') + phone('dark', 412, loading(), 'dark, 412dp')) +
-  block('O', "Offline, app not loaded", '', phone('light', 412, offline(), 'light, 412dp') + phone('dark', 412, offline(), 'dark, 412dp'));
-
-/* ---------------- fold line and checks ---------------- */
-function folds() {
-  document.querySelectorAll('.phone').forEach(ph => {
-    const sc = ph.querySelector('.scroll'), ft = ph.querySelector('.foot');
-    sc.querySelectorAll('.fold').forEach(f => f.remove());
-    const H = +ph.dataset.h;
-    const visible = H - 24 - 64 - (ft ? ft.offsetHeight : 0) - 24;
-    if (sc.offsetHeight <= visible) return;
-    const f = document.createElement('div'); f.className = 'fold'; f.style.top = visible + 'px';
-    f.innerHTML = `<span>first screen ends</span>`; sc.appendChild(f);
+/* layout check for the headless run, kept out of sight */
+function check() {
+  const bad = [];
+  document.querySelectorAll('[data-tile]').forEach(row => {
+    const ic = row.querySelector('.ai, .t40'), col = row.querySelector('.col');
+    if (col.offsetHeight > ic.offsetHeight + 0.5) bad.push('tall: ' + col.textContent.trim().slice(0, 24));
   });
-}
-function checkIn(rootId, outId) {
-  const root = document.getElementById(rootId);
-  const bad = []; let n = 0;
-  root.querySelectorAll('[data-tile]').forEach(row => {
-    const ic = row.querySelector('.ai, .t40, .sk'), col = row.querySelector('.col');
-    if (!ic || !col) return; n++;
-    if (col.offsetHeight > ic.offsetHeight + 0.5) bad.push(`${col.textContent.trim().slice(0, 24)} (${col.offsetHeight} > ${ic.offsetHeight})`);
-  });
-  root.querySelectorAll('.one, .prim, .bar, .rp, .cpy, .hint span, .sh .st').forEach(t => {
+  document.querySelectorAll('.one, .prim, .bar, .rp, .cpy, .hint span, .sh .st').forEach(t => {
     if (t.scrollWidth > t.clientWidth + 1) bad.push('cut: ' + t.textContent.trim().slice(0, 40));
   });
-  root.querySelectorAll('.hint').forEach(h => { if (h.offsetHeight > 20.5) bad.push('hint wraps: ' + h.textContent.trim()); });
-  const el = document.getElementById(outId);
-  el.className = 'check ' + (bad.length ? 'bad' : 'good');
-  el.textContent = bad.length ? `Problems: ${[...new Set(bad)].join('; ')}` : `Checked ${n} icon rows and every one-line text: each text column fits its icon's height, and no name, status, hint or button label is cut or wraps, at 360 and 412.`;
+  document.querySelectorAll('.hint').forEach(h => { if (h.offsetHeight > 20.5) bad.push('wraps: ' + h.textContent.trim()); });
+  document.querySelectorAll('.af').forEach(f => { const a = f.querySelector('.a'); if (a.scrollWidth > a.clientWidth + 1 || f.offsetHeight > 56.5) bad.push('addr ' + f.closest('.phone').style.width + ' h' + f.offsetHeight); });
+  document.getElementById('chk').textContent = bad.length ? 'BAD ' + [...new Set(bad)].join('; ') : 'OK';
 }
-function run() { folds(); checkIn('now', 'chkNow'); checkIn('rec', 'chkNew'); const n = document.getElementById('chkNow'); if (n.className.endsWith('good')) n.textContent = 'Drawn from the code as it is today: CrewSeatScreen, CrewSeatSections and CrewSeatDetails, with their own sizes and gaps.'; }
-run(); document.fonts.ready.then(run);
+check(); document.fonts.ready.then(check);
 </script>
 </body>
 </html>
