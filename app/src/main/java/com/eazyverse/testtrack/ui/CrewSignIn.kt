@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Copy
 import com.composables.icons.lucide.Lucide
@@ -118,17 +119,25 @@ internal fun SignInFields(
     onPassword: (String) -> Unit,
     also: String,
     onAlso: (String) -> Unit,
+    /** The seat page's rhythm: 8 under the choice and 16 between fields, instead of the shared 10, 14 and 12. */
+    seatSpacing: Boolean = false,
 ) {
     TwoChoice("Does your app need a sign-in?", "No sign-in", "Needs a sign-in", !needed) { onNeeded(!it) }
     if (!needed) return
-    Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(if (seatSpacing) 8.dp else 10.dp))
     Text(
         "A test account the crew can use, as Play Console's App access asks for. Fourteen testers " +
             "see it, so never your own.",
-        style = MaterialTheme.typography.bodySmall,
-        color = Tt.colors.text3,
+        style =
+            if (seatSpacing) {
+                MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp)
+            } else {
+                MaterialTheme.typography.bodySmall
+            },
+        color = if (seatSpacing) Tt.colors.text2 else Tt.colors.text3,
     )
-    Spacer(Modifier.height(14.dp))
+    val between = if (seatSpacing) 16.dp else 12.dp
+    Spacer(Modifier.height(if (seatSpacing) 16.dp else 14.dp))
     DialogField(
         value = username,
         onValueChange = { onUsername(it.take(SIGN_IN_USER_MAX)) },
@@ -137,7 +146,7 @@ internal fun SignInFields(
         keyboardType = KeyboardType.Email,
         imeAction = ImeAction.Next,
     )
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(between))
     DialogField(
         value = password,
         onValueChange = { onPassword(it.take(SIGN_IN_PASS_MAX)) },
@@ -145,7 +154,7 @@ internal fun SignInFields(
         placeholder = "The test account's password",
         imeAction = ImeAction.Next,
     )
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(between))
     DialogField(
         value = also,
         onValueChange = { onAlso(it.take(SIGN_IN_ALSO_MAX)) },

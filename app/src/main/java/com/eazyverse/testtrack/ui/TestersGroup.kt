@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
@@ -122,13 +123,27 @@ internal fun GroupAddress(
     }
 }
 
-/** The three steps in Play Console; [last] is what to do once it is saved, which differs by screen. */
+/**
+ * The three steps in Play Console; [last] is what to do once it is saved, which differs by screen.
+ * [textStyle] is for a page that sets its own size for the words; the default is the shared look.
+ */
 @Composable
-internal fun GroupSteps(last: String) {
+internal fun GroupSteps(
+    last: String,
+    textStyle: TextStyle? = null,
+) {
     val steps =
         listOf(
-            bold("In Play Console, open ", "Test and release", ", then ", "Closed testing", ", then your track's ", "Testers", " tab."),
-            bold("Under ", "Google Groups", ", paste the address and save."),
+            boldParts(
+                "In Play Console, open ",
+                "Test and release",
+                ", then ",
+                "Closed testing",
+                ", then your track's ",
+                "Testers",
+                " tab.",
+            ),
+            boldParts("Under ", "Google Groups", ", paste the address and save."),
             AnnotatedString(last),
         )
     steps.forEachIndexed { index, step ->
@@ -140,13 +155,18 @@ internal fun GroupSteps(last: String) {
                 Text("${index + 1}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Tt.colors.tileInk)
             }
             Spacer(Modifier.width(10.dp))
-            Text(step, Modifier.weight(1f).padding(top = 1.dp), style = MaterialTheme.typography.bodySmall, color = Tt.colors.text2)
+            Text(
+                step,
+                Modifier.weight(1f).padding(top = if (textStyle != null) 2.dp else 1.dp),
+                style = textStyle ?: MaterialTheme.typography.bodySmall,
+                color = Tt.colors.text2,
+            )
         }
     }
 }
 
 /** Plain and bold in turn, starting plain: the names a person looks for on the Play Console page. */
-private fun bold(vararg parts: String): AnnotatedString =
+internal fun boldParts(vararg parts: String): AnnotatedString =
     buildAnnotatedString {
         parts.forEachIndexed { index, part ->
             if (index % 2 == 1) withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(part) } else append(part)

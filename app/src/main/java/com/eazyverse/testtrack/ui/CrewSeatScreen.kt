@@ -33,15 +33,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.RefreshCw
+import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AppAction
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.CrewAddViewModel
 import com.eazyverse.testtrack.viewmodel.TestingDriveViewModel
-
-/** The part of the page a refused seat is about, so the page can scroll to it. */
-private enum class SeatSpot { GROUP, BOXES }
 
 /**
  * Taking a seat, on one page with everything open: the app picked in [CrewSeatSheet], the testers
@@ -114,17 +112,26 @@ internal fun CrewSeatScreen(
     val boxes = app?.let(apps::boxes) ?: SeatBoxes()
     // A refused seat scrolls to the part it is about.
     val groupSpot = remember { BringIntoViewRequester() }
+    val detailsSpot = remember { BringIntoViewRequester() }
     val boxesSpot = remember { BringIntoViewRequester() }
     var jump by remember { mutableStateOf<SeatSpot?>(null) }
     LaunchedEffect(jump) {
         when (jump) {
             SeatSpot.GROUP -> groupSpot.bringIntoView()
+            SeatSpot.DETAILS -> detailsSpot.bringIntoView()
             SeatSpot.BOXES -> boxesSpot.bringIntoView()
             null -> Unit
         }
         jump = null
     }
     val groupOpen = app != null && (!app.verified || notVisible != null)
+    val facts = app?.let { apps.facts[it.id] }
+    val failedAt = app?.let { apps.failedChecks[it.id] }
+    // The newer of what the server kept and what this run was told.
+    val newestFailed = failedAt != null && (facts?.checkedAt == null || failedAt >= facts.checkedAt)
+    val checkedAt = if (newestFailed) failedAt else facts?.checkedAt
+    val checkedOk = if (newestFailed) false else facts?.checkedOk
+    val checkFailed = notVisible != null || checkedOk == false
     val waiting = waitingName?.let { SeatWaiting(it, waitingId) }
     val details =
         app?.let {
@@ -133,6 +140,8 @@ internal fun CrewSeatScreen(
                 crewName = crews.open?.name,
                 busy = crews.seating || drive.busy,
                 groupReady = !groupOpen,
+                groupFailed = checkFailed,
+                seating = crews.seating,
                 boxesReady = boxes.both,
                 needsDrive = drive.connected == false,
                 driveMessage = drive.message,
@@ -163,31 +172,22 @@ internal fun CrewSeatScreen(
             ) {
                 Spacer(Modifier.height(8.dp))
                 if (app == null && !loading && apps.offline) {
-                    Text("Check your connection, then try again.", style = MaterialTheme.typography.bodySmall, color = Tt.colors.text2)
-                    Spacer(Modifier.height(12.dp))
+                    Notice(Tt.colors.warn, Lucide.TriangleAlert, boxed = false) {
+                        Text("Check your connection, then try again.", style = MaterialTheme.typography.bodySmall, color = Tt.colors.text2)
+                    }
+                    Spacer(Modifier.height(16.dp))
                     SeatBar("Try again", Lucide.RefreshCw, onClick = { apps.load(context) })
                 } else if (app == null || details == null) {
-                    SeatTileSkeleton(120.dp, 160.dp)
+                    SeatPageSkeleton()
                 } else {
-                    FoundApp(app.pkg, app.name, app.icon, app.developer, unchecked = false, onChange = null)
-                    Text(
-                        "Your app goes in with ${CrewRules.SEATS - 1} others",
-                        Modifier.padding(top = 2.dp, bottom = 10.dp),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Tt.colors.text2,
-                    )
-                    val facts = apps.facts[app.id]
-                    val failedAt = apps.failedChecks[app.id]
-                    // The newer of what the server kept and what this run was told.
-                    val newestFailed = failedAt != null && (facts?.checkedAt == null || failedAt >= facts.checkedAt)
-                    val checkedAt = if (newestFailed) failedAt else facts?.checkedAt
-                    val checkedOk = if (newestFailed) false else facts?.checkedOk
+                    SeatAppHead(app)
+                    Spacer(Modifier.height(24.dp))
                     Column(Modifier.fillMaxWidth().bringIntoViewRequester(groupSpot)) {
                         CrewSeatGroup(
                             SeatGroupState(
                                 open = groupOpen,
                                 checkLine = lastCheckLine(checkedAt, checkedOk, System.currentTimeMillis(), notVisible),
-                                checkFailed = notVisible != null || checkedOk == false,
+                                checkFailed = checkFailed,
                                 checking = apps.acting == app.id && apps.actingOn == AppAction.VERIFY,
                                 error = apps.actionError.takeIf { failedAt == null },
                             ),
@@ -198,11 +198,11 @@ internal fun CrewSeatScreen(
                             },
                         )
                     }
-                    Spacer(Modifier.height(24.dp))
-                    Column(Modifier.fillMaxWidth()) {
+                    Spacer(Modifier.height(32.dp))
+                    Column(Modifier.fillMaxWidth().bringIntoViewRequester(detailsSpot)) {
                         CrewSeatDetails(details, crews = crews, vm = vm, onOpenCircle = onOpenCircle)
                     }
-                    Spacer(Modifier.height(24.dp))
+                    Spacer(Modifier.height(32.dp))
                     Column(Modifier.fillMaxWidth().bringIntoViewRequester(boxesSpot)) {
                         CrewSeatConfirm(
                             boxes = boxes,
@@ -252,7 +252,7 @@ internal fun CrewSeatScreen(
                 // Pinned under the page, above the bar and keyboard the route already clears.
                 Spacer(Modifier.fillMaxWidth().height(1.dp).background(Tt.colors.hair))
                 Column(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 12.dp, bottom = 12.dp)) {
-                    CrewSeatSubmit(details, vm) {
+                    CrewSeatSubmit(details, vm, onSpot = { jump = it }) {
                         if (drive.connected == true) {
                             take()
                         } else {

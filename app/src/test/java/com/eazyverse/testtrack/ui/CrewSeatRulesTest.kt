@@ -154,4 +154,69 @@ class CrewSeatRulesTest {
         assertEquals("Crew 05", appealCrewFor(listOf(crew), "com.example.app"))
         assertNull(appealCrewFor(listOf(crew), "com.example.other"))
     }
+
+    /** Everything done: the baseline each hint test changes one thing in. */
+    private fun hint(
+        groupReady: Boolean = true,
+        groupFailed: Boolean = false,
+        name: String = "Sunrise Notes",
+        signInNeeded: Boolean = false,
+        user: String = "",
+        pass: String = "",
+        also: String = "",
+        tix: Int? = 240,
+        shortServer: Boolean = false,
+        held: Boolean = false,
+        boxesReady: Boolean = true,
+        busy: Boolean = false,
+    ) = seatHint(groupReady, groupFailed, name, signInNeeded, user, pass, also, tix, shortServer, held, boxesReady, busy, 100)
+
+    @Test
+    fun theHintSaysWhatTheSeatTakesWhenNothingIsMissing() {
+        assertEquals(SeatHint(SeatHintKind.READY, "100 tix come off your 240", null), hint())
+        assertEquals("100 tix come off your balance", hint(tix = null).text)
+    }
+
+    @Test
+    fun theGroupComesFirstAndAFailedCheckIsAWarning() {
+        val first = hint(groupReady = false, name = "", boxesReady = false, tix = 10)
+        assertEquals(SeatHint(SeatHintKind.TODO, "Verify the testers group first", SeatSpot.GROUP), first)
+        val failed = hint(groupReady = false, groupFailed = true)
+        assertEquals(SeatHint(SeatHintKind.WARN, "Play doesn't show it to the group yet", SeatSpot.GROUP), failed)
+    }
+
+    @Test
+    fun theNameThenTheSignInAreAskedInOrder() {
+        assertEquals(SeatHint(SeatHintKind.TODO, "Give it a name the crew sees", SeatSpot.DETAILS), hint(name = "  ", tix = 10))
+        assertEquals("Add the test account's username", hint(signInNeeded = true, pass = "x").text)
+        assertEquals("Add the test account's password", hint(signInNeeded = true, user = "u").text)
+        // A free note stands in for both, as the button's own rule allows.
+        assertEquals(SeatHintKind.READY, hint(signInNeeded = true, also = "skip the intro").kind)
+        // A sign-in that is not needed is never asked for.
+        assertEquals(SeatHintKind.READY, hint(signInNeeded = false).kind)
+    }
+
+    @Test
+    fun shortTixWarnsWithHowManyOrWithTheServersWord() {
+        assertEquals(SeatHint(SeatHintKind.WARN, "You need 40 more tix", SeatSpot.DETAILS), hint(tix = 60, boxesReady = false))
+        assertEquals(SeatHint(SeatHintKind.WARN, "Not enough tix for a seat", SeatSpot.DETAILS), hint(shortServer = true))
+        assertEquals(SeatHintKind.READY, hint(tix = 100).kind)
+    }
+
+    @Test
+    fun anAppealHoldsTheSeatBeforeTheBoxesAreAsked() {
+        assertEquals(
+            SeatHint(SeatHintKind.WARN, "Wait for the team to answer your appeal", SeatSpot.DETAILS),
+            hint(held = true, boxesReady = false),
+        )
+        assertEquals(SeatHint(SeatHintKind.TODO, "Tick both Play Console boxes", SeatSpot.BOXES), hint(boxesReady = false))
+    }
+
+    @Test
+    fun whileTheSeatIsBeingCheckedTheHintOnlySaysSo() {
+        val busy = hint(busy = true)
+        assertEquals(SeatHintKind.BUSY, busy.kind)
+        assertEquals("Checking it on Play the way the crew will see it", busy.text)
+        assertNull(busy.spot)
+    }
 }

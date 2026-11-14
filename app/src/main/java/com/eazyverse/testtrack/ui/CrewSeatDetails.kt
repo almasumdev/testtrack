@@ -1,21 +1,34 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Coins
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -36,6 +49,10 @@ internal class SeatDetailsState(
     val busy: Boolean,
     /** Play shows the app to the testers group: the seat can't be submitted before. */
     val groupReady: Boolean,
+    /** Play was asked and said no, or a seat was refused for it: the hint says so instead of asking for a check. */
+    val groupFailed: Boolean = false,
+    /** The seat was sent and Play is being asked the way the crew will see it. */
+    val seating: Boolean = false,
     /** Both Play Console boxes are ticked: the seat can't be submitted before. */
     val boxesReady: Boolean,
     val needsDrive: Boolean,
@@ -65,8 +82,10 @@ internal fun CrewSeatDetails(
     onOpenCircle: () -> Unit,
 ) {
     val app = state.app
-    SeatHeading("Seat details")
-    Spacer(Modifier.height(4.dp))
+    val short = vm.short || state.shortTix
+    SeatHeading("Seat details", if (short) SeatStatus.warn(shortHeadline(vm.tix)) else null)
+    CrewOpenHeader(crews.open)
+    Spacer(Modifier.height(16.dp))
     DialogField(
         value = vm.name,
         onValueChange = vm::rename,
@@ -75,7 +94,7 @@ internal fun CrewSeatDetails(
         imeAction = ImeAction.Next,
         maxLength = FeedRules.APP_NAME_MAX,
     )
-    Spacer(Modifier.height(20.dp))
+    Spacer(Modifier.height(16.dp))
     SignInFields(
         needed = vm.needsSignIn,
         onNeeded = vm::chooseSignIn,
@@ -85,19 +104,17 @@ internal fun CrewSeatDetails(
         onPassword = vm::typePassword,
         also = vm.also,
         onAlso = vm::typeAlso,
+        seatSpacing = true,
     )
+    Spacer(Modifier.height(24.dp))
+    SeatPrice(vm.tix, short, crews.running, onOpenCircle)
+    // Every notice goes under the rules, 16dp apart.
     state.refusal?.let {
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(16.dp))
         AskMessage(AskFailure("Couldn't take the seat", it))
     }
-    Spacer(Modifier.height(18.dp))
-    SeatPrice(vm.tix, crews.running)
-    if (vm.short || state.shortTix) {
-        Spacer(Modifier.height(12.dp))
-        ShortOfTix(onOpenCircle)
-    }
     state.waiting?.let { waiting ->
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
         Notice(Tt.colors.warn, Lucide.TriangleAlert, boxed = false) {
             Text(
                 "Your app waits in ${waiting.crewName.ifBlank { "a crew" }}",
@@ -121,13 +138,9 @@ internal fun CrewSeatDetails(
             }
         }
     }
-    Spacer(Modifier.height(14.dp))
-    if (crews.seating) {
-        DialogNote("Checking it on Play the way the crew will see it. This can take half a minute.")
-        Spacer(Modifier.height(12.dp))
-    }
     // While an appeal waits, no new seat anywhere: the answer decides which way they go.
     state.held?.let { (appName, crewName) ->
+        Spacer(Modifier.height(16.dp))
         Notice(Status.short, Lucide.TriangleAlert, boxed = false) {
             Text(
                 "You asked to get $appName back into $crewName. You can take a new seat once the team answers.",
@@ -135,32 +148,44 @@ internal fun CrewSeatDetails(
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
-        Spacer(Modifier.height(12.dp))
     }
 }
 
-/** The button that takes the seat, with the Drive note above it and its message under it. Pinned by the screen. */
+/** The details heading's status when tix are short: how many, once the balance is known. */
+private fun shortHeadline(tix: Int?): String =
+    if (tix != null && tix < CrewRules.SEAT_COST) "${CrewRules.SEAT_COST - tix} tix short" else "Not enough tix"
+
+/** The button that takes the seat, with the Drive note and the hint above it and its message under it. Pinned by the screen. */
 @Composable
 internal fun CrewSeatSubmit(
     state: SeatDetailsState,
     vm: CrewAddViewModel,
+    onSpot: (SeatSpot) -> Unit,
     onTake: () -> Unit,
 ) {
     if (state.needsDrive) {
         DialogNote("Each night's pictures go to your own Google Drive, so it is connected before you take a seat.")
-        Spacer(Modifier.height(12.dp))
-    }
-    // What is still missing from the two sections above, said once, the group first.
-    val missing =
-        when {
-            !state.groupReady -> "Verify the testers group first"
-            !state.boxesReady -> "Tick both boxes to submit"
-            else -> null
-        }
-    missing?.let {
-        DialogNote(it)
         Spacer(Modifier.height(8.dp))
     }
+    // What is still missing from the page, the first thing first. Tapping it goes there.
+    val hint =
+        seatHint(
+            groupReady = state.groupReady,
+            groupFailed = state.groupFailed,
+            name = vm.name,
+            signInNeeded = vm.needsSignIn,
+            user = vm.username,
+            pass = vm.password,
+            also = vm.also,
+            tix = vm.tix,
+            shortServer = state.shortTix,
+            held = state.held != null,
+            boxesReady = state.boxesReady,
+            busy = state.seating,
+            cost = CrewRules.SEAT_COST,
+        )
+    SeatHintRow(hint, onSpot)
+    Spacer(Modifier.height(8.dp))
     val seat = state.crewName?.let { "Take a seat in $it" } ?: "Take a seat"
     Primary(
         if (state.needsDrive) "Connect Drive and take a seat" else seat,
@@ -181,60 +206,86 @@ internal fun CrewSeatSubmit(
     }
 }
 
+private val PriceLine = tileStyle(12.5f, 14f, FontWeight.Medium)
+private val PriceLineBold = tileStyle(12.5f, 14f, FontWeight.SemiBold)
+
 /**
  * What the seat costs and what there is to pay it from, said before the button rather than as a
- * refusal after it, and what it asks of the nights: every crew somebody is in is fourteen apps a night.
+ * refusal after it, then the rules in three short lines, ending on what it asks of the nights: every
+ * crew somebody is in is fourteen apps a night. Short of tix puts Circle one tap away at the row's end.
  */
 @Composable
 private fun SeatPrice(
     tix: Int?,
+    short: Boolean,
     running: Int,
+    onOpenCircle: () -> Unit,
 ) {
-    val short = tix != null && tix < CrewRules.SEAT_COST
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text("A seat costs", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Tt.colors.text)
-            Spacer(Modifier.height(2.dp))
-            val back = "Back in full if you take it out while the crew fills, or finish every day."
-            Text(
-                if (tix == null) back else "You have $tix tix. $back",
-                style = MaterialTheme.typography.bodySmall,
-                color = if (short) Tt.colors.bad else Tt.colors.text3,
-            )
+    val t = Tt.colors
+    Row(Modifier.fillMaxWidth().heightIn(min = 40.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(t.tile),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Lucide.Coins, null, Modifier.size(20.dp), tint = t.tileInk)
         }
         Spacer(Modifier.width(12.dp))
-        Text(
-            "${CrewRules.SEAT_COST} tix",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = Tt.colors.accentInk,
-        )
+        Column(Modifier.weight(1f)) {
+            Text(
+                "A seat is ${CrewRules.SEAT_COST} tix",
+                style = AppTileName,
+                color = t.text,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val line =
+                when {
+                    tix != null && tix < CrewRules.SEAT_COST -> "You have $tix tix, ${CrewRules.SEAT_COST - tix} short"
+                    short -> "Not enough tix for a seat"
+                    tix != null -> "You have $tix tix"
+                    else -> null
+                }
+            if (line != null) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    line,
+                    style = if (short) PriceLineBold else PriceLine,
+                    color = if (short) t.warn else t.text3,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        if (short) {
+            Spacer(Modifier.width(8.dp))
+            RowPill("Open Circle", PillKind.SOFT, onClick = onOpenCircle)
+        }
     }
-    Spacer(Modifier.height(8.dp))
-    Text(
-        "You open theirs every day for ${CrewRules.RUN_DAYS} days, and they open yours. That puts you on " +
-            "${CrewRules.nightly(running + 1)} apps a night.",
-        style = MaterialTheme.typography.bodySmall,
-        color = Tt.colors.text3,
-    )
-}
-
-/** Tix spent elsewhere after "Take a seat" was tapped: said once, the button held, Circle one tap away. */
-@Composable
-private fun ShortOfTix(onOpenCircle: () -> Unit) {
-    Notice(Tt.colors.warn, Lucide.TriangleAlert, boxed = false) {
-        Text("Not enough tix yet", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Tt.colors.text)
-        Text(
-            "Review somebody's app in Circle to earn the rest.",
-            style = MaterialTheme.typography.bodySmall,
-            color = Tt.colors.text2,
+    Spacer(Modifier.height(16.dp))
+    val bold = SpanStyle(fontWeight = FontWeight.SemiBold, color = t.text)
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        RuleLine(
+            buildAnnotatedString {
+                append("All ")
+                withStyle(bold) { append("${CrewRules.SEAT_COST} tix") }
+                append(" come back if you take it out while the crew fills, or open every app every night to the end.")
+            },
         )
-        Text(
-            "Open Circle",
-            Modifier.clickable(onClick = onOpenCircle).padding(top = 6.dp, bottom = 4.dp, end = 12.dp),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = Tt.colors.accentInk,
+        RuleLine(
+            buildAnnotatedString {
+                append("You open the other ")
+                withStyle(bold) { append("${CrewRules.SEATS - 1}") }
+                append(" apps every day for ")
+                withStyle(bold) { append("${CrewRules.RUN_DAYS}") }
+                append(" days, and they open yours.")
+            },
+        )
+        RuleLine(
+            buildAnnotatedString {
+                append("That puts you on ")
+                withStyle(bold) { append("${CrewRules.nightly(running + 1)}") }
+                append(" apps a night.")
+            },
         )
     }
 }

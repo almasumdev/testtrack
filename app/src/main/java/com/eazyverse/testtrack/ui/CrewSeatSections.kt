@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -65,43 +64,47 @@ private fun BoxRow(
     label: String,
     on: Boolean,
     why: String,
-    how: String,
+    how: Array<String>,
     onChange: (Boolean) -> Unit,
 ) {
     val t = Tt.colors
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(top = 4.dp)
-            .heightIn(min = 44.dp)
+            .heightIn(min = 48.dp)
             .toggleable(value = on, role = Role.Checkbox, onValueChange = onChange),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val shape = RoundedCornerShape(6.dp)
         Box(
             Modifier
-                .size(20.dp)
+                .size(22.dp)
                 .clip(shape)
                 .then(if (on) Modifier.background(t.accent) else Modifier.border(1.5.dp, t.glassBorderStrong, shape)),
             contentAlignment = Alignment.Center,
         ) {
-            if (on) Icon(Lucide.Check, null, Modifier.size(13.dp), tint = t.onAccent)
+            if (on) Icon(Lucide.Check, null, Modifier.size(14.dp), tint = t.onAccent)
         }
-        Spacer(Modifier.width(10.dp))
-        Text(label, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 19.sp), color = t.text)
+        Spacer(Modifier.width(12.dp))
+        Text(label, style = tileStyle(15f, 20f, FontWeight.Medium), color = t.text)
     }
     if (!on) {
-        Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.Top) {
+        // Lined up with the label: the box and its gap are 34dp.
+        Row(Modifier.padding(start = 34.dp), verticalAlignment = Alignment.Top) {
             Icon(Lucide.TriangleAlert, null, Modifier.padding(top = 2.dp).size(13.dp), tint = t.warn)
-            Spacer(Modifier.width(5.dp))
+            Spacer(Modifier.width(6.dp))
             Text(why, style = SmallLine, color = t.warn)
         }
-        Text(how, Modifier.padding(top = 3.dp), style = SmallLine, color = t.text3)
+        Text(boldParts(*how), Modifier.padding(start = 34.dp, top = 2.dp), style = SmallLine, color = t.text3)
+        Spacer(Modifier.height(8.dp))
     }
 }
 
 private val SmallLine
     @Composable get() = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp)
+
+private val BodyLine
+    @Composable get() = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp)
 
 /** What the testers group section needs to draw and to ask. */
 internal class SeatGroupState(
@@ -115,58 +118,38 @@ internal class SeatGroupState(
     val error: String?,
 )
 
-/** A section's heading on the seat page: plain text, no box. */
-@Composable
-internal fun SeatHeading(text: String) {
-    Text(
-        text,
-        Modifier.padding(bottom = 8.dp),
-        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp, lineHeight = 19.sp),
-        fontWeight = FontWeight.SemiBold,
-        color = Tt.colors.text,
-    )
-}
-
-/** Testers group: what to add in Play Console and the check, or one row once Play shows the app to the group. */
+/** Testers group: what to add in Play Console and the check, or only its heading once Play shows the app to the group. */
 @Composable
 internal fun CrewSeatGroup(
     state: SeatGroupState,
     onVerify: () -> Unit,
 ) {
     val t = Tt.colors
-    SeatHeading("Testers group")
     if (!state.open) {
-        Row(Modifier.fillMaxWidth().heightIn(min = 36.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(22.dp).clip(CircleShape).background(t.okBg), contentAlignment = Alignment.Center) {
-                Icon(Lucide.Check, null, Modifier.size(13.dp), tint = t.ok)
-            }
-            Spacer(Modifier.width(12.dp))
-            Text(
-                "Play shows it to the group",
-                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 19.sp),
-                color = t.text2,
-            )
-        }
+        SeatHeading("Testers group", SeatStatus.ok("Play shows it"), gap = 0.dp)
         return
     }
+    SeatHeading("Testers group", if (state.checkFailed) SeatStatus.warn("Not shown yet") else null)
     Text(
-        "In Play Console, add this group as testers on your app's closed track, then roll out a release to it.",
-        style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp),
+        "Crew members install your app through this Google Group. Play has to show your app to it first.",
+        style = BodyLine,
         color = t.text2,
     )
-    Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(4.dp))
     GroupAddress(flat = true)
+    GroupSteps("Roll out a release to that track.", textStyle = BodyLine)
+    Spacer(Modifier.height(16.dp))
     if (state.checkFailed) {
-        Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.Top) {
-            Icon(Lucide.TriangleAlert, null, Modifier.padding(top = 1.dp).size(14.dp), tint = t.warn)
+        Row(verticalAlignment = Alignment.Top) {
+            Icon(Lucide.TriangleAlert, null, Modifier.padding(top = 1.5.dp).size(14.dp), tint = t.warn)
             Spacer(Modifier.width(6.dp))
             Text(state.checkLine, style = SmallLine, color = t.warn)
         }
     } else {
-        Text(state.checkLine, Modifier.padding(top = 10.dp), style = SmallLine, color = t.text3)
+        Text(state.checkLine, style = SmallLine, color = t.text3)
     }
-    state.error?.let { Text(it, Modifier.padding(top = 6.dp), style = SmallLine, color = t.bad) }
-    Spacer(Modifier.height(12.dp))
+    state.error?.let { Text(it, Modifier.padding(top = 8.dp), style = SmallLine, color = t.bad) }
+    Spacer(Modifier.height(8.dp))
     SeatBar(
         if (state.checking) {
             "Asking Play"
@@ -192,10 +175,11 @@ internal fun CrewSeatConfirm(
     val t = Tt.colors
     SeatHeading("Before you submit")
     Text(
-        "Both are needed, so every member can install it.",
-        style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp),
+        "You set both in Play Console. Every member needs them to install your app.",
+        style = BodyLine,
         color = t.text2,
     )
+    Spacer(Modifier.height(8.dp))
     CrewSeatBoxes(boxes, onBoxes)
     boxesMessage?.let { Text(it, Modifier.padding(top = 8.dp), style = SmallLine, color = t.warn) }
 }

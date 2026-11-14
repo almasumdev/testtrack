@@ -265,7 +265,7 @@ private fun RuleGroup(
 
 /** A 4dp dot flush at the content edge; wrapped lines hang under the text. */
 @Composable
-private fun RuleLine(text: androidx.compose.ui.text.AnnotatedString) {
+internal fun RuleLine(text: androidx.compose.ui.text.AnnotatedString) {
     Row(Modifier.fillMaxWidth()) {
         Box(
             Modifier

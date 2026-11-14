@@ -102,14 +102,70 @@ fun SeatNeed.line(): String =
         SeatNeed.NONE -> "Ready to go in"
     }
 
-/** The amber line under an unticked box, and where to fix it. Asked only when a seat is submitted. */
+/**
+ * The amber line under an unticked box, and where to fix it. Asked only when a seat is submitted.
+ * The "how" lines alternate plain and bold, starting plain, so the names to look for stand out.
+ */
 object SeatBoxCopy {
     const val COUNTRIES = "Available in all countries"
     const val DEVICES = "Not limited to some devices"
     const val COUNTRIES_WHY = "Members in other countries can't install it. If two of them report that, you lose your seat."
     const val DEVICES_WHY = "Members on excluded phones can't install it. If two of them report that, you lose your seat."
-    const val COUNTRIES_HOW = "In Play Console: Closed testing, Countries/regions, add all countries."
-    const val DEVICES_HOW = "In Play Console: Device catalog, remove excluded devices."
+    val COUNTRIES_HOW = arrayOf("In Play Console, open ", "Closed testing", ", then ", "Countries/regions", ", and add all countries.")
+    val DEVICES_HOW = arrayOf("In Play Console, open ", "Device catalog", " and remove excluded devices.")
+}
+
+/** The part of the seat page a hint or a refused seat is about, so the page can scroll to it. */
+enum class SeatSpot { GROUP, DETAILS, BOXES }
+
+/** How the line over the button looks: a step to do, something wrong, all done, or working. */
+enum class SeatHintKind { TODO, WARN, READY, BUSY }
+
+/** The line over the seat button: what it says, how it looks, and where tapping it goes (null for none). */
+data class SeatHint(
+    val kind: SeatHintKind,
+    val text: String,
+    val spot: SeatSpot?,
+)
+
+/**
+ * The first thing still missing before the seat can be taken, in the order the page shows it: the
+ * group, the name, the sign-in, the tix, the appeal, the boxes. When nothing is missing it says what
+ * the seat takes from the balance. While the seat is being checked on Play that is all it says.
+ *
+ * [tix] is null until the server has said; [shortServer] is the server saying tix are short even if
+ * the balance on this phone did not. [also] is the sign-in's free note, which stands in for a
+ * username and password, as the button's own rule allows.
+ */
+fun seatHint(
+    groupReady: Boolean,
+    groupFailed: Boolean,
+    name: String,
+    signInNeeded: Boolean,
+    user: String,
+    pass: String,
+    also: String = "",
+    tix: Int?,
+    shortServer: Boolean,
+    held: Boolean,
+    boxesReady: Boolean,
+    busy: Boolean,
+    cost: Int,
+): SeatHint {
+    val signInOpen = signInNeeded && also.isBlank()
+    return when {
+        busy -> SeatHint(SeatHintKind.BUSY, "Checking it on Play the way the crew will see it", null)
+        !groupReady && groupFailed -> SeatHint(SeatHintKind.WARN, "Play doesn't show it to the group yet", SeatSpot.GROUP)
+        !groupReady -> SeatHint(SeatHintKind.TODO, "Verify the testers group first", SeatSpot.GROUP)
+        name.isBlank() -> SeatHint(SeatHintKind.TODO, "Give it a name the crew sees", SeatSpot.DETAILS)
+        signInOpen && user.isBlank() -> SeatHint(SeatHintKind.TODO, "Add the test account's username", SeatSpot.DETAILS)
+        signInOpen && pass.isBlank() -> SeatHint(SeatHintKind.TODO, "Add the test account's password", SeatSpot.DETAILS)
+        tix != null && tix < cost -> SeatHint(SeatHintKind.WARN, "You need ${cost - tix} more tix", SeatSpot.DETAILS)
+        shortServer -> SeatHint(SeatHintKind.WARN, "Not enough tix for a seat", SeatSpot.DETAILS)
+        held -> SeatHint(SeatHintKind.WARN, "Wait for the team to answer your appeal", SeatSpot.DETAILS)
+        !boxesReady -> SeatHint(SeatHintKind.TODO, "Tick both Play Console boxes", SeatSpot.BOXES)
+        else -> SeatHint(SeatHintKind.READY, "$cost tix come off your ${tix ?: "balance"}", null)
+    }
 }
 
 private const val PLAY_DOESNT_SHOW = "Play doesn't show it to the group yet. A new rollout can take a few hours to show."
