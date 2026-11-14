@@ -60,7 +60,11 @@ private const val WHY = "Crew members and reviewers install your closed test thr
 
 /** The testers group's address, and Copy. Selectable too, for whoever long-presses it. */
 @Composable
-internal fun GroupAddress(modifier: Modifier = Modifier) {
+internal fun GroupAddress(
+    modifier: Modifier = Modifier,
+    /** No field box around the address, for a page that keeps no boxes: the address and Copy on the page. */
+    flat: Boolean = false,
+) {
     val clipboard = LocalClipboardManager.current
     var copied by remember { mutableStateOf(false) }
     LaunchedEffect(copied) {
@@ -73,10 +77,17 @@ internal fun GroupAddress(modifier: Modifier = Modifier) {
     Row(
         modifier
             .fillMaxWidth()
-            .clip(shape)
-            .background(Tt.colors.field)
-            .border(1.dp, Tt.colors.fieldBorder, shape)
-            .padding(start = 12.dp, end = 4.dp),
+            .then(
+                if (flat) {
+                    Modifier
+                } else {
+                    Modifier
+                        .clip(shape)
+                        .background(Tt.colors.field)
+                        .border(1.dp, Tt.colors.fieldBorder, shape)
+                        .padding(start = 12.dp, end = 4.dp)
+                },
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SelectionContainer(Modifier.weight(1f)) {

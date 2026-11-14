@@ -219,17 +219,26 @@ fun Notice(
     tone: Color,
     icon: ImageVector,
     modifier: Modifier = Modifier,
+    /** False on a page that keeps no boxes: the glyph and the words on the page, no hairline. */
+    boxed: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = RoundedCornerShape(12.dp)
     Row(
         modifier
             .fillMaxWidth()
-            .clip(shape)
-            // Forty per cent, not full strength. At full strength a hairline reads as a box that
-            // has been drawn around something, which is louder than the sentence inside it.
-            .border(1.dp, tone.copy(alpha = 0.42f), shape)
-            .padding(horizontal = 13.dp, vertical = 12.dp),
+            .then(
+                if (boxed) {
+                    Modifier
+                        .clip(shape)
+                        // Forty per cent, not full strength. At full strength a hairline reads as a box that
+                        // has been drawn around something, which is louder than the sentence inside it.
+                        .border(1.dp, tone.copy(alpha = 0.42f), shape)
+                        .padding(horizontal = 13.dp, vertical = 12.dp)
+                } else {
+                    Modifier
+                },
+            ),
         verticalAlignment = Alignment.Top,
     ) {
         Icon(icon, null, Modifier.padding(top = 1.dp).size(16.dp), tint = tone)

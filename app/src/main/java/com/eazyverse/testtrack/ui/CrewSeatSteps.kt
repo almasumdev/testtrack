@@ -140,7 +140,7 @@ internal fun CrewSeatSteps(
                 color = t.text2,
             )
             Spacer(Modifier.height(10.dp))
-            GroupAddress()
+            GroupAddress(flat = true)
             if (state.checkFailed) {
                 Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.Top) {
                     Icon(Lucide.TriangleAlert, null, Modifier.padding(top = 1.dp).size(14.dp), tint = t.warn)
@@ -191,22 +191,14 @@ internal fun CrewSeatSteps(
     }
 }
 
-/** The step in hand: its number lit, its words in ink, and its body in a hairline box under them. */
+/** The step in hand: its number lit, its words in ink, and its body under them in line with the words. */
 @Composable
 private fun OpenStep(
     number: Int,
     title: String,
     body: @Composable () -> Unit,
 ) {
-    val shape = RoundedCornerShape(12.dp)
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clip(shape)
-            .border(1.dp, Tt.colors.cardLine, shape)
-            .padding(start = 12.dp, end = 12.dp, top = 7.dp, bottom = 12.dp),
-    ) {
+    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Row(Modifier.heightIn(min = 36.dp), verticalAlignment = Alignment.CenterVertically) {
             Dot(number.toString(), Tt.colors.accent, Tt.colors.onAccent)
             Spacer(Modifier.width(12.dp))
@@ -217,7 +209,8 @@ private fun OpenStep(
                 color = Tt.colors.text,
             )
         }
-        body()
+        // Under the title's own text: the dot's 22dp and the 12dp after it.
+        Column(Modifier.fillMaxWidth().padding(start = 34.dp, bottom = 8.dp)) { body() }
     }
 }
 

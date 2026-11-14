@@ -93,7 +93,7 @@ internal fun CrewSeatDetails(
     }
     state.waiting?.let { waiting ->
         Spacer(Modifier.height(12.dp))
-        Notice(Tt.colors.warn, Lucide.TriangleAlert) {
+        Notice(Tt.colors.warn, Lucide.TriangleAlert, boxed = false) {
             Text(
                 "Your app waits in ${waiting.crewName.ifBlank { "a crew" }}",
                 style = MaterialTheme.typography.titleSmall,
@@ -123,7 +123,7 @@ internal fun CrewSeatDetails(
     }
     // While an appeal waits, no new seat anywhere: the answer decides which way they go.
     state.held?.let { (appName, crewName) ->
-        Notice(Status.short, Lucide.TriangleAlert) {
+        Notice(Status.short, Lucide.TriangleAlert, boxed = false) {
             Text(
                 "You asked to get $appName back into $crewName. You can take a new seat once the team answers.",
                 style = MaterialTheme.typography.bodySmall,
@@ -200,7 +200,7 @@ private fun SeatPrice(
 /** Tix spent elsewhere after "Take a seat" was tapped: said once, the button held, Circle one tap away. */
 @Composable
 private fun ShortOfTix(onOpenCircle: () -> Unit) {
-    Notice(Tt.colors.warn, Lucide.TriangleAlert) {
+    Notice(Tt.colors.warn, Lucide.TriangleAlert, boxed = false) {
         Text("Not enough tix yet", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Tt.colors.text)
         Text(
             "Review somebody's app in Circle to earn the rest.",

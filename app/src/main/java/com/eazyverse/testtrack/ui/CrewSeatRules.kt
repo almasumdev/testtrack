@@ -126,8 +126,8 @@ fun stepsLeftLine(left: Int): String = if (left == 1) "1 step before it can go i
 object SeatBoxCopy {
     const val COUNTRIES = "Available in all countries"
     const val DEVICES = "Not limited to some devices"
-    const val COUNTRIES_WHY = "Members in other countries can't install it, and two can't-install answers send your seat back."
-    const val DEVICES_WHY = "Members on excluded phones can't install it, and two can't-install answers send your seat back."
+    const val COUNTRIES_WHY = "Members in other countries can't install it. If two of them report that, you lose your seat."
+    const val DEVICES_WHY = "Members on excluded phones can't install it. If two of them report that, you lose your seat."
     const val COUNTRIES_HOW = "In Play Console: Closed testing, Countries/regions, add all countries."
     const val DEVICES_HOW = "In Play Console: Device catalog, remove excluded devices."
 }
