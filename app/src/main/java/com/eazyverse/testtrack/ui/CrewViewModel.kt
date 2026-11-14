@@ -117,9 +117,7 @@ class CrewViewModel : ViewModel() {
     }
 
     /**
-     * Send them to the switch.
-     *
-     * Here rather than in the screen so the screen does not have to reach into data for it. This
+     * Open the usage switch here so the screen does not have to reach into data for it. This
      * file already talks to UsageRepo to take the measurement, so the pair of it lives together.
      */
     fun openUsageSettings(activity: Activity) {
@@ -143,6 +141,7 @@ class CrewViewModel : ViewModel() {
     }
 
     fun showTab(phase: CrewPhase) {
+        settledTab = true
         tab = phase
         opened = null
     }

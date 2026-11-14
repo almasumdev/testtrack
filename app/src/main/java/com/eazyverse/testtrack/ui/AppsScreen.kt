@@ -1,10 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,11 +10,9 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,7 +21,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
@@ -57,32 +49,16 @@ fun AppsScreen(
     WhileShown(onShow = { vm.startLive(context) }, onHide = vm::stopLive)
 
     val listState = rememberLazyListState()
-    // The way in at the top of the list has scrolled off: the same rule as Circle's ask row.
-    val addOffScreen by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 } }
     val waiting = DebugLooks.holdLoading || (vm.loading && vm.apps.isEmpty() && !vm.offline && !vm.signedOut)
     val canAdd = !vm.signedOut && !(vm.offline && vm.apps.isEmpty())
-    // Over the list, never over the loading page or the empty state, which has its own button.
-    val showBar = canAdd && vm.apps.isNotEmpty() && !waiting
-
-    // Scaffold's slot, and the same fade and slide, as Circle's floating ask bar.
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        floatingActionButtonPosition = FabPosition.Center,
-        floatingActionButton = {
-            AnimatedVisibility(
-                visible = showBar && addOffScreen,
-                enter = fadeIn() + slideInVertically { it },
-                exit = fadeOut() + slideOutVertically { it },
-            ) {
-                Box(Modifier.padding(bottom = dockRoom())) { AddAppBar(onAddApp) }
-            }
-        },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             LoadSwap(waiting) { hold ->
                 if (hold) {
-                    AppsLoading(onAdd = if (canAdd) onAddApp else null)
+                    AppsLoading()
                 } else {
                     AppsBody(
                         apps = vm.apps,
@@ -92,7 +68,6 @@ fun AppsScreen(
                         onRetry = { vm.load(context) },
                         onOpen = { onOpenApp(it.id) },
                         onAdd = if (canAdd) onAddApp else null,
-                        addRoom = if (canAdd && vm.apps.isNotEmpty()) AddRoom else 0.dp,
                         listState = listState,
                     )
                 }
@@ -100,9 +75,6 @@ fun AppsScreen(
         }
     }
 }
-
-/** What the list keeps clear at its foot so its last app can scroll out from under the button. */
-private val AddRoom = 64.dp
 
 /** The list, drawn. Handed its values so every state it has can be put in front of a test. */
 @Composable
@@ -116,9 +88,7 @@ fun AppsBody(
     onOpen: (AppEntry) -> Unit = {},
     /** Adding an app; the empty state's button. Not offered where there is none. */
     onAdd: (() -> Unit)? = null,
-    /** Room kept at the foot for a button floating over the list. */
-    addRoom: Dp = 0.dp,
-    /** The list's scroll, kept by the screen so it can tell when the way in at the top is gone. */
+    /** The list's scroll, also used to close an app's problem callout. */
     listState: LazyListState = rememberLazyListState(),
 ) {
     // Which app's problem callout is open: one at a time, and a scroll closes it.
@@ -144,7 +114,7 @@ fun AppsBody(
         return
     }
     if (DebugLooks.holdLoading || (loading && apps.isEmpty())) {
-        AppsLoading(onAdd)
+        AppsLoading()
         return
     }
     if (apps.isEmpty()) {
@@ -163,12 +133,8 @@ fun AppsBody(
     LazyColumn(
         Modifier.fillMaxSize(),
         state = listState,
-        contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom() + addRoom),
+        contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
     ) {
-        // Circle's ask row, first on the list: the floating bar takes over once it is scrolled off.
-        if (onAdd != null) {
-            item(key = "add") { AddAppRow(onAdd, Modifier.padding(start = Gutter, end = Gutter, bottom = 8.dp)) }
-        }
         items(apps, key = { it.id }) { app ->
             // Fades in, fades out and glides to its new place when the list changes.
             Box(Modifier.animateItem()) {

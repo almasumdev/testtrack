@@ -20,14 +20,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 /**
- * My apps before they have arrived: the way in on top, as the list will have it, then a page of
+ * My apps before they have arrived: a page of
  * tiles in the frame [AppCard] draws them, an icon and two bars. [SKELETON_ROWS] of them, more than
  * the screen holds, so the page does not end before the answer does.
  */
 @Composable
-internal fun AppsLoading(onAdd: (() -> Unit)? = null) {
+internal fun AppsLoading() {
     Column(Modifier.fillMaxSize().padding(top = 12.dp)) {
-        if (onAdd != null) AddAppRow(onAdd, Modifier.padding(horizontal = Gutter).padding(bottom = 8.dp))
         LazyColumn(
             Modifier
                 .fillMaxSize()

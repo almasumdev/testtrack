@@ -1,16 +1,23 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -18,63 +25,51 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
 import com.eazyverse.testtrack.ui.theme.Tt
-import kotlin.math.roundToInt
+import kotlin.math.PI
+import kotlin.math.sin
+
+/** The bar starts at its top line; lists reserve its entire measured height. */
+internal val DockTop = 0.dp
 
 /**
- * The clear strip above the dock's pill, inside what the shell measures. Left out of
- * [LocalDockRoom], so a list's last [Gutter] is measured from the pill a person can see.
- */
-internal val DockTop = 6.dp
-
-/**
- * The bar: a floating dock.
+ * Quiet tile: four named tabs and one Add action on the full-width ground.
  *
- * A pill that floats over the ground rather than a strip bolted to the bottom edge. Every tab but
- * the current one is just its icon; the current one is wider, with its name beside the icon, so
- * where you are is said once, in words, and the other four stay out of the way.
- *
- * One selection pill, not five. Each tab carries a 0..1 share of being selected, sprung from one
- * value to the other; widths, the pill's place and the name's reveal are all read off those
- * shares. On a switch the pill slides from the old tab to the new one and resizes on the way, and
- * the icons between glide to their new places.
- *
- * The row is drawn twice: once in the bar's ink, and once in the selected ink clipped to the
- * pill's exact outline, over the pill's own fill. So an icon is light exactly where the pill is
- * over it, to the pixel, including the ones it slides across. Colouring each icon by a guess at
- * where it sat left pale ghosts beside the pill mid-switch.
- *
- * No pressed highlight: a grey block flashed under the tapped icon before anything moved. The
- * pill starting to move is the answer to the tap, with a light haptic tick under it.
+ * The centre tile is a button, never a selected page. Ranks belongs to You, which stays marked
+ * while its ranks page is open. The whole row grows with text, and each slot keeps a thumb's room.
  */
 @Composable
 fun MainBar(
@@ -83,156 +78,169 @@ fun MainBar(
     modifier: Modifier = Modifier,
     /** What waits on this account, by tab; a tab missing or at 0 shows no number. */
     counts: Map<MainTab, Int> = emptyMap(),
+    onAdd: () -> Unit = {},
 ) {
     val t = Tt.colors
     val haptic = LocalHapticFeedback.current
-    val shape = RoundedCornerShape(32.dp)
-    val shares =
-        MainTab.entries.map { tab ->
-            animateFloatAsState(
-                if (tab == selected) 1f else 0f,
-                spring(dampingRatio = 0.82f, stiffness = Spring.StiffnessMediumLow),
-                label = "tab-${tab.name}",
-            )
-        }
-
-    Box(
-        modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(start = DockInset, end = DockInset, top = DockTop, bottom = 12.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        BoxWithConstraints(
-            Modifier
-                .widthIn(max = 480.dp)
-                .fillMaxWidth()
-                .clip(shape)
-                .background(t.bg)
-                .border(1.dp, t.cardLine, shape)
-                .padding(4.dp),
-        ) {
-            if (maxWidth < Wide + 48.dp * 4 || LocalDensity.current.fontScale > 1.2f) {
-                CompactBar(selected, onSelect, counts)
-                return@BoxWithConstraints
+    val active = if (selected == MainTab.RANKS) MainTab.PROFILE else selected
+    val tabs = remember { listOf(MainTab.CIRCLE, MainTab.GROUPS, null, MainTab.APPS, MainTab.PROFILE) }
+    val movement = updateTransition(tabs.indexOf(active), label = "tab-movement")
+    val selection by movement.animateFloat(
+        transitionSpec = {
+            if (initialState.crossesAdd(targetState)) {
+                tween(720, easing = LinearEasing)
+            } else {
+                spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 500f)
             }
-            val slots = remember(maxWidth) { Slots(maxWidth, MainTab.entries.size) }
-            val values = shares.map(State<Float>::value)
-            val widths = values.map { slots.width(it) }
-            val lefts = widths.runningFold(0.dp) { at, w -> at + w }
-
-            // The pill: wherever the shares say, which mid-switch is part way between two tabs.
-            val total = values.sum().coerceAtLeast(0.0001f)
-            val pillLeft = lefts.zip(values).fold(0.dp) { at, (left, s) -> at + left * (s / total) }
-            val pillWidth = widths.zip(values).fold(0.dp) { at, (w, s) -> at + w * (s / total) }
-
-            // Underneath: the bar's ink, and the only layer that takes taps.
-            BarRow(values, widths, t.tabUnselected, selected, counts) { tab ->
-                if (tab != selected) {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    onSelect(tab)
-                }
-            }
-
-            // On top: the pill, and the same row in the selected ink, both cut to the pill.
-            val density = LocalDensity.current
-            val left = with(density) { pillLeft.toPx() }
-            val right = left + with(density) { pillWidth.toPx() }
-            val pill =
-                GenericShape { size, _ ->
-                    addRoundRect(RoundRect(left, 0f, right, size.height, CornerRadius(size.height / 2)))
-                }
-            Box(
-                Modifier
-                    .matchParentSize()
-                    .clip(pill)
-                    .background(t.leafAccentSoft)
-                    .clearAndSetSemantics {},
-            ) {
-                BarRow(values, widths, t.tabSelected, selected = null, counts = counts, onSelect = null)
-            }
-        }
-    }
-}
-
-@Composable
-private fun CompactBar(
-    selected: MainTab,
-    onSelect: (MainTab) -> Unit,
-    counts: Map<MainTab, Int>,
-) {
-    val t = Tt.colors
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            selected.label,
-            Modifier.padding(top = 6.dp, bottom = 2.dp),
-            style = MaterialTheme.typography.labelLarge,
-            color = t.tabUnselected,
-        )
-        Row(Modifier.fillMaxWidth()) {
-            MainTab.entries.forEach { tab ->
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .heightIn(min = 48.dp)
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(if (tab == selected) t.leafAccentSoft else t.bg)
-                        .selectable(tab == selected, role = Role.Tab, onClick = { onSelect(tab) }),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    TabIcon(tab, counts[tab] ?: 0, if (tab == selected) t.tabSelected else t.tabUnselected, tab.label)
-                }
-            }
-        }
-    }
-}
-
-/**
- * The five tabs in a line, in one ink.
- *
- * Drawn twice by [MainBar] with identical layout, so the two copies line up exactly. Only the copy
- * given [onSelect] is interactive and announced; the other is a picture.
- */
-@Composable
-private fun BarRow(
-    shares: List<Float>,
-    widths: List<Dp>,
-    ink: Color,
-    selected: MainTab?,
-    counts: Map<MainTab, Int>,
-    onSelect: ((MainTab) -> Unit)?,
-) {
-    Row(Modifier.height(BarHeight), verticalAlignment = Alignment.CenterVertically) {
-        MainTab.entries.forEachIndexed { index, tab ->
-            val share = shares[index]
+        },
+        label = "tab-selection",
+    ) { it.toFloat() }
+    Column(modifier.fillMaxWidth().background(t.bg).navigationBarsPadding()) {
+        Box(Modifier.fillMaxWidth().height(1.dp).background(t.cardLine))
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Row(
                 Modifier
-                    .width(widths[index])
-                    .height(BarHeight)
-                    .then(
-                        if (onSelect != null) {
-                            // `selectable` carries the selected state into the accessibility tree,
-                            // and Tab is the role a screen reader announces for one of five.
-                            Modifier.selectable(
-                                selected = tab == selected,
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                role = Role.Tab,
-                                onClick = { onSelect(tab) },
-                            )
-                        } else {
-                            Modifier
-                        },
-                    ).clipToBounds(),
-                horizontalArrangement = Arrangement.Center,
+                    .widthIn(max = 600.dp)
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min)
+                    .drawBehind {
+                        val slot = size.width / tabs.size
+                        val rtl = layoutDirection == LayoutDirection.Rtl
+                        val from = movement.currentState
+                        val to = movement.targetState
+                        val crossing = from.crossesAdd(to)
+                        val progress = if (crossing) ((selection - from) / (to - from)).coerceIn(0f, 1f) else 0f
+                        // Compress before takeoff, then fly at a steady horizontal speed under
+                        // constant gravity. Reserve the last beat for a grounded landing squash.
+                        val flight = ((progress - 0.12f) / 0.76f).coerceIn(0f, 1f)
+                        val travel = if (crossing) from + (to - from) * flight else selection
+                        val position = if (rtl) tabs.lastIndex - travel else travel
+                        val lift = 4f * 64.dp.toPx() * flight * (1f - flight)
+                        val squash = when {
+                            progress < 0.12f -> sin(progress / 0.12f * PI).toFloat() * 0.18f
+                            progress > 0.88f -> sin((progress - 0.88f) / 0.12f * PI).toFloat() * 0.22f
+                            else -> 0f
+                        }
+                        val stretch = sin(flight * PI).toFloat()
+                        val direction = (if (to > from) 1f else -1f) * (if (rtl) -1f else 1f)
+                        val centre = Offset(slot * (position + 0.5f), 22.dp.toPx() - lift + 16.dp.toPx() * squash)
+                        rotate(360f * flight * direction, pivot = centre) {
+                            scale(1f + squash - 0.04f * stretch, 1f - squash + 0.08f * stretch, pivot = centre) {
+                                drawRoundRect(
+                                    color = t.leafAccentSoft,
+                                    topLeft = centre - Offset(26.dp.toPx(), 16.dp.toPx()),
+                                    size = Size(52.dp.toPx(), 32.dp.toPx()),
+                                    cornerRadius = CornerRadius(8.dp.toPx()),
+                                )
+                            }
+                        }
+                    }
+                    .selectableGroup(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TabIcon(tab, counts[tab] ?: 0, ink, if (tab == selected) null else tab.label)
-                if (share > 0.02f) Name(tab.label, share, ink)
+                tabs.forEach { tab ->
+                    if (tab == null) {
+                        val source = remember { MutableInteractionSource() }
+                        val pressed by source.collectIsPressedAsState()
+                        val scale by animateFloatAsState(
+                            if (pressed) 0.92f else 1f,
+                            spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 700f),
+                            label = "add-press",
+                        )
+                        Box(
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .heightIn(min = 64.dp)
+                                .padding(horizontal = 4.dp)
+                                .clickable(
+                                    interactionSource = source,
+                                    indication = null,
+                                    role = Role.Button,
+                                    onClickLabel = "Open Add menu",
+                                    onClick = onAdd,
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Box(
+                                Modifier
+                                    .size(width = 48.dp, height = 36.dp)
+                                    .graphicsLayer {
+                                        scaleX = scale
+                                        scaleY = scale
+                                    }.clip(RoundedCornerShape(11.dp))
+                                    .background(t.accent),
+                                contentAlignment = Alignment.Center,
+                            ) { Icon(Lucide.Plus, "Add", Modifier.size(24.dp), tint = t.onAccent) }
+                        }
+                    } else {
+                        val chosen = tab == active
+                        val count = counts[tab] ?: 0
+                        val source = remember { MutableInteractionSource() }
+                        val pressed by source.collectIsPressedAsState()
+                        val scale by animateFloatAsState(
+                            if (pressed) 0.92f else 1f,
+                            spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 700f),
+                            label = "tab-press-${tab.name}",
+                        )
+                        val ink by animateColorAsState(
+                            if (chosen) t.tabSelected else t.tabUnselected,
+                            tween(180),
+                            label = "tab-ink-${tab.name}",
+                        )
+                        Column(
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .heightIn(min = 64.dp)
+                                .selectable(
+                                    selected = chosen,
+                                    interactionSource = source,
+                                    indication = null,
+                                    role = Role.Tab,
+                                    onClick = {
+                                        if (tab != selected) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            onSelect(tab)
+                                        }
+                                    },
+                                ).semantics(mergeDescendants = true) {
+                                    contentDescription = if (count > 0) "${tab.label}, $count to do" else tab.label
+                                }.padding(vertical = 6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            // The shared ground slides underneath; only the pressed icon scales.
+                            Box(
+                                Modifier
+                                    .size(width = 52.dp, height = 32.dp)
+                                    .graphicsLayer {
+                                        scaleX = scale
+                                        scaleY = scale
+                                    }.background(
+                                        if (pressed) t.leafAccentSoft else Color.Transparent,
+                                        RoundedCornerShape(8.dp),
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) { TabIcon(tab, count, ink, null) }
+                            Text(
+                                tab.label,
+                                Modifier.padding(horizontal = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (chosen) FontWeight.SemiBold else FontWeight.Medium,
+                                color = ink,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 }
+
+/** The centre slot is an action; changing sides takes the selection over it. */
+private fun Int.crossesAdd(other: Int): Boolean = (this < 2 && other > 2) || (this > 2 && other < 2)
 
 /**
  * A tab's icon, and over its corner how many things on it wait for this account.
@@ -278,54 +286,3 @@ private fun TabIcon(
         }
     }
 }
-
-/**
- * The current tab's name, taking its room as the tab grows into it.
- *
- * Its width is laid out in proportion to how far the reveal has got, so the icon beside it moves
- * over smoothly rather than jumping when the name arrives, and it fades in over the last stretch.
- */
-@Composable
-private fun Name(
-    label: String,
-    share: Float,
-    ink: Color,
-) {
-    val reveal = ((share - 0.35f) / 0.65f).coerceIn(0f, 1f)
-    Text(
-        label,
-        Modifier
-            .layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints.copy(minWidth = 0, maxWidth = Int.MAX_VALUE))
-                val gap = 8.dp.roundToPx()
-                val room = ((placeable.width + gap) * reveal).roundToInt()
-                layout(room, placeable.height) { placeable.placeRelative(gap, 0) }
-            }.graphicsLayer { alpha = ((reveal - 0.4f) / 0.6f).coerceIn(0f, 1f) },
-        style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
-        fontWeight = FontWeight.SemiBold,
-        color = ink,
-        maxLines = 1,
-        softWrap = false,
-    )
-}
-
-/**
- * How wide a tab is for how selected it is.
- *
- * The current tab gets [Wide], room for "My apps" beside its icon; the other four share what is
- * left. Mid-switch the two tabs changing hands are in between and the widths still add up to the
- * bar, because the shares do.
- */
-private class Slots(
-    inner: Dp,
-    count: Int,
-) {
-    private val wide = Wide.coerceAtMost(inner * 0.42f)
-    private val narrow = (inner - wide) / (count - 1)
-
-    fun width(share: Float): Dp = narrow + (wide - narrow) * share
-}
-
-private val Wide = 124.dp
-private val BarHeight = 48.dp
-private val DockInset = 20.dp

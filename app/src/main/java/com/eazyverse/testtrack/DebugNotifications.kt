@@ -32,6 +32,10 @@ object DebugNotifications {
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .build()
         // Fixed id, so another tap replaces the notification instead of stacking.
-        runCatching { manager.notify(TEST_ID, notification) }
+        try {
+            manager.notify(TEST_ID, notification)
+        } catch (_: SecurityException) {
+            // Permission can be revoked after the check above. Keep the test notification quiet.
+        }
     }
 }

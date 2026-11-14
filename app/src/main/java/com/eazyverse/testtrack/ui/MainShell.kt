@@ -2,13 +2,10 @@ package com.eazyverse.testtrack.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -18,10 +15,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -35,18 +29,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -59,7 +47,6 @@ import com.composables.icons.lucide.User
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.findActivity
-import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.HudViewModel
 import com.eazyverse.testtrack.viewmodel.ReviewMoment
@@ -67,10 +54,10 @@ import com.eazyverse.testtrack.viewmodel.TabCountsViewModel
 import kotlinx.coroutines.delay
 
 /**
- * The five places the app has.
+ * The shell pages. Ranks is reached from You rather than from the bottom bar.
  *
  * Order is deliberate and not alphabetical: the two you open the app for are on the left, the two
- * about you are on the right, and the one in the middle is what the other four add up to.
+ * about you are on the right. The bar puts Add between them; it opens a menu, not a page.
  *
  * Circle is a place; the composables behind it are still named for the feed they draw, because a
  * `CircleCard` sitting in a Compose file next to `CircleShape` would read as a round one. The
@@ -134,7 +121,9 @@ fun MainShell(
     // My apps, shared by its tab, Crew's seat sheet and Circle's picker: one list, everywhere.
     val apps: AppsViewModel = viewModel()
 
-    /** Which app, for Circle's Ask for feedback. */
+    var adding by rememberSaveable { mutableStateOf(false) }
+
+    /** Which app, for Ask for feedback. */
     var pickingFeedback by remember { mutableStateOf(false) }
 
     // The seat picker, opened by Crew's Take a seat, on the Crew tab's own model.
@@ -178,9 +167,30 @@ fun MainShell(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    val askForFeedback: () -> Unit = {
+        val pick = {
+            apps.load(context)
+            pickingFeedback = true
+        }
+        if (Session.signedIn) {
+            pick()
+        } else {
+            afterSignIn = pick
+            asking =
+                SignInReason(
+                    title = "Sign in to ask for feedback",
+                    why =
+                        "You ask for feedback on one of your own apps and pay for " +
+                            "it in tix, so you need to sign in first.",
+                )
+        }
+    }
+
     // Back from a tab returns to the first one rather than closing the app, which is what a bottom
     // bar has taught everybody to expect. Off on the first tab, so Back there still leaves.
-    BackHandler(enabled = tab != MainTab.CIRCLE) { show(MainTab.CIRCLE) }
+    BackHandler(enabled = tab != MainTab.CIRCLE) {
+        show(if (tab == MainTab.RANKS) MainTab.PROFILE else MainTab.CIRCLE)
+    }
 
     // On the first tab Back leaves, so the first press only says so and the second, inside the
     // window, is let through to the system. Leaving on one press closed the app on a thumb that
@@ -293,24 +303,7 @@ fun MainShell(
                                             // Which app, from My apps. Signed out, sign in first and then
                                             // the same: a request is always for an app on My apps, which
                                             // always has its icon.
-                                            onAsk = {
-                                                val pick = {
-                                                    apps.load(context)
-                                                    pickingFeedback = true
-                                                }
-                                                if (Session.signedIn) {
-                                                    pick()
-                                                } else {
-                                                    afterSignIn = pick
-                                                    asking =
-                                                        SignInReason(
-                                                            title = "Sign in to ask for feedback",
-                                                            why =
-                                                                "You ask for feedback on one of your own apps and pay for " +
-                                                                    "it in tix, so you need to sign in first.",
-                                                        )
-                                                }
-                                            },
+                                            onAsk = askForFeedback,
                                             onSignInToReview = {
                                                 asking =
                                                     SignInReason(
@@ -336,6 +329,7 @@ fun MainShell(
                                         // The Open tab's join steps ask whether there is a closed app, so My apps is read here too.
                                         LaunchedEffect(Unit) { apps.load(context) }
                                         CrewScreen(
+                                            vm = crews,
                                             onOpenCrew = onOpenCrew,
                                             myApps = apps.apps.takeIf { it.isNotEmpty() || !apps.loading },
                                             onAddApp = onAddApp,
@@ -406,6 +400,7 @@ fun MainShell(
                 Modifier
                     .align(Alignment.BottomCenter)
                     .onSizeChanged { dockHeight = with(density) { it.height.toDp() } - DockTop },
+                onAdd = { adding = true },
                 counts =
                     counts.actions?.let {
                         mapOf(MainTab.CIRCLE to it.circle, MainTab.GROUPS to it.crew, MainTab.APPS to it.apps)
@@ -418,6 +413,29 @@ fun MainShell(
                     .padding(bottom = dockHeight + 10.dp),
             )
         }
+    }
+
+    if (adding) {
+        MainAddSheet(
+            onAddApp = {
+                if (Session.signedIn) {
+                    onAddApp()
+                } else {
+                    afterSignIn = onAddApp
+                    asking =
+                        SignInReason(
+                            title = "Sign in to add an app",
+                            why = "The apps you add belong to your account, so you need to sign in first.",
+                        )
+                }
+            },
+            onAsk = askForFeedback,
+            onTakeSeat = {
+                crews.showTab(CrewPhase.OPEN)
+                show(MainTab.GROUPS)
+            },
+            onDismiss = { adding = false },
+        )
     }
 
     if (pickingFeedback) {
@@ -460,32 +478,6 @@ fun MainShell(
 
 /** How long a second Back still leaves, after the first one on the first tab said it would. */
 private const val LEAVE_WINDOW_MS = 2_000L
-
-/** "Press back again", just above the dock, while a second Back would leave. */
-@Composable
-private fun LeaveHint(
-    shown: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    AnimatedVisibility(
-        visible = shown,
-        modifier = modifier,
-        enter = fadeIn(tween(120)) + slideInVertically(tween(160)) { it / 2 },
-        exit = fadeOut(tween(160)),
-    ) {
-        Text(
-            "Press back again to leave TestTrack",
-            Modifier
-                .clip(RoundedCornerShape(percent = 50))
-                .background(Tt.colors.inverse)
-                .padding(horizontal = 18.dp, vertical = 11.dp)
-                .semantics { liveRegion = LiveRegionMode.Polite },
-            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = Tt.colors.onInverse,
-        )
-    }
-}
 
 /** The ground each tab stands on. */
 private val MainTab.scene: Scene

@@ -6,11 +6,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -26,7 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -93,13 +87,6 @@ fun FeedScreen(
 
     val feedbackList = rememberLazyListState()
 
-    /**
-     * The ask row at the top of Feedback has scrolled off.
-     *
-     * Read through [derivedStateOf] so this recomposes when the answer changes rather than on
-     * every frame of the scroll that produced it.
-     */
-    val askOffScreen by remember { derivedStateOf { feedbackList.firstVisibleItemIndex > 0 } }
     // Near the end of the list, the next page: the first twenty were all there ever was.
     val nearEnd by remember {
         derivedStateOf {
@@ -128,7 +115,7 @@ fun FeedScreen(
             offeringNotify = true
         }
     }
-    // Circle's how-to card, under the Ask button: until this account has a review or a request of
+    // Circle's how-to card: until this account has a review or a request of
     // its own, by when it has seen how Circle goes, or until it is closed. Gone for good either way.
     var howTo by remember { mutableStateOf(!HowToCards.circleGone(context)) }
     LaunchedEffect(involved) {
@@ -159,22 +146,6 @@ fun FeedScreen(
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        // Scaffold's own slot rather than a Box over the list, so it is laid out above the list
-        // instead of across it. Only on Feedback, the one tab with something to post.
-        //
-        // Centred rather than at the end, which for something that fills the width is the only
-        // position that means anything: the slot measures its content loosely, so the bar takes
-        // the whole width and carries its own gutter in from both edges.
-        floatingActionButtonPosition = FabPosition.Center,
-        floatingActionButton = {
-            AnimatedVisibility(
-                visible = vm.tab == FeedTab.FEEDBACK && askOffScreen,
-                enter = fadeIn() + slideInVertically { it },
-                exit = fadeOut() + slideOutVertically { it },
-            ) {
-                Box(Modifier.padding(bottom = dockRoom())) { FeedAskBar(onAsk) }
-            }
-        },
         // The tabs sit on the page rather than in a bar, with no title and no rule: the bottom bar
         // already says Circle, and space is what separates them from the first card. They are in
         // the topBar slot only so they stay put while the list moves under them.
@@ -230,20 +201,15 @@ fun FeedScreen(
                             LazyColumn(
                                 Modifier.fillMaxSize(),
                                 state = if (hold) rememberLazyListState() else feedbackList,
-                                // Room under the last card for the floating button, which is only ever
-                                // on screen once you are far enough down for this to be the padding
-                                // that matters.
                                 contentPadding =
                                     PaddingValues(
                                         start = Gutter,
                                         top = ListTop,
                                         end = Gutter,
-                                        bottom = Gutter + 64.dp + dockRoom(),
+                                        bottom = Gutter + dockRoom(),
                                     ),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                // 4dp more under it than between cards, so it sits apart from the list.
-                                item(key = "ask") { FeedAskRow(Modifier.padding(bottom = 4.dp), onPost = onAsk) }
                                 // Only once the server has answered: saved lists can be last time's,
                                 // and a card shown from them would vanish as the real ones arrive.
                                 if (!hold && howTo && vm.answered && !involved) {
