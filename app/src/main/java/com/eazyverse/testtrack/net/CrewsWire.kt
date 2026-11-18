@@ -89,6 +89,8 @@ data class ApiTesterPictures(
     /** Their face, as an address, and their email; both empty when the server does not send them. */
     val photo: String = "",
     val email: String = "",
+    /** The night their app was taken out of the run, in their own calendar; null while it is in. */
+    @SerialName("out_day") val outDay: Int? = null,
 )
 
 /** Every member's pictures of the reader's own app in one crew: the owner's grid. */

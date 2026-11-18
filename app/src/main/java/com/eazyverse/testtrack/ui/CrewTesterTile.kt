@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,13 +91,21 @@ internal fun TesterTile(
                 )
             }
             if (tester.pictures.isNotEmpty()) {
-                Spacer(Modifier.width(10.dp))
-                // Overlapping, newest on top; each still opens its own.
-                Row(horizontalArrangement = Arrangement.spacedBy((-14).dp)) {
+                // No spacer: the invisible edge and the offset leave 16 before the first thumb.
+                // Side by side, 6 apart. Each reserves 48 to touch, so the invisible edges
+                // overlap by what makes the visible gap 6.
+                // Shifted by the invisible edge, so the last thumb lines up with the card's padding.
+                Row(
+                    Modifier.offset(x = (48.dp - ThumbWidth) / 2),
+                    horizontalArrangement = Arrangement.spacedBy(ThumbGap - (48.dp - ThumbWidth)),
+                ) {
                     tester.pictures.forEach { picture ->
-                        Box(Modifier.background(t.bg, RoundedCornerShape(9.dp)).padding(2.dp)) {
-                            PictureThumb(picture.ref, picture.byHand, 22.dp) { onPicture(picture) }
-                        }
+                        PictureThumb(
+                            picture.ref,
+                            picture.byHand,
+                            ThumbWidth,
+                            Modifier.minimumInteractiveComponentSize(),
+                        ) { onPicture(picture) }
                     }
                 }
             }
@@ -205,6 +215,9 @@ internal fun TestersLoading() {
         }
     }
 }
+
+private val ThumbWidth = 32.dp
+private val ThumbGap = 6.dp
 
 private const val SKELETON_GRID_ROWS = 8
 private const val SKELETON_TILES = 3

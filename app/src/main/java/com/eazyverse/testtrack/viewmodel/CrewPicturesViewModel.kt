@@ -57,6 +57,8 @@ data class MemberNights(
     /** Their face, as an address, and their email; empty when the server does not send them. */
     val photo: String = "",
     val email: String = "",
+    /** The night their app was taken out of the run, as the server says it; null while in or unsaid. */
+    val outDay: Int? = null,
 ) {
     /** They did not owe the app that night: reported, let off, or covered by a skip. */
     fun notOwed(
@@ -110,6 +112,7 @@ class CrewPicturesViewModel : ViewModel() {
                                 reportedDays = t.reportedDays.toSet(),
                                 photo = t.photo,
                                 email = t.email,
+                                outDay = t.outDay,
                             )
                         },
                         offDays = got.offDays.toSet(),

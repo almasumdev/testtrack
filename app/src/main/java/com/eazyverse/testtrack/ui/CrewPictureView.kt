@@ -72,11 +72,13 @@ internal fun PictureThumb(
     ref: String,
     byHand: Boolean,
     width: Dp,
+    /** Goes first, such as a 48 touch area round a small thumb. */
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     val shape = RoundedCornerShape(8.dp)
     Box(
-        Modifier
+        modifier
             .size(width, width * 4 / 3)
             .clip(shape)
             .border(if (byHand) 2.dp else 1.dp, if (byHand) Tt.colors.warn else Tt.colors.glassBorder, shape)

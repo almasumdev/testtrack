@@ -118,13 +118,18 @@ internal fun TrackingGrid(
             }
         }
         testers.forEach { tester ->
+            // Rows are 24 apart, too tight for a 40 target on the face alone, so the whole row
+            // (face and squares) opens who it is.
             GridRow(
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable(onClickLabel = "See who this is") { onFace(tester) },
                 lead = {
                     Box(
                         Modifier
                             .size(24.dp)
                             .clip(CircleShape)
-                            .clickable(onClickLabel = "See who this is") { onFace(tester) }
                             .semantics { contentDescription = tester.name }
                             .then(if (tester.out) Modifier.alpha(0.45f) else Modifier),
                     ) {
@@ -186,10 +191,11 @@ internal fun TrackingGrid(
 /** One line of the grid: the face column, then the nights. */
 @Composable
 private fun GridRow(
+    modifier: Modifier = Modifier,
     lead: @Composable () -> Unit,
     nights: @Composable RowScope.() -> Unit,
 ) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(FaceColumn), contentAlignment = Alignment.CenterStart) { lead() }
         Row(Modifier.weight(1f), content = nights)
     }

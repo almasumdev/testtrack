@@ -121,7 +121,7 @@ internal fun nightCounts(pictures: AppNights): List<Int?> =
 
 /**
  * The night an app taken out left the run, in its owner's own calendar: their day now, less the
- * whole days since it left. Null while it is in, or when the server did not say when.
+ * whole days since it left. Only a fallback for a server that does not send out_day itself.
  */
 internal fun outDayOf(
     day: Int,
@@ -151,7 +151,13 @@ internal fun testersOf(
         .map { tester ->
             val member = members[tester.seatId]
             val seat = seats[tester.seatId]
-            val outDay = if (tester.out) member?.outAt?.let { outDayOf(tester.day, it, pictures.runDays, now) } else null
+            // The server's night when it says one; else worked out from when the app left.
+            val outDay =
+                if (tester.out) {
+                    tester.outDay ?: member?.outAt?.let { outDayOf(tester.day, it, pictures.runDays, now) }
+                } else {
+                    null
+                }
             val squares =
                 (1..pictures.runDays).map { day -> squareOf(tester, day, pictures.offDays, finished, outDay, now) }
             val over = finished || tester.day > pictures.runDays
