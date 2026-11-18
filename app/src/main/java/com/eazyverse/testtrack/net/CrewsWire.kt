@@ -41,19 +41,16 @@ data class VersionIn(
     val installer: String = "",
 )
 
-/** A member's private feedback on Play for one app: its picture in their own Drive. */
+/** A member's private feedback on Play for one app: its picture, by the id it was sent under. */
 @Serializable
 data class FeedbackIn(
     @SerialName("proof_ref") val proofRef: String,
-    @SerialName("drive_token") val driveToken: String,
 )
 
-/** A visit's picture, in the member's own Drive and shared by link. */
+/** A visit's picture, by the id it was sent to TestTrack under. */
 @Serializable
 data class PictureIn(
     @SerialName("proof_ref") val proofRef: String,
-    /** A short-lived Drive grant the server uses once to check the file is ours, never kept. */
-    @SerialName("drive_token") val driveToken: String,
     /** Picked from the phone after TestTrack's own picture failed. */
     @SerialName("by_hand") val byHand: Boolean = false,
     /** The visitor's own night it was taken on, so a late picture lands there; null when unknown. */
@@ -66,7 +63,7 @@ data class ApiNightPicture(
     val day: Int,
     val at: String,
     @SerialName("used_ms") val usedMs: Long = 0,
-    /** "drive:<id>", or empty for a visit from before pictures or one still waiting on its own. */
+    /** The picture's ref, or empty for a visit from before pictures or one still waiting on its own. */
     val proof: String = "",
     @SerialName("by_hand") val byHand: Boolean = false,
     val counts: Boolean = true,

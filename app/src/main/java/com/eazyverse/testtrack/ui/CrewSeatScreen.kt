@@ -1,7 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -33,7 +31,6 @@ import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.viewmodel.AppAction
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.CrewAddViewModel
-import com.eazyverse.testtrack.viewmodel.TestingDriveViewModel
 
 /**
  * Taking a seat, on one page with everything open: the app picked in [CrewSeatSheet], the testers
@@ -93,16 +90,6 @@ internal fun CrewSeatScreen(
     }
     LaunchedEffect(app?.id) { app?.let(vm::start) }
 
-    // Every way to a seat ends here, so this is where Drive is made sure of: each night's
-    // pictures go there, and without them no night counts. Asked of Google quietly first.
-    val drive: TestingDriveViewModel = viewModel()
-    LaunchedEffect(Unit) { drive.check(activity) }
-    var afterDrive by remember { mutableStateOf<(() -> Unit)?>(null) }
-    val driveSheet =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
-            drive.consentResult(activity, it.data) { afterDrive?.invoke() }
-        }
-
     val boxes = app?.let(apps::boxes) ?: SeatBoxes()
     // A refused seat scrolls to the part it is about.
     val groupSpot = remember { BringIntoViewRequester() }
@@ -139,13 +126,11 @@ internal fun CrewSeatScreen(
             SeatDetailsState(
                 app = it,
                 crewName = crews.open?.name,
-                busy = crews.seating || drive.busy,
+                busy = crews.seating,
                 groupReady = !groupOpen,
                 groupFailed = checkFailed,
                 seating = crews.seating,
                 boxesReady = boxes.both,
-                needsDrive = drive.connected == false,
-                driveMessage = drive.message,
                 held = appealWaitingIn(crews.crews),
                 refusal =
                     crews.seatError.takeIf {
@@ -270,14 +255,7 @@ internal fun CrewSeatScreen(
                 // The last part of the page: the hint 16 under the boxes (the 48dp rows add 13 under the
                 // last box, so about 31 show), then the button.
                 Spacer(Modifier.height(16.dp))
-                CrewSeatSubmit(details, vm, onSpot = { jump = it }) {
-                    if (drive.connected == true) {
-                        take()
-                    } else {
-                        afterDrive = take
-                        drive.connect(activity, driveSheet::launch, take)
-                    }
-                }
+                CrewSeatSubmit(details, vm, onSpot = { jump = it }, onTake = take)
                 Spacer(Modifier.height(20.dp))
             }
         }

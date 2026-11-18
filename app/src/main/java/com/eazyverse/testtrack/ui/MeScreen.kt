@@ -1,7 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -47,11 +45,9 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
 import com.eazyverse.testtrack.BuildConfig
 import com.eazyverse.testtrack.Config
-import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.net.ApiProfile
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.DebugSwitches
-import com.eazyverse.testtrack.viewmodel.TestingDriveViewModel
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
@@ -74,15 +70,7 @@ fun MeScreen(
     LaunchedEffect(Unit) { vm.load(context) }
     WhileShown(onShow = { vm.startLive(context) }, onHide = vm::stopLive)
 
-    // Whether feedback proof/profile images can go to Drive, checked when the page opens.
-    val activity = context.findActivity()
-    val drive: TestingDriveViewModel = viewModel()
-    LaunchedEffect(vm.signedOut) { if (!vm.signedOut) drive.check(activity) }
     val membership = rememberMembership()
-    val driveSheet =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
-            drive.consentResult(activity, it.data) {}
-        }
     val links = LocalUriHandler.current
 
     MeBody(
@@ -104,18 +92,9 @@ fun MeScreen(
         notifications = notifications,
         onAbout = onAbout,
         onRetry = { vm.load(context) },
-        drive = if (drive.busy) null else drive.connected,
         group = membership.member,
         // Joined, it opens the group itself; otherwise the check, and the way to join.
         onGroup = { if (membership.member) links.openUri(Config.GROUP_URL) else membership.startJoin() },
-        // Connected, it opens the account's own page, where the access can be seen and removed.
-        onDrive = {
-            if (drive.connected == true) {
-                links.openUri(GOOGLE_CONNECTIONS)
-            } else {
-                drive.connect(activity, driveSheet::launch) {}
-            }
-        },
         debug = {
             if (DebugSwitches.visible) {
                 MeDebug(
@@ -124,11 +103,6 @@ fun MeScreen(
                         DebugSwitches.setNoGroup(it)
                         // Off again: the remembered yes is gone, so ask the server as on launch.
                         if (!it) membership.quietly()
-                    },
-                    noDrive = DebugSwitches.noDrive,
-                    onNoDrive = {
-                        DebugSwitches.setNoDrive(it)
-                        if (!it) drive.check(activity)
                     },
                 )
             }
@@ -174,8 +148,6 @@ fun MeBody(
     onOpenRanks: () -> Unit = {},
     notifications: Boolean = false,
     onAbout: () -> Unit = {},
-    drive: Boolean? = null,
-    onDrive: () -> Unit = {},
     group: Boolean = false,
     onGroup: () -> Unit = {},
     onRetry: () -> Unit = {},
@@ -238,8 +210,6 @@ fun MeBody(
             MeSettings(
                 onEdit = onEdit,
                 onSignOut = onSignOut,
-                drive = drive,
-                onDrive = onDrive,
                 group = group,
                 onGroup = onGroup,
                 notifications = notifications,

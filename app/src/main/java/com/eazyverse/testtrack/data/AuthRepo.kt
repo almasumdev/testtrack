@@ -1,17 +1,10 @@
 package com.eazyverse.testtrack.data
 
-import android.accounts.Account
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.util.Log
 import coil.imageLoader
 import coil.request.ImageRequest
-import com.eazyverse.testtrack.Config
-import com.google.android.gms.auth.api.identity.AuthorizationRequest
-import com.google.android.gms.auth.api.identity.AuthorizationResult
-import com.google.android.gms.auth.api.identity.Identity
-import com.google.android.gms.common.api.Scope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.CancellationException
@@ -25,53 +18,17 @@ import kotlin.coroutines.resumeWithException
 import kotlin.math.roundToInt
 
 /**
- * One "Continue with Google" produces three different things, because Android and Firebase
+ * One "Continue with Google" produces two different things, because Android and Firebase
  * separate them:
  *
  *  - **Identity**: Credential Manager returns an ID token. Only Google can mint it, so the
  *    membership verdict derived from it server-side cannot be forged by the device.
  *  - **Firebase session**: the same ID token is exchanged for a Firebase user, which is what
  *    Firestore security rules key on.
- *  - **Authorization**: [AuthorizationClient] returns a Drive access token.
  *
- * Signing in shows only Google's account chooser. Drive consent comes later, on the tap that needs
- * it, and the first time it is its own sheet. Afterwards [authorizeDrive] resolves silently.
+ * Signing in shows only Google's account chooser, and nothing else of Google's is asked for.
  */
 object AuthRepo {
-    /**
-     * The Drive request, pinned to the account that is signed in.
-     *
-     * Without [AuthorizationRequest.Builder.setAccount] the authorization API is not told which
-     * account the question is about, and on a phone carrying more than one Google account it
-     * answers about whichever one it picks. That is wrong twice over: an existing grant on the
-     * signed-in account goes unseen, so the setup screen offers Connect Drive for an
-     * authorisation nobody lost, and a grant made from that screen can land on the other account,
-     * which would put a tester's proof in a Drive that is not the one their record points at.
-     *
-     * Firebase is the authority on who is signed in, because it is the session Firestore rules
-     * key on. [Session.email] is the same address remembered locally and only stands in while
-     * Firebase is still restoring.
-     */
-    private val driveRequest: AuthorizationRequest
-        get() =
-            AuthorizationRequest
-                .builder()
-                .setRequestedScopes(listOf(Scope(Config.DRIVE_SCOPE)))
-                .apply {
-                    val address = FirebaseAuth.getInstance().currentUser?.email ?: Session.email
-                    address?.let { setAccount(Account(it, "com.google")) }
-                }.build()
-
-    /**
-     * How long Play services gets to answer before the screen stops believing it will.
-     *
-     * There is no timeout inside the authorization API: the task simply never completes when
-     * Play services cannot service the call, and it retries in the background about every ten
-     * seconds while it does so. A coroutine awaiting that task waits for the rest of the day, and
-     * the only thing the tester sees is a spinner on a button that never stops.
-     */
-    const val AUTH_TIMEOUT_MS = 20_000L
-
     val uid: String? get() = FirebaseAuth.getInstance().currentUser?.uid
 
     /**
@@ -92,7 +49,7 @@ object AuthRepo {
     /**
      * Signs in and exchanges the token for a Firebase session. Nothing else.
      *
-     * Deliberately only those two things. Each testing feature requests group membership, Drive, usage
+     * Deliberately only those two things. Each testing feature requests group membership, usage
      * access and reminders when needed. Sign-in used to answer
      * two of those a second time while a spinner sat over the screen saying "Signing in...", which
      * made the slowest question in the app, the group roster, the thing standing between a tester
@@ -195,53 +152,6 @@ object AuthRepo {
             throw e
         }
     }
-
-    /**
-     * Requests the Drive access token.
-     *
-     * When Google needs to show a consent screen the result carries a pending intent instead of a
-     * token; the caller must launch it through an
-     * `ActivityResultContracts.StartIntentSenderForResult` launcher.
-     */
-    suspend fun authorizeDrive(activity: Context): AuthorizationResult =
-        suspendCancellableCoroutine { cont ->
-            Identity
-                .getAuthorizationClient(activity)
-                .authorize(driveRequest)
-                .addOnSuccessListener { if (cont.isActive) cont.resume(it) }
-                .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
-        }
-
-    /**
-     * The access token, if one can be had without showing anything. Null means consent needed.
-     * Any context will do for this quiet ask, which is what lets a background upload make it.
-     */
-    suspend fun driveTokenOrNull(activity: Context): String? =
-        withTimeoutOrNull(AUTH_TIMEOUT_MS) {
-            runCatching { authorizeDrive(activity).accessToken }.getOrNull()
-        }
-
-    /**
-     * Has this account already granted Drive access?
-     *
-     * Asked rather than remembered. The grant lives on Google's servers against the account and
-     * survives sign-out, reinstall and a new phone, whereas the local flag did not, so signing
-     * out and back in used to present "Connect Drive" again for an authorisation that had never
-     * been lost. This resolves silently when the grant exists; it shows nothing either way.
-     */
-    suspend fun hasDriveAccess(activity: Activity): Boolean = driveTokenOrNull(activity) != null
-
-    /** Pulls the access token out of the consent screen's result. */
-    fun tokenFromConsent(
-        activity: Activity,
-        data: Intent?,
-    ): String? =
-        runCatching {
-            Identity
-                .getAuthorizationClient(activity)
-                .getAuthorizationResultFromIntent(data)
-                .accessToken
-        }.getOrNull()
 
     fun signOut() {
         com.eazyverse.testtrack.net.ApiAuth

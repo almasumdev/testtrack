@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.eazyverse.testtrack.data.Device
+import com.eazyverse.testtrack.data.ServerUpload
 import com.eazyverse.testtrack.ui.ReviewBody
 import com.eazyverse.testtrack.ui.ReviewJob
 import com.eazyverse.testtrack.ui.ReviewStep
@@ -44,7 +45,7 @@ import org.junit.runners.MethodSorters
  * **What it deliberately does not do.** The install and usage steps are reports about the device,
  * and on an emulator the seeded package is not installed and has no foreground time. Faking that
  * would mean a switch in ReviewViewModel that says "pretend", which is the one thing that must
- * never exist in a build somebody can install. So this drives those two reports through the API
+ * never exist in a build somebody can install. So this sends those two reports through the API
  * directly, exactly as the view model does, and checks the server's answer. What is proved is the
  * contract and the rules; what is not proved is UsageStatsManager, which has its own test.
  */
@@ -63,19 +64,12 @@ class ReviewJourneyTest {
     private val ownerRefresh = args.getString("ownerRefresh").orEmpty()
     private val livePostId = args.getString("livePostId").orEmpty()
     private val closedPostId = args.getString("closedPostId").orEmpty()
-    private val liveProof = args.getString("liveDriveProof").orEmpty()
-    private val closedProof = args.getString("closedDriveProof").orEmpty()
-    private val driveToken = args.getString("driveToken").orEmpty()
 
     @Before
     fun requireASeededWorld() {
         assumeTrue(
-            "No seeded session and owned Drive fixtures. See docs/verification.md.",
-            reviewerAccess.isNotEmpty() &&
-                livePostId.isNotEmpty() &&
-                liveProof.startsWith("drive:") &&
-                closedProof.startsWith("drive:") &&
-                driveToken.isNotEmpty(),
+            "No seeded session. See docs/verification.md.",
+            reviewerAccess.isNotEmpty() && livePostId.isNotEmpty(),
         )
         ApiSession.load(context)
         beReviewer()
@@ -86,6 +80,26 @@ class ReviewJourneyTest {
     private fun beOwner() = ApiSession.remember(Tokens(ownerAccess, ownerRefresh, 900))
 
     private fun fingerprint() = requireNotNull(Device.fingerprint(context)) { "no ANDROID_ID" }
+
+    /** A small picture of this run's own, sent to the server the way the app sends a proof, and its id. */
+    private suspend fun sentPicture(): String {
+        val bitmap = android.graphics.Bitmap.createBitmap(90, 160, android.graphics.Bitmap.Config.ARGB_8888)
+        for (y in 0 until bitmap.height) {
+            for (x in 0 until bitmap.width) bitmap.setPixel(x, y, android.graphics.Color.rgb(x * 2, y, 120))
+        }
+        val bytes =
+            java.io
+                .ByteArrayOutputStream()
+                .also {
+                    bitmap.compress(
+                        android.graphics.Bitmap.CompressFormat.JPEG,
+                        80,
+                        it,
+                    )
+                }.toByteArray()
+        bitmap.recycle()
+        return ServerUpload.send(ServerUpload.newId(), ServerUpload.REVIEW, "image/jpeg") { bytes }
+    }
 
     // ------------------------------------------------------------------ the journey
 
@@ -140,9 +154,8 @@ class ReviewJourneyTest {
             val submitted =
                 Api.submit(
                     claimed.id,
-                    proofRef = liveProof,
+                    proofRef = sentPicture(),
                     written = "The monthly total was readable.",
-                    driveToken = driveToken,
                 )
             assertEquals("submitted", submitted.state)
             assertNotNull(submitted.submittedAt)
@@ -195,9 +208,8 @@ class ReviewJourneyTest {
                 Api
                     .submit(
                         claimed.id,
-                        proofRef = closedProof,
+                        proofRef = sentPicture(),
                         written = "The keyboard covered the list.",
-                        driveToken = driveToken,
                     ).state,
             )
         }

@@ -5,8 +5,8 @@ package com.eazyverse.testtrack.data
  *
  * A picture is one app's on one night: a newer picture of the same app on the same night replaces
  * the older one, and a picture from another night never does. A pass sends them in order and
- * carries on past a picture the server refuses for good, stopping only when the network, Drive or
- * the server itself is down, which a later pass can get past.
+ * carries on past a picture the server refuses for good, stopping only when the network or the
+ * server itself is down, which a later pass can get past.
  */
 object PictureQueue {
     /** What one picture's try came to. */
@@ -14,7 +14,7 @@ object PictureQueue {
         /** Sent, or dropped for good: on to the next. */
         data object Gone : Step
 
-        /** The network, Drive or the server is down: stop here and say why. */
+        /** The network or the server is down: stop here and say why. */
         data class Stop(
             val reason: String,
         ) : Step
@@ -36,10 +36,12 @@ object PictureQueue {
 
     /**
      * A refusal that will be the same on every try: not allowed (the app left the run, or the
-     * member did), a picture the server will not take, or a visit it no longer has. Anything else
-     * (a timeout, the server down, a session to refresh) is worth another try later.
+     * member did), a picture the server will not take (too big, or not a picture), or a visit it
+     * no longer has. Anything else is worth another try later: a timeout, the server down, a
+     * session to refresh, and also the server's disk being full (507) or this copy of TestTrack
+     * being too old (426), which both pass without the picture changing.
      */
-    fun refusedForGood(status: Int) = status in setOf(400, 403, 404, 409, 422)
+    fun refusedForGood(status: Int) = status in setOf(400, 403, 404, 409, 413, 415, 422)
 
     /** Each picture in turn through [send], until one says stop: null when every one went. */
     suspend fun pass(

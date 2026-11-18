@@ -324,7 +324,7 @@ fun ProofImage(
 ) {
     val context = LocalContext.current
     // The token-carrying client, and one loader rather than a new one on every recomposition.
-    // Drive needs no token: the file is shared by link.
+    // An older proof kept at Google needs no token: it is shared by link.
     val loader = remember { ImageLoader.Builder(context).okHttpClient { Api.images }.build() }
 
     SubcomposeAsyncImage(
@@ -336,7 +336,7 @@ fun ProofImage(
                 .build(),
         contentDescription = "The screenshot sent as proof",
         imageLoader = loader,
-        // A screenshot from Drive takes a moment on mobile data: its shape shimmers meanwhile.
+        // A screenshot takes a moment on mobile data: its shape shimmers meanwhile.
         loading = {
             if (whole) {
                 Skeleton(height = 320.dp, corner = 14.dp)

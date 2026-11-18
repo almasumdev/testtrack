@@ -142,7 +142,7 @@ fun Avatar(
         return
     }
 
-    // A face kept by address: ours, Google's or a Drive thumbnail. Only the old inline base64 faces
+    // A face kept by address: ours or Google's. Only the old inline base64 faces
     // were drawn here once, so every address-kept face showed as its letter, including one just
     // saved. It shimmers while it loads, and the letter stands in if it cannot be fetched.
     if (photo.startsWith("https://") || photo.startsWith("http://")) {

@@ -260,7 +260,6 @@ data class UsedIn(
 data class SubmitIn(
     @SerialName("proof_ref") val proofRef: String = "",
     val written: String = "",
-    @SerialName("drive_token") val driveToken: String = "",
     /** Play showed no review box: the screenshot is of that page and [written] is the feedback. */
     @SerialName("no_box") val noBox: Boolean = false,
 )
@@ -269,7 +268,6 @@ data class SubmitIn(
 @Serializable
 data class RecheckIn(
     @SerialName("proof_ref") val proofRef: String,
-    @SerialName("drive_token") val driveToken: String,
 )
 
 @Serializable
@@ -280,9 +278,8 @@ data class KeptIn(
 @Serializable
 data class RejectIn(
     val reason: String,
-    /** An optional picture with the refusal: the owner's own Drive file and Drive token. */
+    /** An optional picture with the refusal, by the id it was sent to TestTrack under. */
     @SerialName("proof_ref") val proofRef: String = "",
-    @SerialName("drive_token") val driveToken: String = "",
 )
 
 /** The reviewer's one answer to a refusal: words, a picture, or both. */
@@ -290,7 +287,6 @@ data class RejectIn(
 data class ReplyIn(
     val text: String = "",
     @SerialName("proof_ref") val proofRef: String = "",
-    @SerialName("drive_token") val driveToken: String = "",
 )
 
 @Serializable
@@ -408,7 +404,6 @@ data class MeIn(
     @SerialName("display_name") val displayName: String,
     /** The photo to keep, by its URL. Empty clears it back to the initial. */
     @SerialName("photo_ref") val photoRef: String = "",
-    @SerialName("drive_token") val driveToken: String = "",
 )
 
 @Serializable

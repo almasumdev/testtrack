@@ -54,8 +54,8 @@ object Api {
         http
             .newBuilder()
             .addInterceptor { chain ->
-                // Our token is for our server only. A proof kept in Drive loads through this
-                // client too, and Google has no business being handed it.
+                // Our token is for our server only. An older proof kept at Google loads through
+                // this client too, and Google has no business being handed it.
                 if (!chain
                         .request()
                         .url
@@ -200,9 +200,8 @@ object Api {
         reviewId: String,
         proofRef: String = "",
         written: String = "",
-        driveToken: String = "",
         noBox: Boolean = false,
-    ): ApiReview = post("/reviews/$reviewId/submit", SubmitIn(proofRef, written, driveToken, noBox))
+    ): ApiReview = post("/reviews/$reviewId/submit", SubmitIn(proofRef, written, noBox))
 
     suspend fun abandon(reviewId: String): ApiReview = post("/reviews/$reviewId/abandon", Empty())
 
@@ -234,8 +233,7 @@ object Api {
         reviewId: String,
         reason: String,
         proofRef: String = "",
-        driveToken: String = "",
-    ): ApiDispute = post("/reviews/$reviewId/reject", RejectIn(reason, proofRef, driveToken))
+    ): ApiDispute = post("/reviews/$reviewId/reject", RejectIn(reason, proofRef))
 
     // ---------------------------------------------------------------- disputes
 

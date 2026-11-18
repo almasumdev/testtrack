@@ -332,7 +332,7 @@ private fun TixLoading(modifier: Modifier = Modifier) {
 /** Reserve the same amount slot while loading and showing a normal balance, scaled with text. */
 private val TixCountRoom = 36.sp
 
-/** The ticket, resting at -12 degrees. [hop] drives the up, over once and back down. */
+/** The ticket, resting at -12 degrees. [hop] runs the up, over once and back down. */
 @Composable
 private fun Ticket(hop: Animatable<Float, *>?) {
     val mark = rememberTicketMark()

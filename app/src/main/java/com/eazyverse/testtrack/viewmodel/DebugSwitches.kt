@@ -12,13 +12,10 @@ object DebugSwitches {
     val visible: Boolean get() = BuildConfig.DEBUG
 
     val noGroup: Boolean get() = DebugOverrides.noGroup
-    val noDrive: Boolean get() = DebugOverrides.noDrive
 
     /** Turning it on forgets the remembered yes, so turning it off asks the server again. */
     fun setNoGroup(on: Boolean) {
         DebugOverrides.updateNoGroup(on)
         if (on) Session.updateMember(false)
     }
-
-    fun setNoDrive(on: Boolean) = DebugOverrides.updateNoDrive(on)
 }

@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.data
 
+import com.eazyverse.testtrack.net.ApiError
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -46,8 +47,50 @@ class PictureQueueTest {
 
     @Test
     fun `a refusal for good is dropped, a server or network failure is tried again`() {
-        listOf(400, 403, 404, 409, 422).forEach { assertTrue("$it", PictureQueue.refusedForGood(it)) }
+        listOf(400, 403, 404, 409, 413, 415, 422).forEach { assertTrue("$it", PictureQueue.refusedForGood(it)) }
         listOf(0, 401, 429, 500, 502, 503).forEach { assertFalse("$it", PictureQueue.refusedForGood(it)) }
+    }
+
+    @Test
+    fun `a full server and an old app keep the picture and try again`() {
+        // 507: the server has no room just now. 426: this copy of TestTrack is too old. Neither is
+        // about the picture, so it stays on the phone and goes on a later pass.
+        assertFalse(PictureQueue.refusedForGood(507))
+        assertFalse(PictureQueue.refusedForGood(426))
+    }
+
+    @Test
+    fun `a pass stops at a full server and keeps every picture after it`() =
+        runBlocking {
+            val tried = mutableListOf<String>()
+            val why =
+                PictureQueue.pass(listOf(pic("x", 3), pic("y", 3))) {
+                    tried += it.seatId
+                    PictureQueue.Step.Stop(ServerUpload.queuedLine(ApiError(507, "storage_full", "No room")))
+                }
+            assertEquals(listOf("x"), tried)
+            assertEquals("Pictures can't be saved right now. They'll send by themselves later.", why)
+        }
+
+    @Test
+    fun `an old app is told to update, in the queue's own line`() {
+        assertEquals("Update TestTrack to send this picture.", ServerUpload.queuedLine(ApiError(426, "update_app", "Too old")))
+        assertEquals("Not yours.", ServerUpload.queuedLine(ApiError(403, "forbidden", "Not yours.")))
+    }
+
+    @Test
+    fun `an id from before pictures came to TestTrack is not one of ours`() {
+        assertTrue(ServerUpload.isId(ServerUpload.newId()))
+        assertTrue(ServerUpload.isId("3f1c9a52-7d0e-4c1b-9a6f-2b8e5d4c7a10"))
+        listOf(null, "", "1AbCdEfGhIjKlMnOpQrStUvWxYz012345", "drive:3f1c9a52-7d0e-4c1b-9a6f-2b8e5d4c7a10").forEach {
+            assertFalse("$it", ServerUpload.isId(it))
+        }
+    }
+
+    @Test
+    fun `a picture left waiting by an older build still goes, as the JPEG it is`() {
+        assertEquals("image/webp", VisitPictures.mime(java.io.File("visit_pictures/crew_1.webp")))
+        assertEquals("image/jpeg", VisitPictures.mime(java.io.File("visit_pictures/crew_1.jpg")))
     }
 
     @Test

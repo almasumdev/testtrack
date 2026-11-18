@@ -24,7 +24,6 @@ object Session {
         email = prefs.getString(KEY_EMAIL, null)
         DebugOverrides.init(context)
         memberCached = prefs.getBoolean(KEY_MEMBER, false)
-        driveCached = prefs.getBoolean(KEY_DRIVE, false)
         cachedUpdateAvailableBuild = prefs.getInt(KEY_UPDATE_CACHE_AVAILABLE, 0)
         cachedUpdateStalenessDays = prefs.getInt(KEY_UPDATE_CACHE_STALENESS, 0)
         cachedUpdateLatestBuild = prefs.getInt(KEY_UPDATE_CACHE_LATEST, 0)
@@ -42,13 +41,9 @@ object Session {
         private set
 
     private var memberCached by mutableStateOf(false)
-    private var driveCached by mutableStateOf(false)
 
     /** The remembered yes, except while the debug switch pretends to be outside the group. */
     val isGroupMember: Boolean get() = memberCached && !DebugOverrides.noGroup
-
-    /** The cached Drive flag, except while the debug switch pretends Drive is not connected. */
-    val driveConnected: Boolean get() = driveCached && !DebugOverrides.noDrive
 
     /**
      * Whether Settings > Special access > Usage access is on for TestTrack.
@@ -155,18 +150,6 @@ object Session {
     }
 
     /**
-     * Cached, not authoritative.
-     *
-     * The Drive grant belongs to the Google account and outlives this install, so the real answer
-     * always comes from [AuthRepo.hasDriveAccess]. This only exists so the setup screen has
-     * something to draw before that answer arrives.
-     */
-    fun updateDriveConnected(value: Boolean) {
-        prefs.edit().putBoolean(KEY_DRIVE, value).apply()
-        driveCached = value
-    }
-
-    /**
      * Clears everything except onboarding, nobody wants to watch the intro twice, and except the
      * cached update policy, which is about this copy of the app rather than about whoever is signed
      * into it.
@@ -185,14 +168,12 @@ object Session {
             .apply()
         email = null
         memberCached = false
-        driveCached = false
         onboardingDone = true
     }
 
     private const val KEY_ONBOARDED = "onboarding_done"
     private const val KEY_EMAIL = "email"
     private const val KEY_MEMBER = "is_member"
-    private const val KEY_DRIVE = "drive_connected"
     private const val KEY_UPDATE_CACHE_AVAILABLE = "update_cache_available_build"
     private const val KEY_UPDATE_CACHE_STALENESS = "update_cache_staleness_days"
     private const val KEY_UPDATE_CACHE_LATEST = "update_cache_latest_build"

@@ -15,9 +15,7 @@
 #   TESTTRACK_VPS         ssh host or alias the isolated staging backend runs on
 #   TESTTRACK_REMOTE_DIR  the directory holding its docker-compose.yml
 #   TESTTRACK_STAGING_ACK  isolated-staging (required acknowledgment; never use production)
-#   TESTTRACK_REVIEWER_EMAIL  Google account that owns both Drive fixture images
-#   TESTTRACK_DRIVE_TOKEN     transient drive.file grant, never commit or print
-#   TESTTRACK_LIVE_DRIVE_PROOF / TESTTRACK_CLOSED_DRIVE_PROOF  distinct drive:<file-id> refs
+#   TESTTRACK_REVIEWER_EMAIL  the isolated test account the seeded reviewer is made for
 #
 #   scripts/e2e.sh                 seed, run, clean
 #   scripts/e2e.sh --keep          leave the seeded world in place to poke at by hand
@@ -27,12 +25,8 @@ set -euo pipefail
 SERIAL="${ANDROID_SERIAL:-emulator-5554}"
 [[ "$SERIAL" == "emulator-5554" ]] || { echo 'Only emulator-5554 is allowed.' >&2; exit 2; }
 [[ "${TESTTRACK_STAGING_ACK:-}" == "isolated-staging" ]] || { echo 'Set TESTTRACK_STAGING_ACK=isolated-staging for an isolated test backend.' >&2; exit 2; }
-REVIEWER_EMAIL="${TESTTRACK_REVIEWER_EMAIL:?set the isolated Drive fixture account email}"
+REVIEWER_EMAIL="${TESTTRACK_REVIEWER_EMAIL:?set the isolated test account email}"
 [[ "$REVIEWER_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]] || exit 2
-DRIVE_TOKEN="${TESTTRACK_DRIVE_TOKEN:?set a transient Drive grant}"
-LIVE_PROOF="${TESTTRACK_LIVE_DRIVE_PROOF:?set an owned live proof reference}"
-CLOSED_PROOF="${TESTTRACK_CLOSED_DRIVE_PROOF:?set a different owned closed proof reference}"
-[[ "$LIVE_PROOF" =~ ^drive:[a-zA-Z0-9_-]+$ && "$CLOSED_PROOF" =~ ^drive:[a-zA-Z0-9_-]+$ && "$LIVE_PROOF" != "$CLOSED_PROOF" ]] || exit 2
 VPS="${TESTTRACK_VPS:?set TESTTRACK_VPS to the host the backend runs on}"
 # Git Bash ships an OpenSSH that cannot read a modern ed25519 key on this machine, so the
 # Windows one is used when it is there. Override SSH to point at whichever works for you.
@@ -86,7 +80,4 @@ ANDROID_SERIAL="$SERIAL" ./gradlew connectedDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.ownerAccess="$OWNER_ACCESS" \
   -Pandroid.testInstrumentationRunnerArguments.ownerRefresh="$OWNER_REFRESH" \
   -Pandroid.testInstrumentationRunnerArguments.livePostId="$LIVE_POST" \
-  -Pandroid.testInstrumentationRunnerArguments.closedPostId="$CLOSED_POST" \
-  -Pandroid.testInstrumentationRunnerArguments.liveDriveProof="$LIVE_PROOF" \
-  -Pandroid.testInstrumentationRunnerArguments.closedDriveProof="$CLOSED_PROOF" \
-  -Pandroid.testInstrumentationRunnerArguments.driveToken="$DRIVE_TOKEN"
+  -Pandroid.testInstrumentationRunnerArguments.closedPostId="$CLOSED_POST"

@@ -38,8 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import com.composables.icons.lucide.Camera
-import com.composables.icons.lucide.HardDrive
-import com.composables.icons.lucide.HardDriveUpload
 import com.composables.icons.lucide.Image
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -178,12 +176,14 @@ fun ProofArea(
                 style = MaterialTheme.typography.labelLarge,
             )
         }
-        // Its own line under the buttons, with room above it, so it reads as a note about where
-        // the picture goes rather than as part of the last button.
+        // Its own line under the buttons, with room above it, so it reads as a note about who
+        // sees the picture rather than as part of the last button.
         Spacer(Modifier.height(if (shown == null) 14.dp else 2.dp))
         ReviewBullet(
-            body = "Anyone with the link can view your Drive screenshot, including the developer and dispute reviewers.",
-            highlights = listOf("Anyone with the link"),
+            body =
+                "The app's owner sees this picture. If they dispute it, a few reviewers and the " +
+                    "TestTrack team see it too. Hide anything personal first.",
+            highlights = listOf("Hide anything personal first."),
         )
     }
 }
@@ -295,51 +295,6 @@ private fun ProofAction(
             color = t.accentInk,
             maxLines = 1,
         )
-    }
-}
-
-/**
- * Drive is not connected yet. Said under the screenshot, before Send is tapped, with the one
- * button that fixes it: the screenshot is kept in the reviewer's own Drive and the owner sees it
- * by link, so nothing can be sent without it.
- */
-@Composable
-fun DriveConnectCard(
-    busy: Boolean,
-    onConnect: () -> Unit,
-) {
-    val t = Tt.colors
-    val shape = RoundedCornerShape(CardRadius)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(t.glass)
-            .border(1.dp, t.glassBorder, shape)
-            .padding(start = 14.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(t.glass2),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Lucide.HardDriveUpload, null, Modifier.size(18.dp), tint = t.accentInk)
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                "Connect Google Drive",
-                style = MaterialTheme.typography.titleSmall.copy(fontSize = 14.5.sp, lineHeight = 19.sp),
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                "Saved in your Drive. Anyone with the link can view it, including the developer and authorized dispute jurors.",
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
-                color = t.text2,
-            )
-        }
-        Spacer(Modifier.width(10.dp))
-        ProofAction(Lucide.HardDrive, if (busy) "Connecting" else "Connect", onClick = { if (!busy) onConnect() })
     }
 }
 

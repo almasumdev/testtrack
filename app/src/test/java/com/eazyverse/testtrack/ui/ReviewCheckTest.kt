@@ -27,7 +27,7 @@ class ReviewCheckTest {
         state = state,
         usedMs = 30_000,
         neededMs = 30_000,
-        proofRef = "drive:FirstPicture123",
+        proofRef = "3f1c9a52-7d0e-4c1b-9a6f-2b8e5d4c7a10",
         written = "",
         reason = "",
         createdAt = "2026-11-07T00:00:00+00:00",
@@ -112,7 +112,7 @@ class ReviewCheckTest {
         assertFalse(ReviewJob(post(), review("submitted")).canReply)
 
         assertTrue(Evidence().isEmpty)
-        assertFalse(Evidence(ownerProofRef = "drive:OwnerPlayPage12345").isEmpty)
+        assertFalse(Evidence(ownerProofRef = "8b2d6e41-5a3c-4f7e-b1d9-0c6a4e2f9b35").isEmpty)
         assertFalse(Evidence(reply = "It is there.").isEmpty)
     }
 }

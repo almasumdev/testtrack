@@ -28,14 +28,6 @@ object Config {
             .substringBefore('?')
             .let { if (it.isBlank()) "" else "$it@googlegroups.com" }
 
-    /**
-     * Only files this app creates. Non-sensitive, so no Google verification is required.
-     * Do not widen to `drive` or `drive.readonly`: those are restricted scopes.
-     */
-    const val DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file"
-
-    const val DRIVE_FOLDER = "TestTrack Proofs"
-
     /** False when local.properties was not filled in, so the app can say so plainly. */
     val isConfigured: Boolean
         get() = WEB_CLIENT_ID.isNotBlank() && GATE_URL.isNotBlank()

@@ -4,15 +4,12 @@ import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.findActivity
-import com.eazyverse.testtrack.viewmodel.TestingDriveViewModel
 
 /*
- * The two things a night's round asks before it starts, now that each visit counts with its
- * picture: Google Drive, once, and Android's screen-share yes, every night.
+ * What a night's round asks before it starts, now that each visit counts with its picture:
+ * Android's screen-share yes, every night.
  */
 
 @Composable
@@ -40,35 +37,14 @@ internal fun CrewPictureAsks(vm: CrewViewModel) {
         Ask(
             title = "A picture of each app",
             body =
-                "Each app is open for ${CrewRules.OPEN_SECONDS} seconds, with a picture taken along the way. Android asks " +
+                "Each app is open for ${CrewRules.OPEN_SECONDS} seconds, with a picture taken along the way. " +
+                    "Each app's picture goes to TestTrack so its owner can see it. Android asks " +
                     "next whether TestTrack can see your screen. Say yes once and it covers " +
                     "${if (stops.size == 1) "this app" else "all ${stops.size} tonight"}.",
             confirm = "Start",
             dismiss = "Not now",
             onConfirm = { consent.launch(wholeScreenCapture(context)) },
             onDismiss = { pictures.skip() },
-        )
-    }
-
-    val drive: TestingDriveViewModel = viewModel()
-    val driveSheet =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
-            drive.consentResult(activity, it.data) { pictures.tell("Google Drive is connected. Tap Open all to start.") }
-        }
-    LaunchedEffect(drive.message) { drive.message?.let { pictures.tell(it) } }
-    if (pictures.needsDrive) {
-        Ask(
-            title = "Connect Google Drive",
-            body =
-                "The picture of each app you open is saved to your own Google Drive, for its owner to " +
-                    "see. TestTrack only sees the files it saves there, never the rest of your Drive.",
-            confirm = "Connect",
-            dismiss = "Not now",
-            onConfirm = {
-                pictures.clearDriveAsk()
-                drive.connect(activity, driveSheet::launch) { pictures.tell("Google Drive is connected. Tap Open all to start.") }
-            },
-            onDismiss = { pictures.clearDriveAsk() },
         )
     }
 }

@@ -55,7 +55,8 @@ internal fun CrewRunPictureUpdates(
                     "These screenshots have waited over 3 hours. Tests count once uploads finish. Check your connection and retry. ${why.orEmpty()}"
                         .trim()
                 why != null -> "Your screenshots are saved on this phone. Retry to finish the tests. $why"
-                else -> "These tests will count once their screenshots finish uploading to your Google Drive."
+                sending.size == 1 -> "It counts once the screenshot is sent. Check you're online."
+                else -> "They count once the screenshots are sent. Check you're online."
             }
         CrewCard(padding = CrewUpdatePadding) {
             CrewUpdateRow(

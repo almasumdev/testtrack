@@ -429,7 +429,7 @@ class FeedViewModel : ViewModel() {
         reason: String,
         picture: Uri? = null,
     ) = decide(context, review.id, "Refused. Three members will decide it.") {
-        rejectWithPicture(context, review.id, review.packageName, reason, picture)
+        rejectWithPicture(context, review.id, reason, picture)
     }
 
     /** Can't find it on Play: ask its reviewer for a new screenshot. Once per review. */

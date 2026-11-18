@@ -12,7 +12,7 @@ import kotlinx.coroutines.tasks.await
 /**
  * The bridge between the sign-in the app already has and a session of our own.
  *
- * Google stays because Drive and the testers-group check both need it. What changes is that the
+ * Google stays because the testers-group check needs it. What changes is that the
  * API trusts its own token afterwards, so no ordinary request depends on Firebase being reachable
  * and leaving Firebase later is this one file.
  */

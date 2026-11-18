@@ -114,7 +114,8 @@ class NightRoundCameraTest {
         assertNotNull("The picture is not an image", bitmap)
         assertTrue("The picture is too small: ${bitmap.width}x${bitmap.height}", bitmap.width > 300 && bitmap.height > 500)
         assertTrue("The picture is a blank frame", !blank(bitmap))
-        shot.copyTo(File(out, "picture.jpg"), overwrite = true)
+        assertTrue("The picture is wider than it is sent: ${bitmap.width}", bitmap.width <= 720)
+        shot.copyTo(File(out, "picture.${shot.extension}"), overwrite = true)
     }
 
     private fun state(): String? {

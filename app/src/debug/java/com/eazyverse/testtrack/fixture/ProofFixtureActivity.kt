@@ -21,7 +21,7 @@ import com.eazyverse.testtrack.ui.ProofEditor
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import java.io.File
 
-/** Local UI/bitmap fixture only. No network, account, backend, Drive or production build path. */
+/** Local UI/bitmap fixture only. No network, account, backend or production build path. */
 class ProofFixtureActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

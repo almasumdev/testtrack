@@ -359,7 +359,7 @@ class CrewViewModel : ViewModel() {
     /** Asked once a session: somebody who said Not now is not asked at every app. */
     private var overlayAsked = false
 
-    /** What a round needs before it starts: Drive, and tonight's screen-share yes. */
+    /** What a round needs before it starts: tonight's screen-share yes. */
     val pictures = NightPictures(viewModelScope, say = { message = it }, reload = { load(it) })
 
     private fun round(
@@ -433,7 +433,7 @@ class CrewViewModel : ViewModel() {
             said?.let { message = it }
             load(context)
         }
-        (context as? Activity)?.let(pictures::send) // What could not go yet, with Drive askable.
+        (context as? Activity)?.let(pictures::send) // What could not go yet.
     }
 
     /**

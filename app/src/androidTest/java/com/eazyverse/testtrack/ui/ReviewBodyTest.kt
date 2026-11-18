@@ -86,8 +86,6 @@ class ReviewBodyTest {
         message: String? = null,
         offline: Boolean = false,
         failure: String? = null,
-        driveConnected: Boolean = true,
-        onConnectDrive: () -> Unit = {},
         onGiveUp: (() -> Unit)? = null,
     ) {
         compose.setContent {
@@ -105,8 +103,6 @@ class ReviewBodyTest {
                     proof = proof,
                     note = note,
                     onCapture = onCapture,
-                    driveConnected = driveConnected,
-                    onConnectDrive = onConnectDrive,
                     onGiveUp = onGiveUp,
                 )
             }
@@ -289,33 +285,10 @@ class ReviewBodyTest {
     }
 
     @Test
-    fun without_drive_the_proof_step_says_how_to_connect_and_send_still_goes_through_it() {
-        // The screenshot is kept in the reviewer's own Drive, so it cannot be sent before Drive is
-        // connected. The page says so before Send is tapped, and Send itself leads there.
-        val shot = android.net.Uri.parse("file:///nowhere/proof.jpg")
-        var connects = 0
-        var sent: android.net.Uri? = null
-        open(
-            "used",
-            leftReview = true,
-            proof = shot,
-            note = "Totals read well",
-            driveConnected = false,
-            onConnectDrive = { connects++ },
-            onSend = { uri, _ -> sent = uri },
-        )
-
-        compose.onNodeWithText("Connect Google Drive").assertIsDisplayed()
-        compose.onNodeWithText("Connect").performClick()
-        assertEquals(1, connects)
-        compose.onNodeWithText("Connect Drive and send").performClick()
-        assertEquals(shot, sent)
-    }
-
-    @Test
-    fun with_drive_connected_there_is_nothing_to_connect() {
-        open("used", leftReview = true, proof = android.net.Uri.parse("file:///nowhere/proof.jpg"))
-        compose.onNodeWithText("Connect Google Drive").assertDoesNotExist()
+    fun the_proof_step_says_who_sees_the_picture_and_asks_for_nothing_else() {
+        open("used", leftReview = true, proof = android.net.Uri.parse("file:///nowhere/proof.jpg"), note = "Totals read well")
+        compose.onNodeWithText("The app's owner sees this picture.", substring = true).assertExists()
+        compose.onNodeWithText("Send the proof").assertIsDisplayed()
     }
 
     @Test

@@ -9,12 +9,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.eazyverse.testtrack.data.AuthRepo
-import com.eazyverse.testtrack.data.DriveRepo
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.ProofImages
 import com.eazyverse.testtrack.data.ReviewCaptureService
-import com.eazyverse.testtrack.data.UploadResult
+import com.eazyverse.testtrack.data.ServerUpload
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.FeedbackIn
@@ -24,9 +22,7 @@ import com.eazyverse.testtrack.net.markDown
 import com.eazyverse.testtrack.net.sendFeedback
 import com.eazyverse.testtrack.net.tellUpdate
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * The crew's own acts beyond opening apps, as docs/crew.md decides them.
@@ -186,7 +182,7 @@ class CrewExtrasViewModel : ViewModel() {
     }
 
     /**
-     * Back in TestTrack: the camera's picture, if it took one, goes to Drive and onto the feedback.
+     * Back in TestTrack: the camera's picture, if it took one, goes to TestTrack and onto the feedback.
      * Back without one, the camera and Android's sharing chip go, as the review page does it, so a
      * later tap cannot send whatever is on screen then as this app's feedback.
      */
@@ -201,7 +197,7 @@ class CrewExtrasViewModel : ViewModel() {
             return
         }
         ReviewCaptureService.takeCrewProof()
-        send(activity, job) { file.readBytes() }
+        send(job) { file.readBytes() }
     }
 
     /** A picture of the feedback picked from the phone instead. */
@@ -210,22 +206,15 @@ class CrewExtrasViewModel : ViewModel() {
         uri: Uri,
     ) {
         val job = feedbackFor ?: return
-        send(activity, job) { ProofImages.bytes(activity, uri) }
+        send(job) { ProofImages.bytes(activity, uri) }
     }
 
     private fun send(
-        activity: Activity,
         job: FeedbackJob,
         bytes: () -> ByteArray,
     ) = act({}) {
-        val token =
-            AuthRepo.driveTokenOrNull(activity)
-                ?: throw ApiError(0, "drive", "Connect Google Drive to send it. The picture is saved there for the team.")
-        val data = withContext(Dispatchers.IO) { bytes() }
-        val id = DriveRepo.reserveId(token)
-        val upload = DriveRepo.upload(token, "feedback_${job.seatId.take(8)}.jpg", "image/jpeg", fileId = id) { data }
-        if (upload is UploadResult.Failed) throw ApiError(0, "drive", upload.reason)
-        Api.sendFeedback(job.seatId, FeedbackIn("drive:$id", token))
+        val id = ServerUpload.send(ServerUpload.newId(), ServerUpload.CREW_FEEDBACK, "image/jpeg", seatId = job.seatId, bytes = bytes)
+        Api.sendFeedback(job.seatId, FeedbackIn(id))
         feedbackFor = null
         "Feedback for ${job.label} sent. Thank you."
     }

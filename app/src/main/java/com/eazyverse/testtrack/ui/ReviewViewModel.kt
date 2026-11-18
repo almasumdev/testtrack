@@ -11,14 +11,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.Device
 import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.ProofStore
 import com.eazyverse.testtrack.data.ReviewCaptureService
 import com.eazyverse.testtrack.data.ReviewClock
 import com.eazyverse.testtrack.data.ReviewKeep
-import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.data.UsageRepo
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
@@ -36,7 +34,7 @@ import java.io.File
 import java.io.IOException
 
 /**
- * One guided review, driven against the API.
+ * One guided review, run against the API.
  *
  * The phone reports only what it can actually see: whether the package is there, who installed it,
  * and how long it has been in the foreground. What that adds up to is the server's decision, every
@@ -370,22 +368,14 @@ class ReviewViewModel : ViewModel() {
         job = current.copy(leftReview = true)
     }
 
-    /** Whether the reviewer's Drive can take the screenshot. */
-    val driveConnected: Boolean get() = Session.driveConnected
-
-    /** Whether Drive is connected, asked of Google without showing anything. */
-    fun checkDrive(activity: Activity) {
-        viewModelScope.launch { Session.updateDriveConnected(AuthRepo.hasDriveAccess(activity)) }
-    }
-
     /**
      * The evidence, and the end of the reviewer's part.
      *
-     * Two steps, in this order, because the second needs what the first gives back: the
-     * screenshot goes to the reviewer's Drive and answers with its id, and the review is
-     * submitted carrying it. Uploading first means a submit that fails leaves a spare file in
-     * their Drive rather than a review claiming proof that was never stored, and the id is kept
-     * so trying again does not upload it twice.
+     * Two steps, in this order, because the second needs what the first gives: the screenshot
+     * goes to TestTrack under an id, and the review is submitted carrying it. Uploading first
+     * means a submit that fails leaves a spare picture on the server rather than a review
+     * claiming proof that was never stored, and the id is kept so trying again does not send
+     * it twice.
      */
     fun submit(
         activity: Activity,

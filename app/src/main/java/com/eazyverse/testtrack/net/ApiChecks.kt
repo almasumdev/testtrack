@@ -15,13 +15,11 @@ suspend fun Api.check(reviewId: String): ApiReview = post("/reviews/$reviewId/ch
 suspend fun Api.recheck(
     reviewId: String,
     proofRef: String,
-    driveToken: String,
-): ApiReview = post("/reviews/$reviewId/recheck", RecheckIn(proofRef, driveToken))
+): ApiReview = post("/reviews/$reviewId/recheck", RecheckIn(proofRef))
 
 /** The reviewer's one answer to a refusal: words, a picture, or both. */
 suspend fun Api.reply(
     reviewId: String,
     text: String,
     proofRef: String,
-    driveToken: String,
-): ApiReview = post("/reviews/$reviewId/reply", ReplyIn(text, proofRef, driveToken))
+): ApiReview = post("/reviews/$reviewId/reply", ReplyIn(text, proofRef))

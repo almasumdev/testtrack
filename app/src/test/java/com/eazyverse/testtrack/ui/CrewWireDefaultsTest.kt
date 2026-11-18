@@ -52,7 +52,17 @@ class CrewWireDefaultsTest {
     @Test
     fun `a picture is sent with its night, and without one when it is not known`() {
         val wire = Json { encodeDefaults = false }
-        assertTrue(wire.encodeToString(PictureIn.serializer(), PictureIn("drive:x", "t", day = 5)).contains("\"day\":5"))
-        assertFalse(wire.encodeToString(PictureIn.serializer(), PictureIn("drive:x", "t")).contains("day"))
+        assertTrue(wire.encodeToString(PictureIn.serializer(), PictureIn(PICTURE_ID, day = 5)).contains("\"day\":5"))
+        assertFalse(wire.encodeToString(PictureIn.serializer(), PictureIn(PICTURE_ID)).contains("day"))
+    }
+
+    @Test
+    fun `a picture goes as its id alone, with no token beside it`() {
+        val sent = Json.encodeToString(PictureIn.serializer(), PictureIn(PICTURE_ID, byHand = true, day = 5))
+        assertEquals("""{"proof_ref":"$PICTURE_ID","by_hand":true,"day":5}""", sent)
+    }
+
+    private companion object {
+        const val PICTURE_ID = "3f1c9a52-7d0e-4c1b-9a6f-2b8e5d4c7a10"
     }
 }

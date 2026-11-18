@@ -59,20 +59,18 @@ enum class JoinStep(
     SIGN_IN("Sign in", "Sign in", Lucide.LogIn),
     GROUP("Join the testers group", "Join the testers group", Lucide.ArrowRight),
     APP("Add an app in a closed test", "Add an app", Lucide.ArrowRight),
-    DRIVE("Connect Google Drive", "Connect Drive", Lucide.ArrowRight),
     TIX("Have ${CrewRules.SEAT_COST} tix", "Earn tix in Circle", Lucide.ArrowRight),
 }
 
 /**
  * What is known about the account. A null is "not answered yet": [closedApp] until My apps has
- * been read, [drive] until Google has been asked, [tix] until the balance has arrived.
+ * been read, [tix] until the balance has arrived.
  */
 data class CrewJoinState(
     val signedOut: Boolean = false,
     val member: Boolean = true,
     /** Any app of yours that is still in a closed test (not live on Play), verified or not. */
     val closedApp: Boolean? = null,
-    val drive: Boolean? = null,
     val tix: Int? = null,
     /** Usage access and the timer over other apps; asked for apart from the steps. */
     val permissions: Boolean = true,
@@ -86,7 +84,6 @@ data class CrewJoinState(
                 listOfNotNull(
                     JoinStep.GROUP.takeIf { !member },
                     JoinStep.APP.takeIf { closedApp == false },
-                    JoinStep.DRIVE.takeIf { drive == false },
                     JoinStep.TIX.takeIf { tix != null && tix < CrewRules.SEAT_COST },
                 )
             }
@@ -211,7 +208,6 @@ private fun StepLine(
                 JoinStep.SIGN_IN -> append("Use the Google account you test apps with.")
                 JoinStep.GROUP -> append("Your account joins it, so you can install the other apps in your crew from Play.")
                 JoinStep.APP -> append("Add the app you want tested, from your phone or from Play. It has to be in a closed test.")
-                JoinStep.DRIVE -> append("Each night's proof pictures are saved there, for the app owners.")
                 JoinStep.TIX -> {
                     append("A seat is ")
                     withStyle(bold) { append("${CrewRules.SEAT_COST} tix") }

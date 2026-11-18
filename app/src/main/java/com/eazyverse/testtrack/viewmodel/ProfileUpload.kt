@@ -12,9 +12,8 @@ import java.io.ByteArrayOutputStream
 /**
  * A profile photo, cropped square on the phone, sent to TestTrack to keep.
  *
- * It used to go to the account's own Google Drive, which needed Drive connected first and failed
- * without a word when it was not. Now it is one request to our own server, which redraws it and
- * serves it to everybody who sees the account.
+ * It is one request to our own server, which redraws it and serves it to everybody who sees the
+ * account.
  */
 object ProfileUpload {
     /** Pixels on a side: what the server keeps, so nothing is sent only to be thrown away. */

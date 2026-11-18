@@ -22,7 +22,6 @@ import com.composables.icons.lucide.Bell
 import com.composables.icons.lucide.CirclePlay
 import com.composables.icons.lucide.Download
 import com.composables.icons.lucide.ExternalLink
-import com.composables.icons.lucide.HardDrive
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.Lucide
@@ -37,9 +36,6 @@ import com.eazyverse.testtrack.viewmodel.ReviewMoment
 /** Where the policy and the deletion request live. The site owns both pages. */
 private const val SITE = "https://eazyverse.com/apps/testtrack"
 
-/** Google's list of apps with access to the account, where Drive access can be removed. */
-internal const val GOOGLE_CONNECTIONS = "https://myaccount.google.com/connections"
-
 /**
  * Everything on Profile that is a setting rather than your record, in groups by what it is for:
  * what testing needs, how the app looks, where to get help and say something, and the account.
@@ -52,8 +48,6 @@ internal const val GOOGLE_CONNECTIONS = "https://myaccount.google.com/connection
 internal fun MeSettings(
     onEdit: () -> Unit,
     onSignOut: () -> Unit,
-    drive: Boolean?,
-    onDrive: () -> Unit,
     group: Boolean,
     onGroup: () -> Unit,
     notifications: Boolean,
@@ -65,40 +59,25 @@ internal fun MeSettings(
 
     Column {
         SectionTitle("Testing")
-        TileGroup(count = 3) { index, place ->
-            when (index) {
-                0 ->
-                    TileRow(
-                        Lucide.Users,
-                        "Testers group",
-                        place,
-                        subtitle = "So owners can add you to tests",
-                        value = if (group) "Joined" else "Join",
-                        onClick = onGroup,
-                    )
-                1 ->
-                    TileRow(
-                        Lucide.HardDrive,
-                        "Google Drive",
-                        place,
-                        subtitle = "Keeps your proof screenshots",
-                        value =
-                            when (drive) {
-                                true -> "Connected"
-                                false -> "Connect"
-                                null -> "Checking"
-                            },
-                        onClick = if (drive == null) null else onDrive,
-                    )
-                else ->
-                    TileRow(
-                        Lucide.Bell,
-                        "Notifications",
-                        place,
-                        subtitle = "Crew news and nightly reminders",
-                        value = if (notifications) "On" else "Off",
-                        onClick = { openNotificationSettings(context) },
-                    )
+        TileGroup(count = 2) { index, place ->
+            if (index == 0) {
+                TileRow(
+                    Lucide.Users,
+                    "Testers group",
+                    place,
+                    subtitle = "So owners can add you to tests",
+                    value = if (group) "Joined" else "Join",
+                    onClick = onGroup,
+                )
+            } else {
+                TileRow(
+                    Lucide.Bell,
+                    "Notifications",
+                    place,
+                    subtitle = "Crew news and nightly reminders",
+                    value = if (notifications) "On" else "Off",
+                    onClick = { openNotificationSettings(context) },
+                )
             }
         }
 

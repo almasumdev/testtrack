@@ -1,5 +1,36 @@
 package com.eazyverse.testtrack.net
 
+import kotlinx.serialization.Serializable
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+
+/** What the server kept of a picture sent to it. */
+@Serializable
+data class UploadOut(
+    val id: String = "",
+    val kind: String = "",
+    val width: Int = 0,
+    val height: Int = 0,
+)
+
+/**
+ * A picture's bytes, onto our own server under an id the phone made up and wrote down first.
+ *
+ * Sending the same id again answers the same way, so a try that died half way is simply repeated.
+ * [kind] is `visit`, `crew_feedback` or `review`; [seatId] is the app's seat for the two crew kinds.
+ */
+suspend fun Api.upload(
+    id: String,
+    kind: String,
+    bytes: ByteArray,
+    mime: String,
+    seatId: String? = null,
+): UploadOut {
+    val seat = seatId?.let { "&seat_id=$it" }.orEmpty()
+    return send(Request.Builder().url(url("/uploads/$id?kind=$kind$seat")).put(bytes.toRequestBody(mime.toMediaType())))
+}
+
 /** The picture of an app, onto the visit it was taken on: what makes that visit count. */
 suspend fun Api.visitPicture(
     seatId: String,

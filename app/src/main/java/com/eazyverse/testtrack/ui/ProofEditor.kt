@@ -53,7 +53,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-/** Edits local pixels before Drive upload. Masks become opaque pixels, never removable overlays. */
+/** Edits local pixels before the picture is sent. Masks become opaque pixels, never removable overlays. */
 @Composable
 internal fun ProofEditor(
     uri: Uri,
@@ -102,7 +102,7 @@ internal fun ProofEditor(
         ) {
             Text("Check your screenshot", style = MaterialTheme.typography.titleLarge)
             Text(
-                "Anyone with the link can view the image saved in your Drive. Hide names, messages and other personal details.",
+                "The app's owner sees this picture. If they dispute it, a few reviewers and the TestTrack team see it too. Hide anything personal first.",
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(

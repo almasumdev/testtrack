@@ -30,7 +30,7 @@ enum class UpdateTier { NONE, NUDGE, BLOCKED }
  *    resolved on device against the track this install actually came from, so it accounts for staged
  *    rollouts, track membership and device compatibility. Always asked first.
  *  - **Firestore `config/app`** decides how strongly to ask: `latestBuild`, `latestVersionName` (its
- *    major drives forcing), `minSupportedBuild` (manual kill-switch, 0 blocks nobody),
+ *    major leads to forcing), `minSupportedBuild` (manual kill-switch, 0 blocks nobody),
  *    `nudgeAfterDays`. Read only after Play says an update is available, so it can never create update
  *    UI on its own.
  *

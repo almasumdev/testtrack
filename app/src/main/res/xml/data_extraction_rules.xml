@@ -9,8 +9,8 @@
   cannot be expressed as a boolean anywhere in the manifest.
 
   Everything is excluded rather than some chosen subset, because there is nothing here worth
-  carrying. Every fact that matters lives in Firestore against the Google account, or in the
-  tester's own Drive, and both come back on the next sign-in by themselves. What is left is a
+  carrying. Every fact that matters lives on TestTrack's server against the Google account, and
+  comes back on the next sign-in by itself. What is left is a
   handful of local flags, and a restored "you're in the group" is a lie the app then has to be
   talked out of. We have paid for that bug twice already.
 

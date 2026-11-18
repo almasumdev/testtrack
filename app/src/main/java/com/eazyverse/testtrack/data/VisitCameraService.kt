@@ -280,8 +280,8 @@ class VisitCameraService : Service() {
             name: String,
         ): File {
             val dir = File(context.filesDir, VisitPictures.DIR).apply { mkdirs() }
-            val file = File(dir, "$name.jpg")
-            file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 80, it) }
+            val file = File(dir, "$name.webp")
+            file.outputStream().use { ProofImages.visitWebp(bitmap, it) }
             bitmap.recycle()
             return file
         }

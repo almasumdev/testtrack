@@ -5,7 +5,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CrewJoinStepsTest {
-    private val ready = CrewJoinState(closedApp = true, drive = true, tix = 240)
+    private val ready = CrewJoinState(closedApp = true, tix = 240)
 
     @Test
     fun nothing_missing_lists_no_steps() {
@@ -14,19 +14,19 @@ class CrewJoinStepsTest {
 
     @Test
     fun signed_out_lists_only_sign_in() {
-        val state = CrewJoinState(signedOut = true, member = false, closedApp = false, drive = false, tix = 0)
+        val state = CrewJoinState(signedOut = true, member = false, closedApp = false, tix = 0)
         assertEquals(listOf(JoinStep.SIGN_IN), state.missing)
     }
 
     @Test
     fun steps_come_in_the_order_they_are_done() {
-        val state = CrewJoinState(member = false, closedApp = false, drive = false, tix = 40)
-        assertEquals(listOf(JoinStep.GROUP, JoinStep.APP, JoinStep.DRIVE, JoinStep.TIX), state.missing)
+        val state = CrewJoinState(member = false, closedApp = false, tix = 40)
+        assertEquals(listOf(JoinStep.GROUP, JoinStep.APP, JoinStep.TIX), state.missing)
     }
 
     @Test
     fun an_answer_that_has_not_arrived_is_not_a_step() {
-        val state = CrewJoinState(member = true, closedApp = null, drive = null, tix = null)
+        val state = CrewJoinState(member = true, closedApp = null, tix = null)
         assertTrue(state.missing.isEmpty())
     }
 

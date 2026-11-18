@@ -153,7 +153,11 @@ class CrewRunCardsTest {
                     day = 4,
                     out = false,
                     // Everybody on nights 1 and 3; night 2 is missed by one, so it is short of 12.
-                    nights = (1..3).filter { d -> !(d == 2 && i == 0) }.map { d -> MemberNight(d, "", 11_000, "drive:x$i$d", false, true) },
+                    nights =
+                        (1..3)
+                            .filter { d ->
+                                !(d == 2 && i == 0)
+                            }.map { d -> MemberNight(d, "", 11_000, "picture-$i-$d", false, true) },
                 )
             }
         show { TrackingGrid(AppNights("Focus Flow", 14, testers)) }

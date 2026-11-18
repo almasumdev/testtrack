@@ -103,7 +103,7 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
             extras.clearMessage()
         }
     }
-    // Back from Play with the camera's picture: it goes to Drive and onto the feedback.
+    // Back from Play with the camera's picture: it goes to TestTrack and onto the feedback.
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner) {
         val watcher = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) extras.takeCaptured(activity) }

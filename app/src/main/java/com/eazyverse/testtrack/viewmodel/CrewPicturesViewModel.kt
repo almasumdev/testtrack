@@ -11,7 +11,7 @@ import com.eazyverse.testtrack.net.crewPictures
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
-/** One night of one member's, with its picture: "drive:<id>", or empty. */
+/** One night of one member's, with its picture's ref, or empty. */
 data class MemberNight(
     val day: Int,
     val at: String,

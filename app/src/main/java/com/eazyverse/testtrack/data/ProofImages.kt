@@ -9,6 +9,7 @@ import android.media.ExifInterface
 import android.net.Uri
 import android.os.Build
 import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.nio.ByteBuffer
 import kotlin.math.max
 
@@ -95,6 +96,55 @@ object ProofImages {
         val bitmap = decode(context, uri)
         return try {
             jpeg(bitmap)
+        } finally {
+            bitmap.recycle()
+        }
+    }
+
+    /** The widest a night's picture of an app is sent: what the server keeps, so nothing more is sent. */
+    const val VISIT_WIDTH = 720
+    private const val VISIT_QUALITY = 70
+
+    /** The size a night's picture is sent at: no wider than [VISIT_WIDTH], the same shape, never enlarged. */
+    fun visitSize(
+        width: Int,
+        height: Int,
+    ): Pair<Int, Int> =
+        if (width <= VISIT_WIDTH) {
+            width to height
+        } else {
+            VISIT_WIDTH to max(1, (height.toLong() * VISIT_WIDTH / width).toInt())
+        }
+
+    /** A night's picture of an app as it is sent: shrunk to [visitSize], WebP. [bitmap] is left alone. */
+    fun visitWebp(
+        bitmap: Bitmap,
+        out: OutputStream,
+    ) {
+        val (width, height) = visitSize(bitmap.width, bitmap.height)
+        val sized = if (width == bitmap.width) bitmap else Bitmap.createScaledBitmap(bitmap, width, height, true)
+        val format =
+            if (Build.VERSION.SDK_INT >= 30) {
+                Bitmap.CompressFormat.WEBP_LOSSY
+            } else {
+                @Suppress("DEPRECATION")
+                Bitmap.CompressFormat.WEBP
+            }
+        try {
+            check(sized.compress(format, VISIT_QUALITY, out))
+        } finally {
+            if (sized !== bitmap) sized.recycle()
+        }
+    }
+
+    /** A picture picked from the phone for a night's visit, as [visitWebp] sends it. */
+    fun visit(
+        context: Context,
+        uri: Uri,
+    ): ByteArray {
+        val bitmap = decode(context, uri)
+        return try {
+            ByteArrayOutputStream().also { visitWebp(bitmap, it) }.toByteArray()
         } finally {
             bitmap.recycle()
         }

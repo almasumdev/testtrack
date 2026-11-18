@@ -66,9 +66,10 @@ private fun Sending(
     Text(
         when {
             late && why != null -> "Waiting more than 3 hours. $why"
-            late -> "Waiting more than 3 hours. It counts once it reaches your Drive, so check you're online."
+            late -> "Waiting more than 3 hours. It counts once the picture is sent. Check you're online."
             why != null -> why
-            else -> "Opened and timed. ${if (sending.size == 1) "It counts" else "They count"} once the picture reaches your Drive."
+            sending.size == 1 -> "Opened and timed. It counts once the picture is sent."
+            else -> "Opened and timed. They count once the pictures are sent."
         },
         Modifier.padding(top = 8.dp),
         style = MaterialTheme.typography.bodySmall,

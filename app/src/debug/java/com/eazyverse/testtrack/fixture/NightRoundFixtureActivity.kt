@@ -15,7 +15,7 @@ import com.eazyverse.testtrack.viewmodel.NightRound
  *
  * Debug builds only, for the device tests. The round takes its picture at its random moment as
  * a real one does; recording the visit then fails for want of a session, which is expected here.
- * Nothing here reaches the server or Drive.
+ * Nothing here reaches the server.
  */
 class NightRoundFixtureActivity : ComponentActivity() {
     private val consent =

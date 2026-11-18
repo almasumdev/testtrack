@@ -302,7 +302,7 @@ class CrewVideoFramesTest {
                     CrewOpenTab(
                         vm,
                         CrewActions({}, {}, {}, {}, {}, {}),
-                        CrewGuide(CrewJoinState(member = false, closedApp = false, drive = false, tix = 40, permissions = false)),
+                        CrewGuide(CrewJoinState(member = false, closedApp = false, tix = 40, permissions = false)),
                     )
                 }
             }

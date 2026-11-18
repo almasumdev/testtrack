@@ -42,7 +42,6 @@ import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.ui.theme.Tt
-import com.eazyverse.testtrack.viewmodel.TestingDriveViewModel
 import com.eazyverse.testtrack.viewmodel.requirePlayInstall
 import kotlinx.coroutines.delay
 
@@ -80,26 +79,11 @@ fun ReviewScreen(
     var reporting by remember { mutableStateOf(false) }
     val capture = rememberReviewCapture(vm, post.packageName, post.isLive)
 
-    // The proof goes to the reviewer's own Drive. Asked of Google quietly once step four is up;
-    // connecting is one sheet, and a Send that was waiting on it goes ahead as soon as it is done.
     val activity = context.findActivity()
-    val drive: TestingDriveViewModel = viewModel()
-    var sendAfterDrive by remember { mutableStateOf<Pair<Uri, String>?>(null) }
-    val connected = {
-        sendAfterDrive?.let { (proof, note) -> vm.submit(activity, proof, note) }
-        sendAfterDrive = null
-    }
-    val driveSheet =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
-            drive.consentResult(activity, it.data, connected)
-            if (!vm.driveConnected) sendAfterDrive = null
-        }
     val membership = rememberMembership()
     val requireMembership: (() -> Unit) -> Unit = { action ->
         if (post.isLive) action() else membership.require(action)
     }
-    val atProof = vm.job?.step == ReviewStep.PROVE
-    LaunchedEffect(atProof) { if (atProof) vm.checkDrive(activity) }
 
     ReviewBody(
         post = post,
@@ -115,14 +99,8 @@ fun ReviewScreen(
         busy = vm.busy,
         usageAccess = vm.usageAccess,
         onAllowUsage = { if (vm.requirePlayInstall(context)) vm.openUsageSettings(context) },
-        message = drive.message ?: vm.message,
-        onMessageDone = {
-            drive.clearMessage()
-            vm.clearMessage()
-        },
-        driveConnected = vm.driveConnected,
-        connectingDrive = drive.busy,
-        onConnectDrive = { if (vm.requirePlayInstall(context)) drive.connect(activity, driveSheet::launch, connected) },
+        message = vm.message,
+        onMessageDone = vm::clearMessage,
         offline = vm.offline,
         failure = vm.failure,
         onRetry = { vm.start(context, post) },
@@ -154,14 +132,7 @@ fun ReviewScreen(
         onReply = { text, picture -> vm.reply(activity, text, picture) },
         onSend = { proof, note ->
             requireMembership {
-                if (vm.requirePlayInstall(context)) {
-                    if (vm.driveConnected) {
-                        vm.submit(activity, proof, note)
-                    } else {
-                        sendAfterDrive = proof to note
-                        drive.connect(activity, driveSheet::launch, connected)
-                    }
-                }
+                if (vm.requirePlayInstall(context)) vm.submit(activity, proof, note)
             }
         },
     )
@@ -217,9 +188,6 @@ fun ReviewBody(
     onPicked: (Uri) -> Unit = {},
     note: String = "",
     onNote: (String) -> Unit = {},
-    driveConnected: Boolean = true,
-    connectingDrive: Boolean = false,
-    onConnectDrive: () -> Unit = {},
     onGiveUp: (() -> Unit)? = null,
     onReport: (() -> Unit)? = null,
     onNoBox: () -> Unit = {},
@@ -269,7 +237,6 @@ fun ReviewBody(
                     val asking = job.step == ReviewStep.USE && !usageAccess
                     // Step four sends once there is a screenshot, and the text the request asks for.
                     val waitingForProof = job.step == ReviewStep.PROVE && (shown == null || !job.textEnough(note))
-                    val needsDrive = job.step == ReviewStep.PROVE && !driveConnected
                     // Waiting on a second day: opening the app today would not count, so the button
                     // says when instead. From the next calendar day it opens the app again.
                     val opens = job.opensAt()?.takeIf { job.step == ReviewStep.USE && !job.secondDayNow(now) }
@@ -280,7 +247,6 @@ fun ReviewBody(
                             needsAgreement && job.onPhone -> "Start review"
                             needsAgreement -> "Start and open Google Play"
                             asking -> "Allow usage access"
-                            needsDrive -> "Connect Drive and send"
                             notYet -> "Opens " + opensWhen(opens, now).removePrefix("today ")
                             job.waitingForDay && job.usedOnTwoDays -> "Continue to review"
                             else -> stepAction(job.step, job)
@@ -384,9 +350,6 @@ fun ReviewBody(
                                 onGallery = galleryPick.takeUnless { job.rechecking },
                                 onInspect = { editingProof = it },
                             )
-                            if (!driveConnected) {
-                                DriveConnectCard(connectingDrive, onConnectDrive)
-                            }
                         }
                         // What losing a dispute costs, said on the first step, before any work is done.
                         if (!job.settled && job.step == ReviewStep.INSTALL && !needsAgreement) {

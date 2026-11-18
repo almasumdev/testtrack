@@ -56,14 +56,15 @@ object ProofStore {
         }.getOrNull()
 
     /**
-     * The kept screenshot's copy in the reviewer's Drive, once it is there. Sending can fail after
-     * the upload, offline for instance, and trying again then reuses this rather than putting a
-     * second copy in their Drive. A new screenshot clears it.
+     * The kept screenshot's id on our server, once it is there. Sending can fail after the upload,
+     * offline for instance, and trying again then reuses this rather than sending it twice. A new
+     * screenshot clears it. A ref kept by an older build is not one of ours and reads as none, so
+     * the screenshot goes again from the phone.
      */
     fun uploaded(
         context: Context,
         reviewId: String,
-    ): String? = prefs(context).getString("ref_$reviewId", null)
+    ): String? = prefs(context).getString("ref_$reviewId", null)?.takeIf(ServerUpload::isId)
 
     fun markUploaded(
         context: Context,
@@ -71,17 +72,18 @@ object ProofStore {
         ref: String,
     ) = prefs(context).edit().putString("ref_$reviewId", ref).apply()
 
+    /** The id the kept screenshot is sent under, written down before the first try. */
     fun reserved(
         context: Context,
         reviewId: String,
-    ): String? = prefs(context).getString("drive_id_$reviewId", null)
+    ): String? = prefs(context).getString("upload_id_$reviewId", null)?.takeIf(ServerUpload::isId)
 
     fun reserve(
         context: Context,
         reviewId: String,
         fileId: String,
     ) {
-        check(prefs(context).edit().putString("drive_id_$reviewId", fileId).commit())
+        check(prefs(context).edit().putString("upload_id_$reviewId", fileId).commit())
     }
 
     fun note(
@@ -137,7 +139,7 @@ object ProofStore {
             .remove("left_$reviewId")
             .remove("no_box_$reviewId")
             .remove("ref_$reviewId")
-            .remove("drive_id_$reviewId")
+            .remove("upload_id_$reviewId")
             .apply()
     }
 
@@ -164,7 +166,7 @@ object ProofStore {
             .putString("file_$reviewId", target.name)
             .putString("mime_$reviewId", mime)
             .remove("ref_$reviewId")
-            .remove("drive_id_$reviewId")
+            .remove("upload_id_$reviewId")
             .commit()
         old?.delete()
         return target

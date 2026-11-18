@@ -59,8 +59,6 @@ internal class SeatDetailsState(
     val seating: Boolean = false,
     /** Both Play Console boxes are ticked: the seat can't be submitted before. */
     val boxesReady: Boolean,
-    val needsDrive: Boolean,
-    val driveMessage: String?,
     /** An appeal is waiting on the team, so no new seat anywhere: the app and crew it is about. */
     val held: Pair<String, String>?,
     /** The server's refusal, for the ones that are not about the group or the boxes. */
@@ -195,7 +193,7 @@ private val TitleLine
 private fun shortHeadline(tix: Int?): String =
     if (tix != null && tix < CrewRules.SEAT_COST) "${CrewRules.SEAT_COST - tix} tix short" else "Not enough tix"
 
-/** The button that takes the seat, with the Drive note and the hint above it and its message under it. The page's last part. */
+/** The button that takes the seat, with the hint above it. The page's last part. */
 @Composable
 internal fun CrewSeatSubmit(
     state: SeatDetailsState,
@@ -203,10 +201,6 @@ internal fun CrewSeatSubmit(
     onSpot: (SeatSpot) -> Unit,
     onTake: () -> Unit,
 ) {
-    if (state.needsDrive) {
-        DialogNote("Each night's pictures go to your own Google Drive, so it is connected before you take a seat.")
-        Spacer(Modifier.height(8.dp))
-    }
     // What is still missing from the page, the first thing first. Tapping it goes there.
     val hint =
         seatHint(
@@ -226,9 +220,8 @@ internal fun CrewSeatSubmit(
         )
     SeatHintRow(hint, onSpot)
     Spacer(Modifier.height(8.dp))
-    val seat = state.crewName?.let { "Take a seat in $it" } ?: "Take a seat"
     Primary(
-        if (state.needsDrive) "Connect Drive and take a seat" else seat,
+        state.crewName?.let { "Take a seat in $it" } ?: "Take a seat",
         busy = state.busy,
         enabled =
             state.groupReady &&
@@ -240,10 +233,6 @@ internal fun CrewSeatSubmit(
                 state.held == null,
         onClick = onTake,
     )
-    state.driveMessage?.let {
-        Spacer(Modifier.height(10.dp))
-        DialogNote(it)
-    }
 }
 
 private val PriceLine = tileStyle(12.5f, 14f, FontWeight.Medium)

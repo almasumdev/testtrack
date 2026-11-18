@@ -136,7 +136,6 @@ private fun OpenCrewCard(
                         JoinStep.SIGN_IN -> guide.onSignIn()
                         JoinStep.GROUP -> guide.onJoin()
                         JoinStep.APP -> guide.onAddApp()
-                        JoinStep.DRIVE -> guide.onDrive()
                         JoinStep.TIX -> guide.onCircle()
                     }
                 }
@@ -341,7 +340,6 @@ class CrewGuide(
     /** The testers group: its dialog. */
     val onJoin: () -> Unit = {},
     val onAddApp: () -> Unit = {},
-    val onDrive: () -> Unit = {},
     /** Circle, where reviews earn tix. */
     val onCircle: () -> Unit = {},
     val onAllow: () -> Unit = {},

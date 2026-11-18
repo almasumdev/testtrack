@@ -54,8 +54,7 @@ import org.robolectric.annotation.GraphicsMode
 import java.io.File
 
 /**
- * The crew picture screens, from the app's own composables: Drive in Get ready, the night's two
- * asks, the control once a picture is in, an app missing its picture, and what the owner sees.
+ * The crew picture screens, from the app's own composables: Get ready, the night's ask, the control once a picture is in, an app missing its picture, and what the owner sees.
  * The pictures are the repo's sample screenshots, as the Circle frames use. Written to
  * media/public/frames/crew-pictures, opt-in like the other frames.
  */
@@ -198,11 +197,11 @@ class CrewPictureFramesTest {
         show {
             Ground {
                 TabShell(MainTab.GROUPS, Scene.CREW) {
-                    // Everything set but Drive, which is the one step this video is about.
+                    // Everything set: the terms and the button to take a seat.
                     CrewOpenTab(
                         vm,
                         CrewActions({}, {}, {}, {}, {}, {}),
-                        CrewGuide(CrewJoinState(closedApp = true, drive = false, tix = 240)),
+                        CrewGuide(CrewJoinState(closedApp = true, tix = 240)),
                     )
                 }
             }
@@ -217,22 +216,10 @@ class CrewPictureFramesTest {
     fun p02_ask() {
         val vm = crews()
         Session.init(compose.activity)
-        Session.updateDriveConnected(true)
         vm.pictures.ask(stops(), float = true)
         show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}) } }
         frame.settle(800)
         frame.write("ask")
-    }
-
-    @Test
-    fun p03_drive() {
-        val vm = crews()
-        Session.init(compose.activity)
-        Session.updateDriveConnected(false)
-        vm.pictures.ask(stops(), float = true)
-        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}) } }
-        frame.settle(800)
-        frame.write("drive")
     }
 
     private fun dock(
@@ -369,8 +356,7 @@ class CrewPictureFramesTest {
         set("failure", "We could not reach TestTrack. Tonight's pictures will go by themselves when you are back online.")
         show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}) } }
         frame.settle(800)
-        // Opening the page tries to send, and without Google here it asks to reconnect Drive.
-        vm.pictures.clearDriveAsk()
+        // Opening the page tries to send, which fails here in its own words: the line is put back.
         set("failure", "We could not reach TestTrack. Tonight's pictures will go by themselves when you are back online.")
         frame.settle(800)
         frame.write("stuck")
