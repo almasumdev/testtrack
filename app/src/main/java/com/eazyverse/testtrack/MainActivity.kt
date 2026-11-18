@@ -45,6 +45,7 @@ import com.eazyverse.testtrack.data.AppUpdateService
 import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.EmulatorGate
 import com.eazyverse.testtrack.data.FeedbackWatch
+import com.eazyverse.testtrack.data.OldDriveGrant
 import com.eazyverse.testtrack.data.PushRepo
 import com.eazyverse.testtrack.data.Session
 import com.eazyverse.testtrack.data.UpdateTier
@@ -140,6 +141,8 @@ class MainActivity : ComponentActivity() {
             window.isNavigationBarContrastEnforced = false
         }
         Session.init(this)
+        // Older builds kept pictures in the account's Google Drive. That access is given up, once.
+        OldDriveGrant.revokeOnce(this)
         // An account the team deleted is signed out on its first refusal: Google and local state
         // here, the tokens and the socket in the network layer. See [AccountGone].
         AccountGone.onGone = {

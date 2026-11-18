@@ -160,7 +160,7 @@ android {
              *
              * It was: with one shared id, two different keys meant a debug build could not be
              * installed over a release one without an uninstall, and an uninstall costs the
-             * signed-in session, the Drive grant, and the usage access that had to be argued out
+             * signed-in session and the usage access that had to be argued out
              * of Samsung's restricted settings. The suffix settles that by keeping the two apart
              * altogether.
              *
@@ -255,7 +255,7 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
 
-    // Authorization: a Drive access token. Separate concern from identity.
+    // Authorization client: only to hand back the Drive access older builds asked for (OldDriveGrant).
     implementation(libs.play.services.auth)
 
     implementation(platform(libs.firebase.bom))
