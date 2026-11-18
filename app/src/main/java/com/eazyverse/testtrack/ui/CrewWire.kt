@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import com.eazyverse.testtrack.domain.ChatState
 import com.eazyverse.testtrack.net.ApiCrew
 import com.eazyverse.testtrack.net.ApiSeat
 
@@ -182,6 +183,9 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
         likelyBasis = likelyBasis,
         detailsUntil = detailsUntil,
         pruned = pruned,
+        chatState = ChatState.of(chatState),
+        chatUnread = chatUnread,
+        chatMuted = chatMuted,
     )
 }
 

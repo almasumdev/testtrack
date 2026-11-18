@@ -54,6 +54,8 @@ fun CrewPage(
     onMembers: () -> Unit = {},
     /** Another crew's page, for an app moved there; null leaves the finished page without the way. */
     onOpenCrew: ((String) -> Unit)? = null,
+    /** The crew's chat. */
+    onChat: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val dialogs = rememberCrewDialogs()
@@ -103,32 +105,35 @@ fun CrewPage(
             }
         },
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
-            when {
-                crew == null && vm.offline -> RobotOffline("This crew didn't load", onRetry = { vm.load(context) })
-                crew == null && !vm.loading ->
-                    RobotState(
-                        Prop.Notes,
-                        "You're not in this crew",
-                        "Your app was taken out or sent back, so this crew is no longer yours to see.",
-                        action = "Back",
-                        onAction = onBack,
-                    )
-                crew == null -> CrewCardLoading()
-                crew.phase == CrewPhase.LOBBY -> CrewLobbyPhase(crew, actions)
-                crew.phase == CrewPhase.RUN -> CrewRunPhase(crew, actions)
-                else ->
-                    CrewRecordPhase(
-                        crew,
-                        record,
-                        failed = id in vm.records.openFailed,
-                        busy = vm.records.busy[id],
-                        onRetry = { vm.records.loadOne(id) },
-                        onAnswer = { vm.records.answerProdAccess(id, it) },
-                        onClaim = { vm.records.claimPerfect(id) },
-                        onMembers = onMembers,
-                        onOpenCrew = onOpenCrew,
-                    )
+        // The chat's button floats over the page; gone once a finished crew's details are cleared.
+        CrewChatEntry(crew, record?.pruned == true, onChat, Modifier.padding(padding)) {
+            Column(Modifier.fillMaxSize()) {
+                when {
+                    crew == null && vm.offline -> RobotOffline("This crew didn't load", onRetry = { vm.load(context) })
+                    crew == null && !vm.loading ->
+                        RobotState(
+                            Prop.Notes,
+                            "You're not in this crew",
+                            "Your app was taken out or sent back, so this crew is no longer yours to see.",
+                            action = "Back",
+                            onAction = onBack,
+                        )
+                    crew == null -> CrewCardLoading()
+                    crew.phase == CrewPhase.LOBBY -> CrewLobbyPhase(crew, actions)
+                    crew.phase == CrewPhase.RUN -> CrewRunPhase(crew, actions)
+                    else ->
+                        CrewRecordPhase(
+                            crew,
+                            record,
+                            failed = id in vm.records.openFailed,
+                            busy = vm.records.busy[id],
+                            onRetry = { vm.records.loadOne(id) },
+                            onAnswer = { vm.records.answerProdAccess(id, it) },
+                            onClaim = { vm.records.claimPerfect(id) },
+                            onMembers = onMembers,
+                            onOpenCrew = onOpenCrew,
+                        )
+                }
             }
         }
     }

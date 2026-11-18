@@ -92,6 +92,11 @@ object Routes {
 
     fun crewMembers(id: String) = "crew/${Uri.encode(id)}/members"
 
+    /** A crew's chat. See ChatRoutes.kt. */
+    const val CREW_CHAT = "crew/{id}/chat"
+
+    fun crewChat(id: String) = "crew/${Uri.encode(id)}/chat"
+
     /** Asking for feedback on an app from My apps. */
     const val ASK_APP = "ask/{app}"
 
@@ -114,6 +119,9 @@ object Routes {
 class MainActivity : ComponentActivity() {
     /** Set when a crew notification was tapped, until the shell has switched to the Crew tab. */
     private val openCrew = mutableStateOf(false)
+
+    /** Set when a chat notification was tapped, to the crew it is about, until its chat is open. */
+    private val openChat = mutableStateOf<String?>(null)
 
     /**
      * Play hands back an IntentSender rather than an Intent, so the update flow needs its own
@@ -150,6 +158,7 @@ class MainActivity : ComponentActivity() {
         // App because it reads Session, which is only loaded now.
         AppUpdateService.applyCachedDecision()
         openCrew.value = intent?.getBooleanExtra(EXTRA_OPEN_CREW, false) == true
+        openChat.value = intent?.getStringExtra(EXTRA_OPEN_CHAT)
         setContent {
             // The theme chosen on the You page, or the phone's own. See [ThemeChoice].
             TestTrackTheme(darkTheme = ThemeChoice.isDark(isSystemInDarkTheme())) {
@@ -170,6 +179,7 @@ class MainActivity : ComponentActivity() {
                             AppNav(
                                 openCrew,
                                 updateOffer(updateLauncher, ::openPlayStoreListing),
+                                openChat,
                             )
                         } else {
                             Inset { NotConfigured() }
@@ -270,11 +280,15 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         if (intent.getBooleanExtra(EXTRA_OPEN_CREW, false)) openCrew.value = true
+        intent.getStringExtra(EXTRA_OPEN_CHAT)?.let { openChat.value = it }
     }
 
     companion object {
         /** A crew notification was tapped: open the Crew tab. */
         const val EXTRA_OPEN_CREW = "openCrew"
+
+        /** A chat notification was tapped: open that crew's chat. */
+        const val EXTRA_OPEN_CHAT = "openChat"
     }
 }
 
@@ -306,6 +320,8 @@ fun AppNav(
     openCrew: MutableState<Boolean> = remember { mutableStateOf(false) },
     /** An optional update for the header's button; null when Play has none. */
     update: UpdateOffer? = null,
+    /** The crew whose chat a tapped notification asked for. */
+    openChat: MutableState<String?> = remember { mutableStateOf(null) },
 ) {
     val nav = rememberNavController()
     // Set by the seat screen's Open Circle, read by the shell once it is back on screen.
@@ -416,6 +432,7 @@ fun AppNav(
                     onSeat = { nav.push(Routes.crewSeat(it)) },
                     onMembers = { nav.push(Routes.crewMembers(id)) },
                     onOpenCrew = { nav.push(Routes.crew(it)) },
+                    onChat = { nav.push(Routes.crewChat(id)) },
                 )
             }
         }
@@ -429,11 +446,13 @@ fun AppNav(
         }
 
         appRoutes(nav, openCrew, openCircle)
+        chatRoutes(nav)
 
         composable(Routes.ABOUT) {
             Inset { AboutScreen(onBack = { nav.popBackStack() }) }
         }
     }
+    OpenChatOnTap(nav, openChat)
 }
 
 /**

@@ -72,7 +72,10 @@ object PushRepo {
      */
     fun ensureChannel(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
-        if (manager.getNotificationChannel(CHANNEL_REMINDERS) != null) return
+        if (manager.getNotificationChannel(CHANNEL_REMINDERS) != null) {
+            ChatNotifications.ensureChannels(context)
+            return
+        }
         manager.createNotificationChannel(
             NotificationChannel(
                 CHANNEL_REMINDERS,
@@ -82,6 +85,7 @@ object PushRepo {
                 description = "Your crews: filling, starting, apps to open tonight, reports and missed days."
             },
         )
+        ChatNotifications.ensureChannels(context)
     }
 
     // ---- the API -------------------------------------------------------------------------

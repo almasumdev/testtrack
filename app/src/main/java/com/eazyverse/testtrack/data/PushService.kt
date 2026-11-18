@@ -7,6 +7,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.eazyverse.testtrack.MainActivity
 import com.eazyverse.testtrack.R
+import com.eazyverse.testtrack.domain.ChatSignals
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
@@ -27,8 +28,9 @@ import kotlinx.coroutines.launch
  * ```
  * title    headline. Required; a message without one is dropped rather than posted blank.
  * body     supporting line.
- * kind     what it is about, from our server: "crew" opens the Crew tab.
+ * kind     what it is about, from our server: "crew" opens the Crew tab, "chat" that crew's chat.
  * ref      the id of the thing, so two notes about one crew replace each other.
+ * count    chat only: messages waiting. mention: "1" when one of them names the reader.
  * ```
  */
 class PushService : FirebaseMessagingService() {
@@ -60,8 +62,18 @@ class PushService : FirebaseMessagingService() {
         // may still be running for people who have not updated, about groups that no longer exist.
         if (data["kind"].isNullOrEmpty()) return
 
+        // Before the permission check: the tiles and the tab move even when nothing can be drawn.
+        val chat = data["kind"] == "chat"
+        if (chat) ChatSignals.tick(data["ref"].orEmpty())
+
         PushRepo.ensureChannel(this)
         if (!PushRepo.granted(this)) return
+
+        // The chat it is about is on screen and shows it within seconds.
+        if (chat) {
+            if (ChatSignals.openCrew != data["ref"]) ChatNotifications.show(this, data)
+            return
+        }
 
         // Feedback has its own channel and its own memory of what it has already said.
         if (data["kind"] == "feedback") {

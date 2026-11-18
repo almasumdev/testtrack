@@ -1,5 +1,7 @@
 package com.eazyverse.testtrack.ui
 
+import com.eazyverse.testtrack.domain.ChatState
+
 /*
  * Crews, in the shape the screen needs them.
  *
@@ -305,6 +307,10 @@ data class Crew(
     /** A finished crew's full detail is kept until this ISO time; [pruned] once it is gone. */
     val detailsUntil: String? = null,
     val pruned: Boolean = false,
+    /** Its chat, and how many of others' messages wait unread; muted ones still count on the tile. */
+    val chatState: ChatState = ChatState.OFF,
+    val chatUnread: Int = 0,
+    val chatMuted: Boolean = false,
 ) {
     /** Days of the run that are this account's: all of them, or what was left when it joined. */
     val ownNights: Int get() = (runDays - firstNight + 1).coerceAtLeast(0)

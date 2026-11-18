@@ -35,12 +35,19 @@ fun PageBar(
     title: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    /** A small mark after the title, such as a muted chat's bell. */
+    titleEnd: (@Composable () -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     TopAppBar(
         modifier = modifier,
         windowInsets = WindowInsets(0, 0, 0, 0),
-        title = { Text(title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(title, Modifier.weight(1f, fill = false), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                titleEnd?.invoke()
+            }
+        },
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(painterResource(R.drawable.ic_arrow_back_ios_new), "Back")
