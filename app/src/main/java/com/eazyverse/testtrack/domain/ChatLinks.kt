@@ -25,8 +25,7 @@ object ChatLinks {
         val folded = normalise(text, allow)
         if (SCHEME.containsMatchIn(folded) || SLASHES.containsMatchIn(folded)) return true
         if (WWW.containsMatchIn(folded)) return true
-        if (DOMAIN.findAll(folded).any { it.groupValues[1] in ChatTlds.all }) return true
-        if (EMAIL.findAll(folded).any { it.groupValues[1] in ChatTlds.all }) return true
+        if (hasDomain(folded)) return true
         if (SPACED_TLD.containsMatchIn(folded)) return true
         return IPV4.containsMatchIn(folded)
     }
@@ -39,7 +38,7 @@ object ChatLinks {
         var s = text
         // 1. The crew's own apps may be named by package.
         for (pkg in allow.filter { it.isNotBlank() }.sortedByDescending { it.length }) {
-            s = Regex("(?i)(?<![$WORD.])" + Regex.escape(pkg) + "(?![$WORD.])").replace(s, " ")
+            s = Regex("(?i)(?<![$WORD.-])" + Regex.escape(pkg) + "(?![$WORD-]|\\.[$WORD])").replace(s, " ")
         }
         // 2. Full-width and other compatibility forms to plain ones, then one case.
         s = Normalizer.normalize(s, Normalizer.Form.NFKC).lowercase(Locale.ROOT)
@@ -49,7 +48,6 @@ object ChatLinks {
         s = DOT_LOOKALIKES.replace(s, ".")
         // 5. Dots in brackets or spelled out.
         s = BRACKET_DOT.replace(s, ".")
-        s = BRACKET_WORD_DOT.replace(s, ".")
         s = SPOKEN_DOT.replace(s, ".")
         // 6. Single characters spaced apart, joined back into the word they spell.
         s = SPACED_OUT.replace(s) { it.value.replace(" ", "") }
@@ -75,15 +73,12 @@ object ChatLinks {
     /** A letter, mark or number: \w without the underscore. */
     private const val ALNUM = "[\\p{L}\\p{M}\\p{N}]"
 
-    private const val LETTERS = "[\\p{L}\\p{M}]"
-
     private val DOT_LOOKALIKES = Regex("[\u3002\uFF61\uFF0E\uFE52\u2024]")
 
     // Each starts where a run of spaces starts, so a long run is read once, not once per space.
-    private val BRACKET_DOT = Regex("(?<!\\s)\\s*[\\[({<]\\s*\\.\\s*[\\])}>]\\s*")
-    private val BRACKET_WORD_DOT = Regex("(?<!\\s)\\s*[\\[(]\\s*d[o0]t\\s*[\\])]\\s*")
+    private val BRACKET_DOT = Regex("(?<!\\s)\\s*[\\[({<]\\s*(?:dot|d0t|\\.)\\s*[\\])}>]\\s*")
     private val SPOKEN_DOT = Regex("(?<=$ALNUM)\\s+d[o0]t\\s+(?=$ALNUM)")
-    private val SPACED_OUT = Regex("(?<![$WORD])$ALNUM(?: $ALNUM){2,}(?![$WORD])")
+    private val SPACED_OUT = Regex("(?<!\\S)$ALNUM(?: $ALNUM){2,}(?!\\S)")
     private val SPACE_BEFORE_DOT = Regex("($ALNUM)\\s+\\.\\s*(?=$ALNUM)")
 
     /** R1, a scheme: the named ones with or without slashes, and anything followed by "://". */
@@ -91,21 +86,25 @@ object ChatLinks {
         Regex(
             "(?<![$WORD])(https?|hxxps?|h\\*\\*ps?|ftp|mailto|intent|market|tg|whatsapp|javascript|sms|tel)\\s*:",
         )
-    private val SLASHES = Regex("[a-z][a-z0-9+.-]{1,15}\\s*:\\s*/\\s*/")
+    private val SLASHES = Regex("(?<![$WORD])[a-z][a-z0-9+.-]{1,15}\\s*:\\s*/\\s*/")
 
     /** R2. */
     private val WWW = Regex("(?<![$WORD])www(?![$WORD])")
 
     /**
-     * R3, labels and dots ending in a real top-level domain (checked against [ChatTlds]). At most
-     * eight labels: a longer name still has its last eight found, from a later start, and the cap
-     * keeps a long run of "a.a.a" from being read again from every dot.
+     * R3, a dotted word in which a label after the first is a real top-level domain (from
+     * [ChatTlds]) and the label before it a valid one. The word is split at its dots rather than
+     * matched by one pattern, as the server does, so nothing is read twice. It may start right after
+     * an "@", so an email address counts.
      */
-    private const val LABELS = "(?:$ALNUM(?:[$WORD-]{0,61}$ALNUM)?\\.){1,8}"
-    private val DOMAIN = Regex("(?<![$WORD@-])$LABELS($LETTERS{2,24}|xn--[a-z0-9-]{1,59})(?![$WORD-])")
+    private fun hasDomain(text: String): Boolean =
+        DOTTED.findAll(text).any { word ->
+            val labels = word.value.split('.')
+            (1 until labels.size).any { i -> labels[i] in ChatTlds.all && LABEL.matches(labels[i - 1]) }
+        }
 
-    /** R3 for an email address, which the rule above steps over at its "@". */
-    private val EMAIL = Regex("[$WORD.+-]@$LABELS($LETTERS{2,24}|xn--[a-z0-9-]{1,59})(?![$WORD-])")
+    private val DOTTED = Regex("(?<![$WORD-])$ALNUM[$WORD-]*+(?:\\.$ALNUM[$WORD-]*+)++")
+    private val LABEL = Regex("$ALNUM(?:[$WORD-]{0,61}$ALNUM)?")
 
     /** R4, "example. com": a dot and spaces before an ending used almost only for links. */
     private val SPACED_TLD =
@@ -113,5 +112,5 @@ object ChatLinks {
 
     /** R5, four numbers 0 to 255 joined by dots. */
     private const val OCTET = "(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])"
-    private val IPV4 = Regex("(?<![0-9.])$OCTET(?:\\.$OCTET){3}(?![0-9.])")
+    private val IPV4 = Regex("(?<![0-9.])$OCTET(?:\\.$OCTET){3}(?![0-9])")
 }

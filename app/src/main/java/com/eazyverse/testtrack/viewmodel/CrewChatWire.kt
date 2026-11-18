@@ -24,11 +24,13 @@ internal fun instantOf(iso: String?): Instant? =
 internal fun ApiChatPerson.toPerson() =
     ChatPerson(
         seatId = seatId,
-        name = name,
-        photo = photoUrl,
+        name = ownerName,
+        photo = ownerPhoto,
+        email = ownerEmail,
         appName = appName,
-        appIcon = appIcon,
+        appIcon = icon,
         packageName = packageName,
+        day = day,
         inCrew = inCrew,
         mine = mine,
     )
@@ -54,7 +56,7 @@ internal fun ApiChatMessage.toLine(pictureHours: Int): ChatLine {
         kind =
             when {
                 kind == "user" -> ChatKind.USER
-                kind == "staff" || event.isBlank() -> ChatKind.TEAM
+                event.isBlank() && !deleted -> ChatKind.TEAM
                 else -> ChatKind.BOT
             },
         authorSeatId = authorSeatId,
@@ -73,7 +75,7 @@ internal fun ApiChatMessage.toLine(pictureHours: Int): ChatLine {
                     width = it.width,
                     height = it.height,
                     expired = it.state != "live",
-                    expiresAt = at?.plusSeconds(pictureHours * 3600L),
+                    expiresAt = instantOf(it.expiresAt) ?: at?.plusSeconds(pictureHours * 3600L),
                 )
             },
         deleted = deleted,

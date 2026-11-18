@@ -76,7 +76,7 @@ class CrewChatViewModel : ViewModel() {
     var picturesLeft by mutableStateOf(0)
         internal set
     var limits by mutableStateOf(ChatLimits())
-        private set
+        internal set
     var botName by mutableStateOf("Crew bot")
         private set
     var botAvatar by mutableStateOf("")
@@ -299,7 +299,9 @@ class CrewChatViewModel : ViewModel() {
         message = if (want) "Chat muted. You still hear when someone mentions you." else "Chat unmuted."
         viewModelScope.launch {
             try {
-                muted = Api.muteChat(crewId, want).muted
+                val done = Api.muteChat(crewId, want)
+                muted = done.muted
+                limits = done.limits.toLimits()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

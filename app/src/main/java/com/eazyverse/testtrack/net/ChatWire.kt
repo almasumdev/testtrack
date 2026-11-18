@@ -60,15 +60,20 @@ data class ApiChatBot(
     @SerialName("avatar_url") val avatarUrl: String = "",
 )
 
-/** A seat in the crew: who sits in it and with which app. */
+/** A seat in the crew: who sits in it and with which app. The names are the crew's own (SeatOut). */
 @Serializable
 data class ApiChatPerson(
     @SerialName("seat_id") val seatId: String = "",
-    val name: String = "",
-    @SerialName("photo_url") val photoUrl: String = "",
+    @SerialName("user_id") val userId: String = "",
+    @SerialName("owner_name") val ownerName: String = "",
+    @SerialName("owner_photo") val ownerPhoto: String = "",
+    /** Empty unless the server shows members' emails. */
+    @SerialName("owner_email") val ownerEmail: String = "",
     @SerialName("app_name") val appName: String = "",
-    @SerialName("app_icon") val appIcon: String = "",
+    val icon: String = "",
     @SerialName("package_name") val packageName: String = "",
+    /** Their own night. */
+    val day: Int = 0,
     @SerialName("in_crew") val inCrew: Boolean = true,
     val mine: Boolean = false,
 )
@@ -81,6 +86,8 @@ data class ApiChatMessage(
     val rev: Long = 0,
     /** user or bot; a team post is a bot line with no [event]. */
     val kind: String = "user",
+    /** Who wrote it and the seat they spoke as; null for the bot and the team. */
+    @SerialName("author_id") val authorId: String? = null,
     @SerialName("author_seat_id") val authorSeatId: String? = null,
     val mine: Boolean = false,
     /** Mention tokens kept inline: `@[seat:<id>]` and `@[app:<id>]`. */
@@ -119,7 +126,7 @@ data class ApiChatPicture(
     val height: Int = 0,
     /** live or expired. */
     val state: String = "live",
-    /** When it goes, an ISO time; null from a server that does not say. */
+    /** When it goes, an ISO time. The server does not send it yet: then it is sent time plus picture_hours. */
     @SerialName("expires_at") val expiresAt: String? = null,
 )
 
@@ -131,10 +138,12 @@ data class ChatPostIn(
     @SerialName("picture_id") val pictureId: String?,
 )
 
+/** The answer to a send, and to a delete, where [message] is the deleted stub. */
 @Serializable
 data class ApiChatSent(
     val message: ApiChatMessage = ApiChatMessage(),
     val left: ApiChatLeft = ApiChatLeft(),
+    val limits: ApiChatLimits = ApiChatLimits(),
     val rev: Long = 0,
 )
 
@@ -146,6 +155,7 @@ data class ChatMuteIn(
 @Serializable
 data class ApiChatMuted(
     val muted: Boolean = false,
+    val limits: ApiChatLimits = ApiChatLimits(),
 )
 
 @Serializable
@@ -156,4 +166,5 @@ data class ChatReadIn(
 @Serializable
 data class ApiChatRead(
     @SerialName("read_rev") val readRev: Long = 0,
+    val limits: ApiChatLimits = ApiChatLimits(),
 )

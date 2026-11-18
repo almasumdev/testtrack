@@ -85,7 +85,9 @@ fun CrewChatViewModel.delete(line: ChatLine) {
     viewModelScope.launch {
         try {
             val gone = Api.deleteChat(crewId, line.id)
-            lines = ChatThread.merge(lines, listOf(gone.toLine(limits.pictureHours)))
+            limits = gone.limits.toLimits()
+            left(gone.left)
+            lines = ChatThread.merge(lines, listOf(gone.message.toLine(limits.pictureHours)))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -117,6 +119,7 @@ private fun CrewChatViewModel.post(
             }
             val sent = Api.sendChat(crewId, ChatPostIn(id, job.text, job.replyTo, pictureId))
             pending.remove(id)
+            limits = sent.limits.toLimits()
             left(sent.left)
             lines = ChatThread.merge(lines, listOf(sent.message.toLine(limits.pictureHours)))
             pollSoon()
@@ -143,7 +146,7 @@ private fun CrewChatViewModel.failed(
                 if (kind == "pictures") "No pictures left today." else "No messages left today."
             }
             "link_not_allowed" -> "Links can't be sent here."
-            "chat_closed", "chat_gone", "chat_paused" -> {
+            "chat_closed", "chat_gone", "chat_paused", "chat_off" -> {
                 pollSoon()
                 error.message
             }

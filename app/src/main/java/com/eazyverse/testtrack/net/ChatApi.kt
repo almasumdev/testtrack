@@ -30,11 +30,11 @@ suspend fun Api.sendChat(
     message: ChatPostIn,
 ): ApiChatSent = post("/crews/$crewId/chat/messages", message)
 
-/** Takes one of your own messages away for everyone. Its row stays as a deleted line. */
+/** Takes one of your own messages away for everyone. Answers with its deleted stub. */
 suspend fun Api.deleteChat(
     crewId: String,
     messageId: String,
-): ApiChatMessage = delete("/crews/$crewId/chat/messages/$messageId")
+): ApiChatSent = delete("/crews/$crewId/chat/messages/$messageId")
 
 /** No pushes for this crew's chat, except when someone mentions you. */
 suspend fun Api.muteChat(

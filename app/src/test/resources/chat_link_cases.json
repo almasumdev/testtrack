@@ -1,8 +1,5 @@
 {
-  "_note": "A copy of the backend's tests/fixtures/chat_link_cases.json. Change both together.",
-  "allow_packages": [
-    "com.crew.app"
-  ],
+  "_note": "Shared with the app (app/src/test/resources/chat_link_cases.json). Change both together. Texts are run through the link filter with allow_packages as the crew's own package names.",
   "blocked": [
     "example.com",
     "EXAMPLE.COM",
@@ -12,10 +9,10 @@
     "example dot com",
     "example(dot)com",
     "example[.]com",
-    "example。com",
-    "ｅｘａｍｐｌｅ．ｃｏｍ",
+    "example\u3002com",
+    "\uff45\uff58\uff41\uff4d\uff50\uff4c\uff45\uff0e\uff43\uff4f\uff4d",
     "e x a m p l e . c o m",
-    "zero​width.com",
+    "zero\u200bwidth.com",
     "hxxp://x",
     "https://x",
     "h t t p s : / / x",
@@ -34,7 +31,17 @@
     "foo.co.uk",
     "sub.domain.example.org",
     "com.other.app",
-    "пример.рф"
+    "\u043f\u0440\u0438\u043c\u0435\u0440.\u0440\u0444",
+    "example [dot] com",
+    "example (.) com",
+    "go to Example . Com now",
+    "h**ps://x",
+    "check mysite.xyz.",
+    "tel:12345",
+    "example\ufe52com",
+    "ex\u00adample.com",
+    "my.site.io is mine",
+    "1.2.3.4"
   ],
   "allowed": [
     "e.g. this",
@@ -52,9 +59,18 @@
     "Settings > Apps",
     "file.kt",
     "com.crew.app",
-    "@[seat:5b0c1f3e-1111-4a2b-9c3d-0123456789ab] can you look?",
-    "@[app:5b0c1f3e-1111-4a2b-9c3d-0123456789ab] crashes",
-    "Works great 😀👍",
-    ""
+    "Opened it. Works fine on my phone",
+    "Night 3 done, see you tomorrow \ud83d\ude42",
+    "I tested it, it is fine",
+    "wait... what? ok",
+    "",
+    "\ud83d\udc4d\ud83d\udc4d",
+    "a b c d",
+    "7 of 15 done",
+    "ok, thanks!",
+    "Rate 4.5 / 5"
+  ],
+  "allow_packages": [
+    "com.crew.app"
   ]
 }

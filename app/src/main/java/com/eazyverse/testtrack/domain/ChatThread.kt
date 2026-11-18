@@ -36,9 +36,12 @@ data class ChatPerson(
     val seatId: String,
     val name: String,
     val photo: String = "",
+    val email: String = "",
     val appName: String = "",
     val appIcon: String = "",
     val packageName: String = "",
+    /** Their own night of the run. */
+    val day: Int = 0,
     val inCrew: Boolean = true,
     val mine: Boolean = false,
 )
@@ -151,11 +154,14 @@ object ChatThread {
     /** The oldest seq held, for asking for the page before it; null with nothing held. */
     fun oldest(lines: List<ChatLine>): Long? = lines.filter { it.send == SendState.SENT && it.seq > 0 }.minOfOrNull { it.seq }
 
-    /** Others' messages after [readRev]: what the "new" line counts. Bot lines are news, not messages. */
+    /**
+     * Others' messages added after [readRev]: what the "new" line counts. A message's seq is the rev
+     * it was added at, so it is what the read mark is compared with. Bot lines are news, not messages.
+     */
     fun unread(
         lines: List<ChatLine>,
         readRev: Long,
-    ): List<ChatLine> = lines.filter { it.rev > readRev && !it.mine && !it.deleted && it.kind != ChatKind.BOT && it.send == SendState.SENT }
+    ): List<ChatLine> = lines.filter { it.seq > readRev && !it.mine && !it.deleted && it.kind != ChatKind.BOT && it.send == SendState.SENT }
 
     /**
      * The rows, oldest first: a day label wherever the day changes, the "new" line over the first
@@ -170,7 +176,7 @@ object ChatThread {
         today: LocalDate = LocalDate.now(zone),
     ): List<ChatRow> {
         val rows = ArrayList<ChatRow>(lines.size + 8)
-        val fresh = if (newFromRev == null) emptyList() else unread(lines, newFromRev).filter { it.rev <= newToRev }
+        val fresh = if (newFromRev == null) emptyList() else unread(lines, newFromRev).filter { it.seq <= newToRev }
         val firstNew = fresh.firstOrNull()?.id
         var day: LocalDate? = null
         var last: ChatLine? = null
