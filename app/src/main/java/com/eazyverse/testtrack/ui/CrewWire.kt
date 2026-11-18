@@ -86,6 +86,11 @@ fun ApiSeat.toMember() =
         openedMineDays = openedMineDays,
         openedMinePicture = openedMinePicture,
         openedMineByHand = openedMineByHand,
+        photo = ownerPhoto,
+        email = ownerEmail,
+        packageName = packageName,
+        icon = icon,
+        outAt = outAt.orEmpty(),
     )
 
 /**

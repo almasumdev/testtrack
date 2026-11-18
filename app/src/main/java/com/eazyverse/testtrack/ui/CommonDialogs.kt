@@ -78,7 +78,8 @@ import com.eazyverse.testtrack.ui.theme.Tt
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Ask(
-    title: String,
+    /** Null for a dialog whose content says who or what it is about, such as a member's profile. */
+    title: String?,
     confirm: String?,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
@@ -110,18 +111,20 @@ fun Ask(
                     .verticalScroll(rememberScrollState())
                     .padding(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 14.dp),
             ) {
-                Text(
-                    title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, lineHeight = 21.sp),
-                    fontWeight = FontWeight.Bold,
-                    color = t.text,
-                )
+                title?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, lineHeight = 21.sp),
+                        fontWeight = FontWeight.Bold,
+                        color = t.text,
+                    )
+                }
                 body?.let {
-                    Spacer(Modifier.height(6.dp))
+                    if (title != null) Spacer(Modifier.height(6.dp))
                     Text(it, style = DialogBody, color = t.text2)
                 }
                 content?.let {
-                    Spacer(Modifier.height(if (body != null) 12.dp else 8.dp))
+                    if (title != null || body != null) Spacer(Modifier.height(if (body != null) 12.dp else 8.dp))
                     it()
                 }
                 Spacer(Modifier.height(14.dp))

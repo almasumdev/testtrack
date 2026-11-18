@@ -54,6 +54,9 @@ data class MemberNights(
     val skippedDays: Set<Int> = emptySet(),
     /** Nights a report they sent during the run excused the app, that night alone. */
     val reportedDays: Set<Int> = emptySet(),
+    /** Their face, as an address, and their email; empty when the server does not send them. */
+    val photo: String = "",
+    val email: String = "",
 ) {
     /** They did not owe the app that night: reported, let off, or covered by a skip. */
     fun notOwed(
@@ -80,6 +83,10 @@ class CrewPicturesViewModel : ViewModel() {
     var loading by mutableStateOf(true)
         private set
 
+    /** The crew's details were cleared after it ended (410 details_gone): nothing left to show. */
+    var gone by mutableStateOf(false)
+        private set
+
     fun load(crewId: String) {
         loading = true
         viewModelScope.launch {
@@ -101,14 +108,18 @@ class CrewPicturesViewModel : ViewModel() {
                                 freeDays = t.freeDays.toSet(),
                                 skippedDays = t.skippedDays.toSet(),
                                 reportedDays = t.reportedDays.toSet(),
+                                photo = t.photo,
+                                email = t.email,
                             )
                         },
                         offDays = got.offDays.toSet(),
                     )
                 failed = null
+                gone = false
             } catch (e: CancellationException) {
                 throw e
             } catch (e: ApiError) {
+                gone = e.status == 410 || e.code == DETAILS_GONE
                 failed = e.message
             } catch (_: Exception) {
                 failed = "We could not reach TestTrack. Check your connection."
@@ -116,5 +127,9 @@ class CrewPicturesViewModel : ViewModel() {
                 loading = false
             }
         }
+    }
+
+    private companion object {
+        const val DETAILS_GONE = "details_gone"
     }
 }

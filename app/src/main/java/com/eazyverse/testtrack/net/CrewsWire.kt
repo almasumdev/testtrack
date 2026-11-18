@@ -86,6 +86,9 @@ data class ApiTesterPictures(
     @SerialName("skipped_days") val skippedDays: List<Int> = emptyList(),
     /** Nights a report they sent during the run excused the reader's app for them, that night alone. */
     @SerialName("reported_days") val reportedDays: List<Int> = emptyList(),
+    /** Their face, as an address, and their email; both empty when the server does not send them. */
+    val photo: String = "",
+    val email: String = "",
 )
 
 /** Every member's pictures of the reader's own app in one crew: the owner's grid. */
@@ -121,6 +124,10 @@ data class ApiSeat(
     val icon: String = "",
     val notes: String = "",
     @SerialName("owner_name") val ownerName: String,
+    /** The owner's face, as an address; empty when they have none or the server does not send it. */
+    @SerialName("owner_photo") val ownerPhoto: String = "",
+    /** The owner's email, empty unless the server is set to share it with the crew. */
+    @SerialName("owner_email") val ownerEmail: String = "",
     /** checking, confirmed, rejected, withdrawn or removed. */
     val state: String,
     val mine: Boolean,

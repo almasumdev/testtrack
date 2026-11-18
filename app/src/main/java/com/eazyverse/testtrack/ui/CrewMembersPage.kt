@@ -4,168 +4,201 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.CircleCheck
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Image
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.AppNights
+import com.eazyverse.testtrack.viewmodel.CrewPicturesViewModel
+import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
- * A crew's members, from the button in its bar: everybody in it, and what each of them did with
- * the reader's own app. The proof is two things: the phone's own record of each open, ten seconds
- * or more in the app, and the picture of the app taken then, which each row shows for tonight and
- * Every night shows for the whole run.
+ * A crew's testers, from the button in its bar: everybody testing the reader's app, on a running
+ * crew and a finished one alike. A line on how tonight (or the run) went, then the grid of every
+ * tester's nights, then a tile for each tester with their last three pictures, those out of the
+ * run last. A face anywhere opens who it is. What the squares mean is behind the grid's (i).
+ *
+ * Two answers make it: the crew, for who each member is, and the crew's pictures, for each night.
+ * A finished crew's details are cleared a few days after it ends, and the page then says so.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CrewMembersPage(
     vm: CrewViewModel,
     id: String,
     onBack: () -> Unit,
-    onEveryNight: () -> Unit = {},
+    pictures: CrewPicturesViewModel = viewModel(),
 ) {
     val crew = vm.crews.firstOrNull { it.id == id }
-    var open by remember { mutableStateOf<NightPicture?>(null) }
-    Scaffold(
-        containerColor = Color.Transparent,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = { PageBar(crew?.let { "${it.name} members" } ?: "Members", onBack) },
-    ) { padding ->
-        if (crew == null) {
-            Box(Modifier.fillMaxSize().padding(padding)) { CrewMembersLoading() }
-            return@Scaffold
-        }
-        val finished = crew.phase == CrewPhase.RECORD
-        val testers = crew.testers
-        val opened = if (finished) crew.testedEveryDay else crew.openedMineTonight
-        val out = crew.members.count { !it.mine && it.out }
-        val others = crew.members.filter { !it.mine }.sortedWith(compareBy({ it.out }, { !it.openedMineToday }))
-        LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom()),
-        ) {
-            item {
-                Box(Modifier.padding(horizontal = Gutter)) {
-                    CrewHero(
-                        chip = if (finished) "Finished after ${crew.finishedDays} days" else "Their day ${crew.day}",
-                        tone =
-                            if (finished && opened < CrewRules.FLOOR) {
-                                Tone.WARN
-                            } else if (finished) {
-                                Tone.OK
-                            } else {
-                                Tone.ACCENT
-                            },
-                        icon = if (finished) Lucide.CircleCheck else Lucide.Users,
-                        headline = "$opened of ${testers.size} " + if (finished) "tested it every day" else "opened your app tonight",
-                        line =
-                            "${testers.size} ${if (testers.size == 1) "tester is" else "testers are"} still in. " +
-                                "${CrewRules.FLOOR} need to keep opening it every day " +
-                                "for Google to count the run.",
-                        meter = {
-                            val lit = Status.posted
-                            SegmentMeter(testers.size.coerceAtLeast(1)) { i -> if (i < opened) lit else Tt.colors.track }
-                            val notYet = testers.size - opened
-                            MeterLabels(
-                                if (finished) "$opened every day, $out left" else "$opened opened, $notYet not yet, $out out",
-                                "${CrewRules.FLOOR} needed",
-                            )
-                        },
-                    )
-                }
-            }
-            item {
-                Box(Modifier.padding(horizontal = Gutter).padding(top = 8.dp)) {
-                    Secondary("See every night", Modifier.fillMaxWidth(), onClick = onEveryNight)
-                }
-            }
-            item { CrewHeading("Testers") }
-            itemsIndexed(others, key = { _, m -> m.id }) { index, member ->
-                Box(Modifier.padding(horizontal = Gutter).padding(bottom = if (index < others.size - 1) 8.dp else 0.dp)) {
-                    MemberRow(member, crew) { picture -> open = picture }
-                }
-            }
-        }
-    }
-    open?.let { PictureViewer(it) { open = null } }
-}
-
-/** One person in the crew, and what they did with your app. */
-@Composable
-private fun MemberRow(
-    member: CrewMember,
-    crew: Crew,
-    onPicture: (NightPicture) -> Unit,
-) {
-    val finished = crew.phase == CrewPhase.RECORD
-    val days = member.openedMineDays
-    val (line, chip, tone) =
-        when {
-            member.out -> Triple("Left the run, opened yours on $days ${plural(days, "day")}", "Out", Tone.QUIET)
-            finished && days >= crew.finishedDays -> Triple("Opened yours on all ${crew.finishedDays} days", "Stayed", Tone.OK)
-            finished -> Triple("Opened yours on $days of ${crew.finishedDays} days", "Some days", Tone.QUIET)
-            member.missedYesterday ->
-                Triple(
-                    "Missed yesterday, opened yours on $days ${plural(days, "day")}",
-                    "${member.missed} missed",
-                    Tone.WARN,
-                )
-            member.openedMineToday ->
-                Triple(
-                    if (member.openedMineByHand) {
-                        "Opened yours${clockAt(member.openedMineAt)}, picked by hand"
-                    } else {
-                        "Opened yours${clockAt(member.openedMineAt)}, $days ${plural(days, "day")} so far"
-                    },
-                    "Opened",
-                    Tone.OK,
-                )
-            else -> Triple("Not tonight yet, opened yours on $days ${plural(days, "day")}", "Not yet", Tone.QUIET)
-        }
-    // Tonight's picture takes the place of the Opened chip: it is the proof, not a word for it.
-    val picture = member.openedMinePicture
-    HairlineRow(
-        leading = { Initial(member.name.take(1).uppercase(), size = 52.dp, letterStyle = MaterialTheme.typography.titleMedium) },
-        title = member.name,
-        note = AnnotatedString(line),
-        trailing = {
-            if (member.openedMineToday && picture.isNotBlank() && !finished) {
-                PictureThumb(picture, member.openedMineByHand, 40.dp) {
-                    onPicture(
-                        NightPicture(
-                            picture,
-                            member.name,
-                            member.day,
-                            member.openedMineAt,
-                            0,
-                            member.openedMineByHand,
-                            crew.mine?.appName.orEmpty(),
-                        ),
-                    )
-                }
-            } else {
-                StatusChip(chip, tone)
-            }
-        },
+    val pruned = crew?.pruned == true
+    LaunchedEffect(id, pruned) { if (!pruned) pictures.load(id) }
+    CrewMembersBody(
+        crew = crew,
+        nights = pictures.pictures,
+        failed = pictures.failed,
+        gone = pruned || pictures.gone,
+        onBack = onBack,
+        onRetry = { pictures.load(id) },
     )
 }
 
-private fun plural(
-    n: Int,
-    word: String,
-) = if (n == 1) word else "${word}s"
+/** The page drawn from plain values, in every state it has. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CrewMembersBody(
+    crew: Crew?,
+    nights: AppNights?,
+    failed: String?,
+    gone: Boolean,
+    onBack: () -> Unit,
+    onRetry: () -> Unit,
+    now: Instant = Instant.now(),
+) {
+    var profile by remember { mutableStateOf<CrewTester?>(null) }
+    var open by remember { mutableStateOf<NightPicture?>(null) }
+    var key by remember { mutableStateOf(false) }
+    Scaffold(
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = { PageBar(crew?.let { "${it.name} testers" } ?: "Testers", onBack) },
+    ) { padding ->
+        val page = Modifier.fillMaxSize().padding(padding)
+        when {
+            gone ->
+                Box(page) {
+                    RobotState(
+                        Prop.Calendar,
+                        dayOf(crew?.detailsUntil, "MMM d")?.let { "Details cleared on $it" } ?: "Details cleared",
+                        "Testers and pictures are cleared 3 days after a crew ends. The result stays on the crew page.",
+                        action = "Back to ${crew?.name ?: "the crew"}",
+                        onAction = onBack,
+                        failed = true,
+                    )
+                }
+            nights == null && failed != null -> Box(page) { RobotOffline("Testers didn't load", onRetry = onRetry) }
+            crew == null || nights == null -> Box(page) { TestersLoading() }
+            else -> {
+                val finished = crew.phase == CrewPhase.RECORD
+                val testers = remember(crew, nights, now) { testersOf(nights, crew, now) }
+                val tiles = remember(testers, finished) { tileOrder(testers, finished) }
+                val today = if (!finished && crew.day in 1..nights.runDays) crew.day else 0
+                LazyColumn(page, contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom())) {
+                    item {
+                        Text(
+                            summaryOf(testers, nights, crew, finished),
+                            Modifier.padding(horizontal = Gutter),
+                            style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp, lineHeight = 20.sp),
+                            fontWeight = FontWeight.SemiBold,
+                            color = Tt.colors.text,
+                            maxLines = 2,
+                        )
+                    }
+                    item {
+                        Box(Modifier.padding(start = Gutter, end = Gutter, top = 12.dp)) {
+                            TrackingGrid(
+                                nights,
+                                testers,
+                                finished = finished,
+                                today = today,
+                                onFace = { profile = it },
+                                onKey = { key = true },
+                            )
+                        }
+                    }
+                    item { CrewHeading("Testers", "${tiles.size}") }
+                    itemsIndexed(tiles, key = { _, tester -> tester.id }) { index, tester ->
+                        Box(Modifier.padding(horizontal = Gutter).padding(bottom = if (index < tiles.size - 1) 8.dp else 0.dp)) {
+                            TesterTile(tester, onFace = { profile = tester }, onPicture = { open = it })
+                        }
+                    }
+                }
+                if (key) SquaresKey(finished, notesOf(testers, crew, finished)) { key = false }
+            }
+        }
+    }
+    profile?.let { CrewMemberProfile(it) { profile = null } }
+    open?.let { PictureViewer(it) { open = null } }
+}
+
+/** The line over the grid: how many opened the app tonight, or every night of a finished run. */
+private fun summaryOf(
+    testers: List<CrewTester>,
+    nights: AppNights,
+    crew: Crew,
+    finished: Boolean,
+): String {
+    val app = nights.appName.ifBlank { crew.mine?.appName.orEmpty() }.ifBlank { "your app" }
+    val stillIn = testers.filter { !it.out }
+    return if (finished) {
+        val every = stillIn.count { tester -> tester.squares.count { it.counted } >= tester.squares.count { it.owed } }
+        "$every of ${stillIn.size} opened $app every night"
+    } else {
+        "${stillIn.count { it.openedTonight }} of ${stillIn.size} opened $app tonight"
+    }
+}
+
+/** A night they owed the app: everything but one not owed or before their first. */
+private val Square.owed: Boolean get() = this != Square.NOT_OWED && this != Square.BEFORE
+
+/** The notes under the key: who is still in and what Google needs, and how long pictures are kept. */
+private fun notesOf(
+    testers: List<CrewTester>,
+    crew: Crew,
+    finished: Boolean,
+): List<Pair<ImageVector, String>> {
+    if (finished) {
+        val until = dayOf(crew.detailsUntil, "EEE, MMM d")
+        return listOf(
+            Lucide.Clock to
+                if (until != null) {
+                    "Pictures of the last 3 nights are kept until $until. Tap one to see it whole."
+                } else {
+                    "Pictures of the last 3 nights. Tap one to see it whole."
+                },
+        )
+    }
+    val stillIn = testers.count { !it.out }
+    val out = testers.size - stillIn
+    return listOf(
+        Lucide.Users to "$stillIn still in${if (out > 0) ", $out left" else ""}. ${CrewRules.FLOOR} need to keep opening it every day.",
+        Lucide.Image to "Pictures of the last 3 nights. Tap one to see it whole.",
+    )
+}
+
+/** An ISO time as a day on this phone, such as "Nov 20", or null when there is none. */
+private fun dayOf(
+    iso: String?,
+    pattern: String,
+): String? =
+    iso?.let {
+        runCatching {
+            OffsetDateTime
+                .parse(it)
+                .atZoneSameInstant(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
+        }.getOrNull()
+    }

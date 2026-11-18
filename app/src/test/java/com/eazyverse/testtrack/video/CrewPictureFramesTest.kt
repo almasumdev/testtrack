@@ -30,7 +30,6 @@ import com.eazyverse.testtrack.ui.CrewMembersPage
 import com.eazyverse.testtrack.ui.CrewOpenTab
 import com.eazyverse.testtrack.ui.CrewPage
 import com.eazyverse.testtrack.ui.CrewPhase
-import com.eazyverse.testtrack.ui.CrewPicturesPage
 import com.eazyverse.testtrack.ui.CrewSeat
 import com.eazyverse.testtrack.ui.CrewViewModel
 import com.eazyverse.testtrack.ui.DockUi
@@ -318,7 +317,8 @@ class CrewPictureFramesTest {
             }
         vm.setState("pictures", AppNights("Focus Flow", 14, testers))
         vm.setState("loading", false)
-        show { Pushed { CrewPicturesPage(vm, "crew-05", "Crew 05", onBack = {}) } }
+        val crews = crews()
+        show { Pushed { CrewMembersPage(crews, running.id, onBack = {}, pictures = vm) } }
         frame.settle(1500)
         frame.write("everyNight")
     }

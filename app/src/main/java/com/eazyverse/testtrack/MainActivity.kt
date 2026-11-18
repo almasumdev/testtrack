@@ -87,13 +87,10 @@ object Routes {
     /** One crew on its own page. */
     const val CREW = "crew/{id}"
     const val CREW_MEMBERS = "crew/{id}/members"
-    const val CREW_PICTURES = "crew/{id}/pictures"
 
     fun crew(id: String) = "crew/${Uri.encode(id)}"
 
     fun crewMembers(id: String) = "crew/${Uri.encode(id)}/members"
-
-    fun crewPictures(id: String) = "crew/${Uri.encode(id)}/pictures"
 
     /** Asking for feedback on an app from My apps. */
     const val ASK_APP = "ask/{app}"
@@ -418,6 +415,7 @@ fun AppNav(
                     onAddApp = { nav.push(Routes.APP_ADD) },
                     onSeat = { nav.push(Routes.crewSeat(it)) },
                     onMembers = { nav.push(Routes.crewMembers(id)) },
+                    onOpenCrew = { nav.push(Routes.crew(it)) },
                 )
             }
         }
@@ -426,16 +424,8 @@ fun AppNav(
             val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
             val crews: CrewViewModel = viewModel(home)
             val id = requireNotNull(entry.arguments?.getString("id"))
-            Inset { CrewMembersPage(crews, id, onBack = { nav.popBackStack() }, onEveryNight = { nav.push(Routes.crewPictures(id)) }) }
-        }
-
-        composable(Routes.CREW_PICTURES, arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
-            val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
-            val crews: CrewViewModel = viewModel(home)
             val pictures: CrewPicturesViewModel = viewModel()
-            val id = requireNotNull(entry.arguments?.getString("id"))
-            val name = crews.crews.firstOrNull { it.id == id }?.name ?: "this crew"
-            Inset { CrewPicturesPage(pictures, id, name, onBack = { nav.popBackStack() }) }
+            Inset { CrewMembersPage(crews, id, onBack = { nav.popBackStack() }, pictures = pictures) }
         }
 
         appRoutes(nav, openCrew, openCircle)

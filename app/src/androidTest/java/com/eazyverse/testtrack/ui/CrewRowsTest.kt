@@ -10,6 +10,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
+import com.eazyverse.testtrack.viewmodel.AppNights
+import com.eazyverse.testtrack.viewmodel.MemberNight
+import com.eazyverse.testtrack.viewmodel.MemberNights
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -193,7 +196,6 @@ class CrewRowsTest {
 
     @Test
     fun members_say_who_opened_your_app_tonight() {
-        val vm = CrewViewModel()
         val crew =
             Crew(
                 id = "c1",
@@ -208,12 +210,22 @@ class CrewRowsTest {
                         CrewMember("c", "Kamal", "Mood Log", day = 6, out = true, openedMineDays = 3),
                     ),
             )
-        vm.preview(listOf(crew))
-        show { CrewMembersPage(vm, "c1", onBack = {}) }
-        compose.onNodeWithText("1 of 2 opened your app tonight").assertIsDisplayed()
-        compose.onNodeWithText("Opened").assertIsDisplayed()
-        compose.onNodeWithText("Not yet").assertIsDisplayed()
-        compose.onNodeWithText("Out").assertIsDisplayed()
+        val opened = MemberNight(6, "", 11_000, "picture-a-6", false, true)
+        val nights =
+            AppNights(
+                "Time Lapse",
+                14,
+                listOf(
+                    MemberNights("a", "Rafiul", 6, false, listOf(opened)),
+                    MemberNights("b", "Nadia", 6, false, (1..5).map { MemberNight(it, "", 11_000, "", false, true) }),
+                    MemberNights("c", "Kamal", 4, true, emptyList()),
+                ),
+            )
+        show { CrewMembersBody(crew, nights, failed = null, gone = false, onBack = {}, onRetry = {}) }
+        compose.onNodeWithText("1 of 2 opened Time Lapse tonight").assertIsDisplayed()
+        compose.onNodeWithText("Opened yours tonight").assertIsDisplayed()
+        compose.onNodeWithText("Not tonight yet").assertIsDisplayed()
+        compose.onNodeWithText("Left the run").assertIsDisplayed()
     }
 }
 

@@ -214,6 +214,14 @@ data class CrewMember(
     /** Tonight's picture of the reader's app from them, and whether they picked it by hand. */
     val openedMinePicture: String = "",
     val openedMineByHand: Boolean = false,
+    /** Their face, as an address, and their email; empty when the server does not send them. */
+    val photo: String = "",
+    val email: String = "",
+    /** Their app's package and Play icon, for the profile popup. */
+    val packageName: String = "",
+    val icon: String = "",
+    /** When their app was taken out of the run (ISO time); blank while it is in. */
+    val outAt: String = "",
 )
 
 /**
