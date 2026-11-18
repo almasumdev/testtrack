@@ -294,6 +294,9 @@ data class Crew(
     /** When a filling crew will probably be full (an ISO time) and what that rests on; see [startEstimate]. */
     val likelyFullAt: String? = null,
     val likelyBasis: String? = null,
+    /** A finished crew's full detail is kept until this ISO time; [pruned] once it is gone. */
+    val detailsUntil: String? = null,
+    val pruned: Boolean = false,
 ) {
     /** Days of the run that are this account's: all of them, or what was left when it joined. */
     val ownNights: Int get() = (runDays - firstNight + 1).coerceAtLeast(0)

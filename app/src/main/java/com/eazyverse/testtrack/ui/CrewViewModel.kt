@@ -19,6 +19,7 @@ import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.SeatIn
+import com.eazyverse.testtrack.viewmodel.CrewRecords
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import com.eazyverse.testtrack.viewmodel.NightPictures
 import com.eazyverse.testtrack.viewmodel.NightRound
@@ -74,6 +75,9 @@ class CrewViewModel : ViewModel() {
     /** A one line result of the last action, shown once and cleared. */
     var message by mutableStateOf<String?>(null)
         private set
+
+    /** The Record tab's kept records, read with every load, and the two answers they ask. */
+    val records = CrewRecords(viewModelScope, say = { message = it })
 
     var loading by mutableStateOf(true)
         private set
@@ -159,12 +163,6 @@ class CrewViewModel : ViewModel() {
     /** Set by [preview]: which sample packages count as on this phone. */
     private var previewInstalled: Set<String>? = null
 
-    /** Rows and rounds share the same install state, including gallery and dev demo overrides. */
-    fun isInstalled(
-        context: Context,
-        pkg: String,
-    ): Boolean = copyOf(context, pkg).installed
-
     /** Install, source and version: cached device facts unless a display preview overrides them. */
     fun copyOf(
         context: Context,
@@ -192,7 +190,9 @@ class CrewViewModel : ViewModel() {
         signedOut: Boolean = false,
         tab: CrewPhase = CrewPhase.OPEN,
         installed: Set<String> = emptySet(),
+        records: List<CrewRecord> = emptyList(),
     ) {
+        this.records.preview(records)
         previewing = true
         previewInstalled = installed
         crews = mine
@@ -217,6 +217,7 @@ class CrewViewModel : ViewModel() {
                 // the one that is filling and its seat count, which is the only evidence anywhere
                 // in the app that there are real people waiting to test each other's work.
                 signedOut = !ApiAuth.ensure(context)
+                records.load(signedOut)
                 val answer = Api.crews()
                 // Asked before a seat was taken and answered after: it would take the new crew
                 // away again, and a crew's page reads that as the crew being gone.

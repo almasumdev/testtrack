@@ -237,6 +237,9 @@ data class ApiCrew(
     @SerialName("likely_full_at") val likelyFullAt: String? = null,
     /** What the estimate rests on: "pace" (recent crews) or "new" (no history yet); null from an older server. */
     @SerialName("likely_basis") val likelyBasis: String? = null,
+    /** For a done crew: until when its full detail (nights, pictures) is kept, and whether it is gone. */
+    @SerialName("details_until") val detailsUntil: String? = null,
+    val pruned: Boolean = false,
 )
 
 @Serializable

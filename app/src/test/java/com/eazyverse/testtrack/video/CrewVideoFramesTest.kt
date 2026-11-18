@@ -57,6 +57,7 @@ import com.eazyverse.testtrack.ui.Scene
 import com.eazyverse.testtrack.ui.SeatBoxes
 import com.eazyverse.testtrack.ui.SeatState
 import com.eazyverse.testtrack.ui.VisitDockContent
+import com.eazyverse.testtrack.ui.isInstalled
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AppsViewModel

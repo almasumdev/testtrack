@@ -69,15 +69,26 @@ internal fun CrewTileSquares(
 @Composable
 internal fun CrewTileApp(seat: CrewSeat?) {
     if (seat == null) return
+    CrewTileApp(seat.packageName, seat.appName, seat.icon)
+}
+
+/** The same footer from plain values; the Record tab keeps the name to [maxLines] 1. */
+@Composable
+internal fun CrewTileApp(
+    packageName: String,
+    appName: String,
+    icon: String,
+    maxLines: Int = 2,
+) {
     Spacer(Modifier.height(12.dp))
     Row(verticalAlignment = Alignment.CenterVertically) {
-        AppMark(seat.packageName, seat.appName, seat.icon, size = 28.dp, ownIcon = true)
+        AppMark(packageName, appName, icon, size = 28.dp, ownIcon = true)
         Spacer(Modifier.width(8.dp))
         Text(
-            seat.appName,
+            appName,
             style = tileStyle(13f, 18f, FontWeight.Normal),
             color = Tt.colors.text2,
-            maxLines = 2,
+            maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
         )
     }

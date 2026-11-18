@@ -447,7 +447,27 @@ class CrewGalleryTest {
         tab("10-run-tab-all-done", vm)
         vm.preview(emptyList(), tab = CrewPhase.RUN)
         tab("11-run-tab-empty", vm)
-        vm.preview(listOf(finished, short), tab = CrewPhase.RECORD)
+        val app = "Time Lapse: Stopwatch & Timer"
+        val records =
+            listOf(
+                CrewRecord(
+                    finished.id,
+                    1,
+                    "Crew 01",
+                    startedAt = "2026-10-06T00:00:00Z",
+                    endedAt = "2026-10-20T00:00:00Z",
+                    appName = app,
+                    packageName = "com.eazyverse.timelapse",
+                    testersEveryDay = 13,
+                    counted = true,
+                    prodAccessUntil = "2099-01-01T00:00:00Z",
+                    prodAccessReward = 10,
+                    perfectClaimAmount = 100,
+                    perfectClaimable = true,
+                ),
+                CrewRecord(short.id, 0, "Crew 00", appName = app, packageName = "com.eazyverse.timelapse", testersEveryDay = 10),
+            )
+        vm.preview(listOf(finished, short), tab = CrewPhase.RECORD, records = records)
         tab("12-record-tab", vm)
         vm.preview(emptyList(), tab = CrewPhase.RECORD)
         tab("13-record-tab-empty", vm)

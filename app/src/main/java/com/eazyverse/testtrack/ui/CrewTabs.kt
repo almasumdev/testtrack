@@ -1,30 +1,16 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.ChevronRight
-import com.composables.icons.lucide.Lucide
-import com.eazyverse.testtrack.ui.theme.Barlow
-import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * The four tabs, each holding every crew that has reached that point.
@@ -170,8 +156,9 @@ fun CrewLobbyTab(
  * Everything of yours that is over.
  *
  * A list rather than the newest one, because a record's whole job is to still be there in six
- * months. What each row carries is the only two figures anybody comes back for: how long it ran
- * and how many stayed.
+ * months. Read from the kept records rather than the crew list: a member whose app was moved or
+ * taken out cannot open that crew any more and still has its record. Each tile says what came of
+ * the run, and asks the one or two things it still can.
  */
 @Composable
 fun CrewRecordTab(
@@ -179,7 +166,8 @@ fun CrewRecordTab(
     onSignIn: () -> Unit,
     onOpenCrew: (String) -> Unit,
 ) {
-    val finished = vm.crews.filter { it.phase == CrewPhase.RECORD }
+    val context = LocalContext.current
+    val records = vm.records.items
 
     if (vm.signedOut) {
         RobotState(
@@ -191,11 +179,15 @@ fun CrewRecordTab(
         )
         return
     }
-    if (vm.firstLoad) {
+    if (records == null && vm.records.failed) {
+        RobotOffline("Your record didn't load", onRetry = { vm.load(context) })
+        return
+    }
+    if (vm.firstLoad || records == null) {
         CrewRecordLoading()
         return
     }
-    if (finished.isEmpty()) {
+    if (records.isEmpty()) {
         RobotState(
             Prop.Calendar,
             "Nothing finished yet",
@@ -204,75 +196,25 @@ fun CrewRecordTab(
         return
     }
 
+    // Only a crew still in the crew list can be opened; the others answer 403 now.
+    val crews = vm.crews.filter { it.phase == CrewPhase.RECORD }.associateBy { it.id }
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
     ) {
-        itemsIndexed(finished, key = { _, crew -> crew.id }) { index, crew ->
+        itemsIndexed(records, key = { _, record -> record.crewId }) { index, record ->
+            val crew = crews[record.crewId]
             // Fades in, fades out and glides to its new place when the list changes.
             Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) {
-                CrewRecordRow(crew) { onOpenCrew(crew.id) }
+                RecordTile(
+                    record = record,
+                    crew = crew,
+                    busy = vm.records.busy[record.crewId],
+                    onOpen = crew?.let { { onOpenCrew(it.id) } },
+                    onAnswer = { vm.records.answerProdAccess(record.crewId, it) },
+                    onClaim = { vm.records.claimPerfect(record.crewId) },
+                )
             }
         }
-    }
-}
-
-/** One finished crew, with what it came to. */
-@Composable
-private fun CrewRecordRow(
-    crew: Crew,
-    onOpen: () -> Unit,
-) {
-    val stayed = crew.stayed
-    val enough = stayed >= CrewRules.FLOOR
-    CrewSummaryRow(
-        mark = "${crew.finishedDays}",
-        markTone = if (enough) Tone.OK else Tone.WARN,
-        title = crew.name,
-        line = "$stayed of ${crew.members.size} stayed the whole run",
-        chip = if (enough) "Counts" else "Under ${CrewRules.FLOOR}",
-        chipTone = if (enough) Tone.OK else Tone.WARN,
-        onOpen = onOpen,
-    )
-}
-
-/** A crew as one row in a tab: its mark, its name, one line, where it stands, and a chevron. */
-@Composable
-private fun CrewSummaryRow(
-    mark: String,
-    markTone: Tone,
-    title: String,
-    line: String,
-    chip: String,
-    chipTone: Tone,
-    onOpen: () -> Unit,
-    lineTone: Tone? = null,
-) {
-    HairlineRow(
-        leading = { CrewMark(mark, markTone) },
-        title = title,
-        note = AnnotatedString(line),
-        noteTone = lineTone?.ink() ?: Tt.colors.text3,
-        onClick = onOpen,
-        trailing = {
-            StatusChip(chip, chipTone)
-            Icon(Lucide.ChevronRight, null, Modifier.padding(start = 2.dp).size(18.dp), tint = Tt.colors.text4)
-        },
-    )
-}
-
-/** The crew's number on a neutral tile; the tone lives in the number, not the tile. */
-@Composable
-private fun CrewMark(
-    mark: String,
-    markTone: Tone,
-) {
-    Box(Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(Tt.colors.tile), contentAlignment = Alignment.Center) {
-        Text(
-            mark,
-            style = TextStyle(fontFamily = Barlow, fontSize = 20.sp, lineHeight = 22.sp, fontFeatureSettings = "tnum"),
-            fontWeight = FontWeight.SemiBold,
-            color = markTone.ink(),
-        )
     }
 }

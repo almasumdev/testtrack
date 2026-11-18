@@ -1,5 +1,7 @@
 package com.eazyverse.testtrack.ui
 
+import android.content.Context
+
 /*
  * What the Crew tab reads off its view model: counts and lists worked out from the crews it holds.
  * Kept beside the view model rather than in it, as plain reads over its state, so the class itself
@@ -47,3 +49,9 @@ val CrewViewModel.sentBack: List<CrewSeat>
 /** How many runs are going, which is what the nightly figure is made of. */
 val CrewViewModel.running: Int
     get() = crews.count { it.phase == CrewPhase.RUN }
+
+/** Rows and rounds share the same install state, including gallery and dev demo overrides. */
+fun CrewViewModel.isInstalled(
+    context: Context,
+    pkg: String,
+): Boolean = copyOf(context, pkg).installed

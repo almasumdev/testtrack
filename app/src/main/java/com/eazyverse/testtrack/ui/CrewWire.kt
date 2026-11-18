@@ -175,6 +175,8 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
         runDays = nights,
         likelyFullAt = likelyFullAt,
         likelyBasis = likelyBasis,
+        detailsUntil = detailsUntil,
+        pruned = pruned,
     )
 }
 

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -19,6 +20,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
@@ -205,13 +207,17 @@ fun Primary(
     }
 }
 
-/** Compact help and row actions: shared label, optional icon, and a full touch target. */
+/**
+ * Compact help and row actions: shared label, optional icon, and a full touch target. While [busy]
+ * a small loader takes the label's place at the same size, and the button takes no taps.
+ */
 @Composable
 internal fun InlineAction(
     label: String,
     modifier: Modifier = Modifier,
     leading: ImageVector? = null,
     enabled: Boolean = true,
+    busy: Boolean = false,
     onClick: () -> Unit,
 ) {
     val dismissKeyboard = rememberDismissKeyboard()
@@ -223,7 +229,7 @@ internal fun InlineAction(
                 onClick()
             },
             modifier = modifier.heightIn(min = 32.dp),
-            enabled = enabled,
+            enabled = enabled && !busy,
             shape = RoundedCornerShape(percent = 50),
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
             colors = ButtonDefaults.textButtonColors(contentColor = Tt.colors.accentInk, disabledContentColor = Tt.colors.text4),
@@ -232,13 +238,17 @@ internal fun InlineAction(
                 Icon(leading, null, Modifier.size(16.dp))
                 Spacer(Modifier.width(6.dp))
             }
-            Text(
-                label,
-                style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    label,
+                    Modifier.alpha(if (busy) 0f else 1f),
+                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                )
+                if (busy) CircularProgressIndicator(Modifier.size(18.dp), color = Tt.colors.accentInk, strokeWidth = 2.dp)
+            }
         }
     }
 }
