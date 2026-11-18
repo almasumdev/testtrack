@@ -159,24 +159,19 @@ class CrewViewModel : ViewModel() {
     /** Set by [preview]: which sample packages count as on this phone. */
     private var previewInstalled: Set<String>? = null
 
-    /**
-     * Whether an app is on this phone. Read during drawing, it subscribes to the installed-apps
-     * cache, so a row redraws when [refreshInstalled] finds the app arrived.
-     */
+    /** Rows and rounds share the same install state, including gallery and dev demo overrides. */
     fun isInstalled(
         context: Context,
         pkg: String,
-    ): Boolean = previewInstalled?.contains(pkg) ?: (pkg.isNotBlank() && InstalledApps.cachedInfo(context, pkg).installed)
+    ): Boolean = copyOf(context, pkg).installed
 
-    /**
-     * The copy of an app on this phone as the server will judge an open of it: here, from Play,
-     * and which version. Cached as [isInstalled] is, and re-read on the way back from Play.
-     */
+    /** Install, source and version: cached device facts unless a display preview overrides them. */
     fun copyOf(
         context: Context,
         pkg: String,
     ): HereCopy {
         previewInstalled?.let { return HereCopy(pkg in it) }
+        DebugLooks.crewDemoCopy(pkg)?.let { return it }
         if (pkg.isBlank()) return HereCopy(false)
         val info = InstalledApps.cachedInfo(context, pkg)
         return HereCopy(info.installed, info.installer == "com.android.vending", info.versionCode.takeIf { info.installed })
@@ -372,6 +367,10 @@ class CrewViewModel : ViewModel() {
         apps: List<CrewApp>,
     ) {
         val first = apps.firstOrNull() ?: return
+        DebugLooks.crewDemoRoundMessage(apps)?.let {
+            message = it
+            return
+        }
         if (apps.any { it.packageName.isBlank() }) {
             message = "${first.label} can't be opened from here. Open it from your phone's app list instead."
             return

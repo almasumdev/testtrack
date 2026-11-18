@@ -1,0 +1,71 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<div id="tt-count-options">
+ <div class="viz-carousel viz-dotted-background" aria-label="Tix count loading styles">
+  <section data-variant="Shimmer bar"><div class="tc-stage" data-count="shimmer"></div></section>
+  <section data-variant="Soft pulse"><div class="tc-stage" data-count="pulse"></div></section>
+  <section data-variant="Plain placeholder"><div class="tc-stage" data-count="plain"></div></section>
+  <section data-variant="Quiet dots"><div class="tc-stage" data-count="dots"></div></section>
+  <section data-variant="Simple dash"><div class="tc-stage" data-count="dash"></div></section>
+ </div>
+</div>
+<style>
+#tt-count-options { --tc-bg:light-dark(#f7fcff,#0f1011); --tc-ink:light-dark(#3a5b73,#b6ccdc); --tc-text:light-dark(#142f43,#eceef0); --tc-sub:light-dark(#59758a,#9da3a9); --tc-soft:light-dark(#e1eaf2,#2a2d31); --tc-line:light-dark(#dce7ef,#34383d); --tc-placeholder:light-dark(#b7ccd9,#596b78); --tc-shine:light-dark(#f7fcffbb,#b6ccdc88); --tc-shadow:light-dark(#142f4310,#00000033); font-family:Barlow,system-ui,sans-serif; }
+#tt-count-options * { box-sizing:border-box; }
+#tt-count-options .tc-stage { min-height:368px; display:flex; flex-direction:column; justify-content:center; gap:22px; align-items:center; padding:28px 0; }
+#tt-count-options .tc-preview { width:360px; max-width:100%; background:var(--tc-bg); border:1px solid var(--tc-line); border-radius:20px; padding:20px 14px; box-shadow:0 6px 18px var(--tc-shadow); }
+#tt-count-options .tc-heading { font-size:17px; line-height:22px; font-weight:600; color:var(--tc-text); margin-bottom:15px; }
+#tt-count-options .tc-list { display:flex; flex-direction:column; gap:10px; }
+#tt-count-options svg { display:block; width:21px; height:21px; stroke-width:1.8; flex-shrink:0; }
+#tt-count-options .tc-tile { display:flex; position:relative; min-height:82px; border:1px solid var(--tc-line); border-radius:14px; background:var(--tc-bg); }
+#tt-count-options .tc-tile:before,#tt-count-options .tc-tile:after { content:''; position:absolute; z-index:1; right:51px; width:14px; height:14px; border:1px solid var(--tc-line); background:var(--tc-bg); border-radius:50%; }
+#tt-count-options .tc-tile:before { top:-8px; border-top-color:transparent; }
+#tt-count-options .tc-tile:after { bottom:-8px; border-bottom-color:transparent; }
+#tt-count-options .tc-body { min-width:0; flex:1; display:flex; align-items:center; gap:10px; padding:11px; }
+#tt-count-options .tc-mark { flex-shrink:0; width:40px; height:40px; display:grid; place-items:center; border-radius:11px; background:var(--tc-soft); color:var(--tc-ink); font-size:17px; font-weight:600; }
+#tt-count-options .tc-copy { min-width:0; }
+#tt-count-options .tc-name { color:var(--tc-text); font-size:15px; line-height:19px; font-weight:600; }
+#tt-count-options .tc-ask { color:var(--tc-sub); font-size:12px; line-height:16px; margin-top:4px; }
+#tt-count-options .tc-stub { width:58px; flex-shrink:0; border-left:1px dashed var(--tc-line); border-radius:0 13px 13px 0; background:var(--tc-soft); color:var(--tc-ink); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:12px 5px; }
+#tt-count-options .tc-stub > svg { width:17px; height:17px; transform:rotate(-12deg); }
+#tt-count-options .tc-value { width:30px; height:20px; display:flex; justify-content:center; align-items:center; font-size:18px; line-height:20px; font-weight:600; color:var(--tc-ink); }
+#tt-count-options .tc-bar { width:24px; height:12px; border-radius:4px; background:var(--tc-placeholder); position:relative; overflow:hidden; opacity:.7; }
+#tt-count-options .tc-shine { display:block; position:absolute; inset:0; background:linear-gradient(100deg,transparent 0%,var(--tc-shine) 48%,transparent 100%); transform:translateX(-110%); }
+#tt-count-options .tc-dots { display:flex; gap:3px; }
+#tt-count-options .tc-dots span { width:3px; height:3px; border-radius:50%; background:var(--tc-ink); opacity:.55; }
+#tt-count-options .tc-dash { opacity:.5; }
+@media(max-width:350px) { #tt-count-options .tc-preview { padding:16px 10px; } #tt-count-options .tc-body { gap:8px; padding:10px; } #tt-count-options .tc-mark { width:34px; height:34px; } #tt-count-options .tc-name { font-size:14px; } }
+</style>
+<script>
+(() => {
+ const root=document.getElementById('tt-count-options');
+ const icon=name=>`<i data-lucide="${name}" aria-hidden="true"></i>`;
+ const examples=[['S','Step Count Pro','Try the new goal screen',8],['N','Notely','Is sign in clear?',6]];
+ const saved=window.openai?.widgetState?.privateContent||{};
+ const state={appearance:saved.appearance||'light dark'};
+ const timers=new Map();
+ function placeholder(mode){
+  if(mode==='dots')return '<span class="tc-dots" aria-hidden="true"><span></span><span></span><span></span></span>';
+  if(mode==='dash')return '<span class="tc-dash" aria-hidden="true">—</span>';
+  return `<span class="tc-bar" aria-hidden="true">${mode==='shimmer'?'<span class="tc-shine"></span>':''}</span>`;
+ }
+ root.querySelectorAll('.tc-stage').forEach(stage=>{
+  stage.innerHTML=`<div class="tc-preview"><div class="tc-heading">Feedback</div><div class="tc-list">${examples.map(row=>`<div class="tc-tile"><div class="tc-body"><span class="tc-mark">${row[0]}</span><div class="tc-copy"><div class="tc-name">${row[1]}</div><div class="tc-ask">${row[2]}</div></div></div><div class="tc-stub">${icon('ticket')}<span class="tc-value" data-value="${row[3]}" aria-label="Loading tix count">${placeholder(stage.dataset.count)}</span></div></div>`).join('')}</div></div><button type="button" class="btn" data-replay>Replay count loading</button>`;
+ });
+ root.addEventListener('click',event=>{
+  if(!event.target.closest('[data-replay]'))return;
+  const stage=event.target.closest('.tc-stage');const mode=stage.dataset.count;
+  clearTimeout(timers.get(mode));
+  stage.querySelectorAll('.tc-value').forEach(el=>{el.innerHTML=placeholder(mode);el.setAttribute('aria-label','Loading tix count');});
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+   if(mode==='shimmer')stage.querySelectorAll('.tc-shine').forEach(el=>el.animate([{transform:'translateX(-110%)'},{transform:'translateX(110%)'}],{duration:950,iterations:3}));
+   if(mode==='pulse')stage.querySelectorAll('.tc-bar').forEach(el=>el.animate([{opacity:.7},{opacity:.25},{opacity:.7}],{duration:950,iterations:3}));
+   if(mode==='dots')stage.querySelectorAll('.tc-dots').forEach(group=>[...group.children].forEach((el,i)=>el.animate([{opacity:.25},{opacity:1},{opacity:.25}],{duration:850,iterations:3,delay:i*100})));
+  }
+  timers.set(mode,setTimeout(()=>stage.querySelectorAll('.tc-value').forEach(el=>{el.textContent=el.dataset.value;el.setAttribute('aria-label',el.dataset.value+' tix');}),3000));
+ });
+ function appearance(){root.style.colorScheme=state.appearance;}
+ window.addEventListener('openai:set_globals',event=>{const s=event.detail?.globals?.widgetState?.privateContent;if(s){state.appearance=s.appearance||'light dark';appearance();}});
+ appearance();if(globalThis.lucide)lucide.createIcons();
+ if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:()=>{appearance();window.openai?.setWidgetState?.({privateContent:state})?.catch(()=>{});}});tweak.addSelect(state,'appearance',{label:'Appearance',options:[{label:'Follow app',value:'light dark'},{label:'Light',value:'light'},{label:'Dark',value:'dark'}]});}
+})();
+</script>

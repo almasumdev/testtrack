@@ -83,14 +83,18 @@ class ProofStoreTest {
     fun the_note_and_the_trip_to_play_are_kept_until_sent() {
         ProofStore.saveNote(context, id, "Crashes on rotate")
         ProofStore.markLeft(context, id)
+        ProofStore.markNoBox(context, id)
         ProofStore.adopt(context, id, picture("c.jpg", Color.RED))
 
         assertEquals("Crashes on rotate", ProofStore.note(context, id))
         assertTrue(ProofStore.left(context, id))
+        assertTrue(ProofStore.noBox(context, id))
+        assertFalse(ProofStore.noBox(context, "another-review"))
 
         ProofStore.forget(context, id)
         assertNull(ProofStore.proof(context, id))
         assertEquals("", ProofStore.note(context, id))
         assertFalse(ProofStore.left(context, id))
+        assertFalse(ProofStore.noBox(context, id))
     }
 }

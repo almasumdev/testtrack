@@ -111,23 +111,20 @@ fun CardRule() {
 fun AppTile(
     name: String,
     size: Dp = 44.dp,
+    outline: Color = Color.Unspecified,
 ) {
     val (fill, ink) = Tt.colors.nameTile((name.hashCode().rem(360) + 360).rem(360).toFloat())
     Box(
         Modifier
             .size(size)
+            .appIconOutline(outline)
             // The same corner ratio AppIcon rounds a real icon by, so nothing shifts when one
             // takes this one's place.
             .clip(RoundedCornerShape(size * 0.3f))
             .background(fill),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            name.take(1).uppercase(),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = ink,
-        )
+        AppInitial(name, size, ink)
     }
 }
 

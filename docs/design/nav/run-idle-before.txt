@@ -1,0 +1,82 @@
+Applications Graphics Acceleration Info:
+Uptime: 902131259 Realtime: 1790003321
+
+** Graphics info for pid 18442 [com.eazyverse.testtrack.debug] **
+
+Stats since: 902125109446304ns
+Total frames rendered: 740
+Janky frames: 0 (0.00%)
+Janky frames (legacy): 46 (6.22%)
+50th percentile: 15ms
+90th percentile: 18ms
+95th percentile: 20ms
+99th percentile: 22ms
+Number Missed Vsync: 0
+Number High input latency: 1480
+Number Slow UI thread: 0
+Number Slow bitmap uploads: 0
+Number Slow issue draw commands: 0
+Number Frame deadline missed: 0
+Number Frame deadline missed (legacy): 0
+HISTOGRAM: 5ms=0 6ms=0 7ms=0 8ms=2 9ms=10 10ms=16 11ms=36 12ms=26 13ms=76 14ms=120 15ms=158 16ms=108 17ms=82 18ms=38 19ms=28 20ms=22 21ms=10 22ms=8 23ms=0 24ms=0 25ms=0 26ms=0 27ms=0 28ms=0 29ms=0 30ms=0 31ms=0 32ms=0 34ms=0 36ms=0 38ms=0 40ms=0 42ms=0 44ms=0 46ms=0 48ms=0 53ms=0 57ms=0 61ms=0 65ms=0 69ms=0 73ms=0 77ms=0 81ms=0 85ms=0 89ms=0 93ms=0 97ms=0 101ms=0 105ms=0 109ms=0 113ms=0 117ms=0 121ms=0 125ms=0 129ms=0 133ms=0 150ms=0 200ms=0 250ms=0 300ms=0 350ms=0 400ms=0 450ms=0 500ms=0 550ms=0 600ms=0 650ms=0 700ms=0 750ms=0 800ms=0 850ms=0 900ms=0 950ms=0 1000ms=0 1050ms=0 1100ms=0 1150ms=0 1200ms=0 1250ms=0 1300ms=0 1350ms=0 1400ms=0 1450ms=0 1500ms=0 1550ms=0 1600ms=0 1650ms=0 1700ms=0 1750ms=0 1800ms=0 1850ms=0 1900ms=0 1950ms=0 2000ms=0 2050ms=0 2100ms=0 2150ms=0 2200ms=0 2250ms=0 2300ms=0 2350ms=0 2400ms=0 2450ms=0 2500ms=0 2550ms=0 2600ms=0 2650ms=0 2700ms=0 2750ms=0 2800ms=0 2850ms=0 2900ms=0 2950ms=0 3000ms=0 3050ms=0 3100ms=0 3150ms=0 3200ms=0 3250ms=0 3300ms=0 3350ms=0 3400ms=0 3450ms=0 3500ms=0 3550ms=0 3600ms=0 3650ms=0 3700ms=0 3750ms=0 3800ms=0 3850ms=0 3900ms=0 3950ms=0 4000ms=0 4050ms=0 4100ms=0 4150ms=0 4200ms=0 4250ms=0 4300ms=0 4350ms=0 4400ms=0 4450ms=0 4500ms=0 4550ms=0 4600ms=0 4650ms=0 4700ms=0 4750ms=0 4800ms=0 4850ms=0 4900ms=0 4950ms=0
+50th gpu percentile: 5ms
+90th gpu percentile: 7ms
+95th gpu percentile: 7ms
+99th gpu percentile: 8ms
+GPU HISTOGRAM: 1ms=0 2ms=0 3ms=0 4ms=4 5ms=374 6ms=240 7ms=108 8ms=10 9ms=4 10ms=0 11ms=0 12ms=0 13ms=0 14ms=0 15ms=0 16ms=0 17ms=0 18ms=0 19ms=0 20ms=0 21ms=0 22ms=0 23ms=0 24ms=0 25ms=0 4950ms=0
+
+Pipeline=Skia (OpenGL)
+Memory policy:
+  Max surface area: 2527200
+  Max resource usage: 121.31MB (x48)
+  Background retention: 50% (altUiHidden = true)
+  GPU Context timeout: 10
+Contexts: 1 (stopped = 0)
+CPU Caches:
+  Glyph Cache: 634.13 KB (1 entry)
+  Glyph Count: 159 
+Total CPU memory usage:
+  649350 bytes, 634.13 KB (0.00 bytes is purgeable)
+GPU Caches:
+  Other:
+    TextBlobCache: 46.62 KB (1 entry)
+    Buffer Object: 464.00 bytes (2 entries)
+    StencilAttachment: 64.00 KB (1 entry)
+  Image:
+    Texture: 1.16 MB (26 entries)
+  Scratch:
+    RenderTarget: 16.00 KB (1 entry)
+    Texture: 2.00 MB (1 entry)
+    Buffer Object: 78.00 KB (2 entries)
+Total GPU memory usage:
+  3518520 bytes, 3.36 MB (582.94 KB is purgeable)
+
+GraphicBufferAllocator buffers:
+            Handle |         Size |     W (Stride) x H | Layers |   Format |      Usage | Requestor
+0xb400006dfa896e00 |  9945.00 KiB | 1080 (1088) x 2340 |      1 |        1 | 0x40000000000b00 | VRI[MainActivity]@825225c#5(BLAST Consumer)5
+0xb400006ec8356e40 |  9945.00 KiB | 1080 (1088) x 2340 |      1 |        1 | 0x40000000000b00 | VRI[MainActivity]@825225c#5(BLAST Consumer)5
+0xb400006ec8357340 |  9945.00 KiB | 1080 (1088) x 2340 |      1 |        1 | 0x40000000000b00 | VRI[MainActivity]@825225c#5(BLAST Consumer)5
+0xb400006eca762400 |  9945.00 KiB | 1080 (1088) x 2340 |      1 |        1 | 0x40000000000b00 | VRI[MainActivity]@825225c#5(BLAST Consumer)5
+Total allocated by GraphicBufferAllocator (estimate): 39780.00 KB
+Imported gralloc buffers:
++ name:VRI[MainActivity]@825225c#5(BLAST Consumer)5, id:5072356729610, size:10153.00KiB, w/h:1080x2340, usage: 0x40000000000b00, req fmt:1, fourcc/mod:875708993/576460752303423602, dataspace: 0x0, compressed: true
++ name:VRI[MainActivity]@825225c#5(BLAST Consumer)5, id:5072356729611, size:10153.00KiB, w/h:1080x2340, usage: 0x40000000000b00, req fmt:1, fourcc/mod:875708993/576460752303423602, dataspace: 0x0, compressed: true
++ name:VRI[MainActivity]@825225c#5(BLAST Consumer)5, id:5072356729609, size:10153.00KiB, w/h:1080x2340, usage: 0x40000000000b00, req fmt:1, fourcc/mod:875708993/576460752303423602, dataspace: 0x0, compressed: true
++ name:VRI[MainActivity]@825225c#5(BLAST Consumer)5, id:5072356729608, size:10153.00KiB, w/h:1080x2340, usage: 0x40000000000b00, req fmt:1, fourcc/mod:875708993/576460752303423602, dataspace: 0x0, compressed: true
+Total imported by gralloc: 40612.00KiB
+
+Profile data in ms:
+
+	com.eazyverse.testtrack.debug/com.eazyverse.testtrack.MainActivity/android.view.ViewRootImpl@8ba084a (visibility=0)
+View hierarchy:
+
+  com.eazyverse.testtrack.debug/com.eazyverse.testtrack.MainActivity/android.view.ViewRootImpl@8ba084a
+  11 views, 21.51 kB of render nodes
+
+
+Total ViewRootImpl   : 1
+Total attached Views : 11
+Total RenderNode     : 21.51 kB (used) / 57.91 kB (capacity)
+
+  ProcessConfig={1.0 470mcc1mnc [en_US] ldltr sw384dp w384dp h832dp 450dpi nrml long compactNeeded port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2340) mAppBounds=Rect(0, 0 - 1080, 2340) mMaxBounds=Rect(0, 0 - 1080, 2340) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0 mStageConfig=undefined mPopOver=off mOverlappingWithCutout=false} s.23650 fontWeightAdjustment=0 ff=0 bf=-1 bts=0 cst=1.0 nightDim=0 themeSeq=0}
+  Application ResourcesConfig={1.0 470mcc1mnc [en_US] ldltr sw384dp w384dp h832dp 450dpi nrml long compactNeeded port night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2340) mAppBounds=Rect(0, 0 - 1080, 2340) mMaxBounds=Rect(0, 0 - 1080, 2340) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0 mStageConfig=undefined mPopOver=off mOverlappingWithCutout=false} s.23650 fontWeightAdjustment=0 ff=0 bf=-1 bts=0 cst=1.0 nightDim=0 themeSeq=0}

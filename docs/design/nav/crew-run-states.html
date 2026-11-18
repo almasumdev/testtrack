@@ -1,0 +1,134 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<div id="tt-run-states" class="viz-dotted-background">
+  <div class="rs-controls"><label for="rs-state">Run state<select id="rs-state" class="cursor-interaction">
+    <optgroup label="Run tab"><option value="multiple">Multiple running crews</option><option value="single">One running crew</option><option value="risk">Missed yesterday</option><option value="done">Tonight is done</option><option value="install">Nothing ready to open</option><option value="missing">Picture missing</option><option value="sending">Pictures sending</option><option value="late">Upload delayed</option><option value="finished">Your nights are done</option><option value="out">Your app is out</option><option value="loading">Loading</option><option value="empty">No running crews</option><option value="signedout">Signed out</option><option value="offline">Offline</option></optgroup>
+    <optgroup label="Crew page"><option value="optional">Optional tonight</option><option value="last">Last night</option><option value="update">Update required</option><option value="play">Install from Play</option><option value="feedback">Play feedback due</option><option value="waiting">Appeal waiting</option><option value="declined">Appeal declined</option><option value="closed">Appeal closed</option><option value="again">Removed again</option><option value="blocked">Cannot appeal</option></optgroup>
+  </select></label><button type="button" class="rs-theme cursor-interaction" aria-label="Switch preview theme"><i data-lucide="sun-moon" aria-hidden="true"></i></button></div>
+  <p class="rs-caption">Current Run screens · sample data · tap a crew to open it</p>
+  <section class="rs-phone" aria-label="TestTrack Run preview"><div class="rs-status"><span>9:41</span><span>••• &nbsp; ▰</span></div><header class="rs-appbar"><strong>TestTrack</strong><span class="rs-wallet"><i data-lucide="ticket" aria-hidden="true"></i>100</span></header><div id="rs-page" aria-live="polite"></div><div class="rs-dock"><span><i data-lucide="circle-dot" aria-hidden="true"></i>Circle</span><span class="rs-selected"><i data-lucide="users" aria-hidden="true"></i>Crew</span><span class="rs-plus" aria-label="Add">+</span><span><i data-lucide="layout-grid" aria-hidden="true"></i>My apps</span></div><div class="rs-home"><span></span></div></section>
+</div>
+<style>
+#tt-run-states{--rs-bg:light-dark(#f7fcff,#0f1011);--rs-text:light-dark(#142f43,#eceef0);--rs-body:light-dark(#344e61,#bdc3c9);--rs-muted:light-dark(#59758a,#9da3a9);--rs-line:light-dark(#b7d1e2,#383c41);--rs-tile:light-dark(#dce6ee,#2a2d31);--rs-card:light-dark(#f3f8fb,#1c1e20);--rs-accent:light-dark(#3a5b73,#93b3ca);--rs-on:light-dark(#fff,#101417);--rs-ok:light-dark(#376a58,#8ac6a7);--rs-warn:light-dark(#885e24,#e2ba7b);--rs-bad:light-dark(#b64646,#e09a9a);font-family:Barlow,system-ui,sans-serif;color:var(--rs-text);padding:20px 0 24px}
+#tt-run-states *{box-sizing:border-box}#tt-run-states [hidden]{display:none!important}
+#tt-run-states .rs-controls{display:flex;gap:10px;align-items:end;max-width:390px;margin:auto;padding:0 8px}
+#tt-run-states .rs-controls label{flex:1;min-width:0;display:grid;gap:5px;font-size:12px;line-height:17px;color:var(--rs-muted)}
+#tt-run-states button,#tt-run-states select{font-family:inherit;font-size:14px;line-height:19px;touch-action:manipulation;color:var(--rs-text)}
+#tt-run-states select{min-height:44px;width:100%;padding:9px;background:var(--rs-bg);border:1px solid var(--rs-line);border-radius:10px}
+#tt-run-states .rs-theme{width:44px;height:44px;display:grid;place-items:center;background:var(--rs-bg);border:1px solid var(--rs-line);border-radius:10px;flex-shrink:0}
+#tt-run-states .rs-theme svg{width:20px;height:20px}
+#tt-run-states p{margin:0}
+#tt-run-states .rs-caption{font-size:12px;line-height:17px;text-align:center;color:var(--rs-muted);margin:10px 8px 20px}
+#tt-run-states .rs-phone{width:390px;max-width:100%;min-height:790px;margin:0 auto;background:var(--rs-bg);border:1px solid var(--rs-line);border-radius:24px;display:flex;flex-direction:column;overflow:hidden;font-size:14px;line-height:19px}
+#tt-run-states .rs-status{display:flex;justify-content:space-between;padding:14px 22px 6px;font-size:12px;font-weight:600;line-height:16px}
+#tt-run-states .rs-appbar{display:flex;align-items:center;justify-content:space-between;padding:15px 20px 22px;font-size:23px;line-height:28px;font-weight:600}
+#tt-run-states .rs-wallet{display:flex;gap:6px;align-items:center;font-size:15px;line-height:20px;color:var(--rs-accent)}
+#tt-run-states .rs-wallet svg{width:19px;height:19px}
+#tt-run-states #rs-page{flex:1;min-width:0;padding-bottom:24px}
+#tt-run-states .rs-tabs{display:flex;gap:4px;margin:0 16px 12px}
+#tt-run-states .rs-tabs span{flex:1;text-align:center;color:var(--rs-muted);padding:9px 2px;font-size:14px;line-height:20px;border-radius:10px;font-weight:500}
+#tt-run-states .rs-tabs .rs-selected,#tt-run-states .rs-dock .rs-selected{background:var(--rs-tile);color:var(--rs-text)}
+#tt-run-states .rs-card{margin:0 16px;border:1px solid var(--rs-line);border-radius:16px;padding:16px;background:var(--rs-bg)}
+#tt-run-states .rs-card+.rs-card{margin-top:8px}
+#tt-run-states .rs-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;background:color-mix(in srgb,var(--rs-accent) 13%,var(--rs-bg));color:var(--rs-accent);font-size:12px;line-height:17px;font-weight:600;max-width:100%}
+#tt-run-states .rs-chip svg{width:14px;height:14px;flex-shrink:0}
+#tt-run-states .rs-chip.rs-ok{background:color-mix(in srgb,var(--rs-ok) 13%,var(--rs-bg));color:var(--rs-ok)}
+#tt-run-states .rs-chip.rs-warn{background:color-mix(in srgb,var(--rs-warn) 13%,var(--rs-bg));color:var(--rs-warn)}
+#tt-run-states .rs-chip.rs-bad{background:color-mix(in srgb,var(--rs-bad) 13%,var(--rs-bg));color:var(--rs-bad)}
+#tt-run-states .rs-card h2{font-size:23px;line-height:27px;font-weight:700;margin:10px 0 4px}
+#tt-run-states .rs-card p{font-size:14px;line-height:20px;color:var(--rs-body)}
+#tt-run-states .rs-card p.rs-warning{color:var(--rs-warn);font-weight:600}
+#tt-run-states .rs-meter{display:flex;gap:4px;margin-top:14px}
+#tt-run-states .rs-meter span{height:7px;flex:1;min-width:0;border-radius:4px;background:var(--rs-tile)}
+#tt-run-states .rs-meter .rs-lit{background:var(--rs-accent)}#tt-run-states .rs-meter.rs-complete .rs-lit{background:var(--rs-ok)}
+#tt-run-states .rs-meter-label{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--rs-muted);font-size:11px;line-height:16px;margin-top:5px}
+#tt-run-states .rs-stats{display:flex;gap:8px;margin-top:14px}
+#tt-run-states .rs-stat{flex:1;min-width:0;border:1px solid var(--rs-line);border-radius:10px;padding:10px 12px}
+#tt-run-states .rs-stat strong{font-size:22px;line-height:27px;font-weight:700;display:block}
+#tt-run-states .rs-stat span{font-size:12px;line-height:17px;color:var(--rs-muted);display:block}
+#tt-run-states .rs-primary,#tt-run-states .rs-secondary{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:48px;padding:10px 16px;border-radius:99px;margin-top:14px;font-weight:600}
+#tt-run-states .rs-primary{background:var(--rs-accent);color:var(--rs-on);border:0}
+#tt-run-states .rs-secondary{background:transparent;color:var(--rs-accent);border:1px solid var(--rs-line)}
+#tt-run-states .rs-button-pair{display:flex;gap:8px;align-items:stretch}
+#tt-run-states .rs-button-pair>button{flex:1;min-width:0;padding-left:8px;padding-right:8px}
+#tt-run-states .rs-primary svg{width:18px;height:18px}
+#tt-run-states h3.rs-heading{font-size:16px;line-height:20px;font-weight:600;margin:20px 16px 10px}
+#tt-run-states .rs-rows{display:grid;gap:8px;margin:0 16px}
+#tt-run-states .rs-row{display:flex;gap:12px;align-items:center;min-height:78px;text-align:left;border:1px solid var(--rs-line);border-radius:16px;background:var(--rs-bg);padding:12px 8px 12px 12px;width:100%}
+#tt-run-states .rs-mark{width:52px;height:52px;flex-shrink:0;border-radius:16px;background:var(--rs-tile);display:grid;place-items:center;font-size:20px;font-weight:600;color:var(--rs-ok)}
+#tt-run-states .rs-mark.rs-warn{color:var(--rs-warn)}
+#tt-run-states .rs-row-copy{min-width:0;flex:1;display:grid;gap:2px}
+#tt-run-states .rs-row-copy strong{font-size:15px;line-height:20px;font-weight:600}
+#tt-run-states .rs-row-copy small{display:block;font-size:12px;line-height:16px;color:var(--rs-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tt-run-states .rs-row-tail{display:flex;align-items:center;gap:2px;flex-shrink:0}
+#tt-run-states .rs-row-tail>svg{width:18px;height:18px;color:var(--rs-muted)}
+#tt-run-states .rs-pagebar{display:flex;align-items:center;gap:8px;padding:0 12px 12px;font-size:20px;font-weight:600}
+#tt-run-states .rs-back{width:44px;height:44px;display:grid;place-items:center;background:transparent;border:0}
+#tt-run-states .rs-back svg{width:22px;height:22px}
+#tt-run-states .rs-small-title{font-size:16px;line-height:21px;font-weight:600;margin:8px 0 4px;display:block}
+#tt-run-states .rs-app-icon{width:42px;height:42px;border-radius:12px;background:var(--rs-tile);color:var(--rs-accent);display:grid;place-items:center;flex-shrink:0}
+#tt-run-states .rs-app-icon svg{width:21px;height:21px}
+#tt-run-states .rs-pill{border:0;border-radius:99px;background:var(--rs-tile);color:var(--rs-accent);font-size:12px;line-height:17px;padding:8px 13px;min-height:38px;font-weight:600}
+#tt-run-states .rs-app-row{display:flex;align-items:center;gap:10px;border:1px solid var(--rs-line);border-radius:16px;padding:12px;min-height:76px;background:var(--rs-bg)}
+#tt-run-states .rs-app-row .rs-chip{font-size:11px;padding:4px 8px}
+#tt-run-states .rs-note{font-size:12px;line-height:17px;color:var(--rs-muted);margin:8px 20px 0}
+#tt-run-states .rs-empty{display:grid;justify-items:center;text-align:center;gap:12px;padding:90px 28px}
+#tt-run-states .rs-empty>svg{width:66px;height:66px;stroke-width:1.25;color:var(--rs-accent)}
+#tt-run-states .rs-empty h2{font-size:21px;line-height:26px;font-weight:600;margin:0}
+#tt-run-states .rs-empty p{font-size:14px;line-height:20px;color:var(--rs-muted)}
+#tt-run-states .rs-skeleton{display:block;height:14px;width:100%;max-width:100%;border-radius:6px;background:var(--rs-tile)}
+#tt-run-states .rs-skeleton-stack{display:grid;gap:16px}
+#tt-run-states .rs-skeleton-row{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--rs-line);border-radius:16px}
+#tt-run-states .rs-dock{display:flex;align-items:center;gap:5px;margin:10px 16px 0;padding:8px;border:1px solid var(--rs-line);border-radius:18px;background:var(--rs-card)}
+#tt-run-states .rs-dock>span{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;font-size:12px;line-height:17px;font-weight:600;color:var(--rs-muted)}
+#tt-run-states .rs-dock .rs-selected{border-radius:11px;color:var(--rs-accent)}
+#tt-run-states .rs-dock svg{width:16px;height:16px}
+#tt-run-states .rs-dock .rs-plus{flex:0 0 44px;border:1px solid var(--rs-line);border-radius:12px;font-size:26px;line-height:28px;font-weight:400;color:var(--rs-accent)}
+#tt-run-states .rs-home{display:flex;justify-content:center;padding:14px 0 8px}
+#tt-run-states .rs-home span{width:110px;height:4px;border-radius:4px;background:var(--rs-text)}
+@media(max-width:350px){#tt-run-states .rs-stat{padding:10px 8px}#tt-run-states .rs-row{gap:8px;padding-left:10px}#tt-run-states .rs-mark{width:44px;height:48px;border-radius:13px}#tt-run-states .rs-row-tail .rs-chip{padding:4px 6px;font-size:11px}#tt-run-states .rs-dock{margin-left:10px;margin-right:10px;padding:6px}#tt-run-states .rs-dock>span{gap:3px}}
+</style>
+<script>
+(()=>{
+const root=document.getElementById('tt-run-states'),page=root.querySelector('#rs-page'),select=root.querySelector('#rs-state');
+const icon=name=>`<i data-lucide="${name}" aria-hidden="true"></i>`;
+const chip=(text,tone='accent',glyph='')=>`<span class="rs-chip rs-${tone}">${glyph?icon(glyph):''}${text}</span>`;
+const btn=(text,action,secondary=false)=>`<button type="button" class="${secondary?'rs-secondary':'rs-primary'} cursor-interaction" data-action="${action}">${text}</button>`;
+const meter=(done,total,end,complete=false)=>`<div class="rs-meter ${complete?'rs-complete':''}" role="meter" aria-label="Opened apps" aria-valuenow="${done}" aria-valuemin="0" aria-valuemax="${Math.max(1,total)}">${Array.from({length:Math.max(1,Math.min(total,42))},(_,i)=>`<span class="${i<done?'rs-lit':''}"></span>`).join('')}</div><div class="rs-meter-label"><span>${done} of ${total} opened</span><span>${end}</span></div>`;
+const appNames=[['Recipe Shelf','Ayesha','cooking-pot'],['Pocket Budget','Rafi','wallet'],['Habit Streak','Nadia','calendar-check'],['Daily Journal','Imran','notebook']];
+const detailCases=new Set(['optional','last','update','play','feedback','waiting','declined','closed','again','blocked']);
+let scenario='multiple',chosen=null,completed=false,pictureFixed=false;
+function crews(){
+ const first={n:58,day:6,done:8,left:6,ready:6};
+ if(scenario==='multiple')return [first,{n:60,day:3,done:2,left:12,ready:10}];
+ if(scenario==='risk')return [{...first,done:4,left:10,ready:10,risk:true}];
+ if(scenario==='done')return [{...first,done:14,left:0,ready:0}];
+ if(scenario==='install')return [{...first,done:0,left:14,ready:0}];
+ if(scenario==='missing')return [{...first,ready:4}];
+ if(scenario==='finished')return [{...first,day:15,done:14,left:0,ready:0,finished:true}];
+ if(['out','waiting','declined','closed','again','blocked'].includes(scenario))return [{...first,day:8,done:0,left:0,ready:0,out:true}];
+ if(scenario==='last')return [{...first,day:14}];
+ if(scenario==='optional')return [{...first,done:0,left:0,ready:0,optional:true}];
+ return [first];
+}
+function currentCrews(){return crews().map(c=>completed&&!c.out&&!c.finished?{...c,done:c.done+c.left,left:0,ready:0}:c)}
+function crewRow(c){const label=c.out?'Your app is out':c.finished?'Done':c.risk?'1 missed':c.left===0?'Done':`${c.left} left`;const tone=c.out?'bad':c.risk?'warn':c.left===0?'ok':'accent';return `<button type="button" class="rs-row cursor-interaction" data-crew="${c.n}" aria-label="Open Crew ${c.n}"><span class="rs-mark ${c.risk||c.out?'rs-warn':''}">${c.day}</span><span class="rs-row-copy"><strong>Crew ${c.n}</strong><small>${c.finished?'Your nights are done':`Day ${c.day} of 14${c.risk?', missed yesterday':''}`}</small></span><span class="rs-row-tail">${chip(label,tone)}${icon('chevron-right')}</span></button>`}
+function pictures(){
+ if(pictureFixed||!['missing','sending','late'].includes(scenario))return '';
+ if(scenario==='missing')return `<div class="rs-card">${chip('1 picture missing','warn')}<strong class="rs-small-title">Recipe Shelf needs a picture</strong><p>You opened it, but its picture didn’t save. Take one now, or pick one from your phone, so tonight counts.</p><div class="rs-button-pair">${btn('Open it again','picture')}${btn('Pick a picture','picture',true)}</div><p class="rs-note">A picture you pick shows to its owner as added by hand.</p></div>`;
+ return `<div class="rs-card">${chip('Sending 2 pictures',scenario==='late'?'bad':'accent')}<p style="margin-top:8px">${scenario==='late'?'Waiting more than 3 hours. It counts once it reaches your Drive, so check you’re online.':'Opened and timed. They count once the picture reaches your Drive.'}</p>${scenario==='late'?btn('Try again','retry',true):''}</div>`;
+}
+function empty(kind){const entries={empty:['wind','Nothing running','When a crew of yours fills up it starts that night, and what you owe shows up here.'],signedout:['lock-keyhole','Sign in to see tonight’s apps','Hold a seat and fourteen nights of testing start here, one night at a time.'],offline:['wifi-off','Crews didn’t load','Check your connection and try again.']};const [glyph,title,text]=entries[kind];return `<div class="rs-empty">${icon(glyph)}<h2>${title}</h2><p>${text}</p>${kind==='empty'?'':btn(kind==='offline'?'Try again':'Sign in','recover')}</div>`}
+function loading(){return `<div class="rs-card rs-skeleton-stack" aria-label="Loading tonight"><span class="rs-skeleton" style="width:170px;height:24px"></span><span class="rs-skeleton" style="width:210px;height:13px"></span><span class="rs-skeleton" style="height:10px"></span><div class="rs-stats">${[1,2,3].map(()=>'<div style="flex:1;display:grid;gap:8px"><span class="rs-skeleton" style="width:40px;height:20px"></span><span class="rs-skeleton" style="width:64px;height:10px"></span></div>').join('')}</div><span class="rs-skeleton" style="height:48px;border-radius:99px"></span></div><h3 class="rs-heading">Your runs</h3><div class="rs-rows">${[1,2,3].map(()=>'<div class="rs-skeleton-row"><span class="rs-skeleton" style="width:52px;height:52px;flex-shrink:0;border-radius:16px"></span><div style="flex:1;display:grid;gap:7px"><span class="rs-skeleton" style="width:100px"></span><span class="rs-skeleton" style="height:11px"></span></div></div>').join('')}</div>`}
+function tab(){const nav='<nav class="rs-tabs" aria-label="Crew sections"><span>Open</span><span>Lobby</span><span class="rs-selected" aria-current="page">Run</span><span>Record</span></nav>';if(['empty','signedout','offline'].includes(scenario))return nav+empty(scenario);if(scenario==='loading')return nav+loading();const runs=currentCrews(),active=runs.filter(c=>!c.out&&!c.finished),left=runs.reduce((sum,c)=>sum+c.left,0),done=runs.reduce((sum,c)=>sum+c.done,0),ready=runs.reduce((sum,c)=>sum+c.ready,0),total=left+done,nights=Math.max(...(active.length?active:runs).map(c=>Math.max(0,14-c.day+(left>0?1:0)))),finished=active.length===0&&runs.some(c=>c.finished),risk=runs.some(c=>c.risk);const label=finished?'Finished for you':`Tonight, ${active.length} ${active.length===1?'crew':'crews'}`;const title=finished?'Your nights are done':left===0?'Tonight is done':`${left} left tonight`;const line=finished?'Nothing to open. The crew closes when everyone else finishes.':left===0?`All ${total} opened, across ${active.length} ${active.length===1?'crew':'crews'}. Nothing counts against you.`:risk?'Crew 58 is one missed day from dropping your app.':`${done} of ${total} done, across ${active.length} ${active.length===1?'crew':'crews'}.`;return `${nav}<div class="rs-card">${chip(label,left===0?'ok':risk?'warn':'accent',left===0?'circle-check':risk?'triangle-alert':'clock')}<h2>${title}</h2><p class="${risk&&left?'rs-warning':''}">${line}</p>${meter(done,total,`${nights} ${nights===1?'night':'nights'} to go`,left===0)}<div class="rs-stats">${[[active.length*14,'apps a night'],[nights,'nights to go'],[active.length,active.length===1?'crew':'crews']].map(([n,label])=>`<div class="rs-stat"><strong>${n}</strong><span>${label}</span></div>`).join('')}</div>${ready?btn(`Open all ${ready}`,'open'):''}</div>${pictures()}<h3 class="rs-heading">Your runs</h3><div class="rs-rows">${runs.map(crewRow).join('')}</div>`}
+function ownerOut(){let label='Your app is out',title='Your app left this run',line='It missed two days in a row. Nobody opens it now, and there’s nothing more for you to open here.',action='Ask to get it back';if(scenario==='waiting'){label='Asked to get it back';title='The team is looking at it';line='You’ll get a notification when they answer, usually within a day. Until then you can’t put an app in a new crew.';action='';}if(scenario==='declined'||scenario==='closed'){label='Not taken back';title='Your app stays out';line=scenario==='closed'?'The run ended before the team answered.':'The team said: The missed visits were confirmed.';action='Put it in a new crew';}if(scenario==='again'){label='Out again';title='Your app left this run again';line='The team put it back once. It missed two days in a row. It can’t be asked back a second time.';action='Put it in a new crew';}if(scenario==='blocked'){line='It missed two days in a row. It can’t be asked back now.';action='Put it in a new crew';}return `<div class="rs-card">${chip(label,scenario==='waiting'?'warn':'bad',scenario==='waiting'?'hourglass':'circle-x')}<h2>${title}</h2><p>${line}</p>${action?btn(action,'appeal'):''}</div><p class="rs-note">${scenario==='waiting'?'You wrote: My phone stopped working, but it is fixed now.':scenario==='out'?'Something went wrong, like a broken phone? Tell the team what happened.':'Seats are kept once a run starts, so this one’s tix aren’t refunded.'}</p>`}
+function feedback(){return `<div class="rs-card">${chip('2 feedback late','warn')}<strong class="rs-small-title">Private feedback on Play</strong><p>Once for each app, by your night 7 with it. After that, opening an app counts only once its feedback is sent.</p>${appNames.slice(0,2).map(([name])=>`<strong class="rs-small-title">${name}</strong><p>Late: its opens don’t count until it’s sent</p>`).join('')}${btn('Send feedback','feedback')}${btn('Pick proof','feedback',true)}</div>`}
+function appRow(index,done=false,optional=false){const [name,owner,glyph]=appNames[index%appNames.length];let label=done?'Opened':scenario==='install'?'Install':scenario==='update'&&index===0?'Update':scenario==='play'&&index===0?'Install':'Open';return `<div class="rs-app-row"><span class="rs-app-icon">${icon(glyph)}</span><span class="rs-row-copy"><strong>${name}</strong><small>${scenario==='play'&&index===0?'Install it from Play':scenario==='update'&&index===0?'Update needed':owner}</small></span>${done?chip('Opened','ok'):`<button type="button" class="rs-pill cursor-interaction" data-action="${label==='Open'?'one':'install'}">${label}</button>`}</div>`}
+function detail(){const c=currentCrews().find(c=>c.n===chosen)||currentCrews()[0],bar=`<div class="rs-pagebar"><button type="button" class="rs-back cursor-interaction" data-action="back" aria-label="Back to Run">${icon('arrow-left')}</button>Crew ${c.n}</div>`;if(c.out)return bar+ownerOut();if(c.finished)return `${bar}<div class="rs-card">${chip('14 of 14 nights','ok','circle-check')}<h2>Your nights are done</h2><p>Nothing to open. The crew closes when everyone else finishes.</p></div>${yourApp()}`;const optional=scenario==='optional',title=optional?'Tonight is optional':c.left===0?'Tonight is done':`${c.left} left tonight`;const line=optional?'You don’t owe anything tonight, so you can’t miss it. Day 7 begins at midnight, your time.':c.left===0?`All 14 opened. ${c.day===14?'That was the last night.':`Day ${c.day+1} begins at midnight, your time.`}`:c.risk?'Miss tonight too and your app leaves this crew.':scenario==='install'?'14 apps aren’t on your phone yet, so install them first.':scenario==='update'?'Recipe Shelf needs its update before it counts.':scenario==='play'?'Recipe Shelf wasn’t installed from Google Play, so install it from Play first.':c.day===14?'No missed days. Tonight is the last night.':`No missed days. Day ${c.day+1} begins at midnight, your time.`;const daysDone=Math.max(0,c.day-(c.left?1:0));return `${bar}<div class="rs-card">${chip(c.risk?`Day ${c.day}, 1 missed`:`Day ${c.day} of 14`,c.risk?'warn':c.left===0?'ok':'accent',c.risk?'triangle-alert':c.left===0?'circle-check':'clock')}<h2>${title}</h2><p class="${c.risk?'rs-warning':''}">${line}</p><div class="rs-meter">${Array.from({length:14},(_,i)=>`<span class="${i<daysDone?'rs-lit':''}"></span>`).join('')}</div><div class="rs-meter-label"><span>${daysDone} days done</span><span>${14-daysDone} to go</span></div>${c.ready?btn(`Open all ${c.ready}`,'open'):''}</div>${pictures()}${scenario==='feedback'?feedback():''}${yourApp()}<h3 class="rs-heading">${optional?'Optional tonight':c.left?'Tonight':'Done'}</h3><div class="rs-rows">${appNames.map((_,i)=>appRow(i,c.left===0&&!optional,optional)).join('')}</div>${c.left?'<h3 class="rs-heading">Done</h3><div class="rs-rows">'+appRow(2,true)+'</div>':''}`}
+function yourApp(){return `<h3 class="rs-heading">Your app</h3><div class="rs-card"><div class="rs-app-row" style="padding:0;border:0;min-height:52px"><span class="rs-app-icon">${icon('notebook')}</span><span class="rs-row-copy"><strong>Quick Notes Lite</strong><small>Opened by 9 of 14 testers so far tonight.</small></span>${chip('9 of 14')}</div>${meter(9,14,'12 keep it counting')}${btn('See who tested it','members',true)}</div>`}
+function render(){select.value=scenario;page.innerHTML=chosen!==null?detail():tab();globalThis.lucide?.createIcons({attrs:{width:16,height:16}});}
+select.addEventListener('change',()=>{scenario=select.value;completed=false;pictureFixed=false;chosen=detailCases.has(scenario)?58:null;render();});
+root.querySelector('.rs-theme').addEventListener('click',()=>root.style.colorScheme=root.style.colorScheme==='dark'?'light':'dark');
+page.addEventListener('click',event=>{const target=event.target.closest('button');if(!target)return;if(target.dataset.crew){chosen=Number(target.dataset.crew);render();return;}switch(target.dataset.action){case 'back':chosen=null;render();break;case 'open':completed=true;render();break;case 'recover':scenario='single';chosen=null;render();break;case 'picture':scenario='sending';render();break;case 'retry':pictureFixed=true;render();break;case 'appeal':if(scenario==='out'){scenario='waiting';render();}else{target.textContent='Take a seat from the add menu';}break;case 'one':target.textContent='Opened';target.disabled=true;break;case 'members':target.textContent='9 of 14 testers opened your app tonight';break;case 'feedback':target.textContent='Google Play · private feedback';break;case 'install':target.textContent='Google Play';break;}});
+render();
+})();
+</script>

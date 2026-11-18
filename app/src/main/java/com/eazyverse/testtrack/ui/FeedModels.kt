@@ -42,7 +42,7 @@ enum class FeedTab(
  */
 object FeedRules {
     /** rules.LIVE_USE_SECONDS and rules.CLOSED_USE_SECONDS on the server: use before Play opens. */
-    const val LIVE_USE_SECONDS = 300
+    const val LIVE_USE_SECONDS = 180
     const val CLOSED_USE_SECONDS = 120
 
     /** rules.LIVE_RETURN_HOURS: a live app is used again this long after its first use. */

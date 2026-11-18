@@ -1,17 +1,24 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -27,19 +34,12 @@ import com.eazyverse.testtrack.ui.theme.Tt
  */
 @Composable
 internal fun DisputeNote() {
-    Text(
-        "If the developer refuses your review and the members agree, you are not paid and up to " +
-            "${FeedRules.STAKE} tix of yours pay the ${FeedRules.JURORS} members who decided.",
-        Modifier.widthIn(max = 300.dp),
-        style = MaterialTheme.typography.bodySmall,
-        color = Tt.colors.text3,
-        textAlign = TextAlign.Center,
+    ReviewBullet(
+        lead = "Lost dispute:",
+        body = "No reward; up to ${FeedRules.STAKE} tix deducted.",
+        highlights = listOf("No reward", "${FeedRules.STAKE} tix"),
     )
 }
-
-/** The way out, quiet and at the end: somebody who cannot finish gives the slot back. 48 to touch. */
-@Composable
-internal fun GiveUpLink(onGiveUp: () -> Unit) = QuietAction("Can't finish?", "Give it up", onGiveUp)
 
 /**
  * A way out, said as a question and a small outlined button beside it. It was underlined small
@@ -68,23 +68,37 @@ internal fun ReviewAppRow(
     offline: Boolean = false,
     icon: String = "",
 ) {
-    // The same header as the To check pages: one app looks the same wherever it is shown.
-    Box(Modifier.padding(top = 4.dp)) {
-        AppHeader(
-            name,
-            packageName,
-            if (live) CheckKind.PLAY else CheckKind.CLOSED,
-            detail = if (owner.isNotBlank()) "by $owner" else "",
-            icon = icon,
-        ) {
-            // Showing the last saved answer: still usable, just not this minute's.
+    val t = Tt.colors
+    val mark = AppTileIcon * LocalDensity.current.fontScale.coerceAtLeast(1f)
+    Column(Modifier.padding(top = 4.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(mark)) {
+                AppMark(packageName, name, icon, size = mark)
+                SourceMark(live, Modifier.align(Alignment.BottomEnd).offset(5.dp, 5.dp))
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f).height(mark), verticalArrangement = Arrangement.Center) {
+                Text(name, style = AppTileName, color = t.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(
+                    packageName,
+                    style = ReviewPackageStyle,
+                    color = t.text3,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             if (offline) {
                 Spacer(Modifier.width(8.dp))
-                Pill("Offline", Tt.colors.text2, Tt.colors.glass2)
+                Pill("Offline", t.text2, t.glass2)
             }
+        }
+        if (owner.isNotBlank()) {
+            Text("by $owner", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodySmall, color = t.text3)
         }
     }
 }
+
+private val ReviewPackageStyle = tileStyle(12.5f, 14f, FontWeight.Medium)
 
 internal fun stepShort(
     step: ReviewStep,
@@ -92,113 +106,20 @@ internal fun stepShort(
 ): String =
     when (step) {
         ReviewStep.INSTALL -> "Install"
-        ReviewStep.USE -> "Use"
+        ReviewStep.USE -> "Use app"
         ReviewStep.LEAVE -> if (job.live) "Review" else "Feedback"
-        ReviewStep.PROVE -> "Prove"
+        ReviewStep.PROVE -> "Send proof"
         ReviewStep.WAIT -> ""
     }
 
-/** It opens later today: used again that long after its first use counts, whatever the date. */
-private fun opensToday(job: ReviewJob): Boolean {
-    val opens = job.opensAt() ?: return false
-    val zone = java.time.ZoneId.systemDefault()
-    return opens.atZone(zone).toLocalDate() == java.time.LocalDate.now(zone)
-}
-
-internal fun stepTitle(job: ReviewJob): String =
-    when (job.step) {
-        ReviewStep.INSTALL -> if (job.onPhone) "Already on your phone" else "Install ${job.post.appName}"
-        ReviewStep.USE ->
-            when {
-                !job.waitingForDay -> "Try the app"
-                job.usedOnTwoDays -> "Almost there"
-                job.secondDayNow() -> "Use it again today"
-                opensToday(job) -> "Come back later today"
-                else -> "Come back tomorrow"
-            }
-        ReviewStep.LEAVE -> if (job.live) "Review it on Google Play" else "Send feedback on Google Play"
-        ReviewStep.PROVE ->
-            when {
-                job.rechecking -> "Show your review again"
-                job.noBox -> "Send it here instead"
-                else -> "Send your proof"
-            }
-        ReviewStep.WAIT -> "Sent"
-    }
-
-internal fun stepLine(job: ReviewJob): String =
-    when (job.step) {
-        ReviewStep.INSTALL ->
-            if (job.onPhone) {
-                "Tap Start review and it counts as installed. It moves to My reviews and your time to finish starts."
-            } else {
-                "Get it from Google Play so it counts."
-            }
-        ReviewStep.USE -> useLine(job)
-        ReviewStep.LEAVE ->
-            if (job.live) {
-                "Rate it and write a few honest words on its Play page. Then tap the camera to take a picture of your review."
-            } else {
-                "On its Play page, send the developer private feedback. Then tap the camera to take a picture of it."
-            }
-        ReviewStep.PROVE ->
-            when {
-                job.rechecking -> recheckLine(job)
-                job.noBox ->
-                    "A screenshot of the app's Play page with no review option, and your feedback for the developer. " +
-                        "This pays half the reward."
-                else -> "The screenshot of what you left on Google Play. Add a note for the developer if you like."
-            }
-        ReviewStep.WAIT -> ""
-    }
-
-/** The owner could not find the review on Play: a new screenshot of it, and by when. */
-private fun recheckLine(job: ReviewJob): String {
-    val due = job.checkBy
-    val by = if (due != null) " Send it ${opensWhen(due)} at the latest." else ""
-    return "The developer can't find it on Google Play. Open its Play page and take a new screenshot of your review.$by " +
-        "If Google is hiding it, you can still see it there."
-}
-
-/** Where the reviewer is with using the app: time still to go, or a live app's second day. */
-private fun useLine(job: ReviewJob): String {
-    if (job.waitingForDay) {
-        val opens = job.opensAt()
-        val now = java.time.Instant.now()
-        if (opens == null) {
-            return if (job.usedOnTwoDays) {
-                "Used on two days. Come back to TestTrack and it opens."
-            } else {
-                "Use the app again on another day. Reviews from a second day of use are the ones Google keeps."
-            }
-        }
-        val past = !opens.isAfter(now)
-        return when {
-            job.usedOnTwoDays && past -> "Used on two days. Come back to TestTrack and it opens."
-            job.usedOnTwoDays -> "Used on two days. Your review opens ${opensWhen(opens, now)}. Come back to TestTrack then."
-            job.secondDayNow() && past -> "Open the app again today, for its second day, and your review opens."
-            job.secondDayNow() -> "Open the app again today, for its second day. Your review opens ${opensWhen(opens, now)}."
-            opensToday(job) -> "Open the app again ${opensWhen(opens, now)}, in ${untilWords(opens, now)}. Your review opens then."
-            else -> "Open the app again tomorrow. Your review opens ${opensWhen(opens, now)}, in ${untilWords(opens, now)}."
-        }
-    }
-    val left = job.secondsLeft
-    if (left == 0) {
-        return if (job.live) {
-            "Long enough. Leave your review on Google Play next."
-        } else {
-            "Long enough. Send your feedback on Google Play next."
-        }
-    }
+internal fun usageLeftLabel(left: Int): String {
     val minutes = left / 60
     val seconds = left % 60
-    val time =
-        when {
-            minutes == 0 -> "$seconds seconds"
-            seconds == 0 -> if (minutes == 1) "1 minute" else "$minutes minutes"
-            else -> "$minutes min $seconds s"
-        }
-    return "$time more in the app"
+    return when {
+        minutes == 0 -> if (seconds == 1) "1 second" else "$seconds seconds"
+        seconds == 0 -> if (minutes == 1) "1 minute" else "$minutes minutes"
+        else -> "$minutes min $seconds s"
+    }
 }
 
 internal fun stepAction(
@@ -206,7 +127,12 @@ internal fun stepAction(
     job: ReviewJob,
 ): String =
     when (step) {
-        ReviewStep.INSTALL -> if (job.onPhone) "Start review" else "Get it on Play"
+        ReviewStep.INSTALL ->
+            when {
+                job.onPhone -> "Start review"
+                job.requiresPlayInstall -> "Open Google Play"
+                else -> "Get it on Play"
+            }
         ReviewStep.USE -> "Open the app"
         ReviewStep.LEAVE -> "Open Google Play"
         ReviewStep.PROVE ->

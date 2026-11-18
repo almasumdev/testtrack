@@ -1,0 +1,145 @@
+package com.eazyverse.testtrack.ui
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.CalendarDays
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.Download
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.MessageSquare
+import com.composables.icons.lucide.Smartphone
+import com.composables.icons.lucide.Users
+import com.eazyverse.testtrack.ui.theme.Tt
+
+/** The same open header as Feedback: the app's identity has one place, above the task. */
+@Composable
+internal fun CrewDetailApp(crew: Crew) {
+    val mine = crew.mine ?: return
+    Row(Modifier.fillMaxWidth().padding(bottom = 24.dp), verticalAlignment = Alignment.CenterVertically) {
+        AppMark(mine.packageName, mine.appName, mine.icon, size = 52.dp, ownIcon = true)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                mine.appName,
+                style = tileStyle(16f, 20f, FontWeight.SemiBold),
+                color = Tt.colors.text,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                mine.packageName,
+                style = tileStyle(12f, 16f, FontWeight.Normal),
+                color = Tt.colors.text3,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/** Sections share the guide's icon, bullet alignment and spacing; counts are ordinary text. */
+@Composable
+internal fun CrewPageHeading(
+    text: String,
+    trailing: String? = null,
+    top: Dp = 24.dp,
+) {
+    val icon =
+        when (text) {
+            "Install these" -> Lucide.Download
+            "Tonight", "Optional tonight" -> Lucide.Smartphone
+            "Done", "Left the run" -> Lucide.Check
+            "Does it install for you?" -> Lucide.MessageSquare
+            else -> Lucide.Users
+        }
+    Row(
+        Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = top, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconSquare(icon, Tone.ACCENT, size = 28)
+        Spacer(Modifier.width(10.dp))
+        Text(text, Modifier.weight(1f), style = tileStyle(16f, 20f, FontWeight.SemiBold), color = Tt.colors.text)
+        if (trailing != null) Text(trailing, style = tileStyle(13f, 18f, FontWeight.Medium), color = Tt.colors.text3)
+    }
+}
+
+/** A task on the page ground. Only actionable app rows use a bordered tile. */
+@Composable
+internal fun CrewPageHero(
+    chip: String,
+    tone: Tone,
+    icon: ImageVector?,
+    headline: String,
+    line: String,
+    lineTone: Tone? = null,
+    meter: (@Composable () -> Unit)? = null,
+    extra: (@Composable () -> Unit)? = null,
+    action: String? = null,
+    onAction: () -> Unit = {},
+) {
+    Column(Modifier.fillMaxWidth()) {
+        Text(chip, style = tileStyle(12.5f, 17f, FontWeight.Medium), color = tone.ink())
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconSquare(icon ?: Lucide.CalendarDays, tone, size = 28)
+            Spacer(Modifier.width(10.dp))
+            Text(headline, Modifier.weight(1f), style = tileStyle(21f, 26f, FontWeight.SemiBold), color = Tt.colors.text)
+        }
+        if (line.isNotBlank()) {
+            Spacer(Modifier.height(8.dp))
+            CrewGuideBullet(line, tone = lineTone)
+        }
+        if (meter != null) {
+            Spacer(Modifier.height(14.dp))
+            meter()
+        }
+        extra?.invoke()
+        if (action != null) {
+            Spacer(Modifier.height(14.dp))
+            Primary(action, Modifier.fillMaxWidth(), onClick = onAction)
+        }
+    }
+}
+
+/** Plain status text for app rows; filled pills are reserved for actions. */
+@Composable
+internal fun CrewPageStatus(
+    text: String,
+    tone: Tone,
+) {
+    Text(text, style = tileStyle(12f, 16f, FontWeight.Medium), color = tone.ink())
+}
+
+/** The app already has its header. Here only its state, tester progress and controls remain. */
+@Composable
+internal fun CrewAppStatus(
+    seat: CrewSeat,
+    chip: String,
+    tone: Tone,
+    status: String,
+    extra: (@Composable () -> Unit)? = null,
+    action: (@Composable () -> Unit)? = null,
+) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        CrewPageStatus(chip, tone)
+        CrewGuideBullet(status)
+        if (seat.notes.isNotBlank()) SignInDetails(seat.notes)
+        extra?.invoke()
+        action?.invoke()
+    }
+}

@@ -1,0 +1,101 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<div id="tt-no-review-sheet" class="viz-dotted-background">
+  <div class="ns-stage">
+    <article class="ns-phone" aria-label="Review help bottom sheet">
+      <header class="ns-pagebar"><i data-lucide="arrow-left" aria-hidden="true"></i><b>Review</b><span class="ns-reward">+<span data-full>35</span> tix</span></header>
+      <div class="ns-app"><span class="ns-app-icon"><i data-lucide="notebook" aria-hidden="true"></i></span><div><b>Quick Notes Lite</b><small>com.demo.quicknotes</small></div></div>
+      <div class="ns-page-copy"><h3>No review option on Play?</h3><p>Feedback sent here pays <b><span data-half>17</span> tix (half reward)</b>, if accepted.</p><button type="button" class="ns-soft cursor-interaction" data-open>Check fixes</button><p class="ns-result" role="status" aria-live="polite" hidden></p></div>
+      <div class="ns-dim" aria-hidden="true"></div>
+      <section class="ns-sheet" role="dialog" aria-modal="true" aria-labelledby="ns-title">
+        <div class="ns-handle" aria-hidden="true"></div>
+        <header class="ns-header"><span class="ns-tile"><i data-lucide="circle-help" class="ns-fix-icon" aria-hidden="true"></i><i data-lucide="message-square" class="ns-fallback-icon" aria-hidden="true" hidden></i></span><h2 id="ns-title">No review option on Play?</h2></header>
+        <div class="ns-face" data-face="fixes">
+          <p class="ns-why">Try these fixes before sending feedback here.</p>
+          <ol class="ns-steps">
+            <li><h3>Google account</h3><p>Use the account you installed this app with.</p></li>
+            <li><h3>Tester status</h3><p>If Play lists you as a tester, leave the test and wait a few minutes.</p></li>
+            <li><h3>Existing review</h3><p>“Edit your review” means you reviewed it before. It does not count as a new review.</p></li>
+            <li><h3>Play Store update</h3><p>Update the Play Store, then reopen the app's page.</p></li>
+          </ol>
+          <button class="ns-primary cursor-interaction" type="button" data-next>Still no review option</button>
+          <button class="ns-text-action cursor-interaction" type="button" data-close>Keep trying on Play</button>
+        </div>
+        <div class="ns-face" data-face="fallback" hidden>
+          <p class="ns-why">Your feedback goes to the developer here. No review is posted on Play.</p>
+          <p class="ns-bullet ns-payout">Pays <b><span data-half>17</span> tix (half reward)</b>, if accepted.</p>
+          <ol class="ns-steps">
+            <li><h3>Screenshot</h3><p>Show the Play page with no review option.</p></li>
+            <li><h3>Written feedback</h3><p>Write at least <span data-needs>100</span> characters for the developer.</p></li>
+          </ol>
+          <button class="ns-primary cursor-interaction" type="button" data-continue>Continue for <span data-half>17</span> tix</button>
+          <button class="ns-text-action cursor-interaction" type="button" data-back>Back to fixes</button>
+        </div>
+      </section>
+    </article>
+  </div>
+</div>
+<style>
+#tt-no-review-sheet{--ns-bg:light-dark(#f7fcff,#0f1011);--ns-sheet:light-dark(#fff,#1c1e20);--ns-line:light-dark(#dce8f0,#2d3034);--ns-text:light-dark(#142f43,#eceef0);--ns-body:light-dark(#203a4e,#bcc1c6);--ns-muted:light-dark(#59758a,#9da3a9);--ns-accent:light-dark(#3a5b73,#93b3ca);--ns-on:light-dark(#fff,#0f1011);--ns-ink:light-dark(#22394b,#93b3ca);--ns-tile:light-dark(#dce6ee,#2a2d31);--ns-scrim:light-dark(#00000050,#00000080);font-family:Barlow,system-ui,sans-serif}
+#tt-no-review-sheet *{box-sizing:border-box}
+#tt-no-review-sheet [hidden]{display:none!important}
+#tt-no-review-sheet .ns-stage{display:flex;justify-content:center;padding:20px 0}
+#tt-no-review-sheet .ns-phone{position:relative;width:380px;max-width:100%;min-height:760px;display:flex;flex-direction:column;background:var(--ns-bg);color:var(--ns-text);border:1px solid var(--ns-line);border-radius:22px;overflow:hidden;font-size:14px;line-height:20px}
+#tt-no-review-sheet svg{display:block;width:20px;height:20px;flex-shrink:0}
+#tt-no-review-sheet .ns-pagebar{display:flex;align-items:center;gap:12px;padding:20px 16px}
+#tt-no-review-sheet .ns-pagebar>b{font-size:20px;font-weight:600}
+#tt-no-review-sheet .ns-reward{margin-left:auto;padding:4px 8px;background:var(--ns-tile);border-radius:8px;font-size:12px;color:var(--ns-ink);font-weight:600}
+#tt-no-review-sheet .ns-app{display:flex;align-items:center;gap:12px;padding:8px 16px 20px}
+#tt-no-review-sheet .ns-app-icon{width:52px;height:52px;border-radius:15px;background:var(--ns-tile);color:var(--ns-ink);display:grid;place-items:center;flex-shrink:0}
+#tt-no-review-sheet .ns-app>div{min-width:0}
+#tt-no-review-sheet .ns-app b{font-size:16px;display:block;font-weight:600}
+#tt-no-review-sheet .ns-app small{display:block;font-size:12px;color:var(--ns-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#tt-no-review-sheet .ns-page-copy{padding:8px 16px 24px}
+#tt-no-review-sheet .ns-page-copy h3{margin:0 0 8px;font-size:16px;font-weight:600}
+#tt-no-review-sheet .ns-page-copy p{margin:0 0 12px;color:var(--ns-body)}
+#tt-no-review-sheet .ns-dim{position:absolute;inset:0;background:var(--ns-scrim);z-index:1}
+#tt-no-review-sheet .ns-sheet{position:relative;z-index:2;background:var(--ns-sheet);border-radius:22px 22px 0 0;border-top:1px solid var(--ns-line);padding:0 16px 20px;margin-top:auto}
+#tt-no-review-sheet .ns-handle{width:38px;height:4px;margin:10px auto 16px;border-radius:2px;background:var(--ns-muted);opacity:.5}
+#tt-no-review-sheet .ns-header{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+#tt-no-review-sheet .ns-tile{width:36px;height:36px;border-radius:11px;background:var(--ns-tile);color:var(--ns-ink);display:grid;place-items:center;flex-shrink:0}
+#tt-no-review-sheet .ns-header h2{font-size:17px;line-height:22px;font-weight:700;margin:0}
+#tt-no-review-sheet .ns-why{font-size:14px;line-height:20px;margin:0;color:var(--ns-body)}
+#tt-no-review-sheet .ns-steps{counter-reset:step;list-style:none;padding:0;margin:12px 0 20px}
+#tt-no-review-sheet .ns-steps li{counter-increment:step;position:relative;padding-left:34px;padding-bottom:8px}
+#tt-no-review-sheet .ns-steps li:before{content:counter(step);position:absolute;left:0;top:7px;width:22px;height:22px;border:1.5px solid var(--ns-line);border-radius:50%;display:grid;place-items:center;color:var(--ns-muted);font-size:12px;font-weight:600;line-height:16px}
+#tt-no-review-sheet .ns-steps h3{margin:0;min-height:36px;display:flex;align-items:center;font-size:14px;line-height:19px;font-weight:500;color:var(--ns-muted)}
+#tt-no-review-sheet .ns-steps p{margin:0;color:var(--ns-body);font-size:12px;line-height:16px}
+#tt-no-review-sheet .ns-bullet{position:relative;padding-left:24px;font-size:13px;line-height:18px;color:var(--ns-body)}
+#tt-no-review-sheet .ns-bullet:before{content:'';position:absolute;left:12px;top:6.5px;width:4px;height:4px;border-radius:50%;background:var(--ns-muted)}
+#tt-no-review-sheet .ns-payout{margin:16px 0 0}
+#tt-no-review-sheet .ns-payout b{font-weight:600;color:var(--ns-text)}
+#tt-no-review-sheet button{font-family:inherit;font-size:15px;line-height:20px;font-weight:600;touch-action:manipulation}
+#tt-no-review-sheet .ns-primary{width:100%;min-height:52px;border:0;border-radius:99px;padding:8px 24px;background:var(--ns-accent);color:var(--ns-on)}
+#tt-no-review-sheet .ns-text-action{display:block;width:100%;margin-top:6px;min-height:44px;border:0;background:transparent;padding:8px;color:var(--ns-ink)}
+#tt-no-review-sheet .ns-soft{min-height:44px;padding:8px 14px;border:0;border-radius:10px;background:var(--ns-tile);color:var(--ns-ink)}
+#tt-no-review-sheet .ns-result{padding-top:12px;font-weight:600}
+@media(prefers-reduced-motion:reduce){#tt-no-review-sheet *{animation:none!important;transition:none!important}}
+</style>
+<script>
+(() => {
+ const root=document.getElementById('tt-no-review-sheet');
+ const sheet=root.querySelector('.ns-sheet'),dim=root.querySelector('.ns-dim');
+ const state={reward:35,needs:'100'};
+ let fallback=false;
+ const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+ function restore(snapshot){const saved=snapshot?.privateContent;if(!saved)return;if(Number.isFinite(saved.reward))state.reward=saved.reward;if(['100','250'].includes(String(saved.needs)))state.needs=String(saved.needs);}
+ restore(window.openai?.widgetState);
+ function draw(){root.querySelectorAll('[data-full]').forEach(el=>el.textContent=state.reward);root.querySelectorAll('[data-half]').forEach(el=>el.textContent=Math.floor(state.reward/2));root.querySelectorAll('[data-needs]').forEach(el=>el.textContent=state.needs);}
+ function showFace(next,animate=true){fallback=next;root.querySelector('#ns-title').textContent=next?'Send feedback here':'No review option on Play?';root.querySelector('.ns-fix-icon').hidden=next;root.querySelector('.ns-fallback-icon').hidden=!next;root.querySelectorAll('[data-face]').forEach(el=>el.hidden=el.dataset.face!==(next?'fallback':'fixes'));if(animate&&!reduced()){root.querySelector('[data-face]:not([hidden])').animate([{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'translateY(0)'}],{duration:300,easing:'ease-out'});}draw();}
+ function close(){if(!reduced()){sheet.animate([{transform:'translateY(0)'},{transform:'translateY(100%)'}],{duration:240,easing:'ease-in'}).finished.then(()=>{sheet.hidden=true;dim.hidden=true;root.querySelector('[data-open]').focus();});}else{sheet.hidden=true;dim.hidden=true;root.querySelector('[data-open]').focus();}}
+ root.querySelector('[data-next]').addEventListener('click',()=>{showFace(true);root.querySelector('[data-continue]').focus();});
+ root.querySelector('[data-back]').addEventListener('click',()=>{showFace(false);root.querySelector('[data-next]').focus();});
+ root.querySelector('[data-close]').addEventListener('click',close);
+ root.querySelector('[data-open]').addEventListener('click',()=>{showFace(false,false);sheet.hidden=false;dim.hidden=false;if(!reduced())sheet.animate([{transform:'translateY(100%)'},{transform:'translateY(0)'}],{duration:300,easing:'ease-out'});root.querySelector('[data-next]').focus();});
+ root.querySelector('[data-continue]').addEventListener('click',()=>{const result=root.querySelector('.ns-result');result.textContent=`Next: screenshot and ${state.needs}-character feedback. ${Math.floor(state.reward/2)} tix if accepted.`;result.hidden=false;close();});
+ root.addEventListener('keydown',event=>{if(event.key==='Escape'&&!sheet.hidden)close();});
+ dim.addEventListener('click',close);
+ showFace(false,false);
+ window.addEventListener('openai:set_globals',event=>{restore(event.detail?.globals?.widgetState);draw();});
+ if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:()=>{draw();window.openai?.setWidgetState?.({modelContent:{reward:state.reward,minimumCharacters:Number(state.needs)},privateContent:state})?.catch(()=>{});}});tweak.addSlider(state,'reward',{label:'Full reward',min:20,max:100,step:1,unit:'tix'});tweak.addSelect(state,'needs',{label:'Required characters',options:['100','250']});}
+})();
+</script>

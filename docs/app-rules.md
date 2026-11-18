@@ -87,6 +87,19 @@ than pretended to be enforced.
 - A number that both halves need lives in `core/rules.py` on the server and is mirrored once in
   the app, with a test that they agree.
 
+## Icon and text sizing
+
+Size a leading status icon to the primary text line and align it with that line. For example,
+the small feedback icon sits beside the compact "Private feedback · By night 7" line.
+Do not stretch a status icon to cover the title and subtitle together.
+
+Keep app artwork at its approved fixed size. Fit and align its title/ID block within the available
+space, allow up to two title lines and one ID line, and keep the title and ID tightly grouped.
+Do not enlarge app artwork to compensate for wrapping or add a blank line between the title and ID.
+Standalone action icons and small status badges keep their approved component sizes.
+
+This is a review convention for app UI and previews, not a mechanically enforced check.
+
 ## Colours: one source, enforced on every build
 
 Edit `app/src/main/java/com/eazyverse/testtrack/ui/theme/Tokens.kt` only for app UI colours.

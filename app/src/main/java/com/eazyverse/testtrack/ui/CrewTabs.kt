@@ -22,10 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
-import com.composables.icons.lucide.CircleCheck
-import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.ui.theme.Barlow
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -50,9 +47,8 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * unit a run actually has: it has its own day, its own fortnight and its own way of going wrong,
  * and the grid of apps belongs inside it rather than poured out here.
  *
- * What stays at the top is the only thing that spans crews, which is the size of the evening. The
- * three figures under it are what the count cannot say on its own: what tonight will cost every
- * night, and how many nights of it are left.
+ * The top card keeps tonight's total, counted opens and one way to open the ready apps.
+ * Updates hold warnings, installs and pictures; the guide explains the round.
  */
 @Composable
 fun CrewRunTab(
@@ -62,8 +58,6 @@ fun CrewRunTab(
     onOpenCrew: (String) -> Unit,
 ) {
     val runs = vm.crews.filter { it.phase == CrewPhase.RUN }
-    // Still owing nights: an app out of the run, or this account's own nights over, owes none.
-    val going = runs.filter { !it.out && !it.nightsDone }
 
     // Before the empty case, not after it. Whether anything is running is a question about an
     // account, and answering it with "Nothing running" to somebody the app cannot identify is a
@@ -91,83 +85,17 @@ fun CrewRunTab(
         return
     }
 
-    val left = vm.tonight.size
-    val ready = openAllOf(vm.tonight, { actions.copyOf(it) }, actions.sendingPicture).size
-    val done = vm.doneTonight
-    val total = left + done
-    val risky = runs.filter { it.atRisk }.map { it.name }
-    // Tonight is one of them until it is done, as the crew's own page counts it.
-    val nightsLeft = (going.ifEmpty { runs }).maxOf { (it.runDays - it.day + if (left > 0) 1 else 0).coerceAtLeast(0) }
-    val crews = "${going.size} ${if (going.size == 1) "crew" else "crews"}"
-    // Every run's own nights are over, members ahead in time zone finishing first.
-    val finishedForMe = going.isEmpty() && runs.any { it.nightsDone }
-
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
     ) {
         item("hero") {
             Box(Modifier.padding(horizontal = Gutter)) {
-                CrewHero(
-                    chip = if (finishedForMe) "Finished for you" else "Tonight, $crews",
-                    tone =
-                        if (left == 0) {
-                            Tone.OK
-                        } else if (risky.isNotEmpty()) {
-                            Tone.WARN
-                        } else {
-                            Tone.ACCENT
-                        },
-                    icon =
-                        if (left == 0) {
-                            Lucide.CircleCheck
-                        } else if (risky.isNotEmpty()) {
-                            Lucide.TriangleAlert
-                        } else {
-                            Lucide.Clock
-                        },
-                    headline =
-                        when {
-                            finishedForMe -> "Your nights are done"
-                            left == 0 -> "Tonight is done"
-                            else -> "$left left tonight"
-                        },
-                    line =
-                        when {
-                            finishedForMe -> "Nothing to open. The crew closes when everyone else finishes."
-                            // The payoff. Nothing else in a fortnight of opening apps says a night
-                            // went right, and a zero does not feel like one.
-                            left == 0 -> "All $total opened, across $crews. Nothing counts against you."
-                            risky.isNotEmpty() -> {
-                                val verb = if (risky.size == 1) "is" else "are"
-                                "${risky.joinToString()} $verb one missed day from dropping your app."
-                            }
-                            else -> "$done of $total done, across $crews."
-                        },
-                    lineTone = if (left > 0 && risky.isNotEmpty()) Tone.WARN else null,
-                    meter = {
-                        val lit = if (left == 0) Status.posted else Tt.colors.accent
-                        SegmentMeter(total.coerceIn(1, 42)) { i -> if (i < done) lit else Tt.colors.track }
-                        MeterLabels("$done of $total opened", "$nightsLeft ${if (nightsLeft == 1) "night" else "nights"} to go")
-                    },
-                    extra = {
-                        StatTiles(
-                            "${CrewRules.nightly(going.size)}" to "apps a night",
-                            "$nightsLeft" to "nights to go",
-                            "${going.size}" to if (going.size == 1) "crew" else "crews",
-                        )
-                    },
-                    // The whole night, across every crew, in one press: the apps on this phone
-                    // that will count. The rest keep their own button on their crew's page.
-                    action = if (ready > 0) "Open all $ready" else null,
-                    onAction = { actions.onOpenAll(null) },
-                )
+                CrewRunSummary(runs, vm.tonight, vm.doneTonight, actions)
             }
         }
-        item("pictures") {
-            Box(Modifier.padding(horizontal = Gutter)) {
-                PicturesDueCard(going.flatMap { it.apps }, actions)
-            }
+        item("updates") {
+            CrewRunUpdates(runs, vm.tonight, actions, onOpenCrew)
         }
 
         item { CrewHeading("Your runs") }
@@ -220,44 +148,12 @@ fun CrewLobbyTab(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = HeadedListTop, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
     ) {
-        item { CrewHeading("Your crews", top = 0.dp) }
         itemsIndexed(lobbies, key = { _, crew -> crew.id }) { index, crew ->
             // Fades in, fades out and glides to its new place when the list changes.
-            Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) {
-                val mine = crew.mine
-                val (chip, tone) =
-                    when {
-                        crew.out -> "Sent back" to Tone.BAD
-                        mine?.state == SeatState.CHECKING -> "Checking" to Tone.WARN
-                        mine != null && mine.reports > 0 -> "${mine.reports} of ${CrewRules.REPORTS_TO_RETURN} reports" to Tone.WARN
-                        else -> "In" to Tone.OK
-                    }
-                CrewSummaryRow(
-                    mark = if (crew.filling) "${crew.filled}" else "${CrewRules.SEATS}",
-                    markTone =
-                        if (crew.out) {
-                            Tone.BAD
-                        } else if (crew.filling) {
-                            Tone.ACCENT
-                        } else {
-                            Tone.OK
-                        },
-                    title = crew.name,
-                    line =
-                        when {
-                            crew.out -> "Sent your app back"
-                            crew.filling -> {
-                                val more = CrewRules.SEATS - crew.filled
-                                "${crew.filled} of ${CrewRules.SEATS} in, $more more to start"
-                            }
-                            else -> "Full, starts in ${untilStart(crew.startsIn)}"
-                        },
-                    chip = chip,
-                    chipTone = tone,
-                    onOpen = { onOpenCrew(crew.id) },
-                )
+            Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 10.dp else 0.dp)) {
+                CrewLobbyRow(crew) { onOpenCrew(crew.id) }
             }
         }
         if (vm.sentBack.isNotEmpty() && vm.blocked == null) {
@@ -310,9 +206,8 @@ fun CrewRecordTab(
 
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = HeadedListTop, bottom = Gutter + dockRoom()),
+        contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
     ) {
-        item { CrewHeading("Finished", top = 0.dp) }
         itemsIndexed(finished, key = { _, crew -> crew.id }) { index, crew ->
             // Fades in, fades out and glides to its new place when the list changes.
             Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) {
@@ -337,41 +232,6 @@ private fun CrewRecordRow(
         line = "$stayed of ${crew.members.size} stayed the whole run",
         chip = if (enough) "Counts" else "Under ${CrewRules.FLOOR}",
         chipTone = if (enough) Tone.OK else Tone.WARN,
-        onOpen = onOpen,
-    )
-}
-
-/**
- * One of your crews, as a line. The mark is the day it is on, amber where a day was missed, the
- * same colour the warning above uses, so one hue means one thing down the whole screen.
- */
-@Composable
-fun CrewListRow(
-    crew: Crew,
-    onOpen: () -> Unit,
-) {
-    val (chip, tone) =
-        when {
-            crew.out -> "Your app is out" to Tone.BAD
-            crew.nightsDone -> "Done" to Tone.OK
-            crew.atRisk -> "${crew.myMisses} missed" to Tone.WARN
-            crew.owed == 0 -> "Done" to Tone.OK
-            else -> "${crew.owed} left" to Tone.ACCENT
-        }
-    CrewSummaryRow(
-        mark = "${crew.day}",
-        markTone = if (crew.atRisk || crew.out) Tone.WARN else Tone.OK,
-        title = crew.name,
-        line =
-            if (crew.nightsDone) {
-                "Your nights are done"
-            } else {
-                "Day ${crew.day} of ${crew.runDays}" +
-                    if (crew.atRisk) ", missed yesterday" else ""
-            },
-        lineTone = if (crew.atRisk) Tone.WARN else null,
-        chip = chip,
-        chipTone = tone,
         onOpen = onOpen,
     )
 }

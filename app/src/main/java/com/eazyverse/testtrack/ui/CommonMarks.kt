@@ -49,6 +49,7 @@ fun AppIcon(
      * text beside it came out at, and [size] is then only the corner radius it is rounded by.
      */
     modifier: Modifier = Modifier.size(size),
+    outline: Color = Color.Unspecified,
     /** Drawn when the app is not on the phone; the grey lettered square when not given. */
     fallback: (@Composable () -> Unit)? = null,
 ) {
@@ -63,7 +64,7 @@ fun AppIcon(
 
     if (bitmap != null) {
         // A launcher icon that is already round or shaped keeps its own edge; a full square gets ours.
-        val fit = remember(bitmap) { iconFit(bitmap.asAndroidBitmap()) }
+        val fit = remember(bitmap) { installedIconFit(bitmap.asAndroidBitmap()) }
         // One with a wide transparent border is cut down to its artwork so it fills the slot.
         val shown =
             remember(bitmap, fit) {
@@ -74,21 +75,16 @@ fun AppIcon(
             bitmap = shown,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = if (square) modifier.clip(shape) else modifier,
+            modifier = modifier.appIconOutline(outline, fit.contour).then(if (square) Modifier.clip(shape) else Modifier),
         )
     } else if (fallback != null) {
         fallback()
     } else {
         Box(
-            modifier.clip(shape).background(Status.neutralSoft),
+            modifier.appIconOutline(outline).clip(shape).background(Status.neutralSoft),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                label.firstOrNull()?.uppercase() ?: "?",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            AppInitial(label, size, MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

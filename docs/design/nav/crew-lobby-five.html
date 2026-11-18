@@ -1,0 +1,134 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<div id="tt-crew-five">
+  <div class="viz-carousel viz-dotted-background" aria-label="Crew Lobby designs">
+    <section data-variant="Crew first" aria-label="Crew first layout"><div class="cf-stage" data-design="crew"></div></section>
+    <section data-variant="Open list" aria-label="Open list layout" hidden><div class="cf-stage" data-design="open"></div></section>
+    <section data-variant="Seat map" aria-label="Seat map layout" hidden><div class="cf-stage" data-design="seats"></div></section>
+    <section data-variant="App first" aria-label="App first layout" hidden><div class="cf-stage" data-design="app"></div></section>
+    <section data-variant="Number rail" aria-label="Number rail layout" hidden><div class="cf-stage" data-design="rail"></div></section>
+  </div>
+</div>
+<style>
+#tt-crew-five{--cf-bg:light-dark(#f7fcff,#0f1011);--cf-surface:light-dark(#edf4f8,#191c1e);--cf-tile:light-dark(#dce8ef,#292e32);--cf-text:light-dark(#162f41,#edf0f2);--cf-body:light-dark(#3e586b,#bdc5cb);--cf-muted:light-dark(#607887,#929da6);--cf-line:light-dark(#bfd0db,#343b40);--cf-accent:light-dark(#416b86,#a5c8de);--cf-soft:light-dark(#d9e8f0,#20313b);--cf-good:light-dark(#37715c,#9bc9b4);--cf-warn:light-dark(#97632c,#dfba86);--cf-bad:light-dark(#b14d49,#dda49f);font-family:Barlow,system-ui,sans-serif;color:var(--cf-text)}
+#tt-crew-five *{box-sizing:border-box}
+#tt-crew-five [hidden]{display:none!important}
+#tt-crew-five .cf-stage{min-height:820px;display:flex;justify-content:center;align-items:start;padding:22px 8px}
+#tt-crew-five .cf-phone{width:382px;max-width:100%;min-height:756px;background:var(--cf-bg);border:1px solid var(--cf-line);border-radius:25px;overflow:hidden;display:flex;flex-direction:column;font-size:14px;line-height:19px}
+#tt-crew-five .cf-status{display:flex;justify-content:space-between;padding:14px 22px 6px;font-size:12px;font-weight:600;line-height:16px}
+#tt-crew-five .cf-appbar{display:flex;align-items:center;justify-content:space-between;padding:15px 20px 22px}
+#tt-crew-five .cf-appbar strong{font-size:23px;line-height:28px;font-weight:600}
+#tt-crew-five .cf-wallet{font-size:15px;font-weight:500;color:var(--cf-accent);display:flex;gap:6px;align-items:center}
+#tt-crew-five .cf-wallet svg{width:19px;height:19px}
+#tt-crew-five .cf-tabs{display:flex;gap:4px;margin:0 16px 18px}
+#tt-crew-five .cf-tabs span{flex:1;text-align:center;font-size:14px;line-height:20px;font-weight:500;color:var(--cf-muted);padding:9px 2px;border-radius:10px}
+#tt-crew-five .cf-tabs .cf-selected{color:var(--cf-text);background:var(--cf-tile)}
+#tt-crew-five .cf-content{flex:1;min-width:0;padding:0 16px 28px}
+#tt-crew-five .cf-stack{display:flex;flex-direction:column;gap:10px}
+#tt-crew-five button{font-family:inherit;color:var(--cf-text);font-size:14px;line-height:19px;touch-action:manipulation}
+#tt-crew-five .cf-item{display:block;position:relative;width:100%;background:var(--cf-bg);border:1px solid var(--cf-line);border-radius:16px;padding:16px;text-align:left;min-width:0;transition:background .18s ease}
+#tt-crew-five .cf-item:hover,#tt-crew-five .cf-item[aria-expanded=true]{background:var(--cf-surface)}
+#tt-crew-five .cf-top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+#tt-crew-five .cf-title{font-size:18px;line-height:23px;font-weight:600;display:block;min-width:0}
+#tt-crew-five .cf-state{font-size:12px;line-height:17px;color:var(--cf-muted);display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+#tt-crew-five .cf-state svg{width:14px;height:14px;flex-shrink:0}
+#tt-crew-five .cf-ready{color:var(--cf-good)}#tt-crew-five .cf-returned{color:var(--cf-bad)}
+#tt-crew-five .cf-app{display:flex;align-items:center;gap:8px;min-width:0;color:var(--cf-body);font-size:13px;line-height:18px}
+#tt-crew-five .cf-app>span:last-child{min-width:0;overflow-wrap:anywhere}
+#tt-crew-five .cf-icon{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--cf-tile);color:var(--cf-accent);flex-shrink:0}
+#tt-crew-five .cf-icon svg{width:15px;height:15px}
+#tt-crew-five .cf-item .cf-app{margin-top:9px}
+#tt-crew-five .cf-result{display:flex;align-items:baseline;justify-content:space-between;gap:6px 12px;flex-wrap:wrap;margin-top:16px;font-size:12px;line-height:17px;color:var(--cf-muted)}
+#tt-crew-five .cf-result strong{font-size:15px;line-height:20px;font-weight:500;color:var(--cf-text)}
+#tt-crew-five .cf-progress{display:block;margin-top:8px;height:4px;border-radius:4px;background:var(--cf-tile);overflow:hidden}
+#tt-crew-five .cf-progress>span{display:block;height:100%;border-radius:4px;background:var(--cf-accent)}
+#tt-crew-five .cf-caption{color:var(--cf-muted);font-size:12px;line-height:17px;display:block}
+#tt-crew-five .cf-details{display:block;margin-top:14px;padding-top:12px;border-top:1px solid var(--cf-line);font-size:13px;line-height:19px;color:var(--cf-body)}
+#tt-crew-five .cf-dock{margin:6px 16px 0;display:flex;align-items:center;gap:5px;padding:8px;border:1px solid var(--cf-line);background:var(--cf-surface);border-radius:18px}
+#tt-crew-five .cf-dock>span{display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:0;min-height:44px;font-size:12px;line-height:16px;font-weight:500;color:var(--cf-muted);white-space:nowrap}
+#tt-crew-five .cf-dock svg{width:16px;height:16px;flex-shrink:0}
+#tt-crew-five .cf-dock .cf-selected{background:var(--cf-tile);color:var(--cf-accent);border-radius:10px}
+#tt-crew-five .cf-dock .cf-plus{flex:0 0 42px;border:1px solid var(--cf-line);border-radius:11px;font-size:26px;font-weight:400;color:var(--cf-accent)}
+#tt-crew-five .cf-home{display:flex;justify-content:center;padding:14px 0 8px}
+#tt-crew-five .cf-home>span{width:110px;height:4px;border-radius:4px;background:var(--cf-text)}
+/* One continuous list, with the crew's status carried by its main line. */
+#tt-crew-five .cf-open .cf-stack{gap:0}
+#tt-crew-five .cf-open .cf-item{border:0;border-bottom:1px solid var(--cf-line);border-radius:0;padding:18px 2px}
+#tt-crew-five .cf-open .cf-item:first-child{padding-top:4px}
+#tt-crew-five .cf-open .cf-title{font-size:16px;line-height:21px}
+#tt-crew-five .cf-open-top{display:flex;align-items:center;gap:12px}
+#tt-crew-five .cf-open-top>.cf-icon{width:42px;height:42px;border-radius:12px}
+#tt-crew-five .cf-open-top>.cf-icon svg{width:21px;height:21px}
+#tt-crew-five .cf-open-copy{min-width:0;flex:1}
+#tt-crew-five .cf-open-copy .cf-caption{margin-top:2px}
+#tt-crew-five .cf-open-status{margin-top:12px;display:flex;gap:7px;align-items:center;font-size:13px;line-height:18px;color:var(--cf-body)}
+#tt-crew-five .cf-open-status svg{width:15px;height:15px;flex-shrink:0;color:var(--cf-accent)}
+#tt-crew-five .cf-open-status.cf-returned svg{color:var(--cf-bad)}
+#tt-crew-five .cf-open .cf-progress{margin-top:10px}
+/* Seats are the central mark, with one distinct place for the reader. */
+#tt-crew-five .cf-seat-grid{display:flex;gap:5px;margin-top:14px}
+#tt-crew-five .cf-seat{display:block;flex:1;min-width:0;height:15px;border-radius:4px;background:var(--cf-tile)}
+#tt-crew-five .cf-seat.cf-filled{background:var(--cf-accent);opacity:.65}
+#tt-crew-five .cf-seat.cf-own{background:var(--cf-accent);opacity:1;position:relative}
+#tt-crew-five .cf-seat.cf-own:after{content:'';width:4px;height:4px;border-radius:50%;background:var(--cf-bg);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+#tt-crew-five .cf-seats .cf-result{margin-top:9px}
+#tt-crew-five .cf-seats .cf-item{background:var(--cf-surface);border-color:transparent}
+/* The app anchors the row; the amount gets its own quiet column. */
+#tt-crew-five .cf-app-top{display:flex;align-items:center;gap:12px;min-width:0}
+#tt-crew-five .cf-app-top>.cf-icon{width:48px;height:48px;border-radius:14px}
+#tt-crew-five .cf-app-top>.cf-icon svg{width:24px;height:24px}
+#tt-crew-five .cf-app-copy{min-width:0;flex:1}
+#tt-crew-five .cf-app-copy .cf-title{font-size:16px;line-height:20px;overflow-wrap:anywhere}
+#tt-crew-five .cf-app-copy .cf-caption{margin-top:4px}
+#tt-crew-five .cf-amount{text-align:right;flex-shrink:0;display:grid;gap:1px}
+#tt-crew-five .cf-amount strong{font-size:24px;line-height:28px;font-weight:500;font-variant-numeric:tabular-nums}
+#tt-crew-five .cf-amount small{font-size:11px;line-height:15px;color:var(--cf-muted)}
+#tt-crew-five .cf-amount svg{width:22px;height:22px;color:var(--cf-bad)}
+#tt-crew-five .cf-app-layout .cf-result{margin-top:13px}
+/* Large crew numbers form a stable rail, leaving the content unboxed. */
+#tt-crew-five .cf-rail .cf-item{display:grid;grid-template-columns:52px minmax(0,1fr);gap:16px;border:0;border-radius:0;padding:20px 0}
+#tt-crew-five .cf-rail .cf-stack{gap:0}
+#tt-crew-five .cf-rail .cf-item:first-child{padding-top:4px}
+#tt-crew-five .cf-rail-number{font-size:31px;line-height:34px;font-weight:500;color:var(--cf-accent);display:grid;align-content:start;gap:3px;font-variant-numeric:tabular-nums}
+#tt-crew-five .cf-rail-number small{font-size:11px;line-height:15px;font-weight:400;letter-spacing:1px;color:var(--cf-muted)}
+#tt-crew-five .cf-rail-body{display:block;min-width:0;border-bottom:1px solid var(--cf-line);padding-bottom:20px}
+#tt-crew-five .cf-rail-body>.cf-title{font-size:16px;line-height:21px;overflow-wrap:anywhere}
+#tt-crew-five .cf-rail-body>.cf-state{margin-top:5px}
+#tt-crew-five .cf-rail .cf-result{margin-top:13px}
+#tt-crew-five .cf-rail .cf-result strong{font-size:13px;line-height:18px}
+#tt-crew-five .cf-rail .cf-details{grid-column:2;margin-top:0}
+@media(max-width:350px){#tt-crew-five .cf-stage{padding-left:0;padding-right:0}#tt-crew-five .cf-item{padding:13px}#tt-crew-five .cf-top{gap:8px}#tt-crew-five .cf-seat-grid{gap:4px}#tt-crew-five .cf-dock{margin-left:10px;margin-right:10px;padding:6px}#tt-crew-five .cf-dock>span{gap:3px}#tt-crew-five .cf-rail .cf-item{grid-template-columns:44px minmax(0,1fr);gap:12px}#tt-crew-five .cf-amount strong{font-size:21px;line-height:25px}}
+@media(prefers-reduced-motion:reduce){#tt-crew-five .cf-item{transition:none}}
+</style>
+<script>
+(()=>{
+const root=document.getElementById('tt-crew-five');
+const icon=name=>`<i data-lucide="${name}" aria-hidden="true"></i>`;
+const crews=[
+ {n:59,app:'Quick Notes Lite',icon:'notebook',state:'holding',filled:8},
+ {n:60,app:'Metro Map',icon:'map',state:'ready',filled:15},
+ {n:54,app:'Recipe Shelf',icon:'cooking-pot',state:'returned',filled:11}
+];
+const face=c=>`<span class="cf-icon">${icon(c.icon)}</span>`;
+const state=c=>c.state==='holding'?'Seat held':c.state==='ready'?'Full':'Sent back';
+const symbol=c=>c.state==='holding'?'check':c.state==='ready'?'moon':'undo-2';
+const line=c=>c.state==='holding'?'8 of 15 in · 7 more to start':c.state==='ready'?'Starts in 3h 42m':'Fix Play availability';
+const info=c=>c.state==='holding'?'Your seat is held. The crew starts at your midnight once all 15 apps are in.':c.state==='ready'?'All 15 seats are confirmed. Day 1 starts at midnight, your time. Install the other apps before then.':'Your app could not be found through the testers group. Your 100 tix were returned. Fix availability before taking another seat.';
+const status=c=>`<span class="cf-state cf-${c.state}">${icon(symbol(c))}${state(c)}</span>`;
+const app=c=>`<span class="cf-app">${face(c)}<span>${c.app}</span></span>`;
+const progress=c=>`<span class="cf-progress" role="meter" aria-label="Confirmed seats" aria-valuenow="${c.filled}" aria-valuemin="0" aria-valuemax="15"><span style="width:${c.filled/15*100}%"></span></span>`;
+const result=c=>`<span class="cf-result"><strong>${c.state==='holding'?'8 of 15 in':c.state==='ready'?'Starts in 3h 42m':'Fix Play availability'}</strong><span>${c.state==='holding'?'7 more to start':c.state==='ready'?'At midnight':'100 tix returned'}</span></span>`;
+function body(design,c){
+ if(design==='crew')return `<span class="cf-top"><strong class="cf-title">Crew ${c.n}</strong>${status(c)}</span>${app(c)}${result(c)}${c.state==='holding'?progress(c):''}`;
+ if(design==='open')return `<span class="cf-open-top">${face(c)}<span class="cf-open-copy"><strong class="cf-title">Crew ${c.n}</strong><span class="cf-caption">${c.app}</span></span></span><span class="cf-open-status cf-${c.state}">${icon(c.state==='holding'?'users':symbol(c))}${line(c)}</span>${c.state==='holding'?progress(c):c.state==='returned'?'<span class="cf-caption" style="margin-top:4px">100 tix returned</span>':''}`;
+ if(design==='seats')return `<span class="cf-top"><strong class="cf-title">Crew ${c.n}</strong>${c.state==='returned'?status(c):`<span class="cf-state">${c.filled} of 15 in</span>`}</span>${c.state!=='returned'?`<span class="cf-seat-grid" role="meter" aria-label="Confirmed seats, first mark is yours" aria-valuenow="${c.filled}" aria-valuemin="0" aria-valuemax="15">${Array.from({length:15},(_,i)=>`<span class="cf-seat ${i===0?'cf-own':i<c.filled?'cf-filled':''}"></span>`).join('')}</span>`:''}${c.state === 'holding' ? `<span class="cf-result"><strong>Your seat is held</strong><span>7 more to start</span></span>` : result(c)}${app(c)}`;
+ if(design==='app')return `<span class="cf-app-top">${face(c)}<span class="cf-app-copy"><strong class="cf-title">${c.app}</strong><span class="cf-caption">Crew ${c.n}</span></span><span class="cf-amount">${c.state==='returned'?icon('undo-2'):`<strong>${c.filled}<small>/15</small></strong><small>${c.state==='ready'?'all in':'members'}</small>`}</span></span>${c.state==='holding'?progress(c):''}<span class="cf-result"><span class="cf-state cf-${c.state}">${icon(symbol(c))}${c.state==='holding'?'Your seat is held':c.state==='ready'?'Starts in 3h 42m':'App sent back'}</span><span>${c.state==='holding'?'7 more to start':c.state==='ready'?'At midnight':'100 tix returned'}</span></span>`;
+ return `<span class="cf-rail-number"><small>CREW</small>${c.n}</span><span class="cf-rail-body"><strong class="cf-title">${c.app}</strong>${status(c)}${result(c)}${c.state==='holding'?progress(c):''}</span>`;
+}
+function renderStage(stage){const design=stage.dataset.design;stage.innerHTML=`<section class="cf-phone cf-${design==='app'?'app-layout':design}" aria-label="${stage.parentElement.dataset.variant} Lobby preview"><div class="cf-status"><span>9:41</span><span>••• &nbsp; ▰</span></div><header class="cf-appbar"><strong>TestTrack</strong><span class="cf-wallet">${icon('ticket')}100</span></header><nav class="cf-tabs" aria-label="Crew sections"><span>Open</span><span class="cf-selected" aria-current="page">Lobby</span><span>Run</span><span>Record</span></nav><div class="cf-content"><div class="cf-stack">${crews.map(c=>`<button class="cf-item cursor-interaction" type="button" aria-label="Crew ${c.n}, ${c.app}, ${state(c)}" aria-expanded="false"><span class="cf-item-body">${body(design,c)}</span><span class="cf-details" hidden>${info(c)}</span></button>`).join('')}</div></div><div class="cf-dock"><span>${icon('circle-dot')}Circle</span><span class="cf-selected">${icon('users')}Crew</span><span class="cf-plus" aria-label="Add">+</span><span>${icon('layout-grid')}My apps</span></div><div class="cf-home"><span></span></div></section>`;}
+root.querySelectorAll('.cf-stage').forEach(renderStage);
+// Layout-only wrapper stays transparent to the rail's grid.
+root.querySelectorAll('.cf-rail .cf-item-body').forEach(body=>body.style.display='contents');
+root.addEventListener('click',event=>{const item=event.target.closest('.cf-item');if(!item)return;const open=item.getAttribute('aria-expanded')!=='true';item.setAttribute('aria-expanded',String(open));item.querySelector('.cf-details').hidden=!open;});
+globalThis.lucide?.createIcons({attrs:{width:16,height:16}});
+})();
+</script>

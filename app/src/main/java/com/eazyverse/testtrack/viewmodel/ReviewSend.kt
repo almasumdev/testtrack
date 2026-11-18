@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.net.Uri
 import com.eazyverse.testtrack.data.AuthRepo
+import com.eazyverse.testtrack.data.InstalledApps
 import com.eazyverse.testtrack.data.ProofStore
 import com.eazyverse.testtrack.data.ProofUpload
 import com.eazyverse.testtrack.net.Api
@@ -33,6 +34,9 @@ internal suspend fun sendProof(
         ProofStore.uploaded(context, id)
             ?: (DRIVE_PREFIX + ProofUpload.send(activity, id, job.post.packageName, proof))
                 .also { ProofStore.markUploaded(context, id, it) }
+    if (!InstalledApps.info(context, job.post.packageName).fromPlay) {
+        throw ApiError(400, "play_install", "Install the Google Play version to continue.")
+    }
     return if (job.rechecking) {
         Api.recheck(id, ref, token)
     } else {

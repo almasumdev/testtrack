@@ -27,13 +27,7 @@ import com.eazyverse.testtrack.viewmodel.rejectWithPicture
 import com.eazyverse.testtrack.viewmodel.requestOf
 import kotlinx.coroutines.launch
 
-/**
- * Circle, against the API.
- *
- * There is no sample data behind this any more. Everything on the screen is a row on the server,
- * which is what makes the tix real: a balance the phone could compute is a balance the phone could
- * be talked into computing differently.
- */
+/** Circle's server-backed lists and actions. Reviews, verdicts and tix stay server-authoritative. */
 class FeedViewModel : ViewModel() {
     var tab by mutableStateOf(FeedTab.FEEDBACK)
         private set
@@ -87,6 +81,10 @@ class FeedViewModel : ViewModel() {
         private set
 
     var loading by mutableStateOf(true)
+        private set
+
+    /** Only the reader's pull shows the refresh indicator; live reloads stay quiet. */
+    var pulling by mutableStateOf(false)
         private set
 
     /** Loads started, and the newest of them that has finished, answered or failed. */
@@ -158,12 +156,7 @@ class FeedViewModel : ViewModel() {
     private var cursor: String? = null
     private var paging = false
 
-    /**
-     * What every tab showed last time, from the phone, but only without a connection: online, Circle
-     * shimmers until the server answers instead of opening on an old list. [afterFailure] is for a
-     * fetch that has just failed for want of one. Only fills what is still empty, never replaces
-     * an answer that has arrived.
-     */
+    /** Offline fallback only; fills empty lists without replacing a server answer. */
     private fun seedFromPhone(afterFailure: Boolean = false) {
         // Kept requests show at once. None kept means the tab waits for the server, so it never
         // says "nobody's asking" from memory and then has a card arrive under the words.
@@ -186,9 +179,18 @@ class FeedViewModel : ViewModel() {
     }
 
     /** Everything the tab shows, fetched together. Safe to call on every resume. */
-    fun load(context: Context) {
+    fun load(
+        context: Context,
+        fromPull: Boolean = false,
+    ) {
+        if (fromPull && pulling) return
+        if (fromPull) {
+            pulling = true
+            seed = newFeedSeed()
+        }
         val load = ++loadsStarted
         viewModelScope.launch {
+            val startedAt = System.currentTimeMillis()
             try {
                 // The posts come either way. Everything after them is about one account, so a
                 // stranger gets the feed and nothing else, rather than an error page in front of
@@ -196,6 +198,7 @@ class FeedViewModel : ViewModel() {
                 val named = ApiAuth.ensure(context)
                 signedOut = !named
                 val page = Api.posts(seed)
+                if (load != loadsStarted) return@launch
                 posts = page.posts
                 cursor = page.next ?: page.nextCursor
                 shuffled = page.next != null || page.nextCursor == null
@@ -234,6 +237,10 @@ class FeedViewModel : ViewModel() {
                 loading = false
                 answered = true
                 if (load > loadsFinished) loadsFinished = load
+                if (fromPull) {
+                    holdShimmer(startedAt)
+                    pulling = false
+                }
             }
         }
     }
@@ -256,17 +263,8 @@ class FeedViewModel : ViewModel() {
 
     fun stopPageLive() = pageLive.stop()
 
-    /**
-     * This visit's shuffle of the feed. A new one each time the app starts, so the requests at the
-     * top change from one visit to the next; the same one for the whole visit, so coming back from
-     * a review or a live refresh never reorders the list under somebody's thumb.
-     */
-    private val seed =
-        java.util.UUID
-            .randomUUID()
-            .toString()
-            .replace("-", "")
-            .take(16)
+    /** Stable through paging and live updates; an explicit pull asks for a fresh shuffle. */
+    private var seed = newFeedSeed()
 
     /** The server shuffles and pages with `after`; false for one that still pages newest first. */
     private var shuffled = true
@@ -283,13 +281,15 @@ class FeedViewModel : ViewModel() {
 
     /** The next page of posts, when the list reaches its end. */
     fun loadMore() {
-        pagedPast = true
         val from = cursor ?: return
-        if (paging) return
+        if (paging || pulling) return
+        pagedPast = true
+        val generation = loadsStarted
         paging = true
         viewModelScope.launch {
             try {
                 val page = if (shuffled) Api.posts(seed, after = from) else Api.posts(seed, before = from)
+                if (generation != loadsStarted) return@launch
                 val seen = posts.map { it.id }.toSet()
                 posts = posts + page.posts.filter { it.id !in seen }
                 cursor = if (shuffled) page.next else page.nextCursor
@@ -488,3 +488,10 @@ class FeedViewModel : ViewModel() {
 
 /** How long an owner has to answer, as the server's rule; only used when it did not say. */
 private const val ONE_DAY = 24 * 3_600_000L
+
+private fun newFeedSeed(): String =
+    java.util.UUID
+        .randomUUID()
+        .toString()
+        .replace("-", "")
+        .take(16)

@@ -1,0 +1,156 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<div id="tt-usage-options">
+  <div class="viz-carousel viz-dotted-background" aria-label="Usage timer designs">
+    <section data-variant="Compact rail" aria-label="Compact rail timer"><div class="ut-stage"><div class="ut-timer ut-compact"><div class="ut-number-row"><div><strong class="ut-big" data-left>2:00</strong><span class="ut-inline-label">left</span></div><div class="ut-secondary"><b data-used>1:00</b><small>of 3:00 used</small></div></div><div class="ut-track"><span data-fill></span></div><div class="ut-scale"><span>0:00</span><span>3:00</span></div></div></div></section>
+    <section data-variant="Focus ring" aria-label="Focus ring timer" hidden><div class="ut-stage"><div class="ut-timer ut-focus"><div class="ut-ring"><svg viewBox="0 0 180 180" role="img" aria-label="Usage progress"><circle class="ut-ring-track" cx="90" cy="90" r="76"/><circle class="ut-ring-fill" cx="90" cy="90" r="76" data-ring/></svg><div class="ut-ring-center"><strong class="ut-big" data-left>2:00</strong><small>remaining</small></div></div><div class="ut-ring-caption"><span data-used>1:00</span> of 3:00 used</div></div></div></section>
+    <section data-variant="Minute checkpoints" aria-label="Minute checkpoint timer" hidden><div class="ut-stage"><div class="ut-timer ut-checkpoints"><div class="ut-number-row"><div><strong class="ut-big" data-left>2:00</strong><span class="ut-inline-label">left</span></div><small>3-minute goal</small></div><div class="ut-minutes"><div data-minute="0"><span class="ut-minute-mark">1</span><div class="ut-mini-track"><span></span></div><small>1 min</small></div><div data-minute="1"><span class="ut-minute-mark">2</span><div class="ut-mini-track"><span></span></div><small>2 min</small></div><div data-minute="2"><span class="ut-minute-mark">3</span><div class="ut-mini-track"><span></span></div><small>3 min</small></div></div></div></div></section>
+    <section data-variant="Tick strip" aria-label="Tick strip timer" hidden><div class="ut-stage"><div class="ut-timer ut-ticks"><div class="ut-centered"><strong class="ut-big" data-left>2:00</strong><small>remaining</small></div><div class="ut-tick-strip" aria-label="Usage progress"></div><div class="ut-scale"><span><b data-used>1:00</b> used</span><span>3:00 goal</span></div></div></div></section>
+    <section data-variant="Vertical timeline" aria-label="Vertical timeline timer" hidden><div class="ut-stage"><div class="ut-timer ut-vertical"><div class="ut-vertical-rail" aria-hidden="true"><div class="ut-vtrack"><span data-vfill></span></div><span class="ut-vdot ut-start"></span><span class="ut-vdot ut-middle"></span><span class="ut-vdot ut-end"></span><span class="ut-vlabel ut-top-label">0:00</span><span class="ut-vlabel ut-bottom-label">3:00</span></div><div class="ut-vertical-value"><small>Time remaining</small><strong class="ut-big" data-left>2:00</strong><span class="ut-elapsed"><b data-used>1:00</b> already used</span></div></div></div></section>
+  </div>
+  <template id="tt-usage-context">
+    <article class="ut-phone" aria-label="TestTrack usage step">
+      <header class="ut-top"><i data-lucide="arrow-left" aria-hidden="true"></i><strong>Feedback</strong><span class="ut-reward">+35 tix</span></header>
+      <div class="ut-app"><span class="ut-app-icon"><i data-lucide="notebook" aria-hidden="true"></i><span class="ut-source"><i data-lucide="flask-conical" aria-hidden="true"></i></span></span><div><strong>Quick Notes Lite</strong><small>com.demo.quicknotes</small></div></div>
+      <ol class="ut-path" aria-label="Step 2 of 4: Use app"><li class="ut-done"><span><i data-lucide="check" aria-hidden="true"></i></span>Install</li><li class="ut-now"><span><i data-lucide="smartphone" aria-hidden="true"></i></span>Use app</li><li><span><i data-lucide="message-square" aria-hidden="true"></i></span>Feedback</li><li><span><i data-lucide="camera" aria-hidden="true"></i></span>Send proof</li></ol>
+      <main class="ut-content"><h3 class="ut-heading"><span><i data-lucide="timer" aria-hidden="true"></i></span>Use time</h3><div class="ut-slot"></div><p class="ut-bullet">Keep the app open in the <b>foreground.</b></p></main>
+      <footer class="ut-footer"><button class="ut-primary cursor-interaction" type="button" data-open>Open app</button><div class="ut-quiet">Can't finish? <button class="ut-link cursor-interaction" type="button" data-giveup>Give up review</button></div></footer>
+      <div class="ut-overlay" hidden><div class="ut-dialog" role="dialog" aria-modal="true"><h3>Give this review up?</h3><p>Your slot is released and no reward is paid.</p><div class="ut-dialog-actions"><button type="button" class="ut-cancel cursor-interaction">Keep going</button><button type="button" class="ut-confirm cursor-interaction">Give up</button></div></div></div>
+    </article>
+  </template>
+</div>
+<style>
+#tt-usage-options{--ut-bg:light-dark(#f7fcff,#0f1011);--ut-text:light-dark(#142f43,#eceef0);--ut-body:light-dark(#203a4e,#bcc1c6);--ut-muted:light-dark(#59758a,#9da3a9);--ut-line:light-dark(#d3e2ec,#383c41);--ut-soft:light-dark(#e1eaf2,#2a2d31);--ut-surface:light-dark(#f3f8fb,#1c1e20);--ut-accent:light-dark(#3a6380,#4a7290);--ut-ink:light-dark(#3a5b73,#93b3ca);--ut-on:light-dark(#fff,#fff);--ut-scrim:light-dark(#142f4344,#00000088);--ut-danger:light-dark(#b83e3e,#ef9898);font-family:Barlow,system-ui,sans-serif}
+#tt-usage-options *{box-sizing:border-box}
+#tt-usage-options [hidden]{display:none!important}
+#tt-usage-options .ut-stage{display:flex;justify-content:center;padding:20px 0;min-height:682px;align-items:center}
+#tt-usage-options .ut-phone{position:relative;width:370px;max-width:100%;min-height:632px;padding:20px;border-radius:22px;border:1px solid var(--ut-line);background:var(--ut-bg);color:var(--ut-text);font-size:14px;line-height:1.4;display:flex;flex-direction:column;overflow:hidden}
+#tt-usage-options svg[data-lucide]{display:block;width:18px;height:18px;flex-shrink:0}
+#tt-usage-options .ut-top{display:flex;gap:12px;align-items:center;margin-bottom:26px}
+#tt-usage-options .ut-top>strong{font-size:20px;font-weight:600}
+#tt-usage-options .ut-reward{margin-left:auto;background:var(--ut-soft);color:var(--ut-ink);padding:5px 9px;border-radius:8px;font-size:12px;font-weight:600}
+#tt-usage-options .ut-app{display:flex;align-items:center;gap:12px}
+#tt-usage-options .ut-app>div{min-width:0}
+#tt-usage-options .ut-app strong{font-size:16px;display:block;font-weight:600}
+#tt-usage-options .ut-app small{font-size:12.5px;color:var(--ut-muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tt-usage-options .ut-app-icon{position:relative;width:52px;height:52px;flex-shrink:0;border-radius:15px;background:var(--ut-soft);display:grid;place-items:center;color:var(--ut-ink)}
+#tt-usage-options .ut-app-icon>svg{width:24px;height:24px}
+#tt-usage-options .ut-source{position:absolute;right:-5px;bottom:-5px;border:2px solid var(--ut-bg);border-radius:50%;width:20px;height:20px;background:var(--ut-surface);display:grid;place-items:center}
+#tt-usage-options .ut-source svg{width:12px;height:12px}
+#tt-usage-options .ut-path{position:relative;list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:24px 0 0;padding:0}
+#tt-usage-options .ut-path:before{content:'';position:absolute;left:12.5%;right:12.5%;top:23px;height:3px;background:linear-gradient(to right,var(--ut-ink) 33.333%,var(--ut-line) 33.333%)}
+#tt-usage-options .ut-path li{position:relative;text-align:center;font-size:12px;color:var(--ut-muted)}
+#tt-usage-options .ut-path li>span{display:grid;place-items:center;width:36px;height:36px;margin:6px auto 14px;border:1px solid var(--ut-line);border-radius:50%;background:var(--ut-bg);box-shadow:0 0 0 5px var(--ut-bg)}
+#tt-usage-options .ut-path .ut-now{color:var(--ut-text);font-weight:600}
+#tt-usage-options .ut-path .ut-now>span{color:var(--ut-on);background:var(--ut-accent);border:0;outline:1.5px solid var(--ut-ink);outline-offset:4px}
+#tt-usage-options .ut-path .ut-done>span{border:0;color:var(--ut-ink);background:var(--ut-soft)}
+#tt-usage-options .ut-content{padding-top:24px;flex:1}
+#tt-usage-options .ut-heading{display:flex;gap:10px;align-items:center;margin:0;font-size:16px;font-weight:600}
+#tt-usage-options .ut-heading>span{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:var(--ut-soft);color:var(--ut-ink)}
+#tt-usage-options .ut-heading svg{width:15px;height:15px}
+#tt-usage-options .ut-timer{min-height:186px;display:flex;flex-direction:column;justify-content:center;padding:18px 0 12px;gap:14px}
+#tt-usage-options .ut-big{font-family:'IBM Plex Mono',monospace;font-size:42px;line-height:1.12;letter-spacing:-2px;font-weight:500;font-variant-numeric:tabular-nums}
+#tt-usage-options .ut-timer small{font-size:12px;color:var(--ut-muted);font-weight:400;display:block}
+#tt-usage-options .ut-number-row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+#tt-usage-options .ut-inline-label{font-size:14px;color:var(--ut-muted);margin-left:8px}
+#tt-usage-options .ut-secondary{text-align:right}
+#tt-usage-options .ut-secondary b,#tt-usage-options [data-used]{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;font-weight:500}
+#tt-usage-options .ut-track,#tt-usage-options .ut-mini-track{height:8px;border-radius:3px;background:var(--ut-soft);overflow:hidden}
+#tt-usage-options .ut-track>span,#tt-usage-options .ut-mini-track>span{display:block;background:var(--ut-ink);height:100%;width:33.333%;transition:width .45s ease}
+#tt-usage-options .ut-scale{display:flex;justify-content:space-between;color:var(--ut-muted);font-size:12px;margin-top:-8px;gap:12px}
+#tt-usage-options .ut-focus{align-items:center;gap:10px;padding:12px 0;min-height:222px}
+#tt-usage-options .ut-ring{width:170px;height:170px;position:relative}
+#tt-usage-options .ut-ring>svg{width:100%;height:100%;display:block;transform:rotate(-90deg)}
+#tt-usage-options .ut-ring circle{fill:none;stroke-width:9;stroke-linecap:round}
+#tt-usage-options .ut-ring-track{stroke:var(--ut-soft)}
+#tt-usage-options .ut-ring-fill{stroke:var(--ut-ink);stroke-dasharray:159.174 477.522;transition:stroke-dasharray .45s ease}
+#tt-usage-options .ut-ring-center{position:absolute;inset:0;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center}
+#tt-usage-options .ut-ring-caption{font-size:12px;color:var(--ut-muted)}
+#tt-usage-options .ut-checkpoints{gap:20px}
+#tt-usage-options .ut-minutes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+#tt-usage-options .ut-minutes>div{display:flex;flex-direction:column;align-items:center;gap:9px;color:var(--ut-muted)}
+#tt-usage-options .ut-minute-mark{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:var(--ut-soft);font-family:'IBM Plex Mono',monospace;font-size:13px}
+#tt-usage-options .ut-minutes .ut-complete .ut-minute-mark{background:var(--ut-accent);color:var(--ut-on)}
+#tt-usage-options .ut-minutes .ut-current .ut-minute-mark{color:var(--ut-ink);font-weight:600}
+#tt-usage-options .ut-mini-track{width:100%;height:6px}
+#tt-usage-options .ut-ticks{gap:20px}
+#tt-usage-options .ut-centered{text-align:center;display:flex;flex-direction:column;gap:5px}
+#tt-usage-options .ut-tick-strip{display:flex;gap:4px;align-items:center;height:34px}
+#tt-usage-options .ut-tick{flex:1;height:22px;border-radius:2px;background:var(--ut-soft);transition:background .3s ease}
+#tt-usage-options .ut-tick:nth-child(5n+1){height:34px}
+#tt-usage-options .ut-tick.ut-filled{background:var(--ut-ink)}
+#tt-usage-options .ut-vertical{display:grid;grid-template-columns:88px 1fr;align-items:center;gap:12px;padding:26px 0 18px}
+#tt-usage-options .ut-vertical-rail{height:138px;position:relative}
+#tt-usage-options .ut-vtrack{position:absolute;left:10px;top:6px;bottom:6px;width:6px;border-radius:3px;background:var(--ut-soft);overflow:hidden}
+#tt-usage-options .ut-vtrack>span{display:block;width:100%;height:33.333%;background:var(--ut-ink);transition:height .45s ease}
+#tt-usage-options .ut-vdot{position:absolute;left:7px;width:12px;height:12px;border-radius:50%;background:var(--ut-line)}
+#tt-usage-options .ut-start{top:0;background:var(--ut-ink)}
+#tt-usage-options .ut-middle{top:calc(50% - 6px)}
+#tt-usage-options .ut-end{bottom:0}
+#tt-usage-options .ut-vlabel{position:absolute;left:28px;font-size:12px;color:var(--ut-muted);font-family:'IBM Plex Mono',monospace}
+#tt-usage-options .ut-top-label{top:-3px}#tt-usage-options .ut-bottom-label{bottom:-3px}
+#tt-usage-options .ut-vertical-value{display:flex;flex-direction:column;gap:8px;min-width:0}
+#tt-usage-options .ut-elapsed{font-size:12px;color:var(--ut-muted);margin-top:4px}
+#tt-usage-options .ut-bullet{position:relative;padding-left:24px;margin:8px 0 0;color:var(--ut-body);font-size:14px}
+#tt-usage-options .ut-bullet:before{content:'';position:absolute;left:12px;top:8px;width:4px;height:4px;background:var(--ut-muted);border-radius:50%}
+#tt-usage-options .ut-bullet b{color:var(--ut-text);font-weight:600}
+#tt-usage-options .ut-footer{padding-top:28px;display:flex;flex-direction:column;gap:8px}
+#tt-usage-options button{font-family:inherit;font-size:14px;line-height:1.4;touch-action:manipulation}
+#tt-usage-options .ut-primary{width:100%;min-height:52px;padding:12px;border:0;border-radius:14px;background:var(--ut-accent);color:var(--ut-on);font-weight:600}
+#tt-usage-options .ut-quiet{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;font-size:13px;color:var(--ut-muted)}
+#tt-usage-options .ut-link{padding:9px 2px;min-height:44px;border:0;background:none;color:var(--ut-ink);font-size:13px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+#tt-usage-options .ut-overlay{position:absolute;inset:0;background:var(--ut-scrim);display:grid;place-items:center;padding:20px;z-index:5}
+#tt-usage-options .ut-dialog{background:var(--ut-surface);padding:22px;border-radius:18px;width:100%}
+#tt-usage-options .ut-dialog h3{margin:0;font-size:19px;font-weight:600}
+#tt-usage-options .ut-dialog p{font-size:14px;color:var(--ut-body);margin:12px 0 20px}
+#tt-usage-options .ut-dialog-actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+#tt-usage-options .ut-dialog button{border:0;background:none;min-height:44px;padding:8px;color:var(--ut-ink);font-weight:600}
+#tt-usage-options .ut-dialog .ut-confirm{color:var(--ut-danger)}
+@media(max-width:380px){#tt-usage-options .ut-phone{padding:16px}#tt-usage-options .ut-tick-strip{gap:3px}#tt-usage-options .ut-vertical{grid-template-columns:72px 1fr}#tt-usage-options .ut-app strong{font-size:15px}}
+@media(prefers-reduced-motion:reduce){#tt-usage-options *{transition:none!important}}
+</style>
+<script>
+(() => {
+ const root=document.getElementById('tt-usage-options');
+ const template=root.querySelector('#tt-usage-context');
+ const state={elapsedSeconds:60};
+ let running=false,interval=null;
+ const clock=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+ function restore(value){const n=value?.privateContent?.elapsedSeconds;if(Number.isFinite(n))state.elapsedSeconds=Math.max(0,Math.min(180,Math.round(n)));}
+ restore(window.openai?.widgetState);
+ root.querySelectorAll('.ut-stage').forEach((stage,index)=>{
+   const timer=stage.querySelector('.ut-timer'),fragment=template.content.cloneNode(true),phone=fragment.querySelector('.ut-phone');
+   phone.querySelector('.ut-slot').append(timer);stage.append(fragment);
+   const strip=stage.querySelector('.ut-tick-strip');if(strip)for(let i=0;i<30;i++){const tick=document.createElement('span');tick.className='ut-tick';strip.append(tick);}
+   const overlay=phone.querySelector('.ut-overlay'),giveup=phone.querySelector('[data-giveup]');
+   const title=phone.querySelector('.ut-dialog h3');title.id=`ut-giveup-title-${index}`;phone.querySelector('.ut-dialog').setAttribute('aria-labelledby',title.id);
+   function close(){overlay.hidden=true;giveup.focus();}
+   giveup.addEventListener('click',()=>{overlay.hidden=false;phone.querySelector('.ut-cancel').focus();});
+   phone.querySelector('.ut-cancel').addEventListener('click',close);
+   phone.querySelector('.ut-confirm').addEventListener('click',()=>{stop();state.elapsedSeconds=0;close();draw();persist();});
+   overlay.addEventListener('keydown',event=>{if(event.key==='Escape')close();});
+   phone.querySelector('[data-open]').addEventListener('click',()=>{
+     if(running){stop();}else{if(state.elapsedSeconds>=180)state.elapsedSeconds=0;running=true;interval=setInterval(()=>{state.elapsedSeconds=Math.min(180,state.elapsedSeconds+1);if(state.elapsedSeconds===180)stop();draw();},1000);}
+     draw();persist();
+   });
+ });
+ function stop(){running=false;if(interval)clearInterval(interval);interval=null;}
+ function persist(){window.openai?.setWidgetState?.({modelContent:{elapsedSeconds:state.elapsedSeconds,totalSeconds:180},privateContent:{elapsedSeconds:state.elapsedSeconds}})?.catch(()=>{});}
+ function draw(){
+   const elapsed=Math.round(state.elapsedSeconds),fraction=elapsed/180,left=180-elapsed;
+   root.querySelectorAll('[data-left]').forEach(el=>el.textContent=clock(left));
+   root.querySelectorAll('[data-used]').forEach(el=>el.textContent=clock(elapsed));
+   root.querySelectorAll('[data-fill]').forEach(el=>el.style.width=`${fraction*100}%`);
+   root.querySelectorAll('[data-vfill]').forEach(el=>el.style.height=`${fraction*100}%`);
+   root.querySelectorAll('[data-ring]').forEach(el=>el.style.strokeDasharray=`${fraction*477.522} 477.522`);
+   root.querySelectorAll('[data-minute]').forEach(el=>{const n=Number(el.dataset.minute),part=Math.max(0,Math.min(1,(elapsed-n*60)/60));el.classList.toggle('ut-complete',part===1);el.classList.toggle('ut-current',part<1&&elapsed>=n*60);el.querySelector('.ut-minute-mark').textContent=part===1?'✓':String(n+1);el.querySelector('.ut-mini-track span').style.width=`${part*100}%`;});
+   root.querySelectorAll('.ut-tick').forEach((el,index)=>el.classList.toggle('ut-filled',index<Math.floor(elapsed/6)));
+   root.querySelectorAll('.ut-vdot.ut-middle').forEach(el=>el.style.background=elapsed>=90?'var(--ut-ink)':'var(--ut-line)');
+   root.querySelectorAll('.ut-vdot.ut-end').forEach(el=>el.style.background=elapsed>=180?'var(--ut-ink)':'var(--ut-line)');
+   root.querySelectorAll('[data-open]').forEach(el=>el.textContent=running?'Return to feedback':elapsed===180?'Preview again':'Open app');
+   root.querySelectorAll('.ut-timer').forEach(el=>{el.setAttribute('role','img');el.setAttribute('aria-label',`${clock(left)} remaining, ${clock(elapsed)} of 3 minutes used`);});
+ }
+ draw();
+ window.addEventListener('openai:set_globals',event=>{restore(event.detail?.globals?.widgetState);draw();});
+ if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:()=>{stop();draw();persist();}});tweak.addSlider(state,'elapsedSeconds',{label:'Usage time',min:0,max:180,step:1,unit:'s'});}
+})();
+</script>

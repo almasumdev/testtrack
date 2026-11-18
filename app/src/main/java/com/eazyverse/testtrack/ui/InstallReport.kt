@@ -48,10 +48,6 @@ val installReasons: List<Pair<String, String>> =
 private const val NOTE_MIN = 10
 private const val NOTE_MAX = 280
 
-/** The quiet way into a report, beside giving the review up. */
-@Composable
-internal fun ReportLink(onReport: () -> Unit) = QuietAction("Can't install it?", "Report it", onReport)
-
 /** Pick why it would not install; "Something else" asks for the reason in the tester's words. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

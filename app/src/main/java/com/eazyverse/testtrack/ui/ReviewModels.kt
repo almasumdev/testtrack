@@ -66,7 +66,9 @@ data class ReviewJob(
     /** Not taken yet, and already on this phone from Play: taking it starts the review at once. */
     val onPhone: Boolean = false,
     /** Play showed no review box, so it is being sent here instead, for half. */
-    val noBox: Boolean = false,
+    val noBox: Boolean = review.noBox,
+    /** A fresh phone check failed. Blocks the local flow without changing the server's review state. */
+    val requiresPlayInstall: Boolean = false,
 ) {
     /** The first day of use: the phone's own record where it has one, else what the server heard. */
     private val firstUse: java.time.Instant?
@@ -75,7 +77,7 @@ data class ReviewJob(
     /** Characters of text this review must carry: 0 for stars alone, and when showing it again. */
     val needsChars: Int
         get() {
-            val asked = maxOf(post.needsChars, review.needsChars)
+            val asked = maxOf(post.needsChars, review.needsChars, FeedRules.Feedback.of(post.feedback).chars)
             return when {
                 rechecking -> 0
                 noBox -> maxOf(FeedRules.NO_BOX_MIN_CHARS, asked)
@@ -92,11 +94,18 @@ data class ReviewJob(
     /** By when that new screenshot has to come. */
     val checkBy: java.time.Instant? get() = instantOf(review.checkBy)
 
+    /** A claimed request came back from Play without a verified install. A fresh preview cannot report. */
+    val canReportInstall: Boolean get() = review.id.isNotEmpty() && review.state == "claimed" && requiresPlayInstall
+
+    /** An installed review holds a slot until submitted; rechecks are already the developer's turn. */
+    val canGiveUp: Boolean get() = review.id.isNotEmpty() && review.state in setOf("installed", "used")
+
     /** The text typed so far is long enough to send. */
     fun textEnough(note: String): Boolean = plainLength(note) >= needsChars
 
     val step: ReviewStep
         get() {
+            if (requiresPlayInstall && !settled) return ReviewStep.INSTALL
             val reached = ReviewStep.of(review)
             val readyToProve = reached == ReviewStep.LEAVE && leftReview
             return if (readyToProve) ReviewStep.PROVE else reached
@@ -112,9 +121,12 @@ data class ReviewJob(
             }
 
     val secondsLeft: Int
-        get() = (((review.neededMs - review.usedMs) / 1000).coerceAtLeast(0)).toInt()
+        get() = (((review.neededMs - review.usedMs).coerceAtLeast(0) + 999) / 1000).toInt()
 
     val live: Boolean get() = post.isLive
+
+    /** The amount shown before and after submission must agree with the chosen feedback route. */
+    val reward: Int get() = if (noBox) post.reward / 2 else post.reward
 
     /** A live review with all the time it needs, still waiting on its second day of use. */
     val waitingForDay: Boolean get() = live && secondsLeft == 0 && review.state == "installed"
@@ -243,36 +255,6 @@ fun opensWhen(
         1L -> "tomorrow at $time"
         else -> "on ${then.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault())} at $time"
     }
-}
-
-/** "about 20 hours", "about an hour", or "a few minutes", until [at]. */
-fun untilWords(
-    at: java.time.Instant,
-    now: java.time.Instant = java.time.Instant.now(),
-): String {
-    val minutes =
-        java.time.Duration
-            .between(now, at)
-            .toMinutes()
-    val hours = (minutes + 30) / 60
-    return when {
-        minutes < 50 -> "a few minutes"
-        hours <= 1 -> "about an hour"
-        else -> "about $hours hours"
-    }
-}
-
-/** "3h 5m", "45m", for the dial's countdown. */
-fun untilShort(
-    at: java.time.Instant,
-    now: java.time.Instant = java.time.Instant.now(),
-): String {
-    val minutes =
-        java.time.Duration
-            .between(now, at)
-            .toMinutes()
-            .coerceAtLeast(1)
-    return if (minutes < 60) "${minutes}m" else "${minutes / 60}h ${minutes % 60}m"
 }
 
 /** What a review is worth saying about itself once it is out of the reviewer's hands. */

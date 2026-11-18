@@ -57,7 +57,7 @@ internal fun ReviewDone(
 ) {
     val t = Tt.colors
     val state = job.review.state
-    val reward = job.post.reward
+    val reward = job.reward
     val (prop, title) =
         when (state) {
             "approved" -> Prop.Seal to "Approved"

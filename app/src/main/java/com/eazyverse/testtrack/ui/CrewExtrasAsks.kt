@@ -62,8 +62,8 @@ internal fun withCrewExtras(
         latePicture = base.latePicture,
         picturesStuck = base.picturesStuck,
         onRetryPictures = base.onRetryPictures,
-        localVersion = { pkg -> extras.copy(context, pkg).takeIf { it.installed }?.versionCode },
-        fromPlay = { pkg -> extras.copy(context, pkg).let { !it.installed || it.fromPlay } },
+        localVersion = { pkg -> vm.copyOf(context, pkg).takeIf { it.installed }?.versionCode },
+        fromPlay = { pkg -> vm.copyOf(context, pkg).let { !it.installed || it.fromPlay } },
         onUpdateApp = { app -> membership.require { openOnPlay(context, app.packageName) } },
         onFeedback = { app -> membership.require { extras.askFeedback(app.id, app.label, app.packageName) } },
         onPickFeedback = { app ->
@@ -91,6 +91,10 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
     val context = LocalContext.current
     val activity = context.findActivity()
     val extras: CrewExtrasViewModel = viewModel()
+    val picker =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) extras.pick(activity, uri) else extras.cancelFeedback()
+        }
 
     // Its lines go where the Crew page says everything else.
     LaunchedEffect(extras.message) {
@@ -129,7 +133,12 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
             dismiss = "Not now",
             onConfirm = { consent.launch(wholeScreenCapture(context)) },
             onDismiss = { extras.cancelFeedback() },
-        )
+        ) {
+            InlineAction("Use saved feedback screenshot") {
+                extras.askFeedback(job.seatId, job.label, job.packageName, asking = false)
+                picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        }
     }
 
     extras.explain?.let { why ->

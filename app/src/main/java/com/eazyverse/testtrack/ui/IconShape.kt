@@ -1,22 +1,26 @@
 package com.eazyverse.testtrack.ui
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.core.graphics.drawable.toBitmap
-import coil.compose.SubcomposeAsyncImage
+import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
 import coil.transform.Transformation
+import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.roundToInt
 import android.graphics.Color as AndroidColor
@@ -74,6 +78,7 @@ internal data class CropBox(
 internal data class IconFit(
     val fullSquare: Boolean,
     val crop: CropBox?,
+    val contour: IconContour? = null,
 )
 
 /**
@@ -138,11 +143,28 @@ internal fun iconFit(bitmap: Bitmap): IconFit {
         val pixels = IntArray(w * h)
         readable.getPixels(pixels, 0, w, 0, 0, w, h)
         val alphaAt = { x: Int, y: Int -> AndroidColor.alpha(pixels[y * w + x]) }
-        if (isFullSquare(w, h, alphaAt)) IconFit(true, null) else IconFit(false, cropBox(w, h, alphaAt))
+        if (isFullSquare(w, h, alphaAt)) {
+            IconFit(true, null)
+        } else {
+            val crop = cropBox(w, h, alphaAt)
+            val x = crop?.let { (it.left * w).roundToInt().coerceIn(0, w - 1) } ?: 0
+            val y = crop?.let { (it.top * h).roundToInt().coerceIn(0, h - 1) } ?: 0
+            val cw = crop?.let { ((it.right - it.left) * w).roundToInt().coerceIn(1, w - x) } ?: w
+            val ch = crop?.let { ((it.bottom - it.top) * h).roundToInt().coerceIn(1, h - y) } ?: h
+            IconFit(false, crop, iconContour(cw, ch) { px, py -> alphaAt(x + px, y + py) })
+        }
     } finally {
         if (readable !== bitmap) readable.recycle()
     }
 }
+
+private val installedFits = WeakHashMap<Bitmap, IconFit>()
+
+/** Installed icon bitmaps are immutable to the UI and shared across crew rows. */
+internal fun installedIconFit(bitmap: Bitmap): IconFit =
+    synchronized(installedFits) {
+        installedFits.getOrPut(bitmap) { iconFit(bitmap) }
+    }
 
 /** [bitmap] cut down to [box]. */
 internal fun cropIcon(
@@ -194,7 +216,7 @@ internal object IconShapes {
 private class IconFitTransformation(
     private val model: String,
 ) : Transformation {
-    override val cacheKey: String = "icon-fit-1"
+    override val cacheKey: String = "icon-fit-2"
 
     override suspend fun transform(
         input: Bitmap,
@@ -219,9 +241,11 @@ internal fun ShapedIconImage(
     size: Dp,
     loading: @Composable () -> Unit,
     error: @Composable () -> Unit,
+    outline: Color = Color.Unspecified,
 ) {
     val context = LocalContext.current
-    var square by remember(model) { mutableStateOf(IconShapes.known(model) ?: true) }
+    var fit by remember(model) { mutableStateOf(IconShapes.fit(model)) }
+    var phase by remember(model) { mutableIntStateOf(0) }
     // Hardware bitmaps cannot be read, so this request opts out of them.
     val request =
         remember(model) {
@@ -233,24 +257,31 @@ internal fun ShapedIconImage(
                 .transformations(IconFitTransformation(model))
                 .build()
         }
-    SubcomposeAsyncImage(
-        model = request,
-        contentDescription = null,
-        modifier = if (square) Modifier.size(size).clip(RoundedCornerShape(size * 0.3f)) else Modifier.size(size),
-        loading = { loading() },
-        error = { error() },
-        onSuccess = { state ->
-            // The transformation records the fit while decoding. If it did not run, read the bitmap.
-            val known = IconShapes.known(model)
-            if (known != null) {
-                square = known
-            } else {
-                runCatching { state.result.drawable.toBitmap() }.getOrNull()?.let { bitmap ->
-                    val fit = iconFit(bitmap)
-                    IconShapes.remember(model, fit)
-                    square = fit.fullSquare
+    Box(Modifier.size(size).appIconOutline(outline, if (phase == 1) fit?.contour else null)) {
+        AsyncImage(
+            model = request,
+            contentDescription = null,
+            modifier =
+                Modifier.matchParentSize().then(
+                    if (fit?.fullSquare != false) Modifier.clip(RoundedCornerShape(size * 0.3f)) else Modifier,
+                ),
+            onLoading = { phase = 0 },
+            onError = { phase = 2 },
+            onSuccess = { state ->
+                val known = IconShapes.fit(model)
+                if (known != null) {
+                    fit = known
+                } else {
+                    runCatching { state.result.drawable.toBitmap() }.getOrNull()?.let { bitmap ->
+                        fit = iconFit(bitmap).also { IconShapes.remember(model, it) }
+                    }
                 }
-            }
-        },
-    )
+                phase = 1
+            },
+        )
+        when (phase) {
+            0 -> loading()
+            2 -> error()
+        }
+    }
 }

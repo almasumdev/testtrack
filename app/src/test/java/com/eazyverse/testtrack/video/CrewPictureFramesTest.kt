@@ -378,19 +378,24 @@ class CrewPictureFramesTest {
         set("failure", null)
     }
 
-    /** The member's Play feedback card on the run page. */
+    /** Feedback is part of the unified app tiles on the run page. */
     @Test
     fun p12_feedback() {
-        val vm = crews()
-        show { Pushed { CrewPage(vm = vm, id = running.id, onBack = {}, onSignIn = {}) } }
+        crews()
+        show {
+            Pushed {
+                com.eazyverse.testtrack.ui
+                    .CrewRunPhase(running, CrewActions({}, {}, {}, {}, {}, {}))
+            }
+        }
         frame.settle(800)
-        vm.pictures.clearDriveAsk()
+        compose.mainClock.autoAdvance = true
         compose
             .onAllNodes(
                 androidx.compose.ui.test
                     .hasScrollToNodeAction(),
             )[0]
-            .performScrollToNode(hasText("Private feedback on Play"))
+            .performScrollToNode(hasText("Apps"))
         frame.settle(800)
         frame.write("feedbackCard")
     }

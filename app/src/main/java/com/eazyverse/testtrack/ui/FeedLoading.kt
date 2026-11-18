@@ -1,10 +1,12 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -45,10 +47,9 @@ internal fun FeedRequestLoadingCard() {
         leading = { Skeleton(width = 52.dp, height = 52.dp, corner = 14.dp) },
         stub = {
             TicketStubFrame(null) {
-                // The stub is the same grey as the default bar, so these sit on card like the real ticket does.
-                Skeleton(width = 16.dp, height = 16.dp, corner = 4.dp, ground = t.card)
+                Image(rememberTicketMark(t.card), null, Modifier.size(16.dp).rotate(-12f))
                 Spacer(Modifier.height(3.dp))
-                Skeleton(width = 24.dp, height = 14.dp, corner = 4.dp, ground = t.card)
+                TixLoadingDots()
             }
         },
     ) {

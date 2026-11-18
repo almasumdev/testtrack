@@ -26,6 +26,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -85,17 +87,18 @@ fun FeedScreen(
     // New requests, reviews of yours and verdicts arrive while the tab is open.
     WhileShown(onShow = { vm.startLive(context) }, onHide = vm::stopLive)
 
-    val feedbackList = rememberLazyListState()
+    var feedbackRefresh by remember { mutableIntStateOf(0) }
+    val feedbackList = key(feedbackRefresh) { rememberLazyListState() }
 
     // Near the end of the list, the next page: the first twenty were all there ever was.
-    val nearEnd by remember {
+    val nearEnd by remember(feedbackList) {
         derivedStateOf {
             val info = feedbackList.layoutInfo
             val last = info.visibleItemsInfo.lastOrNull()?.index ?: 0
             info.totalItemsCount > 0 && last >= info.totalItemsCount - 3
         }
     }
-    LaunchedEffect(nearEnd) { if (nearEnd) vm.loadMore() }
+    LaunchedEffect(nearEnd, vm.pulling) { if (nearEnd && !vm.pulling) vm.loadMore() }
 
     // Notifications, offered once and only once there is something of this account's in
     // Feedback to hear about: a request out, or a review taken on. Offered in our own words
@@ -183,60 +186,75 @@ fun FeedScreen(
                 FeedTab.FEEDBACK -> {
                     // Not a sign in prompt. The posts come back for anybody, so nothing here and
                     // offline means the server could not be got at.
-                    val waiting = DebugLooks.holdLoading || (vm.loading && vm.posts.isEmpty())
-                    LoadSwap(waiting) { hold ->
-                        val unreached = !hold && vm.offline && vm.posts.isEmpty()
-                        val none = !hold && !vm.loading && !unreached && vm.openPosts.isEmpty()
-                        if (unreached) {
-                            RobotOffline("Circle didn't load", onRetry = { vm.load(context) })
-                        } else if (none) {
-                            RobotState(
-                                Prop.Music,
-                                "Nobody's asking right now",
-                                "When someone wants feedback on their app, it shows up here. You can ask for some yourself.",
-                                action = "Ask for feedback",
-                                onAction = onAsk,
-                            )
-                        } else {
-                            LazyColumn(
-                                Modifier.fillMaxSize(),
-                                state = if (hold) rememberLazyListState() else feedbackList,
-                                contentPadding =
-                                    PaddingValues(
-                                        start = Gutter,
-                                        top = ListTop,
-                                        end = Gutter,
-                                        bottom = Gutter + dockRoom(),
-                                    ),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                // Only once the server has answered: saved lists can be last time's,
-                                // and a card shown from them would vanish as the real ones arrive.
-                                if (!hold && howTo && vm.answered && !involved) {
-                                    item(key = "howto") {
-                                        Box(Modifier.animateItem()) {
-                                            FeedCard {
-                                                HowToBody(HowTo.CIRCLE, onHide = {
-                                                    HowToCards.hideCircle(context)
-                                                    howTo = false
-                                                })
+                    val waiting = DebugLooks.holdLoading || vm.pulling || (vm.loading && vm.posts.isEmpty())
+                    RefreshBox(
+                        isRefreshing = vm.pulling,
+                        onRefresh = {
+                            if (!vm.pulling) {
+                                feedbackRefresh++
+                                vm.load(context, fromPull = true)
+                            }
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        // A new pull starts on placeholders with a fresh list position. Reusing
+                        // old keyed rows would anchor to an app after the shuffle moves it down.
+                        key(feedbackRefresh) {
+                            LoadSwap(waiting) { hold ->
+                                val unreached = !hold && vm.offline && vm.posts.isEmpty()
+                                val none = !hold && !vm.loading && !unreached && vm.openPosts.isEmpty()
+                                if (unreached) {
+                                    RobotOffline("Circle didn't load", onRetry = { vm.load(context) })
+                                } else if (none) {
+                                    RobotState(
+                                        Prop.Music,
+                                        "Nobody's asking right now",
+                                        "When someone wants feedback on their app, it shows up here. You can ask for some yourself.",
+                                        action = "Ask for feedback",
+                                        onAction = onAsk,
+                                    )
+                                } else {
+                                    LazyColumn(
+                                        Modifier.fillMaxSize(),
+                                        state = if (hold) rememberLazyListState() else feedbackList,
+                                        contentPadding =
+                                            PaddingValues(
+                                                start = Gutter,
+                                                top = ListTop,
+                                                end = Gutter,
+                                                bottom = Gutter + dockRoom(),
+                                            ),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        // Only once the server has answered: saved lists can be last time's,
+                                        // and a card shown from them would vanish as the real ones arrive.
+                                        if (!hold && howTo && vm.answered && !involved) {
+                                            item(key = "howto") {
+                                                Box(Modifier.animateItem()) {
+                                                    FeedCard {
+                                                        HowToBody(HowTo.CIRCLE, onHide = {
+                                                            HowToCards.hideCircle(context)
+                                                            howTo = false
+                                                        })
+                                                    }
+                                                }
                                             }
                                         }
-                                    }
-                                }
-                                if (hold) items(SKELETON_ROWS) { FeedRequestLoadingCard() }
-                                items(if (hold) emptyList() else vm.openPosts, key = { it.id }) { post ->
-                                    // Fades in, fades out and glides to its new place when the list changes.
-                                    Box(Modifier.animateItem()) {
-                                        // Group membership is required for closed testing only.
-                                        FeedRequestCard(post) {
-                                            // Signed out, a review cannot be claimed: ask for the account first.
-                                            if (vm.signedOut) {
-                                                onSignInToReview()
-                                            } else if (post.isLive) {
-                                                onReview(Json.encodeToString(post))
-                                            } else {
-                                                membership.require { onReview(Json.encodeToString(post)) }
+                                        if (hold) items(SKELETON_ROWS) { FeedRequestLoadingCard() }
+                                        items(if (hold) emptyList() else vm.openPosts, key = { it.id }) { post ->
+                                            // Fades in, fades out and glides to its new place when the list changes.
+                                            Box(Modifier.animateItem()) {
+                                                // Group membership is required for closed testing only.
+                                                FeedRequestCard(post) {
+                                                    // Signed out, a review cannot be claimed: ask for the account first.
+                                                    if (vm.signedOut) {
+                                                        onSignInToReview()
+                                                    } else if (post.isLive) {
+                                                        onReview(Json.encodeToString(post))
+                                                    } else {
+                                                        membership.require { onReview(Json.encodeToString(post)) }
+                                                    }
+                                                }
                                             }
                                         }
                                     }

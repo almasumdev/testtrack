@@ -25,6 +25,7 @@ import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import com.eazyverse.testtrack.viewmodel.replyWithPicture
+import com.eazyverse.testtrack.viewmodel.requirePlayInstall
 import com.eazyverse.testtrack.viewmodel.sendProof
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -156,6 +157,7 @@ class ReviewViewModel : ViewModel() {
         data: Intent,
         pkg: String,
     ) {
+        if (!requirePlayInstall(context)) return
         ReviewCaptureService.start(context, code, data)
         openPlay(context, pkg)
         markLeft()
@@ -191,6 +193,7 @@ class ReviewViewModel : ViewModel() {
         val saved = if (job == null) ReviewKeep.get(context, post.id)?.takeUnless { left && it.state in ENDED } else null
         if (saved != null) {
             job = ReviewJob(post, saved, leftReview = leftFor(context, saved.id))
+            requirePlayInstall(context)
             restore(context, saved.id)
         }
         run(onOffline = { if (job == null) failure = "TestTrack could not be reached. Check your connection." }) {
@@ -207,7 +210,7 @@ class ReviewViewModel : ViewModel() {
             // nothing anywhere.
             if (mine == null) {
                 val here = InstalledApps.info(context, post.packageName)
-                job = ReviewJob(post, previewOf(post), onPhone = here.installed && here.installer == PLAY)
+                job = ReviewJob(post, previewOf(post), onPhone = here.fromPlay)
                 return@run
             }
             val review = mine
@@ -262,8 +265,9 @@ class ReviewViewModel : ViewModel() {
         context: Context,
         id: String,
     ) {
-        ProofStore.proof(context, id)?.let { proof = Uri.fromFile(it) }
+        proof = ProofStore.proof(context, id)?.let(Uri::fromFile)
         note = ProofStore.note(context, id)
+        job = job?.let { it.copy(noBox = it.noBox || ProofStore.noBox(context, id)) }
     }
 
     private fun leftFor(
@@ -287,21 +291,21 @@ class ReviewViewModel : ViewModel() {
     internal var keeps = 0
         private set
 
-    /** The review that is being sent without Play, because Play showed no review box. */
-    private var noBoxFor: String? = null
-
     /** Play showed no review box: on to the proof step, to send it here instead, for half. */
-    fun markNoBox() {
-        val current = job ?: return
-        noBoxFor = current.review.id
+    fun markNoBox(): Boolean {
+        val context = app ?: return false
+        if (!requirePlayInstall(context)) return false
+        val current = job?.takeIf { it.live && it.step == ReviewStep.LEAVE } ?: return false
+        ProofStore.markNoBox(context, current.review.id)
         job = current.copy(leftReview = true, noBox = true)
+        return true
     }
 
     /** Show a job the server has just confirmed, and save it as the last word. */
     internal fun keep(next: ReviewJob) {
         keeps++
         // With the phone's own record of the first day of use, where it has one (ReviewClock).
-        val marked = next.copy(noBox = next.noBox || noBoxFor == next.review.id)
+        val marked = next.copy(noBox = next.noBox || next.review.noBox || app?.let { ProofStore.noBox(it, next.review.id) } == true)
         job = app?.let { marked.copy(firstUsedHere = ReviewClock.firstUse(it, next.review.id)) } ?: marked
         app?.let { ReviewKeep.put(it, next.post.id, next.review) }
     }
@@ -323,31 +327,30 @@ class ReviewViewModel : ViewModel() {
         }
     }
 
-    /**
-     * What the phone sees for [current], reported to the server. [settle] waits a moment for usage
-     * events still being written, which matters on a return from the app and not on first open.
-     */
+    /** Report fresh phone observations. [settle] waits for Android to finish writing usage events. */
     private suspend fun look(
         context: Context,
         current: ReviewJob,
         settle: Boolean,
     ): ReviewJob {
-        if (current.settled || current.review.id.isEmpty()) return current
+        if (current.settled) return current
         usageAccess = UsageRepo.hasAccess(context)
         val info = InstalledApps.info(context, current.post.packageName)
 
-        // Present, but sideloaded. Worth saying rather than silently not advancing, because the
-        // reviewer can see the app on their own home screen and would otherwise think the check
-        // was broken.
-        sideloaded = info.installed && info.installer != PLAY
+        sideloaded = info.installed && !info.fromPlay
+        if (current.review.id.isEmpty()) return current.copy(onPhone = info.fromPlay)
+        if (!info.fromPlay) return current.copy(requiresPlayInstall = true, onPhone = false)
 
         var review = current.review
-        if (review.state == CLAIMED && info.installed && !sideloaded) {
+        if (review.state == CLAIMED) {
             review = Api.installed(review.id)
             offline = false
         }
         if (review.state == INSTALLED || review.state == USED) {
             val use = ReviewClock.measure(context, current.post.packageName, review.id, review.createdAt, review.neededMs, settle)
+            if (!InstalledApps.info(context, current.post.packageName).fromPlay) {
+                return current.copy(review = review, requiresPlayInstall = true)
+            }
             // A new day of use is news even when the total has not moved since the last report, and
             // so is a live review's hours passing: the server opens its last step on being asked.
             val due = review.state == INSTALLED && review.returnsAt?.let(::isPast) == true
@@ -356,11 +359,12 @@ class ReviewViewModel : ViewModel() {
                 offline = false
             }
         }
-        return current.copy(review = review)
+        return current.copy(review = review, requiresPlayInstall = false)
     }
 
     /** On to the proof: the reviewer has been to Google Play for it, or will screenshot it themselves. */
     fun markLeft() {
+        if (!requirePlayInstall(app ?: return)) return
         val current = job ?: return
         app?.let { ProofStore.markLeft(it, current.review.id) }
         job = current.copy(leftReview = true)
@@ -391,6 +395,7 @@ class ReviewViewModel : ViewModel() {
         val current = job ?: return
         // No message on success: the page itself turns into the sent screen.
         run(waits = true, onOffline = { message = "You're offline. Your screenshot and note are saved; send them once you're back." }) {
+            if (!requirePlayInstall(activity)) return@run
             keep(current.copy(review = sendProof(activity, current, proof, note)))
             offline = false
             dropProof(current.review.id)
@@ -480,7 +485,6 @@ class ReviewViewModel : ViewModel() {
     }
 
     private companion object {
-        const val PLAY = "com.android.vending"
         const val CLAIMED = "claimed"
         const val INSTALLED = "installed"
         const val USED = "used"

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>TestTrack · updated crew page</title>
+  <style>
+    :root{color-scheme:light dark;--ground:light-dark(#f7fcff,#0f1011);--ink:light-dark(#142f43,#eceef0);--muted:light-dark(#59758a,#9da3a9);--line:light-dark(#b7d1e2,#383c41)}
+    *{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:14px/1.5 system-ui,sans-serif}main{max-width:430px;margin:24px auto;padding:0 16px 24px}header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px}h1{font-size:16px;font-weight:600;margin:0}small{color:var(--muted);font-size:12px}label{display:grid;gap:6px;font-size:12px;color:var(--muted)}select{width:100%;padding:12px;background:var(--ground);color:var(--ink);border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px}figure{margin:18px 0 0}img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:18px}figcaption{font-size:12px;color:var(--muted);margin-top:10px;text-align:center}
+  </style>
+</head>
+<body>
+<main>
+  <header><h1>Updated crew page</h1><small>Native app renders</small></header>
+  <label for="crew-screen">Screen<select id="crew-screen">
+    <option value="tonight">Run · tonight</option><option value="lobby">Lobby · filling</option><option value="waiting">Lobby · full, waiting for midnight</option><option value="missed">Run · missed yesterday</option><option value="record">Record · completed</option><option value="crewGuide">Complete guide · beginning</option><option value="crewGuideEnd">Complete guide · finishing and refunds</option>
+  </select></label>
+  <figure><img id="crew-native" src="../../../media/public/frames/crew/tonight.png" alt="Updated native crew page: tonight"><figcaption>Run · tonight</figcaption></figure>
+</main>
+<script>
+const picker=document.getElementById('crew-screen'),shot=document.getElementById('crew-native'),caption=document.querySelector('figcaption');
+picker.addEventListener('change',()=>{shot.src=`../../../media/public/frames/crew/${picker.value}.png`;shot.alt=`Updated native crew page: ${picker.selectedOptions[0].textContent}`;caption.textContent=picker.selectedOptions[0].textContent;});
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import com.eazyverse.testtrack.viewmodel.requirePlayInstall
 
 /*
  * The review page's small reads of the phone and of what it remembers, beside its view model so
@@ -31,16 +32,10 @@ fun ReviewViewModel.openOverlaySettings(context: Context) {
     }
 }
 
-/**
- * Only viewed so far: not taken, or taken but the app is not installed yet. Until it is installed
- * the page is a view, with nothing to give up or report.
- */
-val ReviewViewModel.previewing: Boolean get() = job?.step == ReviewStep.INSTALL
-
 /** Install tapped: taken, then Play for it, or, already on the phone, a fresh look that moves it on. */
 fun ReviewViewModel.install(
     context: Context,
     openPlay: () -> Unit,
 ) {
-    if (job?.onPhone == true) take(context) { refresh(context) } else take(context, openPlay)
+    if (job?.onPhone == true && requirePlayInstall(context)) take(context) { refresh(context) } else take(context, openPlay)
 }

@@ -1,0 +1,687 @@
+diff --git a/app/src/main/java/com/eazyverse/testtrack/ui/CrewLeftRun.kt b/app/src/main/java/com/eazyverse/testtrack/ui/CrewLeftRun.kt
+index d5f7e23..a39e642 100644
+--- a/app/src/main/java/com/eazyverse/testtrack/ui/CrewLeftRun.kt
++++ b/app/src/main/java/com/eazyverse/testtrack/ui/CrewLeftRun.kt
+@@ -38,7 +38,7 @@ internal fun OwnerOutCard(
+         when {
+             // Put back once after an appeal, and out again: there is no second appeal.
+             appeal?.state == "accepted" ->
+-                CrewHero(
++                CrewPageHero(
+                     chip = "Out again",
+                     tone = Tone.BAD,
+                     icon = Lucide.CircleX,
+@@ -48,7 +48,7 @@ internal fun OwnerOutCard(
+                     onAction = actions.onTakeSeat,
+                 )
+             appeal == null && !mine.canAppeal ->
+-                CrewHero(
++                CrewPageHero(
+                     chip = "Your app is out",
+                     tone = Tone.BAD,
+                     icon = Lucide.CircleX,
+@@ -58,7 +58,7 @@ internal fun OwnerOutCard(
+                     onAction = actions.onTakeSeat,
+                 )
+             appeal == null ->
+-                CrewHero(
++                CrewPageHero(
+                     chip = "Your app is out",
+                     tone = Tone.BAD,
+                     icon = Lucide.CircleX,
+@@ -68,7 +68,7 @@ internal fun OwnerOutCard(
+                     onAction = { actions.onAppeal(mine) },
+                 )
+             appeal.waiting ->
+-                CrewHero(
++                CrewPageHero(
+                     chip = "Asked to get it back",
+                     tone = Tone.WARN,
+                     icon = Lucide.Hourglass,
+@@ -78,7 +78,7 @@ internal fun OwnerOutCard(
+                             "can't put an app in a new crew.",
+                 )
+             else ->
+-                CrewHero(
++                CrewPageHero(
+                     chip = "Not taken back",
+                     tone = Tone.BAD,
+                     icon = Lucide.CircleX,
+diff --git a/app/src/main/java/com/eazyverse/testtrack/ui/CrewPage.kt b/app/src/main/java/com/eazyverse/testtrack/ui/CrewPage.kt
+index 81799da..17573b0 100644
+--- a/app/src/main/java/com/eazyverse/testtrack/ui/CrewPage.kt
++++ b/app/src/main/java/com/eazyverse/testtrack/ui/CrewPage.kt
+@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
+ import androidx.compose.foundation.layout.padding
+ import androidx.compose.material3.ExperimentalMaterial3Api
+ import androidx.compose.material3.Scaffold
++import androidx.compose.material3.Text
++import androidx.compose.material3.TextButton
+ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.DisposableEffect
+ import androidx.compose.runtime.LaunchedEffect
+@@ -16,6 +18,7 @@ import androidx.compose.runtime.collectAsState
+ import androidx.compose.runtime.getValue
+ import androidx.compose.runtime.mutableStateOf
+ import androidx.compose.runtime.remember
++import androidx.compose.runtime.saveable.rememberSaveable
+ import androidx.compose.runtime.setValue
+ import androidx.compose.ui.Modifier
+ import androidx.compose.ui.graphics.Color
+@@ -56,6 +59,7 @@ fun CrewPage(
+     val context = LocalContext.current
+     val dialogs = rememberCrewDialogs()
+     val crew = vm.crews.firstOrNull { it.id == id }
++    var guideOpen by rememberSaveable(id) { mutableStateOf(false) }
+     LaunchedEffect(id) { if (crew == null) vm.load(context) }
+     // Shown once and then gone from your crews: you took your app out, or it was sent back. The
+     // page has nothing left to show, so it closes rather than waiting for a crew that is not coming.
+@@ -87,6 +91,9 @@ fun CrewPage(
+             Column {
+                 // Its name, and once it runs, the way to its members. Where it stands is the first card.
+                 PageBar(crew?.name ?: "Crew", onBack) {
++                    if (crew != null) {
++                        TextButton(onClick = { guideOpen = true }) { Text("Guide") }
++                    }
+                     if (crew != null && (crew.phase == CrewPhase.RUN || crew.phase == CrewPhase.RECORD)) {
+                         MembersButton(crew.members.size, onMembers)
+                     }
+@@ -114,6 +121,7 @@ fun CrewPage(
+         }
+     }
+     CrewDialogsHost(vm, dialogs)
++    if (guideOpen && crew != null) CrewDetailGuide(crew) { guideOpen = false }
+     val pkg = crew?.mine?.packageName
+     val startId = apps.apps.firstOrNull { it.pkg == pkg }?.id
+     LaunchedEffect(seating, startId) {
+diff --git a/app/src/main/java/com/eazyverse/testtrack/ui/CrewPageParts.kt b/app/src/main/java/com/eazyverse/testtrack/ui/CrewPageParts.kt
+index 1186fb9..b770fdd 100644
+--- a/app/src/main/java/com/eazyverse/testtrack/ui/CrewPageParts.kt
++++ b/app/src/main/java/com/eazyverse/testtrack/ui/CrewPageParts.kt
+@@ -26,7 +26,6 @@ import androidx.compose.ui.graphics.Color
+ import androidx.compose.ui.graphics.vector.ImageVector
+ import androidx.compose.ui.text.font.FontWeight
+ import androidx.compose.ui.text.style.TextAlign
+-import androidx.compose.ui.text.style.TextOverflow
+ import androidx.compose.ui.unit.dp
+ import androidx.compose.ui.unit.sp
+ import com.composables.icons.lucide.Lucide
+@@ -257,50 +256,6 @@ internal fun StatTiles(vararg pairs: Pair<String, String>) {
+     }
+ }
+ 
+-/**
+- * The reader's own app in this crew: its icon and name, where it stands, its sign-in as the crew
+- * sees it, and whatever goes with that state below.
+- */
+-@Composable
+-internal fun YourAppCard(
+-    seat: CrewSeat,
+-    chip: String,
+-    tone: Tone,
+-    status: String,
+-    extra: (@Composable () -> Unit)? = null,
+-    action: (@Composable () -> Unit)? = null,
+-) {
+-    CrewCard(
+-        padding =
+-            androidx.compose.foundation.layout
+-                .PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+-    ) {
+-        Row(verticalAlignment = Alignment.CenterVertically) {
+-            AppMark(seat.packageName, seat.appName, seat.icon, size = 52.dp)
+-            Spacer(Modifier.width(12.dp))
+-            Column(Modifier.weight(1f)) {
+-                Text(
+-                    seat.appName,
+-                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 19.sp),
+-                    fontWeight = FontWeight.SemiBold,
+-                    maxLines = 2,
+-                    overflow = TextOverflow.Ellipsis,
+-                )
+-                Spacer(Modifier.height(2.dp))
+-                Text(status, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text3)
+-            }
+-            Spacer(Modifier.width(10.dp))
+-            StatusChip(chip, tone)
+-        }
+-        if (seat.notes.isNotBlank()) {
+-            Spacer(Modifier.height(12.dp))
+-            TintBox { SignInDetails(seat.notes) }
+-        }
+-        extra?.invoke()
+-        action?.invoke()
+-    }
+-}
+-
+ /** A thin-edged outline around the members button in the bar: people, and how many. */
+ @Composable
+ internal fun MembersButton(
+diff --git a/app/src/main/java/com/eazyverse/testtrack/ui/CrewPageRows.kt b/app/src/main/java/com/eazyverse/testtrack/ui/CrewPageRows.kt
+index 4c46234..acecc12 100644
+--- a/app/src/main/java/com/eazyverse/testtrack/ui/CrewPageRows.kt
++++ b/app/src/main/java/com/eazyverse/testtrack/ui/CrewPageRows.kt
+@@ -34,8 +34,6 @@ import androidx.compose.ui.text.withStyle
+ import androidx.compose.ui.unit.Dp
+ import androidx.compose.ui.unit.dp
+ import androidx.compose.ui.unit.sp
+-import com.composables.icons.lucide.ChevronRight
+-import com.composables.icons.lucide.Lucide
+ import com.eazyverse.testtrack.ui.theme.Tt
+ 
+ /*
+@@ -159,7 +157,6 @@ internal fun CrewPageRow(
+         onClick = if (out) null else onOpen,
+         trailing = {
+             trailing()
+-            if (!out) Icon(Lucide.ChevronRight, null, Modifier.padding(start = 2.dp).size(18.dp), tint = Tt.colors.text4)
+         },
+     )
+ }
+@@ -200,9 +197,9 @@ internal fun InstallRow(
+         onSheet(RowSheet(seat, SheetKind.INSTALL))
+     }) {
+         when {
+-            seat.reported -> StatusChip("Reported", Tone.WARN)
+-            seat.state == SeatState.CHECKING -> StatusChip("Being checked", Tone.QUIET)
+-            installed -> StatusChip("Installed", Tone.OK)
++            seat.reported -> CrewPageStatus("Reported", Tone.WARN)
++            seat.state == SeatState.CHECKING -> CrewPageStatus("Being checked", Tone.QUIET)
++            installed -> CrewPageStatus("Installed", Tone.OK)
+             else -> RowPill("Install", PillKind.SOFT) { actions.onInstall(seat) }
+         }
+     }
+@@ -232,8 +229,8 @@ internal fun AskedRow(
+         icon = seat.icon,
+     ) {
+         when {
+-            seat.myVote == true -> StatusChip("You said Yes", Tone.OK)
+-            seat.myVote == false -> StatusChip("You said No", Tone.WARN)
++            seat.myVote == true -> CrewPageStatus("You said Yes", Tone.OK)
++            seat.myVote == false -> CrewPageStatus("You said No", Tone.WARN)
+             installed -> RowPill("It installed", PillKind.OK, busy = actions.busySeat == seat.id) { actions.onVote(seat, true) }
+             else -> RowPill("Install", PillKind.SOFT) { actions.onInstall(seat) }
+         }
+@@ -316,10 +313,10 @@ internal fun DoneRow(
+         onSheet(RowSheet(seat, SheetKind.DONE, app))
+     }) {
+         when {
+-            app.reported -> StatusChip("Reported", Tone.WARN)
++            app.reported -> CrewPageStatus("Reported", Tone.WARN)
+             notPlay && actions != null -> RowPill("Install", PillKind.SOFT) { actions.onInstall(seat) }
+             old && actions != null -> RowPill("Update", PillKind.SOFT) { actions.onUpdateApp(app) }
+-            else -> StatusChip("Opened", Tone.OK)
++            else -> CrewPageStatus("Opened", Tone.OK)
+         }
+     }
+ }
+diff --git a/app/src/main/java/com/eazyverse/testtrack/ui/CrewPhases.kt b/app/src/main/java/com/eazyverse/testtrack/ui/CrewPhases.kt
+index 094b053..7c019ae 100644
+--- a/app/src/main/java/com/eazyverse/testtrack/ui/CrewPhases.kt
++++ b/app/src/main/java/com/eazyverse/testtrack/ui/CrewPhases.kt
+@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.padding
+ import androidx.compose.foundation.lazy.LazyColumn
+ import androidx.compose.foundation.lazy.LazyListScope
+ import androidx.compose.foundation.lazy.itemsIndexed
+-import androidx.compose.material3.MaterialTheme
+-import androidx.compose.material3.Text
+ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.getValue
+ import androidx.compose.runtime.mutableStateOf
+@@ -65,6 +63,7 @@ private fun CrewList(
+ ) {
+     var sheet by remember { mutableStateOf<RowSheet?>(null) }
+     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = ListTop, bottom = Gutter + dockRoom())) {
++        item(key = "app-header") { Box(Modifier.padding(horizontal = Gutter)) { CrewDetailApp(crew) } }
+         content { sheet = it }
+     }
+     sheet?.let { CrewRowSheet(it, crew.name, actions) { sheet = null } }
+@@ -89,22 +88,22 @@ fun CrewLobbyPhase(
+         // in this crew any more, and its owner is told why rather than shown a lobby.
+         if (mine != null && (mine.state == SeatState.REJECTED || mine.state == SeatState.REMOVED)) {
+             block { SentBack(crew, mine, actions) }
+-            item { CrewHeading("Your app") }
+-            block { YourAppCard(mine, "Sent back", Tone.BAD, "Not in ${crew.name} any more.") }
++            item { CrewPageHeading("Your seat") }
++            block { CrewAppStatus(mine, "Sent back", Tone.BAD, "Not in ${crew.name} any more.") }
+             return@CrewList
+         }
+         block { LobbyHero(crew) }
+         if (mine != null) {
+-            item { CrewHeading("Your app") }
++            item { CrewPageHeading("Your seat") }
+             block { LobbyYourApp(crew, mine, actions) }
+         }
+         if (asked.isNotEmpty()) {
+-            item { CrewHeading("Does it install for you?", "${asked.size}") }
++            item { CrewPageHeading("Does it install for you?", "${asked.size}") }
+             item { AskedSteps() }
+             rows("ask", asked, { it.id }) { seat, place -> AskedRow(seat, place, actions, onSheet) }
+         }
+         if (install.isNotEmpty()) {
+-            item { CrewHeading("Install these") }
++            item { CrewPageHeading("Install these") }
+             rows("in", install, { it.id }) { seat, place -> InstallRow(seat, place, actions, onSheet) }
+         }
+     }
+@@ -117,15 +116,19 @@ private val DECIDES =
+ /** What to do with an app Play could not check, as steps, over the rows that ask. */
+ @Composable
+ private fun AskedSteps() {
+-    Column(Modifier.padding(start = Gutter, end = Gutter, bottom = 10.dp)) {
++    Column(
++        Modifier.padding(start = Gutter, end = Gutter, bottom = 10.dp),
++        verticalArrangement =
++            androidx.compose.foundation.layout.Arrangement
++                .spacedBy(8.dp),
++    ) {
+         listOf(
+             "Play couldn't check these, so members decide.",
+-            "1. Install the app from its row.",
+-            "2. Once it's on your phone, the row asks if it works. Answer Yes or No.",
+-            "3. Won't install? Tap the row and say so.",
++            "Install from Play, then use It installed if it works.",
++            "Won't install? Tap the app tile and tell the crew why.",
+             DECIDES,
+         ).forEach { line ->
+-            Text(line, Modifier.padding(top = 2.dp), style = MaterialTheme.typography.bodySmall, color = Tt.colors.text4)
++            CrewGuideBullet(line)
+         }
+     }
+ }
+@@ -134,20 +137,20 @@ private fun AskedSteps() {
+ private fun LobbyHero(crew: Crew) {
+     val checking = (crew.taken - crew.filled).coerceAtLeast(0)
+     if (crew.filling) {
+-        CrewHero(
++        CrewPageHero(
+             chip = "Filling, ${crew.filled} of ${CrewRules.SEATS}",
+             tone = Tone.ACCENT,
+             icon = Lucide.Users,
+             headline = "${CrewRules.SEATS - crew.filled} more and it starts",
+             line = "It starts at midnight, your time, the day it's full. Install the others now, so day 1 is only opening them.",
+             meter = {
+-                SeatMeter(crew.filled, checking)
++                CrewSeatMap(crew)
+                 MeterLabels("${crew.filled} in" + if (checking > 0) ", $checking being checked" else "", "${CrewRules.SEATS} seats")
+             },
+         )
+     } else if (crew.firstNight > 1) {
+         // Put in by the team part-way through: this account's own run starts on a later day.
+-        CrewHero(
++        CrewPageHero(
+             chip = "Joining on day ${crew.firstNight}",
+             tone = Tone.OK,
+             icon = Lucide.Clock,
+@@ -161,14 +164,14 @@ private fun LobbyHero(crew: Crew) {
+             },
+         )
+     } else {
+-        CrewHero(
++        CrewPageHero(
+             chip = "Full, ${CrewRules.SEATS} of ${CrewRules.SEATS}",
+             tone = Tone.OK,
+             icon = Lucide.Clock,
+             headline = "Starts in ${untilStart(crew.startsIn)}",
+             line = "Day 1 begins at midnight, your time. Install the other ${CrewRules.NIGHTLY} before then and no day counts against you.",
+             meter = {
+-                SeatMeter(crew.filled, checking)
++                CrewSeatMap(crew)
+                 MeterLabels("Everyone's in", "Day 1 at midnight, your time")
+             },
+         )
+@@ -185,7 +188,7 @@ private fun LobbyYourApp(
+         when {
+             mine.state == SeatState.CHECKING -> "Checking" to Tone.WARN
+             mine.reports > 0 -> "${mine.reports} of ${CrewRules.REPORTS_TO_RETURN} reports" to Tone.WARN
+-            else -> "In" to Tone.OK
++            else -> "Seat held" to Tone.OK
+         }
+     val status =
+         when {
+@@ -194,7 +197,7 @@ private fun LobbyYourApp(
+             !crew.filling -> "Play shows it to the testers group. The crew is full, so it stays in now."
+             else -> "Play shows it to the testers group."
+         }
+-    YourAppCard(
++    CrewAppStatus(
+         mine,
+         chip,
+         tone,
+@@ -235,7 +238,7 @@ private fun SentBack(
+ ) {
+     val byTeam = mine.state == SeatState.REMOVED
+     androidx.compose.foundation.layout.Column {
+-        CrewHero(
++        CrewPageHero(
+             chip = if (byTeam) "Taken out" else "Sent back",
+             tone = Tone.BAD,
+             icon = Lucide.Undo2,
+@@ -277,26 +280,20 @@ fun CrewRunPhase(
+         if (crew.nightsDone) {
+             block { NightsDoneHero(crew) }
+             crew.mine?.let { mine ->
+-                item { CrewHeading("Your app") }
++                item { CrewPageHeading("Your testers") }
+                 block { TestersCard(crew, mine, actions) }
+             }
+             return@CrewList
+         }
+         block { RunHero(crew, owed, here, missing, refused, actions) }
+         // Tonight's pictures missing or sending, and any older night's still on the phone.
+-        block { PicturesDueCard(crew.apps + crew.optional, actions) }
+-        block { PlayFeedbackCard(crew, actions) }
+-        crew.mine?.let { mine ->
+-            item { CrewHeading("Your app") }
+-            block { TestersCard(crew, mine, actions) }
+-            block { OwnerToolsCard(mine, actions) }
+-        }
++        block { PicturesDueCard(crew.apps + crew.optional, actions, sectioned = true) }
+         if (owed.isNotEmpty()) {
+-            item { CrewHeading("Tonight", "${owed.size}") }
++            item { CrewPageHeading("Tonight", "${owed.size}") }
+             rows("t", owed, { it.id }) { app, place -> TonightRow(app, seatOf(app), place, actions, onSheet) }
+         }
+         if (crew.optional.isNotEmpty()) {
+-            item { CrewHeading("Optional tonight") }
++            item { CrewPageHeading("Optional tonight") }
+             item { OptionalNote() }
+             rows("o", crew.optional, { it.id }) { app, place ->
+                 if (app.done || app.reported) {
+@@ -307,16 +304,22 @@ fun CrewRunPhase(
+             }
+         }
+         if (settled.isNotEmpty()) {
+-            item { CrewHeading("Done") }
++            item { CrewPageHeading("Done") }
+             rows("d", settled, { it.id }) { app, place -> DoneRow(app, seatOf(app), place, actions, onSheet) }
+         }
+         // Taken out: nobody owes them; listed until uninstalled, so the reader knows which they were.
+         val left = crew.left.filter { actions.isInstalled(it.packageName) }
+         if (left.isNotEmpty()) {
+-            item { CrewHeading("Left the run") }
++            item { CrewPageHeading("Left the run") }
+             item { LeftRunNote() }
+             rows("l", left, { it.id }) { app, place -> LeftRow(app, seatOf(app), place, actions) }
+         }
++        block { PlayFeedbackCard(crew, actions) }
++        crew.mine?.let { mine ->
++            item { CrewPageHeading("Your testers") }
++            block { TestersCard(crew, mine, actions) }
++            block { OwnerToolsCard(mine, actions) }
++        }
+     }
+ }
+ 
+@@ -338,7 +341,7 @@ private fun TestersCard(
+         } else {
+             "Opened by $opened of $testers testers so far tonight."
+         }
+-    YourAppCard(
++    CrewAppStatus(
+         mine.copy(notes = ""),
+         "$opened of $testers",
+         if (!finished) {
+@@ -379,7 +382,7 @@ fun CrewRecordPhase(
+     val enough = stayed >= CrewRules.FLOOR
+     CrewList(crew, actions) { _ ->
+         block {
+-            CrewHero(
++            CrewPageHero(
+                 chip = "Finished after ${crew.finishedDays} days",
+                 tone = if (enough) Tone.OK else Tone.WARN,
+                 icon = if (enough) Lucide.CircleCheck else Lucide.TriangleAlert,
+@@ -401,7 +404,7 @@ fun CrewRecordPhase(
+             block { CardNote("You opened every app on every night, so your ${mine.refunded} tix came back.") }
+         }
+         crew.mine?.let { mine ->
+-            item { CrewHeading("Your app") }
++            item { CrewPageHeading("Your testers") }
+             block { TestersCard(crew, mine, actions) }
+         }
+     }
+diff --git a/app/src/main/java/com/eazyverse/testtrack/ui/CrewPicturesDue.kt b/app/src/main/java/com/eazyverse/testtrack/ui/CrewPicturesDue.kt
+index d7455cd..ff0cb3b 100644
+--- a/app/src/main/java/com/eazyverse/testtrack/ui/CrewPicturesDue.kt
++++ b/app/src/main/java/com/eazyverse/testtrack/ui/CrewPicturesDue.kt
+@@ -14,6 +14,8 @@ import androidx.compose.ui.Alignment
+ import androidx.compose.ui.Modifier
+ import androidx.compose.ui.text.font.FontWeight
+ import androidx.compose.ui.unit.dp
++import com.composables.icons.lucide.Camera
++import com.composables.icons.lucide.Lucide
+ import com.eazyverse.testtrack.ui.theme.Tt
+ 
+ /*
+@@ -30,20 +32,26 @@ import com.eazyverse.testtrack.ui.theme.Tt
+ internal fun PicturesDueCard(
+     apps: List<CrewApp>,
+     actions: CrewActions,
++    sectioned: Boolean = false,
+ ) {
+     val due = apps.filter { it.pictureDue }
+     val stuck = due.filterNot { actions.sendingPicture(it) }
+     // Tonight's waiting to send, and any app with an older night's picture still on the phone.
+     val sending = apps.filter { actions.sendingPicture(it) || actions.waitingPicture(it.id) }
+     if (stuck.isEmpty() && sending.isEmpty()) return
+-    Box(Modifier.padding(top = 8.dp)) {
+-        CrewCard {
+-            if (stuck.isNotEmpty()) Missing(stuck, actions)
++    Box(Modifier.padding(top = if (sectioned) 24.dp else 8.dp)) {
++        val content: @Composable () -> Unit = {
++            if (sectioned) {
++                ReviewSectionTitle(Lucide.Camera, "Pictures to finish")
++                Spacer(Modifier.height(10.dp))
++            }
++            if (stuck.isNotEmpty()) Missing(stuck, actions, sectioned)
+             if (sending.isNotEmpty()) {
+                 if (stuck.isNotEmpty()) Spacer(Modifier.height(16.dp))
+-                Sending(sending, actions)
++                Sending(sending, actions, sectioned)
+             }
+         }
++        if (sectioned) Column { content() } else CrewCard { content() }
+     }
+ }
+ 
+@@ -51,17 +59,18 @@ internal fun PicturesDueCard(
+ private fun Sending(
+     sending: List<CrewApp>,
+     actions: CrewActions,
++    plain: Boolean,
+ ) {
+     val why = actions.picturesStuck
+     val late = sending.any { actions.latePicture(it.id) }
+-    StatusChip(
+-        "Sending ${sending.size} ${if (sending.size == 1) "picture" else "pictures"}",
++    val title = "Sending ${sending.size} ${if (sending.size == 1) "picture" else "pictures"}"
++    val tone =
+         when {
+             late -> Tone.BAD
+             why != null -> Tone.WARN
+             else -> Tone.ACCENT
+-        },
+-    )
++        }
++    if (plain) CrewPageStatus(title, tone) else StatusChip(title, tone)
+     Text(
+         when {
+             late && why != null -> "Waiting more than 3 hours. $why"
+@@ -83,8 +92,10 @@ private fun Sending(
+ private fun Missing(
+     stuck: List<CrewApp>,
+     actions: CrewActions,
++    plain: Boolean,
+ ) {
+-    StatusChip("${stuck.size} ${if (stuck.size == 1) "picture" else "pictures"} missing", Tone.WARN)
++    val title = "${stuck.size} ${if (stuck.size == 1) "picture" else "pictures"} missing"
++    if (plain) CrewPageStatus(title, Tone.WARN) else StatusChip(title, Tone.WARN)
+     stuck.forEachIndexed { index, app ->
+         if (index > 0) Spacer(Modifier.height(14.dp))
+         Text(
+diff --git a/app/src/main/java/com/eazyverse/testtrack/ui/CrewRunCards.kt b/app/src/main/java/com/eazyverse/testtrack/ui/CrewRunCards.kt
+index 0a34963..8b3284f 100644
+--- a/app/src/main/java/com/eazyverse/testtrack/ui/CrewRunCards.kt
++++ b/app/src/main/java/com/eazyverse/testtrack/ui/CrewRunCards.kt
+@@ -13,8 +13,11 @@ import androidx.compose.material3.Text
+ import androidx.compose.runtime.Composable
+ import androidx.compose.ui.Alignment
+ import androidx.compose.ui.Modifier
+-import androidx.compose.ui.text.font.FontWeight
++import androidx.compose.ui.text.AnnotatedString
+ import androidx.compose.ui.unit.dp
++import com.composables.icons.lucide.Lucide
++import com.composables.icons.lucide.MessageSquare
++import com.composables.icons.lucide.Settings2
+ import com.eazyverse.testtrack.ui.theme.Tt
+ 
+ /*
+@@ -33,20 +36,18 @@ internal fun OwnerToolsCard(
+     actions: CrewActions,
+ ) {
+     val blocked = actions.updateBlocked(mine)
+-    Box(Modifier.padding(top = 8.dp)) {
+-        CrewCard {
+-            Text("Tell your crew", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+-            Text(
++    Box(Modifier.padding(top = 24.dp)) {
++        Column {
++            ReviewSectionTitle(Lucide.Settings2, "Manage your app")
++            Spacer(Modifier.height(8.dp))
++            CrewGuideBullet(
+                 if (mine.versionCode != null) {
+                     "They have version ${mine.versionName.ifBlank {
+                         mine.versionCode.toString()
+-                    }}. After you tap Update they get 24 hours to install the new one."
++                    }}. After you tap Update they get ${CrewRules.UPDATE_GRACE_HOURS} hours to install the new one."
+                 } else {
+-                    "After you tap Update they get 24 hours to install the new version."
++                    "After you tap Update they get ${CrewRules.UPDATE_GRACE_HOURS} hours to install the new version."
+                 },
+-                Modifier.padding(top = 4.dp),
+-                style = MaterialTheme.typography.bodySmall,
+-                color = Tt.colors.text3,
+             )
+             Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                 Column(Modifier.weight(1f)) {
+@@ -84,40 +85,43 @@ internal fun PlayFeedbackCard(
+     val owed = crew.apps.filter { !it.feedbackSent && !it.reported }
+     if (owed.isEmpty()) return
+     val late = owed.filter { it.feedbackLate }
+-    Box(Modifier.padding(top = 8.dp)) {
+-        CrewCard {
+-            StatusChip(
++    Box(Modifier.padding(top = 24.dp)) {
++        Column {
++            ReviewSectionTitle(Lucide.MessageSquare, "Private feedback on Play")
++            Spacer(Modifier.height(8.dp))
++            CrewPageStatus(
+                 if (late.isNotEmpty()) "${late.size} feedback late" else "${owed.size} feedback to send",
+                 if (late.isNotEmpty()) Tone.WARN else Tone.ACCENT,
+             )
+-            Text(
+-                "Private feedback on Play",
+-                Modifier.padding(top = 8.dp),
+-                style = MaterialTheme.typography.titleMedium,
+-                fontWeight = FontWeight.Bold,
+-            )
+-            Text(
+-                "Once for each app, by your night ${CrewRules.FEEDBACK_BY_NIGHT} with it. After that, opening an app " +
+-                    "counts only once its feedback is sent.",
+-                Modifier.padding(top = 4.dp),
+-                style = MaterialTheme.typography.bodySmall,
+-                color = Tt.colors.text3,
++            Spacer(Modifier.height(8.dp))
++            CrewGuideBullet(
++                "Send useful private feedback once per app, by your night ${CrewRules.FEEDBACK_BY_NIGHT} with it. After that, its opens count only once feedback is sent.",
+             )
+             owed.sortedBy { it.feedbackDueDay }.forEach { app ->
+-                Spacer(Modifier.height(10.dp))
+-                Row(verticalAlignment = Alignment.CenterVertically) {
+-                    Column(Modifier.weight(1f)) {
+-                        Text(app.label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+-                        Text(
+-                            if (app.feedbackLate) "Late: its opens don't count until it's sent" else "Due by night ${app.feedbackDueDay}",
+-                            style = MaterialTheme.typography.bodySmall,
+-                            color = if (app.feedbackLate) Tt.colors.warn else Tt.colors.text4,
++                val dueDay = app.feedbackDueDay.takeIf { it > 0 } ?: CrewRules.FEEDBACK_BY_NIGHT
++                HairlineRow(
++                    modifier = Modifier.padding(top = 8.dp),
++                    leading = {
++                        AppMark(
++                            app.packageName,
++                            app.label,
++                            crew.seats
++                                .firstOrNull { it.id == app.id }
++                                ?.icon
++                                .orEmpty(),
++                            size = 44.dp,
+                         )
+-                    }
+-                    RowPill("Send", PillKind.SOLID) { actions.onFeedback(app) }
+-                    Spacer(Modifier.width(6.dp))
+-                    RowPill("Pick", PillKind.SOFT) { actions.onPickFeedback(app) }
+-                }
++                    },
++                    title = app.label,
++                    note = AnnotatedString(if (app.feedbackLate) "Feedback late; opens don't count" else "Due by night $dueDay"),
++                    noteTone = if (app.feedbackLate) Tt.colors.warn else Tt.colors.text3,
++                    onClick = { actions.onFeedback(app) },
++                    trailing = {
++                        RowPill("Send", PillKind.SOLID) { actions.onFeedback(app) }
++                        Spacer(Modifier.width(6.dp))
++                        RowPill("Pick", PillKind.SOFT) { actions.onPickFeedback(app) }
++                    },
++                )
+             }
+         }
+     }
+diff --git a/app/src/main/java/com/eazyverse/testtrack/ui/CrewRunHero.kt b/app/src/main/java/com/eazyverse/testtrack/ui/CrewRunHero.kt
+index f6da5e6..21051e5 100644
+--- a/app/src/main/java/com/eazyverse/testtrack/ui/CrewRunHero.kt
++++ b/app/src/main/java/com/eazyverse/testtrack/ui/CrewRunHero.kt
+@@ -48,7 +48,7 @@ internal fun RunHero(
+             last -> "${clean}Tonight is the last night."
+             else -> "${clean}Day ${crew.ownDay + 1} begins at midnight, your time."
+         }
+-    CrewHero(
++    CrewPageHero(
+         chip = if (crew.atRisk) "Day ${crew.ownDay}, ${crew.myMisses} missed" else "Day ${crew.ownDay} of ${crew.ownNights}",
+         tone =
+             if (crew.atRisk) {
+@@ -95,7 +95,7 @@ internal fun RunHero(
+ /** This account's nights are over, and the crew is still on its last: nothing to open. */
+ @Composable
+ internal fun NightsDoneHero(crew: Crew) {
+-    CrewHero(
++    CrewPageHero(
+         chip = "${crew.ownNights} of ${crew.ownNights} nights",
+         tone = Tone.OK,
+         icon = Lucide.CircleCheck,
+diff --git a/app/src/test/java/com/eazyverse/testtrack/video/CrewVideoFramesTest.kt b/app/src/test/java/com/eazyverse/testtrack/video/CrewVideoFramesTest.kt
+index d6de45e..fdb5288 100644
+--- a/app/src/test/java/com/eazyverse/testtrack/video/CrewVideoFramesTest.kt
++++ b/app/src/test/java/com/eazyverse/testtrack/video/CrewVideoFramesTest.kt
+@@ -375,6 +375,22 @@ class CrewVideoFramesTest {
+         frame.write("lobby")
+     }
+ 
++    /** The complete guide is reachable from the real page, and can scroll to its last rule. */
++    @Test
++    fun c06b_crewGuide() {
++        val vm = crews(list = listOf(lobby), installed = false)
++        frame.show { Pushed { CrewPage(vm = vm, id = lobby.id, onBack = {}, onSignIn = {}) } }
++        compose.onNodeWithText("Guide").performClick()
++        frame.settle(800)
++        frame.write("crewGuide")
++        frame.scrollTo(compose.onNodeWithText("Got it"))
++        frame.settle(800)
++        frame.write("crewGuideEnd")
++        compose.onNodeWithText("Got it").performClick()
++        frame.settle(800)
++        compose.onNodeWithText("Crew guide").assertDoesNotExist()
++    }
++
+     @Test
+     fun c07_report() {
+         val vm = crews(list = listOf(lobby), installed = false)

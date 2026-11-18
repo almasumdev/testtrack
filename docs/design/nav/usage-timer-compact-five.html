@@ -1,0 +1,211 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<div id="tt-usage-compact-options">
+  <div class="viz-carousel viz-dotted-background" aria-label="Compact usage timer designs">
+    <section data-variant="Time inside the bar" aria-label="Time inside the progress bar"><div class="ut-stage"><div class="ut-timer uc-capsule"><div class="uc-filled-bar"><span class="uc-bar-fill" data-fill></span><span><b data-used>1:15</b> used</span><strong><b data-left>1:45</b> left</strong></div><small>3 minutes of app use required</small></div></div></section>
+    <section data-variant="Moving time label" aria-label="Moving time label" hidden><div class="ut-stage"><div class="ut-timer uc-traveler"><div class="uc-marker-lane"><span class="uc-marker"><b data-left>1:45</b> left</span></div><div class="ut-track"><span data-fill></span></div><div class="ut-scale"><span><b data-used>1:15</b> used</span><span>3:00 goal</span></div></div></div></section>
+    <section data-variant="Built into the step" aria-label="Timer built into the active step" hidden><div class="ut-stage"><div class="ut-timer uc-step"><div class="uc-sentence"><b data-used>1:15</b><span>of 3 minutes used</span></div><small>Usage is saved when you return.</small></div></div></section>
+    <section data-variant="Built into the button" aria-label="Timer built into the primary button" hidden><div class="ut-stage"><div class="ut-timer uc-action"><div class="uc-sentence"><b data-used>1:15</b><span>of 3 minutes used</span></div><small>Usage is saved when you return.</small></div></div></section>
+    <section data-variant="Sand timer" aria-label="Compact sand timer" hidden><div class="ut-stage"><div class="ut-timer uc-sand"><svg class="uc-hourglass" viewBox="0 0 56 68" role="img" aria-label="Remaining usage time"><defs><clipPath id="uc-upper"><polygon points="6,8 50,8 28,32"/></clipPath><clipPath id="uc-lower"><polygon points="28,36 50,60 6,60"/></clipPath></defs><polygon class="uc-bowl" points="6,8 50,8 28,32"/><polygon class="uc-bowl" points="28,36 50,60 6,60"/><rect class="uc-sand-fill" x="6" y="14" width="44" height="24" clip-path="url(#uc-upper)" data-sand-upper/><rect class="uc-sand-fill" x="6" y="54" width="44" height="24" clip-path="url(#uc-lower)" data-sand-lower/><circle class="uc-grain" cx="28" cy="31" r="1"/><circle class="uc-grain" cx="28" cy="31" r="1"/><circle class="uc-grain" cx="28" cy="31" r="1"/></svg><div class="uc-sand-copy"><div class="uc-sand-time"><b data-left>1:45</b><span>left to use</span></div><small><b data-used>1:15</b> of 3:00 used</small></div></div></div></section>
+  </div>
+  <template id="tt-usage-compact-context">
+    <article class="ut-phone" aria-label="TestTrack usage step">
+      <header class="ut-top"><i data-lucide="arrow-left" aria-hidden="true"></i><strong>Feedback</strong><span class="ut-reward">+35 tix</span></header>
+      <div class="ut-app"><span class="ut-app-icon"><i data-lucide="notebook" aria-hidden="true"></i><span class="ut-source"><i data-lucide="flask-conical" aria-hidden="true"></i></span></span><div><strong>Quick Notes Lite</strong><small>com.demo.quicknotes</small></div></div>
+      <ol class="ut-path" aria-label="Step 2 of 4: Use app"><li class="ut-done"><span><i data-lucide="check" aria-hidden="true"></i></span>Install</li><li class="ut-now"><span><i data-lucide="smartphone" aria-hidden="true"></i></span>Use app</li><li><span><i data-lucide="message-square" aria-hidden="true"></i></span>Feedback</li><li><span><i data-lucide="camera" aria-hidden="true"></i></span>Send proof</li></ol>
+      <main class="ut-content"><h3 class="ut-heading"><span><i data-lucide="timer" aria-hidden="true"></i></span>Use time</h3><div class="ut-slot"></div><p class="ut-bullet">Keep the app open in the <b>foreground.</b></p><div class="uc-developer"><h3 class="ut-heading"><span><i data-lucide="message-square" aria-hidden="true"></i></span>Developer asks</h3><p class="ut-bullet">Write at least <b>100 characters</b> of feedback.</p></div></main>
+      <footer class="ut-footer"><button class="ut-primary cursor-interaction" type="button" data-open>Open app</button><div class="ut-quiet">Can't finish? <button class="ut-link cursor-interaction" type="button" data-giveup>Give up review</button></div></footer>
+      <div class="ut-overlay" hidden><div class="ut-dialog" role="dialog" aria-modal="true"><h3>Give this review up?</h3><p>Your slot is released and no reward is paid.</p><div class="ut-dialog-actions"><button type="button" class="ut-cancel cursor-interaction">Keep going</button><button type="button" class="ut-confirm cursor-interaction">Give up</button></div></div></div>
+    </article>
+  </template>
+  <template id="uc-step-decoration">
+    <svg class="uc-step-orbit" viewBox="0 0 52 52" role="img" aria-label="Usage progress"><circle cx="26" cy="26" r="23" class="uc-orbit-track"/><circle cx="26" cy="26" r="23" class="uc-orbit-fill" data-orbit/></svg>
+    <small class="uc-step-time"><b data-left>1:45</b> left</small>
+  </template>
+  <template id="uc-button-decoration"><span class="uc-button-label">Open app</span><span class="uc-button-time"><b data-left>1:45</b> left</span><span class="uc-button-track"><span data-fill></span></span></template>
+</div>
+<style>
+#tt-usage-compact-options{--ut-bg:light-dark(#f7fcff,#0f1011);--ut-text:light-dark(#142f43,#eceef0);--ut-body:light-dark(#203a4e,#bcc1c6);--ut-muted:light-dark(#59758a,#9da3a9);--ut-line:light-dark(#d3e2ec,#383c41);--ut-soft:light-dark(#e1eaf2,#2a2d31);--ut-surface:light-dark(#f3f8fb,#1c1e20);--ut-accent:light-dark(#3a6380,#4a7290);--ut-ink:light-dark(#3a5b73,#93b3ca);--ut-on:light-dark(#fff,#fff);--ut-scrim:light-dark(#142f4344,#00000088);--ut-danger:light-dark(#b83e3e,#ef9898);font-family:Barlow,system-ui,sans-serif}
+#tt-usage-compact-options *{box-sizing:border-box}
+#tt-usage-compact-options [hidden]{display:none!important}
+#tt-usage-compact-options .ut-stage{display:flex;justify-content:center;padding:20px 0;min-height:682px;align-items:center}
+#tt-usage-compact-options .ut-phone{position:relative;width:370px;max-width:100%;min-height:632px;padding:20px;border-radius:22px;border:1px solid var(--ut-line);background:var(--ut-bg);color:var(--ut-text);font-size:14px;line-height:1.4;display:flex;flex-direction:column;overflow:hidden}
+#tt-usage-compact-options svg[data-lucide]{display:block;width:18px;height:18px;flex-shrink:0}
+#tt-usage-compact-options .ut-top{display:flex;gap:12px;align-items:center;margin-bottom:26px}
+#tt-usage-compact-options .ut-top>strong{font-size:20px;font-weight:600}
+#tt-usage-compact-options .ut-reward{margin-left:auto;background:var(--ut-soft);color:var(--ut-ink);padding:5px 9px;border-radius:8px;font-size:12px;font-weight:600}
+#tt-usage-compact-options .ut-app{display:flex;align-items:center;gap:12px}
+#tt-usage-compact-options .ut-app>div{min-width:0}
+#tt-usage-compact-options .ut-app strong{font-size:16px;display:block;font-weight:600}
+#tt-usage-compact-options .ut-app small{font-size:12.5px;color:var(--ut-muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tt-usage-compact-options .ut-app-icon{position:relative;width:52px;height:52px;flex-shrink:0;border-radius:15px;background:var(--ut-soft);display:grid;place-items:center;color:var(--ut-ink)}
+#tt-usage-compact-options .ut-app-icon>svg{width:24px;height:24px}
+#tt-usage-compact-options .ut-source{position:absolute;right:-5px;bottom:-5px;border:2px solid var(--ut-bg);border-radius:50%;width:20px;height:20px;background:var(--ut-surface);display:grid;place-items:center}
+#tt-usage-compact-options .ut-source svg{width:12px;height:12px}
+#tt-usage-compact-options .ut-path{position:relative;list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:24px 0 0;padding:0}
+#tt-usage-compact-options .ut-path:before{content:'';position:absolute;left:12.5%;right:12.5%;top:23px;height:3px;background:linear-gradient(to right,var(--ut-ink) 33.333%,var(--ut-line) 33.333%)}
+#tt-usage-compact-options .ut-path li{position:relative;text-align:center;font-size:12px;color:var(--ut-muted)}
+#tt-usage-compact-options .ut-path li>span{display:grid;place-items:center;width:36px;height:36px;margin:6px auto 14px;border:1px solid var(--ut-line);border-radius:50%;background:var(--ut-bg);box-shadow:0 0 0 5px var(--ut-bg)}
+#tt-usage-compact-options .ut-path .ut-now{color:var(--ut-text);font-weight:600}
+#tt-usage-compact-options .ut-path .ut-now>span{color:var(--ut-on);background:var(--ut-accent);border:0;outline:1.5px solid var(--ut-ink);outline-offset:4px}
+#tt-usage-compact-options .ut-path .ut-done>span{border:0;color:var(--ut-ink);background:var(--ut-soft)}
+#tt-usage-compact-options .ut-content{padding-top:24px;flex:1}
+#tt-usage-compact-options .ut-heading{display:flex;gap:10px;align-items:center;margin:0;font-size:16px;font-weight:600}
+#tt-usage-compact-options .ut-heading>span{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:var(--ut-soft);color:var(--ut-ink)}
+#tt-usage-compact-options .ut-heading svg{width:15px;height:15px}
+#tt-usage-compact-options .ut-timer{min-height:186px;display:flex;flex-direction:column;justify-content:center;padding:18px 0 12px;gap:14px}
+#tt-usage-compact-options .ut-big{font-family:'IBM Plex Mono',monospace;font-size:42px;line-height:1.12;letter-spacing:-2px;font-weight:500;font-variant-numeric:tabular-nums}
+#tt-usage-compact-options .ut-timer small{font-size:12px;color:var(--ut-muted);font-weight:400;display:block}
+#tt-usage-compact-options .ut-number-row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+#tt-usage-compact-options .ut-inline-label{font-size:14px;color:var(--ut-muted);margin-left:8px}
+#tt-usage-compact-options .ut-secondary{text-align:right}
+#tt-usage-compact-options .ut-secondary b,#tt-usage-compact-options [data-used]{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;font-weight:500}
+#tt-usage-compact-options .ut-track,#tt-usage-compact-options .ut-mini-track{height:8px;border-radius:3px;background:var(--ut-soft);overflow:hidden}
+#tt-usage-compact-options .ut-track>span,#tt-usage-compact-options .ut-mini-track>span{display:block;background:var(--ut-ink);height:100%;width:33.333%;transition:width .45s ease}
+#tt-usage-compact-options .ut-scale{display:flex;justify-content:space-between;color:var(--ut-muted);font-size:12px;margin-top:-8px;gap:12px}
+#tt-usage-compact-options .ut-focus{align-items:center;gap:10px;padding:12px 0;min-height:222px}
+#tt-usage-compact-options .ut-ring{width:170px;height:170px;position:relative}
+#tt-usage-compact-options .ut-ring>svg{width:100%;height:100%;display:block;transform:rotate(-90deg)}
+#tt-usage-compact-options .ut-ring circle{fill:none;stroke-width:9;stroke-linecap:round}
+#tt-usage-compact-options .ut-ring-track{stroke:var(--ut-soft)}
+#tt-usage-compact-options .ut-ring-fill{stroke:var(--ut-ink);stroke-dasharray:159.174 477.522;transition:stroke-dasharray .45s ease}
+#tt-usage-compact-options .ut-ring-center{position:absolute;inset:0;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center}
+#tt-usage-compact-options .ut-ring-caption{font-size:12px;color:var(--ut-muted)}
+#tt-usage-compact-options .ut-checkpoints{gap:20px}
+#tt-usage-compact-options .ut-minutes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+#tt-usage-compact-options .ut-minutes>div{display:flex;flex-direction:column;align-items:center;gap:9px;color:var(--ut-muted)}
+#tt-usage-compact-options .ut-minute-mark{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:var(--ut-soft);font-family:'IBM Plex Mono',monospace;font-size:13px}
+#tt-usage-compact-options .ut-minutes .ut-complete .ut-minute-mark{background:var(--ut-accent);color:var(--ut-on)}
+#tt-usage-compact-options .ut-minutes .ut-current .ut-minute-mark{color:var(--ut-ink);font-weight:600}
+#tt-usage-compact-options .ut-mini-track{width:100%;height:6px}
+#tt-usage-compact-options .ut-ticks{gap:20px}
+#tt-usage-compact-options .ut-centered{text-align:center;display:flex;flex-direction:column;gap:5px}
+#tt-usage-compact-options .ut-tick-strip{display:flex;gap:4px;align-items:center;height:34px}
+#tt-usage-compact-options .ut-tick{flex:1;height:22px;border-radius:2px;background:var(--ut-soft);transition:background .3s ease}
+#tt-usage-compact-options .ut-tick:nth-child(5n+1){height:34px}
+#tt-usage-compact-options .ut-tick.ut-filled{background:var(--ut-ink)}
+#tt-usage-compact-options .ut-vertical{display:grid;grid-template-columns:88px 1fr;align-items:center;gap:12px;padding:26px 0 18px}
+#tt-usage-compact-options .ut-vertical-rail{height:138px;position:relative}
+#tt-usage-compact-options .ut-vtrack{position:absolute;left:10px;top:6px;bottom:6px;width:6px;border-radius:3px;background:var(--ut-soft);overflow:hidden}
+#tt-usage-compact-options .ut-vtrack>span{display:block;width:100%;height:33.333%;background:var(--ut-ink);transition:height .45s ease}
+#tt-usage-compact-options .ut-vdot{position:absolute;left:7px;width:12px;height:12px;border-radius:50%;background:var(--ut-line)}
+#tt-usage-compact-options .ut-start{top:0;background:var(--ut-ink)}
+#tt-usage-compact-options .ut-middle{top:calc(50% - 6px)}
+#tt-usage-compact-options .ut-end{bottom:0}
+#tt-usage-compact-options .ut-vlabel{position:absolute;left:28px;font-size:12px;color:var(--ut-muted);font-family:'IBM Plex Mono',monospace}
+#tt-usage-compact-options .ut-top-label{top:-3px}#tt-usage-compact-options .ut-bottom-label{bottom:-3px}
+#tt-usage-compact-options .ut-vertical-value{display:flex;flex-direction:column;gap:8px;min-width:0}
+#tt-usage-compact-options .ut-elapsed{font-size:12px;color:var(--ut-muted);margin-top:4px}
+#tt-usage-compact-options .ut-bullet{position:relative;padding-left:24px;margin:8px 0 0;color:var(--ut-body);font-size:14px}
+#tt-usage-compact-options .ut-bullet:before{content:'';position:absolute;left:12px;top:8px;width:4px;height:4px;background:var(--ut-muted);border-radius:50%}
+#tt-usage-compact-options .ut-bullet b{color:var(--ut-text);font-weight:600}
+#tt-usage-compact-options .ut-footer{padding-top:28px;display:flex;flex-direction:column;gap:8px}
+#tt-usage-compact-options button{font-family:inherit;font-size:14px;line-height:1.4;touch-action:manipulation}
+#tt-usage-compact-options .ut-primary{width:100%;min-height:52px;padding:12px;border:0;border-radius:14px;background:var(--ut-accent);color:var(--ut-on);font-weight:600}
+#tt-usage-compact-options .ut-quiet{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;font-size:13px;color:var(--ut-muted)}
+#tt-usage-compact-options .ut-link{padding:9px 2px;min-height:44px;border:0;background:none;color:var(--ut-ink);font-size:13px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+#tt-usage-compact-options .ut-overlay{position:absolute;inset:0;background:var(--ut-scrim);display:grid;place-items:center;padding:20px;z-index:5}
+#tt-usage-compact-options .ut-dialog{background:var(--ut-surface);padding:22px;border-radius:18px;width:100%}
+#tt-usage-compact-options .ut-dialog h3{margin:0;font-size:19px;font-weight:600}
+#tt-usage-compact-options .ut-dialog p{font-size:14px;color:var(--ut-body);margin:12px 0 20px}
+#tt-usage-compact-options .ut-dialog-actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+#tt-usage-compact-options .ut-dialog button{border:0;background:none;min-height:44px;padding:8px;color:var(--ut-ink);font-weight:600}
+#tt-usage-compact-options .ut-dialog .ut-confirm{color:var(--ut-danger)}
+@media(max-width:380px){#tt-usage-compact-options .ut-phone{padding:16px}#tt-usage-compact-options .ut-tick-strip{gap:3px}#tt-usage-compact-options .ut-vertical{grid-template-columns:72px 1fr}#tt-usage-compact-options .ut-app strong{font-size:15px}}
+@media(prefers-reduced-motion:reduce){#tt-usage-compact-options *{transition:none!important}}
+#tt-usage-compact-options{--uc-fill:light-dark(#c6dce9,#2b4354);--uc-progress:.4166667}
+#tt-usage-compact-options [data-left]{display:inline-block;font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;font-weight:500}
+#tt-usage-compact-options .ut-stage{min-height:646px}
+#tt-usage-compact-options .ut-phone{min-height:602px}
+#tt-usage-compact-options .ut-timer{min-height:110px;gap:10px;padding:20px 0 16px}
+#tt-usage-compact-options .uc-filled-bar{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;height:46px;overflow:hidden;border-radius:11px;padding:0 12px;background:var(--ut-soft);font-size:13px}
+#tt-usage-compact-options .uc-filled-bar>span:not(.uc-bar-fill),#tt-usage-compact-options .uc-filled-bar>strong{position:relative;font-weight:500}
+#tt-usage-compact-options .uc-bar-fill{position:absolute;left:0;top:0;bottom:0;display:block;background:var(--uc-fill);width:41.6667%;overflow:hidden;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+#tt-usage-compact-options .uc-bar-fill:after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(100deg,transparent,var(--ut-bg),transparent);opacity:.3}
+#tt-usage-compact-options .uc-capsule>small{text-align:center}
+#tt-usage-compact-options .uc-marker-lane{position:relative;height:38px;margin-bottom:0}
+#tt-usage-compact-options .uc-marker{position:absolute;left:clamp(42px,calc(var(--uc-progress)*100%),calc(100% - 42px));bottom:3px;transform:translateX(-50%);white-space:nowrap;background:var(--ut-accent);color:var(--ut-on);border-radius:9px;padding:6px 10px;font-size:12px;transition:left .65s cubic-bezier(.22,1,.36,1)}
+#tt-usage-compact-options .uc-marker:after{content:'';position:absolute;left:calc(50% - 4px);bottom:-4px;width:8px;height:8px;transform:rotate(45deg);background:var(--ut-accent)}
+#tt-usage-compact-options .uc-marker b{font-family:'IBM Plex Mono',monospace;font-weight:500}
+#tt-usage-compact-options .uc-traveler .ut-track{height:5px}
+#tt-usage-compact-options .uc-traveler .ut-scale{margin-top:0}
+#tt-usage-compact-options .uc-sentence{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+#tt-usage-compact-options .uc-sentence>b{font-size:25px;letter-spacing:-1px;color:var(--ut-text)}
+#tt-usage-compact-options .uc-sentence>span{color:var(--ut-muted);font-size:14px}
+#tt-usage-compact-options .uc-step-phone .ut-path{padding-bottom:17px}
+#tt-usage-compact-options .uc-step-phone .ut-now>span{outline:0}
+#tt-usage-compact-options .uc-step-orbit{position:absolute;width:52px;height:52px;top:-2px;left:calc(50% - 26px);transform:rotate(-90deg);pointer-events:none}
+#tt-usage-compact-options .uc-step-orbit circle{fill:none;stroke-width:3;stroke-linecap:round}
+#tt-usage-compact-options .uc-orbit-track{stroke:var(--ut-soft)}
+#tt-usage-compact-options .uc-orbit-fill{stroke:var(--ut-ink);stroke-dasharray:60.213 144.513;transition:stroke-dasharray .6s cubic-bezier(.2,.8,.2,1)}
+#tt-usage-compact-options .uc-step-time{position:absolute;top:80px;left:0;right:0;font-size:11px;color:var(--ut-ink);white-space:nowrap;font-weight:500}
+#tt-usage-compact-options .uc-button{position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px;padding-left:16px;padding-right:16px;overflow:hidden}
+#tt-usage-compact-options .uc-button-time{font-size:12px;font-weight:500;white-space:nowrap}
+#tt-usage-compact-options .uc-button-time b{font-family:'IBM Plex Mono',monospace;font-weight:500}
+#tt-usage-compact-options .uc-button-track{position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--ut-line)}
+#tt-usage-compact-options .uc-button-track>span{height:100%;display:block;background:var(--ut-on);width:41.6667%;transition:width .6s ease}
+#tt-usage-compact-options .uc-sand{display:grid;grid-template-columns:58px 1fr;gap:18px;align-items:center;justify-content:start}
+#tt-usage-compact-options .uc-hourglass{width:56px;height:68px;display:block}
+#tt-usage-compact-options .uc-bowl{fill:var(--ut-soft)}
+#tt-usage-compact-options .uc-grain,#tt-usage-compact-options .uc-sand-fill{fill:var(--ut-ink)}
+#tt-usage-compact-options .uc-grain{opacity:0}
+#tt-usage-compact-options .uc-sand-copy{display:flex;flex-direction:column;gap:5px}
+#tt-usage-compact-options .uc-sand-time{display:flex;align-items:baseline;gap:8px}
+#tt-usage-compact-options .uc-sand-time>b{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;letter-spacing:-1px}
+#tt-usage-compact-options .uc-sand-time>span{color:var(--ut-muted);font-size:13px}
+#tt-usage-compact-options .uc-developer{margin-top:24px}
+#tt-usage-compact-options .uc-developer .ut-bullet{margin-top:8px}
+#tt-usage-compact-options[data-running="true"] .uc-bar-fill:after{animation:uc-shine 3s ease-in-out infinite}
+#tt-usage-compact-options[data-running="true"] .uc-grain{animation:uc-grain-fall 1.6s linear infinite}
+#tt-usage-compact-options[data-running="true"] .uc-grain:nth-last-child(2){animation-delay:.55s}
+#tt-usage-compact-options[data-running="true"] .uc-grain:last-child{animation-delay:1.1s}
+#tt-usage-compact-options .uc-number-change{animation:uc-number-roll .3s ease-out}
+@keyframes uc-shine{0%,20%{transform:translateX(-100%)}80%,100%{transform:translateX(100%)}}
+@keyframes uc-grain-fall{0%{transform:translateY(0);opacity:0}20%{opacity:.8}85%{opacity:.5}100%{transform:translateY(16px);opacity:0}}
+@keyframes uc-number-roll{from{transform:translateY(3px)}to{transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){#tt-usage-compact-options *,#tt-usage-compact-options *:after{transition:none!important;animation:none!important}}
+</style>
+<script>
+(() => {
+ const root=document.getElementById('tt-usage-compact-options');
+ const template=root.querySelector('#tt-usage-compact-context');
+ const state={elapsedSeconds:75};
+ let running=false,interval=null;
+ const clock=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+ function restore(value){const n=value?.privateContent?.elapsedSeconds;if(Number.isFinite(n))state.elapsedSeconds=Math.max(0,Math.min(180,Math.round(n)));}
+ restore(window.openai?.widgetState);
+ root.querySelectorAll('.ut-stage').forEach((stage,index)=>{
+   const timer=stage.querySelector('.ut-timer'),fragment=template.content.cloneNode(true),phone=fragment.querySelector('.ut-phone');
+   phone.querySelector('.ut-slot').append(timer);stage.append(fragment);
+   if(timer.classList.contains('uc-step')){phone.classList.add('uc-step-phone');phone.querySelector('.ut-now').append(root.querySelector('#uc-step-decoration').content.cloneNode(true));}
+   if(timer.classList.contains('uc-action')){const button=phone.querySelector('[data-open]');button.classList.add('uc-button');button.replaceChildren(root.querySelector('#uc-button-decoration').content.cloneNode(true));}
+   const overlay=phone.querySelector('.ut-overlay'),giveup=phone.querySelector('[data-giveup]');
+   const title=phone.querySelector('.ut-dialog h3');title.id=`ut-giveup-title-${index}`;phone.querySelector('.ut-dialog').setAttribute('aria-labelledby',title.id);
+   function close(){overlay.hidden=true;giveup.focus();}
+   giveup.addEventListener('click',()=>{overlay.hidden=false;phone.querySelector('.ut-cancel').focus();});
+   phone.querySelector('.ut-cancel').addEventListener('click',close);
+   phone.querySelector('.ut-confirm').addEventListener('click',()=>{stop();state.elapsedSeconds=0;close();draw();persist();});
+   overlay.addEventListener('keydown',event=>{if(event.key==='Escape')close();});
+   phone.querySelector('[data-open]').addEventListener('click',()=>{
+     if(running){stop();}else{if(state.elapsedSeconds>=180)state.elapsedSeconds=0;running=true;interval=setInterval(()=>{state.elapsedSeconds=Math.min(180,state.elapsedSeconds+1);if(state.elapsedSeconds===180)stop();draw();},1000);}
+     draw();persist();
+   });
+ });
+ function stop(){running=false;if(interval)clearInterval(interval);interval=null;}
+ function persist(){window.openai?.setWidgetState?.({modelContent:{elapsedSeconds:state.elapsedSeconds,totalSeconds:180},privateContent:{elapsedSeconds:state.elapsedSeconds}})?.catch(()=>{});}
+ function draw(){
+   const elapsed=Math.round(state.elapsedSeconds),fraction=elapsed/180,left=180-elapsed;
+   root.dataset.running=String(running);root.style.setProperty('--uc-progress',fraction);
+   root.querySelectorAll('[data-left]').forEach(el=>{const next=clock(left);if(el.textContent!==next){el.textContent=next;if(running){el.classList.remove('uc-number-change');void el.offsetWidth;el.classList.add('uc-number-change');}}});
+   root.querySelectorAll('[data-used]').forEach(el=>el.textContent=clock(elapsed));
+   root.querySelectorAll('[data-fill]').forEach(el=>el.style.width=`${fraction*100}%`);
+   root.querySelectorAll('[data-orbit]').forEach(el=>el.style.strokeDasharray=`${fraction*144.513} 144.513`);
+   root.querySelectorAll('[data-sand-upper]').forEach(el=>el.setAttribute('y',8+24*(1-Math.sqrt(1-fraction))));
+   root.querySelectorAll('[data-sand-lower]').forEach(el=>el.setAttribute('y',36+24*Math.sqrt(1-fraction)));
+   root.querySelectorAll('[data-open]').forEach(el=>{const label=el.querySelector('.uc-button-label')||el;label.textContent=running?'Return to feedback':elapsed===180?'Preview again':'Open app';});
+   root.querySelectorAll('.ut-timer').forEach(el=>{el.setAttribute('role','img');el.setAttribute('aria-label',`${clock(left)} remaining, ${clock(elapsed)} of 3 minutes used`);});
+ }
+ draw();
+ window.addEventListener('openai:set_globals',event=>{restore(event.detail?.globals?.widgetState);draw();});
+ if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:()=>{stop();draw();persist();}});tweak.addSlider(state,'elapsedSeconds',{label:'Usage time',min:0,max:180,step:1,unit:'s'});}
+})();
+</script>

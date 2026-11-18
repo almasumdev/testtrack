@@ -28,7 +28,7 @@ internal fun mineNext(
 ): String =
     when (review.state) {
         "claimed" -> "Install from Play"
-        "installed" -> if (review.isLive) liveUseLine(review, now) else "Use it for 2 minutes"
+        "installed" -> if (review.isLive) liveUseLine(review, now) else "Use it for ${FeedRules.CLOSED_USE_SECONDS / 60} minutes"
         "used" -> if (review.isLive) "Review it on Play" else "Send feedback on Play"
         "checking" -> "Retake your screenshot"
         else -> ""

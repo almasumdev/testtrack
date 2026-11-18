@@ -30,13 +30,14 @@ import com.eazyverse.testtrack.ui.theme.Tt
 internal fun PicturesDueCard(
     apps: List<CrewApp>,
     actions: CrewActions,
+    modifier: Modifier = Modifier.padding(top = 8.dp),
 ) {
     val due = apps.filter { it.pictureDue }
     val stuck = due.filterNot { actions.sendingPicture(it) }
     // Tonight's waiting to send, and any app with an older night's picture still on the phone.
     val sending = apps.filter { actions.sendingPicture(it) || actions.waitingPicture(it.id) }
     if (stuck.isEmpty() && sending.isEmpty()) return
-    Box(Modifier.padding(top = 8.dp)) {
+    Box(modifier) {
         CrewCard {
             if (stuck.isNotEmpty()) Missing(stuck, actions)
             if (sending.isNotEmpty()) {

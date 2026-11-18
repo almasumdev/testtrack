@@ -262,7 +262,7 @@ fun CrewRunPhase(
 ) {
     val seatOf = { app: CrewApp -> crew.seats.first { it.id == app.id } }
     val owed = crew.apps.filter { !it.done && !it.reported }
-    val settled = crew.apps.filter { it.done || it.reported }
+    val apps = crewRunAppEntries(crew, actions.isInstalled)
     // What Open all opens: on this phone, and nothing the server is known to refuse.
     val here = openAllOf(owed, { actions.copyOf(it) }, actions.sendingPicture)
     val missing = owed.filter { !actions.isInstalled(it.packageName) }
@@ -285,37 +285,16 @@ fun CrewRunPhase(
         block { RunHero(crew, owed, here, missing, refused, actions) }
         // Tonight's pictures missing or sending, and any older night's still on the phone.
         block { PicturesDueCard(crew.apps + crew.optional, actions) }
-        block { PlayFeedbackCard(crew, actions) }
         crew.mine?.let { mine ->
             item { CrewHeading("Your app") }
             block { TestersCard(crew, mine, actions) }
             block { OwnerToolsCard(mine, actions) }
         }
-        if (owed.isNotEmpty()) {
-            item { CrewHeading("Tonight", "${owed.size}") }
-            rows("t", owed, { it.id }) { app, place -> TonightRow(app, seatOf(app), place, actions, onSheet) }
-        }
-        if (crew.optional.isNotEmpty()) {
-            item { CrewHeading("Optional tonight") }
-            item { OptionalNote() }
-            rows("o", crew.optional, { it.id }) { app, place ->
-                if (app.done || app.reported) {
-                    DoneRow(app, seatOf(app), place, actions, onSheet)
-                } else {
-                    TonightRow(app, seatOf(app), place, actions, onSheet)
-                }
+        if (apps.isNotEmpty()) {
+            item { CrewHeading("Apps", "${apps.size}") }
+            rows("app", apps, { it.app.id }) { entry, _ ->
+                CrewRunAppTile(entry.app, seatOf(entry.app), actions, onSheet, entry.kind)
             }
-        }
-        if (settled.isNotEmpty()) {
-            item { CrewHeading("Done") }
-            rows("d", settled, { it.id }) { app, place -> DoneRow(app, seatOf(app), place, actions, onSheet) }
-        }
-        // Taken out: nobody owes them; listed until uninstalled, so the reader knows which they were.
-        val left = crew.left.filter { actions.isInstalled(it.packageName) }
-        if (left.isNotEmpty()) {
-            item { CrewHeading("Left the run") }
-            item { LeftRunNote() }
-            rows("l", left, { it.id }) { app, place -> LeftRow(app, seatOf(app), place, actions) }
         }
     }
 }

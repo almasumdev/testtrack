@@ -7,6 +7,7 @@ import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.ApiReview
 import com.eazyverse.testtrack.ui.AppEntry
+import com.eazyverse.testtrack.ui.FeedRules
 
 /**
  * The people and apps the Circle video is told with. Neutral names, plain numbers.
@@ -90,7 +91,7 @@ internal object CircleSamples {
         postId = habit.id,
         state = state,
         usedMs = usedMs,
-        neededMs = 120_000,
+        neededMs = FeedRules.CLOSED_USE_SECONDS * 1000L,
         proofRef = if (state == "submitted") "drive:habit-proof" else "",
         written = if (state == "submitted") NOTE else "",
         reason = "",

@@ -1,0 +1,126 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<div id="tt-lobby-preview" class="viz-dotted-background">
+  <div class="cl-controls">
+    <label for="cl-scenario">Lobby state<select id="cl-scenario" class="cursor-interaction">
+      <option value="multiple">Multiple crews</option><option value="holding">Holding a seat</option>
+      <option value="checking">App being checked</option><option value="reported">One report</option>
+      <option value="full">Full · waiting for midnight</option><option value="returned">App sent back</option>
+      <option value="joining">Joining a running crew</option><option value="empty">Empty lobby</option>
+    </select></label>
+    <button type="button" class="cl-theme cursor-interaction" aria-label="Switch preview theme"><i data-lucide="sun-moon" aria-hidden="true"></i></button>
+  </div>
+  <p class="cl-caption">Current app layout · sample states · tap a crew to explore</p>
+  <section class="cl-phone" aria-label="TestTrack Crew Lobby preview">
+    <div class="cl-status"><span>9:41</span><span>••• &nbsp; ▰</span></div>
+    <header class="cl-appbar"><strong>TestTrack</strong><span class="cl-wallet"><i data-lucide="ticket" aria-hidden="true"></i>100</span></header>
+    <div id="cl-page" aria-live="polite"></div>
+    <div class="cl-dock"><span><i data-lucide="circle-dot" aria-hidden="true"></i>Circle</span><span class="cl-active"><i data-lucide="users" aria-hidden="true"></i>Crew</span><span class="cl-plus" aria-label="Add">+</span><span><i data-lucide="layout-grid" aria-hidden="true"></i>My apps</span></div>
+    <div class="cl-home"><span></span></div>
+  </section>
+</div>
+<style>
+#tt-lobby-preview{--cl-bg:light-dark(#f7fcff,#0f1011);--cl-card:light-dark(#eef5fa,#191b1d);--cl-ink:light-dark(#142f43,#eceef0);--cl-body:light-dark(#344e61,#bdc3c9);--cl-muted:light-dark(#59758a,#9da3a9);--cl-line:light-dark(#b7d1e2,#383c41);--cl-tile:light-dark(#dce6ee,#2a2d31);--cl-accent:light-dark(#3a5b73,#93b3ca);--cl-on:light-dark(#fff,#101417);--cl-ok:light-dark(#376a58,#8ac6a7);--cl-warn:light-dark(#885e24,#e2ba7b);--cl-bad:light-dark(#b64646,#e09a9a);font-family:Barlow,system-ui,sans-serif;color:var(--cl-ink);padding:20px 0 24px}
+#tt-lobby-preview *{box-sizing:border-box}
+#tt-lobby-preview [hidden]{display:none!important}
+#tt-lobby-preview button,#tt-lobby-preview select{font-family:inherit;font-size:14px;color:var(--cl-ink);touch-action:manipulation}
+#tt-lobby-preview button{cursor:inherit}
+#tt-lobby-preview .cl-controls{max-width:390px;margin:0 auto;display:flex;align-items:end;gap:10px;padding:0 8px}
+#tt-lobby-preview .cl-controls label{flex:1;min-width:0;font-size:12px;color:var(--cl-muted);display:grid;gap:5px}
+#tt-lobby-preview select{width:100%;min-height:44px;border:1px solid var(--cl-line);border-radius:10px;background:var(--cl-bg);padding:8px 10px}
+#tt-lobby-preview .cl-theme{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--cl-line);border-radius:10px;background:var(--cl-bg);flex-shrink:0}
+#tt-lobby-preview .cl-theme svg{width:20px;height:20px}
+#tt-lobby-preview .cl-caption{font-size:12px;line-height:17px;color:var(--cl-muted);text-align:center;margin:10px 8px 20px}
+#tt-lobby-preview .cl-phone{width:390px;max-width:100%;margin:0 auto;border:1px solid var(--cl-line);border-radius:24px;background:var(--cl-bg);overflow:hidden;font-size:14px;line-height:19px;min-height:770px;display:flex;flex-direction:column}
+#tt-lobby-preview .cl-status{padding:14px 22px 6px;display:flex;justify-content:space-between;font-size:12px;font-weight:600}
+#tt-lobby-preview .cl-appbar{padding:15px 20px 20px;display:flex;justify-content:space-between;align-items:center;font-size:23px;font-weight:600}
+#tt-lobby-preview .cl-wallet{font-size:15px;display:flex;gap:6px;align-items:center;color:var(--cl-accent)}
+#tt-lobby-preview .cl-wallet svg{width:19px;height:19px}
+#tt-lobby-preview #cl-page{flex:1;min-width:0;padding-bottom:24px}
+#tt-lobby-preview .cl-tabs{display:flex;gap:4px;margin:0 16px 24px;align-items:center}
+#tt-lobby-preview .cl-tabs span{flex:1;min-width:0;text-align:center;color:var(--cl-muted);padding:9px 3px;border-radius:10px;font-size:14px;font-weight:500}
+#tt-lobby-preview .cl-tabs .cl-selected{background:var(--cl-tile);color:var(--cl-ink)}
+#tt-lobby-preview h2{font-size:16px;line-height:20px;font-weight:600;margin:0 16px 10px}
+#tt-lobby-preview .cl-list{display:grid;gap:8px;margin:0 16px}
+#tt-lobby-preview .cl-row{display:flex;align-items:center;width:100%;text-align:left;gap:12px;min-height:78px;padding:12px 8px 12px 12px;background:var(--cl-bg);border:1px solid var(--cl-line);border-radius:16px}
+#tt-lobby-preview .cl-mark{width:52px;height:52px;flex-shrink:0;border-radius:16px;background:var(--cl-tile);display:grid;place-items:center;color:var(--cl-accent);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+#tt-lobby-preview .cl-row-copy{flex:1;min-width:0;display:grid;gap:1px}
+#tt-lobby-preview .cl-row-copy strong{font-size:15px;font-weight:600;line-height:20px}
+#tt-lobby-preview .cl-row-copy small{font-size:12px;line-height:16px;color:var(--cl-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+#tt-lobby-preview .cl-row-tail{display:flex;align-items:center;gap:2px;flex-shrink:0}
+#tt-lobby-preview .cl-row-tail>svg{width:18px;height:18px;color:var(--cl-muted)}
+#tt-lobby-preview .cl-chip{font-size:11px;line-height:16px;font-weight:600;display:inline-flex;gap:5px;align-items:center;background:color-mix(in srgb,var(--cl-accent) 12%,var(--cl-bg));color:var(--cl-accent);padding:4px 8px;border-radius:7px;white-space:nowrap}
+#tt-lobby-preview .cl-chip svg{width:13px;height:13px}
+#tt-lobby-preview .cl-ok{color:var(--cl-ok)}#tt-lobby-preview .cl-warn{color:var(--cl-warn)}#tt-lobby-preview .cl-bad{color:var(--cl-bad)}
+#tt-lobby-preview .cl-chip.cl-ok{background:color-mix(in srgb,var(--cl-ok) 12%,var(--cl-bg))}#tt-lobby-preview .cl-chip.cl-warn{background:color-mix(in srgb,var(--cl-warn) 12%,var(--cl-bg))}#tt-lobby-preview .cl-chip.cl-bad{background:color-mix(in srgb,var(--cl-bad) 12%,var(--cl-bg))}
+#tt-lobby-preview .cl-pagebar{display:flex;gap:8px;align-items:center;padding:0 12px 14px;font-weight:600;font-size:20px}
+#tt-lobby-preview .cl-back{border:0;background:transparent;color:var(--cl-ink);width:44px;height:44px;display:grid;place-items:center}
+#tt-lobby-preview .cl-back svg{width:22px;height:22px}
+#tt-lobby-preview .cl-card{margin:0 16px;border-radius:18px;background:var(--cl-card);padding:16px}
+#tt-lobby-preview .cl-card h3{margin:10px 0 4px;font-size:23px;line-height:27px;font-weight:700}
+#tt-lobby-preview p{margin:0}
+#tt-lobby-preview .cl-card p{font-size:14px;line-height:20px;color:var(--cl-body)}
+#tt-lobby-preview .cl-meter{display:flex;gap:3px;margin-top:14px}
+#tt-lobby-preview .cl-meter span{height:7px;border-radius:3px;flex:1;background:var(--cl-tile)}
+#tt-lobby-preview .cl-meter .cl-filled{background:var(--cl-accent)}#tt-lobby-preview .cl-meter .cl-check{background:var(--cl-warn)}
+#tt-lobby-preview .cl-meter-label{display:flex;justify-content:space-between;gap:8px;font-size:11px;line-height:16px;margin-top:5px;color:var(--cl-muted)}
+#tt-lobby-preview .cl-heading{margin-top:22px;margin-bottom:10px}
+#tt-lobby-preview .cl-app-head{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+#tt-lobby-preview .cl-app-icon{flex-shrink:0;width:44px;height:44px;border-radius:13px;background:var(--cl-tile);color:var(--cl-accent);display:grid;place-items:center}
+#tt-lobby-preview .cl-app-icon svg{width:22px;height:22px}
+#tt-lobby-preview .cl-app-head>div{min-width:0;flex:1}
+#tt-lobby-preview .cl-app-head strong{display:block;font-size:15px;font-weight:600;line-height:20px}
+#tt-lobby-preview .cl-app-head small{display:block;font-size:12px;line-height:16px;color:var(--cl-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#tt-lobby-preview .cl-outline{width:100%;min-height:48px;border-radius:24px;border:1px solid var(--cl-line);background:transparent;color:var(--cl-bad);font-weight:600;margin-top:12px;padding:10px 16px}
+#tt-lobby-preview .cl-note{font-size:12px;line-height:16px;color:var(--cl-muted);margin:7px 20px 0}
+#tt-lobby-preview .cl-quote{margin-top:12px;border:1px solid color-mix(in srgb,var(--cl-warn) 45%,transparent);border-radius:10px;padding:10px 12px;font-size:13px;line-height:18px;color:var(--cl-body)}
+#tt-lobby-preview .cl-quote small{display:block;margin-top:5px;color:var(--cl-muted);font-size:12px;line-height:16px}
+#tt-lobby-preview .cl-install{display:flex;align-items:center;gap:10px;padding:12px;background:var(--cl-bg);border:1px solid var(--cl-line);border-radius:16px;min-height:76px}
+#tt-lobby-preview .cl-install-copy{min-width:0;flex:1}
+#tt-lobby-preview .cl-install-copy strong{display:block;font-size:14px;line-height:20px;font-weight:600}
+#tt-lobby-preview .cl-install-copy small{color:var(--cl-muted);font-size:12px;line-height:16px}
+#tt-lobby-preview .cl-install-label{font-size:12px;color:var(--cl-accent);background:var(--cl-tile);padding:7px 12px;border-radius:10px;font-weight:600}
+#tt-lobby-preview .cl-primary{display:block;width:100%;min-height:48px;border:0;border-radius:24px;background:var(--cl-accent);color:var(--cl-on);font-weight:600;padding:10px 16px;margin-top:14px}
+#tt-lobby-preview .cl-empty{padding:90px 28px;text-align:center;display:grid;justify-items:center;gap:12px}
+#tt-lobby-preview .cl-empty>svg{width:64px;height:64px;color:var(--cl-accent);stroke-width:1.2}
+#tt-lobby-preview .cl-empty h3{font-size:20px;line-height:25px;font-weight:600;margin:0}
+#tt-lobby-preview .cl-empty p{font-size:14px;line-height:20px;color:var(--cl-muted)}
+#tt-lobby-preview .cl-dock{margin:10px 16px 0;display:flex;gap:5px;align-items:center;padding:8px;background:var(--cl-card);border:1px solid var(--cl-line);border-radius:18px}
+#tt-lobby-preview .cl-dock>span{display:flex;align-items:center;justify-content:center;gap:6px;flex:1;min-height:44px;font-size:12px;font-weight:600;color:var(--cl-muted);white-space:nowrap}
+#tt-lobby-preview .cl-dock svg{width:16px;height:16px}
+#tt-lobby-preview .cl-dock .cl-active{border-radius:11px;background:var(--cl-tile);color:var(--cl-accent)}
+#tt-lobby-preview .cl-dock .cl-plus{flex:0 0 44px;border:1px solid var(--cl-line);border-radius:12px;font-size:26px;font-weight:400;color:var(--cl-accent)}
+#tt-lobby-preview .cl-home{display:flex;justify-content:center;padding:14px 0 8px}
+#tt-lobby-preview .cl-home span{height:4px;width:110px;border-radius:5px;background:var(--cl-ink)}
+@media(max-width:360px){#tt-lobby-preview .cl-row{gap:8px;padding-left:10px}#tt-lobby-preview .cl-mark{width:44px;height:48px;border-radius:13px}#tt-lobby-preview .cl-chip{padding:4px 6px}#tt-lobby-preview .cl-dock{margin-left:10px;margin-right:10px}#tt-lobby-preview .cl-dock>span{gap:4px}}
+</style>
+<script>
+(()=>{
+const root=document.getElementById('tt-lobby-preview'),page=root.querySelector('#cl-page'),selector=root.querySelector('#cl-scenario');
+const icon=name=>`<i data-lucide="${name}" aria-hidden="true"></i>`;
+const sample={
+ holding:{id:59,filled:8,chip:'In',tone:'ok',app:'Quick Notes Lite',pkg:'com.demo.quicknotes'},
+ full:{id:60,filled:15,chip:'In',tone:'ok',app:'Metro Map',pkg:'com.demo.metromap',full:true},
+ checking:{id:59,filled:8,checking:1,chip:'Checking',tone:'warn',app:'Quick Notes Lite',pkg:'com.demo.quicknotes'},
+ reported:{id:59,filled:8,chip:'1 of 2 reports',tone:'warn',app:'Quick Notes Lite',pkg:'com.demo.quicknotes'},
+ returned:{id:54,filled:11,chip:'Sent back',tone:'bad',app:'Recipe Shelf',pkg:'com.demo.recipeshelf',returned:true},
+ joining:{id:57,filled:15,chip:'In',tone:'ok',app:'Metro Map',pkg:'com.demo.metromap',full:true,joining:true}
+};
+let current='multiple',detail=null;
+const initial=globalThis.openai?.widgetState?.modelContent?.scenario;
+if(initial&&([...selector.options].some(option=>option.value===initial)))current=initial;
+const refreshIcons=()=>globalThis.lucide?.createIcons({attrs:{width:16,height:16}});
+const chip=d=>`<span class="cl-chip cl-${d.tone}">${d.chip}</span>`;
+function row(key){const d=sample[key];return `<button type="button" class="cl-row cursor-interaction" data-crew="${key}" aria-label="Open Crew ${d.id}, ${d.chip}"><span class="cl-mark cl-${d.returned?'bad':d.full?'ok':'accent'}">${d.filled}</span><span class="cl-row-copy"><strong>Crew ${d.id}</strong><small>${d.returned?'Sent your app back':d.full?'Full, starts in 3h 42m':`${d.filled} of 15 in, ${15-d.filled} more to start`}</small></span><span class="cl-row-tail">${chip(d)}${icon('chevron-right')}</span></button>`}
+function list(){const keys=current==='multiple'?['full','holding','returned']:current==='empty'?[]:[current];return `<nav class="cl-tabs" aria-label="Crew sections"><span>Open</span><span class="cl-selected" aria-current="page">Lobby</span><span>Run</span><span>Record</span></nav>${keys.length?`<h2>Your crews</h2><div class="cl-list">${keys.map(row).join('')}</div>`:`<div class="cl-empty">${icon('blocks')}<h3>No crew waiting to start</h3><p>Put an app in the open crew and it waits here until the crew is full.</p></div>`}`}
+function meter(d){return `<div class="cl-meter" role="meter" aria-label="Confirmed seats" aria-valuemin="0" aria-valuemax="15" aria-valuenow="${d.filled}">${Array.from({length:15},(_,i)=>`<span class="${i<d.filled?'cl-filled':i<d.filled+(d.checking||0)?'cl-check':''}"></span>`).join('')}</div><div class="cl-meter-label"><span>${d.full?(d.joining?'You join on day 4':"Everyone’s in"):`${d.filled} in${d.checking?', 1 being checked':''}`}</span><span>${d.full?(d.joining?'11 days for you':'Day 1 at midnight, your time'):'15 seats'}</span></div>`}
+function appCard(d){let text=d.chip==='Checking'?"Play couldn't check it, so members are trying it.":d.tone==='warn'?'Play shows it to the testers group, but a member had trouble.':d.returned?`Not in Crew ${d.id} any more.`:d.full?'Play shows it to the testers group. The crew is full, so it stays in now.':'Play shows it to the testers group.';return `<h2 class="cl-heading">Your app</h2><div class="cl-card"><div class="cl-app-head"><span class="cl-app-icon">${icon('notebook')}</span><div><strong>${d.app}</strong><small>${d.pkg}</small></div>${chip(d)}</div><p>${text}</p>${d.chip==='Checking'?'<div class="cl-quote">1 Yes and 0 No so far. 2 Yes answers or 2 No answers decide it. Make sure the sign-in works.</div>':d.tone==='warn'?'<div class="cl-quote">“The sign-in screen keeps loading.”<small>One more report sends it back. Check the sign-in still works.</small></div>':''}${!d.full&&!d.returned?'<button type="button" class="cl-outline cursor-interaction" data-leave>Take it back out</button>':''}</div>${!d.full&&!d.returned?'<p class="cl-note">Your 100 tix come back in full.</p>':''}`}
+function crew(key){const d=sample[key];return `<div class="cl-pagebar"><button class="cl-back cursor-interaction" type="button" aria-label="Back to Lobby" data-back>${icon('arrow-left')}</button>Crew ${d.id}</div><div class="cl-card"><span class="cl-chip cl-${d.returned?'bad':d.full?'ok':'accent'}">${icon(d.returned?'undo-2':d.full?'clock':'users')}${d.returned?'Sent back':d.joining?'Joining on day 4':d.full?'Full, 15 of 15':`Filling, ${d.filled} of 15`}</span><h3>${d.returned?'Your app came back':d.full?'Starts in 3h 42m':`${15-d.filled} more and it starts`}</h3><p>${d.returned?'Play could not find your app through the testers group.':d.joining?'This crew is already running. Your first day is day 4, from midnight, your time. Install the others before then and no day counts against you.':d.full?'Day 1 begins at midnight, your time. Install the other 14 before then and no day counts against you.':"It starts at midnight, your time, the day it’s full. Install the others now, so day 1 is only opening them."}</p>${d.returned?'<button type="button" class="cl-primary cursor-interaction" data-fix>Fix it, then put it in again</button>':meter(d)}</div>${d.returned?'<p class="cl-note">Your 100 tix were returned in full. Fix what’s wrong, then put it in a crew again.</p>':''}${appCard(d)}${!d.returned?`<h2 class="cl-heading">Install these</h2><div class="cl-list">${[['Recipe Shelf','Ayesha','cooking-pot'],['Pocket Budget','Rafi','wallet'],['Habit Streak','Nadia','calendar-check']].map(([app,owner,glyph])=>`<div class="cl-install"><span class="cl-app-icon">${icon(glyph)}</span><div class="cl-install-copy"><strong>${app}</strong><small>${owner}</small></div><span class="cl-install-label">Install</span></div>`).join('')}</div>`:''}`}
+function render(){selector.value=current;page.innerHTML=detail?crew(detail):list();refreshIcons();}
+function save(){globalThis.openai?.setWidgetState?.({modelContent:{scenario:current},privateContent:{detail}})?.catch(()=>{});}
+selector.addEventListener('change',()=>{current=selector.value;detail=null;render();save();});
+root.querySelector('.cl-theme').addEventListener('click',()=>{root.style.colorScheme=root.style.colorScheme==='dark'?'light':'dark';});
+page.addEventListener('click',event=>{const target=event.target.closest('button');if(!target)return;if(target.dataset.crew){detail=target.dataset.crew;render();save();}else if(target.hasAttribute('data-back')){detail=null;render();save();}else if(target.hasAttribute('data-leave')){target.textContent='Preview · your 100 tix would be returned';}else if(target.hasAttribute('data-fix')){target.textContent='Fix availability, then use Take a seat';}});
+window.addEventListener('openai:set_globals',event=>{const saved=event.detail?.globals?.widgetState;const next=saved?.modelContent?.scenario;if([...selector.options].some(option=>option.value===next)){current=next;const chosen=saved?.privateContent?.detail;detail=Object.hasOwn(sample,chosen)?chosen:null;render();}});
+render();
+})();
+</script>

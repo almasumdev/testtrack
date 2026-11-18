@@ -1,0 +1,132 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<div id="tt-run-new" class="viz-dotted-background">
+  <div class="rn-controls"><label for="rn-state">Run state<select id="rn-state" class="cursor-interaction"><option value="multiple">Multiple crews</option><option value="single">One crew</option><option value="risk">Missed yesterday</option><option value="done">Tonight complete</option><option value="install">Apps need installing</option><option value="missing">Picture missing</option><option value="sending">Pictures sending</option><option value="late">Upload delayed</option><option value="finished">All your nights finished</option><option value="out">App removed from run</option><option value="loading">Loading</option><option value="empty">No running crew</option><option value="signedout">Signed out</option><option value="offline">Offline</option></select></label><button type="button" class="rn-theme cursor-interaction" aria-label="Switch preview theme"><i data-lucide="sun-moon" aria-hidden="true"></i></button></div>
+  <p class="rn-caption">Updated Run tab · sample states</p>
+  <section class="rn-phone" aria-label="Redesigned TestTrack Run tab">
+    <div class="rn-status"><span>9:41</span><span>••• &nbsp; ▰</span></div>
+    <header class="rn-appbar"><strong>TestTrack</strong><span><i data-lucide="ticket" aria-hidden="true"></i>100</span></header>
+    <nav class="rn-tabs" aria-label="Crew sections"><span>Open</span><span>Lobby</span><span class="rn-selected" aria-current="page">Run</span><span>Record</span></nav>
+    <div id="rn-content" aria-live="polite"></div>
+    <div class="rn-dock"><span><i data-lucide="circle-dot" aria-hidden="true"></i>Circle</span><span class="rn-selected"><i data-lucide="users" aria-hidden="true"></i>Crew</span><span class="rn-plus" aria-label="Add">+</span><span><i data-lucide="layout-grid" aria-hidden="true"></i>My apps</span></div><div class="rn-home"><span></span></div>
+    <div id="rn-guide" class="rn-overlay" hidden><section class="rn-sheet" role="dialog" aria-modal="true" aria-labelledby="rn-guide-title"><div class="rn-handle"></div><header class="rn-sheet-head"><h2 id="rn-guide-title">Nightly guide</h2><button type="button" class="rn-plain cursor-interaction" data-close>Done</button></header><div class="rn-guide-body">
+      <section><h3><i data-lucide="smartphone" aria-hidden="true"></i>Open tonight’s apps</h3><ul><li>Use <b>Open all</b>, or open one app at a time from its crew.</li><li>Each app stays open for <b>20 seconds</b>. It needs at least <b>10 seconds in front</b> and a screenshot to count.</li><li>Finish before <b>your local midnight</b>. Pause the floating timer if you need longer.</li></ul></section>
+      <section><h3><i data-lucide="download" aria-hidden="true"></i>Make each open count</h3><ul><li>Install from <b>Google Play</b> using the account in the testers group.</li><li>Allow <b>usage access</b>, connect <b>your Google Drive</b>, and approve Android’s screen sharing for the round.</li><li>If an update is announced, get it within <b>24 hours</b>. After that, the old copy stops counting.</li></ul></section>
+      <section><h3><i data-lucide="camera" aria-hidden="true"></i>Finish the picture</h3><ul><li>TestTrack captures a picture while the app is in front. The open counts when <b>time and picture</b> are received.</li><li>Uploads retry automatically and keep the <b>original night</b>, even after midnight.</li><li>Missing picture? Open the app again or pick a picture. Picked proof is marked as added by hand.</li><li>Waiting more than <b>3 hours</b>? Check your connection and use <b>Try again</b>.</li></ul></section>
+      <section><h3><i data-lucide="message-square" aria-hidden="true"></i>Send private feedback</h3><ul><li>Once per app, say <b>what worked and what could improve</b> on Play, with screenshot proof.</li><li>Due by <b>your night 7</b> with that app. After that, its opens stop counting until feedback is sent.</li><li>Crew feedback has <b>no Tix reward</b>.</li></ul></section>
+      <section><h3><i data-lucide="triangle-alert" aria-hidden="true"></i>Protect your run</h3><ul><li>A night is missed if <b>3 or more owed apps</b> stay unopened, or you open none.</li><li>One missed night is a warning. <b>2 in a row</b> take your app out.</li><li>Open <b>every owed app on every owed night</b> for a clean-run refund when the crew closes. One or two left can lose that refund even without a missed night.</li><li>Optional and excused apps are not owed. Once your own nights finish, nothing more is owed while other members finish.</li></ul></section>
+    </div></section></div>
+  </section>
+</div>
+<style>
+#tt-run-new{--rn-bg:light-dark(#f7fcff,#0f1011);--rn-text:light-dark(#142f43,#eceef0);--rn-body:light-dark(#344e61,#bdc3c9);--rn-muted:light-dark(#59758a,#9da3a9);--rn-line:light-dark(#b7d1e2,#383c41);--rn-tile:light-dark(#dce6ee,#2a2d31);--rn-card:light-dark(#f3f8fb,#1c1e20);--rn-accent:light-dark(#3a5b73,#93b3ca);--rn-on:light-dark(#fff,#101417);--rn-ok:light-dark(#376a58,#8ac6a7);--rn-warn:light-dark(#885e24,#e2ba7b);--rn-bad:light-dark(#b64646,#e09a9a);font-family:Barlow,system-ui,sans-serif;color:var(--rn-text);padding:20px 0 24px}
+#tt-run-new *{box-sizing:border-box}#tt-run-new [hidden]{display:none!important}#tt-run-new p{margin:0}#tt-run-new button,#tt-run-new select{font-family:inherit;font-size:14px;line-height:19px;touch-action:manipulation}
+#tt-run-new .rn-controls{display:flex;gap:10px;align-items:end;max-width:390px;padding:0 8px;margin:auto}
+#tt-run-new .rn-controls label{flex:1;min-width:0;display:grid;gap:5px;font-size:12px;line-height:17px;color:var(--rn-muted)}
+#tt-run-new select{padding:10px;width:100%;min-height:44px;background:var(--rn-bg);color:var(--rn-text);border:1px solid var(--rn-line);border-radius:10px}
+#tt-run-new .rn-theme{width:44px;height:44px;flex-shrink:0;background:var(--rn-bg);color:var(--rn-text);border:1px solid var(--rn-line);border-radius:10px;display:grid;place-items:center}
+#tt-run-new .rn-theme svg{width:20px;height:20px}
+#tt-run-new .rn-caption{font-size:12px;line-height:17px;text-align:center;color:var(--rn-muted);margin:10px 8px 20px}
+#tt-run-new .rn-phone{position:relative;display:flex;flex-direction:column;width:390px;max-width:100%;min-height:790px;margin:auto;overflow:hidden;border:1px solid var(--rn-line);border-radius:24px;background:var(--rn-bg);font-size:14px;line-height:19px}
+#tt-run-new .rn-status{display:flex;justify-content:space-between;padding:14px 22px 6px;font-size:12px;line-height:16px;font-weight:600}
+#tt-run-new .rn-appbar{display:flex;align-items:center;justify-content:space-between;padding:15px 20px 22px;font-size:23px;line-height:28px;font-weight:600}
+#tt-run-new .rn-appbar>span{display:flex;align-items:center;gap:6px;font-size:15px;color:var(--rn-accent)}
+#tt-run-new .rn-appbar svg{width:19px;height:19px}
+#tt-run-new .rn-tabs{display:flex;gap:4px;margin:0 16px 18px}
+#tt-run-new .rn-tabs span{flex:1;min-width:0;text-align:center;padding:9px 2px;font-size:14px;line-height:20px;color:var(--rn-muted);font-weight:500;border-radius:10px}
+#tt-run-new .rn-tabs .rn-selected{background:var(--rn-tile);color:var(--rn-text)}
+#tt-run-new #rn-content{padding:0 16px 24px;flex:1;min-width:0}
+#tt-run-new .rn-summary{padding:0 0 24px}
+#tt-run-new .rn-summary-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;min-height:36px}
+#tt-run-new .rn-summary-head>span{font-size:14px;line-height:20px;font-weight:500;color:var(--rn-muted)}
+#tt-run-new .rn-plain{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:40px;padding:4px 0;border:0;background:transparent;color:var(--rn-accent);font-size:13px;font-weight:500}
+#tt-run-new .rn-plain svg{width:15px;height:15px}
+#tt-run-new .rn-summary h2{font-size:30px;line-height:35px;letter-spacing:-.4px;font-weight:600;margin:0 0 6px}
+#tt-run-new .rn-meta{font-size:13px;line-height:18px;color:var(--rn-muted)}
+#tt-run-new .rn-summary-meter{height:5px;border-radius:5px;background:var(--rn-tile);overflow:hidden;margin-top:17px}
+#tt-run-new .rn-summary-meter>span{display:block;height:100%;border-radius:5px;background:var(--rn-accent);transition:width .35s ease}
+#tt-run-new .rn-summary-meta{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:5px 10px;margin-top:6px;font-size:12px;line-height:17px;color:var(--rn-muted)}
+#tt-run-new .rn-primary,#tt-run-new .rn-secondary{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:48px;padding:10px 14px;border-radius:99px;font-weight:600}
+#tt-run-new .rn-primary{border:0;background:var(--rn-accent);color:var(--rn-on);margin-top:16px}
+#tt-run-new .rn-primary svg{width:17px;height:17px}
+#tt-run-new .rn-secondary{border:1px solid var(--rn-line);background:var(--rn-bg);color:var(--rn-accent);margin-top:12px}
+#tt-run-new .rn-attention{display:block;font-size:12px;line-height:17px;margin-top:8px;color:var(--rn-warn)}
+#tt-run-new .rn-grid{display:flex;flex-direction:column;gap:10px}
+#tt-run-new .rn-crew{padding:16px;border:1px solid var(--rn-line);border-radius:16px;background:var(--rn-bg)}
+#tt-run-new .rn-crew-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+#tt-run-new .rn-crew-top strong{font-size:18px;line-height:23px;font-weight:600}
+#tt-run-new .rn-crew-top>span{font-size:12px;line-height:17px;color:var(--rn-muted)}
+#tt-run-new .rn-seats{display:flex;gap:4px}
+#tt-run-new .rn-seat{flex:1;min-width:0;height:15px;border-radius:4px;background:var(--rn-tile)}
+#tt-run-new .rn-seat.rn-filled{background:var(--rn-accent)}
+#tt-run-new .rn-seat.rn-needs{background:color-mix(in srgb,var(--rn-warn) 52%,var(--rn-tile))}
+#tt-run-new .rn-crew-counts{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:9px}
+#tt-run-new .rn-crew-counts strong{font-size:15px;line-height:20px;font-weight:500}
+#tt-run-new .rn-crew-counts>span{font-size:12px;line-height:17px;color:var(--rn-muted)}
+#tt-run-new .rn-own-app{display:flex;align-items:center;gap:8px;margin-top:13px;min-width:0;color:var(--rn-body);font-size:13px;line-height:18px}
+#tt-run-new .rn-own-app>span:last-child{min-width:0;overflow-wrap:anywhere}
+#tt-run-new .rn-icon{width:28px;height:28px;flex-shrink:0;display:grid;place-items:center;background:var(--rn-tile);border-radius:8px;color:var(--rn-accent)}
+#tt-run-new .rn-icon svg{width:15px;height:15px}
+#tt-run-new .rn-warning{margin-top:10px;font-size:12px;line-height:17px;color:var(--rn-warn)}
+#tt-run-new .rn-ok{color:var(--rn-ok)}#tt-run-new .rn-bad{color:var(--rn-bad)}
+#tt-run-new .rn-picture{padding:0 0 22px}
+#tt-run-new .rn-picture-title{display:flex;align-items:center;gap:9px;font-size:16px;line-height:21px;font-weight:600;margin:0 0 7px}
+#tt-run-new .rn-picture-title svg{width:18px;height:18px;color:var(--rn-warn)}
+#tt-run-new .rn-picture p{font-size:13px;line-height:18px;color:var(--rn-body)}
+#tt-run-new .rn-pair{display:flex;gap:8px}
+#tt-run-new .rn-pair>button{flex:1;min-width:0}
+#tt-run-new .rn-empty{padding:72px 8px;text-align:center;display:grid;justify-items:center;gap:12px}
+#tt-run-new .rn-empty>svg{width:54px;height:54px;color:var(--rn-accent);stroke-width:1.3}
+#tt-run-new .rn-empty h2{font-size:22px;line-height:27px;font-weight:600;margin:0}
+#tt-run-new .rn-empty p{font-size:14px;line-height:20px;color:var(--rn-muted);max-width:270px}
+#tt-run-new .rn-skeleton{height:16px;border-radius:5px;background:var(--rn-tile);display:block;max-width:100%}
+#tt-run-new .rn-dock{display:flex;align-items:center;gap:5px;margin:10px 16px 0;padding:8px;background:var(--rn-card);border:1px solid var(--rn-line);border-radius:18px}
+#tt-run-new .rn-dock>span{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;font-size:12px;line-height:17px;font-weight:600;color:var(--rn-muted);white-space:nowrap}
+#tt-run-new .rn-dock svg{width:16px;height:16px}
+#tt-run-new .rn-dock .rn-selected{background:var(--rn-tile);border-radius:11px;color:var(--rn-accent)}
+#tt-run-new .rn-dock .rn-plus{flex:0 0 44px;border:1px solid var(--rn-line);border-radius:12px;font-size:26px;line-height:28px;font-weight:400;color:var(--rn-accent)}
+#tt-run-new .rn-home{display:flex;justify-content:center;padding:14px 0 8px}
+#tt-run-new .rn-home span{width:110px;height:4px;border-radius:5px;background:var(--rn-text)}
+#tt-run-new .rn-overlay{position:absolute;inset:0;background:color-mix(in srgb,var(--rn-text) 25%,transparent);display:flex;align-items:flex-end;z-index:3}
+#tt-run-new .rn-sheet{max-height:90%;width:100%;background:var(--rn-card);border-top:1px solid var(--rn-line);border-radius:24px 24px 0 0;display:flex;flex-direction:column;overflow:hidden;padding:0 16px 20px}
+#tt-run-new .rn-handle{width:36px;height:4px;border-radius:4px;background:var(--rn-muted);opacity:.5;flex-shrink:0;margin:11px auto 14px}
+#tt-run-new .rn-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;flex-shrink:0}
+#tt-run-new .rn-sheet-head h2{font-size:19px;line-height:24px;font-weight:600;margin:0}
+#tt-run-new .rn-guide-body{overflow-y:auto;min-height:0;overscroll-behavior:contain;display:grid;gap:22px;padding-bottom:10px}
+#tt-run-new .rn-guide-body h3{display:flex;gap:9px;align-items:center;font-size:16px;line-height:21px;font-weight:600;margin:0 0 8px}
+#tt-run-new .rn-guide-body h3 svg{width:18px;height:18px;flex-shrink:0;color:var(--rn-accent)}
+#tt-run-new .rn-guide-body ul{margin:0;padding-left:17px;display:grid;gap:7px;font-size:13px;line-height:18px;color:var(--rn-body)}
+#tt-run-new .rn-guide-body b{font-weight:600;color:var(--rn-text)}
+@media(max-width:350px){#tt-run-new .rn-dock{margin-left:10px;margin-right:10px;padding:6px}#tt-run-new .rn-dock>span{gap:3px}#tt-run-new .rn-crew{padding:14px}#tt-run-new .rn-seats{gap:3px}#tt-run-new .rn-summary h2{font-size:27px;line-height:32px}}
+@media(prefers-reduced-motion:reduce){#tt-run-new .rn-summary-meter>span{transition:none}}
+</style>
+<script>
+(()=>{
+const root=document.getElementById('tt-run-new'),content=root.querySelector('#rn-content'),selector=root.querySelector('#rn-state'),overlay=root.querySelector('#rn-guide');
+const icon=name=>`<i data-lucide="${name}" aria-hidden="true"></i>`;
+let state='multiple',opened=false,pictureResolved=false;
+function data(){let a={n:58,day:6,done:8,left:6,ready:6,name:'Quick Notes Lite',glyph:'notebook'};
+ if(state==='multiple')return [a,{n:60,day:3,done:2,left:12,ready:10,name:'Metro Map',glyph:'map'}];
+ if(state==='risk')return [{...a,done:4,left:10,ready:10,risk:true}];
+ if(state==='done')return [{...a,done:14,left:0,ready:0}];
+ if(state==='install')return [{...a,done:0,left:14,ready:0}];
+ if(state==='missing')return [{...a,ready:5}];
+ if(state==='finished')return [{...a,day:15,done:14,left:0,ready:0,finished:true}];
+ if(state==='out')return [{...a,day:8,done:0,left:0,ready:0,out:true}];
+ return [a];}
+function rows(){return data().map(c=>opened?{...c,done:c.done+c.ready,left:c.left-c.ready,ready:0}:c)}
+const action=(label,key,secondary=false)=>`<button type="button" class="${secondary?'rn-secondary':'rn-primary'} cursor-interaction" data-action="${key}">${label}</button>`;
+function crew(c){const total=c.done+c.left,needs=Math.max(0,c.left-c.ready),closed=c.finished||c.out;return `<section class="rn-crew" aria-label="Crew ${c.n}"><header class="rn-crew-top"><strong>Crew ${c.n}</strong><span>${c.finished?'Finished for you':`Day ${c.day} of 14`}</span></header>${!closed?`<div class="rn-seats" role="meter" aria-label="Tonight’s counted opens in Crew ${c.n}" aria-valuenow="${c.done}" aria-valuemin="0" aria-valuemax="${Math.max(1,total)}">${Array.from({length:total},(_,i)=>`<span class="rn-seat ${i<c.done?'rn-filled':i>=total-needs?'rn-needs':''}"></span>`).join('')}</div>`:''}<div class="rn-crew-counts"><strong class="${c.out?'rn-bad':!c.left?'rn-ok':''}">${c.out?'Your app is out':c.finished?'All your nights complete':!c.left?'Tonight complete':`${c.left} left tonight`}</strong><span>${closed?'Nothing more owed':`${c.done}/${total} opened`}</span></div>${c.risk?'<p class="rn-warning">Missed yesterday. Finish tonight to keep your app in.</p>':''}${needs&&!closed?`<p class="rn-warning">${state==='missing'?'1 picture needs finishing':`${needs} need installing from Play`}</p>`:''}<div class="rn-own-app"><span class="rn-icon">${icon(c.glyph)}</span><span>${c.name}</span></div></section>`}
+function picture(){if(pictureResolved||!['missing','sending','late'].includes(state))return '';const missing=state==='missing',late=state==='late';return `<section class="rn-picture"><h3 class="rn-picture-title">${icon('camera')}${missing?'Finish one picture':late?'Pictures waiting too long':'2 pictures are sending'}</h3><p>${missing?'Recipe Shelf opened, but its picture didn’t save. Add it so tonight counts.':late?'Waiting over 3 hours. Check your connection, then try sending again.':'The opens count once their pictures reach your Drive.'}</p>${missing?`<div class="rn-pair">${action('Open again','picture',true)}${action('Pick a picture','picture',true)}</div>`:late?action('Try again','retry',true):''}</section>`}
+function blank(){const [glyph,title,body]=state==='empty'?['moon','No runs yet','A full crew starts at midnight. Its nightly apps will appear here.']:state==='offline'?['wifi-off','Couldn’t load your runs','Check your connection and try again.']:['lock-keyhole','Your runs, after sign-in','Sign in to see tonight’s testing and your crews.'];return `<div class="rn-empty">${icon(glyph)}<h2>${title}</h2><p>${body}</p>${state==='empty'?'':action(state==='offline'?'Try again':'Sign in','recover')}</div>`}
+function loading(){return `<section class="rn-summary" aria-label="Loading tonight"><span class="rn-skeleton" style="width:90px"></span><span class="rn-skeleton" style="width:210px;height:32px;margin-top:12px"></span><span class="rn-skeleton" style="height:5px;margin-top:20px"></span><span class="rn-skeleton" style="height:48px;border-radius:99px;margin-top:20px"></span></section><div class="rn-grid">${[1,2].map(()=>'<section class="rn-crew"><span class="rn-skeleton" style="width:100px;height:23px"></span><span class="rn-skeleton" style="height:15px;margin-top:16px"></span><span class="rn-skeleton" style="width:160px;margin-top:12px"></span><span class="rn-skeleton" style="width:140px;height:28px;margin-top:14px"></span></section>').join('')}</div>`}
+function render(){selector.value=state;if(['empty','offline','signedout'].includes(state))content.innerHTML=blank();else if(state==='loading')content.innerHTML=loading();else{const crews=rows(),active=crews.filter(c=>!c.out&&!c.finished),done=active.reduce((s,c)=>s+c.done,0),left=active.reduce((s,c)=>s+c.left,0),ready=active.reduce((s,c)=>s+c.ready,0),total=done+left,finished=crews.every(c=>c.finished),out=crews.every(c=>c.out),risk=crews.some(c=>c.risk),nights=Math.max(0,...active.map(c=>14-c.day+(left>0?1:0))),needs=left-ready;content.innerHTML=`<section class="rn-summary"><div class="rn-summary-head"><span>Tonight</span><button type="button" class="rn-plain cursor-interaction" data-guide>${icon('book-open')}Nightly guide</button></div><h2>${out?'Nothing more owed':finished?'Your nights are done':left?`${left} apps left`:'You’re done tonight'}</h2><p class="rn-meta">${out?'Your app is no longer in this run.':finished?'The crew closes when every member finishes.':`${active.length} ${active.length===1?'crew':'crews'} · ${nights} ${nights===1?'night':'nights'} to go`}</p>${!out&&!finished?`<div class="rn-summary-meter" role="meter" aria-label="All tonight’s counted opens" aria-valuenow="${done}" aria-valuemin="0" aria-valuemax="${Math.max(1,total)}"><span style="width:${total?done/total*100:0}%"></span></div><div class="rn-summary-meta"><span>${done}/${total} opened</span><span>${left?'By your midnight':'Everything counted'}</span></div>`:''}${ready?action(`${icon('play')}Open all ${ready}`,'open'):needs&&state!=='missing'?action('Check installs on Play','installs',true):''}${risk?'<span class="rn-attention">One missed night yesterday. Finish tonight.</span>':needs&&state!=='missing'?`<span class="rn-attention">${needs} ${needs===1?'app needs':'apps need'} attention before opening.</span>`:''}</section>${picture()}<div class="rn-grid">${crews.map(crew).join('')}</div>`;}globalThis.lucide?.createIcons({attrs:{width:16,height:16}});}
+selector.addEventListener('change',()=>{state=selector.value;opened=false;pictureResolved=false;render();});
+root.querySelector('.rn-theme').addEventListener('click',()=>root.style.colorScheme=root.style.colorScheme==='dark'?'light':'dark');
+let lastFocused=null;
+function closeGuide(){overlay.hidden=true;lastFocused?.focus();}
+root.addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;if(button.hasAttribute('data-guide')){lastFocused=button;overlay.hidden=false;overlay.querySelector('[data-close]').focus();return;}if(button.hasAttribute('data-close')){closeGuide();return;}switch(button.dataset.action){case 'open':opened=true;render();break;case 'picture':state='sending';opened=false;render();break;case 'retry':pictureResolved=true;render();break;case 'recover':state='single';render();break;case 'installs':button.textContent='Installs ready — return to testing';state='single';opened=false;render();break;}});
+root.addEventListener('keydown',event=>{if(overlay.hidden)return;if(event.key==='Escape'){event.preventDefault();closeGuide();}else if(event.key==='Tab'){event.preventDefault();overlay.querySelector('[data-close]').focus();}});
+overlay.addEventListener('click',event=>{if(event.target===overlay)closeGuide();});
+render();
+})();
+</script>

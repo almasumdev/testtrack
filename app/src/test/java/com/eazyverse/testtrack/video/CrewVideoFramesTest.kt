@@ -3,40 +3,62 @@ package com.eazyverse.testtrack.video
 import android.app.Application
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.net.ApiSession
+import com.eazyverse.testtrack.ui.AppTile
 import com.eazyverse.testtrack.ui.Crew
 import com.eazyverse.testtrack.ui.CrewActions
 import com.eazyverse.testtrack.ui.CrewApp
 import com.eazyverse.testtrack.ui.CrewGuide
 import com.eazyverse.testtrack.ui.CrewJoinState
+import com.eazyverse.testtrack.ui.CrewListRow
 import com.eazyverse.testtrack.ui.CrewMember
 import com.eazyverse.testtrack.ui.CrewMembersPage
 import com.eazyverse.testtrack.ui.CrewOpenTab
 import com.eazyverse.testtrack.ui.CrewPage
 import com.eazyverse.testtrack.ui.CrewPhase
 import com.eazyverse.testtrack.ui.CrewReportDialog
+import com.eazyverse.testtrack.ui.CrewRunPhase
+import com.eazyverse.testtrack.ui.CrewRunSummary
+import com.eazyverse.testtrack.ui.CrewRunUpdates
 import com.eazyverse.testtrack.ui.CrewScreen
 import com.eazyverse.testtrack.ui.CrewSeat
 import com.eazyverse.testtrack.ui.CrewSeatScreen
 import com.eazyverse.testtrack.ui.CrewViewModel
+import com.eazyverse.testtrack.ui.DebugLooks
 import com.eazyverse.testtrack.ui.DockUi
 import com.eazyverse.testtrack.ui.MainTab
 import com.eazyverse.testtrack.ui.Scene
 import com.eazyverse.testtrack.ui.SeatBoxes
+import com.eazyverse.testtrack.ui.SeatState
 import com.eazyverse.testtrack.ui.VisitDockContent
+import com.eazyverse.testtrack.ui.theme.TestTrackTheme
+import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -405,8 +427,226 @@ class CrewVideoFramesTest {
         vm.setState("tab", CrewPhase.RUN)
         frame.show { Ground { TabShell(MainTab.GROUPS, Scene.CREW) { CrewScreen(vm = vm) } } }
         frame.settle(800)
-        runCatching { frame.target("openAll", compose.onAllNodes(hasText("Open all", substring = true) and hasClickAction())[0]) }
+        runCatching { frame.target("openAll", compose.onAllNodes(hasText("Run all", substring = true) and hasClickAction())[0]) }
         frame.write("run")
+    }
+
+    /** The approved Run top card, with two crews and two apps still needing installation. */
+    @Test
+    fun c09b_runTopCard() {
+        val first = running.copy(apps = running.apps.mapIndexed { i, app -> app.copy(done = i < 8) })
+        val second =
+            running.copy(
+                id = "crew-61",
+                name = "Crew 61",
+                day = 3,
+                members = running.members.map { if (it.mine) it.copy(missedYesterday = true, missed = 1) else it },
+                apps = running.apps.mapIndexed { i, app -> app.copy(id = "second-$i", packageName = "com.example.second$i", done = i < 2) },
+            )
+        val runs = listOf(first, second)
+        var opened = 0
+        var installedPackage = ""
+        var openedCrew = ""
+        val available = mutableStateOf(true)
+        val dark = mutableStateOf(false)
+        val actions =
+            CrewActions(
+                onOpen = {},
+                onOpenAll = { id ->
+                    org.junit.Assert.assertNull(id)
+                    opened++
+                },
+                onInstall = { installedPackage = it.packageName },
+                onReport = {},
+                onLeave = {},
+                onTakeSeat = {},
+                isInstalled = { available.value && it != "com.example.second12" && it != "com.example.second13" },
+                onUpdateApp = { installedPackage = it.packageName },
+            )
+        frame.show {
+            Pushed {
+                TestTrackTheme(darkTheme = dark.value) {
+                    Column(Modifier.fillMaxSize().background(Tt.colors.bg).padding(top = 16.dp)) {
+                        Box(Modifier.padding(horizontal = 16.dp)) {
+                            CrewRunSummary(
+                                runs,
+                                com.eazyverse.testtrack.ui
+                                    .tonightIn(runs),
+                                10,
+                                actions,
+                            )
+                        }
+                        CrewRunUpdates(
+                            runs,
+                            com.eazyverse.testtrack.ui
+                                .tonightIn(runs),
+                            actions,
+                            onOpenCrew = { openedCrew = it },
+                        )
+                    }
+                }
+            }
+        }
+        frame.settle(800)
+        frame.write("runTopCard")
+        compose.onNodeWithText("Updates").assertExists()
+        val startButton = compose.onNodeWithText("Run all 16").fetchSemanticsNode().boundsInRoot
+        val updatesHeading = compose.onNodeWithText("Updates").fetchSemanticsNode().boundsInRoot
+        org.junit.Assert.assertTrue("Updates are outside and below the start card", updatesHeading.top > startButton.bottom)
+        compose.onNodeWithText("Missed yesterday").assertExists()
+        compose.onNodeWithText("Crew 61 · 12 apps left · Before midnight").assertExists()
+        compose.onNodeWithText("View crew").performClick()
+        org.junit.Assert.assertEquals("crew-61", openedCrew)
+        compose.onNodeWithText("Run all 16").performClick()
+        org.junit.Assert.assertEquals(1, opened)
+        compose.onNode(hasText("Nightly guide") and hasClickAction()).performClick()
+        frame.settle(800)
+        frame.write("runTopGuide")
+        compose.onNodeWithText("Done").performClick()
+        frame.settle(800)
+        compose.onNodeWithText("Run all 16").assertExists()
+        compose.onNodeWithText("View").performClick()
+        frame.settle(800)
+        frame.write("runTopInstalls")
+        compose.onAllNodes(hasText("Install") and hasClickAction())[0].performClick()
+        frame.settle(800)
+        org.junit.Assert.assertEquals("com.example.second12", installedPackage)
+        compose.runOnIdle { dark.value = true }
+        frame.settle(800)
+        frame.write("runUpdatesDark")
+        compose.runOnIdle { available.value = false }
+        frame.settle(800)
+        compose.onNodeWithText("Run all").assertIsNotEnabled()
+        frame.write("runNoAppsReadyDark")
+    }
+
+    /** Run tiles keep their own app, nightly state and navigation in every account state. */
+    @Test
+    fun c09c_runRows() {
+        val example = running.withCircleIcons()
+        val risk =
+            example.copy(
+                id = "risk",
+                name = "Crew 06",
+                members = example.members.map { if (it.mine) it.copy(missedYesterday = true, missed = 1) else it },
+            )
+        val done = example.copy(id = "done", name = "Crew 07", apps = example.apps.map { it.copy(done = true) })
+        val finished = example.copy(id = "finished", name = "Crew 08", day = example.runDays + 1)
+        val out =
+            example.copy(
+                id = "out",
+                name = "Crew 09",
+                seats = example.seats.map { if (it.mine) it.copy(state = SeatState.REMOVED) else it },
+            )
+        var opened = ""
+        val dark = mutableStateOf(false)
+        frame.show {
+            Pushed {
+                TestTrackTheme(darkTheme = dark.value) {
+                    Column(
+                        Modifier.fillMaxSize().background(Tt.colors.bg).padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        listOf(example, risk, done, finished, out).forEach { crew ->
+                            CrewListRow(crew) { opened = crew.id }
+                        }
+                    }
+                }
+            }
+        }
+        frame.settle(800)
+        frame.write("runRows")
+        compose.onNodeWithText("Missed yesterday. Finish tonight to keep your app in.").assertExists()
+        compose.onNodeWithText("Done for tonight").assertExists()
+        compose.onNodeWithText("Your nights are done").assertExists()
+        compose.onNodeWithText("Your app is out").assertExists()
+        compose.onNode(hasText("Crew 06") and hasClickAction()).performClick()
+        org.junit.Assert.assertEquals("risk", opened)
+        compose.runOnIdle { dark.value = true }
+        frame.settle(800)
+        frame.write("runRowsDark")
+    }
+
+    /** Real image and letter fallbacks at a 320dp phone width, including doubled text. */
+    @Test
+    fun c09d_runIconFit() {
+        val example = running.withCircleIcons()
+        frame.show {
+            Pushed {
+                TestTrackTheme(darkTheme = true) {
+                    Column(
+                        Modifier.fillMaxSize().background(Tt.colors.bg).padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Box(Modifier.width(288.dp)) { CrewListRow(example) {} }
+                        CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 2f)) {
+                            Box(Modifier.width(288.dp)) { CrewListRow(example) {} }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Box(Modifier.testTag("mini-initial")) { AppTile("W", 16.dp) }
+                                AppTile("ß", 16.dp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        frame.settle(800)
+        frame.write("runIconFit")
+        val tile = compose.onNodeWithTag("mini-initial").fetchSemanticsNode().boundsInRoot
+        val letter = compose.onNodeWithText("W", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        org.junit.Assert.assertTrue(
+            "Letter stays inside its tiny tile at doubled font size",
+            tile.contains(letter.topLeft) && tile.contains(letter.bottomRight),
+        )
+    }
+
+    /** Seeded demo packages can show Open all without installing packages or starting a real round. */
+    @Test
+    fun c09e_demoInstalled() {
+        assumeTrue(DebugLooks.crewDemoCopy("dev.seedapps.member0") != null)
+        val sample = running.withCircleIcons()
+        val demo =
+            sample.copy(
+                day = 5,
+                apps =
+                    sample.apps.mapIndexed { index, app ->
+                        app.copy(
+                            packageName = "dev.seedapps.member$index",
+                            done = false,
+                            reported = false,
+                            pictureDue = false,
+                            day = 5,
+                            feedbackDueDay = 7,
+                        )
+                    },
+                seats =
+                    sample.seats.mapIndexed { index, seat ->
+                        if (seat.mine) seat else seat.copy(packageName = "dev.seedapps.member$index")
+                    },
+            )
+        val vm = crews(listOf(demo), installed = false)
+        val context = compose.activity
+        val actions =
+            CrewActions(
+                onOpen = { vm.openApp(context, it) },
+                onOpenAll = { vm.openAll(context, it) },
+                onInstall = {},
+                onReport = {},
+                onLeave = {},
+                onTakeSeat = {},
+                isInstalled = { vm.isInstalled(context, it) },
+                localVersion = { vm.copyOf(context, it).versionCode },
+                fromPlay = { vm.copyOf(context, it).fromPlay },
+            )
+        frame.show { Pushed { CrewRunPhase(demo, actions) } }
+        frame.settle(800)
+        compose.onNodeWithText("Open all 14").assertIsEnabled()
+        frame.write("demoInstalled")
+        compose.onNodeWithText("Open all 14").performClick()
+        org.junit.Assert.assertTrue(vm.message.orEmpty().startsWith("Demo preview:"))
+        org.junit.Assert.assertNull(vm.needsUsageFor)
+        org.junit.Assert.assertNull(vm.needsOverlayFor)
+        org.junit.Assert.assertTrue(demo.apps.none { it.done })
     }
 
     /** The timer over the app being visited: counting, then counted. */

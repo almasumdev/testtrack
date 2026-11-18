@@ -1,0 +1,126 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap">
+<div id="tt-updates-compact" class="viz-dotted-background">
+  <main class="uc-page" aria-label="Compact Run Updates tiles">
+    <header><h2>Updates</h2><span>Compact tile states</span></header>
+    <section data-case="single"><h3>Missed night · One crew</h3><article class="uc-card">
+      <div class="uc-row"><div class="uc-copy"><div class="uc-line uc-warn"><i data-lucide="triangle-alert" aria-hidden="true"></i><b>Missed yesterday</b><button class="uc-info cursor-interaction" data-info="risk" aria-label="About missed nights" aria-expanded="false" aria-controls="uc-info-popup"><i data-lucide="info" aria-hidden="true"></i></button></div><p class="uc-note">Crew 61 · 12 apps left · <strong>Before midnight</strong></p></div><button class="uc-link cursor-interaction" data-crew="61">View crew</button></div>
+    </article></section>
+    <section data-case="multiple"><h3>Missed night · Multiple crews</h3><article class="uc-card">
+      <div class="uc-row"><div class="uc-copy"><div class="uc-line uc-warn"><i data-lucide="triangle-alert" aria-hidden="true"></i><b>Crew 61 · Missed yesterday</b></div><p class="uc-note">12 apps left · <strong>Before midnight</strong></p></div><button class="uc-link cursor-interaction" data-crew="61">View crew</button></div>
+      <div class="uc-row"><div class="uc-copy"><div class="uc-line uc-warn"><i data-lucide="triangle-alert" aria-hidden="true"></i><b>Crew 66 · Missed yesterday</b></div><p class="uc-note">3 apps left · <strong>Before midnight</strong></p></div><button class="uc-link cursor-interaction" data-crew="66">View crew</button></div>
+    </article></section>
+    <section data-case="install"><h3>Install or replace a non-Play copy</h3><article class="uc-card"><div class="uc-row">
+      <div class="uc-copy"><div class="uc-line"><i data-lucide="download" aria-hidden="true"></i><b>2 apps to install</b></div><p class="uc-note">Get the Google Play copies</p></div><button class="uc-link cursor-interaction" data-view="install">View</button>
+    </div></article></section>
+    <section data-case="missing"><h3>Missing screenshot</h3><article class="uc-card"><div class="uc-row">
+      <div class="uc-copy"><div class="uc-line uc-warn"><i data-lucide="image" aria-hidden="true"></i><b>Screenshot missing</b><button class="uc-info cursor-interaction" data-info="missing" aria-label="About missing screenshot" aria-expanded="false" aria-controls="uc-info-popup"><i data-lucide="info" aria-hidden="true"></i></button></div><p class="uc-note">Auto Silent · Test time saved</p></div><button class="uc-link cursor-interaction" data-add>Add</button>
+    </div></article></section>
+    <section data-case="sending"><h3>Screenshots uploading</h3><article class="uc-card"><div class="uc-row">
+      <div class="uc-copy"><div class="uc-line"><i data-lucide="cloud-upload" aria-hidden="true"></i><b>Uploading 2 screenshots</b><button class="uc-info cursor-interaction" data-info="sending" aria-label="About uploading screenshots" aria-expanded="false" aria-controls="uc-info-popup"><i data-lucide="info" aria-hidden="true"></i></button></div></div>
+    </div></article></section>
+    <section data-case="failed"><h3>Upload failed</h3><article class="uc-card"><div class="uc-row">
+      <div class="uc-copy"><div class="uc-line uc-warn"><i data-lucide="cloud-upload" aria-hidden="true"></i><b>2 uploads failed</b><button class="uc-info cursor-interaction" data-info="failed" aria-label="About failed uploads" aria-expanded="false" aria-controls="uc-info-popup"><i data-lucide="info" aria-hidden="true"></i></button></div><p class="uc-note">Screenshots saved on this phone</p></div><button class="uc-link cursor-interaction" data-retry>Retry</button>
+    </div></article></section>
+    <section data-case="late"><h3>Upload waiting more than 3 hours</h3><article class="uc-card"><div class="uc-row">
+      <div class="uc-copy"><div class="uc-line uc-bad"><i data-lucide="clock" aria-hidden="true"></i><b>Upload waiting · 3h+</b><button class="uc-info cursor-interaction" data-info="late" aria-label="About delayed upload" aria-expanded="false" aria-controls="uc-info-popup"><i data-lucide="info" aria-hidden="true"></i></button></div><p class="uc-note">1 screenshot saved on this phone</p></div><button class="uc-link cursor-interaction" data-retry>Retry</button>
+    </div></article></section>
+    <section data-case="feedback"><h3>Private feedback blocking testing</h3><article class="uc-card"><div class="uc-row">
+      <div class="uc-copy"><div class="uc-line uc-warn"><i data-lucide="message-circle" aria-hidden="true"></i><b>2 apps need feedback</b><button class="uc-info cursor-interaction" data-info="feedback" aria-label="About feedback needed" aria-expanded="false" aria-controls="uc-info-popup"><i data-lucide="info" aria-hidden="true"></i></button></div></div><button class="uc-link cursor-interaction" data-view="feedback">View</button>
+    </div></article></section>
+    <section data-case="update"><h3>App updates blocking testing</h3><article class="uc-card"><div class="uc-row">
+      <div class="uc-copy"><div class="uc-line uc-warn"><i data-lucide="refresh-cw" aria-hidden="true"></i><b>2 apps need an update</b><button class="uc-info cursor-interaction" data-info="update" aria-label="About updates needed" aria-expanded="false" aria-controls="uc-info-popup"><i data-lucide="info" aria-hidden="true"></i></button></div></div><button class="uc-link cursor-interaction" data-view="update">View</button>
+    </div></article></section>
+    <section data-case="mixed"><h3>Mixed blockers</h3><article class="uc-card"><div class="uc-row">
+      <div class="uc-copy"><div class="uc-line uc-warn"><i data-lucide="triangle-alert" aria-hidden="true"></i><b>3 apps need attention</b><button class="uc-info cursor-interaction" data-info="mixed" aria-label="About apps needing attention" aria-expanded="false" aria-controls="uc-info-popup"><i data-lucide="info" aria-hidden="true"></i></button></div></div><button class="uc-link cursor-interaction" data-view="mixed">View</button>
+    </div></article></section>
+    <div id="uc-info-popup" popover="auto" role="note"><p></p></div>
+    <dialog class="uc-dialog" aria-labelledby="uc-dialog-title"><h2 id="uc-dialog-title"></h2><p data-body></p><div data-options></div><button class="uc-primary cursor-interaction" data-close>Done</button></dialog>
+    <p class="uc-announcement" aria-live="polite"></p>
+  </main>
+</div>
+<style>
+#tt-updates-compact{--uc-bg:light-dark(#f7fcff,#0f1011);--uc-ink:light-dark(#142f43,#eceef0);--uc-muted:light-dark(#59758a,#9da3a9);--uc-border:light-dark(#b7d1e2,#383c41);--uc-accent:light-dark(#3a5b73,#93b3ca);--uc-on:light-dark(#fff,#0f1011);--uc-sheet:light-dark(#fff,#1c1e20);--uc-warn:light-dark(#885e24,#d8b774);--uc-bad:light-dark(#a84438,#e49b91);font-family:Barlow,system-ui,sans-serif;color:var(--uc-ink);display:flex;justify-content:center;padding:24px 0}
+#tt-updates-compact *{box-sizing:border-box}
+#tt-updates-compact .uc-page{width:404px;max-width:100%;padding:12px;background:var(--uc-bg);border:1px solid var(--uc-border);border-radius:20px}
+#tt-updates-compact h2,#tt-updates-compact h3,#tt-updates-compact p{margin:0}
+#tt-updates-compact header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+#tt-updates-compact h2{font-size:18px;line-height:24px;font-weight:600}
+#tt-updates-compact header>span{font-size:12px;line-height:17px;color:var(--uc-muted)}
+#tt-updates-compact section+section{margin-top:14px}
+#tt-updates-compact h3{font-size:12px;line-height:17px;font-weight:400;color:var(--uc-muted);margin-bottom:5px}
+#tt-updates-compact .uc-card{border:1px solid var(--uc-border);border-radius:14px;padding:8px 10px;background:var(--uc-bg)}
+#tt-updates-compact .uc-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:32px}
+#tt-updates-compact .uc-row+.uc-row{margin-top:8px}
+#tt-updates-compact .uc-copy{min-width:0;flex:1}
+#tt-updates-compact .uc-line{--icon-size:15px;display:flex;align-items:center;gap:6px;min-width:0;min-height:18px;font-size:13px;line-height:18px}
+#tt-updates-compact .uc-line>svg{flex:none;color:var(--uc-muted)}
+#tt-updates-compact .uc-line b{font-weight:500;min-width:0;flex:0 1 auto}
+#tt-updates-compact .uc-warn,#tt-updates-compact .uc-warn>svg{color:var(--uc-warn)}
+#tt-updates-compact .uc-bad,#tt-updates-compact .uc-bad>svg{color:var(--uc-bad)}
+#tt-updates-compact .uc-note{font-size:12px;line-height:17px;color:var(--uc-muted);margin-top:1px}
+#tt-updates-compact .uc-note strong{font-weight:500;color:var(--uc-ink)}
+#tt-updates-compact button{font:inherit;touch-action:manipulation}
+#tt-updates-compact button:focus-visible,#tt-updates-compact a:focus-visible{outline:2px solid var(--uc-accent);outline-offset:3px}
+#tt-updates-compact .uc-link{flex:none;min-height:32px;border:0;background:transparent;color:var(--uc-accent);padding:4px 2px;font-size:13px;line-height:18px;font-weight:600}
+#tt-updates-compact .uc-info{--icon-size:14px;flex:none;display:grid;place-items:center;width:24px;height:24px;padding:4px;border:0;background:transparent;color:var(--uc-muted);margin-left:-3px}
+#tt-updates-compact #uc-info-popup{position:absolute;inset:auto;margin:0;width:260px;max-width:calc(100% - 32px);overflow:visible;padding:12px 14px;background:var(--uc-sheet);color:var(--uc-ink);border:1px solid var(--uc-border);border-radius:14px;font-family:inherit;font-size:13px;line-height:18px}
+#tt-updates-compact #uc-info-popup::before{content:"";position:absolute;width:11px;height:11px;left:var(--uc-caret,50%);top:-6px;transform:translateX(-50%) rotate(45deg);background:inherit;border-top:1px solid var(--uc-border);border-left:1px solid var(--uc-border)}
+#tt-updates-compact #uc-info-popup.is-above::before{top:auto;bottom:-6px;transform:translateX(-50%) rotate(225deg)}
+#tt-updates-compact #uc-info-popup::backdrop{background:transparent}
+#tt-updates-compact .uc-dialog{font-family:inherit;color:var(--uc-ink);background:var(--uc-bg);width:340px;max-width:calc(100% - 28px);border:1px solid var(--uc-border);border-radius:18px;padding:18px}
+#tt-updates-compact .uc-dialog p{font-size:14px;line-height:20px;margin:10px 0;color:var(--uc-muted)}
+#tt-updates-compact .uc-dialog::backdrop{background:light-dark(#142f4340,#00000066)}
+#tt-updates-compact .uc-dialog [data-options]{display:grid;gap:6px}
+#tt-updates-compact .uc-dialog a{font-size:14px;line-height:20px;color:var(--uc-accent);padding:6px 0;display:block;text-decoration:none}
+#tt-updates-compact .uc-primary{border:0;border-radius:99px;background:var(--uc-accent);color:var(--uc-on);width:100%;min-height:44px;padding:10px;font-size:14px;line-height:20px;font-weight:600;margin-top:12px}
+#tt-updates-compact .uc-announcement{font-size:12px;line-height:17px;color:var(--uc-muted);margin-top:8px}
+#tt-updates-compact .uc-announcement:empty{display:none}
+@media(pointer:coarse){#tt-updates-compact .uc-link{min-height:44px}#tt-updates-compact .uc-info{width:44px;height:44px;margin-left:0;padding:14px}#tt-updates-compact .uc-line:has(.uc-info){min-height:44px}}
+@media(max-width:350px){#tt-updates-compact .uc-page{padding:10px}#tt-updates-compact .uc-card{padding:8px}#tt-updates-compact .uc-row{gap:6px}}
+</style>
+<script>
+(()=>{
+  const root=document.getElementById('tt-updates-compact'),popup=root.querySelector('#uc-info-popup'),dialog=root.querySelector('dialog');
+  const explanations={
+    risk:'Miss tonight too and your app leaves the crew. Finish all owed apps before your local midnight.',
+    missing:'Your app time is saved. Add a screenshot of Auto Silent to count this test. You can retake it or use a saved app screenshot.',
+    sending:'These tests will count once their screenshots finish uploading to your Google Drive.',
+    failed:'Your screenshots are safe on this phone. Connect to the internet and retry the upload.',
+    late:'This screenshot has waited over 3 hours. The test counts when the upload finishes. Check your connection and retry.',
+    feedback:'Give private feedback on Google Play for these apps before their tests can count.',
+    update:'The installed copies are older than the required versions. Update from Google Play before testing.',
+    mixed:'Some apps need private feedback; others need a Google Play update. Open the list to see each action.'
+  };
+  let anchor=null;
+  function closeInfo(){popup.hidePopover();anchor?.setAttribute('aria-expanded','false');anchor=null;}
+  function position(){
+    if(!anchor||!popup.matches(':popover-open'))return;
+    const a=anchor.getBoundingClientRect(),p=root.querySelector('.uc-page').getBoundingClientRect(),r=popup.getBoundingClientRect();
+    const left=Math.max(16,Math.min(p.right-16-r.width,window.innerWidth-16-r.width));
+    const above=a.bottom+r.height+8>window.innerHeight&&a.top>r.height+8;
+    popup.classList.toggle('is-above',above);popup.style.left=`${left+window.scrollX}px`;
+    popup.style.top=`${(above?a.top-r.height-8:a.bottom+8)+window.scrollY}px`;
+    popup.style.setProperty('--uc-caret',`${Math.max(22,Math.min(r.width-22,a.left+a.width/2-left))}px`);
+  }
+  popup.addEventListener('toggle',()=>{if(!popup.matches(':popover-open')){anchor?.setAttribute('aria-expanded','false');anchor=null;}});
+  window.addEventListener('resize',position);
+  function show(title,body,options=''){closeInfo();root.querySelector('#uc-dialog-title').textContent=title;dialog.querySelector('[data-body]').textContent=body;dialog.querySelector('[data-options]').innerHTML=options;dialog.showModal();}
+  root.addEventListener('click',event=>{
+    const button=event.target.closest('button');if(!button)return;
+    if(button.hasAttribute('data-info')){
+      if(anchor===button&&popup.matches(':popover-open')){closeInfo();return;}
+      closeInfo();anchor=button;popup.querySelector('p').textContent=explanations[button.dataset.info];popup.showPopover();button.setAttribute('aria-expanded','true');position();return;
+    }
+    if(button.hasAttribute('data-close')){dialog.close();return;}
+    if(button.hasAttribute('data-crew')){show(`Crew ${button.dataset.crew}`,'Finish tonight’s owed apps before your local midnight.');return;}
+    if(button.hasAttribute('data-add')){show('Complete your test','Your app time is saved. Add an app screenshot so this test counts.','<button class="uc-link cursor-interaction" data-capture>Retake screenshot</button><button class="uc-link cursor-interaction" data-pick>Use saved app screenshot</button>');return;}
+    if(button.hasAttribute('data-capture')||button.hasAttribute('data-pick')){dialog.close();root.querySelector('.uc-announcement').textContent=button.hasAttribute('data-capture')?'Screenshot capture selected.':'Saved screenshot selected.';return;}
+    if(button.hasAttribute('data-view')){
+      const kind=button.dataset.view;
+      show({install:'Apps to install',feedback:'Apps needing feedback',update:'Apps to update',mixed:'Apps needing attention'}[kind],kind==='mixed'?'Auto Silent needs private feedback. Bluefy and Cherish need updates.':'Auto Silent and Bluefy need attention before testing.');return;
+    }
+    if(button.hasAttribute('data-retry'))root.querySelector('.uc-announcement').textContent='Upload retry requested.';
+  });
+  if(globalThis.lucide)lucide.createIcons({attrs:{width:16,height:16}});
+})();
+</script>

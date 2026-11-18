@@ -98,7 +98,7 @@ internal fun ReplyToRefusal(
         var picture by remember { mutableStateOf<Uri?>(null) }
         Ask(
             title = "Answer the developer",
-            body = "Say what you did, or show the review on Google Play. You can answer once.",
+            body = "Explain what you sent or add a screenshot. You can answer once.",
             confirm = "Send",
             confirmEnabled = text.trim().isNotEmpty() || picture != null,
             onConfirm = {
@@ -111,13 +111,13 @@ internal fun ReplyToRefusal(
                 value = text,
                 onValueChange = { text = it.take(FeedRules.REFUSE_MAX) },
                 label = "Your answer",
-                placeholder = "It is on Google Play under my name.",
+                placeholder = "My feedback was sent on Google Play.",
                 singleLine = false,
                 minHeight = 96.dp,
                 maxLength = FeedRules.REFUSE_MAX,
             )
             Spacer(Modifier.height(8.dp))
-            AddPicture(picture, { picture = it }, "Show your review on Play?")
+            AddPicture(picture, { picture = it }, "Add a screenshot?")
         }
     }
 }

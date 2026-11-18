@@ -74,53 +74,71 @@ fun CrewRunLoading() {
         item {
             Box(Modifier.padding(horizontal = Gutter)) {
                 CrewCard(padding = PaddingValues(16.dp)) {
-                    Skeleton(width = 170.dp, height = 24.dp, corner = 8.dp)
-                    Spacer(Modifier.height(10.dp))
-                    Skeleton(width = 210.dp, height = 13.dp)
-                    Spacer(Modifier.height(18.dp))
-                    Skeleton(height = 10.dp, corner = 5.dp)
-                    Spacer(Modifier.height(20.dp))
-                    Row(Modifier.fillMaxWidth()) {
-                        repeat(3) {
-                            Column(Modifier.weight(1f)) {
-                                Skeleton(width = 40.dp, height = 20.dp)
-                                Spacer(Modifier.height(6.dp))
-                                Skeleton(width = 64.dp, height = 10.dp)
-                            }
+                    Row(Modifier.fillMaxWidth().height(32.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Skeleton(width = 32.dp, height = 32.dp, corner = 10.dp)
+                        Spacer(Modifier.width(9.dp))
+                        Skeleton(width = 60.dp, height = 19.dp)
+                        Spacer(Modifier.weight(1f))
+                        Skeleton(width = 104.dp, height = 18.dp)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(Modifier.weight(1f)) {
+                            Skeleton(width = 64.dp, height = 50.dp)
+                            Spacer(Modifier.height(4.dp))
+                            Skeleton(width = 115.dp, height = 18.dp)
+                        }
+                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                            Skeleton(width = 80.dp, height = 32.dp)
+                            Spacer(Modifier.height(7.dp))
+                            Skeleton(width = 50.dp, height = 18.dp)
                         }
                     }
                     Spacer(Modifier.height(18.dp))
-                    Skeleton(height = 48.dp, corner = 24.dp)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        repeat(3) {
+                            Box(Modifier.weight(1f)) { Skeleton(height = 17.dp) }
+                        }
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    Skeleton(height = ButtonHeight, corner = 26.dp)
                 }
             }
         }
         item { CrewHeading("Your runs") }
         items(SKELETON_ROWS) { index ->
-            Box(Modifier.padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) { CrewRowLoading(index) }
+            Box(Modifier.padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) { CrewRunRowLoading() }
         }
     }
 }
 
-/** Waiting to start: the heading, then rows of crews that are filling, like [CrewRecordLoading]. */
+/** Waiting to start: the seat map and app have the same places before and after the load. */
 @Composable
-fun CrewLobbyLoading() = CrewRowsLoading("Loading your crews", "Your crews")
-
-/** Finished: the heading, then rows of crews that are over. */
-@Composable
-fun CrewRecordLoading() = CrewRowsLoading("Loading finished crews", "Finished")
-
-/** A heading and [SKELETON_ROWS] crew rows, more than the screen holds. */
-@Composable
-private fun CrewRowsLoading(
-    what: String,
-    heading: String,
-) {
+fun CrewLobbyLoading() {
     LazyColumn(
-        Modifier.fillMaxSize().loading(what),
-        contentPadding = PaddingValues(top = HeadedListTop, bottom = Gutter + dockRoom()),
+        Modifier.fillMaxSize().loading("Loading your crews"),
+        contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
         userScrollEnabled = false,
     ) {
-        item { CrewHeading(heading, top = 0.dp) }
+        items(SKELETON_ROWS) {
+            Box(Modifier.padding(horizontal = Gutter)) { CrewLobbyRowLoading() }
+        }
+    }
+}
+
+/** Finished: rows of crews that are over, no heading. */
+@Composable
+fun CrewRecordLoading() = CrewRowsLoading("Loading finished crews")
+
+/** [SKELETON_ROWS] crew rows, more than the screen holds. */
+@Composable
+private fun CrewRowsLoading(what: String) {
+    LazyColumn(
+        Modifier.fillMaxSize().loading(what),
+        contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
+        userScrollEnabled = false,
+    ) {
         items(SKELETON_ROWS) { index ->
             Box(Modifier.padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) { CrewRowLoading(index) }
         }

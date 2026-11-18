@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,6 +39,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.domain.grouped
@@ -230,6 +232,7 @@ private fun TixFigure(
     modifier: Modifier = Modifier,
 ) {
     val t = Tt.colors
+    val countRoom = with(LocalDensity.current) { TixCountRoom.toDp() }
 
     // Long enough to read as counting, short enough not to be waited on.
     val shown by animateIntAsState(
@@ -276,7 +279,7 @@ private fun TixFigure(
             Spacer(Modifier.width(7.dp))
             Text(
                 grouped(shown),
-                Modifier.graphicsLayer {
+                Modifier.widthIn(min = countRoom).graphicsLayer {
                     // A little swell while it counts, settling as the roll ends.
                     val swell = 1f + 0.16f * sin(PI.toFloat() * (1f - hop.value).coerceIn(0f, 1f)).coerceAtLeast(0f)
                     scaleX = swell
@@ -287,6 +290,7 @@ private fun TixFigure(
                 fontFamily = Barlow,
                 fontWeight = FontWeight.SemiBold,
                 color = t.text,
+                textAlign = TextAlign.Center,
             )
         }
         if (rise.value < 1f && change != 0) {
@@ -308,15 +312,25 @@ private fun TixFigure(
     }
 }
 
-/** The ticket and a bar where the figure goes, while the signed-in account is still loading. */
+/** The static ticket and the same quiet loading dots used by a list tile's unknown amount. */
 @Composable
 private fun TixLoading(modifier: Modifier = Modifier) {
-    Row(modifier.height(48.dp).padding(start = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+    val countRoom = with(LocalDensity.current) { TixCountRoom.toDp() }
+    Row(
+        modifier
+            .height(48.dp)
+            .padding(start = 6.dp)
+            .clearAndSetSemantics { contentDescription = "Loading tix balance" },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Ticket(null)
         Spacer(Modifier.width(7.dp))
-        Skeleton(width = 36.dp, height = 14.dp, corner = 6.dp)
+        TixLoadingDots(Modifier.width(countRoom), color = Tt.colors.text)
     }
 }
+
+/** Reserve the same amount slot while loading and showing a normal balance, scaled with text. */
+private val TixCountRoom = 36.sp
 
 /** The ticket, resting at -12 degrees. [hop] drives the up, over once and back down. */
 @Composable

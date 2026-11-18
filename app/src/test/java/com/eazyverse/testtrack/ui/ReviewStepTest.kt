@@ -134,14 +134,12 @@ class ReviewStepTest {
                 .plusHours(5)
                 .toString()
         val oneDay = ReviewJob(post, review("installed", used = 300_000, needed = 300_000).copy(returnsAt = later, daysUsed = 1))
-        assertTrue(stepTitle(oneDay) in setOf("Come back tomorrow", "Come back later today"))
-        assertTrue(stepLine(oneDay).contains("Your review opens"))
+        assertTrue(oneDay.waitingForDay)
 
         // Used on two days already: only the hours since it was taken are left to pass.
         val twoDays = oneDay.copy(review = oneDay.review.copy(daysUsed = 2))
         assertEquals(5, twoDays.hoursToReturn)
-        assertEquals("Almost there", stepTitle(twoDays))
-        assertTrue(stepLine(twoDays).contains("Your review opens"))
+        assertTrue(twoDays.waitingForDay)
     }
 
     @Test
@@ -200,16 +198,24 @@ class ReviewStepTest {
         val closed = post.copy(isLive = false)
         val job = ReviewJob(closed, review("used", used = 120_000, needed = 120_000))
         assertEquals(null, job.hoursToReturn)
-        assertEquals("Send feedback on Google Play", stepTitle(job))
+        assertEquals(ReviewStep.LEAVE, job.step)
         assertEquals("Open Google Play", stepAction(job.step, job))
     }
 
     @Test
     fun time_still_to_go_is_said_in_minutes() {
         val job = ReviewJob(post, review("installed", used = 60_000, needed = 300_000))
-        assertEquals("4 minutes more in the app", stepLine(job))
+        assertEquals("4 minutes", usageLeftLabel(job.secondsLeft))
         val odd = ReviewJob(post, review("installed", used = 50_000, needed = 300_000))
-        assertEquals("4 min 10 s more in the app", stepLine(odd))
+        assertEquals("4 min 10 s", usageLeftLabel(odd.secondsLeft))
+    }
+
+    @Test
+    fun a_partial_second_still_needs_more_usage() {
+        val almost = ReviewJob(post, review("installed", used = 119_999, needed = 120_000))
+        assertEquals(1, almost.secondsLeft)
+        assertFalse(almost.waitingForDay)
+        assertEquals(0, almost.copy(review = almost.review.copy(usedMs = 120_000)).secondsLeft)
     }
 
     @Test
@@ -217,8 +223,6 @@ class ReviewStepTest {
         val fresh = ReviewJob(post, review("claimed"))
         assertEquals("Get it on Play", stepAction(ReviewStep.INSTALL, fresh))
         val here = fresh.copy(onPhone = true)
-        assertEquals("Already on your phone", stepTitle(here))
         assertEquals("Start review", stepAction(ReviewStep.INSTALL, here))
-        assertTrue(stepLine(here).contains("My reviews"))
     }
 }

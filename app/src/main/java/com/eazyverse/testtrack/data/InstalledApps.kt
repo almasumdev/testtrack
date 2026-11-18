@@ -32,7 +32,7 @@ object InstalledApps {
         /**
          * `com.android.vending` means it came from Play rather than a sideload.
          *
-         * Nothing reads this yet. A closed-test build can only be installed from Play by someone
+         * A closed-test build can only be installed from Play by someone
          * already opted in, so the source is the one thing on the device that says the tester
          * opted in at all, and opting in is the only thing Play counts. A sideloaded copy passed
          * around the group would otherwise pass every check here and still be worth nothing.
@@ -42,7 +42,9 @@ object InstalledApps {
         /** From the same [android.content.pm.PackageInfo] read as everything else here: no extra cost. */
         val versionCode: Long = 0L,
         val versionName: String? = null,
-    )
+    ) {
+        val fromPlay: Boolean get() = installed && installer == "com.android.vending"
+    }
 
     /**
      * Cached because a list of fourteen rows asks for this on every recomposition.

@@ -43,7 +43,7 @@ fun GiveUpDialog(
 ) {
     Ask(
         title = "Give this review up?",
-        body = "The slot goes back for somebody else, and you can't take this one again.",
+        body = "Your slot is released and no reward is paid.",
         confirm = "Give it up",
         destructive = true,
         onConfirm = onGiveUp,

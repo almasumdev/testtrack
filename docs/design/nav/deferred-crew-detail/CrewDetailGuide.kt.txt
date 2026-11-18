@@ -1,0 +1,177 @@
+package com.eazyverse.testtrack.ui
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Camera
+import com.composables.icons.lucide.Coins
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.MessageSquare
+import com.composables.icons.lucide.Moon
+import com.composables.icons.lucide.RefreshCw
+import com.composables.icons.lucide.TriangleAlert
+import com.composables.icons.lucide.Users
+import com.eazyverse.testtrack.ui.theme.Tt
+
+/** Full instructions stay reachable from every crew phase, including a sent-back or removed app. */
+@Composable
+internal fun CrewDetailGuide(
+    crew: Crew,
+    onDismiss: () -> Unit,
+) {
+    PickerSheet(
+        title = "Crew guide",
+        subtitle = crew.name,
+        leading = { IconSquare(Lucide.Users, Tone.ACCENT) },
+        onDismiss = onDismiss,
+        skipHalf = true,
+        fitMax = 0.9f,
+    ) { close ->
+        Column(
+            Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            CrewGuideGroup(Lucide.Users, "Before the first night") {
+                CrewGuideBullet(
+                    if (crew.firstNight > 1) {
+                        "This crew already started. Your first night begins at the first local midnight after the team puts your app in."
+                    } else {
+                        "All ${CrewRules.SEATS} apps must be confirmed. Your run starts at your first local midnight after the crew fills."
+                    },
+                )
+                CrewGuideBullet(
+                    "Install the other apps from Google Play using the account in the testers group. Tap an app tile for its test sign-in.",
+                )
+                if (crew.firstNight > 1) {
+                    CrewGuideBullet(
+                        "You join on crew day ${crew.firstNight}: ${crew.ownNights} nights for you. Earlier nights are not owed.",
+                    )
+                } else {
+                    CrewGuideBullet("This crew runs for ${crew.runDays} nights. Each day ends at your local midnight.")
+                }
+                CrewGuideBullet(
+                    "If Play cannot check an app, members try it: ${CrewRules.VOTES_TO_DECIDE} Yes answers confirm it; ${CrewRules.VOTES_TO_DECIDE} No answers send it back.",
+                )
+            }
+            CrewGuideGroup(Lucide.Moon, "Every night") {
+                CrewGuideBullet(
+                    "Use Open all, or open apps one at a time. Each stays open for ${CrewRules.OPEN_SECONDS} seconds; at least ${CrewRules.VISIT_SECONDS} seconds in front and a picture are needed to count.",
+                )
+                CrewGuideBullet("Allow usage access, connect your Google Drive, and approve Android's screen sharing for the round.")
+                CrewGuideBullet(
+                    "The floating timer moves to the next app after ${CrewRules.OPEN_SECONDS} seconds. Pause it when you need longer.",
+                )
+                CrewGuideBullet(
+                    "Only apps listed in Tonight are owed. Optional tonight is not required; apps under Left the run are not owed.",
+                )
+            }
+            CrewGuideGroup(Lucide.Camera, "Pictures and sending") {
+                CrewGuideBullet(
+                    "TestTrack takes one picture while the app is in front. It counts once time and the picture reach the server.",
+                )
+                CrewGuideBullet(
+                    "Pictures go to your own Google Drive, shared by link. A pending upload retries by itself and keeps its original night, even after midnight.",
+                )
+                CrewGuideBullet(
+                    "Picture missing? Open the app again, or pick a picture from your phone. A picked picture is marked as added by hand.",
+                )
+                CrewGuideBullet("An upload waiting more than 3 hours is highlighted. Check your connection and use Try again.")
+            }
+            CrewGuideGroup(Lucide.MessageSquare, "Private feedback on Play") {
+                CrewGuideBullet(
+                    "Send useful private feedback once per app: what worked, what was confusing, and what could improve. Crew feedback earns no tix.",
+                )
+                CrewGuideBullet(
+                    "Send it by your night ${CrewRules.FEEDBACK_BY_NIGHT} with that app, with screenshot proof. After that, its opens stop counting until feedback is sent.",
+                )
+                CrewGuideBullet(
+                    "Use Feedback on the app's row, or open the row for its actions. The developer reads it in Play Console; the team can see the proof.",
+                )
+            }
+            CrewGuideGroup(Lucide.RefreshCw, "Updates and app problems") {
+                CrewGuideBullet(
+                    "An old copy counts for ${CrewRules.UPDATE_GRACE_HOURS} hours after the owner announces an update. After that, update from Play before opening it again.",
+                )
+                CrewGuideBullet(
+                    "Your own Update control announces the newer Play version installed on this phone. Down tonight excuses your app for that night; you have ${CrewRules.DOWN_NIGHTS} per run.",
+                )
+                CrewGuideBullet(
+                    "An app does not work? Open its tile and report what happened. During a run, a report excuses that app for that night only.",
+                )
+                CrewGuideBullet(
+                    "Before a run starts, ${CrewRules.REPORTS_TO_RETURN} member reports send an app back. One report alone does not remove it.",
+                )
+            }
+            CrewGuideGroup(Lucide.TriangleAlert, "Missed nights and getting back in") {
+                CrewGuideBullet(
+                    "A night is missed when ${CrewRules.MISS_UNOPENED} or more owed apps stay unopened, or you open none. One or two left still lose a clean-run refund.",
+                )
+                CrewGuideBullet(
+                    "One missed night is a warning. ${CrewRules.MISSES_IN_A_ROW} in a row take your app out; you then owe nothing else in that crew.",
+                )
+                CrewGuideBullet(
+                    "When Ask to get it back is available, explain what happened to the team. While it is waiting, you cannot join a new crew. An app put back once cannot appeal again.",
+                )
+            }
+            CrewGuideGroup(Lucide.Coins, "Your seat and finishing") {
+                CrewGuideBullet(
+                    "A normal seat costs ${CrewRules.SEAT_COST} tix. Leaving while the crew fills, or having your app sent back before the run, returns the seat charge.",
+                )
+                CrewGuideBullet(
+                    "Once running, the seat charge is kept unless you finish a clean run: open every owed app on every owed night. Refunds are paid when the crew closes.",
+                )
+                CrewGuideBullet("Excused apps and nights do not count against the clean-run refund. A free seat has no charge to return.")
+                CrewGuideBullet(
+                    "Your nights may finish before other members' nights. Nothing more is owed while the crew waits for everyone, then the result stays in Record.",
+                )
+            }
+            Secondary("Got it", Modifier.fillMaxWidth()) { close {} }
+        }
+    }
+}
+
+@Composable
+private fun CrewGuideGroup(
+    icon: ImageVector,
+    title: String,
+    content: @Composable () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        ReviewSectionTitle(icon, title)
+        content()
+    }
+}
+
+/** Same dot and inset as the feedback guide; rule figures and key actions catch the eye. */
+@Composable
+internal fun CrewGuideBullet(
+    body: String,
+    tone: Tone? = null,
+) {
+    val ink = tone?.ink()
+    val strong = SpanStyle(fontWeight = FontWeight.SemiBold, color = ink ?: Tt.colors.text)
+    val words =
+        Regex(
+            "\\b\\d+(?:\\s+(?:seconds|hours|nights|tix))?\\b|Google Play|Google Drive|Open all|Tonight|Optional tonight|Left the run|Try again|Ask to get it back",
+        )
+    Box(Modifier.padding(start = 12.dp)) {
+        RuleLine(
+            buildAnnotatedString {
+                append(body)
+                if (ink != null) addStyle(SpanStyle(color = ink), 0, length)
+                words.findAll(body).forEach { addStyle(strong, it.range.first, it.range.last + 1) }
+            },
+        )
+    }
+}

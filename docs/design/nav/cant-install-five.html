@@ -1,0 +1,171 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<div id="tt-install-options">
+  <div class="viz-carousel viz-dotted-background" aria-label="Can't install designs">
+    <section data-variant="Quiet link" aria-label="Quiet link design">
+      <div class="ci-stage" data-placement="footer">
+        <div class="ci-recovery ci-quiet"><span>Can't install?</span><button class="ci-link cursor-interaction" type="button" data-report>Report a problem</button></div>
+      </div>
+    </section>
+    <section data-variant="Direct row" aria-label="Direct row design" hidden>
+      <div class="ci-stage">
+        <div class="ci-recovery"><button class="ci-direct cursor-interaction" type="button" data-report><span class="ci-mark"><i data-lucide="circle-help" aria-hidden="true"></i></span><span>Can't install this app?</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></button></div>
+      </div>
+    </section>
+    <section data-variant="Reason shortcuts" aria-label="Reason shortcuts design" hidden>
+      <div class="ci-stage">
+        <div class="ci-recovery"><h3 class="ci-heading"><span class="ci-mark"><i data-lucide="circle-help" aria-hidden="true"></i></span>What's stopping you?</h3><div class="ci-chips"><button class="ci-chip cursor-interaction" type="button" data-report="not_available">Not available</button><button class="ci-chip cursor-interaction" type="button" data-report="not_in_group">Test access</button><button class="ci-chip cursor-interaction" type="button" data-report="other">Other</button></div></div>
+      </div>
+    </section>
+    <section data-variant="Inline reason" aria-label="Inline reason design" hidden>
+      <div class="ci-stage">
+        <form class="ci-recovery ci-inline"><h3 class="ci-heading"><span class="ci-mark"><i data-lucide="circle-help" aria-hidden="true"></i></span>Installation problem</h3><label class="ci-field"><span class="ci-sr">What went wrong?</span><select class="ci-select cursor-interaction" aria-label="What went wrong?" data-inline-reason><option value="">What went wrong?</option><option value="not_available">Not available for my phone</option><option value="not_in_group">Test access doesn't work</option><option value="not_found">App not found</option><option value="device">Device not supported</option><option value="crashes">App crashes</option><option value="other">Something else</option></select></label><label class="ci-field ci-extra" hidden><span>What happened?</span><textarea class="ci-note" rows="2" maxlength="280" placeholder="At least 10 characters" aria-label="What happened?" data-inline-note></textarea></label><div class="ci-inline-bottom"><small>Ends this review. No penalty.</small><button class="ci-send cursor-interaction" type="submit" disabled>Send report</button></div></form>
+      </div>
+    </section>
+    <section data-variant="Secondary button" aria-label="Secondary button design" hidden>
+      <div class="ci-stage" data-placement="footer">
+        <div class="ci-recovery"><button class="ci-outline cursor-interaction" type="button" data-report><i data-lucide="flag" aria-hidden="true"></i>Report installation problem</button></div>
+      </div>
+    </section>
+  </div>
+  <template id="tt-install-context">
+    <article class="ci-phone" aria-label="TestTrack installation step">
+      <header class="ci-top"><i data-lucide="arrow-left" aria-hidden="true"></i><strong>Feedback</strong><span class="ci-reward">+35 tix</span></header>
+      <div class="ci-app"><span class="ci-app-icon">Q<span class="ci-source"><i data-lucide="flask-conical" aria-hidden="true"></i></span></span><div><strong>Quick Notes Lite</strong><small>com.demo.quicknotes</small></div></div>
+      <ol class="ci-path" aria-label="Step 1 of 4: Install"><li class="ci-now"><span><i data-lucide="download" aria-hidden="true"></i></span>Install</li><li><span><i data-lucide="smartphone" aria-hidden="true"></i></span>Use app</li><li><span><i data-lucide="message-square" aria-hidden="true"></i></span>Feedback</li><li><span><i data-lucide="camera" aria-hidden="true"></i></span>Send proof</li></ol>
+      <div class="ci-body"><div class="ci-body-slot"></div></div>
+      <footer class="ci-footer"><button type="button" class="ci-primary cursor-interaction" data-play>Open Google Play</button><div class="ci-footer-slot"></div></footer>
+      <p class="ci-status" role="status" aria-live="polite"></p>
+      <div class="ci-overlay" hidden>
+        <section class="ci-dialog" role="dialog" aria-modal="true">
+          <h3>Can't install Quick Notes Lite?</h3><p class="ci-dialog-hint">Tell the developer what failed. No penalty.</p>
+          <form class="ci-report-form">
+            <label class="ci-field"><span>What went wrong?</span><select class="ci-select cursor-interaction" required data-dialog-reason><option value="">Choose a reason</option><option value="not_available">Not available for my phone</option><option value="not_in_group">Test access doesn't work</option><option value="not_found">App not found</option><option value="device">Device not supported</option><option value="crashes">App crashes</option><option value="other">Something else</option></select></label>
+            <label class="ci-field ci-dialog-extra" hidden><span>What happened?</span><textarea class="ci-note" rows="2" maxlength="280" placeholder="At least 10 characters" data-dialog-note></textarea></label>
+            <div class="ci-dialog-actions"><button type="button" class="ci-cancel cursor-interaction" data-cancel>Cancel</button><button type="submit" class="ci-send cursor-interaction" disabled>Send report</button></div>
+          </form>
+        </section>
+      </div>
+    </article>
+  </template>
+</div>
+<style>
+#tt-install-options{--ci-bg:light-dark(#f7fcff,#0f1011);--ci-text:light-dark(#142f43,#eceef0);--ci-body:light-dark(#203a4e,#bcc1c6);--ci-muted:light-dark(#59758a,#9da3a9);--ci-line:light-dark(#d3e2ec,#383c41);--ci-soft:light-dark(#e1eaf2,#2a2d31);--ci-surface:light-dark(#f3f8fb,#1c1e20);--ci-accent:light-dark(#3a6380,#4a7290);--ci-ink:light-dark(#3a5b73,#93b3ca);--ci-on:light-dark(#fff,#fff);--ci-scrim:light-dark(#142f4344,#00000088);font-family:Barlow,system-ui,sans-serif}
+#tt-install-options *{box-sizing:border-box}
+#tt-install-options .ci-stage{display:flex;align-items:center;justify-content:center;min-height:574px;padding:20px 0}
+#tt-install-options .ci-phone{position:relative;display:flex;flex-direction:column;width:370px;max-width:100%;min-height:516px;padding:20px;background:var(--ci-bg);border:1px solid var(--ci-line);border-radius:22px;color:var(--ci-text);font-size:14px;line-height:1.4;overflow:hidden}
+#tt-install-options .ci-top{display:flex;align-items:center;gap:12px;margin-bottom:26px}
+#tt-install-options .ci-top strong{font-size:20px;font-weight:600}
+#tt-install-options svg{width:18px;height:18px;flex-shrink:0;display:block}
+#tt-install-options .ci-reward{margin-left:auto;background:var(--ci-soft);color:var(--ci-ink);padding:5px 9px;border-radius:8px;font-size:12px;font-weight:600}
+#tt-install-options .ci-app{display:flex;align-items:center;gap:12px}
+#tt-install-options .ci-app>div{min-width:0;flex:1}
+#tt-install-options .ci-app strong{font-size:16px;font-weight:600;display:block}
+#tt-install-options .ci-app small{color:var(--ci-muted);font-size:12.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#tt-install-options .ci-app-icon{position:relative;width:52px;height:52px;border-radius:15px;display:grid;place-items:center;background:var(--ci-soft);color:var(--ci-ink);font-size:24px;font-weight:600;flex-shrink:0}
+#tt-install-options .ci-source{position:absolute;right:-5px;bottom:-5px;border:2px solid var(--ci-bg);border-radius:50%;width:20px;height:20px;background:var(--ci-surface);display:grid;place-items:center}
+#tt-install-options .ci-source svg{width:12px;height:12px}
+#tt-install-options .ci-path{position:relative;list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:0;margin:24px 0 0}
+#tt-install-options .ci-path:before{content:'';position:absolute;left:12.5%;right:12.5%;top:23px;height:3px;background:var(--ci-line)}
+#tt-install-options .ci-path li{position:relative;text-align:center;font-size:12px;color:var(--ci-muted)}
+#tt-install-options .ci-path li>span{display:grid;place-items:center;width:36px;height:36px;margin:6px auto 14px;border:1px solid var(--ci-line);border-radius:50%;background:var(--ci-bg);box-shadow:0 0 0 5px var(--ci-bg)}
+#tt-install-options .ci-path .ci-now{font-weight:600;color:var(--ci-text)}
+#tt-install-options .ci-path .ci-now>span{color:var(--ci-on);background:var(--ci-accent);border:0;outline:1.5px solid var(--ci-ink);outline-offset:4px}
+#tt-install-options .ci-body{display:flex;flex-direction:column;justify-content:flex-end;flex:1;padding-top:24px;min-height:164px}
+#tt-install-options .ci-body-slot:empty{display:none}
+#tt-install-options .ci-recovery{width:100%}
+#tt-install-options button,#tt-install-options select,#tt-install-options textarea{font-family:inherit;font-size:14px;line-height:1.4}
+#tt-install-options button{touch-action:manipulation}
+#tt-install-options .ci-footer{display:flex;flex-direction:column;gap:12px;padding-top:24px}
+#tt-install-options .ci-primary{min-height:52px;border:0;border-radius:14px;width:100%;padding:12px;background:var(--ci-accent);color:var(--ci-on);font-weight:600}
+#tt-install-options .ci-footer-slot:empty{display:none}
+#tt-install-options .ci-quiet{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;font-size:13px;color:var(--ci-muted)}
+#tt-install-options .ci-link{border:0;background:none;padding:9px 2px;min-height:44px;color:var(--ci-ink);font-weight:600;text-decoration:underline;text-underline-offset:3px;font-size:13px}
+#tt-install-options .ci-direct{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;border:0;padding:6px 0;background:none;color:var(--ci-text);text-align:left;font-weight:600}
+#tt-install-options .ci-direct>svg:last-child{margin-left:auto;color:var(--ci-ink)}
+#tt-install-options .ci-mark{display:grid;place-items:center;background:var(--ci-soft);color:var(--ci-ink);width:28px;height:28px;border-radius:9px;flex-shrink:0}
+#tt-install-options .ci-mark svg{width:15px;height:15px}
+#tt-install-options .ci-heading{display:flex;align-items:center;gap:10px;margin:0;font-size:16px;font-weight:600}
+#tt-install-options .ci-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+#tt-install-options .ci-chip{border:0;border-radius:10px;min-height:44px;padding:9px 13px;background:var(--ci-soft);color:var(--ci-ink);font-weight:500}
+#tt-install-options .ci-inline{display:flex;flex-direction:column;gap:10px}
+#tt-install-options .ci-field{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--ci-body)}
+#tt-install-options .ci-select{width:100%;max-width:100%;min-width:0;border:1px solid var(--ci-line);border-radius:10px;min-height:46px;padding:10px;color:var(--ci-text);background:var(--ci-bg)}
+#tt-install-options .ci-inline-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#tt-install-options .ci-inline-bottom small{font-size:12px;color:var(--ci-muted)}
+#tt-install-options .ci-send{min-height:44px;padding:9px 14px;border:0;border-radius:10px;background:var(--ci-soft);color:var(--ci-ink);font-weight:600}
+#tt-install-options .ci-send:disabled{opacity:.4;cursor:default}
+#tt-install-options [data-report],#tt-install-options .ci-send{min-height:var(--ci-control-height,46px)}
+#tt-install-options .ci-note{width:100%;min-height:70px;resize:vertical;border:1px solid var(--ci-line);border-radius:10px;padding:10px;background:var(--ci-bg);color:var(--ci-text);font-size:16px}
+#tt-install-options .ci-outline{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;border:1px solid var(--ci-line);border-radius:12px;padding:10px;background:none;color:var(--ci-ink);font-weight:600}
+#tt-install-options .ci-status{margin:12px 0 0;color:var(--ci-muted);font-size:12px;text-align:center}
+#tt-install-options .ci-status:empty{display:none}
+#tt-install-options .ci-overlay{position:absolute;inset:0;background:var(--ci-scrim);display:flex;align-items:center;justify-content:center;padding:14px;z-index:3}
+#tt-install-options .ci-dialog{width:100%;padding:18px;background:var(--ci-surface);border:1px solid var(--ci-line);border-radius:18px}
+#tt-install-options .ci-dialog h3{font-size:17px;font-weight:600;margin:0}
+#tt-install-options .ci-dialog-hint{font-size:13px;color:var(--ci-muted);margin:7px 0 16px}
+#tt-install-options .ci-report-form{display:flex;flex-direction:column;gap:12px}
+#tt-install-options .ci-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+#tt-install-options .ci-cancel{min-height:44px;border:0;background:none;color:var(--ci-body);padding:9px 14px}
+#tt-install-options .ci-sr{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+#tt-install-options [hidden]{display:none!important}
+@media(max-width:380px){#tt-install-options .ci-stage{min-height:600px}#tt-install-options .ci-phone{padding:16px;min-height:540px}}
+</style>
+<script>
+(() => {
+ const root=document.getElementById('tt-install-options');
+ const template=root.querySelector('#tt-install-context');
+ const stages=[...root.querySelectorAll('.ci-stage')];
+ let saved=window.openai?.widgetState?.privateContent?.reasons||{};
+ const reasons={...saved};
+ function persist(name,reason){reasons[name]=reason;window.openai?.setWidgetState?.({modelContent:{design:name,reason},privateContent:{reasons}})?.catch(()=>{});}
+ function update(form){
+   const select=form.querySelector('select'), note=form.querySelector('textarea'), extra=form.querySelector('.ci-extra,.ci-dialog-extra');
+   const other=select.value==='other';extra.hidden=!other;
+   form.querySelector('button[type="submit"]').disabled=!select.value||(other&&note.value.trim().length<10);
+ }
+ stages.forEach((stage,index)=>{
+   const recovery=stage.querySelector('.ci-recovery');
+   const fragment=template.content.cloneNode(true);
+   const phone=fragment.querySelector('.ci-phone');
+   const name=stage.closest('[data-variant]').dataset.variant;
+   phone.querySelector(stage.dataset.placement==='footer'?'.ci-footer-slot':'.ci-body-slot').append(recovery);
+   const overlay=phone.querySelector('.ci-overlay'),dialogForm=phone.querySelector('.ci-report-form'),dialogSelect=dialogForm.querySelector('select');
+   const dialogTitle=phone.querySelector('.ci-dialog h3');dialogTitle.id=`ci-dialog-title-${index}`;phone.querySelector('.ci-dialog').setAttribute('aria-labelledby',dialogTitle.id);
+   const status=phone.querySelector('.ci-status');
+   let opener=null;
+   function close(){overlay.hidden=true;if(opener)opener.focus();}
+   recovery.querySelectorAll('[data-report]').forEach(button=>button.addEventListener('click',()=>{
+     opener=button;status.textContent='';dialogSelect.value=button.dataset.report||reasons[name]||'';update(dialogForm);overlay.hidden=false;dialogSelect.focus();persist(name,dialogSelect.value);
+   }));
+   phone.querySelector('[data-cancel]').addEventListener('click',close);
+   overlay.addEventListener('click',event=>{if(event.target===overlay)close();});
+   overlay.addEventListener('keydown',event=>{
+     if(event.key==='Escape'){close();return;}
+     if(event.key==='Tab'){
+       const targets=[...overlay.querySelectorAll('button:not(:disabled),select,textarea')].filter(el=>el.getClientRects().length);
+       const first=targets[0],last=targets[targets.length-1];
+       if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+       else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+     }
+   });
+   dialogForm.addEventListener('input',()=>update(dialogForm));
+   dialogForm.addEventListener('change',()=>{update(dialogForm);persist(name,dialogSelect.value);});
+   dialogForm.addEventListener('submit',event=>{event.preventDefault();if(dialogForm.querySelector('[type="submit"]').disabled)return;persist(name,dialogSelect.value);close();status.textContent='Preview: report ready. Nothing was sent.';});
+   const inline=phone.querySelector('.ci-inline');
+   if(inline){
+     const select=inline.querySelector('select');select.value=reasons[name]||'';update(inline);
+     inline.addEventListener('input',()=>update(inline));inline.addEventListener('change',()=>{update(inline);persist(name,select.value);});
+     inline.addEventListener('submit',event=>{event.preventDefault();if(inline.querySelector('[type="submit"]').disabled)return;persist(name,select.value);status.textContent='Preview: report ready. Nothing was sent.';});
+   }
+   phone.querySelector('[data-play]').addEventListener('click',()=>{status.textContent='Preview: Google Play would open.';});
+   stage.append(fragment);
+ });
+ window.addEventListener('openai:set_globals',event=>{
+   const incoming=event.detail?.globals?.widgetState?.privateContent?.reasons;if(!incoming)return;
+   Object.assign(reasons,incoming);
+   stages.forEach(stage=>{const name=stage.closest('[data-variant]').dataset.variant;const inline=stage.querySelector('.ci-inline');if(inline){inline.querySelector('select').value=reasons[name]||'';update(inline);}});
+ });
+ const styleState={controlHeight:46};
+ if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:()=>root.style.setProperty('--ci-control-height',`${styleState.controlHeight}px`)});tweak.addSlider(styleState,'controlHeight',{label:'Report button height',min:44,max:56,step:2,unit:'px'});}
+})();
+</script>

@@ -23,4 +23,17 @@ object DebugLooks {
     private const val SHOW_RATING_ASK = false
 
     val showRatingAsk: Boolean get() = BuildConfig.DEBUG && SHOW_RATING_ASK
+
+    /** Temporary Crew UI preview: only seeded member apps, only a debug build on dev. */
+    private const val CREW_DEMO_INSTALLED = true
+
+    internal fun crewDemoCopy(pkg: String): HereCopy? =
+        demoCrewCopy(pkg, CREW_DEMO_INSTALLED && BuildConfig.DEBUG && BuildConfig.VERSION_NAME.endsWith("-dev"))
+
+    internal fun crewDemoRoundMessage(apps: List<CrewApp>): String? =
+        if (apps.any { crewDemoCopy(it.packageName) != null }) {
+            "Demo preview: these apps are shown as installed. A real installed app is needed to start a testing round."
+        } else {
+            null
+        }
 }

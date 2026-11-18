@@ -182,7 +182,8 @@ private fun TrackNote(live: Boolean) {
                     "Google does not allow rewarding reviews and can remove ones it doubts, so the reviews are " +
                     "paced like real users'. Whether to ask is your decision."
             } else {
-                "Testers send you private feedback on Google Play after trying your app for two minutes. It reaches " +
+                "Testers send you private feedback on Google Play after trying your app for " +
+                    "${FeedRules.CLOSED_USE_SECONDS / 60} minutes. It reaches " +
                     "you in Play Console, and a screenshot of it comes here."
             },
             style = MaterialTheme.typography.bodySmall,

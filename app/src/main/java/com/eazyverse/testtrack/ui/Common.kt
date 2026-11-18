@@ -9,10 +9,13 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +25,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.ui.theme.LocalStatusColors
@@ -198,6 +202,44 @@ fun Primary(
             textAlign = TextAlign.Center,
             maxLines = 2,
         )
+    }
+}
+
+/** Compact help and row actions: shared label, optional icon, and a full touch target. */
+@Composable
+internal fun InlineAction(
+    label: String,
+    modifier: Modifier = Modifier,
+    leading: ImageVector? = null,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    val dismissKeyboard = rememberDismissKeyboard()
+    // Match the 32dp header mark without reserving blank space. Compose still expands touch bounds.
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        TextButton(
+            onClick = {
+                dismissKeyboard()
+                onClick()
+            },
+            modifier = modifier.heightIn(min = 32.dp),
+            enabled = enabled,
+            shape = RoundedCornerShape(percent = 50),
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+            colors = ButtonDefaults.textButtonColors(contentColor = Tt.colors.accentInk, disabledContentColor = Tt.colors.text4),
+        ) {
+            if (leading != null) {
+                Icon(leading, null, Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+            }
+            Text(
+                label,
+                style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+            )
+        }
     }
 }
 

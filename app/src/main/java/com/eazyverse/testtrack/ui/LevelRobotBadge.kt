@@ -55,7 +55,11 @@ internal fun LevelRobotBadge(
     val progress by animateFloatAsState(target, tween(700), label = "Robot XP")
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateFlow
         .collectAsState()
-    val motion = robotMotion(lifecycle.isAtLeast(Lifecycle.State.STARTED) && ValueAnimator.areAnimatorsEnabled())
+    val moving = lifecycle.isAtLeast(Lifecycle.State.STARTED) && ValueAnimator.areAnimatorsEnabled()
+    val clock = robotTime(moving)
+    // Read time in graphics layers, keeping the header's text and vector art composed.
+    val breathe = { if (moving) -1f + 2f * pingPong(clock.longValue, 2400) else 0f }
+    val blink = { if (moving) blinkAt(clock.longValue, 5600, 4400) else 1f }
     val celebration = remember { Animatable(0f) }
     var previousLevel by remember { mutableStateOf(level) }
     LaunchedEffect(level) {
@@ -133,24 +137,24 @@ internal fun LevelRobotBadge(
         Image(
             painterResource(R.drawable.level_robot_head),
             null,
-            Modifier.matchParentSize().graphicsLayer { translationY = -motion.breathe * 0.7.dp.toPx() - celebration.value * 1.5.dp.toPx() },
+            Modifier.matchParentSize().graphicsLayer { translationY = -breathe() * 0.7.dp.toPx() - celebration.value * 1.5.dp.toPx() },
         )
         Image(
             painterResource(R.drawable.level_robot_eyes),
             null,
             Modifier.matchParentSize().graphicsLayer {
-                translationY = -motion.breathe * 0.7.dp.toPx() - celebration.value * 1.5.dp.toPx()
+                translationY = -breathe() * 0.7.dp.toPx() - celebration.value * 1.5.dp.toPx()
                 transformOrigin = TransformOrigin(0.5f, (529f - 110f) / 980f)
-                scaleY = motion.blink
+                scaleY = blink()
             },
         )
         Image(
             painterResource(R.drawable.level_robot_antenna),
             null,
             Modifier.matchParentSize().graphicsLayer {
-                translationY = -motion.breathe * 0.7.dp.toPx() - celebration.value * 1.5.dp.toPx()
+                translationY = -breathe() * 0.7.dp.toPx() - celebration.value * 1.5.dp.toPx()
                 transformOrigin = TransformOrigin((627f - 185f) / 880f, (278f - 110f) / 980f)
-                rotationZ = motion.breathe * 3f
+                rotationZ = breathe() * 3f
             },
         )
         Canvas(Modifier.matchParentSize()) {
@@ -196,19 +200,4 @@ internal fun LevelRobotBadge(
             )
         }
     }
-}
-
-private data class RobotMotion(
-    val breathe: Float = 0f,
-    val blink: Float = 1f,
-)
-
-@Composable
-private fun robotMotion(active: Boolean): RobotMotion {
-    if (!active) return RobotMotion()
-    // On the robots' shared clock, so the header robot does not start over on every tab.
-    val ms = robotTime().longValue
-    val breathe = -1f + 2f * pingPong(ms, 2400)
-    val blink = blinkAt(ms, 5600, 4400)
-    return RobotMotion(breathe, blink)
 }

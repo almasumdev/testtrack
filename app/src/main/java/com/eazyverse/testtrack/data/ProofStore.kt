@@ -106,6 +106,23 @@ object ProofStore {
         reviewId: String,
     ) = prefs(context).edit().putBoolean("left_$reviewId", true).apply()
 
+    /** The half-reward choice must survive leaving TestTrack to capture its Play proof. */
+    fun noBox(
+        context: Context,
+        reviewId: String,
+    ): Boolean = prefs(context).getBoolean("no_box_$reviewId", false)
+
+    fun markNoBox(
+        context: Context,
+        reviewId: String,
+    ) {
+        prefs(context)
+            .edit()
+            .putBoolean("no_box_$reviewId", true)
+            .putBoolean("left_$reviewId", true)
+            .apply()
+    }
+
     /** Sent: none of it is needed any more. */
     fun forget(
         context: Context,
@@ -118,6 +135,7 @@ object ProofStore {
             .remove("mime_$reviewId")
             .remove("note_$reviewId")
             .remove("left_$reviewId")
+            .remove("no_box_$reviewId")
             .remove("ref_$reviewId")
             .remove("drive_id_$reviewId")
             .apply()

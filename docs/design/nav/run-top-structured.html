@@ -1,0 +1,85 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap">
+<div id="tt-run-top-card" class="viz-dotted-background">
+  <section class="rc-card" aria-label="Run tab tonight summary">
+    <header><span class="rc-heading"><span class="rc-heading-icon"><i data-lucide="moon" aria-hidden="true"></i></span>Tonight</span><button type="button" class="rc-guide cursor-interaction" data-guide><i data-lucide="book-open" aria-hidden="true"></i>Guide</button></header>
+    <div class="rc-scoreboard"><h2><strong data-left>18</strong><span>apps left tonight</span></h2><div class="rc-opened"><div><strong data-done>10</strong><span> / 28</span></div><span>opened</span></div></div>
+    <div class="rc-facts" aria-label="Tonight's workload"><span><i data-lucide="clock" aria-hidden="true"></i>20s per app</span><span><i data-lucide="users" aria-hidden="true"></i>2 crews</span><span><i data-lucide="moon" aria-hidden="true"></i>12 nights left</span></div>
+    <button type="button" class="rc-open cursor-interaction" data-open><i data-lucide="play" aria-hidden="true"></i><span>Open 16 ready apps</span></button>
+    <div class="rc-install"><div class="rc-install-copy"><span class="rc-install-icon"><i data-lucide="download" aria-hidden="true"></i></span><div class="rc-install-text"><strong>2 apps to install</strong><span>Install from Google Play</span></div></div><button type="button" class="rc-guide cursor-interaction" data-installs>View</button></div>
+    <section class="rc-installs-panel" role="dialog" aria-modal="true" aria-labelledby="rc-installs-title" hidden><header><h3 id="rc-installs-title">Apps to install</h3><button type="button" class="rc-guide cursor-interaction" data-install-close>Done</button></header><div class="rc-install-app"><span class="rc-install-icon"><i data-lucide="notebook" aria-hidden="true"></i></span><strong>Daily Journal</strong><button type="button" class="rc-guide cursor-interaction" data-install-one>Install</button></div><div class="rc-install-app"><span class="rc-install-icon"><i data-lucide="wallet" aria-hidden="true"></i></span><strong>Pocket Budget</strong><button type="button" class="rc-guide cursor-interaction" data-install-one>Install</button></div></section>
+    <section class="rc-help" role="dialog" aria-modal="true" aria-labelledby="rc-help-title" hidden>
+      <header><h3 id="rc-help-title">Nightly guide</h3><button type="button" class="rc-guide cursor-interaction" data-close>Done</button></header>
+      <p>Open each app for <b>20 seconds</b>. It needs at least <b>10 seconds in front</b> and a picture to count.</p>
+      <p>Install from <b>Google Play</b>, allow usage access, and approve screen sharing for the round.</p>
+      <p>Finish tonight’s owed apps before <b>your local midnight</b>. Pending pictures retry automatically.</p>
+    </section>
+  </section>
+</div>
+<style>
+#tt-run-top-card{--rc-bg:light-dark(#f7fcff,#0f1011);--rc-text:light-dark(#142f43,#eceef0);--rc-body:light-dark(#344e61,#bdc3c9);--rc-muted:light-dark(#59758a,#9da3a9);--rc-line:light-dark(#b7d1e2,#383c41);--rc-tile:light-dark(#dce6ee,#2a2d31);--rc-accent:light-dark(#3a5b73,#93b3ca);--rc-on:light-dark(#fff,#101417);--rc-warn:light-dark(#885e24,#e2ba7b);font-family:Barlow,system-ui,sans-serif;color:var(--rc-text);padding:24px 0;display:flex;justify-content:center}
+#tt-run-top-card *{box-sizing:border-box}#tt-run-top-card [hidden]{display:none!important}
+#tt-run-top-card .rc-card{position:relative;width:390px;max-width:100%;background:var(--rc-bg);border:1px solid var(--rc-line);border-radius:16px;padding:16px;overflow:hidden;font-size:14px;line-height:19px}
+#tt-run-top-card header{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px;margin-bottom:10px;font-size:14px;line-height:19px;color:var(--rc-body)}
+#tt-run-top-card button{font-family:inherit;touch-action:manipulation}
+#tt-run-top-card .rc-guide{display:flex;align-items:center;gap:6px;background:transparent;border:0;color:var(--rc-accent);font-size:13px;line-height:18px;font-weight:500;padding:6px 0;min-height:40px}
+#tt-run-top-card .rc-guide svg{width:16px;height:16px}
+#tt-run-top-card h2{font-size:28px;line-height:33px;letter-spacing:-.3px;font-weight:600;margin:0 0 6px}
+#tt-run-top-card p{margin:0}
+#tt-run-top-card .rc-meta{font-size:13px;line-height:18px;color:var(--rc-muted)}
+#tt-run-top-card .rc-counts{display:flex;align-items:center;justify-content:space-between;gap:6px 12px;flex-wrap:wrap;font-size:12px;line-height:17px;color:var(--rc-muted);margin-top:18px}
+#tt-run-top-card .rc-open{width:100%;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;margin-top:14px;background:var(--rc-accent);border:0;border-radius:99px;color:var(--rc-on);font-size:15px;line-height:20px;font-weight:600}
+#tt-run-top-card .rc-open svg{width:18px;height:18px}
+#tt-run-top-card .rc-open:disabled{background:var(--rc-tile);color:var(--rc-muted)}
+#tt-run-top-card .rc-attention{font-size:12px;line-height:17px;color:var(--rc-warn);margin-top:10px}
+#tt-run-top-card .rc-help{position:absolute;inset:0;background:var(--rc-bg);padding:16px;overflow:auto}
+#tt-run-top-card .rc-help header{margin-bottom:10px}
+#tt-run-top-card .rc-help h3{font-size:17px;line-height:22px;font-weight:600;margin:0;color:var(--rc-text)}
+#tt-run-top-card .rc-help p{font-size:13px;line-height:18px;color:var(--rc-body);margin-top:10px}
+#tt-run-top-card b{font-weight:600;color:var(--rc-text)}
+#tt-run-top-card header{margin-bottom:18px;font-size:15px;line-height:20px;color:var(--rc-text)}
+#tt-run-top-card .rc-heading{display:flex;align-items:center;gap:9px;font-weight:600}
+#tt-run-top-card .rc-heading-icon{width:32px;height:32px;border-radius:10px;background:var(--rc-tile);color:var(--rc-accent);display:grid;place-items:center}
+#tt-run-top-card .rc-heading-icon svg{width:17px;height:17px}
+#tt-run-top-card .rc-scoreboard{display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:20px}
+#tt-run-top-card .rc-scoreboard h2{display:grid;gap:4px;margin:0;font-size:14px;line-height:19px;font-weight:400}
+#tt-run-top-card .rc-scoreboard h2>strong{font-size:48px;line-height:50px;letter-spacing:-1.2px;font-weight:500;font-variant-numeric:tabular-nums}
+#tt-run-top-card .rc-scoreboard h2>span{font-size:13px;line-height:18px;color:var(--rc-body)}
+#tt-run-top-card .rc-opened{text-align:right;display:grid;gap:7px}
+#tt-run-top-card .rc-opened>div{white-space:nowrap;color:var(--rc-muted);font-size:17px;line-height:32px}
+#tt-run-top-card .rc-opened strong{font-size:29px;line-height:32px;font-weight:500;color:var(--rc-text);font-variant-numeric:tabular-nums}
+#tt-run-top-card .rc-opened>span{font-size:13px;line-height:18px;color:var(--rc-muted)}
+#tt-run-top-card .rc-facts{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 12px;margin-top:18px;color:var(--rc-muted);font-size:12px;line-height:17px}
+#tt-run-top-card .rc-facts>span{display:flex;align-items:center;gap:5px;white-space:nowrap}
+#tt-run-top-card .rc-facts svg{width:14px;height:14px}
+#tt-run-top-card .rc-open{margin-top:16px;min-height:50px}
+#tt-run-top-card .rc-footer{display:flex;justify-content:space-between;align-items:center;gap:6px 12px;flex-wrap:wrap;margin-top:11px}
+#tt-run-top-card .rc-footer .rc-attention{margin:0}
+#tt-run-top-card .rc-footer>span{font-size:11px;line-height:16px;color:var(--rc-muted)}
+#tt-run-top-card .rc-install{display:flex;align-items:center;gap:9px;margin-top:13px}
+#tt-run-top-card .rc-install-icon{width:30px;height:30px;border-radius:9px;background:var(--rc-tile);color:var(--rc-accent);display:grid;place-items:center;flex-shrink:0}
+#tt-run-top-card .rc-install-icon svg{width:16px;height:16px}
+#tt-run-top-card .rc-install-copy{flex:1;min-width:0;display:flex;align-items:stretch;gap:9px}
+#tt-run-top-card .rc-install-copy>.rc-install-icon{width:34px;height:34px;align-self:stretch}
+#tt-run-top-card .rc-install-text{min-width:0;display:flex;flex-direction:column}
+#tt-run-top-card .rc-install strong{font-size:13px;line-height:18px;font-weight:600}
+#tt-run-top-card .rc-install-text>span{font-size:12px;line-height:16px;color:var(--rc-muted)}
+#tt-run-top-card .rc-installs-panel{position:absolute;inset:0;background:var(--rc-bg);padding:16px;overflow:auto}
+#tt-run-top-card .rc-installs-panel h3{margin:0;font-size:17px;line-height:22px;font-weight:600}
+#tt-run-top-card .rc-install-app{display:flex;gap:10px;align-items:center;border:1px solid var(--rc-line);border-radius:12px;padding:10px;margin-top:10px}
+#tt-run-top-card .rc-install-app strong{flex:1;min-width:0;font-size:13px;line-height:18px;font-weight:500}
+@media(max-width:350px){#tt-run-top-card .rc-card{padding:15px}#tt-run-top-card .rc-scoreboard{gap:12px}#tt-run-top-card .rc-facts{gap:8px}}
+</style>
+<script>
+(()=>{
+const root=document.getElementById('tt-run-top-card'),guide=root.querySelector('.rc-help'),guideButton=root.querySelector('[data-guide]');
+const installsPanel=root.querySelector('.rc-installs-panel');
+root.querySelector('[data-installs]').addEventListener('click',()=>{installsPanel.hidden=false;root.querySelector('[data-install-close]').focus();});
+root.querySelector('[data-install-close]').addEventListener('click',()=>{installsPanel.hidden=true;root.querySelector('[data-installs]').focus();});
+root.querySelectorAll('[data-install-one]').forEach(button=>button.addEventListener('click',()=>{button.textContent='Ready';button.disabled=true;}));
+root.querySelector('[data-open]').addEventListener('click',event=>{root.querySelector('[data-left]').textContent='2';root.querySelector('[data-done]').textContent='26';event.currentTarget.querySelector('span').textContent='Install 2 apps first';event.currentTarget.disabled=true;});
+guideButton.addEventListener('click',()=>{guide.hidden=false;root.querySelector('[data-close]').focus();});
+function close(){guide.hidden=true;guideButton.focus();}
+root.querySelector('[data-close]').addEventListener('click',close);
+root.addEventListener('keydown',event=>{if(guide.hidden)return;if(event.key==='Escape'){event.preventDefault();close();}else if(event.key==='Tab'){event.preventDefault();root.querySelector('[data-close]').focus();}});
+})();
+</script>

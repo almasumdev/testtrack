@@ -1,0 +1,147 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<div id="tt-feedback-flow">
+  <div class="viz-controls">
+    <label class="form-label">Preview step
+      <select class="form-select" id="tt-flow-step">
+        <option value="0">Before starting</option>
+        <option value="1">Use the app</option>
+        <option value="2">Leave feedback</option>
+        <option value="3">Send proof</option>
+      </select>
+    </label>
+  </div>
+  <div class="viz-dotted-background ff-stage">
+    <article class="ff-phone" aria-label="TestTrack feedback page">
+      <header class="ff-bar"><i data-lucide="arrow-left" aria-hidden="true"></i><strong class="ff-page-title">Feedback</strong><span class="ff-reward">+30 tix</span></header>
+      <div class="ff-content">
+        <div class="ff-app"><span class="ff-icon"><i data-lucide="notebook" aria-hidden="true"></i><span class="ff-kind" aria-label="Closed test"></span></span><div><strong>Quick Notes Lite</strong><span class="ff-id">com.demo.quicknotes</span></div></div>
+        <ol class="ff-steps" aria-label="Feedback progress"></ol>
+        <section class="ff-task" aria-live="polite"><span class="ff-eyebrow"></span><h2></h2><p class="ff-instruction"></p><div class="ff-meter" hidden><span></span></div><div class="ff-detail"><i data-lucide="circle-check" aria-hidden="true"></i><div class="ff-note"><strong>What completes this step</strong><p class="ff-completion"></p></div></div><div class="ff-detail"><i data-lucide="arrow-right" aria-hidden="true"></i><div class="ff-note"><strong>Up next</strong><p class="ff-next"></p></div></div></section>
+        <section class="ff-rules">
+          <h3 class="ff-section-title"><i data-lucide="shield-check" aria-hidden="true"></i>Before you start</h3>
+          <div class="ff-detail"><i data-lucide="smartphone" aria-hidden="true"></i><div><strong>Install and genuinely use the app</strong><p class="ff-use-rule"></p></div></div>
+          <div class="ff-detail"><i data-lucide="message-square" aria-hidden="true"></i><div><strong>Give honest feedback</strong><p class="ff-honest-rule"></p></div></div>
+          <div class="ff-detail"><i data-lucide="clock" aria-hidden="true"></i><div><strong>Send genuine proof on time</strong><p class="ff-time-rule"></p></div></div>
+          <div class="ff-detail"><i data-lucide="ticket" aria-hidden="true"></i><div><strong>Understand the reward</strong><p class="ff-reward-rule"></p></div></div>
+          <label class="ff-agreement cursor-interaction"><input type="checkbox" id="tt-flow-agree"><span>I understand these rules and agree to follow them.</span></label>
+        </section>
+        <section class="ff-proof" hidden><h3>Your screenshot</h3><div class="ff-shot"><i data-lucide="image" aria-hidden="true"></i><span>Screenshot attached</span><small>Check the text is readable and hide private details.</small></div><label>Your feedback<textarea rows="3">The notes are easy to create. I would like a quicker way to search older notes.</textarea></label></section>
+        <div class="ff-ask"><h3 class="ff-section-title"><i data-lucide="message-circle-question-mark" aria-hidden="true"></i>The developer asks</h3><p>Try creating a note and finding it again. Was anything confusing?</p></div>
+      </div>
+      <footer><button type="button" class="ff-primary cursor-interaction" disabled>Read and agree to start</button><p class="ff-preview-status" aria-live="polite"></p></footer>
+    </article>
+  </div>
+</div>
+<style>
+#tt-feedback-flow{--ff-bg:light-dark(#f7fcff,#0f1011);--ff-text:light-dark(#142f43,#eceef0);--ff-body:light-dark(#203a4e,#bcc1c6);--ff-muted:light-dark(#59758a,#9da3a9);--ff-panel:light-dark(#edf5fa,#1c1e20);--ff-soft:light-dark(#e1eaf2,#2a2d31);--ff-line:light-dark(#d3e2ec,#383c41);--ff-accent:light-dark(#3a6380,#4a7290);--ff-ink:light-dark(#3a5b73,#93b3ca);--ff-on:light-dark(#fff,#fff);font-family:Barlow,system-ui,sans-serif}
+#tt-feedback-flow *{box-sizing:border-box}
+#tt-feedback-flow .viz-controls{margin-bottom:18px}
+#tt-feedback-flow .ff-stage{padding:20px 0;display:flex;justify-content:center}
+#tt-feedback-flow .ff-phone{width:390px;max-width:100%;border-radius:22px;border:1px solid var(--ff-line);background:var(--ff-bg);color:var(--ff-text);overflow:hidden;font-size:14px;line-height:1.45}
+#tt-feedback-flow .ff-bar{display:flex;align-items:center;gap:12px;padding:19px 20px 23px}
+#tt-feedback-flow .ff-page-title{font-size:21px;font-weight:600}
+#tt-feedback-flow .ff-reward{margin-left:auto;padding:5px 10px;border-radius:8px;background:var(--ff-soft);color:var(--ff-ink);font-weight:600}
+#tt-feedback-flow .ff-content{padding:0 20px}
+#tt-feedback-flow svg{width:20px;height:20px;flex-shrink:0}
+#tt-feedback-flow .ff-app{display:flex;align-items:center;gap:12px;margin-bottom:25px;min-height:52px}
+#tt-feedback-flow .ff-app>div{min-width:0;flex:1}
+#tt-feedback-flow .ff-app strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:16px;line-height:19px;font-weight:600}
+#tt-feedback-flow .ff-icon{position:relative;width:52px;height:52px;display:grid;place-items:center;background:var(--ff-soft);border-radius:15px;color:var(--ff-ink);flex-shrink:0}
+#tt-feedback-flow .ff-id{display:block;font-size:12.5px;line-height:14px;color:var(--ff-muted);white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+#tt-feedback-flow .ff-kind{position:absolute;right:-5px;bottom:-5px;display:grid;place-items:center;color:var(--ff-ink);width:20px;height:20px;border:2px solid var(--ff-bg);border-radius:50%;background:var(--ff-panel)}
+#tt-feedback-flow .ff-kind svg{width:12px;height:12px}
+#tt-feedback-flow .ff-steps{position:relative;list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0 0 26px;padding:0}
+#tt-feedback-flow .ff-steps:before{content:'';position:absolute;top:24px;left:12.5%;right:12.5%;height:1px;background:var(--ff-line)}
+#tt-feedback-flow .ff-steps:after{content:'';position:absolute;top:24px;left:12.5%;width:var(--ff-reached,0%);height:1.5px;background:var(--ff-ink);transition:width .24s ease}
+#tt-feedback-flow .ff-steps li{position:relative;z-index:1;text-align:center;color:var(--ff-muted);font-size:12px}
+#tt-feedback-flow .ff-step-number{position:relative;display:grid;place-items:center;margin:0 auto 8px;width:48px;height:48px;border-radius:50%;background:var(--ff-bg)}
+#tt-feedback-flow .ff-marker{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;border:1px solid var(--ff-line);background:var(--ff-bg)}
+#tt-feedback-flow .ff-step-number svg{width:17px;height:17px}
+#tt-feedback-flow .ff-steps .ff-current{color:var(--ff-text);font-weight:600}
+#tt-feedback-flow .ff-current .ff-step-number:after{content:'';position:absolute;inset:2px;border:1.5px solid var(--ff-ink);border-radius:50%}
+#tt-feedback-flow .ff-current .ff-marker{width:34px;height:34px;background:var(--ff-accent);color:var(--ff-on);border:0}
+#tt-feedback-flow .ff-current svg,#tt-feedback-flow .ff-done svg{width:19px;height:19px}
+#tt-feedback-flow .ff-done{color:var(--ff-ink)}
+#tt-feedback-flow .ff-done .ff-marker{width:38px;height:38px;color:var(--ff-ink);background:var(--ff-soft);border:0}
+@media(prefers-reduced-motion:reduce){#tt-feedback-flow .ff-steps:after{transition:none}}
+#tt-feedback-flow .ff-task{display:flex;flex-direction:column;gap:14px}
+#tt-feedback-flow h2,#tt-feedback-flow h3,#tt-feedback-flow p{margin:0}
+#tt-feedback-flow h2{font-size:24px;line-height:1.2;font-weight:600}
+#tt-feedback-flow h3{font-size:18px;font-weight:600}
+#tt-feedback-flow .ff-eyebrow{font-size:12px;color:var(--ff-ink);font-weight:600}
+#tt-feedback-flow .ff-instruction{color:var(--ff-body)}
+#tt-feedback-flow .ff-detail{display:flex;align-items:flex-start;gap:12px}
+#tt-feedback-flow .ff-detail>svg{margin-top:2px;width:18px;height:18px;color:var(--ff-ink)}
+#tt-feedback-flow .ff-detail>div{min-width:0;flex:1}
+#tt-feedback-flow .ff-note strong{font-size:13px;font-weight:600}
+#tt-feedback-flow .ff-note p{font-size:12px;color:var(--ff-muted);margin-top:3px}
+#tt-feedback-flow .ff-rules{margin-top:32px;display:flex;flex-direction:column;gap:18px}
+#tt-feedback-flow .ff-section-title{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:600}
+#tt-feedback-flow .ff-section-title svg{width:19px;height:19px;color:var(--ff-ink)}
+#tt-feedback-flow .ff-section-title:after{content:'';height:1px;flex:1;margin-left:5px;background:var(--ff-line)}
+#tt-feedback-flow .ff-rules strong{font-size:13px;font-weight:600}
+#tt-feedback-flow .ff-rules p{font-size:12px;color:var(--ff-muted);margin-top:3px}
+#tt-feedback-flow .ff-agreement{display:flex;gap:12px;align-items:center;min-height:48px;font-weight:500}
+#tt-feedback-flow .ff-agreement input{width:19px;height:19px;flex-shrink:0;accent-color:var(--ff-accent)}
+#tt-feedback-flow .ff-ask{margin-top:28px;padding:0 0 6px}
+#tt-feedback-flow .ff-ask strong{font-size:13px;font-weight:600}
+#tt-feedback-flow .ff-ask p{font-size:14px;color:var(--ff-body);margin-top:12px}
+#tt-feedback-flow footer{padding:18px 20px}
+#tt-feedback-flow .ff-primary{width:100%;min-height:52px;background:var(--ff-accent);color:var(--ff-on);border:0;border-radius:14px;padding:12px 14px;font:600 15px Barlow,system-ui,sans-serif}
+#tt-feedback-flow .ff-primary:disabled{opacity:.4;cursor:default}
+#tt-feedback-flow .ff-preview-status{font-size:12px;color:var(--ff-muted);margin-top:8px;text-align:center}
+#tt-feedback-flow .ff-preview-status:empty{display:none}
+#tt-feedback-flow .ff-meter{height:5px;background:var(--ff-soft);border-radius:4px}
+#tt-feedback-flow .ff-meter span{display:block;width:42%;height:100%;background:var(--ff-accent);border-radius:4px}
+#tt-feedback-flow .ff-proof{margin-top:20px}
+#tt-feedback-flow .ff-shot{background:var(--ff-soft);border-radius:12px;min-height:150px;margin:10px 0 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:16px;color:var(--ff-ink)}
+#tt-feedback-flow .ff-shot small{color:var(--ff-muted);font-size:12px}
+#tt-feedback-flow .ff-proof label{display:flex;flex-direction:column;gap:8px;font-size:13px}
+#tt-feedback-flow textarea{resize:vertical;max-width:100%;width:100%;background:var(--ff-bg);border:1px solid var(--ff-line);border-radius:10px;padding:12px;color:var(--ff-text);font:400 16px Barlow,system-ui,sans-serif}
+#tt-feedback-flow [hidden]{display:none!important}
+</style>
+<script>
+(() => {
+ const root=document.getElementById('tt-feedback-flow');
+ const select=root.querySelector('#tt-flow-step'), agree=root.querySelector('#tt-flow-agree'), primary=root.querySelector('.ff-primary');
+ const state={step:0,accepted:false,live:false};
+ const saved=window.openai?.widgetState?.privateContent;
+ if(saved){state.step=Math.max(0,Math.min(3,Number(saved.step)||0));state.accepted=!!saved.accepted;state.live=!!saved.live;}
+ const q=s=>root.querySelector(s);
+ function persist(){window.openai?.setWidgetState?.({modelContent:{step:['Before starting','Use app','Leave feedback','Send proof'][state.step],live:state.live},privateContent:state})?.catch(()=>{});}
+ function render(){
+  select.value=String(state.step);agree.checked=state.accepted;
+  q('.ff-page-title').textContent=state.live?'Review':'Feedback';
+  q('.ff-kind').setAttribute('aria-label',state.live?'Live app':'Closed test');
+  q('.ff-kind').innerHTML=`<i data-lucide="${state.live?'play':'flask-conical'}" aria-hidden="true"></i>`;
+  const labels=['Install','Use app',state.live?'Review':'Feedback','Send proof'];
+  const icons=['download','smartphone',state.live?'star':'message-square','camera'];
+  q('.ff-steps').innerHTML=labels.map((label,i)=>`<li class="${i===state.step?'ff-current':i<state.step?'ff-done':''}" aria-label="Step ${i+1}, ${label}, ${i===state.step?'current':i<state.step?'complete':'not started'}"><span class="ff-step-number"><span class="ff-marker"><i data-lucide="${i<state.step?'check':icons[i]}" aria-hidden="true"></i></span></span>${i+1}. ${label}</li>`).join('');
+  q('.ff-steps').style.setProperty('--ff-reached',`${state.step*25}%`);
+  const tasks=[
+   ['Install Quick Notes Lite','Get it from Google Play so it counts.','TestTrack checks that Google Play installed this app when you come back. The finish timer starts after installation.','Return here after installing. Then open the app and try it.'],
+   ['Try the app',`Open the app and try what the developer asked about, then return here. ${state.live?'2 min 55 s':'1 min 10 s'} more in the app.`,state.live?'TestTrack checks real foreground use and the return-day requirement. Come back here to update your progress.':'TestTrack measures time while this app is in the foreground. Come back here to update the timer.',state.live?'Leave your honest review on Google Play.':'Send private feedback on Google Play.'],
+   [`${state.live?'Review it':'Send feedback'} on Google Play`,state.live?'Rate it and write a few honest words on its Play page. Then tap the camera to take a picture of your review.':"On its Play page, send the developer private feedback. Then tap the camera to take a picture of it.",state.live?'Post your rating and review on Google Play, then capture it. Opening Play alone does not finish the review.':'Send private feedback in the testing section on Play, then capture what you sent.','Return with a screenshot. The next step checks and sends your proof.'],
+   ['Send your proof','Check the screenshot below. Hide personal details, then send it with the requested text.','Attach the screenshot and enter at least 50 characters before sending. The developer checks the proof.','Your submission goes to the developer. Tix are paid after approval.']
+  ];
+  const task=tasks[state.step];
+  q('.ff-eyebrow').textContent=`Step ${state.step+1} of 4`;
+  q('h2').textContent=task[0];q('.ff-instruction').textContent=task[1];q('.ff-completion').textContent=task[2];q('.ff-next').textContent=task[3];
+  q('.ff-meter').hidden=state.step!==1;q('.ff-rules').hidden=state.step!==0;q('.ff-proof').hidden=state.step!==3;
+  q('.ff-use-rule').textContent=`Get it from Google Play and use it for at least ${state.live?5:2} minutes.`+(state.live?' You also need a return visit on another day, after 20 hours.':'');
+  q('.ff-honest-rule').textContent=(state.live?'Choose your own rating and review on Google Play.':"Send private feedback in Google Play’s testing section.")+' This request needs at least 50 characters. Describe your real experience.';
+  q('.ff-time-rule').textContent=`Send a screenshot of what you posted. Finish within ${state.live?72:24} hours after installation.`+(state.live?' Keep the app installed until the follow-up check is complete.':'');
+  q('.ff-reward-rule').textContent='30 tix are paid after approval, not just for opening or installing the app. If members uphold a rejection, you are not paid and up to 15 of your tix pay the deciding members.'+(state.live?' If Play has no review box, sending feedback here instead pays half.':'');
+  primary.disabled=state.step===0&&!state.accepted;
+  primary.textContent=[state.accepted?'Start and open Google Play':'Read and agree to start','Open the app','Open Google Play','Send the proof'][state.step];
+  q('.ff-preview-status').textContent='';
+  if(globalThis.lucide)lucide.createIcons({attrs:{width:18,height:18}});
+ }
+ select.addEventListener('change',()=>{state.step=Number(select.value);render();persist();});
+ agree.addEventListener('change',()=>{state.accepted=agree.checked;render();persist();});
+ primary.addEventListener('click',()=>{q('.ff-preview-status').textContent=state.step===3?'Preview: proof is ready for submission.':`Preview: ${state.step===1?'the app':'Google Play'} would open here.`;});
+ window.addEventListener('openai:set_globals',event=>{const s=event.detail?.globals?.widgetState?.privateContent;if(s){state.step=Math.max(0,Math.min(3,Number(s.step)||0));state.accepted=!!s.accepted;state.live=!!s.live;render();}});
+ render();
+ if(globalThis.Tweak){const tweak=new Tweak({container:q('.ff-phone'),onChange:()=>{render();persist();}});tweak.addToggle(state,'live',{label:'Live app review'});}
+})();
+</script>

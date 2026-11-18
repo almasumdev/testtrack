@@ -82,25 +82,27 @@ class ReviewCheckTest {
     }
 
     @Test
-    fun `the first page lists what a review asks, by kind of request`() {
-        val live = ReviewJob(post(100), review("claimed", 100))
-        assertEquals(
-            listOf(
-                "Install it from Play",
-                "Use it for 5 minutes",
-                "Open it again tomorrow, after 20 hours",
-                "Review it on Google Play: stars and at least 100 characters",
-                "Take a screenshot of your review with the capture button",
-            ),
-            todoLines(live),
-        )
-        assertEquals("You get 41 tix. Finish within 3 days.", todoPayLine(live))
+    fun `closed and live usage requirements keep their own finish windows`() {
+        assertEquals(120_000L, previewOf(post().copy(isLive = false)).neededMs)
+        assertEquals(180_000L, previewOf(post().copy(isLive = true)).neededMs)
+        assertEquals(24, FeedRules.CLAIM_HOURS)
+        assertEquals(72, FeedRules.LIVE_CLAIM_HOURS)
+    }
 
-        val closed = ReviewJob(post().copy(isLive = false), review("claimed"))
-        assertEquals(4, todoLines(closed).size)
-        assertEquals("Use it for 2 minutes", todoLines(closed)[1])
-        assertEquals("Give it a star rating on Google Play", todoLines(closed)[2])
-        assertEquals("You get 41 tix. Finish within 1 day.", todoPayLine(closed))
+    @Test
+    fun `the server's half reward choice survives restoring a review`() {
+        val restored = ReviewJob(post(), review("submitted").copy(noBox = true))
+        assertTrue(restored.noBox)
+        assertTrue(restored.settled)
+        assertEquals(20, restored.reward)
+    }
+
+    @Test
+    fun `written feedback still requires text when optional counts are absent`() {
+        val written = ReviewJob(post().copy(feedback = "written", needsChars = 0), review("used", 0))
+        assertEquals(100, written.needsChars)
+        assertFalse(written.textEnough("a".repeat(99)))
+        assertTrue(written.textEnough("a".repeat(100)))
     }
 
     @Test

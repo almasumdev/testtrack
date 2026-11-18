@@ -1,0 +1,106 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap">
+<div id="tt-run-updates" class="viz-dotted-background">
+  <main class="up-page" aria-label="Run Updates current tile states">
+    <header class="up-heading"><h2>Updates</h2><span>All current states</span></header>
+    <section data-case="single"><h3 class="up-case">Missed night · One crew</h3><article class="up-tile">
+      <div class="up-notice up-warn"><i data-lucide="triangle-alert" aria-hidden="true"></i><strong>Keep your app in the crew</strong></div>
+      <p class="up-deadline">Finish tonight’s apps <b>before midnight</b>.</p>
+      <div class="up-row"><div><b>Crew 61</b><small>Missed yesterday · 12 apps left</small></div><button class="up-link cursor-interaction" data-crew="61">View crew</button></div>
+    </article></section>
+    <section data-case="multiple"><h3 class="up-case">Missed night · Multiple crews</h3><article class="up-tile">
+      <div class="up-notice up-warn"><i data-lucide="triangle-alert" aria-hidden="true"></i><strong>Keep your apps in their crews</strong></div>
+      <p class="up-deadline">Finish tonight’s apps <b>before midnight</b>.</p>
+      <div class="up-row"><div><b>Crew 61</b><small>Missed yesterday · 12 apps left</small></div><button class="up-link cursor-interaction" data-crew="61">View crew</button></div>
+      <div class="up-row"><div><b>Crew 66</b><small>Missed yesterday · 3 apps left</small></div><button class="up-link cursor-interaction" data-crew="66">View crew</button></div>
+    </article></section>
+    <section data-case="install"><h3 class="up-case">Install or replace a non-Play copy</h3><article class="up-tile up-row up-install">
+      <div class="up-install-copy"><span class="up-icon"><i data-lucide="download" aria-hidden="true"></i></span><div><b>2 apps to install</b><small>Install from Google Play</small></div></div><button class="up-link cursor-interaction" data-install>View</button>
+    </article></section>
+    <section data-case="missing"><h3 class="up-case">Missing screenshot</h3><article class="up-tile up-picture">
+      <span class="up-chip up-warn">1 picture missing</span><h4>Auto Silent needs a picture</h4>
+      <p>You opened it, but its picture didn’t save. Take one now, or pick one from your phone, so tonight counts.</p>
+      <div class="up-actions"><button class="up-primary cursor-interaction" data-open>Open it again</button><button class="up-secondary cursor-interaction" data-pick>Pick a picture</button></div>
+      <small class="up-note">A picture you pick shows to its owner as added by hand.</small>
+    </article></section>
+    <section data-case="sending"><h3 class="up-case">Screenshots uploading</h3><article class="up-tile up-picture">
+      <span class="up-chip up-accent">Sending 2 pictures</span><p>Opened and timed. They count once the picture reaches your Drive.</p>
+    </article></section>
+    <section data-case="failed"><h3 class="up-case">Upload failed</h3><article class="up-tile up-picture">
+      <span class="up-chip up-warn">Sending 2 pictures</span><p>You’re offline. Your pictures are saved on this phone.</p><button class="up-secondary up-wide cursor-interaction" data-retry>Try again</button>
+    </article></section>
+    <section data-case="late"><h3 class="up-case">Upload waiting more than 3 hours</h3><article class="up-tile up-picture">
+      <span class="up-chip up-bad">Sending 1 picture</span><p class="up-bad">Waiting more than 3 hours. It counts once it reaches your Drive, so check you’re online.</p><button class="up-secondary up-wide cursor-interaction" data-retry>Try again</button>
+    </article></section>
+    <section data-case="feedback"><h3 class="up-case">Private feedback blocking testing</h3><article class="up-tile"><div class="up-notice"><i data-lucide="triangle-alert" aria-hidden="true"></i><p>2 apps need private feedback on Play.</p></div></article></section>
+    <section data-case="update"><h3 class="up-case">App updates blocking testing</h3><article class="up-tile"><div class="up-notice"><i data-lucide="triangle-alert" aria-hidden="true"></i><p>2 apps need updating from Play.</p></div></article></section>
+    <section data-case="mixed"><h3 class="up-case">Mixed blockers</h3><article class="up-tile"><div class="up-notice"><i data-lucide="triangle-alert" aria-hidden="true"></i><p>3 apps need attention before opening.</p></div></article></section>
+    <p class="up-announcement" aria-live="polite"></p>
+    <dialog class="up-dialog" aria-labelledby="up-dialog-title"><h2 id="up-dialog-title"></h2><p></p><button class="up-primary cursor-interaction" data-close>Done</button></dialog>
+  </main>
+</div>
+<style>
+#tt-run-updates{--up-bg:light-dark(#f7fcff,#0f1011);--up-ink:light-dark(#142f43,#eceef0);--up-text:light-dark(#405d72,#bcc1c6);--up-muted:light-dark(#59758a,#9da3a9);--up-border:light-dark(#b7d1e2,#383c41);--up-accent:light-dark(#3a5b73,#93b3ca);--up-accent-fill:light-dark(#3a5b73,#93b3ca);--up-on:light-dark(#fff,#0f1011);--up-soft:light-dark(#dfedf6,#292c2f);--up-warn:light-dark(#885e24,#d8b774);--up-bad:light-dark(#a84438,#e49b91);font-family:Barlow,system-ui,sans-serif;color:var(--up-ink);display:flex;justify-content:center;padding:24px 0}
+#tt-run-updates *{box-sizing:border-box}
+#tt-run-updates .up-page{width:404px;max-width:100%;padding:14px;background:var(--up-bg);border:1px solid var(--up-border);border-radius:20px}
+#tt-run-updates h2,#tt-run-updates h3,#tt-run-updates h4,#tt-run-updates p{margin:0}
+#tt-run-updates .up-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:16px}
+#tt-run-updates h2{font-size:18px;line-height:24px;font-weight:700}
+#tt-run-updates .up-heading>span{font-size:12px;line-height:17px;color:var(--up-muted)}
+#tt-run-updates section+section{margin-top:20px}
+#tt-run-updates .up-case{font-size:12px;line-height:17px;font-weight:500;color:var(--up-muted);margin-bottom:6px}
+#tt-run-updates .up-tile{border:1px solid var(--up-border);border-radius:16px;padding:12px;background:var(--up-bg)}
+#tt-run-updates .up-notice{--icon-size:16px;display:flex;align-items:start;gap:10px;color:var(--up-text);font-size:13px;line-height:18px}
+#tt-run-updates .up-notice svg{flex:none;color:var(--up-warn);margin-top:1px}
+#tt-run-updates .up-notice strong{font-size:14px;line-height:19px;font-weight:600}
+#tt-run-updates .up-warn{color:var(--up-warn)}
+#tt-run-updates .up-bad{color:var(--up-bad)}
+#tt-run-updates .up-accent{color:var(--up-accent)}
+#tt-run-updates .up-deadline{font-size:13px;line-height:18px;color:var(--up-text);margin:6px 0 8px}
+#tt-run-updates b{font-weight:600}
+#tt-run-updates .up-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#tt-run-updates .up-row+.up-row{margin-top:6px}
+#tt-run-updates .up-row>div{min-width:0}
+#tt-run-updates .up-row b{display:block;font-size:13px;line-height:18px}
+#tt-run-updates small{display:block;color:var(--up-muted);font-size:12px;line-height:17px}
+#tt-run-updates button{font:inherit;touch-action:manipulation}
+#tt-run-updates button:focus-visible{outline:2px solid var(--up-accent);outline-offset:3px}
+#tt-run-updates .up-link{flex:none;min-height:32px;border:0;background:transparent;color:var(--up-accent);padding:4px 8px;font-size:14px;line-height:19px;font-weight:700}
+#tt-run-updates .up-install-copy{display:flex;gap:9px;align-items:center}
+#tt-run-updates .up-icon{--icon-size:18px;display:grid;place-items:center;width:34px;height:34px;flex:none;border-radius:10px;background:var(--up-soft);color:var(--up-accent)}
+#tt-run-updates .up-chip{display:inline-block;padding:4px 10px;border-radius:99px;font-size:12.5px;line-height:17px;font-weight:700;background:color-mix(in srgb,currentColor 12%,var(--up-bg))}
+#tt-run-updates .up-picture{padding:14px 16px}
+#tt-run-updates h4{font-size:16px;line-height:21px;font-weight:700;margin-top:8px}
+#tt-run-updates .up-picture p{font-size:12px;line-height:17px;color:var(--up-muted);margin-top:8px}
+#tt-run-updates .up-picture h4+p{margin-top:4px}
+#tt-run-updates .up-picture p.up-bad{color:var(--up-bad)}
+#tt-run-updates .up-actions{display:flex;gap:8px;margin-top:10px}
+#tt-run-updates .up-primary,#tt-run-updates .up-secondary{flex:1;min-width:0;min-height:52px;padding:10px 12px;border-radius:99px;font-size:14px;line-height:19px;font-weight:700;text-align:center}
+#tt-run-updates .up-primary{border:1px solid var(--up-accent-fill);background:var(--up-accent-fill);color:var(--up-on)}
+#tt-run-updates .up-secondary{border:1px solid var(--up-border);background:transparent;color:var(--up-accent)}
+#tt-run-updates .up-wide{width:100%;margin-top:10px}
+#tt-run-updates .up-note{margin-top:8px}
+#tt-run-updates .up-announcement{font-size:12px;line-height:17px;color:var(--up-muted);margin-top:10px}
+#tt-run-updates .up-announcement:empty{display:none}
+#tt-run-updates .up-dialog{font-family:inherit;background:var(--up-bg);color:var(--up-ink);width:340px;max-width:calc(100% - 28px);border:1px solid var(--up-border);border-radius:18px;padding:18px}
+#tt-run-updates .up-dialog p{font-size:14px;line-height:20px;color:var(--up-text);margin:10px 0 16px}
+#tt-run-updates .up-dialog button{width:100%}
+#tt-run-updates .up-dialog::backdrop{background:light-dark(#142f4340,#00000066)}
+@media(pointer:coarse){#tt-run-updates .up-link{min-height:44px}}
+@media(max-width:350px){#tt-run-updates .up-page{padding:10px}#tt-run-updates .up-tile{padding:12px}#tt-run-updates .up-row .up-link{padding:4px}#tt-run-updates .up-actions button{padding:8px}}
+</style>
+<script>
+(()=>{
+  const root=document.getElementById('tt-run-updates'),dialog=root.querySelector('dialog');
+  function show(title,body){root.querySelector('#up-dialog-title').textContent=title;dialog.querySelector('p').textContent=body;dialog.showModal();}
+  root.addEventListener('click',event=>{
+    const button=event.target.closest('button');if(!button)return;
+    if(button.hasAttribute('data-close')){dialog.close();return;}
+    if(button.hasAttribute('data-crew')){show(`Crew ${button.dataset.crew}`,'View the apps still owed tonight in this crew.');return;}
+    if(button.hasAttribute('data-install')){show('Apps to install','Auto Silent and Bluefy need their Google Play copies.');return;}
+    if(button.hasAttribute('data-open')){show('A picture of each app','Open Auto Silent again and capture its screenshot so tonight counts.');return;}
+    if(button.hasAttribute('data-pick')){show('Pick a picture','Choose an app screenshot saved on your phone.');return;}
+    if(button.hasAttribute('data-retry'))root.querySelector('.up-announcement').textContent='Upload retry requested.';
+  });
+  if(globalThis.lucide)lucide.createIcons({attrs:{width:16,height:16}});
+})();
+</script>

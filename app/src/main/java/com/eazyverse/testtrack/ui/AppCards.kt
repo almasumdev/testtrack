@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,6 +42,7 @@ internal fun AppMark(
      * one still shows while the chosen one loads, and stands in if it cannot.
      */
     ownIcon: Boolean = false,
+    outline: Color = Color.Unspecified,
 ) {
     if (ownIcon && icon.isNotBlank()) {
         ShapedIconImage(
@@ -48,18 +50,20 @@ internal fun AppMark(
             size = size,
             loading = { Skeleton(size, size, size * 0.3f) },
             error = { AppIcon(pkg, name, size = size) { AppTile(name, size) } },
+            outline = outline,
         )
         return
     }
-    AppIcon(pkg, name, size = size) {
+    AppIcon(pkg, name, size = size, outline = outline) {
         if (icon.isBlank()) {
-            AppTile(name, size)
+            AppTile(name, size, outline)
         } else {
             ShapedIconImage(
                 model = icon,
                 size = size,
                 loading = { Skeleton(size, size, size * 0.3f) },
                 error = { AppTile(name, size) },
+                outline = outline,
             )
         }
     }
