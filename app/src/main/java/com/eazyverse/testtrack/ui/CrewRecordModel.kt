@@ -102,17 +102,23 @@ fun recordDates(
     }
 }
 
-/** The production question is open: a counted run, not answered, and still inside its days. */
+/** The production question is open: a finished run, not answered, and still inside its days. */
 fun asksProdAccess(
     r: CrewRecord,
     now: Instant = Instant.now(),
-): Boolean = r.counted && r.prodAccess == null && instantOf(r.prodAccessUntil)?.let { now < it } == true
+): Boolean =
+    r.outcome == RecordOutcome.FINISHED &&
+        r.prodAccess == null &&
+        instantOf(r.prodAccessUntil)?.let { now < it } == true
 
 /** The question's days ran out with no answer. */
 fun prodAccessMissed(
     r: CrewRecord,
     now: Instant = Instant.now(),
-): Boolean = r.counted && r.prodAccess == null && instantOf(r.prodAccessUntil)?.let { now >= it } == true
+): Boolean =
+    r.outcome == RecordOutcome.FINISHED &&
+        r.prodAccess == null &&
+        instantOf(r.prodAccessUntil)?.let { now >= it } == true
 
 /** A perfect run's tix wait to be claimed. They never run out. */
 fun canClaimPerfect(r: CrewRecord): Boolean = r.perfectClaimable && r.perfectClaimedAt == null
