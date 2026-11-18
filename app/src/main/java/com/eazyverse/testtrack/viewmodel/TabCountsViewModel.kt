@@ -5,10 +5,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eazyverse.testtrack.domain.ChatSignals
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiActions
 import com.eazyverse.testtrack.net.ApiSession
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
@@ -24,8 +26,14 @@ class TabCountsViewModel : ViewModel() {
     var actions by mutableStateOf<ApiActions?>(null)
         private set
 
+    /** Unread chat over this account's unmuted crews: a dot on Crew when it has nothing else to do. */
+    val crewChat: Int get() = actions?.parts?.crewChat ?: 0
+
     private val live =
         LiveReload("tabs", viewModelScope) { it.channel.startsWith("user:") || it.channel.startsWith("crew:") }
+
+    // Chat is not on the live socket: a chat push is what says the count moved.
+    private var chat: Job? = null
 
     fun refresh() {
         if (!ApiSession.signedIn) {
@@ -43,7 +51,15 @@ class TabCountsViewModel : ViewModel() {
         }
     }
 
-    fun start() = live.start { refresh() }
+    fun start() {
+        live.start { refresh() }
+        chat?.cancel()
+        chat = viewModelScope.launch { ChatSignals.news.collect { refresh() } }
+    }
 
-    fun stop() = live.stop()
+    fun stop() {
+        live.stop()
+        chat?.cancel()
+        chat = null
+    }
 }

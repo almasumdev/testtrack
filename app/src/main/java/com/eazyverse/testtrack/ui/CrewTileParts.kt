@@ -65,11 +65,14 @@ internal fun CrewTileSquares(
     }
 }
 
-/** The owner's app has the same small footer in both crew tabs. */
+/** The owner's app has the same small footer in both crew tabs; [trailing] sits at its end, such as the chat badge. */
 @Composable
-internal fun CrewTileApp(seat: CrewSeat?) {
+internal fun CrewTileApp(
+    seat: CrewSeat?,
+    trailing: (@Composable () -> Unit)? = null,
+) {
     if (seat == null) return
-    CrewTileApp(seat.packageName, seat.appName, seat.icon)
+    CrewTileApp(seat.packageName, seat.appName, seat.icon, trailing = trailing)
 }
 
 /** The same footer from plain values; the Record tab keeps the name to [maxLines] 1. */
@@ -79,6 +82,7 @@ internal fun CrewTileApp(
     appName: String,
     icon: String,
     maxLines: Int = 2,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     Spacer(Modifier.height(12.dp))
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -86,10 +90,15 @@ internal fun CrewTileApp(
         Spacer(Modifier.width(8.dp))
         Text(
             appName,
+            if (trailing != null) Modifier.weight(1f) else Modifier,
             style = tileStyle(13f, 18f, FontWeight.Normal),
             color = Tt.colors.text2,
             maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
         )
+        if (trailing != null) {
+            Spacer(Modifier.width(8.dp))
+            trailing()
+        }
     }
 }

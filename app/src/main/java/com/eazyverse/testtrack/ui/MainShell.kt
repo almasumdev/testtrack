@@ -434,6 +434,7 @@ fun MainShell(
                     counts.actions?.let {
                         mapOf(MainTab.CIRCLE to it.circle, MainTab.GROUPS to it.crew, MainTab.APPS to it.apps)
                     } ?: emptyMap(),
+                dots = if (counts.crewChat > 0) setOf(MainTab.GROUPS) else emptySet(),
             )
             LeaveHint(
                 leaving,

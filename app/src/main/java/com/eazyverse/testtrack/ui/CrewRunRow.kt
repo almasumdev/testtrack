@@ -69,7 +69,7 @@ fun CrewListRow(
                 color = Tone.WARN.ink(),
             )
         }
-        CrewTileApp(mine)
+        CrewTileApp(mine) { CrewChatTileBadge(crew) }
     }
 }
 

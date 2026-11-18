@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -75,6 +76,8 @@ fun MainBar(
     modifier: Modifier = Modifier,
     /** What waits on this account, by tab; a tab missing or at 0 shows no number. */
     counts: Map<MainTab, Int> = emptyMap(),
+    /** Tabs with something new but nothing to do, such as unread crew chat: a dot, under any number. */
+    dots: Set<MainTab> = emptySet(),
     onAdd: () -> Unit = {},
     addExpanded: Boolean = false,
 ) {
@@ -227,7 +230,7 @@ fun MainBar(
                                         RoundedCornerShape(8.dp),
                                     ),
                                 contentAlignment = Alignment.Center,
-                            ) { TabIcon(tab, count, ink, null) }
+                            ) { TabIcon(tab, count, ink, null, dot = tab in dots) }
                             Text(
                                 tab.label,
                                 Modifier.padding(horizontal = 2.dp),
@@ -265,6 +268,7 @@ private fun TabIcon(
     count: Int,
     tint: Color,
     description: String?,
+    dot: Boolean = false,
 ) {
     Box {
         Icon(
@@ -294,6 +298,19 @@ private fun TabIcon(
                     color = Tt.colors.onPrimary,
                 )
             }
+        } else if (dot) {
+            // Unread chat: the number above wins whenever there is something to do.
+            Box(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 4.dp, y = (-3).dp)
+                    .size(13.dp)
+                    .clip(CircleShape)
+                    .background(Tt.colors.bg)
+                    .padding(2.dp)
+                    .clip(CircleShape)
+                    .background(Tt.colors.primary),
+            )
         }
     }
 }

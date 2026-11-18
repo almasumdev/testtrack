@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eazyverse.testtrack.domain.ChatSignals
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
@@ -58,6 +59,8 @@ fun CrewScreen(
     // Reloaded on every arrival: a crew fills, an app is sent back and a fortnight starts while
     // somebody is on another screen.
     LaunchedEffect(Unit) { vm.load(context) }
+    // A chat push: the tiles and the tab's chat badges read their counts again.
+    LaunchedEffect(Unit) { ChatSignals.news.collect { vm.load(context) } }
     CrewLifecycle(vm)
     val actions = crewActions(vm, dialogs, onSignIn, onAddToCrew)
 
@@ -67,7 +70,7 @@ fun CrewScreen(
         topBar = {
             Column {
                 // The tabs bring their own gutter and room above, the same as Circle's.
-                PhaseTabs(vm.tab, { vm.badge(it) }) { vm.showTab(it) }
+                PhaseTabs(vm.tab, { vm.badge(it) }, { chatUnreadOf(vm.crews, it) }) { vm.showTab(it) }
                 PageMessage(vm.message, vm::clearMessage)
             }
         },
@@ -144,12 +147,14 @@ class CrewActions(
 private fun PhaseTabs(
     selected: CrewPhase,
     badge: (CrewPhase) -> Int,
+    chat: (CrewPhase) -> Int,
     onSelect: (CrewPhase) -> Unit,
 ) {
     SegmentedTabs(
         labels = CrewPhase.entries.map { it.name.lowercase().replaceFirstChar(Char::uppercase) },
         selected = CrewPhase.entries.indexOf(selected),
         counts = CrewPhase.entries.map(badge),
+        chats = CrewPhase.entries.map(chat),
         gap = 14,
     ) { onSelect(CrewPhase.entries[it]) }
 }

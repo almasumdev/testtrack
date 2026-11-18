@@ -35,7 +35,7 @@ internal fun CrewLobbyRow(
         }
         Spacer(Modifier.height(if (crew.out) 14.dp else 9.dp))
         LobbyStanding(crew)
-        CrewTileApp(mine)
+        CrewTileApp(mine) { CrewChatTileBadge(crew) }
     }
 }
 
