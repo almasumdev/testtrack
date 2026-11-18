@@ -69,10 +69,15 @@ Order: B1, B2, dev. Then B3-B5 in parallel with A1-A5. Promote B1-B4 (B5 shipped
 - Users' own Drive copies stay; privacy text says they can delete them.
 - Blockers before coding: the owner's uncommitted app work touches the same files; backend `infra/dev-first` is ~20 commits ahead of `origin/dev` with uncommitted `app/core/rules.py`.
 
-## Open questions for the owner
-1. Keep the small night rows (night_excuses, seat_absences, seat_verdicts)? Recommended: keep.
-2. Circle review proofs: keep until account deletion (recommended) or 30 days after final?
-3. Low-disk alert: push to super admin or Telegram bot?
-4. Running crews' Drive pictures: copy (recommended) or show from Drive until pruned?
-5. Quietly revoke the old Drive grant on first launch?
-6. Days Drive stays accepted after the forced min version (suggest 3)?
+## Owner answers 2026-11-18 (these override the plan above)
+- STILL PLANNING. Build nothing until the owner says.
+- Rolling picture window: while a crew runs, keep only the last 3 days of visit pictures; older ones are deleted daily (rows stay until the crew prune). Then everything heavy goes 3 days after the crew ends as planned.
+- App: the next release removes Drive completely (no picture display via Drive needed beyond plain links, no Drive UI, no scope). It revokes the old Drive grant on first launch.
+- Server: keeps accepting `drive:` refs until the owner says stop (no fixed P4 date; 426 only on the owner's word).
+- No copying: do NOT copy Drive pictures to the VPS (drop B6 / P2). New pictures go to the VPS; old pictures keep their Drive links as they are. Existing VPS files also stay as they are.
+- Circle review proofs are deleted when the review is approved or its dispute completes.
+- Low-disk alert goes to the Telegram bot.
+- Small night rows (night_excuses, seat_absences, seat_verdicts): keep (planner default, not contested).
+
+## Storage with the rolling 3-day window
+15 members x 14 apps x 3 nights = 630 pictures per crew x ~70 KB = ~45 MB per crew; 10 crews ~0.45 GB (+ finished crews in their 3-day window, same size).
