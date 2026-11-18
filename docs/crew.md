@@ -220,9 +220,9 @@ counts only with both:
 
 How it runs:
 
-- **Google Drive is required.** It is a Get ready step, and the Take a seat page, which every way
-  to a seat leads to, connects it first. Pictures go to the member's own Drive, shared by link;
-  only the file's id reaches our server, which checks the file is theirs.
+- **Pictures go to TestTrack.** Each app's picture is sent to our own server so its owner can see
+  it, shrunk on the phone first (720 px wide, WebP). Nothing has to be connected: there is no
+  Drive step in Get ready or on the Take a seat page (dropped 18 November 2026).
 - **Android asks to share the screen every night**, once for the whole round, after one line from
   us saying why. Not now opens nothing and the night is still owed.
 - **The visit is sent first and its picture follows**, so an upload never holds up the next app.
@@ -285,7 +285,7 @@ whose crew notes (commit 9776af2, removed in 65cac3c) are a different thing.
 - **Once per app.** Each member leaves private feedback on Google Play for every other app in the
   run, once for the whole run.
 - **With a screenshot.** They take it with TestTrack's camera button over Play, as a Circle review
-  does, and submit it. It goes to their own Drive, shared by link. Back in TestTrack without
+  does, and submit it. It is sent to TestTrack, for the team to check. Back in TestTrack without
   taking it, the camera button and Android's sharing chip go, so a later tap sends nothing.
 - **By the end of day 7.** From day 8, a member's opens of an app they have not sent feedback for
   do not count, until they send it. For a seat that joined part-way, the 7 days count from that

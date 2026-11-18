@@ -6,7 +6,7 @@ release builds. `datasafety.csv` is generated from the declaration in `../mkit.t
 | Declared type | Evidence and purpose |
 | --- | --- |
 | Name, email and user IDs | Google/Firebase sign-in, API accounts, public names and legacy cohort identity/member rows. Account management and functionality; account/device comparisons prevent duplicate testing. |
-| Photos | Optional. Feedback screenshots upload directly to the user's Drive; the backend verifies transient-grant metadata and stores references only, and new Drive images are explicitly shared with anyone who has the link. A chosen profile photo is cropped on the phone and sent to the backend (`PUT /me/photo`), which redraws it as a 400 px JPEG and serves it publicly by its hash. Legacy Drive and historical backend images remain readable. Owners and eligible jurors can read feedback evidence. |
+| Photos | Optional. Proof pictures (a review's screenshot, a night's picture of each crew app, a crew feedback screenshot, a picture added to a refusal or a reply) are sent to the backend (`PUT /uploads/{id}`) and stored on TestTrack's servers, which redraw them and keep only their own copy. The owner of the app can open a picture of it; a disputed review's picture can also be opened by eligible jurors and the TestTrack team. A chosen profile photo is cropped on the phone and sent to the backend (`PUT /me/photo`), which redraws it as a 400 px JPEG and serves it publicly by its hash. Pictures sent by older builds stay in the sender's own Google Drive behind the public link they already had; the app no longer asks for Drive access and gives the old grant back. |
 | Other user-generated content | Written feedback, rejection reasons, crew entry notes and disputes, displayed to the people handling that work. |
 | Installed apps | Named package install/source/version checks through `InstalledApps`, review milestones and legacy version/proof records. The whole installed-package inventory is not uploaded. |
 | In-app search history | `AskViewModel` sends lookup queries to `/apps/lookup`; the lookup service does not persist them. Optional, ephemeral collection. |
@@ -31,7 +31,8 @@ optional because release collection has no in-app opt-out control.
 
 The deletion URLs point at the existing request forms. `deletion = "yes"`
 means users can request deletion, not that an in-app deletion endpoint exists.
-The privacy page must cover backend records, historical uploads and publicly linked Drive images.
+The privacy page must cover backend records, pictures stored on TestTrack's servers and the older
+publicly linked Drive images.
 The app describes a manual request rather than instant deletion; the operator procedure in the
 backend operations guide still requires a cross-store rehearsal and retention-policy review.
 

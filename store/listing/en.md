@@ -53,7 +53,7 @@ Indie developers, students and small teams publishing their first app on a new p
 GOOD TO KNOW
 
 • Usage access lets TestTrack measure how long you spent in each app you test. It checks only those apps.
-• Screenshots go to your own Google Drive, not to our servers. Check a screenshot for personal details before you send it.
+• Screenshots are kept on our servers for the app's owner to see. Check a screenshot for personal details before you send it.
 • You can browse open crews, the Circle and Ranks without an account. Joining needs a Google sign-in.
 
 TestTrack is an independent app and is not affiliated with Google. Finishing a closed test helps you meet the requirement, but Google Play decides production access.

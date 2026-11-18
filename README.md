@@ -62,9 +62,10 @@ you through.
 
 ## Privacy
 
-Screenshots and profile pictures go to your own Google Drive, not to our servers; we keep only a
-reference to the file. Anyone holding a screenshot's link can open it, so check what's in the
-picture before you send it. Crew visits send how long an app was open, never what was on screen.
+Screenshots and profile pictures are stored on TestTrack's servers. A screenshot is seen by the
+owner of the app it is about, and if it is disputed, by a few reviewers and the team, so check
+what's in the picture before you send it. A crew visit sends how long the app was open and one
+picture of it.
 
 [Privacy policy](https://eazyverse.com/apps/testtrack/privacy) ·
 [Request account deletion](https://eazyverse.com/apps/testtrack/delete-account)

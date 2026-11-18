@@ -143,6 +143,5 @@ All of it already exists for something else:
 
 ## Open
 
-- Where the screenshots are stored. Drive, as proofs are, or our own object storage.
 - Whether a juror sees the reviewer's name, or only the evidence.
 - How many disputes one person may judge in a day.

@@ -38,16 +38,23 @@ installation eligibility; neither asks for compensated public ratings. Install, 
 proof and waiting are the guided steps. The capture button opens the tested app. The proof editor
 supports inspection, zoom and opaque pixel masks; JPEG export strips source metadata and bounds size.
 
-Proof and custom profile images upload directly to the user's Drive with the narrow drive.file grant.
-Files receive anyone-with-link read access, disclosed before upload. The API receives only a Drive
-reference and transient grant, checks metadata/existence/ownership/size/permission, and binds a proof
-file to one review. It does not persist the grant or new image bytes. Existing backend-upload proof
-has an access-controlled read path; new POST /uploads writes are retired with no fallback.
+Proof pictures are stored on TestTrack's servers: a review's screenshot, a night's picture of a crew
+app, a crew feedback screenshot, and a picture added to a refusal or a reply. The phone makes up the
+picture's id (a UUID), writes it down, then sends the bytes with
+`PUT /uploads/{id}?kind=visit|crew_feedback|review`. The server redraws the picture and keeps only
+its own bytes. The id then goes as `proof_ref` on the same JSON endpoint as before. A night's
+picture is shrunk on the phone first, to 720 px wide WebP. `GET /uploads/{id}` needs the session
+and answers only the people who may see that picture. A profile photo goes to `PUT /me/photo`.
 
-Pending feedback/proof is saved locally. A reserved Drive file ID is persisted before upload, so
-uncertain responses retry the same file. Submission is separately idempotent. Posting retries keep
-an immutable request ID while the form is unchanged. Replacing an already-uploaded screenshot can
-leave a discarded user-owned Drive file; users can remove it from the TestTrack Proofs folder.
+Pictures sent by older builds stay in their sender's Google Drive and are shown by their public
+link (`drive:` refs in `proofSource`). Nothing was copied. The app no longer asks for Drive access,
+and gives the old grant back once, on the first start after the update (`OldDriveGrant`).
+
+Pending feedback/proof is saved locally. The picture's id is persisted before upload, so an
+uncertain response retries the same id and the server answers as it did the first time. Submission
+is separately idempotent. Posting retries keep an immutable request ID while the form is unchanged.
+When the server's disk is full (507) or the app is too old (426), a night's picture stays queued on
+the phone and is sent later.
 
 The backend sweeper runs feedback/claim/dispute deadlines, crew reminders, missed days and closure.
 Those are implemented jobs, not missing features.

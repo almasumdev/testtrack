@@ -122,9 +122,10 @@ does not recolour those assets. Launcher assets remain managed through Android S
 ## Permissions belong to the feature
 
 Startup has only onboarding (first-time guests) and Home. There is no Setup route or global
-setup-complete gate. Signing in and browsing do not request Drive, usage access,
-group membership or notifications. Feedback requests usage access for measurement and Drive
-when attaching proof; only closed feedback requires group membership. Crew testing requests usage access when opening a test;
+setup-complete gate. Signing in and browsing do not request usage access,
+group membership or notifications. Feedback requests usage access for measurement;
+only closed feedback requires group membership. Crew testing requests usage access when opening a test;
 its participation dialogs link to the testers group. Notifications are an optional control
-inside active crews. The screenshot-proof testing flow requests Drive at the point of starting
-or uploading proof, retains pending screenshots if declined, and offers reconnection there.
+inside active crews. Proof pictures are stored on TestTrack's servers and go there with the normal
+session, so no screenshot flow asks Google for anything. A picture that cannot be sent yet is kept
+on the phone and sent later.
