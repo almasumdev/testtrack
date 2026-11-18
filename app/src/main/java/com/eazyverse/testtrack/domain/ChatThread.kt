@@ -159,16 +159,18 @@ object ChatThread {
 
     /**
      * The rows, oldest first: a day label wherever the day changes, the "new" line over the first
-     * unread message, and each message marked [ChatRow.Line.first] where a new author starts.
+     * message unread between [newFromRev] and [newToRev], and each message marked
+     * [ChatRow.Line.first] where a new author starts.
      */
     fun rows(
         lines: List<ChatLine>,
         newFromRev: Long?,
+        newToRev: Long = Long.MAX_VALUE,
         zone: ZoneId = ZoneId.systemDefault(),
         today: LocalDate = LocalDate.now(zone),
     ): List<ChatRow> {
         val rows = ArrayList<ChatRow>(lines.size + 8)
-        val fresh = if (newFromRev == null) emptyList() else unread(lines, newFromRev)
+        val fresh = if (newFromRev == null) emptyList() else unread(lines, newFromRev).filter { it.rev <= newToRev }
         val firstNew = fresh.firstOrNull()?.id
         var day: LocalDate? = null
         var last: ChatLine? = null

@@ -33,11 +33,11 @@ data class ApiChatPage(
     val messages: List<ApiChatMessage> = emptyList(),
 )
 
-/** What is left of today's allowance. */
+/** What is left of today's allowance; -1 where the server does not say. */
 @Serializable
 data class ApiChatLeft(
-    val messages: Int = 0,
-    val pictures: Int = 0,
+    val messages: Int = -1,
+    val pictures: Int = -1,
     @SerialName("resets_at") val resetsAt: String? = null,
 )
 

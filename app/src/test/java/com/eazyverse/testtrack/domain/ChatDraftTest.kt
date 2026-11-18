@@ -93,6 +93,16 @@ class ChatDraftTest {
     }
 
     @Test
+    fun `the new line counts only what was unread as the chat opened`() {
+        val lines = (1L..5L).map { line("$it", it, "b", "2026-11-19T10:0$it:00Z") }
+        val rows = ChatThread.rows(lines, newFromRev = 2, newToRev = 4, zone = ZoneOffset.UTC, today = LocalDate.parse("2026-11-19"))
+        val new = rows.filterIsInstance<ChatRow.New>().single()
+        assertEquals(2, new.count)
+        assertEquals("3", (rows[rows.indexOf(new) + 1] as ChatRow.Line).line.id)
+        assertTrue(ChatThread.rows(lines, newFromRev = 5, zone = ZoneOffset.UTC).none { it is ChatRow.New })
+    }
+
+    @Test
     fun `a picture says how long it has left`() {
         val now = Instant.parse("2026-11-19T10:00:00Z")
         assertEquals("Gone in 21 h", ChatThread.pictureLeft(now.plusSeconds(21 * 3600 + 120), now))
