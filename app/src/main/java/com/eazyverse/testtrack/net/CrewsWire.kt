@@ -249,6 +249,11 @@ data class ApiCrew(
     /** For a done crew: until when its full detail (nights, pictures) is kept, and whether it is gone. */
     @SerialName("details_until") val detailsUntil: String? = null,
     val pruned: Boolean = false,
+    /** The crew's chat: off, open, read_only or gone; off from a server without chat. */
+    @SerialName("chat_state") val chatState: String = "off",
+    /** Others' messages not read yet; bot lines never count. */
+    @SerialName("chat_unread") val chatUnread: Int = 0,
+    @SerialName("chat_muted") val chatMuted: Boolean = false,
 )
 
 @Serializable

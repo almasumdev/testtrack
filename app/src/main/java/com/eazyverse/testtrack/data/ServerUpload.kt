@@ -19,6 +19,9 @@ object ServerUpload {
     const val CREW_FEEDBACK = "crew_feedback"
     const val REVIEW = "review"
 
+    /** A picture in a crew's chat, kept a day. Sent with the sender's seat. */
+    const val CHAT = "chat"
+
     /** The two types the server takes. Anything else is redrawn as a JPEG before it goes. */
     val TYPES = setOf("image/jpeg", "image/webp")
 

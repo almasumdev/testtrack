@@ -1,0 +1,95 @@
+package com.eazyverse.testtrack.domain
+
+/** The day's allowance and the server's limits, as the last answer said them. */
+data class ChatLimits(
+    val messagesPerDay: Int = 10,
+    val picturesPerDay: Int = 3,
+    val pictureHours: Int = 24,
+    val maxLength: Int = 500,
+    val maxMentions: Int = 5,
+    val pollSeconds: Int = 5,
+    val pollMaxSeconds: Int = 30,
+)
+
+/** How much is left, which sets how loudly the count speaks. */
+enum class Left {
+    /** More than [ChatAllowance.LOW]. */
+    PLENTY,
+
+    /** [ChatAllowance.LOW] or fewer: the count turns to the warning colour. */
+    LOW,
+    NONE,
+}
+
+/** Why the message as written cannot go, said under the field. */
+enum class DraftProblem { NONE, LINK, TOO_LONG, TOO_MANY_MENTIONS }
+
+/** Counting what is left today, and whether the message as written can be sent. */
+object ChatAllowance {
+    /** At this many or fewer the count warns. */
+    const val LOW = 2
+
+    fun level(left: Int): Left =
+        when {
+            left <= 0 -> Left.NONE
+            left <= LOW -> Left.LOW
+            else -> Left.PLENTY
+        }
+
+    /** Pictures only ever say none: a low picture count is not worth a warning. */
+    fun pictureLevel(left: Int): Left = if (left <= 0) Left.NONE else Left.PLENTY
+
+    fun pictureWord(left: Int) = if (left == 1) "picture" else "pictures"
+
+    /** What is wrong with [draft], first things first; [DraftProblem.NONE] when it may go. */
+    fun problem(
+        draft: ChatDraft,
+        limits: ChatLimits,
+        allow: Set<String>,
+    ): DraftProblem =
+        when {
+            ChatLinks.blocked(draft.forLinkCheck(), allow) -> DraftProblem.LINK
+            draft.visibleLength() > limits.maxLength -> DraftProblem.TOO_LONG
+            draft.spans.size > limits.maxMentions -> DraftProblem.TOO_MANY_MENTIONS
+            else -> DraftProblem.NONE
+        }
+
+    /** Send is on: something written, nothing wrong with it, and a message left today. */
+    fun canSend(
+        draft: ChatDraft,
+        problem: DraftProblem,
+        messagesLeft: Int,
+        canPost: Boolean,
+    ): Boolean = canPost && !draft.empty && problem == DraftProblem.NONE && messagesLeft > 0
+
+    /** A picture can be picked: a message and a picture left, and nothing wrong with the words with it. */
+    fun canPickPicture(
+        problem: DraftProblem,
+        messagesLeft: Int,
+        picturesLeft: Int,
+        canPost: Boolean,
+    ): Boolean = canPost && problem == DraftProblem.NONE && messagesLeft > 0 && picturesLeft > 0
+}
+
+/** How long to wait before the next poll, slowing down while nothing changes or the network fails. */
+object ChatPolling {
+    /** Failures in a row before the chat says it is offline. */
+    const val OFFLINE_AFTER = 2
+
+    /**
+     * [baseS] after a poll that brought something, then half as long again for each empty or
+     * failed poll in a row, never past [maxS].
+     */
+    fun nextDelayMs(
+        baseS: Int,
+        maxS: Int,
+        emptyStreak: Int,
+        failures: Int,
+    ): Long {
+        val base = baseS.coerceAtLeast(1) * 1000.0
+        val cap = maxOf(maxS.coerceAtLeast(1) * 1000.0, base)
+        var delay = base
+        repeat((emptyStreak + failures).coerceIn(0, 20)) { delay *= 1.5 }
+        return delay.coerceAtMost(cap).toLong()
+    }
+}

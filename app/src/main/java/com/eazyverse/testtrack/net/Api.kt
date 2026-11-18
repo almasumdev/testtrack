@@ -297,7 +297,7 @@ object Api {
             Request
                 .Builder()
                 .url(url("/me/push-token"))
-                .put(json.encodeToString(PushTokenIn(token)).toRequestBody(JSON)),
+                .put(json.encodeToString(PushTokenIn(token, chat = true)).toRequestBody(JSON)),
         )
 
     /** Stop sending to this phone. Called on sign-out, before the session goes. */

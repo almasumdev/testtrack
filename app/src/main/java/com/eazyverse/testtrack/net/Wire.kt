@@ -240,6 +240,8 @@ data class ApiActionParts(
     @SerialName("cases_to_vote") val casesToVote: Int = 0,
     @SerialName("apps_to_verify") val appsToVerify: Int = 0,
     @SerialName("requests_unlisted") val requestsUnlisted: Int = 0,
+    /** Unread chat over this account's unmuted crews; not part of [ApiActions.crew]. */
+    @SerialName("crew_chat") val crewChat: Int = 0,
 )
 
 @Serializable
@@ -409,6 +411,8 @@ data class MeIn(
 @Serializable
 data class PushTokenIn(
     val token: String,
+    /** This build can show chat pushes. No default: the shared Json does not write defaults. */
+    val chat: Boolean,
 )
 
 // ------------------------------------------------------- standing, apps and the profile
