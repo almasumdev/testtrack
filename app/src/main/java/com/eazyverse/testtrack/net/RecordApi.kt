@@ -18,12 +18,19 @@ data class ApiCrewRecord(
     @SerialName("started_at") val startedAt: String? = null,
     @SerialName("ended_at") val endedAt: String? = null,
     @SerialName("run_days") val runDays: Int = 14,
+    /** Nights of the run they owed something and the night was over. */
+    @SerialName("member_nights") val memberNights: Int = 0,
     @SerialName("app_name") val appName: String = "",
     @SerialName("package_name") val packageName: String = "",
     @SerialName("app_icon") val appIcon: String = "",
     /** finished, left, removed, moved or cancelled. */
     val outcome: String = "finished",
     @SerialName("left_day") val leftDay: Int? = null,
+    @SerialName("nights_kept") val nightsKept: Int = 0,
+    @SerialName("nights_missed") val nightsMissed: Int = 0,
+    @SerialName("nights_short") val nightsShort: Int = 0,
+    @SerialName("nights_let_off") val nightsLetOff: Int = 0,
+    @SerialName("nights_reported") val nightsReported: Int = 0,
     @SerialName("testers_stayed") val testersStayed: Int = 0,
     @SerialName("testers_every_day") val testersEveryDay: Int = 0,
     val counted: Boolean = false,
@@ -43,8 +50,44 @@ data class ApiCrewRecord(
     @SerialName("perfect_claim_amount") val perfectClaimAmount: Int = 0,
     @SerialName("perfect_claimed_at") val perfectClaimedAt: String? = null,
     @SerialName("perfect_claimable") val perfectClaimable: Boolean = false,
+    /** The member's nights in order, 1 to the end of the run; null for a record kept before them. */
+    val nights: List<ApiRecordNight>? = null,
+    /** The other apps in the crew, never the reader's own; null for a record kept before them. */
+    @SerialName("crew_apps") val crewApps: List<ApiRecordApp>? = null,
+    /** The reader's app's testers: only from [crewRecord], and only while the crew is not pruned. */
+    val testers: List<ApiRecordTester>? = null,
     val final: Boolean = true,
     val pruned: Boolean = false,
+)
+
+/** One night of the member's run. */
+@Serializable
+data class ApiRecordNight(
+    val night: Int = 0,
+    /** kept, short, missed, let_off, reported, after_left or not_in. */
+    val state: String = "",
+)
+
+/** Another member's app in the crew, for the icon strip. */
+@Serializable
+data class ApiRecordApp(
+    @SerialName("app_name") val appName: String = "",
+    @SerialName("package_name") val packageName: String = "",
+    @SerialName("app_icon") val appIcon: String = "",
+    /** finished, left, removed, moved or cancelled. */
+    val outcome: String = "finished",
+)
+
+/** One other member's part in testing the reader's app. */
+@Serializable
+data class ApiRecordTester(
+    val name: String = "",
+    val avatar: String = "",
+    @SerialName("nights_opened") val nightsOpened: Int = 0,
+    @SerialName("of_nights") val ofNights: Int = 0,
+    /** every_night, some, left, out or reported. */
+    val status: String = "",
+    @SerialName("left_day") val leftDay: Int? = null,
 )
 
 @Serializable
@@ -64,6 +107,9 @@ suspend fun Api.crewRecords(): CrewRecordList = kept(CREW_RECORDS)
 
 /** What [crewRecords] last kept, or null; see [Api.last]. */
 fun Api.lastCrewRecords(afterFailure: Boolean = false): CrewRecordList? = last(CREW_RECORDS, afterFailure)
+
+/** One crew's record on its own, with its testers while they are kept. 404 for a crew never run in. */
+suspend fun Api.crewRecord(crewId: String): ApiCrewRecord = get("/crews/$crewId/record")
 
 /** "Did your app get production access?", answered once for the tix it pays. 403, 404 or 409 refuse it. */
 suspend fun Api.answerProdAccess(

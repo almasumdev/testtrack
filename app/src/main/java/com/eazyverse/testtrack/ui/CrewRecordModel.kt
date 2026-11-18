@@ -22,6 +22,8 @@ data class CrewRecord(
     val startedAt: String? = null,
     val endedAt: String? = null,
     val runDays: Int = CrewRules.RUN_DAYS,
+    /** Nights they owed something and the night was over: how long their app was tested. */
+    val memberNights: Int = 0,
     val appName: String = "",
     val packageName: String = "",
     val appIcon: String = "",
@@ -32,6 +34,7 @@ data class CrewRecord(
     val counted: Boolean = false,
     val floor: Int = CrewRules.FLOOR,
     val movedToCrewNumber: Int? = null,
+    val movedToCrewId: String? = null,
     val outReason: String? = null,
     val doneAt: String? = null,
     /** The member's one answer, null until given; [prodAccessUntil] is the last moment to give it. */
@@ -42,6 +45,40 @@ data class CrewRecord(
     val perfectClaimedAt: String? = null,
     val perfectClaimable: Boolean = false,
     val pruned: Boolean = false,
+    /** The seat cost tix (false for one the team placed free), and how many came back. */
+    val charged: Boolean = false,
+    val tixSpent: Int = 0,
+    val tixRefunded: Int = 0,
+    /** The member's nights in order; empty for a record kept before they were. */
+    val nights: List<NightMark> = emptyList(),
+    /** The same nights as counts, which stay once the crew is pruned. */
+    val nightCounts: Map<NightMark, Int> = emptyMap(),
+    /** The other apps in the crew, never the reader's own. */
+    val crewApps: List<RecordApp> = emptyList(),
+)
+
+/** How one of the member's nights went. */
+enum class NightMark {
+    KEPT,
+    SHORT,
+    MISSED,
+    LET_OFF,
+    REPORTED,
+    AFTER_LEFT,
+    NOT_IN,
+    ;
+
+    companion object {
+        fun of(wire: String) = entries.firstOrNull { it.name.equals(wire, ignoreCase = true) } ?: NOT_IN
+    }
+}
+
+/** Another member's app in the crew; [left] when it did not finish the run. */
+data class RecordApp(
+    val name: String,
+    val packageName: String,
+    val icon: String,
+    val left: Boolean,
 )
 
 enum class RecordOutcome {
@@ -141,6 +178,73 @@ fun detailsClear(
         days == 1L -> "Details clear in 1 day" to false
         else -> "Details clear in $days days" to false
     }
+}
+
+/** The member's nights as counts: from the nights while they are there, else from the kept counts. */
+fun nightCountsOf(r: CrewRecord): Map<NightMark, Int> =
+    if (r.nights.isNotEmpty()) r.nights.groupingBy { it }.eachCount() else r.nightCounts.filterValues { it > 0 }
+
+/** How long the reader's app was tested: "5 nights". */
+private fun testedFor(r: CrewRecord) = "${r.memberNights} ${if (r.memberNights == 1) "night" else "nights"}"
+
+/** The line under the reader's app on a finished crew's page. */
+fun yourAppLine(r: CrewRecord): String =
+    when (r.outcome) {
+        RecordOutcome.LEFT -> "${testedFor(r)}, then you left"
+        RecordOutcome.REMOVED -> "${testedFor(r)}, then taken out"
+        else -> "${r.testersEveryDay} every night"
+    }
+
+/** The chip over the reader's nights, and how loudly it says it. */
+fun nightsSummary(r: CrewRecord): Pair<String, Tone> {
+    if (r.outcome == RecordOutcome.LEFT) return "${testedFor(r)}, then you left" to Tone.QUIET
+    if (r.outcome == RecordOutcome.REMOVED) return (r.leftDay?.let { "Taken out on day $it" } ?: "Taken out") to Tone.BAD
+    val counts = nightCountsOf(r)
+    val owed = counts.filterKeys { it != NightMark.AFTER_LEFT && it != NightMark.NOT_IN }.values.sum()
+    val kept = counts[NightMark.KEPT] ?: 0
+    return if (owed > 0 && kept == owed) "Every night kept" to Tone.OK else "$kept of $owed kept" to Tone.QUIET
+}
+
+/** What a night's square stands for, in the legend under the nights. */
+fun nightLabel(
+    mark: NightMark,
+    outcome: RecordOutcome,
+): String =
+    when (mark) {
+        NightMark.KEPT -> "kept"
+        NightMark.SHORT -> "short"
+        NightMark.MISSED -> "missed"
+        NightMark.LET_OFF -> "let off"
+        NightMark.REPORTED -> "reported"
+        NightMark.AFTER_LEFT -> if (outcome == RecordOutcome.REMOVED) "after it was taken out" else "after you left"
+        NightMark.NOT_IN -> "not in your run"
+    }
+
+/** The line over the other apps: how many, and how many of them left. */
+fun appsSummary(apps: List<RecordApp>): String {
+    val n = apps.size
+    val left = apps.count { it.left }
+    val base = "$n other ${if (n == 1) "app" else "apps"}"
+    return if (left > 0) "$base, $left left the crew" else base
+}
+
+/** The day a crew's details were cleared, "Nov 20", or null when it is not known. */
+fun clearedOn(
+    detailsUntil: String?,
+    zone: ZoneId = ZoneId.systemDefault(),
+): String? = instantOf(detailsUntil)?.atZone(zone)?.format(MONTH_DAY)
+
+/** Whole days between a crew's end and its details clearing, or null when either is not known. */
+fun keptDays(
+    endedAt: String?,
+    detailsUntil: String?,
+): Long? {
+    val end = instantOf(endedAt) ?: return null
+    val until = instantOf(detailsUntil) ?: return null
+    return ChronoUnit.HOURS
+        .between(end, until)
+        .takeIf { it > 0 }
+        ?.let { (it + 12) / 24 }
 }
 
 /** The team's words, without a closing full stop, or null when there are none. */

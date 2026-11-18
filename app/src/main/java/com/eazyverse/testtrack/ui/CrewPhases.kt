@@ -20,13 +20,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.TriangleAlert
 import com.composables.icons.lucide.Undo2
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
+import java.time.Instant
 
 /** The space under the bar, the same 8dp as every other page with a back bar. */
 private val ListTop = 8.dp
@@ -348,41 +347,43 @@ private fun TestersCard(
     )
 }
 
-/** It is over, and this is what it was: the crew's figures, then what it did for your app. */
+/**
+ * It is over, and this is what it was: what came of the run and what it still asks, the reader's
+ * app, their nights and the other apps. Once the details are cleared, only the result stays.
+ */
 @Composable
 fun CrewRecordPhase(
     crew: Crew,
-    actions: CrewActions = CrewActions({}, {}, {}, {}, {}, {}),
+    record: CrewRecord?,
+    failed: Boolean,
+    busy: RecordBusy?,
+    onRetry: () -> Unit,
+    onAnswer: (Boolean) -> Unit,
+    onClaim: () -> Unit,
+    onMembers: () -> Unit,
+    /** Opens another crew's page, for an app moved there; null hides the way there. */
+    onOpenCrew: ((String) -> Unit)? = null,
+    now: Instant = Instant.now(),
 ) {
-    val stayed = crew.stayed
-    val enough = stayed >= CrewRules.FLOOR
-    CrewList(crew, actions) { _ ->
-        block {
-            CrewHero(
-                chip = "Finished after ${crew.finishedDays} days",
-                tone = if (enough) Tone.OK else Tone.WARN,
-                icon = if (enough) Lucide.CircleCheck else Lucide.TriangleAlert,
-                headline = "${crew.name} finished",
-                line =
-                    if (enough) {
-                        "$stayed of ${crew.members.size} went the distance, Google's ${CrewRules.FLOOR} or more. You can apply for production."
-                    } else {
-                        "$stayed of ${crew.members.size} went the distance. Google asks for ${CrewRules.FLOOR}, so this run may not count."
-                    },
-                lineTone = if (enough) null else Tone.WARN,
-                extra = { StatTiles("${crew.finishedDays}" to "days tested", "$stayed" to "stayed", "${crew.myMisses}" to "you missed") },
-                action = if (enough) null else "Put it in a new crew",
-                onAction = actions.onTakeSeat,
-            )
+    if (record == null) {
+        if (failed) RobotOffline("This crew didn't load", onRetry = onRetry) else RecordPageLoading()
+        return
+    }
+    val pruned = record.pruned || crew.pruned
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = ListTop, bottom = Gutter + dockRoom())) {
+        block { RecordHero(record, crew.detailsUntil, pruned, busy, onAnswer, onClaim, onOpenCrew, now) }
+        if (!record.ran()) return@LazyColumn
+        item { CrewHeading("Your app") }
+        block { YourAppRow(record, if (pruned) null else onMembers) }
+        if (record.nights.isNotEmpty() || nightCountsOf(record).isNotEmpty()) {
+            item { CrewHeading("Your nights") }
+            block { NightsCard(record, showStrip = !pruned) }
         }
-        // Paid by the server as the crew closed; an older server, or an app left unopened, says nothing.
-        crew.mine?.takeIf { it.refunded > 0 }?.let { mine ->
-            block { CardNote("You opened every app on every night, so your ${mine.refunded} tix came back.") }
+        if (!pruned && record.crewApps.isNotEmpty()) {
+            item { CrewHeading("Apps", "${record.crewApps.size}") }
+            block { RecordAppsCard(record.crewApps) }
         }
-        crew.mine?.let { mine ->
-            item { CrewHeading("Your app") }
-            block { TestersCard(crew, mine, actions) }
-        }
+        if (pruned) block { ClearedNote(clearedOn(crew.detailsUntil), keptDays(record.endedAt, crew.detailsUntil)) }
     }
 }
 

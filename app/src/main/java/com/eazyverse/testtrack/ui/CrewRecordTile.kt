@@ -136,50 +136,63 @@ internal fun RecordAsk(
  * tapped one shows a loader in its label's place and the others wait in text4.
  */
 @Composable
-private fun AskPill(
+internal fun AskPill(
     label: String,
     which: RecordBusy,
     busy: RecordBusy?,
     onClick: () -> Unit,
 ) = InlineAction(label, enabled = busy == null, busy = busy == which, onClick = onClick)
 
-/** What the reader answered or claimed, each as a chip, with the tix it paid beside it. */
+/** One answer or claim of a record: its chip, and the tix it paid where it paid some. */
+internal data class RecordResultChip(
+    val text: String,
+    val tone: Tone,
+    val icon: ImageVector,
+    val paid: String? = null,
+)
+
+/** What the reader answered or claimed, in the order the tile and the crew page show them. */
+internal fun recordResultChips(
+    record: CrewRecord,
+    now: Instant,
+): List<RecordResultChip> =
+    buildList {
+        if (record.perfectClaimedAt != null && record.perfectClaimAmount > 0) {
+            add(RecordResultChip("${record.perfectClaimAmount} tix claimed", Tone.QUIET, Lucide.Ticket))
+        }
+        val reward = record.prodAccessReward.takeIf { it > 0 }?.let { "+$it tix" }
+        when {
+            record.prodAccess == true -> add(RecordResultChip("Production access", Tone.OK, Lucide.CircleCheck, reward))
+            record.prodAccess == false -> add(RecordResultChip("No production access yet", Tone.QUIET, Lucide.Hourglass, reward))
+            prodAccessMissed(record, now) -> add(RecordResultChip("Not answered", Tone.QUIET, Lucide.Clock))
+        }
+    }
+
+/** What the reader answered or claimed, each as a chip on its own line. */
 @Composable
 private fun RecordResults(
     record: CrewRecord,
     now: Instant,
 ) {
-    if (record.perfectClaimedAt != null && record.perfectClaimAmount > 0) {
-        RecordResult("${record.perfectClaimAmount} tix claimed", Tone.QUIET, Lucide.Ticket)
-    }
-    val reward = record.prodAccessReward.takeIf { it > 0 }?.let { "+$it tix" }
-    when {
-        record.prodAccess == true -> RecordResult("Production access", Tone.OK, Lucide.CircleCheck, reward)
-        record.prodAccess == false -> RecordResult("No production access yet", Tone.QUIET, Lucide.Hourglass, reward)
-        prodAccessMissed(record, now) -> RecordResult("Not answered", Tone.QUIET, Lucide.Clock)
+    recordResultChips(record, now).forEach { chip ->
+        Spacer(Modifier.height(10.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) { RecordResult(chip) }
     }
 }
 
+/** One result: the chip, then the tix it paid in quiet text. */
 @Composable
-private fun RecordResult(
-    text: String,
-    tone: Tone,
-    icon: ImageVector,
-    paid: String? = null,
-) {
-    Spacer(Modifier.height(10.dp))
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-        itemVerticalAlignment = Alignment.CenterVertically,
-    ) {
-        StatusChip(text, tone, icon)
-        if (paid != null) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Lucide.Ticket, null, Modifier.size(13.dp), tint = Tt.colors.text3)
-                Spacer(Modifier.width(5.dp))
-                Text(paid, style = tileStyle(12.5f, 16f, FontWeight.SemiBold), color = Tt.colors.text3)
-            }
+internal fun RecordResult(chip: RecordResultChip) {
+    StatusChip(chip.text, chip.tone, chip.icon)
+    if (chip.paid != null) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Lucide.Ticket, null, Modifier.size(13.dp), tint = Tt.colors.text3)
+            Spacer(Modifier.width(5.dp))
+            Text(chip.paid, style = tileStyle(12.5f, 16f, FontWeight.SemiBold), color = Tt.colors.text3)
         }
     }
 }

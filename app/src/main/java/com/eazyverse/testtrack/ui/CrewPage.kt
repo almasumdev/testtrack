@@ -52,6 +52,8 @@ fun CrewPage(
     onSeat: (String) -> Unit = {},
     /** The crew's members, and what each did with your app. */
     onMembers: () -> Unit = {},
+    /** Another crew's page, for an app moved there; null leaves the finished page without the way. */
+    onOpenCrew: ((String) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val dialogs = rememberCrewDialogs()
@@ -72,6 +74,12 @@ fun CrewPage(
         }
     }
     CrewLifecycle(vm)
+    // A finished crew's page draws its own record, read on its own for the testers it carries.
+    val finished = crew?.phase == CrewPhase.RECORD
+    LaunchedEffect(id, finished) { if (finished) vm.records.loadOne(id) }
+    val record = if (finished) vm.records.record(id) else null
+    // Nothing to see in the members once the details are cleared, or in a crew that never ran.
+    val noMembers = crew?.pruned == true || record?.pruned == true || record?.outcome == RecordOutcome.CANCELLED
     // Put it in again: the seat screen on the same app when it is on My apps, else the picker.
     var seating by remember { mutableStateOf(false) }
     val actions =
@@ -87,7 +95,7 @@ fun CrewPage(
             Column {
                 // Its name, and once it runs, the way to its members. Where it stands is the first card.
                 PageBar(crew?.name ?: "Crew", onBack) {
-                    if (crew != null && (crew.phase == CrewPhase.RUN || crew.phase == CrewPhase.RECORD)) {
+                    if (crew != null && (crew.phase == CrewPhase.RUN || (crew.phase == CrewPhase.RECORD && !noMembers))) {
                         MembersButton(crew.members.size, onMembers)
                     }
                 }
@@ -109,7 +117,18 @@ fun CrewPage(
                 crew == null -> CrewCardLoading()
                 crew.phase == CrewPhase.LOBBY -> CrewLobbyPhase(crew, actions)
                 crew.phase == CrewPhase.RUN -> CrewRunPhase(crew, actions)
-                else -> CrewRecordPhase(crew, actions)
+                else ->
+                    CrewRecordPhase(
+                        crew,
+                        record,
+                        failed = id in vm.records.openFailed,
+                        busy = vm.records.busy[id],
+                        onRetry = { vm.records.loadOne(id) },
+                        onAnswer = { vm.records.answerProdAccess(id, it) },
+                        onClaim = { vm.records.claimPerfect(id) },
+                        onMembers = onMembers,
+                        onOpenCrew = onOpenCrew,
+                    )
             }
         }
     }

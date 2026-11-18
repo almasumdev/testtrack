@@ -8,9 +8,12 @@ import com.eazyverse.testtrack.net.ApiCrewRecord
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.answerProdAccess
 import com.eazyverse.testtrack.net.claimPerfect
+import com.eazyverse.testtrack.net.crewRecord
 import com.eazyverse.testtrack.net.crewRecords
 import com.eazyverse.testtrack.net.lastCrewRecords
 import com.eazyverse.testtrack.ui.CrewRecord
+import com.eazyverse.testtrack.ui.NightMark
+import com.eazyverse.testtrack.ui.RecordApp
 import com.eazyverse.testtrack.ui.RecordBusy
 import com.eazyverse.testtrack.ui.RecordOutcome
 import kotlinx.coroutines.CancellationException
@@ -44,8 +47,35 @@ class CrewRecords(
     var busy by mutableStateOf<Map<String, RecordBusy>>(emptyMap())
         private set
 
+    /** Single records read for a finished crew's page, by crew id. */
+    var opened by mutableStateOf<Map<String, CrewRecord>>(emptyMap())
+        private set
+
+    /** Crews whose page record did not load. */
+    var openFailed by mutableStateOf<Set<String>>(emptySet())
+        private set
+
     private var loads = 0
     private var previewing = false
+
+    /** One crew's record for its page: the one read on its own, else the list's while that loads. */
+    fun record(crewId: String): CrewRecord? = opened[crewId] ?: items?.firstOrNull { it.crewId == crewId }
+
+    /** Read one crew's record again, from GET /crews/{id}/record. */
+    fun loadOne(crewId: String) {
+        if (previewing) return
+        openFailed = openFailed - crewId
+        scope.launch {
+            try {
+                val record = Api.crewRecord(crewId).toRecord()
+                opened = opened + (crewId to record)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                openFailed = openFailed + crewId
+            }
+        }
+    }
 
     init {
         Api.lastCrewRecords()?.let { kept -> items = kept.items.map { it.toRecord() } }
@@ -98,6 +128,7 @@ class CrewRecords(
             try {
                 val updated = block().toRecord()
                 items = items?.map { if (it.crewId == updated.crewId) updated else it }
+                if (updated.crewId in opened) opened = opened + (updated.crewId to updated)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -116,6 +147,8 @@ class CrewRecords(
         items = records
         failed = false
         busy = emptyMap()
+        opened = emptyMap()
+        openFailed = emptySet()
     }
 
     private companion object {
@@ -131,6 +164,7 @@ private fun ApiCrewRecord.toRecord() =
         startedAt = startedAt,
         endedAt = endedAt,
         runDays = runDays,
+        memberNights = memberNights,
         appName = appName,
         packageName = packageName,
         appIcon = appIcon,
@@ -140,6 +174,7 @@ private fun ApiCrewRecord.toRecord() =
         counted = counted,
         floor = floor,
         movedToCrewNumber = movedToCrewNumber,
+        movedToCrewId = movedToCrewId,
         outReason = outReason,
         doneAt = doneAt,
         prodAccess = prodAccess,
@@ -149,4 +184,20 @@ private fun ApiCrewRecord.toRecord() =
         perfectClaimedAt = perfectClaimedAt,
         perfectClaimable = perfectClaimable,
         pruned = pruned,
+        charged = charged,
+        tixSpent = tixSpent,
+        tixRefunded = tixRefunded,
+        nights = nights.orEmpty().sortedBy { it.night }.map { NightMark.of(it.state) },
+        nightCounts =
+            mapOf(
+                NightMark.KEPT to nightsKept,
+                NightMark.SHORT to nightsShort,
+                NightMark.MISSED to nightsMissed,
+                NightMark.LET_OFF to nightsLetOff,
+                NightMark.REPORTED to nightsReported,
+            ),
+        crewApps =
+            crewApps.orEmpty().map {
+                RecordApp(it.appName, it.packageName, it.appIcon, left = !it.outcome.equals("finished", ignoreCase = true))
+            },
     )
