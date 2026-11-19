@@ -10,24 +10,6 @@ class ChatAllowanceTest {
     private val limits = ChatLimits(maxLength = 10, maxMentions = 2)
 
     @Test
-    fun `the count warns at two and is bad at none`() {
-        assertEquals(Left.PLENTY, ChatAllowance.level(7))
-        assertEquals(Left.PLENTY, ChatAllowance.level(3))
-        assertEquals(Left.LOW, ChatAllowance.level(2))
-        assertEquals(Left.LOW, ChatAllowance.level(1))
-        assertEquals(Left.NONE, ChatAllowance.level(0))
-        assertEquals(Left.NONE, ChatAllowance.level(-1))
-    }
-
-    @Test
-    fun `pictures only speak up at none`() {
-        assertEquals(Left.PLENTY, ChatAllowance.pictureLevel(1))
-        assertEquals(Left.NONE, ChatAllowance.pictureLevel(0))
-        assertEquals("picture", ChatAllowance.pictureWord(1))
-        assertEquals("pictures", ChatAllowance.pictureWord(2))
-    }
-
-    @Test
     fun `send needs words, a message left and nothing wrong`() {
         val draft = ChatDraft("Hi all")
         assertTrue(ChatAllowance.canSend(draft, DraftProblem.NONE, 1, canPost = true))
@@ -56,10 +38,17 @@ class ChatAllowanceTest {
     @Test
     fun `the picture badge counts what is left unless pictures never run out first`() {
         val day = ChatLimits(messagesPerDay = 10, picturesPerDay = 3)
-        assertEquals("2", ChatAllowance.pictureBadge(2, day))
-        assertEquals(null, ChatAllowance.pictureBadge(0, day))
-        assertEquals(null, ChatAllowance.pictureBadge(5, ChatLimits(messagesPerDay = 10, picturesPerDay = 10)))
-        assertEquals("9+", ChatAllowance.pictureBadge(12, ChatLimits(messagesPerDay = 50, picturesPerDay = 20)))
+        assertEquals("2", ChatAllowance.pictureBadge(5, 2, day, canPost = true))
+        assertEquals(null, ChatAllowance.pictureBadge(5, 0, day, canPost = true))
+        assertEquals(null, ChatAllowance.pictureBadge(5, 5, ChatLimits(messagesPerDay = 10, picturesPerDay = 10), canPost = true))
+        assertEquals("9+", ChatAllowance.pictureBadge(30, 12, ChatLimits(messagesPerDay = 50, picturesPerDay = 20), canPost = true))
+    }
+
+    @Test
+    fun `a greyed picture button has no badge`() {
+        val day = ChatLimits(messagesPerDay = 10, picturesPerDay = 3)
+        assertEquals(null, ChatAllowance.pictureBadge(0, 2, day, canPost = true))
+        assertEquals(null, ChatAllowance.pictureBadge(5, 2, day, canPost = false))
     }
 
     @Test

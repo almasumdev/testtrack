@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix
@@ -12,6 +13,8 @@ import android.text.TextPaint
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.content.res.ResourcesCompat
+import com.eazyverse.testtrack.R
 import java.io.ByteArrayOutputStream
 import kotlin.math.ceil
 import kotlin.math.cos
@@ -28,6 +31,16 @@ private const val SEND_MAX_BYTES = 1_000_000
 
 /** The longest side a chat picture is sent at. The server keeps less, so nothing is lost. */
 private const val SEND_LONG_SIDE = 1600
+
+/** The face words are drawn in: the app's Barlow Bold, as the editor types them. */
+@Volatile
+private var wordsFace: Typeface? = null
+
+/** Reads Barlow Bold once, before any words are drawn. System bold stands in if it can't be read. */
+internal fun loadWordsFace(context: Context) {
+    if (wordsFace != null) return
+    wordsFace = runCatching { ResourcesCompat.getFont(context, R.font.barlow_bold) }.getOrNull() ?: Typeface.DEFAULT_BOLD
+}
 
 /**
  * The picture under [m] (its own pixels to the canvas), with its lines and words, and [live] being
@@ -91,7 +104,7 @@ private fun layoutOf(
         TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = item.color.toArgb()
             textSize = item.size
-            typeface = Typeface.DEFAULT_BOLD
+            typeface = wordsFace ?: Typeface.DEFAULT_BOLD
             if (shadow != null) setShadowLayer(item.size * 0.12f, 0f, item.size * 0.03f, shadow)
         }
     val width =

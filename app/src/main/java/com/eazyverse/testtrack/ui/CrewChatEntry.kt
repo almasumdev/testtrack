@@ -241,7 +241,7 @@ internal fun CrewChatTileButton(
                         .background(t.bg)
                         .padding(1.5.dp)
                         .clip(CircleShape)
-                        .background(if (muted) t.text3 else t.badgeFill)
+                        .background(if (muted) t.surface3 else t.badgeFill)
                         .padding(horizontal = 3.5.dp),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -249,7 +249,7 @@ internal fun CrewChatTileButton(
                         if (count > 9) "9+" else "$count",
                         style = chatStyle(10f, 15f).tabular().copy(letterSpacing = 0.sp),
                         fontWeight = FontWeight.Bold,
-                        color = if (muted) t.bg else t.onAccent,
+                        color = if (muted) t.text2 else t.onAccent,
                         maxLines = 1,
                     )
                 }

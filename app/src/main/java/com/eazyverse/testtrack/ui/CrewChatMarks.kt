@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,13 +13,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -52,33 +54,46 @@ internal fun TimeText(
     )
 }
 
-/** The square of the mascot's 880 by 980 artboard a bot face shows: the head, ears and antenna. */
-private const val HEAD_SIDE = 860f
+/** How wide the head is on the mascot's 880 by 980 artboard: x 30 to 854, antenna and ears in. */
+private const val HEAD_WIDTH = 824f
+
+/** How much of the circle's width the head fills, so it still reads at 20dp. */
+private const val HEAD_FILL = 0.8f
 
 /**
- * The bot's face: the app's own robot, its head and antenna as the mascot's drawings have them.
- * The name still comes from the server, but never a picture, so the bot looks the same everywhere.
+ * The bot's face: the app's own robot, its head and antenna as the mascot's drawings have them,
+ * on a soft round of the accent. The name still comes from the server, but never a picture, so the
+ * bot looks the same everywhere.
  */
 @Composable
 internal fun BotFace(size: Dp) {
-    val unit = size / HEAD_SIDE
+    val unit = size * HEAD_FILL / HEAD_WIDTH
     // The head spans x 30 to 854 and y 17 to 633 of the artboard; (442, 325) is its middle.
     val art =
         Modifier
             .requiredSize(unit * 880f, unit * 980f)
             .offset(x = unit * (440f - 442f), y = unit * (490f - 325f))
-    Box(Modifier.size(size).clipToBounds(), contentAlignment = Alignment.Center) {
+    Box(
+        Modifier.size(size).clip(CircleShape).background(Tt.colors.botRound),
+        contentAlignment = Alignment.Center,
+    ) {
         Image(painterResource(R.drawable.level_robot_antenna), null, art)
         Image(painterResource(R.drawable.level_robot_head), null, art)
         Image(painterResource(R.drawable.level_robot_eyes), null, art)
     }
 }
 
-/** The chat's loading shape: faces and bubbles of mixed widths, others' on the left, yours on the right. */
+/**
+ * The chat's loading shape: faces and bubbles of mixed widths, others' on the left, yours on the
+ * right. [rows] cuts it short, as older messages load in at the top.
+ */
 @Composable
-internal fun ChatSkeleton(modifier: Modifier = Modifier) {
+internal fun ChatSkeleton(
+    modifier: Modifier = Modifier,
+    rows: Int = 8,
+) {
     Column(modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
-        listOf(0 to 0.62f, 0 to 0.44f, 1 to 0.52f, 0 to 0.7f, 1 to 0.4f, 0 to 0.55f, 1 to 0.64f, 0 to 0.46f).forEach { (mine, share) ->
+        SkeletonRows.take(rows).forEach { (mine, share) ->
             Row(
                 Modifier.fillMaxWidth().padding(top = 14.dp),
                 horizontalArrangement = if (mine == 1) Arrangement.End else Arrangement.Start,
@@ -94,7 +109,10 @@ internal fun ChatSkeleton(modifier: Modifier = Modifier) {
     }
 }
 
-/** A dashed edge, for what is gone: the deleted stub, an expired picture, a team post. */
+private val SkeletonRows =
+    listOf(0 to 0.62f, 0 to 0.44f, 1 to 0.52f, 0 to 0.7f, 1 to 0.4f, 0 to 0.55f, 1 to 0.64f, 0 to 0.46f)
+
+/** A dashed edge: round a deleted message, and round a team post. */
 internal fun Modifier.dashed(
     color: Color,
     corner: Dp,

@@ -11,36 +11,11 @@ data class ChatLimits(
     val pollMaxSeconds: Int = 30,
 )
 
-/** How much is left, which sets how loudly the count speaks. */
-enum class Left {
-    /** More than [ChatAllowance.LOW]. */
-    PLENTY,
-
-    /** [ChatAllowance.LOW] or fewer: the count turns to the warning colour. */
-    LOW,
-    NONE,
-}
-
 /** Why the message as written cannot go, said under the field. */
 enum class DraftProblem { NONE, LINK, TOO_LONG, TOO_MANY_MENTIONS }
 
 /** Counting what is left today, and whether the message as written can be sent. */
 object ChatAllowance {
-    /** At this many or fewer the count warns. */
-    const val LOW = 2
-
-    fun level(left: Int): Left =
-        when {
-            left <= 0 -> Left.NONE
-            left <= LOW -> Left.LOW
-            else -> Left.PLENTY
-        }
-
-    /** Pictures only ever say none: a low picture count is not worth a warning. */
-    fun pictureLevel(left: Int): Left = if (left <= 0) Left.NONE else Left.PLENTY
-
-    fun pictureWord(left: Int) = if (left == 1) "picture" else "pictures"
-
     /** What is wrong with [draft], first things first; [DraftProblem.NONE] when it may go. */
     fun problem(
         draft: ChatDraft,
@@ -69,16 +44,18 @@ object ChatAllowance {
     fun fieldCount(messagesLeft: Int): Int? = if (messagesLeft in 1..FIELD_COUNT) messagesLeft else null
 
     /**
-     * The count on the picture button, or null for none: when nothing is left (the button greys
-     * instead), and when the server allows as many pictures as messages, so pictures are never
+     * The count on the picture button, or null for none: when the button is greyed (see
+     * [canAttach]), and when the server allows as many pictures as messages, so pictures are never
      * what runs out first.
      */
     fun pictureBadge(
+        messagesLeft: Int,
         picturesLeft: Int,
         limits: ChatLimits,
+        canPost: Boolean,
     ): String? =
         when {
-            picturesLeft <= 0 -> null
+            !canAttach(messagesLeft, picturesLeft, canPost) -> null
             limits.picturesPerDay >= limits.messagesPerDay -> null
             picturesLeft > 9 -> "9+"
             else -> picturesLeft.toString()

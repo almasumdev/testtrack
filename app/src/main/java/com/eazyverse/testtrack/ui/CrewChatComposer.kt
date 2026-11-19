@@ -107,7 +107,9 @@ internal fun ChatComposer(
                     if (canAttach) t.tileInk else t.text4,
                     onClick = { if (canAttach) actions.onPickPicture() else tip = true },
                 )
-                ChatAllowance.pictureBadge(view.picturesLeft, view.limits)?.let { PictureBadge(it, Modifier.align(Alignment.TopEnd)) }
+                ChatAllowance.pictureBadge(view.messagesLeft, view.picturesLeft, view.limits, view.canPost)?.let {
+                    PictureBadge(it, Modifier.align(Alignment.TopEnd))
+                }
                 if (tip) PictureTip(pictureTip(view)) { tip = false }
             }
             Spacer(Modifier.width(8.dp))
@@ -118,8 +120,9 @@ internal fun ChatComposer(
                 "Send",
                 48.dp,
                 20.dp,
-                if (canSend) t.primary else t.glass2,
-                if (canSend) t.onPrimary else t.text4,
+                // The accent own bubbles wear, the same as Send in the picture editor.
+                if (canSend) t.accent else t.glass2,
+                if (canSend) t.onAccent else t.text4,
                 enabled = canSend,
                 onClick = actions.onSend,
             )

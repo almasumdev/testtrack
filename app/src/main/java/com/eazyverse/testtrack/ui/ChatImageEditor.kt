@@ -117,6 +117,7 @@ private fun Editor(
 ) {
     val t = Tt.colors
     val context = LocalContext.current
+    remember { loadWordsFace(context) }
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
     val history = remember(bitmap) { EditHistory(PictureDoc(bitmap.width, bitmap.height)) }
@@ -140,7 +141,8 @@ private fun Editor(
     BackHandler(enabled = typing != null) { typing = null }
 
     fun send() {
-        if (!canSend) return
+        // Read busy afresh: a second tap can land before the button redraws as busy.
+        if (busy || !canSend) return
         busy = true
         failed = null
         scope.launch {
@@ -239,6 +241,7 @@ private fun Editor(
                     },
                     problem = failed ?: captionLine(problem, vm.limits),
                     canSend = canSend,
+                    busy = busy,
                     onSend = ::send,
                 )
         }

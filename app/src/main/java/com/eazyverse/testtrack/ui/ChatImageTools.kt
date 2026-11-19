@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -266,9 +267,12 @@ internal fun CaptionBar(
     onValue: (TextFieldValue) -> Unit,
     problem: String?,
     canSend: Boolean,
+    busy: Boolean,
     onSend: () -> Unit,
 ) {
     val t = Tt.colors
+    // While the picture is made ready the button stays lit and turns, and takes no more taps.
+    val lit = canSend || busy
     Column(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 12.dp)) {
         if (problem != null) {
             Row(Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)) {
@@ -313,16 +317,20 @@ internal fun CaptionBar(
                 Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(if (canSend) t.accent else t.onPhoto.copy(alpha = 0.18f))
-                    .clickable(enabled = canSend, onClickLabel = "Send", onClick = onSend),
+                    .background(if (lit) t.accent else t.onPhoto.copy(alpha = 0.18f))
+                    .clickable(enabled = canSend && !busy, onClickLabel = "Send", onClick = onSend),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    Lucide.Send,
-                    "Send",
-                    Modifier.size(20.dp),
-                    tint = if (canSend) t.onAccent else t.onPhoto.copy(alpha = 0.4f),
-                )
+                if (busy) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = t.onAccent)
+                } else {
+                    Icon(
+                        Lucide.Send,
+                        "Send",
+                        Modifier.size(20.dp),
+                        tint = if (canSend) t.onAccent else t.onPhoto.copy(alpha = 0.4f),
+                    )
+                }
             }
         }
     }

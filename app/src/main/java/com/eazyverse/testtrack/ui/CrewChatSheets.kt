@@ -44,6 +44,7 @@ import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.domain.ChatLine
 import com.eazyverse.testtrack.domain.ChatPerson
+import com.eazyverse.testtrack.domain.SendState
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /** The bar's ⋮: mute or unmute, and the crew's members when it has a page for them. */
@@ -166,7 +167,7 @@ internal fun ChatMentionSheet(
     }
 }
 
-/** What a held-down message offers: Reply, Copy, and Delete on your own. */
+/** What a held-down message offers: Reply, Copy, and Delete on your own (Remove when it never sent). */
 @Composable
 internal fun ChatMessageSheet(
     line: ChatLine,
@@ -181,7 +182,12 @@ internal fun ChatMessageSheet(
         Column(Modifier.fillMaxWidth().padding(bottom = 18.dp)) {
             if (canReply) SheetAction(Lucide.Reply, "Reply") { close(onReply) }
             if (line.text.isNotBlank()) SheetAction(Lucide.Copy, "Copy") { close(onCopy) }
-            if (line.mine) SheetAction(Lucide.Trash2, "Delete", "Gone for everyone", danger = true) { close(onDelete) }
+            when {
+                // Still on its way: it can't be called back, so nothing to offer until it lands or fails.
+                !line.mine || line.send == SendState.SENDING -> Unit
+                line.send == SendState.SENT -> SheetAction(Lucide.Trash2, "Delete", "Gone for everyone", danger = true) { close(onDelete) }
+                else -> SheetAction(Lucide.Trash2, "Remove", "Not sent", danger = true) { close(onDelete) }
+            }
         }
     }
 }

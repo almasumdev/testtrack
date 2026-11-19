@@ -122,6 +122,8 @@ data class TtTokens(
     val photoScrim: Color,
     /** A problem said over a picture in the picture editor, light enough to read on [photo]. */
     val photoBad: Color,
+    /** The soft round of the accent behind the chat bot's face. */
+    val botRound: Color,
     /** The pen and word colours in the picture editor. They mark the picture, so they never change with the theme. */
     val pens: List<Color>,
 ) {
@@ -257,6 +259,7 @@ val OceanLight =
         onPhoto = Color(0xFFFFFFFF),
         photoScrim = Color(0xFF000000).alpha(0.5f),
         photoBad = PhotoBad,
+        botRound = Color(0xFF4A7290).alpha(0.18f),
         pens = Pens,
     )
 
@@ -337,6 +340,7 @@ val OceanDark =
         onPhoto = Color(0xFFFFFFFF),
         photoScrim = Color(0xFF000000).alpha(0.5f),
         photoBad = PhotoBad,
+        botRound = Color(0xFF93B3CA).alpha(0.18f),
         pens = Pens,
     )
 

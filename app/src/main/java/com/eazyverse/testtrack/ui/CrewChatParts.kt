@@ -140,9 +140,9 @@ private fun TeamPost(
         Modifier
             .padding(top = 12.dp, bottom = 2.dp)
             .fillMaxWidth()
+            // The fill first and unclipped, so the whole dashed edge shows over it.
+            .background(t.surface2, RoundedCornerShape(14.dp))
             .dashed(t.glassBorder, 14.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(t.bg)
             .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

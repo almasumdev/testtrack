@@ -250,14 +250,15 @@ fun CrewChatScreen(
             canReply = vm.canPost && line.send == SendState.SENT,
             onReply = { vm.reply(line) },
             onCopy = { clipboard.setText(AnnotatedString(view.plain(line.text))) },
-            onDelete = { deleting = line },
+            // A message that never sent only leaves this phone, so it goes without asking.
+            onDelete = { if (line.send == SendState.SENT) deleting = line else vm.delete(line) },
             onDismiss = { pressed = null },
         )
     }
     deleting?.let { line ->
         Ask(
             title = "Delete this message?",
-            body = "It goes for everyone in $name. It still counts toward your ${vm.limits.messagesPerDay} today.",
+            body = "It goes for everyone in $name. It still counts toward today's messages.",
             confirm = "Delete",
             dismiss = "Keep it",
             destructive = true,
@@ -375,7 +376,7 @@ private fun ChatThreadList(
         contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 10.dp),
     ) {
         items(rows, key = { it.key }) { row -> ChatRowView(row, view, actions) }
-        if (view.loadingOlder) item(key = "older") { ChatSkeleton(Modifier.fillMaxWidth()) }
+        if (view.loadingOlder) item(key = "older") { ChatSkeleton(Modifier.fillMaxWidth(), rows = 2) }
     }
 }
 
