@@ -47,7 +47,6 @@ import com.eazyverse.testtrack.ui.CaptionBar
 import com.eazyverse.testtrack.ui.ChatActions
 import com.eazyverse.testtrack.ui.ChatImageViewer
 import com.eazyverse.testtrack.ui.ChatJump
-import com.eazyverse.testtrack.ui.ChatMentionSheet
 import com.eazyverse.testtrack.ui.ChatMessageSheet
 import com.eazyverse.testtrack.ui.ChatPictureEditor
 import com.eazyverse.testtrack.ui.Crew
@@ -126,7 +125,6 @@ internal fun sheetSection(
             Shot("Long-press sheet, the team's post (Reply and Copy)") { OpenButton("Open") { show(Overlay.Message(lines.bot)) } },
             Shot("Long-press sheet, your message that didn't send") { OpenButton("Open") { show(Overlay.Message(lines.failed)) } },
             Shot("Delete dialog") { OpenButton("Open") { show(Overlay.Delete(lines.own)) } },
-            Shot("Mention picker") { OpenButton("Open") { show(Overlay.Mention) } },
             Shot("Profile (from a face)") { OpenButton("Open") { show(Overlay.Profile(KENJI)) } },
             Shot("Picture viewer") { OpenButton("Open") { show(Overlay.Viewer(lines.picture)) } },
             Shot("Menu: tap the three dots in the bar") { PageBox(s.view(s.threadRows()), a, 300.dp) },
@@ -164,13 +162,6 @@ internal fun OverlayHost(
                 dismiss = "Keep it",
                 destructive = true,
                 onConfirm = close,
-                onDismiss = close,
-            )
-        Overlay.Mention ->
-            ChatMentionSheet(
-                people = s.people.values.filter { it.inCrew && !it.mine },
-                crewName = GallerySamples.CREW,
-                onPick = { _, _ -> },
                 onDismiss = close,
             )
         is Overlay.Profile -> CrewMemberProfile(chatProfileOf(overlay.seat, s.people[overlay.seat], s.run(0)), close)
@@ -213,6 +204,10 @@ internal fun GalleryPage(
             onField = {
                 field = it
                 draft = draft.edit(it.text)
+            },
+            onMention = { next, cursor ->
+                draft = next
+                field = TextFieldValue(next.text, TextRange(cursor))
             },
             onPickPicture = { show(Overlay.Editor) },
             onLongPress = base.onLongPress,

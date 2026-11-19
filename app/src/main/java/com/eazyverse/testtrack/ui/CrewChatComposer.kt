@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -31,15 +32,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -61,6 +66,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.AtSign
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.ImagePlus
@@ -72,6 +78,9 @@ import com.eazyverse.testtrack.domain.ChatAllowance
 import com.eazyverse.testtrack.domain.ChatDraft
 import com.eazyverse.testtrack.domain.ChatQuote
 import com.eazyverse.testtrack.domain.DraftProblem
+import com.eazyverse.testtrack.domain.MentionFinder
+import com.eazyverse.testtrack.domain.MentionOption
+import com.eazyverse.testtrack.domain.MentionQuery
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
 import kotlinx.coroutines.delay
@@ -91,20 +100,23 @@ internal fun ChatComposer(
     val t = Tt.colors
     val canSend = ChatAllowance.canSend(view.draft, view.problem, view.messagesLeft, view.canPost)
     val showSend = field.text.isNotBlank() && view.messagesLeft > 0
+    val typing = rememberMentionTyping(view, field)
+    val focus = remember { FocusRequester() }
     ComposerFrame {
         view.replyTo?.let { reply ->
             val quote = view.quoteOf(ChatQuote(reply.id, reply.authorSeatId, reply.text, reply.picture != null))
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 6.dp)
+                    .padding(bottom = 8.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(t.glass2),
+                    .background(t.glass2)
+                    .padding(start = 12.dp, end = 2.dp, top = 10.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Quote(
                     quote.copy(who = "Replying to ${quote.who}"),
-                    Modifier.weight(1f).padding(start = 6.dp, top = 6.dp, bottom = 6.dp),
+                    Modifier.weight(1f),
                     fill = t.bg,
                     maxWidth = Dp.Unspecified,
                 )
@@ -112,7 +124,29 @@ internal fun ChatComposer(
             }
         }
         Row(verticalAlignment = Alignment.Bottom) {
-            ChatField(field, view, actions, Modifier.weight(1f))
+            var pill by remember { mutableIntStateOf(0) }
+            Box(Modifier.weight(1f).onGloballyPositioned { pill = it.size.width }) {
+                ChatField(field, view, actions, Modifier.fillMaxWidth().focusRequester(focus)) {
+                    actions.onAt()
+                    focus.requestFocus()
+                }
+                if (typing.shown && pill > 0) {
+                    val density = LocalDensity.current
+                    val gap = with(density) { 6.dp.roundToPx() }
+                    val edge = with(density) { MentionEdge.roundToPx() }
+                    Popup(
+                        popupPositionProvider = remember(gap, edge) { MentionAnchor(gap, edge) },
+                        properties = PopupProperties(focusable = false, dismissOnClickOutside = false, clippingEnabled = false),
+                    ) {
+                        MentionList(typing.options, with(density) { pill.toDp() }) { option ->
+                            val label = if (option.app) shortAppName(option.person.appName) else option.person.name
+                            val (next, cursor) =
+                                view.draft.mention(typing.query.at, label, option.app, option.person.seatId, field.selection.start)
+                            actions.onMention(next, cursor)
+                        }
+                    }
+                }
+            }
             AnimatedVisibility(
                 visible = showSend,
                 enter = fadeIn(tween(150)) + scaleIn(tween(150), initialScale = 0.6f),
@@ -136,6 +170,41 @@ internal fun ChatComposer(
         }
         if (view.problem != DraftProblem.NONE) ComposerLine(Lucide.CircleAlert, problemLine(view), bad = true)
     }
+    // Back closes the list first, and it stays shut for this "@" until the cursor leaves it.
+    BackHandler(enabled = typing.shown) { typing.hide() }
+}
+
+/** The "@word" being typed, who it may mean, and whether the list for it is up. */
+private class MentionTyping(
+    val query: MentionQuery,
+    val options: List<MentionOption>,
+    val shown: Boolean,
+    val hide: () -> Unit,
+)
+
+private val NoQuery = MentionQuery(-1, "")
+
+/**
+ * Reads the field for an "@word" at the cursor and who it may mean. The list is up while there is
+ * one and someone matches; Back shuts it for that "@" until the cursor goes elsewhere.
+ */
+@Composable
+private fun rememberMentionTyping(
+    view: ChatView,
+    field: TextFieldValue,
+): MentionTyping {
+    val open = view.messagesLeft > 0 && field.selection.collapsed
+    val spans = if (view.draft.text == field.text) view.draft.spans else emptyList()
+    val query = if (open) MentionFinder.queryAt(field.text, field.selection.start, spans) else null
+    val options = remember(view.people, query?.query) { query?.let { MentionFinder.options(view.people.values, it.query) }.orEmpty() }
+    var hiddenAt by remember { mutableIntStateOf(-1) }
+    LaunchedEffect(query == null) { if (query == null) hiddenAt = -1 }
+    return MentionTyping(
+        query ?: NoQuery,
+        options,
+        shown = query != null && options.isNotEmpty() && hiddenAt != query.at,
+        hide = { hiddenAt = query?.at ?: -1 },
+    )
 }
 
 /** The picture button at the start of the pill, with the pictures left on its corner. */
@@ -263,13 +332,15 @@ private fun ChatField(
     view: ChatView,
     actions: ChatActions,
     modifier: Modifier,
+    onAt: () -> Unit,
 ) {
     val t = Tt.colors
     val source = remember { MutableInteractionSource() }
     val focused by source.collectIsFocusedAsState()
     val bad = view.problem != DraftProblem.NONE
     val shape = RoundedCornerShape(24.dp)
-    val mentions = remember(view.draft, t) { MentionInk(view.draft, t.accentInk) }
+    val ink = mentionStyle(false, t.accentInk)
+    val mentions = remember(view.draft, ink) { MentionInk(view.draft, ink) }
     val open = view.messagesLeft > 0
     val count = ChatAllowance.fieldCount(view.messagesLeft)
     val canMention = open && view.people.values.any { it.inCrew && !it.mine }
@@ -334,7 +405,7 @@ private fun ChatField(
                     )
                 }
                 if (canMention) {
-                    FieldButton(Lucide.AtSign, "Mention someone", 44.dp, 48.dp, 20.dp, t.text3, onClick = actions.onAt)
+                    FieldButton(Lucide.AtSign, "Mention someone", 44.dp, 48.dp, 20.dp, t.text3, onClick = onAt)
                 } else {
                     Spacer(Modifier.width(16.dp))
                 }
@@ -343,17 +414,17 @@ private fun ChatField(
     )
 }
 
-/** Picked mentions in the field drawn semibold in the accent, the same as they read once sent. */
+/** Picked mentions in the field drawn in the accent, semibold: the same [mentionStyle] they read in once sent. */
 private class MentionInk(
     private val draft: ChatDraft,
-    private val ink: Color,
+    private val ink: SpanStyle,
 ) : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         if (draft.spans.isEmpty() || draft.text != text.text) return TransformedText(text, OffsetMapping.Identity)
         val styled =
             buildAnnotatedString {
                 append(text)
-                draft.spans.forEach { addStyle(SpanStyle(color = ink, fontWeight = FontWeight.SemiBold), it.start, it.end) }
+                draft.spans.forEach { addStyle(ink, it.start, it.end) }
             }
         return TransformedText(styled, OffsetMapping.Identity)
     }
@@ -426,7 +497,7 @@ private fun ComposerFrame(content: @Composable () -> Unit) {
         Modifier
             .fillMaxWidth()
             .background(t.bg)
-            .padding(start = 10.dp, end = 10.dp, top = 6.dp, bottom = 12.dp),
+            .padding(start = 10.dp, end = 10.dp, top = 14.dp, bottom = 12.dp),
     ) { content() }
 }
 

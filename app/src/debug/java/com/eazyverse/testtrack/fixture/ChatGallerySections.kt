@@ -66,8 +66,6 @@ internal sealed interface Overlay {
         val line: ChatLine,
     ) : Overlay
 
-    data object Mention : Overlay
-
     data class Profile(
         val seat: String,
     ) : Overlay
@@ -389,6 +387,7 @@ internal fun composerSection(
             comp("Normal, empty") { it },
             comp("With text") { it.copy(draft = ChatDraft("Opened yours, all good tonight.")) },
             comp("With a mention picked") { it.copy(draft = ChatDraft(mention, listOf(MentionSpan(7, 18, false, KENJI)))) },
+            comp("Typing @ke: the list of people over the field (live)") { it.copy(draft = ChatDraft("Thanks @ke")) },
             comp("Five lines, the most it grows") { it.copy(draft = ChatDraft(s.longText)) },
             comp("Reply bar") { it.copy(replyTo = reply) },
             comp("Reply bar, to a picture") { it.copy(replyTo = picture) },

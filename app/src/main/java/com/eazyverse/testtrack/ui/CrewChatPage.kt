@@ -167,8 +167,10 @@ internal class ChatActions(
     val onMute: () -> Unit = {},
     val onMembers: () -> Unit = {},
     val onField: (TextFieldValue) -> Unit = {},
-    /** The @ button: puts an "@" at the cursor and opens the people sheet, the same as typing it. */
+    /** The @ button: puts an "@" at the cursor, which brings up the list of people the same as typing it. */
     val onAt: () -> Unit = {},
+    /** Someone picked from that list: the draft with the mention in, and where the cursor goes. */
+    val onMention: (ChatDraft, Int) -> Unit = { _, _ -> },
     val onSend: () -> Unit = {},
     val onPickPicture: () -> Unit = {},
     val onClearReply: () -> Unit = {},
@@ -207,7 +209,6 @@ fun CrewChatScreen(
     LaunchedEffect(vm.draft.text) {
         if (field.text != vm.draft.text) field = TextFieldValue(vm.draft.text, TextRange(vm.draft.text.length))
     }
-    var mentionAt by remember { mutableStateOf<Int?>(null) }
     var pressed by remember { mutableStateOf<ChatLine?>(null) }
     var deleting by remember { mutableStateOf<ChatLine?>(null) }
     var profile by remember { mutableStateOf<CrewTester?>(null) }
@@ -255,10 +256,8 @@ fun CrewChatScreen(
             onMute = vm::toggleMute,
             onMembers = onMembers,
             onField = { next ->
-                val at = ChatDraft.atTyped(field.text, next.text, next.selection.start)
                 vm.edit(vm.draft.edit(next.text))
                 field = next
-                if (at != null && vm.people.values.any { it.inCrew && !it.mine }) mentionAt = at
             },
             onAt = {
                 val start = field.selection.min
@@ -267,7 +266,10 @@ fun CrewChatScreen(
                 val next = before + gap + "@" + field.text.substring(field.selection.max)
                 vm.edit(vm.draft.edit(next))
                 field = TextFieldValue(next, TextRange(start + gap.length + 1))
-                mentionAt = start + gap.length
+            },
+            onMention = { next, cursor ->
+                vm.edit(next)
+                field = TextFieldValue(next.text, TextRange(cursor))
             },
             onSend = vm::send,
             onPickPicture = pickPicture,
@@ -283,18 +285,6 @@ fun CrewChatScreen(
         )
     CrewChatBody(view, actions, field)
 
-    mentionAt?.let { at ->
-        ChatMentionSheet(
-            people = vm.people.values.filter { it.inCrew && !it.mine },
-            crewName = name,
-            onPick = { person, app ->
-                val (next, cursor) = vm.draft.mention(at, if (app) shortAppName(person.appName) else person.name, app, person.seatId)
-                vm.edit(next)
-                field = TextFieldValue(next.text, TextRange(cursor))
-            },
-            onDismiss = { mentionAt = null },
-        )
-    }
     pressed?.let { line ->
         ChatMessageSheet(
             line = line,

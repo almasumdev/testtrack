@@ -1,6 +1,6 @@
 package com.eazyverse.testtrack.domain
 
-/** A mention picked from the sheet, sitting at [start] until [end] in the draft as "@Label". */
+/** A mention picked from the suggestion list, sitting at [start] until [end] in the draft as "@Label". */
 data class MentionSpan(
     val start: Int,
     val end: Int,
@@ -76,17 +76,18 @@ data class ChatDraft(
     }
 
     /**
-     * [label] put in for the "@" at [at] and whatever was typed after it in the same word, with a
-     * space after. Answers the draft and where the cursor goes.
+     * [label] put in for the "@" at [at] and whatever was typed after it, up to [until] and on to
+     * the end of that word, with a space after. Answers the draft and where the cursor goes.
      */
     fun mention(
         at: Int,
         label: String,
         app: Boolean,
         seatId: String,
+        until: Int = 0,
     ): Pair<ChatDraft, Int> {
         val from = at.coerceIn(0, text.length)
-        var to = if (from < text.length && text[from] == '@') from + 1 else from
+        var to = maxOf(until.coerceIn(0, text.length), if (from < text.length && text[from] == '@') from + 1 else from)
         while (to < text.length && !text[to].isWhitespace()) to++
         val put = "@$label "
         val next = text.substring(0, from) + put + text.substring(to)
@@ -101,24 +102,6 @@ data class ChatDraft(
             }
         val added = MentionSpan(from, from + put.length - 1, app, seatId)
         return ChatDraft(next, (kept + added).sortedBy { it.start }) to from + put.length
-    }
-
-    companion object {
-        /**
-         * Where an "@" was just typed at the start of a word, which opens the mention sheet: the
-         * edit from [before] to [after] added exactly that one character. Null otherwise.
-         */
-        fun atTyped(
-            before: String,
-            after: String,
-            cursor: Int,
-        ): Int? {
-            if (after.length != before.length + 1 || cursor < 1 || cursor > after.length) return null
-            val at = cursor - 1
-            if (after[at] != '@') return null
-            if (after.removeRange(at, at + 1) != before) return null
-            return if (at == 0 || after[at - 1].isWhitespace()) at else null
-        }
     }
 }
 

@@ -95,7 +95,6 @@ private fun overlayFor(
         "message_bot" -> Overlay.Message(lines.bot)
         "message_failed" -> Overlay.Message(lines.failed)
         "delete" -> Overlay.Delete(lines.own)
-        "mention" -> Overlay.Mention
         "profile" -> Overlay.Profile(GallerySamples.KENJI)
         "viewer" -> Overlay.Viewer(lines.picture)
         "editor" -> Overlay.Editor

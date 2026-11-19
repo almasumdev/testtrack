@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.domain
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
@@ -13,20 +12,20 @@ class ChatDraftTest {
     private val amir = "11111111-2222-3333-4444-555555555555"
 
     @Test
-    fun `an at typed at a word start opens the picker`() {
-        assertEquals(0, ChatDraft.atTyped("", "@", 1))
-        assertEquals(4, ChatDraft.atTyped("Hey ", "Hey @", 5))
-        assertNull(ChatDraft.atTyped("mail", "mail@", 5))
-        assertNull(ChatDraft.atTyped("Hey ", "Hey @@", 6))
-    }
-
-    @Test
     fun `a picked mention is sent as its token`() {
         val (draft, cursor) = ChatDraft("Can @am see").mention(4, "Amir Haddad", app = false, seatId = amir)
         assertEquals("Can @Amir Haddad  see", draft.text)
         assertEquals(17, cursor)
         assertEquals("Can @[seat:$amir]  see", draft.toWire())
         assertEquals("Can    see", draft.forLinkCheck())
+    }
+
+    @Test
+    fun `a mention picked after a longer typed name replaces all of it`() {
+        val (draft, cursor) = ChatDraft("Hi @Amir Ha now").mention(3, "Amir Haddad", app = false, seatId = amir, until = 11)
+        assertEquals("Hi @Amir Haddad  now", draft.text)
+        assertEquals(16, cursor)
+        assertEquals(MentionSpan(3, 15, false, amir), draft.spans.single())
     }
 
     @Test
