@@ -171,6 +171,12 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
             } else {
                 emptyList()
             },
+        strip =
+            if (phase == CrewPhase.RUN) {
+                members.filter { !it.mine && it.state == "confirmed" }.map { it.toApp(name, day) }
+            } else {
+                emptyList()
+            },
         day = day,
         startsIn = startsInMs,
         // What it came to. Only meaningful once it is over, and the server's own day count is

@@ -117,7 +117,7 @@ private fun BotLine(
                 .padding(start = 5.dp, end = 12.dp, top = 3.dp, bottom = 3.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            BotFace(view.botAvatar, 20.dp)
+            BotFace(20.dp)
             Spacer(Modifier.width(7.dp))
             Text(
                 view.plain(line.text),
@@ -146,7 +146,7 @@ private fun TeamPost(
             .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            BotFace(view.botAvatar, 26.dp)
+            BotFace(26.dp)
             Spacer(Modifier.width(8.dp))
             Text(view.botName, style = chatStyle(13.5f, 18f), fontWeight = FontWeight.Bold, color = t.text)
             Spacer(Modifier.width(8.dp))

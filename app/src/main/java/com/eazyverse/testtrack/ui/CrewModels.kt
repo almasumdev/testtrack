@@ -291,6 +291,12 @@ data class Crew(
     /** Others' apps taken out of the run: nobody owes them, and they are left on the page so the
      * reader knows which to uninstall, once it is clear they will not come back. */
     val left: List<CrewApp> = emptyList(),
+    /**
+     * Every other app still in the run, each with tonight's done mark, for the tile's strip. Unlike
+     * [apps] it is there on every night of the run: a night let off, the reader's nights done, or
+     * the reader's app out.
+     */
+    val strip: List<CrewApp> = emptyList(),
     /** Which day of the run, in this account's own calendar. Zero before it starts. */
     val day: Int = 0,
     /** Milliseconds until this account's midnight, once it is full. */

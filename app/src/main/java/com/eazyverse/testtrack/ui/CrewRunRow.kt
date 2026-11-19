@@ -33,10 +33,11 @@ fun CrewListRow(
         }
     CrewCard(padding = PaddingValues(16.dp), onClick = onOpen) {
         CrewTileHeading(crew.name, "Night ${crew.day.coerceIn(0, crew.runDays)} of ${crew.runDays}")
-        val showOpens = !crew.out && !crew.nightsDone && crew.apps.isNotEmpty()
+        // The crew's apps on every night, also when tonight owes nothing; faded once the reader's app is out.
+        val showOpens = crew.strip.isNotEmpty()
         if (showOpens) {
             Spacer(Modifier.height(14.dp))
-            CrewRunAppIcons(crew)
+            CrewRunAppIcons(crew, quiet = crew.out)
         }
         Spacer(Modifier.height(if (showOpens) 9.dp else 14.dp))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {

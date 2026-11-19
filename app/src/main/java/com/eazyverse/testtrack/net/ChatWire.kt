@@ -57,6 +57,7 @@ data class ApiChatLimits(
 @Serializable
 data class ApiChatBot(
     val name: String = "Crew bot",
+    /** Read but not shown: the app draws its own robot as the bot's face. */
     @SerialName("avatar_url") val avatarUrl: String = "",
 )
 

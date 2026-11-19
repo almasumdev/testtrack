@@ -79,8 +79,6 @@ class CrewChatViewModel : ViewModel() {
         internal set
     var botName by mutableStateOf("Crew bot")
         private set
-    var botAvatar by mutableStateOf("")
-        private set
 
     /** Older messages wait on the server. */
     var moreBefore by mutableStateOf(false)
@@ -238,7 +236,6 @@ class CrewChatViewModel : ViewModel() {
         // A poll that leaves the allowance out keeps what is held rather than resetting it.
         if (fresh || page.left.messages >= 0) left(page.left)
         botName = page.bot.name.ifBlank { botName }
-        botAvatar = page.bot.avatarUrl
         val incoming = page.messages.map { it.toLine(limits.pictureHours) }
         lines = ChatThread.merge(lines, incoming, reset = fresh)
         if (page.rev > 0) cursor = page.rev

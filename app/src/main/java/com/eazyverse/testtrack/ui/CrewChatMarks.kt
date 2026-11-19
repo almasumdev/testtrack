@@ -1,12 +1,15 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,18 +18,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
 
@@ -49,37 +52,25 @@ internal fun TimeText(
     )
 }
 
-/** The bot's face: the server's picture when it sends one, else the robot head in the theme's colours. */
-@Composable
-internal fun BotFace(
-    avatar: String,
-    size: Dp,
-) {
-    if (avatar.startsWith("https://")) {
-        Avatar(avatar, "B", size = size)
-    } else {
-        BotHead(size)
-    }
-}
+/** The square of the mascot's 880 by 980 artboard a bot face shows: the head, ears and antenna. */
+private const val HEAD_SIDE = 860f
 
-/** The robot's head as the crew pages draw it, from the theme's own colours. */
+/**
+ * The bot's face: the app's own robot, its head and antenna as the mascot's drawings have them.
+ * The name still comes from the server, but never a picture, so the bot looks the same everywhere.
+ */
 @Composable
-internal fun BotHead(size: Dp) {
-    val t = Tt.colors
-    Canvas(Modifier.size(size)) {
-        val u = this.size.width / 80f
-
-        fun p(
-            x: Float,
-            y: Float,
-        ) = Offset((x - 20f) * u, (y - 2f) * u)
-        drawLine(t.tileInk, p(60f, 10f), p(60f, 26f), strokeWidth = 4f * u)
-        drawCircle(t.warn, 6f * u, p(60f, 9f))
-        drawRoundRect(t.tile, p(26f, 26f), Size(68f * u, 52f * u), CornerRadius(18f * u))
-        drawRoundRect(t.tileInk, p(26f, 26f), Size(68f * u, 52f * u), CornerRadius(18f * u), style = Stroke(4f * u))
-        drawRoundRect(t.bg, p(36f, 38f), Size(48f * u, 28f * u), CornerRadius(13f * u))
-        drawCircle(t.text, 5f * u, p(50f, 52f))
-        drawCircle(t.text, 5f * u, p(70f, 52f))
+internal fun BotFace(size: Dp) {
+    val unit = size / HEAD_SIDE
+    // The head spans x 30 to 854 and y 17 to 633 of the artboard; (442, 325) is its middle.
+    val art =
+        Modifier
+            .requiredSize(unit * 880f, unit * 980f)
+            .offset(x = unit * (440f - 442f), y = unit * (490f - 325f))
+    Box(Modifier.size(size).clipToBounds(), contentAlignment = Alignment.Center) {
+        Image(painterResource(R.drawable.level_robot_antenna), null, art)
+        Image(painterResource(R.drawable.level_robot_head), null, art)
+        Image(painterResource(R.drawable.level_robot_eyes), null, art)
     }
 }
 

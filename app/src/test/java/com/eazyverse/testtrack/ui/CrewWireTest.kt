@@ -286,6 +286,26 @@ class CrewWireTest {
     }
 
     @Test
+    fun the_tile_strip_keeps_every_app_when_tonight_owes_nothing() {
+        val members =
+            listOf(
+                seat("me", mine = true),
+                seat("a", opened = true).copy(offTonight = true),
+                seat("b").copy(offTonight = true),
+                seat("gone", state = "removed"),
+            )
+        val letOff = crew(state = "full", day = 5, members = members).toCrew()
+        assertTrue(letOff.apps.isEmpty())
+        assertEquals(listOf("a", "b"), letOff.strip.map { it.id })
+        assertEquals(listOf(true, false), letOff.strip.map { it.done })
+        val nightsDone = crew(state = "full", day = 15, members = members).toCrew()
+        assertEquals(listOf("a", "b"), nightsDone.strip.map { it.id })
+        val out = crew(state = "full", day = 5, members = members.map { if (it.mine) it.copy(state = "removed") else it }).toCrew()
+        assertEquals(listOf("a", "b"), out.strip.map { it.id })
+        assertTrue(crew(state = "filling", members = members).toCrew().strip.isEmpty())
+    }
+
+    @Test
     fun an_app_out_of_the_run_offers_nothing_optional() {
         val out =
             crew(
