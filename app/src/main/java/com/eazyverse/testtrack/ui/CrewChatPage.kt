@@ -167,6 +167,8 @@ internal class ChatActions(
     val onMute: () -> Unit = {},
     val onMembers: () -> Unit = {},
     val onField: (TextFieldValue) -> Unit = {},
+    /** The @ button: puts an "@" at the cursor and opens the people sheet, the same as typing it. */
+    val onAt: () -> Unit = {},
     val onSend: () -> Unit = {},
     val onPickPicture: () -> Unit = {},
     val onClearReply: () -> Unit = {},
@@ -257,6 +259,15 @@ fun CrewChatScreen(
                 vm.edit(vm.draft.edit(next.text))
                 field = next
                 if (at != null && vm.people.values.any { it.inCrew && !it.mine }) mentionAt = at
+            },
+            onAt = {
+                val start = field.selection.min
+                val before = field.text.substring(0, start)
+                val gap = if (before.isEmpty() || before.last().isWhitespace()) "" else " "
+                val next = before + gap + "@" + field.text.substring(field.selection.max)
+                vm.edit(vm.draft.edit(next))
+                field = TextFieldValue(next, TextRange(start + gap.length + 1))
+                mentionAt = start + gap.length
             },
             onSend = vm::send,
             onPickPicture = pickPicture,

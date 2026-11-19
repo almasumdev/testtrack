@@ -1,5 +1,11 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,8 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -57,6 +61,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
+import com.composables.icons.lucide.AtSign
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.ImagePlus
 import com.composables.icons.lucide.Lock
@@ -72,10 +77,10 @@ import com.eazyverse.testtrack.ui.theme.tabular
 import kotlinx.coroutines.delay
 
 /**
- * Writing to the crew: a picture button with the pictures left on it, the field growing to five
- * lines with the messages left at its end once few are, and Send. A reply shows what it answers
- * over the field; a link stops Send and says why under it. With no messages left the field is
- * shut and says so.
+ * Writing to the crew: one pill with the picture button, the field growing to five lines, the
+ * messages left once few are, and an @ button; Send pops in beside it while there is text. A reply
+ * shows what it answers on a strip over the pill; a link stops Send and says why under it. With no
+ * messages left the pill is shut and says so.
  */
 @Composable
 internal fun ChatComposer(
@@ -85,49 +90,78 @@ internal fun ChatComposer(
 ) {
     val t = Tt.colors
     val canSend = ChatAllowance.canSend(view.draft, view.problem, view.messagesLeft, view.canPost)
-    val canAttach = ChatAllowance.canAttach(view.messagesLeft, view.picturesLeft, view.canPost)
-    var tip by remember { mutableStateOf(false) }
+    val showSend = field.text.isNotBlank() && view.messagesLeft > 0
     ComposerFrame {
         view.replyTo?.let { reply ->
-            Row(Modifier.padding(start = 2.dp, end = 2.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                val quote = view.quoteOf(ChatQuote(reply.id, reply.authorSeatId, reply.text, reply.picture != null))
-                Quote(quote.copy(who = "Replying to ${quote.who}"), Modifier.weight(1f), fill = t.glass2, maxWidth = Dp.Unspecified)
-                Spacer(Modifier.width(8.dp))
-                RoundButton(Lucide.X, "Stop replying", 32.dp, 15.dp, t.glass2, t.text2, onClick = actions.onClearReply)
+            val quote = view.quoteOf(ChatQuote(reply.id, reply.authorSeatId, reply.text, reply.picture != null))
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 6.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(t.glass2),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Quote(
+                    quote.copy(who = "Replying to ${quote.who}"),
+                    Modifier.weight(1f).padding(start = 6.dp, top = 6.dp, bottom = 6.dp),
+                    fill = t.bg,
+                    maxWidth = Dp.Unspecified,
+                )
+                FieldButton(Lucide.X, "Stop replying", 44.dp, 36.dp, 17.dp, t.text2, onClick = actions.onClearReply)
             }
         }
         Row(verticalAlignment = Alignment.Bottom) {
-            Box {
-                RoundButton(
-                    Lucide.ImagePlus,
-                    if (canAttach) "Send a picture" else "No pictures left today",
-                    48.dp,
-                    21.dp,
-                    if (canAttach) t.tile else t.glass2,
-                    if (canAttach) t.tileInk else t.text4,
-                    onClick = { if (canAttach) actions.onPickPicture() else tip = true },
-                )
-                ChatAllowance.pictureBadge(view.messagesLeft, view.picturesLeft, view.limits, view.canPost)?.let {
-                    PictureBadge(it, Modifier.align(Alignment.TopEnd))
+            ChatField(field, view, actions, Modifier.weight(1f))
+            AnimatedVisibility(
+                visible = showSend,
+                enter = fadeIn(tween(150)) + scaleIn(tween(150), initialScale = 0.6f),
+                exit = fadeOut(tween(150)) + scaleOut(tween(150), targetScale = 0.6f),
+            ) {
+                Row {
+                    Spacer(Modifier.width(8.dp))
+                    RoundButton(
+                        Lucide.Send,
+                        "Send",
+                        48.dp,
+                        20.dp,
+                        // The accent own bubbles wear, the same as Send in the picture editor.
+                        if (canSend) t.accent else t.glass2,
+                        if (canSend) t.onAccent else t.text4,
+                        enabled = canSend,
+                        onClick = actions.onSend,
+                    )
                 }
-                if (tip) PictureTip(pictureTip(view)) { tip = false }
             }
-            Spacer(Modifier.width(8.dp))
-            ChatField(field, view, actions.onField, Modifier.weight(1f))
-            Spacer(Modifier.width(8.dp))
-            RoundButton(
-                Lucide.Send,
-                "Send",
-                48.dp,
-                20.dp,
-                // The accent own bubbles wear, the same as Send in the picture editor.
-                if (canSend) t.accent else t.glass2,
-                if (canSend) t.onAccent else t.text4,
-                enabled = canSend,
-                onClick = actions.onSend,
-            )
         }
         if (view.problem != DraftProblem.NONE) ComposerLine(Lucide.CircleAlert, problemLine(view), bad = true)
+    }
+}
+
+/** The picture button at the start of the pill, with the pictures left on its corner. */
+@Composable
+private fun PictureButton(
+    view: ChatView,
+    actions: ChatActions,
+    ring: Color,
+) {
+    val t = Tt.colors
+    val canAttach = ChatAllowance.canAttach(view.messagesLeft, view.picturesLeft, view.canPost)
+    var tip by remember { mutableStateOf(false) }
+    Box {
+        FieldButton(
+            Lucide.ImagePlus,
+            if (canAttach) "Send a picture" else "No pictures left today",
+            48.dp,
+            48.dp,
+            21.dp,
+            if (canAttach) t.tileInk else t.text4,
+            onClick = { if (canAttach) actions.onPickPicture() else tip = true },
+        )
+        ChatAllowance.pictureBadge(view.messagesLeft, view.picturesLeft, view.limits, view.canPost)?.let {
+            PictureBadge(it, ring, Modifier.align(Alignment.TopEnd))
+        }
+        if (tip) PictureTip(pictureTip(view)) { tip = false }
     }
 }
 
@@ -143,17 +177,18 @@ private fun pictureTip(view: ChatView): String =
 @Composable
 private fun PictureBadge(
     count: String,
+    ring: Color,
     modifier: Modifier,
 ) {
     val t = Tt.colors
     Box(
         modifier
-            .offset(x = 4.dp, y = (-4).dp)
+            .offset(x = (-3).dp, y = 6.dp)
             .heightIn(min = 18.dp)
             .widthIn(min = 18.dp)
             .clip(CircleShape)
             .background(t.badgeFill)
-            .border(1.5.dp, t.bg, CircleShape)
+            .border(1.5.dp, ring, CircleShape)
             .padding(horizontal = 4.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -218,14 +253,15 @@ private class AboveAnchor(
 }
 
 /**
- * The field: a pill that grows to five lines, its edge red while what is written cannot go, with
- * the messages left at its end once few are. With none left it is shut and says so.
+ * The field: one pill holding the picture button, the text growing to five lines, the messages
+ * left once few are, and the @ button. Its edge is red while what is written cannot go. With none
+ * left it is shut and says so.
  */
 @Composable
 private fun ChatField(
     value: TextFieldValue,
     view: ChatView,
-    onValue: (TextFieldValue) -> Unit,
+    actions: ChatActions,
     modifier: Modifier,
 ) {
     val t = Tt.colors
@@ -236,9 +272,11 @@ private fun ChatField(
     val mentions = remember(view.draft, t) { MentionInk(view.draft, t.accentInk) }
     val open = view.messagesLeft > 0
     val count = ChatAllowance.fieldCount(view.messagesLeft)
+    val canMention = open && view.people.values.any { it.inCrew && !it.mine }
+    val fill = if (open) t.field else t.glass2
     BasicTextField(
         value = value,
-        onValueChange = onValue,
+        onValueChange = actions.onField,
         modifier = modifier,
         enabled = open,
         textStyle = chatStyle(15f, 20f).copy(color = t.text),
@@ -248,14 +286,18 @@ private fun ChatField(
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         interactionSource = source,
         decorationBox = { inner ->
-            Box(
+            Row(
                 Modifier
                     .fillMaxWidth()
                     .heightIn(min = 48.dp)
                     .clip(shape)
-                    .background(t.bg)
+                    .background(fill)
                     .border(
-                        if (bad || focused) 1.6.dp else 1.2.dp,
+                        when {
+                            bad || focused -> 1.6.dp
+                            open -> 1.2.dp
+                            else -> 1.dp
+                        },
                         when {
                             bad -> t.bad
                             focused -> t.text
@@ -263,32 +305,38 @@ private fun ChatField(
                             else -> t.glassBorderStrong
                         },
                         shape,
-                    ).padding(start = 16.dp, end = if (count != null) 12.dp else 16.dp, top = 13.dp, bottom = 13.dp),
+                    ),
+                verticalAlignment = Alignment.Bottom,
             ) {
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Box(Modifier.weight(1f)) {
-                        if (value.text.isEmpty()) {
-                            Text(
-                                if (open) "Message ${view.crewName}" else "No messages left today",
-                                style = chatStyle(15f, 20f),
-                                color = t.text4,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                        inner()
-                    }
-                    if (count != null) {
-                        Spacer(Modifier.width(8.dp))
+                PictureButton(view, actions, fill)
+                Box(Modifier.weight(1f).padding(vertical = 14.dp)) {
+                    if (value.text.isEmpty()) {
                         Text(
-                            "$count left",
-                            Modifier.semantics {
-                                contentDescription = if (count == 1) "1 message left today" else "$count messages left today"
-                            },
-                            style = chatStyle(12f, 20f).tabular(),
+                            if (open) "Message ${view.crewName}" else "No messages left today",
+                            style = chatStyle(15f, 20f),
                             color = t.text4,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
+                    inner()
+                }
+                if (count != null) {
+                    Text(
+                        "$count left",
+                        Modifier
+                            .padding(start = 6.dp, top = 14.dp, bottom = 14.dp)
+                            .semantics {
+                                contentDescription = if (count == 1) "1 message left today" else "$count messages left today"
+                            },
+                        style = chatStyle(12f, 20f).tabular(),
+                        color = t.text4,
+                    )
+                }
+                if (canMention) {
+                    FieldButton(Lucide.AtSign, "Mention someone", 44.dp, 48.dp, 20.dp, t.text3, onClick = actions.onAt)
+                } else {
+                    Spacer(Modifier.width(16.dp))
                 }
             }
         },
@@ -350,7 +398,27 @@ private fun RoundButton(
     ) { Icon(icon, label, Modifier.size(iconSize), tint = ink) }
 }
 
-/** The ground under the composer and its stand-ins, with a hairline over it. */
+/** A bare icon button inside the pill, with a round press mark. */
+@Composable
+private fun FieldButton(
+    icon: ImageVector,
+    label: String,
+    width: Dp,
+    height: Dp,
+    iconSize: Dp,
+    ink: Color,
+    onClick: () -> Unit,
+) {
+    Box(
+        Modifier
+            .size(width, height)
+            .clip(CircleShape)
+            .clickable(onClickLabel = label, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) { Icon(icon, label, Modifier.size(iconSize), tint = ink) }
+}
+
+/** The ground under the composer and its stand-ins. */
 @Composable
 private fun ComposerFrame(content: @Composable () -> Unit) {
     val t = Tt.colors
@@ -358,30 +426,14 @@ private fun ComposerFrame(content: @Composable () -> Unit) {
         Modifier
             .fillMaxWidth()
             .background(t.bg)
-            .drawBehind { drawLine(t.cardLine, Offset.Zero, Offset(size.width, 0f), 1.dp.toPx()) }
-            .padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 12.dp),
+            .padding(start = 10.dp, end = 10.dp, top = 6.dp, bottom = 12.dp),
     ) { content() }
 }
 
-/** The composer while the chat loads: its buttons wait. */
+/** The composer while the chat loads: a pill that shimmers. */
 @Composable
 internal fun ChatComposerLoading() {
-    val t = Tt.colors
-    ComposerFrame {
-        Row(verticalAlignment = Alignment.Bottom) {
-            RoundButton(Lucide.ImagePlus, "Send a picture", 48.dp, 21.dp, t.glass2, t.text4, enabled = false) {}
-            Spacer(Modifier.width(8.dp))
-            Box(
-                Modifier
-                    .weight(1f)
-                    .heightIn(min = 48.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .border(1.2.dp, t.glassBorderStrong, RoundedCornerShape(24.dp)),
-            )
-            Spacer(Modifier.width(8.dp))
-            RoundButton(Lucide.Send, "Send", 48.dp, 20.dp, t.glass2, t.text4, enabled = false) {}
-        }
-    }
+    ComposerFrame { Skeleton(height = 48.dp, corner = 24.dp) }
 }
 
 /** In place of the composer when the chat can be read but not written in. */
@@ -392,9 +444,10 @@ internal fun ChatClosedBar(text: String) {
         Row(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
+                .heightIn(min = 48.dp)
+                .clip(RoundedCornerShape(24.dp))
                 .background(t.glass2)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .padding(horizontal = 18.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(Lucide.Lock, null, Modifier.size(18.dp), tint = t.text2)
