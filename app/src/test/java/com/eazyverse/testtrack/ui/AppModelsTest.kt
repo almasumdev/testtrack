@@ -65,7 +65,7 @@ class AppModelsTest {
     @Test
     fun the_card_says_what_needs_the_owner_first() {
         assertEquals(FeedbackCardKind.TO_CHECK, feedback(toCheck = 1).cardKind())
-        assertEquals(FeedbackCardKind.TO_CHECK, feedback(toCheck = 1, unlisted = true).cardKind())
+        assertEquals(FeedbackCardKind.OFF_CIRCLE, feedback(toCheck = 1, unlisted = true).cardKind())
         assertEquals(FeedbackCardKind.OFF_CIRCLE, feedback(unlisted = true).cardKind())
         assertEquals(FeedbackCardKind.WAITING, feedback(done = 2).cardKind())
         assertEquals(FeedbackCardKind.ALL_IN, feedback(done = 5, state = "done").cardKind())

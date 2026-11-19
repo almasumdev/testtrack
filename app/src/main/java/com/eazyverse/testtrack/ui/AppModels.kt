@@ -126,8 +126,8 @@ fun AppFeedbackStatus.cardKind(): FeedbackCardKind =
     when {
         state == "done" -> FeedbackCardKind.ALL_IN
         state != "collecting" -> FeedbackCardKind.CLOSED
-        toCheck > 0 -> FeedbackCardKind.TO_CHECK
         unlisted -> FeedbackCardKind.OFF_CIRCLE
+        toCheck > 0 -> FeedbackCardKind.TO_CHECK
         else -> FeedbackCardKind.WAITING
     }
 

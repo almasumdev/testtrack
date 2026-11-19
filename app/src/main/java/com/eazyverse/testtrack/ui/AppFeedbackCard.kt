@@ -131,7 +131,8 @@ internal fun FeedbackCard(
         FlowRow(
             Modifier
                 .fillMaxWidth()
-                .alpha(if (kind == FeedbackCardKind.OFF_CIRCLE) 0.45f else 1f)
+                // Dim the faces when off Circle, but keep reviews waiting for the owner at full strength.
+                .alpha(if (kind == FeedbackCardKind.OFF_CIRCLE && feedback.toCheck <= 0) 0.45f else 1f)
                 .clearAndSetSemantics { contentDescription = spoken },
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
