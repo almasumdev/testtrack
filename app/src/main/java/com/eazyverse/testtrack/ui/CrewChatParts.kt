@@ -19,11 +19,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +51,7 @@ import com.eazyverse.testtrack.domain.ChatLine
 import com.eazyverse.testtrack.domain.ChatRow
 import com.eazyverse.testtrack.domain.ChatThread
 import com.eazyverse.testtrack.ui.theme.Tt
+import kotlinx.coroutines.delay
 import java.time.LocalDate
 
 /*
@@ -72,8 +77,11 @@ internal fun ChatRowView(
         is ChatRow.Line -> {
             // Under a time line already, a tap has no time to add.
             val onTap = { if (!row.stamped) actions.onTime(row.line) }
-            Column(Modifier.fillMaxWidth()) {
-                TappedTime(row, view)
+            val open = row.line.at != null && !row.stamped && view.timeShown == row.line.id
+            val reveal = remember { BringIntoViewRequester() }
+            RevealWhenOpened(open, reveal)
+            Column(Modifier.fillMaxWidth().bringIntoViewRequester(reveal)) {
+                TappedTime(row, open)
                 when (row.line.kind) {
                     ChatKind.BOT -> BotLine(row.line, view, onTap)
                     ChatKind.TEAM -> TeamPost(row.line, view, onTap)
@@ -107,17 +115,37 @@ private const val TAP_MS = 150
 @Composable
 private fun TappedTime(
     row: ChatRow.Line,
-    view: ChatView,
+    open: Boolean,
 ) {
     val at = row.line.at
     val hour24 = DateFormat.is24HourFormat(LocalContext.current)
     AnimatedVisibility(
-        visible = at != null && !row.stamped && view.timeShown == row.line.id,
+        visible = open,
         enter = expandVertically(tween(TAP_MS)) + fadeIn(tween(TAP_MS)),
         exit = shrinkVertically(tween(TAP_MS)) + fadeOut(tween(TAP_MS)),
     ) {
         val label = remember(at, hour24) { at?.let { ChatThread.timeLabel(it, LocalDate.now(), hour24 = hour24) }.orEmpty() }
         TimeLine(label, bottom = 6.dp)
+    }
+}
+
+/**
+ * The thread grows upward, so a time line opening over a message near the top edge would land out
+ * of sight. Once it has eased in, the message and its time scroll into view. One open already when
+ * the row is first drawn stays where it is.
+ */
+@Composable
+private fun RevealWhenOpened(
+    open: Boolean,
+    reveal: BringIntoViewRequester,
+) {
+    val was = remember { mutableStateOf(open) }
+    LaunchedEffect(open) {
+        if (open && !was.value) {
+            delay(TAP_MS.toLong())
+            reveal.bringIntoView()
+        }
+        was.value = open
     }
 }
 
