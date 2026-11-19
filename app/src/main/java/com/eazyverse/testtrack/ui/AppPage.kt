@@ -5,15 +5,18 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,6 +25,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -40,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -50,10 +56,10 @@ import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.FlaskConical
 import com.composables.icons.lucide.Globe
+import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageSquare
 import com.composables.icons.lucide.Pencil
-import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AppAction
@@ -380,7 +386,10 @@ private fun Cta(text: String) {
     }
 }
 
-/** Going live and deleting, each behind its own question; an app that can't go says why. */
+/**
+ * Going live and deleting, each behind its own question, at the foot of the page. Going live is a
+ * full-width tonal button; deleting is a small red link under it; an app that can't go says why.
+ */
 @Composable
 private fun Manage(
     app: AppEntry,
@@ -389,47 +398,76 @@ private fun Manage(
     onLive: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val rows = listOfNotNull("live".takeIf { !app.live }, "delete".takeIf { app.canDelete })
-    if (rows.isEmpty() && app.whyNotDelete.isBlank()) return
-    SectionTitle("Manage")
-    if (rows.isNotEmpty()) {
-        TileGroup(count = rows.size) { index, place ->
-            if (rows[index] == "live") {
-                val checking = running == AppAction.LIVE
-                TileRow(
-                    Lucide.ArrowUpRight,
-                    "It's live on Google Play now",
-                    place,
-                    subtitle = if (checking) "Checking its public Play page" else "Moves it to feedback only",
-                    trailing = if (checking) ({ RowBusy() }) else null,
-                    onClick = if (busy) null else onLive,
+    if (app.live && !app.canDelete && app.whyNotDelete.isBlank()) return
+    val t = Tt.colors
+    Spacer(Modifier.height(30.dp))
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        if (!app.live) {
+            val checking = running == AppAction.LIVE
+            Button(
+                onClick = { if (!busy) onLive() },
+                shape = RoundedCornerShape(percent = 50),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = t.tile,
+                        contentColor = t.accentInk,
+                    ),
+                elevation = null,
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            ) {
+                if (checking) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = t.accentInk)
+                } else {
+                    Icon(Lucide.ArrowUpRight, null, Modifier.size(18.dp))
+                }
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    if (checking) "Checking Play" else "It's live on Play",
+                    style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
                 )
-            } else {
-                TileRow(
-                    Lucide.Trash2,
-                    "Delete app",
-                    place,
-                    danger = true,
-                    subtitle = if (running == AppAction.DELETE) "Deleting" else null,
-                    trailing = if (running == AppAction.DELETE) ({ RowBusy() }) else null,
-                    onClick = if (busy) null else onDelete,
+            }
+        }
+        if (app.canDelete) {
+            val deleting = running == AppAction.DELETE
+            Spacer(Modifier.height(6.dp))
+            Row(
+                Modifier
+                    .heightIn(min = 40.dp)
+                    .clip(RoundedCornerShape(percent = 50))
+                    .clickable(role = Role.Button) { if (!busy) onDelete() }
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (deleting) {
+                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = t.bad)
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text(
+                    if (deleting) "Deleting" else "Delete app",
+                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                    fontWeight = FontWeight.Bold,
+                    color = t.bad,
+                )
+            }
+        } else if (app.whyNotDelete.isNotBlank()) {
+            Spacer(Modifier.height(10.dp))
+            Row(
+                Modifier.padding(horizontal = 4.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Icon(Lucide.Lock, null, Modifier.padding(top = 2.dp).size(13.dp), tint = t.text4)
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    "Can't be deleted. ${app.whyNotDelete}",
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    color = t.text4,
                 )
             }
         }
     }
-    if (!app.canDelete && app.whyNotDelete.isNotBlank()) {
-        Spacer(Modifier.height(10.dp))
-        Text(
-            "Can't be deleted. ${app.whyNotDelete}",
-            Modifier.padding(horizontal = 4.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = Tt.colors.text4,
-        )
-    }
-}
-
-/** A row's action under way: a small spinner where its chevron was. */
-@Composable
-private fun RowBusy() {
-    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = Tt.colors.accentInk)
 }
