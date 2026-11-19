@@ -172,11 +172,15 @@ internal fun OverlayHost(
     }
 }
 
-/** The chat page full screen, as the app shows it, with the field, mute and the long-press all live. */
+/**
+ * The chat page full screen, as the app shows it, with the field, mute and the long-press all live.
+ * [state] "empty" holds it with nobody having written, "loading" holds it loading.
+ */
 @Composable
 internal fun GalleryPage(
     s: GallerySamples,
     show: (Overlay) -> Unit,
+    state: String = "page",
     onBack: () -> Unit,
 ) {
     var muted by remember { mutableStateOf(false) }
@@ -187,7 +191,17 @@ internal fun GalleryPage(
     var message by remember { mutableStateOf<String?>(null) }
     var held by remember { mutableStateOf(emptySet<String>()) }
     val picks = ChatSelect.picks(held, s.thread, writable = true)
-    val view = s.view(s.threadRows()).copy(muted = muted, draft = draft, timeShown = shown, jump = jump, message = message, picks = picks)
+    val rows = if (state == "page") s.threadRows() else emptyList()
+    val view =
+        s.view(rows).copy(
+            loading = state == "loading",
+            muted = muted,
+            draft = draft,
+            timeShown = shown,
+            jump = jump,
+            message = message,
+            picks = picks,
+        )
     BackHandler(enabled = picks.active) { held = emptySet() }
     val base = galleryActions(show)
     val actions =

@@ -2,17 +2,10 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -32,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 
-// The chat's small marks: the bot's face, the loading shape, dashed edges and text sizes.
+// The chat's small marks: the bot's face, dashed edges and text sizes.
 
 /** How wide the head is on the mascot's 880 by 980 artboard: x 30 to 854, antenna and ears in. */
 private const val HEAD_WIDTH = 824f
@@ -62,35 +55,6 @@ internal fun BotFace(size: Dp) {
         Image(painterResource(R.drawable.level_robot_eyes), null, art)
     }
 }
-
-/**
- * The chat's loading shape: faces and bubbles of mixed widths, others' on the left, yours on the
- * right. [rows] cuts it short, as older messages load in at the top.
- */
-@Composable
-internal fun ChatSkeleton(
-    modifier: Modifier = Modifier,
-    rows: Int = 8,
-) {
-    Column(modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
-        SkeletonRows.take(rows).forEach { (mine, share) ->
-            Row(
-                Modifier.fillMaxWidth().padding(top = 14.dp),
-                horizontalArrangement = if (mine == 1) Arrangement.End else Arrangement.Start,
-                verticalAlignment = Alignment.Bottom,
-            ) {
-                if (mine == 0) {
-                    Skeleton(width = 28.dp, height = 28.dp, corner = 14.dp)
-                    Spacer(Modifier.width(8.dp))
-                }
-                Skeleton(height = 38.dp, corner = 18.dp, modifier = Modifier.fillMaxWidth(share))
-            }
-        }
-    }
-}
-
-private val SkeletonRows =
-    listOf(0 to 0.62f, 0 to 0.44f, 1 to 0.52f, 0 to 0.7f, 1 to 0.4f, 0 to 0.55f, 1 to 0.64f, 0 to 0.46f)
 
 /** A dashed edge, round a deleted message. */
 internal fun Modifier.dashed(

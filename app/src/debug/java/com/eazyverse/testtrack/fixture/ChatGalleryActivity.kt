@@ -54,7 +54,8 @@ import com.eazyverse.testtrack.ui.theme.exchangeBackground
  *
  * Extras: `--es section bubbles|pictures|page|composer|sheets|editor|entry` shows one section,
  * `--ez dark true|false` forces the theme, and `--es open` opens one thing straight away:
- * page, message_others, message_own, message_bot, message_failed, delete, mention, profile, viewer, editor.
+ * page, empty, loading (the full page in that state), message_others, message_own, message_bot,
+ * message_failed, delete, mention, profile, viewer, editor.
  */
 class ChatGalleryActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,6 +99,9 @@ private fun overlayFor(
     }
 }
 
+/** The `open` names that show the whole chat page rather than one thing over the gallery. */
+private val FullPages = setOf("page", "empty", "loading")
+
 @Composable
 private fun ChatGallery(
     s: GallerySamples,
@@ -108,7 +112,8 @@ private fun ChatGallery(
     onBack: () -> Unit,
 ) {
     var overlay by remember { mutableStateOf(overlayFor(open, s)) }
-    var page by rememberSaveable { mutableStateOf(open == "page") }
+    // Which full page is up, if any: the live thread, or the page held empty or loading.
+    var page by rememberSaveable { mutableStateOf(open?.takeIf { it in FullPages }) }
     var picked by rememberSaveable { mutableStateOf(section) }
     val show: (Overlay) -> Unit = { overlay = it }
     val sections =
@@ -118,14 +123,15 @@ private fun ChatGallery(
                 pictureSection(s, show),
                 pageSection(s, show),
                 composerSection(s, show),
-                sheetSection(s, show) { page = true },
+                sheetSection(s, show) { page = "page" },
                 editorSection(s, show),
                 entrySection(s),
             )
         }
-    if (page) {
-        BackHandler { page = false }
-        Box(Modifier.fillMaxSize().safeDrawingPadding()) { GalleryPage(s, show) { page = false } }
+    val full = page
+    if (full != null) {
+        BackHandler { page = null }
+        Box(Modifier.fillMaxSize().safeDrawingPadding()) { GalleryPage(s, show, full) { page = null } }
     } else {
         Column(Modifier.fillMaxSize().safeDrawingPadding()) {
             PageBar("Chat gallery", onBack) {

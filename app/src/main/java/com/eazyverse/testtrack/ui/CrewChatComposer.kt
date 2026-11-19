@@ -18,11 +18,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -51,7 +49,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
@@ -59,17 +56,11 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.AtSign
 import com.composables.icons.lucide.CircleAlert
-import com.composables.icons.lucide.ImagePlus
 import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Send
@@ -83,7 +74,6 @@ import com.eazyverse.testtrack.domain.MentionOption
 import com.eazyverse.testtrack.domain.MentionQuery
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
-import kotlinx.coroutines.delay
 
 /**
  * Writing to the crew: one pill with the picture button, the field growing to five lines, the
@@ -214,96 +204,6 @@ private fun rememberMentionTyping(
     )
 }
 
-/** The picture button at the start of the pill, with the pictures left on its corner. */
-@Composable
-private fun PictureButton(
-    view: ChatView,
-    actions: ChatActions,
-    ring: Color,
-) {
-    val t = Tt.colors
-    val canAttach = ChatAllowance.canAttach(view.messagesLeft, view.picturesLeft, view.canPost)
-    var tip by remember { mutableStateOf(false) }
-    Box {
-        FieldButton(
-            Lucide.ImagePlus,
-            if (canAttach) "Send a picture" else "No pictures left today",
-            48.dp,
-            48.dp,
-            21.dp,
-            if (canAttach) t.tileInk else t.text4,
-            onClick = { if (canAttach) actions.onPickPicture() else tip = true },
-        )
-        ChatAllowance.pictureBadge(view.messagesLeft, view.picturesLeft, view.limits, view.canPost)?.let {
-            PictureBadge(it, ring, Modifier.align(Alignment.TopEnd))
-        }
-        if (tip) PictureTip(pictureTip(view)) { tip = false }
-    }
-}
-
-/** Why the picture button is grey, said briefly when it is tapped. */
-private fun pictureTip(view: ChatView): String =
-    when {
-        view.messagesLeft <= 0 -> "No messages left today. More after midnight."
-        view.limits.picturesPerDay <= 0 -> "Pictures are off in this chat."
-        else -> "No pictures left today. You get ${view.limits.picturesPerDay} more after midnight."
-    }
-
-/** How many pictures are left, on the corner of the picture button. */
-@Composable
-private fun PictureBadge(
-    count: String,
-    ring: Color,
-    modifier: Modifier,
-) {
-    val t = Tt.colors
-    Box(
-        modifier
-            .offset(x = (-3).dp, y = 6.dp)
-            .heightIn(min = 18.dp)
-            .widthIn(min = 18.dp)
-            .clip(CircleShape)
-            .background(t.badgeFill)
-            .border(1.5.dp, ring, CircleShape)
-            .padding(horizontal = 4.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            count,
-            style = chatStyle(10.5f, 13f).tabular(),
-            fontWeight = FontWeight.Bold,
-            color = t.onAccent,
-        )
-    }
-}
-
-/** A short note over the picture button, gone after a few seconds or a tap. */
-@Composable
-private fun PictureTip(
-    text: String,
-    onGone: () -> Unit,
-) {
-    val t = Tt.colors
-    LaunchedEffect(text) {
-        delay(3_000)
-        onGone()
-    }
-    val gap = with(LocalDensity.current) { 8.dp.roundToPx() }
-    Popup(popupPositionProvider = remember(gap) { AboveAnchor(gap) }, onDismissRequest = onGone) {
-        Text(
-            text,
-            Modifier
-                .widthIn(max = 260.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(t.inverse)
-                .clickable(onClick = onGone)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            style = chatStyle(13f, 17f),
-            color = t.onInverse,
-        )
-    }
-}
-
 private fun problemLine(view: ChatView): String =
     when (view.problem) {
         DraftProblem.LINK -> "Links can't be sent here. Take it out to send. To point at an app, type @ and pick it."
@@ -311,22 +211,6 @@ private fun problemLine(view: ChatView): String =
         DraftProblem.TOO_MANY_MENTIONS -> "You can mention up to ${view.limits.maxMentions} people or apps in one message."
         DraftProblem.NONE -> ""
     }
-
-/** Puts a popup just over what it belongs to, kept inside the window. */
-private class AboveAnchor(
-    private val gap: Int,
-) : PopupPositionProvider {
-    override fun calculatePosition(
-        anchorBounds: IntRect,
-        windowSize: IntSize,
-        layoutDirection: LayoutDirection,
-        popupContentSize: IntSize,
-    ): IntOffset =
-        IntOffset(
-            anchorBounds.left.coerceAtMost(windowSize.width - popupContentSize.width).coerceAtLeast(0),
-            (anchorBounds.top - popupContentSize.height - gap).coerceAtLeast(0),
-        )
-}
 
 /**
  * The field: one pill holding the picture button, the text growing to five lines, the messages
@@ -478,7 +362,7 @@ private fun RoundButton(
 
 /** A bare icon button inside the pill, with a round press mark. */
 @Composable
-private fun FieldButton(
+internal fun FieldButton(
     icon: ImageVector,
     label: String,
     width: Dp,

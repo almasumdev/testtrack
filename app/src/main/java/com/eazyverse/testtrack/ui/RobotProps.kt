@@ -205,6 +205,9 @@ enum class Prop(
                 PropLayer(R.drawable.robot_prop_clock_z2, Rise(dx = 26f, dy = -50f, delay = 0.5f), px = 955f, py = 375f),
             ),
     ),
+
+    /** Nothing in its hands: only the robot, breathing, blinking and hovering, as a page waits on people. */
+    Idle(),
     ;
 
     internal val layers = layers.toList()

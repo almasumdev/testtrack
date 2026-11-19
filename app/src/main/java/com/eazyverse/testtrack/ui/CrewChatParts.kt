@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -46,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.MessagesSquare
 import com.eazyverse.testtrack.domain.ChatLine
 import com.eazyverse.testtrack.domain.ChatRow
 import com.eazyverse.testtrack.domain.ChatThread
@@ -238,7 +236,7 @@ internal fun SendNote(sending: Boolean) {
     }
 }
 
-/** Nobody has written yet: a quiet mark, a title and one line, centred where it is put. */
+/** Nobody has written yet: the app's robot, idling, then a title and one line, centred where it is put. */
 @Composable
 internal fun ChatEmptyNote(
     canPost: Boolean,
@@ -246,12 +244,8 @@ internal fun ChatEmptyNote(
 ) {
     val t = Tt.colors
     Column(modifier.padding(horizontal = 32.dp, vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(96.dp).clip(CircleShape).background(t.glass2), contentAlignment = Alignment.Center) {
-            Box(Modifier.size(68.dp).clip(CircleShape).background(t.tile), contentAlignment = Alignment.Center) {
-                Icon(Lucide.MessagesSquare, null, Modifier.size(30.dp), tint = t.tileInk)
-            }
-        }
-        Spacer(Modifier.height(16.dp))
+        RobotHolding(Prop.Idle, size = 120.dp)
+        Spacer(Modifier.height(14.dp))
         Text("No messages yet", style = chatStyle(17f, 22f), fontWeight = FontWeight.SemiBold, color = t.text)
         Spacer(Modifier.height(4.dp))
         Text(
