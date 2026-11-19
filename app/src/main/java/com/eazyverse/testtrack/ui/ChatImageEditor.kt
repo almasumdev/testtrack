@@ -9,7 +9,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
@@ -17,10 +16,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,18 +36,13 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.composables.icons.lucide.Crop
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Pencil
-import com.composables.icons.lucide.Type
-import com.composables.icons.lucide.Undo2
-import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.domain.ChatAllowance
 import com.eazyverse.testtrack.domain.ChatLimits
 import com.eazyverse.testtrack.domain.DraftProblem
@@ -139,6 +131,8 @@ private fun Editor(
     var pen by remember { mutableStateOf(t.pens.getOrElse(2) { t.onPhoto }) }
     var penWidth by remember { mutableFloatStateOf(6f) }
     var typing by remember { mutableStateOf<Typing?>(null) }
+    // The undo steps when the open tool began, so Back can take a crop back and undo reaches only the pen's strokes.
+    var toolMark by remember { mutableIntStateOf(0) }
     var nextId by remember { mutableLongStateOf(1L) }
     var caption by remember { mutableStateOf(vm.draft) }
     var field by remember { mutableStateOf(TextFieldValue(vm.draft.text, TextRange(vm.draft.text.length))) }
@@ -153,21 +147,35 @@ private fun Editor(
     val back = backStep(typing != null, mode)
     var bottomHeight by remember { mutableIntStateOf(0) }
     val keyboard = LocalSoftwareKeyboardController.current
+    val focus = LocalFocusManager.current
 
-    /** Puts the words on the picture (or takes them off when emptied) and goes back to the tools. */
+    /**
+     * Puts the words on the picture (or takes them off when emptied) and goes back to the tools.
+     * A second call with nothing open does nothing, so the words can never be added twice.
+     */
     fun finishWords() {
         val was = typing ?: return
         typing = null
-        history.commit(doc.withWords(was.id, was.field.text, was.colour, nextId))
+        history.commit(history.doc.withWords(was.id, was.field.text, was.colour, nextId))
         if (was.id == null) nextId++
+        focus.clearFocus(force = true)
         keyboard?.hide()
     }
 
-    // The tick and Back do the same: Back keeps what is typed, as a messenger does.
+    /** Puts the crop and turns back as they were when the crop opened, and leaves it. */
+    fun cancelCrop() {
+        history.rollback(toolMark)
+        shape = CropShape.FREE
+        mode = EditMode.NONE
+    }
+
+    // The tick and Back do the same, as a messenger does: words and strokes are kept. Only a crop's
+    // Back and close take its changes back.
     BackHandler(enabled = back != BackStep.CLOSE) {
         when (back) {
             BackStep.FINISH_WORDS -> finishWords()
             BackStep.LEAVE_TOOL -> mode = EditMode.NONE
+            BackStep.CANCEL_CROP -> cancelCrop()
             BackStep.CLOSE -> Unit
         }
     }
@@ -194,31 +202,31 @@ private fun Editor(
     // or shrink when it opens, so only the pieces that need it take its inset, each on its own.
     Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout))) {
         Column(Modifier.fillMaxSize()) {
-            if (bars.top == TopBar.TOOLS) {
-                Row(
-                    Modifier.fillMaxWidth().height(EditorTopBar).padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    EditorButton(Lucide.X, "Close", onClick = onClose)
-                    Spacer(Modifier.weight(1f))
-                    EditorButton(Lucide.Crop, "Crop and turn", active = mode == EditMode.CROP) {
-                        mode = if (mode == EditMode.CROP) EditMode.NONE else EditMode.CROP
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    EditorButton(Lucide.Pencil, "Draw", active = mode == EditMode.DRAW) {
-                        mode = if (mode == EditMode.DRAW) EditMode.NONE else EditMode.DRAW
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    EditorButton(Lucide.Type, "Add words") {
-                        mode = EditMode.NONE
-                        typing = Typing(null, "", t.onPhoto)
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    EditorButton(Lucide.Undo2, "Undo", enabled = history.canUndo) { history.undo() }
-                }
-            } else {
+            when (bars.top) {
+                TopBar.TOOLS ->
+                    ToolsTopBar(
+                        canUndo = history.canUndo,
+                        onClose = onClose,
+                        onCrop = {
+                            toolMark = history.steps
+                            mode = EditMode.CROP
+                        },
+                        onDraw = {
+                            toolMark = history.steps
+                            mode = EditMode.DRAW
+                        },
+                        onWords = { typing = Typing(null, "", t.onPhoto) },
+                        onUndo = history::undo,
+                    )
+                TopBar.DRAW ->
+                    DrawTopBar(
+                        canUndo = history.steps > toolMark,
+                        onUndo = { history.undoSince(toolMark) },
+                        onDone = { mode = EditMode.NONE },
+                    )
+                TopBar.CROP -> CropTopBar(onCancel = ::cancelCrop, onDone = { mode = EditMode.NONE })
                 // The words' own top bar covers this; the room stays so the picture holds its place.
-                Spacer(Modifier.height(EditorTopBar))
+                TopBar.WORDS -> Spacer(Modifier.height(EditorTopBar))
             }
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 PictureCanvas(
@@ -262,7 +270,6 @@ private fun Editor(
                                         }
                                     history.commit(doc.turned())
                                 },
-                                onDone = { mode = EditMode.NONE },
                             )
                         else ->
                             CaptionBar(
@@ -283,9 +290,11 @@ private fun Editor(
         typing?.let { words ->
             WordsEntry(
                 value = words.field,
-                onValue = { typing = words.copy(field = it) },
+                // Read the state afresh: the keyboard sends a last edit as the field leaves, and that
+                // must not bring a finished entry back from the copy this lambda was made with.
+                onValue = { value -> typing = typing?.copy(field = value) },
                 ink = words.colour,
-                onInk = { typing = words.copy(colour = it) },
+                onInk = { colour -> typing = typing?.copy(colour = colour) },
                 onDone = ::finishWords,
             )
         }

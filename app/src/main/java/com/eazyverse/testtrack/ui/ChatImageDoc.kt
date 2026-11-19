@@ -232,6 +232,9 @@ internal class EditHistory(
 
     val canUndo: Boolean get() = before.isNotEmpty()
 
+    /** How many edits can be undone: a tool notes it on opening to know what it did since. */
+    val steps: Int get() = before.size
+
     /** Keep [next] as the picture now, with what it was before for undo. */
     fun commit(next: PictureDoc) {
         if (next == doc) return
@@ -241,5 +244,17 @@ internal class EditHistory(
 
     fun undo() {
         doc = before.removeLastOrNull() ?: return
+    }
+
+    /** Undo only what was done since [steps] was [mark]; earlier edits stay. */
+    fun undoSince(mark: Int) {
+        if (before.size > mark) undo()
+    }
+
+    /** Take back everything done since [steps] was [mark], leaving no trace in undo. */
+    fun rollback(mark: Int) {
+        if (before.size <= mark) return
+        doc = before[mark]
+        while (before.size > mark) before.removeLast()
     }
 }

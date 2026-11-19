@@ -53,9 +53,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.CircleAlert
+import com.composables.icons.lucide.Crop
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.RotateCw
 import com.composables.icons.lucide.Send
+import com.composables.icons.lucide.Type
+import com.composables.icons.lucide.Undo2
+import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -154,13 +159,71 @@ internal fun PenBar(
 internal const val PEN_MIN = 2f
 internal const val PEN_MAX = 28f
 
-/** While cropping: turn, the crop's shapes, and done. */
+/** The top bar with no tool open: close, the tools, and undo. */
+@Composable
+internal fun ToolsTopBar(
+    canUndo: Boolean,
+    onClose: () -> Unit,
+    onCrop: () -> Unit,
+    onDraw: () -> Unit,
+    onWords: () -> Unit,
+    onUndo: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().height(EditorTopBar).padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        EditorButton(Lucide.X, "Close", onClick = onClose)
+        Spacer(Modifier.weight(1f))
+        EditorButton(Lucide.Crop, "Crop and turn", onClick = onCrop)
+        Spacer(Modifier.width(8.dp))
+        EditorButton(Lucide.Pencil, "Draw", onClick = onDraw)
+        Spacer(Modifier.width(8.dp))
+        EditorButton(Lucide.Type, "Add words", onClick = onWords)
+        Spacer(Modifier.width(8.dp))
+        EditorButton(Lucide.Undo2, "Undo", enabled = canUndo, onClick = onUndo)
+    }
+}
+
+/** The top bar while drawing: undo a stroke on the left, the tick on the right. The other tools hide. */
+@Composable
+internal fun DrawTopBar(
+    canUndo: Boolean,
+    onUndo: () -> Unit,
+    onDone: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().height(EditorTopBar).padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        EditorButton(Lucide.Undo2, "Undo", enabled = canUndo, onClick = onUndo)
+        Spacer(Modifier.weight(1f))
+        EditorButton(Lucide.Check, "Done drawing", active = true, size = 48.dp, onClick = onDone)
+    }
+}
+
+/** The top bar while cropping: close puts the crop back as it was, the tick keeps it. */
+@Composable
+internal fun CropTopBar(
+    onCancel: () -> Unit,
+    onDone: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().height(EditorTopBar).padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        EditorButton(Lucide.X, "Cancel cropping", onClick = onCancel)
+        Spacer(Modifier.weight(1f))
+        EditorButton(Lucide.Check, "Done cropping", active = true, size = 48.dp, onClick = onDone)
+    }
+}
+
+/** While cropping: turn and the crop's shapes. The tick is in the top bar. */
 @Composable
 internal fun CropBar(
     shape: CropShape,
     onShape: (CropShape) -> Unit,
     onTurn: () -> Unit,
-    onDone: () -> Unit,
 ) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
@@ -172,8 +235,6 @@ internal fun CropBar(
             Modifier.weight(1f).horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) { CropShape.entries.forEach { ShapeChip(it.label, it == shape) { onShape(it) } } }
-        Spacer(Modifier.width(10.dp))
-        EditorButton(Lucide.Check, "Done cropping", active = true, onClick = onDone)
     }
 }
 

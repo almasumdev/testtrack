@@ -32,12 +32,6 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Crop
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Pencil
-import com.composables.icons.lucide.Type
-import com.composables.icons.lucide.Undo2
-import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.domain.ChatDraft
 import com.eazyverse.testtrack.domain.SendState
 import com.eazyverse.testtrack.fixture.GallerySamples.Companion.KENJI
@@ -58,9 +52,10 @@ import com.eazyverse.testtrack.ui.CrewLobbyRow
 import com.eazyverse.testtrack.ui.CrewMemberProfile
 import com.eazyverse.testtrack.ui.CropBar
 import com.eazyverse.testtrack.ui.CropShape
+import com.eazyverse.testtrack.ui.CropTopBar
+import com.eazyverse.testtrack.ui.DrawTopBar
 import com.eazyverse.testtrack.ui.EditHistory
 import com.eazyverse.testtrack.ui.EditMode
-import com.eazyverse.testtrack.ui.EditorButton
 import com.eazyverse.testtrack.ui.Gutter
 import com.eazyverse.testtrack.ui.PenBar
 import com.eazyverse.testtrack.ui.PenStroke
@@ -68,6 +63,7 @@ import com.eazyverse.testtrack.ui.PictureCanvas
 import com.eazyverse.testtrack.ui.PictureDoc
 import com.eazyverse.testtrack.ui.PictureText
 import com.eazyverse.testtrack.ui.SegmentedTabs
+import com.eazyverse.testtrack.ui.ToolsTopBar
 import com.eazyverse.testtrack.ui.WordsEntry
 import com.eazyverse.testtrack.ui.chatProfileOf
 import com.eazyverse.testtrack.ui.loadWordsFace
@@ -263,16 +259,10 @@ private fun EditorFrame(
     val penWidth = with(LocalDensity.current) { 6.dp.toPx() }
     Box(Modifier.fillMaxWidth().height(640.dp).background(t.photo)) {
         Column(Modifier.fillMaxSize()) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
-                EditorButton(Lucide.X, "Close") {}
-                Spacer(Modifier.weight(1f))
-                EditorButton(Lucide.Crop, "Crop and turn", active = mode == EditMode.CROP) {}
-                Spacer(Modifier.width(8.dp))
-                EditorButton(Lucide.Pencil, "Draw", active = mode == EditMode.DRAW) {}
-                Spacer(Modifier.width(8.dp))
-                EditorButton(Lucide.Type, "Add words") {}
-                Spacer(Modifier.width(8.dp))
-                EditorButton(Lucide.Undo2, "Undo", enabled = history.canUndo) { history.undo() }
+            when (mode) {
+                EditMode.NONE -> ToolsTopBar(history.canUndo, {}, {}, {}, {}, history::undo)
+                EditMode.DRAW -> DrawTopBar(history.canUndo, history::undo, {})
+                EditMode.CROP -> CropTopBar({}, {})
             }
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 PictureCanvas(
@@ -291,7 +281,7 @@ private fun EditorFrame(
             }
             when (mode) {
                 EditMode.DRAW -> PenBar(pen, 6f, {}, {})
-                EditMode.CROP -> CropBar(shape, {}, { history.commit(doc.turned()) }, {})
+                EditMode.CROP -> CropBar(shape, {}, { history.commit(doc.turned()) })
                 EditMode.NONE -> {
                     var value by remember { mutableStateOf(TextFieldValue(caption, TextRange(caption.length))) }
                     CaptionBar(value, { value = it }, problem, canSend = problem == null, busy = false, onSend = {})
