@@ -20,6 +20,7 @@ import com.eazyverse.testtrack.domain.ChatLimits
 import com.eazyverse.testtrack.domain.ChatLine
 import com.eazyverse.testtrack.domain.ChatQuote
 import com.eazyverse.testtrack.domain.ChatRow
+import com.eazyverse.testtrack.domain.ChatSelect
 import com.eazyverse.testtrack.domain.ChatState
 import com.eazyverse.testtrack.domain.ChatThread
 import com.eazyverse.testtrack.domain.DraftProblem
@@ -58,10 +59,6 @@ internal class Section(
 
 /** What a tap in the gallery opens over it. */
 internal sealed interface Overlay {
-    data class Message(
-        val line: ChatLine,
-    ) : Overlay
-
     data class Delete(
         val line: ChatLine,
     ) : Overlay
@@ -82,7 +79,6 @@ internal fun galleryActions(
     show: (Overlay) -> Unit,
     onTime: (ChatLine) -> Unit = {},
 ) = ChatActions(
-    onLongPress = { show(Overlay.Message(it)) },
     onFace = { show(Overlay.Profile(it)) },
     onPicture = { show(Overlay.Viewer(it)) },
     onTime = onTime,
@@ -130,7 +126,7 @@ internal fun bubbleSection(
         val a = galleryActions(show) { line -> shown = if (shown == line.id) null else line.id }
         Rows(edit(s.view(rows)).copy(timeShown = shown), a)
     }
-    val held = s.msg("held", KENJI, "Hold me down to see the lift.")
+    val held = s.msg("held", KENJI, "Hold me down to pick me.")
     // As people really write: a burst within minutes sits under one time line, a pause starts another.
     val spread =
         listOf(
@@ -236,7 +232,9 @@ internal fun bubbleSection(
             ),
             rows("Deleted, others", one(s.msg("d1", DANIEL, "", deleted = true))),
             rows("Deleted, yours", one(s.msg("d2", ME, "", deleted = true))),
-            rows("Held down (lifted while its sheet is up)", one(held)) { it.copy(lifted = held.id) },
+            rows("Picked with a hold (a wash across the row)", one(held)) {
+                it.copy(picks = ChatSelect.picks(setOf(held.id), listOf(held), writable = true))
+            },
             rows("Team post: the bot's name and face, a check mark, a lighter fill", one(s.team("tp", GallerySamples.PLAY_SLOW))),
             rows(
                 "Bot news, a run of two",

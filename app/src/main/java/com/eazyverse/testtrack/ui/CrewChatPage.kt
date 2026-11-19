@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import android.text.format.DateFormat
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -44,14 +45,15 @@ import com.eazyverse.testtrack.domain.ChatKind
 import com.eazyverse.testtrack.domain.ChatLimits
 import com.eazyverse.testtrack.domain.ChatLine
 import com.eazyverse.testtrack.domain.ChatPerson
+import com.eazyverse.testtrack.domain.ChatPicks
 import com.eazyverse.testtrack.domain.ChatPiece
 import com.eazyverse.testtrack.domain.ChatQuote
 import com.eazyverse.testtrack.domain.ChatRow
+import com.eazyverse.testtrack.domain.ChatSelect
 import com.eazyverse.testtrack.domain.ChatState
 import com.eazyverse.testtrack.domain.ChatText
 import com.eazyverse.testtrack.domain.ChatThread
 import com.eazyverse.testtrack.domain.DraftProblem
-import com.eazyverse.testtrack.domain.SendState
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.CrewChatViewModel
 import com.eazyverse.testtrack.viewmodel.delete
@@ -83,8 +85,8 @@ internal data class ChatView(
     val replyTo: ChatLine? = null,
     val problem: DraftProblem = DraftProblem.NONE,
     val loadingOlder: Boolean = false,
-    /** The message held down, lifted while its sheet is up. */
-    val lifted: String? = null,
+    /** The messages picked with a hold, and what the bar over the page offers for them. */
+    val picks: ChatPicks = ChatPicks(),
     /** The message tapped for its time, shown as a time line over it. */
     val timeShown: String? = null,
     /** A quote was tapped: the thread moves to the message it quotes. */
@@ -100,18 +102,13 @@ internal data class ChatView(
     /** Anything said by a member or the team, rather than only the bot's news. */
     val talk: Boolean get() = rows.any { it is ChatRow.Line && it.line.kind != ChatKind.BOT }
 
+    /** The reader can post here, so a message can be answered. */
+    val writable: Boolean get() = canPost && state == ChatState.OPEN
+
     fun name(seatId: String?): String = seatId?.let { people[it]?.name }?.ifBlank { null } ?: "Someone"
 
     /** Who wrote [line]: the bot's name for the bot's news and the team's posts, else the member's. */
     fun authorName(line: ChatLine): String = if (line.kind == ChatKind.USER) name(line.authorSeatId) else botName
-
-    /** The title of a held-down message's sheet: "Your message", "Kenji's message", "Crew bot's message". */
-    fun messageTitle(line: ChatLine): String =
-        when {
-            line.mine -> "Your message"
-            line.kind != ChatKind.USER -> "$botName's message"
-            else -> "${name(line.authorSeatId).substringBefore(' ')}'s message"
-        }
 
     fun mentionLabel(
         line: ChatLine,
@@ -174,7 +171,14 @@ internal class ChatActions(
     val onSend: () -> Unit = {},
     val onPickPicture: () -> Unit = {},
     val onClearReply: () -> Unit = {},
-    val onLongPress: (ChatLine) -> Unit = {},
+    /** A message held down picks it; while any are picked, a tap picks or unpicks. */
+    val onSelect: (ChatLine) -> Unit = {},
+    val onClearSelection: () -> Unit = {},
+    /** Answer a message: a swipe on it, or Reply in the bar. */
+    val onReply: (ChatLine) -> Unit = {},
+    val onReplyPicked: () -> Unit = {},
+    val onCopyPicked: () -> Unit = {},
+    val onDeletePicked: () -> Unit = {},
     val onFace: (String) -> Unit = {},
     val onRetryLine: (ChatLine) -> Unit = {},
     val onPicture: (ChatLine) -> Unit = {},
@@ -209,14 +213,19 @@ fun CrewChatScreen(
     LaunchedEffect(vm.draft.text) {
         if (field.text != vm.draft.text) field = TextFieldValue(vm.draft.text, TextRange(vm.draft.text.length))
     }
-    var pressed by remember { mutableStateOf<ChatLine?>(null) }
-    var deleting by remember { mutableStateOf<ChatLine?>(null) }
+    var picked by remember { mutableStateOf(emptySet<String>()) }
+    var deleting by remember { mutableStateOf<List<ChatLine>>(emptyList()) }
     var profile by remember { mutableStateOf<CrewTester?>(null) }
     var picture by remember { mutableStateOf<ChatLine?>(null) }
     var timeShown by remember { mutableStateOf<String?>(null) }
     var jump by remember { mutableStateOf<ChatJump?>(null) }
     val hour24 = DateFormat.is24HourFormat(context)
     val pickPicture = rememberChatPicturePicker(vm)
+    val writable = vm.canPost && vm.state == ChatState.OPEN
+    val picks = remember(picked, vm.lines, writable) { ChatSelect.picks(picked, vm.lines, writable) }
+    // A picked message that goes (or can no longer be picked) drops out; with none left the bar closes.
+    LaunchedEffect(picks.ids) { if (picks.ids != picked) picked = picks.ids }
+    BackHandler(enabled = picks.active) { picked = emptySet() }
 
     val name = crew?.name ?: "Crew"
     val view =
@@ -242,7 +251,7 @@ fun CrewChatScreen(
             replyTo = vm.replyTo,
             problem = vm.problem,
             loadingOlder = vm.loadingOlder,
-            lifted = pressed?.id,
+            picks = picks,
             timeShown = timeShown,
             jump = jump,
             seeking = vm.seeking,
@@ -274,7 +283,28 @@ fun CrewChatScreen(
             onSend = vm::send,
             onPickPicture = pickPicture,
             onClearReply = vm::clearReply,
-            onLongPress = { pressed = it },
+            onSelect = { picked = ChatSelect.toggle(picked, it.id) },
+            onClearSelection = { picked = emptySet() },
+            onReply = { if (ChatSelect.canReply(it, writable)) vm.reply(it) },
+            onReplyPicked = {
+                ChatSelect.lines(picked, vm.lines, writable).singleOrNull()?.let(vm::reply)
+                picked = emptySet()
+            },
+            onCopyPicked = {
+                val lines = ChatSelect.lines(picked, vm.lines, writable)
+                clipboard.setText(AnnotatedString(ChatSelect.copyText(lines, view::plain)))
+                picked = emptySet()
+            },
+            onDeletePicked = {
+                val lines = ChatSelect.lines(picked, vm.lines, writable)
+                // Messages that never sent only leave this phone, so they go without asking.
+                if (picks.ask) {
+                    deleting = lines
+                } else {
+                    picked = emptySet()
+                    lines.forEach(vm::delete)
+                }
+            },
             onFace = { seat -> profile = chatProfileOf(seat, vm.people[seat], crew) },
             onRetryLine = { vm.retry(it, context) },
             onPicture = { picture = it },
@@ -285,30 +315,26 @@ fun CrewChatScreen(
         )
     CrewChatBody(view, actions, field)
 
-    pressed?.let { line ->
-        ChatMessageSheet(
-            line = line,
-            title = view.messageTitle(line),
-            canReply = vm.canPost && line.send == SendState.SENT,
-            onReply = { vm.reply(line) },
-            onCopy = { clipboard.setText(AnnotatedString(view.plain(line.text))) },
-            // A message that never sent only leaves this phone, so it goes without asking.
-            onDelete = { if (line.send == SendState.SENT) deleting = line else vm.delete(line) },
-            onDismiss = { pressed = null },
-        )
-    }
-    deleting?.let { line ->
+    if (deleting.isNotEmpty()) {
+        val many = deleting.size > 1
         Ask(
-            title = "Delete this message?",
-            body = "It goes for everyone in $name. It still counts toward today's messages.",
+            title = if (many) "Delete ${deleting.size} messages?" else "Delete this message?",
+            body =
+                if (many) {
+                    "They go for everyone in $name. They still count toward today's messages."
+                } else {
+                    "It goes for everyone in $name. It still counts toward today's messages."
+                },
             confirm = "Delete",
-            dismiss = "Keep it",
+            dismiss = "Keep ${if (many) "them" else "it"}",
             destructive = true,
             onConfirm = {
-                deleting = null
-                vm.delete(line)
+                val gone = deleting
+                deleting = emptyList()
+                picked = emptySet()
+                gone.forEach(vm::delete)
             },
-            onDismiss = { deleting = null },
+            onDismiss = { deleting = emptyList() },
         )
     }
     profile?.let { CrewMemberProfile(it) { profile = null } }
@@ -331,19 +357,23 @@ internal fun CrewChatBody(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             Column {
-                PageBar(
-                    "${view.crewName} chat",
-                    actions.onBack,
-                    titleEnd =
-                        if (view.muted) {
-                            {
-                                Spacer(Modifier.size(6.dp))
-                                Icon(Lucide.BellOff, "Muted", Modifier.size(16.dp), tint = Tt.colors.text3)
-                            }
-                        } else {
-                            null
-                        },
-                ) { if (!view.failed && !view.loading) ChatMenu(view, actions) }
+                if (view.picks.active) {
+                    PickBar(view.picks, actions)
+                } else {
+                    PageBar(
+                        "${view.crewName} chat",
+                        actions.onBack,
+                        titleEnd =
+                            if (view.muted) {
+                                {
+                                    Spacer(Modifier.size(6.dp))
+                                    Icon(Lucide.BellOff, "Muted", Modifier.size(16.dp), tint = Tt.colors.text3)
+                                }
+                            } else {
+                                null
+                            },
+                    ) { if (!view.failed && !view.loading) ChatMenu(view, actions) }
+                }
                 PageMessage(view.message, actions.onClearMessage)
             }
         },
@@ -380,7 +410,7 @@ private fun ChatEmpty(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .heightIn(min = maxHeight)
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = ChatGutter),
         ) {
             view.rows.forEach { ChatRowView(it, view, actions) }
             Spacer(Modifier.weight(1f))
@@ -420,7 +450,7 @@ private fun ChatThreadList(
         Modifier.fillMaxSize(),
         state = state,
         reverseLayout = true,
-        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 10.dp),
+        contentPadding = PaddingValues(start = ChatGutter, end = ChatGutter, top = 4.dp, bottom = 10.dp),
     ) {
         items(rows, key = { it.key }) { row -> ChatRowView(row, shown, actions) }
         if (view.loadingOlder) item(key = "older") { ChatSkeleton(Modifier.fillMaxWidth(), rows = 2) }

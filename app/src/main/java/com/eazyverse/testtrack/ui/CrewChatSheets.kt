@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,8 +36,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Reply
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.Users
-import com.eazyverse.testtrack.domain.ChatLine
-import com.eazyverse.testtrack.domain.SendState
+import com.eazyverse.testtrack.domain.ChatPicks
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /** The bar's ⋮: mute or unmute, and the crew's members when it has a page for them. */
@@ -102,54 +101,30 @@ private fun MenuRow(
     }
 }
 
-/** What a held-down message offers: Reply, Copy, and Delete on your own (Remove when it never sent). */
+/**
+ * The bar while messages are picked, in place of the page's own: the way out, how many are
+ * picked, and what can be done with them. Reply is for one message; Copy and Delete work on
+ * many (Delete only when every one is yours, and "Remove" when none of them ever sent).
+ */
 @Composable
-internal fun ChatMessageSheet(
-    line: ChatLine,
-    title: String,
-    canReply: Boolean,
-    onReply: () -> Unit,
-    onCopy: () -> Unit,
-    onDelete: () -> Unit,
-    onDismiss: () -> Unit,
+internal fun PickBar(
+    picks: ChatPicks,
+    actions: ChatActions,
 ) {
-    PickerSheet(title = title, onDismiss = onDismiss, skipHalf = true) { close ->
-        Column(Modifier.fillMaxWidth().padding(bottom = 18.dp)) {
-            if (canReply) SheetAction(Lucide.Reply, "Reply") { close(onReply) }
-            if (line.text.isNotBlank()) SheetAction(Lucide.Copy, "Copy") { close(onCopy) }
-            when {
-                // Still on its way: it can't be called back, so nothing to offer until it lands or fails.
-                !line.mine || line.send == SendState.SENDING -> Unit
-                line.send == SendState.SENT -> SheetAction(Lucide.Trash2, "Delete", "Gone for everyone", danger = true) { close(onDelete) }
-                else -> SheetAction(Lucide.Trash2, "Remove", "Not sent", danger = true) { close(onDelete) }
-            }
-        }
+    val t = Tt.colors
+    PageBar("${picks.count} selected", actions.onClearSelection) {
+        if (picks.reply) PickButton(Lucide.Reply, "Reply", t.text2, actions.onReplyPicked)
+        if (picks.copy) PickButton(Lucide.Copy, "Copy", t.text2, actions.onCopyPicked)
+        if (picks.delete) PickButton(Lucide.Trash2, if (picks.removeOnly) "Remove" else "Delete", t.bad, actions.onDeletePicked)
     }
 }
 
 @Composable
-private fun SheetAction(
+private fun PickButton(
     icon: ImageVector,
-    title: String,
-    line: String? = null,
-    danger: Boolean = false,
+    label: String,
+    tint: Color,
     onClick: () -> Unit,
 ) {
-    val t = Tt.colors
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 58.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconTile(icon, danger = danger)
-        Spacer(Modifier.width(14.dp))
-        Column {
-            Text(title, style = chatStyle(16f, 20f), fontWeight = FontWeight.SemiBold, color = if (danger) t.bad else t.text)
-            if (line != null) Text(line, style = chatStyle(12.5f, 16f), color = t.text3)
-        }
-    }
+    IconButton(onClick = onClick) { Icon(icon, label, Modifier.size(20.dp), tint = tint) }
 }

@@ -2,6 +2,7 @@ package com.eazyverse.testtrack.fixture
 
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.domain.ChatDraft
+import com.eazyverse.testtrack.domain.ChatLine
+import com.eazyverse.testtrack.domain.ChatSelect
 import com.eazyverse.testtrack.domain.SendState
 import com.eazyverse.testtrack.fixture.GallerySamples.Companion.KENJI
 import com.eazyverse.testtrack.fixture.GallerySamples.Companion.ME
@@ -41,7 +44,6 @@ import com.eazyverse.testtrack.ui.CaptionBar
 import com.eazyverse.testtrack.ui.ChatActions
 import com.eazyverse.testtrack.ui.ChatImageViewer
 import com.eazyverse.testtrack.ui.ChatJump
-import com.eazyverse.testtrack.ui.ChatMessageSheet
 import com.eazyverse.testtrack.ui.ChatPictureEditor
 import com.eazyverse.testtrack.ui.Crew
 import com.eazyverse.testtrack.ui.CrewChatBody
@@ -111,15 +113,20 @@ internal fun sheetSection(
 ): Section {
     val a = galleryActions(show)
     val lines = SheetLines(s)
+
+    fun picked(vararg held: ChatLine) =
+        s.view(s.laid(held.toList())).copy(picks = ChatSelect.picks(held.map { it.id }.toSet(), held.toList(), writable = true))
     return Section(
         "sheets",
         "Sheets and dialogs",
         listOf(
             Shot("The full chat page on its own, every tap works") { OpenButton("Open the chat page", openPage) },
-            Shot("Long-press sheet, others' message") { OpenButton("Open") { show(Overlay.Message(lines.others)) } },
-            Shot("Long-press sheet, your message") { OpenButton("Open") { show(Overlay.Message(lines.own)) } },
-            Shot("Long-press sheet, the team's post (Reply and Copy)") { OpenButton("Open") { show(Overlay.Message(lines.bot)) } },
-            Shot("Long-press sheet, your message that didn't send") { OpenButton("Open") { show(Overlay.Message(lines.failed)) } },
+            Shot("Picked, someone's message (bar: Reply, Copy)") { PageBox(picked(lines.others), a, 300.dp) },
+            Shot("Picked, your message (bar: Reply, Copy, Delete)") { PageBox(picked(lines.own), a, 300.dp) },
+            Shot("Picked, the team's post (bar: Reply, Copy)") { PageBox(picked(lines.bot), a, 300.dp) },
+            Shot("Picked, your message that didn't send (bar: Copy, Remove)") { PageBox(picked(lines.failed), a, 300.dp) },
+            Shot("Picked, two of them (bar: Copy, Delete)") { PageBox(picked(lines.own, lines.failed), a, 300.dp) },
+            Shot("Picked, one of them someone else's (bar: Copy only)") { PageBox(picked(lines.others, lines.own), a, 300.dp) },
             Shot("Delete dialog") { OpenButton("Open") { show(Overlay.Delete(lines.own)) } },
             Shot("Profile (from a face)") { OpenButton("Open") { show(Overlay.Profile(KENJI)) } },
             Shot("Picture viewer") { OpenButton("Open") { show(Overlay.Viewer(lines.picture)) } },
@@ -134,22 +141,9 @@ internal fun sheetSection(
 internal fun OverlayHost(
     overlay: Overlay,
     s: GallerySamples,
-    show: (Overlay) -> Unit,
     close: () -> Unit,
 ) {
     when (overlay) {
-        is Overlay.Message -> {
-            val line = overlay.line
-            ChatMessageSheet(
-                line = line,
-                title = s.view().messageTitle(line),
-                canReply = line.send == SendState.SENT,
-                onReply = {},
-                onCopy = {},
-                onDelete = { if (line.send == SendState.SENT) show(Overlay.Delete(line)) },
-                onDismiss = close,
-            )
-        }
         is Overlay.Delete ->
             Ask(
                 title = "Delete this message?",
@@ -191,7 +185,10 @@ internal fun GalleryPage(
     var shown by remember { mutableStateOf<String?>(null) }
     var jump by remember { mutableStateOf<ChatJump?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
-    val view = s.view(s.threadRows()).copy(muted = muted, draft = draft, timeShown = shown, jump = jump, message = message)
+    var held by remember { mutableStateOf(emptySet<String>()) }
+    val picks = ChatSelect.picks(held, s.thread, writable = true)
+    val view = s.view(s.threadRows()).copy(muted = muted, draft = draft, timeShown = shown, jump = jump, message = message, picks = picks)
+    BackHandler(enabled = picks.active) { held = emptySet() }
     val base = galleryActions(show)
     val actions =
         ChatActions(
@@ -206,7 +203,11 @@ internal fun GalleryPage(
                 field = TextFieldValue(next.text, TextRange(cursor))
             },
             onPickPicture = { show(Overlay.Editor) },
-            onLongPress = base.onLongPress,
+            onSelect = { held = ChatSelect.toggle(held, it.id) },
+            onClearSelection = { held = emptySet() },
+            onReplyPicked = { held = emptySet() },
+            onCopyPicked = { held = emptySet() },
+            onDeletePicked = { held = emptySet() },
             onFace = base.onFace,
             onPicture = base.onPicture,
             onTime = { shown = if (shown == it.id) null else it.id },

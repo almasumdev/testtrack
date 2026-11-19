@@ -102,6 +102,13 @@ internal fun ChatComposer(
     val showSend = field.text.isNotBlank() && view.messagesLeft > 0
     val typing = rememberMentionTyping(view, field)
     val focus = remember { FocusRequester() }
+    // A reply just set (a swipe, or Reply in the bar) puts the cursor in the field, ready to write.
+    val replyId = view.replyTo?.id
+    var seen by remember { mutableStateOf(replyId) }
+    LaunchedEffect(replyId) {
+        if (replyId != null && replyId != seen) focus.requestFocus()
+        seen = replyId
+    }
     ComposerFrame {
         view.replyTo?.let { reply ->
             val quote = view.quoteOf(ChatQuote(reply.id, reply.authorSeatId, reply.text, reply.picture != null))

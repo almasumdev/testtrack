@@ -90,10 +90,6 @@ private fun overlayFor(
 ): Overlay? {
     val lines = SheetLines(s)
     return when (name) {
-        "message_others" -> Overlay.Message(lines.others)
-        "message_own" -> Overlay.Message(lines.own)
-        "message_bot" -> Overlay.Message(lines.bot)
-        "message_failed" -> Overlay.Message(lines.failed)
         "delete" -> Overlay.Delete(lines.own)
         "profile" -> Overlay.Profile(GallerySamples.KENJI)
         "viewer" -> Overlay.Viewer(lines.picture)
@@ -154,7 +150,7 @@ private fun ChatGallery(
             }
         }
     }
-    overlay?.let { OverlayHost(it, s, show) { overlay = null } }
+    overlay?.let { OverlayHost(it, s) { overlay = null } }
 }
 
 @Composable
