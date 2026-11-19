@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +53,7 @@ internal fun ChatMessageText(
     view: ChatView,
     modifier: Modifier = Modifier,
     ink: Color = Tt.colors.text,
+    onTextLayout: (TextLayoutResult) -> Unit = {},
 ) {
     val t = Tt.colors
     val style = chatStyle(15f, 20f)
@@ -99,7 +101,7 @@ internal fun ChatMessageText(
                 }
             }
         }
-    Text(text, modifier, style = style, color = ink, inlineContent = inline)
+    Text(text, modifier, style = style, color = ink, inlineContent = inline, onTextLayout = onTextLayout)
 }
 
 @Composable

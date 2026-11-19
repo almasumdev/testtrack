@@ -359,3 +359,18 @@ fun ProofImage(
         contentScale = if (whole) ContentScale.FillWidth else ContentScale.Crop,
     )
 }
+
+/** One token-carrying loader for chat pictures, so a thumbnail and its viewer share one cache. */
+private var chatLoader: ImageLoader? = null
+
+@Composable
+internal fun rememberChatLoader(): ImageLoader {
+    val context = LocalContext.current.applicationContext
+    return remember {
+        chatLoader ?: ImageLoader
+            .Builder(context)
+            .okHttpClient { Api.images }
+            .build()
+            .also { chatLoader = it }
+    }
+}

@@ -122,10 +122,14 @@ sealed interface ChatRow {
         override val key = "new"
     }
 
-    /** [first] starts a run by one author: their name and face show on it. */
+    /**
+     * [first] starts a run by one author, where their name shows; [last] ends it, where their face
+     * shows. A line on its own is both.
+     */
     data class Line(
         val line: ChatLine,
         val first: Boolean,
+        val last: Boolean = true,
     ) : ChatRow {
         override val key = line.id
     }
@@ -166,7 +170,7 @@ object ChatThread {
     /**
      * The rows, oldest first: a day label wherever the day changes, the "new" line over the first
      * message unread between [newFromRev] and [newToRev], and each message marked
-     * [ChatRow.Line.first] where a new author starts.
+     * [ChatRow.Line.first] where a new author starts and [ChatRow.Line.last] where that run ends.
      */
     fun rows(
         lines: List<ChatLine>,
@@ -196,6 +200,10 @@ object ChatThread {
             val sameAuthor = prev != null && prev.authorSeatId == line.authorSeatId && prev.mine == line.mine
             val bothUser = prev?.kind == ChatKind.USER && line.kind == ChatKind.USER
             val joined = !broke && sameAuthor && bothUser
+            if (joined) {
+                val at = rows.lastIndex
+                rows[at] = (rows[at] as ChatRow.Line).copy(last = false)
+            }
             rows += ChatRow.Line(line, first = !joined)
             last = line
         }

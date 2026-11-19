@@ -116,6 +116,14 @@ data class TtTokens(
     /** The closed-test flask on a tile's corner: its liquid, and the glass outline round it. */
     val flaskLiquid: Color,
     val flaskGlass: Color,
+    /** Behind a picture shown whole, the ink over it, and the dark pill a time sits on over a picture. */
+    val photo: Color,
+    val onPhoto: Color,
+    val photoScrim: Color,
+    /** A problem said over a picture in the picture editor, light enough to read on [photo]. */
+    val photoBad: Color,
+    /** The pen and word colours in the picture editor. They mark the picture, so they never change with the theme. */
+    val pens: List<Color>,
 ) {
     val primary: Color get() = if (isDark) accentInk else accent
     val onPrimary: Color get() = if (isDark) bg else onAccent
@@ -150,6 +158,21 @@ val PlayBlue = Color(0xFF00A0FF)
 val PlayGreen = Color(0xFF00F076)
 val PlayYellow = Color(0xFFFFCE00)
 val PlayRed = Color(0xFFFF3A44)
+
+private val PhotoBad = Color(0xFFFF8A80)
+private val Pens =
+    listOf(
+        Color(0xFFFFFFFF),
+        Color(0xFF000000),
+        Color(0xFFF44336),
+        Color(0xFFFF9800),
+        Color(0xFFFFEB3B),
+        Color(0xFF4CAF50),
+        Color(0xFF00BCD4),
+        Color(0xFF2196F3),
+        Color(0xFF9C27B0),
+        Color(0xFFE91E63),
+    )
 
 private val OkLight = Color(0xFF246B59)
 private val WarnLight = Color(0xFF8A611C)
@@ -230,6 +253,11 @@ val OceanLight =
         cardLine = Color(0xFFE1ECF3),
         flaskLiquid = Color(0xFF9279D6),
         flaskGlass = Color(0xFF4A3B86),
+        photo = Color(0xFF000000),
+        onPhoto = Color(0xFFFFFFFF),
+        photoScrim = Color(0xFF000000).alpha(0.5f),
+        photoBad = PhotoBad,
+        pens = Pens,
     )
 
 val OceanDark =
@@ -305,6 +333,11 @@ val OceanDark =
         cardLine = Color(0xFF2D3034),
         flaskLiquid = Color(0xFF8C70D4),
         flaskGlass = Color(0xFFCDBEF0),
+        photo = Color(0xFF000000),
+        onPhoto = Color(0xFFFFFFFF),
+        photoScrim = Color(0xFF000000).alpha(0.5f),
+        photoBad = PhotoBad,
+        pens = Pens,
     )
 
 val LocalTokens = staticCompositionLocalOf { OceanDark }

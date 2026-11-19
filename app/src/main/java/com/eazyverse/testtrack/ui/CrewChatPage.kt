@@ -1,16 +1,14 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -58,7 +56,6 @@ import com.eazyverse.testtrack.viewmodel.CrewChatViewModel
 import com.eazyverse.testtrack.viewmodel.delete
 import com.eazyverse.testtrack.viewmodel.retry
 import com.eazyverse.testtrack.viewmodel.send
-import com.eazyverse.testtrack.viewmodel.sendPicture
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -151,7 +148,7 @@ internal class ChatActions(
     val onLongPress: (ChatLine) -> Unit = {},
     val onFace: (String) -> Unit = {},
     val onRetryLine: (ChatLine) -> Unit = {},
-    val onPicture: (String) -> Unit = {},
+    val onPicture: (ChatLine) -> Unit = {},
     val onLoadOlder: () -> Unit = {},
     val onClearMessage: () -> Unit = {},
 )
@@ -183,11 +180,8 @@ fun CrewChatScreen(
     var pressed by remember { mutableStateOf<ChatLine?>(null) }
     var deleting by remember { mutableStateOf<ChatLine?>(null) }
     var profile by remember { mutableStateOf<CrewTester?>(null) }
-    var picture by remember { mutableStateOf<String?>(null) }
-    val picker =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) vm.sendPicture(context, uri)
-        }
+    var picture by remember { mutableStateOf<ChatLine?>(null) }
+    val pickPicture = rememberChatPicturePicker(vm)
 
     val name = crew?.name ?: "Crew"
     val view =
@@ -228,7 +222,7 @@ fun CrewChatScreen(
                 if (at != null && vm.people.values.any { it.inCrew && !it.mine }) mentionAt = at
             },
             onSend = vm::send,
-            onPickPicture = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            onPickPicture = pickPicture,
             onClearReply = vm::clearReply,
             onLongPress = { pressed = it },
             onFace = { seat -> profile = chatProfileOf(seat, vm.people[seat], crew) },
@@ -277,7 +271,10 @@ fun CrewChatScreen(
         )
     }
     profile?.let { CrewMemberProfile(it) { profile = null } }
-    picture?.let { ChatPictureViewer(it) { picture = null } }
+    picture?.let { line ->
+        val who = if (line.mine) "You" else view.name(line.authorSeatId)
+        ChatImageViewer(line, who, view.plain(line.text)) { picture = null }
+    }
 }
 
 /** The chat page, drawn from [view]: the bar, the thread, and the composer or why there is none. */
@@ -314,7 +311,6 @@ internal fun CrewChatBody(
                 view.failed -> Unit
                 view.loading -> ChatComposerLoading()
                 !view.canPost || view.state != ChatState.OPEN -> ChatClosedBar(view.closedLine)
-                view.messagesLeft <= 0 -> ChatLimitCard(view.limits.messagesPerDay)
                 else -> ChatComposer(view, actions, field)
             }
         },
@@ -330,21 +326,25 @@ internal fun CrewChatBody(
     }
 }
 
-/** No member has said anything yet: the bot's news, if any, then a word to start. */
+/** No member has said anything yet: the bot's news, if any, then a word to start in the space left. */
 @Composable
 private fun ChatEmpty(
     view: ChatView,
     actions: ChatActions,
 ) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp)) {
-        view.rows.forEach { ChatRowView(it, view, actions) }
-        Spacer(Modifier.height(20.dp))
-        RobotState(
-            Prop.Letter,
-            "No messages yet",
-            if (view.canPost) "Say hi, or ask the crew about an app." else "Nobody wrote in this chat.",
-            fill = false,
-        )
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = maxHeight)
+                .padding(horizontal = 12.dp),
+        ) {
+            view.rows.forEach { ChatRowView(it, view, actions) }
+            Spacer(Modifier.weight(1f))
+            ChatEmptyNote(view.canPost, Modifier.align(Alignment.CenterHorizontally))
+            Spacer(Modifier.weight(1f))
+        }
     }
 }
 

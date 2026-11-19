@@ -36,6 +36,7 @@ import com.eazyverse.testtrack.ui.theme.tabular
 internal fun TimeText(
     text: String,
     modifier: Modifier = Modifier,
+    color: Color = Tt.colors.text4,
 ) {
     if (text.isBlank()) return
     Text(
@@ -43,7 +44,8 @@ internal fun TimeText(
         modifier,
         style = TimeStyle(),
         fontWeight = FontWeight.Medium,
-        color = Tt.colors.text4,
+        color = color,
+        maxLines = 1,
     )
 }
 
