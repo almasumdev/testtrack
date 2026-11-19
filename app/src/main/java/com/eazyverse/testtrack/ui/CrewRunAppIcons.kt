@@ -3,6 +3,8 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -15,7 +17,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Lucide
@@ -23,8 +24,8 @@ import com.composables.icons.lucide.Minus
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
- * The crew's other apps in a stable order, each marked for tonight: a check when opened, a dash
- * when reported, plain while still owed, and faint when tonight owes it nothing. [quiet] fades the
+ * The crew's other apps in a stable order, each marked for tonight: a check when opened, dimmed
+ * with a dash when reported, plain while still owed, and faint when tonight owes it nothing. [quiet] fades the
  * whole strip, for a reader whose own app is out.
  */
 @Composable
@@ -50,9 +51,9 @@ internal fun CrewRunAppIcons(
                             AppMark(app.packageName, app.label, seat?.icon.orEmpty(), size = side)
                         }
                         if (app.done) {
-                            Corner(Lucide.Check, Tone.OK.ink(), side)
+                            Corner(Lucide.Check, Tt.colors.ok)
                         } else if (app.reported) {
-                            Corner(Lucide.Minus, Tone.WARN.ink(), side)
+                            Corner(Lucide.Minus, Tt.colors.warn)
                         }
                     }
                 }
@@ -61,22 +62,34 @@ internal fun CrewRunAppIcons(
     }
 }
 
-/** A small round mark on an app's bottom-right corner. */
+/**
+ * A small round mark on an app's bottom-end corner, set 2dp past the icon, with a ring in the
+ * card's colour so it reads apart from the art under it.
+ */
 @Composable
 private fun BoxScope.Corner(
     icon: ImageVector,
-    ink: Color,
-    side: Dp,
+    fill: Color,
 ) {
+    val t = Tt.colors
     Box(
         Modifier
             .align(Alignment.BottomEnd)
-            .size((side * 0.48f).coerceAtMost(10.dp))
+            // The ring sits outside the mark, so the mark itself ends 2dp past the icon.
+            .offset(x = MarkPast + MarkRing, y = MarkPast + MarkRing)
+            .size(MarkSize + MarkRing * 2)
             .clip(CircleShape)
-            .background(ink),
+            .background(t.bg)
+            .padding(MarkRing)
+            .clip(CircleShape)
+            .background(fill),
         contentAlignment = Alignment.Center,
-    ) { Icon(icon, null, Modifier.size(8.dp), tint = Tt.colors.inkOn(ink)) }
+    ) { Icon(icon, null, Modifier.size(8.dp), tint = t.inkOn(fill)) }
 }
+
+private val MarkSize = 11.dp
+private val MarkRing = 1.5.dp
+private val MarkPast = 2.dp
 
 @Composable
 internal fun CrewRunAppIconsLoading() {

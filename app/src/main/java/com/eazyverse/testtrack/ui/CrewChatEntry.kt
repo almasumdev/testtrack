@@ -42,10 +42,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.BellOff
 import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageCircle
@@ -55,7 +53,7 @@ import com.eazyverse.testtrack.ui.theme.tabular
 
 /*
  * The ways into a crew's chat: a floating Chat button on the crew's page, and its unread count on
- * the crew tiles, where a tap opens it too, and the Crew tab's segments.
+ * the crew tiles, where a tap opens it too, and a dot on the Crew tab's segments.
  */
 
 /** Room under a list for the floating button, so it never sits over the last row. */
@@ -193,41 +191,6 @@ private fun BoxScope.ChatFab(
     }
 }
 
-/**
- * Unread chat as a small pill: the chat mark and the count, in the badge fill, or quiet with a
- * crossed-out bell when the chat is muted. [small] is the size for a tab segment; the crew tiles
- * use [CrewChatTileButton].
- */
-@Composable
-internal fun ChatBadge(
-    count: Int,
-    muted: Boolean = false,
-    small: Boolean = false,
-) {
-    val t = Tt.colors
-    val height: Dp = if (small) 17.dp else 24.dp
-    Row(
-        Modifier
-            .height(height)
-            .clip(RoundedCornerShape(height / 2))
-            .background(if (muted) t.tile else t.badgeFill)
-            .padding(start = if (small) 3.dp else 6.dp, end = if (small) 4.dp else 8.dp)
-            .semantics { contentDescription = if (muted) "$count unread, muted" else "$count unread in chat" },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val ink = if (muted) t.text3 else t.onAccent
-        Icon(if (muted) Lucide.BellOff else Lucide.MessageCircle, null, Modifier.size(if (small) 10.dp else 16.dp), tint = ink)
-        Spacer(Modifier.width(if (small) 1.dp else 4.dp))
-        Text(
-            if (count > 99) "99+" else "$count",
-            style = chatStyle(if (small) 10.5f else 14f, if (small) 17f else 24f).tabular().copy(letterSpacing = 0.sp),
-            fontWeight = FontWeight.Bold,
-            color = ink,
-            maxLines = 1,
-        )
-    }
-}
-
 /** The chat mark's slot on a crew tile: the same 28dp as the tile's app icon, so both sit on one centre line. */
 private val TileMark = 28.dp
 
@@ -295,7 +258,7 @@ internal fun CrewChatTileButton(
     }
 }
 
-/** Unread chat over the Lobby's or the Run's crews, leaving muted chats out, for the segment's badge. */
+/** Unread chat over the Lobby's or the Run's crews, leaving muted chats out, for the segment's dot. */
 internal fun chatUnreadOf(
     crews: List<Crew>,
     phase: CrewPhase,

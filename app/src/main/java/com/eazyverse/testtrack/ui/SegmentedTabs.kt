@@ -16,10 +16,13 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,7 +45,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.ui.theme.Tt
-import com.eazyverse.testtrack.ui.theme.tabular
 
 /**
  * The tab row as one round track with the current tab filled in it.
@@ -64,8 +66,8 @@ fun SegmentedTabs(
     modifier: Modifier = Modifier,
     /** Per tab, in the same order. Zero, or an absent entry, draws nothing. */
     counts: List<Int> = emptyList(),
-    /** Unread chat per tab, drawn after the count as a chat badge. Zero draws nothing. */
-    chats: List<Int> = emptyList(),
+    /** New chat per tab, drawn as a small dot right after the label. False, or an absent entry, draws nothing. */
+    chatDots: List<Boolean> = emptyList(),
     @Suppress("UNUSED_PARAMETER") gap: Int = 20,
     onSelect: (Int) -> Unit,
 ) {
@@ -86,20 +88,15 @@ fun SegmentedTabs(
 
         fun count(index: Int) = counts.getOrElse(index) { 0 }
 
-        fun chat(index: Int) = chats.getOrElse(index) { 0 }
-        val chatStyle =
-            MaterialTheme.typography.bodyMedium
-                .copy(fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
-                .tabular()
+        fun dot(index: Int) = chatDots.getOrElse(index) { false }
 
-        // What each segment spends besides its words: touch room on both sides, and its count when it has one.
+        // What each segment spends besides its words: touch room on both sides, its chat dot and its count.
         val fixed =
             labels.indices.map {
                 val c = count(it)
-                val m = chat(it)
                 px(SegPad * 2) +
                     (if (c > 0) px(CountGap) + measurer.measure("$c", countStyle).size.width + px(CountPad * 2) else 0f) +
-                    if (m > 0) px(ChatGap + ChatBadgeExtra) + measurer.measure(if (m > 99) "99+" else "$m", chatStyle).size.width else 0f
+                    if (dot(it)) px(DotGap + DotSize) else 0f
             }
 
         fun words(
@@ -168,7 +165,7 @@ fun SegmentedTabs(
                     Segment(
                         label = label,
                         count = c,
-                        chat = chat(index),
+                        dot = dot(index),
                         current = index == selected,
                         style = style,
                         countStyle = countStyle,
@@ -185,7 +182,7 @@ fun SegmentedTabs(
 private fun Segment(
     label: String,
     count: Int,
-    chat: Int,
+    dot: Boolean,
     current: Boolean,
     style: TextStyle,
     countStyle: TextStyle,
@@ -219,7 +216,10 @@ private fun Segment(
                 indication = null,
                 role = Role.Tab,
                 onClick = onSelect,
-            ).semantics { if (count > 0) contentDescription = "$label, $count waiting" },
+            ).semantics {
+                val said = listOfNotNull(label, "$count waiting".takeIf { count > 0 }, "new chat".takeIf { dot })
+                if (said.size > 1) contentDescription = said.joinToString(", ")
+            },
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -233,6 +233,16 @@ private fun Segment(
                 maxLines = 1,
                 softWrap = false,
             )
+            if (dot) {
+                Box(
+                    Modifier
+                        .padding(start = DotGap)
+                        .offset(y = (-6).dp)
+                        .size(DotSize)
+                        .clip(CircleShape)
+                        .background(t.primary),
+                )
+            }
             if (count > 0) {
                 Spacer(Modifier.width(CountGap))
                 Box(
@@ -245,10 +255,6 @@ private fun Segment(
                 ) {
                     Text("$count", style = countStyle, color = t.tileInk, maxLines = 1)
                 }
-            }
-            if (chat > 0) {
-                Spacer(Modifier.width(ChatGap))
-                ChatBadge(chat, small = true)
             }
         }
     }
@@ -268,7 +274,7 @@ private val SegGap = 2.dp
 private val SegPad = 10.dp
 private val CountGap = 5.dp
 
-// A tab's chat badge: the gap before it, then its padding, mark and the mark's gap round the count.
-private val ChatGap = 4.dp
-private val ChatBadgeExtra = 3.dp + 4.dp + 10.dp + 1.dp
+// New chat on a tab: a dot just after the label, raised to its top end.
+private val DotGap = 2.dp
+private val DotSize = 7.dp
 private val CountPad = 5.dp
