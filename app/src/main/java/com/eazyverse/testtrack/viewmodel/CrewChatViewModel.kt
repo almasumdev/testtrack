@@ -363,7 +363,7 @@ class CrewChatViewModel : ViewModel() {
     }
 
     fun reply(line: ChatLine) {
-        if (line.kind == ChatKind.USER && !line.deleted) replyTo = line
+        if (!line.deleted) replyTo = line
     }
 
     fun clearReply() {

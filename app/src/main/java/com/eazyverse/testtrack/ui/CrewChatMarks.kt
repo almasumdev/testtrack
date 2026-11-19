@@ -92,7 +92,7 @@ internal fun ChatSkeleton(
 private val SkeletonRows =
     listOf(0 to 0.62f, 0 to 0.44f, 1 to 0.52f, 0 to 0.7f, 1 to 0.4f, 0 to 0.55f, 1 to 0.64f, 0 to 0.46f)
 
-/** A dashed edge: round a deleted message, and round a team post. */
+/** A dashed edge, round a deleted message. */
 internal fun Modifier.dashed(
     color: Color,
     corner: Dp,

@@ -112,12 +112,14 @@ internal class GallerySamples(
         seq: Long = 0,
     ) = ChatLine(id = id, seq = seq, rev = seq, kind = ChatKind.BOT, text = text, event = event, at = at)
 
+    /** A post from the team, under the bot's name; [quote] makes it a reply to a member. */
     fun team(
         id: String,
         text: String,
         at: Instant = today(9, 30),
         seq: Long = 0,
-    ) = ChatLine(id = id, seq = seq, rev = seq, kind = ChatKind.TEAM, text = text, at = at)
+        quote: ChatQuote? = null,
+    ) = ChatLine(id = id, seq = seq, rev = seq, kind = ChatKind.TEAM, text = text, quote = quote, at = at)
 
     /** A picture the server holds, read by its address, as a sent one is. */
     fun sent(
@@ -143,7 +145,8 @@ internal class GallerySamples(
 
     // The full thread, as people really write: a few people within minutes under one time line, and
     // a new line only after a pause. Yesterday's evening, then tonight, with news since the reader
-    // last looked. Two replies quote further up: one still held, one the chat no longer keeps.
+    // last looked. Two replies quote further up: one still held, one the chat no longer keeps. This
+    // morning the team posts, Kenji replies to it, and the team answers him in a run of two.
 
     val thread: List<ChatLine> =
         listOf(
@@ -161,31 +164,29 @@ internal class GallerySamples(
             msg("t5", NADIA, "That worked, thanks!", yesterday(19, 45), 5),
             msg("t5b", ME, "Thanks for checking it so carefully.", yesterday(19, 46), 6),
             bot("t6", "Night 6 started. 9 apps to open tonight.", "night", today(0, 1), 7),
-            team(
-                "t7",
-                "Play is slow to show new testers today. If an app says it isn't available, wait an hour and try again.",
-                today(9, 30),
-                8,
-            ),
+            team("t7", PLAY_SLOW, today(9, 30), 8),
+            msg("t7b", KENJI, SHOWED_UP, today(9, 34), 9, quote = ChatQuote("t7", null, PLAY_SLOW)),
+            team("t7c", "Good to hear.", today(9, 36), 10, quote = ChatQuote("t7b", KENJI, SHOWED_UP)),
+            team("t7d", "${seat(KENJI)} if one still won't show by tonight, write here and we'll look.", today(9, 36), 11),
             msg(
                 "t8",
                 SOFIA,
                 "${app(KENJI)} closed on me when I tapped Start. Screenshot here.",
                 today(19, 12),
-                9,
+                12,
                 picture = sent(landscape, 1600, 900),
             ),
-            msg("t9", KENJI, "${seat(SOFIA)} thanks, which phone is that?", today(19, 13), 10),
-            msg("t9b", SOFIA, "Pixel 7, Android 14.", today(19, 13), 11),
-            msg("t10", KENJI, "${seat(ME)} did yours open fine tonight?", today(19, 14), 12),
-            msg("t10b", DANIEL, "Mine closed too, on the same screen.", today(19, 16), 13),
-            msg("t11", DANIEL, "", today(19, 16), 14, picture = sent(portrait, 900, 1600)),
+            msg("t9", KENJI, "${seat(SOFIA)} thanks, which phone is that?", today(19, 13), 13),
+            msg("t9b", SOFIA, "Pixel 7, Android 14.", today(19, 13), 14),
+            msg("t10", KENJI, "${seat(ME)} did yours open fine tonight?", today(19, 14), 15),
+            msg("t10b", DANIEL, "Mine closed too, on the same screen.", today(19, 16), 16),
+            msg("t11", DANIEL, "", today(19, 16), 17, picture = sent(portrait, 900, 1600)),
             msg(
                 "t12",
                 ME,
                 "All good on mine, opened it a minute ago.",
                 today(19, 40),
-                15,
+                18,
                 quote = ChatQuote("t10", KENJI, "@Arjun Mehta did yours open fine tonight?"),
             ),
             msg(
@@ -193,14 +194,14 @@ internal class GallerySamples(
                 NADIA,
                 "It's in the seat notes now.",
                 today(19, 41),
-                16,
+                19,
                 quote = ChatQuote(GONE_ID, ZARA, "Where is the link to the testers group?"),
             ),
             msg("t13", ME, "Will check Steps Daily again after the update.", Instant.now(), send = SendState.SENDING),
         )
 
     /** The thread laid out as the page lays it out: time lines, and the "new" line over Sofia's picture. */
-    fun threadRows(): List<ChatRow> = ChatThread.rows(thread, newFromRev = 8, hour24 = hour24)
+    fun threadRows(): List<ChatRow> = ChatThread.rows(thread, newFromRev = 11, hour24 = hour24)
 
     /** [lines] with the page's own time lines and runs, nothing marked new. */
     fun laid(lines: List<ChatLine>): List<ChatRow> = ChatThread.rows(lines, null, hour24 = hour24)
@@ -292,6 +293,8 @@ internal class GallerySamples(
 
     companion object {
         const val CREW = "Crew 05"
+        const val PLAY_SLOW = "Play is slow to show new testers today. If an app says it isn't available, wait an hour and try again."
+        const val SHOWED_UP = "Thanks, Pocket Recipes showed up after a while."
         const val ME = "a0000001"
         const val KENJI = "a0000002"
         const val NADIA = "a0000003"

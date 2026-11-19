@@ -182,6 +182,7 @@ object ChatThread {
      * since the one before (any author), the "new" line over the first message unread between
      * [newFromRev] and [newToRev], and each message marked [ChatRow.Line.first] where a new author
      * starts and [ChatRow.Line.last] where that run ends. A time line ends a run, as the new line does.
+     * The bot and the team are one author: their lines run together, never with a member's.
      */
     fun rows(
         lines: List<ChatLine>,
@@ -214,8 +215,9 @@ object ChatThread {
             }
             val prev = last
             val sameAuthor = prev != null && prev.authorSeatId == line.authorSeatId && prev.mine == line.mine
-            val bothUser = prev?.kind == ChatKind.USER && line.kind == ChatKind.USER
-            val joined = !broke && sameAuthor && bothUser
+            // The bot's news and the team's posts all speak as the bot, so they run together as one author.
+            val sameVoice = prev != null && (prev.kind == ChatKind.USER) == (line.kind == ChatKind.USER)
+            val joined = !broke && sameAuthor && sameVoice
             if (joined) {
                 val end = rows.lastIndex
                 rows[end] = (rows[end] as ChatRow.Line).copy(last = false)

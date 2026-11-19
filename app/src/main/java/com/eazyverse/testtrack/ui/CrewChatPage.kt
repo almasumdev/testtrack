@@ -102,6 +102,17 @@ internal data class ChatView(
 
     fun name(seatId: String?): String = seatId?.let { people[it]?.name }?.ifBlank { null } ?: "Someone"
 
+    /** Who wrote [line]: the bot's name for the bot's news and the team's posts, else the member's. */
+    fun authorName(line: ChatLine): String = if (line.kind == ChatKind.USER) name(line.authorSeatId) else botName
+
+    /** The title of a held-down message's sheet: "Your message", "Kenji's message", "Crew bot's message". */
+    fun messageTitle(line: ChatLine): String =
+        when {
+            line.mine -> "Your message"
+            line.kind != ChatKind.USER -> "$botName's message"
+            else -> "${name(line.authorSeatId).substringBefore(' ')}'s message"
+        }
+
     fun mentionLabel(
         line: ChatLine,
         app: Boolean,
@@ -125,7 +136,13 @@ internal data class ChatView(
 
     fun quoteOf(quote: ChatQuote): QuoteView =
         QuoteView(
-            who = if (quote.authorSeatId != null && quote.authorSeatId == mySeat) "You" else name(quote.authorSeatId),
+            // Only the bot and the team write with no seat, so a quote with none is theirs.
+            who =
+                when (quote.authorSeatId) {
+                    null -> botName
+                    mySeat -> "You"
+                    else -> name(quote.authorSeatId)
+                },
             text =
                 when {
                     quote.deleted -> "Message deleted"
@@ -270,7 +287,7 @@ fun CrewChatScreen(
     pressed?.let { line ->
         ChatMessageSheet(
             line = line,
-            title = if (line.mine) "Your message" else "${view.name(line.authorSeatId).substringBefore(' ')}'s message",
+            title = view.messageTitle(line),
             canReply = vm.canPost && line.send == SendState.SENT,
             onReply = { vm.reply(line) },
             onCopy = { clipboard.setText(AnnotatedString(view.plain(line.text))) },
@@ -295,7 +312,7 @@ fun CrewChatScreen(
     }
     profile?.let { CrewMemberProfile(it) { profile = null } }
     picture?.let { line ->
-        val who = if (line.mine) "You" else view.name(line.authorSeatId)
+        val who = if (line.mine) "You" else view.authorName(line)
         ChatImageViewer(line, who, view.plain(line.text)) { picture = null }
     }
 }

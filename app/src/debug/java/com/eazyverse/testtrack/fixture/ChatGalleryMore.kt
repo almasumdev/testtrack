@@ -106,6 +106,7 @@ internal class SheetLines(
     val own = s.msg("sm", ME, "All good on mine, opened it a minute ago.")
     val failed = s.msg("sf", ME, "Opened all nine tonight.", send = SendState.FAILED, error = "No connection. Check your internet.")
     val picture = s.thread.first { it.id == "t8" }
+    val bot = s.thread.first { it.id == "t7" }
 }
 
 internal fun sheetSection(
@@ -122,6 +123,7 @@ internal fun sheetSection(
             Shot("The full chat page on its own, every tap works") { OpenButton("Open the chat page", openPage) },
             Shot("Long-press sheet, others' message") { OpenButton("Open") { show(Overlay.Message(lines.others)) } },
             Shot("Long-press sheet, your message") { OpenButton("Open") { show(Overlay.Message(lines.own)) } },
+            Shot("Long-press sheet, the team's post (Reply and Copy)") { OpenButton("Open") { show(Overlay.Message(lines.bot)) } },
             Shot("Long-press sheet, your message that didn't send") { OpenButton("Open") { show(Overlay.Message(lines.failed)) } },
             Shot("Delete dialog") { OpenButton("Open") { show(Overlay.Delete(lines.own)) } },
             Shot("Mention picker") { OpenButton("Open") { show(Overlay.Mention) } },
@@ -146,7 +148,7 @@ internal fun OverlayHost(
             val line = overlay.line
             ChatMessageSheet(
                 line = line,
-                title = if (line.mine) "Your message" else "${s.name(line).substringBefore(' ')}'s message",
+                title = s.view().messageTitle(line),
                 canReply = line.send == SendState.SENT,
                 onReply = {},
                 onCopy = {},

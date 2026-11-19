@@ -106,6 +106,17 @@ private fun one(line: ChatLine) = listOf(ChatRow.Line(line, first = true, last =
 
 private fun group(lines: List<ChatLine>) = lines.mapIndexed { i, line -> ChatRow.Line(line, first = i == 0, last = i == lines.lastIndex) }
 
+/** The team posts, Kenji replies to it, and the team answers him: a quote each way and a run of two. */
+private fun teamTalk(s: GallerySamples): List<ChatLine> =
+    listOf(
+        s.team("bt1", GallerySamples.PLAY_SLOW, today(9, 30)),
+        s.team("bt2", "Your nights still count while you wait.", today(9, 30)),
+        s.msg("bt3", KENJI, GallerySamples.SHOWED_UP, today(9, 34), quote = ChatQuote("bt1", null, GallerySamples.PLAY_SLOW)),
+        s.msg("bt4", NADIA, "Same for Tiny Tasks.", today(9, 35)),
+        s.team("bt5", "Good to hear.", today(9, 36), quote = ChatQuote("bt3", KENJI, GallerySamples.SHOWED_UP)),
+        s.team("bt6", "${seat(KENJI)} if one still won't show by tonight, write here and we'll look.", today(9, 36)),
+    )
+
 internal fun bubbleSection(
     s: GallerySamples,
     show: (Overlay) -> Unit,
@@ -228,12 +239,17 @@ internal fun bubbleSection(
             rows("Deleted, others", one(s.msg("d1", DANIEL, "", deleted = true))),
             rows("Deleted, yours", one(s.msg("d2", ME, "", deleted = true))),
             rows("Held down (lifted while its sheet is up)", one(held)) { it.copy(lifted = held.id) },
+            rows("Team post: the bot's name and face, a check mark, a lighter fill", one(s.team("tp", GallerySamples.PLAY_SLOW))),
             rows(
-                "Team post, with the robot",
-                one(s.team("tp", "Play is slow to show new testers today. If an app says it isn't available, wait an hour and try again.")),
+                "Bot news, a run of two",
+                group(
+                    listOf(
+                        s.bot("bn", "Night 6 started. 9 apps to open tonight.", "night"),
+                        s.bot("bp", "Daniel joined on night 2, so his nights end a day later.", "joined"),
+                    ),
+                ),
             ),
-            rows("Bot line, good news", one(s.bot("bn", "Night 6 started. 9 apps to open tonight.", "night"))),
-            rows("Bot line, plain", one(s.bot("bp", "Daniel joined on night 2, so his nights end a day later.", "joined"))),
+            rows("The bot posts, a member replies, the bot answers with a quote", s.laid(teamTalk(s))),
             rows("Time lines: older, yesterday, six messages in a burst under one line, then a pause", s.laid(spread)),
             rows("Tapped time open over a message (tap another to move it)", s.laid(tapped), open = "tt2"),
             rows(

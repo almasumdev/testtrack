@@ -46,7 +46,6 @@ import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessagesSquare
-import com.eazyverse.testtrack.domain.ChatKind
 import com.eazyverse.testtrack.domain.ChatLine
 import com.eazyverse.testtrack.domain.ChatRow
 import com.eazyverse.testtrack.domain.ChatThread
@@ -55,14 +54,11 @@ import kotlinx.coroutines.delay
 import java.time.LocalDate
 
 /*
- * The pieces of a crew's chat thread: the bot's lines, the team's posts, the time lines and the
- * divider before what is new, and the empty chat. Members' bubbles are in CrewChatBubble.kt.
+ * The pieces of a crew's chat thread: the time lines, the divider before what is new, and the
+ * empty chat. Every message, the bot's and the team's too, is a bubble from CrewChatBubble.kt.
  * Times work as in Messenger: none inside a message, a time line wherever talk starts again after
  * a pause, and a tapped message shows its own time line over it.
  */
-
-/** Bot lines that are good news, drawn in the ok colour. */
-private val GoodNews = setOf("started", "night", "halfway", "last_night", "ended")
 
 /** One row of the thread. */
 @Composable
@@ -75,18 +71,12 @@ internal fun ChatRowView(
         is ChatRow.Time -> TimeLine(row.label)
         is ChatRow.New -> NewDivider(row.count)
         is ChatRow.Line -> {
-            // Under a time line already, a tap has no time to add.
-            val onTap = { if (!row.stamped) actions.onTime(row.line) }
             val open = row.line.at != null && !row.stamped && view.timeShown == row.line.id
             val reveal = remember { BringIntoViewRequester() }
             RevealWhenOpened(open, reveal)
             Column(Modifier.fillMaxWidth().bringIntoViewRequester(reveal)) {
                 TappedTime(row, open)
-                when (row.line.kind) {
-                    ChatKind.BOT -> BotLine(row.line, view, onTap)
-                    ChatKind.TEAM -> TeamPost(row.line, view, onTap)
-                    ChatKind.USER -> ChatMessage(row, view, actions)
-                }
+                ChatMessage(row, view, actions)
             }
         }
     }
@@ -162,78 +152,6 @@ private fun NewDivider(count: Int) {
             color = t.accentInk,
         )
         Box(Modifier.weight(1f).height(1.dp).background(t.glassBorder))
-    }
-}
-
-/** The crew's own news: a small pill in the middle, green when it is good. */
-@Composable
-private fun BotLine(
-    line: ChatLine,
-    view: ChatView,
-    onTap: () -> Unit,
-) {
-    val t = Tt.colors
-    val good = line.event in GoodNews
-    Box(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 2.dp), contentAlignment = Alignment.Center) {
-        Row(
-            Modifier
-                .widthIn(max = 340.dp)
-                .clip(RoundedCornerShape(percent = 50))
-                .background(if (good) t.okBg else t.glass2)
-                .clickable(onClick = onTap)
-                .padding(start = 5.dp, end = 12.dp, top = 3.dp, bottom = 3.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BotFace(20.dp)
-            Spacer(Modifier.width(7.dp))
-            Text(
-                view.plain(line.text),
-                style = chatStyle(12.5f, 17f),
-                fontWeight = if (good) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (good) t.ok else t.text2,
-            )
-        }
-    }
-}
-
-/** A post from the TestTrack team: a dashed card, under the bot's name, marked as the team's. */
-@Composable
-private fun TeamPost(
-    line: ChatLine,
-    view: ChatView,
-    onTap: () -> Unit,
-) {
-    val t = Tt.colors
-    Column(
-        Modifier
-            .padding(top = 12.dp, bottom = 2.dp)
-            .fillMaxWidth()
-            // The fill first and unclipped, so the whole dashed edge shows over it.
-            .background(t.surface2, RoundedCornerShape(14.dp))
-            .dashed(t.glassBorder, 14.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .clickable(onClick = onTap)
-            .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 12.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            BotFace(26.dp)
-            Spacer(Modifier.width(8.dp))
-            Text(view.botName, style = chatStyle(13.5f, 18f), fontWeight = FontWeight.Bold, color = t.text)
-            Spacer(Modifier.width(8.dp))
-            Text(
-                "TestTrack team",
-                Modifier
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(t.tile)
-                    .padding(horizontal = 8.dp, vertical = 1.dp),
-                style = chatStyle(11.5f, 15f),
-                fontWeight = FontWeight.Bold,
-                color = t.accentInk,
-                maxLines = 1,
-            )
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(view.plain(line.text), style = chatStyle(14.5f, 20f), color = t.text)
     }
 }
 

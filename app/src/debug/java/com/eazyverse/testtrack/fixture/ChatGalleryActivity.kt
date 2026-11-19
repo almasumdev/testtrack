@@ -54,7 +54,7 @@ import com.eazyverse.testtrack.ui.theme.exchangeBackground
  *
  * Extras: `--es section bubbles|pictures|page|composer|sheets|editor|entry` shows one section,
  * `--ez dark true|false` forces the theme, and `--es open` opens one thing straight away:
- * page, message_others, message_own, message_failed, delete, mention, profile, viewer, editor.
+ * page, message_others, message_own, message_bot, message_failed, delete, mention, profile, viewer, editor.
  */
 class ChatGalleryActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,6 +92,7 @@ private fun overlayFor(
     return when (name) {
         "message_others" -> Overlay.Message(lines.others)
         "message_own" -> Overlay.Message(lines.own)
+        "message_bot" -> Overlay.Message(lines.bot)
         "message_failed" -> Overlay.Message(lines.failed)
         "delete" -> Overlay.Delete(lines.own)
         "mention" -> Overlay.Mention

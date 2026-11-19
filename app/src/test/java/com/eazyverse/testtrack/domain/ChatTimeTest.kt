@@ -21,7 +21,7 @@ class ChatTimeTest {
     private fun line(
         id: String,
         at: String,
-        author: String = "a",
+        author: String? = "a",
         mine: Boolean = false,
         send: SendState = SendState.SENT,
         kind: ChatKind = ChatKind.USER,
@@ -101,5 +101,20 @@ class ChatTimeTest {
             )
         val marked = rows(lines).filterIsInstance<ChatRow.Line>().filter { it.newestMine }.map { it.line.id }
         assertEquals(listOf("2"), marked)
+    }
+
+    @Test
+    fun `the bot and the team run together as one author, never with a member`() {
+        val lines =
+            listOf(
+                line("1", "2026-11-19T10:00:00Z", kind = ChatKind.BOT, author = null),
+                line("2", "2026-11-19T10:01:00Z", kind = ChatKind.TEAM, author = null),
+                line("3", "2026-11-19T10:02:00Z"),
+                line("4", "2026-11-19T10:03:00Z", kind = ChatKind.TEAM, author = null),
+                line("5", "2026-11-19T10:04:00Z", kind = ChatKind.TEAM, author = null),
+            )
+        assertEquals(listOf("time-1", "1*", "2", "3*", "4*", "5"), keys(rows(lines)))
+        val laid = rows(lines).filterIsInstance<ChatRow.Line>()
+        assertEquals(listOf(false, true, true, false, true), laid.map { it.last })
     }
 }

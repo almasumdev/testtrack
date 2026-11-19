@@ -34,8 +34,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.BadgeCheck
 import com.composables.icons.lucide.Ban
 import com.composables.icons.lucide.Lucide
+import com.eazyverse.testtrack.domain.ChatKind
 import com.eazyverse.testtrack.domain.ChatLine
 import com.eazyverse.testtrack.domain.ChatRow
 import com.eazyverse.testtrack.domain.SendState
@@ -46,6 +48,8 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * left on a soft surface. A run of messages by one author sits close together, with the name on
  * its first and the face on its last, and the corners toward the author tucked in where the run
  * goes on. No time sits inside a bubble: the thread's time lines carry it, as in Messenger.
+ * The bot and the team write the same way, under the bot's name and face, with a check mark after
+ * the name and a lighter wash of the accent on the bubble.
  */
 
 private val Round = 18.dp
@@ -108,9 +112,14 @@ internal fun Modifier.quoteTap(tap: QuoteTap): Modifier =
 @Composable
 internal fun Modifier.mentionWash(you: Boolean): Modifier = if (you) background(Tt.colors.mentionTint) else this
 
+/** A message from the bot or the team: a lighter wash of the accent, so it reads as theirs. */
+@Composable
+internal fun Modifier.teamWash(team: Boolean): Modifier = if (team) background(Tt.colors.botTint) else this
+
 /**
- * One member's message, with its face, name and what can be done with it. A tap shows its time
- * (or retries a failed one, or opens a picture); your own show how the send went under them.
+ * One message, with its face, name and what can be done with it. A tap shows its time (or retries
+ * a failed one, or opens a picture); your own show how the send went under them. The bot's and the
+ * team's have the bot's face and name, and no profile behind the face.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -119,10 +128,10 @@ internal fun ChatMessage(
     view: ChatView,
     actions: ChatActions,
 ) {
-    val t = Tt.colors
     val line = row.line
     val first = row.first
     val last = row.last
+    val team = line.kind != ChatKind.USER
     val person = line.authorSeatId?.let { view.people[it] }
     val lifted by animateFloatAsState(if (view.lifted == line.id) 1.04f else 1f, label = "chat-lift")
     val picture = line.picture
@@ -133,7 +142,9 @@ internal fun ChatMessage(
         verticalAlignment = Alignment.Bottom,
     ) {
         if (!line.mine) {
-            if (last) {
+            if (last && team) {
+                BotFace(28.dp)
+            } else if (last) {
                 Box(
                     Modifier
                         .clip(CircleShape)
@@ -148,17 +159,7 @@ internal fun ChatMessage(
         val hold = { if (!line.deleted && line.send != SendState.SENDING) actions.onLongPress(line) }
         val quoteTap = line.quote?.let { quote -> QuoteTap(onTap = { actions.onQuote(quote) }, onHold = hold) }
         Column(horizontalAlignment = if (line.mine) Alignment.End else Alignment.Start) {
-            if (!line.mine && first) {
-                Text(
-                    person?.name ?: "Someone",
-                    Modifier.widthIn(max = bubbleMax()).padding(start = 12.dp, bottom = 2.dp),
-                    style = chatStyle(12f, 16f),
-                    fontWeight = FontWeight.SemiBold,
-                    color = t.text3,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            if (!line.mine && first) AuthorName(view.authorName(line), team)
             Box(
                 Modifier
                     .graphicsLayer {
@@ -188,7 +189,7 @@ internal fun ChatMessage(
                 when {
                     line.deleted -> DeletedStub(line, first, last)
                     picture != null -> PictureBubble(line, picture, first, last, view, quoteTap)
-                    else -> TextBubble(line, first, last, view, quoteTap)
+                    else -> TextBubble(line, first, last, view, quoteTap, team)
                 }
             }
             when {
@@ -196,6 +197,33 @@ internal fun ChatMessage(
                 line.send == SendState.SENDING -> SendNote(sending = true)
                 row.newestMine && line.mine && !line.deleted -> SendNote(sending = false)
             }
+        }
+    }
+}
+
+/** Over the first of someone else's run: their name, and the check mark when it is the team. */
+@Composable
+private fun AuthorName(
+    name: String,
+    team: Boolean,
+) {
+    val t = Tt.colors
+    Row(
+        Modifier.widthIn(max = bubbleMax()).padding(start = 12.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            name,
+            Modifier.weight(1f, fill = false),
+            style = chatStyle(12f, 16f),
+            fontWeight = FontWeight.SemiBold,
+            color = t.text3,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (team) {
+            Spacer(Modifier.width(3.dp))
+            Icon(Lucide.BadgeCheck, "TestTrack team", Modifier.size(12.dp), tint = t.accentInk)
         }
     }
 }
@@ -208,6 +236,7 @@ private fun TextBubble(
     last: Boolean,
     view: ChatView,
     quoteTap: QuoteTap?,
+    team: Boolean,
 ) {
     val shape = bubbleShape(line.mine, first, last)
     val ink = bubbleInk(line.mine)
@@ -218,6 +247,7 @@ private fun TextBubble(
             .width(IntrinsicSize.Max)
             .clip(shape)
             .background(ink.fill)
+            .teamWash(team)
             .mentionWash(you)
             .bubbleEdge(line, shape)
             .padding(horizontal = 12.dp, vertical = 7.dp),

@@ -124,6 +124,8 @@ data class TtTokens(
     val photoBad: Color,
     /** The soft round of the accent behind the chat bot's face. */
     val botRound: Color,
+    /** A lighter wash of the accent over a bubble from the bot or the team, so it reads as theirs. */
+    val botTint: Color,
     /** A faint wash of the accent over someone's bubble that names you. */
     val mentionTint: Color,
     /** The brief wash over a message a reply's quote was tapped to jump to, faded out in about a second. */
@@ -264,6 +266,7 @@ val OceanLight =
         photoScrim = Color(0xFF000000).alpha(0.5f),
         photoBad = PhotoBad,
         botRound = Color(0xFF4A7290).alpha(0.18f),
+        botTint = Color(0xFF4A7290).alpha(0.07f),
         mentionTint = Color(0xFF4A7290).alpha(0.12f),
         jumpTint = Color(0xFF142F43).alpha(0.22f),
         pens = Pens,
@@ -347,6 +350,7 @@ val OceanDark =
         photoScrim = Color(0xFF000000).alpha(0.5f),
         photoBad = PhotoBad,
         botRound = Color(0xFF93B3CA).alpha(0.18f),
+        botTint = Color(0xFF93B3CA).alpha(0.06f),
         mentionTint = Color(0xFF93B3CA).alpha(0.10f),
         jumpTint = Color(0xFFECEEF0).alpha(0.24f),
         pens = Pens,
