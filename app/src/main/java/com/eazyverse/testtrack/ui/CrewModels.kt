@@ -259,6 +259,8 @@ data class CrewApp(
     val feedbackLate: Boolean = false,
     /** When it was taken out of the run (ISO time), for an app in Left the run; blank otherwise. */
     val outAt: String = "",
+    /** Taken out of the run: on the tile's strip only, faded with a cross, and never counted. */
+    val out: Boolean = false,
     /**
      * Quiet skips of it: nights its owner left this account's app unopened, each letting this one
      * go unopened once without a miss. Shown only as a bare number; nothing invites a skip.
@@ -292,9 +294,9 @@ data class Crew(
      * reader knows which to uninstall, once it is clear they will not come back. */
     val left: List<CrewApp> = emptyList(),
     /**
-     * Every other app still in the run, each with tonight's done mark, for the tile's strip. Unlike
-     * [apps] it is there on every night of the run: a night let off, the reader's nights done, or
-     * the reader's app out.
+     * Every other app in the run, each with tonight's done mark, for the tile's strip: those still
+     * in first, then those taken out ([CrewApp.out]). Unlike [apps] it is there on every night of
+     * the run: a night let off, the reader's nights done, or the reader's app out.
      */
     val strip: List<CrewApp> = emptyList(),
     /** Which day of the run, in this account's own calendar. Zero before it starts. */

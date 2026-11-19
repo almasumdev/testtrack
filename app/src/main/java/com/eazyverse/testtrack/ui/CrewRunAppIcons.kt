@@ -21,12 +21,14 @@ import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Minus
+import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
  * The crew's other apps in a stable order, each marked for tonight: a check when opened, dimmed
- * with a dash when reported, plain while still owed, and faint when tonight owes it nothing. [quiet] fades every
- * icon the same way, for a reader whose own app is out; the marks stay full.
+ * with a dash when reported, plain while still owed, and faint when tonight owes it nothing. Apps
+ * taken out of the run come after, faint with a cross. [quiet] fades every icon the same way, for
+ * a reader whose own app is out; the marks stay full.
  */
 @Composable
 internal fun CrewRunAppIcons(
@@ -38,23 +40,28 @@ internal fun CrewRunAppIcons(
     val owedIds = remember(crew.apps) { crew.apps.mapTo(HashSet()) { it.id } }
     val seatsById = remember(crew.seats) { crew.seats.associateBy { it.id } }
     val seatsByPackage = remember(crew.seats) { crew.seats.filter { it.packageName.isNotBlank() }.associateBy { it.packageName } }
-    val opened = apps.count { it.done }
-    val reported = apps.count { it.reported && !it.done }
-    CrewAppIconStrip(apps.size, "Tonight's apps: $opened opened, $reported reported, ${crew.owed} left.") { side ->
+    // Apps taken out are drawn but never counted.
+    val inRun = apps.filter { !it.out }
+    val opened = inRun.count { it.done }
+    val reported = inRun.count { it.reported && !it.done }
+    val out = apps.size - inRun.size
+    val said = "Tonight's apps: $opened opened, $reported reported, ${crew.owed} left" + if (out > 0) ", $out out." else "."
+    CrewAppIconStrip(apps.size, said) { side ->
         apps.forEach { app ->
             key(app.id) {
                 val seat = seatsById[app.id] ?: seatsByPackage[app.packageName]
                 // One fade, never two: an out reader owes nothing, so stacking [quiet] on the
                 // not-owed fade left the icons at under a fifth and the strip read as missing.
-                val faint = quiet || (!app.done && (app.reported || app.id !in owedIds))
+                // An app taken out takes the same single fade, so it stays legible under [quiet].
+                val faint = quiet || app.out || (!app.done && (app.reported || app.id !in owedIds))
                 Box(Modifier.size(side)) {
                     Box(Modifier.alpha(if (faint) FAINT else 1f)) {
                         AppMark(app.packageName, app.label, seat?.icon.orEmpty(), size = side)
                     }
-                    if (app.done) {
-                        Corner(Lucide.Check, Tt.colors.ok)
-                    } else if (app.reported) {
-                        Corner(Lucide.Minus, Tt.colors.warn)
+                    when {
+                        app.out -> Corner(Lucide.X, Tt.colors.text3)
+                        app.done -> Corner(Lucide.Check, Tt.colors.ok)
+                        app.reported -> Corner(Lucide.Minus, Tt.colors.warn)
                     }
                 }
             }

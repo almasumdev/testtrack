@@ -296,13 +296,43 @@ class CrewWireTest {
             )
         val letOff = crew(state = "full", day = 5, members = members).toCrew()
         assertTrue(letOff.apps.isEmpty())
-        assertEquals(listOf("a", "b"), letOff.strip.map { it.id })
-        assertEquals(listOf(true, false), letOff.strip.map { it.done })
+        assertEquals(listOf("a", "b", "gone"), letOff.strip.map { it.id })
+        assertEquals(listOf(true, false, false), letOff.strip.map { it.done })
+        assertEquals(listOf(false, false, true), letOff.strip.map { it.out })
         val nightsDone = crew(state = "full", day = 15, members = members).toCrew()
-        assertEquals(listOf("a", "b"), nightsDone.strip.map { it.id })
+        assertEquals(listOf("a", "b", "gone"), nightsDone.strip.map { it.id })
         val out = crew(state = "full", day = 5, members = members.map { if (it.mine) it.copy(state = "removed") else it }).toCrew()
-        assertEquals(listOf("a", "b"), out.strip.map { it.id })
+        assertEquals(listOf("a", "b", "gone"), out.strip.map { it.id })
         assertTrue(crew(state = "filling", members = members).toCrew().strip.isEmpty())
+    }
+
+    @Test
+    fun the_tile_strip_shows_apps_taken_out_after_those_still_in_without_counting_them() {
+        // Every other app taken out: the strip still shows them all, faded, and nothing is owed.
+        val members =
+            listOf(
+                seat("x", state = "removed").copy(outAt = "2026-09-25T00:00:00+00:00"),
+                seat("me", mine = true),
+                seat("y", state = "removed"),
+            )
+        val lonely = crew(state = "full", day = 5, members = members).toCrew()
+        assertEquals(listOf("x", "y"), lonely.strip.map { it.id })
+        assertTrue(lonely.strip.all { it.out })
+        assertEquals("2026-09-25T00:00:00+00:00", lonely.strip.first().outAt)
+        assertTrue(lonely.apps.isEmpty())
+        assertEquals(0, lonely.owed)
+        assertTrue(tonightIn(listOf(lonely)).isEmpty())
+
+        // Mixed, in the server's order: those still in come first, then those taken out.
+        val mixed =
+            crew(
+                state = "full",
+                day = 5,
+                members = listOf(seat("gone", state = "removed"), seat("me", mine = true), seat("a"), seat("back", state = "rejected")),
+            ).toCrew()
+        assertEquals(listOf("a", "gone"), mixed.strip.map { it.id })
+        assertEquals(listOf("a"), mixed.apps.map { it.id })
+        assertEquals(1, mixed.owed)
     }
 
     @Test

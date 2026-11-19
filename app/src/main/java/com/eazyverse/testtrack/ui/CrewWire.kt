@@ -173,7 +173,11 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
             },
         strip =
             if (phase == CrewPhase.RUN) {
-                members.filter { !it.mine && it.state == "confirmed" }.map { it.toApp(name, day) }
+                // Apps still in, then those taken out, so a crew that lost its others still shows them.
+                members.filter { !it.mine && it.state == "confirmed" }.map { it.toApp(name, day) } +
+                    members
+                        .filter { !it.mine && it.state == "removed" }
+                        .map { it.toApp(name, day).copy(outAt = it.outAt.orEmpty(), out = true) }
             } else {
                 emptyList()
             },
