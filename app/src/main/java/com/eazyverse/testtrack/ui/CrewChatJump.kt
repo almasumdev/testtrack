@@ -1,7 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.animateScrollBy
@@ -44,8 +44,10 @@ internal data class ChatJump(
     val n: Int = 0,
 )
 
-/** How long the tint takes to fade from a message gone to. */
-private const val FLASH_MS = 1000
+/** The tint on a message gone to: held at full for a moment, then faded out, about a second in all. */
+private const val FLASH_HOLD_MS = 300
+private const val FLASH_FADE_MS = 750
+private const val FLASH_MS = FLASH_HOLD_MS + FLASH_FADE_MS
 
 /** Marks the bubble while its tint shows, for tests. */
 internal const val JUMP_FLASH_TAG = "chat-jump-flash"
@@ -83,7 +85,7 @@ internal fun JumpWhenAsked(
     }
 }
 
-/** The tint over a bubble that was just gone to: full at once, then fading out over about a second. */
+/** The tint over a bubble that was just gone to: full at once, held a moment, then fading out. */
 @Composable
 internal fun Modifier.jumpFlash(
     flash: ChatJump?,
@@ -94,7 +96,7 @@ internal fun Modifier.jumpFlash(
     LaunchedEffect(mine) {
         if (mine != null) {
             glow.snapTo(1f)
-            glow.animateTo(0f, tween(FLASH_MS, easing = LinearOutSlowInEasing))
+            glow.animateTo(0f, tween(FLASH_FADE_MS, delayMillis = FLASH_HOLD_MS, easing = FastOutLinearInEasing))
         }
     }
     val tint = Tt.colors.jumpTint
