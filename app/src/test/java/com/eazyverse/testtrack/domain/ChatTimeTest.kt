@@ -62,7 +62,7 @@ class ChatTimeTest {
     }
 
     @Test
-    fun `a time line heads the first message and every pause of 15 minutes or more`() {
+    fun `a time line heads the first message, every new author run and every pause of 15 minutes or more`() {
         val lines =
             listOf(
                 line("1", "2026-11-19T10:00:00Z"),
@@ -72,7 +72,24 @@ class ChatTimeTest {
                 line("5", "2026-11-19T11:00:00Z", kind = ChatKind.BOT, author = "bot"),
                 line("6", "2026-11-19T11:10:00Z", author = "b"),
             )
-        assertEquals(listOf("time-1", "1*", "2", "time-3", "3*", "4*", "time-5", "5*", "6*"), keys(rows(lines)))
+        assertEquals(
+            listOf("time-1", "1*", "2", "time-3", "3*", "time-4", "4*", "time-5", "5*", "time-6", "6*"),
+            keys(rows(lines)),
+        )
+    }
+
+    @Test
+    fun `a time line heads each author run, none inside one`() {
+        val lines =
+            listOf(
+                line("1", "2026-11-19T10:00:00Z", author = "a"),
+                line("2", "2026-11-19T10:00:30Z", author = "a"),
+                line("3", "2026-11-19T10:01:00Z", author = "b"),
+                line("4", "2026-11-19T10:02:00Z", author = "a"),
+            )
+        assertEquals(listOf("time-1", "1*", "2", "time-3", "3*", "time-4", "4*"), keys(rows(lines)))
+        val laid = rows(lines).filterIsInstance<ChatRow.Line>()
+        assertEquals(listOf(true, false, true, true), laid.map { it.stamped })
     }
 
     @Test
@@ -113,7 +130,7 @@ class ChatTimeTest {
                 line("4", "2026-11-19T10:03:00Z", kind = ChatKind.TEAM, author = null),
                 line("5", "2026-11-19T10:04:00Z", kind = ChatKind.TEAM, author = null),
             )
-        assertEquals(listOf("time-1", "1*", "2", "3*", "4*", "5"), keys(rows(lines)))
+        assertEquals(listOf("time-1", "1*", "2", "time-3", "3*", "time-4", "4*", "5"), keys(rows(lines)))
         val laid = rows(lines).filterIsInstance<ChatRow.Line>()
         assertEquals(listOf(false, true, true, false, true), laid.map { it.last })
     }

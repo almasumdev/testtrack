@@ -137,7 +137,7 @@ internal fun ChatMessage(
     val picture = line.picture
     val opens = picture != null && !line.deleted && !picture.expired && line.send == SendState.SENT
     Row(
-        Modifier.fillMaxWidth().padding(top = if (first) 10.dp else 2.dp),
+        Modifier.fillMaxWidth().padding(top = if (first) 12.dp else 2.dp),
         horizontalArrangement = if (line.mine) Arrangement.End else Arrangement.Start,
         verticalAlignment = Alignment.Bottom,
     ) {

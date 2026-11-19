@@ -174,14 +174,15 @@ object ChatThread {
         readRev: Long,
     ): List<ChatLine> = lines.filter { it.seq > readRev && !it.mine && !it.deleted && it.kind != ChatKind.BOT && it.send == SendState.SENT }
 
-    /** The pause after which talk gets a new time line, as Messenger does. */
+    /** The pause after which the same author writing again gets a new time line. */
     val GAP: Duration = Duration.ofMinutes(15)
 
     /**
-     * The rows, oldest first: a time line over the first message and wherever [GAP] or more passed
-     * since the one before (any author), the "new" line over the first message unread between
-     * [newFromRev] and [newToRev], and each message marked [ChatRow.Line.first] where a new author
-     * starts and [ChatRow.Line.last] where that run ends. A time line ends a run, as the new line does.
+     * The rows, oldest first: a time line over the first message, over every message that starts a
+     * new run (the author or the voice changes), and wherever [GAP] or more passed since the one
+     * before. The "new" line goes over the first message unread between [newFromRev] and [newToRev],
+     * after any time line. Each message is marked [ChatRow.Line.first] where a run by one author
+     * starts and [ChatRow.Line.last] where it ends. A time line ends a run, as the new line does.
      * The bot and the team are one author: their lines run together, never with a member's.
      */
     fun rows(
@@ -203,7 +204,12 @@ object ChatThread {
             val at = line.at
             var broke = false
             var stamped = false
-            if (at != null && (said == null || Duration.between(said, at) >= GAP)) {
+            val prev = last
+            val sameAuthor = prev != null && prev.authorSeatId == line.authorSeatId && prev.mine == line.mine
+            // The bot's news and the team's posts all speak as the bot, so they run together as one author.
+            val sameVoice = prev != null && (prev.kind == ChatKind.USER) == (line.kind == ChatKind.USER)
+            val newRun = !sameAuthor || !sameVoice
+            if (at != null && (said == null || newRun || Duration.between(said, at) >= GAP)) {
                 rows += ChatRow.Time(at, timeLabel(at, today, zone, hour24, locale), line.id)
                 broke = true
                 stamped = true
@@ -213,10 +219,6 @@ object ChatThread {
                 rows += ChatRow.New(fresh.size)
                 broke = true
             }
-            val prev = last
-            val sameAuthor = prev != null && prev.authorSeatId == line.authorSeatId && prev.mine == line.mine
-            // The bot's news and the team's posts all speak as the bot, so they run together as one author.
-            val sameVoice = prev != null && (prev.kind == ChatKind.USER) == (line.kind == ChatKind.USER)
             val joined = !broke && sameAuthor && sameVoice
             if (joined) {
                 val end = rows.lastIndex

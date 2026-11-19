@@ -56,8 +56,8 @@ import java.time.LocalDate
 /*
  * The pieces of a crew's chat thread: the time lines, the divider before what is new, and the
  * empty chat. Every message, the bot's and the team's too, is a bubble from CrewChatBubble.kt.
- * Times work as in Messenger: none inside a message, a time line wherever talk starts again after
- * a pause, and a tapped message shows its own time line over it.
+ * Times: none inside a message, a time line over every new sender group and wherever the same
+ * author talks again after a pause, and a tapped message shows its own time line over it.
  */
 
 /** One row of the thread. */
@@ -82,7 +82,7 @@ internal fun ChatRowView(
     }
 }
 
-/** Where talk starts again after a pause: the time, small and centred, with no chip. */
+/** Over a new sender group, or where the same author talks again after a pause: the time, small and centred, with no chip. */
 @Composable
 internal fun TimeLine(
     label: String,
