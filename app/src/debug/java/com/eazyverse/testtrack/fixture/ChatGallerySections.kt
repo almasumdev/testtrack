@@ -122,16 +122,22 @@ internal fun bubbleSection(
         Rows(edit(s.view(rows)).copy(timeShown = shown), a)
     }
     val held = s.msg("held", KENJI, "Hold me down to see the lift.")
+    // As people really write: a burst within minutes sits under one time line, a pause starts another.
     val spread =
         listOf(
             s.msg("tl0", DANIEL, "Last year's crew was a lot quieter.", daysAgo(380, 21, 10)),
             s.msg("tl1", SOFIA, "Pocket Recipes 2.1 is on the test track now.", daysAgo(26, 20, 55)),
             s.msg("tl2", KENJI, "Up early, opened all nine.", daysAgo(3, 3, 45)),
             s.msg("tl3", ME, "See you all tomorrow.", yesterday(22, 10)),
+            s.msg("tl3b", KENJI, "Good night!", yesterday(22, 11)),
             s.msg("tl4", NADIA, "Morning, Tiny Tasks got an update.", today(8, 2)),
-            s.msg("tl5", NADIA, "The reminder works now.", today(8, 9)),
-            s.msg("tl6", ME, "Nice, I'll update tonight.", today(8, 12)),
-            s.msg("tl7", KENJI, "Steps Daily opens faster too.", today(9, 40)),
+            s.msg("tl5", NADIA, "The reminder works now.", today(8, 2)),
+            s.msg("tl6", KENJI, "Nice, updating now.", today(8, 3)),
+            s.msg("tl7", ME, "Same, I'll check it tonight.", today(8, 4)),
+            s.msg("tl8", NADIA, "Tell me if it comes late again.", today(8, 5)),
+            s.msg("tl9", KENJI, "Steps Daily opens faster too.", today(8, 6)),
+            s.msg("tl10", SOFIA, "Anyone else see the new Play testers page?", today(9, 40)),
+            s.msg("tl11", ME, "Yes, since this morning.", today(9, 41)),
         )
     val tapped =
         listOf(
@@ -228,7 +234,7 @@ internal fun bubbleSection(
             ),
             rows("Bot line, good news", one(s.bot("bn", "Night 6 started. 9 apps to open tonight.", "night"))),
             rows("Bot line, plain", one(s.bot("bp", "Daniel joined on night 2, so his nights end a day later.", "joined"))),
-            rows("Time lines: last year, this year, this week, yesterday, today, then a 15+ min gap", s.laid(spread)),
+            rows("Time lines: older, yesterday, six messages in a burst under one line, then a pause", s.laid(spread)),
             rows("Tapped time open over a message (tap another to move it)", s.laid(tapped), open = "tt2"),
             rows(
                 "The new line",

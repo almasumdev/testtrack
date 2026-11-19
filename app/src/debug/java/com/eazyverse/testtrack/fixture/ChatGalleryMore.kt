@@ -46,6 +46,7 @@ import com.eazyverse.testtrack.ui.Ask
 import com.eazyverse.testtrack.ui.CaptionBar
 import com.eazyverse.testtrack.ui.ChatActions
 import com.eazyverse.testtrack.ui.ChatImageViewer
+import com.eazyverse.testtrack.ui.ChatJump
 import com.eazyverse.testtrack.ui.ChatMentionSheet
 import com.eazyverse.testtrack.ui.ChatMessageSheet
 import com.eazyverse.testtrack.ui.ChatPictureEditor
@@ -199,7 +200,9 @@ internal fun GalleryPage(
     var draft by remember { mutableStateOf(ChatDraft()) }
     var field by remember { mutableStateOf(TextFieldValue("")) }
     var shown by remember { mutableStateOf<String?>(null) }
-    val view = s.view(s.threadRows()).copy(muted = muted, draft = draft, timeShown = shown)
+    var jump by remember { mutableStateOf<ChatJump?>(null) }
+    var message by remember { mutableStateOf<String?>(null) }
+    val view = s.view(s.threadRows()).copy(muted = muted, draft = draft, timeShown = shown, jump = jump, message = message)
     val base = galleryActions(show)
     val actions =
         ChatActions(
@@ -214,6 +217,12 @@ internal fun GalleryPage(
             onFace = base.onFace,
             onPicture = base.onPicture,
             onTime = { shown = if (shown == it.id) null else it.id },
+            // The whole thread is held here, so a quoted message is either in it or gone.
+            onQuote = { quote ->
+                val held = s.thread.firstOrNull { it.id == quote.id && !it.deleted }
+                if (quote.deleted || held == null) message = "That message is gone." else jump = ChatJump(held.id, (jump?.n ?: 0) + 1)
+            },
+            onClearMessage = { message = null },
         )
     CrewChatBody(view, actions, field)
 }

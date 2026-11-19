@@ -239,7 +239,8 @@ private fun TeamPost(
 
 /**
  * The message a reply quotes: who wrote it and its first line. [ink] draws it on a coloured bubble,
- * where the theme's own text colours would not show.
+ * where the theme's own text colours would not show. Inside a message, [tap] makes it a way to the
+ * message it quotes.
  */
 @Composable
 internal fun Quote(
@@ -248,6 +249,7 @@ internal fun Quote(
     fill: Color = Tt.colors.bg,
     maxWidth: Dp = 240.dp,
     ink: Color? = null,
+    tap: QuoteTap? = null,
 ) {
     val t = Tt.colors
     val bar = ink ?: t.accentInk
@@ -255,6 +257,7 @@ internal fun Quote(
         modifier
             .widthIn(max = maxWidth)
             .clip(RoundedCornerShape(8.dp))
+            .then(tap?.let { Modifier.quoteTap(it) } ?: Modifier)
             .background(fill)
             .drawBehind { drawRect(bar, size = Size(3.dp.toPx(), size.height)) }
             .padding(start = 11.dp, end = 8.dp, top = 4.dp, bottom = 5.dp),

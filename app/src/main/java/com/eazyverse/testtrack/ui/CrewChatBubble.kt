@@ -89,6 +89,21 @@ internal fun Modifier.bubbleEdge(
     shape: RoundedCornerShape,
 ): Modifier = if (line.send == SendState.FAILED) border(1.5.dp, Tt.colors.badBorder, shape) else this
 
+/** What a quote inside a message does: a tap goes to the message it quotes, a hold opens the message's options. */
+internal class QuoteTap(
+    val onTap: () -> Unit,
+    val onHold: () -> Unit,
+)
+
+@OptIn(ExperimentalFoundationApi::class)
+internal fun Modifier.quoteTap(tap: QuoteTap): Modifier =
+    combinedClickable(
+        onClickLabel = "Go to the message",
+        onLongClickLabel = "Message options",
+        onClick = tap.onTap,
+        onLongClick = tap.onHold,
+    )
+
 /** Someone's message that names you: a faint wash of the accent over its fill, never an edge. */
 @Composable
 internal fun Modifier.mentionWash(you: Boolean): Modifier = if (you) background(Tt.colors.mentionTint) else this
@@ -129,6 +144,9 @@ internal fun ChatMessage(
             }
             Spacer(Modifier.width(8.dp))
         }
+        // Only the quote goes to the message it quotes; the rest of the bubble keeps its own tap.
+        val hold = { if (!line.deleted && line.send != SendState.SENDING) actions.onLongPress(line) }
+        val quoteTap = line.quote?.let { quote -> QuoteTap(onTap = { actions.onQuote(quote) }, onHold = hold) }
         Column(horizontalAlignment = if (line.mine) Alignment.End else Alignment.Start) {
             if (!line.mine && first) {
                 Text(
@@ -147,6 +165,7 @@ internal fun ChatMessage(
                         scaleX = lifted
                         scaleY = lifted
                     }.clip(bubbleShape(line.mine, first, last))
+                    .jumpFlash(view.flash, line.id)
                     .combinedClickable(
                         onClickLabel =
                             when {
@@ -163,13 +182,13 @@ internal fun ChatMessage(
                                 !row.stamped -> actions.onTime(line)
                             }
                         },
-                        onLongClick = { if (!line.deleted && line.send != SendState.SENDING) actions.onLongPress(line) },
+                        onLongClick = hold,
                     ),
             ) {
                 when {
                     line.deleted -> DeletedStub(line, first, last)
-                    picture != null -> PictureBubble(line, picture, first, last, view)
-                    else -> TextBubble(line, first, last, view)
+                    picture != null -> PictureBubble(line, picture, first, last, view, quoteTap)
+                    else -> TextBubble(line, first, last, view, quoteTap)
                 }
             }
             when {
@@ -188,6 +207,7 @@ private fun TextBubble(
     first: Boolean,
     last: Boolean,
     view: ChatView,
+    quoteTap: QuoteTap?,
 ) {
     val shape = bubbleShape(line.mine, first, last)
     val ink = bubbleInk(line.mine)
@@ -209,6 +229,7 @@ private fun TextBubble(
                 fill = if (line.mine) ink.ink.copy(alpha = 0.16f) else Tt.colors.bg,
                 maxWidth = bubbleMax() - 24.dp,
                 ink = if (line.mine) ink.ink else null,
+                tap = quoteTap,
             )
         }
         ChatMessageText(line, view, ink = ink.ink)

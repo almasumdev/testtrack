@@ -65,6 +65,7 @@ internal fun PictureBubble(
     first: Boolean,
     last: Boolean,
     view: ChatView,
+    quoteTap: QuoteTap? = null,
 ) {
     val t = Tt.colors
     val shape = bubbleShape(line.mine, first, last)
@@ -96,6 +97,7 @@ internal fun PictureBubble(
                 fill = if (line.mine) ink.ink.copy(alpha = 0.16f) else t.bg,
                 maxWidth = width - 8.dp,
                 ink = if (line.mine) ink.ink else null,
+                tap = quoteTap,
             )
         }
         Box(Modifier.width(width).height(height)) {

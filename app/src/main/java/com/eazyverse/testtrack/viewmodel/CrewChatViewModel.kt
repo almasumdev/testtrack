@@ -36,6 +36,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 
+/** Said when a tapped quote's message was deleted, or is no longer kept. */
+private const val GONE_LINE = "That message is gone."
+
 /**
  * One crew's chat: what is held of it, the poll that keeps it current while it is on screen, and
  * what is being written.
@@ -84,6 +87,10 @@ class CrewChatViewModel : ViewModel() {
     var moreBefore by mutableStateOf(false)
         private set
     var loadingOlder by mutableStateOf(false)
+        private set
+
+    /** Older pages are being read to find a message a tapped quote points at. */
+    var seeking by mutableStateOf(false)
         private set
 
     /**
@@ -270,21 +277,64 @@ class CrewChatViewModel : ViewModel() {
 
     /** The page before the oldest held, when the list is scrolled up to it. */
     fun loadOlder() {
-        val before = ChatThread.oldest(lines) ?: return
-        if (!moreBefore || loadingOlder) return
+        if (ChatThread.oldest(lines) == null || !moreBefore || loadingOlder) return
         loadingOlder = true
         viewModelScope.launch {
             try {
-                val page = Api.chat(crewId, before = before)
-                if (page.people.isNotEmpty()) people = people + page.people.associate { it.seatId to it.toPerson() }
-                lines = ChatThread.merge(lines, page.messages.map { it.toLine(limits.pictureHours) })
-                moreBefore = page.moreBefore
+                older()
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
                 // Tried again on the next scroll to the top.
             } finally {
                 loadingOlder = false
+            }
+        }
+    }
+
+    /** Reads the page before the oldest held into [lines]. False with nothing held to read before. */
+    private suspend fun older(): Boolean {
+        val before = ChatThread.oldest(lines) ?: return false
+        val page = Api.chat(crewId, before = before)
+        if (page.people.isNotEmpty()) people = people + page.people.associate { it.seatId to it.toPerson() }
+        lines = ChatThread.merge(lines, page.messages.map { it.toLine(limits.pictureHours) })
+        moreBefore = page.moreBefore
+        return true
+    }
+
+    /**
+     * Finds the message [quote] points at for [onFound], reading older pages until it is held. One
+     * deleted, or no longer on the server (the chat keeps only so much), gets a line saying so.
+     */
+    fun seek(
+        quote: ChatQuote,
+        onFound: (String) -> Unit,
+    ) {
+        if (seeking) return
+        val held = lines.firstOrNull { it.id == quote.id }
+        when {
+            quote.deleted || held?.deleted == true -> message = GONE_LINE
+            held != null -> onFound(held.id)
+            !moreBefore -> message = GONE_LINE
+            else -> {
+                seeking = true
+                loadingOlder = true
+                viewModelScope.launch {
+                    try {
+                        while (lines.none { it.id == quote.id } && moreBefore) {
+                            if (!older()) break
+                        }
+                        val found = lines.firstOrNull { it.id == quote.id }
+                        if (found == null || found.deleted) message = GONE_LINE else onFound(found.id)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+                        message = "Couldn't load older messages. Try again."
+                    } finally {
+                        seeking = false
+                        loadingOlder = false
+                    }
+                }
             }
         }
     }

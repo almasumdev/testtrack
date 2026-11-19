@@ -141,53 +141,66 @@ internal class GallerySamples(
             "works, though the heart only fills after a second tap. The timer kept running with the " +
             "screen off, which is great. One crash when I rotated the phone on the shopping list."
 
-    // The full thread: yesterday's evening, then tonight, with four new since the reader last looked.
+    // The full thread, as people really write: a few people within minutes under one time line, and
+    // a new line only after a pause. Yesterday's evening, then tonight, with news since the reader
+    // last looked. Two replies quote further up: one still held, one the chat no longer keeps.
 
     val thread: List<ChatLine> =
         listOf(
             bot("t1", "Night 5 started. Open 9 apps tonight.", "night", yesterday(0, 1), 1),
             msg("t2", KENJI, "Evening all. Opened 6 so far, the rest after dinner.", yesterday(19, 42), 2),
-            msg("t3", NADIA, "Same here. ${app(ME)} asks me to sign in on first open, is that expected?", yesterday(19, 50), 3),
+            msg("t3", NADIA, "Same here. ${app(ME)} asks me to sign in on first open, is that expected?", yesterday(19, 43), 3),
             msg(
                 "t4",
                 ME,
                 "Yes, that's the Google sign-in. Tap Not now at the bottom to skip it.",
-                yesterday(20, 4),
+                yesterday(19, 44),
                 4,
                 quote = ChatQuote("t3", NADIA, "Same here. Focus Flow asks me to sign in on first open, is that expected?"),
             ),
-            msg("t5", ME, "Thanks for checking it so carefully.", yesterday(20, 5), 5),
-            bot("t6", "Night 6 started. 9 apps to open tonight.", "night", today(0, 1), 6),
+            msg("t5", NADIA, "That worked, thanks!", yesterday(19, 45), 5),
+            msg("t5b", ME, "Thanks for checking it so carefully.", yesterday(19, 46), 6),
+            bot("t6", "Night 6 started. 9 apps to open tonight.", "night", today(0, 1), 7),
             team(
                 "t7",
                 "Play is slow to show new testers today. If an app says it isn't available, wait an hour and try again.",
                 today(9, 30),
-                7,
+                8,
             ),
             msg(
                 "t8",
                 SOFIA,
                 "${app(KENJI)} closed on me when I tapped Start. Screenshot here.",
                 today(19, 12),
-                8,
+                9,
                 picture = sent(landscape, 1600, 900),
             ),
-            msg("t9", KENJI, "${seat(SOFIA)} thanks, which phone is that?", today(19, 20), 9),
-            msg("t10", KENJI, "${seat(ME)} did yours open fine tonight?", today(19, 21), 10),
-            msg("t11", DANIEL, "", today(19, 33), 11, picture = sent(portrait, 900, 1600)),
+            msg("t9", KENJI, "${seat(SOFIA)} thanks, which phone is that?", today(19, 13), 10),
+            msg("t9b", SOFIA, "Pixel 7, Android 14.", today(19, 13), 11),
+            msg("t10", KENJI, "${seat(ME)} did yours open fine tonight?", today(19, 14), 12),
+            msg("t10b", DANIEL, "Mine closed too, on the same screen.", today(19, 16), 13),
+            msg("t11", DANIEL, "", today(19, 16), 14, picture = sent(portrait, 900, 1600)),
             msg(
                 "t12",
                 ME,
                 "All good on mine, opened it a minute ago.",
                 today(19, 40),
-                12,
+                15,
                 quote = ChatQuote("t10", KENJI, "@Arjun Mehta did yours open fine tonight?"),
+            ),
+            msg(
+                "t12b",
+                NADIA,
+                "It's in the seat notes now.",
+                today(19, 41),
+                16,
+                quote = ChatQuote(GONE_ID, ZARA, "Where is the link to the testers group?"),
             ),
             msg("t13", ME, "Will check Steps Daily again after the update.", Instant.now(), send = SendState.SENDING),
         )
 
     /** The thread laid out as the page lays it out: time lines, and the "new" line over Sofia's picture. */
-    fun threadRows(): List<ChatRow> = ChatThread.rows(thread, newFromRev = 7, hour24 = hour24)
+    fun threadRows(): List<ChatRow> = ChatThread.rows(thread, newFromRev = 8, hour24 = hour24)
 
     /** [lines] with the page's own time lines and runs, nothing marked new. */
     fun laid(lines: List<ChatLine>): List<ChatRow> = ChatThread.rows(lines, null, hour24 = hour24)
@@ -289,6 +302,9 @@ internal class GallerySamples(
         const val GRACE = "a0000008"
         const val EMMA = "a0000009"
         const val PRIYA = "a000000a"
+
+        /** A message a reply quotes that the chat no longer keeps. */
+        const val GONE_ID = "t0-pruned"
 
         fun seat(id: String) = "@[seat:$id]"
 

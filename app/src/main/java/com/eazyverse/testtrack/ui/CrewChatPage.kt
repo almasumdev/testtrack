@@ -87,6 +87,12 @@ internal data class ChatView(
     val lifted: String? = null,
     /** The message tapped for its time, shown as a time line over it. */
     val timeShown: String? = null,
+    /** A quote was tapped: the thread moves to the message it quotes. */
+    val jump: ChatJump? = null,
+    /** The message just gone to, washed with a fading tint. */
+    val flash: ChatJump? = null,
+    /** Older pages are being read to find a quoted message. */
+    val seeking: Boolean = false,
     /** The crew has a members page to go to. */
     val members: Boolean = false,
     val message: String? = null,
@@ -153,6 +159,8 @@ internal class ChatActions(
     val onPicture: (ChatLine) -> Unit = {},
     /** A message tapped: show its time, or hide it again. */
     val onTime: (ChatLine) -> Unit = {},
+    /** A reply's quote tapped: go to the message it quotes. */
+    val onQuote: (ChatQuote) -> Unit = {},
     val onLoadOlder: () -> Unit = {},
     val onClearMessage: () -> Unit = {},
 )
@@ -186,6 +194,7 @@ fun CrewChatScreen(
     var profile by remember { mutableStateOf<CrewTester?>(null) }
     var picture by remember { mutableStateOf<ChatLine?>(null) }
     var timeShown by remember { mutableStateOf<String?>(null) }
+    var jump by remember { mutableStateOf<ChatJump?>(null) }
     val hour24 = DateFormat.is24HourFormat(context)
     val pickPicture = rememberChatPicturePicker(vm)
 
@@ -215,6 +224,8 @@ fun CrewChatScreen(
             loadingOlder = vm.loadingOlder,
             lifted = pressed?.id,
             timeShown = timeShown,
+            jump = jump,
+            seeking = vm.seeking,
             members = crew != null && !crew.pruned && (crew.phase == CrewPhase.RUN || crew.phase == CrewPhase.RECORD),
             message = vm.message,
         )
@@ -238,6 +249,7 @@ fun CrewChatScreen(
             onRetryLine = { vm.retry(it, context) },
             onPicture = { picture = it },
             onTime = { timeShown = if (timeShown == it.id) null else it.id },
+            onQuote = { quote -> vm.seek(quote) { jump = ChatJump(it, (jump?.n ?: 0) + 1) } },
             onLoadOlder = vm::loadOlder,
             onClearMessage = vm::clearMessage,
         )
@@ -333,6 +345,7 @@ internal fun CrewChatBody(
                 !view.talk -> ChatEmpty(view, actions)
                 else -> ChatThreadList(view, actions)
             }
+            if (view.seeking) SeekingNote(Modifier.align(Alignment.TopCenter).padding(top = 8.dp))
         }
     }
 }
@@ -381,13 +394,17 @@ private fun ChatThreadList(
         val own = (newest as? ChatRow.Line)?.line?.mine == true
         if (own || state.firstVisibleItemIndex <= 1) state.animateScrollToItem(0)
     }
+    // A tapped quote: the original moves to the middle, then lights up.
+    var flash by remember { mutableStateOf<ChatJump?>(null) }
+    JumpWhenAsked(state, rows, view.jump) { flash = it }
+    val shown = if (flash == null) view else view.copy(flash = flash)
     LazyColumn(
         Modifier.fillMaxSize(),
         state = state,
         reverseLayout = true,
         contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 10.dp),
     ) {
-        items(rows, key = { it.key }) { row -> ChatRowView(row, view, actions) }
+        items(rows, key = { it.key }) { row -> ChatRowView(row, shown, actions) }
         if (view.loadingOlder) item(key = "older") { ChatSkeleton(Modifier.fillMaxWidth(), rows = 2) }
     }
 }
