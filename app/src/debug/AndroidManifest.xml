@@ -3,5 +3,6 @@
     <application>
         <activity android:name="com.eazyverse.testtrack.fixture.ProofFixtureActivity" android:exported="true" />
         <activity android:name="com.eazyverse.testtrack.fixture.NightRoundFixtureActivity" android:exported="true" />
+        <activity android:name="com.eazyverse.testtrack.fixture.ChatGalleryActivity" android:exported="true" />
     </application>
 </manifest>
