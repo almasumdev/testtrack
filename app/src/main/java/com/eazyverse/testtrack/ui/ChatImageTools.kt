@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -201,9 +202,12 @@ private fun ShapeChip(
     }
 }
 
+/** The height of the bar along the top, tools or words, so the picture never moves between them. */
+internal val EditorTopBar = 60.dp
+
 /**
- * Typing words onto the picture, over it with the picture shaded: the colours, Done, and the words
- * big in the middle. Done with nothing written takes the words away.
+ * Typing words onto the picture with its own state, for a page that only shows the entry. The editor
+ * itself keeps the words and calls the other [WordsEntry].
  */
 @Composable
 internal fun WordsEntry(
@@ -211,36 +215,54 @@ internal fun WordsEntry(
     colour: Color,
     onDone: (String, Color) -> Unit,
 ) {
-    val t = Tt.colors
     var value by remember { mutableStateOf(TextFieldValue(text, TextRange(text.length))) }
     var ink by remember { mutableStateOf(colour) }
+    Box(Modifier.fillMaxSize().safeDrawingPadding()) {
+        WordsEntry(value, { value = it }, ink, { ink = it }) { onDone(value.text, ink) }
+    }
+}
+
+/**
+ * Typing words onto the picture, over it with the picture shaded: the colours and the tick in the top
+ * bar, and the words big in the middle. Fills the editor's box and takes only the keyboard's inset,
+ * on the words alone, so the picture under it stays put. Done with nothing written takes the words away.
+ */
+@Composable
+internal fun WordsEntry(
+    value: TextFieldValue,
+    onValue: (TextFieldValue) -> Unit,
+    ink: Color,
+    onInk: (Color) -> Unit,
+    onDone: () -> Unit,
+) {
+    val t = Tt.colors
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
     Column(
         Modifier
             .fillMaxSize()
             .background(t.photoScrim)
-            .clickable(interactionSource = null, indication = null, onClickLabel = "Done") { onDone(value.text, ink) }
-            .safeDrawingPadding(),
+            .clickable(interactionSource = null, indication = null, onClickLabel = "Done", onClick = onDone),
     ) {
         Row(
-            Modifier.fillMaxWidth().padding(start = 16.dp, end = 12.dp, top = 10.dp),
+            Modifier.fillMaxWidth().height(EditorTopBar).padding(start = 16.dp, end = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PenColours(ink, { ink = it }, Modifier.weight(1f))
+            PenColours(ink, onInk, Modifier.weight(1f))
             Spacer(Modifier.width(10.dp))
-            Box(
-                Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(t.onPhoto)
-                    .clickable { onDone(value.text, ink) }
-                    .padding(horizontal = 18.dp, vertical = 9.dp),
-            ) { Text("Done", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = t.photo) }
+            EditorButton(Lucide.Check, "Done", active = true, size = 48.dp, onClick = onDone)
         }
-        Box(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .imePadding()
+                .padding(horizontal = 24.dp),
+            contentAlignment = Alignment.Center,
+        ) {
             BasicTextField(
                 value = value,
-                onValueChange = { value = it },
+                onValueChange = onValue,
                 modifier = Modifier.fillMaxWidth().focusRequester(focus),
                 textStyle =
                     MaterialTheme.typography.headlineMedium.copy(
