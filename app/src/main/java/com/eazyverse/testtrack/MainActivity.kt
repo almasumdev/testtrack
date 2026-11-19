@@ -364,6 +364,7 @@ fun AppNav(
                 onCheck = { nav.push(Routes.check(it)) },
                 onOpenAbout = { nav.push(Routes.ABOUT) },
                 onOpenCrew = { nav.push(Routes.crew(it)) },
+                onOpenChat = { nav.push(Routes.crewChat(it)) },
                 onAskForApp = { nav.push(Routes.askFor(it)) },
                 onOpenApp = { nav.push(Routes.app(it)) },
                 onAddApp = { nav.push(Routes.APP_ADD) },

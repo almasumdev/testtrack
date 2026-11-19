@@ -42,6 +42,7 @@ fun CrewRunTab(
     onSignIn: () -> Unit,
     actions: CrewActions,
     onOpenCrew: (String) -> Unit,
+    onOpenChat: (String) -> Unit,
 ) {
     val runs = vm.crews.filter { it.phase == CrewPhase.RUN }
 
@@ -88,7 +89,7 @@ fun CrewRunTab(
         itemsIndexed(runs, key = { _, crew -> crew.id }) { index, crew ->
             // Fades in, fades out and glides to its new place when the list changes.
             Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) {
-                CrewListRow(crew) { onOpenCrew(crew.id) }
+                CrewListRow(crew, onChat = { onOpenChat(crew.id) }) { onOpenCrew(crew.id) }
             }
         }
     }
@@ -106,6 +107,7 @@ fun CrewLobbyTab(
     onSignIn: () -> Unit,
     actions: CrewActions,
     onOpenCrew: (String) -> Unit,
+    onOpenChat: (String) -> Unit,
 ) {
     val lobbies = vm.crews.filter { it.phase == CrewPhase.LOBBY }
 
@@ -139,7 +141,7 @@ fun CrewLobbyTab(
         itemsIndexed(lobbies, key = { _, crew -> crew.id }) { index, crew ->
             // Fades in, fades out and glides to its new place when the list changes.
             Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 10.dp else 0.dp)) {
-                CrewLobbyRow(crew) { onOpenCrew(crew.id) }
+                CrewLobbyRow(crew, onChat = { onOpenChat(crew.id) }) { onOpenCrew(crew.id) }
             }
         }
         if (vm.sentBack.isNotEmpty() && vm.blocked == null) {

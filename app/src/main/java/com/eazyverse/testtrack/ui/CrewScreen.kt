@@ -44,6 +44,8 @@ fun CrewScreen(
     onSignIn: () -> Unit = {},
     /** A crew's own page, from a tap on it in any of the four tabs. */
     onOpenCrew: (String) -> Unit = {},
+    /** A crew's chat, from the chat mark on its Run or Lobby tile. */
+    onOpenChat: (String) -> Unit = {},
     /** The page that puts an app into a crew. */
     onAddToCrew: () -> Unit = {},
     /** My apps as it stands, for the Open tab's join steps; null until it has answered. */
@@ -82,9 +84,9 @@ fun CrewScreen(
             when {
                 vm.offline && vm.crews.isEmpty() -> RobotOffline("Crews didn't load", onRetry = { vm.load(context) })
                 vm.tab == CrewPhase.RUN ->
-                    LoadSwap(vm.firstLoad) { if (it) CrewRunLoading() else CrewRunTab(vm, onSignIn, actions, onOpenCrew) }
+                    LoadSwap(vm.firstLoad) { if (it) CrewRunLoading() else CrewRunTab(vm, onSignIn, actions, onOpenCrew, onOpenChat) }
                 vm.tab == CrewPhase.LOBBY ->
-                    LoadSwap(vm.firstLoad) { if (it) CrewLobbyLoading() else CrewLobbyTab(vm, onSignIn, actions, onOpenCrew) }
+                    LoadSwap(vm.firstLoad) { if (it) CrewLobbyLoading() else CrewLobbyTab(vm, onSignIn, actions, onOpenCrew, onOpenChat) }
                 vm.tab == CrewPhase.RECORD ->
                     LoadSwap(vm.firstLoad) { if (it) CrewRecordLoading() else CrewRecordTab(vm, onSignIn, onOpenCrew) }
                 else -> CrewOpenTab(vm, actions, rememberCrewGuide(vm, myApps, onSignIn, onAddApp, onOpenCircle))

@@ -99,8 +99,9 @@ fun MainShell(
     onSignOut: () -> Unit,
     onCheck: (String) -> Unit = {},
     onOpenAbout: () -> Unit = {},
-    /** A crew's own page. */
+    /** A crew's own page, and its chat from the chat mark on its tile. */
     onOpenCrew: (String) -> Unit = {},
+    onOpenChat: (String) -> Unit = {},
     /** Ask for feedback on this app from My apps. */
     onAskForApp: (String) -> Unit = {},
     /** An app's own page. */
@@ -126,8 +127,7 @@ fun MainShell(
         if (adding && Session.signedIn && !apps.reading) apps.load(context)
     }
 
-    /** Which app, for Ask for feedback. */
-    var pickingFeedback by remember { mutableStateOf(false) }
+    var pickingFeedback by remember { mutableStateOf(false) } // Which app, for Ask for feedback.
 
     // The seat picker, opened by Crew's Take a seat, on the Crew tab's own model.
     val crews: CrewViewModel = viewModel()
@@ -334,6 +334,7 @@ fun MainShell(
                                         CrewScreen(
                                             vm = crews,
                                             onOpenCrew = onOpenCrew,
+                                            onOpenChat = onOpenChat,
                                             myApps = apps.apps.takeIf { it.isNotEmpty() || !apps.loading },
                                             onAddApp = onAddApp,
                                             onOpenCircle = { show(MainTab.CIRCLE) },

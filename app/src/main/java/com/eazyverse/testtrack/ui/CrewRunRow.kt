@@ -16,10 +16,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.ui.theme.Tt
 
-/** A running crew: the reader's app, their work, and the testers opening their app. */
+/** A running crew: the reader's app, their work, and the testers opening their app. The chat mark opens its chat. */
 @Composable
 fun CrewListRow(
     crew: Crew,
+    onChat: () -> Unit = {},
     onOpen: () -> Unit,
 ) {
     val mine = crew.mine
@@ -69,7 +70,7 @@ fun CrewListRow(
                 color = Tone.WARN.ink(),
             )
         }
-        CrewTileApp(mine) { CrewChatTileBadge(crew) }
+        CrewTileApp(mine) { CrewChatTileButton(crew, onChat) }
     }
 }
 
