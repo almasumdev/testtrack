@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -84,6 +85,8 @@ internal data class ChatView(
     val loadingOlder: Boolean = false,
     /** The message held down, lifted while its sheet is up. */
     val lifted: String? = null,
+    /** The message tapped for its time, shown as a time line over it. */
+    val timeShown: String? = null,
     /** The crew has a members page to go to. */
     val members: Boolean = false,
     val message: String? = null,
@@ -148,6 +151,8 @@ internal class ChatActions(
     val onFace: (String) -> Unit = {},
     val onRetryLine: (ChatLine) -> Unit = {},
     val onPicture: (ChatLine) -> Unit = {},
+    /** A message tapped: show its time, or hide it again. */
+    val onTime: (ChatLine) -> Unit = {},
     val onLoadOlder: () -> Unit = {},
     val onClearMessage: () -> Unit = {},
 )
@@ -180,6 +185,8 @@ fun CrewChatScreen(
     var deleting by remember { mutableStateOf<ChatLine?>(null) }
     var profile by remember { mutableStateOf<CrewTester?>(null) }
     var picture by remember { mutableStateOf<ChatLine?>(null) }
+    var timeShown by remember { mutableStateOf<String?>(null) }
+    val hour24 = DateFormat.is24HourFormat(context)
     val pickPicture = rememberChatPicturePicker(vm)
 
     val name = crew?.name ?: "Crew"
@@ -191,7 +198,10 @@ fun CrewChatScreen(
             state = vm.state,
             canPost = vm.canPost,
             closedLine = closedLine(vm.state, vm.whyNot, name, crew?.detailsUntil),
-            rows = remember(vm.lines, vm.newFromRev, vm.newToRev) { ChatThread.rows(vm.lines, vm.newFromRev, vm.newToRev) },
+            rows =
+                remember(vm.lines, vm.newFromRev, vm.newToRev, hour24) {
+                    ChatThread.rows(vm.lines, vm.newFromRev, vm.newToRev, hour24 = hour24)
+                },
             people = vm.people,
             mySeat = vm.mySeat,
             muted = vm.muted,
@@ -204,6 +214,7 @@ fun CrewChatScreen(
             problem = vm.problem,
             loadingOlder = vm.loadingOlder,
             lifted = pressed?.id,
+            timeShown = timeShown,
             members = crew != null && !crew.pruned && (crew.phase == CrewPhase.RUN || crew.phase == CrewPhase.RECORD),
             message = vm.message,
         )
@@ -226,6 +237,7 @@ fun CrewChatScreen(
             onFace = { seat -> profile = chatProfileOf(seat, vm.people[seat], crew) },
             onRetryLine = { vm.retry(it, context) },
             onPicture = { picture = it },
+            onTime = { timeShown = if (timeShown == it.id) null else it.id },
             onLoadOlder = vm::loadOlder,
             onClearMessage = vm::clearMessage,
         )

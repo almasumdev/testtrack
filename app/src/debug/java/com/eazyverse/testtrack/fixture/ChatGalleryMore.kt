@@ -198,7 +198,8 @@ internal fun GalleryPage(
     var muted by remember { mutableStateOf(false) }
     var draft by remember { mutableStateOf(ChatDraft()) }
     var field by remember { mutableStateOf(TextFieldValue("")) }
-    val view = s.view(s.threadRows()).copy(muted = muted, draft = draft)
+    var shown by remember { mutableStateOf<String?>(null) }
+    val view = s.view(s.threadRows()).copy(muted = muted, draft = draft, timeShown = shown)
     val base = galleryActions(show)
     val actions =
         ChatActions(
@@ -212,6 +213,7 @@ internal fun GalleryPage(
             onLongPress = base.onLongPress,
             onFace = base.onFace,
             onPicture = base.onPicture,
+            onTime = { shown = if (shown == it.id) null else it.id },
         )
     CrewChatBody(view, actions, field)
 }

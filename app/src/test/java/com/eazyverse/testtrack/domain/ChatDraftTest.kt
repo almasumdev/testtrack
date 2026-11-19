@@ -77,7 +77,7 @@ class ChatDraftTest {
     }
 
     @Test
-    fun `rows carry days, the new line and author runs`() {
+    fun `rows carry time lines, the new line and author runs`() {
         val lines =
             listOf(
                 line("1", 1, "a", "2026-11-18T10:00:00Z"),
@@ -88,7 +88,7 @@ class ChatDraftTest {
             )
         val rows = ChatThread.rows(lines, newFromRev = 3, zone = ZoneOffset.UTC, today = LocalDate.parse("2026-11-19"))
         val keys = rows.map { if (it is ChatRow.Line) "${it.line.id}${if (it.first) "*" else ""}" else it.key }
-        assertEquals(listOf("day-Yesterday", "1*", "day-Today", "2*", "3", "new", "4*", "5*"), keys)
+        assertEquals(listOf("time-1", "1*", "time-2", "2*", "3", "new", "4*", "5*"), keys)
         assertEquals(1, (rows[5] as ChatRow.New).count)
     }
 

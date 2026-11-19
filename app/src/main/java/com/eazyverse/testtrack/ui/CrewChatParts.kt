@@ -1,5 +1,12 @@
 package com.eazyverse.testtrack.ui
 
+import android.text.format.DateFormat
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -17,12 +24,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -30,18 +39,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.CircleAlert
+import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessagesSquare
-import com.composables.icons.lucide.RotateCcw
 import com.eazyverse.testtrack.domain.ChatKind
 import com.eazyverse.testtrack.domain.ChatLine
 import com.eazyverse.testtrack.domain.ChatRow
 import com.eazyverse.testtrack.domain.ChatThread
 import com.eazyverse.testtrack.ui.theme.Tt
+import java.time.LocalDate
 
 /*
- * The pieces of a crew's chat thread: the bot's lines, the team's posts, the dividers between days
- * and before what is new, and the empty chat. Members' bubbles are in CrewChatBubble.kt.
+ * The pieces of a crew's chat thread: the bot's lines, the team's posts, the time lines and the
+ * divider before what is new, and the empty chat. Members' bubbles are in CrewChatBubble.kt.
+ * Times work as in Messenger: none inside a message, a time line wherever talk starts again after
+ * a pause, and a tapped message shows its own time line over it.
  */
 
 /** Bot lines that are good news, drawn in the ok colour. */
@@ -55,32 +67,57 @@ internal fun ChatRowView(
     actions: ChatActions,
 ) {
     when (row) {
-        is ChatRow.Day -> DayDivider(row.label)
+        is ChatRow.Time -> TimeLine(row.label)
         is ChatRow.New -> NewDivider(row.count)
-        is ChatRow.Line ->
-            when (row.line.kind) {
-                ChatKind.BOT -> BotLine(row.line, view)
-                ChatKind.TEAM -> TeamPost(row.line, view)
-                ChatKind.USER -> ChatMessage(row.line, row.first, row.last, view, actions)
+        is ChatRow.Line -> {
+            // Under a time line already, a tap has no time to add.
+            val onTap = { if (!row.stamped) actions.onTime(row.line) }
+            Column(Modifier.fillMaxWidth()) {
+                TappedTime(row, view)
+                when (row.line.kind) {
+                    ChatKind.BOT -> BotLine(row.line, view, onTap)
+                    ChatKind.TEAM -> TeamPost(row.line, view, onTap)
+                    ChatKind.USER -> ChatMessage(row, view, actions)
+                }
             }
+        }
     }
 }
 
-/** A day's chip, centred between the days. */
+/** Where talk starts again after a pause: the time, small and centred, with no chip. */
 @Composable
-private fun DayDivider(label: String) {
-    val t = Tt.colors
-    Box(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 4.dp), contentAlignment = Alignment.Center) {
-        Text(
-            label,
-            Modifier
-                .clip(RoundedCornerShape(percent = 50))
-                .background(t.glass2)
-                .padding(horizontal = 10.dp, vertical = 3.dp),
-            style = chatStyle(11.5f, 15f),
-            fontWeight = FontWeight.SemiBold,
-            color = t.text3,
-        )
+internal fun TimeLine(
+    label: String,
+    bottom: Dp = 0.dp,
+) {
+    Text(
+        label,
+        Modifier.fillMaxWidth().padding(top = 16.dp, bottom = bottom),
+        style = chatStyle(11.5f, 15f),
+        fontWeight = FontWeight.Medium,
+        color = Tt.colors.text3,
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+    )
+}
+
+private const val TAP_MS = 150
+
+/** A tapped message's own time line, over it, eased in and out. One shows at a time. */
+@Composable
+private fun TappedTime(
+    row: ChatRow.Line,
+    view: ChatView,
+) {
+    val at = row.line.at
+    val hour24 = DateFormat.is24HourFormat(LocalContext.current)
+    AnimatedVisibility(
+        visible = at != null && !row.stamped && view.timeShown == row.line.id,
+        enter = expandVertically(tween(TAP_MS)) + fadeIn(tween(TAP_MS)),
+        exit = shrinkVertically(tween(TAP_MS)) + fadeOut(tween(TAP_MS)),
+    ) {
+        val label = remember(at, hour24) { at?.let { ChatThread.timeLabel(it, LocalDate.now(), hour24 = hour24) }.orEmpty() }
+        TimeLine(label, bottom = 6.dp)
     }
 }
 
@@ -105,6 +142,7 @@ private fun NewDivider(count: Int) {
 private fun BotLine(
     line: ChatLine,
     view: ChatView,
+    onTap: () -> Unit,
 ) {
     val t = Tt.colors
     val good = line.event in GoodNews
@@ -114,6 +152,7 @@ private fun BotLine(
                 .widthIn(max = 340.dp)
                 .clip(RoundedCornerShape(percent = 50))
                 .background(if (good) t.okBg else t.glass2)
+                .clickable(onClick = onTap)
                 .padding(start = 5.dp, end = 12.dp, top = 3.dp, bottom = 3.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -134,6 +173,7 @@ private fun BotLine(
 private fun TeamPost(
     line: ChatLine,
     view: ChatView,
+    onTap: () -> Unit,
 ) {
     val t = Tt.colors
     Column(
@@ -143,6 +183,8 @@ private fun TeamPost(
             // The fill first and unclipped, so the whole dashed edge shows over it.
             .background(t.surface2, RoundedCornerShape(14.dp))
             .dashed(t.glassBorder, 14.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onTap)
             .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -161,8 +203,6 @@ private fun TeamPost(
                 color = t.accentInk,
                 maxLines = 1,
             )
-            Spacer(Modifier.weight(1f))
-            TimeText(ChatThread.clock(line.at))
         }
         Spacer(Modifier.height(4.dp))
         Text(view.plain(line.text), style = chatStyle(14.5f, 20f), color = t.text)
@@ -205,32 +245,39 @@ internal fun Quote(
     }
 }
 
-/** Under a message that did not go: why, and the way to try again. */
+/** Under a message that did not go: the red mark, the way to try again, and why. */
 @Composable
 internal fun FailedRow(
     line: ChatLine,
     actions: ChatActions,
 ) {
     val t = Tt.colors
-    Column(Modifier.padding(start = 4.dp, end = 4.dp, top = 4.dp), horizontalAlignment = Alignment.End) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    Column(Modifier.padding(top = 3.dp), horizontalAlignment = Alignment.End) {
+        Row(
+            Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .clickable(onClickLabel = "Try again") { actions.onRetryLine(line) }
+                .padding(horizontal = 4.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Icon(Lucide.CircleAlert, null, Modifier.size(14.dp), tint = t.bad)
-            Spacer(Modifier.width(6.dp))
-            Text("Not sent.", style = chatStyle(12.5f, 17f), color = t.bad)
-            Row(
-                Modifier
-                    .padding(start = 6.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .clickable { actions.onRetryLine(line) }
-                    .padding(horizontal = 2.dp, vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Lucide.RotateCcw, null, Modifier.size(13.dp), tint = t.accentInk)
-                Spacer(Modifier.width(4.dp))
-                Text("Try again", style = chatStyle(12.5f, 17f), fontWeight = FontWeight.Bold, color = t.accentInk)
-            }
+            Spacer(Modifier.width(5.dp))
+            Text("Not sent. Tap to retry", style = chatStyle(12f, 16f), fontWeight = FontWeight.Medium, color = t.bad)
         }
-        if (line.error.isNotBlank()) Text(line.error, style = chatStyle(12f, 16f), color = t.text3)
+        if (line.error.isNotBlank()) Text(line.error, Modifier.padding(end = 4.dp), style = chatStyle(12f, 16f), color = t.text3)
+    }
+}
+
+/** Under your own message: "Sending" with a small clock while it goes, "Sent" on your newest once it has. */
+@Composable
+internal fun SendNote(sending: Boolean) {
+    val t = Tt.colors
+    Row(Modifier.padding(top = 3.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (sending) {
+            Icon(Lucide.Clock, null, Modifier.size(12.dp), tint = t.text3)
+            Spacer(Modifier.width(4.dp))
+        }
+        Text(if (sending) "Sending" else "Sent", style = chatStyle(11.5f, 15f), fontWeight = FontWeight.Medium, color = t.text3)
     }
 }
 

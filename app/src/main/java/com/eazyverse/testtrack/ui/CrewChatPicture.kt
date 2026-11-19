@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -44,9 +43,9 @@ import com.eazyverse.testtrack.viewmodel.proofSource
 
 /*
  * A picture message, drawn the way chat apps do: the picture fills the bubble edge to edge in its
- * own shape, with the time on a dark pill over its corner. A caption sits under it in the same
- * bubble, with the time after the words instead. While it goes it is dimmed under a spinning ring;
- * if it did not go, a retry mark sits on it. Pictures are kept a day, then a plain box says so.
+ * own shape, with no time over it. A caption sits under it in the same bubble. While it goes it is
+ * dimmed under a spinning ring; if it did not go, a retry mark sits on it. Pictures are kept a day,
+ * then a plain box says so.
  */
 
 /** The widest a picture grows, as a share of the screen. */
@@ -117,23 +116,9 @@ internal fun PictureBubble(
                     SendState.SENT -> Unit
                 }
             }
-            if (!caption) {
-                if (picture.expired) {
-                    Box(Modifier.align(Alignment.BottomEnd).padding(end = 10.dp, bottom = 7.dp)) { MessageMeta(line, t.text4) }
-                } else {
-                    Box(
-                        Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(6.dp)
-                            .clip(RoundedCornerShape(percent = 50))
-                            .background(t.photoScrim)
-                            .padding(horizontal = 7.dp, vertical = 2.dp),
-                    ) { MessageMeta(line, t.onPhoto) }
-                }
-            }
         }
         if (caption) {
-            WordsWithMeta(line, view, ink, Modifier.fillMaxWidth().padding(start = 10.dp, end = 10.dp, top = 6.dp, bottom = 6.dp))
+            ChatMessageText(line, view, Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp), ink = ink.ink)
         }
     }
 }

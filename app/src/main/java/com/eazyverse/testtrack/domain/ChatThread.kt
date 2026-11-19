@@ -5,6 +5,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 /** Where a crew's chat stands, from the crew and from the chat itself. */
@@ -110,10 +111,13 @@ data class ChatLine(
 sealed interface ChatRow {
     val key: String
 
-    data class Day(
+    /** A time line over [before], the id of the message it heads: where talk starts again after a pause. */
+    data class Time(
+        val at: Instant,
         val label: String,
+        val before: String,
     ) : ChatRow {
-        override val key = "day-$label"
+        override val key = "time-$before"
     }
 
     data class New(
@@ -124,12 +128,15 @@ sealed interface ChatRow {
 
     /**
      * [first] starts a run by one author, where their name shows; [last] ends it, where their face
-     * shows. A line on its own is both.
+     * shows. A line on its own is both. [stamped] sits right under a time line, so tapping it shows
+     * no second one. [newestMine] is the reader's own latest message, where "Sent" shows.
      */
     data class Line(
         val line: ChatLine,
         val first: Boolean,
         val last: Boolean = true,
+        val stamped: Boolean = false,
+        val newestMine: Boolean = false,
     ) : ChatRow {
         override val key = line.id
     }
@@ -167,10 +174,14 @@ object ChatThread {
         readRev: Long,
     ): List<ChatLine> = lines.filter { it.seq > readRev && !it.mine && !it.deleted && it.kind != ChatKind.BOT && it.send == SendState.SENT }
 
+    /** The pause after which talk gets a new time line, as Messenger does. */
+    val GAP: Duration = Duration.ofMinutes(15)
+
     /**
-     * The rows, oldest first: a day label wherever the day changes, the "new" line over the first
-     * message unread between [newFromRev] and [newToRev], and each message marked
-     * [ChatRow.Line.first] where a new author starts and [ChatRow.Line.last] where that run ends.
+     * The rows, oldest first: a time line over the first message and wherever [GAP] or more passed
+     * since the one before (any author), the "new" line over the first message unread between
+     * [newFromRev] and [newToRev], and each message marked [ChatRow.Line.first] where a new author
+     * starts and [ChatRow.Line.last] where that run ends. A time line ends a run, as the new line does.
      */
     fun rows(
         lines: List<ChatLine>,
@@ -178,20 +189,25 @@ object ChatThread {
         newToRev: Long = Long.MAX_VALUE,
         zone: ZoneId = ZoneId.systemDefault(),
         today: LocalDate = LocalDate.now(zone),
+        hour24: Boolean = false,
+        locale: Locale = Locale.getDefault(),
     ): List<ChatRow> {
         val rows = ArrayList<ChatRow>(lines.size + 8)
         val fresh = if (newFromRev == null) emptyList() else unread(lines, newFromRev).filter { it.seq <= newToRev }
         val firstNew = fresh.firstOrNull()?.id
-        var day: LocalDate? = null
+        val newestMine = lines.lastOrNull { it.mine && it.kind == ChatKind.USER }?.id
+        var said: Instant? = null
         var last: ChatLine? = null
         for (line in lines) {
-            val date = line.at?.atZone(zone)?.toLocalDate()
+            val at = line.at
             var broke = false
-            if (date != null && date != day) {
-                rows += ChatRow.Day(dayLabel(date, today))
-                day = date
+            var stamped = false
+            if (at != null && (said == null || Duration.between(said, at) >= GAP)) {
+                rows += ChatRow.Time(at, timeLabel(at, today, zone, hour24, locale), line.id)
                 broke = true
+                stamped = true
             }
+            if (at != null) said = at
             if (line.id == firstNew) {
                 rows += ChatRow.New(fresh.size)
                 broke = true
@@ -201,13 +217,39 @@ object ChatThread {
             val bothUser = prev?.kind == ChatKind.USER && line.kind == ChatKind.USER
             val joined = !broke && sameAuthor && bothUser
             if (joined) {
-                val at = rows.lastIndex
-                rows[at] = (rows[at] as ChatRow.Line).copy(last = false)
+                val end = rows.lastIndex
+                rows[end] = (rows[end] as ChatRow.Line).copy(last = false)
             }
-            rows += ChatRow.Line(line, first = !joined)
+            rows += ChatRow.Line(line, first = !joined, stamped = stamped, newestMine = line.id == newestMine)
             last = line
         }
         return rows
+    }
+
+    /**
+     * A time line's words, Messenger's way, in capitals: "2:20 PM" today, "TUE AT 3:45 AM" within
+     * the last six days, "NOV 15 AT 8:55 PM" earlier this year, "NOV 15, 2025 AT 8:55 PM" before.
+     * [hour24] follows the phone's own clock setting.
+     */
+    fun timeLabel(
+        at: Instant,
+        today: LocalDate,
+        zone: ZoneId = ZoneId.systemDefault(),
+        hour24: Boolean = false,
+        locale: Locale = Locale.getDefault(),
+    ): String {
+        val time = at.atZone(zone)
+        val date = time.toLocalDate()
+        val clock = if (hour24) "HH:mm" else "h:mm a"
+        val days = ChronoUnit.DAYS.between(date, today)
+        val pattern =
+            when {
+                days == 0L -> clock
+                days in 1L..6L -> "EEE 'at' $clock"
+                date.year == today.year -> "MMM d 'at' $clock"
+                else -> "MMM d, yyyy 'at' $clock"
+            }
+        return time.format(DateTimeFormatter.ofPattern(pattern, locale)).uppercase(locale)
     }
 
     /** "Today", "Yesterday", or the date, with the year only when it is not this one. */

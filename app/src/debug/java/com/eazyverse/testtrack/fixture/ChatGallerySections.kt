@@ -6,6 +6,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
@@ -27,6 +31,7 @@ import com.eazyverse.testtrack.fixture.GallerySamples.Companion.ME
 import com.eazyverse.testtrack.fixture.GallerySamples.Companion.NADIA
 import com.eazyverse.testtrack.fixture.GallerySamples.Companion.SOFIA
 import com.eazyverse.testtrack.fixture.GallerySamples.Companion.app
+import com.eazyverse.testtrack.fixture.GallerySamples.Companion.daysAgo
 import com.eazyverse.testtrack.fixture.GallerySamples.Companion.seat
 import com.eazyverse.testtrack.fixture.GallerySamples.Companion.today
 import com.eazyverse.testtrack.fixture.GallerySamples.Companion.yesterday
@@ -38,7 +43,6 @@ import com.eazyverse.testtrack.ui.ChatRowView
 import com.eazyverse.testtrack.ui.ChatView
 import com.eazyverse.testtrack.ui.CrewChatBody
 import com.eazyverse.testtrack.ui.closedLine
-import java.time.LocalDate
 
 /** One state in the gallery: its label, and the real composable drawing it. */
 internal class Shot(
@@ -76,12 +80,15 @@ internal sealed interface Overlay {
 }
 
 /** The gallery's actions: holding a message, a face or a picture opens what the chat page would. */
-internal fun galleryActions(show: (Overlay) -> Unit) =
-    ChatActions(
-        onLongPress = { show(Overlay.Message(it)) },
-        onFace = { show(Overlay.Profile(it)) },
-        onPicture = { show(Overlay.Viewer(it)) },
-    )
+internal fun galleryActions(
+    show: (Overlay) -> Unit,
+    onTime: (ChatLine) -> Unit = {},
+) = ChatActions(
+    onLongPress = { show(Overlay.Message(it)) },
+    onFace = { show(Overlay.Profile(it)) },
+    onPicture = { show(Overlay.Viewer(it)) },
+    onTime = onTime,
+)
 
 /** Rows of the thread, with the thread's own side margins. */
 @Composable
@@ -103,14 +110,36 @@ internal fun bubbleSection(
     s: GallerySamples,
     show: (Overlay) -> Unit,
 ): Section {
-    val a = galleryActions(show)
-
+    // Each shot keeps its own tapped time, so a tap shows a time line as the page does.
     fun rows(
         label: String,
         rows: List<ChatRow>,
+        open: String? = null,
         edit: (ChatView) -> ChatView = { it },
-    ) = Shot(label) { Rows(edit(s.view(rows)), a) }
+    ) = Shot(label) {
+        var shown by remember { mutableStateOf(open) }
+        val a = galleryActions(show) { line -> shown = if (shown == line.id) null else line.id }
+        Rows(edit(s.view(rows)).copy(timeShown = shown), a)
+    }
     val held = s.msg("held", KENJI, "Hold me down to see the lift.")
+    val spread =
+        listOf(
+            s.msg("tl0", DANIEL, "Last year's crew was a lot quieter.", daysAgo(380, 21, 10)),
+            s.msg("tl1", SOFIA, "Pocket Recipes 2.1 is on the test track now.", daysAgo(26, 20, 55)),
+            s.msg("tl2", KENJI, "Up early, opened all nine.", daysAgo(3, 3, 45)),
+            s.msg("tl3", ME, "See you all tomorrow.", yesterday(22, 10)),
+            s.msg("tl4", NADIA, "Morning, Tiny Tasks got an update.", today(8, 2)),
+            s.msg("tl5", NADIA, "The reminder works now.", today(8, 9)),
+            s.msg("tl6", ME, "Nice, I'll update tonight.", today(8, 12)),
+            s.msg("tl7", KENJI, "Steps Daily opens faster too.", today(9, 40)),
+        )
+    val tapped =
+        listOf(
+            s.msg("tt1", NADIA, "Quick one about Tiny Tasks", today(8, 2)),
+            s.msg("tt2", NADIA, "The reminder came 5 minutes late", today(8, 6)),
+            s.msg("tt3", NADIA, "Otherwise it works well", today(8, 9)),
+            s.msg("tt4", ME, "Good catch, I'll look at it", today(8, 11)),
+        )
     return Section(
         "bubbles",
         "Bubbles",
@@ -188,14 +217,8 @@ internal fun bubbleSection(
             ),
             rows("Bot line, good news", one(s.bot("bn", "Night 6 started. 9 apps to open tonight.", "night"))),
             rows("Bot line, plain", one(s.bot("bp", "Daniel joined on night 2, so his nights end a day later.", "joined"))),
-            rows(
-                "Day chips",
-                listOf(
-                    ChatRow.Day(ChatThread.dayLabel(LocalDate.now().minusDays(3), LocalDate.now())),
-                    ChatRow.Day("Yesterday"),
-                    ChatRow.Day("Today"),
-                ),
-            ),
+            rows("Time lines: last year, this year, this week, yesterday, today, then a 15+ min gap", s.laid(spread)),
+            rows("Tapped time open over a message (tap another to move it)", s.laid(tapped), open = "tt2"),
             rows(
                 "The new line",
                 listOf(

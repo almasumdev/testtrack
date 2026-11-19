@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,32 +26,13 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
-import com.eazyverse.testtrack.ui.theme.tabular
 
-// The chat's small marks: the bot's face, times, the loading shape, dashed edges and text sizes.
-
-@Composable
-internal fun TimeText(
-    text: String,
-    modifier: Modifier = Modifier,
-    color: Color = Tt.colors.text4,
-) {
-    if (text.isBlank()) return
-    Text(
-        text,
-        modifier,
-        style = TimeStyle(),
-        fontWeight = FontWeight.Medium,
-        color = color,
-        maxLines = 1,
-    )
-}
+// The chat's small marks: the bot's face, the loading shape, dashed edges and text sizes.
 
 /** How wide the head is on the mascot's 880 by 980 artboard: x 30 to 854, antenna and ears in. */
 private const val HEAD_WIDTH = 824f
@@ -131,10 +111,3 @@ internal fun chatStyle(
     size: Float,
     line: Float,
 ) = MaterialTheme.typography.bodyMedium.copy(fontSize = size.sp, lineHeight = line.sp)
-
-/** A message's time: small, in the figures' own face. */
-@Composable
-private fun TimeStyle() =
-    MaterialTheme.typography.labelSmall
-        .tabular()
-        .copy(fontSize = 10.5.sp, lineHeight = 14.sp)

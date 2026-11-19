@@ -10,6 +10,7 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
 import android.net.Uri
+import android.text.format.DateFormat
 import com.eazyverse.testtrack.domain.ChatKind
 import com.eazyverse.testtrack.domain.ChatLine
 import com.eazyverse.testtrack.domain.ChatPerson
@@ -39,6 +40,9 @@ internal class GallerySamples(
     val portrait = pictureFile(context, "portrait", 900, 1600, 205f)
     val landscape = pictureFile(context, "landscape", 1600, 900, 28f)
     val tall = pictureFile(context, "tall", 900, 2600, 150f)
+
+    /** The phone's own clock setting, as the chat page reads it. */
+    val hour24: Boolean = DateFormat.is24HourFormat(context)
 
     /** The editor's picture, held in memory as the editor holds it. */
     val editorBitmap: Bitmap = drawPicture(1080, 1440, "Editor", 260f)
@@ -182,8 +186,11 @@ internal class GallerySamples(
             msg("t13", ME, "Will check Steps Daily again after the update.", Instant.now(), send = SendState.SENDING),
         )
 
-    /** The thread laid out as the page lays it out: day chips, and the "new" line over Sofia's picture. */
-    fun threadRows(): List<ChatRow> = ChatThread.rows(thread, newFromRev = 7)
+    /** The thread laid out as the page lays it out: time lines, and the "new" line over Sofia's picture. */
+    fun threadRows(): List<ChatRow> = ChatThread.rows(thread, newFromRev = 7, hour24 = hour24)
+
+    /** [lines] with the page's own time lines and runs, nothing marked new. */
+    fun laid(lines: List<ChatLine>): List<ChatRow> = ChatThread.rows(lines, null, hour24 = hour24)
 
     // Crews, for the tiles and the floating button.
 
@@ -302,10 +309,16 @@ internal class GallerySamples(
         fun yesterday(
             hour: Int,
             minute: Int,
+        ): Instant = daysAgo(1, hour, minute)
+
+        fun daysAgo(
+            days: Long,
+            hour: Int,
+            minute: Int,
         ): Instant =
             LocalDate
                 .now(zone)
-                .minusDays(1)
+                .minusDays(days)
                 .atTime(hour, minute)
                 .atZone(zone)
                 .toInstant()
