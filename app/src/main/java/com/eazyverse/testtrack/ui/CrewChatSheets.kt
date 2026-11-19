@@ -6,19 +6,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,8 +34,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.composables.icons.lucide.Bell
 import com.composables.icons.lucide.BellOff
 import com.composables.icons.lucide.Copy
@@ -48,7 +42,6 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Reply
 import com.composables.icons.lucide.Trash2
 import com.composables.icons.lucide.Users
-import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.domain.ChatLine
 import com.eazyverse.testtrack.domain.ChatPerson
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -277,27 +270,5 @@ private fun marked(
         append(text)
         val at = if (query.isBlank()) -1 else text.indexOf(query, ignoreCase = true)
         if (at >= 0) addStyle(SpanStyle(color = ink, fontWeight = FontWeight.Bold), at, at + query.length)
-    }
-}
-
-/** A chat picture whole, over everything. */
-@Composable
-internal fun ChatPictureViewer(
-    id: String,
-    onDismiss: () -> Unit,
-) {
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .background(Tt.colors.inverse)
-                .statusBarsPadding()
-                .verticalScroll(rememberScrollState()),
-        ) {
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                IconButton(onClick = onDismiss) { Icon(Lucide.X, "Close", tint = Tt.colors.onInverse) }
-            }
-            Box(Modifier.padding(horizontal = 16.dp)) { ProofImage(id, whole = true) }
-        }
     }
 }

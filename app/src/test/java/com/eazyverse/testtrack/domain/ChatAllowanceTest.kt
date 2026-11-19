@@ -46,6 +46,31 @@ class ChatAllowanceTest {
     }
 
     @Test
+    fun `the field counts only the last three messages`() {
+        assertEquals(null, ChatAllowance.fieldCount(4))
+        assertEquals(3, ChatAllowance.fieldCount(3))
+        assertEquals(1, ChatAllowance.fieldCount(1))
+        assertEquals(null, ChatAllowance.fieldCount(0))
+    }
+
+    @Test
+    fun `the picture badge counts what is left unless pictures never run out first`() {
+        val day = ChatLimits(messagesPerDay = 10, picturesPerDay = 3)
+        assertEquals("2", ChatAllowance.pictureBadge(2, day))
+        assertEquals(null, ChatAllowance.pictureBadge(0, day))
+        assertEquals(null, ChatAllowance.pictureBadge(5, ChatLimits(messagesPerDay = 10, picturesPerDay = 10)))
+        assertEquals("9+", ChatAllowance.pictureBadge(12, ChatLimits(messagesPerDay = 50, picturesPerDay = 20)))
+    }
+
+    @Test
+    fun `the picture button needs a message and a picture left, not clean words`() {
+        assertTrue(ChatAllowance.canAttach(1, 1, canPost = true))
+        assertFalse(ChatAllowance.canAttach(0, 3, canPost = true))
+        assertFalse(ChatAllowance.canAttach(4, 0, canPost = true))
+        assertFalse(ChatAllowance.canAttach(4, 2, canPost = false))
+    }
+
+    @Test
     fun `the problem is the link first, then length, then mentions`() {
         assertEquals(DraftProblem.LINK, ChatAllowance.problem(ChatDraft("see a.com now and more"), limits, emptySet()))
         assertEquals(DraftProblem.TOO_LONG, ChatAllowance.problem(ChatDraft("eleven char"), limits, emptySet()))

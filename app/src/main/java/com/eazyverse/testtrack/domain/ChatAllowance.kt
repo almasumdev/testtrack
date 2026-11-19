@@ -62,6 +62,35 @@ object ChatAllowance {
         canPost: Boolean,
     ): Boolean = canPost && !draft.empty && problem == DraftProblem.NONE && messagesLeft > 0
 
+    /** At this many messages left or fewer, the field says how many. */
+    const val FIELD_COUNT = 3
+
+    /** The count at the end of the field: shown from [FIELD_COUNT] down to one, and not at none, where the field says so. */
+    fun fieldCount(messagesLeft: Int): Int? = if (messagesLeft in 1..FIELD_COUNT) messagesLeft else null
+
+    /**
+     * The count on the picture button, or null for none: when nothing is left (the button greys
+     * instead), and when the server allows as many pictures as messages, so pictures are never
+     * what runs out first.
+     */
+    fun pictureBadge(
+        picturesLeft: Int,
+        limits: ChatLimits,
+    ): String? =
+        when {
+            picturesLeft <= 0 -> null
+            limits.picturesPerDay >= limits.messagesPerDay -> null
+            picturesLeft > 9 -> "9+"
+            else -> picturesLeft.toString()
+        }
+
+    /** The picture button opens the picker: a message and a picture left. What is written is checked in the editor. */
+    fun canAttach(
+        messagesLeft: Int,
+        picturesLeft: Int,
+        canPost: Boolean,
+    ): Boolean = canPost && messagesLeft > 0 && picturesLeft > 0
+
     /** A picture can be picked: a message and a picture left, and nothing wrong with the words with it. */
     fun canPickPicture(
         problem: DraftProblem,

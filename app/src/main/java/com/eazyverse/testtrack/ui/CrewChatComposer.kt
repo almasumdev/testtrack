@@ -5,16 +5,17 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -22,8 +23,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +36,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -41,31 +48,34 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
 import com.composables.icons.lucide.CircleAlert
-import com.composables.icons.lucide.Clock
-import com.composables.icons.lucide.Image
-import com.composables.icons.lucide.ImageOff
 import com.composables.icons.lucide.ImagePlus
 import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.MessageSquare
 import com.composables.icons.lucide.Send
 import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.domain.ChatAllowance
 import com.eazyverse.testtrack.domain.ChatDraft
 import com.eazyverse.testtrack.domain.ChatQuote
 import com.eazyverse.testtrack.domain.DraftProblem
-import com.eazyverse.testtrack.domain.Left
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
+import kotlinx.coroutines.delay
 
 /**
- * Writing to the crew: what is left today over the field, a picture button, the field growing to
- * five lines, and Send. A reply shows what it answers over the field; a link stops Send and says
- * why under it.
+ * Writing to the crew: a picture button with the pictures left on it, the field growing to five
+ * lines with the messages left at its end once few are, and Send. A reply shows what it answers
+ * over the field; a link stops Send and says why under it. With no messages left the field is
+ * shut and says so.
  */
 @Composable
 internal fun ChatComposer(
@@ -75,20 +85,9 @@ internal fun ChatComposer(
 ) {
     val t = Tt.colors
     val canSend = ChatAllowance.canSend(view.draft, view.problem, view.messagesLeft, view.canPost)
-    val canPicture = ChatAllowance.canPickPicture(view.problem, view.messagesLeft, view.picturesLeft, view.canPost)
+    val canAttach = ChatAllowance.canAttach(view.messagesLeft, view.picturesLeft, view.canPost)
+    var tip by remember { mutableStateOf(false) }
     ComposerFrame {
-        Row(
-            Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, bottom = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.End),
-        ) {
-            LeftCount(Lucide.MessageSquare, view.messagesLeft, " left today", ChatAllowance.level(view.messagesLeft))
-            LeftCount(
-                Lucide.Image,
-                view.picturesLeft,
-                " " + ChatAllowance.pictureWord(view.picturesLeft),
-                ChatAllowance.pictureLevel(view.picturesLeft),
-            )
-        }
         view.replyTo?.let { reply ->
             Row(Modifier.padding(start = 2.dp, end = 2.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 val quote = view.quoteOf(ChatQuote(reply.id, reply.authorSeatId, reply.text, reply.picture != null))
@@ -98,16 +97,19 @@ internal fun ChatComposer(
             }
         }
         Row(verticalAlignment = Alignment.Bottom) {
-            RoundButton(
-                Lucide.ImagePlus,
-                if (canPicture) "Send a picture" else "No pictures left today",
-                48.dp,
-                21.dp,
-                if (canPicture) t.tile else t.glass2,
-                if (canPicture) t.tileInk else t.text4,
-                enabled = canPicture,
-                onClick = actions.onPickPicture,
-            )
+            Box {
+                RoundButton(
+                    Lucide.ImagePlus,
+                    if (canAttach) "Send a picture" else "No pictures left today",
+                    48.dp,
+                    21.dp,
+                    if (canAttach) t.tile else t.glass2,
+                    if (canAttach) t.tileInk else t.text4,
+                    onClick = { if (canAttach) actions.onPickPicture() else tip = true },
+                )
+                ChatAllowance.pictureBadge(view.picturesLeft, view.limits)?.let { PictureBadge(it, Modifier.align(Alignment.TopEnd)) }
+                if (tip) PictureTip(pictureTip(view)) { tip = false }
+            }
             Spacer(Modifier.width(8.dp))
             ChatField(field, view, actions.onField, Modifier.weight(1f))
             Spacer(Modifier.width(8.dp))
@@ -122,14 +124,69 @@ internal fun ChatComposer(
                 onClick = actions.onSend,
             )
         }
-        when {
-            view.problem != DraftProblem.NONE -> ComposerLine(Lucide.CircleAlert, problemLine(view), bad = true)
-            view.picturesLeft <= 0 ->
-                ComposerLine(
-                    Lucide.ImageOff,
-                    "No pictures left today. You get ${view.limits.picturesPerDay} more after midnight.",
-                )
-        }
+        if (view.problem != DraftProblem.NONE) ComposerLine(Lucide.CircleAlert, problemLine(view), bad = true)
+    }
+}
+
+/** Why the picture button is grey, said briefly when it is tapped. */
+private fun pictureTip(view: ChatView): String =
+    when {
+        view.messagesLeft <= 0 -> "No messages left today. More after midnight."
+        view.limits.picturesPerDay <= 0 -> "Pictures are off in this chat."
+        else -> "No pictures left today. You get ${view.limits.picturesPerDay} more after midnight."
+    }
+
+/** How many pictures are left, on the corner of the picture button. */
+@Composable
+private fun PictureBadge(
+    count: String,
+    modifier: Modifier,
+) {
+    val t = Tt.colors
+    Box(
+        modifier
+            .offset(x = 4.dp, y = (-4).dp)
+            .heightIn(min = 18.dp)
+            .widthIn(min = 18.dp)
+            .clip(CircleShape)
+            .background(t.badgeFill)
+            .border(1.5.dp, t.bg, CircleShape)
+            .padding(horizontal = 4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            count,
+            style = chatStyle(10.5f, 13f).tabular(),
+            fontWeight = FontWeight.Bold,
+            color = t.onAccent,
+        )
+    }
+}
+
+/** A short note over the picture button, gone after a few seconds or a tap. */
+@Composable
+private fun PictureTip(
+    text: String,
+    onGone: () -> Unit,
+) {
+    val t = Tt.colors
+    LaunchedEffect(text) {
+        delay(3_000)
+        onGone()
+    }
+    val gap = with(LocalDensity.current) { 8.dp.roundToPx() }
+    Popup(popupPositionProvider = remember(gap) { AboveAnchor(gap) }, onDismissRequest = onGone) {
+        Text(
+            text,
+            Modifier
+                .widthIn(max = 260.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(t.inverse)
+                .clickable(onClick = onGone)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            style = chatStyle(13f, 17f),
+            color = t.onInverse,
+        )
     }
 }
 
@@ -141,7 +198,26 @@ private fun problemLine(view: ChatView): String =
         DraftProblem.NONE -> ""
     }
 
-/** The field: a pill that grows to five lines, its edge red while what is written cannot go. */
+/** Puts a popup just over what it belongs to, kept inside the window. */
+private class AboveAnchor(
+    private val gap: Int,
+) : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset =
+        IntOffset(
+            anchorBounds.left.coerceAtMost(windowSize.width - popupContentSize.width).coerceAtLeast(0),
+            (anchorBounds.top - popupContentSize.height - gap).coerceAtLeast(0),
+        )
+}
+
+/**
+ * The field: a pill that grows to five lines, its edge red while what is written cannot go, with
+ * the messages left at its end once few are. With none left it is shut and says so.
+ */
 @Composable
 private fun ChatField(
     value: TextFieldValue,
@@ -155,10 +231,13 @@ private fun ChatField(
     val bad = view.problem != DraftProblem.NONE
     val shape = RoundedCornerShape(24.dp)
     val mentions = remember(view.draft, t) { MentionInk(view.draft, t.accentInk) }
+    val open = view.messagesLeft > 0
+    val count = ChatAllowance.fieldCount(view.messagesLeft)
     BasicTextField(
         value = value,
         onValueChange = onValue,
         modifier = modifier,
+        enabled = open,
         textStyle = chatStyle(15f, 20f).copy(color = t.text),
         cursorBrush = SolidColor(t.accentInk),
         maxLines = 5,
@@ -177,13 +256,37 @@ private fun ChatField(
                         when {
                             bad -> t.bad
                             focused -> t.text
+                            !open -> t.glassBorder
                             else -> t.glassBorderStrong
                         },
                         shape,
-                    ).padding(horizontal = 16.dp, vertical = 13.dp),
+                    ).padding(start = 16.dp, end = if (count != null) 12.dp else 16.dp, top = 13.dp, bottom = 13.dp),
             ) {
-                if (value.text.isEmpty()) Text("Message ${view.crewName}", style = chatStyle(15f, 20f), color = t.text4, maxLines = 1)
-                inner()
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Box(Modifier.weight(1f)) {
+                        if (value.text.isEmpty()) {
+                            Text(
+                                if (open) "Message ${view.crewName}" else "No messages left today",
+                                style = chatStyle(15f, 20f),
+                                color = t.text4,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        inner()
+                    }
+                    if (count != null) {
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "$count left",
+                            Modifier.semantics {
+                                contentDescription = if (count == 1) "1 message left today" else "$count messages left today"
+                            },
+                            style = chatStyle(12f, 20f).tabular(),
+                            color = t.text4,
+                        )
+                    }
+                }
             }
         },
     )
@@ -207,39 +310,6 @@ private class MentionInk(
     override fun equals(other: Any?) = other is MentionInk && other.draft == draft && other.ink == ink
 
     override fun hashCode() = draft.hashCode() * 31 + ink.hashCode()
-}
-
-/** "7 left today", in the warning colour at two or fewer and the bad one at none. */
-@Composable
-private fun LeftCount(
-    icon: ImageVector,
-    count: Int,
-    words: String,
-    level: Left,
-) {
-    val t = Tt.colors
-    val ink =
-        when (level) {
-            Left.NONE -> t.bad
-            Left.LOW -> t.warn
-            Left.PLENTY -> t.text3
-        }
-    val weight = if (level == Left.PLENTY) FontWeight.Normal else FontWeight.SemiBold
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, null, Modifier.size(13.dp), tint = ink)
-        Spacer(Modifier.width(4.dp))
-        Text(
-            buildAnnotatedString {
-                withStyle(SpanStyle(fontFamily = chatStyle(12f, 16f).tabular().fontFamily, fontWeight = FontWeight.Bold)) {
-                    append(count.coerceAtLeast(0).toString())
-                }
-                append(words)
-            },
-            style = chatStyle(12f, 16f),
-            fontWeight = weight,
-            color = ink,
-        )
-    }
 }
 
 @Composable
@@ -290,18 +360,11 @@ private fun ComposerFrame(content: @Composable () -> Unit) {
     ) { content() }
 }
 
-/** The composer while the chat loads: its counts shimmer, its buttons wait. */
+/** The composer while the chat loads: its buttons wait. */
 @Composable
 internal fun ChatComposerLoading() {
     val t = Tt.colors
     ComposerFrame {
-        Row(
-            Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, bottom = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.End),
-        ) {
-            Skeleton(width = 80.dp, height = 12.dp)
-            Skeleton(width = 64.dp, height = 12.dp)
-        }
         Row(verticalAlignment = Alignment.Bottom) {
             RoundButton(Lucide.ImagePlus, "Send a picture", 48.dp, 21.dp, t.glass2, t.text4, enabled = false) {}
             Spacer(Modifier.width(8.dp))
@@ -334,30 +397,6 @@ internal fun ChatClosedBar(text: String) {
             Icon(Lucide.Lock, null, Modifier.size(18.dp), tint = t.text2)
             Spacer(Modifier.width(10.dp))
             Text(text, style = chatStyle(13.5f, 18f), color = t.text2)
-        }
-    }
-}
-
-/** The day's messages are used up: no field, only when more come. */
-@Composable
-internal fun ChatLimitCard(perDay: Int) {
-    val t = Tt.colors
-    ComposerFrame {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(t.warnBg)
-                .border(1.dp, t.warnBorder, RoundedCornerShape(14.dp))
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(Lucide.Clock, null, Modifier.size(22.dp), tint = t.warn)
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Text("That's your $perDay for today", style = chatStyle(14.5f, 19f), fontWeight = FontWeight.SemiBold, color = t.text)
-                Text("You can write again after midnight, your time.", style = chatStyle(12.5f, 17f), color = t.text2)
-            }
         }
     }
 }
