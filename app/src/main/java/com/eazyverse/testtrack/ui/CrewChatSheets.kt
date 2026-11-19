@@ -102,7 +102,7 @@ private fun MenuRow(
 }
 
 /**
- * The bar while messages are picked, in place of the page's own: the way out, how many are
+ * The bar while messages are picked, in place of the page's own: an X to let them go, how many are
  * picked, and what can be done with them. Reply is for one message; Copy and Delete work on
  * many (Delete only when every one is yours, and "Remove" when none of them ever sent).
  */
@@ -112,7 +112,7 @@ internal fun PickBar(
     actions: ChatActions,
 ) {
     val t = Tt.colors
-    PageBar("${picks.count} selected", actions.onClearSelection) {
+    PageBar("${picks.count} selected", actions.onClearSelection, close = true) {
         if (picks.reply) PickButton(Lucide.Reply, "Reply", t.text2, actions.onReplyPicked)
         if (picks.copy) PickButton(Lucide.Copy, "Copy", t.text2, actions.onCopyPicked)
         if (picks.delete) PickButton(Lucide.Trash2, if (picks.removeOnly) "Remove" else "Delete", t.bad, actions.onDeletePicked)

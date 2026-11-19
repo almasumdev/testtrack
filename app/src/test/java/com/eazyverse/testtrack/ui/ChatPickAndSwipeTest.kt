@@ -157,9 +157,9 @@ class ChatPickAndSwipeTest {
         val after = compose.onNodeWithText(next.text).getUnclippedBoundsInRoot()
         assertEquals(BubbleMinHeight, after.height)
         assertEquals(BubbleMinHeight, deleted.height)
-        // One run by one author: 2dp apart, as between any two bubbles in a group.
-        assertEquals(groupGap(first = false), after.top - deleted.bottom)
-        assertEquals(2.dp, groupGap(first = false))
+        // One run by one author: 2.5dp apart, as between any two bubbles in a group (whole pixels on screen).
+        assertEquals(groupGap(first = false).value, (after.top - deleted.bottom).value, 0.5f)
+        assertEquals(2.5.dp, groupGap(first = false))
         assertEquals(12.dp, groupGap(first = true))
     }
 }

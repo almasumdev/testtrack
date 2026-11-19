@@ -125,7 +125,7 @@ internal fun Modifier.mentionWash(you: Boolean): Modifier = if (you) background(
 internal fun Modifier.teamWash(team: Boolean): Modifier = if (team) background(Tt.colors.botTint) else this
 
 /** The space over a message: tight inside a run by one author, wider where a new run starts. */
-internal fun groupGap(first: Boolean): Dp = if (first) 12.dp else 2.dp
+internal fun groupGap(first: Boolean): Dp = if (first) 12.dp else 2.5.dp
 
 /** The shortest a one-line bubble is: its line of text with the bubble's own padding over and under. */
 internal val BubbleMinHeight = 34.dp

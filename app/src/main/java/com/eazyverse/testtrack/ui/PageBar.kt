@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,6 +19,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.R
 
 /**
@@ -27,7 +31,7 @@ import com.eazyverse.testtrack.R
  * insets of its own (every page is already inset where it is routed, and the stock bar adding the
  * status bar again is what sat some arrows lower than others), a bold title, and anything extra
  * in the actions slot with the page's gutter after it. The back mark is always Material's
- * arrow_back_ios_new.
+ * arrow_back_ios_new, or Lucide's X in the same slot when [close] is set (a selection to let go of).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +41,8 @@ fun PageBar(
     modifier: Modifier = Modifier,
     /** A small mark after the title, such as a muted chat's bell. */
     titleEnd: (@Composable () -> Unit)? = null,
+    /** An X in place of the back arrow: the bar closes something on the page rather than leaving it. */
+    close: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     TopAppBar(
@@ -50,7 +56,11 @@ fun PageBar(
         },
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(painterResource(R.drawable.ic_arrow_back_ios_new), "Back")
+                if (close) {
+                    Icon(Lucide.X, "Close", Modifier.size(24.dp))
+                } else {
+                    Icon(painterResource(R.drawable.ic_arrow_back_ios_new), "Back")
+                }
             }
         },
         actions = {
