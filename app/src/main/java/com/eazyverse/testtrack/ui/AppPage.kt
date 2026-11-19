@@ -321,7 +321,10 @@ private fun VerifyCallout(
     if (how) GroupHowSheet { how = false }
 }
 
-/** Crew test and feedback as two rows: where each stands, and tapping goes on to the next step. */
+/**
+ * Crew test and feedback, each under its own heading with a tag for when it is for. An empty block is
+ * one start tile with a line saying what it is; a running one drops the line and keeps the tag.
+ */
 @Composable
 private fun Testing(
     app: AppEntry,
@@ -330,16 +333,15 @@ private fun Testing(
     onCrew: (String) -> Unit,
     onFeedback: (String) -> Unit,
 ) {
-    val crewRow = !app.live || app.crew != null
-    SectionTitle("Testing")
-    TileGroup(count = if (crewRow) 2 else 1) { index, place ->
-        if (crewRow && index == 0) {
-            val crew = app.crew
+    if (!app.live || app.crew != null) {
+        val crew = app.crew
+        BlockHeading("Crew test", CREW_WHEN)
+        TileGroup(count = 1) { _, place ->
             TileRow(
                 Lucide.Users,
-                "Crew test",
+                if (crew == null) "Find a crew" else "Crew test",
                 place,
-                subtitle = crewStatus(app),
+                subtitle = if (crew == null) CREW_START_LINE else crewStatus(app),
                 trailing = if (!app.crewOpen && app.canCrew) ({ Cta("Put in for ${CrewRules.SEAT_COST} tix") }) else null,
                 onClick =
                     when {
@@ -348,23 +350,31 @@ private fun Testing(
                         else -> null
                     },
             )
-        } else {
-            val feedback = app.feedback
+        }
+    }
+    BlockHeading("Feedback", FEEDBACK_WHEN)
+    val feedback = app.feedback
+    if (feedback == null) {
+        TileGroup(count = 1) { _, place ->
             TileRow(
                 Lucide.MessageSquare,
-                "Feedback",
+                "Get reviews",
                 place,
-                subtitle = feedbackStatus(app),
-                trailing = if (app.canFeedback) ({ Cta(if (feedback == null) "Ask for feedback" else "Ask for feedback again") }) else null,
-                onClick =
-                    when {
-                        feedback != null && app.collecting -> ({ onOpenRequest(feedback.postId) })
-                        app.canFeedback -> ({ onFeedback(app.id) })
-                        feedback != null -> ({ onOpenRequest(feedback.postId) })
-                        else -> null
-                    },
+                subtitle = FEEDBACK_START_LINE,
+                trailing = if (app.canFeedback) ({ Cta("Ask") }) else null,
+                onClick = if (app.canFeedback) ({ onFeedback(app.id) }) else null,
             )
         }
+    } else {
+        val open = { onOpenRequest(feedback.postId) }
+        FeedbackCard(
+            feedback,
+            canAskAgain = app.canFeedback,
+            onOpen = open,
+            onCheck = open,
+            onFix = open,
+            onAskAgain = { onFeedback(app.id) },
+        )
     }
 }
 

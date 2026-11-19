@@ -251,8 +251,8 @@ class AppsVideoFramesTest {
                 )
             }
         }
-        runCatching { frame.target("crewRow", tap("Crew test")) }
-        runCatching { frame.target("feedbackRow", compose.onNode(hasText("Feedback") and hasClickAction())) }
+        runCatching { frame.target("crewRow", tap("Find a crew")) }
+        runCatching { frame.target("feedbackRow", tap("Get reviews")) }
         runCatching { frame.target("verify", compose.onNodeWithText("Not verified yet")) }
         frame.write("page")
     }

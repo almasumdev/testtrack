@@ -85,6 +85,72 @@ fun cappedCount(
 /** Reviews of this app's request that wait for its owner to accept or refuse. */
 val AppEntry.toCheck: Int get() = feedback?.toCheck?.coerceAtLeast(0) ?: 0
 
+/** One bought review, as a face on the feedback card. */
+enum class ReviewFace { ACCEPTED, TO_CHECK, OPEN }
+
+/** The faces a card draws, and how many more reviews there are than room for faces. */
+data class ReviewFaces(
+    val faces: List<ReviewFace>,
+    val more: Int = 0,
+)
+
+/** Most faces one card draws before the rest become a "+N". */
+const val MAX_REVIEW_FACES = 10
+
+/**
+ * One face per review bought, in a fixed order: accepted, then waiting to be checked, then the rest.
+ * The server counts accepted and waiting reviews but not who has started one, so a review being
+ * written and a slot nobody took are both open. When there are more than [cap], the open ones go
+ * first, then the oldest accepted, and the ones waiting for the owner always stay.
+ */
+fun AppFeedbackStatus.faces(cap: Int = MAX_REVIEW_FACES): ReviewFaces {
+    val total = bought.coerceAtLeast(0)
+    val accepted = done.coerceIn(0, total)
+    val waiting = toCheck.coerceIn(0, total - accepted)
+    val open = total - accepted - waiting
+    val waitingShown = minOf(waiting, cap)
+    val room = cap - waitingShown
+    val acceptedShown = minOf(accepted, room)
+    val openShown = minOf(open, room - acceptedShown)
+    val faces =
+        List(acceptedShown) { ReviewFace.ACCEPTED } +
+            List(waitingShown) { ReviewFace.TO_CHECK } +
+            List(openShown) { ReviewFace.OPEN }
+    return ReviewFaces(faces, total - faces.size)
+}
+
+/** What the feedback card says under its faces. */
+enum class FeedbackCardKind { TO_CHECK, WAITING, OFF_CIRCLE, ALL_IN, CLOSED }
+
+fun AppFeedbackStatus.cardKind(): FeedbackCardKind =
+    when {
+        state == "done" -> FeedbackCardKind.ALL_IN
+        state != "collecting" -> FeedbackCardKind.CLOSED
+        toCheck > 0 -> FeedbackCardKind.TO_CHECK
+        unlisted -> FeedbackCardKind.OFF_CIRCLE
+        else -> FeedbackCardKind.WAITING
+    }
+
+/** The faces in words, for a screen reader: "2 accepted, 1 to check, 2 open". */
+fun AppFeedbackStatus.facesSpoken(): String {
+    val total = bought.coerceAtLeast(0)
+    val accepted = done.coerceIn(0, total)
+    val waiting = toCheck.coerceIn(0, total - accepted)
+    return listOfNotNull(
+        "$accepted accepted",
+        "$waiting to check".takeIf { waiting > 0 },
+        "${total - accepted - waiting} open".takeIf { total - accepted - waiting > 0 },
+    ).joinToString(", ")
+}
+
+/** The tag after a block's heading: when it is for. */
+const val CREW_WHEN = "Before production"
+const val FEEDBACK_WHEN = "Any time"
+
+/** What an empty start tile says it is for, so nobody has to guess which one to pick. */
+const val CREW_START_LINE = "Testing days Google asks for"
+const val FEEDBACK_START_LINE = "Real people try it, then review"
+
 /** The problems an app has, in the order a tile lists them. */
 fun AppEntry.problems(): List<AppProblem> =
     listOfNotNull(
