@@ -117,8 +117,8 @@ internal fun ChatComposer(
                 Quote(
                     quote.copy(who = "Replying to ${quote.who}"),
                     Modifier.weight(1f),
-                    fill = t.bg,
                     maxWidth = Dp.Unspecified,
+                    flat = true,
                 )
                 FieldButton(Lucide.X, "Stop replying", 44.dp, 36.dp, 17.dp, t.text2, onClick = actions.onClearReply)
             }

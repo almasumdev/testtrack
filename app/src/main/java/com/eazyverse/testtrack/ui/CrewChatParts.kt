@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -168,18 +169,25 @@ internal fun Quote(
     maxWidth: Dp = 240.dp,
     ink: Color? = null,
     tap: QuoteTap? = null,
+    flat: Boolean = false,
 ) {
     val t = Tt.colors
     val bar = ink ?: t.accentInk
-    Row(
-        modifier
-            .widthIn(max = maxWidth)
-            .clip(RoundedCornerShape(8.dp))
-            .then(tap?.let { Modifier.quoteTap(it) } ?: Modifier)
-            .background(fill)
-            .drawBehind { drawRect(bar, size = Size(3.dp.toPx(), size.height)) }
-            .padding(start = 11.dp, end = 8.dp, top = 4.dp, bottom = 5.dp),
-    ) {
+    // Flat: drawn straight on whatever holds it, with no box of its own, only the bar and the text.
+    val box =
+        if (flat) {
+            Modifier
+                .drawBehind { drawRoundRect(bar, size = Size(3.dp.toPx(), size.height), cornerRadius = CornerRadius(1.5.dp.toPx())) }
+                .padding(start = 11.dp)
+        } else {
+            Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .then(tap?.let { Modifier.quoteTap(it) } ?: Modifier)
+                .background(fill)
+                .drawBehind { drawRect(bar, size = Size(3.dp.toPx(), size.height)) }
+                .padding(start = 11.dp, end = 8.dp, top = 4.dp, bottom = 5.dp)
+        }
+    Row(modifier.widthIn(max = maxWidth).then(box)) {
         Column {
             Text(quote.who, style = chatStyle(12f, 16f), fontWeight = FontWeight.Bold, color = bar, maxLines = 1)
             Text(
