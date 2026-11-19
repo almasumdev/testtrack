@@ -1,11 +1,11 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
@@ -22,26 +22,43 @@ import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.domain.ChatLine
+import com.eazyverse.testtrack.domain.ChatPerson
 import com.eazyverse.testtrack.domain.ChatPiece
 import com.eazyverse.testtrack.domain.ChatText
 import com.eazyverse.testtrack.ui.theme.Tt
 
-/** An app named in a message is a chip with its icon and short name; a member is "@Name" in bold. */
-private const val CHIP_TEXT_SP = 14f
-private val ChipIcon = 17.dp
+/*
+ * Mentions read as words, the way Messenger and WhatsApp draw them: a member is "@Name" in
+ * semibold accent ink, an app is its small icon then its short name in the same style. Neither
+ * sits in a box. On your own accent bubble the name is bold and underlined in the bubble's ink.
+ */
 
-/** A short name for an app chip: what comes before the colon in a store title. */
+/** The app icon's height, in the text's own em: small enough that its line keeps its height. */
+private const val ICON_EM = 1.1f
+private val IconGap = 2.dp
+private val IconCorner = 4.dp
+
+/** A short name for an app mention: what comes before the colon in a store title. */
 internal fun shortAppName(name: String) = name.substringBefore(':').trim().ifBlank { name }
+
+/** How a mention reads on a bubble: semibold accent on theirs, bold underlined ink on yours. */
+@Composable
+internal fun mentionStyle(
+    mine: Boolean,
+    ink: Color,
+): SpanStyle =
+    if (mine) {
+        SpanStyle(color = ink, fontWeight = FontWeight.Bold, textDecoration = TextDecoration.Underline)
+    } else {
+        SpanStyle(color = Tt.colors.accentInk, fontWeight = FontWeight.SemiBold)
+    }
 
 /**
  * A message's words, with its mentions drawn in place. Nothing in it is drawn as a link: links
@@ -55,12 +72,12 @@ internal fun ChatMessageText(
     ink: Color = Tt.colors.text,
     onTextLayout: (TextLayoutResult) -> Unit = {},
 ) {
-    val t = Tt.colors
     val style = chatStyle(15f, 20f)
-    val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val chipStyle = style.copy(fontSize = CHIP_TEXT_SP.sp, fontWeight = FontWeight.SemiBold)
+    val mention = mentionStyle(line.mine, ink)
     val pieces = remember(line.text) { ChatText.pieces(line.text) }
+    // The icon plus its gap, as a share of the text's em, so the slot scales with the font.
+    val slot = with(density) { ICON_EM + IconGap.toPx() / style.fontSize.toPx() }
     val inline = HashMap<String, InlineTextContent>()
     val text =
         buildAnnotatedString {
@@ -72,30 +89,14 @@ internal fun ChatMessageText(
                         if (piece.app) {
                             val key = "app$index"
                             val name = shortAppName(label)
-                            val wide =
-                                with(density) {
-                                    val words =
-                                        measurer
-                                            .measure(name, chipStyle)
-                                            .size.width
-                                            .toFloat()
-                                    // Icon, gaps and padding round the name, then the whole in the text's own em.
-                                    (words + (ChipIcon + 5.dp + 3.dp + 8.dp + 4.dp).toPx()) / style.fontSize.toPx()
-                                }
-                            appendInlineContent(key, "@$name")
+                            appendInlineContent(key, "@")
                             inline[key] =
-                                InlineTextContent(Placeholder(wide.em, 1.4.em, PlaceholderVerticalAlign.TextCenter)) {
-                                    AppChip(view.people[piece.seatId], name, chipStyle)
+                                InlineTextContent(Placeholder(slot.em, ICON_EM.em, PlaceholderVerticalAlign.TextCenter)) {
+                                    MentionIcon(view.people[piece.seatId], name)
                                 }
+                            withStyle(mention) { append(name) }
                         } else {
-                            val you = piece.seatId == view.mySeat
-                            withStyle(
-                                if (you) {
-                                    SpanStyle(fontWeight = FontWeight.Bold, color = t.tileInk, background = t.tile)
-                                } else {
-                                    SpanStyle(fontWeight = FontWeight.Bold, color = if (line.mine) ink else t.accentInk)
-                                },
-                            ) { append("@$label") }
+                            withStyle(mention) { append("@$label") }
                         }
                     }
                 }
@@ -104,26 +105,16 @@ internal fun ChatMessageText(
     Text(text, modifier, style = style, color = ink, inlineContent = inline, onTextLayout = onTextLayout)
 }
 
+/** An app's icon inside a line of text: the placeholder's height, softly rounded, then the gap. */
 @Composable
-private fun AppChip(
-    person: com.eazyverse.testtrack.domain.ChatPerson?,
+private fun MentionIcon(
+    person: ChatPerson?,
     name: String,
-    style: TextStyle,
 ) {
-    val t = Tt.colors
-    val shape = RoundedCornerShape(percent = 50)
-    Row(
-        Modifier
-            .fillMaxSize()
-            .padding(vertical = 1.dp)
-            .clip(shape)
-            .background(t.bg)
-            .border(1.dp, t.cardLine, shape)
-            .padding(start = 3.dp, end = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        AppMark(person?.packageName.orEmpty(), person?.appName ?: name, person?.appIcon.orEmpty(), size = ChipIcon)
-        Spacer(Modifier.width(5.dp))
-        Text(name, style = style, color = t.text, maxLines = 1, overflow = TextOverflow.Clip)
+    Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+        BoxWithConstraints(Modifier.fillMaxHeight().aspectRatio(1f).clip(RoundedCornerShape(IconCorner))) {
+            AppMark(person?.packageName.orEmpty(), person?.appName ?: name, person?.appIcon.orEmpty(), size = maxHeight)
+        }
+        Spacer(Modifier.width(IconGap))
     }
 }

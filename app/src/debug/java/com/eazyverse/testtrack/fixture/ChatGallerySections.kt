@@ -168,11 +168,22 @@ internal fun bubbleSection(
             ),
             rows("Long text", one(s.msg("b3", SOFIA, s.longText))),
             rows("Long text, yours", one(s.msg("b3m", ME, s.longText))),
-            rows("Mentions you (edge and highlight)", one(s.msg("b4", KENJI, "${seat(ME)} did yours open fine tonight?"))),
+            rows("Mentions you (tinted fill)", one(s.msg("b4", KENJI, "${seat(ME)} did yours open fine tonight?"))),
             rows("Mentions someone else", one(s.msg("b5", KENJI, "${seat(SOFIA)} thanks, which phone is that?"))),
             rows("Yours, mentioning someone", one(s.msg("b6", ME, "${seat(KENJI)} fixed it on my side, try again."))),
             rows("App mention, others", one(s.msg("b7", NADIA, "${app(ME)} asks me to sign in on first open, is that expected?"))),
             rows("App mention, yours", one(s.msg("b8", ME, "Has anyone tried ${app(KENJI)} with the screen off?"))),
+            rows(
+                "App mention mid-paragraph (line height)",
+                one(
+                    s.msg(
+                        "b9",
+                        SOFIA,
+                        "Opened four apps tonight. The reminder in ${app(NADIA)} came late again, and ${seat(ME)} yours asked " +
+                            "me to sign in twice before it let me through to the list.",
+                    ),
+                ),
+            ),
             rows(
                 "Reply, others quoting you",
                 one(

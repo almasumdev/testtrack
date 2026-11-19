@@ -82,20 +82,16 @@ internal fun bubbleInk(mine: Boolean): BubbleInk {
     return if (mine) BubbleInk(t.accent, t.onAccent) else BubbleInk(t.glass2, t.text)
 }
 
-/** A thin edge where a bubble needs one: a failed send, or a message naming you. */
+/** A thin red edge round a message that did not go. */
 @Composable
 internal fun Modifier.bubbleEdge(
     line: ChatLine,
-    you: Boolean,
     shape: RoundedCornerShape,
-): Modifier {
-    val t = Tt.colors
-    return when {
-        line.send == SendState.FAILED -> border(1.5.dp, t.badBorder, shape)
-        you -> border(1.5.dp, t.accent, shape)
-        else -> this
-    }
-}
+): Modifier = if (line.send == SendState.FAILED) border(1.5.dp, Tt.colors.badBorder, shape) else this
+
+/** Someone's message that names you: a faint wash of the accent over its fill, never an edge. */
+@Composable
+internal fun Modifier.mentionWash(you: Boolean): Modifier = if (you) background(Tt.colors.mentionTint) else this
 
 /**
  * One member's message, with its face, name and what can be done with it. A tap shows its time
@@ -202,7 +198,8 @@ private fun TextBubble(
             .width(IntrinsicSize.Max)
             .clip(shape)
             .background(ink.fill)
-            .bubbleEdge(line, you, shape)
+            .mentionWash(you)
+            .bubbleEdge(line, shape)
             .padding(horizontal = 12.dp, vertical = 7.dp),
     ) {
         line.quote?.let { quote ->

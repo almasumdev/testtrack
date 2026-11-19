@@ -295,7 +295,7 @@ private fun ChatField(
     )
 }
 
-/** Picked mentions in the field drawn bold in the accent, the same as they read once sent. */
+/** Picked mentions in the field drawn semibold in the accent, the same as they read once sent. */
 private class MentionInk(
     private val draft: ChatDraft,
     private val ink: Color,
@@ -305,7 +305,7 @@ private class MentionInk(
         val styled =
             buildAnnotatedString {
                 append(text)
-                draft.spans.forEach { addStyle(SpanStyle(color = ink, fontWeight = FontWeight.Bold), it.start, it.end) }
+                draft.spans.forEach { addStyle(SpanStyle(color = ink, fontWeight = FontWeight.SemiBold), it.start, it.end) }
             }
         return TransformedText(styled, OffsetMapping.Identity)
     }

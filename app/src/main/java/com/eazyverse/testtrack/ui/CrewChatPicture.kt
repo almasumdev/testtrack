@@ -86,7 +86,8 @@ internal fun PictureBubble(
             .width(width)
             .clip(shape)
             .background(ink.fill)
-            .bubbleEdge(line, you, shape),
+            .mentionWash(you)
+            .bubbleEdge(line, shape),
     ) {
         line.quote?.let { quote ->
             Quote(
