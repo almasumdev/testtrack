@@ -11,7 +11,6 @@ import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiSession
 import com.eazyverse.testtrack.net.Listing
 import com.eazyverse.testtrack.net.PostIn
-import com.eazyverse.testtrack.viewmodel.AskFailure
 import com.eazyverse.testtrack.viewmodel.LiveReload
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -34,8 +33,13 @@ class AskViewModel : ViewModel() {
     var posting by mutableStateOf(false)
         private set
 
-    var failure by mutableStateOf<AskFailure?>(null)
+    /** Why the last try did not post, said under the bar; cleared when it closes or on the next try. */
+    var pageMessage by mutableStateOf<String?>(null)
         private set
+
+    fun clearMessage() {
+        pageMessage = null
+    }
 
     /** The app is not verified yet. Said on the page so nobody forgets. */
     var unchecked by mutableStateOf(false)
@@ -53,7 +57,7 @@ class AskViewModel : ViewModel() {
     var reviewCount by mutableStateOf(FeedRules.REVIEWS_BOUGHT)
         private set
 
-    /** What each reviewer gives. Ticking written or detailed raises the least a review may pay. */
+    /** What each reviewer gives. Written or detailed raises the least a review may pay. */
     var feedback by mutableStateOf(FeedRules.Feedback.STARS)
         private set
 
@@ -70,15 +74,11 @@ class AskViewModel : ViewModel() {
         while (readyTexts.size > reviewCount && readyTexts.last().isBlank()) readyTexts.removeAt(readyTexts.lastIndex)
     }
 
-    /** Written off takes detailed with it: detailed feedback is written feedback, only longer. */
-    fun askWritten(on: Boolean) = changeFeedback(if (on) FeedRules.Feedback.WRITTEN else FeedRules.Feedback.STARS)
-
-    fun askDetailed(on: Boolean) = changeFeedback(if (on) FeedRules.Feedback.DETAILED else FeedRules.Feedback.WRITTEN)
-
-    private fun changeFeedback(to: FeedRules.Feedback) {
-        feedback = to
-        if (reward < to.least) reward = to.least
-        if (to != FeedRules.Feedback.DETAILED) readyTexts.clear()
+    /** A level lifts the pay to its least; leaving detailed takes the ready reviews with it. */
+    fun chooseFeedback(level: FeedRules.Feedback) {
+        feedback = level
+        if (reward < level.least) reward = level.least
+        if (level != FeedRules.Feedback.DETAILED) readyTexts.clear()
     }
 
     fun addReady() {
@@ -98,21 +98,24 @@ class AskViewModel : ViewModel() {
 
     private val ready: List<String> get() = readyTexts.map { it.trim() }.filter { it.isNotEmpty() }
 
+    /** What is wrong with each ready review, by its place in [readyTexts]; null where nothing is. */
+    val readyErrors: List<String?> get() = readyErrors(readyTexts)
+
     /** Each filled one long enough, all different, and no more of them than reviews asked for. */
-    private val readyOk: Boolean
-        get() =
-            ready.size <= reviewCount &&
-                ready.all { plainLength(it) >= FeedRules.Feedback.DETAILED.chars } &&
-                ready.map { it.lowercase() }.toSet().size == ready.size
+    private val readyOk: Boolean get() = ready.size <= reviewCount && readyErrors.all { it == null }
 
     /**
-     * Read once when the page opens, so the cost line can say what you have.
-     *
-     * Not refreshed after posting: this page is leaving at that point, and the tab underneath
-     * reloads on its own.
+     * Read when the page opens and again whenever the balance changes, so the cost line can say
+     * what you have. Null until the first read has answered.
      */
-    var tix by mutableStateOf(0)
+    var tix by mutableStateOf<Int?>(null)
         private set
+
+    /** What stops the request going up, for the hint over the button; null while the balance is unknown. */
+    val blockReason: AskBlock? get() = askBlock(tix, cost, readyOk)
+
+    /** How many tix the request is short by, for the hint. */
+    val shortBy: Int get() = tix?.let { (cost - it).coerceAtLeast(0) } ?: 0
 
     init {
         refreshBalance()
@@ -144,7 +147,7 @@ class AskViewModel : ViewModel() {
     fun signedIn() {
         needsSignIn = false
         if (!ApiSession.signedIn) {
-            failure = AskFailure("Sign-in couldn't finish", "Please try again. Your request is still here.")
+            pageMessage = "Sign-in couldn't finish. Please try again. Your request is still here."
             return
         }
         refreshBalance()
@@ -153,9 +156,9 @@ class AskViewModel : ViewModel() {
     val cost: Int get() = FeedRules.postCost(reward, reviewCount)
 
     private val inRange: Boolean get() = reward in FeedRules.MIN_REWARD..FeedRules.MAX_REWARD
-    private val affordable: Boolean get() = inRange && cost <= tix
 
-    val canPost: Boolean get() = found != null && affordable && readyOk && reward >= feedback.least && !posting
+    val canPost: Boolean
+        get() = found != null && tix != null && blockReason == null && inRange && reward >= feedback.least && !posting
 
     /** The app on My apps this request is for. */
     var appId by mutableStateOf<String?>(null)
@@ -168,7 +171,7 @@ class AskViewModel : ViewModel() {
         isLive = app.live
         found = Listing(`package` = app.pkg, name = app.name, icon = app.icon, developer = app.developer)
         unchecked = !app.verified
-        failure = null
+        pageMessage = null
     }
 
     private var pendingRequest: PostIn? = null
@@ -198,7 +201,7 @@ class AskViewModel : ViewModel() {
                                 .toString(),
                     ).also { pendingRequest = it }
         posting = true
-        failure = null
+        pageMessage = null
         viewModelScope.launch {
             runCatching {
                 // Older servers silently ignore unknown fields; never charge an unintended review count.
@@ -234,15 +237,8 @@ class AskViewModel : ViewModel() {
                 if (it is ApiError && it.isAuth) {
                     requestSignIn()
                 } else {
-                    failure =
-                        AskFailure(
-                            "Couldn't send your request",
-                            if (it is IllegalStateException) {
-                                it.message.orEmpty()
-                            } else {
-                                whyNot(it)
-                            },
-                        )
+                    val why = if (it is IllegalStateException) it.message.orEmpty() else whyNot(it)
+                    pageMessage = "Couldn't send your request. $why"
                 }
             }
             posting = false
@@ -255,4 +251,49 @@ class AskViewModel : ViewModel() {
      */
     private fun whyNot(error: Throwable): String =
         if (error is ApiError) error.message else "Couldn't reach TestTrack. Check your connection and try again."
+}
+
+/** Why the button waits, for the hint over it. */
+enum class AskBlock {
+    /** A ready review is too short or the same as another, or there are more than reviews. */
+    READY,
+
+    /** The request costs more than the balance. */
+    SHORT,
+}
+
+/**
+ * What stops a request going up, the first one on the page first: the ready reviews sit above the
+ * price. Nothing while the balance is still unknown, when the button simply waits.
+ */
+internal fun askBlock(
+    tix: Int?,
+    cost: Int,
+    readyOk: Boolean,
+): AskBlock? =
+    when {
+        tix == null -> null
+        !readyOk -> AskBlock.READY
+        cost > tix -> AskBlock.SHORT
+        else -> null
+    }
+
+/**
+ * Each ready review's problem, in place: blank is fine (it is not sent), short says how far it got,
+ * and one the same as an earlier one (ignoring case and the ends) names that one.
+ */
+internal fun readyErrors(texts: List<String>): List<String?> {
+    val least = FeedRules.Feedback.DETAILED.chars
+    val seen = mutableMapOf<String, Int>()
+    return texts.mapIndexed { i, text ->
+        val key = text.trim().lowercase()
+        if (key.isEmpty()) return@mapIndexed null
+        val first = seen.getOrPut(key) { i }
+        val length = plainLength(text)
+        when {
+            length < least -> "$length of at least $least characters"
+            first != i -> "Same as ready review ${first + 1}"
+            else -> null
+        }
+    }
 }

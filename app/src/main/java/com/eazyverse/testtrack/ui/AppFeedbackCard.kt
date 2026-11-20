@@ -70,17 +70,24 @@ internal fun BlockHeading(
             fontWeight = FontWeight.Bold,
             color = t.text,
         )
-        Text(
-            tag,
-            Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(t.glass2)
-                .padding(horizontal = 9.dp, vertical = 2.dp),
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp, lineHeight = 16.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = t.text3,
-        )
+        HeadingTag(tag)
     }
+}
+
+/** The small quiet tag at a heading's far end, such as when a block is for or "Optional". */
+@Composable
+internal fun HeadingTag(tag: String) {
+    val t = Tt.colors
+    Text(
+        tag,
+        Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(t.glass2)
+            .padding(horizontal = 9.dp, vertical = 2.dp),
+        style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp, lineHeight = 16.sp),
+        fontWeight = FontWeight.SemiBold,
+        color = t.text3,
+    )
 }
 
 /**

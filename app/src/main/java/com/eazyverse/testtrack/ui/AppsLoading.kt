@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -74,24 +73,6 @@ internal fun AppHeroLoading() {
         repeat(2) {
             Skeleton(height = 56.dp, corner = 16.dp)
             Spacer(Modifier.height(4.dp))
-        }
-    }
-}
-
-/** The app a page is for, before My apps has it: the card [FoundApp] draws it in. */
-@Composable
-internal fun FoundAppLoading() {
-    Box(Modifier.semantics(mergeDescendants = true) { contentDescription = "Loading the app" }) {
-        CrewCard {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Skeleton(width = 48.dp, height = 48.dp, corner = 14.dp)
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Skeleton(width = 130.dp, height = 15.dp)
-                    Spacer(Modifier.height(7.dp))
-                    Skeleton(width = 170.dp, height = 11.dp)
-                }
-            }
         }
     }
 }

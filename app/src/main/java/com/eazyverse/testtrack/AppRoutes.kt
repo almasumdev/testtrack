@@ -2,6 +2,8 @@ package com.eazyverse.testtrack
 
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -18,6 +20,9 @@ import com.eazyverse.testtrack.ui.CrewViewModel
 import com.eazyverse.testtrack.ui.FeedViewModel
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 
+/** What the Ask page leaves on the app page's entry when a request has gone up, for its message line. */
+private const val POSTED_NOTE = "posted_note"
+
 /**
  * The pages about one app on My apps: its own page, adding one, and feedback. Putting it in a crew is
  * the seat screen, opened from its page. Each borrows My apps' model from the home entry underneath, so an
@@ -31,17 +36,31 @@ internal fun NavGraphBuilder.appRoutes(
     composable(Routes.ASK_APP, arguments = listOf(navArgument("app") { type = NavType.StringType })) { entry ->
         val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
         val apps: AppsViewModel = viewModel(home)
+        val feed: FeedViewModel = viewModel(home)
         val context = LocalContext.current
         val appId = requireNotNull(entry.arguments?.getString("app"))
         LaunchedEffect(appId) { if (apps.byId(appId) == null) apps.load(context) }
         Inset {
             AskScreen(
-                onDone = { nav.popBackStack() },
+                // Back to the app page, which says the request is up and lists it under Feedback.
+                onDone = {
+                    feed.load(context)
+                    nav.previousBackStackEntry
+                        ?.takeIf { it.destination.route == Routes.APP }
+                        ?.savedStateHandle
+                        ?.set(POSTED_NOTE, "Your request is on Circle.")
+                    nav.popBackStack()
+                },
                 onBack = { nav.popBackStack() },
                 app = apps.byId(appId),
                 loading = apps.loading || apps.reading,
                 offline = apps.offline,
                 onRetry = { apps.load(context) },
+                // Back to the shell, on the Circle tab, where reviews earn tix.
+                onOpenCircle = {
+                    openCircle.value = true
+                    nav.popBackStack(Routes.HOME, false)
+                },
             )
         }
     }
@@ -58,6 +77,7 @@ internal fun NavGraphBuilder.appRoutes(
         // Circle may not have been opened yet: read it once, unless a read is already on its way.
         LaunchedEffect(Unit) { if (!feed.answered && feed.loadsStarted == feed.loadsFinished) feed.load(context) }
         val pkg = apps.byId(id)?.pkg
+        val posted by entry.savedStateHandle.getStateFlow<String?>(POSTED_NOTE, null).collectAsState()
         Inset {
             AppPage(
                 apps,
@@ -71,6 +91,8 @@ internal fun NavGraphBuilder.appRoutes(
                 requestsLoading = !feed.answered && feed.requests.isEmpty(),
                 onSeat = { nav.push(Routes.crewSeat(it)) },
                 onOpenChat = { nav.push(Routes.crewChat(it)) },
+                message = posted,
+                onMessageTaken = { entry.savedStateHandle[POSTED_NOTE] = null },
             )
         }
     }

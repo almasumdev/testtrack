@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.X
@@ -44,13 +45,14 @@ import kotlinx.coroutines.delay
  * content down by its own height, and closes itself after a few seconds or on a tap.
  *
  * [text] is the screen's message; [onDone] clears it, which is what lets the same words be said
- * twice in a row.
+ * twice in a row. An [error] leads with an alert in the bad ink instead of the info mark.
  */
 @Composable
 fun PageMessage(
     text: String?,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
+    error: Boolean = false,
 ) {
     // Kept while it closes, so the words do not vanish before the line does.
     var shown by remember { mutableStateOf("") }
@@ -80,7 +82,11 @@ fun PageMessage(
                     .padding(start = 14.dp, end = 10.dp, top = 11.dp, bottom = 11.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Lucide.Info, null, Modifier.size(17.dp), tint = t.accentInk)
+                if (error) {
+                    Icon(Lucide.CircleAlert, "Error", Modifier.size(17.dp), tint = t.bad)
+                } else {
+                    Icon(Lucide.Info, null, Modifier.size(17.dp), tint = t.accentInk)
+                }
                 Spacer(Modifier.width(10.dp))
                 Text(
                     shown,

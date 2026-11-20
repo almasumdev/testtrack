@@ -101,13 +101,14 @@ internal class SeatStatus(
 
 /**
  * A part's heading on the seat page: 16 Bold, plain text, no box, and at its far end one short
- * status. 8dp under it; [gap] is 0 when the part is only its heading.
+ * status, or whatever [end] draws there. 8dp under it; [gap] is 0 when the part is only its heading.
  */
 @Composable
 internal fun SeatHeading(
     text: String,
     status: SeatStatus? = null,
     gap: Dp = 8.dp,
+    end: (@Composable () -> Unit)? = null,
 ) {
     val t = Tt.colors
     Row(
@@ -121,6 +122,10 @@ internal fun SeatHeading(
             Icon(if (status.ok) Lucide.CircleCheck else Lucide.CircleAlert, null, Modifier.size(14.dp), tint = tone)
             Spacer(Modifier.width(4.dp))
             Text(status.text, style = StatusStyle, color = tone, maxLines = 1, softWrap = false)
+        }
+        if (end != null) {
+            Spacer(Modifier.width(8.dp))
+            end()
         }
     }
 }
@@ -319,10 +324,12 @@ internal fun SeatHintRow(
 }
 
 private const val LEAD = "lead"
+private const val TAIL = "tail"
 
 /**
  * A line whose icon is its first glyph, so a wrapped line runs back to the left edge instead of
  * hanging under the icon. Every warning, notice and hint on the seat page is drawn this way.
+ * [trailing] is set after the last word, in a slot [trailingWidth] wide, such as an (i).
  */
 @Composable
 internal fun IconLine(
@@ -336,23 +343,34 @@ internal fun IconLine(
     gap: Dp = 6.dp,
     textAlign: TextAlign? = null,
     maxLines: Int = Int.MAX_VALUE,
+    trailing: (@Composable () -> Unit)? = null,
+    trailingWidth: Dp = 24.dp,
 ) {
     val density = LocalDensity.current
     val slot = with(density) { (iconSize + gap).toSp() }
     val high = with(density) { iconSize.toSp() }
-    val inline =
-        mapOf(
-            LEAD to
-                InlineTextContent(Placeholder(slot, high, PlaceholderVerticalAlign.TextCenter)) {
-                    Box(Modifier.fillMaxSize()) {
-                        Icon(icon, null, Modifier.size(iconSize).align(Alignment.CenterStart), tint = tint)
-                    }
-                },
-        )
+    val lead =
+        LEAD to
+            InlineTextContent(Placeholder(slot, high, PlaceholderVerticalAlign.TextCenter)) {
+                Box(Modifier.fillMaxSize()) {
+                    Icon(icon, null, Modifier.size(iconSize).align(Alignment.CenterStart), tint = tint)
+                }
+            }
+    val tail =
+        trailing?.let { mark ->
+            val wide = with(density) { trailingWidth.toSp() }
+            val tall = with(density) { TrailingHeight.toSp() }
+            TAIL to
+                InlineTextContent(Placeholder(wide, tall, PlaceholderVerticalAlign.TextCenter)) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { mark() }
+                }
+        }
+    val inline = listOfNotNull(lead, tail).toMap()
     Text(
         buildAnnotatedString {
             appendInlineContent(LEAD, " ")
             append(text)
+            if (tail != null) appendInlineContent(TAIL, " ")
         },
         modifier,
         style = style,
@@ -423,6 +441,9 @@ internal fun SeatPageSkeleton(modifier: Modifier = Modifier) {
         }
     }
 }
+
+/** The slot an [IconLine]'s trailing mark gets: a line's height, so the line does not grow. */
+private val TrailingHeight = 18.dp
 
 /** Roughly the height of the page's own shapes above, before the extra rows; one extra row and its gap. */
 private val SkeletonPageHeight = 700.dp

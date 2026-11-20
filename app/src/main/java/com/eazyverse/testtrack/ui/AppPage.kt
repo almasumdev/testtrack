@@ -83,6 +83,9 @@ fun AppPage(
     /** The seat screen for this app. */
     onSeat: (String) -> Unit = {},
     onOpenChat: (String) -> Unit = {},
+    /** Left by the page this one came back from, such as a request that has just gone up. */
+    message: String? = null,
+    onMessageTaken: () -> Unit = {},
 ) {
     val context = LocalContext.current
     // Putting it in a crew: on the testers group first, then the seat screen on this app.
@@ -98,6 +101,12 @@ fun AppPage(
     var askDelete by remember { mutableStateOf(false) }
     // Said under the bar, such as why the bin can't delete this app.
     var note by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(message) {
+        if (message != null) {
+            note = message
+            onMessageTaken()
+        }
+    }
     val picture =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             val target = app
