@@ -92,7 +92,7 @@ fun WaitingBody(
                 CheckCard(
                     Modifier.animateItem(),
                     review.appName,
-                    if (until != null) "$who, $kind, ${timeLeft(until, now)} left" else "$who, $kind",
+                    if (until != null) "$who, $kind, ${timeLeft(until, now, " left")}" else "$who, $kind",
                     onClick = { onOpenReview(review) },
                     packageName = review.packageName,
                     icon = review.icon,

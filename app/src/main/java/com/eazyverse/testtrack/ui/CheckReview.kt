@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -65,17 +66,7 @@ fun ReviewCheck(
             when {
                 settled?.accepted == true -> Primary("Done", onClick = onBack)
                 settled != null -> {
-                    if (settled.canAcceptLater) {
-                        Row(
-                            Modifier.fillMaxWidth().heightIn(min = 44.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text("Refused by mistake?", style = tileStyle(13.5f, 18f, FontWeight.Normal), color = Tt.colors.text3)
-                            Spacer(Modifier.width(4.dp))
-                            InlineAction("Accept after all", enabled = !busy, underline = true, onClick = onAcceptLater)
-                        }
-                    }
+                    if (settled.canAcceptLater) RefusedByMistake(onAcceptLater, enabled = !busy)
                     Primary("Done", onClick = onBack)
                 }
                 else -> {
@@ -100,7 +91,16 @@ fun ReviewCheck(
             }
         },
     ) {
-        CheckAppHead(review.appName, review.packageName, review.icon, review.isLive)
+        val context = LocalContext.current
+        AppHead(
+            review.packageName,
+            review.appName,
+            review.icon,
+            review.isLive,
+            sub = if (review.isLive) "Live app" else "Closed test",
+            onClick = { openPlay(context, review.packageName) }.takeIf { review.packageName.isNotBlank() },
+            onClickLabel = "Open ${review.appName} on Google Play",
+        )
         ReviewThread(review, settled, proof)
     }
 }
@@ -119,7 +119,7 @@ internal fun checkSubtitle(
         settled?.accepted == true -> (if (pays > 0) "Accepted, paid $pays tix" else "Accepted") to BarTone.OK
         settled != null -> "Refused, members deciding" to BarTone.WARN
         else -> {
-            val left = decideBy?.let { if (it > now) "${timeLeft(it, now)} left" else timeLeft(it, now) }
+            val left = decideBy?.let { timeLeft(it, now, " left") }
             val paid = if (pays > 0) "pays $pays tix" else null
             val line = listOfNotNull(left, paid).joinToString(", ").replaceFirstChar { it.uppercase() }
             line to if (decideBy != null && closeTo(decideBy, now)) BarTone.WARN else BarTone.NORMAL
@@ -142,7 +142,7 @@ private fun AcceptHint(
         InfoDot("If you do nothing", ink) {
             CalloutLine(
                 if (until != null && until > now) {
-                    val left = timeLeft(until, now)
+                    val left = timeLeft(until, now, "")
                     strong("It accepts itself in $left and they are paid.", left)
                 } else {
                     AnnotatedString("It accepts itself after a day and they are paid.")
@@ -155,6 +155,28 @@ private fun AcceptHint(
                 ),
             )
         }
+    }
+}
+
+/**
+ * "Refused by mistake? Accept after all", for a refused review whose case is still open: centred
+ * under a page, or from the left inside a card when not [center].
+ */
+@Composable
+internal fun RefusedByMistake(
+    onAccept: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    center: Boolean = true,
+) {
+    Row(
+        modifier.fillMaxWidth().heightIn(min = 44.dp),
+        horizontalArrangement = if (center) Arrangement.Center else Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("Refused by mistake?", style = tileStyle(13.5f, 18f, FontWeight.Normal), color = Tt.colors.text3)
+        Spacer(Modifier.width(4.dp))
+        InlineAction("Accept after all", enabled = enabled, underline = true, onClick = onAccept)
     }
 }
 

@@ -1,6 +1,8 @@
 package com.eazyverse.testtrack.ui
 
+import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Coins
@@ -49,6 +51,7 @@ internal fun ReviewThread(
     val name = review.reviewerName.trim().ifBlank { "Reviewer" }
     val zone = ZoneId.systemDefault()
     val today = LocalDate.now(zone)
+    val hour24 = DateFormat.is24HourFormat(LocalContext.current)
     val sent = review.sentAt?.let(Instant::ofEpochMilli)
     val asked = review.askedAt?.let(Instant::ofEpochMilli)
     val again = review.recheckedRef.isNotBlank()
@@ -58,7 +61,7 @@ internal fun ReviewThread(
             val figure = "${review.needsChars}+"
             ThreadNote(noteText("You asked for $figure characters", figure), icon = Lucide.Text)
         }
-        val sentTime = ChatThread.clock(sent)
+        val sentTime = ChatThread.clock(sent, hour24 = hour24)
         ThreadGroup(
             listOfNotNull(
                 review.proofRef.takeIf { it.isNotBlank() }?.let { ThreadPart.Picture(it) },
@@ -98,7 +101,7 @@ internal fun ReviewThread(
             ThreadGroup(
                 listOf(ThreadPart.Words(ASKED_AGAIN)),
                 side = ThreadSide.RIGHT,
-                time = ChatThread.clock(asked),
+                time = ChatThread.clock(asked, hour24 = hour24),
                 picture = proof,
             )
             ThreadGroup(

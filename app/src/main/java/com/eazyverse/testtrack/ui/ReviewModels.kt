@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import com.eazyverse.testtrack.domain.instantOf
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.ApiReview
 
@@ -142,13 +143,7 @@ data class ReviewJob(
         get() {
             val at = review.returnsAt ?: return null
             if (!waitingForDay) return null
-            val millis =
-                runCatching {
-                    java.time.OffsetDateTime
-                        .parse(at)
-                        .toInstant()
-                        .toEpochMilli()
-                }.getOrNull() ?: return null
+            val millis = instantOf(at)?.toEpochMilli() ?: return null
             val left = millis - System.currentTimeMillis()
             return if (left <= 0) 0 else ((left + 3_599_999) / 3_600_000).toInt().coerceAtLeast(1)
         }
@@ -194,15 +189,6 @@ data class ReviewJob(
     private companion object {
         /** rules.LIVE_RETURN_HOURS on the server. */
         const val LIVE_RETURN_HOURS = 20
-
-        fun instantOf(iso: String?): java.time.Instant? =
-            iso?.let {
-                runCatching {
-                    java.time.OffsetDateTime
-                        .parse(it)
-                        .toInstant()
-                }.getOrNull()
-            }
     }
 }
 
@@ -225,12 +211,7 @@ internal fun previewOf(post: ApiPost) =
     )
 
 /** Whether a time the server sent has come. */
-internal fun isPast(iso: String): Boolean =
-    runCatching {
-        java.time.Instant
-            .parse(iso)
-            .toEpochMilli() <= System.currentTimeMillis()
-    }.getOrDefault(false)
+internal fun isPast(iso: String): Boolean = instantOf(iso)?.let { it.toEpochMilli() <= System.currentTimeMillis() } ?: false
 
 /**
  * When a review opens, said the way a person says it: "today at 2:10 PM", "tomorrow at 2:10 PM",

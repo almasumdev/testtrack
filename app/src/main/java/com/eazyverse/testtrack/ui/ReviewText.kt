@@ -1,15 +1,12 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,10 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -42,23 +37,10 @@ internal fun DisputeNote() {
 }
 
 /**
- * A way out, said as a question and a small outlined button beside it. It was underlined small
- * print, which read as a note rather than something to tap.
+ * The app under review: its mark, its name, and where it is. Kept to its own two lines (the name
+ * and the package, the icon's height) rather than [AppHead]'s, which the Send and Waiting pages
+ * were approved without.
  */
-@Composable
-internal fun QuietAction(
-    question: String,
-    action: String,
-    onClick: () -> Unit,
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(question, style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp), color = Tt.colors.text3)
-        Spacer(Modifier.width(10.dp))
-        RowPill(action, PillKind.GHOST, onClick = onClick)
-    }
-}
-
-/** The app under review: its mark, its name, and where it is. */
 @Composable
 internal fun ReviewAppRow(
     name: String,
@@ -72,16 +54,13 @@ internal fun ReviewAppRow(
     val mark = AppTileIcon * LocalDensity.current.fontScale.coerceAtLeast(1f)
     Column(Modifier.padding(top = 4.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(mark)) {
-                AppMark(packageName, name, icon, size = mark)
-                SourceMark(live, Modifier.align(Alignment.BottomEnd).offset(5.dp, 5.dp))
-            }
+            SourcedAppMark(packageName, name, icon, live, size = mark)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f).height(mark), verticalArrangement = Arrangement.Center) {
                 Text(name, style = AppTileName, color = t.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(
                     packageName,
-                    style = ReviewPackageStyle,
+                    style = TextStyles.DeveloperStyle,
                     color = t.text3,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -89,7 +68,7 @@ internal fun ReviewAppRow(
             }
             if (offline) {
                 Spacer(Modifier.width(8.dp))
-                Pill("Offline", t.text2, t.glass2)
+                StatusChip("Offline", Tone.PLAIN, size = ChipSize.LARGE)
             }
         }
         if (owner.isNotBlank()) {
@@ -97,8 +76,6 @@ internal fun ReviewAppRow(
         }
     }
 }
-
-private val ReviewPackageStyle = tileStyle(12.5f, 14f, FontWeight.Medium)
 
 internal fun stepShort(
     step: ReviewStep,

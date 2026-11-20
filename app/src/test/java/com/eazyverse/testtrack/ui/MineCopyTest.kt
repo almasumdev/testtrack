@@ -5,13 +5,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
 import java.time.ZoneOffset
-import java.util.Locale
 
 /** The words on a My reviews ticket: short enough to sit beside the app's mark without wrapping. */
 class MineCopyTest {
     private val now = Instant.parse("2026-11-12T10:00:00Z")
     private val zone = ZoneOffset.UTC
-    private val english = Locale.ENGLISH
     private val row = MyReview(id = "r", postId = "p", appName = "Cherish", state = "claimed", reward = 20, reason = "")
 
     @Test
@@ -65,19 +63,19 @@ class MineCopyTest {
     @Test
     fun a_decided_review_says_how_it_ended_and_when() {
         val done = row.copy(decidedAt = "2026-11-09T07:00:00Z")
-        assertEquals("Paid on 9 Nov", mineHistory(done.copy(state = "approved"), zone, english))
-        assertEquals("Ran out on 9 Nov", mineHistory(done.copy(state = "expired"), zone, english))
-        assertEquals("Given up on 9 Nov", mineHistory(done.copy(state = "abandoned"), zone, english))
-        assertEquals("Refused. Wrong app.", mineHistory(done.copy(state = "rejected", reason = "Wrong app."), zone, english))
-        assertEquals("Refused", mineHistory(done.copy(state = "rejected"), zone, english))
+        assertEquals("Paid on Nov 9", mineHistory(done.copy(state = "approved"), zone))
+        assertEquals("Ran out on Nov 9", mineHistory(done.copy(state = "expired"), zone))
+        assertEquals("Given up on Nov 9", mineHistory(done.copy(state = "abandoned"), zone))
+        assertEquals("Refused. Wrong app.", mineHistory(done.copy(state = "rejected", reason = "Wrong app."), zone))
+        assertEquals("Refused", mineHistory(done.copy(state = "rejected"), zone))
     }
 
     @Test
     fun a_sent_review_says_how_it_was_sent() {
         val sent = row.copy(state = "submitted", submittedAt = "2026-11-09T07:00:00Z")
-        assertEquals("Sent on 9 Nov", mineWaitNote(sent, zone, english))
-        assertEquals("Sent here, so it pays half", mineWaitNote(sent.copy(noBox = true), zone, english))
-        assertEquals("You asked for a second look", mineWaitNote(sent.copy(state = "disputed"), zone, english))
+        assertEquals("Sent on Nov 9", mineWaitNote(sent, zone))
+        assertEquals("Sent here, so it pays half", mineWaitNote(sent.copy(noBox = true), zone))
+        assertEquals("You asked for a second look", mineWaitNote(sent.copy(state = "disputed"), zone))
         assertEquals("With the developer", mineWaitingWith(sent))
         assertEquals("Members are deciding", mineWaitingWith(sent.copy(state = "disputed")))
     }

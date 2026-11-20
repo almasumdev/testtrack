@@ -1,8 +1,6 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,18 +28,6 @@ internal fun ReviewSectionTitle(
         IconSquare(icon, Tone.ACCENT, size = 28)
         Spacer(Modifier.width(10.dp))
         Text(title, style = ReviewHeadingStyle, color = Tt.colors.text)
-    }
-}
-
-@Composable
-internal fun ReviewSection(
-    icon: ImageVector,
-    title: String,
-    body: String,
-) {
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(ReviewLineGap)) {
-        ReviewSectionTitle(icon, title)
-        ReviewBullet(body = body)
     }
 }
 

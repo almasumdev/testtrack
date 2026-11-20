@@ -1,6 +1,8 @@
 package com.eazyverse.testtrack.ui
 
+import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.CheckCheck
@@ -12,6 +14,7 @@ import com.composables.icons.lucide.Scale
 import com.composables.icons.lucide.Smartphone
 import com.composables.icons.lucide.Wallet
 import com.eazyverse.testtrack.domain.ChatThread
+import com.eazyverse.testtrack.domain.instantOf
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -29,8 +32,9 @@ internal fun ReviewWaitThread(job: ReviewJob) {
     val developer = ThreadApp(job.post.packageName, job.post.appName, job.post.icon)
     val zone = ZoneId.systemDefault()
     val today = LocalDate.now(zone)
-    val sent = reviewInstant(review.submittedAt)
-    val asked = reviewInstant(review.checkedAt)
+    val hour24 = DateFormat.is24HourFormat(LocalContext.current)
+    val sent = instantOf(review.submittedAt)
+    val asked = instantOf(review.checkedAt)
     val again = review.recheckedRef.isNotBlank()
     // Not found on Play, and no new screenshot came in time: refused without a dispute.
     val unproven = review.state == "rejected" && asked != null && !again
@@ -49,9 +53,14 @@ internal fun ReviewWaitThread(job: ReviewJob) {
             )
         if (again || unproven) {
             ThreadGroup(mine, side = ThreadSide.RIGHT, time = "First screenshot")
-            ThreadGroup(listOf(ThreadPart.Words(ASKED_FOR_NEW)), face = ThreadFace.APP, app = developer, time = ChatThread.clock(asked))
+            ThreadGroup(
+                listOf(ThreadPart.Words(ASKED_FOR_NEW)),
+                face = ThreadFace.APP,
+                app = developer,
+                time = ChatThread.clock(asked, hour24 = hour24),
+            )
         } else {
-            ThreadGroup(mine, side = ThreadSide.RIGHT, sent = true, time = sentAt(sent))
+            ThreadGroup(mine, side = ThreadSide.RIGHT, sent = true, time = sentAt(sent, hour24))
         }
         if (again) {
             if (sent != null && first != null && !sameDay(first, sent, zone)) ThreadDay(day(sent))
@@ -59,11 +68,11 @@ internal fun ReviewWaitThread(job: ReviewJob) {
                 listOf(ThreadPart.Picture(review.recheckedRef, 110.dp, 150.dp)),
                 side = ThreadSide.RIGHT,
                 sent = true,
-                time = "New, " + sentAt(sent).replaceFirstChar { it.lowercase() },
+                time = "New, " + sentAt(sent, hour24).replaceFirstChar { it.lowercase() },
             )
         }
         // The refusal is only timed while the members decide: deciding moves the time it carries.
-        val refusedAt = if (review.state == "disputed") reviewInstant(review.decidedAt) else null
+        val refusedAt = if (review.state == "disputed") instantOf(review.decidedAt) else null
         if (refused) {
             val before = if (again) sent else first
             if (refusedAt != null && before != null && !sameDay(before, refusedAt, zone)) ThreadDay(day(refusedAt))
@@ -74,11 +83,11 @@ internal fun ReviewWaitThread(job: ReviewJob) {
                 ),
                 face = ThreadFace.APP,
                 app = developer,
-                time = ChatThread.clock(refusedAt),
+                time = ChatThread.clock(refusedAt, hour24 = hour24),
             )
         }
         val answer = answerParts(review.reply, review.replyProofRef)
-        val answeredAt = sentAt(reviewInstant(review.repliedAt))
+        val answeredAt = sentAt(instantOf(review.repliedAt), hour24)
         when (review.state) {
             "submitted" -> SubmittedNote(job)
             "disputed" -> {
@@ -171,4 +180,7 @@ private fun answerParts(
     )
 
 /** "Sent 9:41 AM", or just "Sent" without a time. */
-private fun sentAt(at: Instant?): String = listOf("Sent", ChatThread.clock(at)).filter { it.isNotBlank() }.joinToString(" ")
+private fun sentAt(
+    at: Instant?,
+    hour24: Boolean,
+): String = listOf("Sent", ChatThread.clock(at, hour24 = hour24)).filter { it.isNotBlank() }.joinToString(" ")

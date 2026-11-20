@@ -157,22 +157,13 @@ internal fun ReviewFailed(
     reason: String,
     room: Dp,
 ) {
-    val t = Tt.colors
-    Column(
-        Modifier.fillMaxWidth().heightIn(min = room - 64.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        RobotHolding(Prop.Plug, size = (room * 0.18f).coerceIn(88.dp, 120.dp))
-        Spacer(Modifier.height(18.dp))
-        Text("Can't open this review", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(6.dp))
-        Text(
+    Box(Modifier.fillMaxWidth().heightIn(min = room - 64.dp), contentAlignment = Alignment.Center) {
+        RobotState(
+            Prop.Plug,
+            "Can't open this review",
             reason,
-            Modifier.widthIn(max = 280.dp),
-            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
-            color = t.text2,
-            textAlign = TextAlign.Center,
+            fill = false,
+            robot = (room * 0.18f).coerceIn(88.dp, 120.dp),
         )
     }
 }

@@ -322,9 +322,9 @@ fun ProofImage(
     whole: Boolean = false,
 ) {
     val context = LocalContext.current
-    // The token-carrying client, and one loader rather than a new one on every recomposition.
-    // An older proof kept at Google needs no token: it is shared by link.
-    val loader = remember { ImageLoader.Builder(context).okHttpClient { Api.images }.build() }
+    // The one token-carrying loader the chat pictures use too, so they share a cache. An older
+    // proof kept at Google needs no token: it is shared by link.
+    val loader = rememberChatLoader()
     // In a thread's picture bubble the bubble has the corners, and hears when the file is gone.
     val frame = LocalProofFrame.current
     val corner = if (frame != null) 0.dp else 14.dp

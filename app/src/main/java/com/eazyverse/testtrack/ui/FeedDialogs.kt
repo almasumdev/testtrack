@@ -1,9 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,7 +23,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.EyeOff
@@ -59,10 +55,7 @@ fun FeedRefuseSheet(
     var picture by remember { mutableStateOf<Uri?>(null) }
     val sent = (problems.filter { it in ticked } + listOfNotNull(reason.trim().ifBlank { null })).joinToString(". ")
     val enough = ticked.isNotEmpty() || reason.trim().length >= REFUSE_MIN_CHARS
-    val pick =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) picture = uri
-        }
+    val pick = rememberImagePicker { uri -> if (uri != null) picture = uri }
     val t = Tt.colors
     PickerSheet(
         title = "Refuse this review?",
@@ -126,11 +119,11 @@ fun FeedRefuseSheet(
                     PillKind.SOFT,
                     leading = Lucide.ImagePlus,
                     leadingSize = 15.dp,
-                ) { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+                ) { pick() }
                 if (picture != null) RowPill("Remove", PillKind.GHOST) { picture = null }
             }
             Spacer(Modifier.height(8.dp))
-            InfoLine(Lucide.EyeOff, AnnotatedString("The reviewer sees it. Hide your name and email."))
+            InfoLine("The reviewer sees it. Hide your name and email.", icon = Lucide.EyeOff)
             Spacer(Modifier.height(14.dp))
             Primary("Refuse and hold $stake tix", enabled = enough, destructive = true) {
                 val reasonSent = sent.take(FeedRules.REFUSE_MAX)

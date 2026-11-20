@@ -1,9 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -41,7 +38,6 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.net.ApiPost
-import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.requirePlayInstall
 import kotlinx.coroutines.delay
 
@@ -202,15 +198,10 @@ fun ReviewBody(
     LaunchedEffect(post.id, job?.step) { scroll.scrollTo(0) }
     var editingProof by remember { mutableStateOf<Uri?>(null) }
     var answering by remember { mutableStateOf(false) }
-    val pick =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) editingProof = uri
-        }
+    val galleryPick = rememberImagePicker { uri -> if (uri != null) editingProof = uri }
     val shown = proof
-    val t = Tt.colors
     // A spinner only for work that takes a moment: a quick check on coming back stays still.
     var spinning by remember { mutableStateOf(false) }
-    val galleryPick = { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
     LaunchedEffect(busy) {
         if (busy) delay(SPIN_AFTER_MS)
         spinning = busy
@@ -226,7 +217,7 @@ fun ReviewBody(
             Column {
                 PageBar(if (post.isLive) "Review" else "Feedback", onClose) {
                     val reward = job?.reward ?: post.reward
-                    Pill(if (job?.noBox == true) "Half pay, +$reward tix" else "+$reward tix", t.tileInk, t.tile)
+                    StatusChip(if (job?.noBox == true) "Half pay, +$reward tix" else "+$reward tix", Tone.TILE, size = ChipSize.LARGE)
                 }
                 PageMessage(message, onMessageDone)
             }

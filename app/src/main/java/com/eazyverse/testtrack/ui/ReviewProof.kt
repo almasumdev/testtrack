@@ -1,21 +1,17 @@
 package com.eazyverse.testtrack.ui
 
 import android.net.Uri
+import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Clock
@@ -24,6 +20,8 @@ import com.composables.icons.lucide.EyeOff
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Text
 import com.eazyverse.testtrack.domain.ChatThread
+import com.eazyverse.testtrack.domain.clockTime
+import com.eazyverse.testtrack.domain.instantOf
 import com.eazyverse.testtrack.ui.theme.Tt
 import java.time.Instant
 import java.time.LocalDate
@@ -140,7 +138,7 @@ internal fun SendProof(
                 }
             }
         }
-        SendHeading(if (rechecking) "Your new screenshot" else "Your review", proofInfo(job))
+        SmallHeading(if (rechecking) "Your new screenshot" else "Your review", info = proofInfo(job))
         ProofBox(
             picture = shown,
             onCapture = onCapture,
@@ -163,25 +161,6 @@ internal fun SendProof(
             CalloutLine(AnnotatedString("If they dispute it, ${FeedRules.JURORS.words()} members and the TestTrack team see it too."))
         }
         if (!rechecking && !job.noBox) ProveAsks(job, developer)
-    }
-}
-
-/**
- * A small heading over a part of the Send page, 18dp under what is above it, with an (i) that
- * says more when there is more to say.
- */
-@Composable
-internal fun SendHeading(
-    title: String,
-    info: String? = null,
-) {
-    val t = Tt.colors
-    Row(Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(title, style = tileStyle(12f, 16f, FontWeight.Bold), color = t.text3, maxLines = 1)
-        if (info != null) {
-            Spacer(Modifier.width(4.dp))
-            InfoDot(title, t.text3) { CalloutLine(AnnotatedString(info)) }
-        }
     }
 }
 
@@ -267,8 +246,9 @@ private fun RecheckAsked(
     val review = job.review
     val zone = ZoneId.systemDefault()
     val today = LocalDate.now(zone)
-    val sent = reviewInstant(review.submittedAt)
-    val asked = reviewInstant(review.checkedAt)
+    val hour24 = DateFormat.is24HourFormat(LocalContext.current)
+    val sent = instantOf(review.submittedAt)
+    val asked = instantOf(review.checkedAt)
     sent?.let { ThreadDay(ChatThread.dayLabel(it.atZone(zone).toLocalDate(), today)) }
     if (review.proofRef.isNotBlank()) {
         ThreadGroup(
@@ -284,29 +264,20 @@ private fun RecheckAsked(
         listOf(ThreadPart.Words(ASKED_FOR_NEW)),
         face = ThreadFace.APP,
         app = developer,
-        time = ChatThread.clock(asked),
+        time = ChatThread.clock(asked, hour24 = hour24),
     )
     job.checkBy?.let { due ->
-        val by = sendBy(due, zone)
+        val by = sendBy(due, zone, hour24)
         ThreadNote(noteText("Send it by $by", by), NoteTone.WARN, Lucide.Clock)
     }
 }
 
-/** "Sat, 2:10 PM": the day and the time a new screenshot is due. */
+/** "Sat, 2:10 PM", or "Sat, 14:10" on a 24 hour phone: the day and the time a new screenshot is due. */
 private fun sendBy(
     due: Instant,
     zone: ZoneId,
-): String = due.atZone(zone).format(DateTimeFormatter.ofPattern("EEE, h:mm a", Locale.getDefault()))
-
-/** A time the server sent, or null where it sent none or one that does not read. */
-internal fun reviewInstant(iso: String?): Instant? =
-    iso?.let {
-        runCatching {
-            java.time.OffsetDateTime
-                .parse(it)
-                .toInstant()
-        }.getOrNull()
-    }
+    hour24: Boolean,
+): String = due.atZone(zone).format(DateTimeFormatter.ofPattern("EEE", Locale.getDefault())) + ", " + clockTime(due, hour24, zone)
 
 /** What the developer said, as the reviewer reads it, when asking for a new screenshot. */
 internal const val ASKED_FOR_NEW = "I can't find your review on Play. Please send a new screenshot."
