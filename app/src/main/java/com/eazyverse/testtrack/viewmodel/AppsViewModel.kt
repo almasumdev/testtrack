@@ -12,8 +12,9 @@ import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiApp
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
-import com.eazyverse.testtrack.net.AppBoxesIn
+import com.eazyverse.testtrack.net.AppEditIn
 import com.eazyverse.testtrack.net.IconIn
+import com.eazyverse.testtrack.net.editApp
 import com.eazyverse.testtrack.ui.AppCrewStatus
 import com.eazyverse.testtrack.ui.AppEntry
 import com.eazyverse.testtrack.ui.AppFeedbackStatus
@@ -114,7 +115,7 @@ class AppsViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 ApiAuth.ensure(appContext)
-                val row = Api.patch<AppBoxesIn, ApiApp>("/apps/${app.id}", AppBoxesIn(next.countries, next.devices))
+                val row = Api.editApp(app.id, AppEditIn(allCountries = next.countries, allDevices = next.devices))
                 val saved = row.toSeatFacts()
                 // The server has them now: its updated row replaces ours and is the one shown from here.
                 if (saved.boxes != null && ticked[app.id] == next) {
@@ -257,6 +258,18 @@ class AppsViewModel : ViewModel() {
         Api.setAppIcon(id, IconIn(readIcon { AppIconData.ofPicture(context.applicationContext, uri) }))
     }
 
+    /** Set an app's name and its two descriptions, from the sheet on its page. [onDone] once saved. */
+    fun saveDetails(
+        context: Context,
+        id: String,
+        name: String,
+        short: String,
+        full: String,
+        onDone: () -> Unit,
+    ) = act(context, id, AppAction.DETAILS, onDone) {
+        Api.editApp(id, AppEditIn(name = name, shortDescription = short, fullDescription = full))
+    }
+
     private suspend fun readIcon(read: () -> AppIconData.Encoded?): String =
         withContext(Dispatchers.Default) { runCatching(read).getOrNull() }?.base64 ?: throw UnusablePicture()
 
@@ -299,7 +312,7 @@ class AppsViewModel : ViewModel() {
 }
 
 /** The things done to an app from its page, each shown busy where it was asked for. */
-enum class AppAction { LIVE, VERIFY, DELETE, ICON }
+enum class AppAction { LIVE, VERIFY, DELETE, ICON, DETAILS }
 
 /** The server's app, as the screens draw it. */
 fun ApiApp.toEntry(): AppEntry =
@@ -309,6 +322,8 @@ fun ApiApp.toEntry(): AppEntry =
         name = name,
         icon = icon,
         developer = developer,
+        shortDescription = shortDescription,
+        fullDescription = fullDescription,
         live = live,
         verifiedBy = verifiedBy,
         crew =

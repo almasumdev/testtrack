@@ -111,6 +111,10 @@ object FeedRules {
     /** An app's name as typed in the app: 30, so it fits a row. The server still takes up to 60 (PostIn.app_name). */
     const val APP_NAME_MAX = 30
 
+    /** An app's two descriptions, as long as Play lets them be. */
+    const val SHORT_DESC_MAX = 80
+    const val FULL_DESC_MAX = 4000
+
     /** Members who decide a refused review, and what each is paid (rules.JURORS, rules.JUROR_FEE). */
     const val JURORS = 3
     const val JUROR_FEE = 5

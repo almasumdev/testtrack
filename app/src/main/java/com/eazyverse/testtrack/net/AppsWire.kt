@@ -19,6 +19,9 @@ data class AppIn(
     val name: String = "",
     @SerialName("from_phone") val fromPhone: Boolean = false,
     @SerialName("icon_data") val iconData: String = "",
+    /** What the app is, in Play's two parts. Optional; Play's own for an app found there. */
+    @SerialName("short_description") val shortDescription: String = "",
+    @SerialName("full_description") val fullDescription: String = "",
 )
 
 /** A new icon for an app, base64: the one on this phone, or a picture. */
@@ -58,6 +61,9 @@ data class ApiApp(
     val name: String,
     val icon: String = "",
     val developer: String = "",
+    /** What the app is, as Play has it or its owner wrote it. Absent from an older server's answer. */
+    @SerialName("short_description") val shortDescription: String = "",
+    @SerialName("full_description") val fullDescription: String = "",
     /** closed or live. */
     val source: String = "closed",
     /** play, crew or review; null while unverified. */
@@ -102,9 +108,16 @@ data class AppAdded(
     val existing: Boolean = false,
 )
 
-/** The two boxes an owner confirms for an app, set together. */
+/**
+ * A change to an app, sent to PATCH /apps/{id}. Every field is optional and one left null is not
+ * sent, so it stays as it was: the two boxes an owner confirms before a seat, or the name and both
+ * descriptions from the app's page. An empty name is refused; long text is refused as too long.
+ */
 @Serializable
-data class AppBoxesIn(
-    @SerialName("all_countries") val allCountries: Boolean,
-    @SerialName("all_devices") val allDevices: Boolean,
+data class AppEditIn(
+    val name: String? = null,
+    @SerialName("short_description") val shortDescription: String? = null,
+    @SerialName("full_description") val fullDescription: String? = null,
+    @SerialName("all_countries") val allCountries: Boolean? = null,
+    @SerialName("all_devices") val allDevices: Boolean? = null,
 )

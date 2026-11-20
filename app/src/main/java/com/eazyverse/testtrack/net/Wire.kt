@@ -55,6 +55,9 @@ data class Listing(
     val name: String,
     val icon: String = "",
     val developer: String = "",
+    /** The listing's own words. Absent from an older server's answer. */
+    @SerialName("short_description") val shortDescription: String = "",
+    @SerialName("full_description") val fullDescription: String = "",
 )
 
 @Serializable

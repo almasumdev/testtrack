@@ -40,6 +40,9 @@ data class AppEntry(
     /** Play's icon, or ours for one picked from a phone; blank only for an app typed on an old build. */
     val icon: String = "",
     val developer: String = "",
+    /** What the app is, as Play has it or its owner wrote it; blank when there is nothing. */
+    val shortDescription: String = "",
+    val fullDescription: String = "",
     val live: Boolean = false,
     /** play, crew or review; null while unverified. */
     val verifiedBy: String? = null,
