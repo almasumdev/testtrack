@@ -2,7 +2,6 @@ package com.eazyverse.testtrack.ui
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -22,11 +21,14 @@ import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.viewmodel.LiveReload
+import com.eazyverse.testtrack.viewmodel.ProofGate
+import com.eazyverse.testtrack.viewmodel.keepEdited
 import com.eazyverse.testtrack.viewmodel.replyWithPicture
 import com.eazyverse.testtrack.viewmodel.requirePlayInstall
 import com.eazyverse.testtrack.viewmodel.sendProof
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -68,9 +70,6 @@ class ReviewViewModel : ViewModel() {
     var usageAccess by mutableStateOf(true)
         private set
 
-    /** Open the Usage access list so the reviewer can switch TestTrack on. */
-    fun openUsageSettings(context: Context) = UsageRepo.openSettings(context)
-
     /**
      * The screenshot for step four, however it came, kept on the phone until it is sent. See
      * [ProofStore]: leaving the page and coming back finds it, and the note, where they were.
@@ -87,6 +86,12 @@ class ReviewViewModel : ViewModel() {
 
     /** A capture that landed before the review was known; kept once it is. */
     private var pending: File? = null
+
+    /** Writing and sending the kept screenshot take turns here. See [ProofGate]. */
+    private val gate = ProofGate()
+
+    /** A new version of the screenshot is being kept: Send waits for it. */
+    val replacing: Boolean get() = gate.replacing
 
     init {
         viewModelScope.launch {
@@ -106,8 +111,10 @@ class ReviewViewModel : ViewModel() {
         val context = app ?: return
         val id = job?.review?.id ?: return
         pending = null
-        val kept = withContext(Dispatchers.IO) { ProofStore.adopt(context, id, file) } ?: return
-        showProof(context, id, kept)
+        gate.replace {
+            val kept = withContext(Dispatchers.IO) { ProofStore.adopt(context, id, file) } ?: return@replace
+            showProof(context, id, kept)
+        }
     }
 
     private fun showProof(
@@ -121,21 +128,21 @@ class ReviewViewModel : ViewModel() {
         job = job?.copy(leftReview = true)
     }
 
-    /** A screenshot chosen from the gallery: copied in, so it outlasts the picker's grant. */
-    fun keepPicked(
+    /**
+     * A screenshot from the editor kept as the review's picture (see [keepEdited]). The editor
+     * waits for this before it closes. Run in the page's scope, so it finishes if the editor goes.
+     */
+    suspend fun keepPicked(
         context: Context,
         uri: Uri,
     ) {
-        val id = job?.review?.id ?: return
+        val id = job?.review?.id ?: error("No review to keep it for")
         val appContext = context.applicationContext
-        viewModelScope.launch {
-            val kept = withContext(Dispatchers.IO) { ProofStore.keep(appContext, id, uri) }
-            if (kept == null) {
-                message = "That image could not be read. Try another."
-            } else {
+        viewModelScope
+            .async {
+                val kept = gate.keepEdited(appContext, id, uri) { job?.review?.id == id && job?.settled == false }
                 showProof(appContext, id, kept)
-            }
-        }
+            }.await()
     }
 
     /** The × on the picture: the screenshot goes, the note and the step stay. */
@@ -149,30 +156,6 @@ class ReviewViewModel : ViewModel() {
         note = text
         val id = job?.review?.id ?: return
         app?.let { ProofStore.saveNote(it, id, text) }
-    }
-
-    /**
-     * Put the camera button up with the consent just given, then open the app's Play page, where
-     * the review or the private feedback is left. Proof opens on the way out, so somebody who comes
-     * back without pressing it can still pick a screenshot.
-     */
-    fun startCapture(
-        context: Context,
-        code: Int,
-        data: Intent,
-        pkg: String,
-    ) {
-        if (!requirePlayInstall(context)) return
-        ReviewCaptureService.start(context, code, data)
-        openPlay(context, pkg)
-        markLeft()
-    }
-
-    /** Remove a waiting capture button when returning without a picture. */
-    fun dropStrayButton(context: Context) {
-        if (ReviewCaptureService.running.value == ReviewCaptureService.State.WAITING) {
-            ReviewCaptureService.cancel(context)
-        }
     }
 
     /** True once the package is present but Play did not put it there. */
@@ -386,16 +369,24 @@ class ReviewViewModel : ViewModel() {
      */
     fun submit(
         activity: Activity,
-        proof: Uri,
         note: String,
     ) {
         val current = job ?: return
+        val id = current.review.id
         // No message on success: the page itself turns into the sent screen.
         run(waits = true, onOffline = { message = "You're offline. Your screenshot and note are saved; send them once you're back." }) {
             if (!requirePlayInstall(activity)) return@run
-            keep(current.copy(review = sendProof(activity, current, proof, note)))
+            // The picture is the one kept at this moment, read inside the gate: never one a
+            // version with details hidden is still replacing, whatever the page showed.
+            val sent = gate.send({ ProofStore.proof(activity, id) }) { sendProof(activity, current, Uri.fromFile(it), note) }
+            if (sent == null) {
+                proof = null
+                message = "Add your screenshot again."
+                return@run
+            }
+            keep(current.copy(review = sent))
             offline = false
-            dropProof(current.review.id)
+            dropProof(id)
         }
     }
 

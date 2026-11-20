@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.data
 import android.content.Context
 import android.net.Uri
 import java.io.File
+import java.util.UUID
 
 /**
  * The proof step's work in progress, kept per review until it is sent.
@@ -43,17 +44,20 @@ object ProofStore {
             write(context, reviewId, "image/jpeg") { out -> out.write(bytes) }
         }.getOrNull()
 
-    /** Take over a screenshot the camera button saved in the cache. Blocking. */
+    /** Take over a screenshot the camera button saved in the cache, which goes either way. Blocking. */
     fun adopt(
         context: Context,
         reviewId: String,
         captured: File,
     ): File? =
-        runCatching {
-            val bytes = ProofImages.bytes(context, Uri.fromFile(captured))
-            write(context, reviewId, "image/jpeg") { out -> out.write(bytes) }
-                .also { captured.delete() }
-        }.getOrNull()
+        try {
+            runCatching {
+                val bytes = ProofImages.bytes(context, Uri.fromFile(captured))
+                write(context, reviewId, "image/jpeg") { out -> out.write(bytes) }
+            }.getOrNull()
+        } finally {
+            captured.delete()
+        }
 
     /**
      * The kept screenshot's id on our server, once it is there. Sending can fail after the upload,
@@ -158,11 +162,31 @@ object ProofStore {
             .apply()
     }
 
+    /** The start of the picture editor's files in the cache, written before they are kept here. */
+    const val EDIT_PREFIX = "proof_edit_"
+
     /**
-     * Written as a new file beside the old one, which goes only once the new one is whole. A new
-     * name each time, too: the same name gave the page the same address for a different picture,
-     * and it kept showing the first one.
+     * Deletes what no kept screenshot refers to: a file here left by a write cut short, or an old
+     * one whose delete failed after a newer version (one with details hidden, say) replaced it;
+     * the editor's files in the cache; and camera pictures that were never taken over. Run at
+     * process start, when nothing can be on its way. Blocking.
      */
+    @Synchronized
+    fun sweep(context: Context) {
+        val all = prefs(context).all
+        val kept = all.filterKeys { it.startsWith("file_") }.values.toSet()
+        dir(context).listFiles()?.forEach { if (it.name !in kept) it.delete() }
+        context.cacheDir.listFiles()?.forEach { if (it.name.startsWith(EDIT_PREFIX)) it.delete() }
+        File(context.cacheDir, "review_proof").listFiles()?.forEach { it.delete() }
+    }
+
+    /**
+     * Written as a new file beside the old one, which goes only once the new one is whole and the
+     * record points at it: cut short at any moment, the record names one whole picture, never a
+     * mix. A new name each time, too: the same name gave the page the same address for a
+     * different picture, and it kept showing the first one.
+     */
+    @Synchronized
     private fun write(
         context: Context,
         reviewId: String,
@@ -170,19 +194,24 @@ object ProofStore {
         copy: (java.io.OutputStream) -> Unit,
     ): File {
         val old = proof(context, reviewId)
-        val target = File(dir(context), "${reviewId}_${System.currentTimeMillis()}")
+        val target = File(dir(context), "${reviewId}_${UUID.randomUUID()}")
         target.outputStream().use(copy)
         if (target.length() == 0L) {
             target.delete()
             error("empty image")
         }
-        prefs(context)
-            .edit()
-            .putString("file_$reviewId", target.name)
-            .putString("mime_$reviewId", mime)
-            .remove("ref_$reviewId")
-            .remove("upload_id_$reviewId")
-            .commit()
+        val recorded =
+            prefs(context)
+                .edit()
+                .putString("file_$reviewId", target.name)
+                .putString("mime_$reviewId", mime)
+                .remove("ref_$reviewId")
+                .remove("upload_id_$reviewId")
+                .commit()
+        if (!recorded) {
+            target.delete()
+            error("not recorded")
+        }
         old?.delete()
         return target
     }

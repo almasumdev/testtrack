@@ -102,13 +102,14 @@ private val ProofTools = setOf(PictureTool.CROP, PictureTool.HIDE)
 
 /**
  * The screenshot in the picture editor before it is used: crop it and hide anything personal. The
- * edited picture is written by [ProofEditing.save] and its file goes to [onKeep]. Closing without
- * using it keeps the picture as it was.
+ * edited picture is written by [ProofEditing.save] and its file goes to [onKeep], which returns once
+ * it is kept (the editor waits for that) and throws when it could not be. Closing without using it
+ * keeps the picture as it was.
  */
 @Composable
 internal fun ProofPictureEditor(
     uri: Uri,
-    onKeep: (Uri) -> Unit,
+    onKeep: suspend (Uri) -> Unit,
     onClose: () -> Unit,
 ) {
     val context = LocalContext.current

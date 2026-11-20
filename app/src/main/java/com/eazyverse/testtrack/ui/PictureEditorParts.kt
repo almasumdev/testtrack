@@ -42,7 +42,10 @@ import kotlinx.coroutines.withContext
 /**
  * The [PictureEditor] for a picture that is kept rather than sent: [title] and [copy] under it with
  * one wide [primaryLabel] button. The button flattens the picture at full size, boxes burned in, and
- * hands it to [write], whose answer goes to [onDone] before the editor closes.
+ * hands it to [write], whose answer goes to [onDone]. The editor stays open, its button spinning,
+ * until [onDone] returns: closing it sooner would leave the picture kept before in place, details
+ * and all, while the new one is still on its way. A throw from either says [failText] and the
+ * editor stays open, so nothing falls back to the picture as it was without the person knowing.
  */
 @Composable
 internal fun PictureEditor(
@@ -54,18 +57,20 @@ internal fun PictureEditor(
     failText: String,
     unreadable: String,
     write: suspend (Bitmap) -> Uri,
-    onDone: (Uri) -> Unit,
+    onDone: suspend (Uri) -> Unit,
     onClose: () -> Unit,
 ) {
     PictureEditor(source, tools, onClose, unreadable = unreadable) { footer ->
         EditorFooter(title, copy, footer.failed, primaryLabel, footer.busy) {
             footer.finish(failText) { picture ->
                 val flat = withContext(Dispatchers.Default) { picture.flatten() }
-                try {
-                    onDone(write(flat))
-                } finally {
-                    flat.recycle()
-                }
+                val written =
+                    try {
+                        write(flat)
+                    } finally {
+                        flat.recycle()
+                    }
+                onDone(written)
                 true
             }
         }

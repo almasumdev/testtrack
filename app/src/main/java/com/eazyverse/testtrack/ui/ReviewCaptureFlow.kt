@@ -11,6 +11,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.eazyverse.testtrack.viewmodel.requirePlayInstall
+import com.eazyverse.testtrack.viewmodel.startCapture
 
 /** Keep capture consent and its guide together, including the return from Android overlay settings. */
 @Composable

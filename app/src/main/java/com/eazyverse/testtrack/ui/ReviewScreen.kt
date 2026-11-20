@@ -38,6 +38,8 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.net.ApiPost
+import com.eazyverse.testtrack.viewmodel.dropStrayButton
+import com.eazyverse.testtrack.viewmodel.openUsageSettings
 import com.eazyverse.testtrack.viewmodel.requirePlayInstall
 import kotlinx.coroutines.delay
 
@@ -85,6 +87,7 @@ fun ReviewScreen(
         post = post,
         job = vm.job,
         proof = vm.proof,
+        replacing = vm.replacing,
         // The screenshot already got stays until a new one arrives, so a capture abandoned half
         // way does not cost the one there was.
         onCapture = capture,
@@ -127,9 +130,10 @@ fun ReviewScreen(
         onReport = { reporting = true },
         onNoBox = { if (vm.markNoBox()) capture() },
         onReply = { text, picture -> vm.reply(activity, text, picture) },
-        onSend = { proof, note ->
+        // What is sent is the screenshot kept at that moment (see ReviewViewModel.submit), not the address shown.
+        onSend = { _, note ->
             requireMembership {
-                if (vm.requirePlayInstall(context)) vm.submit(activity, proof, note)
+                if (vm.requirePlayInstall(context)) vm.submit(activity, note)
             }
         },
     )
@@ -181,8 +185,11 @@ fun ReviewBody(
     onLeave: (ReviewStep) -> Unit,
     onSend: (proof: Uri, note: String) -> Unit,
     proof: Uri? = null,
+    /** A new version of [proof] is still being kept: Send waits. */
+    replacing: Boolean = false,
     onCapture: () -> Unit = {},
-    onPicked: (Uri) -> Unit = {},
+    /** Keeps a picture from the editor; returns once it is kept and throws when it can't be. */
+    onPicked: suspend (Uri) -> Unit = {},
     onRemoveProof: () -> Unit = {},
     note: String = "",
     onNote: (String) -> Unit = {},
@@ -233,7 +240,7 @@ fun ReviewBody(
                 } else {
                     val asking = job.step == ReviewStep.USE && !usageAccess
                     // Step four sends once there is a screenshot, and the text the request asks for.
-                    val waitingForProof = job.step == ReviewStep.PROVE && (shown == null || !job.textEnough(note))
+                    val waitingForProof = job.step == ReviewStep.PROVE && (shown == null || replacing || !job.textEnough(note))
                     // Waiting on a second day: opening the app today would not count, so the button
                     // says when instead. From the next calendar day it opens the app again.
                     val opens = job.opensAt()?.takeIf { job.step == ReviewStep.USE && !job.secondDayNow(now) }

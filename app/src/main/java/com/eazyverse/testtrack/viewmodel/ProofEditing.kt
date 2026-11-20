@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import com.eazyverse.testtrack.data.ProofImages
+import com.eazyverse.testtrack.data.ProofStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -29,8 +30,21 @@ object ProofEditing {
         edited: Bitmap,
     ): Uri =
         withContext(Dispatchers.IO) {
-            val file = File(context.cacheDir, "proof_edit_${UUID.randomUUID()}.jpg")
+            val file = File(context.cacheDir, "${ProofStore.EDIT_PREFIX}${UUID.randomUUID()}.jpg")
             file.writeBytes(ProofImages.jpeg(edited))
             Uri.fromFile(file)
         }
+
+    /**
+     * Deletes [uri] when it is one of [save]'s files, once it has been kept elsewhere or given up.
+     * Anything else (a gallery pick, the kept screenshot itself) is left alone. Blocking.
+     */
+    fun discard(
+        context: Context,
+        uri: Uri,
+    ) {
+        if (uri.scheme != "file") return
+        val file = File(uri.path ?: return)
+        if (file.parentFile == context.cacheDir && file.name.startsWith(ProofStore.EDIT_PREFIX)) file.delete()
+    }
 }

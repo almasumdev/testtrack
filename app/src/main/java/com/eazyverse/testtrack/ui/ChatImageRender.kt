@@ -183,7 +183,10 @@ private fun solid(
 /**
  * A copy of [bitmap] with every box in [hides] painted over in solid [ink]: whole pixels, rounded
  * outwards, full alpha. Done before any turn, crop or scaling, so what was under a box is gone from
- * every pixel made from it. [bitmap] itself is left alone; with no boxes it is handed back as it is.
+ * every pixel made from it: a filtered resample after this only mixes the ink with pixels that were
+ * outside the box anyway. [bitmap] is the editor's own, already at most 1600 on its long side (see
+ * ProofImages.decode), so the boxes sit on the very pixels the person looked at. [bitmap] itself is
+ * left alone; with no boxes it is handed back as it is.
  */
 internal fun burnHides(
     bitmap: Bitmap,

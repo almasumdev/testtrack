@@ -15,6 +15,16 @@ import kotlin.math.max
 
 /** Bound reads/decodes, apply EXIF orientation, and export pixels without source metadata. */
 object ProofImages {
+    /**
+     * [uri] as a bitmap no longer than 1600 on its long side, turned upright.
+     *
+     * The picture editor opens its picture through here, so the shrink happens before anybody sees
+     * it or draws a box. The order after that, kept on purpose: boxes are burned into this bitmap's
+     * own pixels, whole pixels rounded outwards (burnHides), before any turn, crop or scaling, and
+     * nothing later reads the pixels from before the burn. A turn or crop that resamples, the JPEG,
+     * and ProofStore's copy (the same size again, so not scaled) can only mix a box's ink with
+     * pixels that were outside it and already on show; what was under a box is in none of them.
+     */
     fun decode(
         context: Context,
         uri: Uri,
