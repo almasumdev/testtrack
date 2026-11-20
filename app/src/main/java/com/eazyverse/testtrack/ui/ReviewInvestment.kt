@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -58,10 +59,14 @@ private val EndLabel = tileStyle(12f, 14f, FontWeight.Normal).copy(fontFeatureSe
 /** The counts most requests pick, one tap each. */
 private val CommonCounts = listOf(3, 5, 10, 20, 50)
 
-/** The stepper's buttons stand 8dp into the space above and below the heading, so it stays 19dp. */
-private val StepOverhang = 8.dp
+/** How far the slider reaches past the page's edges, so its track runs 2dp in from each, as drawn. */
+private val SliderReach = 8.dp
 
-/** The Reviews heading, its stepper at the end, and the common counts as chips under it. */
+/**
+ * The Reviews heading, its stepper at the end, and the common counts as chips under it. The row is
+ * the stepper's 36dp with the heading centred on it, so the page's 24 above and the heading's 10
+ * below stay clear of the buttons.
+ */
 @Composable
 internal fun AskCount(
     reviews: Int,
@@ -70,7 +75,6 @@ internal fun AskCount(
 ) {
     SeatHeading("Reviews", gap = 10.dp, end = {
         Row(
-            Modifier.overhang(StepOverhang),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
@@ -95,13 +99,13 @@ internal fun AskCount(
     }
 }
 
-/** Draws at its full height but tells the row it is [by] shorter at the top and the bottom. */
-private fun Modifier.overhang(by: Dp): Modifier =
+/** Measures [by] wider on each side than it is given and centres on its slot, past both edges. */
+private fun Modifier.reach(by: Dp): Modifier =
     layout { measurable, constraints ->
-        val placeable = measurable.measure(constraints)
-        val cut = by.roundToPx()
-        val height = (placeable.height - 2 * cut).coerceAtLeast(0)
-        layout(placeable.width, height) { placeable.place(0, -cut) }
+        val extra = 2 * by.roundToPx()
+        val wide = constraints.copy(minWidth = constraints.minWidth + extra, maxWidth = constraints.maxWidth + extra)
+        val placeable = measurable.measure(wide)
+        layout(placeable.width - extra, placeable.height) { placeable.place(-extra / 2, 0) }
     }
 
 @Composable
@@ -171,10 +175,11 @@ internal fun AskPay(
     onChange: (Int) -> Unit,
 ) {
     val t = Tt.colors
-    val ticket = rememberTicketMark()
+    // The page's ticket, as the feed's: on the card colour and tipped back 12 degrees.
+    val ticket = rememberTicketMark(t.card)
     SeatHeading("Each review pays", gap = 10.dp, end = {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(ticket, null, Modifier.size(16.dp), tint = Color.Unspecified)
+            Icon(ticket, null, Modifier.size(16.dp).rotate(-12f), tint = Color.Unspecified)
             Spacer(Modifier.width(6.dp))
             Text("$reward tix", style = PayValue, color = t.accentInk)
         }
@@ -212,6 +217,7 @@ internal fun AskPay(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .reach(SliderReach)
                 .height(36.dp)
                 .then(if (enabled) Modifier else Modifier.alpha(DISABLED_ALPHA))
                 .semantics { contentDescription = "Tix each review pays" },

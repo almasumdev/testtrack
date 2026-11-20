@@ -288,7 +288,23 @@ internal fun AskPrice(
         }
     }
     Spacer(Modifier.height(14.dp))
-    RuleLine(AnnotatedString("Paid now. Close the request early and the tix for open reviews come back."))
+    // The page's rule as drawn: a 4dp dot in text3, 10dp before the words.
+    Row(Modifier.fillMaxWidth()) {
+        Box(
+            Modifier
+                .padding(top = 7.dp)
+                .size(4.dp)
+                .clip(CircleShape)
+                .background(t.text3),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            "Paid now. Close the request early and the tix for open reviews come back.",
+            Modifier.weight(1f),
+            style = PageLine,
+            color = t.text2,
+        )
+    }
 }
 
 /** The line over the button while something stops the request, centred; a tap goes to it. */

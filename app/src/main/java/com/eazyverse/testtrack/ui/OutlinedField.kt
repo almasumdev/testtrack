@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -115,12 +116,25 @@ internal fun OutlinedField(
             errorTrailingIconColor = t.text4,
         )
     // The decoration grows the label from bodySmall (in the notch) to bodyLarge (inside the box), so
-    // those two are what set its sizes here: 12/16 SemiBold up, 15/20 down.
+    // those two are what set its sizes here: 12/16 SemiBold up, 15/20 down. No tracking, as the
+    // design's text has none; the theme's body styles carry Material's.
     val typography = MaterialTheme.typography
     val fieldTypography =
         typography.copy(
-            bodyLarge = typography.bodyLarge.copy(fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.Normal),
-            bodySmall = typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold),
+            bodyLarge =
+                typography.bodyLarge.copy(
+                    fontSize = 15.sp,
+                    lineHeight = 20.sp,
+                    fontWeight = FontWeight.Normal,
+                    letterSpacing = 0.sp,
+                ),
+            bodySmall =
+                typography.bodySmall.copy(
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.sp,
+                ),
         )
     val labelDown = !focused && value.isEmpty()
     Column(modifier.fillMaxWidth().then(if (enabled) Modifier else Modifier.alpha(DISABLED_ALPHA))) {
@@ -129,7 +143,14 @@ internal fun OutlinedField(
             onValueChange = onValueChange,
             enabled = enabled,
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-            textStyle = typography.bodyLarge.copy(fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.Medium, color = t.text),
+            textStyle =
+                typography.bodyLarge.copy(
+                    fontSize = 15.sp,
+                    lineHeight = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 0.sp,
+                    color = t.text,
+                ),
             cursorBrush = SolidColor(t.primary),
             singleLine = singleLine,
             minLines = minLines,
@@ -148,7 +169,9 @@ internal fun OutlinedField(
                     onNext = { focus.moveFocus(FocusDirection.Down) },
                 ),
             decorationBox = { inner ->
-                Box {
+                // The field's own width and least height reach the outline, which otherwise shrinks
+                // to its label and leaves a box a third of the page wide.
+                Box(propagateMinConstraints = true) {
                     MaterialTheme(typography = fieldTypography) {
                         OutlinedTextFieldDefaults.DecorationBox(
                             value = value,
@@ -190,10 +213,17 @@ internal fun OutlinedField(
                             colors = colors,
                             contentPadding =
                                 OutlinedTextFieldDefaults.contentPadding(
-                                    start = 14.dp,
-                                    end = if (trailing != null) TrailingRoom else 4.dp,
-                                    top = 12.dp,
-                                    bottom = 12.dp,
+                                    // The design's 14 inside a 1dp line, and 13 above and below,
+                                    // where the text sits as drawn; three lines make the 86dp box.
+                                    start = 15.dp,
+                                    end =
+                                        when {
+                                            trailing != null -> TrailingRoom
+                                            password -> 4.dp
+                                            else -> 15.dp
+                                        },
+                                    top = 13.dp,
+                                    bottom = 13.dp,
                                 ),
                             container = {
                                 OutlinedTextFieldDefaults.Container(
@@ -210,7 +240,12 @@ internal fun OutlinedField(
                     }
                     if (trailing != null) {
                         Box(
-                            Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 4.dp).size(36.dp),
+                            Modifier
+                                .align(Alignment.TopEnd)
+                                // The box hands its width down; this keeps the action its own 36dp.
+                                .wrapContentSize(Alignment.TopEnd)
+                                .padding(top = 7.dp, end = 5.dp)
+                                .size(36.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             trailing()
@@ -227,7 +262,12 @@ internal fun OutlinedField(
                         Lucide.CircleAlert,
                         t.bad,
                         AnnotatedString(error),
-                        typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.SemiBold),
+                        typography.bodySmall.copy(
+                            fontSize = 12.sp,
+                            lineHeight = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 0.sp,
+                        ),
                         t.bad,
                         Modifier.weight(1f),
                         iconSize = 13.dp,
@@ -239,7 +279,7 @@ internal fun OutlinedField(
                     Spacer(Modifier.width(8.dp))
                     Text(
                         "${value.length}/$maxLength",
-                        style = typography.bodySmall.copy(fontSize = 11.5.sp, lineHeight = 14.sp),
+                        style = typography.bodySmall.copy(fontSize = 11.5.sp, lineHeight = 14.sp, letterSpacing = 0.sp),
                         color = t.text4,
                     )
                 }
@@ -248,8 +288,8 @@ internal fun OutlinedField(
     }
 }
 
-/** What a [trailing] action keeps clear at the box's end: its 36dp and 4dp on either side. */
-private val TrailingRoom = 40.dp
+/** What a [trailing] action keeps clear at the box's end: its 36dp, 5dp to the edge and 0 to the text. */
+private val TrailingRoom = 41.dp
 
 /** How faded a field is while it takes no typing, as the page's other controls are. */
 internal const val DISABLED_ALPHA = 0.45f

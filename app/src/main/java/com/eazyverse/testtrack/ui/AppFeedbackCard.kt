@@ -84,7 +84,7 @@ internal fun HeadingTag(tag: String) {
             .clip(RoundedCornerShape(10.dp))
             .background(t.glass2)
             .padding(horizontal = 9.dp, vertical = 2.dp),
-        style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp, lineHeight = 16.sp),
+        style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.sp),
         fontWeight = FontWeight.SemiBold,
         color = t.text3,
     )

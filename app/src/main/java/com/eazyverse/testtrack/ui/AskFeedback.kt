@@ -114,7 +114,8 @@ private fun LevelTile(
             .selectable(selected = chosen, enabled = enabled, role = Role.RadioButton, onClick = onClick)
             .then(if (enabled) Modifier else Modifier.alpha(DISABLED_ALPHA)),
     ) {
-        Column(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 11.dp, bottom = 10.dp)) {
+        // The design's 11/12/10 inside its 1dp line, which this border draws inside the tile.
+        Column(Modifier.fillMaxWidth().padding(start = 13.dp, end = 13.dp, top = 12.dp, bottom = 11.dp)) {
             Icon(level.icon(), null, Modifier.size(18.dp), tint = t.tileInk)
             Spacer(Modifier.height(6.dp))
             Text(
@@ -130,7 +131,7 @@ private fun LevelTile(
             Icon(
                 Lucide.Check,
                 null,
-                Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 10.dp).size(15.dp),
+                Modifier.align(Alignment.TopEnd).padding(top = 11.dp, end = 11.dp).size(15.dp),
                 tint = t.tabSelected,
             )
         }
