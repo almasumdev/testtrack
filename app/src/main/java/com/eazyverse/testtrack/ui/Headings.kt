@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -51,6 +52,10 @@ private val HeadingLine = 19.dp
  * [count] sits in a badge right beside the words it counts. [tag] is the small quiet tag at the
  * far end, such as "Optional"; [end] is anything else there, such as a status or an action. [top]
  * is the space over it; it keeps 10dp under it. Padding for the gutter goes in [modifier].
+ *
+ * With [tagTall] the tag keeps its own 20dp height and the words are centred beside it, so the
+ * heading is 20dp tall, as the Ask page's "For testers" always was. Off, the tag is centred on the
+ * words and adds no height.
  */
 @Composable
 internal fun SectionHeading(
@@ -59,13 +64,15 @@ internal fun SectionHeading(
     count: Int? = null,
     tag: String? = null,
     top: Dp = 0.dp,
+    tagTall: Boolean = false,
     end: (@Composable RowScope.() -> Unit)? = null,
 ) {
+    val align = if (tagTall) Alignment.CenterVertically else Alignment.Top
     Row(
-        modifier.fillMaxWidth().padding(top = top, bottom = 10.dp),
-        verticalAlignment = Alignment.Top,
+        modifier.fillMaxWidth().heightIn(min = if (tagTall) HeadingLine else 0.dp).padding(top = top, bottom = 10.dp),
+        verticalAlignment = align,
     ) {
-        Row(Modifier.weight(1f), verticalAlignment = Alignment.Top) {
+        Row(Modifier.weight(1f), verticalAlignment = align) {
             Text(
                 text,
                 Modifier.weight(1f, fill = false),
@@ -83,8 +90,12 @@ internal fun SectionHeading(
         }
         if (!tag.isNullOrBlank()) {
             Spacer(Modifier.width(8.dp))
-            Box(Modifier.height(HeadingLine).wrapContentHeight(Alignment.CenterVertically, unbounded = true)) {
+            if (tagTall) {
                 HeadingTag(tag)
+            } else {
+                Box(Modifier.height(HeadingLine).wrapContentHeight(Alignment.CenterVertically, unbounded = true)) {
+                    HeadingTag(tag)
+                }
             }
         }
         if (end != null) {

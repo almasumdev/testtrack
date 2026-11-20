@@ -142,7 +142,7 @@ private fun ColumnScope.AskBody(
         AskPay(vm.reward, vm.feedback.least, enabled, vm::changeReward)
 
         Spacer(Modifier.height(SectionGap))
-        SectionHeading("For testers", tag = "Optional")
+        SectionHeading("For testers", tag = "Optional", tagTall = true)
         Spacer(Modifier.height(6.dp))
         OutlinedField(
             value = vm.ask,
