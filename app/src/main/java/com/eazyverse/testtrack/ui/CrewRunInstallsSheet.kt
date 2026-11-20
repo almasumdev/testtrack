@@ -24,7 +24,7 @@ internal fun CrewRunInstallsSheet(
     PickerSheet(
         title = "Apps to install",
         onDismiss = onDismiss,
-        leading = { IconSquare(Lucide.Download, Tone.ACCENT) },
+        leading = { IconTile(Lucide.Download, 36.dp, corner = 12.dp, glyph = 18.dp, tint = Tone.ACCENT.ink()) },
         skipHalf = true,
         fitMax = 0.85f,
     ) { close ->

@@ -45,7 +45,7 @@ internal fun AnswerSheet(
         onDismiss = onDismiss,
         skipHalf = true,
         fitMax = 0.9f,
-        leading = { IconSquare(Lucide.MessageSquare, Tone.ACCENT) },
+        leading = { IconTile(Lucide.MessageSquare, 36.dp, corner = 12.dp, glyph = 18.dp, tint = Tone.ACCENT.ink()) },
     ) { close ->
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 18.dp)) {
             InfoLine("You can answer once. The ${FeedRules.JURORS.words()} members and the developer see it.")

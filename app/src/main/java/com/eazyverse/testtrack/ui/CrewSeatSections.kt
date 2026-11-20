@@ -336,16 +336,12 @@ internal fun SeatBar(
     onClick: () -> Unit,
 ) {
     val t = Tt.colors
-    val shape = RoundedCornerShape(14.dp)
     val ink = if (enabled || busy) t.tabSelected else t.text4
     Box(
         modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, t.cardLine, shape)
-            .then(if (enabled && !busy) Modifier.clickable(onClick = onClick) else Modifier)
+            .tileFrame(onClick = if (enabled && !busy) onClick else null, fill = MaterialTheme.colorScheme.surface)
             .padding(12.dp),
         contentAlignment = Alignment.Center,
     ) {

@@ -62,7 +62,7 @@ fun FeedRefuseSheet(
         onDismiss = onDismiss,
         skipHalf = true,
         fitMax = 0.9f,
-        leading = { IconSquare(Lucide.Scale, Tone.ACCENT) },
+        leading = { IconTile(Lucide.Scale, 36.dp, corner = 12.dp, glyph = 18.dp, tint = Tone.ACCENT.ink()) },
     ) { close ->
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 18.dp)) {
             InfoLine(

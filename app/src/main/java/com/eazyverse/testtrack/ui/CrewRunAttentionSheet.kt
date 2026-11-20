@@ -28,7 +28,7 @@ internal fun CrewRunAttentionSheet(
                 CrewRunAttentionKind.MIXED -> "Apps needing attention"
             },
         onDismiss = onDismiss,
-        leading = { IconSquare(Lucide.TriangleAlert, Tone.WARN) },
+        leading = { IconTile(Lucide.TriangleAlert, 36.dp, Tone.WARN, corner = 12.dp, glyph = 18.dp, tint = Tone.WARN.ink()) },
         skipHalf = true,
         fitMax = 0.85f,
     ) { close ->

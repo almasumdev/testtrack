@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -149,15 +148,7 @@ private fun RowScope.StatCard(
             .padding(start = 12.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            Modifier
-                .size(38.dp)
-                .clip(RoundedCornerShape(11.dp))
-                .background(if (tint == null) t.tile else tint.copy(alpha = 0.16f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, null, Modifier.size(19.dp), tint = ink)
-        }
+        IconTile(icon, 38.dp, corner = 11.dp, glyph = 19.dp, tint = ink, ground = tint?.copy(alpha = 0.16f))
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             if (value == null) {

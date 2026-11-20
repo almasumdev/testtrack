@@ -25,7 +25,7 @@ internal fun ReviewSectionTitle(
     title: String,
 ) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        IconSquare(icon, Tone.ACCENT, size = 28)
+        IconTile(icon, 28.dp, corner = 9.dp, glyph = 14.dp, tint = Tone.ACCENT.ink())
         Spacer(Modifier.width(10.dp))
         Text(title, style = ReviewHeadingStyle, color = Tt.colors.text)
     }

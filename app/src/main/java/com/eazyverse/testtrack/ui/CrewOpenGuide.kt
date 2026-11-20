@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,14 +9,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -102,24 +99,6 @@ private fun CrewStory() {
     )
 }
 
-@Composable
-internal fun IconSquare(
-    icon: ImageVector,
-    tone: Tone,
-    filled: Boolean = false,
-    size: Int = 36,
-) {
-    Box(
-        Modifier
-            .size(size.dp)
-            .clip(RoundedCornerShape((size / 3).dp))
-            .background(if (filled) tone.ink() else Tt.colors.tile),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, null, Modifier.size((size / 2).dp), tint = if (filled) Tt.colors.inkOn(tone.ink()) else tone.ink())
-    }
-}
-
 // ------------------------------------------------------------------ how it goes
 
 private class Step(
@@ -152,15 +131,7 @@ private fun JourneyRow(
 ) {
     val t = Tt.colors
     Row(Modifier.padding(top = if (first) 10.dp else 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(t.tile),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(step.icon, null, Modifier.size(20.dp), tint = t.tileInk)
-        }
+        IconTile(step.icon, 40.dp, glyph = 20.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(step.title, style = JourneyTitle, color = t.text, maxLines = 1, overflow = TextOverflow.Ellipsis)

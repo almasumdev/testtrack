@@ -257,8 +257,7 @@ internal fun TintBox(
     Box(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, Tt.colors.cardLine, RoundedCornerShape(10.dp))
+            .tileFrame(RoundedCornerShape(10.dp), fill = Color.Transparent)
             .padding(horizontal = 12.dp, vertical = 6.dp),
     ) { content() }
 }

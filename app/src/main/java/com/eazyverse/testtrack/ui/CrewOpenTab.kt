@@ -161,15 +161,7 @@ internal fun CrewOpenHeader(crew: Crew?) {
     val t = Tt.colors
     val estimate = crew?.let { startEstimate(it.likelyFullAt, it.likelyBasis) }
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(t.tile),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Lucide.Users, null, Modifier.size(20.dp), tint = t.tileInk)
-        }
+        IconTile(Lucide.Users, 40.dp, glyph = 20.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f).testTag(CREW_HEAD_TAG)) {
             // Only the name gives way to an ellipsis; the seats left are the answer and stay whole.

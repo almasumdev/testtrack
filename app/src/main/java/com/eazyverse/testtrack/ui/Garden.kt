@@ -76,6 +76,10 @@ fun Backdrop(
  * on the quiet tile; [filled] fills the tile with the tone instead, the glyph in the ink that reads
  * on it. The danger version swaps to the red ground so a destructive row says so before its words
  * are read.
+ *
+ * [corner] and [glyph] are 0.3 and 0.52 of [size] unless given, such as a 40dp tile's 20dp glyph or
+ * a sheet's 36dp mark with its 12dp corner. [tint] is the glyph's ink and [ground] the tile's, in
+ * place of the tone's, such as a gold stat.
  */
 @Composable
 fun IconTile(
@@ -84,10 +88,14 @@ fun IconTile(
     tone: Tone = Tone.ACCENT,
     filled: Boolean = false,
     danger: Boolean = false,
+    corner: Dp = size * 0.3f,
+    glyph: Dp = size * 0.52f,
+    tint: Color? = null,
+    ground: Color? = null,
 ) {
     val t = Tt.colors
     val toneInk = if (tone == Tone.ACCENT) t.tileInk else tone.ink()
-    val (ground, ink) =
+    val (toneGround, toneGlyph) =
         when {
             danger -> t.badBg to t.bad
             filled -> tone.ink() to t.inkOn(tone.ink())
@@ -96,11 +104,11 @@ fun IconTile(
     Box(
         Modifier
             .size(size)
-            .clip(RoundedCornerShape(size * 0.3f))
-            .background(ground),
+            .clip(RoundedCornerShape(corner))
+            .background(ground ?: toneGround),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, null, Modifier.size(size * 0.52f), tint = ink)
+        Icon(icon, null, Modifier.size(glyph), tint = tint ?: toneGlyph)
     }
 }
 
@@ -327,41 +335,53 @@ fun ListTile(
 
 /**
  * The hairline tile: the page colour inside a 1dp card line, clipped to [shape]. With [onClick] the
- * whole tile is the press shape. Size and padding go before and after it as usual.
+ * whole tile is the press shape, read out as [role]. Size and padding go before and after it as usual.
+ *
+ * [fill] is the ground inside the line: the page colour unless given, such as none at all
+ * ([Color.Transparent]) for a frame drawn on a card, or the sheet's surface.
  */
 @Composable
 fun Modifier.tileFrame(
     shape: Shape = RoundedCornerShape(TileRadius),
     onClick: (() -> Unit)? = null,
+    fill: Color = Tt.colors.bg,
+    role: Role? = null,
 ): Modifier {
     val t = Tt.colors
     return this
         .clip(shape)
-        .background(t.bg)
+        .background(fill)
         .border(1.dp, t.cardLine, shape)
-        .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+        .then(if (onClick != null) Modifier.clickable(role = role, onClick = onClick) else Modifier)
 }
 
 /**
  * One answer of a few side by side, such as the Ask page's Stars, Written and Detailed: a hairline
  * tile, or when [selected] the soft accent wash with no line, the way a picker marks its chosen row.
- * Picked as a radio button; faded and untappable when not [enabled].
+ * Picked as a radio button; untappable when not [enabled], and faded too unless not [fadeWhenOff].
+ *
+ * [fill] and [line] are the ground and the line while not chosen, [chosenFill] and [chosenLine]
+ * once chosen, such as the review counts' bare unchosen chips or a two-answer question's tile
+ * with its ink line.
  */
 @Composable
 fun Modifier.choiceTile(
     selected: Boolean,
     enabled: Boolean = true,
     shape: Shape = RoundedCornerShape(TileRadius),
+    fill: Color = Tt.colors.bg,
+    line: Color = Tt.colors.cardLine,
+    chosenFill: Color = Tt.colors.leafAccentSoft,
+    chosenLine: Color = Color.Transparent,
+    fadeWhenOff: Boolean = true,
     onClick: () -> Unit,
-): Modifier {
-    val t = Tt.colors
-    return this
+): Modifier =
+    this
         .clip(shape)
-        .background(if (selected) t.leafAccentSoft else t.bg)
-        .border(1.dp, if (selected) Color.Transparent else t.cardLine, shape)
+        .background(if (selected) chosenFill else fill)
+        .border(1.dp, if (selected) chosenLine else line, shape)
         .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
-        .then(if (enabled) Modifier else Modifier.alpha(DISABLED_ALPHA))
-}
+        .then(if (enabled || !fadeWhenOff) Modifier else Modifier.alpha(DISABLED_ALPHA))
 
 /**
  * How much of the bottom of the screen the floating dock covers, system bar included.

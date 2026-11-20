@@ -167,15 +167,7 @@ fun AskRow(
             .padding(start = 10.dp, end = if (trailing != null) 10.dp else 12.dp, top = 9.dp, bottom = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(t.tile),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, null, Modifier.size(20.dp), tint = t.tileInk)
-        }
+        IconTile(icon, 40.dp, glyph = 20.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(

@@ -248,12 +248,7 @@ private fun SeatPrice(
 ) {
     val t = Tt.colors
     Row(Modifier.fillMaxWidth().heightIn(min = 40.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(t.tile),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Lucide.Coins, null, Modifier.size(20.dp), tint = t.tileInk)
-        }
+        IconTile(Lucide.Coins, 40.dp, glyph = 20.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(

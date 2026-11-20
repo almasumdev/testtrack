@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -142,16 +140,11 @@ private fun CountChip(
     modifier: Modifier,
 ) {
     val t = Tt.colors
-    val shape = RoundedCornerShape(18.dp)
     Box(
         modifier
             .height(36.dp)
-            .clip(shape)
-            .background(if (chosen) t.leafAccentSoft else Color.Transparent)
-            .border(1.dp, if (chosen) Color.Transparent else t.cardLine, shape)
-            .selectable(selected = chosen, enabled = enabled, role = Role.RadioButton, onClick = onClick)
-            .semantics { contentDescription = "$count reviews" }
-            .then(if (enabled) Modifier else Modifier.alpha(DISABLED_ALPHA)),
+            .choiceTile(chosen, enabled, RoundedCornerShape(18.dp), fill = Color.Transparent, onClick = onClick)
+            .semantics { contentDescription = "$count reviews" },
         contentAlignment = Alignment.Center,
     ) {
         Text(

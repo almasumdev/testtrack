@@ -55,7 +55,7 @@ internal fun CrewRunSummary(
 
     CrewCard(padding = PaddingValues(16.dp)) {
         Row(Modifier.fillMaxWidth().heightIn(min = 32.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconSquare(Lucide.Moon, Tone.ACCENT, size = 32)
+            IconTile(Lucide.Moon, 32.dp, corner = 10.dp, glyph = 16.dp, tint = Tone.ACCENT.ink())
             Spacer(Modifier.width(9.dp))
             Text("Tonight", Modifier.weight(1f), style = tileStyle(15f, 20f, FontWeight.SemiBold), color = Tt.colors.text)
             InlineAction("Nightly guide", leading = Lucide.BookOpen) { guide = true }
@@ -139,7 +139,7 @@ private fun CrewNightlyGuide(onDismiss: () -> Unit) {
     PickerSheet(
         title = "Nightly guide",
         onDismiss = onDismiss,
-        leading = { IconSquare(Lucide.BookOpen, Tone.ACCENT) },
+        leading = { IconTile(Lucide.BookOpen, 36.dp, corner = 12.dp, glyph = 18.dp, tint = Tone.ACCENT.ink()) },
         skipHalf = true,
         fitMax = 0.9f,
     ) { close ->

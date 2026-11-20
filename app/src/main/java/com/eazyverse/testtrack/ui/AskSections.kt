@@ -2,13 +2,10 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
@@ -66,14 +64,17 @@ internal fun TwoChoice(
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(true to first, false to second).forEach { (isFirst, label) ->
             val selected = firstChosen == isFirst
-            val shape = RoundedCornerShape(10.dp)
             Box(
                 Modifier
                     .weight(1f)
-                    .clip(shape)
-                    .background(if (selected) Tt.colors.tile else androidx.compose.ui.graphics.Color.Transparent)
-                    .border(1.dp, if (selected) Tt.colors.tileInk else Tt.colors.glassBorderStrong, shape)
-                    .selectable(selected = selected, role = Role.RadioButton, onClick = { onChange(isFirst) })
+                    .choiceTile(
+                        selected,
+                        shape = RoundedCornerShape(10.dp),
+                        fill = Color.Transparent,
+                        line = Tt.colors.glassBorderStrong,
+                        chosenFill = Tt.colors.tile,
+                        chosenLine = Tt.colors.tileInk,
+                    ) { onChange(isFirst) }
                     .heightIn(min = 48.dp)
                     .padding(horizontal = 8.dp, vertical = 12.dp),
                 contentAlignment = Alignment.Center,
@@ -193,12 +194,7 @@ internal fun AskPrice(
     val t = Tt.colors
     val short = tix != null && cost > tix
     Row(modifier.fillMaxWidth().heightIn(min = 40.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(t.tile),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Lucide.Coins, null, Modifier.size(20.dp), tint = t.tileInk)
-        }
+        IconTile(Lucide.Coins, 40.dp, glyph = 20.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(

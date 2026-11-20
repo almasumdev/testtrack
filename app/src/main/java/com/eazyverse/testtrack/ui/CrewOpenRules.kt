@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -136,14 +136,12 @@ private fun RowScope.FactTile(
     label: String,
     tone: Tone = Tone.ACCENT,
 ) {
-    val shape = RoundedCornerShape(12.dp)
     val ink = if (tone == Tone.BAD) tone.ink() else Tt.colors.tabSelected
     Column(
         Modifier
             .weight(1f)
             .fillMaxHeight()
-            .clip(shape)
-            .border(1.dp, Tt.colors.cardLine, shape)
+            .tileFrame(RoundedCornerShape(12.dp), fill = Color.Transparent)
             .padding(start = 10.dp, top = 9.dp, end = 10.dp, bottom = 10.dp),
     ) {
         Row(verticalAlignment = Alignment.Bottom) {
@@ -252,7 +250,7 @@ private fun RuleGroup(
 ) {
     Column(Modifier.padding(top = 16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconSquare(icon, tone, size = 28)
+            IconTile(icon, 28.dp, tone, corner = 9.dp, glyph = 14.dp, tint = tone.ink())
             Spacer(Modifier.width(10.dp))
             Text(title, style = HeadingStyle, color = Tt.colors.text)
         }

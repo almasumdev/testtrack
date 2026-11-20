@@ -1,8 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -77,11 +73,12 @@ internal fun SeatAppTile(
         modifier
             .fillMaxWidth()
             .heightIn(min = 66.dp)
-            .clip(shape)
-            .background(if (blocked) Color.Transparent else t.bg)
-            .border(1.dp, t.cardLine, shape)
-            .then(if (blocked) Modifier else Modifier.clickable(role = Role.Button, onClick = onClick))
-            .padding(horizontal = 12.dp, vertical = 11.dp)
+            .tileFrame(
+                shape,
+                onClick = if (blocked) null else onClick,
+                fill = if (blocked) Color.Transparent else t.bg,
+                role = Role.Button,
+            ).padding(horizontal = 12.dp, vertical = 11.dp)
             .semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.CenterVertically,
     ) {
