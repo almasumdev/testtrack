@@ -180,7 +180,7 @@ fun MeBody(
     }
     if (offline && profile == null) {
         // The robot, like every other tab that could not load.
-        RobotOffline("Your record did not load", onRetry = onRetry)
+        RobotOffline("Your record didn't load", onRetry = onRetry)
         return
     }
     // Until it arrives the account rows are already there; only the person and figures shimmer.
@@ -191,7 +191,7 @@ fun MeBody(
         contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = FootRoom + dockRoom()),
     ) {
         item { LoadSwap(shown == null) { if (it) WhoLoading() else shown?.let { p -> Who(p, onEdit) } } }
-        item { SectionTitle("Your record") }
+        item { SectionHeading("Your record", top = 16.dp) }
         item {
             LoadSwap(shown == null) { waiting ->
                 if (waiting || shown == null) return@LoadSwap RecordGridLoading()
@@ -221,16 +221,9 @@ fun MeBody(
     }
 }
 
-/** A heading inside the page's own gutter, the list's padding already having taken it. */
+/** A heading inside the page's own gutter. Kept for MeDebug and ThemeCard, which wave 3 moves to [SectionHeading]. */
 @Composable
-internal fun SectionTitle(text: String) {
-    Text(
-        text,
-        Modifier.padding(top = 16.dp, bottom = 10.dp),
-        style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp),
-        fontWeight = FontWeight.Bold,
-    )
-}
+internal fun SectionTitle(text: String) = SectionHeading(text, top = 16.dp)
 
 /**
  * The person: the face on the left, the name and address beside it, the small facts under both.
@@ -261,10 +254,7 @@ private fun Who(
                 ) {
                     Avatar(
                         profile.photoUrl,
-                        profile.displayName
-                            .take(1)
-                            .uppercase()
-                            .ifBlank { "?" },
+                        initialOf(profile.displayName),
                         size = FaceSize - 6.dp,
                         letterStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 23.sp),
                     )
@@ -310,8 +300,8 @@ private fun Who(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            memberSince(profile.joinedAt)?.let { ProfileChip(Lucide.CalendarDays, it) }
-            localTime(profile.timezone)?.let { ProfileChip(Lucide.Clock, it) }
+            memberSince(profile.joinedAt)?.let { StatusChip(it, Tone.QUIET, Lucide.CalendarDays, size = ChipSize.SMALL) }
+            localTime(profile.timezone)?.let { StatusChip(it, Tone.QUIET, Lucide.Clock, size = ChipSize.SMALL) }
         }
     }
 }

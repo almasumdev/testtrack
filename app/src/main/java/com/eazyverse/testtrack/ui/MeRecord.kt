@@ -2,7 +2,6 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,40 +39,13 @@ import com.composables.icons.lucide.Smartphone
 import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.Trophy
 import com.composables.icons.lucide.Users
+import com.eazyverse.testtrack.domain.pluralOf
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
- * The profile's figures: the chips under the name, the points card and the crews strip.
+ * The profile's figures: the stat cards of the record grid.
  * Split from MeScreen.kt, which draws the page around them.
  */
-
-/** A small fact under the name: an icon and a few words. The board place is lit in the accent. */
-@Composable
-internal fun ProfileChip(
-    icon: ImageVector,
-    text: String,
-    lit: Boolean = false,
-) {
-    val t = Tt.colors
-    val ink = if (lit) t.tileInk else t.text2
-    Row(
-        Modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .background(if (lit) t.tile else t.glass2)
-            .padding(start = 8.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, null, Modifier.size(12.dp), tint = ink)
-        Spacer(Modifier.width(5.dp))
-        Text(
-            text,
-            style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.5.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = ink,
-            maxLines = 1,
-        )
-    }
-}
 
 /**
  * What this account has done, as a two-column grid of small stat cards.
@@ -108,11 +80,11 @@ internal fun RecordGrid(
             StatCard(Lucide.Star, "$points", "Points", tint = t.accentInk)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatCard(Lucide.Smartphone, "$opens", if (opens == 1) "App opened" else "Apps opened")
-            StatCard(Lucide.MessageSquareText, "$reviews", if (reviews == 1) "Review accepted" else "Reviews accepted")
+            StatCard(Lucide.Smartphone, "$opens", "${pluralOf(opens, "App")} opened")
+            StatCard(Lucide.MessageSquareText, "$reviews", "${pluralOf(reviews, "Review")} accepted")
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatCard(Lucide.Users, "$crewsRunning", if (crewsRunning == 1) "Crew going on" else "Crews going on")
+            StatCard(Lucide.Users, "$crewsRunning", "${pluralOf(crewsRunning, "Crew")} going on")
             StatCard(Lucide.Moon, "${CrewRules.nightly(crewsFilled)}", "Apps a night")
         }
         if (!ranked) {
@@ -169,15 +141,11 @@ private fun RowScope.StatCard(
     onClick: (() -> Unit)? = null,
 ) {
     val t = Tt.colors
-    val shape = RoundedCornerShape(CardRadius)
     val ink = tint ?: t.tileInk
     Row(
         Modifier
             .weight(1f)
-            .clip(shape)
-            .background(t.glass)
-            .border(1.dp, t.glassBorder, shape)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .tileFrame(onClick = onClick)
             .padding(start = 12.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

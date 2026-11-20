@@ -50,6 +50,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.RefreshCw
 import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.R
+import com.eazyverse.testtrack.ui.TextStyles.HintStyle
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -73,7 +74,6 @@ internal val PlaySteps =
     )
 
 private val StepStyle = tileStyle(15f, 20f, FontWeight.SemiBold)
-private val HintStyle = tileStyle(12.5f, 14f, FontWeight.Medium)
 
 @Composable
 internal fun GroupHowToDialog(

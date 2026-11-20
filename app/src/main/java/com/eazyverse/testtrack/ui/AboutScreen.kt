@@ -1,14 +1,11 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,7 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -63,7 +60,7 @@ import java.util.Calendar
  * this app's own colours, type and buttons.
  *
  * No cards, though every other screen here is made of them. Groups are made by space alone:
- * [HEAD_GAP] under a heading against [BANK_GAP] under a bank, and [PLATE_GAP] where the page
+ * [BANK_GAP] under a bank, and [PLATE_GAP] where the page
  * changes subject, after the app and before the footer. Every action hands the reader to something
  * this app does not own, so every one can fail, and they fail in silence.
  */
@@ -172,8 +169,7 @@ private fun ColumnScope.AppPlate() {
  */
 @Composable
 private fun ColumnScope.RatingBank(onRate: (Int) -> Unit) {
-    BankHeading("Enjoying TestTrack?")
-    Spacer(Modifier.height(HEAD_GAP))
+    SectionHeading("Enjoying TestTrack?")
     BankLine("Rate it on Google Play and support our work.")
     Spacer(Modifier.height(10.dp))
     RatingStars(Modifier.align(Alignment.CenterHorizontally), onRate = onRate)
@@ -183,8 +179,7 @@ private fun ColumnScope.RatingBank(onRate: (Int) -> Unit) {
 @Composable
 private fun ColumnScope.QuestionsBank() {
     val context = LocalContext.current
-    BankHeading("Have a question?")
-    Spacer(Modifier.height(HEAD_GAP))
+    SectionHeading("Have a question?")
     BankLine("Ask in our WhatsApp group. Members and the team answer there.")
     Spacer(Modifier.height(16.dp))
     Outlined(
@@ -199,8 +194,7 @@ private fun ColumnScope.QuestionsBank() {
 private fun ColumnScope.MakerBank() {
     val context = LocalContext.current
     val t = Tt.colors
-    BankHeading("Meet the developer")
-    Spacer(Modifier.height(HEAD_GAP))
+    SectionHeading("Meet the developer")
     Row(
         Modifier
             .fillMaxWidth()
@@ -239,13 +233,14 @@ private fun ColumnScope.MakerBank() {
             "are more on Google Play. If you have one in mind, tell us about it.",
     )
     Spacer(Modifier.height(16.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Filled("Start a project", Modifier.weight(1f), icon = { Icon(Lucide.Mail, null, Modifier.size(17.dp)) }) {
-            mail(context, "A project, from TestTrack")
-        }
-        Outlined("eazyverse.com", Modifier.weight(1f), icon = { Icon(Lucide.Globe, null, Modifier.size(17.dp)) }) {
-            openUrl(context, STUDIO_SITE)
-        }
+    // Stacked: the shared filled button is taller and its words larger than the old pair's, and
+    // "Start a project" wrapped onto two lines at half the page's width.
+    Primary("Start a project", Modifier.fillMaxWidth(), mark = rememberVectorPainter(Lucide.Mail)) {
+        mail(context, "A project, from TestTrack")
+    }
+    Spacer(Modifier.height(10.dp))
+    Outlined("eazyverse.com", Modifier.fillMaxWidth(), icon = { Icon(Lucide.Globe, null, Modifier.size(17.dp)) }) {
+        openUrl(context, STUDIO_SITE)
     }
 }
 
@@ -253,8 +248,7 @@ private fun ColumnScope.MakerBank() {
 @Composable
 private fun ColumnScope.MoreAppsBank() {
     val context = LocalContext.current
-    BankHeading("More from EazyVerse")
-    Spacer(Modifier.height(HEAD_GAP))
+    SectionHeading("More from EazyVerse")
     BankLine("Everything the studio has on the store, in one place.")
     Spacer(Modifier.height(16.dp))
     Outlined(
@@ -269,8 +263,7 @@ private fun ColumnScope.MoreAppsBank() {
 @Composable
 private fun ColumnScope.SourceBank() {
     val context = LocalContext.current
-    BankHeading("Open source")
-    Spacer(Modifier.height(HEAD_GAP))
+    SectionHeading("Open source")
     BankLine("The app's code is public on GitHub under the MIT licence. Read it, report a problem, or send a fix.")
     Spacer(Modifier.height(16.dp))
     Outlined(
@@ -319,17 +312,6 @@ private fun LegalLink(
     }
 }
 
-/** A bank's heading, in the app's own section style. */
-@Composable
-private fun BankHeading(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, lineHeight = 19.sp),
-        fontWeight = FontWeight.Bold,
-        color = Tt.colors.text,
-    )
-}
-
 @Composable
 private fun BankLine(text: String) {
     Text(
@@ -337,63 +319,6 @@ private fun BankLine(text: String) {
         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
         color = Tt.colors.text2,
     )
-}
-
-/**
- * The filled pill, sized with [Outlined] so the two sit side by side as a pair: [Primary] is taller
- * and its type larger, which wrapped "Start a project" onto two lines at half the page's width.
- */
-@Composable
-private fun Filled(
-    label: String,
-    modifier: Modifier = Modifier,
-    icon: @Composable () -> Unit,
-    onClick: () -> Unit,
-) {
-    // The button's own text colour, as [Primary] uses: white on the light ground's navy, dark on
-    // the dark ground's light blue. White here was unreadable in dark mode.
-    val ink = MaterialTheme.colorScheme.onPrimary
-    Button(
-        onClick = onClick,
-        modifier = modifier.heightIn(min = ButtonHeight),
-        shape = RoundedCornerShape(percent = 50),
-        elevation = null,
-        contentPadding = PaddingValues(horizontal = 16.dp),
-    ) {
-        Box(Modifier.size(18.dp), contentAlignment = Alignment.Center) {
-            androidx.compose.runtime.CompositionLocalProvider(
-                androidx.compose.material3.LocalContentColor provides ink,
-            ) { icon() }
-        }
-        Spacer(Modifier.width(8.dp))
-        Text(label, fontWeight = FontWeight.Bold, color = ink, fontSize = 14.5.sp, maxLines = 1)
-    }
-}
-
-/** The app's outlined pill, the partner of [Primary] that the "did not load" pages already use. */
-@Composable
-private fun Outlined(
-    label: String,
-    modifier: Modifier = Modifier,
-    icon: @Composable () -> Unit,
-    onClick: () -> Unit,
-) {
-    val t = Tt.colors
-    OutlinedButton(
-        onClick = onClick,
-        modifier = modifier.heightIn(min = ButtonHeight),
-        shape = RoundedCornerShape(percent = 50),
-        border = BorderStroke(1.5.dp, t.accentInk),
-        contentPadding = PaddingValues(horizontal = 16.dp),
-    ) {
-        Box(Modifier.size(18.dp), contentAlignment = Alignment.Center) {
-            androidx.compose.runtime.CompositionLocalProvider(
-                androidx.compose.material3.LocalContentColor provides t.accentInk,
-            ) { icon() }
-        }
-        Spacer(Modifier.width(8.dp))
-        Text(label, fontWeight = FontWeight.Bold, color = t.accentInk, fontSize = 14.5.sp, maxLines = 1)
-    }
 }
 
 /**
@@ -419,6 +344,5 @@ private val ICON_MARK = 84.dp
 /** The canvas that puts an [ICON_MARK]-tall robot on screen: 84 × 1254 / 670. */
 private val ICON_ART = 157.dp
 private val TOUCH_MIN = 48.dp
-private val HEAD_GAP = 10.dp
 private val BANK_GAP = 26.dp
 private val PLATE_GAP = 34.dp

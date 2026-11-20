@@ -45,7 +45,7 @@ internal fun NoPlayOptionSheet(
     PickerSheet(
         title = if (fallback) "Send feedback here" else "No review option on Play?",
         onDismiss = onDismiss,
-        leading = { StatusTile(if (fallback) Lucide.MessageSquare else Lucide.CircleHelp, t.tileInk, t.tile) },
+        leading = { IconTile(if (fallback) Lucide.MessageSquare else Lucide.CircleHelp) },
         containerColor = t.sheet,
         topLine = t.sheetLine,
         handleGap = 16.dp,
@@ -106,8 +106,8 @@ internal fun NoPlayOptionBody(
             Spacer(Modifier.height(12.dp))
             NoPlayFix(1, "Screenshot", "Play opens with a camera button. Capture the page showing no review option.")
             NoPlayFix(2, "Written feedback", "Write at least $needs characters for the developer.")
-            Actions { GroupPrimary("Capture on Play", onContinue, busy = closing) }
-            TextAction("Back to fixes", onFixes, enabled = !closing)
+            Actions { Primary("Capture on Play", busy = closing, busyKeepsFill = true, onClick = onContinue) }
+            InlineAction("Back to fixes", Modifier.padding(top = 6.dp), enabled = !closing, fullWidth = true, onClick = onFixes)
         } else {
             Why("Try these fixes before sending feedback here.")
             Spacer(Modifier.height(12.dp))
@@ -115,8 +115,8 @@ internal fun NoPlayOptionBody(
             NoPlayFix(2, "Tester status", "If Play lists you as a tester, leave the test and wait a few minutes.")
             NoPlayFix(3, "Existing review", "\"Edit your review\" means you reviewed it before. It does not count as a new review.")
             NoPlayFix(4, "Play Store update", "Update the Play Store, then reopen the app's page.")
-            Actions { GroupPrimary("Still no review option", onFallback) }
-            TextAction("Keep trying on Play", onClose)
+            Actions { Primary("Still no review option", onClick = onFallback) }
+            InlineAction("Keep trying on Play", Modifier.padding(top = 6.dp), fullWidth = true, onClick = onClose)
         }
     }
 }

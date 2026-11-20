@@ -204,9 +204,24 @@ internal fun UpdateRow(
                 UpdateOffer.State.AVAILABLE ->
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         NewTag()
-                        SmallPill("Update", Lucide.ArrowDownToLine, offer.onTap)
+                        RowPill(
+                            "Update",
+                            PillKind.SOLID,
+                            leading = Lucide.ArrowDownToLine,
+                            size = PillSize.SMALL,
+                            touchTarget = false,
+                            onClick = offer.onTap,
+                        )
                     }
-                UpdateOffer.State.READY -> SmallPill("Restart", Lucide.RotateCw, offer.onTap)
+                UpdateOffer.State.READY ->
+                    RowPill(
+                        "Restart",
+                        PillKind.SOLID,
+                        leading = Lucide.RotateCw,
+                        size = PillSize.SMALL,
+                        touchTarget = false,
+                        onClick = offer.onTap,
+                    )
                 UpdateOffer.State.DOWNLOADING ->
                     Column(horizontalAlignment = Alignment.End, modifier = Modifier.width(72.dp)) {
                         Text(
@@ -241,24 +256,4 @@ private fun NewTag() {
         fontWeight = FontWeight.Bold,
         color = Tt.colors.gold,
     )
-}
-
-@Composable
-private fun SmallPill(
-    label: String,
-    icon: ImageVector,
-    onClick: () -> Unit,
-) {
-    Row(
-        Modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .background(Tt.colors.accent)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(start = 10.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, null, Modifier.size(14.dp), tint = Tt.colors.onAccent)
-        Spacer(Modifier.width(5.dp))
-        Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = Tt.colors.onAccent)
-    }
 }

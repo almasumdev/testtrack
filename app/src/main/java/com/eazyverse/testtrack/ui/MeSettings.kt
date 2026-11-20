@@ -58,7 +58,7 @@ internal fun MeSettings(
     val out: @Composable () -> Unit = { Icon(Lucide.ExternalLink, null, Modifier.size(17.dp), tint = Tt.colors.text4) }
 
     Column {
-        SectionTitle("Testing")
+        SectionHeading("Testing", top = 16.dp)
         TileGroup(count = 2) { index, place ->
             if (index == 0) {
                 TileRow(
@@ -85,7 +85,7 @@ internal fun MeSettings(
 
         SupportGroup(onAbout)
 
-        SectionTitle("Account")
+        SectionHeading("Account", top = 16.dp)
         TileGroup(count = 3) { index, place ->
             when (index) {
                 0 -> TileRow(Lucide.Pencil, "Edit profile", place, subtitle = "Your name and picture", onClick = onEdit)
@@ -115,7 +115,7 @@ internal fun SupportGroup(onAbout: () -> Unit) {
     var videos by remember { mutableStateOf(false) }
     if (videos) HowToSheet(onDismiss = { videos = false })
     Column {
-        SectionTitle("Support")
+        SectionHeading("Support", top = 16.dp)
         // Left out on a phone with no mail app, where it could only open a dead end.
         val mailable = remember { canMail(context) }
         // The update row only while a newer version exists; without one the group is as it was.
