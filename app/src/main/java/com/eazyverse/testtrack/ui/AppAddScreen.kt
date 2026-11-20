@@ -1,9 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -50,10 +47,9 @@ fun AppAddScreen(
 ) {
     val context = LocalContext.current
     val dismissKeyboard = rememberDismissKeyboard()
-    val picture =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            uri?.let { vm.usePicture(context, it) }
-        }
+    // Straight to the gallery: the phone's own icon is already the one shown, so a sheet offering
+    // it again only closed. Backing out leaves the icon as it was.
+    val chooseIcon = rememberImagePicker { uri -> uri?.let { vm.usePicture(context, it) } }
     // Back walks the steps of this page before it leaves it.
     BackHandler(enabled = vm.way != null) { vm.back() }
 
@@ -93,14 +89,12 @@ fun AppAddScreen(
                             live = vm.isLive,
                             testBuild = app.testBuild,
                             onPickAnother = { vm.openPicker(context) },
-                            // Straight to the gallery: the phone's own icon is already the one shown, so a
-                            // sheet offering it again only closed. Backing out leaves the icon as it was.
-                            onChangeIcon = { picture.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                            onChangeIcon = chooseIcon,
                             onRename = vm::renamePicked,
                         )
                         vm.iconError?.let {
                             Spacer(Modifier.height(12.dp))
-                            AskMessage(AskFailure("Couldn't use that picture", it))
+                            FailureLine(AskFailure("Couldn't use that picture", it))
                         }
                         Spacer(Modifier.height(22.dp))
                         AskAvailability(vm.isLive, vm::choose)
@@ -145,7 +139,7 @@ private fun AddButton(
 ) {
     vm.addError?.let {
         Spacer(Modifier.height(14.dp))
-        AskMessage(AskFailure("Couldn't add it", it))
+        FailureLine(AskFailure("Couldn't add it", it))
     }
     Spacer(Modifier.height(20.dp))
     Primary("Add to My apps", busy = vm.adding, enabled = enabled) {
@@ -182,7 +176,7 @@ private fun Finding(
     )
     vm.failure?.let {
         Spacer(Modifier.height(14.dp))
-        AskMessage(it)
+        FailureLine(it)
     }
     Spacer(Modifier.height(16.dp))
     // Our check is down, or Play is slow to show a closed track: the phone has the app anyway.

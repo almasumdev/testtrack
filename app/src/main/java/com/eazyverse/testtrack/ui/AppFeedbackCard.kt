@@ -40,6 +40,7 @@ import com.composables.icons.lucide.EyeOff
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageSquare
 import com.eazyverse.testtrack.domain.Request
+import com.eazyverse.testtrack.domain.shortDate
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -183,7 +184,7 @@ internal fun RequestCard(
             RequestState.DONE -> t.ok
             else -> t.text3
         }
-    val day = request.closedAt?.takeIf { compact }?.let { monthDay(it) }
+    val day = request.closedAt?.takeIf { compact }?.let { shortDate(it) }
     CrewCard(
         padding = if (compact) PaddingValues(horizontal = 14.dp, vertical = 12.dp) else PaddingValues(16.dp),
         onClick = onOpen,

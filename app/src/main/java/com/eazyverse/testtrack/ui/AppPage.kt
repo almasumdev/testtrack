@@ -1,55 +1,32 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ArrowUpRight
 import com.composables.icons.lucide.BadgeCheck
 import com.composables.icons.lucide.CircleAlert
-import com.composables.icons.lucide.FlaskConical
-import com.composables.icons.lucide.Globe
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.Trash2
 import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -108,14 +85,13 @@ fun AppPage(
             onMessageTaken()
         }
     }
-    val picture =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+    // The pencil goes straight to the gallery. Play's icon is filled in by the server once Play
+    // shows the app, so a sheet of choices added a step and nothing else.
+    val choosePicture =
+        rememberImagePicker { uri ->
             val target = app
             if (uri != null && target != null) vm.iconFromPicture(context, target.id, uri)
         }
-    // The pencil goes straight to the gallery. Play's icon is filled in by the server once Play
-    // shows the app, so a sheet of choices added a step and nothing else.
-    val choosePicture = { picture.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -156,7 +132,7 @@ fun AppPage(
                     val busy = vm.acting == app.id
                     val running = if (busy) vm.actingOn else null
                     Spacer(Modifier.height(8.dp))
-                    Hero(
+                    AppPageHero(
                         app,
                         iconBusy = running == AppAction.ICON,
                         liveBusy = running == AppAction.LIVE,
@@ -169,7 +145,7 @@ fun AppPage(
                     }
                     vm.actionError?.let {
                         Spacer(Modifier.height(10.dp))
-                        AskMessage(AskFailure("That didn't work", it))
+                        FailureLine(AskFailure("That didn't work", it))
                     }
                     // A live app can never go into a crew, so it has no crew block unless it was in one.
                     if (!app.live || app.crew != null) {
@@ -246,11 +222,11 @@ private fun DeleteAction(
 }
 
 /**
- * The app, centred: its icon, name and package, chips for where it is found and whether it's real,
- * and for a closed test the pill that says it is live now.
+ * The app on its own page: [AppHero] with its icon from My apps, whether it is verified, and for a
+ * closed test the pill that says it is live now.
  */
 @Composable
-private fun Hero(
+private fun AppPageHero(
     app: AppEntry,
     /** A new icon is being read and sent: shown on the icon itself, which is what is changing. */
     iconBusy: Boolean,
@@ -259,86 +235,37 @@ private fun Hero(
     onChangeIcon: () -> Unit,
     onLive: () -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(96.dp).iconTap(onChangeIcon)) {
-            AppMark(app.pkg, app.name, app.icon, size = 88.dp, ownIcon = true)
-            if (iconBusy) {
-                Box(
-                    Modifier
-                        .size(88.dp)
-                        .clip(RoundedCornerShape(88.dp * 0.3f))
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)),
-                    contentAlignment = Alignment.Center,
-                ) { CircularProgressIndicator(Modifier.size(26.dp), strokeWidth = 2.5.dp, color = Tt.colors.accentInk) }
-            }
-            Box(
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(30.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .border(1.dp, Tt.colors.glassBorder, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) { Icon(Lucide.Pencil, null, Modifier.size(15.dp), tint = Tt.colors.accentInk) }
-        }
-        Spacer(Modifier.height(12.dp))
-        Text(
-            app.name,
-            style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp, lineHeight = 26.sp),
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            app.pkg,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            AppChip(
-                if (app.live) Lucide.Globe else Lucide.FlaskConical,
-                if (app.live) "Live" else "Closed test",
-                MaterialTheme.colorScheme.onSurfaceVariant,
-                Status.neutralSoft,
-            )
+    AppHero(
+        name = app.name,
+        pkg = app.pkg,
+        live = app.live,
+        onChangeIcon = onChangeIcon,
+        iconBusy = iconBusy,
+        icon = { AppMark(app.pkg, app.name, app.icon, size = AppHeroIcon, ownIcon = true) },
+        chips = {
             if (app.verified) {
                 AppChip(Lucide.BadgeCheck, verifiedChip(app), Status.posted, Status.postedSoft)
             } else {
                 AppChip(Lucide.CircleAlert, verifiedChip(app), Status.short, Status.shortSoft)
             }
-        }
+        },
         // A closed test can say it's live now; a live app has only its Live chip.
-        if (!app.live) {
-            Spacer(Modifier.height(10.dp))
-            SoftPill(
-                if (liveBusy) "Checking Play" else "It's live on Play",
-                icon = Lucide.ArrowUpRight,
-                onClick = onLive,
-                busy = liveBusy,
-            )
-        }
-    }
-}
-
-/** A small fact about an app, as its page shows them: where it is found, whether it is real. */
-@Composable
-internal fun AppChip(
-    icon: ImageVector,
-    text: String,
-    tone: Color,
-    background: Color,
-) {
-    Row(
-        Modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .background(background)
-            .padding(horizontal = 11.dp, vertical = 5.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, null, Modifier.size(14.dp), tint = tone)
-        Spacer(Modifier.width(6.dp))
-        Text(text, style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp), fontWeight = FontWeight.SemiBold, color = tone)
-    }
+        below =
+            if (app.live) {
+                null
+            } else {
+                {
+                    Spacer(Modifier.height(10.dp))
+                    RowPill(
+                        if (liveBusy) "Checking Play" else "It's live on Play",
+                        PillKind.SOFT,
+                        busy = liveBusy,
+                        leading = Lucide.ArrowUpRight,
+                        size = PillSize.SMALL,
+                        touchTarget = false,
+                        onClick = onLive,
+                    )
+                }
+            },
+    )
 }

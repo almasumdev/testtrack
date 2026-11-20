@@ -88,13 +88,7 @@ internal fun AppNotThere(
     onBack: () -> Unit,
 ) {
     if (offline) {
-        RobotState(
-            Prop.Notes,
-            "Couldn't load your apps",
-            "Check your connection, then try again.",
-            action = "Try again",
-            onAction = onRetry,
-        )
+        RobotOffline("Couldn't load your apps", onRetry = onRetry)
     } else {
         RobotState(
             Prop.Notes,

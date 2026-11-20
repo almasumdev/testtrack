@@ -3,7 +3,6 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,22 +29,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Clock
-import com.composables.icons.lucide.FlaskConical
-import com.composables.icons.lucide.Globe
 import com.composables.icons.lucide.Image
-import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -171,9 +162,9 @@ private val NAMES = listOf(96, 128, 84, 112, 140, 90, 118)
 private val PACKAGES = listOf(170, 150, 186, 140, 160, 176, 132)
 
 /**
- * The app picked from this phone, drawn the way its own page will draw it once added: the icon large
- * in the middle, its name and package under it, and chips for where it is and whether it is checked.
- * Tap the icon to change it and the name to rename it; nothing else needs saying.
+ * The app picked from this phone, drawn the way its own page will draw it once added: [AppHero]
+ * with chips for where it is and whether it is checked. Tap the icon to change it and the name to
+ * rename it; nothing else needs saying.
  */
 @Composable
 internal fun PickedApp(
@@ -186,66 +177,35 @@ internal fun PickedApp(
     onChangeIcon: () -> Unit,
     onRename: (String) -> Unit,
 ) {
-    val t = Tt.colors
     var renaming by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(96.dp).iconTap(onChangeIcon)) {
-            val icon = Modifier.size(88.dp).clip(RoundedCornerShape(26.dp))
-            if (preview != null) Image(preview, "App icon", icon) else Skeleton(width = 88.dp, height = 88.dp, corner = 26.dp)
-            Box(
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(30.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .border(1.dp, t.glassBorder, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) { Icon(Lucide.Pencil, null, Modifier.size(15.dp), tint = t.accentInk) }
-        }
-        Spacer(Modifier.height(12.dp))
-        Row(
-            Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .clickable(role = Role.Button, onClickLabel = "Rename") { renaming = true }
-                .padding(horizontal = 6.dp, vertical = 2.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                name,
-                style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp, lineHeight = 26.sp),
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.weight(1f, fill = false),
-            )
-            Spacer(Modifier.width(8.dp))
-            Icon(Lucide.Pencil, null, Modifier.size(16.dp), tint = t.accentInk)
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            pkg,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            AppChip(
-                if (live) Lucide.Globe else Lucide.FlaskConical,
-                if (live) "Live" else "Closed test",
-                MaterialTheme.colorScheme.onSurfaceVariant,
-                Status.neutralSoft,
-            )
+    AppHero(
+        name = name,
+        pkg = pkg,
+        live = live,
+        onChangeIcon = onChangeIcon,
+        onRename = { renaming = true },
+        icon = {
+            val icon = Modifier.size(AppHeroIcon).clip(RoundedCornerShape(AppHeroIcon * 0.3f))
+            if (preview != null) {
+                Image(preview, "App icon", icon)
+            } else {
+                Skeleton(width = AppHeroIcon, height = AppHeroIcon, corner = AppHeroIcon * 0.3f)
+            }
+        },
+        chips = {
             if (testBuild) {
                 AppChip(Lucide.TriangleAlert, "Test build", Status.missed, Status.missedSoft)
             } else {
                 AppChip(Lucide.Clock, "Not checked yet", Status.short, Status.shortSoft)
             }
-        }
-        Spacer(Modifier.height(16.dp))
-        // A button, not a line of coloured text: as text it read as a label, not as a way back
-        // to the list of apps.
-        Secondary("Choose another app", onClick = onPickAnother)
-    }
+        },
+        below = {
+            Spacer(Modifier.height(16.dp))
+            // A button, not a line of coloured text: as text it read as a label, not as a way back
+            // to the list of apps.
+            Secondary("Choose another app", onClick = onPickAnother)
+        },
+    )
     if (renaming) RenameApp(name, onDone = { renaming = false }, onRename = onRename)
 }
 
@@ -267,7 +227,7 @@ private fun RenameApp(
         },
         onDismiss = onDone,
     ) {
-        DialogField(
+        OutlinedField(
             value = typed,
             onValueChange = { typed = it.take(FeedRules.APP_NAME_MAX) },
             label = "Name",
@@ -278,7 +238,7 @@ private fun RenameApp(
 
 /**
  * What happens next to an app picked from the phone. One quiet line, as the check needs nothing
- * from them; a test build gets the red callout instead, since it would add the wrong app.
+ * from them; a test build gets the red line instead, since it would add the wrong app.
  */
 @Composable
 internal fun PickedNotice(
@@ -286,42 +246,21 @@ internal fun PickedNotice(
     /** Live on Play: looked up on its public page as it is added, and never for a crew. */
     live: Boolean,
 ) {
-    if (!testBuild) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.Top) {
-            Icon(Lucide.Info, null, Modifier.padding(top = 2.dp).size(15.dp), tint = Status.short)
-            Spacer(Modifier.width(8.dp))
-            Text(
-                if (live) {
-                    "We look it up on Google Play's public page as you add it."
-                } else {
-                    "We check it on Play by ourselves once ${Config.GROUP_EMAIL} is on your closed track's testers. " +
-                        "You can put it in a crew before then."
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = Tt.colors.text3,
-            )
-        }
-        return
-    }
-    val shape = RoundedCornerShape(18.dp)
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(Status.missedSoft)
-            .border(1.dp, Status.missed.copy(alpha = 0.28f), shape)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Lucide.TriangleAlert, null, Modifier.size(18.dp), tint = Status.missed)
-            Spacer(Modifier.width(8.dp))
-            Text("This is a test build", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Status.missed)
-        }
-        Spacer(Modifier.height(6.dp))
-        Text(
-            "Its package is not the one on Play, so testers would not find it. Pick the copy installed from Play.",
-            style = MaterialTheme.typography.bodySmall,
-            color = Tt.colors.text2,
+    if (testBuild) {
+        InfoLine(
+            "This is a test build. Its package is not the one on Play, so testers would not find it. " +
+                "Pick the copy installed from Play.",
+            tone = Tone.BAD,
+            icon = Lucide.TriangleAlert,
+        )
+    } else {
+        InfoLine(
+            if (live) {
+                "We look it up on Google Play's public page as you add it."
+            } else {
+                "We check it on Play by ourselves once ${Config.GROUP_EMAIL} is on your closed track's testers. " +
+                    "You can put it in a crew before then."
+            },
         )
     }
 }

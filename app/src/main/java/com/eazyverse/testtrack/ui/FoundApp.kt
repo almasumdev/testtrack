@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,19 +9,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.SubcomposeAsyncImage
-import com.composables.icons.lucide.Info
-import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -49,18 +42,8 @@ internal fun FoundApp(
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (icon.isBlank()) {
-            // No icon from Play or My apps yet: the one on this phone, as the feed will draw it.
-            AppIcon(pkg, name, size = 48.dp)
-        } else {
-            SubcomposeAsyncImage(
-                model = icon,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(11.dp)),
-                loading = { Skeleton(48.dp, 48.dp, 11.dp) },
-                error = { AskAppPlaceholder() },
-            )
-        }
+        // Play's icon when there is one; blank, it is the one on this phone, as the feed will draw it.
+        AppMark(pkg, name, icon, size = 48.dp, ownIcon = true)
         Spacer(Modifier.width(13.dp))
         Column(Modifier.weight(1f)) {
             Text(
@@ -87,20 +70,9 @@ internal fun FoundApp(
     }
     if (unchecked) {
         Spacer(Modifier.height(8.dp))
-        UncheckedNote()
-    }
-}
-
-/** Said under an app nothing has checked on Play yet. */
-@Composable
-internal fun UncheckedNote() {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Icon(Lucide.Info, null, Modifier.size(16.dp), tint = Tt.colors.text3)
-        Text(
+        InfoLine(
             "Not checked on Play yet. Add ${Config.GROUP_EMAIL} to your closed track's testers, " +
                 "or reviewers won't be able to install it.",
-            style = MaterialTheme.typography.bodySmall,
-            color = Tt.colors.text3,
         )
     }
 }

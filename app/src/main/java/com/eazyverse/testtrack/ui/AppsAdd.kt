@@ -2,14 +2,21 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
+import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Plus
+import com.eazyverse.testtrack.viewmodel.AskFailure
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
 /*
- * Adding an app, from the tab that lists them, and the news that a list changed elsewhere.
+ * Adding an app: the news that My apps changed elsewhere, and how a failure to add one is said.
  */
 
 /**
@@ -28,20 +35,20 @@ object MyAppsChanged {
     }
 }
 
-/** The way in at the top of My apps: Circle's ask row, in My apps' words. */
+/**
+ * Why adding or finding an app failed: the title in bold and what to do about it under it, as one
+ * line in amber when the fault is ours and a way on is offered, red when something needs fixing.
+ */
 @Composable
-internal fun AddAppRow(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    AskRow("Add an app", "From this phone or Play", onClick, modifier)
-}
-
-/** The way in on a list that already has apps: Circle's floating bar, with a plus ahead of the words. */
-@Composable
-internal fun AddAppBar(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    FloatingActionBar("Add an app", onClick, modifier, icon = rememberVectorPainter(Lucide.Plus))
+internal fun FailureLine(failure: AskFailure) {
+    InfoLine(
+        buildAnnotatedString {
+            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(failure.title) }
+            append("\n")
+            append(failure.detail)
+        },
+        Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        tone = if (failure.ours) Tone.WARN else Tone.BAD,
+        icon = Lucide.CircleAlert,
+    )
 }
