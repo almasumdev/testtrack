@@ -177,7 +177,7 @@ internal fun AskPay(
     val t = Tt.colors
     // The page's ticket, as the feed's: on the card colour and tipped back 12 degrees.
     val ticket = rememberTicketMark(t.card)
-    SeatHeading("Each review pays", gap = 10.dp, end = {
+    SectionHeading("Each review pays", end = {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(ticket, null, Modifier.size(16.dp).rotate(-12f), tint = Color.Unspecified)
             Spacer(Modifier.width(6.dp))

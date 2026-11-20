@@ -1,7 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,9 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -26,10 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -56,7 +49,6 @@ import com.eazyverse.testtrack.ui.theme.Tt
 private val LevelName = tileStyle(15f, 18f, FontWeight.SemiBold)
 private val LevelNameChosen = tileStyle(15f, 18f, FontWeight.Bold)
 private val LevelFrom = tileStyle(12f, 15f, FontWeight.Normal)
-private val PageLine = tileStyle(13f, 18f, FontWeight.Normal)
 private val PageLineBold = tileStyle(13f, 18f, FontWeight.SemiBold)
 private val CountLine = tileStyle(12.5f, 15f, FontWeight.Normal)
 
@@ -93,7 +85,7 @@ internal fun AskLevelTiles(
         }
     }
     Spacer(Modifier.height(8.dp))
-    Text(chosen.line(), style = PageLine, color = Tt.colors.text2)
+    Text(chosen.line(), style = TextStyles.PageLine, color = Tt.colors.text2)
 }
 
 @Composable
@@ -105,15 +97,7 @@ private fun LevelTile(
     modifier: Modifier,
 ) {
     val t = Tt.colors
-    val shape = RoundedCornerShape(TileRadius)
-    Box(
-        modifier
-            .clip(shape)
-            .background(if (chosen) t.leafAccentSoft else t.bg)
-            .border(1.dp, if (chosen) Color.Transparent else t.cardLine, shape)
-            .selectable(selected = chosen, enabled = enabled, role = Role.RadioButton, onClick = onClick)
-            .then(if (enabled) Modifier else Modifier.alpha(DISABLED_ALPHA)),
-    ) {
+    Box(modifier.choiceTile(chosen, enabled, onClick = onClick)) {
         // The design's 11/12/10 inside its 1dp line, which this border draws inside the tile.
         Column(Modifier.fillMaxWidth().padding(start = 13.dp, end = 13.dp, top = 12.dp, bottom = 11.dp)) {
             Icon(level.icon(), null, Modifier.size(18.dp), tint = t.tileInk)
@@ -179,7 +163,7 @@ internal fun AskReadyTexts(
                 withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = t.text)) { append("one reviewer only") }
                 append(", who can use it, change it or write their own.")
             },
-            style = PageLine,
+            style = TextStyles.PageLine,
             color = t.text2,
         )
     }
@@ -217,11 +201,14 @@ internal fun AskReadyTexts(
             )
         texts.size < max ->
             Row(Modifier.padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                SoftPill(
+                RowPill(
                     "Add a ready review",
-                    icon = Lucide.Plus,
-                    onClick = { if (enabled) onAdd() },
+                    PillKind.SOFT,
                     modifier = if (enabled) Modifier else Modifier.alpha(DISABLED_ALPHA),
+                    leading = Lucide.Plus,
+                    size = PillSize.SMALL,
+                    touchTarget = false,
+                    onClick = { if (enabled) onAdd() },
                 )
                 Spacer(Modifier.width(10.dp))
                 Text("${texts.size} of $max", style = CountLine, color = t.text3)
@@ -230,7 +217,7 @@ internal fun AskReadyTexts(
             Text(
                 "One for each review you asked for.",
                 Modifier.padding(top = 12.dp),
-                style = PageLine,
+                style = TextStyles.PageLine,
                 color = t.text3,
             )
     }

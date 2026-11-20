@@ -102,7 +102,6 @@ internal fun CrewSeatDetails(
         onPassword = vm::typePassword,
         also = vm.also,
         onAlso = vm::typeAlso,
-        seatSpacing = true,
     )
     Spacer(Modifier.height(16.dp))
     SeatPrice(vm.tix, short, crews.running, onOpenCircle)
@@ -234,9 +233,6 @@ internal fun CrewSeatSubmit(
         onClick = onTake,
     )
 }
-
-private val PriceLine = tileStyle(12.5f, 14f, FontWeight.Medium)
-private val PriceLineBold = tileStyle(12.5f, 14f, FontWeight.SemiBold)
 
 /**
  * What the seat costs and what there is to pay it from, said before the button rather than as a

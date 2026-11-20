@@ -33,7 +33,6 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
@@ -136,14 +135,14 @@ private fun ColumnScope.AskBody(
         AskCount(vm.reviewCount, enabled, vm::changeReviewCount)
 
         Spacer(Modifier.height(SectionGap))
-        SeatHeading("Each review has", gap = 10.dp)
+        SectionHeading("Each review has")
         AskLevelTiles(vm.feedback, enabled, vm::chooseFeedback)
 
         Spacer(Modifier.height(SectionGap))
         AskPay(vm.reward, vm.feedback.least, enabled, vm::changeReward)
 
         Spacer(Modifier.height(SectionGap))
-        SeatHeading("For testers", gap = 10.dp, end = { HeadingTag("Optional") })
+        SectionHeading("For testers", tag = "Optional")
         Spacer(Modifier.height(6.dp))
         OutlinedField(
             value = vm.ask,
@@ -214,15 +213,7 @@ private val SectionGap = 24.dp
 private fun AskPageSkeleton(modifier: Modifier = Modifier) {
     Box(modifier.clipToBounds().semantics { contentDescription = "Loading the request page" }) {
         Column(Modifier.fillMaxWidth().wrapContentHeight(Alignment.Top, unbounded = true)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Skeleton(width = AppTileIcon, height = AppTileIcon, corner = 16.dp)
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Skeleton(width = 170.dp, height = 15.dp)
-                    Spacer(Modifier.height(7.dp))
-                    Skeleton(width = 90.dp, height = 11.dp)
-                }
-            }
+            AppHeadSkeleton(name = 170.dp, sub = 90.dp)
             Spacer(Modifier.height(18.dp))
             Skeleton(height = 12.dp)
             Spacer(Modifier.height(7.dp))
@@ -253,20 +244,5 @@ private fun AskPageSkeleton(modifier: Modifier = Modifier) {
             Spacer(Modifier.height(24.dp))
             Skeleton(height = 52.dp, corner = 26.dp)
         }
-    }
-}
-
-@Composable
-private fun SkeletonHeading(
-    width: Dp,
-    end: Dp? = null,
-    endHeight: Dp = 15.dp,
-) {
-    Row(
-        Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.weight(1f)) { Skeleton(width = width, height = 15.dp) }
-        if (end != null) Skeleton(width = end, height = endHeight, corner = if (endHeight > 20.dp) endHeight / 2 else 6.dp)
     }
 }

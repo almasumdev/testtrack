@@ -45,11 +45,9 @@ import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AskFailure
 
-private val PageLine = tileStyle(13f, 18f, FontWeight.Normal)
-private val DeveloperStyle = tileStyle(12.5f, 14f, FontWeight.Medium)
-private val PriceLine = tileStyle(12.5f, 14f, FontWeight.Medium)
-private val PriceLineBold = tileStyle(12.5f, 14f, FontWeight.SemiBold)
-private val HintStyle = tileStyle(12.5f, 16f, FontWeight.SemiBold)
+/** The line under a price's total: what there is to pay it from. Shared with the seat page's price. */
+internal val PriceLine = tileStyle(12.5f, 14f, FontWeight.Medium)
+internal val PriceLineBold = tileStyle(12.5f, 14f, FontWeight.SemiBold)
 
 @Composable
 internal fun AskAvailability(
@@ -126,15 +124,18 @@ internal fun AskAppPlaceholder() {
 internal fun AskAppHead(app: AppEntry) {
     val t = Tt.colors
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(AppTileIcon)) {
-            AppMark(app.pkg, app.name, app.icon, size = AppTileIcon, ownIcon = true)
-            SourceMark(live = app.live, Modifier.align(Alignment.BottomEnd).offset(5.dp, 5.dp))
-        }
+        SourcedAppMark(app.pkg, app.name, app.icon, app.live, ownIcon = true)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(app.name, style = AppTileName, color = t.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(2.dp))
-            Text(app.developer.ifBlank { app.pkg }, style = DeveloperStyle, color = t.text3, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                app.developer.ifBlank { app.pkg },
+                style = TextStyles.DeveloperStyle,
+                color = t.text3,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
@@ -166,7 +167,7 @@ internal fun AskTrackLines(
                         withStyle(bold) { append("your decision") }
                         append(".")
                     },
-                    style = PageLine,
+                    style = TextStyles.PageLine,
                     color = t.text2,
                 )
             }
@@ -181,7 +182,7 @@ internal fun AskTrackLines(
         }
         if (!verified && live) {
             InfoLine(Lucide.CircleAlert, AnnotatedString("Waiting for Play."), warn = true, title = "Waiting for Play") {
-                Text("Google Play didn't answer when you added it. We keep asking.", style = PageLine, color = t.text2)
+                Text("Google Play didn't answer when you added it. We keep asking.", style = TextStyles.PageLine, color = t.text2)
             }
         } else if (!verified) {
             InfoLine(Lucide.CircleAlert, AnnotatedString("Not checked on Play yet."), warn = true, title = "Add our testers group") {
@@ -191,7 +192,7 @@ internal fun AskTrackLines(
                         withStyle(bold) { append(Config.GROUP_EMAIL) }
                         append(" to your closed track's testers, or reviewers can't install it.")
                     },
-                    style = PageLine,
+                    style = TextStyles.PageLine,
                     color = t.text2,
                 )
             }
@@ -218,7 +219,7 @@ internal fun InfoLine(
         icon,
         if (warn) t.warn else t.text3,
         text,
-        PageLine,
+        TextStyles.PageLine,
         if (warn) t.text else t.text2,
         modifier,
         trailing =
@@ -284,7 +285,7 @@ internal fun AskPrice(
         }
         if (short) {
             Spacer(Modifier.width(8.dp))
-            SoftPill("Open Circle", onClick = onOpenCircle)
+            RowPill("Open Circle", PillKind.SOFT, size = PillSize.SMALL, touchTarget = false, onClick = onOpenCircle)
         }
     }
     Spacer(Modifier.height(14.dp))
@@ -301,7 +302,7 @@ internal fun AskPrice(
         Text(
             "Paid now. Close the request early and the tix for open reviews come back.",
             Modifier.weight(1f),
-            style = PageLine,
+            style = TextStyles.PageLine,
             color = t.text2,
         )
     }
@@ -327,6 +328,6 @@ internal fun AskHint(
             .clickable(role = Role.Button, onClick = onSpot),
         contentAlignment = Alignment.Center,
     ) {
-        IconLine(icon, tone, AnnotatedString(text), HintStyle, tone, textAlign = TextAlign.Center, maxLines = 1)
+        IconLine(icon, tone, AnnotatedString(text), TextStyles.HintStyle, tone, textAlign = TextAlign.Center, maxLines = 1)
     }
 }

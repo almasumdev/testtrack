@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -80,13 +79,10 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * are in CrewSeatSections and CrewSeatDetails.
  */
 
-private val HeadingStyle = tileStyle(16f, 19f, FontWeight.Bold)
 private val HeadNameStyle = tileStyle(16f, 18f, FontWeight.SemiBold)
 private val HeadEditStyle = tileStyle(16f, 17f, FontWeight.SemiBold)
 private val CountStyle = tileStyle(11.5f, 14f, FontWeight.Normal)
 private val StatusStyle = tileStyle(12.5f, 14f, FontWeight.SemiBold)
-private val DeveloperStyle = tileStyle(12.5f, 14f, FontWeight.Medium)
-private val HintStyle = tileStyle(12.5f, 16f, FontWeight.SemiBold)
 private val HintQuietStyle = tileStyle(12.5f, 16f, FontWeight.Medium)
 
 /** The one short status at the far end of a heading: done (green) or something wrong (amber). */
@@ -115,7 +111,7 @@ internal fun SeatHeading(
         Modifier.fillMaxWidth().heightIn(min = 19.dp).padding(bottom = gap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text, Modifier.weight(1f), style = HeadingStyle, color = t.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(text, Modifier.weight(1f), style = TextStyles.HeadingStyle, color = t.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
         if (status != null) {
             Spacer(Modifier.width(8.dp))
             val tone = if (status.ok) t.ok else t.warn
@@ -196,10 +192,7 @@ internal fun SeatAppHead(
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(icon)) {
-            AppMark(app.pkg, app.name, app.icon, size = icon, ownIcon = true)
-            SourceMark(live = false, Modifier.align(Alignment.BottomEnd).offset(5.dp, 5.dp))
-        }
+        SourcedAppMark(app.pkg, app.name, app.icon, live = false, size = icon, ownIcon = true)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             if (open) {
@@ -249,7 +242,7 @@ internal fun SeatAppHead(
                     Text(
                         developer,
                         Modifier.weight(1f).alignByBaseline(),
-                        style = DeveloperStyle,
+                        style = TextStyles.DeveloperStyle,
                         color = t.text3,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -267,7 +260,7 @@ internal fun SeatAppHead(
             } else {
                 Text(name, style = HeadNameStyle, color = t.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(2.dp))
-                Text(developer, style = DeveloperStyle, color = t.text3, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(developer, style = TextStyles.DeveloperStyle, color = t.text3, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         Spacer(Modifier.width(4.dp))
@@ -300,7 +293,7 @@ internal fun SeatHintRow(
             SeatHintKind.WARN -> t.warn
             SeatHintKind.READY, SeatHintKind.BUSY -> t.text3
         }
-    val style = if (hint.kind == SeatHintKind.READY || hint.kind == SeatHintKind.BUSY) HintQuietStyle else HintStyle
+    val style = if (hint.kind == SeatHintKind.READY || hint.kind == SeatHintKind.BUSY) HintQuietStyle else TextStyles.HintStyle
     Box(
         Modifier
             .fillMaxWidth()
@@ -392,17 +385,8 @@ internal fun SeatPageSkeleton(modifier: Modifier = Modifier) {
     BoxWithConstraints(modifier.clipToBounds().semantics { contentDescription = "Loading the seat page" }) {
         val extra = ((maxHeight - SkeletonPageHeight) / SkeletonRowStep).toInt().coerceAtLeast(0) + 1
         Column(Modifier.fillMaxWidth().wrapContentHeight(Alignment.Top, unbounded = true)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Skeleton(width = AppTileIcon, height = AppTileIcon, corner = AppTileIcon * 0.3f)
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Skeleton(width = 130.dp, height = 14.dp)
-                    Spacer(Modifier.height(8.dp))
-                    Skeleton(width = 90.dp, height = 11.dp)
-                }
-            }
-            Spacer(Modifier.height(24.dp))
-            SkeletonHeading()
+            AppHeadSkeleton(name = 130.dp, sub = 90.dp)
+            SkeletonHeading(110.dp, top = 26.dp)
             SkeletonTileRow(150.dp, 100.dp)
             Spacer(Modifier.height(16.dp))
             SkeletonTileRow(120.dp, 110.dp)
@@ -421,8 +405,7 @@ internal fun SeatPageSkeleton(modifier: Modifier = Modifier) {
                 Box(Modifier.fillMaxWidth(0.8f)) { Skeleton(height = 11.dp) }
                 Box(Modifier.fillMaxWidth(0.55f)) { Skeleton(height = 11.dp) }
             }
-            Spacer(Modifier.height(32.dp))
-            SkeletonHeading()
+            SkeletonHeading(110.dp, top = 34.dp)
             repeat(2) {
                 Row(Modifier.height(48.dp), verticalAlignment = Alignment.CenterVertically) {
                     Skeleton(width = 22.dp, height = 22.dp)
@@ -448,12 +431,6 @@ private val TrailingHeight = 18.dp
 /** Roughly the height of the page's own shapes above, before the extra rows; one extra row and its gap. */
 private val SkeletonPageHeight = 700.dp
 private val SkeletonRowStep = 64.dp
-
-@Composable
-private fun SkeletonHeading() {
-    Skeleton(width = 110.dp, height = 16.dp)
-    Spacer(Modifier.height(11.dp))
-}
 
 @Composable
 private fun SkeletonTileRow(
