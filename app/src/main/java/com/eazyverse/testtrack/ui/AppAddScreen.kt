@@ -17,11 +17,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -81,6 +85,16 @@ fun AppAddScreen(
     ) { padding ->
         // Each page starts at its top.
         val scroll = key(vm.starting) { rememberScrollState() }
+        // Typing at the end of the full description grows the page; once it has laid out, the page
+        // scrolls to its end so the field's foot and counter clear the fade.
+        var endEdit by remember { mutableIntStateOf(0) }
+        LaunchedEffect(scroll, endEdit) {
+            if (endEdit > 0) {
+                withFrameNanos { }
+                withFrameNanos { }
+                scroll.scrollTo(scroll.maxValue)
+            }
+        }
         // Taller than its room: the button stays put over the page's faded foot.
         val pinned = scroll.maxValue in 1 until Int.MAX_VALUE
         Column(
@@ -99,7 +113,7 @@ fun AppAddScreen(
                         .then(if (vm.adding) Modifier.alpha(DISABLED_ALPHA) else Modifier),
                 ) {
                     Spacer(Modifier.height(8.dp))
-                    if (vm.starting) AddStart(vm) else AddApp(vm, chooseIcon)
+                    if (vm.starting) AddStart(vm) else AddApp(vm, chooseIcon) { endEdit++ }
                     // Scrolled to the end, the last block stops 12dp over the 18dp foot fade, which
                     // sits on the button. Always there, so pinning never flickers and the end of a
                     // growing field has real room to scroll into.
@@ -193,6 +207,7 @@ private fun AddStart(vm: AppAddViewModel) {
 private fun AddApp(
     vm: AppAddViewModel,
     onChangeIcon: () -> Unit,
+    onFullEndEdit: () -> Unit,
 ) {
     val context = LocalContext.current
     val listing = vm.found
@@ -224,6 +239,6 @@ private fun AddApp(
         // No Play page yet, so the owner can write them.
         SectionHeading("About the app", tag = "Optional", top = 24.dp, tagBeside = true)
         Spacer(Modifier.height(4.dp))
-        AboutFields(vm.shortDesc, vm::writeShort, vm.fullDesc, vm::writeFull, enabled = !vm.adding)
+        AboutFields(vm.shortDesc, vm::writeShort, vm.fullDesc, vm::writeFull, enabled = !vm.adding, onFullEndEdit = onFullEndEdit)
     }
 }

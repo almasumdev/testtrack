@@ -72,6 +72,8 @@ internal fun AboutFields(
     full: String,
     onFull: (String) -> Unit,
     enabled: Boolean = true,
+    /** Run after the full description is typed to its very end, for a page to scroll there. */
+    onFullEndEdit: (() -> Unit)? = null,
 ) {
     OutlinedField(
         value = short,
@@ -92,7 +94,7 @@ internal fun AboutFields(
         minLines = 3,
         // No cap: it grows with the text and the page scrolls.
         maxLines = Int.MAX_VALUE,
-        keepInView = true,
+        onEndEdit = onFullEndEdit,
         maxLength = FeedRules.FULL_DESC_MAX,
         capitalization = KeyboardCapitalization.Sentences,
         // A new line, not Done: the full description has paragraphs.

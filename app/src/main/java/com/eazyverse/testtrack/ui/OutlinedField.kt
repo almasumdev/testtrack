@@ -6,17 +6,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -27,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,20 +32,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.CircleAlert
@@ -103,11 +96,11 @@ internal fun OutlinedField(
      */
     onImeAction: (() -> Unit)? = null,
     /**
-     * For a box that grows inside a page that scrolls: while it has focus and its text changes, the
-     * page scrolls so the box's bottom edge and its counter stay in view, and again as the keyboard
-     * moves. The page leaves its own room under the last block for a foot fade.
+     * For a box that grows inside a page that scrolls: run after a change that leaves the caret at
+     * the very end of the text, so the page can scroll that end into view. Not run for an edit in
+     * the middle.
      */
-    keepInView: Boolean = false,
+    onEndEdit: (() -> Unit)? = null,
 ) {
     val t = Tt.colors
     val focus = LocalFocusManager.current
@@ -167,26 +160,27 @@ internal fun OutlinedField(
                 ),
         )
     val labelDown = !focused && value.isEmpty()
-    val requester = remember { BringIntoViewRequester() }
-    var size by remember { mutableStateOf(IntSize.Zero) }
-    // The keyboard sliding up shrinks the page, so the scroll is asked again as it moves.
-    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
-    if (keepInView) {
-        LaunchedEffect(value, focused, imeBottom) {
-            if (focused && size.height > 0) {
-                requester.bringIntoView(Rect(0f, 0f, size.width.toFloat(), size.height.toFloat()))
-            }
+    // The text with its caret, so an edit at the very end can be told from one in the middle.
+    var editingValue by remember { mutableStateOf(TextFieldValue(value)) }
+    val displayedValue =
+        if (editingValue.text == value) {
+            editingValue
+        } else {
+            editingValue.copy(text = value, selection = TextRange(value.length), composition = null)
         }
-    }
-    Column(
-        modifier
-            .fillMaxWidth()
-            .then(if (keepInView) Modifier.onSizeChanged { size = it }.bringIntoViewRequester(requester) else Modifier)
-            .then(if (enabled) Modifier else Modifier.alpha(DISABLED_ALPHA)),
-    ) {
+    Column(modifier.fillMaxWidth().then(if (enabled) Modifier else Modifier.alpha(DISABLED_ALPHA))) {
         BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
+            value = displayedValue,
+            onValueChange = { next ->
+                val changed = next.text != displayedValue.text
+                editingValue = next
+                if (changed) {
+                    onValueChange(next.text)
+                    if (focused && next.selection.collapsed && next.selection.end == next.text.length) {
+                        onEndEdit?.invoke()
+                    }
+                }
+            },
             enabled = enabled,
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
             textStyle =
