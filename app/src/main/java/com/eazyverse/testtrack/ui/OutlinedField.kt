@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -102,7 +104,8 @@ internal fun OutlinedField(
     onImeAction: (() -> Unit)? = null,
     /**
      * For a box that grows inside a page that scrolls: while it has focus and its text changes, the
-     * page scrolls so the box's bottom edge, its counter and a little room stay in view.
+     * page scrolls so the box's bottom edge, its counter and room for the foot fade and a gap stay in
+     * view, and again as the keyboard moves.
      */
     keepInView: Boolean = false,
 ) {
@@ -166,9 +169,12 @@ internal fun OutlinedField(
     val labelDown = !focused && value.isEmpty()
     val requester = remember { BringIntoViewRequester() }
     var size by remember { mutableStateOf(IntSize.Zero) }
-    val room = with(LocalDensity.current) { 12.dp.toPx() }
+    // The page's foot fade is 18dp over the bottom of the scrolled area; 12dp more is the gap.
+    val room = with(LocalDensity.current) { (18.dp + 12.dp).toPx() }
+    // The keyboard sliding up shrinks the page, so the scroll is asked again as it moves.
+    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
     if (keepInView) {
-        LaunchedEffect(value, focused) {
+        LaunchedEffect(value, focused, imeBottom) {
             if (focused && size.height > 0) {
                 requester.bringIntoView(Rect(0f, 0f, size.width.toFloat(), size.height + room))
             }
