@@ -220,7 +220,7 @@ fun ReviewBody(
             Column {
                 PageBar(if (post.isLive) "Review" else "Feedback", onClose) {
                     val reward = job?.reward ?: post.reward
-                    Pill(if (job?.noBox == true) "Half · +$reward tix" else "+$reward tix", t.tileInk, t.tile)
+                    Pill(if (job?.noBox == true) "Half pay, +$reward tix" else "+$reward tix", t.tileInk, t.tile)
                 }
                 PageMessage(message, onMessageDone)
             }
@@ -333,12 +333,13 @@ fun ReviewBody(
                             }
                         }
                         if (!job.settled && !job.rechecking && !job.noBox) {
-                            DeveloperAsks(job)
+                            // On the proof step the developer's ask and ready review are their own messages.
+                            if (job.step == ReviewStep.PROVE) ProveAsks(job) else DeveloperAsks(job)
                         }
                         if (needsAgreement) {
                             ReviewRulesAgreement(rulesAccepted) { rulesAccepted = it }
                         }
-                        WrittenAsk(job, onNote, onNoBox)
+                        WrittenAsk(job, onNoBox)
                         if (!job.settled && job.step == ReviewStep.PROVE) {
                             ProofArea(
                                 shown = shown,
@@ -349,6 +350,9 @@ fun ReviewBody(
                                 // Showing it again needs a picture taken now, on Play, not one picked.
                                 onGallery = galleryPick.takeUnless { job.rechecking },
                                 onInspect = { editingProof = it },
+                                label = proofLabel(job),
+                                placeholder = proofHint(job),
+                                ready = readyReview(job),
                             )
                         }
                         // What losing a dispute costs, said on the first step, before any work is done.
@@ -366,5 +370,22 @@ fun ReviewBody(
 }
 
 private enum class ReviewPage { LOADING, FAILED, STEP, DONE }
+
+/** The proof box's label: the review's own words on a live app, feedback otherwise. */
+private fun proofLabel(job: ReviewJob): String =
+    when {
+        job.needsChars <= 0 -> "A note for the developer (optional)"
+        job.live && !job.noBox -> "Your review text"
+        else -> "Your feedback for the developer"
+    }
+
+/** What goes in the box, said inside it once it has focus. */
+private fun proofHint(job: ReviewJob): String? =
+    when {
+        job.needsChars <= 0 -> null
+        job.noBox -> "What worked and what to improve"
+        job.live -> "The same words you posted on Play"
+        else -> "The same feedback you sent on Play"
+    }
 
 private const val SPIN_AFTER_MS = 250L

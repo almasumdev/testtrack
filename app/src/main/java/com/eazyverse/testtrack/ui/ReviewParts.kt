@@ -53,6 +53,40 @@ internal fun DeveloperAsks(job: ReviewJob) {
     }
 }
 
+/**
+ * On the proof step, what the developer gave as their own messages: what they asked about, and the
+ * ready review they wrote, if any. The box under them takes the ready review with one tap.
+ */
+@Composable
+internal fun ProveAsks(job: ReviewJob) {
+    val asked =
+        job.post.ask
+            .trim()
+            .takeIf { it.isNotEmpty() && it != GENERAL_ASK }
+    val ready = readyReview(job)
+    if (asked == null && ready == null) return
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(ReviewSectionGap)) {
+        if (asked != null) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                ThreadHeading("The developer asks")
+                ThreadBubble(ThreadSide.LEFT, who = "Developer", text = asked, face = ThreadFace.DEVELOPER)
+            }
+        }
+        if (ready != null) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                ThreadHeading("A ready review", tag = "Optional")
+                ThreadBubble(ThreadSide.LEFT, who = "Developer", text = ready, face = ThreadFace.DEVELOPER)
+            }
+        }
+    }
+}
+
+/** The developer's ready review for this reviewer, where the step takes text; null without one. */
+internal fun readyReview(job: ReviewJob): String? =
+    job.review.offered
+        .trim()
+        .takeIf { it.isNotEmpty() && job.needsChars > 0 }
+
 /** The icon route and open instruction sections before the review arrives. */
 @Composable
 internal fun ReviewLoading() {

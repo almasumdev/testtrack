@@ -2,7 +2,6 @@ package com.eazyverse.testtrack.ui
 
 import android.net.Uri
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,15 +11,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,17 +23,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import com.composables.icons.lucide.Camera
+import com.composables.icons.lucide.EyeOff
 import com.composables.icons.lucide.Image
+import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -110,8 +103,8 @@ fun OverlayPermissionDialog(
 }
 
 /**
- * Step four: the screenshot and its note as one card, the way a photo and its caption go
- * together, with the two ways to get or replace the screenshot in one row under it.
+ * Step four: the screenshot in a phone-shaped frame with the ways to get it beside it, then the
+ * text in an outlined box that grows to six lines, with its count under it.
  *
  * The same shape with or without a screenshot: without one the picture's place is a dashed
  * frame, so adding one changes what is in the frame and nothing on the page moves.
@@ -128,63 +121,67 @@ fun ProofArea(
     /** Null where the picture must be taken now, on Play, rather than picked. */
     onGallery: (() -> Unit)?,
     onInspect: (Uri) -> Unit = {},
+    /** The box's label and the hint inside it once it has focus. */
+    label: String = if (needs > 0) "Your feedback for the developer" else "A note for the developer (optional)",
+    placeholder: String? = null,
+    /** The developer's ready review, put in the box with one tap; null without one. */
+    ready: String? = null,
 ) {
     val t = Tt.colors
-    val shape = RoundedCornerShape(CardRadius)
     Column(Modifier.fillMaxWidth()) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .clip(shape)
-                .background(t.glass)
-                .border(1.dp, t.glassBorder, shape)
-                .padding(10.dp),
-        ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Crossfade(shown, label = "proof") { picture ->
                 if (picture == null) EmptyShot() else Shot(picture) { onInspect(picture) }
             }
-            Spacer(Modifier.width(12.dp))
-            if (note != null) NoteField(note, onNote, Modifier.weight(1f).height(THUMB_HEIGHT), needs)
+            Column(Modifier.padding(top = 2.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                RowPill(
+                    if (shown == null) "Capture on Play" else "Capture again",
+                    PillKind.SOFT,
+                    leading = Lucide.Camera,
+                    leadingSize = 15.dp,
+                    onClick = onCapture,
+                )
+                if (onGallery != null) RowPill("Gallery", PillKind.SOFT, leading = Lucide.Image, leadingSize = 15.dp, onClick = onGallery)
+                if (shown != null) InlineAction("Hide details", leading = Lucide.EyeOff) { onInspect(shown) }
+                if (onGallery == null) {
+                    InfoLine(Lucide.Info, AnnotatedString("It has to be taken now, on Play."))
+                }
+            }
         }
-        if (note != null && needs > 0) {
+        if (note != null) {
+            Spacer(Modifier.height(18.dp))
             val have = plainLength(note)
-            Text(
-                if (have >= needs) "$have characters. Enough." else "$have of at least $needs characters.",
-                Modifier.padding(top = 6.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = if (have >= needs) t.ok else t.text3,
+            OutlinedField(
+                value = note,
+                onValueChange = { onNote(it.take(NOTE_MAX)) },
+                label = label,
+                placeholder = placeholder,
+                singleLine = false,
+                minLines = 3,
+                maxLines = 6,
+                imeAction = androidx.compose.ui.text.input.ImeAction.Default,
+                maxLength = NOTE_MAX,
+                hint =
+                    when {
+                        needs <= 0 -> null
+                        have >= needs -> "$have characters, enough"
+                        else -> "$have of $needs characters"
+                    },
+                hintTone = if (needs > 0 && have >= needs) t.ok else null,
             )
+            if (ready != null && note.trim() != ready.trim()) {
+                Spacer(Modifier.height(6.dp))
+                Box(Modifier.offset(x = (-8).dp)) { InlineAction("Put the ready review in") { onNote(ready.take(NOTE_MAX)) } }
+            }
         }
-        Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ProofAction(
-                Lucide.Camera,
-                if (shown == null) "Capture on Play" else "Capture again",
-                onCapture,
-                Modifier.weight(1f),
-            )
-            if (onGallery != null) ProofAction(Lucide.Image, "Gallery", onGallery, Modifier.weight(1f))
+        Spacer(Modifier.height(if (note != null && ready == null) 16.dp else 10.dp))
+        InfoLine(
+            Lucide.EyeOff,
+            AnnotatedString("The developer sees this picture. Hide anything personal."),
+            title = "Who sees it",
+        ) {
+            CalloutLine(AnnotatedString("If they dispute it, ${FeedRules.JURORS.words()} members and the TestTrack team see it too."))
         }
-        if (shown != null) {
-            Text(
-                "Inspect and hide personal details",
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { onInspect(shown) }
-                    .padding(vertical = 12.dp),
-                color = t.accentInk,
-                style = MaterialTheme.typography.labelLarge,
-            )
-        }
-        // Its own line under the buttons, with room above it, so it reads as a note about who
-        // sees the picture rather than as part of the last button.
-        Spacer(Modifier.height(if (shown == null) 14.dp else 2.dp))
-        ReviewBullet(
-            body =
-                "The app's owner sees this picture. If they dispute it, a few reviewers and the " +
-                    "TestTrack team see it too. Hide anything personal first.",
-            highlights = listOf("Hide anything personal first."),
-        )
     }
 }
 
@@ -229,72 +226,6 @@ private fun EmptyShot() {
         contentAlignment = Alignment.Center,
     ) {
         Icon(Lucide.Image, contentDescription = "No screenshot yet", Modifier.size(22.dp), tint = t.text4)
-    }
-}
-
-/** The note, typed straight into the card beside the picture rather than into a box of its own. */
-@Composable
-private fun NoteField(
-    note: String,
-    onNote: (String) -> Unit,
-    modifier: Modifier,
-    needs: Int,
-) {
-    val t = Tt.colors
-    val style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.5.sp, lineHeight = 20.sp, color = t.text)
-    BasicTextField(
-        value = note,
-        onValueChange = { onNote(it.take(NOTE_MAX)) },
-        // A shade apart from the card, with room inside, so it reads as the place to type.
-        modifier =
-            modifier
-                .clip(ThumbShape)
-                .background(t.glass2.copy(alpha = 0.55f))
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-        textStyle = style,
-        cursorBrush = SolidColor(t.accent),
-        decorationBox = { field ->
-            Box {
-                if (note.isEmpty()) {
-                    Text(
-                        if (needs > 0) "Your feedback for the developer" else "A note for the developer (optional)",
-                        style = style.copy(color = t.text3),
-                    )
-                }
-                field()
-            }
-        },
-    )
-}
-
-/** One of the two ways to a screenshot. */
-@Composable
-private fun ProofAction(
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val t = Tt.colors
-    Row(
-        modifier
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(percent = 50))
-            .background(t.glass2)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, null, Modifier.size(16.dp), tint = t.accentInk)
-        Spacer(Modifier.width(7.dp))
-        Text(
-            label,
-            style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.5.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = t.accentInk,
-            maxLines = 1,
-        )
     }
 }
 

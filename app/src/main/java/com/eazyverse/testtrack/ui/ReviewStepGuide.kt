@@ -121,7 +121,8 @@ private fun ReviewProofTask(
         job.rechecking -> {
             ReviewBullet(body = "Capture a fresh screenshot on Google Play.", highlights = listOf("fresh screenshot"))
             job.checkBy?.let { due ->
-                val deadline = opensWhen(due)
+                // "by Saturday at 2:10 PM", not "by on Saturday".
+                val deadline = opensWhen(due).removePrefix("on ")
                 ReviewBullet(body = "Send it by $deadline.", highlights = listOf(deadline))
             }
         }

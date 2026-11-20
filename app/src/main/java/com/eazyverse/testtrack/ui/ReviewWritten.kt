@@ -23,22 +23,19 @@ import com.eazyverse.testtrack.domain.textUseLabel
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
- * Optional suggested wording to copy on the Play step or put into the proof's text box.
+ * Optional suggested wording to copy on the Play step.
  * On a live app's Play step, also offers help when Play shows no review box.
  */
 
 @Composable
 internal fun WrittenAsk(
     job: ReviewJob,
-    onNote: (String) -> Unit,
     onNoBox: () -> Unit = {},
 ) {
     if (job.settled) return
     val offered = job.review.offered.trim()
-    val showOffer =
-        offered.isNotEmpty() &&
-            job.needsChars > 0 &&
-            (job.step == ReviewStep.LEAVE || job.step == ReviewStep.PROVE)
+    // On the proof step the ready review is the developer's bubble beside the box instead (ProveAsks).
+    val showOffer = offered.isNotEmpty() && job.needsChars > 0 && job.step == ReviewStep.LEAVE
     val showNoBoxHelp = job.step == ReviewStep.LEAVE && job.live && !job.noBox
     if (!showOffer && !showNoBoxHelp) return
     val clipboard = LocalClipboardManager.current
@@ -60,7 +57,6 @@ internal fun WrittenAsk(
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(ReviewLineGap)) {
                     RowPill("Copy", PillKind.SOFT, onClick = { clipboard.setText(AnnotatedString(offered)) })
-                    if (job.step == ReviewStep.PROVE) RowPill("Put it in the box", PillKind.GHOST, onClick = { onNote(offered) })
                 }
             }
         }
@@ -112,20 +108,6 @@ internal fun FeedbackPill(feedback: String) {
     }
 }
 
-/** Sent in TestTrack because Play showed no review box: said before anything else about it. */
-@Composable
-internal fun NoBoxNote(
-    noBox: Boolean,
-    reward: Int,
-) {
-    if (!noBox) return
-    Spacer(Modifier.height(12.dp))
-    DialogNote(
-        "Play showed them no review box, so they sent their feedback here with a screenshot of the Play page. " +
-            "Accepting pays them ${reward / 2} tix, half the reward, and the rest comes back to you.",
-    )
-}
-
 /** The screenshot sent with the review, and the new one if the owner asked to see it again. */
 @Composable
 internal fun Screenshots(
@@ -143,11 +125,4 @@ internal fun Screenshots(
         Text("New screenshot, taken when asked", style = MaterialTheme.typography.labelMedium, color = Tt.colors.text3)
         proof(again)
     }
-}
-
-/** The owner cannot find the review on Play: one ask for a new screenshot, before deciding. */
-@Composable
-internal fun CantFind(onAskAgain: () -> Unit) {
-    Spacer(Modifier.height(14.dp))
-    QuietAction("Can't find it on Google Play?", "Ask again", onAskAgain)
 }
