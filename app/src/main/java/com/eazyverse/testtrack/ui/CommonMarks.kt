@@ -96,6 +96,18 @@ fun installedLabel(pkg: String): String? {
     return remember(pkg, InstalledApps.revision) { InstalledApps.cachedInfo(context, pkg).label }
 }
 
+/**
+ * The first letter of a name, capitalised, for a face or a tile with no picture: [fallback] when
+ * the name is blank, so a disc is never empty.
+ */
+internal fun initialOf(
+    name: String,
+    fallback: String = "?",
+): String {
+    val letter = name.trim().take(1).uppercase()
+    return letter.ifEmpty { fallback }
+}
+
 /** A tester's initial in a tinted disc: the only stand-in for an avatar we have. */
 @Composable
 fun Initial(

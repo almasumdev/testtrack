@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -173,9 +175,17 @@ fun Primary(
     mark: Painter? = null,
     /** Red, for the button that confirms something that costs the reader. */
     destructive: Boolean = false,
+    /** Keeps its full colour while [busy], rather than greying out as a disabled button does. */
+    busyKeepsFill: Boolean = false,
     onClick: () -> Unit,
 ) {
     val dismissKeyboard = rememberDismissKeyboard()
+    val colors =
+        if (destructive) {
+            ButtonDefaults.buttonColors(containerColor = Tt.colors.bad, contentColor = Tt.colors.onBad)
+        } else {
+            ButtonDefaults.buttonColors()
+        }
     Button(
         onClick = {
             dismissKeyboard()
@@ -183,10 +193,10 @@ fun Primary(
         },
         enabled = enabled && !busy,
         colors =
-            if (destructive) {
-                ButtonDefaults.buttonColors(containerColor = Tt.colors.bad, contentColor = Tt.colors.onBad)
+            if (busy && busyKeepsFill) {
+                colors.copy(disabledContainerColor = colors.containerColor, disabledContentColor = colors.contentColor)
             } else {
-                ButtonDefaults.buttonColors()
+                colors
             },
         // A full pill, the main button: the one filled shape on a screen, so it is the
         // one place the eye lands.
@@ -231,6 +241,8 @@ internal fun InlineAction(
     color: Color = Tt.colors.accentInk,
     /** Underlined, as a way out after a question such as "Refused by mistake?". */
     underline: Boolean = false,
+    /** Takes the whole width, its words centred, such as a way out under a page's button. */
+    fullWidth: Boolean = false,
     onClick: () -> Unit,
 ) {
     val dismissKeyboard = rememberDismissKeyboard()
@@ -241,7 +253,7 @@ internal fun InlineAction(
                 dismissKeyboard()
                 onClick()
             },
-            modifier = modifier.heightIn(min = 32.dp),
+            modifier = modifier.then(if (fullWidth) Modifier.fillMaxWidth() else Modifier).heightIn(min = 32.dp),
             enabled = enabled && !busy,
             shape = RoundedCornerShape(percent = 50),
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
@@ -269,6 +281,47 @@ internal fun InlineAction(
 
 /** Every button's height, filled, soft or outlined: the garden look's one pill. */
 val ButtonHeight = 52.dp
+
+/**
+ * The outlined pill, the partner of [Primary]: a 1.5dp accent edge and accent words, as on the
+ * "did not load" pages and About's links. An optional [icon] leads the words in their colour, at
+ * 18dp; a mark that must keep its own colours, such as Google Play's, draws itself untinted.
+ */
+@Composable
+fun Outlined(
+    label: String,
+    modifier: Modifier = Modifier,
+    icon: (@Composable () -> Unit)? = null,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    val t = Tt.colors
+    val dismissKeyboard = rememberDismissKeyboard()
+    OutlinedButton(
+        onClick = {
+            dismissKeyboard()
+            onClick()
+        },
+        modifier = modifier.heightIn(min = ButtonHeight),
+        enabled = enabled,
+        shape = RoundedCornerShape(percent = 50),
+        border = BorderStroke(1.5.dp, if (enabled) t.accentInk else t.text4),
+        contentPadding = PaddingValues(horizontal = if (icon != null) 16.dp else 22.dp),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = t.accentInk, disabledContentColor = t.text4),
+    ) {
+        if (icon != null) {
+            Box(Modifier.size(18.dp), contentAlignment = Alignment.Center) { icon() }
+            Spacer(Modifier.width(8.dp))
+        }
+        Text(
+            label,
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.5.sp,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+        )
+    }
+}
 
 /**
  * Something the reader needs to know, drawn as an edge rather than a fill.

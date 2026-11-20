@@ -1,18 +1,13 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -49,10 +45,12 @@ fun RobotState(
     /** Something quieter under the way out, such as the how-to video's links. */
     footer: (@Composable () -> Unit)? = null,
     fill: Boolean = true,
+    /** The robot's size: smaller where the page has a lot under it. */
+    robot: Dp = 112.dp,
 ) {
     val t = Tt.colors
     val body: @Composable ColumnScope.() -> Unit = {
-        RobotHolding(prop, size = 112.dp, description = title)
+        RobotHolding(prop, size = robot, description = title)
         Spacer(Modifier.height(14.dp))
         Text(
             title,
@@ -71,15 +69,7 @@ fun RobotState(
         if (action.isNotEmpty()) {
             Spacer(Modifier.height(18.dp))
             if (failed) {
-                OutlinedButton(
-                    onClick = onAction,
-                    shape = RoundedCornerShape(percent = 50),
-                    border = BorderStroke(1.5.dp, t.accentInk),
-                    contentPadding = PaddingValues(horizontal = 22.dp),
-                    modifier = Modifier.heightIn(min = ButtonHeight),
-                ) {
-                    Text(action, fontWeight = FontWeight.Bold, color = t.accentInk, fontSize = 14.5.sp)
-                }
+                Outlined(action, onClick = onAction)
             } else {
                 Primary(action, Modifier.widthIn(max = 240.dp), onClick = onAction)
             }
@@ -102,7 +92,10 @@ fun RobotState(
     }
 }
 
-/** The one shape every "did not load" takes, so they all say it the same way. */
+/**
+ * The one offline page: every "did not load" takes this shape, so they all say it the same way.
+ * Use it rather than a [RobotState] with [Prop.Plug] of your own.
+ */
 @Composable
 fun RobotOffline(
     title: String,

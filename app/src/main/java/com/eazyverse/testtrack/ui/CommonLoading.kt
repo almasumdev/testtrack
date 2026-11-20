@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -19,6 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -96,6 +98,49 @@ const val SKELETON_ROWS = 10
 private val Titles = listOf(118, 92, 140, 104, 126, 86, 132)
 
 private fun title(i: Int) = Titles[i % Titles.size].dp
+
+/**
+ * An [AppHead] on its way: the icon's square, the name and the line under it. [name] and [sub] are
+ * the two bars' widths.
+ */
+@Composable
+fun AppHeadSkeleton(
+    modifier: Modifier = Modifier,
+    name: Dp = 140.dp,
+    sub: Dp = 80.dp,
+) {
+    val icon = AppTileIcon * LocalDensity.current.fontScale.coerceAtLeast(1f)
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Skeleton(width = icon, height = icon, corner = icon * 0.3f)
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Skeleton(width = name, height = 15.dp)
+            Spacer(Modifier.height(7.dp))
+            Skeleton(width = sub, height = 11.dp)
+        }
+    }
+}
+
+/**
+ * A [SectionHeading] on its way: a bar [width] wide, and at the far end an [end] bar as tall as
+ * [endHeight], such as a pill's. [top] is the space over it, as the heading's own.
+ */
+@Composable
+fun SkeletonHeading(
+    width: Dp,
+    modifier: Modifier = Modifier,
+    end: Dp? = null,
+    endHeight: Dp = 15.dp,
+    top: Dp = 24.dp,
+) {
+    Row(
+        modifier.fillMaxWidth().padding(top = top, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.weight(1f)) { Skeleton(width = width, height = 15.dp) }
+        if (end != null) Skeleton(width = end, height = endHeight, corner = if (endHeight > 20.dp) endHeight / 2 else 6.dp)
+    }
+}
 
 /**
  * A page's placeholder giving way to the page, as a short fade rather than a cut.

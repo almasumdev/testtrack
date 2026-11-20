@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,14 +23,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -53,21 +57,31 @@ internal fun Modifier.clickableRole(
 /** The three looks of a row's own button: the night's main action, a step, or an answer. */
 enum class PillKind { SOLID, SOFT, GHOST, OK }
 
+/**
+ * How big a [RowPill] is drawn. [ROW] is a crew row's 34dp pill with one line of 14sp words.
+ * [SMALL] is the soft pill on My apps: 32dp, 13.5sp words on up to two lines, a 15dp icon, and
+ * while busy a loader in the icon's place beside words that say what it is doing.
+ */
+enum class PillSize { ROW, SMALL }
+
 @Composable
 internal fun RowPill(
     label: String,
     kind: PillKind,
-    /** Sent and not answered yet: a spinner in place of the word, and nothing to tap. */
+    /** Sent and not answered yet: a spinner, and nothing to tap. */
     busy: Boolean = false,
     modifier: Modifier = Modifier,
     /** A small icon before the word, in the pill's own text colour. */
     leading: ImageVector? = null,
-    /** The leading icon's size: 13 on a row, 16 on the seat page's group pills. */
-    leadingSize: Dp = 13.dp,
+    /** The leading icon's size: 13 on a row, 16 on the seat page's group pills, 15 when [size] is SMALL. */
+    leadingSize: Dp? = null,
     shape: Shape = RoundedCornerShape(percent = 50),
     /** A small icon after the word, turned by [trailingTurn] degrees. */
     trailing: ImageVector? = null,
     trailingTurn: Float = 0f,
+    size: PillSize = PillSize.ROW,
+    /** False where the pill is only as big as it is drawn, with no 48dp touch area around it. */
+    touchTarget: Boolean = true,
     onClick: () -> Unit,
 ) {
     val (bg, fg) =
@@ -77,38 +91,71 @@ internal fun RowPill(
             PillKind.GHOST -> Tt.colors.bg to Tt.colors.accentInk
             PillKind.OK -> Status.posted to Tt.colors.inkOn(Status.posted)
         }
+    val small = size == PillSize.SMALL
     // 34 to look at, 48 to touch, the way an icon button is built.
     Box(
         modifier
-            .minimumInteractiveComponentSize()
-            .heightIn(min = 34.dp)
+            .then(if (touchTarget) Modifier.minimumInteractiveComponentSize() else Modifier)
+            .heightIn(min = if (small) 32.dp else 34.dp)
             .clip(shape)
             .background(bg)
             .then(if (kind == PillKind.GHOST) Modifier.border(1.5.dp, Tt.colors.glassBorderStrong, shape) else Modifier)
-            .clickable(enabled = !busy, onClick = onClick)
-            .padding(horizontal = if (leading != null) 12.dp else 14.dp, vertical = 7.dp),
+            .clickable(enabled = !busy, role = Role.Button, onClick = onClick)
+            .padding(horizontal = if (leading != null && !small) 12.dp else 14.dp, vertical = 7.dp),
         contentAlignment = Alignment.Center,
     ) {
-        // The word stays, unseen, so the pill keeps its width while the spinner is in it.
-        val ink = if (busy) fg.copy(alpha = 0f) else fg
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (leading != null) {
-                Icon(leading, null, Modifier.size(leadingSize), tint = ink)
-                Spacer(Modifier.width(6.dp))
+        if (small) {
+            SmallPillContent(label, fg, busy, leading, leadingSize ?: 15.dp)
+        } else {
+            // The word stays, unseen, so the pill keeps its width while the spinner is in it.
+            val ink = if (busy) fg.copy(alpha = 0f) else fg
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (leading != null) {
+                    Icon(leading, null, Modifier.size(leadingSize ?: 13.dp), tint = ink)
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                    fontWeight = FontWeight.Bold,
+                    color = ink,
+                    maxLines = 1,
+                )
+                if (trailing != null) {
+                    Spacer(Modifier.width(4.dp))
+                    Icon(trailing, null, Modifier.size(16.dp).rotate(trailingTurn), tint = ink)
+                }
             }
-            Text(
-                label,
-                style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
-                fontWeight = FontWeight.Bold,
-                color = ink,
-                maxLines = 1,
-            )
-            if (trailing != null) {
-                Spacer(Modifier.width(4.dp))
-                Icon(trailing, null, Modifier.size(16.dp).rotate(trailingTurn), tint = ink)
-            }
+            if (busy) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = fg)
         }
-        if (busy) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = fg)
+    }
+}
+
+/** A [PillSize.SMALL] pill's inside: the icon, or a loader in its place while busy, then the words. */
+@Composable
+private fun SmallPillContent(
+    label: String,
+    ink: Color,
+    busy: Boolean,
+    leading: ImageVector?,
+    leadingSize: Dp,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+        if (busy) {
+            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = ink)
+            Spacer(Modifier.width(6.dp))
+        } else if (leading != null) {
+            Icon(leading, null, Modifier.size(leadingSize), tint = ink)
+            Spacer(Modifier.width(6.dp))
+        }
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.5.sp, lineHeight = 16.sp),
+            fontWeight = FontWeight.Bold,
+            color = ink,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+        )
     }
 }
 

@@ -41,8 +41,12 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * card is set apart by its own edge and a block inside one by its tint.
  */
 
-/** How loudly a chip or a line speaks: going, done, needs a look, out, or just a fact. */
-enum class Tone { ACCENT, OK, WARN, BAD, QUIET }
+/**
+ * How loudly a chip or a line speaks: going, done, needs a look, out, or just a fact. [TILE] is the
+ * accent's quieter tile ink, such as a reward or a lit profile fact; [PLAIN] is ordinary words on
+ * the glass, such as "Offline".
+ */
+enum class Tone { ACCENT, OK, WARN, BAD, QUIET, TILE, PLAIN }
 
 @Composable
 internal fun Tone.ink(): Color =
@@ -52,6 +56,8 @@ internal fun Tone.ink(): Color =
         Tone.WARN -> Status.short
         Tone.BAD -> Status.missed
         Tone.QUIET -> MaterialTheme.colorScheme.onSurfaceVariant
+        Tone.TILE -> Tt.colors.tileInk
+        Tone.PLAIN -> Tt.colors.text2
     }
 
 @Composable
@@ -62,31 +68,60 @@ internal fun Tone.soft(): Color =
         Tone.WARN -> Status.shortSoft
         Tone.BAD -> Status.missedSoft
         Tone.QUIET -> Status.neutralSoft
+        Tone.TILE -> Tt.colors.tile
+        Tone.PLAIN -> Tt.colors.glass2
     }
 
-/** One status, said in a word or two, in the one chip style every state uses. */
+/**
+ * How big a read-only chip is drawn. [SMALL] is a fact under a profile's name, [MEDIUM] a status
+ * on a row, [LARGE] a fact sized with [ActionChip] so a row does not change size between the two.
+ */
+enum class ChipSize { SMALL, MEDIUM, LARGE }
+
+/** One status, said in a word or two, in the one chip style every state uses. Nothing to tap. */
 @Composable
 internal fun StatusChip(
     text: String,
     tone: Tone,
     icon: ImageVector? = null,
+    modifier: Modifier = Modifier,
+    size: ChipSize = ChipSize.MEDIUM,
 ) {
+    val ink = tone.ink()
+    val pad =
+        when (size) {
+            ChipSize.SMALL -> PaddingValues(start = if (icon != null) 8.dp else 10.dp, end = 10.dp, top = 4.dp, bottom = 4.dp)
+            ChipSize.MEDIUM -> PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+            ChipSize.LARGE -> PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+        }
+    val style =
+        when (size) {
+            ChipSize.SMALL -> MaterialTheme.typography.labelMedium.copy(fontSize = 11.5.sp)
+            ChipSize.MEDIUM -> MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp)
+            ChipSize.LARGE -> MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp)
+        }
     Row(
-        Modifier
+        modifier
             .clip(RoundedCornerShape(percent = 50))
             .background(tone.soft())
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(pad),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
-            Icon(icon, null, Modifier.size(13.dp), tint = tone.ink())
-            Spacer(Modifier.width(5.dp))
+            val glyph =
+                when (size) {
+                    ChipSize.SMALL -> 12.dp
+                    ChipSize.MEDIUM -> 13.dp
+                    ChipSize.LARGE -> 14.dp
+                }
+            Icon(icon, null, Modifier.size(glyph), tint = ink)
+            Spacer(Modifier.width(if (size == ChipSize.LARGE) 6.dp else 5.dp))
         }
         Text(
             text,
-            style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
-            fontWeight = FontWeight.Bold,
-            color = tone.ink(),
+            style = style,
+            fontWeight = if (size == ChipSize.MEDIUM) FontWeight.Bold else FontWeight.SemiBold,
+            color = ink,
             maxLines = 1,
         )
     }

@@ -12,12 +12,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -27,9 +26,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -70,24 +72,35 @@ fun Backdrop(
 /**
  * An icon on its own tinted tile: the mark every row and header leads with.
  *
- * A rounded square rather than a circle, the glyph at about half the tile. The danger version
- * swaps to the red ground so a destructive row says so before its words are read.
+ * A rounded square rather than a circle, the glyph at about half the tile. [tone] colours the glyph
+ * on the quiet tile; [filled] fills the tile with the tone instead, the glyph in the ink that reads
+ * on it. The danger version swaps to the red ground so a destructive row says so before its words
+ * are read.
  */
 @Composable
 fun IconTile(
     icon: ImageVector,
     size: Dp = 36.dp,
+    tone: Tone = Tone.ACCENT,
+    filled: Boolean = false,
     danger: Boolean = false,
 ) {
     val t = Tt.colors
+    val toneInk = if (tone == Tone.ACCENT) t.tileInk else tone.ink()
+    val (ground, ink) =
+        when {
+            danger -> t.badBg to t.bad
+            filled -> tone.ink() to t.inkOn(tone.ink())
+            else -> t.tile to toneInk
+        }
     Box(
         Modifier
             .size(size)
-            .clip(RoundedCornerShape(size * 0.305f))
-            .background(if (danger) t.badBg else t.tile),
+            .clip(RoundedCornerShape(size * 0.3f))
+            .background(ground),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, null, Modifier.size(size * 0.52f), tint = if (danger) t.bad else t.tileInk)
+        Icon(icon, null, Modifier.size(size * 0.52f), tint = ink)
     }
 }
 
@@ -252,10 +265,8 @@ fun TileRow(
 }
 
 /**
- * A section's heading: sentence case, one step under a title, with its count in a badge beside it.
- *
- * It was small grey capitals, which is a label, and a label over a list says "form" rather than
- * "here are your things". A count sits in a badge next to the words it counts; anything that is not a count stays quiet text at the far end.
+ * A section's heading on a tab's list, on the gutter: [SectionHeading] with a count in a badge
+ * beside it, or anything that is not a count as quiet text at the far end.
  */
 @Composable
 fun CrewHeading(
@@ -263,34 +274,19 @@ fun CrewHeading(
     trailing: String? = null,
     top: Dp = 20.dp,
 ) {
-    Row(
-        Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = top, bottom = 10.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Text(
-            text,
-            style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, lineHeight = 19.sp),
-            fontWeight = FontWeight.Bold,
-            color = Tt.colors.text,
-        )
-        val count = trailing?.toIntOrNull()
-        if (count != null) {
-            Spacer(Modifier.width(5.dp))
-            // Centred on the words and given no height of its own, so the heading is exactly as
-            // tall as its words and they start where the first card on any other tab starts.
-            Box(Modifier.height(19.dp).wrapContentHeight(Alignment.CenterVertically, unbounded = true)) {
-                CountBadge(count)
-            }
-        }
-        Spacer(Modifier.weight(1f))
-        if (trailing != null && count == null) {
-            Text(
-                trailing,
-                style = MaterialTheme.typography.labelMedium,
-                color = Tt.colors.text3,
-            )
-        }
-    }
+    val count = trailing?.toIntOrNull()
+    SectionHeading(
+        text,
+        Modifier.padding(horizontal = Gutter),
+        count = count,
+        top = top,
+        end =
+            if (trailing != null && count == null) {
+                { Text(trailing, style = MaterialTheme.typography.labelMedium, color = Tt.colors.text3) }
+            } else {
+                null
+            },
+    )
 }
 
 /**
@@ -319,18 +315,52 @@ fun ListTile(
     @Suppress("UNUSED_PARAMETER") count: Int,
     content: @Composable () -> Unit,
 ) {
-    val t = Tt.colors
-    val shape = RoundedCornerShape(TileRadius)
     Box(
         Modifier
             .padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)
             .fillMaxWidth()
-            .clip(shape)
-            .background(t.bg)
-            .border(1.dp, t.cardLine, shape),
+            .tileFrame(),
     ) {
         content()
     }
+}
+
+/**
+ * The hairline tile: the page colour inside a 1dp card line, clipped to [shape]. With [onClick] the
+ * whole tile is the press shape. Size and padding go before and after it as usual.
+ */
+@Composable
+fun Modifier.tileFrame(
+    shape: Shape = RoundedCornerShape(TileRadius),
+    onClick: (() -> Unit)? = null,
+): Modifier {
+    val t = Tt.colors
+    return this
+        .clip(shape)
+        .background(t.bg)
+        .border(1.dp, t.cardLine, shape)
+        .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+}
+
+/**
+ * One answer of a few side by side, such as the Ask page's Stars, Written and Detailed: a hairline
+ * tile, or when [selected] the soft accent wash with no line, the way a picker marks its chosen row.
+ * Picked as a radio button; faded and untappable when not [enabled].
+ */
+@Composable
+fun Modifier.choiceTile(
+    selected: Boolean,
+    enabled: Boolean = true,
+    shape: Shape = RoundedCornerShape(TileRadius),
+    onClick: () -> Unit,
+): Modifier {
+    val t = Tt.colors
+    return this
+        .clip(shape)
+        .background(if (selected) t.leafAccentSoft else t.bg)
+        .border(1.dp, if (selected) Color.Transparent else t.cardLine, shape)
+        .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
+        .then(if (enabled) Modifier else Modifier.alpha(DISABLED_ALPHA))
 }
 
 /**
