@@ -52,11 +52,12 @@ import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
  * An outlined field whose label sits inside while it is empty and moves up into a notch in the top
- * border once it has focus or a value. 48dp tall rather than [DialogField]'s 56, which is why it is
- * built on [BasicTextField] and the outlined decoration instead of OutlinedTextField and its floor.
+ * border once it has focus or a value. 48dp tall rather than OutlinedTextField's 56, which is why it
+ * is built on [BasicTextField] and the outlined decoration instead of OutlinedTextField and its floor.
  *
  * Under the box, only when there is something to say: the error at the start, and "used/max" at the
- * end for a field with a [maxLength]. Like [DialogField], the cap is the caller's to enforce.
+ * end for a field with a [maxLength]. The cap is the caller's to enforce. [isError] draws the red
+ * line without a message, where the page says what is wrong elsewhere.
  *
  * A [trailing] action, such as an X that removes the field, sits in the box's top end corner and
  * the text keeps clear of it. A field that is not [enabled] takes no typing and is drawn faded.
@@ -86,6 +87,12 @@ internal fun OutlinedField(
     hint: String? = null,
     /** The hint's ink; text3 when not given. */
     hintTone: Color? = null,
+    isError: Boolean = error != null,
+    /**
+     * What the keyboard's own key does. Search, Go and Send mean nothing without it; Done puts the
+     * keyboard away and then runs it if given; Next moves to the field below unless it is given.
+     */
+    onImeAction: (() -> Unit)? = null,
 ) {
     val t = Tt.colors
     val focus = LocalFocusManager.current
@@ -93,7 +100,11 @@ internal fun OutlinedField(
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     var shown by rememberSaveable { mutableStateOf(false) }
-    val isError = error != null
+    val finish = {
+        dismissKeyboard()
+        onImeAction?.invoke()
+        Unit
+    }
     val transformation =
         if (password && !shown) PasswordVisualTransformation() else VisualTransformation.None
     val colors =
@@ -169,8 +180,11 @@ internal fun OutlinedField(
                 ),
             keyboardActions =
                 KeyboardActions(
-                    onDone = { dismissKeyboard() },
-                    onNext = { focus.moveFocus(FocusDirection.Down) },
+                    onDone = { finish() },
+                    onSearch = { finish() },
+                    onGo = { finish() },
+                    onSend = { finish() },
+                    onNext = { onImeAction?.invoke() ?: focus.moveFocus(FocusDirection.Down) },
                 ),
             decorationBox = { inner ->
                 // The field's own width and least height reach the outline, which otherwise shrinks

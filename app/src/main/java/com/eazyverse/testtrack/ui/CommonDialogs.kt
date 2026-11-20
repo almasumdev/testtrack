@@ -24,34 +24,26 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -274,110 +266,3 @@ val DialogBody: TextStyle
     @Composable get() = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.5.sp, lineHeight = 19.5.sp)
 
 private val DialogShape = RoundedCornerShape(18.dp)
-
-/**
- * What is typed in a field, and its hint at the same size. Larger than a dialog's words and, once
- * typed, a step heavier: at the body's size and weight it read as thin and faint inside the box.
- */
-private val FieldText: TextStyle
-    @Composable get() = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp, lineHeight = 21.sp)
-
-/** A field inside [Ask], matching the shape the rest of the app uses for one. */
-@Composable
-fun DialogField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    placeholder: String? = null,
-    error: String? = null,
-    isError: Boolean = error != null,
-    supporting: String? = null,
-    singleLine: Boolean = true,
-    /** Which key the keyboard offers. Ignored where the field takes more than one line. */
-    imeAction: ImeAction = ImeAction.Done,
-    /** Which keyboard. A field that only accepts digits should not open a letter one. */
-    keyboardType: KeyboardType = KeyboardType.Text,
-    /** A floor, for a field that expects a sentence or two rather than a word. */
-    minHeight: Dp = 0.dp,
-    /** The field's own cap, shown as "used/max" under it. Not enforced here: the caller already
-     * has to hold typing to the limit, since this only draws what that number already is. */
-    maxLength: Int? = null,
-    /**
-     * What the keyboard's own key does. Search, Go and Send mean nothing without it; Done puts the
-     * keyboard away and then runs it if given; Next moves to the field below unless it is given.
-     */
-    onImeAction: (() -> Unit)? = null,
-) {
-    val focus = LocalFocusManager.current
-    val dismissKeyboard = rememberDismissKeyboard()
-    val finish = {
-        dismissKeyboard()
-        onImeAction?.invoke()
-        Unit
-    }
-    Column(Modifier.fillMaxWidth()) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = Tt.colors.text4,
-        )
-        Spacer(Modifier.height(4.dp))
-        // The hint is in the faintest ink, well apart from typed text: a hint that looked typed was
-        // being read as a value already filled in.
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder =
-                placeholder?.let {
-                    { Text(it, style = FieldText, color = Tt.colors.text4.copy(alpha = 0.8f)) }
-                },
-            singleLine = singleLine,
-            isError = isError,
-            textStyle = FieldText.copy(color = Tt.colors.text, fontWeight = FontWeight.Medium),
-            shape = RoundedCornerShape(8.dp),
-            // A keyboard that says Done and inserts a newline is lying about its own button, so a
-            // field taking more than one line does not get to name the action.
-            keyboardOptions =
-                KeyboardOptions(
-                    keyboardType = keyboardType,
-                    imeAction = if (singleLine) imeAction else ImeAction.Default,
-                ),
-            keyboardActions =
-                KeyboardActions(
-                    onDone = { finish() },
-                    onSearch = { finish() },
-                    onGo = { finish() },
-                    onSend = { finish() },
-                    onNext = { onImeAction?.invoke() ?: focus.moveFocus(FocusDirection.Down) },
-                ),
-            modifier = Modifier.fillMaxWidth().heightIn(min = minHeight),
-        )
-        // Ours rather than the field's own supporting slot, which reserves the height whether or
-        // not anything is in it and pushes whatever follows down over nothing.
-        if (error != null || supporting != null || maxLength != null) {
-            Spacer(Modifier.height(4.dp))
-            Row(Modifier.fillMaxWidth()) {
-                Text(
-                    (error ?: supporting).orEmpty(),
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
-                    color =
-                        if (error != null) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                    modifier = Modifier.weight(1f),
-                )
-                if (maxLength != null) {
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "${value.length}/$maxLength",
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-    }
-}

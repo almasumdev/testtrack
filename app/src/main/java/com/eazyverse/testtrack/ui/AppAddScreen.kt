@@ -163,13 +163,12 @@ private fun Finding(
         color = Tt.colors.text2,
     )
     Spacer(Modifier.height(12.dp))
-    DialogField(
+    OutlinedField(
         value = vm.query,
         onValueChange = vm::type,
         label = "Play link or package name",
         placeholder = "com.example.myapp",
         isError = vm.failure?.invalidLink == true,
-        singleLine = true,
         keyboardType = KeyboardType.Uri,
         imeAction = ImeAction.Search,
         onImeAction = vm::look,
