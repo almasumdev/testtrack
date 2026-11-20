@@ -191,7 +191,7 @@ fun MeBody(
         contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = FootRoom + dockRoom()),
     ) {
         item { LoadSwap(shown == null) { if (it) WhoLoading() else shown?.let { p -> Who(p, onEdit) } } }
-        item { SectionHeading("Your record", top = 16.dp) }
+        item { SectionHeading("Your record", top = 16.dp, style = TextStyles.SectionTitleStyle) }
         item {
             LoadSwap(shown == null) { waiting ->
                 if (waiting || shown == null) return@LoadSwap RecordGridLoading()

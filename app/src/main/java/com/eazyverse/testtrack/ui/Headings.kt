@@ -60,6 +60,12 @@ object TextStyles {
      */
     val BlockHeadingStyle = TtTypography.titleMedium.copy(fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.Bold)
 
+    /**
+     * The Me tab's section headings: 16 bold on Material's title, whose 24 line gives the space
+     * above and below the words.
+     */
+    val SectionTitleStyle = TtTypography.titleMedium.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold)
+
     /** The app page's small "Earlier" heading: 12.5 on 16, semibold, on Material's label. */
     val EarlierStyle = TtTypography.labelMedium.copy(fontSize = 12.5.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
 }

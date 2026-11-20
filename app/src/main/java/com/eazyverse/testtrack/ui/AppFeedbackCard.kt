@@ -187,8 +187,8 @@ private fun RequestFooter(
             FooterRow(lineTop) {
                 Headline("${counts.toCheck} waiting for you", t.text, compact, Modifier.weight(1f))
                 Spacer(Modifier.width(12.dp))
-                // Drawn as the filled Button it was: 40dp tall, the theme's primary fill.
-                RowPill("Check", PillKind.PRIMARY, size = PillSize.SMALL, touchTarget = false, minHeight = 40.dp, onClick = onCheck)
+                // Drawn as the filled Button it was: 32dp tall, no touch area, the theme's primary fill.
+                RowPill("Check", PillKind.PRIMARY, size = PillSize.SMALL, touchTarget = false, onClick = onCheck)
             }
         RequestFoot.ASK_AGAIN ->
             Box(Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.CenterEnd) {
