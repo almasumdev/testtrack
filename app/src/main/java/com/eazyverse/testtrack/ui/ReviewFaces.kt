@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -35,7 +34,6 @@ import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Eye
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.User
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -146,17 +144,8 @@ private fun Disc(
         return
     }
     val faded = face == ReviewFace.IN_PROGRESS && !fadeInk
-    Box(
-        modifier
-            .size(size)
-            .alpha(if (faded) 0.5f else 1f)
-            .clip(CircleShape)
-            .background(t.tile),
-        contentAlignment = Alignment.Center,
-    ) {
-        val ink = if (face == ReviewFace.IN_PROGRESS && fadeInk) t.tileInk.copy(alpha = 0.5f) else t.tileInk
-        Icon(Lucide.User, null, Modifier.size(size * 0.56f), tint = ink)
-    }
+    val ink = if (face == ReviewFace.IN_PROGRESS && fadeInk) t.tileInk.copy(alpha = 0.5f) else t.tileInk
+    PersonDisc(size, modifier.alpha(if (faded) 0.5f else 1f), ink = ink)
 }
 
 /** The small mark for where a review stands: a check when done, an eye to check, a clock under way. */

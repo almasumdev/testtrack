@@ -67,13 +67,17 @@ internal fun BotFace(size: Dp) {
 internal fun PersonDisc(
     size: Dp,
     modifier: Modifier = Modifier,
+    /** The figure's size: 0.56 of the disc unless given. */
+    glyph: Dp = size * 0.56f,
+    /** The figure's ink: the tile's unless given, such as faded for a review under way. */
+    ink: Color = Tt.colors.tileInk,
 ) {
     val t = Tt.colors
     Box(
         modifier.size(size).clip(CircleShape).background(t.tile),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(Lucide.User, null, Modifier.size(size * 0.56f), tint = t.tileInk)
+        Icon(Lucide.User, null, Modifier.size(glyph), tint = ink)
     }
 }
 

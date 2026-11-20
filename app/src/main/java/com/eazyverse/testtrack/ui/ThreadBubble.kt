@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.layoutId
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -42,7 +42,6 @@ import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.CheckCheck
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Maximize2
-import com.composables.icons.lucide.User
 import com.eazyverse.testtrack.domain.textUseLabel
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.proofRemoved
@@ -118,8 +117,7 @@ private val FaceGap = 8.dp
 private val BubbleGap = 4.dp
 
 /** The widest a bubble grows: four fifths of the page between its gutters. */
-@Composable
-private fun threadBubbleMax(): Dp = ((LocalConfiguration.current.screenWidthDp.dp - Gutter * 2) * 0.8f)
+private const val THREAD_SHARE = 0.8f
 
 @Composable
 private fun threadInk(tone: ThreadTone): BubbleInk =
@@ -159,14 +157,11 @@ internal fun ThreadGroup(
         horizontalAlignment = if (right) Alignment.End else Alignment.Start,
     ) {
         if (who.isNotBlank()) {
-            Text(
+            AuthorName(
                 who,
-                Modifier.padding(start = if (right) 0.dp else indent + 12.dp, end = if (right) 12.dp else 0.dp, bottom = 3.dp),
-                style = chatStyle(12f, 16f),
-                fontWeight = FontWeight.SemiBold,
-                color = t.text3,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                team = false,
+                max = Dp.Unspecified,
+                padding = PaddingValues(start = if (right) 0.dp else indent + 12.dp, end = if (right) 12.dp else 0.dp, bottom = 3.dp),
             )
         }
         parts.forEachIndexed { i, part ->
@@ -215,12 +210,7 @@ private fun ThreadFaceMark(
         }
         return
     }
-    Box(
-        Modifier.size(Face).clip(CircleShape).background(t.tile),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(Lucide.User, null, Modifier.size(15.dp), tint = t.tileInk)
-    }
+    PersonDisc(Face, glyph = 15.dp)
 }
 
 /**
@@ -297,7 +287,7 @@ private fun WordsBubble(
     val quiet = if (tone == ThreadTone.MINE) ink.ink.copy(alpha = 0.75f) else t.text3
     Column(
         Modifier
-            .widthIn(max = threadBubbleMax())
+            .widthIn(max = bubbleMax(THREAD_SHARE, inset = Gutter * 2))
             .width(IntrinsicSize.Max)
             .clip(shape)
             .background(ink.fill)

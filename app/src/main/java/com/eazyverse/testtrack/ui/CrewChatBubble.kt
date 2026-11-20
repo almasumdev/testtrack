@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -63,9 +64,15 @@ internal val ChatGutter = 12.dp
 private val Round = 18.dp
 private val Tucked = 4.dp
 
-/** About three quarters of the screen: the widest a bubble grows. The one helper for every bubble. */
+/**
+ * About three quarters of the screen: the widest a bubble grows. The one helper for every bubble.
+ * [inset] comes off the screen's width first, such as a review thread's two gutters.
+ */
 @Composable
-internal fun bubbleMax(share: Float = 0.75f): Dp = (LocalConfiguration.current.screenWidthDp * share).dp
+internal fun bubbleMax(
+    share: Float = 0.75f,
+    inset: Dp = 0.dp,
+): Dp = (LocalConfiguration.current.screenWidthDp.dp - inset) * share
 
 /** The corners of a bubble: all round, except those toward its author where the run goes on. */
 internal fun bubbleShape(
@@ -250,10 +257,14 @@ internal fun ChatMessage(
 internal fun AuthorName(
     name: String,
     team: Boolean,
+    /** The widest it runs, the bubble's own; [Dp.Unspecified] for the column's whole width. */
+    max: Dp = bubbleMax(),
+    /** Round it: 12 in from the bubble's edge and 2 over it unless given. */
+    padding: PaddingValues = PaddingValues(start = 12.dp, bottom = 2.dp),
 ) {
     val t = Tt.colors
     Row(
-        Modifier.widthIn(max = bubbleMax()).padding(start = 12.dp, bottom = 2.dp),
+        Modifier.widthIn(max = max).padding(padding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
