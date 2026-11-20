@@ -263,10 +263,6 @@ internal fun TintBox(
     ) { content() }
 }
 
-/** A small centred line under a card: what happens to your tix, and the like. */
-@Composable
-internal fun CardNote(text: String) = QuietNote(text, Modifier.padding(top = 10.dp))
-
 /**
  * The reader's own app in this crew: its icon and name, where it stands, its sign-in as the crew
  * sees it, and whatever goes with that state below.

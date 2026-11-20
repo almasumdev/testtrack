@@ -154,12 +154,12 @@ internal fun SendProof(
         }
         Spacer(Modifier.height(10.dp))
         InfoLine(
-            Lucide.EyeOff,
-            AnnotatedString("The developer sees this picture. Hide anything personal."),
-            title = "Who sees it",
-        ) {
-            CalloutLine(AnnotatedString("If they dispute it, ${FeedRules.JURORS.words()} members and the TestTrack team see it too."))
-        }
+            "The developer sees this picture. Hide anything personal.",
+            icon = Lucide.EyeOff,
+            info = "If they dispute it, ${FeedRules.JURORS.words()} members and the TestTrack team see it too.",
+            infoTitle = "Who sees it",
+            infoLook = InfoDotLook.ACCENT,
+        )
         if (!rechecking && !job.noBox) ProveAsks(job, developer)
     }
 }

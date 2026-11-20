@@ -111,5 +111,5 @@ private fun Missing(
             }
         }
     }
-    CardNote("A picture you pick shows to its owner as added by hand.")
+    QuietNote("A picture you pick shows to its owner as added by hand.", Modifier.padding(top = 10.dp))
 }

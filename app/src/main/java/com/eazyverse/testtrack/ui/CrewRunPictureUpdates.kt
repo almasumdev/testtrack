@@ -25,18 +25,15 @@ internal fun CrewRunPictureUpdates(
         CrewCard(padding = CrewUpdatePadding) {
             missing.forEachIndexed { index, app ->
                 if (index > 0) Spacer(Modifier.height(12.dp))
-                CrewUpdateRow(
-                    "Screenshot missing",
+                StatusLine(
                     Lucide.Image,
-                    Tone.WARN,
+                    "Screenshot missing",
+                    tone = Tone.WARN,
                     note = AnnotatedString("${app.label} · Test time saved"),
-                    explanation =
+                    info =
                         "Your app time is saved. Add an app screenshot to count this test. " +
                             "You can retake it or use a saved screenshot.",
-                    action = "Add",
-                    enabled = actions.busySeat != app.id,
-                    onAction = { choosing = app },
-                )
+                ) { InlineAction("Add", enabled = actions.busySeat != app.id) { choosing = app } }
             }
         }
     }
@@ -60,9 +57,9 @@ internal fun CrewRunPictureUpdates(
                 else -> "They count once the screenshots are sent. Check you're online."
             }
         CrewCard(padding = CrewUpdatePadding) {
-            CrewUpdateRow(
-                label,
+            StatusLine(
                 if (late) Lucide.Clock else Lucide.CloudUpload,
+                label,
                 tone =
                     when {
                         late -> Tone.BAD
@@ -70,9 +67,8 @@ internal fun CrewRunPictureUpdates(
                         else -> Tone.QUIET
                     },
                 note = if (late || why != null) AnnotatedString("${sending.size} $noun saved on this phone") else null,
-                explanation = explanation,
-                action = if (late || why != null) "Retry" else null,
-                onAction = actions.onRetryPictures,
+                info = explanation,
+                actions = if (late || why != null) ({ InlineAction("Retry", onClick = actions.onRetryPictures) }) else null,
             )
         }
     }

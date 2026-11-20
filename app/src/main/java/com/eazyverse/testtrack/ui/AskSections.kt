@@ -13,18 +13,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -35,7 +29,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.Coins
-import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageSquare
 import com.composables.icons.lucide.Star
@@ -43,7 +36,6 @@ import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
-import com.eazyverse.testtrack.viewmodel.AskFailure
 
 /** The line under a price's total: what there is to pay it from. Shared with the seat page's price. */
 internal val PriceLine = tileStyle(12.5f, 14f, FontWeight.Medium)
@@ -93,23 +85,6 @@ internal fun TwoChoice(
 }
 
 @Composable
-internal fun AskMessage(failure: AskFailure) {
-    Row(
-        Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        // Amber when the fault is ours and there is a way on; red when something needs fixing.
-        val tone = if (failure.ours) Tt.colors.warn else Tt.colors.bad
-        Icon(Lucide.CircleAlert, "Error", Modifier.size(20.dp), tint = tone)
-        Column {
-            Text(failure.title, color = tone, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(4.dp))
-            Text(failure.detail, color = tone, style = MaterialTheme.typography.bodySmall)
-        }
-    }
-}
-
-@Composable
 internal fun AskAppPlaceholder() {
     Box(Modifier.fillMaxSize().background(Tt.colors.tile), contentAlignment = Alignment.Center) {
         Image(painterResource(R.drawable.testtrack_robot), null, Modifier.size(36.dp))
@@ -154,94 +129,52 @@ internal fun AskTrackLines(
     val bold = SpanStyle(fontWeight = FontWeight.SemiBold, color = t.text)
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         if (live) {
-            InfoLine(Lucide.Star, AnnotatedString("Testers use it on two days, then rate and review it on Google Play."))
+            InfoLine("Testers use it on two days, then rate and review it on Google Play.", icon = Lucide.Star)
             InfoLine(
-                Lucide.TriangleAlert,
                 AnnotatedString("Google doesn't allow rewarding reviews and may remove ones it doubts."),
-                warn = true,
-                title = "Why reviews come in slowly",
-            ) {
-                Text(
+                tone = Tone.WARN,
+                icon = Lucide.TriangleAlert,
+                info =
                     buildAnnotatedString {
                         append("So the reviews come in slowly, the way real users leave them. Whether to ask is ")
                         withStyle(bold) { append("your decision") }
                         append(".")
                     },
-                    style = TextStyles.PageLine,
-                    color = t.text2,
-                )
-            }
+                infoTitle = "Why reviews come in slowly",
+                infoLook = InfoDotLook.ACCENT,
+            )
         } else {
             InfoLine(
-                Lucide.MessageSquare,
-                AnnotatedString(
-                    "Testers use it for ${FeedRules.CLOSED_USE_SECONDS / 60} minutes, then send private feedback on " +
-                        "Google Play. You get a picture of it here.",
-                ),
+                "Testers use it for ${FeedRules.CLOSED_USE_SECONDS / 60} minutes, then send private feedback on " +
+                    "Google Play. You get a picture of it here.",
+                icon = Lucide.MessageSquare,
             )
         }
         if (!verified && live) {
-            InfoLine(Lucide.CircleAlert, AnnotatedString("Waiting for Play."), warn = true, title = "Waiting for Play") {
-                Text("Google Play didn't answer when you added it. We keep asking.", style = TextStyles.PageLine, color = t.text2)
-            }
+            InfoLine(
+                "Waiting for Play.",
+                tone = Tone.WARN,
+                icon = Lucide.CircleAlert,
+                info = "Google Play didn't answer when you added it. We keep asking.",
+                infoTitle = "Waiting for Play",
+                infoLook = InfoDotLook.ACCENT,
+            )
         } else if (!verified) {
-            InfoLine(Lucide.CircleAlert, AnnotatedString("Not checked on Play yet."), warn = true, title = "Add our testers group") {
-                Text(
+            InfoLine(
+                AnnotatedString("Not checked on Play yet."),
+                tone = Tone.WARN,
+                icon = Lucide.CircleAlert,
+                info =
                     buildAnnotatedString {
                         append("Add ")
                         withStyle(bold) { append(Config.GROUP_EMAIL) }
                         append(" to your closed track's testers, or reviewers can't install it.")
                     },
-                    style = TextStyles.PageLine,
-                    color = t.text2,
-                )
-            }
+                infoTitle = "Add our testers group",
+                infoLook = InfoDotLook.ACCENT,
+            )
         }
     }
-}
-
-/**
- * A page line with its icon as the first glyph. With [more] it ends on an (i) that opens a callout
- * holding the rest; [warn] puts the icon in amber and the words in the strongest ink.
- */
-@Composable
-internal fun InfoLine(
-    icon: ImageVector,
-    text: AnnotatedString,
-    modifier: Modifier = Modifier,
-    warn: Boolean = false,
-    title: String = "",
-    more: (@Composable ColumnScope.() -> Unit)? = null,
-) {
-    val t = Tt.colors
-    var open by remember { mutableStateOf(false) }
-    IconLine(
-        icon,
-        if (warn) t.warn else t.text3,
-        text,
-        TextStyles.PageLine,
-        if (warn) t.text else t.text2,
-        modifier,
-        trailing =
-            more?.let { body ->
-                {
-                    Box {
-                        Box(
-                            Modifier
-                                .requiredSize(22.dp)
-                                .clip(CircleShape)
-                                .then(if (open) Modifier.background(t.accentInk.copy(alpha = 0.1f)) else Modifier)
-                                .clickable(role = Role.Button, onClickLabel = title) { open = !open },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(Lucide.Info, title, Modifier.size(14.dp), tint = if (open) t.accentInk else t.text3)
-                        }
-                        Callout(open, { open = false }, title, iconInset = 4.dp, content = body)
-                    }
-                }
-            },
-        trailingWidth = 26.dp,
-    )
 }
 
 /**

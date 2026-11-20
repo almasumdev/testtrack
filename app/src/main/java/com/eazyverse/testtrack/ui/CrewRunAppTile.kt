@@ -84,9 +84,23 @@ internal fun CrewRunAppTile(
             ) { actions.onReport(seat) }
         }
         Spacer(Modifier.height(10.dp))
-        CrewRunAppStatus(
-            if (status.action == "Add screenshot") status.copy(run = { screenshotChoice = true }) else status,
-            actions.busySeat == app.id,
+        val band = if (status.action == "Add screenshot") status.copy(run = { screenshotChoice = true }) else status
+        val busy = actions.busySeat == app.id
+        StatusLine(
+            band.icon,
+            band.text,
+            tone = band.tone,
+            info = band.explanation,
+            band = true,
+            actions =
+                if (band.action != null || band.alternate != null) {
+                    {
+                        band.action?.let { InlineAction(it, enabled = !busy, onClick = band.run) }
+                        band.alternate?.let { InlineAction(it, enabled = !busy, onClick = band.runAlternate) }
+                    }
+                } else {
+                    null
+                },
         )
         if (!app.feedbackSent && !app.reported && kind == CrewRunAppKind.REQUIRED && !status.feedbackAction) {
             FeedbackAction(app, actions)

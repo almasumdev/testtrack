@@ -153,20 +153,17 @@ internal fun AskReadyTexts(
     }
     Spacer(Modifier.height(18.dp))
     InfoLine(
-        Lucide.Pencil,
         AnnotatedString("Ready reviews give a reviewer a text to start from."),
-        title = "About ready reviews",
-    ) {
-        Text(
+        icon = Lucide.Pencil,
+        info =
             buildAnnotatedString {
                 append("Reviewers don't have to use these. Each one goes to ")
                 withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = t.text)) { append("one reviewer only") }
                 append(", who can use it, change it or write their own.")
             },
-            style = TextStyles.PageLine,
-            color = t.text2,
-        )
-    }
+        infoTitle = "About ready reviews",
+        infoLook = InfoDotLook.ACCENT,
+    )
     texts.forEachIndexed { i, text ->
         Spacer(Modifier.height(if (i == 0) 18.dp else 16.dp))
         OutlinedField(

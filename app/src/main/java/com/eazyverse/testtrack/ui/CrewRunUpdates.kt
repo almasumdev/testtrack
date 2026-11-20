@@ -41,30 +41,26 @@ internal fun CrewRunUpdates(
                 if (risky.isNotEmpty()) MissedNightCard(risky, onOpenCrew)
                 if (installs.isNotEmpty()) {
                     CrewCard(padding = CrewUpdatePadding) {
-                        CrewUpdateRow(
-                            "${installs.size} ${pluralOf(installs.size, "app")} to install",
+                        StatusLine(
                             Lucide.Download,
+                            "${installs.size} ${pluralOf(installs.size, "app")} to install",
                             note = AnnotatedString(if (installs.size == 1) "Get the Google Play copy" else "Get the Google Play copies"),
-                            action = "View",
-                            onAction = { installsOpen = true },
-                        )
+                        ) { InlineAction("View") { installsOpen = true } }
                     }
                 }
                 if (pictures) CrewRunPictureUpdates(apps, actions)
                 attention?.let { note ->
                     CrewCard(padding = CrewUpdatePadding) {
-                        CrewUpdateRow(
-                            note.title,
+                        StatusLine(
                             when (note.kind) {
                                 CrewRunAttentionKind.FEEDBACK -> Lucide.MessageCircle
                                 CrewRunAttentionKind.UPDATE -> Lucide.RefreshCw
                                 CrewRunAttentionKind.MIXED -> Lucide.TriangleAlert
                             },
-                            Tone.WARN,
-                            explanation = note.explanation,
-                            action = "View",
-                            onAction = { attentionOpen = true },
-                        )
+                            note.title,
+                            tone = Tone.WARN,
+                            info = note.explanation,
+                        ) { InlineAction("View") { attentionOpen = true } }
                     }
                 }
             }
@@ -73,6 +69,9 @@ internal fun CrewRunUpdates(
     if (installsOpen) CrewRunInstallsSheet(installs, runs, actions) { installsOpen = false }
     if (attentionOpen && attention != null) CrewRunAttentionSheet(attention, runs, actions, onOpenCrew) { attentionOpen = false }
 }
+
+/** The inside of an update card: 14 at the sides, 12 above and below. */
+internal val CrewUpdatePadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)
 
 @Composable
 private fun MissedNightCard(
@@ -83,20 +82,18 @@ private fun MissedNightCard(
     CrewCard(padding = CrewUpdatePadding) {
         risky.forEachIndexed { index, crew ->
             if (index > 0) Spacer(Modifier.height(12.dp))
-            CrewUpdateRow(
-                if (risky.size == 1) "Missed yesterday" else "${crew.name} · Missed yesterday",
+            StatusLine(
                 Lucide.TriangleAlert,
-                Tone.WARN,
+                if (risky.size == 1) "Missed yesterday" else "${crew.name} · Missed yesterday",
+                tone = Tone.WARN,
                 note =
                     buildAnnotatedString {
                         if (risky.size == 1) append("${crew.name} · ")
                         append("${crew.owed} ${pluralOf(crew.owed, "app")} left · ")
                         withStyle(deadline) { append("Before midnight") }
                     },
-                explanation = "Miss tonight too and your app leaves this crew. Finish all owed apps before your local midnight.",
-                action = "View crew",
-                onAction = { onOpenCrew(crew.id) },
-            )
+                info = "Miss tonight too and your app leaves this crew. Finish all owed apps before your local midnight.",
+            ) { InlineAction("View crew") { onOpenCrew(crew.id) } }
         }
     }
 }

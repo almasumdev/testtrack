@@ -45,12 +45,21 @@ import com.eazyverse.testtrack.ui.theme.Tt
  */
 
 /**
+ * How an [InfoDot]'s glyph reads. [FADE]: faint until it is open, then full ink on a round of its
+ * own colour. [ACCENT]: full ink until it is open, then the accent ink on a faint accent round, as
+ * on the Ask page. [STILL]: the same ink open or not, with no round, as on a crew's update rows.
+ */
+enum class InfoDotLook { FADE, ACCENT, STILL }
+
+/**
  * A small (i) in [ink] that opens the app's callout with [content] in it, titled [title] for
- * TalkBack. Faint until it is open, then full ink on a round of its own colour.
+ * TalkBack, drawn in its [look].
  *
- * The round is 6dp wider than the [glyph]. It keeps its own open state unless [open] and [onOpen]
- * are given. [iconInset] is how far inside the anchor the glyph sits, so the callout's caret meets
- * it; the default is right for the dot on its own.
+ * The [round] is 6dp wider than the [glyph] unless given; [slot] is the square it is centred in and
+ * tapped by, the round's own size unless given. It keeps its own open state unless [open] and
+ * [onOpen] are given. [iconInset] is how far inside the anchor the glyph sits, so the callout's
+ * caret meets it; the default is right for the dot on its own. [spacing] is between the callout's
+ * lines.
  */
 @Composable
 internal fun InfoDot(
@@ -61,28 +70,48 @@ internal fun InfoDot(
     open: Boolean? = null,
     onOpen: ((Boolean) -> Unit)? = null,
     iconInset: Dp = 3.dp,
+    look: InfoDotLook = InfoDotLook.FADE,
+    round: Dp = glyph + 6.dp,
+    slot: Dp = round,
+    spacing: Dp = 10.dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val t = Tt.colors
     var own by remember { mutableStateOf(false) }
     val shown = open ?: own
     val set: (Boolean) -> Unit = { next -> if (onOpen != null) onOpen(next) else own = next }
-    Box(modifier) {
+    val (glyphInk, roundInk) =
+        when (look) {
+            InfoDotLook.FADE -> ink to ink.copy(alpha = 0.16f)
+            InfoDotLook.ACCENT -> (if (shown) t.accentInk else ink) to t.accentInk.copy(alpha = 0.1f)
+            InfoDotLook.STILL -> ink to Color.Transparent
+        }
+    val fade = look == InfoDotLook.FADE && !shown
+    Box(modifier, contentAlignment = Alignment.Center) {
         Box(
             Modifier
-                .requiredSize(glyph + 6.dp)
+                .requiredSize(slot)
                 .clip(CircleShape)
-                .then(if (shown) Modifier.background(ink.copy(alpha = 0.16f)) else Modifier)
                 .clickable(role = Role.Button, onClickLabel = title) { set(!shown) },
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Lucide.Info, title, Modifier.size(glyph).alpha(if (shown) 1f else 0.75f), tint = ink)
+            Box(
+                Modifier
+                    .size(round)
+                    .clip(CircleShape)
+                    .then(if (shown && look != InfoDotLook.STILL) Modifier.background(roundInk) else Modifier),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Lucide.Info, title, Modifier.size(glyph).alpha(if (fade) 0.75f else 1f), tint = glyphInk)
+            }
         }
-        Callout(shown, { set(false) }, title, iconInset = iconInset, content = content)
+        Callout(shown, { set(false) }, title, iconInset = iconInset, spacing = spacing, content = content)
     }
 }
 
-/** A status line's words: 13 on 18. */
+/** A status line's words: 13 on 18, medium; on the band, regular. */
 private val StatusWords = tileStyle(13f, 18f, FontWeight.Medium)
+private val BandWords = tileStyle(13f, 18f, FontWeight.Normal)
 private val StatusNote = tileStyle(12f, 17f, FontWeight.Normal)
 
 /**
@@ -90,8 +119,9 @@ private val StatusNote = tileStyle(12f, 17f, FontWeight.Normal)
  * [info], an optional [note] under it, and [actions] at the far end. At a font size over 1.3x the
  * actions drop under the words, at the right, so the words keep their room.
  *
- * A quiet tone keeps the words in the ordinary ink with a grey icon. [band] puts it on the soft
- * grey band a crew's own app sits on.
+ * A quiet tone keeps the words in the ordinary ink with a grey icon, as a crew's update rows do;
+ * the (i) sits in a 24dp slot right after the words. [band] is a crew's own app's status: on the
+ * soft grey band, the words regular and in the icon's ink, and the (i) in a 32dp slot.
  */
 @Composable
 internal fun StatusLine(
@@ -123,12 +153,30 @@ internal fun StatusLine(
         Row(Modifier.fillMaxWidth().heightIn(min = if (band) 36.dp else 32.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(icon, null, Modifier.size(15.dp), tint = if (quiet) t.text3 else tone.ink())
+                    val iconInk = if (quiet) t.text3 else tone.ink()
+                    Icon(icon, null, Modifier.size(15.dp), tint = iconInk)
                     Spacer(Modifier.width(6.dp))
-                    Text(text, Modifier.weight(1f, fill = false), style = StatusWords, color = if (quiet) t.text else tone.ink())
+                    Text(
+                        text,
+                        Modifier.weight(1f, fill = false),
+                        style = if (band) BandWords else StatusWords,
+                        color =
+                            if (band) {
+                                iconInk
+                            } else if (quiet) {
+                                t.text
+                            } else {
+                                tone.ink()
+                            },
+                    )
                     if (info != null) {
-                        Spacer(Modifier.width(4.dp))
-                        InfoDot(text, t.text3) { CalloutLine(AnnotatedString(info)) }
+                        InfoDot(
+                            text,
+                            t.text3,
+                            iconInset = if (band) 9.dp else 5.dp,
+                            look = InfoDotLook.STILL,
+                            slot = if (band) 32.dp else 24.dp,
+                        ) { CalloutLine(AnnotatedString(info)) }
                     }
                 }
                 if (note != null) Text(note, style = StatusNote, color = t.text3)

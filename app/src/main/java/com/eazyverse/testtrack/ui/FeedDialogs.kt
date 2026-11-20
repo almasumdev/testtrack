@@ -66,17 +66,16 @@ fun FeedRefuseSheet(
     ) { close ->
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 18.dp)) {
             InfoLine(
-                Lucide.Lock,
                 strong("$stake tix are held from you until ${FeedRules.JURORS.words()} members decide.", "$stake tix"),
-                title = "What refusing starts",
-            ) {
-                CalloutLine(
+                icon = Lucide.Lock,
+                info =
                     strong(
                         "If they agree with you, the tix come back and the slot opens again. If not, the reviewer is paid " +
                             "and your $stake tix pay the members.",
                     ),
-                )
-            }
+                infoTitle = "What refusing starts",
+                infoLook = InfoDotLook.ACCENT,
+            )
             Spacer(Modifier.height(16.dp))
             Text("What was missing", style = tileStyle(14f, 18f, FontWeight.Bold), color = t.text)
             Spacer(Modifier.height(2.dp))

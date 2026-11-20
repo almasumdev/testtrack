@@ -23,7 +23,8 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * the rest, titled [infoTitle] for TalkBack.
  *
  * A quiet [tone] is a grey icon and ordinary words; any other tone colours the icon and sets the
- * words in the strongest ink, so a warning reads first.
+ * words in the strongest ink, so a warning reads first. [infoLook] [InfoDotLook.ACCENT] is the Ask
+ * page's (i): a 22dp round that turns the accent when open.
  */
 @Composable
 internal fun InfoLine(
@@ -33,6 +34,7 @@ internal fun InfoLine(
     icon: ImageVector = Lucide.Info,
     info: AnnotatedString? = null,
     infoTitle: String = "More about this",
+    infoLook: InfoDotLook = InfoDotLook.FADE,
 ) {
     val t = Tt.colors
     val quiet = tone == Tone.QUIET
@@ -43,7 +45,16 @@ internal fun InfoLine(
         TextStyles.PageLine,
         if (quiet) t.text2 else t.text,
         modifier,
-        trailing = info?.let { more -> { InfoDot(infoTitle, t.text3) { CalloutLine(more) } } },
+        trailing =
+            info?.let { more ->
+                {
+                    if (infoLook == InfoDotLook.ACCENT) {
+                        InfoDot(infoTitle, t.text3, iconInset = 4.dp, look = infoLook, round = 22.dp) { CalloutLine(more) }
+                    } else {
+                        InfoDot(infoTitle, t.text3, look = infoLook) { CalloutLine(more) }
+                    }
+                }
+            },
         trailingWidth = 26.dp,
     )
 }
@@ -57,7 +68,8 @@ internal fun InfoLine(
     icon: ImageVector = Lucide.Info,
     info: String? = null,
     infoTitle: String = "More about this",
-) = InfoLine(AnnotatedString(text), modifier, tone, icon, info?.let(::AnnotatedString), infoTitle)
+    infoLook: InfoDotLook = InfoDotLook.FADE,
+) = InfoLine(AnnotatedString(text), modifier, tone, icon, info?.let(::AnnotatedString), infoTitle, infoLook)
 
 /**
  * A small grey line, such as what happens to your tix under a card. Centred across the width

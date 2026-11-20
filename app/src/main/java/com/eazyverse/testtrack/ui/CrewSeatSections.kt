@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
@@ -54,7 +53,6 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.CircleHelp
 import com.composables.icons.lucide.Copy
-import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.RefreshCw
 import com.composables.icons.lucide.TriangleAlert
@@ -145,23 +143,22 @@ private fun BoxRow(
             style = tileStyle(15f, 20f, FontWeight.Medium),
             color = t.text,
         )
-        // The callout is anchored to this box: its 20dp icon sits 10dp inside the 40dp button.
-        Box(Modifier.offset(x = (-6).dp)) {
-            IconButton(onClick = { onInfo(!open) }, modifier = Modifier.size(40.dp)) {
-                Box(
-                    Modifier
-                        .size(30.dp)
-                        .clip(CircleShape)
-                        .then(if (open) Modifier.background(t.accentInk.copy(alpha = 0.1f)) else Modifier),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Lucide.Info, "Why it matters", Modifier.size(20.dp), tint = if (open) t.accentInk else t.text4)
-                }
-            }
-            Callout(open, onClose = { onInfo(false) }, paneTitle = label, iconInset = 10.dp, spacing = 6.dp) {
-                Text(why, style = BodyLine, color = t.warn)
-                Text(inkParts(how), style = BodyLine, color = t.text2)
-            }
+        // The callout is anchored to this slot: its 20dp icon sits 10dp inside the 40dp square.
+        InfoDot(
+            label,
+            t.text4,
+            Modifier.offset(x = (-6).dp),
+            glyph = 20.dp,
+            open = open,
+            onOpen = onInfo,
+            iconInset = 10.dp,
+            look = InfoDotLook.ACCENT,
+            round = 30.dp,
+            slot = 40.dp,
+            spacing = 6.dp,
+        ) {
+            Text(why, style = BodyLine, color = t.warn)
+            Text(inkParts(how), style = BodyLine, color = t.text2)
         }
     }
 }
