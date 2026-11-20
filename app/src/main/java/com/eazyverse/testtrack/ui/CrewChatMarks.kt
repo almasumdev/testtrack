@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,6 +23,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.User
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -53,6 +56,24 @@ internal fun BotFace(size: Dp) {
         Image(painterResource(R.drawable.level_robot_antenna), null, art)
         Image(painterResource(R.drawable.level_robot_head), null, art)
         Image(painterResource(R.drawable.level_robot_eyes), null, art)
+    }
+}
+
+/**
+ * The anonymous person: a soft round with the person glyph, for someone with no photo or name to
+ * show. The same face as the thread's person mark and the review faces' disc.
+ */
+@Composable
+internal fun PersonDisc(
+    size: Dp,
+    modifier: Modifier = Modifier,
+) {
+    val t = Tt.colors
+    Box(
+        modifier.size(size).clip(CircleShape).background(t.tile),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Lucide.User, null, Modifier.size(size * 0.56f), tint = t.tileInk)
     }
 }
 

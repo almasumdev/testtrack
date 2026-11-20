@@ -59,7 +59,7 @@ private const val TALLEST = 1.4f
 private const val FLATTEST = 0.55f
 
 @Composable
-internal fun PictureBubble(
+internal fun ChatPictureBubble(
     line: ChatLine,
     picture: ChatPicture,
     first: Boolean,

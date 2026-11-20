@@ -63,7 +63,7 @@ internal val ChatGutter = 12.dp
 private val Round = 18.dp
 private val Tucked = 4.dp
 
-/** About three quarters of the screen: the widest a bubble grows. */
+/** About three quarters of the screen: the widest a bubble grows. The one helper for every bubble. */
 @Composable
 internal fun bubbleMax(share: Float = 0.75f): Dp = (LocalConfiguration.current.screenWidthDp * share).dp
 
@@ -231,7 +231,7 @@ internal fun ChatMessage(
                 ) {
                     when {
                         line.deleted -> DeletedStub(line, first, last)
-                        picture != null -> PictureBubble(line, picture, first, last, view, quoteTap)
+                        picture != null -> ChatPictureBubble(line, picture, first, last, view, quoteTap)
                         else -> TextBubble(line, first, last, view, quoteTap, team)
                     }
                 }
@@ -245,9 +245,9 @@ internal fun ChatMessage(
     }
 }
 
-/** Over the first of someone else's run: their name, and the check mark when it is the team. */
+/** Over the first of someone else's run: their name, and the check mark when it is the team. Shared with the thread. */
 @Composable
-private fun AuthorName(
+internal fun AuthorName(
     name: String,
     team: Boolean,
 ) {

@@ -46,15 +46,13 @@ import com.eazyverse.testtrack.domain.ChatRow
 import com.eazyverse.testtrack.domain.ChatSelect
 import com.eazyverse.testtrack.domain.ChatState
 import com.eazyverse.testtrack.domain.ChatThread
+import com.eazyverse.testtrack.domain.instantOf
+import com.eazyverse.testtrack.domain.shortDate
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.CrewChatViewModel
 import com.eazyverse.testtrack.viewmodel.delete
 import com.eazyverse.testtrack.viewmodel.retry
 import com.eazyverse.testtrack.viewmodel.send
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /**
  * A crew's chat on its own page: the wiring. The poll runs while it is on screen; leaving reads
@@ -342,15 +340,7 @@ internal fun closedLine(
         whyNot == "out" -> "Your app is out of this run, so you can read the chat but not post."
         whyNot == "paused" -> "The team has paused your messages in this chat."
         else -> {
-            val day =
-                detailsUntil?.let {
-                    runCatching {
-                        OffsetDateTime
-                            .parse(it)
-                            .atZoneSameInstant(ZoneId.systemDefault())
-                            .format(DateTimeFormatter.ofPattern("MMM d", Locale.getDefault()))
-                    }.getOrNull()
-                }
+            val day = instantOf(detailsUntil)?.let { shortDate(it) }
             "$crewName has ended, so this chat is read only." + (day?.let { " It goes with the crew's details on $it." } ?: "")
         }
     }

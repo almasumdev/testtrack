@@ -7,19 +7,15 @@ import com.eazyverse.testtrack.domain.ChatMention
 import com.eazyverse.testtrack.domain.ChatPerson
 import com.eazyverse.testtrack.domain.ChatPicture
 import com.eazyverse.testtrack.domain.ChatQuote
+import com.eazyverse.testtrack.domain.instantOf
 import com.eazyverse.testtrack.net.ApiChatLimits
 import com.eazyverse.testtrack.net.ApiChatMessage
 import com.eazyverse.testtrack.net.ApiChatPerson
-import java.time.Instant
-import java.time.OffsetDateTime
 
 /*
  * The chat's wire shapes, turned into the plain values the screen draws. Anything the server
  * leaves out becomes a blank, never a crash.
  */
-
-internal fun instantOf(iso: String?): Instant? =
-    iso?.takeIf { it.isNotBlank() }?.let { runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull() }
 
 internal fun ApiChatPerson.toPerson() =
     ChatPerson(
