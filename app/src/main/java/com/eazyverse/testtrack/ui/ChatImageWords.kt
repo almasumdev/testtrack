@@ -9,12 +9,16 @@ import androidx.compose.ui.graphics.Color
 
 /**
  * The bar along the top, one set at a time: the tools, or while a tool is in use only its own
- * controls with the tick (the colours for words, undo for the pen, close and the tick for a crop).
+ * controls with the tick (the colours for words, undo for the pen or the boxes, close and the tick
+ * for a crop).
  */
-internal enum class TopBar { TOOLS, WORDS, DRAW, CROP }
+internal enum class TopBar { TOOLS, WORDS, DRAW, CROP, HIDE }
 
-/** The bar along the bottom: the pen, the crop, the caption with send, or nothing while words are typed. */
-internal enum class BottomBar { NONE, PEN, CROP, CAPTION }
+/**
+ * The bar along the bottom: the pen, the crop, how to hide details, the footer that finishes (the
+ * chat's caption with send), or nothing while words are typed.
+ */
+internal enum class BottomBar { NONE, PEN, CROP, HIDE, FOOTER }
 
 internal data class EditorBars(
     val top: TopBar,
@@ -30,12 +34,13 @@ internal fun barsFor(
         typingWords -> EditorBars(TopBar.WORDS, BottomBar.NONE)
         mode == EditMode.DRAW -> EditorBars(TopBar.DRAW, BottomBar.PEN)
         mode == EditMode.CROP -> EditorBars(TopBar.CROP, BottomBar.CROP)
-        else -> EditorBars(TopBar.TOOLS, BottomBar.CAPTION)
+        mode == EditMode.HIDE -> EditorBars(TopBar.HIDE, BottomBar.HIDE)
+        else -> EditorBars(TopBar.TOOLS, BottomBar.FOOTER)
     }
 
 /**
  * What Back does, innermost first: words in hand, then a tool, then the editor itself. Leaving the
- * pen keeps the strokes; leaving the crop puts it back as it was when it was opened.
+ * pen or the boxes keeps them; leaving the crop puts it back as it was when it was opened.
  */
 internal enum class BackStep { FINISH_WORDS, LEAVE_TOOL, CANCEL_CROP, CLOSE }
 
@@ -46,7 +51,7 @@ internal fun backStep(
     when {
         typingWords -> BackStep.FINISH_WORDS
         mode == EditMode.CROP -> BackStep.CANCEL_CROP
-        mode == EditMode.DRAW -> BackStep.LEAVE_TOOL
+        mode == EditMode.DRAW || mode == EditMode.HIDE -> BackStep.LEAVE_TOOL
         else -> BackStep.CLOSE
     }
 

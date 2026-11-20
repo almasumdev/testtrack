@@ -2,6 +2,7 @@ package com.eazyverse.testtrack.ui
 
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import android.graphics.RectF
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -10,7 +11,9 @@ import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -38,7 +41,8 @@ import kotlin.math.abs
 /**
  * The picture being edited, filling its box. Showing, it is the crop and words can be moved,
  * pinched and tapped; drawing, a finger draws; cropping, the whole picture shows with the crop's
- * frame over it and its corners and sides can be dragged.
+ * frame over it and its corners and sides can be dragged; hiding, a finger drags a box over
+ * details and two fingers zoom in to reach small ones.
  */
 @Composable
 internal fun PictureCanvas(
@@ -55,11 +59,24 @@ internal fun PictureCanvas(
     onText: (PictureText) -> Unit,
     onTextTap: (PictureText) -> Unit,
     onCrop: (Rect) -> Unit,
+    /** A box over details, in the picture's own pixels. */
+    onHide: (Rect) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val t = Tt.colors
     val shadow = t.photoScrim.toArgb()
+    val hideInk = t.photo.toArgb()
     var live by remember { mutableStateOf<PenStroke?>(null) }
+    var boxing by remember { mutableStateOf<Rect?>(null) }
+    // Hiding only: how far in the picture is zoomed and moved, so a small detail can be reached.
+    var zoom by remember { mutableFloatStateOf(1f) }
+    var pan by remember { mutableStateOf(Offset.Zero) }
+    LaunchedEffect(mode) {
+        if (mode != EditMode.HIDE) {
+            zoom = 1f
+            pan = Offset.Zero
+        }
+    }
     var moving by remember { mutableStateOf<PictureText?>(null) }
     var cropping by remember { mutableStateOf<Rect?>(null) }
     var box by remember { mutableStateOf(Size.Zero) }
@@ -70,11 +87,12 @@ internal fun PictureCanvas(
             texts = moving?.let { m -> doc.texts.map { if (it.id == m.id) m else it } } ?: doc.texts,
         )
     val now by rememberUpdatedState(
-        Tools(doc, mode, pen, penWidth, shape, onStroke, onText, onTextTap, onCrop),
+        Tools(doc, mode, pen, penWidth, shape, onStroke, onText, onTextTap, onCrop, onHide),
     )
     val density = LocalDensity.current
     val inset = with(density) { 28.dp.toPx() }
     val grab = with(density) { 30.dp.toPx() }
+    val smallest = with(density) { 6.dp.toPx() }
 
     Canvas(
         modifier
@@ -86,6 +104,7 @@ internal fun PictureCanvas(
                     val tools = now
                     val pad = if (tools.mode == EditMode.CROP) inset else 0f
                     val m = tools.doc.matrix(box.width, box.height, tools.mode == EditMode.CROP, pad)
+                    if (tools.mode == EditMode.HIDE) m.postConcat(lens(zoom, pan, box))
                     val inv = Matrix().also { m.invert(it) }
                     when (tools.mode) {
                         EditMode.DRAW -> {
@@ -114,6 +133,31 @@ internal fun PictureCanvas(
                                 }
                                 cropping?.let(tools.onCrop)
                                 cropping = null
+                            }
+                        }
+                        EditMode.HIDE -> {
+                            down.consume()
+                            val start = inv.point(down.position)
+                            var pinched = false
+                            do {
+                                val event = awaitPointerEvent()
+                                if (event.changes.count { it.pressed } > 1) pinched = true
+                                if (pinched) {
+                                    // Two fingers zoom and move the picture; the box being dragged is dropped.
+                                    boxing = null
+                                    zoom = (zoom * event.calculateZoom()).coerceIn(1f, 4f)
+                                    pan = keptInView(pan + event.calculatePan(), zoom, box)
+                                } else {
+                                    val finger = event.changes.firstOrNull { it.id == down.id }
+                                    if (finger != null && finger.pressed) boxing = tools.doc.hideBox(start, inv.point(finger.position))
+                                }
+                                event.changes.forEach { it.consume() }
+                            } while (event.changes.any { it.pressed })
+                            val drawn = boxing
+                            boxing = null
+                            val scale = m.mapRadius(1f)
+                            if (!pinched && drawn != null && drawn.width * scale >= smallest && drawn.height * scale >= smallest) {
+                                tools.onHide(drawn)
                             }
                         }
                         EditMode.NONE -> {
@@ -151,12 +195,18 @@ internal fun PictureCanvas(
             },
     ) {
         val m = view.matrix(size.width, size.height, whole, if (whole) inset else 0f)
-        val shown = view.shownRect(size.width, size.height, whole, if (whole) inset else 0f)
+        var shown = view.shownRect(size.width, size.height, whole, if (whole) inset else 0f)
+        if (mode == EditMode.HIDE) {
+            val looking = lens(zoom, pan, size)
+            m.postConcat(looking)
+            val r = RectF(shown.left, shown.top, shown.right, shown.bottom).also { looking.mapRect(it) }
+            shown = Rect(r.left, r.top, r.right, r.bottom).intersect(Rect(Offset.Zero, size))
+        }
         drawIntoCanvas { canvas ->
             val native = canvas.nativeCanvas
             native.save()
             if (!whole) native.clipRect(shown.left, shown.top, shown.right, shown.bottom)
-            drawPicture(native, bitmap, view, m, shadow, live, typing)
+            drawPicture(native, bitmap, view, m, shadow, hideInk, live, typing, boxing)
             native.restore()
         }
         if (whole) cropFrame(onScreen(view.crop, shown), t.photoScrim, t.onPhoto)
@@ -174,7 +224,29 @@ private class Tools(
     val onText: (PictureText) -> Unit,
     val onTextTap: (PictureText) -> Unit,
     val onCrop: (Rect) -> Unit,
+    val onHide: (Rect) -> Unit,
 )
+
+/** The zoom about the box's middle, then the move: what hiding lays over the fitted picture. */
+private fun lens(
+    zoom: Float,
+    pan: Offset,
+    box: Size,
+) = Matrix().apply {
+    setScale(zoom, zoom, box.width / 2f, box.height / 2f)
+    postTranslate(pan.x, pan.y)
+}
+
+/** A move kept so the zoomed picture still fills the box: none at all when not zoomed. */
+private fun keptInView(
+    pan: Offset,
+    zoom: Float,
+    box: Size,
+): Offset {
+    val x = box.width * (zoom - 1f) / 2f
+    val y = box.height * (zoom - 1f) / 2f
+    return Offset(pan.x.coerceIn(-x, x), pan.y.coerceIn(-y, y))
+}
 
 private fun Matrix.point(at: Offset): Offset {
     val p = floatArrayOf(at.x, at.y)

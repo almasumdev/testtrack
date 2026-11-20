@@ -6,11 +6,14 @@ import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.graphics.Typeface
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.res.ResourcesCompat
@@ -18,7 +21,9 @@ import com.eazyverse.testtrack.R
 import java.io.ByteArrayOutputStream
 import kotlin.math.ceil
 import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
 /*
@@ -43,9 +48,9 @@ internal fun loadWordsFace(context: Context) {
 }
 
 /**
- * The picture under [m] (its own pixels to the canvas), with its lines and words, and [live] being
- * drawn. [hide] leaves one word out while it is being typed over. [shadow] is the soft edge under
- * words, so they read on any picture.
+ * The picture under [m] (its own pixels to the canvas), with its boxes in solid [hideInk], its lines
+ * and words, and [live] or [liveBox] being drawn. [hide] leaves one word out while it is being typed
+ * over. [shadow] is the soft edge under words, so they read on any picture.
  */
 internal fun drawPicture(
     canvas: Canvas,
@@ -53,12 +58,18 @@ internal fun drawPicture(
     doc: PictureDoc,
     m: Matrix,
     shadow: Int,
+    hideInk: Int,
     live: PenStroke? = null,
     hide: Long? = null,
+    liveBox: Rect? = null,
 ) {
     canvas.save()
     canvas.concat(m)
     canvas.drawBitmap(bitmap, 0f, 0f, Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG))
+    if (doc.hides.isNotEmpty() || liveBox != null) {
+        val ink = solid(hideInk)
+        (doc.hides + listOfNotNull(liveBox)).forEach { canvas.drawRect(it.left, it.top, it.right, it.bottom, ink) }
+    }
     doc.strokes.forEach { drawStroke(canvas, it) }
     live?.let { drawStroke(canvas, it) }
     doc.texts.forEach { if (it.id != hide) drawWords(canvas, it, shadow) }
@@ -157,28 +168,86 @@ internal fun wordsHit(
     return kotlin.math.abs(x) <= size.width / 2f + slop && kotlin.math.abs(y) <= size.height / 2f + slop
 }
 
+/** A fill that covers whatever is under it: full alpha and hard edges. [replace] writes the pixels outright. */
+private fun solid(
+    ink: Int,
+    replace: Boolean = false,
+) = Paint().apply {
+    color = ink
+    alpha = 255
+    style = Paint.Style.FILL
+    isAntiAlias = false
+    if (replace) xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC)
+}
+
 /**
- * The edited picture as it is sent: turned, cropped, drawn on, no longer than [SEND_LONG_SIDE] on
- * its long side and a JPEG under [SEND_MAX_BYTES]. Slow, so off the main thread.
+ * A copy of [bitmap] with every box in [hides] painted over in solid [ink]: whole pixels, rounded
+ * outwards, full alpha. Done before any turn, crop or scaling, so what was under a box is gone from
+ * every pixel made from it. [bitmap] itself is left alone; with no boxes it is handed back as it is.
+ */
+internal fun burnHides(
+    bitmap: Bitmap,
+    hides: List<Rect>,
+    ink: Int,
+): Bitmap {
+    if (hides.isEmpty()) return bitmap
+    val copy = bitmap.copy(Bitmap.Config.ARGB_8888, true) ?: error("That picture is too big to edit.")
+    val canvas = Canvas(copy)
+    val paint = solid(ink, replace = true)
+    hides.forEach { canvas.drawRect(floor(it.left), floor(it.top), ceil(it.right), ceil(it.bottom), paint) }
+    return copy
+}
+
+/**
+ * The edited picture at its full size: turned, cropped, drawn on, with its boxes burned into the
+ * pixels (see [burnHides]). The caller recycles it. Slow, so off the main thread.
+ */
+internal fun flattenPicture(
+    bitmap: Bitmap,
+    doc: PictureDoc,
+    shadow: Int,
+    hideInk: Int,
+): Bitmap {
+    val source = burnHides(bitmap, doc.hides, hideInk)
+    try {
+        val w = doc.cropWidth.roundToInt().coerceAtLeast(1)
+        val h = doc.cropHeight.roundToInt().coerceAtLeast(1)
+        val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        drawPicture(Canvas(out), source, doc, doc.matrix(w.toFloat(), h.toFloat()), shadow, hideInk)
+        return out
+    } finally {
+        if (source !== bitmap) source.recycle()
+    }
+}
+
+/**
+ * The edited picture as it is sent: turned, cropped, drawn on, its boxes burned in, no longer than
+ * [SEND_LONG_SIDE] on its long side and a JPEG under [SEND_MAX_BYTES]. Slow, so off the main thread.
  */
 internal fun exportPicture(
     bitmap: Bitmap,
     doc: PictureDoc,
     shadow: Int,
+    hideInk: Int,
 ): ByteArray {
-    var longSide = max(doc.cropWidth, doc.cropHeight).coerceAtMost(SEND_LONG_SIDE.toFloat())
-    repeat(4) {
-        val scale = longSide / max(doc.cropWidth, doc.cropHeight)
-        val w = (doc.cropWidth * scale).toInt().coerceAtLeast(1)
-        val h = (doc.cropHeight * scale).toInt().coerceAtLeast(1)
-        val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        try {
-            drawPicture(Canvas(out), bitmap, doc, doc.matrix(w.toFloat(), h.toFloat()), shadow)
-            jpegUnder(out)?.let { return it }
-        } finally {
-            out.recycle()
+    val source = burnHides(bitmap, doc.hides, hideInk)
+    try {
+        var longSide = max(doc.cropWidth, doc.cropHeight).coerceAtMost(SEND_LONG_SIDE.toFloat())
+        repeat(4) {
+            val scale = longSide / max(doc.cropWidth, doc.cropHeight)
+            val w = (doc.cropWidth * scale).toInt().coerceAtLeast(1)
+            val h = (doc.cropHeight * scale).toInt().coerceAtLeast(1)
+            val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            try {
+                drawPicture(Canvas(out), source, doc, doc.matrix(w.toFloat(), h.toFloat()), shadow, hideInk)
+                jpegUnder(out)?.let { return it }
+            } finally {
+                out.recycle()
+            }
+            longSide *= 0.75f
         }
-        longSide *= 0.75f
+    } finally {
+        if (source !== bitmap) source.recycle()
     }
     error("That picture is too big to send.")
 }

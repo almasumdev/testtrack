@@ -17,7 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import coil.compose.AsyncImage
-import com.eazyverse.testtrack.ui.ProofEditor
+import com.eazyverse.testtrack.ui.ProofPictureEditor
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import java.io.File
 
@@ -46,7 +46,7 @@ class ProofFixtureActivity : ComponentActivity() {
                 var editing by remember { mutableStateOf(true) }
                 var image by remember { mutableStateOf(Uri.fromFile(file)) }
                 if (editing) {
-                    ProofEditor(image, onKeep = { image = it }, onClose = { editing = false })
+                    ProofPictureEditor(image, onKeep = { image = it }, onClose = { editing = false })
                 } else {
                     Column {
                         Text("Saved local fixture")

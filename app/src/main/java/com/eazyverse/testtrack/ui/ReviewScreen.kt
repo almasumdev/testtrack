@@ -370,7 +370,7 @@ fun ReviewBody(
         }
     }
     editingProof?.let { uri ->
-        ProofEditor(uri, onKeep = onPicked, onClose = { editingProof = null })
+        ProofPictureEditor(uri, onKeep = onPicked, onClose = { editingProof = null })
     }
     if (answering && job?.canReply == true) {
         AnswerSheet(onSend = onReply, onDismiss = { answering = false })

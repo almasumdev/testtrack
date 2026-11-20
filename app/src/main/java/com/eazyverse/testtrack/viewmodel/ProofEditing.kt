@@ -2,10 +2,6 @@ package com.eazyverse.testtrack.viewmodel
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.RectF
 import android.net.Uri
 import com.eazyverse.testtrack.data.ProofImages
 import kotlinx.coroutines.Dispatchers
@@ -22,30 +18,19 @@ object ProofEditing {
             ProofImages.decode(context, uri)
         }
 
+    /**
+     * Writes an edited screenshot to the cache as a JPEG and answers its file. [edited] already has
+     * its hidden boxes burned into the pixels (the editor's flatten does that); a JPEG from a bitmap
+     * carries pixels only, so no EXIF or other metadata from the original goes with it. [edited] is
+     * left for the caller to recycle.
+     */
     suspend fun save(
         context: Context,
-        original: Bitmap,
-        masks: List<RectF>,
+        edited: Bitmap,
     ): Uri =
         withContext(Dispatchers.IO) {
-            val edited = original.copy(Bitmap.Config.ARGB_8888, true)
-            try {
-                val paint = Paint().apply { color = Color.BLACK }
-                val canvas = Canvas(edited)
-                for (mask in masks) {
-                    canvas.drawRect(
-                        mask.left * edited.width,
-                        mask.top * edited.height,
-                        mask.right * edited.width,
-                        mask.bottom * edited.height,
-                        paint,
-                    )
-                }
-                val file = File(context.cacheDir, "proof_edit_${UUID.randomUUID()}.jpg")
-                file.writeBytes(ProofImages.jpeg(edited))
-                Uri.fromFile(file)
-            } finally {
-                edited.recycle()
-            }
+            val file = File(context.cacheDir, "proof_edit_${UUID.randomUUID()}.jpg")
+            file.writeBytes(ProofImages.jpeg(edited))
+            Uri.fromFile(file)
         }
 }

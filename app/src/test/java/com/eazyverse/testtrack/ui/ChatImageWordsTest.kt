@@ -26,9 +26,10 @@ class ChatImageWordsTest {
 
     @Test
     fun eachModeShowsExactlyOneSetOfControls() {
-        assertEquals(EditorBars(TopBar.TOOLS, BottomBar.CAPTION), barsFor(false, EditMode.NONE))
+        assertEquals(EditorBars(TopBar.TOOLS, BottomBar.FOOTER), barsFor(false, EditMode.NONE))
         assertEquals(EditorBars(TopBar.DRAW, BottomBar.PEN), barsFor(false, EditMode.DRAW))
         assertEquals(EditorBars(TopBar.CROP, BottomBar.CROP), barsFor(false, EditMode.CROP))
+        assertEquals(EditorBars(TopBar.HIDE, BottomBar.HIDE), barsFor(false, EditMode.HIDE))
     }
 
     @Test
@@ -37,6 +38,7 @@ class ChatImageWordsTest {
         assertEquals(BackStep.FINISH_WORDS, backStep(true, EditMode.DRAW))
         assertEquals(BackStep.FINISH_WORDS, backStep(true, EditMode.CROP))
         assertEquals(BackStep.LEAVE_TOOL, backStep(false, EditMode.DRAW))
+        assertEquals(BackStep.LEAVE_TOOL, backStep(false, EditMode.HIDE))
         assertEquals(BackStep.CANCEL_CROP, backStep(false, EditMode.CROP))
         assertEquals(BackStep.CLOSE, backStep(false, EditMode.NONE))
     }

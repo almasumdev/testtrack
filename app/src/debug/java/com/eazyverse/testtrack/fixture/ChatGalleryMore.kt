@@ -59,11 +59,13 @@ import com.eazyverse.testtrack.ui.DrawTopBar
 import com.eazyverse.testtrack.ui.EditHistory
 import com.eazyverse.testtrack.ui.EditMode
 import com.eazyverse.testtrack.ui.Gutter
+import com.eazyverse.testtrack.ui.HideBar
 import com.eazyverse.testtrack.ui.PenBar
 import com.eazyverse.testtrack.ui.PenStroke
 import com.eazyverse.testtrack.ui.PictureCanvas
 import com.eazyverse.testtrack.ui.PictureDoc
 import com.eazyverse.testtrack.ui.PictureText
+import com.eazyverse.testtrack.ui.PictureTool
 import com.eazyverse.testtrack.ui.PictureViewer
 import com.eazyverse.testtrack.ui.SegmentedTabs
 import com.eazyverse.testtrack.ui.ToolsTopBar
@@ -286,8 +288,10 @@ private fun EditorFrame(
     Box(Modifier.fillMaxWidth().height(640.dp).background(t.photo)) {
         Column(Modifier.fillMaxSize()) {
             when (mode) {
-                EditMode.NONE -> ToolsTopBar(history.canUndo, {}, {}, {}, {}, history::undo)
+                EditMode.NONE ->
+                    ToolsTopBar(setOf(PictureTool.CROP, PictureTool.DRAW, PictureTool.WORDS), history.canUndo, {}, {}, history::undo)
                 EditMode.DRAW -> DrawTopBar(history.canUndo, history::undo, {})
+                EditMode.HIDE -> DrawTopBar(history.canUndo, history::undo, {}, doneLabel = "Done hiding")
                 EditMode.CROP -> CropTopBar({}, {})
             }
             Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -303,10 +307,12 @@ private fun EditorFrame(
                     onText = { moved -> history.commit(doc.copy(texts = doc.texts.map { if (it.id == moved.id) moved else it })) },
                     onTextTap = {},
                     onCrop = { history.commit(doc.copy(crop = it)) },
+                    onHide = { history.commit(doc.copy(hides = doc.hides + it)) },
                 )
             }
             when (mode) {
                 EditMode.DRAW -> PenBar(pen, 6f, {}, {})
+                EditMode.HIDE -> HideBar(doc.hides.size)
                 EditMode.CROP -> CropBar(shape, {}, { history.commit(doc.turned()) })
                 EditMode.NONE -> {
                     var value by remember { mutableStateOf(TextFieldValue(caption, TextRange(caption.length))) }

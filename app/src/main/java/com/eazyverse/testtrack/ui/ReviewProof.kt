@@ -23,6 +23,7 @@ import com.eazyverse.testtrack.domain.ChatThread
 import com.eazyverse.testtrack.domain.clockTime
 import com.eazyverse.testtrack.domain.instantOf
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.ProofEditing
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -93,6 +94,37 @@ fun OverlayPermissionDialog(
         confirm = "Open settings",
         onConfirm = onOpen,
         onDismiss = onDismiss,
+    )
+}
+
+/** The review screenshot's tools: crop and turn, and boxes over anything personal. */
+private val ProofTools = setOf(PictureTool.CROP, PictureTool.HIDE)
+
+/**
+ * The screenshot in the picture editor before it is used: crop it and hide anything personal. The
+ * edited picture is written by [ProofEditing.save] and its file goes to [onKeep]. Closing without
+ * using it keeps the picture as it was.
+ */
+@Composable
+internal fun ProofPictureEditor(
+    uri: Uri,
+    onKeep: (Uri) -> Unit,
+    onClose: () -> Unit,
+) {
+    val context = LocalContext.current
+    PictureEditor(
+        source = uri,
+        tools = ProofTools,
+        title = "Check your screenshot",
+        copy =
+            "The app's owner sees this picture. If they dispute it, a few reviewers and the TestTrack team see it too. " +
+                "Hide anything personal first.",
+        primaryLabel = "Use screenshot",
+        failText = "The edited screenshot could not be saved. Try again.",
+        unreadable = "That image could not be opened. Choose another screenshot.",
+        write = { ProofEditing.save(context, it) },
+        onDone = onKeep,
+        onClose = onClose,
     )
 }
 

@@ -14,9 +14,9 @@ import kotlin.math.min
 
 /*
  * What the picture editor has done to a picture, as plain values: quarter turns, a crop, pen
- * lines and words. Lines and words are kept in the picture's own pixels, so a turn or a crop
- * after them never moves them on the picture. The crop is kept as fractions of the turned
- * picture, so it stays square to the screen.
+ * lines, words and boxes that hide details. Lines, words and boxes are kept in the picture's own
+ * pixels, so a turn or a crop after them never moves them on the picture. The crop is kept as
+ * fractions of the turned picture, so it stays square to the screen.
  */
 
 /** A line drawn with the pen, in the picture's own pixels. */
@@ -37,7 +37,7 @@ internal data class PictureText(
 )
 
 /** What the editor can be doing besides showing the picture. */
-internal enum class EditMode { NONE, CROP, DRAW }
+internal enum class EditMode { NONE, CROP, DRAW, HIDE }
 
 /** A crop's shape: free, or a width over height held while a corner is dragged. */
 internal enum class CropShape(
@@ -60,6 +60,8 @@ internal data class PictureDoc(
     val crop: Rect = WHOLE,
     val strokes: List<PenStroke> = emptyList(),
     val texts: List<PictureText> = emptyList(),
+    /** Boxes over details, in the picture's own pixels. They become solid pixels when it is written out. */
+    val hides: List<Rect> = emptyList(),
 ) {
     val turnedWidth: Float get() = (if (turns % 2 == 1) height else width).toFloat()
     val turnedHeight: Float get() = (if (turns % 2 == 1) width else height).toFloat()
@@ -144,6 +146,21 @@ internal data class PictureDoc(
         text: String,
         color: Color,
     ) = PictureText(id, text, color, cropCenter(), min(cropWidth, cropHeight) / 9f, -90f * turns)
+
+    /** The box between two points (the picture's own pixels), kept on the picture. */
+    fun hideBox(
+        a: Offset,
+        b: Offset,
+    ): Rect {
+        val w = width.toFloat()
+        val h = height.toFloat()
+        return Rect(
+            min(a.x, b.x).coerceIn(0f, w),
+            min(a.y, b.y).coerceIn(0f, h),
+            max(a.x, b.x).coerceIn(0f, w),
+            max(a.y, b.y).coerceIn(0f, h),
+        )
+    }
 
     /** The biggest crop of [shape] that fits, centred where the crop is now. Free keeps the crop. */
     fun cropFor(shape: CropShape): Rect {

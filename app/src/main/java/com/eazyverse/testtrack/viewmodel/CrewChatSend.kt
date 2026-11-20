@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.viewmodel
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.data.ProofImages
@@ -45,12 +44,6 @@ fun CrewChatViewModel.send() {
     clearDraft()
     post(id)
 }
-
-/** A picked picture, read for the editor: bounded, the right way up, at most 1600 on its long side. */
-suspend fun loadChatPicture(
-    context: Context,
-    uri: Uri,
-): Bitmap = withContext(Dispatchers.IO) { ProofImages.decode(context.applicationContext, uri) }
 
 /**
  * An edited picture and its caption, sent as one message. The JPEG is kept in the cache under the

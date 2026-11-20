@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.Crop
+import com.composables.icons.lucide.EyeOff
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.RotateCw
@@ -159,14 +160,13 @@ internal fun PenBar(
 internal const val PEN_MIN = 2f
 internal const val PEN_MAX = 28f
 
-/** The top bar with no tool open: close, the tools, and undo. */
+/** The top bar with no tool open: close, the editor's [tools] in [PictureTool]'s order, and undo. */
 @Composable
 internal fun ToolsTopBar(
+    tools: Set<PictureTool>,
     canUndo: Boolean,
     onClose: () -> Unit,
-    onCrop: () -> Unit,
-    onDraw: () -> Unit,
-    onWords: () -> Unit,
+    onTool: (PictureTool) -> Unit,
     onUndo: () -> Unit,
 ) {
     Row(
@@ -175,22 +175,29 @@ internal fun ToolsTopBar(
     ) {
         EditorButton(Lucide.X, "Close", onClick = onClose)
         Spacer(Modifier.weight(1f))
-        EditorButton(Lucide.Crop, "Crop and turn", onClick = onCrop)
-        Spacer(Modifier.width(8.dp))
-        EditorButton(Lucide.Pencil, "Draw", onClick = onDraw)
-        Spacer(Modifier.width(8.dp))
-        EditorButton(Lucide.Type, "Add words", onClick = onWords)
-        Spacer(Modifier.width(8.dp))
+        PictureTool.entries.filter { it in tools }.forEach { tool ->
+            when (tool) {
+                PictureTool.CROP -> EditorButton(Lucide.Crop, "Crop and turn") { onTool(tool) }
+                PictureTool.DRAW -> EditorButton(Lucide.Pencil, "Draw") { onTool(tool) }
+                PictureTool.WORDS -> EditorButton(Lucide.Type, "Add words") { onTool(tool) }
+                PictureTool.HIDE -> EditorButton(Lucide.EyeOff, "Hide details") { onTool(tool) }
+            }
+            Spacer(Modifier.width(8.dp))
+        }
         EditorButton(Lucide.Undo2, "Undo", enabled = canUndo, onClick = onUndo)
     }
 }
 
-/** The top bar while drawing: undo a stroke on the left, the tick on the right. The other tools hide. */
+/**
+ * The top bar while drawing or hiding: undo a stroke or a box on the left, the tick ([doneLabel])
+ * on the right. The other tools hide.
+ */
 @Composable
 internal fun DrawTopBar(
     canUndo: Boolean,
     onUndo: () -> Unit,
     onDone: () -> Unit,
+    doneLabel: String = "Done drawing",
 ) {
     Row(
         Modifier.fillMaxWidth().height(EditorTopBar).padding(horizontal = 12.dp),
@@ -198,7 +205,7 @@ internal fun DrawTopBar(
     ) {
         EditorButton(Lucide.Undo2, "Undo", enabled = canUndo, onClick = onUndo)
         Spacer(Modifier.weight(1f))
-        EditorButton(Lucide.Check, "Done drawing", active = true, size = 48.dp, onClick = onDone)
+        EditorButton(Lucide.Check, doneLabel, active = true, size = 48.dp, onClick = onDone)
     }
 }
 
