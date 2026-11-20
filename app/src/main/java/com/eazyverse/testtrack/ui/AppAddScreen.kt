@@ -100,13 +100,13 @@ fun AppAddScreen(
                 ) {
                     Spacer(Modifier.height(8.dp))
                     if (vm.starting) AddStart(vm) else AddApp(vm, chooseIcon)
-                    // Scrolled to the end, the last block stops just over the button. The 16 here and
-                    // the 8 under it make the same 24 as an unpinned page, so pinning never flickers.
-                    if (pinned) Spacer(Modifier.height(16.dp))
+                    // Scrolled to the end, the last block stops 12dp over the 18dp foot fade, which
+                    // sits on the button. Always there, so pinning never flickers and the end of a
+                    // growing field has real room to scroll into.
+                    Spacer(Modifier.height(30.dp))
                 }
                 if (pinned) FootFade(Modifier.align(Alignment.BottomCenter))
             }
-            Spacer(Modifier.height(if (pinned) 8.dp else 24.dp))
             val padded = Modifier.padding(horizontal = Gutter)
             if (vm.starting) {
                 Primary(

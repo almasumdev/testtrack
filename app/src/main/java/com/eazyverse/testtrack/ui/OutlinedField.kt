@@ -104,8 +104,8 @@ internal fun OutlinedField(
     onImeAction: (() -> Unit)? = null,
     /**
      * For a box that grows inside a page that scrolls: while it has focus and its text changes, the
-     * page scrolls so the box's bottom edge, its counter and room for the foot fade and a gap stay in
-     * view, and again as the keyboard moves.
+     * page scrolls so the box's bottom edge and its counter stay in view, and again as the keyboard
+     * moves. The page leaves its own room under the last block for a foot fade.
      */
     keepInView: Boolean = false,
 ) {
@@ -169,14 +169,12 @@ internal fun OutlinedField(
     val labelDown = !focused && value.isEmpty()
     val requester = remember { BringIntoViewRequester() }
     var size by remember { mutableStateOf(IntSize.Zero) }
-    // The page's foot fade is 18dp over the bottom of the scrolled area; 12dp more is the gap.
-    val room = with(LocalDensity.current) { (18.dp + 12.dp).toPx() }
     // The keyboard sliding up shrinks the page, so the scroll is asked again as it moves.
     val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
     if (keepInView) {
         LaunchedEffect(value, focused, imeBottom) {
             if (focused && size.height > 0) {
-                requester.bringIntoView(Rect(0f, 0f, size.width.toFloat(), size.height + room))
+                requester.bringIntoView(Rect(0f, 0f, size.width.toFloat(), size.height.toFloat()))
             }
         }
     }
