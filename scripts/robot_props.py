@@ -685,8 +685,20 @@ def lock():
     }
 
 
+def chat():
+    """Chat, nobody has written yet: a speech bubble held up in both hands, three dots taking turns, as if typing."""
+    # One outline for body and tail, so the tail grows out of the bubble with no seam.
+    d = ('M424 800 H830 A74 74 0 0 1 904 874 V930 A74 74 0 0 1 830 1004 H572 '
+         'Q548 1040 486 1062 Q512 1030 508 1004 H424 A74 74 0 0 1 350 930 V874 A74 74 0 0 1 424 800 Z')
+    bubble = [shape(d, ('#FFFFFF', '#E3ECF3'), (350, 800, 904, 1062)),
+              shine('M392 880 Q394 836 440 828', 13, 0.9)]
+    dots = {f'chat_dot{i + 1}': [shape(circle(x, 902, 30), NAVY, (x - 30, 872, x + 30, 932), stroke=None)]
+            for i, x in enumerate((537, 627, 717))}
+    return {'chat_face': eyes(0, 6, 50) + mouth_open() + cheeks(), 'chat_bubble': bubble, **dots}
+
+
 PROPS = [music, popcorn, notes, icecream, blocks, kite, calendar, trophy, phone, lock, plug, gears, letter, seal, scales, wallet,
-         flag, clock, faces]
+         flag, clock, faces, chat]
 
 
 # ---------------------------------------------------------------- emit

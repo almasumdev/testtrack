@@ -206,8 +206,14 @@ enum class Prop(
             ),
     ),
 
-    /** Nothing in its hands: only the robot, breathing, blinking and hovering, as a page waits on people. */
-    Idle(),
+    /** Nobody has written in the chat yet: a speech bubble held up in both hands, its three dots taking turns, as if typing. */
+    Chat(
+        PropLayer(R.drawable.robot_prop_chat_bubble),
+        PropLayer(R.drawable.robot_prop_chat_dot1, Pulse(0f, 1200f)),
+        PropLayer(R.drawable.robot_prop_chat_dot2, Pulse(0.33f, 1200f)),
+        PropLayer(R.drawable.robot_prop_chat_dot3, Pulse(0.66f, 1200f)),
+        face = R.drawable.robot_prop_chat_face,
+    ),
     ;
 
     internal val layers = layers.toList()

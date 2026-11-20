@@ -236,7 +236,7 @@ internal fun SendNote(sending: Boolean) {
     }
 }
 
-/** Nobody has written yet: the app's robot, idling, then a title and one line, centred where it is put. */
+/** Nobody has written yet: the app's robot holding up a speech bubble, then a title and one line, centred where it is put. */
 @Composable
 internal fun ChatEmptyNote(
     canPost: Boolean,
@@ -244,7 +244,7 @@ internal fun ChatEmptyNote(
 ) {
     val t = Tt.colors
     Column(modifier.padding(horizontal = 32.dp, vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        RobotHolding(Prop.Idle, size = 120.dp)
+        RobotHolding(Prop.Chat, size = 140.dp)
         Spacer(Modifier.height(14.dp))
         Text("No messages yet", style = chatStyle(17f, 22f), fontWeight = FontWeight.SemiBold, color = t.text)
         Spacer(Modifier.height(4.dp))
