@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -35,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Hourglass
@@ -231,3 +235,58 @@ internal fun ProblemMark(
         ProblemCallout(app, problems, open, onClose = { onOpenChange(false) }, onOpen = onOpen)
     }
 }
+
+/**
+ * One start row on the app page, a Crew test or Get reviews block: an icon tile, a title with a line
+ * under it, and an optional action at the end. It is a [CrewCard], so it has the corner and hairline of
+ * every other tile on the page and the Circle rows. The line wraps to two rows of words instead of
+ * being cut, and the action is held to [ActionMaxWidth] so it never takes the line's room.
+ */
+@Composable
+internal fun AppStartRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
+) {
+    val t = Tt.colors
+    CrewCard(
+        modifier.heightIn(min = 60.dp),
+        padding = PaddingValues(start = 14.dp, top = 10.dp, end = 12.dp, bottom = 10.dp),
+        onClick = onClick,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconTile(icon)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
+                    fontWeight = FontWeight.SemiBold,
+                    color = t.text,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
+                    color = t.text3,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (action != null) {
+                Spacer(Modifier.width(8.dp))
+                action()
+            } else if (onClick != null) {
+                Spacer(Modifier.width(6.dp))
+                Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = t.text4)
+            }
+        }
+    }
+}
+
+/** The most room an [AppStartRow] gives its action, so the line beside it keeps its words. */
+internal val ActionMaxWidth = 96.dp

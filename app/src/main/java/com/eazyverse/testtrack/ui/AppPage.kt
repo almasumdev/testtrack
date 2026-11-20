@@ -113,6 +113,14 @@ fun AppPage(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         // The name is the page's own heading, so the bar is only the way back.
         topBar = { PageBar("", onBack) },
+        // Going live and deleting stay at the foot of the screen, above the nav area, whatever the
+        // content height; the scroll above gets their height as bottom padding.
+        bottomBar = {
+            if (app != null) {
+                val busy = vm.acting == app.id
+                Manage(app, busy, if (busy) vm.actingOn else null, onLive = { askLive = true }, onDelete = { askDelete = true })
+            }
+        },
     ) { padding ->
         val scroll = rememberScrollState()
         Column(
@@ -151,8 +159,7 @@ fun AppPage(
                         AskMessage(AskFailure("That didn't work", it))
                     }
                     Testing(app, onOpenCrew, onOpenRequest, onCrew = { membership.require { onSeat(app.id) } }, onFeedback)
-                    Manage(app, busy, running, onLive = { askLive = true }, onDelete = { askDelete = true })
-                    Spacer(Modifier.height(28.dp))
+                    Spacer(Modifier.height(16.dp))
                 }
             }
         }
@@ -280,7 +287,7 @@ private fun VerifyCallout(
     onVerify: () -> Unit,
 ) {
     var how by remember { mutableStateOf(false) }
-    val shape = RoundedCornerShape(18.dp)
+    val shape = RoundedCornerShape(TileRadius)
     Column(
         Modifier
             .fillMaxWidth()
@@ -336,35 +343,29 @@ private fun Testing(
     if (!app.live || app.crew != null) {
         val crew = app.crew
         BlockHeading("Crew test", CREW_WHEN)
-        TileGroup(count = 1) { _, place ->
-            TileRow(
-                Lucide.Users,
-                if (crew == null) "Find a crew" else "Crew test",
-                place,
-                subtitle = if (crew == null) CREW_START_LINE else crewStatus(app),
-                trailing = if (!app.crewOpen && app.canCrew) ({ Cta("Put in for ${CrewRules.SEAT_COST} tix") }) else null,
-                onClick =
-                    when {
-                        crew != null && app.crewOpen -> ({ onOpenCrew(crew.crewId) })
-                        app.canCrew -> ({ onCrew(app.id) })
-                        else -> null
-                    },
-            )
-        }
+        AppStartRow(
+            Lucide.Users,
+            if (crew == null) "Find a crew" else "Crew test",
+            if (crew == null) CREW_START_LINE else crewStatus(app),
+            action = if (!app.crewOpen && app.canCrew) ({ Cta("Put in for ${CrewRules.SEAT_COST} tix") }) else null,
+            onClick =
+                when {
+                    crew != null && app.crewOpen -> ({ onOpenCrew(crew.crewId) })
+                    app.canCrew -> ({ onCrew(app.id) })
+                    else -> null
+                },
+        )
     }
     BlockHeading("Feedback", FEEDBACK_WHEN)
     val feedback = app.feedback
     if (feedback == null) {
-        TileGroup(count = 1) { _, place ->
-            TileRow(
-                Lucide.MessageSquare,
-                "Get reviews",
-                place,
-                subtitle = FEEDBACK_START_LINE,
-                trailing = if (app.canFeedback) ({ Cta("Ask") }) else null,
-                onClick = if (app.canFeedback) ({ onFeedback(app.id) }) else null,
-            )
-        }
+        AppStartRow(
+            Lucide.MessageSquare,
+            "Get reviews",
+            FEEDBACK_START_LINE,
+            action = if (app.canFeedback) ({ Cta("Ask") }) else null,
+            onClick = if (app.canFeedback) ({ onFeedback(app.id) }) else null,
+        )
     } else {
         val open = { onOpenRequest(feedback.postId) }
         FeedbackCard(
@@ -384,7 +385,7 @@ private fun Cta(text: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text,
-            Modifier.widthIn(max = 136.dp),
+            Modifier.widthIn(max = ActionMaxWidth),
             textAlign = TextAlign.End,
             maxLines = 2,
             style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
@@ -410,8 +411,10 @@ private fun Manage(
 ) {
     if (app.live && !app.canDelete && app.whyNotDelete.isBlank()) return
     val t = Tt.colors
-    Spacer(Modifier.height(30.dp))
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         if (!app.live) {
             val checking = running == AppAction.LIVE
             Button(
