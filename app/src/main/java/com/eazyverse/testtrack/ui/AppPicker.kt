@@ -3,27 +3,17 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,13 +22,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
@@ -115,18 +101,11 @@ internal fun AppPickerSheet(
                             PickRow(app) { close { onPick(app) } }
                             Spacer(Modifier.height(8.dp))
                         }
-                        OutlinedButton(
-                            onClick = { close(onAdd) },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, Tt.colors.cardLine),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Tt.colors.accentInk),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
-                        ) {
-                            Icon(Lucide.Plus, null, Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Add a new app", style = MaterialTheme.typography.labelLarge)
-                        }
+                        Outlined(
+                            "Add a new app",
+                            Modifier.fillMaxWidth(),
+                            icon = { Icon(Lucide.Plus, null, Modifier.size(18.dp)) },
+                        ) { close(onAdd) }
                     }
                 }
                 Spacer(Modifier.height(20.dp))
@@ -135,38 +114,27 @@ internal fun AppPickerSheet(
     }
 }
 
-private val PickerPackageStyle = tileStyle(12.5f, 14f, FontWeight.Medium)
-
 /** The same outline and source mark as My apps, with the package ID in place of its status. */
 @Composable
 private fun PickRow(
     app: AppEntry,
     onClick: () -> Unit,
 ) {
-    val t = Tt.colors
     // Two 19sp title lines and one 14sp package line fit the icon, also at larger text sizes.
-    val icon = AppTileIcon * LocalDensity.current.fontScale.coerceAtLeast(1f)
-    Row(
+    AppHead(
+        app.pkg,
+        app.name,
+        app.icon,
+        app.live,
+        app.pkg,
         Modifier
             .appTileFrame()
             .clickable(role = Role.Button, onClick = onClick)
             .semantics(mergeDescendants = true) {}
             .padding(AppTilePadding),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        SourcedAppMark(app.pkg, app.name, app.icon, app.live, size = icon, ownIcon = true)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f).height(icon), verticalArrangement = Arrangement.Center) {
-            Text(app.name, style = AppTileName, color = t.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text(
-                app.pkg,
-                style = PickerPackageStyle,
-                color = t.text3,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.width(8.dp))
-        Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = t.text4)
-    }
+        ownIcon = true,
+        trailing = { Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = Tt.colors.text4) },
+        subGap = 0.dp,
+        subStyle = TextStyles.DeveloperStyle,
+    )
 }

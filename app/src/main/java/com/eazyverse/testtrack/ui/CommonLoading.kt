@@ -108,14 +108,19 @@ fun AppHeadSkeleton(
     modifier: Modifier = Modifier,
     name: Dp = 140.dp,
     sub: Dp = 80.dp,
+    /** The icon's size: [AppHead]'s, grown with the font, unless given. */
+    icon: Dp = AppTileIcon * LocalDensity.current.fontScale.coerceAtLeast(1f),
+    corner: Dp = icon * 0.3f,
+    nameHeight: Dp = 15.dp,
+    /** Between the two bars. */
+    gap: Dp = 7.dp,
 ) {
-    val icon = AppTileIcon * LocalDensity.current.fontScale.coerceAtLeast(1f)
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
-        Skeleton(width = icon, height = icon, corner = icon * 0.3f)
+        Skeleton(width = icon, height = icon, corner = corner)
         Spacer(Modifier.width(12.dp))
         Column {
-            Skeleton(width = name, height = 15.dp)
-            Spacer(Modifier.height(7.dp))
+            Skeleton(width = name, height = nameHeight)
+            Spacer(Modifier.height(gap))
             Skeleton(width = sub, height = 11.dp)
         }
     }

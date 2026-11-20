@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -65,6 +66,9 @@ private val AppHeadSub = tileStyle(12.5f, 15f, FontWeight.Medium)
  * With [onClick] the whole head is one rounded press shape, with room inside it for the source
  * mark that hangs under the icon; without one it takes no room it does not need. [trailing] sits
  * at the far end, such as a count or a mark.
+ *
+ * [subGap] and [subStyle] set the line under the name: 2dp under it at 12.5 on 15 unless given,
+ * such as the review page's and the picker's package, flush under the name at 12.5 on 14.
  */
 @Composable
 internal fun AppHead(
@@ -79,6 +83,8 @@ internal fun AppHead(
     /** What TalkBack says a tap does, such as "Open Cherish on Google Play". */
     onClickLabel: String? = null,
     trailing: (@Composable RowScope.() -> Unit)? = null,
+    subGap: Dp = 2.dp,
+    subStyle: TextStyle = AppHeadSub,
 ) {
     val t = Tt.colors
     val mark = AppTileIcon * LocalDensity.current.fontScale.coerceAtLeast(1f)
@@ -102,8 +108,8 @@ internal fun AppHead(
         Column(Modifier.weight(1f)) {
             Text(name, style = AppTileName, color = t.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (sub.isNotEmpty()) {
-                Spacer(Modifier.height(2.dp))
-                Text(sub, style = AppHeadSub, color = t.text3, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(subGap))
+                Text(sub, style = subStyle, color = t.text3, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         if (trailing != null) {
@@ -126,4 +132,6 @@ internal fun AppHead(
     onClick: (() -> Unit)? = null,
     onClickLabel: String? = null,
     trailing: (@Composable RowScope.() -> Unit)? = null,
-) = AppHead(pkg, name, icon, live, AnnotatedString(sub), modifier, ownIcon, onClick, onClickLabel, trailing)
+    subGap: Dp = 2.dp,
+    subStyle: TextStyle = AppHeadSub,
+) = AppHead(pkg, name, icon, live, AnnotatedString(sub), modifier, ownIcon, onClick, onClickLabel, trailing, subGap, subStyle)

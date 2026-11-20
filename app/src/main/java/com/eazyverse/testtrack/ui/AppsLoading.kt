@@ -2,7 +2,6 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,21 +33,17 @@ internal fun AppsLoading() {
             userScrollEnabled = false,
         ) {
             items(SKELETON_ROWS) { i ->
-                Row(
+                AppHeadSkeleton(
                     Modifier
                         .padding(horizontal = Gutter, vertical = 4.dp)
                         .appTileFrame()
                         .padding(AppTilePadding),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Skeleton(width = AppTileIcon, height = AppTileIcon, corner = AppTileIcon * 0.3f)
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Skeleton(width = RowNames[i % RowNames.size].dp, height = 14.dp)
-                        Spacer(Modifier.height(8.dp))
-                        Skeleton(width = RowLines[i % RowLines.size].dp, height = 11.dp)
-                    }
-                }
+                    name = RowNames[i % RowNames.size].dp,
+                    sub = RowLines[i % RowLines.size].dp,
+                    icon = AppTileIcon,
+                    nameHeight = 14.dp,
+                    gap = 8.dp,
+                )
             }
         }
     }

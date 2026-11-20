@@ -137,15 +137,7 @@ internal fun CheckSkeleton(onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState(), enabled = false)
                 .padding(start = Gutter, end = Gutter, top = 4.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Skeleton(width = AppTileIcon, height = AppTileIcon, corner = 16.dp)
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Skeleton(width = 140.dp, height = 15.dp)
-                    Spacer(Modifier.height(7.dp))
-                    Skeleton(width = 80.dp, height = 11.dp)
-                }
-            }
+            AppHeadSkeleton(icon = AppTileIcon, corner = 16.dp)
             Spacer(Modifier.height(22.dp))
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Skeleton(width = 44.dp, height = 12.dp) }
             Spacer(Modifier.height(16.dp))
