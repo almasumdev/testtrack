@@ -3,9 +3,6 @@ package com.eazyverse.testtrack.ui
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,12 +59,9 @@ import kotlinx.coroutines.withContext
 @Composable
 internal fun rememberChatPicturePicker(vm: CrewChatViewModel): () -> Unit {
     var picked by remember { mutableStateOf<Uri?>(null) }
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) picked = uri
-        }
+    val pick = rememberImagePicker { uri -> if (uri != null) picked = uri }
     picked?.let { uri -> ChatPictureEditor(vm, uri) { picked = null } }
-    return remember(launcher) { { launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) } }
+    return pick
 }
 
 /**

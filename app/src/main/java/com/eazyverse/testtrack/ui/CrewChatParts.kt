@@ -242,17 +242,12 @@ internal fun ChatEmptyNote(
     canPost: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val t = Tt.colors
-    Column(modifier.padding(horizontal = 32.dp, vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        RobotHolding(Prop.Chat, size = 140.dp)
-        Spacer(Modifier.height(14.dp))
-        Text("No messages yet", style = chatStyle(17f, 22f), fontWeight = FontWeight.SemiBold, color = t.text)
-        Spacer(Modifier.height(4.dp))
-        Text(
-            if (canPost) "Say hi to your crew." else "Nobody wrote in this chat.",
-            style = chatStyle(14f, 20f),
-            color = t.text3,
-            textAlign = TextAlign.Center,
-        )
-    }
+    RobotState(
+        prop = Prop.Chat,
+        title = "No messages yet",
+        line = if (canPost) "Say hi to your crew." else "Nobody wrote in this chat.",
+        modifier = modifier,
+        fill = false,
+        robot = 140.dp,
+    )
 }
