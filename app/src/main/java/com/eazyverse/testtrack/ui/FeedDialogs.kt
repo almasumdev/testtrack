@@ -26,8 +26,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.EyeOff
 import com.composables.icons.lucide.ImagePlus
 import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.Lucide
@@ -127,7 +129,9 @@ fun FeedRefuseSheet(
                 ) { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
                 if (picture != null) RowPill("Remove", PillKind.GHOST) { picture = null }
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
+            InfoLine(Lucide.EyeOff, AnnotatedString("The reviewer sees it. Hide your name and email."))
+            Spacer(Modifier.height(14.dp))
             Primary("Refuse and hold $stake tix", enabled = enough, destructive = true) {
                 val reasonSent = sent.take(FeedRules.REFUSE_MAX)
                 val pictureSent = picture

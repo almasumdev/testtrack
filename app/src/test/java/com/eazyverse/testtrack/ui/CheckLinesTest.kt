@@ -30,6 +30,17 @@ class CheckLinesTest {
     }
 
     @Test
+    fun `the bar's subtitle says time left and pay, amber when it is close`() {
+        val now = 1_000_000_000L
+        val hour = 3_600_000L
+        assertEquals("1d 4h left, pays 20 tix" to BarTone.NORMAL, checkSubtitle(20, now + 28 * hour, null, now))
+        assertEquals("7h left, pays 10 tix" to BarTone.WARN, checkSubtitle(10, now + 7 * hour, null, now))
+        assertEquals("Pays 20 tix" to BarTone.NORMAL, checkSubtitle(20, null, null, now))
+        assertEquals("Accepted, paid 20 tix" to BarTone.OK, checkSubtitle(20, null, SettledReview(accepted = true), now))
+        assertEquals("Refused, members deciding" to BarTone.WARN, checkSubtitle(20, null, SettledReview(accepted = false), now))
+    }
+
+    @Test
     fun `the line after accepting names the reviewer by their first name`() {
         assertEquals("Tania", Waiting(id = "r1", appName = "Budget Buddy", reviewerName = "Tania Ahmed").firstName)
         assertEquals("The reviewer", Waiting(id = "r1", appName = "Budget Buddy").firstName)

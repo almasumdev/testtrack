@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -228,6 +229,8 @@ internal fun InlineAction(
     busy: Boolean = false,
     /** The words' ink: the accent's, or red for an action that costs something. */
     color: Color = Tt.colors.accentInk,
+    /** Underlined, as a way out after a question such as "Refused by mistake?". */
+    underline: Boolean = false,
     onClick: () -> Unit,
 ) {
     val dismissKeyboard = rememberDismissKeyboard()
@@ -255,6 +258,7 @@ internal fun InlineAction(
                     style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
+                    textDecoration = if (underline) TextDecoration.Underline else null,
                     maxLines = 2,
                 )
                 if (busy) CircularProgressIndicator(Modifier.size(18.dp), color = color, strokeWidth = 2.dp)

@@ -65,17 +65,18 @@ internal fun ProveAsks(job: ReviewJob) {
             .takeIf { it.isNotEmpty() && it != GENERAL_ASK }
     val ready = readyReview(job)
     if (asked == null && ready == null) return
+    val developer = ThreadApp(job.post.packageName, job.post.appName, job.post.icon)
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(ReviewSectionGap)) {
         if (asked != null) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 ThreadHeading("The developer asks")
-                ThreadBubble(ThreadSide.LEFT, who = "Developer", text = asked, face = ThreadFace.DEVELOPER)
+                ThreadGroup(listOf(ThreadPart.Words(asked)), face = ThreadFace.APP, app = developer)
             }
         }
         if (ready != null) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 ThreadHeading("A ready review", tag = "Optional")
-                ThreadBubble(ThreadSide.LEFT, who = "Developer", text = ready, face = ThreadFace.DEVELOPER)
+                ThreadGroup(listOf(ThreadPart.Words(ready)), face = ThreadFace.APP, app = developer)
             }
         }
     }

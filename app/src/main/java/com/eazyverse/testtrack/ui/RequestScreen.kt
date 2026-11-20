@@ -47,7 +47,10 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * took.
  */
 
-/** The page for one request. [onOpenWaiting] opens a review still waiting on the owner. */
+/**
+ * The page for one request. [onOpenWaiting] opens a review on its own page: one waiting on the
+ * owner, one refused with the members deciding, or one accepted.
+ */
 @Composable
 fun RequestCheck(
     request: Request,
@@ -182,7 +185,8 @@ private fun RequestReviewCard(
 ) {
     val t = Tt.colors
     val shape = RoundedCornerShape(CardRadius)
-    val waiting = review.state == "submitted"
+    // Waiting on you, refused with the members deciding, or accepted: each opens the review's own page.
+    val waiting = review.opensCheck
     val sent = review.proofRef.isNotBlank() || review.written.isNotBlank()
     var open by remember { mutableStateOf(false) }
     Column(

@@ -5,44 +5,49 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.composables.icons.lucide.LayoutGrid
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.CheckCheck
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Maximize2
 import com.composables.icons.lucide.User
-import com.composables.icons.lucide.X
+import com.eazyverse.testtrack.domain.textUseLabel
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * A review's back and forth, drawn the way the crew chat draws messages: the reviewer on the left,
- * the developer on the right, a quiet line between them for what happened. The same corners, fills
- * and type as a chat bubble, without a chat line behind it.
+ * the developer on the right. One person's turn is a group: a picture and words each in a bubble
+ * of their own, 4dp apart, with the corners toward the author tucked where they join, the face
+ * beside the last of them and one time line under the lot.
  */
 
 /** Which side a message sits on: the reviewer's on the left, the developer's on the right. */
@@ -51,8 +56,67 @@ enum class ThreadSide { LEFT, RIGHT }
 /** A message's fill: theirs on the soft surface, the reader's own in the accent, the other side on the tile. */
 enum class ThreadTone { THEIRS, MINE, SIDE }
 
-/** The face before a left-hand message: a person, the developer's app grid, or none. */
-enum class ThreadFace { PERSON, DEVELOPER, NONE }
+/**
+ * The face beside a left-hand group: a person, the app's own icon standing for its developer (who
+ * stays anonymous on a reviewer's pages: never their name or photo), or none.
+ */
+enum class ThreadFace { PERSON, APP, NONE }
+
+/** The app whose icon stands for its developer, for [ThreadFace.APP]. */
+data class ThreadApp(
+    val packageName: String,
+    val name: String,
+    val icon: String = "",
+)
+
+/** One bubble in a group. */
+sealed interface ThreadPart {
+    /** A screenshot, cropped to its top, where a review on Play sits. */
+    data class Picture(
+        val ref: String,
+        val width: Dp = 150.dp,
+        val height: Dp = 200.dp,
+    ) : ThreadPart
+
+    /**
+     * Words, with an optional footer inside the bubble: [footStart] on the left (in green with a
+     * check when [footOk], such as "145 characters"), [footEnd] muted on the right ("In their own words").
+     */
+    data class Words(
+        val text: String,
+        val footStart: String = "",
+        val footEnd: String = "",
+        val footOk: Boolean = false,
+    ) : ThreadPart
+}
+
+/**
+ * A review's text as a bubble: with the count in green once it is long enough for what was asked,
+ * and whose words it is on the right. Null for no text.
+ */
+internal fun reviewWords(
+    written: String,
+    needs: Int,
+    use: String?,
+): ThreadPart.Words? {
+    if (written.isBlank()) return null
+    val length = plainLength(written)
+    return ThreadPart.Words(
+        written,
+        footStart = if (needs > 0) "$length characters" else "",
+        footEnd = textUseLabel(use).orEmpty(),
+        footOk = needs > 0 && length >= needs,
+    )
+}
+
+private val PictureCorner = 14.dp
+private val Face = 28.dp
+private val FaceGap = 8.dp
+private val BubbleGap = 4.dp
+
+/** The widest a bubble grows: four fifths of the page between its gutters. */
+@Composable
+private fun threadBubbleMax(): Dp = ((LocalConfiguration.current.screenWidthDp.dp - Gutter * 2) * 0.8f)
 
 @Composable
 private fun threadInk(tone: ThreadTone): BubbleInk =
@@ -62,187 +126,175 @@ private fun threadInk(tone: ThreadTone): BubbleInk =
         ThreadTone.SIDE -> BubbleInk(Tt.colors.tile, Tt.colors.text)
     }
 
-/** A screenshot in a bubble: a phone's shape, cropped to its top, where a review on Play sits. */
-private val PictureWidth = 156.dp
-private val PictureHeight = 232.dp
-private val PictureShape = RoundedCornerShape(14.dp)
-
 /**
- * One message: who wrote it over it, the words and the screenshot in one bubble, and a quiet line
- * under it such as how long the text is. A tap on the picture calls [onPicture] with its ref.
- * [picture] draws a ref; it is given the bubble's width and cut to the bubble's height.
+ * One person's turn: [parts] as separate bubbles, the name over the first (left side), the face
+ * bottom-aligned with the last, and one [time] line under the group at the bubbles' edge. [sent]
+ * puts the green double check before the time, for the reader's own. A tap on a picture opens it
+ * whole in [ProofViewer], unless [onPicture] takes it. Inside [Thread] a new group starts 12dp below.
  */
 @Composable
-internal fun ThreadBubble(
-    side: ThreadSide,
-    who: String = "",
-    text: String = "",
-    pictureRef: String = "",
-    meta: String = "",
-    tone: ThreadTone = ThreadTone.THEIRS,
+internal fun ThreadGroup(
+    parts: List<ThreadPart>,
     modifier: Modifier = Modifier,
+    side: ThreadSide = ThreadSide.LEFT,
     face: ThreadFace = if (side == ThreadSide.LEFT) ThreadFace.PERSON else ThreadFace.NONE,
+    who: String = if (face == ThreadFace.APP) "Developer" else "",
+    time: String = "",
+    sent: Boolean = false,
+    app: ThreadApp? = null,
+    tone: ThreadTone = if (side == ThreadSide.RIGHT) ThreadTone.MINE else ThreadTone.THEIRS,
     picture: @Composable (String) -> Unit = { ProofImage(it, whole = true) },
     onPicture: ((String) -> Unit)? = null,
 ) {
+    if (parts.isEmpty()) return
     val t = Tt.colors
     val right = side == ThreadSide.RIGHT
-    val ink = threadInk(tone)
-    val shape = bubbleShape(mine = right, first = true, last = false)
-    val hasPicture = pictureRef.isNotBlank()
-    Row(
-        modifier.fillMaxWidth(),
-        horizontalArrangement = if (right) Arrangement.End else Arrangement.Start,
-        verticalAlignment = Alignment.Bottom,
+    val faced = !right && face != ThreadFace.NONE
+    val indent = if (faced) Face + FaceGap else 0.dp
+    var viewing by remember { mutableStateOf<String?>(null) }
+    val open: (String) -> Unit = onPicture ?: { viewing = it }
+    Column(
+        modifier.fillMaxWidth().layoutId(ThreadKind.GROUP),
+        horizontalAlignment = if (right) Alignment.End else Alignment.Start,
     ) {
-        if (!right && face != ThreadFace.NONE) {
-            val developer = face == ThreadFace.DEVELOPER
-            Box(
-                Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(if (developer) t.glass2 else t.tile),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    if (developer) Lucide.LayoutGrid else Lucide.User,
-                    null,
-                    Modifier.size(15.dp),
-                    tint = if (developer) t.text2 else t.tileInk,
-                )
-            }
-            Spacer(Modifier.width(8.dp))
+        if (who.isNotBlank()) {
+            Text(
+                who,
+                Modifier.padding(start = if (right) 0.dp else indent + 12.dp, end = if (right) 12.dp else 0.dp, bottom = 3.dp),
+                style = chatStyle(12f, 16f),
+                fontWeight = FontWeight.SemiBold,
+                color = t.text3,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-        Column(
-            Modifier.widthIn(max = bubbleMax(0.82f)),
-            horizontalAlignment = if (right) Alignment.End else Alignment.Start,
-        ) {
-            if (who.isNotBlank()) {
-                Text(
-                    who,
-                    Modifier.padding(start = 12.dp, end = 12.dp, bottom = 3.dp),
-                    style = chatStyle(12f, 16f),
-                    fontWeight = FontWeight.SemiBold,
-                    color = t.text3,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+        parts.forEachIndexed { i, part ->
+            if (i > 0) Spacer(Modifier.height(BubbleGap))
+            val last = i == parts.lastIndex
+            Row(verticalAlignment = Alignment.Bottom) {
+                if (faced) {
+                    if (last) ThreadFaceMark(face, app) else Spacer(Modifier.width(Face))
+                    Spacer(Modifier.width(FaceGap))
+                }
+                val shape = bubbleShape(mine = right, first = i == 0, last = last)
+                when (part) {
+                    is ThreadPart.Picture -> PictureBubble(part, shape, threadInk(tone), picture) { open(part.ref) }
+                    is ThreadPart.Words -> WordsBubble(part, shape, tone)
+                }
             }
-            Column(
-                Modifier
-                    .clip(shape)
-                    .background(ink.fill)
-                    .then(
-                        when {
-                            !hasPicture -> Modifier.padding(horizontal = BubblePadX, vertical = BubblePadY)
-                            text.isBlank() -> Modifier.padding(4.dp)
-                            else -> Modifier.padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 7.dp)
-                        },
-                    ),
+        }
+        if (time.isNotBlank()) {
+            Row(
+                Modifier.padding(start = if (right) 0.dp else indent + 2.dp, end = 2.dp, top = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (hasPicture) {
-                    Box(
-                        Modifier
-                            .size(PictureWidth, PictureHeight)
-                            .clip(PictureShape)
-                            .background(t.surface3)
-                            .then(
-                                if (onPicture != null) {
-                                    Modifier.clickable(onClickLabel = "Open the screenshot") { onPicture(pictureRef) }
-                                } else {
-                                    Modifier
-                                },
-                            ),
-                    ) {
-                        Box(Modifier.fillMaxWidth().wrapContentHeight(Alignment.Top, unbounded = true)) { picture(pictureRef) }
-                    }
+                if (sent) {
+                    Icon(Lucide.CheckCheck, "Sent", Modifier.size(12.dp), tint = t.ok)
+                    Spacer(Modifier.width(4.dp))
                 }
-                if (text.isNotBlank()) {
-                    Text(
-                        text,
-                        if (hasPicture) Modifier.width(PictureWidth).padding(start = 8.dp, end = 8.dp, top = 6.dp) else Modifier,
-                        style = chatStyle(14.5f, 20f),
-                        color = ink.ink,
-                    )
-                }
-            }
-            if (meta.isNotBlank()) {
-                Text(
-                    meta,
-                    Modifier.padding(start = 10.dp, end = 10.dp, top = 3.dp),
-                    style = chatStyle(11.5f, 15f),
-                    color = t.text4,
-                )
+                Text(time, style = chatStyle(11.5f, 15f), fontWeight = FontWeight.Normal, color = t.text3, maxLines = 1)
             }
         }
     }
+    viewing?.let { ref -> ProofViewer(ref, onDismiss = { viewing = null }, picture = picture) }
 }
 
-/** What happened between two messages, in a quiet pill across the middle; amber for a refusal. */
+/** The 28dp face: a person's round, or the app's icon standing for its developer. */
 @Composable
-internal fun ThreadNote(
-    text: String,
-    warn: Boolean = false,
+private fun ThreadFaceMark(
+    face: ThreadFace,
+    app: ThreadApp?,
 ) {
     val t = Tt.colors
-    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Text(
-            text,
-            Modifier
-                .clip(RoundedCornerShape(percent = 50))
-                .background(if (warn) t.warnBg else t.glass2)
-                .padding(horizontal = 12.dp, vertical = 3.dp),
-            style = chatStyle(12.5f, 17f),
-            fontWeight = if (warn) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (warn) t.warn else t.text2,
-        )
+    if (face == ThreadFace.APP && app != null) {
+        Box(Modifier.size(Face).semantics { contentDescription = "Developer" }) {
+            AppMark(app.packageName, app.name, app.icon, size = Face)
+        }
+        return
+    }
+    Box(
+        Modifier.size(Face).clip(CircleShape).background(t.tile),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Lucide.User, null, Modifier.size(15.dp), tint = t.tileInk)
     }
 }
 
-/** A thread's messages, 10dp apart. */
+/** A screenshot in a bubble of its own, with the expand mark on its corner. */
 @Composable
-internal fun Thread(content: @Composable () -> Unit) {
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) { content() }
-}
-
-/** A heading over a part of the page, with an optional quiet tag at its far end such as "Optional". */
-@Composable
-internal fun ThreadHeading(
-    title: String,
-    modifier: Modifier = Modifier,
-    tag: String = "",
+private fun PictureBubble(
+    part: ThreadPart.Picture,
+    shape: RoundedCornerShape,
+    ink: BubbleInk,
+    picture: @Composable (String) -> Unit,
+    onOpen: () -> Unit,
 ) {
-    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            title,
-            Modifier.weight(1f),
-            style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, lineHeight = 19.sp),
-            fontWeight = FontWeight.Bold,
-            color = Tt.colors.text,
-        )
-        if (tag.isNotBlank()) HeadingTag(tag)
-    }
-}
-
-/** A screenshot from a thread, whole, over everything; it scrolls when it is taller than the screen. */
-@Composable
-internal fun ProofViewer(
-    ref: String,
-    onDismiss: () -> Unit,
-    picture: @Composable (String) -> Unit = { ProofImage(it, whole = true) },
-) {
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(
+    val t = Tt.colors
+    Box(Modifier.clip(shape).background(ink.fill).padding(4.dp)) {
+        Box(
             Modifier
-                .fillMaxSize()
-                .background(Tt.colors.inverse)
-                .statusBarsPadding()
-                .verticalScroll(rememberScrollState()),
+                .size(part.width, part.height)
+                .clip(RoundedCornerShape(PictureCorner))
+                .background(t.surface3)
+                .clickable(onClickLabel = "Open the screenshot", onClick = onOpen),
         ) {
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                IconButton(onClick = onDismiss) { Icon(Lucide.X, "Close", tint = Tt.colors.onInverse) }
+            Box(Modifier.fillMaxWidth().wrapContentHeight(Alignment.Top, unbounded = true)) { picture(part.ref) }
+            Box(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .size(26.dp)
+                    .clip(CircleShape)
+                    .background(t.photoScrim),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Lucide.Maximize2, null, Modifier.size(14.dp), tint = t.onPhoto)
             }
-            Box(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 24.dp)) { picture(ref) }
+        }
+    }
+}
+
+/** Words in a bubble of their own, with the footer inside it. */
+@Composable
+private fun WordsBubble(
+    part: ThreadPart.Words,
+    shape: RoundedCornerShape,
+    tone: ThreadTone,
+) {
+    val t = Tt.colors
+    val ink = threadInk(tone)
+    val quiet = if (tone == ThreadTone.MINE) ink.ink.copy(alpha = 0.75f) else t.text3
+    Column(
+        Modifier
+            .widthIn(max = threadBubbleMax())
+            .width(IntrinsicSize.Max)
+            .clip(shape)
+            .background(ink.fill)
+            .padding(horizontal = BubblePadX, vertical = BubblePadY),
+    ) {
+        Text(part.text, style = chatStyle(15f, 20f), color = ink.ink)
+        if (part.footStart.isNotBlank() || part.footEnd.isNotBlank()) {
+            Row(
+                Modifier.fillMaxWidth().padding(top = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (part.footOk) {
+                        Icon(Lucide.Check, null, Modifier.size(12.dp), tint = t.ok)
+                        Spacer(Modifier.width(4.dp))
+                    }
+                    Text(
+                        part.footStart,
+                        style = chatStyle(12f, 16f),
+                        fontWeight = if (part.footOk) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (part.footOk) t.ok else quiet,
+                        maxLines = 1,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(part.footEnd, style = chatStyle(12f, 16f), color = quiet, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
 }

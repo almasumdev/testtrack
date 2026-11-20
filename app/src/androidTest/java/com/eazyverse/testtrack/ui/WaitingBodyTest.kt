@@ -120,7 +120,7 @@ class WaitingBodyTest {
         compose.setContent {
             TestTrackTheme { ReviewCheck(review()) }
         }
-        compose.onNodeWithText("accepts itself", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Accepts itself", substring = true).assertIsDisplayed()
     }
 
     @Test

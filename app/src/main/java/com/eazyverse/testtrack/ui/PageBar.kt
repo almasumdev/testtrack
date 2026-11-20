@@ -1,14 +1,18 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -22,6 +26,7 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.graphics.vector.VectorGroup
 import androidx.compose.ui.graphics.vector.VectorPath
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -33,6 +38,20 @@ import com.eazyverse.testtrack.ui.theme.Tt
 
 /** Material's own padding at each end of its top bar, before the 48dp buttons. */
 private val BarPadding = 4.dp
+
+/**
+ * The bar's own height, Material's small top bar. A subtitle never adds to it: with one, the title
+ * drops from 22/28 to 20/24 and the subtitle takes 12.5/16 under it, 40dp of type in the same 64dp.
+ */
+private val BarHeight = TopAppBarDefaults.TopAppBarExpandedHeight
+
+/** The title over a subtitle, and the subtitle: single lines, tight, so both sit inside [BarHeight]. */
+private val TitleOver = tileStyle(20f, 24f, FontWeight.Bold)
+private val SubtitleQuiet = tileStyle(12.5f, 16f, FontWeight.Medium)
+private val SubtitleLoud = tileStyle(12.5f, 16f, FontWeight.SemiBold)
+
+/** How a bar's subtitle speaks: a plain fact, running short, settled, or gone wrong. */
+enum class BarTone { NORMAL, WARN, OK, BAD }
 
 /** The touch target every bar button gets. */
 private val BarButton = 48.dp
@@ -66,15 +85,29 @@ fun PageBar(
     titleEnd: (@Composable () -> Unit)? = null,
     /** An X in place of the back arrow: the bar closes something on the page rather than leaving it. */
     close: Boolean = false,
+    /** One quiet line under the title, such as how long is left; the bar stays the same height. */
+    subtitle: String? = null,
+    subtitleTone: BarTone = BarTone.NORMAL,
+    /** A figure at the bar's end, before [actions], such as "1 of 3" in a run of pages. */
+    count: String? = null,
+    /** The title and subtitle as skeleton bars, while the page loads. */
+    loading: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     TopAppBar(
         modifier = modifier,
         windowInsets = WindowInsets(0, 0, 0, 0),
+        expandedHeight = BarHeight,
         title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(title, Modifier.weight(1f, fill = false), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                titleEnd?.invoke()
+            when {
+                loading -> BarSkeleton()
+                subtitle != null ->
+                    Column {
+                        BarTitle(title, TitleOver, titleEnd)
+                        BarSubtitle(subtitle, subtitleTone)
+                    }
+                // Alone, the title keeps the bar's own titleLarge (22/28), as every page had it.
+                else -> BarTitle(title, null, titleEnd)
             }
         },
         navigationIcon = {
@@ -87,9 +120,73 @@ fun PageBar(
             }
         },
         actions = {
-            Row(Modifier.padding(end = BarEdge - BarPadding), verticalAlignment = Alignment.CenterVertically, content = actions)
+            Row(Modifier.padding(end = BarEdge - BarPadding), verticalAlignment = Alignment.CenterVertically) {
+                if (count != null) PageBarCount(count)
+                actions()
+            }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+    )
+}
+
+@Composable
+private fun BarTitle(
+    title: String,
+    style: TextStyle?,
+    end: (@Composable () -> Unit)?,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            title,
+            Modifier.weight(1f, fill = false),
+            style = style ?: LocalTextStyle.current,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        end?.invoke()
+    }
+}
+
+@Composable
+private fun BarSubtitle(
+    text: String,
+    tone: BarTone,
+) {
+    val t = Tt.colors
+    Text(
+        text,
+        style = if (tone == BarTone.NORMAL) SubtitleQuiet else SubtitleLoud,
+        color =
+            when (tone) {
+                BarTone.NORMAL -> t.text3
+                BarTone.WARN -> t.warn
+                BarTone.OK -> t.ok
+                BarTone.BAD -> t.bad
+            },
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
+}
+
+/** The title and subtitle while the page loads, in their own sizes. */
+@Composable
+private fun BarSkeleton() {
+    Column {
+        Skeleton(width = 150.dp, height = 16.dp)
+        Spacer(Modifier.height(6.dp))
+        Skeleton(width = 110.dp, height = 11.dp)
+    }
+}
+
+/** A figure at the bar's end, such as "1 of 3": it ends [BarEdge] from the edge, as the back arrow starts. */
+@Composable
+fun PageBarCount(text: String) {
+    Text(
+        text,
+        style = tileStyle(14f, 18f, FontWeight.Bold).copy(fontFeatureSettings = "tnum"),
+        color = Tt.colors.text2,
+        maxLines = 1,
     )
 }
 

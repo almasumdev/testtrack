@@ -68,6 +68,14 @@ fun CheckScreen(
     val review = feed.waiting.firstOrNull { it.id == current }
     val listed = feed.disputes.firstOrNull { it.id == current }
     val request = feed.requests.firstOrNull { it.id == current }
+    // A review of one of your requests already decided, opened from that request: refused with
+    // the members deciding, or accepted. Drawn on the same page, with nothing left to answer.
+    val settled =
+        if (review == null && listed == null && request == null) {
+            feed.requests.firstNotNullOfOrNull { r -> r.reviews.firstOrNull { it.id == current }?.let { settledCheck(r, it) } }
+        } else {
+            null
+        }
     // A vote, once counted: the case as it was and the side sent, kept after the list lets it go.
     var sending by remember(id) { mutableStateOf<Voted?>(null) }
     var voted by remember(id) { mutableStateOf<Voted?>(null) }
@@ -75,7 +83,8 @@ fun CheckScreen(
         voted?.let { v -> v.case.copy(votesCast = maxOf(v.case.votesCast + 1, listed?.votesCast ?: 0)) } ?: listed
     var refusing by remember { mutableStateOf(false) }
     var askingAgain by remember { mutableStateOf(false) }
-    val missing = review == null && case == null && request == null
+    var acceptingLater by remember { mutableStateOf(false) }
+    val missing = review == null && case == null && request == null && settled == null
     // This app's reviews still waiting, in the list's order, after the ones decided on this page.
     val queue = review?.let { shown -> feed.waiting.filter { it.sameApp(shown) && it.id !in doneHere } }.orEmpty()
     val position = doneHere.size + queue.indexOfFirst { it.id == current } + 1
@@ -93,6 +102,8 @@ fun CheckScreen(
             voted = vote
             return@LaunchedEffect
         }
+        // Accepted after all: the page stays and redraws as accepted once the request reloads.
+        if (review == null && settled != null) return@LaunchedEffect
         val next = queue.firstOrNull { it.id != done }
         if (next == null) {
             onClose()
@@ -120,6 +131,15 @@ fun CheckScreen(
                     onAskAgain = { askingAgain = true },
                     pager = if (total > 1 && position > 0) "$position of $total" else null,
                 )
+            settled != null ->
+                ReviewCheck(
+                    settled.first,
+                    busy = feed.busy,
+                    proof = { ref -> ProofImage(ref, whole = true) },
+                    onBack = onClose,
+                    settled = settled.second,
+                    onAcceptLater = { acceptingLater = true },
+                )
             request != null ->
                 RequestCheck(
                     request,
@@ -143,20 +163,19 @@ fun CheckScreen(
                     },
                     voted = voted?.forReviewer,
                 )
-            else -> {
+            feed.offline -> {
                 PageBar("", onClose)
-                if (feed.offline) {
-                    RobotState(
-                        Prop.Notes,
-                        "Couldn't load this",
-                        "Check your connection, then try again.",
-                        action = "Try again",
-                        onAction = { feed.load(context) },
-                    )
-                } else {
-                    CheckSkeleton()
-                }
+                RobotState(
+                    Prop.Notes,
+                    "Couldn't load this",
+                    "Check your connection, then try again.",
+                    footer = {
+                        Spacer(Modifier.height(8.dp))
+                        RowPill("Try again", PillKind.SOFT) { feed.load(context) }
+                    },
+                )
             }
+            else -> CheckSkeleton(onClose)
         }
     }
     if (askingAgain && review != null) {
@@ -171,6 +190,21 @@ fun CheckScreen(
                 feed.askAgain(context, review)
             },
             onDismiss = { askingAgain = false },
+        )
+    }
+    val later = settled?.first
+    if (acceptingLater && later != null) {
+        Ask(
+            title = "Accept it after all?",
+            body =
+                "The reviewer is paid ${later.reward} tix and the members stop deciding. Members who already voted " +
+                    "get ${FeedRules.JUROR_FEE} tix each from your ${FeedRules.STAKE} tix stake, and the rest comes back to you.",
+            confirm = "Accept and pay",
+            onConfirm = {
+                acceptingLater = false
+                feed.acceptLater(context, later.id)
+            },
+            onDismiss = { acceptingLater = false },
         )
     }
     if (refusing && review != null) {

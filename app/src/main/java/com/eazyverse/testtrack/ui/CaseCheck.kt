@@ -116,12 +116,13 @@ fun CaseCheck(
             }
         }
         if (voted == null) {
-            Spacer(Modifier.height(16.dp))
+            // The thread's first group brings its own 12dp.
+            Spacer(Modifier.height(4.dp))
             thread()
             vote()
         } else {
             vote()
-            ThreadHeading("What each side showed", Modifier.padding(top = 22.dp, bottom = 10.dp))
+            ThreadHeading("What each side showed", Modifier.padding(top = 22.dp))
             thread()
         }
     }
@@ -136,47 +137,48 @@ private fun CaseThread(
     onPicture: (String) -> Unit,
 ) {
     Thread {
-        if (case.written.isNotBlank() || case.proofRef.isNotBlank()) {
-            ThreadBubble(
-                ThreadSide.LEFT,
-                who = "Reviewer",
-                text = case.written,
-                pictureRef = case.proofRef,
-                meta = textMeta(case.written, case.needsChars, case.textUse),
-                picture = proof,
-                onPicture = onPicture,
-            )
-        }
+        ThreadGroup(
+            listOfNotNull(
+                case.proofRef.takeIf { it.isNotBlank() }?.let { ThreadPart.Picture(it) },
+                reviewWords(case.written, case.needsChars, case.textUse),
+            ),
+            who = "Reviewer",
+            picture = proof,
+            onPicture = onPicture,
+        )
         if (case.recheckedRef.isNotBlank()) {
             ThreadNote("The developer asked for a new one")
-            ThreadBubble(
-                ThreadSide.LEFT,
-                pictureRef = case.recheckedRef,
-                meta = "New, taken on Play when asked",
+            ThreadGroup(
+                listOf(ThreadPart.Picture(case.recheckedRef)),
+                time = "New, taken on Play when asked",
                 picture = proof,
                 onPicture = onPicture,
             )
         }
-        ThreadNote("The developer refused it", warn = true)
+        ThreadNote("The developer refused it", NoteTone.WARN, Lucide.Scale)
         val evidence = case.evidence
-        if (case.reason.isNotBlank()) {
-            ThreadBubble(ThreadSide.RIGHT, who = "Developer", text = case.reason, tone = ThreadTone.SIDE)
-        }
-        if (evidence.ownerProofRef.isNotBlank()) {
-            ThreadBubble(
-                ThreadSide.RIGHT,
-                pictureRef = evidence.ownerProofRef,
-                tone = ThreadTone.SIDE,
-                picture = proof,
-                onPicture = onPicture,
-            )
-        }
+        ThreadGroup(
+            listOfNotNull(
+                case.reason.takeIf { it.isNotBlank() }?.let { ThreadPart.Words(it) },
+                evidence.ownerProofRef.takeIf { it.isNotBlank() }?.let { ThreadPart.Picture(it) },
+            ),
+            side = ThreadSide.RIGHT,
+            who = "Developer",
+            tone = ThreadTone.SIDE,
+            picture = proof,
+            onPicture = onPicture,
+        )
         if (evidence.reply.isNotBlank() || evidence.replyProofRef.isNotBlank()) {
             ThreadNote("The reviewer answered")
-            if (evidence.reply.isNotBlank()) ThreadBubble(ThreadSide.LEFT, who = "Reviewer", text = evidence.reply)
-            if (evidence.replyProofRef.isNotBlank()) {
-                ThreadBubble(ThreadSide.LEFT, pictureRef = evidence.replyProofRef, picture = proof, onPicture = onPicture)
-            }
+            ThreadGroup(
+                listOfNotNull(
+                    evidence.reply.takeIf { it.isNotBlank() }?.let { ThreadPart.Words(it) },
+                    evidence.replyProofRef.takeIf { it.isNotBlank() }?.let { ThreadPart.Picture(it) },
+                ),
+                who = "Reviewer",
+                picture = proof,
+                onPicture = onPicture,
+            )
         }
     }
 }

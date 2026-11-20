@@ -386,8 +386,7 @@ class FeedViewModel : ViewModel() {
             submittedAt = it.submittedAt,
         )
 
-    // Mapped here rather than drawn raw: a post id means nothing on a card, and the screen should
-    // not have to know what the database calls things.
+    // Mapped here, not drawn raw: a post id means nothing on a card, nor should a screen know the database's names.
     private fun waitingOf(it: ApiReview): Waiting {
         // From an older server these come blank; the post, when it is on the feed, has them too.
         val post = posts.firstOrNull { p -> p.id == it.postId }
@@ -409,6 +408,8 @@ class FeedViewModel : ViewModel() {
             noBox = it.noBox,
             recheckedRef = it.recheckedRef,
             checked = it.checkedAt != null,
+            sentAt = millis(it.submittedAt),
+            askedAt = millis(it.checkedAt),
         )
     }
 

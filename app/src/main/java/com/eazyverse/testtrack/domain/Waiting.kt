@@ -48,6 +48,10 @@ data class Waiting(
     val recheckedRef: String = "",
     /** The owner has asked once for a new screenshot; they may not again. */
     val checked: Boolean = false,
+    /** When it was sent, in epoch milliseconds; null when unknown. */
+    val sentAt: Long? = null,
+    /** When the owner asked for a new screenshot, in epoch milliseconds; null when they have not. */
+    val askedAt: Long? = null,
 )
 
 /** Who sent it, by their first name, as the line after accepting says it. */

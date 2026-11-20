@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -38,8 +39,8 @@ import com.eazyverse.testtrack.domain.textUseLabel
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
- * The pieces a review to check and a case to decide share: the app at the top, the reviewer with
- * their chips, plain lines with a word or two in bold, and the page while it loads.
+ * The pieces a review to check and a case to decide share: the app at the top, chips, plain lines
+ * with a word or two in bold, the frame with its pinned answers, and the page while it loads.
  */
 
 /** What an (i) opens to: one plain sentence, in the callout's own ink. */
@@ -124,30 +125,6 @@ internal fun ChipRow(
     )
 }
 
-/** Who sent a review: their face, their name, and under it the chips that matter, such as time left. */
-@Composable
-internal fun ReviewerRow(
-    name: String,
-    face: ReviewFace = ReviewFace.TO_CHECK,
-    chips: @Composable FlowRowScope.() -> Unit,
-) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        ReviewerFace(face, 44.dp)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                name,
-                style = tileStyle(16f, 20f, FontWeight.SemiBold),
-                color = Tt.colors.text,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(5.dp))
-            ChipRow(content = chips)
-        }
-    }
-}
-
 /** "100 characters, changed your ready review": how long a text is and whose words it is in. */
 internal fun textMeta(
     written: String,
@@ -178,68 +155,79 @@ internal fun askedLine(
     return line to figure
 }
 
-/** A page of these while it is on its way: the app, the reviewer and a message, in their own shapes. */
+/**
+ * The Check review page while it is on its way, in the shapes it will take: the bar's title and
+ * subtitle, the app, the day, the reviewer's picture and words with the face beside them, and the
+ * answers pinned under it.
+ */
 @Composable
-internal fun CheckSkeleton() {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState(), enabled = false)
-            .padding(horizontal = Gutter, vertical = 8.dp)
-            .semantics { contentDescription = "Loading" },
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Skeleton(width = AppTileIcon, height = AppTileIcon, corner = 16.dp)
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Skeleton(width = 140.dp, height = 15.dp)
-                Spacer(Modifier.height(7.dp))
-                Skeleton(width = 80.dp, height = 11.dp)
+internal fun CheckSkeleton(onBack: () -> Unit) {
+    Column(Modifier.fillMaxSize().semantics { contentDescription = "Loading" }) {
+        PageBar("", onBack, loading = true)
+        Column(
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState(), enabled = false)
+                .padding(start = Gutter, end = Gutter, top = 8.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Skeleton(width = AppTileIcon, height = AppTileIcon, corner = 16.dp)
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Skeleton(width = 140.dp, height = 15.dp)
+                    Spacer(Modifier.height(7.dp))
+                    Skeleton(width = 80.dp, height = 11.dp)
+                }
+            }
+            Spacer(Modifier.height(22.dp))
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Skeleton(width = 44.dp, height = 12.dp) }
+            Spacer(Modifier.height(16.dp))
+            Skeleton(width = 70.dp, height = 11.dp, modifier = Modifier.padding(start = 36.dp))
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Spacer(Modifier.width(36.dp))
+                Skeleton(width = 158.dp, height = 208.dp, corner = 18.dp)
+            }
+            Spacer(Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Skeleton(width = 28.dp, height = 28.dp, corner = 14.dp)
+                Spacer(Modifier.width(8.dp))
+                Skeleton(width = 230.dp, height = 96.dp, corner = 18.dp)
             }
         }
-        Spacer(Modifier.height(18.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Skeleton(width = 40.dp, height = 40.dp, corner = 20.dp)
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Skeleton(width = 120.dp, height = 15.dp)
-                Spacer(Modifier.height(8.dp))
-                Skeleton(width = 150.dp, height = 22.dp, corner = 11.dp)
+        Column(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 6.dp + dockRoom())) {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Skeleton(width = 190.dp, height = 12.dp) }
+            Spacer(Modifier.height(10.dp))
+            Skeleton(height = ButtonHeight, corner = 26.dp)
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 44.dp),
+                horizontalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Skeleton(width = 120.dp, height = 14.dp)
+                Skeleton(width = 60.dp, height = 14.dp)
             }
-        }
-        Spacer(Modifier.height(18.dp))
-        Skeleton(modifier = Modifier.fillMaxWidth(0.8f), height = 12.dp)
-        Spacer(Modifier.height(16.dp))
-        Row(verticalAlignment = Alignment.Bottom) {
-            Skeleton(width = 28.dp, height = 28.dp, corner = 14.dp)
-            Spacer(Modifier.width(8.dp))
-            Skeleton(width = 186.dp, height = 300.dp, corner = 18.dp)
         }
     }
 }
 
 /**
- * A page of this kind: the bar with an optional figure at its end, the page scrolling under it, and
- * the answers pinned above the dock.
+ * A page of this kind: the bar with an optional subtitle and figure at its end, the page scrolling
+ * under it, and the answers pinned above the dock.
  */
 @Composable
 internal fun CheckFrame(
     title: String,
     onBack: () -> Unit,
     barEnd: String? = null,
+    subtitle: String? = null,
+    subtitleTone: BarTone = BarTone.NORMAL,
     foot: (@Composable ColumnScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
-        PageBar(title, onBack) {
-            if (barEnd != null) {
-                Text(
-                    barEnd,
-                    style = tileStyle(14f, 18f, FontWeight.Bold).copy(fontFeatureSettings = "tnum"),
-                    color = Tt.colors.text2,
-                )
-            }
-        }
+        PageBar(title, onBack, subtitle = subtitle, subtitleTone = subtitleTone, count = barEnd)
         Column(
             Modifier
                 .weight(1f)
@@ -250,7 +238,7 @@ internal fun CheckFrame(
         )
         if (foot != null) {
             Column(
-                Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 10.dp, bottom = 6.dp + dockRoom()),
+                Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 6.dp + dockRoom()),
                 content = foot,
             )
         }
