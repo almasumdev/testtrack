@@ -1,41 +1,52 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.eazyverse.testtrack.ui.theme.Tt
-import com.eazyverse.testtrack.viewmodel.AddWay
+import com.composables.icons.lucide.BadgeCheck
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Smartphone
 import com.eazyverse.testtrack.viewmodel.AppAddViewModel
-import com.eazyverse.testtrack.viewmodel.AskFailure
 
 /**
- * Adding an app to My apps: picked from this phone, or found on Play by its link, then added.
+ * Adding an app to My apps, on two pages.
+ *
+ * The start page asks where people try it, gives a closed test the testers group to add, and takes
+ * the app either way: picked from this phone, or a Play link or package to find. The second page is
+ * the app found or picked, with what it is about, and Add to My apps. Back from it keeps what was
+ * typed. The button follows the page while it is short and stays pinned once the page runs longer.
  *
  * Nothing is spent here. The app is remembered, and its page is where it goes into a crew or up
- * for feedback, so it is found and confirmed once rather than at every step after. Both ways bring
- * the app's real icon and name; typing them is gone, since that is how blank squares got in.
+ * for feedback. Both ways bring the app's real icon and name; typing them is gone, since that is
+ * how blank squares got in.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,72 +61,74 @@ fun AppAddScreen(
     // Straight to the gallery: the phone's own icon is already the one shown, so a sheet offering
     // it again only closed. Backing out leaves the icon as it was.
     val chooseIcon = rememberImagePicker { uri -> uri?.let { vm.usePicture(context, it) } }
-    // Back walks the steps of this page before it leaves it.
-    BackHandler(enabled = vm.way != null) { vm.back() }
+    // Back from the app goes to the start page before it leaves this screen.
+    BackHandler(enabled = !vm.starting) { vm.back() }
 
     Scaffold(
         containerColor = Color.Transparent,
         // The navigation route already applies safeDrawingPadding.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            PageBar("Add an app", onBack = { if (!vm.back()) onBack() })
+            Column {
+                PageBar("Add an app", onBack = { if (!vm.back()) onBack() })
+                PageMessage(
+                    vm.addError ?: vm.iconError,
+                    onDone = { if (vm.addError != null) vm.clearAddError() else vm.clearIconError() },
+                    error = true,
+                )
+            }
         },
     ) { padding ->
+        // Each page starts at its top.
+        val scroll = key(vm.starting) { rememberScrollState() }
+        // Taller than its room: the button stays put over the page's faded foot.
+        val pinned = scroll.maxValue in 1 until Int.MAX_VALUE
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .dismissKeyboardOnTap(dismissKeyboard)
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = Gutter),
+                .imePadding(),
         ) {
-            Spacer(Modifier.height(8.dp))
-            when (vm.way) {
-                null -> {
-                    AddWayChoice(vm.choice, vm::select)
-                    Spacer(Modifier.height(22.dp))
-                    Primary("Continue") { vm.proceed(context) }
+            Box(Modifier.weight(1f, fill = false).fillMaxWidth()) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(scroll)
+                        .padding(horizontal = Gutter)
+                        .then(if (vm.adding) Modifier.alpha(DISABLED_ALPHA) else Modifier),
+                ) {
+                    Spacer(Modifier.height(8.dp))
+                    if (vm.starting) AddStart(vm) else AddApp(vm, chooseIcon)
+                    // Scrolled to the end, the last block stops just over the button. The 16 here and
+                    // the 8 under it make the same 24 as an unpinned page, so pinning never flickers.
+                    if (pinned) Spacer(Modifier.height(16.dp))
                 }
-                AddWay.PHONE -> {
-                    // Only reached once an app is picked: the list itself is the sheet below.
-                    val app = vm.picked
-                    if (app != null) {
-                        Spacer(Modifier.height(8.dp))
-                        PickedApp(
-                            pkg = app.pkg,
-                            name = vm.pickedName,
-                            preview = vm.pickedPreview,
-                            live = vm.isLive,
-                            testBuild = app.testBuild,
-                            onPickAnother = { vm.openPicker(context) },
-                            onChangeIcon = chooseIcon,
-                            onRename = vm::renamePicked,
-                        )
-                        vm.iconError?.let {
-                            Spacer(Modifier.height(12.dp))
-                            FailureLine(AskFailure("Couldn't use that picture", it))
-                        }
-                        Spacer(Modifier.height(22.dp))
-                        AskAvailability(vm.isLive, vm::choose)
-                        Spacer(Modifier.height(12.dp))
-                        PickedNotice(testBuild = app.testBuild, live = vm.isLive)
-                        AddButton(vm, enabled = vm.canAddPicked, onAdded)
-                    }
-                }
-                AddWay.PLAY -> {
-                    AskAvailability(vm.isLive, vm::choose)
-                    Spacer(Modifier.height(16.dp))
-                    val app = vm.found
-                    if (app == null) {
-                        Finding(vm) { vm.pickInstead(context) }
-                    } else {
-                        FoundApp(app.`package`, app.name, app.icon, app.developer, unchecked = false, onChange = vm::startOver)
-                        AddButton(vm, enabled = true, onAdded)
-                    }
-                }
+                if (pinned) FootFade(Modifier.align(Alignment.BottomCenter))
             }
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(if (pinned) 8.dp else 24.dp))
+            val padded = Modifier.padding(horizontal = Gutter)
+            if (vm.starting) {
+                Primary(
+                    when {
+                        vm.looking -> "Finding your app"
+                        vm.failure != null -> "Try again"
+                        else -> "Find my app"
+                    },
+                    padded,
+                    busy = vm.looking,
+                    enabled = vm.canLook,
+                    onClick = vm::look,
+                )
+            } else {
+                Primary(
+                    "Add to My apps",
+                    padded,
+                    busy = vm.adding,
+                    enabled = vm.picked == null || vm.canAddPicked,
+                ) { vm.add { app, _ -> onAdded(app) } }
+            }
+            Spacer(Modifier.height(6.dp))
         }
     }
 
@@ -131,38 +144,32 @@ fun AppAddScreen(
     }
 }
 
+/**
+ * The start page: where people try it, the testers group for a closed test, then the app, picked
+ * from this phone or found by its Play link, and why Play could not find it.
+ */
 @Composable
-private fun AddButton(
-    vm: AppAddViewModel,
-    enabled: Boolean,
-    onAdded: (AppEntry) -> Unit,
-) {
-    vm.addError?.let {
-        Spacer(Modifier.height(14.dp))
-        FailureLine(AskFailure("Couldn't add it", it))
-    }
-    Spacer(Modifier.height(20.dp))
-    Primary("Add to My apps", busy = vm.adding, enabled = enabled) {
-        vm.add { app, _ -> onAdded(app) }
-    }
-}
-
-/** Before an app is found on Play: the link and the button, and the phone when Play cannot help. */
-@Composable
-private fun Finding(
-    vm: AppAddViewModel,
-    onPickInstead: () -> Unit,
-) {
+private fun AddStart(vm: AppAddViewModel) {
+    val context = LocalContext.current
+    var how by rememberSaveable { mutableStateOf(false) }
+    AskAvailability(vm.isLive, vm::choose)
     if (!vm.isLive) {
-        GroupSetupCard()
-        Spacer(Modifier.height(18.dp))
+        SectionHeading("First, add our testers group", top = 24.dp)
+        // The copy button's 40dp reaches into the card's edge, as the address row is drawn.
+        CrewCard(padding = PaddingValues(start = 16.dp, top = 12.dp, end = 6.dp, bottom = 6.dp)) {
+            SeatAddressRow()
+            InlineAction("How to add it", Modifier.offset(x = (-8).dp)) { how = true }
+        }
     }
-    Text(
-        "Paste your Google Play link or type the package name.",
-        style = MaterialTheme.typography.bodyMedium,
-        color = Tt.colors.text2,
+    SectionHeading("Your app", top = 24.dp)
+    AppStartRow(
+        Lucide.Smartphone,
+        "Pick from this phone",
+        "Works before Play is ready",
+        onClick = { vm.pickFromPhone(context) },
+        pill = "Pick",
     )
-    Spacer(Modifier.height(12.dp))
+    QuietNote("or", Modifier.padding(top = 10.dp, bottom = 12.dp))
     OutlinedField(
         value = vm.query,
         onValueChange = vm::type,
@@ -172,25 +179,51 @@ private fun Finding(
         keyboardType = KeyboardType.Uri,
         imeAction = ImeAction.Search,
         onImeAction = vm::look,
+        enabled = !vm.looking,
     )
     vm.failure?.let {
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(12.dp))
         FailureLine(it)
     }
-    Spacer(Modifier.height(16.dp))
-    // Our check is down, or Play is slow to show a closed track: the phone has the app anyway.
-    if (vm.failure?.pickInstead == true) {
-        Secondary("Pick it from this phone instead", Modifier.fillMaxWidth(), onClick = onPickInstead)
-        Spacer(Modifier.height(10.dp))
+    if (how) GroupHowToDialog(onDismiss = { how = false })
+}
+
+/** The app found on Play or picked from this phone, and what it is about. */
+@Composable
+private fun AddApp(
+    vm: AppAddViewModel,
+    onChangeIcon: () -> Unit,
+) {
+    val context = LocalContext.current
+    val listing = vm.found
+    val picked = vm.picked
+    if (listing != null) {
+        AppHero(
+            name = listing.name,
+            pkg = listing.`package`,
+            live = vm.isLive,
+            // Play's icon is the one it has; nothing here changes it.
+            onChangeIcon = null,
+            icon = { AppMark(listing.`package`, listing.name, listing.icon, size = AppHeroIcon, ownIcon = true) },
+            chips = { StatusChip("Found on Play", Tone.OK, Lucide.BadgeCheck, size = ChipSize.FACT) },
+            below = { ChooseAnother { vm.back() } },
+        )
+        PlayAbout(listing.shortDescription, listing.fullDescription)
+    } else if (picked != null) {
+        PickedApp(
+            pkg = picked.pkg,
+            name = vm.pickedName,
+            preview = vm.pickedPreview,
+            live = vm.isLive,
+            testBuild = picked.testBuild,
+            onPickAnother = { vm.openPicker(context) },
+            onChangeIcon = onChangeIcon,
+            onRename = vm::renamePicked,
+        )
+        PickedNotice(testBuild = picked.testBuild, live = vm.isLive)
+        // No Play page yet, so the owner can write them.
+        SectionHeading("About the app", tag = "Optional", top = 24.dp, tagBeside = true)
+        Spacer(Modifier.height(4.dp))
+        AboutFields(vm.shortDesc, vm::writeShort, vm.fullDesc, vm::writeFull, enabled = !vm.adding)
     }
-    Primary(
-        when {
-            vm.looking -> "Finding your app"
-            vm.failure != null -> "Try again"
-            else -> "Find my app"
-        },
-        busy = vm.looking,
-        enabled = vm.canLook,
-        onClick = vm::look,
-    )
 }

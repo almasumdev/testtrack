@@ -11,14 +11,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
@@ -71,7 +74,8 @@ internal val PickerTitleLineHeight = 22.sp
  * 22, a 38 by 4 handle, the title, and the body under it, never wider than 560.
  *
  * [tall] is for a long list with search: the sheet takes 82% of the screen at once, rather than
- * growing and shrinking as the search narrows the list. [skipHalf] opens a short sheet fully,
+ * growing and shrinking as the search narrows the list. [full] is the same for the longest lists:
+ * the sheet opens at the whole height under the status bar, less a 10dp gap. [skipHalf] opens a short sheet fully,
  * with no half-open stop. [fitMax] is for a sheet that sizes itself to what it holds: the column
  * is as tall as its content up to that share of the window, and scrolls inside past it; ignored
  * when [tall] is set. [leading] sits before the title, such as the app a sheet is about.
@@ -91,7 +95,8 @@ internal fun PickerSheet(
     onDismiss: () -> Unit,
     subtitle: String? = null,
     tall: Boolean = false,
-    skipHalf: Boolean = tall,
+    full: Boolean = false,
+    skipHalf: Boolean = tall || full,
     fitMax: Float? = null,
     leading: (@Composable () -> Unit)? = null,
     containerColor: Color = MaterialTheme.colorScheme.surface,
@@ -131,6 +136,13 @@ internal fun PickerSheet(
         with(density) {
             LocalWindowInfo.current.containerSize.height
                 .toDp()
+        }
+    // A full sheet: the window less the status bar, the gap over the sheet, the handle's room and
+    // the navigation bar the sheet pads its content above.
+    val fullHeight =
+        with(density) {
+            windowHeight - WindowInsets.statusBars.getTop(this).toDp() - WindowInsets.navigationBars.getBottom(this).toDp() -
+                FullSheetGap - (HandleRoom + handleGap)
         }
     ModalBottomSheet(
         // The scrim tap and a swipe past the bottom both end up here.
@@ -176,6 +188,7 @@ internal fun PickerSheet(
                     .fillMaxWidth()
                     .then(
                         when {
+                            full -> Modifier.height(fullHeight)
                             tall -> Modifier.fillMaxHeight(0.82f)
                             fitMax != null -> Modifier.heightIn(max = windowHeight * fitMax)
                             else -> Modifier
@@ -218,6 +231,12 @@ internal fun PickerSheet(
         }
     }
 }
+
+/** The room over a full sheet's top edge, under the status bar. */
+private val FullSheetGap = 10.dp
+
+/** The handle's 10dp above it and its own 4dp; the gap under it is the sheet's handleGap. */
+private val HandleRoom = 14.dp
 
 /**
  * A picker's search: 48 high, a pill on the sunken ground with a search mark before the words, a

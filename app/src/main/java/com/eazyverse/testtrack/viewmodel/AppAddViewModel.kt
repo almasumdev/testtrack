@@ -23,9 +23,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** The two ways an app gets onto My apps, both of which bring its real icon and name. */
-enum class AddWay { PHONE, PLAY }
-
 /** An app on this phone that can be picked, as the list draws it. */
 data class PhoneApp(
     val pkg: String,
@@ -42,22 +39,17 @@ data class PhoneApp(
 /**
  * Adding an app to My apps: picked from this phone, or found on Play by its link.
  *
+ * Two pages. The start page asks where people try it and takes either way in; the second shows the
+ * app found or picked, to add. Back from the second keeps what was typed and the answer given.
+ *
  * Nothing is spent and nothing is sent anywhere. The app is only remembered, and its crews and
  * feedback start from its own page. Either way it arrives with an icon and the name it really has:
  * Play's, or the phone's. Typing the details by hand is gone, because that is how apps ended up on
  * everybody's screens as a blank square. Picked from the phone, an app starts unverified and becomes
  * verified once Play, a crew or a review shows it is real, which also covers a closed test Play is
- * not showing yet.
+ * not showing yet. Its descriptions are the owner's to write, since Play has none to give yet.
  */
 class AppAddViewModel : ViewModel() {
-    /** Null on the first page, where the way is chosen. */
-    var way by mutableStateOf<AddWay?>(null)
-        private set
-
-    /** The way selected on the first page, before Continue. */
-    var choice by mutableStateOf(AddWay.PHONE)
-        private set
-
     var isLive by mutableStateOf(false)
         private set
 
@@ -92,6 +84,13 @@ class AppAddViewModel : ViewModel() {
         private set
 
     var pickedName by mutableStateOf("")
+        private set
+
+    /** The two descriptions written for an app picked from the phone. Optional. */
+    var shortDesc by mutableStateOf("")
+        private set
+
+    var fullDesc by mutableStateOf("")
         private set
 
     private var pickedIcon by mutableStateOf<AppIconData.Encoded?>(null)
@@ -129,18 +128,8 @@ class AppAddViewModel : ViewModel() {
             return all.filter { it.label.contains(needle, ignoreCase = true) || it.pkg.contains(needle, ignoreCase = true) }
         }
 
-    fun select(next: AddWay) {
-        choice = next
-    }
-
-    /** Continue from the first page: to the link, or the sheet of this phone's apps over it. */
-    fun proceed(context: Context) {
-        if (choice == AddWay.PHONE) {
-            openPicker(context)
-        } else {
-            way = AddWay.PLAY
-        }
-    }
+    /** On the start page: neither found nor picked. */
+    val starting: Boolean get() = found == null && picked == null
 
     /** The sheet of this phone's apps, to pick one or another one. */
     fun openPicker(context: Context) {
@@ -153,24 +142,29 @@ class AppAddViewModel : ViewModel() {
         picking = false
     }
 
-    /** A step back inside the flow. False on the first page, where Back leaves the screen. */
+    /**
+     * Back to the start page, keeping what was typed and where it is tried. False on the start
+     * page, where Back leaves the screen. Nothing happens while the app is being added.
+     */
     fun back(): Boolean {
-        when {
-            picked != null -> {
-                picked = null
-                pickedIcon = null
-                iconError = null
-                addError = null
-                way = null
-            }
-            found != null -> startOver()
-            way != null -> {
-                clearLookup()
-                way = null
-            }
-            else -> return false
-        }
+        if (starting) return false
+        if (adding) return true
+        iconJob?.cancel()
+        reading = false
+        picked = null
+        pickedIcon = null
+        iconError = null
+        addError = null
+        found = null
         return true
+    }
+
+    /**
+     * The phone's row on the start page. When Play could not show the app typed, straight to that
+     * app if it is installed here; otherwise the sheet of this phone's apps.
+     */
+    fun pickFromPhone(context: Context) {
+        if (failure?.pickInstead == true) pickInstead(context) else openPicker(context)
     }
 
     /** Changing where it is throws away anything found under the other answer. */
@@ -188,11 +182,6 @@ class AppAddViewModel : ViewModel() {
         query = next.take(QUERY_MAX)
     }
 
-    fun startOver() {
-        clearLookup()
-        found = null
-    }
-
     fun look() {
         if (!canLook) return
         failure = null
@@ -201,6 +190,7 @@ class AppAddViewModel : ViewModel() {
             viewModelScope.launch {
                 try {
                     found = Api.lookupApp(query.trim(), closed = !isLive)
+                    addError = null
                 } catch (error: CancellationException) {
                     throw error
                 } catch (error: Exception) {
@@ -218,7 +208,6 @@ class AppAddViewModel : ViewModel() {
     fun pickInstead(context: Context) {
         val typed = packageFrom(query)
         clearLookup()
-        choice = AddWay.PHONE
         loadPhoneApps(context) { apps ->
             val installed = apps.firstOrNull { it.pkg == typed }
             if (installed != null) pick(context, installed) else picking = true
@@ -254,9 +243,14 @@ class AppAddViewModel : ViewModel() {
         context: Context,
         app: PhoneApp,
     ) {
-        way = AddWay.PHONE
         picking = false
+        if (picked?.pkg != app.pkg) {
+            // Another app: what was written was about the one before it.
+            shortDesc = ""
+            fullDesc = ""
+        }
         picked = app
+        found = null
         pickedName = app.label.take(FeedRules.APP_NAME_MAX)
         pickedIcon = null
         addError = null
@@ -265,6 +259,23 @@ class AppAddViewModel : ViewModel() {
 
     fun renamePicked(next: String) {
         pickedName = next.take(FeedRules.APP_NAME_MAX)
+    }
+
+    /** One line, as Play's short description is. */
+    fun writeShort(next: String) {
+        shortDesc = next.replace('\n', ' ').take(FeedRules.SHORT_DESC_MAX)
+    }
+
+    fun writeFull(next: String) {
+        fullDesc = next.take(FeedRules.FULL_DESC_MAX)
+    }
+
+    fun clearIconError() {
+        iconError = null
+    }
+
+    fun clearAddError() {
+        addError = null
     }
 
     fun usePicture(
@@ -297,16 +308,31 @@ class AppAddViewModel : ViewModel() {
 
     /** Add what was found or picked. `onAdded` gets the app, and whether it was on My apps already. */
     fun add(onAdded: (app: AppEntry, existing: Boolean) -> Unit) {
+        val app = picked
+        val listing = found
         val body =
-            when (way) {
-                AddWay.PHONE -> {
-                    val app = picked ?: return
+            when {
+                app != null -> {
                     val icon = pickedIcon ?: return
-                    if (pickedName.isBlank()) return
-                    AppIn(query = app.pkg, live = isLive, name = pickedName.trim(), fromPhone = true, iconData = icon.base64)
+                    if (pickedName.isBlank() || reading) return
+                    AppIn(
+                        query = app.pkg,
+                        live = isLive,
+                        name = pickedName.trim(),
+                        fromPhone = true,
+                        iconData = icon.base64,
+                        shortDescription = shortDesc.trim(),
+                        fullDescription = fullDesc.trim(),
+                    )
                 }
-                AddWay.PLAY -> AppIn(query = found?.`package` ?: return, live = isLive)
-                null -> return
+                listing != null ->
+                    AppIn(
+                        query = listing.`package`,
+                        live = isLive,
+                        shortDescription = listing.shortDescription,
+                        fullDescription = listing.fullDescription,
+                    )
+                else -> return
             }
         if (adding) return
         adding = true
@@ -319,7 +345,7 @@ class AppAddViewModel : ViewModel() {
             } catch (e: ApiError) {
                 addError = e.message
             } catch (_: Exception) {
-                addError = "We could not reach TestTrack. Check your connection."
+                addError = "Couldn't add it. Check your connection."
             } finally {
                 adding = false
             }

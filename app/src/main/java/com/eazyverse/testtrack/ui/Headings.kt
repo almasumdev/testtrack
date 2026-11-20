@@ -112,6 +112,8 @@ internal fun SectionHeading(
     oneLine: Boolean = false,
     style: TextStyle = TextStyles.HeadingStyle,
     status: HeadingStatus? = null,
+    /** The [tag] right after the words rather than at the far end. */
+    tagBeside: Boolean = false,
     end: (@Composable RowScope.() -> Unit)? = null,
 ) {
     val t = Tt.colors
@@ -138,8 +140,14 @@ internal fun SectionHeading(
                     CountBadge(count)
                 }
             }
+            if (tagBeside && !tag.isNullOrBlank()) {
+                Spacer(Modifier.width(8.dp))
+                Box(Modifier.height(HeadingLine).wrapContentHeight(Alignment.CenterVertically, unbounded = true)) {
+                    HeadingTag(tag)
+                }
+            }
         }
-        if (!tag.isNullOrBlank()) {
+        if (!tagBeside && !tag.isNullOrBlank()) {
             Spacer(Modifier.width(8.dp))
             if (tagTall) {
                 HeadingTag(tag)
@@ -192,11 +200,12 @@ internal fun SmallHeading(
     modifier: Modifier = Modifier,
     info: String? = null,
     top: Dp = 18.dp,
+    bottom: Dp = 8.dp,
     /** The words' style: [SmallHeadingStyle] unless given, such as the app page's "Earlier". */
     style: TextStyle = SmallHeadingStyle,
 ) {
     val t = Tt.colors
-    Row(modifier.fillMaxWidth().padding(top = top, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.fillMaxWidth().padding(top = top, bottom = bottom), verticalAlignment = Alignment.CenterVertically) {
         Text(
             text,
             Modifier.weight(1f, fill = false),

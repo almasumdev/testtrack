@@ -22,7 +22,6 @@ import com.eazyverse.testtrack.ui.AppsScreen
 import com.eazyverse.testtrack.ui.CrewViewModel
 import com.eazyverse.testtrack.ui.MainTab
 import com.eazyverse.testtrack.ui.Scene
-import com.eazyverse.testtrack.viewmodel.AddWay
 import com.eazyverse.testtrack.viewmodel.AppAddViewModel
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.PhoneApp
@@ -144,17 +143,17 @@ class AppsVideoFramesTest {
         val vm = adding()
         frame.show { Pushed { AppAddScreen(onAdded = {}, onBack = {}, vm = vm) } }
         runCatching { frame.target("wayPhone", tap("Pick from this phone")) }
-        runCatching { frame.target("wayPlay", tap("Play link or package name")) }
-        runCatching { frame.target("continue", tap("Continue")) }
+        runCatching { frame.target("wayPlay", compose.onNode(hasSetTextAction())) }
+        runCatching { frame.target("continue", tap("Find my app")) }
         frame.write("ways")
     }
 
     @Test
     fun a03_waysPlay() {
-        val vm = adding { select(AddWay.PLAY) }
+        val vm = adding { choose(live = true) }
         frame.show { Pushed { AppAddScreen(onAdded = {}, onBack = {}, vm = vm) } }
-        runCatching { frame.target("wayPlay", tap("Play link or package name")) }
-        runCatching { frame.target("continue", tap("Continue")) }
+        runCatching { frame.target("wayPlay", compose.onNode(hasSetTextAction())) }
+        runCatching { frame.target("continue", tap("Find my app")) }
         frame.write("waysPlay")
     }
 
@@ -162,7 +161,6 @@ class AppsVideoFramesTest {
     fun a04_sheet() {
         val vm =
             adding {
-                setState("way", AddWay.PHONE)
                 setState("phoneApps", phone)
                 setState("picking", true)
             }
@@ -176,7 +174,6 @@ class AppsVideoFramesTest {
     fun a05_picked() {
         val vm =
             adding {
-                setState("way", AddWay.PHONE)
                 setState("phoneApps", phone)
                 setState("picked", phone.first { it.pkg == focus.pkg })
                 setState("pickedName", focus.name)
@@ -184,8 +181,6 @@ class AppsVideoFramesTest {
             }
         frame.show { Pushed { AppAddScreen(onAdded = {}, onBack = {}, vm = vm) } }
         runCatching { frame.target("icon", compose.onNode(hasContentDescription("App icon"), useUnmergedTree = true)) }
-        runCatching { frame.target("closed", tap("Closed testing")) }
-        runCatching { frame.target("live", tap("Live on Play")) }
         // The note is a line of text after its 15 dp info icon and an 8 dp gap: the mark takes both.
         runCatching {
             val words = compose.onNodeWithText("We check it on Play", substring = true).screenBounds()
@@ -203,8 +198,6 @@ class AppsVideoFramesTest {
     fun a06_play() {
         val vm =
             adding {
-                setState("way", AddWay.PLAY)
-                setState("choice", AddWay.PLAY)
                 setState("query", "https://play.google.com/store/apps/details?id=${focus.pkg}")
             }
         frame.show { Pushed { AppAddScreen(onAdded = {}, onBack = {}, vm = vm) } }
@@ -218,12 +211,10 @@ class AppsVideoFramesTest {
     fun a07_found() {
         val vm =
             adding {
-                setState("way", AddWay.PLAY)
-                setState("choice", AddWay.PLAY)
                 setState("found", Listing(`package` = focus.pkg, name = focus.name, icon = focus.icon, developer = "You"))
             }
         frame.show { Pushed { AppAddScreen(onAdded = {}, onBack = {}, vm = vm) } }
-        runCatching { frame.target("change", tap("Change")) }
+        runCatching { frame.target("change", tap("Choose another app")) }
         runCatching { frame.target("add", tap("Add to My apps")) }
         frame.write("found")
     }

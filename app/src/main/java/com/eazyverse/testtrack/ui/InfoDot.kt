@@ -74,6 +74,8 @@ internal fun InfoDot(
     round: Dp = glyph + 6.dp,
     slot: Dp = round,
     spacing: Dp = 10.dp,
+    /** The glyph: the (i) unless given, such as a test build's red alert. */
+    icon: ImageVector = Lucide.Info,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val t = Tt.colors
@@ -102,7 +104,7 @@ internal fun InfoDot(
                     .then(if (shown && look != InfoDotLook.STILL) Modifier.background(roundInk) else Modifier),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Lucide.Info, title, Modifier.size(glyph).alpha(if (fade) 0.75f else 1f), tint = glyphInk)
+                Icon(icon, title, Modifier.size(glyph).alpha(if (fade) 0.75f else 1f), tint = glyphInk)
             }
         }
         Callout(shown, { set(false) }, title, iconInset = iconInset, spacing = spacing, content = content)

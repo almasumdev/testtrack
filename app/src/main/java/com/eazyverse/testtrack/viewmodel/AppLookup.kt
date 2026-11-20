@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.viewmodel
 
-import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.net.ApiError
 import java.net.URI
 import java.net.URLDecoder
@@ -44,7 +43,7 @@ fun lookupFailure(
         error.code == "listing_not_visible" ->
             AskFailure(
                 "We can't access this listing",
-                "Check that our testers group, ${Config.GROUP_EMAIL}, is added to your closed track and the release is available. " +
+                "Check that our testers group is on your closed track and the release is out. " +
                     "Just added it? Play can take a few hours. You can pick it from this phone instead.",
                 pickInstead = true,
                 ours = false,

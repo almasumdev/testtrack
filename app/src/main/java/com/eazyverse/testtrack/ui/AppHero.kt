@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -40,13 +41,14 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * The app at the top of its own page, and of the page that adds it: one hero for both.
  */
 
-/** The icon's size in the hero; its tap area is 8dp wider, for the pencil on its corner. */
+/** The icon's size in the hero; its box is 8dp wider, for the pencil on its corner. */
 internal val AppHeroIcon = 88.dp
 
 /**
  * The app, centred: its [icon] (drawn [AppHeroIcon] square), name, package and chips for where it
- * is found, with [chips] after them for what else is true of it. Tapping the icon changes it; the
- * pencil on its corner says so. With [onRename] the name is tappable too and carries a pencil.
+ * is found, with [chips] after them for what else is true of it. With [onChangeIcon] tapping the
+ * icon changes it and the pencil on its corner says so; null, as for an app found on Play, the icon
+ * is only shown. With [onRename] the name is tappable too and carries a pencil.
  * [iconBusy] puts a loader on the icon while a new one is being read and sent. [below] is whatever
  * sits under the chips, such as the pill that says a closed test is live now.
  */
@@ -55,7 +57,7 @@ internal fun AppHero(
     name: String,
     pkg: String,
     live: Boolean,
-    onChangeIcon: () -> Unit,
+    onChangeIcon: (() -> Unit)?,
     modifier: Modifier = Modifier,
     iconBusy: Boolean = false,
     onRename: (() -> Unit)? = null,
@@ -64,7 +66,7 @@ internal fun AppHero(
     below: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(AppHeroIcon + 8.dp).iconTap(onChangeIcon)) {
+        Box(Modifier.size(AppHeroIcon + 8.dp).then(if (onChangeIcon != null) Modifier.iconTap(onChangeIcon) else Modifier)) {
             icon()
             if (iconBusy) {
                 Box(
@@ -75,7 +77,7 @@ internal fun AppHero(
                     contentAlignment = Alignment.Center,
                 ) { CircularProgressIndicator(Modifier.size(26.dp), strokeWidth = 2.5.dp, color = Tt.colors.accentInk) }
             }
-            EditBadge(Modifier.align(Alignment.BottomEnd))
+            if (onChangeIcon != null) EditBadge(Modifier.align(Alignment.BottomEnd))
         }
         Spacer(Modifier.height(12.dp))
         AppHeroName(name, onRename)
@@ -100,7 +102,11 @@ internal fun AppHero(
     }
 }
 
-/** The app's name at 22sp, and with [onRename] a press shape round it with a pencil after it. */
+/**
+ * The app's name at 22sp, and with [onRename] a press shape round it with a pencil after it. The
+ * press shape reaches 2dp above and below the words without taking that room, so the name and
+ * everything under it stay where they are without it.
+ */
 @Composable
 private fun AppHeroName(
     name: String,
@@ -113,9 +119,13 @@ private fun AppHeroName(
     }
     Row(
         Modifier
-            .clip(RoundedCornerShape(10.dp))
+            .layout { measurable, constraints ->
+                val edge = NamePress.roundToPx()
+                val placeable = measurable.measure(constraints)
+                layout(placeable.width, (placeable.height - edge * 2).coerceAtLeast(0)) { placeable.place(0, -edge) }
+            }.clip(RoundedCornerShape(10.dp))
             .clickable(role = Role.Button, onClickLabel = "Rename", onClick = onRename)
-            .padding(horizontal = 6.dp, vertical = 2.dp),
+            .padding(horizontal = 6.dp, vertical = NamePress),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -129,6 +139,9 @@ private fun AppHeroName(
         Icon(Lucide.Pencil, null, Modifier.size(16.dp), tint = Tt.colors.accentInk)
     }
 }
+
+/** How far the name's press shape reaches above and below the words. */
+private val NamePress = 2.dp
 
 /** The pencil in a round on an icon's corner: this can be changed by tapping it. */
 @Composable

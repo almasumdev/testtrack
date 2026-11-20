@@ -77,6 +77,7 @@ fun AppPage(
     }
     var askLive by remember { mutableStateOf(false) }
     var askDelete by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf(false) }
     // Said under the bar, such as why the bin can't delete this app.
     var note by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(message) {
@@ -138,6 +139,12 @@ fun AppPage(
                         liveBusy = running == AppAction.LIVE,
                         onChangeIcon = { if (!busy) choosePicture() },
                         onLive = { if (!busy) askLive = true },
+                        onEdit = {
+                            if (!busy) {
+                                vm.clearActionError()
+                                editing = true
+                            }
+                        },
                     )
                     if (!app.verified) {
                         Spacer(Modifier.height(16.dp))
@@ -180,6 +187,17 @@ fun AppPage(
                 vm.goLive(context, app.id)
             },
             onDismiss = { askLive = false },
+        )
+    }
+    if (editing && app != null) {
+        AppDetailsSheet(
+            app = app,
+            busy = vm.acting == app.id && vm.actingOn == AppAction.DETAILS,
+            error = vm.actionError,
+            onSave = { name, short, full, saved ->
+                vm.saveDetails(context, app.id, name, short, full, onDone = saved)
+            },
+            onDismiss = { editing = false },
         )
     }
     if (askDelete && app != null) {
@@ -234,12 +252,15 @@ private fun AppPageHero(
     liveBusy: Boolean,
     onChangeIcon: () -> Unit,
     onLive: () -> Unit,
+    /** The pencil by the name: the sheet with the name and both descriptions. */
+    onEdit: () -> Unit,
 ) {
     AppHero(
         name = app.name,
         pkg = app.pkg,
         live = app.live,
         onChangeIcon = onChangeIcon,
+        onRename = onEdit,
         iconBusy = iconBusy,
         icon = { AppMark(app.pkg, app.name, app.icon, size = AppHeroIcon, ownIcon = true) },
         chips = {
