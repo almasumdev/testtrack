@@ -21,11 +21,10 @@ import java.time.Instant
 internal fun ReviewStepGuide(
     job: ReviewJob,
     usageAccess: Boolean,
-    hasProof: Boolean,
     now: Instant = Instant.now(),
 ) {
-    // The send step says what it needs in the box, the frame and the lines under them instead.
-    val sending = job.step == ReviewStep.PROVE && !job.rechecking
+    // The send step says what it needs in the box, the thread and the lines under them instead.
+    val sending = job.step == ReviewStep.PROVE
     val showTask =
         !sending &&
             (
@@ -52,8 +51,6 @@ internal fun ReviewStepGuide(
                         job.step == ReviewStep.USE && !usageAccess -> "Usage access"
                         job.step == ReviewStep.USE && job.waitingForDay -> "Return visit"
                         job.step == ReviewStep.USE -> "Use time"
-                        job.rechecking -> "New proof needed"
-                        job.noBox -> "No review option on Play"
                         else -> "What to do"
                     }
                 ReviewSectionTitle(icon, title)
@@ -86,8 +83,7 @@ internal fun ReviewStepGuide(
                             highlights = listOf("Capture what you posted"),
                         )
                     }
-                    ReviewStep.PROVE -> ReviewProofTask(job, hasProof)
-                    ReviewStep.WAIT -> Unit
+                    ReviewStep.PROVE, ReviewStep.WAIT -> Unit
                 }
             }
         }
@@ -114,25 +110,5 @@ private fun ReviewUseTask(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun ReviewProofTask(
-    job: ReviewJob,
-    hasProof: Boolean,
-) {
-    // Only a new screenshot asked for by the developer comes here; the send step has no list.
-    ReviewBullet(body = "Capture a fresh screenshot on Google Play.", highlights = listOf("fresh screenshot"))
-    job.checkBy?.let { due ->
-        // "by Saturday at 2:10 PM", not "by on Saturday".
-        val deadline = opensWhen(due).removePrefix("on ")
-        ReviewBullet(body = "Send it by $deadline.", highlights = listOf(deadline))
-    }
-    if (hasProof) {
-        ReviewBullet(
-            body = "Check the screenshot and hide private details before sending.",
-            highlights = listOf("hide private details"),
-        )
     }
 }

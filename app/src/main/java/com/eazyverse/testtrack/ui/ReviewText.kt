@@ -138,7 +138,6 @@ internal fun stepAction(
         ReviewStep.PROVE ->
             when {
                 job.rechecking -> "Send the new screenshot"
-                job.noBox -> "Send for half"
                 else -> "Send the proof"
             }
         ReviewStep.WAIT -> ""

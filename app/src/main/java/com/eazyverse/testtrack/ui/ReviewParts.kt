@@ -54,31 +54,33 @@ internal fun DeveloperAsks(job: ReviewJob) {
 }
 
 /**
- * On the proof step, what the developer gave as their own messages: what they asked about, and the
- * ready review they wrote, if any. The box under them takes the ready review with one tap.
+ * On the Send page, under the box, what the developer gave as their own messages, as one turn of
+ * theirs under the app's icon: what they asked about, then the ready review they wrote, marked as
+ * one and optional. The box above takes the ready review with one tap. The developer stays
+ * anonymous here: the app's icon and "Developer", never their name or photo.
  */
 @Composable
-internal fun ProveAsks(job: ReviewJob) {
+internal fun ProveAsks(
+    job: ReviewJob,
+    developer: ThreadApp,
+) {
     val asked =
         job.post.ask
             .trim()
             .takeIf { it.isNotEmpty() && it != GENERAL_ASK }
     val ready = readyReview(job)
     if (asked == null && ready == null) return
-    val developer = ThreadApp(job.post.packageName, job.post.appName, job.post.icon)
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(ReviewSectionGap)) {
-        if (asked != null) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                ThreadHeading("The developer asks")
-                ThreadGroup(listOf(ThreadPart.Words(asked)), face = ThreadFace.APP, app = developer)
-            }
-        }
-        if (ready != null) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                ThreadHeading("A ready review", tag = "Optional")
-                ThreadGroup(listOf(ThreadPart.Words(ready)), face = ThreadFace.APP, app = developer)
-            }
-        }
+    Column(Modifier.fillMaxWidth()) {
+        SendHeading("The developer asks")
+        Spacer(Modifier.height(10.dp))
+        ThreadGroup(
+            listOfNotNull(
+                asked?.let { ThreadPart.Words(it) },
+                ready?.let { ThreadPart.Words(it, footStart = "A ready review", footEnd = "Optional") },
+            ),
+            face = ThreadFace.APP,
+            app = developer,
+        )
     }
 }
 

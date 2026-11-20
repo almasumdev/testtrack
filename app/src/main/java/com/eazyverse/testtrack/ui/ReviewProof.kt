@@ -1,10 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import android.net.Uri
-import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,31 +9,31 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import coil.compose.SubcomposeAsyncImage
-import com.composables.icons.lucide.Camera
+import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.EyeOff
-import com.composables.icons.lucide.Image
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Text
+import com.eazyverse.testtrack.domain.ChatThread
 import com.eazyverse.testtrack.ui.theme.Tt
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /*
  * The capture half of the review: the one-time guide, the ask for "Display over other apps", and
- * step four: the screenshot with its note, and the two ways to get one.
+ * step four, the Send page: the picture box, the text with its count, and the developer's messages.
  */
 
 /**
@@ -103,78 +99,62 @@ fun OverlayPermissionDialog(
 }
 
 /**
- * Step four: the screenshot in a phone-shaped frame with the ways to get it beside it, then the
- * text in an outlined box that grows to six lines, with its count under it.
- *
- * The same shape with or without a screenshot: without one the picture's place is a dashed
- * frame, so adding one changes what is in the frame and nothing on the page moves.
+ * Step four, the Send page under the route. A new screenshot asked for starts with what was sent
+ * and the developer's ask; no review box starts with its half-pay note. Then the picture box, the
+ * text with its count (not when only a new screenshot is asked for), who sees the picture, and
+ * what the developer asked, as their own messages.
  */
 @Composable
-fun ProofArea(
+internal fun SendProof(
+    job: ReviewJob,
     shown: Uri?,
-    /** Null when only a screenshot is asked for, as when showing a review again. */
-    note: String?,
+    note: String,
     onNote: (String) -> Unit,
-    /** Characters of pasted text the request asks for; 0 when the note is optional. */
-    needs: Int = 0,
     onCapture: () -> Unit,
     /** Null where the picture must be taken now, on Play, rather than picked. */
     onGallery: (() -> Unit)?,
-    onInspect: (Uri) -> Unit = {},
-    /** The box's label and the hint inside it once it has focus. */
-    label: String = if (needs > 0) "Your feedback for the developer" else "A note for the developer (optional)",
-    placeholder: String? = null,
-    /** The developer's ready review, put in the box with one tap; null without one. */
-    ready: String? = null,
+    onRemove: () -> Unit,
+    /** Opens the editor that covers anything personal. */
+    onEdit: (Uri) -> Unit,
 ) {
-    val t = Tt.colors
+    val rechecking = job.rechecking
+    val half = job.noBox && !rechecking
+    val developer = ThreadApp(job.post.packageName, job.post.appName, job.post.icon)
     Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Crossfade(shown, label = "proof") { picture ->
-                if (picture == null) EmptyShot() else Shot(picture) { onInspect(picture) }
-            }
-            Column(Modifier.padding(top = 2.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                RowPill(
-                    if (shown == null) "Capture on Play" else "Capture again",
-                    PillKind.SOFT,
-                    leading = Lucide.Camera,
-                    leadingSize = 15.dp,
-                    onClick = onCapture,
-                )
-                if (onGallery != null) RowPill("Gallery", PillKind.SOFT, leading = Lucide.Image, leadingSize = 15.dp, onClick = onGallery)
-                if (shown != null) InlineAction("Hide details", leading = Lucide.EyeOff) { onInspect(shown) }
-                if (onGallery == null) {
-                    InfoLine(Lucide.Info, AnnotatedString("It has to be taken now, on Play."))
+        if (rechecking || half) {
+            Thread {
+                if (rechecking) RecheckAsked(job, developer)
+                if (half) {
+                    val pays = "${job.reward} tix"
+                    ThreadNote(
+                        noteText("No review box, half pay"),
+                        NoteTone.INFO,
+                        Lucide.Info,
+                        more =
+                            strong(
+                                "Play shows you no review box, so you send it here. It pays $pays and needs ${job.needsChars}+ characters.",
+                                pays,
+                            ),
+                        moreTitle = "Half pay",
+                    )
                 }
             }
         }
-        if (note != null) {
-            Spacer(Modifier.height(18.dp))
-            val have = plainLength(note)
-            OutlinedField(
-                value = note,
-                onValueChange = { onNote(it.take(NOTE_MAX)) },
-                label = label,
-                placeholder = placeholder,
-                singleLine = false,
-                minLines = 3,
-                maxLines = 6,
-                imeAction = androidx.compose.ui.text.input.ImeAction.Default,
-                maxLength = NOTE_MAX,
-                hint =
-                    when {
-                        needs <= 0 -> null
-                        have >= needs -> "$have characters, enough"
-                        else -> "$have of $needs characters"
-                    },
-                hintTone = if (needs > 0 && have >= needs) t.ok else null,
-            )
-            if (ready != null && note.trim() != ready.trim()) {
-                Spacer(Modifier.height(6.dp))
-                Box(Modifier.offset(x = (-8).dp)) { InlineAction("Put the ready review in") { onNote(ready.take(NOTE_MAX)) } }
-            }
+        SendHeading(if (rechecking) "Your new screenshot" else "Your review", proofInfo(job))
+        ProofBox(
+            picture = shown,
+            onCapture = onCapture,
+            onGallery = onGallery,
+            onRemove = onRemove,
+            onHideDetails = { shown?.let(onEdit) },
+            onRetake = onCapture,
+            onOpen = shown?.let { picture -> { onEdit(picture) } },
+        )
+        if (!rechecking) {
+            Spacer(Modifier.height(20.dp))
+            SendNote(job, note, onNote)
         }
-        Spacer(Modifier.height(if (note != null && ready == null) 16.dp else 10.dp))
+        Spacer(Modifier.height(10.dp))
         InfoLine(
             Lucide.EyeOff,
             AnnotatedString("The developer sees this picture. Hide anything personal."),
@@ -182,55 +162,156 @@ fun ProofArea(
         ) {
             CalloutLine(AnnotatedString("If they dispute it, ${FeedRules.JURORS.words()} members and the TestTrack team see it too."))
         }
+        if (!rechecking && !job.noBox) ProveAsks(job, developer)
     }
 }
 
+/**
+ * A small heading over a part of the Send page, 18dp under what is above it, with an (i) that
+ * says more when there is more to say.
+ */
 @Composable
-private fun Shot(
-    picture: Uri,
-    onClick: () -> Unit,
+internal fun SendHeading(
+    title: String,
+    info: String? = null,
 ) {
     val t = Tt.colors
-    SubcomposeAsyncImage(
-        model = picture,
-        contentDescription = "Your review screenshot",
-        loading = { Skeleton(THUMB_WIDTH, THUMB_HEIGHT, 10.dp) },
-        modifier =
-            Modifier
-                .size(width = THUMB_WIDTH, height = THUMB_HEIGHT)
-                .clip(ThumbShape)
-                .clickable(onClick = onClick)
-                .border(1.dp, t.glassBorder, ThumbShape),
-        contentScale = ContentScale.Crop,
-    )
-}
-
-/** Where the screenshot will go: a dashed frame, read rather than pressed; the buttons do that. */
-@Composable
-private fun EmptyShot() {
-    val t = Tt.colors
-    Box(
-        Modifier
-            .size(width = THUMB_WIDTH, height = THUMB_HEIGHT)
-            .drawBehind {
-                drawRoundRect(
-                    color = t.glassBorder,
-                    cornerRadius = CornerRadius(10.dp.toPx()),
-                    style =
-                        Stroke(
-                            width = 1.5.dp.toPx(),
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx())),
-                        ),
-                )
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(Lucide.Image, contentDescription = "No screenshot yet", Modifier.size(22.dp), tint = t.text4)
+    Row(Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(title, style = tileStyle(12f, 16f, FontWeight.Bold), color = t.text3, maxLines = 1)
+        if (info != null) {
+            Spacer(Modifier.width(4.dp))
+            InfoDot(title, t.text3) { CalloutLine(AnnotatedString(info)) }
+        }
     }
 }
+
+/** What the picture has to show, behind the heading's (i). */
+private fun proofInfo(job: ReviewJob): String =
+    when {
+        job.rechecking -> "Take it now, on Google Play. A picture from the gallery won't do."
+        job.noBox -> "A screenshot of the app's page on Google Play, with no review box on it."
+        job.live -> "A screenshot of your rating and review on Google Play."
+        else -> "A screenshot of the private feedback you sent on Google Play."
+    }
+
+/** The text that goes with the picture: its count under it, and the ready review one tap away. */
+@Composable
+private fun SendNote(
+    job: ReviewJob,
+    note: String,
+    onNote: (String) -> Unit,
+) {
+    val t = Tt.colors
+    val needs = job.needsChars
+    val max = if (needs > 0) NOTE_MAX else OPTIONAL_NOTE_MAX
+    val have = plainLength(note)
+    OutlinedField(
+        value = note,
+        onValueChange = { onNote(it.take(max)) },
+        label = proofLabel(job),
+        placeholder = proofHint(job),
+        singleLine = false,
+        minLines = 3,
+        maxLines = 6,
+        imeAction = ImeAction.Default,
+        maxLength = max,
+        hint =
+            when {
+                needs <= 0 -> null
+                have >= needs -> "$have characters, enough"
+                else -> "$have of $needs characters"
+            },
+        hintTone =
+            when {
+                needs <= 0 -> null
+                have >= needs -> t.ok
+                have > 0 -> t.warn
+                else -> t.text3
+            },
+    )
+    val ready = readyReview(job)
+    if (ready != null && note.trim() != ready.trim()) {
+        Spacer(Modifier.height(2.dp))
+        Box(Modifier.offset(x = (-8).dp)) {
+            InlineAction("Put the ready review in", leading = Lucide.Text) { onNote(ready.take(max)) }
+        }
+    }
+}
+
+/** The box's label: the review's own words on a live app, feedback otherwise. */
+private fun proofLabel(job: ReviewJob): String =
+    when {
+        job.needsChars <= 0 -> "A note for the developer (optional)"
+        job.live && !job.noBox -> "Your review text"
+        else -> "Your feedback for the developer"
+    }
+
+/** What goes in the box, said inside it once it has focus. */
+private fun proofHint(job: ReviewJob): String? =
+    when {
+        job.needsChars <= 0 -> null
+        job.noBox -> "What worked and what to improve"
+        job.live -> "The same words you posted on Play"
+        else -> "The same feedback you sent on Play"
+    }
+
+/**
+ * The developer could not find it on Play: the first screenshot on the right, their ask on the
+ * left under the app's icon, and by when the new one has to come.
+ */
+@Composable
+private fun RecheckAsked(
+    job: ReviewJob,
+    developer: ThreadApp,
+) {
+    val review = job.review
+    val zone = ZoneId.systemDefault()
+    val today = LocalDate.now(zone)
+    val sent = reviewInstant(review.submittedAt)
+    val asked = reviewInstant(review.checkedAt)
+    sent?.let { ThreadDay(ChatThread.dayLabel(it.atZone(zone).toLocalDate(), today)) }
+    if (review.proofRef.isNotBlank()) {
+        ThreadGroup(
+            listOf(ThreadPart.Picture(review.proofRef, width = 110.dp, height = 150.dp)),
+            side = ThreadSide.RIGHT,
+            time = "Your first screenshot",
+        )
+    }
+    if (asked != null && (sent == null || !sameDay(sent, asked, zone))) {
+        ThreadDay(ChatThread.dayLabel(asked.atZone(zone).toLocalDate(), today))
+    }
+    ThreadGroup(
+        listOf(ThreadPart.Words(ASKED_FOR_NEW)),
+        face = ThreadFace.APP,
+        app = developer,
+        time = ChatThread.clock(asked),
+    )
+    job.checkBy?.let { due ->
+        val by = sendBy(due, zone)
+        ThreadNote(noteText("Send it by $by", by), NoteTone.WARN, Lucide.Clock)
+    }
+}
+
+/** "Sat, 2:10 PM": the day and the time a new screenshot is due. */
+private fun sendBy(
+    due: Instant,
+    zone: ZoneId,
+): String = due.atZone(zone).format(DateTimeFormatter.ofPattern("EEE, h:mm a", Locale.getDefault()))
+
+/** A time the server sent, or null where it sent none or one that does not read. */
+internal fun reviewInstant(iso: String?): Instant? =
+    iso?.let {
+        runCatching {
+            java.time.OffsetDateTime
+                .parse(it)
+                .toInstant()
+        }.getOrNull()
+    }
+
+/** What the developer said, as the reviewer reads it, when asking for a new screenshot. */
+internal const val ASKED_FOR_NEW = "I can't find your review on Play. Please send a new screenshot."
 
 private const val NOTE_MAX = 600
 
-private val THUMB_WIDTH = 72.dp
-private val THUMB_HEIGHT = 128.dp
-private val ThumbShape = RoundedCornerShape(10.dp)
+/** An optional note is a line or two for the developer, not a review. */
+private const val OPTIONAL_NOTE_MAX = 280

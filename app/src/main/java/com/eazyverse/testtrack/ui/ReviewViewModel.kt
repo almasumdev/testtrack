@@ -138,6 +138,13 @@ class ReviewViewModel : ViewModel() {
         }
     }
 
+    /** The × on the picture: the screenshot goes, the note and the step stay. */
+    fun removeProof() {
+        val id = job?.review?.id ?: return
+        app?.let { ProofStore.dropPicture(it, id) }
+        proof = null
+    }
+
     fun editNote(text: String) {
         note = text
         val id = job?.review?.id ?: return

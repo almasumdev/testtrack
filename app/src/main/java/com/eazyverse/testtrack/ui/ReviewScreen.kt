@@ -32,13 +32,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.findActivity
@@ -95,6 +93,7 @@ fun ReviewScreen(
         // way does not cost the one there was.
         onCapture = capture,
         onPicked = { vm.keepPicked(context, it) },
+        onRemoveProof = vm::removeProof,
         note = vm.note,
         onNote = vm::editNote,
         sideloaded = vm.sideloaded,
@@ -188,6 +187,7 @@ fun ReviewBody(
     proof: Uri? = null,
     onCapture: () -> Unit = {},
     onPicked: (Uri) -> Unit = {},
+    onRemoveProof: () -> Unit = {},
     note: String = "",
     onNote: (String) -> Unit = {},
     onGiveUp: (() -> Unit)? = null,
@@ -201,6 +201,7 @@ fun ReviewBody(
     val scroll = rememberScrollState()
     LaunchedEffect(post.id, job?.step) { scroll.scrollTo(0) }
     var editingProof by remember { mutableStateOf<Uri?>(null) }
+    var answering by remember { mutableStateOf(false) }
     val pick =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri != null) editingProof = uri
@@ -228,13 +229,15 @@ fun ReviewBody(
             }
         },
         bottomBar = {
-            Column(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 12.dp, bottom = 18.dp)) {
+            // The Send and Waiting pages sit their foot 8dp under the page, as the thread pages do.
+            val threadFoot = job != null && (job.settled || job.step == ReviewStep.PROVE)
+            Column(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = if (threadFoot) 8.dp else 12.dp, bottom = 18.dp)) {
                 if (job == null && failure != null) {
                     Primary("Try again", busy = spinning, onClick = onRetry)
                 } else if (job == null) {
                     Spacer(Modifier.height(52.dp))
                 } else if (job.settled) {
-                    Primary("Done", onClick = onClose)
+                    WaitFoot(job, busy = spinning, onDone = onClose, onAnswer = { answering = true })
                 } else {
                     val asking = job.step == ReviewStep.USE && !usageAccess
                     // Step four sends once there is a screenshot, and the text the request asks for.
@@ -287,8 +290,6 @@ fun ReviewBody(
             ) {
                 // Anonymous: whose app it is is not shown to the reviewer.
                 ReviewAppRow(post.appName, post.packageName, post.isLive, if (post.mine) post.ownerName else "", offline, icon = post.icon)
-                // Keep the route separate from the app's identity.
-                Spacer(Modifier.height(ReviewSectionGap))
                 // Which page this is, rather than the job itself: keyed on the job, every answer
                 // from the server faded the whole page out and back in. Now only a real change of
                 // page does: loading to the step, the step to sent.
@@ -299,6 +300,18 @@ fun ReviewBody(
                         job.settled -> ReviewPage.DONE
                         else -> ReviewPage.STEP
                     }
+                // Keep the route separate from the app's identity. A thread starts nearer the app:
+                // its day label brings its own room, and the Send page's route sits 18dp under it.
+                val robot = job?.review?.state == "abandoned" || job?.review?.state == "expired"
+                Spacer(
+                    Modifier.height(
+                        when {
+                            page == ReviewPage.DONE && !robot -> 10.dp
+                            page == ReviewPage.STEP && job?.step == ReviewStep.PROVE -> 18.dp
+                            else -> ReviewSectionGap
+                        },
+                    ),
+                )
                 Crossfade(page, label = "review") { shownPage ->
                     if (shownPage == ReviewPage.FAILED) {
                         ReviewFailed(failure.orEmpty(), room)
@@ -309,7 +322,29 @@ fun ReviewBody(
                         return@Crossfade
                     }
                     if (shownPage == ReviewPage.DONE) {
-                        ReviewDone(job, room, onReply)
+                        ReviewDone(job, room)
+                        return@Crossfade
+                    }
+                    if (job.step == ReviewStep.PROVE) {
+                        Column(Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                            ReviewStepGuide(job, usageAccess, now)
+                            if (sideloaded) {
+                                Spacer(Modifier.height(ReviewSectionGap))
+                                SideloadNotice()
+                            }
+                            Spacer(Modifier.height(10.dp))
+                            SendProof(
+                                job = job,
+                                shown = shown,
+                                note = note,
+                                onNote = onNote,
+                                onCapture = onCapture,
+                                // Showing it again needs a picture taken now, on Play, not one picked.
+                                onGallery = galleryPick.takeUnless { job.rechecking },
+                                onRemove = onRemoveProof,
+                                onEdit = { editingProof = it },
+                            )
+                        }
                         return@Crossfade
                     }
                     // Keep each task at the top; longer instructions remain scrollable.
@@ -319,48 +354,19 @@ fun ReviewBody(
                         horizontalAlignment = Alignment.Start,
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(ReviewLineGap)) {
-                            ReviewStepGuide(job, usageAccess, shown != null, now)
+                            ReviewStepGuide(job, usageAccess, now)
                             if (job.step == ReviewStep.LEAVE) SelfShotLink { onLeave(ReviewStep.LEAVE) }
                         }
                         if (needsAgreement) {
                             ReviewStartRules(job)
                         }
-                        if (sideloaded) {
-                            Notice(Status.short, Lucide.TriangleAlert) {
-                                Text(
-                                    "Install the Google Play version to continue.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                            }
-                        }
+                        if (sideloaded) SideloadNotice()
                         // On the send step the developer's ask and ready review are their messages, under the box.
-                        if (!job.settled && !job.rechecking && !job.noBox && job.step != ReviewStep.PROVE) {
-                            DeveloperAsks(job)
-                        }
+                        if (!job.rechecking && !job.noBox) DeveloperAsks(job)
                         if (needsAgreement) {
                             ReviewRulesAgreement(rulesAccepted) { rulesAccepted = it }
                         }
                         WrittenAsk(job, onNoBox)
-                        if (!job.settled && job.step == ReviewStep.PROVE && job.noBox && !job.rechecking) {
-                            InfoLine(Lucide.Info, AnnotatedString("Play showed no review box, so this pays half."))
-                        }
-                        if (!job.settled && job.step == ReviewStep.PROVE) {
-                            ProofArea(
-                                shown = shown,
-                                note = note.takeUnless { job.rechecking },
-                                needs = job.needsChars,
-                                onNote = onNote,
-                                onCapture = onCapture,
-                                // Showing it again needs a picture taken now, on Play, not one picked.
-                                onGallery = galleryPick.takeUnless { job.rechecking },
-                                onInspect = { editingProof = it },
-                                label = proofLabel(job),
-                                placeholder = proofHint(job),
-                                ready = readyReview(job),
-                            )
-                            if (!job.rechecking && !job.noBox) ProveAsks(job)
-                        }
                         // What losing a dispute costs, said on the first step, before any work is done.
                         if (!job.settled && job.step == ReviewStep.INSTALL && !needsAgreement) {
                             DisputeNote()
@@ -373,25 +379,23 @@ fun ReviewBody(
     editingProof?.let { uri ->
         ProofEditor(uri, onKeep = onPicked, onClose = { editingProof = null })
     }
+    if (answering && job?.canReply == true) {
+        AnswerSheet(onSend = onReply, onDismiss = { answering = false })
+    }
+}
+
+/** Under the route, for an app that did not come from Google Play. */
+@Composable
+private fun SideloadNotice() {
+    Notice(Status.short, Lucide.TriangleAlert) {
+        Text(
+            "Install the Google Play version to continue.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
 }
 
 private enum class ReviewPage { LOADING, FAILED, STEP, DONE }
-
-/** The proof box's label: the review's own words on a live app, feedback otherwise. */
-private fun proofLabel(job: ReviewJob): String =
-    when {
-        job.needsChars <= 0 -> "A note for the developer (optional)"
-        job.live && !job.noBox -> "Your review text"
-        else -> "Your feedback for the developer"
-    }
-
-/** What goes in the box, said inside it once it has focus. */
-private fun proofHint(job: ReviewJob): String? =
-    when {
-        job.needsChars <= 0 -> null
-        job.noBox -> "What worked and what to improve"
-        job.live -> "The same words you posted on Play"
-        else -> "The same feedback you sent on Play"
-    }
 
 private const val SPIN_AFTER_MS = 250L

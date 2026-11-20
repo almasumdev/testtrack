@@ -8,7 +8,6 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.eazyverse.testtrack.net.ApiPost
 import com.eazyverse.testtrack.net.ApiReview
@@ -221,11 +220,8 @@ class ReviewBodyTest {
     fun a_sent_review_stops_offering_anything_to_press() {
         open("submitted")
 
-        compose.onNodeWithText("Sent to the developer").assertIsDisplayed()
-        compose.onNodeWithText("Sent with your screenshot").assertIsDisplayed()
-        compose
-            .onNodeWithText("Up to a day, then it approves itself")
-            .assertIsDisplayed()
+        compose.onNodeWithText("With the developer").assertIsDisplayed()
+        compose.onNodeWithText("Done").assertIsDisplayed()
         for (action in listOf("Get it on Play", "Open the app", "Send the proof")) {
             compose.onNodeWithText(action).assertDoesNotExist()
         }
@@ -253,7 +249,7 @@ class ReviewBodyTest {
         open("used", leftReview = true, onSend = { _, _ -> sent++ })
 
         // Both ways to get one are on the page itself, not behind a dialog.
-        compose.onNodeWithText("Capture app").assertIsDisplayed()
+        compose.onNodeWithText("Capture on Play").assertIsDisplayed()
         compose.onNodeWithText("Gallery").assertIsDisplayed()
 
         // Nothing to send yet. A proof step that accepts an empty proof sends the developer a
@@ -275,9 +271,8 @@ class ReviewBodyTest {
         }, onCapture = { captures++ })
 
         compose.onNodeWithContentDescription("Your review screenshot").assertIsDisplayed()
-        // Replacing it is not only a screen capture: the gallery is right beside it.
-        compose.onNodeWithText("Gallery").assertIsDisplayed()
-        compose.onNodeWithText("Capture again").performClick()
+        // Replacing it is on the picture itself.
+        compose.onNodeWithText("Retake").performClick()
         assertEquals(1, captures)
 
         compose.onNodeWithText("Send the proof").performClick()
@@ -287,7 +282,7 @@ class ReviewBodyTest {
     @Test
     fun the_proof_step_says_who_sees_the_picture_and_asks_for_nothing_else() {
         open("used", leftReview = true, proof = android.net.Uri.parse("file:///nowhere/proof.jpg"), note = "Totals read well")
-        compose.onNodeWithText("The app's owner sees this picture.", substring = true).assertExists()
+        compose.onNodeWithText("The developer sees this picture.", substring = true).assertExists()
         compose.onNodeWithText("Send the proof").assertIsDisplayed()
     }
 
@@ -295,14 +290,14 @@ class ReviewBodyTest {
     fun an_unfinished_review_can_be_given_up_and_a_sent_one_cannot() {
         var gaveUp = 0
         open("installed", onGiveUp = { gaveUp++ })
-        compose.onNodeWithText("Give it up").performScrollTo().performClick()
+        compose.onNodeWithText("Give up review").performClick()
         assertEquals(1, gaveUp)
     }
 
     @Test
     fun a_sent_review_has_no_way_to_give_it_up() {
         open("submitted", onGiveUp = {})
-        compose.onNodeWithText("Give it up").assertDoesNotExist()
+        compose.onNodeWithText("Give up review").assertDoesNotExist()
     }
 
     @Test
@@ -314,8 +309,8 @@ class ReviewBodyTest {
     @Test
     fun an_approved_review_says_the_tix_were_paid() {
         open("approved")
-        compose.onNodeWithText("Approved").assertIsDisplayed()
-        compose.onNodeWithText("Paid to you").assertIsDisplayed()
+        compose.onNodeWithText("Approved, +40 tix").assertIsDisplayed()
+        compose.onNodeWithText("Done").assertIsDisplayed()
     }
 
     @Test

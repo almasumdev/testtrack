@@ -145,7 +145,7 @@ internal fun ReviewThread(
     }
 }
 
-private fun sameDay(
+internal fun sameDay(
     a: Instant,
     b: Instant,
     zone: ZoneId,

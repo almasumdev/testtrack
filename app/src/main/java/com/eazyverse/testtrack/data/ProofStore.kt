@@ -125,6 +125,21 @@ object ProofStore {
             .apply()
     }
 
+    /** Taken back out before sending: the picture goes, the note and the step stay. */
+    fun dropPicture(
+        context: Context,
+        reviewId: String,
+    ) {
+        proof(context, reviewId)?.delete()
+        prefs(context)
+            .edit()
+            .remove("file_$reviewId")
+            .remove("mime_$reviewId")
+            .remove("ref_$reviewId")
+            .remove("upload_id_$reviewId")
+            .apply()
+    }
+
     /** Sent: none of it is needed any more. */
     fun forget(
         context: Context,
