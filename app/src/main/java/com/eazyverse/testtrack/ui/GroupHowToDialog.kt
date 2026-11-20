@@ -54,8 +54,9 @@ import com.eazyverse.testtrack.ui.TextStyles.HintStyle
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
- * How to add the testers group, full screen from the seat page: the address again, then each step
- * in Play Console with a picture of where to tap. A picture zooms where it is, see [ZoomableImage].
+ * How to add the testers group, full screen, the one how-to every page opens: the address again,
+ * then each step in Play Console with a picture of where to tap. A picture zooms where it is, see
+ * [ZoomableImage].
  */
 
 /** One step of adding the testers group in Play Console, and its picture. */
@@ -75,11 +76,15 @@ internal val PlaySteps =
 
 private val StepStyle = tileStyle(15f, 20f, FontWeight.SemiBold)
 
+/**
+ * The steps. With [verify] and [onVerify], as from the seat page, the check sits at the end;
+ * without them the page is only the address and the steps.
+ */
 @Composable
 internal fun GroupHowToDialog(
-    state: SeatGroupState,
-    onVerify: () -> Unit,
     onDismiss: () -> Unit,
+    verify: SeatGroupState? = null,
+    onVerify: (() -> Unit)? = null,
 ) {
     val t = Tt.colors
     // The zoom hint sits under the first picture until a picture is zoomed once.
@@ -137,7 +142,9 @@ internal fun GroupHowToDialog(
                     }
                 }
                 Spacer(Modifier.height(28.dp))
-                SeatBar(state.verifyLabel, Lucide.RefreshCw, busy = state.checking, enabled = !state.checking, onClick = onVerify)
+                if (verify != null && onVerify != null) {
+                    SeatBar(verify.verifyLabel, Lucide.RefreshCw, busy = verify.checking, enabled = !verify.checking, onClick = onVerify)
+                }
             }
         }
     }

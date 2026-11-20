@@ -10,6 +10,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,11 +20,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.CircleAlert
@@ -31,7 +36,6 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageSquare
 import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.TriangleAlert
-import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -119,7 +123,7 @@ internal fun AskAppHead(app: AppEntry) {
 /**
  * What testers do with the app, said before anything is posted. A live app adds the part an owner
  * should decide knowingly: Google does not allow rewarding reviews. An app nothing has verified
- * says so in amber, with what to do behind the (i).
+ * says so in amber, with the way to the testers group's steps.
  */
 @Composable
 internal fun AskTrackLines(
@@ -128,6 +132,7 @@ internal fun AskTrackLines(
 ) {
     val t = Tt.colors
     val bold = SpanStyle(fontWeight = FontWeight.SemiBold, color = t.text)
+    var how by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         if (live) {
             InfoLine("Testers use it on two days, then rate and review it on Google Play.", icon = Lucide.Star)
@@ -161,21 +166,23 @@ internal fun AskTrackLines(
                 infoLook = InfoDotLook.ACCENT,
             )
         } else if (!verified) {
+            // The words then the way to the steps, in one line, so the page keeps its height.
             InfoLine(
-                AnnotatedString("Not checked on Play yet."),
+                buildAnnotatedString {
+                    append("Not checked on Play yet. ")
+                    withLink(
+                        LinkAnnotation.Clickable(
+                            "how",
+                            TextLinkStyles(SpanStyle(color = t.accentInk, fontWeight = FontWeight.Bold)),
+                        ) { how = true },
+                    ) { append("How to add it") }
+                },
                 tone = Tone.WARN,
                 icon = Lucide.CircleAlert,
-                info =
-                    buildAnnotatedString {
-                        append("Add ")
-                        withStyle(bold) { append(Config.GROUP_EMAIL) }
-                        append(" to your closed track's testers, or reviewers can't install it.")
-                    },
-                infoTitle = "Add our testers group",
-                infoLook = InfoDotLook.ACCENT,
             )
         }
     }
+    if (how) GroupHowToDialog(onDismiss = { how = false })
 }
 
 /**

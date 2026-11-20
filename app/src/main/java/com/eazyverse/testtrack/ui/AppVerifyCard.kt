@@ -73,5 +73,5 @@ internal fun AppVerifyCard(
         Spacer(Modifier.height(if (live) 16.dp else 10.dp))
         Primary("Verify now", busy = busy, onClick = onVerify)
     }
-    if (how) GroupHowSheet { how = false }
+    if (how) GroupHowToDialog(onDismiss = { how = false })
 }

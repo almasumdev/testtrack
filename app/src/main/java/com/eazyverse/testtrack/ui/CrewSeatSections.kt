@@ -241,7 +241,7 @@ internal fun CrewSeatGroup(
     }
     state.error?.let { Text(it, Modifier.padding(top = 8.dp), style = SmallLine, color = t.bad) }
     // Only while the group is open: once Play shows the app the steps close with it.
-    if (howTo) GroupHowToDialog(state, onVerify, onDismiss = { howTo = false })
+    if (howTo) GroupHowToDialog(onDismiss = { howTo = false }, verify = state, onVerify = onVerify)
 }
 
 private val AddressStyle = tileStyle(15f, 18f, FontWeight.SemiBold)
