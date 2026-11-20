@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review pages as a chat thread</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 700; src: url("../../../app/src/main/res/font/plexmono_bold.ttf"); }
+
+  /* OceanLight / OceanDark, ui/theme/Tokens.kt */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
+    --tile:#DCE6EE; --tileInk:#3A5B73;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --cardLine:#E1ECF3; --sheet:#FFFFFF; --ring:rgba(20,47,67,.14); --track:#E4EEF4; --sk:#E3EDF4;
+    --flaskLiquid:#9279D6; --flaskGlass:#4A3B86;
+    --primary:var(--accent); --onPrimary:var(--onAccent); --onTone:#FFFFFF; --scrim:rgba(20,34,48,.46);
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
+    --tile:#2A2D31; --tileInk:#A2BED2;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --cardLine:#2D3034; --sheet:#1C1E20; --ring:rgba(255,255,255,.16); --track:#2D3034; --sk:#212427;
+    --flaskLiquid:#8C70D4; --flaskGlass:#CDBEF0;
+    --primary:var(--accentInk); --onPrimary:var(--bg); --onTone:#0F1011; --scrim:rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  .top { position: sticky; top: 0; z-index: 9; display: flex; align-items: center; gap: 10px; padding: 12px 28px; background: #D9E0E5; border-bottom: 1px solid #C3CDD4; }
+  .top h1 { margin: 0 14px 0 0; font-size: 20px; font-weight: 700; }
+  .top a { font: 600 15px/20px "BarlowApp", "Barlow", sans-serif; padding: 8px 18px; border-radius: 20px; border: 1px solid #B3C0C9; background: #F4F7F9; color: #2D4A5F; text-decoration: none; }
+  .doc { padding: 6px 28px 80px; }
+  .page { font-size: 30px; font-weight: 700; margin: 40px 0 4px 4px; }
+  .thm { font-size: 15px; font-weight: 700; color: #4F5C66; margin: 22px 0 10px 4px; }
+  .row { display: flex; flex-wrap: wrap; gap: 28px 22px; align-items: flex-start; }
+  .state { display: flex; flex-direction: column; gap: 8px; }
+  .lbl { font-size: 15px; font-weight: 700; margin-left: 4px; display: flex; gap: 8px; align-items: center; }
+  .lbl .k.now { background: #8A949C; }
+  .recm { font-size: 12.5px; padding: 3px 10px; border-radius: 99px; background: #246B59; color: #fff; }
+  /* reviewer block ideas */
+  .pbar .t2 { margin-left: 4px; flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .pbar .t2 .a { font-size: 20px; line-height: 24px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pbar .t2 .b { font-size: 12.5px; line-height: 16px; color: var(--text3); font-weight: 500; white-space: nowrap; }
+  .pbar .t2 .b.warn { color: var(--warn); font-weight: 600; }
+  .pbar .t2 .b.ok { color: var(--ok); font-weight: 600; }
+  .pbar .t2 .b .inl { margin-right: 4px; }
+  .pbar .cv { margin-left: 2px; flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+  .pbar .cv .t2 { margin-left: 0; }
+  .intro { display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: 22px; }
+  .intro .n { margin-top: 10px; font-size: 18px; line-height: 22px; font-weight: 700; }
+  .intro .l { margin-top: 3px; display: flex; gap: 14px; font-size: 13px; line-height: 17px; color: var(--text3); }
+  .intro .l .inl { margin-right: 4px; }
+  .intro .l .warn { color: var(--warn); font-weight: 600; }
+  .intro .l b { color: var(--text); font-weight: 700; }
+  .lbl .k { display: inline-grid; place-items: center; min-width: 26px; height: 24px; padding: 0 7px; border-radius: 8px; background: #2D4A5F; color: #fff; font-size: 13px; }
+
+  /* phone, 360 x 800 */
+  .phone { width: 360px; height: 800px; background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #B9C5CE; position: relative; display: flex; flex-direction: column; }
+  .dark.phone { border-color: #3A4046; }
+  .sbar { height: 24px; flex: none; }
+  .pbar { height: 64px; flex: none; display: flex; align-items: center; }
+  .pbar .back { width: 48px; height: 48px; display: grid; place-items: center; margin-left: 4px; color: var(--text); flex: none; }
+  .pbar .ttl { margin-left: 4px; font-size: 22px; line-height: 28px; font-weight: 700; flex: 1; white-space: nowrap; }
+  .pbar .pr { margin-right: 22px; color: var(--text2); font-size: 14px; font-weight: 700; font-feature-settings: "tnum"; }
+  .pbar .tixp { margin-right: 22px; height: 32px; padding: 0 13px; border-radius: 16px; background: var(--tile); color: var(--tileInk); display: inline-flex; align-items: center; font-size: 14.5px; font-weight: 700; white-space: nowrap; }
+  .scroll { flex: 1; overflow: hidden; padding: 8px 16px 12px; position: relative;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent); }
+  .foot { flex: none; padding: 8px 16px 4px; }
+  .gest { height: 22px; flex: none; display: grid; place-items: center; }
+  .gest i { width: 108px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .55; }
+
+  svg.ic { display: block; flex: none; }
+  .inl { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .inl svg { display: inline-block; }
+  .ai { display: grid; place-items: center; flex: none; overflow: hidden; box-shadow: inset 0 0 0 1px var(--ring); font-weight: 700; }
+  .light .nt0 { background: hsl(var(--h) 45% 89%); color: hsl(var(--h) 50% 32%); box-shadow: none; }
+  .dark .nt0 { background: hsl(var(--h) 30% 18%); color: hsl(var(--h) 55% 76%); box-shadow: none; }
+
+  /* ---- top blocks, as the app draws them today ---- */
+  .ah { display: flex; align-items: center; gap: 12px; }
+  .aic { position: relative; width: 52px; height: 52px; flex: none; }
+  .src { position: absolute; right: -5px; bottom: -5px; width: 20px; height: 20px; border-radius: 50%; background: var(--sheet); box-shadow: 0 0 0 2px var(--bg); display: grid; place-items: center; }
+  .ah .col { flex: 1; min-width: 0; }
+  .an { font-size: 16px; line-height: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ad { margin-top: 2px; font-size: 12.5px; line-height: 15px; font-weight: 500; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rr { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+  .rr .col { flex: 1; min-width: 0; }
+  .rr .t { font-size: 16px; line-height: 20px; font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; font-size: 12.5px; line-height: 16px; font-weight: 700; white-space: nowrap; }
+  .chip.ok { background: var(--okBg); color: var(--ok); } .chip.warn { background: var(--warnBg); color: var(--warn); }
+  .chip.bad { background: var(--badBg); color: var(--bad); } .chip.quiet { background: var(--glass2); color: var(--text2); }
+  /* the four-step route (ReviewProgress) */
+  .rail { display: flex; margin-top: 18px; }
+  .rail .s { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+  .rail .s + .s::before { content: ""; position: absolute; top: 18px; right: calc(50% + 22px); width: calc(100% - 44px); height: 2.5px; border-radius: 2px; background: var(--glassBorder); }
+  .rail .s.d + .s::before, .rail .s.d + .s.d::before { background: var(--accent); }
+  .rail .c { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--glassBorderStrong); color: var(--text3); }
+  .rail .s.d .c { background: var(--tile); border-color: transparent; color: var(--text); }
+  .rail .s.n .c { background: var(--accent); border-color: transparent; color: var(--onAccent); box-shadow: 0 0 0 2.5px var(--bg), 0 0 0 4.5px var(--accent); }
+  .dark .rail .s.n .c { box-shadow: 0 0 0 2.5px var(--bg), 0 0 0 4.5px var(--accentInk); }
+  .rail .l { margin-top: 8px; font-size: 11.5px; line-height: 14px; color: var(--text3); white-space: nowrap; }
+  .rail .s.n .l { color: var(--text); font-weight: 600; }
+
+  /* ---- the thread: the approved crew chat's bubbles (CrewChatBubble / ThreadBubble) ---- */
+  .thr { display: flex; flex-direction: column; margin-top: 6px; }
+  .day { align-self: center; font-size: 12px; font-weight: 600; color: var(--text3); margin: 14px 0 0; }
+  .m { display: flex; gap: 8px; align-items: flex-end; margin-top: 10px; }
+  .m.cont { margin-top: 4px; }
+  .m.r { justify-content: flex-end; }
+  .m .col { max-width: 80%; display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+  .m.r .col { align-items: flex-end; }
+  .who { font-size: 12px; font-weight: 600; color: var(--text3); margin: 0 0 3px 12px; }
+  .av { width: 28px; height: 28px; border-radius: 50%; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .av.sp { visibility: hidden; }
+  .m.l:has(+ .m.cont) > .av, .m.l:has(+ .m.cont) > span:first-child { visibility: hidden; }
+  /* CrewChatBubble.bubbleShape: all 18, the corners toward the author 4 where the run goes on */
+  .bub { background: var(--glass2); color: var(--text); border-radius: 18px; padding: 7px 12px; font-size: 15px; line-height: 20px; overflow-wrap: anywhere; }
+  .m.l:has(+ .m.cont) .bub { border-bottom-left-radius: 4px; }
+  .m.l.cont .bub { border-top-left-radius: 4px; }
+  .m.r .bub { background: var(--accent); color: var(--onAccent); }
+  .m.r:has(+ .m.cont) .bub { border-bottom-right-radius: 4px; }
+  .m.r.cont .bub { border-top-right-radius: 4px; }
+  .bub.pic { padding: 4px; }
+  .bub.pic .shw { border-radius: 14px; }
+  .tm { font: 400 11.5px/15px "BarlowApp", "Barlow", sans-serif; color: var(--text3); margin: 4px 0 0 38px; display: flex; align-items: center; gap: 4px; }
+  .tm.r { margin: 4px 2px 0 0; justify-content: flex-end; }
+  .bf { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 6px; font-size: 12px; line-height: 16px; color: var(--text3); white-space: nowrap; }
+  .bf .ok { color: var(--ok); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+  .tm .ok { color: var(--ok); }
+  .meta { font-size: 12px; line-height: 16px; color: var(--text3); margin: 2px 2px 0; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .meta .ok { color: var(--ok); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+  .meta .warn { color: var(--warn); font-weight: 600; }
+  /* a note in the thread: centred, one line, hugging its words; detail behind the (i) */
+  .sys { align-self: center; position: relative; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 6px 0 10px; border-radius: 13px;
+    background: var(--glass2); color: var(--text2); font-size: 12.5px; line-height: 16px; font-weight: 600; white-space: nowrap; margin: 12px 0; }
+  .sys.noi { padding-right: 11px; }
+  .sys + .sys { margin-top: -6px; }
+  .sys + .m { margin-top: 0; }
+  .sys .ic { opacity: .9; }
+  .sys b { font-weight: 700; font-feature-settings: "tnum"; }
+  .sys.info { background: color-mix(in srgb, var(--accentInk) 12%, transparent); color: var(--accentInk); }
+  .sys.ok { background: var(--okBg); color: var(--ok); }
+  .sys.warn { background: var(--warnBg); color: var(--warn); }
+  .sys.bad { background: var(--badBg); color: var(--bad); }
+  .sys .ii { width: 20px; height: 20px; color: inherit; opacity: .75; vertical-align: 0; }
+  .sys .ii.open { opacity: 1; border-radius: 50%; background: color-mix(in srgb, currentColor 16%, transparent); }
+  /* the (i)'s callout, as the app draws it today */
+  .co { position: absolute; top: calc(100% + 10px); right: -10px; z-index: 4; width: 270px; white-space: normal; background: var(--sheet); border: 1px solid var(--glassBorder); border-radius: 14px;
+    padding: 11px 13px; font-size: 13px; line-height: 18px; font-weight: 400; color: var(--text2); box-shadow: 0 8px 24px rgba(16,47,70,.16); text-align: left; }
+  .co::before { content: ""; position: absolute; top: -7px; right: 20px; width: 12px; height: 12px; background: var(--sheet); border-left: 1px solid var(--glassBorder); border-top: 1px solid var(--glassBorder); transform: rotate(45deg); }
+  .co b { color: var(--text); font-weight: 600; }
+  .uact { margin: 2px 2px 0 0; }
+
+  /* the reviewer's Play screenshot, white in both themes */
+  .shw { position: relative; overflow: hidden; flex: none; background: #fff; }
+  .xb { position: absolute; right: 8px; top: 8px; width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; display: grid; place-items: center; }
+  .ps { width: 180px; background: #fff; color: #202124; font-family: Roboto, "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  .ps .q0 { display: flex; justify-content: space-between; padding: 6px 10px 0; font-size: 7px; font-weight: 600; color: #3C4043; }
+  .ps .qa { display: flex; gap: 8px; align-items: center; padding: 11px 10px 0; }
+  .ps .qa i { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; color: #fff; font: 700 14px system-ui; font-style: normal; flex: none; }
+  .ps .qa b { display: block; font-size: 10px; line-height: 12px; }
+  .ps .qa span { font-size: 7px; color: #01875F; font-weight: 600; }
+  .ps .qo { margin: 9px 10px 0; height: 18px; border-radius: 9px; border: 1px solid #DADCE0; display: grid; place-items: center; font-size: 7.5px; font-weight: 600; color: #01875F; }
+  .ps .qh { padding: 11px 10px 0; font-size: 8.5px; font-weight: 700; }
+  .ps .qs { padding: 3px 10px 0; color: #01875F; font-size: 12px; letter-spacing: 2px; line-height: 14px; }
+  .ps .qb { margin: 5px 10px 0; border: 1px solid #01875F; border-radius: 6px; padding: 6px; font-size: 6.6px; line-height: 9px; color: #3C4043; min-height: 46px; }
+  .ps .qk { padding: 4px 10px 0; font-size: 7px; color: #01875F; font-weight: 600; }
+  .ps .ql { margin: 5px 10px 0; height: 4px; border-radius: 2px; background: #E1E3E6; }
+  .ps .qr2 { display: flex; gap: 10px; padding: 6px 10px 0; align-items: center; }
+  .ps .qr2 .qbg { font-size: 22px; font-weight: 500; line-height: 24px; }
+  .ps .qr2 .qbars { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .ps .qr2 .qbars i { height: 3px; border-radius: 2px; background: #01875F; display: block; }
+  .ps .qg { font-size: 6.5px; color: #5F6368; padding: 3px 10px 0; line-height: 9px; }
+  .ps .qc { margin: 10px 10px 0; font-size: 7.5px; line-height: 10px; color: #5F6368; }
+
+  /* writing your own: the empty picture, its pills, the field */
+  /* the picture box: full width, today's height; the buttons sit on it */
+  .pbox { position: relative; width: 100%; height: 160px; border-radius: 14px; border: 1.5px dashed var(--glassBorderStrong); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+  .pbox .cam { color: var(--text4); }
+  .pbs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 290px; }
+  .cb { box-sizing: border-box; height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+  .cb.pri { background: color-mix(in srgb, var(--accent) 20%, var(--bg)); color: var(--accentInk); border-color: color-mix(in srgb, var(--accent) 45%, var(--bg)); }
+  .dark .cb.pri { background: color-mix(in srgb, var(--accentInk) 20%, var(--bg)); border-color: color-mix(in srgb, var(--accentInk) 45%, var(--bg)); }
+  .cb.alt { background: var(--bg); color: var(--text2); border-color: var(--glassBorder); }
+  .pbox.full { border: 0; overflow: hidden; display: block; box-shadow: inset 0 0 0 1px var(--cardLine); }
+  .pbox.full .shw { border-radius: 14px; }
+  .pbox .rm { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; display: grid; place-items: center; }
+  .pbox .ov { position: absolute; bottom: 8px; height: 30px; padding: 0 12px; border-radius: 15px; background: rgba(0,0,0,.6); color: #fff; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; }
+  .pbox .ov.hide { left: 8px; } .pbox .ov.retake { right: 8px; }
+  /* the picture row: two equal buttons beside the slot */
+  .prow { display: flex; gap: 12px; align-items: center; }
+  .pcol { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .pb { height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14.5px; font-weight: 700; white-space: nowrap; }
+  .pb.pri { background: color-mix(in srgb, var(--accent) 20%, var(--bg)); color: var(--accentInk); }
+  .dark .pb.pri { background: color-mix(in srgb, var(--accentInk) 20%, var(--bg)); }
+  .pb.alt { background: var(--bg); color: var(--text2); box-shadow: inset 0 0 0 1px var(--glassBorder); }
+  .phint { font-size: 12px; line-height: 16px; color: var(--text3); white-space: nowrap; padding-left: 4px; }
+  .slotpic { position: relative; width: 118px; height: 160px; border-radius: 14px; overflow: hidden; flex: none; box-shadow: inset 0 0 0 1px var(--cardLine); }
+  .slotpic .shw { border-radius: 14px; }
+  .slotpic .rm { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; display: grid; place-items: center; }
+  .slotpic .hd2 { position: absolute; left: 6px; right: 6px; bottom: 6px; height: 26px; border-radius: 13px; background: rgba(0,0,0,.6); color: #fff; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 12px; font-weight: 700; }
+  .slot { flex: none; width: 118px; height: 160px; border-radius: 14px; border: 1.5px dashed var(--glassBorderStrong); display: grid; place-items: center; color: var(--text4); }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; margin-top: 8px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 7px 14px; border-radius: 16px; background: var(--tile); color: var(--accentInk); font-size: 13.5px; line-height: 16px; font-weight: 700; white-space: nowrap; }
+  .ia { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 8px; font-size: 14px; font-weight: 700; color: var(--accentInk); border-radius: 16px; white-space: nowrap; }
+  .ia.bad { color: var(--bad); } .ia.off { color: var(--text4); }
+  .fld { position: relative; border: 1px solid var(--glassBorderStrong); border-radius: 10px; padding: 13px 14px; font-size: 15px; line-height: 20px; font-weight: 500; color: var(--text); background: var(--bg); }
+  .fld.foc { border: 2px solid var(--primary); padding: 12px 13px; }
+  .fld .lab { position: absolute; top: -9px; left: 10px; padding: 0 4px; background: var(--bg); font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); white-space: nowrap; }
+  .fld.foc .lab { color: var(--accentInk); left: 9px; top: -10px; }
+  .fld .ph { color: var(--text4); font-weight: 400; }
+  .fld .cur { display: inline-block; width: 2px; height: 18px; background: var(--primary); vertical-align: -3px; }
+  .sheet .fld, .sheet .fld .lab { background: var(--sheet); }
+  .ff { display: flex; gap: 8px; margin-top: 4px; font-size: 12px; line-height: 14px; }
+  .ff .fe { flex: 1; color: var(--text3); font-weight: 600; } .ff .fe.ok { color: var(--ok); } .ff .fe.warn { color: var(--warn); }
+  .ff .fc { margin-left: auto; color: var(--text4); font-size: 11.5px; font-feature-settings: "tnum"; }
+  .il { font-size: 13px; line-height: 18px; color: var(--text2); position: relative; }
+  .il .inl { color: var(--text3); }
+  .il b { color: var(--text); font-weight: 600; }
+  .ii { display: inline-grid; place-items: center; width: 22px; height: 18px; vertical-align: -3px; color: var(--text3); }
+  .sec { font-size: 12px; font-weight: 700; color: var(--text3); margin: 18px 0 8px; display: flex; align-items: center; gap: 8px; }
+  .sec::after { content: ""; flex: 1; }
+
+  /* the fixed foot */
+  .hint { text-align: center; font-size: 12.5px; line-height: 16px; font-weight: 600; color: var(--accentInk); margin-bottom: 10px; }
+  .hint.warn { color: var(--warn); } .hint.ok { color: var(--ok); } .hint.q { color: var(--text3); }
+  .hint .ii { color: inherit; opacity: .8; }
+  .pbtn { height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 700; }
+  .pbtn.bad { background: var(--bad); color: var(--onTone); }
+  .pbtn.off { background: color-mix(in srgb, var(--text) 12%, transparent); color: color-mix(in srgb, var(--text) 38%, transparent); }
+  .spin { width: 20px; height: 20px; border-radius: 50%; border: 2.4px solid color-mix(in srgb, currentColor 28%, transparent); border-top-color: currentColor; }
+  .two { display: flex; justify-content: center; align-items: center; gap: 28px; min-height: 44px; }
+  .ta { display: flex; justify-content: center; align-items: center; gap: 4px; min-height: 44px; font-size: 13.5px; color: var(--text3); }
+  .ta .ia { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* sheets and dialogs */
+  .scrimL { position: absolute; inset: 0; background: var(--scrim); z-index: 5; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--sheet); border-radius: 28px 28px 0 0; padding: 10px 16px 0; display: flex; flex-direction: column; }
+  .sheet .hd { width: 32px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .5; margin: 0 auto 16px; }
+  .sheet .st { display: flex; align-items: center; gap: 12px; font-size: 20px; line-height: 25px; font-weight: 700; }
+  .isq { width: 40px; height: 40px; border-radius: 12px; background: var(--tile); color: var(--tileInk); display: grid; place-items: center; flex: none; }
+  .sub { font-size: 14px; line-height: 18px; font-weight: 700; margin-top: 16px; }
+  .cbr { display: flex; align-items: center; gap: 14px; min-height: 44px; font-size: 14.5px; line-height: 19px; }
+  .cbx { width: 18px; height: 18px; border: 2px solid var(--glassBorderStrong); border-radius: 3px; margin: 0 3px; flex: none; display: grid; place-items: center; color: var(--onPrimary); }
+  .cbx.on { background: var(--primary); border-color: var(--primary); }
+  .fcount { text-align: right; margin-top: 4px; font-size: 11.5px; color: var(--text4); font-feature-settings: "tnum"; }
+  .dlg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 300px; background: var(--sheet); border-radius: 28px; padding: 24px; z-index: 6; }
+  .dlg .t { font-size: 20px; line-height: 26px; font-weight: 700; }
+  .dlg .b { margin-top: 14px; font-size: 14px; line-height: 20px; color: var(--text2); }
+  .dlg .bt { display: flex; justify-content: flex-end; gap: 4px; margin: 20px -8px -8px 0; }
+
+  .sk { display: block; background: var(--sk); border-radius: 6px; }
+  .rob { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 120px 24px 0; }
+  .rob .h { margin-top: 16px; font-size: 20px; line-height: 25px; font-weight: 700; }
+  .rob .b { margin-top: 6px; font-size: 14px; line-height: 20px; color: var(--text2); }
+</style>
+</head>
+<body>
+<div class="top"><h1>Review pages, final</h1><a href="#p1">Check review</a><a href="#p2">Send review</a><a href="#p3">Waiting</a></div>
+<div class="doc" id="doc"></div>
+<script>
+const L = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  checks: '<path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  tri: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  eye: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+  eyeOff: '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  scale: '<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
+  imagePlus: '<path d="M16 5h6"/><path d="M19 2v6"/><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><circle cx="9" cy="9" r="2"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  expand: '<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>',
+  rotate: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  phone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  msq: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+  text: '<path d="M15 18H3"/><path d="M17 6H3"/><path d="M21 12H3"/>',
+  circleCheck: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  hourglass: '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+};
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const inl = (n, s = 14, w = 2.2) => `<span class="inl">${ic(n, s, w)}</span>`;
+const BACK = `<svg width="22" height="22" viewBox="0 0 24 24" style="fill:currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`;
+const FLASK = `<svg width="12" height="12" viewBox="0 0 24 24"><path d="M9 2.5h6M10 2.5v6.2L4.6 18.6A2 2 0 0 0 6.4 21.5h11.2a2 2 0 0 0 1.8-2.9L14 8.7V2.5" fill="none" stroke="var(--flaskGlass)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M6.6 15h10.8l1.6 3.4a1.2 1.2 0 0 1-1.1 1.7H6.1A1.2 1.2 0 0 1 5 18.4Z" fill="var(--flaskLiquid)"/></svg>`;
+const PLAY = `<svg width="12" height="12" viewBox="0 0 24 24"><path d="M3.6 1.8 13.4 12 3.6 22.2c-.4-.2-.6-.6-.6-1.1V2.9c0-.5.2-.9.6-1.1Z" fill="#00A0FF"/><path d="M16.8 8.6 13.4 12 3.6 1.8c.3-.2.8-.2 1.2 0Z" fill="#00F076"/><path d="M16.8 15.4 4.8 22.2c-.4.2-.9.2-1.2 0L13.4 12Z" fill="#FF3A44"/><path d="m16.8 8.6 3.6 2a1.6 1.6 0 0 1 0 2.8l-3.6 2L13.4 12Z" fill="#FFCE00"/></svg>`;
+/* the mascot's head, as the crew chat's system lines carry it */
+const BOT = (s) => `<svg width="${s}" height="${s}" viewBox="20 2 80 80" style="flex:none;display:block"><line x1="60" y1="10" x2="60" y2="26" style="stroke:var(--tileInk);stroke-width:4"/><circle cx="60" cy="9" r="6" style="fill:var(--warn)"/><rect x="26" y="26" width="68" height="52" rx="18" style="fill:var(--tile);stroke:var(--tileInk);stroke-width:4"/><rect x="36" y="38" width="48" height="28" rx="13" style="fill:var(--bg)"/><circle cx="50" cy="52" r="5" style="fill:var(--text)"/><circle cx="70" cy="52" r="5" style="fill:var(--text)"/></svg>`;
+const ROBOT = `<svg width="132" height="120" viewBox="0 0 132 120"><line x1="60" y1="10" x2="60" y2="26" style="stroke:var(--tileInk);stroke-width:3"/><circle cx="60" cy="9" r="5" style="fill:var(--warn)"/><rect x="26" y="26" width="68" height="52" rx="18" style="fill:var(--tile);stroke:var(--tileInk);stroke-width:3"/><rect x="36" y="38" width="48" height="28" rx="13" style="fill:var(--bg)"/><circle cx="50" cy="52" r="4" style="fill:var(--text)"/><circle cx="70" cy="52" r="4" style="fill:var(--text)"/><rect x="36" y="82" width="48" height="28" rx="10" style="fill:var(--tile);stroke:var(--tileInk);stroke-width:3"/></svg>`;
+const sp = (h) => `<div style="height:${h}px"></div>`;
+const ii = () => `<span class="ii">${ic('info', 14)}</span>`;
+const chip = (t, tone, icon) => `<span class="chip ${tone}">${icon ? ic(icon, 13, 2.4) : ''}${t}</span>`;
+const pill = (t, icon) => `<span class="pill">${icon ? ic(icon, 15, 2.3) : ''}${t}</span>`;
+const ia = (t, cls = '', icon) => `<span class="ia ${cls}">${icon ? ic(icon, 15, 2.3) : ''}${t}</span>`;
+const pbtn = (t, cls = '') => `<div class="pbtn ${cls}">${cls.includes('busy') ? '<span class="spin"></span>' : t}</div>`;
+const hint = (t, tone = '', icon = 'clock', info = false) => `<div class="hint ${tone}">${inl(icon, 14)}${t}${info ? ii() : ''}</div>`;
+const il = (icon, text, more = '') => `<div class="il">${inl(icon)}${text}${more}</div>`;
+const len = (t) => t.trim().split(/\s+/).join(' ').length;
+
+/* ---------- apps ---------- */
+const A = {
+  buddy: { n: 'Budget Buddy', p: 'com.hasanapps.budgetbuddy', art: 'buddy', c: '#2E9C8F', dev: 'Hasan Apps' },
+  tides: { n: 'Tide Times', p: 'com.coastline.tidetimes', h: 200, c: '#3D8BFD', dev: 'Coastline Labs' },
+  study: { n: 'Study Cards', p: 'com.seedstudio.studycards', art: 'study', c: '#8E5B7B', dev: 'Seed Studio' },
+  wave: { n: 'Wave Weather', p: 'com.seedstudio.waveweather', art: 'wave', c: '#5B6CF0', dev: 'Seed Studio' },
+  pets: { n: 'Pixel Pets', p: 'com.petlab.pixelpets', art: 'pets', c: '#E07A3A', dev: 'Pet Lab' },
+};
+function art(a, s) {
+  const base = `width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.3)}px;`;
+  const g = Math.round(s * 0.6);
+  const sv = (b) => `<svg width="${g}" height="${g}" viewBox="0 0 24 24">${b}</svg>`;
+  switch (a.art) {
+    case 'buddy': return `<span class="ai" style="${base}background:linear-gradient(150deg,#1F6E8C,#2E9C8F)"><span style="width:${s * .5}px;height:${s * .42}px;border-radius:${s * .1}px;background:#fff;display:grid;grid-template-columns:1fr 1fr;gap:${Math.max(1, s / 26)}px;padding:${s * .07}px"><i style="background:#7BB6FF;border-radius:2px"></i><i style="background:#6EE0B8;border-radius:2px"></i><i style="background:#FFD166;border-radius:2px"></i><i style="background:#C59BFF;border-radius:2px"></i></span></span>`;
+    case 'study': return `<span class="ai" style="${base}background:#fff">${sv('<path d="M5 9V5h4M5 15v4h4M19 9V5h-4" style="fill:none;stroke:#3B2BBF;stroke-width:2"/><circle cx="13" cy="13" r="3.5" style="fill:none;stroke:#141414;stroke-width:2"/><path d="m15.5 15.5 3.5 3.5" style="stroke:#141414;stroke-width:2;stroke-linecap:round"/>')}</span>`;
+    case 'wave': return `<span class="ai" style="${base}background:linear-gradient(150deg,#6A7BFF,#4B55E0)">${sv('<path d="M13 2 5 14h6l-1 8 8-12h-6z" style="fill:#fff"/>')}</span>`;
+    case 'pets': return `<span class="ai" style="${base}background:radial-gradient(circle at 50% 60%,#5A3520,#1E1612)">${sv('<path d="M12 3c3 4 5 7 5 10a5 5 0 0 1-10 0c0-3 2-6 5-10z" style="fill:#F28A2E"/><path d="M12 10c1.5 2 2.5 3.5 2.5 5a2.5 2.5 0 0 1-5 0c0-1.5 1-3 2.5-5z" style="fill:#FFD08A"/>')}</span>`;
+    default: return `<span class="ai nt0" style="${base}--h:${a.h};font-size:${Math.round(s * 0.45)}px">${a.n[0]}</span>`;
+  }
+}
+
+/* ---------- a Play screenshot, drawn 180 wide and zoomed ---------- */
+function play(p) {
+  const a = p.app;
+  let b = `<div class="q0"><span>${p.time || '21:34'}</span><span>5G 64%</span></div>
+    <div class="qa"><i style="background:${a.c}">${a.n[0]}</i><div><b>${a.n}</b><span>${a.dev}</span></div></div>
+    <div class="qo">${p.k === 'feedback' ? 'Open' : 'Uninstall          Open'}</div>`;
+  const words = (p.text || '').slice(0, 150);
+  if (p.k === 'review') b += `<div class="qh">Your review</div><div class="qs">★★★★☆</div><div class="qb">${words}</div><div class="qg">Posted publicly. ${p.again ? 'Edited today' : 'Today'}</div>`;
+  if (p.k === 'feedback') b += `<div class="qh">Private feedback to the developer</div><div class="qk">✓ Sent to the developer</div><div class="qs">★★★★★</div><div class="qb">${words}</div>`;
+  if (p.k === 'nobox') b += `<div class="qh">Ratings and reviews</div><div class="qr2"><span class="qbg">4.3</span><span class="qbars"><i style="width:90%"></i><i style="width:55%"></i><i style="width:24%"></i><i style="width:12%"></i><i style="width:18%"></i></span></div><div class="qg">2.1K reviews</div><div class="qg" style="padding-top:8px">You can't rate this app yet.</div>`;
+  if (p.k === 'none') b += `<div class="qh">Ratings and reviews</div><div class="qr2"><span class="qbg">4.1</span><span class="qbars"><i style="width:80%"></i><i style="width:45%"></i><i style="width:20%"></i><i style="width:10%"></i><i style="width:14%"></i></span></div><div class="qg">880 reviews</div><div class="qc">No review from this account was found.</div>`;
+  b += `<div class="qh">About this app</div><div class="ql"></div><div class="ql" style="width:70%"></div><div class="ql" style="width:84%"></div><div class="ql" style="width:52%"></div><div class="ql" style="width:64%"></div>`;
+  return `<div class="ps">${b}</div>`;
+}
+function shot(p, w, h, o = {}) {
+  const z = w / 180;
+  return `<div class="shw" style="width:${w}px;height:${h}px"><div style="zoom:${z};height:${h / z}px;overflow:hidden"><div style="margin-top:-${o.y || 0}px">${play(p)}</div></div>${o.x === false ? '' : `<span class="xb">${ic('expand', 14, 2.2)}</span>`}</div>`;
+}
+
+/* ---------- the thread ---------- */
+const DAY = (t) => `<div class="day">${t}</div>`;
+const SYS = (t, tone = '', icon = 'info', more = null, open = false) =>
+  `<div class="sys ${tone}${more ? '' : ' noi'}">${ic(icon, 13, 2.4)}<span>${t}</span>${more ? `<span class="ii${open ? ' open' : ''}">${ic('info', 14)}</span>` : ''}${more && open ? `<div class="co">${more}</div>` : ''}</div>`;
+const FACE = `<span class="av">${ic('user', 15, 2)}</span>`;
+const DEV = (a) => `<span style="flex:none">${art(a, 28)}</span>`;
+/*
+ * One message. side 'l' or 'r'; av: the avatar html for the first of a run, or 'sp' for a later one;
+ * pic: a screenshot in a bubble of its own; text: words in a bubble of their own.
+ */
+function M(o) {
+  const side = o.side || 'l';
+  const cls = `m ${side}${o.cont ? ' cont' : ''}`;
+  const av = side === 'r' ? '' : (o.av || FACE);
+  const who = side === 'l' && !o.cont && o.who ? `<div class="who">${o.who}</div>` : '';
+  // What a text adds up to sits inside its bubble as a footer: the count on the left, whose words on the right.
+  const foot = o.metaL || o.metaR ? `<div class="bf"><span>${o.metaL || ''}</span><span>${o.metaR || ''}</span></div>` : '';
+  const body = o.pic ? `<div class="bub pic">${shot(o.pic, o.pw || 150, o.ph || 200)}</div>` : `<div class="bub">${o.text}${foot}</div>`;
+  // The time goes under the group, outside the row, so the face lines up with the bubble itself.
+  const tm = o.tm ? `<div class="tm ${side}">${o.tm}</div>` : '';
+  return `<div class="${cls}">${av}<div class="col">${who}${body}</div></div>${tm}`;
+}
+const thr = (h) => `<div class="thr">${h}</div>`;
+
+/* ---------- phone ---------- */
+function phone(th, o) {
+  const right = o.right ? `<span class="pr">${o.right}</span>` : o.tix ? `<span class="tixp">${o.tix}</span>` : '';
+  const title = o.titleHtml ? o.titleHtml : o.sub != null
+    ? `<span class="t2"><span class="a">${o.title}</span><span class="b ${o.subTone || ''}">${o.sub}</span></span>`
+    : `<span class="ttl">${o.title || ''}</span>`;
+  return `<div class="phone ${th}"><div class="sbar"></div><div class="pbar"><span class="back">${BACK}</span>${title}${right}</div>
+    <div class="scroll"><div style="margin-top:-${o.scrollY || 0}px">${o.body}</div></div>${o.foot ? `<div class="foot">${o.foot}</div>` : ''}<div class="gest"><i></i></div>${o.over || ''}</div>`;
+}
+const appRow = (a, live, sub) => `<div class="ah"><span class="aic">${art(a, 52)}<span class="src">${live ? PLAY : FLASK}</span></span><div class="col"><div class="an">${a.n}</div><div class="ad">${sub}</div></div></div>`;
+
+/* ==================== CHECK REVIEW (the developer) ==================== */
+const TXT_BUDDY = 'Adding an expense takes two taps and the monthly chart is easy to read. The category list was long on my small phone, so a search box would help.';
+const TXT_TIDES = 'Clear chart and the widget works. Good for my morning walks.';
+const TXT_NOBOX = 'Play shows no review box for me. The app opens fast and the tide chart is clear. A widget for the next high tide would be great.';
+const TXT_LONG = 'Setup was quick and the main actions are on the first screen. Making a deck took under a minute, and the flip animation feels smooth on my older phone. Text reads well in light and dark. Two things got in my way: the back gesture closes the app from the second screen instead of going back, and the reminder time picker resets to 9:00 every time I open it. A search box on the decks list would help once you have more than ten decks.';
+
+const checkTop = (d) => appRow(d.app, d.live, d.live ? 'Live app' : 'Closed test');
+function checkThread(d) {
+  const first = d.who;
+  let t = DAY(d.day || 'Today');
+  if (d.need) t += SYS(`You asked for <b>${d.need}+</b> characters`, '', 'text');
+  t += M({ who: first, pic: d.pics[0], tm: d.text ? '' : (d.again ? 'First screenshot, 9:12' : d.time) });
+  if (d.text) {
+    const ok = `<span class="ok">${ic('check', 12, 2.8)}${len(d.text)} characters</span>`;
+    t += M({ cont: true, text: d.text, tm: d.time, metaL: ok, metaR: d.use });
+  }
+  if (d.half) t += SYS('No review box, half pay', 'info', 'info', `Play showed them no review box, so they sent it here. It pays <b>${d.pays} tix</b> and the other <b>${d.pays} tix</b> come back to you.`, d.co === 'half');
+  if (d.gone) t += SYS('Uninstalled within a day', 'warn', 'tri', 'Google may doubt the review. Check it before it accepts itself.');
+  if (d.again) {
+    t += M({ side: 'r', text: "Can't find it on Play. Please send a new screenshot.", tm: '12:30' });
+    t += M({ who: first, pic: d.pics[1], tm: 'New, taken on Play when asked, 18:40' });
+  }
+  if (d.refused) {
+    t += M({ side: 'r', text: 'No review on Google Play. I checked twice and the page shows no review from this account.' });
+    t += M({ side: 'r', cont: true, pic: { k: 'none', app: d.app }, pw: 130, ph: 170, tm: '11:02' });
+    t += SYS('Refused. 3 members decide', 'warn', 'scale', '<b>15 tix</b> are held from you until they decide.');
+    t += M({ who: first, text: 'It is there under my Play name, T. Ahmed. Sorting by newest shows it.' });
+    t += M({ cont: true, pic: d.pics[0], pw: 130, ph: 170, tm: '13:20' });
+  }
+  if (d.accepted) t += SYS(`Accepted, <b>${d.pays} tix</b> paid`, 'ok', 'circleCheck');
+  return thr(t);
+}
+function checkFoot(d) {
+  if (d.accepted) return pbtn('Done') + sp(6);
+  if (d.refused) return `<div class="ta">Refused by mistake?${ia('Accept after all')}</div>` + pbtn('Done') + sp(6);
+  const busy = d.busy;
+  const acts = d.canAsk ? `<div class="two">${ia('Ask for a new one', busy ? 'off' : '', 'rotate')}${ia('Refuse', busy ? 'off' : 'bad', 'x')}</div>`
+    : `<div class="two">${ia('Refuse', busy ? 'off' : 'bad', 'x')}</div>`;
+  return hint('Accepts itself if you do nothing.', d.warn ? 'warn' : '', 'clock', true) + pbtn(`Accept and pay ${d.pays} tix`, busy ? 'busy' : '') + acts;
+}
+const checkSub = (d) => d.accepted ? [`Accepted, paid ${d.pays} tix`, 'ok'] : d.refused ? ['Refused, members deciding', 'warn'] : [`${d.left} left, pays ${d.pays} tix`, d.warn ? 'warn' : ''];
+const check = (th, d) => phone(th, { title: `${d.who}'s review`, sub: checkSub(d)[0], subTone: checkSub(d)[1], right: d.pager, body: checkTop(d) + checkThread(d), foot: checkFoot(d), scrollY: d.scrollY, over: d.over ? d.over() : '' });
+
+function refuseSheet() {
+  const row = (t, on) => `<div class="cbr"><span class="cbx${on ? ' on' : ''}">${on ? ic('check', 13, 3.4) : ''}</span>${t}</div>`;
+  return `<div class="scrimL"></div><div class="sheet"><div class="hd"></div>
+    <div class="st"><span class="isq">${ic('scale', 20)}</span>Refuse this review?</div>${sp(14)}
+    ${il('lock', '<b>15 tix</b> are held until three members decide.', ii())}
+    <div class="sub">What was missing</div>${sp(2)}
+    ${row('No review on Google Play', true)}${row('The screenshot is of something else')}${row("The text isn't what's on Play")}${row('The text is too short or off topic')}${sp(12)}
+    <div class="fld" style="min-height:86px"><span class="lab">Anything else</span><span class="ph">Optional. The reviewer sees this too.</span></div>
+    <div class="fcount">0/280</div>${sp(6)}
+    <div style="display:flex;align-items:center;gap:8px">${pill('Add your screenshot', 'imagePlus')}</div>${sp(8)}
+    ${il('eyeOff', 'The reviewer sees it. Hide your name and email.')}${sp(14)}
+    ${pbtn('Refuse and hold 15 tix', 'bad')}${sp(6)}<div class="gest"><i></i></div></div>`;
+}
+const askDialog = () => `<div class="scrimL"></div><div class="dlg"><div class="t">Ask for a new screenshot?</div><div class="b">They get 48 hours to show their review on Play again. 10 tix are held from you: they get them if they show it, you get them back if not. You can ask once.</div><div class="bt">${ia('Cancel')}${ia('Ask')}</div></div>`;
+
+const CK = {
+  one: { app: A.buddy, who: 'Tania Ahmed', time: '9:41', left: '1h', warn: true, pays: 30, kind: 'Written', need: 100,
+    text: TXT_BUDDY, use: 'Changed your ready review', pics: [{ k: 'feedback', app: A.buddy, text: TXT_BUDDY }], canAsk: true },
+  stars: { app: A.tides, live: true, who: 'Sam Lee', time: '8:05', left: '1d 4h', pays: 20,
+    pics: [{ k: 'review', app: A.tides, text: TXT_TIDES }], canAsk: true },
+  long: { app: A.study, who: 'Rafi Karim', time: '21:05', day: 'Yesterday', left: '14h', pays: 55, kind: 'Detailed', need: 250,
+    text: TXT_LONG, use: 'In their own words', pics: [{ k: 'feedback', app: A.study, text: TXT_LONG }], canAsk: true, scrollY: 200 },
+  again: { app: A.tides, live: true, who: 'Tania Rahman', left: '7h', warn: true, pays: 20, again: true,
+    pics: [{ k: 'review', app: A.tides, text: TXT_TIDES, time: '09:12' }, { k: 'review', app: A.tides, text: TXT_TIDES, time: '18:40', again: true }], scrollY: 210 },
+  half: { app: A.tides, live: true, who: 'Farhan Rahman', time: '8:15', left: '1d 4h', pays: 10, half: true, gone: true, kind: 'Written', need: 100,
+    text: TXT_NOBOX, use: 'In their own words', pics: [{ k: 'nobox', app: A.tides }], pager: '1 of 3', scrollY: 110 },
+};
+CK.dialog = { ...CK.one, over: askDialog };
+CK.info = { ...CK.half, co: 'half' };
+CK.sheet = { ...CK.one, over: refuseSheet };
+CK.busy = { ...CK.one, busy: true };
+CK.refused = { ...CK.one, refused: true, scrollY: 640 };
+CK.accepted = { ...CK.one, accepted: true, scrollY: 96 };
+function checkLoading(th) {
+  const s = (w, h, r = 6, m = '') => `<span class="sk" style="width:${w};height:${h}px;border-radius:${r}px;${m}"></span>`;
+  const bar = `<span class="t2" style="gap:6px">${s('150px', 16)}${s('110px', 11)}</span>`;
+  const b = `<div class="ah">${s('52px', 52, 16)}<div class="col">${s('140px', 15)}${sp(7)}${s('80px', 11)}</div></div>${sp(22)}
+    <div style="display:flex;justify-content:center">${s('44px', 12)}</div>${sp(16)}
+    <div style="margin-left:36px">${s('70px', 11)}</div>${sp(6)}
+    <div style="display:flex;gap:8px;align-items:flex-end">${s('28px', 0)}${s('158px', 208, 18)}</div>${sp(4)}
+    <div style="display:flex;gap:8px;align-items:flex-end">${s('28px', 28, 14)}${s('230px', 96, 18)}</div>`;
+  return phone(th, { titleHtml: bar, body: b, foot: `<div style="display:flex;justify-content:center;margin-bottom:10px">${s('190px', 12)}</div>${s('100%', 52, 26, 'display:block')}<div class="two">${s('120px', 14)}${s('60px', 14)}</div>` });
+}
+const checkError = (th) => phone(th, { title: '', body: `<div class="rob">${ROBOT}<div class="h">Couldn't load this</div><div class="b">Check your connection, then try again.</div>${sp(18)}${pill('Try again')}</div>` });
+
+/* ==================== SEND REVIEW (the reviewer, step 4) ==================== */
+const TXT_ASK = 'Is the monthly total easy to read at a glance?';
+const TXT_READY = 'I log my spending every evening and Budget Buddy makes it quick. The monthly chart shows where the money goes, and the categories make sense. I would like a search box for long lists.';
+const TXT_MINE = 'Adding an expense takes two taps and the monthly chart is easy to read. The category list was long on my small phone.';
+
+function rail(live, cur) {
+  const steps = [['download', '1. Install'], ['phone', '2. Use app'], ['star', live ? '3. Review' : '3. Feedback'], ['camera', '4. Send proof']];
+  return `<div class="rail">${steps.map(([icn, l], i) => {
+    const k = i < cur ? 'd' : i === cur ? 'n' : '';
+    return `<div class="s ${k}"><span class="c">${ic(k === 'd' ? 'check' : icn, 17, 2.2)}</span><span class="l">${l}</span></div>`;
+  }).join('')}</div>`;
+}
+const revTop = (d, cur) => appRow(d.app, d.live, d.app.p) + (cur != null ? rail(d.live, cur) : '');
+const tixOf = (d) => d.half ? `Half pay, +${d.tix} tix` : `+${d.tix} tix`;
+function field(label, value, o = {}) {
+  const has = !!value;
+  const inner = has ? `${value}${o.focus ? '<span class="cur"></span>' : ''}` : `<span class="ph">${o.ph || label}</span>`;
+  const n = has ? len(value) : 0;
+  let fe = '';
+  if (o.need) fe = n >= o.need ? `<span class="fe ok">${n} characters, enough</span>` : `<span class="fe${n ? ' warn' : ''}">${n} of ${o.need} characters</span>`;
+  return `<div class="fld${o.focus ? ' foc' : ''}" style="min-height:${o.min || 86}px">${has || o.focus ? `<span class="lab">${label}</span>` : ''}${inner}</div>
+    <div class="ff">${fe || '<span class="fe"></span>'}<span class="fc">${n}/${o.max || 600}</span></div>`;
+}
+function sendBody(d) {
+  let t = '';
+  const devAv = DEV(d.app);
+  if (d.recheck) {
+    t += DAY('Wed, 19 Nov');
+    t += M({ side: 'r', pic: d.firstPic, pw: 110, ph: 150, tm: 'Your first screenshot' });
+    t += DAY('Today');
+    t += M({ av: devAv, who: 'Developer', text: "I can't find your review on Play. Please send a new screenshot.", tm: '10:02' });
+    t += SYS('Send it by <b>Sat, 2:10 PM</b>', 'warn', 'clock');
+  }
+  if (d.noBox) t += SYS('No review box, half pay', 'info', 'info', `Play shows you no review box, so you send it here. It pays <b>${d.tix} tix</b> and needs ${d.need}+ characters.`);
+  t += `<div class="sec">${d.recheck ? 'Your new screenshot' : 'Your review'}<span class="ii" style="margin-left:-4px">${ic('info', 13)}</span></div>`;
+  t += d.pic
+    ? `<div class="pbox full">${shot(d.pic, 328, 160, { x: false, y: 58 })}<span class="rm">${ic('x', 14, 2.6)}</span><span class="ov hide">${ic('eyeOff', 14, 2.4)}Hide details</span><span class="ov retake">${ic('camera', 14, 2.4)}Retake</span></div>`
+    : `<div class="pbox"><span class="cam">${ic('camera', 26, 1.8)}</span><div class="pbs"><span class="cb pri">${ic('camera', 15, 2.3)}Capture on Play</span><span class="cb alt">${ic('image', 15, 2.3)}Gallery</span></div></div>`;
+  if (!d.recheck) {
+    t += sp(20);
+    t += d.need ? field('Your feedback for the developer', d.text, { need: d.need, focus: d.focus })
+      : field('A note for the developer (optional)', d.text, { focus: d.focus, max: 280, ph: 'A note for the developer (optional)' });
+    if (d.ready) t += `<div style="margin:2px 0 0 -8px">${ia('Put the ready review in', '', 'text')}</div>`;
+  }
+  t += sp(10) + il('eyeOff', 'The developer sees this picture. Hide anything personal.', ii());
+  if (!d.recheck && (d.ask || d.ready)) {
+    t += `<div class="sec">The developer asks</div>`;
+    if (d.ask) t += M({ av: devAv, who: 'Developer', text: d.ask });
+    if (d.ready) t += M({ av: devAv, cont: !!d.ask, who: 'Developer', text: d.ready, metaL: 'A ready review', metaR: 'Optional' });
+  }
+  return revTop(d, 3) + sp(4) + thr(t);
+}
+function sendFoot(d) {
+  const ready = d.pic && (!d.need || (d.text && len(d.text) >= d.need));
+  const label = d.recheck ? 'Send the new screenshot' : 'Send the proof';
+  return pbtn(label, d.busy ? 'busy' : ready ? '' : 'off') + `<div class="ta">Can't finish?${ia('Give up review')}</div>`;
+}
+const send = (th, d) => phone(th, { title: d.live ? 'Review' : 'Feedback', tix: tixOf(d), body: sendBody(d), foot: sendFoot(d), scrollY: d.scrollY });
+const SD = {
+  empty: { app: A.buddy, tix: 40, need: 100, ask: TXT_ASK, ready: TXT_READY },
+  typing: { app: A.buddy, tix: 40, need: 100, ask: TXT_ASK, ready: TXT_READY, pic: { k: 'feedback', app: A.buddy, text: 'Adding an expense takes two taps.' }, text: 'Adding an expense takes two taps and the monthly chart is', focus: true, scrollY: 40 },
+  ready: { app: A.buddy, tix: 40, need: 100, ask: TXT_ASK, pic: { k: 'feedback', app: A.buddy, text: TXT_MINE }, text: TXT_MINE },
+  stars: { app: A.wave, live: true, tix: 35, pic: { k: 'review', app: A.wave, text: '' } },
+  nobox: { app: A.tides, live: true, half: true, noBox: true, tix: 20, need: 150, pic: { k: 'nobox', app: A.tides }, text: '' },
+  recheck: { app: A.wave, live: true, tix: 35, recheck: true, firstPic: { k: 'review', app: A.wave, text: 'Clear hourly chart and the rain alert came on time.', time: '09:05' } },
+};
+SD.busy = { ...SD.ready, busy: true };
+SD.devs = { ...SD.empty, scrollY: 330 };
+SD.recheckPic = { ...SD.recheck, pic: { k: 'review', app: A.wave, text: 'Clear hourly chart and the rain alert came on time.', time: '14:20', again: true }, scrollY: 170 };
+
+/* ==================== WAITING FOR THE DEVELOPER (the reviewer, after sending) ==================== */
+const TXT_STUDY = 'Setup was quick and the main actions are on the first screen. Scrolling is smooth and text reads well in light and dark. The back gesture closes the app from the second screen.';
+const TXT_WAVE = 'Clear hourly chart and the rain alert came on time. The radar is slow to load on mobile data.';
+
+function waitBody(d) {
+  const devAv = DEV(d.app);
+  let t = DAY(d.day || 'Today');
+  const sentTm = `<span class="ok">${ic('checks', 12, 2.6)}</span>Sent ${d.time}`;
+  if (d.again) {
+    t += M({ side: 'r', pic: d.pics[0], pw: 110, ph: 150, tm: 'First screenshot' });
+    t += M({ av: devAv, who: 'Developer', text: "I can't find your review on Play. Please send a new screenshot.", tm: '12:30' });
+    t += M({ side: 'r', pic: d.pics[1], pw: 110, ph: 150, tm: `<span class="ok">${ic('checks', 12, 2.6)}</span>New, sent 18:40` });
+  } else {
+    t += M({ side: 'r', pic: d.pics[0], pw: 120, ph: 165, tm: d.text ? '' : sentTm });
+    if (d.text) t += M({ side: 'r', cont: true, text: d.text, tm: sentTm });
+  }
+  switch (d.state) {
+    case 'sent': t += SYS(d.live ? 'With the developer' : 'With the developer, up to a day', '', 'hourglass', d.live ? 'They can accept it any time.' : "If they don't answer, it accepts itself."); break;
+    case 'half': t += SYS('Sent here, half pay', 'info', 'info', `Play showed you no review box, so it pays <b>${d.tix} tix</b>.`); break;
+    case 'refused':
+    case 'answer':
+    case 'answered':
+      t += M({ av: devAv, who: 'Developer', text: 'No review on Google Play. I checked twice and the page shows no review from this account.' });
+      t += M({ av: devAv, cont: true, pic: { k: 'none', app: d.app }, pw: 120, ph: 160, tm: '11:02' });
+      t += SYS('Refused. 3 members decide', 'warn', 'scale', 'If they side with the developer, you pay <b>15 tix</b>.');
+      if (d.state === 'answered') {
+        t += M({ side: 'r', text: 'It is there under my Play name, T. Ahmed. Sorting by newest shows it.' });
+        t += M({ side: 'r', cont: true, pic: d.pics[0], pw: 110, ph: 150, tm: `<span class="ok">${ic('checks', 12, 2.6)}</span>Sent 13:20` });
+        t += SYS('Answer sent', '', 'checks');
+      }
+      break;
+    case 'paid': t += SYS(`Approved, <b>+${d.tix} tix</b>`, 'ok', 'circleCheck'); if (d.live) t += SYS('Keep the app a few more days', '', 'phone', 'So your review counts on Google Play.'); break;
+    case 'lost': t += M({ av: devAv, who: 'Developer', text: 'No review on Google Play. I checked twice.', tm: '11:02' });
+      t += SYS('Not paid', 'bad', 'wallet', 'The members sided with the developer. Their <b>15 tix</b> fee came from your tix.'); break;
+  }
+  return revTop(d) + sp(4) + thr(t);
+}
+function waitFoot(d) {
+  if (d.state === 'refused' || d.state === 'answer') return hint('You can answer once. The members see it.', 'q', 'msq') + pbtn('Answer the developer') + sp(6);
+  if (d.state === 'sent' && d.live) return hint('Keep the app installed. If they don\'t answer, we check after a day and pay you.', 'q', 'phone') + pbtn('Done') + sp(6);
+  if (d.state === 'sent' || d.state === 'half') return hint(`${d.tix} tix once it's accepted.`, 'q', 'hourglass') + pbtn('Done') + sp(6);
+  return pbtn('Done') + sp(6);
+}
+function answerSheet() {
+  return `<div class="scrimL"></div><div class="sheet"><div class="hd"></div>
+    <div class="st"><span class="isq">${ic('msq', 20)}</span>Answer the developer</div>${sp(14)}
+    ${il('info', 'You can answer once. The three members and the developer see it.')}${sp(18)}
+    <div class="fld foc" style="min-height:86px"><span class="lab">Your answer</span>It is there under my Play name, T. Ahmed.<span class="cur"></span></div>
+    <div class="fcount">41/280</div>${sp(6)}
+    <div>${pill('Add a screenshot', 'imagePlus')}</div>${sp(16)}
+    ${pbtn('Send answer')}${sp(6)}<div class="gest"><i></i></div></div>`;
+}
+const wait = (th, d) => phone(th, { title: d.live ? 'Review' : 'Feedback', tix: tixOf(d), body: waitBody(d), foot: waitFoot(d), scrollY: d.scrollY, over: d.over ? d.over() : '' });
+const WD = {
+  sent: { app: A.study, state: 'sent', tix: 55, time: '9:41', text: TXT_STUDY, pics: [{ k: 'feedback', app: A.study, text: TXT_STUDY }] },
+  live: { app: A.wave, live: true, state: 'sent', tix: 35, time: '8:15', text: '', pics: [{ k: 'review', app: A.wave, text: TXT_WAVE }] },
+  half: { app: A.tides, live: true, half: true, state: 'half', tix: 20, time: '8:15', text: TXT_NOBOX, pics: [{ k: 'nobox', app: A.tides }] },
+  again: { app: A.wave, live: true, state: 'sent', again: true, tix: 35, time: '18:40',
+    pics: [{ k: 'review', app: A.wave, text: TXT_WAVE, time: '09:05' }, { k: 'review', app: A.wave, text: TXT_WAVE, time: '18:40', again: true }], scrollY: 80 },
+  refused: { app: A.pets, live: true, state: 'refused', tix: 70, time: '9:20', day: 'Yesterday', text: '', pics: [{ k: 'review', app: A.pets, text: 'Cute pets and the daily feeding reminder works.' }], scrollY: 150 },
+  answered: { app: A.pets, live: true, state: 'answered', tix: 70, time: '9:20', day: 'Yesterday', text: '', pics: [{ k: 'review', app: A.pets, text: 'Cute pets and the daily feeding reminder works.' }], scrollY: 420 },
+  paid: { app: A.study, state: 'paid', tix: 55, time: '9:41', text: TXT_STUDY, pics: [{ k: 'feedback', app: A.study, text: TXT_STUDY }] },
+  paidLive: { app: A.wave, live: true, state: 'paid', tix: 35, time: '8:15', text: '', pics: [{ k: 'review', app: A.wave, text: TXT_WAVE }] },
+  lost: { app: A.pets, live: true, state: 'lost', tix: 70, time: '9:20', day: 'Yesterday', text: '', pics: [{ k: 'review', app: A.pets, text: 'Cute pets and the daily feeding reminder works.' }] },
+};
+WD.answer = { ...WD.refused, state: 'answer', over: answerSheet };
+
+/* ---------- the page ---------- */
+const F = (k, label, html) => `<div class="state"><div class="lbl"><span class="k">${k}</span>${label}</div>${html}</div>`;
+const SECTIONS = [
+  ['p1', 'Check review', [
+    ['1', 'Screenshot and text', (th) => check(th, CK.one)],
+    ['2', 'Stars only', (th) => check(th, CK.stars)],
+    ['3', 'Long text', (th) => check(th, CK.long)],
+    ['4', 'New screenshot came', (th) => check(th, CK.again)],
+    ['5', '1 of 3, half pay, uninstalled', (th) => check(th, CK.half)],
+    ['5b', '(i) open', (th) => check(th, CK.info)],
+    ['6', 'Ask for a new one', (th) => check(th, CK.dialog)],
+    ['7', 'Refuse', (th) => check(th, CK.sheet)],
+    ['8', 'Accepting', (th) => check(th, CK.busy)],
+    ['9', 'Accepted', (th) => check(th, CK.accepted)],
+    ['9b', 'Refused, members deciding', (th) => check(th, CK.refused)],
+    ['10', 'Loading', checkLoading],
+    ['11', "Couldn't load", checkError],
+  ]],
+  ['p2', 'Send review', [
+    ['1', 'Nothing yet', (th) => send(th, SD.empty)],
+    ['1b', "Developer's messages", (th) => send(th, SD.devs)],
+    ['2', 'Picture in, typing', (th) => send(th, SD.typing)],
+    ['3', 'Ready to send', (th) => send(th, SD.ready)],
+    ['4', 'Sending', (th) => send(th, SD.busy)],
+    ['5', 'Stars only, live', (th) => send(th, SD.stars)],
+    ['6', 'No review box, half pay', (th) => send(th, SD.nobox)],
+    ['7', 'New screenshot asked', (th) => send(th, SD.recheck)],
+    ['8', 'New screenshot in', (th) => send(th, SD.recheckPic)],
+  ]],
+  ['p3', 'Waiting for the developer', [
+    ['1', 'Sent, closed test', (th) => wait(th, WD.sent)],
+    ['2', 'Sent, live app', (th) => wait(th, WD.live)],
+    ['3', 'Sent here, half pay', (th) => wait(th, WD.half)],
+    ['4', 'New screenshot sent', (th) => wait(th, WD.again)],
+    ['5', 'Refused', (th) => wait(th, WD.refused)],
+    ['6', 'Answer', (th) => wait(th, WD.answer)],
+    ['7', 'Answered, members deciding', (th) => wait(th, WD.answered)],
+    ['8', 'Paid', (th) => wait(th, WD.paid)],
+    ['9', 'Paid, live app', (th) => wait(th, WD.paidLive)],
+    ['10', 'Not paid', (th) => wait(th, WD.lost)],
+  ]],
+];
+function show() {
+  let h = '';
+  for (const [id, title, states] of SECTIONS) {
+    h += `<div class="page" id="${id}">${title}</div>`;
+    for (const th of ['light', 'dark']) {
+      h += `<div class="thm">${th === 'light' ? 'Light' : 'Dark'}</div><div class="row">`;
+      for (const [k, label, fn] of states) h += F(k, label, fn(th));
+      h += `</div>`;
+    }
+  }
+  document.getElementById('doc').innerHTML = h;
+}
+show();
+if (document.fonts) document.fonts.ready.then(show);
+</script>
+</body>
+</html>
