@@ -129,8 +129,8 @@ internal fun groupGap(first: Boolean): Dp = if (first) 12.dp else 4.dp
 
 /** The shortest a one-line bubble is: its line of text with the bubble's own padding over and under. */
 internal val BubbleMinHeight = 34.dp
-private val BubblePadX = 12.dp
-private val BubblePadY = 7.dp
+internal val BubblePadX = 12.dp
+internal val BubblePadY = 7.dp
 
 /** Behind a picked message, across the whole row: a light wash of the accent, reaching to the screen's edges. */
 @Composable

@@ -86,6 +86,12 @@ internal fun NavGraphBuilder.appRoutes(
                 onOpenCrew = { nav.push(Routes.crew(it)) },
                 onOpenRequest = { nav.push(Routes.check(it)) },
                 onFeedback = { nav.push(Routes.askFor(it)) },
+                // Check opens the first review waiting on the owner, in To check's order; the card opens the request.
+                onCheck = { request ->
+                    val waiting = request.reviews.filter { it.state == "submitted" }.map { it.id }
+                    val first = feed.waiting.firstOrNull { it.id in waiting }?.id ?: waiting.firstOrNull()
+                    nav.push(Routes.check(first ?: request.id))
+                },
                 crews = crews,
                 requests = feed.requests.filter { it.packageName == pkg },
                 requestsLoading = !feed.answered && feed.requests.isEmpty(),

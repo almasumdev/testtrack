@@ -1,11 +1,9 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -126,7 +124,7 @@ class WaitingBodyTest {
     }
 
     @Test
-    fun a_case_offers_a_side_and_says_what_it_costs_whoever_loses() {
+    fun a_case_votes_only_when_a_side_is_picked_and_sent() {
         var voted: Boolean? = null
         compose.setContent {
             TestTrackTheme {
@@ -135,14 +133,25 @@ class WaitingBodyTest {
         }
 
         compose.onNodeWithText("Chalo Transit").assertIsDisplayed()
-        compose.onNodeWithText("15 tix").assertIsDisplayed()
-        compose.onNodeWithText("1 of 3").assertIsDisplayed()
+        compose.onNodeWithText("1 of 3 votes in").assertIsDisplayed()
+        compose.onNodeWithText("Send my vote").assertIsNotEnabled()
 
+        // A tap picks a side; nothing is counted until the vote is sent.
         compose.onNodeWithText("The review stands").performClick()
-        assertEquals(true, voted)
-
+        assertNull(voted)
         compose.onNodeWithText("The developer is right").performClick()
+        compose.onNodeWithText("Send my vote").performClick()
         assertEquals(false, voted)
+    }
+
+    @Test
+    fun a_counted_vote_stays_on_the_page_and_says_what_it_waits_for() {
+        compose.setContent {
+            TestTrackTheme { CaseCheck(dispute(cast = 2), voted = true) }
+        }
+        compose.onNodeWithText("2 of 3 votes in").assertIsDisplayed()
+        compose.onNodeWithText("Waiting for one more vote", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Send my vote").assertDoesNotExist()
     }
 
     @Test
@@ -168,14 +177,9 @@ class WaitingBodyTest {
     }
 
     @Test
-    fun a_reviewer_name_too_long_for_its_tile_shows_whole_on_a_tap() {
-        val long = "Mohammad Abdullah Al Mamun Chowdhury"
-        compose.setContent { TestTrackTheme { ReviewCheck(review().copy(reviewerName = long)) } }
-        // One line in the tile; the tooltip is a second copy of the same words.
-        compose.onAllNodesWithText(long).assertCountEquals(1)
-        compose.onNodeWithText(long).performClick()
-        compose.waitForIdle()
-        compose.onAllNodesWithText(long).assertCountEquals(2)
+    fun the_pager_says_where_this_review_is_in_the_run() {
+        compose.setContent { TestTrackTheme { ReviewCheck(review(), pager = "1 of 2") } }
+        compose.onNodeWithText("1 of 2").assertIsDisplayed()
     }
 
     @Test
@@ -216,26 +220,25 @@ class WaitingBodyTest {
         var reason: String? = null
         compose.setContent {
             TestTrackTheme {
-                FeedRefuseDialog(
-                    appName = "Nikosh Budget",
+                FeedRefuseSheet(
                     onRefuse = { text, _ -> reason = text },
                     onDismiss = {},
                 )
             }
         }
 
-        compose.onNodeWithText("Refuse it").assertIsNotEnabled()
+        compose.onNodeWithText("Refuse and hold 15 tix").assertIsNotEnabled()
         assertNull(reason)
         // What refusing holds, said before it is held.
         compose
-            .onNodeWithText("Refusing holds 15 tix", substring = true)
+            .onNodeWithText("15 tix are held from you", substring = true)
             .assertIsDisplayed()
 
         compose.onNode(hasSetTextAction()).performTextInput("Too short")
-        compose.onNodeWithText("Refuse it").assertIsNotEnabled()
+        compose.onNodeWithText("Refuse and hold 15 tix").assertIsNotEnabled()
 
         compose.onNode(hasSetTextAction()).performTextInput(" and then some more detail")
-        compose.onNodeWithText("Refuse it").performClick()
+        compose.onNodeWithText("Refuse and hold 15 tix").performClick()
         assertEquals("Too short and then some more detail", reason)
     }
 }

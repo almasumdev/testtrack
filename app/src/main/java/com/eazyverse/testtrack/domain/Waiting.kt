@@ -50,6 +50,9 @@ data class Waiting(
     val checked: Boolean = false,
 )
 
+/** Who sent it, by their first name, as the line after accepting says it. */
+val Waiting.firstName: String get() = reviewerName.trim().substringBefore(' ').ifBlank { "The reviewer" }
+
 /** What accepting it pays: half the reward for one sent without Play (FeedRules.NO_BOX_MIN_CHARS). */
 val Waiting.pays: Int get() = if (noBox) reward / 2 else reward
 

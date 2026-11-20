@@ -2,7 +2,6 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -24,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,12 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Quote
-import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.domain.Case
 import com.eazyverse.testtrack.domain.Waiting
-import com.eazyverse.testtrack.domain.closeTo
-import com.eazyverse.testtrack.domain.pays
-import com.eazyverse.testtrack.domain.timeLeft
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -51,8 +47,10 @@ import com.eazyverse.testtrack.ui.theme.Tt
 /**
  * A review or case on its own page, from the Circle tab's view model.
  *
- * Closes itself once it is decided, and also if it is no longer there to decide: answered on
- * another phone, or accepted by the clock while the list was open.
+ * A review, once decided, gives way to the next of the same app's reviews still waiting, so a
+ * run of them is checked in one go; with none left the page closes. A vote stays on the page,
+ * drawn from what the phone already knows, until the others are in. The page also closes if what
+ * it shows is no longer there to decide: answered on another phone, or accepted by the clock.
  */
 @Composable
 fun CheckScreen(
@@ -63,18 +61,45 @@ fun CheckScreen(
     onOpen: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
-    val review = feed.waiting.firstOrNull { it.id == id }
-    val case = feed.disputes.firstOrNull { it.id == id }
-    val request = feed.requests.firstOrNull { it.id == id }
+    // The review shown: the one opened, then the next of its app's once one is decided here.
+    var current by rememberSaveable { mutableStateOf(id) }
+    var doneHere by rememberSaveable { mutableStateOf(listOf<String>()) }
+    val review = feed.waiting.firstOrNull { it.id == current }
+    val listed = feed.disputes.firstOrNull { it.id == current }
+    val request = feed.requests.firstOrNull { it.id == current }
+    // A vote, once counted: the case as it was and the side sent, kept after the list lets it go.
+    var sending by remember { mutableStateOf<Voted?>(null) }
+    var voted by remember { mutableStateOf<Voted?>(null) }
+    val case =
+        voted?.let { v -> v.case.copy(votesCast = maxOf(v.case.votesCast + 1, listed?.votesCast ?: 0)) } ?: listed
     var refusing by remember { mutableStateOf(false) }
     var askingAgain by remember { mutableStateOf(false) }
     val missing = review == null && case == null && request == null
+    // This app's reviews still waiting, in the list's order, after the ones decided on this page.
+    val queue = review?.let { shown -> feed.waiting.filter { it.sameApp(shown) && it.id !in doneHere } }.orEmpty()
+    val position = doneHere.size + queue.indexOfFirst { it.id == current } + 1
+    val total = doneHere.size + queue.size
     // Only a load started from here on can say it is gone: one that finished before the page
     // opened knew nothing of a request just posted or a review just sent.
     val opened = remember { feed.loadsStarted }
     // Arrived from My apps, perhaps before Circle has ever loaded: fetch, rather than find nothing.
     LaunchedEffect(Unit) { if (missing) feed.load(context) }
-    LaunchedEffect(feed.decided) { if (feed.decided == id) onClose() }
+    LaunchedEffect(feed.decided) {
+        val done = feed.decided ?: return@LaunchedEffect
+        if (done != current) return@LaunchedEffect
+        val vote = sending
+        if (vote != null && vote.case.id == done) {
+            voted = vote
+            return@LaunchedEffect
+        }
+        val next = queue.firstOrNull { it.id != done }
+        if (next == null) {
+            onClose()
+        } else {
+            doneHere = doneHere + done
+            current = next.id
+        }
+    }
     // A review arriving, a vote landing or the case being decided shows on this page as it happens.
     WhileShown(onShow = { feed.startPageLive(context) }, onHide = feed::stopPageLive)
     LaunchedEffect(missing, feed.loadsFinished) {
@@ -92,6 +117,7 @@ fun CheckScreen(
                     onApprove = { feed.approve(context, review) },
                     onReject = { refusing = true },
                     onAskAgain = { askingAgain = true },
+                    pager = if (total > 1 && position > 0) "$position of $total" else null,
                 )
             request != null ->
                 RequestCheck(
@@ -110,7 +136,11 @@ fun CheckScreen(
                     busy = feed.busy,
                     proof = { ref -> ProofImage(ref, whole = true) },
                     onBack = onClose,
-                    onVote = { forReviewer -> feed.vote(context, case, forReviewer) },
+                    onVote = { forReviewer ->
+                        sending = Voted(case, forReviewer)
+                        feed.vote(context, case, forReviewer)
+                    },
+                    voted = voted?.forReviewer,
                 )
             else -> {
                 PageBar("", onClose)
@@ -123,7 +153,7 @@ fun CheckScreen(
                         onAction = { feed.load(context) },
                     )
                 } else {
-                    FeedLoadingList()
+                    CheckSkeleton()
                 }
             }
         }
@@ -132,10 +162,8 @@ fun CheckScreen(
         Ask(
             title = "Ask for a new screenshot?",
             body =
-                "The reviewer gets ${FeedRules.RECHECK_HOURS} hours to show their review on Google Play again, with a " +
-                    "new screenshot. Google sometimes hides reviews from the public, and they can still see theirs. " +
-                    "${FeedRules.RECHECK_FEE} tix are held from you: they go to the reviewer if they show it, and come " +
-                    "back if they don't. You can ask once.",
+                "They get ${FeedRules.RECHECK_HOURS} hours to show their review on Play again. ${FeedRules.RECHECK_FEE} tix " +
+                    "are held from you: they get them if they show it, you get them back if not. You can ask once.",
             confirm = "Ask",
             onConfirm = {
                 askingAgain = false
@@ -145,135 +173,23 @@ fun CheckScreen(
         )
     }
     if (refusing && review != null) {
-        FeedRefuseDialog(
-            appName = review.appName,
+        FeedRefuseSheet(
             needsChars = review.needsChars,
-            onRefuse = { reason, picture ->
-                refusing = false
-                feed.reject(context, review, reason, picture)
-            },
+            onRefuse = { reason, picture -> feed.reject(context, review, reason, picture) },
             onDismiss = { refusing = false },
         )
     }
 }
 
-/**
- * A review of your app, on its own page: who sent it, their note, the screenshot whole, and the
- * two answers at the bottom. Refusing is not free, so the page says what it starts.
- */
-@Composable
-fun ReviewCheck(
-    review: Waiting,
-    busy: Boolean = false,
-    proof: @Composable (String) -> Unit = {},
-    onBack: () -> Unit = {},
-    onApprove: () -> Unit = {},
-    onReject: () -> Unit = {},
-    /** Can't find it on Play: ask the reviewer for a new screenshot. */
-    onAskAgain: () -> Unit = {},
-) {
-    val now = System.currentTimeMillis()
-    val until = review.decideBy
-    CheckPage(
-        title = "Review",
-        onBack = onBack,
-        actions = {
-            Primary(
-                if (review.pays > 0) "Accept and pay ${review.pays} tix" else "Accept",
-                Modifier.weight(1f),
-                busy = busy,
-                onClick = onApprove,
-            )
-            Spacer(Modifier.width(10.dp))
-            Secondary("Refuse", Modifier.weight(1f), destructive = true, enabled = !busy, onClick = onReject)
-        },
-    ) {
-        AppHeader(review.appName, review.packageName, if (review.isLive) CheckKind.PLAY else CheckKind.CLOSED, icon = review.icon)
-        Spacer(Modifier.height(12.dp))
-        // Time left only from the server's own deadline. Without one there is no figure to show.
-        StatTiles(
-            listOfNotNull(
-                Stat("Reviewer", review.reviewerName.ifBlank { "Unknown" }),
-                until?.let { Stat("Time left", timeLeft(it, now), warn = closeTo(it, now)) },
-                Stat("Pays", if (review.pays > 0) "${review.pays} tix" else "-"),
-            ),
-        )
-        if (review.isLive && review.kept == false) {
-            Spacer(Modifier.height(12.dp))
-            Notice(Status.short, Lucide.TriangleAlert) {
-                Text(
-                    "They uninstalled the app within a day of reviewing it. Google may see that as a review " +
-                        "that is not genuine, so check it before it accepts itself.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        }
-        AskedFor(review.feedback, review.needsChars, owner = true)
-        NoBoxNote(review.noBox, review.reward)
-        TextGiven(review.written, review.needsChars, review.textUse)
-        Screenshots(review.proofRef, review.recheckedRef, proof)
-        if (!review.noBox && !review.checked) CantFind(onAskAgain)
-        Spacer(Modifier.height(14.dp))
-        Text(
-            (
-                if (until !=
-                    null
-                ) {
-                    "Accepts itself in ${timeLeft(until, now)} if you do nothing. "
-                } else {
-                    "It accepts itself after a day if you do nothing. "
-                }
-            ) +
-                "Refusing sends it to three members, and whoever they decide against pays them.",
-            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp),
-            color = Tt.colors.text3,
-        )
-    }
-}
+/** A vote sent on a case, with the case as it stood when it went. */
+private class Voted(
+    val case: Case,
+    val forReviewer: Boolean,
+)
 
-/** A case between a developer and a reviewer, on its own page, with the two sides at the bottom. */
-@Composable
-fun CaseCheck(
-    case: Case,
-    busy: Boolean = false,
-    proof: @Composable (String) -> Unit = {},
-    onBack: () -> Unit = {},
-    onVote: (forReviewer: Boolean) -> Unit = {},
-) {
-    CheckPage(
-        title = "Case",
-        onBack = onBack,
-        actions = {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Secondary("The review stands", Modifier.fillMaxWidth(), enabled = !busy) { onVote(true) }
-                Secondary("The developer is right", Modifier.fillMaxWidth(), enabled = !busy) { onVote(false) }
-            }
-        },
-    ) {
-        AppHeader(case.appName, case.packageName, CheckKind.DISPUTED, icon = case.icon)
-        Spacer(Modifier.height(12.dp))
-        StatTiles(
-            listOf(
-                Stat("Votes", "${case.votesCast} of ${case.votesNeeded}"),
-                Stat("Stake", "${case.stake} tix"),
-                Stat("Review pays", if (case.reward > 0) "${case.reward} tix" else "-"),
-            ),
-        )
-        Said("The developer says", case.reason)
-        AskedFor(case.feedback, case.needsChars, owner = false)
-        NoBoxNote(case.noBox, case.reward)
-        TextGiven(case.written, case.needsChars, case.textUse, note = "The reviewer's note")
-        Screenshots(case.proofRef, case.recheckedRef, proof)
-        DisputeEvidence(case.evidence, proof)
-        Spacer(Modifier.height(14.dp))
-        Text(
-            "Whoever you decide against pays the ${case.stake} tix that goes to the three of you deciding.",
-            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp),
-            color = Tt.colors.text3,
-        )
-    }
-}
+/** Reviews of the same app, by its package, or its name from an older server that sent none. */
+private fun Waiting.sameApp(other: Waiting): Boolean =
+    if (packageName.isNotBlank() && other.packageName.isNotBlank()) packageName == other.packageName else appName == other.appName
 
 /** A back arrow and a title, the page scrolling under it, and the answers pinned above the dock. */
 @Composable

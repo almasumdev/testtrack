@@ -16,7 +16,7 @@ import com.eazyverse.testtrack.ui.AppPickerSheet
 import com.eazyverse.testtrack.ui.AskScreen
 import com.eazyverse.testtrack.ui.AskViewModel
 import com.eazyverse.testtrack.ui.CaseCheck
-import com.eazyverse.testtrack.ui.FeedRefuseDialog
+import com.eazyverse.testtrack.ui.FeedRefuseSheet
 import com.eazyverse.testtrack.ui.FeedTab
 import com.eazyverse.testtrack.ui.GroupSheetBody
 import com.eazyverse.testtrack.ui.GroupSheetFrame
@@ -201,7 +201,7 @@ class CircleVideoFramesTest {
             frame.target("sendProof", text("Send the proof", clickable = true))
             frame.target("note", compose.onNode(hasSetTextAction()))
             frame.target("gallery", text("Gallery", clickable = true))
-            frame.target("hideDetails", text("Inspect and hide personal details", clickable = true))
+            frame.target("hideDetails", text("Hide details", clickable = true))
         }
 
     /** The first time the camera is wanted and "Display over other apps" is off. */
@@ -284,12 +284,12 @@ class CircleVideoFramesTest {
         frame.show {
             Pushed {
                 ReviewCheck(review, proof = { LocalProof(shot("weather")) })
-                FeedRefuseDialog(appName = review.appName, onRefuse = { _, _ -> }, onDismiss = {})
+                FeedRefuseSheet(onRefuse = { _, _ -> }, onDismiss = {}, needsChars = review.needsChars)
             }
         }
         compose.onNode(hasSetTextAction()).performTextInput(s.REFUSAL)
         frame.settle(800)
-        frame.target("refuseIt", text("Refuse it", clickable = true))
+        frame.target("refuseIt", text("Refuse and hold 15 tix", clickable = true))
         frame.write("refuse")
     }
 

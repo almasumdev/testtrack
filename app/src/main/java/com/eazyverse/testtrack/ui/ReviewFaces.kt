@@ -85,6 +85,18 @@ internal fun FaceGrid(
     }
 }
 
+/**
+ * One reviewer's face on its own, such as beside their name on a review to check: [size] is its
+ * outer edge, the amber ring included, with the mark for where it stands on the corner.
+ */
+@Composable
+fun ReviewerFace(
+    face: ReviewFace,
+    size: Dp,
+) {
+    Box(Modifier.clearAndSetSemantics {}) { GridFace(face, size, overhang = size * 0.08f, compact = false) }
+}
+
 /** One face of the grid: the disc inside the ring's room, the ring itself, and the mark on its corner. */
 @Composable
 private fun GridFace(

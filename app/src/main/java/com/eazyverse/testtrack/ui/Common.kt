@@ -170,6 +170,8 @@ fun Primary(
     busy: Boolean = false,
     enabled: Boolean = true,
     mark: Painter? = null,
+    /** Red, for the button that confirms something that costs the reader. */
+    destructive: Boolean = false,
     onClick: () -> Unit,
 ) {
     val dismissKeyboard = rememberDismissKeyboard()
@@ -179,6 +181,12 @@ fun Primary(
             onClick()
         },
         enabled = enabled && !busy,
+        colors =
+            if (destructive) {
+                ButtonDefaults.buttonColors(containerColor = Tt.colors.bad, contentColor = Tt.colors.onBad)
+            } else {
+                ButtonDefaults.buttonColors()
+            },
         // A full pill, the main button: the one filled shape on a screen, so it is the
         // one place the eye lands.
         shape = RoundedCornerShape(percent = 50),
@@ -190,7 +198,7 @@ fun Primary(
             androidx.compose.material3.CircularProgressIndicator(
                 Modifier.size(16.dp),
                 strokeWidth = 2.dp,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = if (destructive) Tt.colors.onBad else MaterialTheme.colorScheme.onPrimary,
             )
             Spacer(Modifier.width(10.dp))
         } else if (mark != null) {
@@ -218,6 +226,8 @@ internal fun InlineAction(
     leading: ImageVector? = null,
     enabled: Boolean = true,
     busy: Boolean = false,
+    /** The words' ink: the accent's, or red for an action that costs something. */
+    color: Color = Tt.colors.accentInk,
     onClick: () -> Unit,
 ) {
     val dismissKeyboard = rememberDismissKeyboard()
@@ -232,7 +242,7 @@ internal fun InlineAction(
             enabled = enabled && !busy,
             shape = RoundedCornerShape(percent = 50),
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-            colors = ButtonDefaults.textButtonColors(contentColor = Tt.colors.accentInk, disabledContentColor = Tt.colors.text4),
+            colors = ButtonDefaults.textButtonColors(contentColor = color, disabledContentColor = Tt.colors.text4),
         ) {
             if (leading != null) {
                 Icon(leading, null, Modifier.size(16.dp))
@@ -247,7 +257,7 @@ internal fun InlineAction(
                     textAlign = TextAlign.Center,
                     maxLines = 2,
                 )
-                if (busy) CircularProgressIndicator(Modifier.size(18.dp), color = Tt.colors.accentInk, strokeWidth = 2.dp)
+                if (busy) CircularProgressIndicator(Modifier.size(18.dp), color = color, strokeWidth = 2.dp)
             }
         }
     }

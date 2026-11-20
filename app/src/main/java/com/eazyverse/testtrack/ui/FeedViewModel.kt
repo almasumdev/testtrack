@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.eazyverse.testtrack.domain.Case
 import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.Waiting
+import com.eazyverse.testtrack.domain.firstName
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiAuth
 import com.eazyverse.testtrack.net.ApiError
@@ -415,7 +416,7 @@ class FeedViewModel : ViewModel() {
     fun approve(
         context: Context,
         review: Waiting,
-    ) = decide(context, review.id, "Accepted. The reviewer has been paid.") { Api.approve(review.id) }
+    ) = decide(context, review.id, "Accepted. ${review.firstName} has been paid.") { Api.approve(review.id) }
 
     /**
      * Refuse one, which is not free.

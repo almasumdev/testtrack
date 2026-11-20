@@ -82,6 +82,10 @@ internal fun OutlinedField(
     enabled: Boolean = true,
     /** A 36dp action in the top end corner of the box. */
     trailing: (@Composable () -> Unit)? = null,
+    /** A plain line under the box where an error would go, such as how many characters there are. */
+    hint: String? = null,
+    /** The hint's ink; text3 when not given. */
+    hintTone: Color? = null,
 ) {
     val t = Tt.colors
     val focus = LocalFocusManager.current
@@ -254,7 +258,7 @@ internal fun OutlinedField(
                 }
             },
         )
-        if (error != null || maxLength != null) {
+        if (error != null || maxLength != null || hint != null) {
             Spacer(Modifier.height(4.dp))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                 if (error != null) {
@@ -271,6 +275,14 @@ internal fun OutlinedField(
                         t.bad,
                         Modifier.weight(1f),
                         iconSize = 13.dp,
+                    )
+                } else if (hint != null) {
+                    Text(
+                        hint,
+                        Modifier.weight(1f),
+                        style = typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 14.sp, letterSpacing = 0.sp),
+                        fontWeight = if (hintTone != null) FontWeight.SemiBold else FontWeight.Normal,
+                        color = hintTone ?: t.text3,
                     )
                 } else {
                     Spacer(Modifier.weight(1f))

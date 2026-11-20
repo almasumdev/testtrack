@@ -74,6 +74,8 @@ fun AppPage(
     onOpenCrew: (String) -> Unit,
     onOpenRequest: (String) -> Unit,
     onFeedback: (String) -> Unit,
+    /** The Check on a request's card: the first review waiting on the owner, or the request without one. */
+    onCheck: (Request) -> Unit = { onOpenRequest(it.id) },
     /** The Crew tab's model, for this app's crew tile. */
     crews: CrewViewModel,
     /** This app's own feedback requests, from Circle's model, and whether they are still on their way. */
@@ -180,7 +182,7 @@ fun AppPage(
                         loading = requestsLoading,
                         onOpen = { onOpenRequest(it.id) },
                         onAsk = { onFeedback(app.id) },
-                        onCheck = { onOpenRequest(it.id) },
+                        onCheck = onCheck,
                         onFix = { onOpenRequest(it.id) },
                         canAsk = app.canFeedback,
                     )
