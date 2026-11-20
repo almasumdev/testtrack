@@ -120,54 +120,17 @@ internal fun SignInFields(
     onPassword: (String) -> Unit,
     also: String,
     onAlso: (String) -> Unit,
-    /** The seat page's look: 8 under the choice, then [OutlinedField]s 20 apart, instead of the shared 10, 14 and 12. */
-    seatSpacing: Boolean = false,
 ) {
     TwoChoice("Does your app need a sign-in?", "No sign-in", "Needs a sign-in", !needed) { onNeeded(!it) }
     if (!needed) return
-    Spacer(Modifier.height(if (seatSpacing) 8.dp else 10.dp))
+    Spacer(Modifier.height(8.dp))
     Text(
         "A test account the crew can use, as Play Console's App access asks for. Fourteen testers " +
             "see it, so never your own.",
-        style =
-            if (seatSpacing) {
-                MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp)
-            } else {
-                MaterialTheme.typography.bodySmall
-            },
-        color = if (seatSpacing) Tt.colors.text2 else Tt.colors.text3,
+        style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp),
+        color = Tt.colors.text2,
     )
-    if (seatSpacing) {
-        SeatSignInFields(username, onUsername, password, onPassword, also, onAlso)
-        return
-    }
-    Spacer(Modifier.height(14.dp))
-    DialogField(
-        value = username,
-        onValueChange = { onUsername(it.take(SIGN_IN_USER_MAX)) },
-        label = "Username, email or phone",
-        placeholder = "test@example.com",
-        keyboardType = KeyboardType.Email,
-        imeAction = ImeAction.Next,
-    )
-    Spacer(Modifier.height(12.dp))
-    DialogField(
-        value = password,
-        onValueChange = { onPassword(it.take(SIGN_IN_PASS_MAX)) },
-        label = "Password",
-        placeholder = "The test account's password",
-        imeAction = ImeAction.Next,
-    )
-    Spacer(Modifier.height(12.dp))
-    DialogField(
-        value = also,
-        onValueChange = { onAlso(it.take(SIGN_IN_ALSO_MAX)) },
-        label = "Anything else needed (optional)",
-        placeholder = "A one-time code, or which screen to skip",
-        singleLine = false,
-        minHeight = 72.dp,
-        maxLength = SIGN_IN_ALSO_MAX,
-    )
+    SeatSignInFields(username, onUsername, password, onPassword, also, onAlso)
 }
 
 /** The seat page's three fields: notched outlined boxes, 20 apart and 20 under the line above. */

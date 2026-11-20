@@ -163,14 +163,11 @@ internal fun SeatTileSkeleton(
     nameWidth: Dp,
     lineWidth: Dp,
 ) {
-    val shape = RoundedCornerShape(TileRadius)
     Row(
         Modifier
             .fillMaxWidth()
             .heightIn(min = 66.dp)
-            .clip(shape)
-            .background(Tt.colors.bg)
-            .border(1.dp, Tt.colors.cardLine, shape)
+            .tileFrame()
             .padding(horizontal = 12.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
