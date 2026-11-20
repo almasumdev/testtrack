@@ -205,8 +205,15 @@ fun CrewChatScreen(
     }
     profile?.let { CrewMemberProfile(it) { profile = null } }
     picture?.let { line ->
+        val shown = line.picture ?: return@let
         val who = if (line.mine) "You" else view.authorName(line)
-        ChatImageViewer(line, who, view.plain(line.text)) { picture = null }
+        PictureViewer(
+            shown.source(),
+            title = who,
+            subtitle = sentAt(line),
+            caption = view.plain(line.text),
+            footnote = ChatThread.pictureLeft(shown.expiresAt),
+        ) { picture = null }
     }
 }
 

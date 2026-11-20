@@ -236,8 +236,9 @@ private fun RequestReviewCard(
         AnimatedVisibility(open && !waiting) {
             Column {
                 TextGiven(review.written, needs, review.textUse)
-                Screenshots(review.proofRef, review.recheckedRef, proof)
-                DisputeEvidence(review.evidence, proof)
+                val who = review.reviewerName.ifBlank { null }
+                Screenshots(review.proofRef, review.recheckedRef, proof, who)
+                DisputeEvidence(review.evidence, proof, reviewer = who)
             }
         }
     }

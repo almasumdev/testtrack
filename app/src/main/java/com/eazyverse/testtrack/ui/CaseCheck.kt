@@ -18,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -63,7 +62,6 @@ fun CaseCheck(
     voted: Boolean? = null,
 ) {
     var picked by rememberSaveable(case.id) { mutableStateOf<Boolean?>(null) }
-    var viewing by remember { mutableStateOf<String?>(null) }
     val choice = voted ?: picked
     val share = if (case.stake > 0) case.stake / FeedRules.JURORS else FeedRules.JUROR_FEE
     val stake = if (case.stake > 0) case.stake else FeedRules.STAKE
@@ -93,7 +91,7 @@ fun CaseCheck(
             Spacer(Modifier.height(14.dp))
             InfoLine(Lucide.Info, AnnotatedString("Play showed them no review box, so they sent it in TestTrack for half pay."))
         }
-        val thread: @Composable () -> Unit = { CaseThread(case, proof) { viewing = it } }
+        val thread: @Composable () -> Unit = { CaseThread(case, proof) }
         val vote: @Composable () -> Unit = {
             ThreadHeading("Your vote", Modifier.padding(top = 22.dp, bottom = 10.dp))
             VoteTiles(choice, enabled = voted == null && !busy, dimOthers = voted != null) { picked = it }
@@ -126,7 +124,6 @@ fun CaseCheck(
             thread()
         }
     }
-    viewing?.let { ref -> ProofViewer(ref, onDismiss = { viewing = null }, picture = proof) }
 }
 
 /** Both sides, in the order it happened: the review, the refusal, and the reviewer's one answer. */
@@ -134,7 +131,6 @@ fun CaseCheck(
 private fun CaseThread(
     case: Case,
     proof: @Composable (String) -> Unit,
-    onPicture: (String) -> Unit,
 ) {
     Thread {
         ThreadGroup(
@@ -144,7 +140,6 @@ private fun CaseThread(
             ),
             who = "Reviewer",
             picture = proof,
-            onPicture = onPicture,
         )
         if (case.recheckedRef.isNotBlank()) {
             ThreadNote("The developer asked for a new one")
@@ -152,7 +147,6 @@ private fun CaseThread(
                 listOf(ThreadPart.Picture(case.recheckedRef)),
                 time = "New, taken on Play when asked",
                 picture = proof,
-                onPicture = onPicture,
             )
         }
         ThreadNote("The developer refused it", NoteTone.WARN, Lucide.Scale)
@@ -166,7 +160,6 @@ private fun CaseThread(
             who = "Developer",
             tone = ThreadTone.SIDE,
             picture = proof,
-            onPicture = onPicture,
         )
         if (evidence.reply.isNotBlank() || evidence.replyProofRef.isNotBlank()) {
             ThreadNote("The reviewer answered")
@@ -177,7 +170,6 @@ private fun CaseThread(
                 ),
                 who = "Reviewer",
                 picture = proof,
-                onPicture = onPicture,
             )
         }
     }

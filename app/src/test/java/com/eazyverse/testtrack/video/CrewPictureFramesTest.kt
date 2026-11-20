@@ -36,9 +36,12 @@ import com.eazyverse.testtrack.ui.DockUi
 import com.eazyverse.testtrack.ui.LocalPictureImage
 import com.eazyverse.testtrack.ui.MainTab
 import com.eazyverse.testtrack.ui.NightPicture
+import com.eazyverse.testtrack.ui.PictureSource
 import com.eazyverse.testtrack.ui.PictureViewer
 import com.eazyverse.testtrack.ui.Scene
 import com.eazyverse.testtrack.ui.VisitDockContent
+import com.eazyverse.testtrack.ui.nightProves
+import com.eazyverse.testtrack.ui.nightTitle
 import com.eazyverse.testtrack.viewmodel.AppNights
 import com.eazyverse.testtrack.viewmodel.CrewPicturesViewModel
 import com.eazyverse.testtrack.viewmodel.MemberNight
@@ -327,9 +330,8 @@ class CrewPictureFramesTest {
     fun p09_viewer() {
         show {
             Pushed {
-                PictureViewer(
-                    NightPicture(shot("habit"), "Sofia Alvarez", 4, "2026-10-25T18:12:00+06:00", 14_000, false, "Focus Flow"),
-                ) {}
+                val night = NightPicture(shot("habit"), "Sofia Alvarez", 4, "2026-10-25T18:12:00+06:00", 14_000, false, "Focus Flow")
+                PictureViewer(PictureSource.Proof(night.ref), title = nightTitle(night), footnote = nightProves(night)) {}
             }
         }
         frame.settle(1500)

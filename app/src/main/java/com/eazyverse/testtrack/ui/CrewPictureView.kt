@@ -1,34 +1,16 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.ui.theme.Tt
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -36,8 +18,9 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /*
- * A crew picture, small in a row or a grid and whole when tapped: whose it is, which night, when,
- * the seconds the phone measured, and whether TestTrack took it or the member picked it by hand.
+ * A crew picture, small in a row or a grid, and what [PictureViewer] says over it when tapped: whose it
+ * is, which night, when, the seconds the phone measured, and whether TestTrack took it or the member
+ * picked it by hand.
  */
 
 /**
@@ -47,12 +30,9 @@ import java.util.Locale
 val LocalPictureImage = staticCompositionLocalOf<(@Composable (String, Boolean) -> Unit)?> { null }
 
 @Composable
-private fun Picture(
-    ref: String,
-    whole: Boolean = false,
-) {
+private fun Picture(ref: String) {
     val local = LocalPictureImage.current
-    if (local != null) local(ref, whole) else ProofImage(ref, whole)
+    if (local != null) local(ref, false) else ProofImage(ref)
 }
 
 /** One night's picture, as the viewer captions it. */
@@ -86,42 +66,15 @@ internal fun PictureThumb(
     ) { Picture(ref) }
 }
 
-/** The picture whole, over everything, with what it proves under it. */
-@Composable
-internal fun PictureViewer(
-    picture: NightPicture,
-    onDismiss: () -> Unit,
-) {
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .background(Tt.colors.inverse)
-                .statusBarsPadding()
-                .verticalScroll(rememberScrollState()),
-        ) {
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                IconButton(onClick = onDismiss) { Icon(Lucide.X, "Close", tint = Tt.colors.onInverse) }
-            }
-            Text(
-                "Night ${picture.day}, ${picture.who}",
-                Modifier.padding(start = 16.dp, end = 16.dp),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Tt.colors.onInverse,
-            )
-            val seconds = (picture.usedMs / 1000).toInt()
-            Text(
-                "Opened ${picture.app}${clockAt(picture.at)}" +
-                    (if (seconds > 0) ", $seconds seconds in the app. " else ". ") +
-                    if (picture.byHand) "Picked by hand." else "Taken by TestTrack.",
-                Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 14.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                color = Tt.colors.onInverse.copy(alpha = 0.8f),
-            )
-            Box(Modifier.padding(horizontal = 16.dp)) { Picture(picture.ref, whole = true) }
-        }
-    }
+/** "Night 4, Sofia Alvarez", over [picture] whole in [PictureViewer]. */
+internal fun nightTitle(picture: NightPicture): String = "Night ${picture.day}, ${picture.who}"
+
+/** What [picture] proves, under it whole: when the app was opened, for how long, and who took it. */
+internal fun nightProves(picture: NightPicture): String {
+    val seconds = (picture.usedMs / 1000).toInt()
+    return "Opened ${picture.app}${clockAt(picture.at)}" +
+        (if (seconds > 0) ", $seconds seconds in the app. " else ". ") +
+        if (picture.byHand) "Picked by hand." else "Taken by TestTrack."
 }
 
 /** " at 9:14 pm", in this phone's own time, or nothing if the time did not come. */

@@ -36,13 +36,13 @@ import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.domain.ChatDraft
 import com.eazyverse.testtrack.domain.ChatLine
 import com.eazyverse.testtrack.domain.ChatSelect
+import com.eazyverse.testtrack.domain.ChatThread
 import com.eazyverse.testtrack.domain.SendState
 import com.eazyverse.testtrack.fixture.GallerySamples.Companion.KENJI
 import com.eazyverse.testtrack.fixture.GallerySamples.Companion.ME
 import com.eazyverse.testtrack.ui.Ask
 import com.eazyverse.testtrack.ui.CaptionBar
 import com.eazyverse.testtrack.ui.ChatActions
-import com.eazyverse.testtrack.ui.ChatImageViewer
 import com.eazyverse.testtrack.ui.ChatJump
 import com.eazyverse.testtrack.ui.ChatPictureEditor
 import com.eazyverse.testtrack.ui.Crew
@@ -64,11 +64,14 @@ import com.eazyverse.testtrack.ui.PenStroke
 import com.eazyverse.testtrack.ui.PictureCanvas
 import com.eazyverse.testtrack.ui.PictureDoc
 import com.eazyverse.testtrack.ui.PictureText
+import com.eazyverse.testtrack.ui.PictureViewer
 import com.eazyverse.testtrack.ui.SegmentedTabs
 import com.eazyverse.testtrack.ui.ToolsTopBar
 import com.eazyverse.testtrack.ui.WordsEntry
 import com.eazyverse.testtrack.ui.chatProfileOf
 import com.eazyverse.testtrack.ui.loadWordsFace
+import com.eazyverse.testtrack.ui.sentAt
+import com.eazyverse.testtrack.ui.source
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.CrewChatViewModel
 import kotlin.math.sin
@@ -157,7 +160,15 @@ internal fun OverlayHost(
         is Overlay.Profile -> CrewMemberProfile(chatProfileOf(overlay.seat, s.people[overlay.seat], s.run(0)), close)
         is Overlay.Viewer -> {
             val line = overlay.line
-            ChatImageViewer(line, s.name(line), s.view().plain(line.text), close)
+            val shown = line.picture ?: return
+            PictureViewer(
+                shown.source(),
+                title = s.name(line),
+                subtitle = sentAt(line),
+                caption = s.view().plain(line.text),
+                footnote = ChatThread.pictureLeft(shown.expiresAt),
+                onDismiss = close,
+            )
         }
         Overlay.Editor -> {
             val vm =

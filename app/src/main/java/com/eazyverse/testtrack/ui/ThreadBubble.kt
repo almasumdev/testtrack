@@ -133,7 +133,7 @@ private fun threadInk(tone: ThreadTone): BubbleInk =
  * One person's turn: [parts] as separate bubbles, the name over the first (left side), the face
  * bottom-aligned with the last, and one [time] line under the group at the bubbles' edge. [sent]
  * puts the green double check before the time, for the reader's own. A tap on a picture opens it
- * whole in [ProofViewer], unless [onPicture] takes it. Inside [Thread] a new group starts 12dp below.
+ * whole in [PictureViewer], titled with [who] and [time]. Inside [Thread] a new group starts 12dp below.
  */
 @Composable
 internal fun ThreadGroup(
@@ -147,7 +147,6 @@ internal fun ThreadGroup(
     app: ThreadApp? = null,
     tone: ThreadTone = if (side == ThreadSide.RIGHT) ThreadTone.MINE else ThreadTone.THEIRS,
     picture: @Composable (String) -> Unit = { ProofImage(it, whole = true) },
-    onPicture: ((String) -> Unit)? = null,
 ) {
     if (parts.isEmpty()) return
     val t = Tt.colors
@@ -155,7 +154,6 @@ internal fun ThreadGroup(
     val faced = !right && face != ThreadFace.NONE
     val indent = if (faced) Face + FaceGap else 0.dp
     var viewing by remember { mutableStateOf<String?>(null) }
-    val open: (String) -> Unit = onPicture ?: { viewing = it }
     Column(
         modifier.fillMaxWidth().layoutId(ThreadKind.GROUP),
         horizontalAlignment = if (right) Alignment.End else Alignment.Start,
@@ -181,7 +179,7 @@ internal fun ThreadGroup(
                 }
                 val shape = bubbleShape(mine = right, first = i == 0, last = last)
                 when (part) {
-                    is ThreadPart.Picture -> PictureBubble(part, shape, picture) { open(part.ref) }
+                    is ThreadPart.Picture -> PictureBubble(part, shape, picture) { viewing = part.ref }
                     is ThreadPart.Words -> WordsBubble(part, shape, tone)
                 }
             }
@@ -199,7 +197,9 @@ internal fun ThreadGroup(
             }
         }
     }
-    viewing?.let { ref -> ProofViewer(ref, onDismiss = { viewing = null }, picture = picture) }
+    viewing?.let { ref ->
+        PictureViewer(PictureSource.Proof(ref), title = who.ifBlank { null }, subtitle = time.ifBlank { null }) { viewing = null }
+    }
 }
 
 /** The 28dp face: a person's round, or the app's icon standing for its developer. */

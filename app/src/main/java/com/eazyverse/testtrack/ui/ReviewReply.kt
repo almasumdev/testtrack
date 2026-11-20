@@ -105,24 +105,28 @@ private fun EvidenceLine(
     Text(text, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = Tt.colors.text)
 }
 
-/** For the members deciding, and the owner: what each side showed. */
+/**
+ * For the members deciding, and the owner: what each side showed. A tap opens a screenshot whole,
+ * the reviewer's titled with [reviewer].
+ */
 @Composable
 internal fun DisputeEvidence(
     evidence: Evidence,
     proof: @Composable (String) -> Unit,
+    reviewer: String? = null,
 ) {
     if (evidence.isEmpty) return
     Spacer(Modifier.height(14.dp))
     if (evidence.ownerProofRef.isNotBlank()) {
         Text("The developer's screenshot", style = MaterialTheme.typography.labelMedium, color = Tt.colors.text3)
-        proof(evidence.ownerProofRef)
+        OpensWhole(evidence.ownerProofRef, "Developer", proof)
         Spacer(Modifier.height(12.dp))
     }
     if (evidence.reply.isNotBlank() || evidence.replyProofRef.isNotBlank()) {
         EvidenceLine("The reviewer's answer", evidence.reply)
         if (evidence.replyProofRef.isNotBlank()) {
             Spacer(Modifier.padding(top = 6.dp))
-            proof(evidence.replyProofRef)
+            OpensWhole(evidence.replyProofRef, reviewer, proof)
         }
     }
 }

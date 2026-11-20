@@ -141,7 +141,9 @@ fun CrewMembersBody(
         }
     }
     profile?.let { CrewMemberProfile(it) { profile = null } }
-    open?.let { PictureViewer(it) { open = null } }
+    open?.let {
+        PictureViewer(PictureSource.Proof(it.ref), title = nightTitle(it), footnote = nightProves(it)) { open = null }
+    }
 }
 
 /** The line over the grid: how many opened the app tonight, or every night of a finished run. */

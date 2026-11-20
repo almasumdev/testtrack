@@ -108,21 +108,25 @@ internal fun FeedbackPill(feedback: String) {
     }
 }
 
-/** The screenshot sent with the review, and the new one if the owner asked to see it again. */
+/**
+ * The screenshot sent with the review, and the new one if the owner asked to see it again. A tap
+ * opens one whole, titled with [who] sent it.
+ */
 @Composable
 internal fun Screenshots(
     first: String,
     again: String,
     proof: @Composable (String) -> Unit,
+    who: String? = null,
 ) {
     if (first.isNotBlank()) {
         Spacer(Modifier.height(14.dp))
         if (again.isNotBlank()) Text("First screenshot", style = MaterialTheme.typography.labelMedium, color = Tt.colors.text3)
-        proof(first)
+        OpensWhole(first, who, proof)
     }
     if (again.isNotBlank()) {
         Spacer(Modifier.height(14.dp))
         Text("New screenshot, taken when asked", style = MaterialTheme.typography.labelMedium, color = Tt.colors.text3)
-        proof(again)
+        OpensWhole(again, who, proof)
     }
 }
