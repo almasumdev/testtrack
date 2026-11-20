@@ -11,11 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.eazyverse.testtrack.domain.clockTime
+import com.eazyverse.testtrack.domain.instantOf
 import com.eazyverse.testtrack.ui.theme.Tt
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /*
  * A crew picture, small in a row or a grid, and what [PictureViewer] says over it when tapped: whose it
@@ -69,17 +67,22 @@ internal fun PictureThumb(
 /** "Night 4, Sofia Alvarez", over [picture] whole in [PictureViewer]. */
 internal fun nightTitle(picture: NightPicture): String = "Night ${picture.day}, ${picture.who}"
 
-/** What [picture] proves, under it whole: when the app was opened, for how long, and who took it. */
-internal fun nightProves(picture: NightPicture): String {
+/**
+ * What [picture] proves, under it whole: when the app was opened, for how long, and who took it.
+ * The time is in the phone's 12 or 24 hour clock, as [hour24] says.
+ */
+internal fun nightProves(
+    picture: NightPicture,
+    hour24: Boolean = false,
+): String {
     val seconds = (picture.usedMs / 1000).toInt()
-    return "Opened ${picture.app}${clockAt(picture.at)}" +
+    return "Opened ${picture.app}${clockAt(picture.at, hour24)}" +
         (if (seconds > 0) ", $seconds seconds in the app. " else ". ") +
         if (picture.byHand) "Picked by hand." else "Taken by TestTrack."
 }
 
-/** " at 9:14 pm", in this phone's own time, or nothing if the time did not come. */
-internal fun clockAt(iso: String): String =
-    runCatching {
-        val local = OffsetDateTime.parse(iso).atZoneSameInstant(ZoneId.systemDefault())
-        " at " + local.format(DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())).lowercase()
-    }.getOrDefault("")
+/** " at 9:14 PM" (or " at 21:14"), in this phone's own time, or nothing if the time did not come. */
+internal fun clockAt(
+    iso: String,
+    hour24: Boolean = false,
+): String = instantOf(iso)?.let { " at " + clockTime(it, hour24).lowercase() }.orEmpty()

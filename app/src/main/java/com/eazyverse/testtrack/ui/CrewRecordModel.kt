@@ -1,9 +1,11 @@
 package com.eazyverse.testtrack.ui
 
+import com.eazyverse.testtrack.domain.instantOf
+import com.eazyverse.testtrack.domain.pluralOf
+import com.eazyverse.testtrack.domain.shortDate
 import java.time.Instant
-import java.time.OffsetDateTime
+import java.time.LocalDate
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
@@ -125,17 +127,18 @@ fun recordDates(
     r: CrewRecord,
     zone: ZoneId = ZoneId.systemDefault(),
 ): String {
-    val end = (instantOf(r.endedAt) ?: instantOf(r.doneAt))?.atZone(zone)
+    val endAt = instantOf(r.endedAt) ?: instantOf(r.doneAt)
     val started = instantOf(r.startedAt)
-    if (r.outcome == RecordOutcome.CANCELLED || started == null || end == null) {
-        return (end ?: started?.atZone(zone))?.format(MONTH_DAY).orEmpty()
+    if (r.outcome == RecordOutcome.CANCELLED || started == null || endAt == null) {
+        return (endAt ?: started)?.let { shortDate(it, zone) }.orEmpty()
     }
-    val last = end.minusMinutes(1).toLocalDate()
+    val day = { date: LocalDate -> shortDate(date.atStartOfDay(zone).toInstant(), zone) }
+    val last = endAt.atZone(zone).minusMinutes(1).toLocalDate()
     val first = last.minusDays((r.runDays - 1).coerceAtLeast(0).toLong())
     return when {
-        first == last -> last.format(MONTH_DAY)
-        first.month == last.month -> "${first.format(MONTH_DAY)} to ${last.dayOfMonth}"
-        else -> "${first.format(MONTH_DAY)} to ${last.format(MONTH_DAY)}"
+        first == last -> day(last)
+        first.month == last.month -> "${day(first)} to ${last.dayOfMonth}"
+        else -> "${day(first)} to ${day(last)}"
     }
 }
 
@@ -185,7 +188,7 @@ fun nightCountsOf(r: CrewRecord): Map<NightMark, Int> =
     if (r.nights.isNotEmpty()) r.nights.groupingBy { it }.eachCount() else r.nightCounts.filterValues { it > 0 }
 
 /** How long the reader's app was tested: "5 nights". */
-private fun testedFor(r: CrewRecord) = "${r.memberNights} ${if (r.memberNights == 1) "night" else "nights"}"
+private fun testedFor(r: CrewRecord) = "${r.memberNights} ${pluralOf(r.memberNights, "night")}"
 
 /** The line under the reader's app on a finished crew's page. */
 fun yourAppLine(r: CrewRecord): String =
@@ -224,7 +227,7 @@ fun nightLabel(
 fun appsSummary(apps: List<RecordApp>): String {
     val n = apps.size
     val left = apps.count { it.left }
-    val base = "$n other ${if (n == 1) "app" else "apps"}"
+    val base = "$n other ${pluralOf(n, "app")}"
     return if (left > 0) "$base, $left left the crew" else base
 }
 
@@ -232,7 +235,7 @@ fun appsSummary(apps: List<RecordApp>): String {
 fun clearedOn(
     detailsUntil: String?,
     zone: ZoneId = ZoneId.systemDefault(),
-): String? = instantOf(detailsUntil)?.atZone(zone)?.format(MONTH_DAY)
+): String? = instantOf(detailsUntil)?.let { shortDate(it, zone) }
 
 /** Whole days between a crew's end and its details clearing, or null when either is not known. */
 fun keptDays(
@@ -252,11 +255,3 @@ private fun cleanReason(reason: String?): String? {
     val words = reason?.trim() ?: return null
     return words.trimEnd('.').ifEmpty { null }
 }
-
-private val MONTH_DAY = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH)
-
-private fun instantOf(iso: String?): Instant? =
-    iso?.takeIf { it.isNotBlank() }?.let {
-        runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull()
-            ?: runCatching { Instant.parse(it) }.getOrNull()
-    }

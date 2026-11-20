@@ -24,6 +24,7 @@ import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Undo2
 import com.composables.icons.lucide.Users
+import com.eazyverse.testtrack.domain.pluralOf
 import com.eazyverse.testtrack.ui.theme.Tt
 import java.time.Instant
 
@@ -156,7 +157,7 @@ private fun LobbyHero(crew: Crew) {
                     "Install the others before then and no day counts against you.",
             meter = {
                 DayMeter(crew.firstNight - 1, done = true, from = crew.firstNight, total = crew.runDays)
-                MeterLabels("You join on day ${crew.firstNight}", "${crew.ownNights} ${if (crew.ownNights == 1) "day" else "days"} for you")
+                MeterLabels("You join on day ${crew.firstNight}", "${crew.ownNights} ${pluralOf(crew.ownNights, "day")} for you")
             },
         )
     } else {
@@ -217,7 +218,7 @@ private fun LobbyYourApp(
                         destructive = true,
                         busy = leaving,
                     ) { actions.onLeave(mine) }
-                    CardNote("Your ${CrewRules.SEAT_COST} tix come back in full.")
+                    QuietNote("Your ${CrewRules.SEAT_COST} tix come back in full.", Modifier.padding(top = 10.dp))
                 }
             } else {
                 null
@@ -246,7 +247,10 @@ private fun SentBack(
             action = if (byTeam) "Put it in a crew again" else "Fix it, then put it in again",
             onAction = actions.onTakeSeat,
         )
-        CardNote(seatRefundLine(mine, if (byTeam) "" else " Fix what's wrong, then put it in a crew again."))
+        QuietNote(
+            seatRefundLine(mine, if (byTeam) "" else " Fix what's wrong, then put it in a crew again."),
+            Modifier.padding(top = 10.dp),
+        )
     }
 }
 

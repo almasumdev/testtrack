@@ -1,10 +1,11 @@
 package com.eazyverse.testtrack.ui
 
+import com.eazyverse.testtrack.domain.instantOf
+import com.eazyverse.testtrack.domain.pluralOf
 import com.eazyverse.testtrack.viewmodel.AppNights
 import com.eazyverse.testtrack.viewmodel.MemberNights
 import java.time.Duration
 import java.time.Instant
-import java.time.OffsetDateTime
 
 /*
  * The testers of the reader's own app, in the shape the testers page draws them: one square per
@@ -68,9 +69,6 @@ internal data class CrewTester(
     val over: Boolean = false,
 )
 
-/** The first letter of a name, for a face that has no photo. */
-internal fun initialOf(name: String) = name.trim().take(1).uppercase()
-
 /**
  * What one tester's night was, as the server judges it: a night they did not owe (reported, let
  * off, or a quiet skip) or one before their first is neutral, never a miss. On a finished crew an
@@ -129,7 +127,7 @@ internal fun outDayOf(
     runDays: Int,
     now: Instant = Instant.now(),
 ): Int? {
-    val left = runCatching { OffsetDateTime.parse(outAt).toInstant() }.getOrNull() ?: return null
+    val left = instantOf(outAt) ?: return null
     val daysSince = Duration.between(left, now).toDays().coerceAtLeast(0)
     return (day - daysSince.toInt()).coerceIn(1, runDays)
 }
@@ -143,6 +141,7 @@ internal fun testersOf(
     pictures: AppNights,
     crew: Crew? = null,
     now: Instant = Instant.now(),
+    hour24: Boolean = false,
 ): List<CrewTester> {
     val finished = crew?.phase == CrewPhase.RECORD
     val members = crew?.members.orEmpty().associateBy { it.id }
@@ -162,7 +161,7 @@ internal fun testersOf(
                 (1..pictures.runDays).map { day -> squareOf(tester, day, pictures.offDays, finished, outDay, now) }
             val over = finished || tester.day > pictures.runDays
             val tonight = squares.getOrNull(tester.day - 1)
-            val (line, tone) = lineOf(tester, member, squares, over, outDay, now)
+            val (line, tone) = lineOf(tester, member, squares, over, outDay, now, hour24)
             val otherDay = !over && crew != null && crew.day > 0 && tester.day != crew.day
             val days = squares.count { it.counted }
             CrewTester(
@@ -211,6 +210,7 @@ private fun lineOf(
     over: Boolean,
     outDay: Int?,
     now: Instant,
+    hour24: Boolean,
 ): Pair<String, Tone> {
     if (tester.out) {
         val missedBefore = outDay != null && squares.getOrNull(outDay - 2) == Square.MISSED
@@ -228,8 +228,8 @@ private fun lineOf(
         day < tester.firstNight -> "Not joined yet" to Tone.QUIET
         tester.excused || day in tester.reportedDays -> "Reported it" to Tone.QUIET
         tonight != null && tonight.counts && tonight.byHand ->
-            "Opened yours${clockAt(tonight.at)}, picked by hand" to Tone.OK
-        tonight != null && tonight.counts -> "Opened yours${clockAt(tonight.at).ifEmpty { " tonight" }}" to Tone.OK
+            "Opened yours${clockAt(tonight.at, hour24)}, picked by hand" to Tone.OK
+        tonight != null && tonight.counts -> "Opened yours${clockAt(tonight.at, hour24).ifEmpty { " tonight" }}" to Tone.OK
         tonight != null && tonight.waitingLong(now) -> "Picture waiting for hours" to Tone.BAD
         tonight != null -> "Picture on its way" to Tone.ACCENT
         yesterday == Square.WAITING_LONG -> "Picture waiting for hours" to Tone.BAD
@@ -252,8 +252,3 @@ private fun lastPictures(
         .sortedBy { it.day }
         .map { NightPicture(it.proof, tester.name, it.day, it.at, it.usedMs, it.byHand, pictures.appName) }
 }
-
-internal fun pluralOf(
-    n: Int,
-    word: String,
-) = if (n == 1) word else "${word}s"

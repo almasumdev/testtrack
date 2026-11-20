@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -205,21 +204,23 @@ fun CrewReportDialog(
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 quick.forEach { text ->
                     val picked = reason.trim() == text
-                    ActionChip(
+                    RowPill(
                         text,
-                        if (picked) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                        if (picked) MaterialTheme.colorScheme.primaryContainer else Status.neutralSoft,
+                        if (picked) PillKind.SOFT else PillKind.GHOST,
+                        size = PillSize.SMALL,
+                        touchTarget = false,
                     ) { reason = text }
                 }
             }
             Spacer(Modifier.height(12.dp))
-            DialogField(
+            OutlinedField(
                 value = reason,
                 onValueChange = { reason = it.take(280) },
                 label = "What went wrong",
                 placeholder = "Play says the item was not found",
                 singleLine = false,
-                minHeight = 72.dp,
+                minLines = 3,
+                maxLines = 6,
                 maxLength = 280,
                 error =
                     if (reason.isNotBlank() && !enough) {

@@ -32,6 +32,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Moon
 import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Users
+import com.eazyverse.testtrack.domain.pluralOf
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /** Tonight across every run, using the existing eligibility rules and the shared list-tile frame. */
@@ -81,7 +82,7 @@ internal fun CrewRunSummary(
                 when {
                     finished -> "Your nights are done"
                     out -> "Nothing more owed"
-                    left > 0 -> "$left ${if (left == 1) "app" else "apps"} left"
+                    left > 0 -> "$left ${pluralOf(left, "app")} left"
                     total == 0 -> "Nothing owed tonight"
                     else -> "You're done tonight"
                 },
@@ -94,8 +95,8 @@ internal fun CrewRunSummary(
                     finished -> "The crew closes when every member finishes."
                     out -> "Your app is no longer in these runs."
                     else ->
-                        "${going.size} ${if (going.size == 1) "crew" else "crews"}, " +
-                            "$nights ${if (nights == 1) "night" else "nights"} to go"
+                        "${going.size} ${pluralOf(going.size, "crew")}, " +
+                            "$nights ${pluralOf(nights, "night")} to go"
                 },
                 style = tileStyle(13f, 18f, FontWeight.Normal),
                 color = Tt.colors.text3,
@@ -111,8 +112,8 @@ internal fun CrewRunSummary(
                 val facts =
                     listOf(
                         Lucide.Clock to "${CrewRules.OPEN_SECONDS}s per app",
-                        Lucide.Users to "${going.size} ${if (going.size == 1) "crew" else "crews"}",
-                        Lucide.Moon to "$nights ${if (nights == 1) "night" else "nights"} left",
+                        Lucide.Users to "${going.size} ${pluralOf(going.size, "crew")}",
+                        Lucide.Moon to "$nights ${pluralOf(nights, "night")} left",
                     )
                 facts.forEach { (icon, label) ->
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {

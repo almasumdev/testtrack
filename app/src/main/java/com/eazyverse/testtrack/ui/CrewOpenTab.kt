@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -296,12 +295,10 @@ private fun OpenStatusRow(
     noteLines: Int = 1,
 ) {
     val t = Tt.colors
-    val shape = RoundedCornerShape(TileRadius)
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(shape)
-            .border(1.dp, t.cardLine, shape)
+            .tileFrame()
             .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,

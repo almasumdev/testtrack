@@ -9,6 +9,7 @@ import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.CloudUpload
 import com.composables.icons.lucide.Image
 import com.composables.icons.lucide.Lucide
+import com.eazyverse.testtrack.domain.pluralOf
 
 /** Run's compact proof updates. Crew detail retains its existing page-level recovery card. */
 @Composable
@@ -42,7 +43,7 @@ internal fun CrewRunPictureUpdates(
     if (sending.isNotEmpty()) {
         val late = sending.any { actions.latePicture(it.id) }
         val why = actions.picturesStuck
-        val noun = if (sending.size == 1) "screenshot" else "screenshots"
+        val noun = pluralOf(sending.size, "screenshot")
         val label =
             when {
                 late -> "Upload waiting · 3h+"

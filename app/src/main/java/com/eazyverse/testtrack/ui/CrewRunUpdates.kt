@@ -15,6 +15,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageCircle
 import com.composables.icons.lucide.RefreshCw
 import com.composables.icons.lucide.TriangleAlert
+import com.eazyverse.testtrack.domain.pluralOf
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /** Compact actionable updates, outside tonight's progress and start button. */
@@ -41,7 +42,7 @@ internal fun CrewRunUpdates(
                 if (installs.isNotEmpty()) {
                     CrewCard(padding = CrewUpdatePadding) {
                         CrewUpdateRow(
-                            "${installs.size} ${if (installs.size == 1) "app" else "apps"} to install",
+                            "${installs.size} ${pluralOf(installs.size, "app")} to install",
                             Lucide.Download,
                             note = AnnotatedString(if (installs.size == 1) "Get the Google Play copy" else "Get the Google Play copies"),
                             action = "View",
@@ -89,7 +90,7 @@ private fun MissedNightCard(
                 note =
                     buildAnnotatedString {
                         if (risky.size == 1) append("${crew.name} · ")
-                        append("${crew.owed} ${if (crew.owed == 1) "app" else "apps"} left · ")
+                        append("${crew.owed} ${pluralOf(crew.owed, "app")} left · ")
                         withStyle(deadline) { append("Before midnight") }
                     },
                 explanation = "Miss tonight too and your app leaves this crew. Finish all owed apps before your local midnight.",

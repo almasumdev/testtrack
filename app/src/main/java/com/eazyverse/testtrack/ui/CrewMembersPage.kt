@@ -1,5 +1,6 @@
 package com.eazyverse.testtrack.ui
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -20,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,11 +30,12 @@ import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Image
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Users
+import com.eazyverse.testtrack.domain.instantOf
+import com.eazyverse.testtrack.domain.shortDate
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AppNights
 import com.eazyverse.testtrack.viewmodel.CrewPicturesViewModel
 import java.time.Instant
-import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -78,6 +81,7 @@ fun CrewMembersBody(
     onRetry: () -> Unit,
     now: Instant = Instant.now(),
 ) {
+    val hour24 = DateFormat.is24HourFormat(LocalContext.current)
     var profile by remember { mutableStateOf<CrewTester?>(null) }
     var open by remember { mutableStateOf<NightPicture?>(null) }
     var key by remember { mutableStateOf(false) }
@@ -92,7 +96,7 @@ fun CrewMembersBody(
                 Box(page) {
                     RobotState(
                         Prop.Calendar,
-                        dayOf(crew?.detailsUntil, "MMM d")?.let { "Details cleared on $it" } ?: "Details cleared",
+                        instantOf(crew?.detailsUntil)?.let { shortDate(it) }?.let { "Details cleared on $it" } ?: "Details cleared",
                         "Testers and pictures are cleared 3 days after a crew ends. The result stays on the crew page.",
                         action = "Back to ${crew?.name ?: "the crew"}",
                         onAction = onBack,
@@ -103,7 +107,7 @@ fun CrewMembersBody(
             crew == null || nights == null -> Box(page) { TestersLoading() }
             else -> {
                 val finished = crew.phase == CrewPhase.RECORD
-                val testers = remember(crew, nights, now) { testersOf(nights, crew, now) }
+                val testers = remember(crew, nights, now, hour24) { testersOf(nights, crew, now, hour24) }
                 val tiles = remember(testers, finished) { tileOrder(testers, finished) }
                 val today = if (!finished && crew.day in 1..nights.runDays) crew.day else 0
                 LazyColumn(page, contentPadding = PaddingValues(top = 8.dp, bottom = Gutter + dockRoom())) {
@@ -142,7 +146,7 @@ fun CrewMembersBody(
     }
     profile?.let { CrewMemberProfile(it) { profile = null } }
     open?.let {
-        PictureViewer(PictureSource.Proof(it.ref), title = nightTitle(it), footnote = nightProves(it)) { open = null }
+        PictureViewer(PictureSource.Proof(it.ref), title = nightTitle(it), footnote = nightProves(it, hour24)) { open = null }
     }
 }
 
@@ -173,7 +177,7 @@ private fun notesOf(
     finished: Boolean,
 ): List<Pair<ImageVector, String>> {
     if (finished) {
-        val until = dayOf(crew.detailsUntil, "EEE, MMM d")
+        val until = instantOf(crew.detailsUntil)?.let { weekdayDate(it) }
         return listOf(
             Lucide.Clock to
                 if (until != null) {
@@ -191,16 +195,6 @@ private fun notesOf(
     )
 }
 
-/** An ISO time as a day on this phone, such as "Nov 20", or null when there is none. */
-private fun dayOf(
-    iso: String?,
-    pattern: String,
-): String? =
-    iso?.let {
-        runCatching {
-            OffsetDateTime
-                .parse(it)
-                .atZoneSameInstant(ZoneId.systemDefault())
-                .format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
-        }.getOrNull()
-    }
+/** A day with its weekday on this phone, such as "Fri, Nov 20": where the page says when pictures go. */
+private fun weekdayDate(at: Instant): String =
+    at.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("EEE, MMM d", Locale.getDefault()))

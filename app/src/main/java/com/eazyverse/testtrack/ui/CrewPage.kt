@@ -1,8 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -186,8 +183,8 @@ internal fun crewActions(
     val membership = rememberMembership()
     // The app a picked picture is for, held while the picker is up.
     var picking by remember { mutableStateOf<CrewApp?>(null) }
-    val picker =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+    val pickPicture =
+        rememberImagePicker { uri ->
             val app = picking
             picking = null
             if (app != null && uri != null) vm.pictures.pick(context.findActivity(), app.id, app.label, uri, app.day)
@@ -210,7 +207,7 @@ internal fun crewActions(
             busySeat = vm.acting,
             onPickPicture = { app ->
                 picking = app
-                picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                pickPicture()
             },
             // Read through [waiting], so a row redraws when its picture goes.
             sendingPicture = { app -> waiting.any { it.seatId == app.id && it.day == app.day } },
