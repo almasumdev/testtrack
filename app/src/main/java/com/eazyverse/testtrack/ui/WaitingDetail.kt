@@ -1,9 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,7 +11,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.domain.Case
 import com.eazyverse.testtrack.domain.Waiting
 
@@ -148,10 +145,9 @@ fun CheckScreen(
                     Prop.Notes,
                     "Couldn't load this",
                     "Check your connection, then try again.",
-                    footer = {
-                        Spacer(Modifier.height(8.dp))
-                        RowPill("Try again", PillKind.SOFT) { feed.load(context) }
-                    },
+                    action = "Try again",
+                    onAction = { feed.load(context) },
+                    soft = true,
                 )
             }
             else -> CheckSkeleton(onClose)

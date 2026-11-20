@@ -2,9 +2,9 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -57,55 +56,54 @@ internal fun ReviewDone(
         ReviewWaitThread(job)
         return
     }
-    val t = Tt.colors
     val (prop, title) = if (state == "abandoned") Prop.Flag to "Given up" else Prop.Clock to "Ran out"
-    Column(
-        Modifier.fillMaxWidth().heightIn(min = room - 64.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        RobotHolding(prop, size = (room * 0.2f).coerceIn(96.dp, 132.dp), description = title)
-        Spacer(Modifier.height(18.dp))
-        Text(
+    Box(Modifier.fillMaxWidth().heightIn(min = room - 64.dp), contentAlignment = Alignment.Center) {
+        RobotState(
+            prop,
             title,
-            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp, lineHeight = 28.sp),
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
             reviewOutcome(state, job.live, job.review.endedReason),
-            Modifier.widthIn(max = 300.dp),
-            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
-            color = t.text2,
-            textAlign = TextAlign.Center,
+            fill = false,
+            robot = (room * 0.2f).coerceIn(96.dp, 132.dp),
+            pad = PaddingValues(0.dp),
+            robotGap = 18.dp,
+            titleStyle = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold),
+            footerGap = 22.dp,
+            footer = { FailedCard(job, state) },
         )
-        Spacer(Modifier.height(22.dp))
-        val shape = RoundedCornerShape(CardRadius)
-        Column(
+    }
+}
+
+/** What did not happen to a review given up or run out: the slot, then the pay. */
+@Composable
+private fun FailedCard(
+    job: ReviewJob,
+    state: String,
+) {
+    val t = Tt.colors
+    val shape = RoundedCornerShape(CardRadius)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(t.glass)
+            .border(1.dp, t.glassBorder, shape)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        FailedRow(
+            when {
+                state == "abandoned" -> "You gave it up"
+                job.live -> "Not finished within three days"
+                else -> "Not finished within a day"
+            },
+            "The slot went back for somebody else",
+        )
+        Box(
             Modifier
-                .fillMaxWidth()
-                .clip(shape)
-                .background(t.glass)
-                .border(1.dp, t.glassBorder, shape)
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-        ) {
-            FailedRow(
-                when {
-                    state == "abandoned" -> "You gave it up"
-                    job.live -> "Not finished within three days"
-                    else -> "Not finished within a day"
-                },
-                "The slot went back for somebody else",
-            )
-            Box(
-                Modifier
-                    .padding(start = STAGE_DOT / 2 - 1.dp, top = 3.dp, bottom = 3.dp)
-                    .size(width = 2.dp, height = 12.dp)
-                    .background(t.glassBorder),
-            )
-            FailedRow("+${job.reward} tix", "Not paid")
-        }
+                .padding(start = STAGE_DOT / 2 - 1.dp, top = 3.dp, bottom = 3.dp)
+                .size(width = 2.dp, height = 12.dp)
+                .background(t.glassBorder),
+        )
+        FailedRow("+${job.reward} tix", "Not paid")
     }
 }
 

@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -243,16 +244,18 @@ internal fun ChatEmptyNote(
     modifier: Modifier = Modifier,
 ) {
     val t = Tt.colors
-    Column(modifier.padding(horizontal = 32.dp, vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        RobotHolding(Prop.Chat, size = 140.dp)
-        Spacer(Modifier.height(14.dp))
-        Text("No messages yet", style = chatStyle(17f, 22f), fontWeight = FontWeight.SemiBold, color = t.text)
-        Spacer(Modifier.height(4.dp))
-        Text(
-            if (canPost) "Say hi to your crew." else "Nobody wrote in this chat.",
-            style = chatStyle(14f, 20f),
-            color = t.text3,
-            textAlign = TextAlign.Center,
-        )
-    }
+    RobotState(
+        Prop.Chat,
+        "No messages yet",
+        if (canPost) "Say hi to your crew." else "Nobody wrote in this chat.",
+        modifier,
+        fill = false,
+        robot = 140.dp,
+        pad = PaddingValues(horizontal = 32.dp, vertical = 24.dp),
+        titleStyle = chatStyle(17f, 22f).copy(fontWeight = FontWeight.SemiBold),
+        titleColor = t.text,
+        titleGap = 4.dp,
+        lineColor = t.text3,
+        lineMax = Dp.Unspecified,
+    )
 }
