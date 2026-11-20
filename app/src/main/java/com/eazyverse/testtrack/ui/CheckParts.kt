@@ -88,7 +88,9 @@ internal fun CheckAppHead(
             .clip(RoundedCornerShape(16.dp))
             .clickable(enabled = packageName.isNotBlank(), onClickLabel = "Open $name on Google Play") {
                 openPlay(context, packageName)
-            },
+            }
+            // Room inside the press shape for the source mark, which hangs 5dp below the icon.
+            .padding(bottom = HeadMarkRoom),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(AppTileIcon)) {
@@ -109,6 +111,9 @@ internal fun CheckAppHead(
         }
     }
 }
+
+/** The room [CheckAppHead] keeps under its icon for the source mark; what follows it counts it in. */
+internal val HeadMarkRoom = 6.dp
 
 /** A row of chips that wraps onto a second line rather than running off the page. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -169,7 +174,7 @@ internal fun CheckSkeleton(onBack: () -> Unit) {
                 .weight(1f)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState(), enabled = false)
-                .padding(start = Gutter, end = Gutter, top = 8.dp),
+                .padding(start = Gutter, end = Gutter, top = 4.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Skeleton(width = AppTileIcon, height = AppTileIcon, corner = 16.dp)
@@ -228,14 +233,16 @@ internal fun CheckFrame(
 ) {
     Column(Modifier.fillMaxSize()) {
         PageBar(title, onBack, subtitle = subtitle, subtitleTone = subtitleTone, count = barEnd)
-        Column(
-            Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 20.dp),
-            content = content,
-        )
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = Gutter, end = Gutter, top = 4.dp, bottom = 20.dp),
+                content = content,
+            )
+            if (foot != null) FootFade(Modifier.align(Alignment.BottomCenter))
+        }
         if (foot != null) {
             Column(
                 Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 6.dp + dockRoom()),

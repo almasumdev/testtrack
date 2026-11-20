@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.Layout
@@ -256,4 +257,19 @@ internal fun ProofViewer(
             Box(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 24.dp)) { picture(ref) }
         }
     }
+}
+
+/**
+ * The last 18dp of a page that scrolls above a pinned foot: the page's own colour fading in, so
+ * what runs under the foot goes soft rather than being cut. Laid over the bottom of the scroll.
+ */
+@Composable
+internal fun FootFade(modifier: Modifier = Modifier) {
+    val bg = Tt.colors.bg
+    Box(
+        modifier
+            .fillMaxWidth()
+            .height(18.dp)
+            .background(Brush.verticalGradient(listOf(bg.copy(alpha = 0f), bg))),
+    )
 }

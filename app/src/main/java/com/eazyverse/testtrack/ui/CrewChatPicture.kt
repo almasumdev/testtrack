@@ -190,7 +190,7 @@ private fun ExpiredPicture() {
 }
 
 @Composable
-private fun PictureMissing(label: String) {
+internal fun PictureMissing(label: String) {
     val t = Tt.colors
     Column(
         Modifier.fillMaxSize().background(t.surface3),

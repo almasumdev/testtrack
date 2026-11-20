@@ -80,7 +80,7 @@ fun CaseCheck(
             },
     ) {
         CheckAppHead(case.appName, case.packageName, case.icon, case.isLive)
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(14.dp - HeadMarkRoom))
         ChipRow {
             if (case.votesNeeded > 0) StatusChip("${case.votesCast} of ${case.votesNeeded} votes in", Tone.QUIET, Lucide.Users)
             StatusChip("$share tix to you", Tone.QUIET)

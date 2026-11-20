@@ -101,7 +101,6 @@ fun ReviewCheck(
         },
     ) {
         CheckAppHead(review.appName, review.packageName, review.icon, review.isLive)
-        Spacer(Modifier.height(6.dp))
         ReviewThread(review, settled, proof)
     }
 }

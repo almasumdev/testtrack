@@ -216,6 +216,9 @@ fun ReviewBody(
         spinning = busy
     }
 
+    // The Send and Waiting pages sit their foot 8dp under the page, as the thread pages do, and
+    // their thread fades out above it.
+    val threadFoot = job != null && (job.settled || job.step == ReviewStep.PROVE)
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -229,8 +232,6 @@ fun ReviewBody(
             }
         },
         bottomBar = {
-            // The Send and Waiting pages sit their foot 8dp under the page, as the thread pages do.
-            val threadFoot = job != null && (job.settled || job.step == ReviewStep.PROVE)
             Column(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = if (threadFoot) 8.dp else 12.dp, bottom = 18.dp)) {
                 if (job == null && failure != null) {
                     Primary("Try again", busy = spinning, onClick = onRetry)
@@ -374,6 +375,7 @@ fun ReviewBody(
                     }
                 }
             }
+            if (threadFoot) FootFade(Modifier.align(Alignment.BottomCenter))
         }
     }
     editingProof?.let { uri ->

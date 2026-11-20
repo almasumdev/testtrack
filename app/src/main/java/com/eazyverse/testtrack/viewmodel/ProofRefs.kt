@@ -16,3 +16,12 @@ fun proofSource(ref: String): String =
         ref.startsWith("file:") -> ref
         else -> Api.proofUrl(ref)
     }
+
+/**
+ * What the server puts in place of a picture it deleted on purpose: a review's once it is over, a
+ * crew visit's after a few nights. There is no file behind it to fetch.
+ */
+const val REMOVED_PROOF = "removed"
+
+/** Whether [ref] names a picture the server has deleted. */
+fun proofRemoved(ref: String): Boolean = ref == REMOVED_PROOF

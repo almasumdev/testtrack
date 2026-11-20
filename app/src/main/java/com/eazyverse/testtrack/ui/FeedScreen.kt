@@ -41,6 +41,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
 import coil.compose.SubcomposeAsyncImage
+import coil.network.HttpException
 import coil.request.ImageRequest
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.viewmodel.proofSource
@@ -324,6 +325,9 @@ fun ProofImage(
     // The token-carrying client, and one loader rather than a new one on every recomposition.
     // An older proof kept at Google needs no token: it is shared by link.
     val loader = remember { ImageLoader.Builder(context).okHttpClient { Api.images }.build() }
+    // In a thread's picture bubble the bubble has the corners, and hears when the file is gone.
+    val frame = LocalProofFrame.current
+    val corner = if (frame != null) 0.dp else 14.dp
 
     SubcomposeAsyncImage(
         model =
@@ -337,7 +341,7 @@ fun ProofImage(
         // A screenshot takes a moment on mobile data: its shape shimmers meanwhile.
         loading = {
             if (whole) {
-                Skeleton(height = 320.dp, corner = 14.dp)
+                Skeleton(height = 320.dp, corner = corner)
             } else {
                 BoxWithConstraints(Modifier.fillMaxSize()) { Skeleton(maxWidth, maxHeight, 10.dp) }
             }
@@ -347,7 +351,7 @@ fun ProofImage(
         // unreadable.
         modifier =
             if (whole) {
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(corner))
             } else {
                 Modifier
                     .fillMaxWidth()
@@ -355,8 +359,13 @@ fun ProofImage(
                     .clip(RoundedCornerShape(10.dp))
             },
         contentScale = if (whole) ContentScale.FillWidth else ContentScale.Crop,
+        // Not found: the server deleted it once the review was over.
+        onError = { error -> if (frame != null && (error.result.throwable as? HttpException)?.response?.code in GoneCodes) frame.onGone() },
     )
 }
+
+/** What the server answers for a picture whose file it no longer has. */
+private val GoneCodes = setOf(404, 410)
 
 /** One token-carrying loader for chat pictures, so a thumbnail and its viewer share one cache. */
 private var chatLoader: ImageLoader? = null
