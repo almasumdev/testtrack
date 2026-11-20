@@ -214,7 +214,7 @@ class AskViewModel : ViewModel() {
                     }
                 // An older server would take the request as stars and say nothing.
                 check(request.feedback == FeedRules.Feedback.STARS.wire || (options?.version ?: 0) >= FeedRules.FEEDBACK_OPTIONS) {
-                    "Written and detailed feedback aren't available yet. Untick them to ask for star ratings."
+                    "Written and detailed feedback aren't available yet. Pick Stars to ask for star ratings."
                 }
                 if (options == null) {
                     check(request.reviewsBought == FeedRules.REVIEWS_BOUGHT) {
