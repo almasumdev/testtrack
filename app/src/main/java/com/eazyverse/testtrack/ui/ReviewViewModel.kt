@@ -105,24 +105,33 @@ class ReviewViewModel : ViewModel() {
         }
     }
 
-    /** Move a capture from the cache into the review's keeping. */
+    /**
+     * Move a capture from the cache into the review's keeping. One that replaces a picture kept
+     * before (one with details hidden, say) is said, so nobody sends it thinking it is the old one.
+     */
     private suspend fun adoptPending() {
         val file = pending ?: return
         val context = app ?: return
         val id = job?.review?.id ?: return
         pending = null
-        gate.replace {
-            val kept = withContext(Dispatchers.IO) { ProofStore.adopt(context, id, file) } ?: return@replace
-            showProof(context, id, kept)
+        gate.replace({ showProof(context, id) }) {
+            val before = ProofStore.proof(context, id)
+            val kept = withContext(Dispatchers.IO) { ProofStore.adopt(context, id, file) }
+            if (kept != null && before != null) message = "Your new screenshot replaced the one before. Hide anything personal again."
         }
     }
 
+    /**
+     * Puts what [ProofStore] keeps for [id] on the page. Called inside the gate, in the same turn
+     * as the write, so the page shows the stored picture and never one it replaced.
+     */
     private fun showProof(
         context: Context,
         id: String,
-        file: File,
     ) {
-        proof = Uri.fromFile(file)
+        val kept = ProofStore.proof(context, id)
+        proof = kept?.let(Uri::fromFile)
+        if (kept == null) return
         // Picking proof opens the private-feedback submission step; acceptance is server-owned.
         ProofStore.markLeft(context, id)
         job = job?.copy(leftReview = true)
@@ -138,18 +147,17 @@ class ReviewViewModel : ViewModel() {
     ) {
         val id = job?.review?.id ?: error("No review to keep it for")
         val appContext = context.applicationContext
-        viewModelScope
-            .async {
-                val kept = gate.keepEdited(appContext, id, uri) { job?.review?.id == id && job?.settled == false }
-                showProof(appContext, id, kept)
-            }.await()
+        val open = { job?.review?.id == id && job?.settled == false }
+        viewModelScope.async { gate.keepEdited(appContext, id, uri, open) { showProof(appContext, id) } }.await()
     }
 
     /** The × on the picture: the screenshot goes, the note and the step stay. */
     fun removeProof() {
         val id = job?.review?.id ?: return
-        app?.let { ProofStore.dropPicture(it, id) }
-        proof = null
+        val context = app ?: return
+        viewModelScope.launch {
+            gate.replace({ showProof(context, id) }) { withContext(Dispatchers.IO) { ProofStore.dropPicture(context, id) } }
+        }
     }
 
     fun editNote(text: String) {

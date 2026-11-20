@@ -295,6 +295,8 @@ class ReviewCaptureService : Service() {
         val dir = File(cacheDir, "review_proof").apply { mkdirs() }
         dir.listFiles()?.forEach { it.delete() }
         val file = File(dir, "proof_${System.currentTimeMillis()}.jpg")
+        // In use until the review page takes it over ([ProofStore.adopt]); the start-up sweep leaves it.
+        ProofStore.hold(file)
         file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 85, it) }
         bitmap.recycle()
         return file

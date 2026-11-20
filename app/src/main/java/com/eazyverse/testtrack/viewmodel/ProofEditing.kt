@@ -31,7 +31,14 @@ object ProofEditing {
     ): Uri =
         withContext(Dispatchers.IO) {
             val file = File(context.cacheDir, "${ProofStore.EDIT_PREFIX}${UUID.randomUUID()}.jpg")
-            file.writeBytes(ProofImages.jpeg(edited))
+            ProofStore.hold(file)
+            try {
+                file.writeBytes(ProofImages.jpeg(edited))
+            } catch (e: Exception) {
+                file.delete()
+                ProofStore.release(file)
+                throw e
+            }
             Uri.fromFile(file)
         }
 
@@ -45,6 +52,9 @@ object ProofEditing {
     ) {
         if (uri.scheme != "file") return
         val file = File(uri.path ?: return)
-        if (file.parentFile == context.cacheDir && file.name.startsWith(ProofStore.EDIT_PREFIX)) file.delete()
+        if (file.parentFile == context.cacheDir && file.name.startsWith(ProofStore.EDIT_PREFIX)) {
+            file.delete()
+            ProofStore.release(file)
+        }
     }
 }

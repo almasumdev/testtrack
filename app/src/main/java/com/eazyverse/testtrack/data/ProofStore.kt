@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import java.io.File
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * The proof step's work in progress, kept per review until it is sent.
@@ -57,6 +58,7 @@ object ProofStore {
             }.getOrNull()
         } finally {
             captured.delete()
+            release(captured)
         }
 
     /**
@@ -165,29 +167,59 @@ object ProofStore {
     /** The start of the picture editor's files in the cache, written before they are kept here. */
     const val EDIT_PREFIX = "proof_edit_"
 
+    /** How old a file must be before [sweep] may take it: no write or edit runs this long. */
+    const val SWEEP_AGE_MS = 10 * 60_000L
+
+    /** The end of a file [write] is still writing, renamed to its real name once it is whole. */
+    private const val PART = ".part"
+
+    /** Files on their way somewhere ([hold]): the editor's copy, a capture not yet taken over. */
+    private val held = ConcurrentHashMap.newKeySet<String>()
+
+    /** [file] is in use and [sweep] leaves it, however old, until [release]. */
+    fun hold(file: File) {
+        held += file.absolutePath
+    }
+
+    fun release(file: File) {
+        held -= file.absolutePath
+    }
+
     /**
      * Deletes what no kept screenshot refers to: a file here left by a write cut short, or an old
      * one whose delete failed after a newer version (one with details hidden, say) replaced it;
      * the editor's files in the cache; and camera pictures that were never taken over. Run at
-     * process start, when nothing can be on its way. Blocking.
+     * process start, but a capture or the editor may already be writing, so it only takes files
+     * older than [SWEEP_AGE_MS] by [now], and never a kept one or one [hold] marks in use. It takes
+     * turns with [write], so it never sees one half done. Blocking.
      */
     @Synchronized
-    fun sweep(context: Context) {
-        val all = prefs(context).all
-        val kept = all.filterKeys { it.startsWith("file_") }.values.toSet()
-        dir(context).listFiles()?.forEach { if (it.name !in kept) it.delete() }
-        context.cacheDir.listFiles()?.forEach { if (it.name.startsWith(EDIT_PREFIX)) it.delete() }
-        File(context.cacheDir, "review_proof").listFiles()?.forEach { it.delete() }
+    fun sweep(
+        context: Context,
+        now: Long = System.currentTimeMillis(),
+    ) {
+        val kept =
+            prefs(context)
+                .all
+                .filterKeys { it.startsWith("file_") }
+                .values
+                .toSet()
+
+        fun stale(file: File) = file.absolutePath !in held && now - file.lastModified() >= SWEEP_AGE_MS
+        dir(context).listFiles()?.forEach { if (it.name !in kept && stale(it)) it.delete() }
+        context.cacheDir.listFiles()?.forEach { if (it.name.startsWith(EDIT_PREFIX) && stale(it)) it.delete() }
+        File(context.cacheDir, "review_proof").listFiles()?.forEach { if (stale(it)) it.delete() }
     }
 
     /**
-     * Written as a new file beside the old one, which goes only once the new one is whole and the
-     * record points at it: cut short at any moment, the record names one whole picture, never a
-     * mix. A new name each time, too: the same name gave the page the same address for a
-     * different picture, and it kept showing the first one.
+     * Written to a part file beside the old one and renamed to a new name once whole; the old one
+     * goes only once the record points at the new one. Cut short at any moment, the record names
+     * one whole picture, never a mix, and a failed write leaves no part behind. A new name each
+     * time, too: the same name gave the page the same address for a different picture, and it kept
+     * showing the first one.
      */
     @Synchronized
-    private fun write(
+    internal fun write(
         context: Context,
         reviewId: String,
         mime: String,
@@ -195,10 +227,14 @@ object ProofStore {
     ): File {
         val old = proof(context, reviewId)
         val target = File(dir(context), "${reviewId}_${UUID.randomUUID()}")
-        target.outputStream().use(copy)
-        if (target.length() == 0L) {
-            target.delete()
-            error("empty image")
+        val part = File(target.path + PART)
+        try {
+            part.outputStream().use(copy)
+            check(part.length() > 0L) { "empty image" }
+            check(part.renameTo(target)) { "not renamed" }
+        } catch (e: Throwable) {
+            part.delete()
+            throw e
         }
         val recorded =
             prefs(context)

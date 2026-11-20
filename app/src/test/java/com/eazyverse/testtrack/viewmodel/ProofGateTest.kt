@@ -20,6 +20,13 @@ class ProofGateTest {
     private class FakeStore {
         var kept: String? = "original.jpg"
         val uploaded = mutableListOf<String>()
+
+        /** What the page shows, read from the store the way the view model's showProof does. */
+        var shown: String? = "original.jpg"
+
+        fun show() {
+            shown = kept
+        }
     }
 
     @Test
@@ -80,5 +87,40 @@ class ProofGateTest {
             val store = FakeStore().apply { kept = null }
             assertNull(gate.send({ store.kept }) { file -> store.uploaded += file })
             assertTrue(store.uploaded.isEmpty())
+        }
+
+    @Test
+    fun aCaptureTakenOverAfterAnEditIsWhatThePageShowsAndWhatGoes() =
+        runBlocking {
+            val gate = ProofGate()
+            val store = FakeStore()
+            val hidden = CompletableDeferred<Unit>()
+            val editing = launch { gate.replace(store::show) { hidden.await().also { store.kept = "hidden.jpg" } } }
+            yield()
+            val capture =
+                launch {
+                    gate.replace(store::show) {
+                        assertEquals("the edit was shown inside its own turn", "hidden.jpg", store.shown)
+                        store.kept = "capture.jpg"
+                    }
+                }
+            yield()
+
+            hidden.complete(Unit)
+            editing.join()
+            capture.join()
+            assertEquals("capture.jpg", store.kept)
+            assertEquals("the page shows the new capture, not the hidden one it replaced", "capture.jpg", store.shown)
+            gate.send({ store.kept }) { file -> store.uploaded += file }
+            assertEquals(listOf(store.shown), store.uploaded)
+        }
+
+    @Test
+    fun aFailedReplacementShowsWhatIsStillKept() =
+        runBlocking {
+            val gate = ProofGate()
+            val store = FakeStore().apply { shown = null }
+            assertTrue(runCatching { gate.replace<Unit>(store::show) { error("could not be kept") } }.isFailure)
+            assertEquals("original.jpg", store.shown)
         }
 }
