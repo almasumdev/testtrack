@@ -3,13 +3,11 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,13 +16,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.Config
 import com.eazyverse.testtrack.domain.Request
-import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.domain.pluralOf
 
 /*
  * An app a tester cannot install, said once and in a form the developer can act on.
@@ -95,13 +96,14 @@ fun InstallReportDialog(
             }
             if (other) {
                 Spacer(Modifier.height(12.dp))
-                DialogField(
+                OutlinedField(
                     value = note,
                     onValueChange = { note = it.take(NOTE_MAX) },
                     label = "Tell the developer what happened",
                     placeholder = "Play shows the page, but Install is greyed out",
                     singleLine = false,
-                    minHeight = 72.dp,
+                    minLines = 3,
+                    maxLines = 6,
                     maxLength = NOTE_MAX,
                     error = if (note.isNotBlank() && note.trim().length < NOTE_MIN) "A little more, so they know what to fix." else null,
                 )
@@ -113,36 +115,30 @@ fun InstallReportDialog(
 /** On the owner's request: why testers could not install it, and what that did. */
 @Composable
 internal fun InstallReports(request: Request) {
-    Notice(if (request.unlisted) Status.missed else Status.short, Lucide.TriangleAlert) {
-        Text(
-            if (request.unlisted) {
-                "Off Circle: ${request.reports.size} testers couldn't install it"
-            } else if (request.reports.size == 1) {
-                "1 tester couldn't install it"
-            } else {
-                "${request.reports.size} testers couldn't install it"
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        request.reports.forEach { r ->
-            Text(
-                if (r.note.isBlank()) r.label else "${r.label}: ${r.note}",
-                Modifier.padding(top = 4.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface,
+    val count = request.reports.size
+    val text =
+        buildAnnotatedString {
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                append(
+                    if (request.unlisted) {
+                        "Off Circle: $count testers couldn't install it"
+                    } else {
+                        "$count ${pluralOf(count, "tester")} couldn't install it"
+                    },
+                )
+            }
+            request.reports.forEach { r ->
+                append("\n")
+                append(if (r.note.isBlank()) r.label else "${r.label}: ${r.note}")
+            }
+            append("\n")
+            append(
+                if (request.unlisted) {
+                    "Check that ${Config.GROUP_EMAIL} is on your closed track's testers and a release is rolled out, then relist it."
+                } else {
+                    "Two reports take it off Circle until you fix it and relist it."
+                },
             )
         }
-        Text(
-            if (request.unlisted) {
-                "Check that ${Config.GROUP_EMAIL} is on your closed track's testers and a release is rolled out, then relist it."
-            } else {
-                "Two reports take it off Circle until you fix it and relist it."
-            },
-            Modifier.padding(top = 6.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = Tt.colors.text3,
-        )
-    }
+    InfoLine(text, tone = if (request.unlisted) Tone.BAD else Tone.WARN, icon = Lucide.TriangleAlert)
 }

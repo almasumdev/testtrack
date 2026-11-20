@@ -7,9 +7,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -18,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.Dp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.edit
@@ -116,7 +113,7 @@ fun TestingNotifications(modifier: Modifier = Modifier) {
             ask,
             modifier,
             icon = Lucide.Bell,
-            trailing = { LookOnlyPill("Turn on", PillKind.SOFT, ask) },
+            trailing = { RowPill("Turn on", PillKind.SOFT, touchTarget = false, onClick = ask) },
         )
     } else {
         AskRow(
@@ -125,19 +122,19 @@ fun TestingNotifications(modifier: Modifier = Modifier) {
             settings,
             modifier,
             icon = Lucide.BellOff,
-            trailing = { LookOnlyPill("Settings", PillKind.GHOST, settings) },
+            trailing = { RowPill("Settings", PillKind.GHOST, touchTarget = false, onClick = settings) },
         )
     }
 }
 
-/** A row's pill drawn at 34dp: the row around it is the target, so it asks for no 48dp of its own. */
+/** A row's pill with no 48dp of its own: the row around it is the target. Still used by CrewOpenTab; wave 3 moves it to [RowPill]. */
 @Composable
 internal fun LookOnlyPill(
     label: String,
     kind: PillKind,
     onClick: () -> Unit,
 ) {
-    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) { RowPill(label, kind, onClick = onClick) }
+    RowPill(label, kind, touchTarget = false, onClick = onClick)
 }
 
 private fun wasAsked(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(ASKED, false)

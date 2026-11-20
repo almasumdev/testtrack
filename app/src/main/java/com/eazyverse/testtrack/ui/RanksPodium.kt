@@ -168,13 +168,13 @@ private fun Face(
     ) {
         if (row.photo.isBlank()) {
             Text(
-                row.name.take(1).uppercase(),
+                initialOf(row.name),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = medal,
             )
         } else {
-            Avatar(row.photo, row.name.take(1).uppercase(), size = size - 7.dp)
+            Avatar(row.photo, initialOf(row.name), size = size - 7.dp)
         }
     }
 }

@@ -97,8 +97,6 @@ internal enum class HowTo(
 /** What the Bangla button says, in Bangla: it is for the people who read it. */
 private const val IN_BANGLA = "বাংলায় দেখুন"
 
-private val ChipHeight = Modifier.height(34.dp)
-
 /** Opens [video] in YouTube, or the browser on a phone without it. [fromList] is the Support sheet. */
 internal fun watch(
     context: Context,
@@ -146,16 +144,11 @@ internal fun HowToBody(
                     color = t.text3,
                 )
                 Spacer(Modifier.height(8.dp))
-                // A row while both fit, two lines at a large font size rather than a cut label. One
-                // height for both: Bangla script stands taller than the Latin beside it.
+                // A row while both fit, two lines at a large font size rather than a cut label. Both
+                // pills are the one height: Bangla script stands taller than the Latin beside it.
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ActionChip(
-                        "Watch",
-                        MaterialTheme.colorScheme.onPrimaryContainer,
-                        MaterialTheme.colorScheme.primaryContainer,
-                        ChipHeight,
-                    ) { watch(context, video, bangla = false, fromList) }
-                    ActionChip(IN_BANGLA, t.text, t.glass2, ChipHeight) { watch(context, video, bangla = true, fromList) }
+                    RowPill("Watch", PillKind.SOFT) { watch(context, video, bangla = false, fromList) }
+                    RowPill(IN_BANGLA, PillKind.GHOST) { watch(context, video, bangla = true, fromList) }
                 }
             }
         }

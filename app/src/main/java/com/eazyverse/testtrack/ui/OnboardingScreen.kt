@@ -11,7 +11,6 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -159,7 +158,7 @@ fun OnboardingBody(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            TextButton(onClick = onSkip) { Text(stringResource(R.string.intro_skip), color = c.text2) }
+            InlineAction(stringResource(R.string.intro_skip), color = c.text2, onClick = onSkip)
         }
         HorizontalPager(state = pager, modifier = Modifier.weight(1f), key = { it }) { index ->
             val distance = if (motionEnabled) (pager.currentPage - index) + pager.currentPageOffsetFraction else 0f
@@ -183,22 +182,17 @@ fun OnboardingBody(
                     )
                 }
             }
-            Button(
-                onClick = onNext,
+            Primary(
+                stringResource(if (pager.currentPage == IntroPages.lastIndex) R.string.intro_start else R.string.intro_next),
                 enabled = !pager.isScrollInProgress,
-                modifier = Modifier.fillMaxWidth().heightIn(min = ButtonHeight),
-                shape = RoundedCornerShape(percent = 50),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-            ) {
-                Text(
-                    stringResource(if (pager.currentPage == IntroPages.lastIndex) R.string.intro_start else R.string.intro_next),
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            TextButton(onClick = onSignIn, modifier = Modifier.padding(top = 6.dp, bottom = 8.dp)) {
-                Text(stringResource(R.string.intro_sign_in), color = c.accentInk, textAlign = TextAlign.Center)
-            }
+                onClick = onNext,
+            )
+            InlineAction(
+                stringResource(R.string.intro_sign_in),
+                Modifier.padding(top = 6.dp, bottom = 8.dp),
+                fullWidth = true,
+                onClick = onSignIn,
+            )
         }
     }
 }

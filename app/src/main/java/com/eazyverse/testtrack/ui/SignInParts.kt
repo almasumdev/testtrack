@@ -1,9 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,22 +18,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Lucide
@@ -45,27 +37,6 @@ import com.eazyverse.testtrack.viewmodel.SignInUi
 
 // The pieces the sign-in sheet is built from, kept apart from the sheet itself (SignInSheet.kt),
 // which is what decides which of them to show.
-
-/** A rounded square holding one glyph in a tone, on that tone's soft ground. */
-@Composable
-internal fun StatusTile(
-    icon: ImageVector,
-    tone: Color,
-    soft: Color,
-    size: Dp = 36.dp,
-    corner: Dp = 11.dp,
-    glyph: Dp = 19.dp,
-) {
-    Box(
-        Modifier
-            .size(size)
-            .clip(RoundedCornerShape(corner))
-            .background(soft),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, null, Modifier.size(glyph), tint = tone)
-    }
-}
 
 /** What a failure says when nothing more specific than "it did not work" is known. */
 internal const val DEFAULT_FAILURE =
@@ -89,46 +60,6 @@ internal fun Why(text: String) {
 internal fun Actions(content: @Composable () -> Unit) {
     Spacer(Modifier.height(20.dp))
     content()
-}
-
-/** The quiet line under the Google button, on the first state only. */
-@Composable
-internal fun Footnote(text: String) {
-    Spacer(Modifier.height(12.dp))
-    Text(
-        text,
-        style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
-        textAlign = TextAlign.Center,
-        color = Tt.colors.text4,
-        modifier = Modifier.fillMaxWidth(),
-    )
-}
-
-/**
- * A second choice that is not the main one: 44 high, in the accent as ink, no fill.
- * Six below whatever it sits under. Greyed and not pressable while it is not [enabled].
- */
-@Composable
-internal fun TextAction(
-    label: String,
-    onClick: () -> Unit,
-    enabled: Boolean = true,
-) {
-    Spacer(Modifier.height(6.dp))
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(44.dp)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = if (enabled) Tt.colors.accentInk else Tt.colors.text4,
-        )
-    }
 }
 
 /**
@@ -207,7 +138,7 @@ internal fun AccountRow(
     photo: String?,
 ) {
     val t = Tt.colors
-    val letter = (name ?: email).trim().take(1).uppercase()
+    val letter = initialOf(name ?: email)
     AccountRowFrame {
         Box(Modifier.size(36.dp).border(1.dp, t.ring, CircleShape)) {
             Avatar(
@@ -274,17 +205,14 @@ internal fun SignedIn(
 @Composable
 internal fun StarterCard() {
     val t = Tt.colors
-    val shape = RoundedCornerShape(16.dp)
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(shape)
-            .background(t.card)
-            .border(1.dp, t.cardLine, shape)
+            .tileFrame()
             .padding(14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            StatusTile(Lucide.Ticket, t.warn, t.warnBg, size = 30.dp, corner = 9.dp, glyph = 16.dp)
+            IconTile(Lucide.Ticket, size = 30.dp, tone = Tone.WARN)
             Spacer(Modifier.width(10.dp))
             Text(
                 "Starter tix already used",

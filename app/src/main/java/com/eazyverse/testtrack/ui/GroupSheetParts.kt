@@ -3,22 +3,17 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -29,13 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -74,7 +67,7 @@ internal fun GroupAccountRow(
             Box(Modifier.size(36.dp).border(1.dp, t.ring, CircleShape)) {
                 Avatar(
                     photo = "",
-                    letter = name.trim().take(1).uppercase(),
+                    letter = initialOf(name),
                     size = 36.dp,
                     letterStyle = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp),
                 )
@@ -147,7 +140,7 @@ private fun HintRow(
 ) {
     val t = Tt.colors
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-        StatusTile(icon, t.tileInk, t.tile, size = 32.dp, corner = 10.dp, glyph = 17.dp)
+        IconTile(icon, size = 32.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
@@ -177,48 +170,3 @@ private fun bold(
         withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = ink)) { append(word) }
         append(tail)
     }
-
-/**
- * This sheet's own main button. While [busy] it keeps most of its fill, with a spinner in the
- * button's ink, so the button reads as working rather than switched off. The shared Primary
- * greys out, which is right elsewhere and loses the one filled shape here.
- */
-@Composable
-internal fun GroupPrimary(
-    label: String,
-    onClick: () -> Unit,
-    busy: Boolean = false,
-    mark: Painter? = null,
-) {
-    val t = Tt.colors
-    Button(
-        onClick = onClick,
-        enabled = !busy,
-        shape = RoundedCornerShape(percent = 50),
-        elevation = null,
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor = t.primary,
-                contentColor = t.onPrimary,
-                disabledContainerColor = t.primary.copy(alpha = 0.72f),
-                disabledContentColor = t.onPrimary,
-            ),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
-        modifier = Modifier.fillMaxWidth().heightIn(min = ButtonHeight),
-    ) {
-        if (busy) {
-            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = t.onPrimary)
-            Spacer(Modifier.width(10.dp))
-        } else if (mark != null) {
-            Icon(mark, null, Modifier.size(18.dp))
-            Spacer(Modifier.width(10.dp))
-        }
-        Text(
-            label,
-            style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp),
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-        )
-    }
-}

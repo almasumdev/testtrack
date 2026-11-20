@@ -188,14 +188,13 @@ internal fun groupTitle(ui: GroupUi): String =
 /** What sits before the title: a toned tile, neutral until there is something to say. */
 @Composable
 internal fun GroupLead(ui: GroupUi) {
-    val t = Tt.colors
     when (ui) {
-        GroupUi.Checking, is GroupUi.Join, GroupUi.Rechecking -> StatusTile(Lucide.Users, t.tileInk, t.tile)
-        GroupUi.Joined -> StatusTile(Lucide.Check, t.ok, t.okBg)
-        GroupUi.StillOut -> StatusTile(Lucide.Hourglass, t.warn, t.warnBg)
+        GroupUi.Checking, is GroupUi.Join, GroupUi.Rechecking -> IconTile(Lucide.Users)
+        GroupUi.Joined -> IconTile(Lucide.Check, tone = Tone.OK)
+        GroupUi.StillOut -> IconTile(Lucide.Hourglass, tone = Tone.WARN)
         // A dropped connection reads as one; anything else is a message the server sent.
         is GroupUi.Failed ->
-            StatusTile(if (ui.offline) Lucide.WifiOff else Lucide.CircleAlert, t.bad, t.badBg)
+            IconTile(if (ui.offline) Lucide.WifiOff else Lucide.CircleAlert, danger = true)
     }
 }
 
@@ -248,7 +247,7 @@ private fun Face(
             Why("Reviews and crew testing need it. This takes a few seconds.")
             Account(email, "Checking now", t.text3, running = true)
             Actions {}
-            TextAction("Not now", onClose)
+            InlineAction("Not now", Modifier.padding(top = 6.dp), fullWidth = true, onClick = onClose)
         }
 
         is GroupUi.Join, GroupUi.Rechecking -> {
@@ -259,16 +258,12 @@ private fun Face(
             GroupSteps(opened = checking || (state as? GroupUi.Join)?.opened == true)
             Actions {
                 if (checking) {
-                    GroupPrimary(
-                        "Checking",
-                        onClick = {},
-                        busy = true,
-                    )
+                    Primary("Checking", busy = true, busyKeepsFill = true) {}
                 } else {
-                    GroupPrimary("Open the group", onOpenGroup, mark = link)
+                    Primary("Open the group", mark = link, onClick = onOpenGroup)
                 }
             }
-            TextAction("I already joined", onCheck, enabled = !checking)
+            InlineAction("I already joined", Modifier.padding(top = 6.dp), enabled = !checking, fullWidth = true, onClick = onCheck)
         }
 
         GroupUi.Joined -> {
@@ -283,8 +278,8 @@ private fun Face(
             Account(email, "Checked just now", t.warn)
             Spacer(Modifier.height(14.dp))
             GroupHints()
-            Actions { GroupPrimary("Check again", onCheck) }
-            TextAction("Open the group again", onOpenGroup)
+            Actions { Primary("Check again", onClick = onCheck) }
+            InlineAction("Open the group again", Modifier.padding(top = 6.dp), fullWidth = true, onClick = onOpenGroup)
         }
 
         is GroupUi.Failed -> {
@@ -295,9 +290,9 @@ private fun Face(
                 Account(email, "Couldn't check", t.bad, icon = Lucide.CircleAlert)
             }
             Actions {
-                if (state.retrying) GroupPrimary("Checking", onClick = {}, busy = true) else GroupPrimary("Try again", onCheck)
+                if (state.retrying) Primary("Checking", busy = true, busyKeepsFill = true) {} else Primary("Try again", onClick = onCheck)
             }
-            TextAction("Not now", onClose)
+            InlineAction("Not now", Modifier.padding(top = 6.dp), fullWidth = true, onClick = onClose)
         }
     }
 }

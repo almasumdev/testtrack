@@ -45,6 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eazyverse.testtrack.domain.pluralOf
 import com.eazyverse.testtrack.net.BoardRow
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
@@ -119,14 +120,7 @@ fun RanksBody(
     // this is worth joining is exactly who most needs to see that people are doing the work.
     if (offline && rows.isEmpty()) {
         // The robot, like every other screen that has nothing to show, rather than a lone tile.
-        RobotState(
-            Prop.Plug,
-            "The board did not load",
-            "Check your connection and try again.",
-            action = "Try again",
-            onAction = onRetry,
-            failed = true,
-        )
+        RobotOffline("The board didn't load", onRetry = onRetry)
         return
     }
     if (DebugLooks.holdLoading || (loading && rows.isEmpty())) {
@@ -367,7 +361,7 @@ private fun BoardRowView(
                 },
         )
         Spacer(Modifier.width(11.dp))
-        Avatar(row.photoUrl, row.name.take(1).uppercase(), size = face)
+        Avatar(row.photoUrl, initialOf(row.name), size = face)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
@@ -426,9 +420,9 @@ private fun placeRoom(widest: Int): Dp =
 /** What earned the points, under the name. */
 private fun work(row: BoardRow): String =
     buildString {
-        append(if (row.opens == 1) "1 app opened" else "${row.opens} apps opened")
+        append("${row.opens} ${pluralOf(row.opens, "app")} opened")
         if (row.reviews > 0) {
-            append(if (row.reviews == 1) ", 1 review" else ", ${row.reviews} reviews")
+            append(", ${row.reviews} ${pluralOf(row.reviews, "review")}")
         }
     }
 

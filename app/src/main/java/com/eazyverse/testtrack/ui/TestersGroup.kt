@@ -174,22 +174,14 @@ internal fun boldParts(vararg parts: String): AnnotatedString =
 /** On Add an app, for a closed test: the group to add before looking the app up. */
 @Composable
 internal fun GroupSetupCard() {
-    val shape = RoundedCornerShape(18.dp)
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(shape)
-            .background(Tt.colors.glass)
-            .border(1.dp, Tt.colors.glassBorder, shape)
+            .tileFrame()
             .padding(14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)).background(Tt.colors.tile),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Lucide.Users, null, Modifier.size(19.dp), tint = Tt.colors.tileInk)
-            }
+            IconTile(Lucide.Users)
             Spacer(Modifier.width(10.dp))
             Text(
                 "First, add our testers group",

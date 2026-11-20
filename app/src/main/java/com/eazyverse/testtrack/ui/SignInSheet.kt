@@ -174,7 +174,6 @@ internal fun signInTitle(
  */
 @Composable
 internal fun SignInLead(ui: SignInUi) {
-    val t = Tt.colors
     when (ui) {
         SignInUi.Idle, SignInUi.Working, SignInUi.Cancelled -> {
             // As tall as the title's line, and scales with the font size.
@@ -182,13 +181,13 @@ internal fun SignInLead(ui: SignInUi) {
             Image(painterResource(R.drawable.testtrack_mark), null, Modifier.size(markSize))
         }
 
-        SignInUi.Offline -> StatusTile(Lucide.WifiOff, t.warn, t.warnBg)
+        SignInUi.Offline -> IconTile(Lucide.WifiOff, tone = Tone.WARN)
 
-        SignInUi.NoAccount -> StatusTile(Lucide.UserX, t.warn, t.warnBg)
+        SignInUi.NoAccount -> IconTile(Lucide.UserX, tone = Tone.WARN)
 
-        is SignInUi.Failed -> StatusTile(Lucide.CircleAlert, t.bad, t.badBg)
+        is SignInUi.Failed -> IconTile(Lucide.CircleAlert, danger = true)
 
-        is SignInUi.SignedIn -> StatusTile(Lucide.Check, t.ok, t.okBg)
+        is SignInUi.SignedIn -> IconTile(Lucide.Check, tone = Tone.OK)
     }
 }
 
@@ -250,7 +249,7 @@ fun SignInSheetBody(
                     SignInUi.Idle -> {
                         Why(reason.why)
                         Actions { GooglePill(onPress) }
-                        Footnote("Google Play links testers by their Google account.")
+                        QuietNote("Google Play links testers by their Google account.", Modifier.padding(top = 12.dp))
                     }
 
                     SignInUi.Working -> {
@@ -261,7 +260,7 @@ fun SignInSheetBody(
                     SignInUi.Cancelled -> {
                         Why("You can try again or keep looking around.")
                         Actions { GooglePill(onPress) }
-                        TextAction("Keep looking around", onClose)
+                        InlineAction("Keep looking around", Modifier.padding(top = 6.dp), fullWidth = true, onClick = onClose)
                     }
 
                     SignInUi.Offline -> {
@@ -278,7 +277,7 @@ fun SignInSheetBody(
                                 onClick = onAddAccount,
                             )
                         }
-                        TextAction("Try again", onPress)
+                        InlineAction("Try again", Modifier.padding(top = 6.dp), fullWidth = true, onClick = onPress)
                     }
 
                     is SignInUi.Failed -> {

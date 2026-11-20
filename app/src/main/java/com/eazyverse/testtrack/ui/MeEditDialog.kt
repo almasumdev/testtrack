@@ -2,9 +2,6 @@ package com.eazyverse.testtrack.ui
 
 import android.graphics.Bitmap
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -68,12 +65,7 @@ fun MeEditDialog(
     var picked by remember { mutableStateOf<Bitmap?>(null) }
     val t = Tt.colors
 
-    val pick =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) framing = uri
-        }
-
-    val choose = { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+    val choose = rememberImagePicker { uri -> if (uri != null) framing = uri }
     Ask(
         title = "Edit profile",
         body = "Your name and photo are shown to everyone on TestTrack.",
@@ -104,11 +96,7 @@ fun MeEditDialog(
                 } else {
                     Avatar(
                         photo,
-                        typed
-                            .trim()
-                            .take(1)
-                            .uppercase()
-                            .ifBlank { "?" },
+                        initialOf(typed),
                         size = 72.dp,
                         letterStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 28.sp),
                     )
@@ -154,13 +142,13 @@ fun MeEditDialog(
             }
         }
         Spacer(Modifier.height(10.dp))
-        DialogField(
+        OutlinedField(
             value = typed,
             onValueChange = { typed = it.take(NAME_MAX) },
             label = "Name",
             placeholder = "Rafiul",
             error = if (typed.isNotEmpty() && typed.isBlank()) "That is only spaces." else null,
-            supporting = "It doesn't have to be your real name.",
+            hint = "It doesn't have to be your real name.",
             maxLength = NAME_MAX,
         )
     }
