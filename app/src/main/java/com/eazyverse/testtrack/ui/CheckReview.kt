@@ -106,14 +106,16 @@ fun ReviewCheck(
         Thread {
             val again = review.recheckedRef.isNotBlank()
             val first = textMeta(review.written, review.needsChars, review.textUse)
-            ThreadBubble(
-                ThreadSide.LEFT,
-                text = review.written,
-                pictureRef = review.proofRef,
-                meta = if (again) listOf(first, "first screenshot").filter { it.isNotBlank() }.joinToString(", ").cap() else first,
-                picture = proof,
-                onPicture = { viewing = it },
-            )
+            if (review.written.isNotBlank() || review.proofRef.isNotBlank()) {
+                ThreadBubble(
+                    ThreadSide.LEFT,
+                    text = review.written,
+                    pictureRef = review.proofRef,
+                    meta = if (again) listOf(first, "first screenshot").filter { it.isNotBlank() }.joinToString(", ").cap() else first,
+                    picture = proof,
+                    onPicture = { viewing = it },
+                )
+            }
             if (again) {
                 ThreadNote("You asked for a new one")
                 ThreadBubble(

@@ -24,10 +24,15 @@ internal fun ReviewStepGuide(
     hasProof: Boolean,
     now: Instant = Instant.now(),
 ) {
+    // The send step says what it needs in the box, the frame and the lines under them instead.
+    val sending = job.step == ReviewStep.PROVE && !job.rechecking
     val showTask =
-        job.step != ReviewStep.INSTALL ||
-            job.onPhone ||
-            (job.requiresPlayInstall && job.review.state != "claimed")
+        !sending &&
+            (
+                job.step != ReviewStep.INSTALL ||
+                    job.onPhone ||
+                    (job.requiresPlayInstall && job.review.state != "claimed")
+            )
     Column(Modifier.fillMaxWidth()) {
         ReviewProgress(job)
         if (showTask) {
@@ -117,33 +122,12 @@ private fun ReviewProofTask(
     job: ReviewJob,
     hasProof: Boolean,
 ) {
-    when {
-        job.rechecking -> {
-            ReviewBullet(body = "Capture a fresh screenshot on Google Play.", highlights = listOf("fresh screenshot"))
-            job.checkBy?.let { due ->
-                // "by Saturday at 2:10 PM", not "by on Saturday".
-                val deadline = opensWhen(due).removePrefix("on ")
-                ReviewBullet(body = "Send it by $deadline.", highlights = listOf(deadline))
-            }
-        }
-        job.noBox -> {
-            ReviewBullet(body = "Show the Play page with no review option.", highlights = listOf("no review option"))
-            ReviewBullet(
-                body = "Write at least ${job.needsChars} characters here.",
-                highlights = listOf("${job.needsChars} characters"),
-            )
-            val reward = job.reward
-            ReviewBullet(body = "Pays $reward tix, half the reward.", highlights = listOf("$reward tix", "half the reward"))
-        }
-        else -> {
-            if (!hasProof) ReviewBullet(body = "Attach a screenshot of what you posted.", highlights = listOf("Attach a screenshot"))
-            if (job.needsChars > 0) {
-                ReviewBullet(
-                    body = "Paste the same feedback here.",
-                    highlights = listOf("same feedback"),
-                )
-            }
-        }
+    // Only a new screenshot asked for by the developer comes here; the send step has no list.
+    ReviewBullet(body = "Capture a fresh screenshot on Google Play.", highlights = listOf("fresh screenshot"))
+    job.checkBy?.let { due ->
+        // "by Saturday at 2:10 PM", not "by on Saturday".
+        val deadline = opensWhen(due).removePrefix("on ")
+        ReviewBullet(body = "Send it by $deadline.", highlights = listOf(deadline))
     }
     if (hasProof) {
         ReviewBullet(

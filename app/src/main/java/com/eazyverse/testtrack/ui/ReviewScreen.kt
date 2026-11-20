@@ -32,11 +32,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.findActivity
@@ -332,14 +334,17 @@ fun ReviewBody(
                                 )
                             }
                         }
-                        if (!job.settled && !job.rechecking && !job.noBox) {
-                            // On the proof step the developer's ask and ready review are their own messages.
-                            if (job.step == ReviewStep.PROVE) ProveAsks(job) else DeveloperAsks(job)
+                        // On the send step the developer's ask and ready review are their messages, under the box.
+                        if (!job.settled && !job.rechecking && !job.noBox && job.step != ReviewStep.PROVE) {
+                            DeveloperAsks(job)
                         }
                         if (needsAgreement) {
                             ReviewRulesAgreement(rulesAccepted) { rulesAccepted = it }
                         }
                         WrittenAsk(job, onNoBox)
+                        if (!job.settled && job.step == ReviewStep.PROVE && job.noBox && !job.rechecking) {
+                            InfoLine(Lucide.Info, AnnotatedString("Play showed no review box, so this pays half."))
+                        }
                         if (!job.settled && job.step == ReviewStep.PROVE) {
                             ProofArea(
                                 shown = shown,
@@ -354,6 +359,7 @@ fun ReviewBody(
                                 placeholder = proofHint(job),
                                 ready = readyReview(job),
                             )
+                            if (!job.rechecking && !job.noBox) ProveAsks(job)
                         }
                         // What losing a dispute costs, said on the first step, before any work is done.
                         if (!job.settled && job.step == ReviewStep.INSTALL && !needsAgreement) {

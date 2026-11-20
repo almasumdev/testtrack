@@ -61,15 +61,16 @@ fun CheckScreen(
     onOpen: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
-    // The review shown: the one opened, then the next of its app's once one is decided here.
-    var current by rememberSaveable { mutableStateOf(id) }
-    var doneHere by rememberSaveable { mutableStateOf(listOf<String>()) }
+    // The review shown: the one opened, then the next of its app's once one is decided here. Keyed
+    // on the id, since opening another of these from this page reuses the page with a new one.
+    var current by rememberSaveable(id) { mutableStateOf(id) }
+    var doneHere by rememberSaveable(id) { mutableStateOf(listOf<String>()) }
     val review = feed.waiting.firstOrNull { it.id == current }
     val listed = feed.disputes.firstOrNull { it.id == current }
     val request = feed.requests.firstOrNull { it.id == current }
     // A vote, once counted: the case as it was and the side sent, kept after the list lets it go.
-    var sending by remember { mutableStateOf<Voted?>(null) }
-    var voted by remember { mutableStateOf<Voted?>(null) }
+    var sending by remember(id) { mutableStateOf<Voted?>(null) }
+    var voted by remember(id) { mutableStateOf<Voted?>(null) }
     val case =
         voted?.let { v -> v.case.copy(votesCast = maxOf(v.case.votesCast + 1, listed?.votesCast ?: 0)) } ?: listed
     var refusing by remember { mutableStateOf(false) }
