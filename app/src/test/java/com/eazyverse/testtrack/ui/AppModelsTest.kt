@@ -1,7 +1,11 @@
 package com.eazyverse.testtrack.ui
 
+import com.eazyverse.testtrack.domain.Request
+import com.eazyverse.testtrack.domain.RequestReview
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.ZoneId
 
 /** What an app on My apps says about itself on its page. The tile's own line is in AppTileStatusTest. */
 class AppModelsTest {
@@ -24,52 +28,128 @@ class AppModelsTest {
         assertEquals("Not verified", verifiedChip(app(verifiedBy = null)))
     }
 
-    private fun feedback(
-        done: Int = 0,
+    private fun request(
         bought: Int = 5,
-        toCheck: Int = 0,
-        state: String = "collecting",
+        done: Int = 0,
+        states: List<String> = emptyList(),
+        closed: Boolean = false,
         unlisted: Boolean = false,
-    ) = AppFeedbackStatus(state, "p", done, bought, toCheck, unlisted)
+        createdAt: Long? = null,
+        refunded: Int? = null,
+        id: String = "p",
+    ) = Request(
+        id = id,
+        appName = "Lapse",
+        bought = bought,
+        done = done,
+        closed = closed,
+        unlisted = unlisted,
+        reviews = states.mapIndexed { i, s -> RequestReview("r$i", s) },
+        createdAt = createdAt,
+        refunded = refunded,
+    )
+
+    private fun title(r: Request) = requestTitle(r.cardState(), r.reviewCounts())
 
     @Test
-    fun the_card_draws_one_face_per_review_bought_in_a_fixed_order() {
-        val faces = feedback(done = 1, toCheck = 2, bought = 5).faces()
+    fun the_counts_come_from_the_reviews_and_open_is_never_below_zero() {
+        val counts =
+            request(
+                bought = 5,
+                done = 1,
+                states = listOf("approved", "submitted", "claimed", "checking", "rejected"),
+            ).reviewCounts()
+        assertEquals(ReviewCounts(done = 1, toCheck = 1, inProgress = 2, open = 1), counts)
+        assertEquals(0, request(bought = 2, done = 1, states = listOf("submitted", "used", "installed")).reviewCounts().open)
         assertEquals(
-            listOf(ReviewFace.ACCEPTED, ReviewFace.TO_CHECK, ReviewFace.TO_CHECK, ReviewFace.OPEN, ReviewFace.OPEN),
-            faces.faces,
+            listOf(ReviewFace.DONE, ReviewFace.TO_CHECK, ReviewFace.IN_PROGRESS, ReviewFace.IN_PROGRESS, ReviewFace.OPEN),
+            counts.faces(),
         )
-        assertEquals(0, faces.more)
-        assertEquals("1 accepted, 2 to check, 2 open", feedback(done = 1, toCheck = 2, bought = 5).facesSpoken())
-        assertEquals("5 accepted", feedback(done = 5, bought = 5, state = "done").facesSpoken())
+        assertEquals("1 done, 1 to check, 2 under way, 1 open", counts.spoken())
     }
 
     @Test
-    fun counts_that_do_not_add_up_never_draw_more_faces_than_were_bought() {
-        assertEquals(3, feedback(done = 9, toCheck = 4, bought = 3).faces().faces.size)
-        val mixed = feedback(done = 1, toCheck = 1, bought = 3).faces().faces
-        assertEquals(listOf(ReviewFace.ACCEPTED, ReviewFace.TO_CHECK, ReviewFace.OPEN), mixed)
-        assertEquals(emptyList<ReviewFace>(), feedback(bought = 0).faces().faces)
+    fun the_title_counts_what_is_in() {
+        assertEquals("No reviews in yet", title(request(bought = 3)))
+        assertEquals("1 of 1 review in", title(request(bought = 1, states = listOf("submitted"))))
+        assertEquals("The review is in", title(request(bought = 1, done = 1)))
+        assertEquals("3 of 5 reviews in", title(request(bought = 5, done = 2, states = listOf("submitted"))))
+        assertEquals("All 5 reviews in", title(request(bought = 5, done = 5)))
+        assertEquals("2 of 4 reviews in", title(request(bought = 4, done = 2, closed = true)))
     }
 
     @Test
-    fun a_long_request_keeps_the_reviews_waiting_for_the_owner_and_counts_the_rest() {
-        val shown = feedback(done = 30, toCheck = 4, bought = 150).faces()
-        assertEquals(10, shown.faces.size)
-        assertEquals(4, shown.faces.count { it == ReviewFace.TO_CHECK })
-        assertEquals(6, shown.faces.count { it == ReviewFace.ACCEPTED })
-        assertEquals(140, shown.more)
-        assertEquals(10, feedback(toCheck = 40, bought = 50).faces().faces.count { it == ReviewFace.TO_CHECK })
+    fun the_state_says_filled_first_then_closed_then_off_circle() {
+        assertEquals(RequestState.ON_CIRCLE, request().cardState())
+        assertEquals(RequestState.OFF_CIRCLE, request(unlisted = true).cardState())
+        assertEquals(RequestState.CLOSED, request(closed = true, unlisted = true).cardState())
+        assertEquals(RequestState.DONE, request(done = 5, closed = true).cardState())
+        assertEquals(listOf("On Circle", "Off Circle", "Done", "Closed"), RequestState.entries.map { it.label })
     }
 
     @Test
-    fun the_card_says_what_needs_the_owner_first() {
-        assertEquals(FeedbackCardKind.TO_CHECK, feedback(toCheck = 1).cardKind())
-        assertEquals(FeedbackCardKind.OFF_CIRCLE, feedback(toCheck = 1, unlisted = true).cardKind())
-        assertEquals(FeedbackCardKind.OFF_CIRCLE, feedback(unlisted = true).cardKind())
-        assertEquals(FeedbackCardKind.WAITING, feedback(done = 2).cardKind())
-        assertEquals(FeedbackCardKind.ALL_IN, feedback(done = 5, state = "done").cardKind())
-        assertEquals(FeedbackCardKind.CLOSED, feedback(done = 1, state = "closed", unlisted = true).cardKind())
+    fun more_than_ten_reviews_switch_to_the_summary() {
+        assertEquals(false, request(bought = 10).reviewCounts().summarised)
+        assertEquals(true, request(bought = 11).reviewCounts().summarised)
+        assertEquals(true, request(bought = 50).reviewCounts().summarised)
+    }
+
+    @Test
+    fun the_summary_keeps_the_order_and_leaves_out_kinds_with_none() {
+        val all = ReviewCounts(done = 31, toCheck = 4, inProgress = 6, open = 9).summary()
+        assertEquals(listOf(ReviewFace.DONE, ReviewFace.TO_CHECK, ReviewFace.IN_PROGRESS, ReviewFace.OPEN), all.map { it.face })
+        assertEquals(listOf("done", "to check", "under way", "open"), all.map { it.word })
+        val some = ReviewCounts(done = 12, open = 3).summary()
+        assertEquals(listOf(FaceGroup(ReviewFace.DONE, 12, "done"), FaceGroup(ReviewFace.OPEN, 3, "open")), some)
+    }
+
+    @Test
+    fun the_face_grid_fills_each_width_exactly_with_at_least_the_gap() {
+        for ((width, perRow) in listOf(344f to 9, 292f to 7, 252f to 6)) {
+            val fit = fitFaces(width, minFace = 30f, maxFace = 36f, minGap = 8f)
+            assertEquals(perRow, fit.perRow)
+            assertTrue("gap ${fit.gap} at $width", fit.gap >= 8f - 1e-3f)
+            assertTrue(fit.face in 30f..36f)
+            assertEquals(width, fit.perRow * fit.face + (fit.perRow - 1) * fit.gap, 1e-3f)
+        }
+        val one = fitFaces(20f, 30f, 36f, 8f)
+        assertEquals(FaceFit(1, 20f, 0f), one)
+    }
+
+    @Test
+    fun a_mark_never_reaches_the_next_face() {
+        assertEquals(4.5f, markOverhang(36f, 8f), 1e-3f)
+        assertEquals(2f, markOverhang(36f, 4f), 1e-3f)
+        assertEquals(0f, markOverhang(36f, 1f), 1e-3f)
+    }
+
+    @Test
+    fun the_open_request_leads_and_the_rest_follow_newest_first() {
+        val old = request(id = "old", done = 5, createdAt = 1)
+        val open = request(id = "open", createdAt = 2)
+        val newer = request(id = "newer", done = 1, closed = true, createdAt = 3)
+        val (lead, earlier) = listOf(old, newer, open).splitForPage()
+        assertEquals("open", lead?.id)
+        assertEquals(listOf("newer", "old"), earlier.map { it.id })
+        val (finishedLead, rest) = listOf(old, newer).splitForPage()
+        assertEquals("newer", finishedLead?.id)
+        assertEquals(listOf("old"), rest.map { it.id })
+    }
+
+    @Test
+    fun the_foot_says_what_needs_the_owner_first() {
+        assertEquals(RequestFoot.OFF_CIRCLE, requestFoot(request(unlisted = true, states = listOf("submitted")), false, false))
+        assertEquals(RequestFoot.TO_CHECK, requestFoot(request(states = listOf("submitted", "submitted")), false, false))
+        assertEquals(RequestFoot.ASK_AGAIN, requestFoot(request(done = 5), false, newestFinished = true))
+        assertEquals(RequestFoot.TIX_BACK, requestFoot(request(closed = true, refunded = 70), true, false))
+        assertEquals(RequestFoot.NONE, requestFoot(request(closed = true), true, false))
+        assertEquals(RequestFoot.ON_IT, requestFoot(request(), false, false))
+        assertEquals(RequestFoot.NONE, requestFoot(request(done = 5), true, false))
+    }
+
+    @Test
+    fun an_earlier_card_names_the_day_it_ended() {
+        assertEquals("Nov 2", monthDay(1_762_041_600_000L, ZoneId.of("UTC")))
     }
 
     @Test

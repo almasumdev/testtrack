@@ -1,5 +1,11 @@
 package com.eazyverse.testtrack.ui
 
+import com.eazyverse.testtrack.domain.Request
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
 /*
  * My apps as the screens draw it: each app added once, one status line and the problems it has.
  *
@@ -85,63 +91,161 @@ fun cappedCount(
 /** Reviews of this app's request that wait for its owner to accept or refuse. */
 val AppEntry.toCheck: Int get() = feedback?.toCheck?.coerceAtLeast(0) ?: 0
 
-/** One bought review, as a face on the feedback card. */
-enum class ReviewFace { ACCEPTED, TO_CHECK, OPEN }
-
-/** The faces a card draws, and how many more reviews there are than room for faces. */
-data class ReviewFaces(
-    val faces: List<ReviewFace>,
-    val more: Int = 0,
-)
-
-/** Most faces one card draws before the rest become a "+N". */
-const val MAX_REVIEW_FACES = 10
-
-/**
- * One face per review bought, in a fixed order: accepted, then waiting to be checked, then the rest.
- * The server counts accepted and waiting reviews but not who has started one, so a review being
- * written and a slot nobody took are both open. When there are more than [cap], the open ones go
- * first, then the oldest accepted, and the ones waiting for the owner always stay.
- */
-fun AppFeedbackStatus.faces(cap: Int = MAX_REVIEW_FACES): ReviewFaces {
-    val total = bought.coerceAtLeast(0)
-    val accepted = done.coerceIn(0, total)
-    val waiting = toCheck.coerceIn(0, total - accepted)
-    val open = total - accepted - waiting
-    val waitingShown = minOf(waiting, cap)
-    val room = cap - waitingShown
-    val acceptedShown = minOf(accepted, room)
-    val openShown = minOf(open, room - acceptedShown)
-    val faces =
-        List(acceptedShown) { ReviewFace.ACCEPTED } +
-            List(waitingShown) { ReviewFace.TO_CHECK } +
-            List(openShown) { ReviewFace.OPEN }
-    return ReviewFaces(faces, total - faces.size)
+/** Where one request stands, as its card says it at the top right. */
+enum class RequestState(
+    val label: String,
+) {
+    ON_CIRCLE("On Circle"),
+    OFF_CIRCLE("Off Circle"),
+    DONE("Done"),
+    CLOSED("Closed"),
 }
 
-/** What the feedback card says under its faces. */
-enum class FeedbackCardKind { TO_CHECK, WAITING, OFF_CIRCLE, ALL_IN, CLOSED }
+/** One bought review, as a face on a request's card. */
+enum class ReviewFace { DONE, TO_CHECK, IN_PROGRESS, OPEN }
 
-fun AppFeedbackStatus.cardKind(): FeedbackCardKind =
+/** A request's reviews, one count for each face. */
+data class ReviewCounts(
+    val done: Int = 0,
+    val toCheck: Int = 0,
+    val inProgress: Int = 0,
+    val open: Int = 0,
+) {
+    val total: Int get() = done + toCheck + inProgress + open
+
+    /** In: accepted, or waiting for the owner to accept or refuse. */
+    val inCount: Int get() = done + toCheck
+}
+
+private val IN_PROGRESS_STATES = setOf("claimed", "installed", "used", "checking")
+
+/** Accepted is what the server counts as done; open is what was bought and nobody has started. */
+fun Request.reviewCounts(): ReviewCounts {
+    val done = this.done.coerceAtLeast(0)
+    val toCheck = reviews.count { it.state == "submitted" }
+    val inProgress = reviews.count { it.state in IN_PROGRESS_STATES }
+    return ReviewCounts(done, toCheck, inProgress, (bought - done - toCheck - inProgress).coerceAtLeast(0))
+}
+
+/** Filled first, then closed, then off Circle while testers can't install it. */
+fun Request.cardState(): RequestState =
     when {
-        state == "done" -> FeedbackCardKind.ALL_IN
-        state != "collecting" -> FeedbackCardKind.CLOSED
-        unlisted -> FeedbackCardKind.OFF_CIRCLE
-        toCheck > 0 -> FeedbackCardKind.TO_CHECK
-        else -> FeedbackCardKind.WAITING
+        bought > 0 && done >= bought -> RequestState.DONE
+        closed -> RequestState.CLOSED
+        unlisted -> RequestState.OFF_CIRCLE
+        else -> RequestState.ON_CIRCLE
     }
 
-/** The faces in words, for a screen reader: "2 accepted, 1 to check, 2 open". */
-fun AppFeedbackStatus.facesSpoken(): String {
-    val total = bought.coerceAtLeast(0)
-    val accepted = done.coerceIn(0, total)
-    val waiting = toCheck.coerceIn(0, total - accepted)
-    return listOfNotNull(
-        "$accepted accepted",
-        "$waiting to check".takeIf { waiting > 0 },
-        "${total - accepted - waiting} open".takeIf { total - accepted - waiting > 0 },
-    ).joinToString(", ")
+val RequestState.finished: Boolean get() = this == RequestState.DONE || this == RequestState.CLOSED
+
+/** The card's title: how many reviews are in. */
+fun requestTitle(
+    state: RequestState,
+    counts: ReviewCounts,
+): String {
+    val n = counts.total
+    return when {
+        state == RequestState.DONE -> if (n == 1) "The review is in" else "All $n reviews in"
+        counts.inCount == 0 -> "No reviews in yet"
+        else -> "${counts.inCount} of $n ${if (n == 1) "review" else "reviews"} in"
+    }
 }
+
+/** One face per review, in a fixed order: done, to check, under way, open. */
+fun ReviewCounts.faces(): List<ReviewFace> =
+    List(done) { ReviewFace.DONE } +
+        List(toCheck) { ReviewFace.TO_CHECK } +
+        List(inProgress) { ReviewFace.IN_PROGRESS } +
+        List(open) { ReviewFace.OPEN }
+
+/** Most faces a card draws one by one; above it the card shows [summary] instead. */
+const val MAX_REVIEW_FACES = 10
+
+val ReviewCounts.summarised: Boolean get() = total > MAX_REVIEW_FACES
+
+/** One stack of the summary: a face kind, how many, and the word under the count. */
+data class FaceGroup(
+    val face: ReviewFace,
+    val count: Int,
+    val word: String,
+)
+
+/** The summary's stacks, in the faces' order, leaving out the kinds with none. */
+fun ReviewCounts.summary(): List<FaceGroup> =
+    listOf(
+        FaceGroup(ReviewFace.DONE, done, "done"),
+        FaceGroup(ReviewFace.TO_CHECK, toCheck, "to check"),
+        FaceGroup(ReviewFace.IN_PROGRESS, inProgress, "under way"),
+        FaceGroup(ReviewFace.OPEN, open, "open"),
+    ).filter { it.count > 0 }
+
+/** The faces in words, for a screen reader: "2 done, 1 to check, 2 open". */
+fun ReviewCounts.spoken(): String = summary().joinToString(", ") { "${it.count} ${it.word}" }.ifEmpty { "No reviews" }
+
+/** How a row of faces fills a width: faces per row, each face's outer size, and the gap between them. */
+data class FaceFit(
+    val perRow: Int,
+    val face: Float,
+    val gap: Float,
+)
+
+/**
+ * As many faces of at least [minFace] as fit with [minGap] between them; the faces then grow to
+ * fill the row, up to [maxFace], and what is left goes to the gaps. A face's size is its outer
+ * edge, ring included, so two neighbours always keep the whole gap between them.
+ */
+fun fitFaces(
+    width: Float,
+    minFace: Float,
+    maxFace: Float,
+    minGap: Float,
+): FaceFit {
+    val perRow = maxOf(1, ((width + minGap) / (minFace + minGap)).toInt())
+    if (perRow == 1) return FaceFit(1, minOf(maxFace, width), 0f)
+    val face = minOf(maxFace, (width - minGap * (perRow - 1)) / perRow)
+    return FaceFit(perRow, face, (width - perRow * face) / (perRow - 1))
+}
+
+/** How far a face's mark reaches past its bottom right: an eighth of the face, kept 2dp clear of the next face. */
+fun markOverhang(
+    face: Float,
+    gap: Float,
+): Float = minOf(face * 0.125f, (gap - 2f).coerceAtLeast(0f))
+
+/** The request shown in full (the open one, else the newest), and every other one, newest first. */
+fun List<Request>.splitForPage(): Pair<Request?, List<Request>> {
+    val newest = sortedByDescending { it.createdAt ?: Long.MIN_VALUE }
+    val lead = newest.firstOrNull { !it.cardState().finished } ?: newest.firstOrNull()
+    return lead to newest.filter { it !== lead }
+}
+
+/** What a request's card says under its faces. */
+enum class RequestFoot { OFF_CIRCLE, TO_CHECK, ASK_AGAIN, TIX_BACK, ON_IT, NONE }
+
+/** The first that applies wins; [newestFinished] is the newest request once it is over and none is open. */
+fun requestFoot(
+    request: Request,
+    compact: Boolean,
+    newestFinished: Boolean,
+): RequestFoot {
+    val state = request.cardState()
+    return when {
+        state == RequestState.OFF_CIRCLE -> RequestFoot.OFF_CIRCLE
+        request.reviewCounts().toCheck > 0 -> RequestFoot.TO_CHECK
+        newestFinished && state.finished -> RequestFoot.ASK_AGAIN
+        state == RequestState.CLOSED && (request.refunded ?: 0) > 0 -> RequestFoot.TIX_BACK
+        state == RequestState.ON_CIRCLE && !compact -> RequestFoot.ON_IT
+        else -> RequestFoot.NONE
+    }
+}
+
+private val MONTH_DAY = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH)
+
+/** A day as an earlier request's card says it: "Nov 2", in the phone's own time zone. */
+fun monthDay(
+    millis: Long,
+    zone: ZoneId = ZoneId.systemDefault(),
+): String = Instant.ofEpochMilli(millis).atZone(zone).format(MONTH_DAY)
 
 /** The tag after a block's heading: when it is for. */
 const val CREW_WHEN = "Before production"

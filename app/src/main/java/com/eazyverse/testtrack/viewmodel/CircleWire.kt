@@ -57,6 +57,9 @@ fun requestOf(it: ApiMyPost) =
         feedback = it.feedback,
         needsChars = it.needsChars,
         readyTexts = it.readyTexts,
+        createdAt = millis(it.createdAt),
+        closedAt = millis(it.closedAt),
+        refunded = it.refunded,
         reviews =
             it.reviews.map { r ->
                 RequestReview(

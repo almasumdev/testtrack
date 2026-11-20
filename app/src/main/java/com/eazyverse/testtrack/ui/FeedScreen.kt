@@ -301,8 +301,6 @@ fun FeedScreen(
                             onOpenReview = { onCheck(it.id) },
                             onOpenCase = { onCheck(it.id) },
                             onSignIn = onSignIn,
-                            requests = vm.requests,
-                            onOpenRequest = { onCheck(it.id) },
                         )
                     }
             }

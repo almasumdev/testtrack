@@ -190,6 +190,12 @@ data class ApiMyPost(
     val feedback: String = "stars",
     @SerialName("needs_chars") val needsChars: Int = 0,
     @SerialName("ready_texts") val readyTexts: List<String> = emptyList(),
+    /** When it was asked for. */
+    @SerialName("created_at") val createdAt: String? = null,
+    /** When it was closed or filled; null while open, or from an older server. */
+    @SerialName("closed_at") val closedAt: String? = null,
+    /** The tix that came back when it closed; null while open, or from an older server. */
+    val refunded: Int? = null,
 )
 
 @Serializable

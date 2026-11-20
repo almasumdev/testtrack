@@ -31,6 +31,12 @@ data class Request(
     val needsChars: Int = 0,
     /** Its ready-written reviews, in the order they are handed out. */
     val readyTexts: List<String> = emptyList(),
+    /** When it was asked for, in epoch milliseconds; null from an older server. */
+    val createdAt: Long? = null,
+    /** When it was closed or filled, in epoch milliseconds; null while open or unknown. */
+    val closedAt: Long? = null,
+    /** The tix that came back when it closed; null when not known. */
+    val refunded: Int? = null,
 ) {
     /** Reviews still on their way, or waiting on the owner or the members. */
     val underWay: Int get() = reviews.count { it.state in setOf("claimed", "installed", "used", "submitted", "checking", "disputed") }

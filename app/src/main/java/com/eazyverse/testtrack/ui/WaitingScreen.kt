@@ -12,11 +12,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Clock
-import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.domain.Case
-import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.domain.closeTo
 import com.eazyverse.testtrack.domain.grouped
@@ -46,8 +44,6 @@ fun WaitingBody(
     onOpenCase: (Case) -> Unit = {},
     onSignIn: () -> Unit = {},
     onRetry: () -> Unit = {},
-    requests: List<Request> = emptyList(),
-    onOpenRequest: (Request) -> Unit = {},
 ) {
     // Asked before the network is blamed. This branch used to be the offline one and it was
     // titled "Sign in to see what is waiting", so a dropped connection told the reader they were
@@ -62,7 +58,7 @@ fun WaitingBody(
         )
         return
     }
-    if (offline && reviews.isEmpty() && disputes.isEmpty() && requests.isEmpty()) {
+    if (offline && reviews.isEmpty() && disputes.isEmpty()) {
         RobotOffline("What's waiting didn't load", onRetry)
         return
     }
@@ -70,11 +66,11 @@ fun WaitingBody(
         TicketLoadingList()
         return
     }
-    if (reviews.isEmpty() && disputes.isEmpty() && requests.isEmpty()) {
+    if (reviews.isEmpty() && disputes.isEmpty()) {
         RobotState(
             Prop.IceCream,
-            "Nothing waiting on you",
-            "Reviews of your apps land here, and so does any case you are asked to help decide.",
+            "Nothing to check",
+            "New reviews of your apps show up here. Your own requests are on each app's page in My apps.",
         )
         return
     }
@@ -129,36 +125,6 @@ fun WaitingBody(
                         TicketStubFigure(grouped(case.stake), "${case.stake} tix")
                     } else {
                         TicketStubIcon(Lucide.Users, "Members are deciding")
-                    }
-                }
-            }
-        }
-        // Your own requests: what each has had, and the way to close one. Below what is owed,
-        // because that is the errand; this is the record.
-        if (requests.isNotEmpty()) {
-            item(key = "h-requests") {
-                CrewHeading(
-                    "Your requests",
-                    top = if (reviews.isEmpty() && disputes.isEmpty()) 0.dp else 20.dp,
-                )
-            }
-            items(requests, key = { "request-${it.id}" }) { request ->
-                CheckCard(
-                    Modifier.animateItem(),
-                    request.appName,
-                    buildList {
-                        add("${request.done} of ${request.bought} done")
-                        add(if (request.closed) "closed" else "${request.open} open")
-                        if (request.underWay > 0) add("${request.underWay} under way")
-                    }.joinToString(", "),
-                    onClick = { onOpenRequest(request) },
-                    packageName = request.packageName,
-                    icon = request.icon,
-                ) {
-                    if (request.closed) {
-                        TicketStubIcon(Lucide.Lock, "Closed", Tt.colors.text4)
-                    } else {
-                        TicketStubFigure(grouped(request.open), "${request.open} open")
                     }
                 }
             }

@@ -54,30 +54,6 @@ class WaitingBodyTest {
     )
 
     @Test
-    fun your_own_requests_are_listed_and_open_their_page() {
-        var opened: String? = null
-        compose.setContent {
-            TestTrackTheme {
-                WaitingBody(
-                    reviews = emptyList(),
-                    disputes = emptyList(),
-                    requests =
-                        listOf(
-                            Request(id = "p1", appName = "Porua", bought = 3, done = 1, open = 1),
-                            Request(id = "p2", appName = "Bluefy", bought = 2, done = 2, closed = true),
-                        ),
-                    onOpenRequest = { opened = it.id },
-                )
-            }
-        }
-        compose.onNodeWithText("Your requests").assertIsDisplayed()
-        compose.onNodeWithText("1 open").assertIsDisplayed()
-        compose.onNodeWithText("Closed").assertIsDisplayed()
-        compose.onNodeWithText("Porua").performClick()
-        assertEquals("p1", opened)
-    }
-
-    @Test
     fun a_request_page_shows_each_review_and_offers_to_close_with_the_refund() {
         var closed = 0
         compose.setContent {
@@ -114,7 +90,7 @@ class WaitingBodyTest {
         compose.setContent {
             TestTrackTheme { WaitingBody(reviews = emptyList(), disputes = emptyList()) }
         }
-        compose.onNodeWithText("Nothing waiting on you").assertIsDisplayed()
+        compose.onNodeWithText("Nothing to check").assertIsDisplayed()
     }
 
     @Test
