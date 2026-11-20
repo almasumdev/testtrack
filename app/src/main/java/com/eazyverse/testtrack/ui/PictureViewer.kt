@@ -2,7 +2,6 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -55,7 +53,6 @@ import com.eazyverse.testtrack.domain.ChatLine
 import com.eazyverse.testtrack.domain.ChatPicture
 import com.eazyverse.testtrack.domain.ChatThread
 import com.eazyverse.testtrack.ui.theme.Tt
-import com.eazyverse.testtrack.viewmodel.proofRemoved
 import com.eazyverse.testtrack.viewmodel.proofSource
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -116,30 +113,14 @@ internal fun PictureViewer(
 internal fun ChatPicture.source(): PictureSource =
     if (local.isNotBlank()) PictureSource.OnPhone(local, width, height) else PictureSource.Proof(id, width, height)
 
-/** "Today at 8:15 PM" for when [line] was sent, or blank with no time. */
-internal fun sentAt(line: ChatLine): String {
+/** "Today at 8:15 PM" (or "20:15" when [hour24]) for when [line] was sent, or blank with no time. */
+internal fun sentAt(
+    line: ChatLine,
+    hour24: Boolean = false,
+): String {
     val day = line.at?.atZone(ZoneId.systemDefault())?.toLocalDate()
-    return listOfNotNull(day?.let { ChatThread.dayLabel(it, LocalDate.now()) }, ChatThread.clock(line.at).ifBlank { null })
+    return listOfNotNull(day?.let { ChatThread.dayLabel(it, LocalDate.now()) }, ChatThread.clock(line.at, hour24 = hour24).ifBlank { null })
         .joinToString(" at ")
-}
-
-/**
- * [proof] drawn for [ref], opening it whole in [PictureViewer] on a tap, titled [title]. A picture
- * the server has removed draws with no tap.
- */
-@Composable
-internal fun OpensWhole(
-    ref: String,
-    title: String?,
-    proof: @Composable (String) -> Unit,
-) {
-    var open by remember(ref) { mutableStateOf(false) }
-    if (proofRemoved(ref)) {
-        proof(ref)
-        return
-    }
-    Box(Modifier.clickable(onClickLabel = "Open the screenshot") { open = true }) { proof(ref) }
-    if (open) PictureViewer(PictureSource.Proof(ref), title = title) { open = false }
 }
 
 @Composable

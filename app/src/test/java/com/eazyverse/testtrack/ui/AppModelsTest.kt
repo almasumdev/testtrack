@@ -2,6 +2,7 @@ package com.eazyverse.testtrack.ui
 
 import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.RequestReview
+import com.eazyverse.testtrack.domain.shortDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -149,7 +150,7 @@ class AppModelsTest {
 
     @Test
     fun an_earlier_card_names_the_day_it_ended() {
-        assertEquals("Nov 2", monthDay(1_762_041_600_000L, ZoneId.of("UTC")))
+        assertEquals("Nov 2", shortDate(1_762_041_600_000L, ZoneId.of("UTC")))
     }
 
     @Test

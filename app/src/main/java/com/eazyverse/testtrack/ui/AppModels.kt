@@ -1,10 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import com.eazyverse.testtrack.domain.Request
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /*
  * My apps as the screens draw it: each app added once, one status line and the problems it has.
@@ -238,14 +234,6 @@ fun requestFoot(
         else -> RequestFoot.NONE
     }
 }
-
-private val MONTH_DAY = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH)
-
-/** A day as an earlier request's card says it: "Nov 2", in the phone's own time zone. */
-fun monthDay(
-    millis: Long,
-    zone: ZoneId = ZoneId.systemDefault(),
-): String = Instant.ofEpochMilli(millis).atZone(zone).format(MONTH_DAY)
 
 /** The tag after a block's heading: when it is for. */
 const val CREW_WHEN = "Before production"

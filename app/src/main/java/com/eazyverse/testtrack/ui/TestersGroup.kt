@@ -39,7 +39,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Copy
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Users
@@ -196,23 +195,6 @@ internal fun GroupSetupCard() {
         GroupAddress()
         Spacer(Modifier.height(2.dp))
         GroupSteps("Make sure a release is rolled out on that track.")
-    }
-}
-
-/** The quiet way to the steps, where only the address is shown. */
-@Composable
-internal fun GroupHowLink(onClick: () -> Unit) {
-    Row(
-        Modifier
-            .minimumInteractiveComponentSize()
-            .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 6.dp, horizontal = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text("How to add it", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = Tt.colors.accentInk)
-        Spacer(Modifier.width(4.dp))
-        Icon(Lucide.ChevronRight, null, Modifier.size(15.dp), tint = Tt.colors.accentInk)
     }
 }
 

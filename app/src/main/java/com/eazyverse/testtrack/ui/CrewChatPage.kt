@@ -208,7 +208,7 @@ fun CrewChatScreen(
         PictureViewer(
             shown.source(),
             title = who,
-            subtitle = sentAt(line),
+            subtitle = sentAt(line, hour24),
             caption = view.plain(line.text),
             footnote = ChatThread.pictureLeft(shown.expiresAt),
         ) { picture = null }

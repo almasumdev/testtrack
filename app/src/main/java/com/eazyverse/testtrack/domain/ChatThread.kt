@@ -244,16 +244,16 @@ object ChatThread {
     ): String {
         val time = at.atZone(zone)
         val date = time.toLocalDate()
-        val clock = if (hour24) "HH:mm" else "h:mm a"
+        val clock = clockTime(at, hour24, zone).uppercase(locale)
         val days = ChronoUnit.DAYS.between(date, today)
-        val pattern =
+        val day =
             when {
-                days == 0L -> clock
-                days in 1L..6L -> "EEE 'at' $clock"
-                date.year == today.year -> "MMM d 'at' $clock"
-                else -> "MMM d, yyyy 'at' $clock"
+                days == 0L -> return clock
+                days in 1L..6L -> "EEE"
+                date.year == today.year -> "MMM d"
+                else -> "MMM d, yyyy"
             }
-        return time.format(DateTimeFormatter.ofPattern(pattern, locale)).uppercase(locale)
+        return time.format(DateTimeFormatter.ofPattern(day, locale)).uppercase(locale) + " AT " + clock
     }
 
     /** "Today", "Yesterday", or the date, with the year only when it is not this one. */

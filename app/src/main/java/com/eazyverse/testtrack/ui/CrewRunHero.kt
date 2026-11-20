@@ -1,18 +1,11 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.domain.pluralOf
-import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * The top of a crew's night: how tonight stands for this account, and the one press that does it.
@@ -106,16 +99,5 @@ internal fun NightsDoneHero(crew: Crew) {
             DayMeter(crew.runDays, done = true, from = crew.firstNight, total = crew.runDays)
             MeterLabels("${crew.ownNights} ${pluralOf(crew.ownNights, "day")} done", "Nothing to open")
         },
-    )
-}
-
-/** Above the apps nobody owes tonight, which the team's putting an app back opened up. */
-@Composable
-internal fun OptionalNote() {
-    Text(
-        "You don't have to open these tonight. If you do, it counts and shows.",
-        style = MaterialTheme.typography.bodySmall,
-        color = Tt.colors.text3,
-        modifier = Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, bottom = 8.dp),
     )
 }
