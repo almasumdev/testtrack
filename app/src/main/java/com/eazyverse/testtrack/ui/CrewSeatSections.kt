@@ -214,7 +214,7 @@ internal fun CrewSeatGroup(
 ) {
     val t = Tt.colors
     var howTo by rememberSaveable { mutableStateOf(false) }
-    SeatHeading("Testers group")
+    SectionHeading("Testers group", bottom = 8.dp, oneLine = true)
     // Once Play was asked and said no, the last check's own words take the plain line's place.
     val line = state.checkLine.takeIf { state.checkFailed } ?: "Play doesn't show your app to the group yet"
     IconLine(Lucide.TriangleAlert, t.warn, AnnotatedString(line), SmallLine, t.warn)
@@ -312,7 +312,7 @@ internal fun CrewSeatConfirm(
     onBoxes: (SeatBoxes) -> Unit,
 ) {
     val t = Tt.colors
-    SeatHeading("Before you submit")
+    SectionHeading("Before you submit", bottom = 8.dp, oneLine = true)
     Text(
         "You set both in Play Console. Every member needs them to install your app.",
         style = BodyLine,

@@ -221,10 +221,6 @@ fun MeBody(
     }
 }
 
-/** A heading inside the page's own gutter. Kept for MeDebug and ThemeCard, which wave 3 moves to [SectionHeading]. */
-@Composable
-internal fun SectionTitle(text: String) = SectionHeading(text, top = 16.dp)
-
 /**
  * The person: the face on the left, the name and address beside it, the small facts under both.
  *

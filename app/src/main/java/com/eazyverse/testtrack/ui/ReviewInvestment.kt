@@ -73,7 +73,7 @@ internal fun AskCount(
     enabled: Boolean,
     onChange: (Int) -> Unit,
 ) {
-    SeatHeading("Reviews", gap = 10.dp, end = {
+    SectionHeading("Reviews", oneLine = true, end = {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),

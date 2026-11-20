@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,7 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -172,25 +170,6 @@ internal fun ThreadNote(
     more: String? = null,
     moreTitle: String = "More about this",
 ) = ThreadNote(AnnotatedString(text), tone, icon, more?.let(::AnnotatedString), moreTitle)
-
-/** A heading over a part of the page, with an optional quiet tag at its far end such as "Optional". */
-@Composable
-internal fun ThreadHeading(
-    title: String,
-    modifier: Modifier = Modifier,
-    tag: String = "",
-) {
-    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            title,
-            Modifier.weight(1f),
-            style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, lineHeight = 19.sp),
-            fontWeight = FontWeight.Bold,
-            color = Tt.colors.text,
-        )
-        if (tag.isNotBlank()) HeadingTag(tag)
-    }
-}
 
 /**
  * The last 18dp of a page that scrolls above a pinned foot: the page's own colour fading in, so

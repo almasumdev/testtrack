@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -45,47 +42,6 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * Each shows one face for every review bought, drawn from the counts the server sends; there are
  * no names here, so every face is the same neutral person.
  */
-
-/**
- * A block's heading with a small tag at the far end saying when that block is for. The tag stays
- * once the block is running; the line that explains it only shows on the empty start tile.
- */
-@Composable
-internal fun BlockHeading(
-    title: String,
-    tag: String,
-) {
-    val t = Tt.colors
-    Row(
-        Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            title,
-            Modifier.weight(1f),
-            style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, lineHeight = 19.sp),
-            fontWeight = FontWeight.Bold,
-            color = t.text,
-        )
-        HeadingTag(tag)
-    }
-}
-
-/** The small quiet tag at a heading's far end, such as when a block is for or "Optional". */
-@Composable
-internal fun HeadingTag(tag: String) {
-    val t = Tt.colors
-    Text(
-        tag,
-        Modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(t.glass2)
-            .padding(horizontal = 9.dp, vertical = 2.dp),
-        style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.sp),
-        fontWeight = FontWeight.SemiBold,
-        color = t.text3,
-    )
-}
 
 /**
  * Every request an app has had, for its page. [requests] are this app's only, in any order. With
@@ -133,13 +89,7 @@ fun FeedbackRequests(
             )
         }
         if (earlier.isEmpty()) return@Column
-        Text(
-            "Earlier",
-            Modifier.padding(start = 2.dp, top = 16.dp, bottom = 8.dp),
-            style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = t.text3,
-        )
+        SmallHeading("Earlier", Modifier.padding(start = 2.dp), top = 16.dp, style = TextStyles.EarlierStyle)
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             earlier.forEach { request ->
                 RequestCard(

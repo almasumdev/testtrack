@@ -149,10 +149,10 @@ fun AppPage(
                     }
                     // A live app can never go into a crew, so it has no crew block unless it was in one.
                     if (!app.live || app.crew != null) {
-                        BlockHeading("Crew test", CREW_WHEN)
+                        SectionHeading("Crew test", tag = CREW_WHEN, top = 20.dp, tagTall = true, style = TextStyles.BlockHeadingStyle)
                         AppCrewBlock(app, crews, onOpenCrew, onOpenChat, onPutIn = { membership.require { onSeat(app.id) } })
                     }
-                    BlockHeading("Feedback", FEEDBACK_WHEN)
+                    SectionHeading("Feedback", tag = FEEDBACK_WHEN, top = 20.dp, tagTall = true, style = TextStyles.BlockHeadingStyle)
                     FeedbackRequests(
                         requests = requests,
                         loading = requestsLoading,

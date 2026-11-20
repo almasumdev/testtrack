@@ -86,7 +86,7 @@ internal fun CrewSeatDetails(
     groupDone: Boolean,
 ) {
     val short = vm.short || state.shortTix
-    SeatHeading("Seat details", if (short) SeatStatus.warn(shortHeadline(vm.tix)) else null)
+    SectionHeading("Seat details", bottom = 8.dp, oneLine = true, status = if (short) HeadingStatus.warn(shortHeadline(vm.tix)) else null)
     if (groupDone) {
         SeatGroupDoneRow()
         Spacer(Modifier.height(16.dp))

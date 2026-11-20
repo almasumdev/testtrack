@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -19,7 +20,7 @@ internal fun MeDebug(
     onNoGroup: (Boolean) -> Unit,
 ) {
     Column {
-        SectionTitle("Debug")
+        SectionHeading("Debug", top = 16.dp)
         TileGroup(count = 1) { _, place ->
             TileRow(
                 Lucide.Users,

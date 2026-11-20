@@ -102,7 +102,7 @@ fun CaseCheck(
         }
         val thread: @Composable () -> Unit = { CaseThread(case, proof) }
         val vote: @Composable () -> Unit = {
-            ThreadHeading("Your vote", Modifier.padding(top = 22.dp, bottom = 10.dp))
+            SectionHeading("Your vote", top = 22.dp, style = TextStyles.BlockHeadingStyle)
             VoteTiles(choice, enabled = voted == null && !busy, dimOthers = voted != null) { picked = it }
             Spacer(Modifier.height(12.dp))
             if (voted == null) {
@@ -126,7 +126,7 @@ fun CaseCheck(
             vote()
         } else {
             vote()
-            ThreadHeading("What each side showed", Modifier.padding(top = 22.dp))
+            SectionHeading("What each side showed", top = 22.dp, bottom = 0.dp, style = TextStyles.BlockHeadingStyle)
             thread()
         }
     }

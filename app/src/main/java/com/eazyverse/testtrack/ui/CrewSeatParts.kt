@@ -63,8 +63,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.CircleAlert
-import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.CircleDashed
 import com.composables.icons.lucide.Coins
 import com.composables.icons.lucide.Lucide
@@ -82,49 +80,7 @@ import com.eazyverse.testtrack.ui.theme.Tt
 private val HeadNameStyle = tileStyle(16f, 18f, FontWeight.SemiBold)
 private val HeadEditStyle = tileStyle(16f, 17f, FontWeight.SemiBold)
 private val CountStyle = tileStyle(11.5f, 14f, FontWeight.Normal)
-private val StatusStyle = tileStyle(12.5f, 14f, FontWeight.SemiBold)
 private val HintQuietStyle = tileStyle(12.5f, 16f, FontWeight.Medium)
-
-/** The one short status at the far end of a heading: done (green) or something wrong (amber). */
-internal class SeatStatus(
-    val text: String,
-    val ok: Boolean,
-) {
-    companion object {
-        fun warn(text: String) = SeatStatus(text, false)
-    }
-}
-
-/**
- * A part's heading on the seat page: 16 Bold, plain text, no box, and at its far end one short
- * status, or whatever [end] draws there. 8dp under it; [gap] is 0 when the part is only its heading.
- */
-@Composable
-internal fun SeatHeading(
-    text: String,
-    status: SeatStatus? = null,
-    gap: Dp = 8.dp,
-    end: (@Composable () -> Unit)? = null,
-) {
-    val t = Tt.colors
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = 19.dp).padding(bottom = gap),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(text, Modifier.weight(1f), style = TextStyles.HeadingStyle, color = t.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        if (status != null) {
-            Spacer(Modifier.width(8.dp))
-            val tone = if (status.ok) t.ok else t.warn
-            Icon(if (status.ok) Lucide.CircleCheck else Lucide.CircleAlert, null, Modifier.size(14.dp), tint = tone)
-            Spacer(Modifier.width(4.dp))
-            Text(status.text, style = StatusStyle, color = tone, maxLines = 1, softWrap = false)
-        }
-        if (end != null) {
-            Spacer(Modifier.width(8.dp))
-            end()
-        }
-    }
-}
 
 /**
  * The app the seat is for, as a My apps tile without the box: its icon with the closed-test flask on
