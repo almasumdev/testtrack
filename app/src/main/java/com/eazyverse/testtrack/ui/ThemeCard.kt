@@ -61,7 +61,7 @@ internal fun AppearanceGroup() {
     val t = Tt.colors
     val shape = TilePlace.ONLY.shape()
     Column {
-        SectionHeading("Appearance", top = 16.dp)
+        SectionHeading("Appearance", top = 16.dp, style = TextStyles.SectionTitleStyle)
         Column(
             Modifier
                 .fillMaxWidth()

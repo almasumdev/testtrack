@@ -20,7 +20,7 @@ internal fun MeDebug(
     onNoGroup: (Boolean) -> Unit,
 ) {
     Column {
-        SectionHeading("Debug", top = 16.dp)
+        SectionHeading("Debug", top = 16.dp, style = TextStyles.SectionTitleStyle)
         TileGroup(count = 1) { _, place ->
             TileRow(
                 Lucide.Users,
