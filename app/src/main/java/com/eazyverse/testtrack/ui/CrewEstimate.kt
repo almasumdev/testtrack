@@ -1,7 +1,7 @@
 package com.eazyverse.testtrack.ui
 
+import com.eazyverse.testtrack.domain.instantOf
 import java.time.Instant
-import java.time.OffsetDateTime
 import java.time.ZoneId
 import kotlin.math.roundToLong
 
@@ -33,7 +33,7 @@ fun startEstimate(
     zone: ZoneId = ZoneId.systemDefault(),
 ): StartEstimate? {
     if (likelyBasis == "new") return StartEstimate("No start estimate yet", known = false)
-    val full = likelyFullAt?.let { runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull() } ?: return null
+    val full = instantOf(likelyFullAt) ?: return null
 
     val coming =
         now

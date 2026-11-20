@@ -70,7 +70,7 @@ internal fun OwnerToolsCard(
                     color = Tt.colors.text4,
                 )
             }
-            CardNote("Down tonight: ${mine.downsLeft} of ${CrewRules.DOWN_NIGHTS} left this run.")
+            QuietNote("Down tonight: ${mine.downsLeft} of ${CrewRules.DOWN_NIGHTS} left this run.", Modifier.padding(top = 10.dp))
         }
     }
 }

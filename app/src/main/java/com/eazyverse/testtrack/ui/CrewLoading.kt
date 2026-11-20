@@ -1,7 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -16,15 +14,12 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * The crew tabs' first load, each in the shape of what is coming.
@@ -155,22 +150,6 @@ fun CrewCardLoading() {
     }
 }
 
-/** The members and pictures pages: the crew's card, then a heading and a row for each member. */
-@Composable
-fun CrewMembersLoading() {
-    LazyColumn(
-        Modifier.fillMaxSize().loading("Loading the members"),
-        contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
-        userScrollEnabled = false,
-    ) {
-        item { CrewCardSkeleton() }
-        item { CrewHeading("Members") }
-        items(SKELETON_ROWS) { index ->
-            Box(Modifier.padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) { CrewRowLoading(index) }
-        }
-    }
-}
-
 @Composable
 private fun CrewCardSkeleton() {
     Box(Modifier.padding(horizontal = Gutter)) {
@@ -203,9 +182,7 @@ private fun CrewRowLoading(index: Int) {
         Modifier
             .fillMaxWidth()
             .heightIn(min = 76.dp)
-            .clip(RoundedCornerShape(TileRadius))
-            .background(Tt.colors.bg)
-            .border(1.dp, Tt.colors.cardLine, RoundedCornerShape(TileRadius))
+            .tileFrame()
             .padding(start = 12.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

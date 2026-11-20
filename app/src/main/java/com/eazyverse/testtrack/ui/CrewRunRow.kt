@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.eazyverse.testtrack.domain.pluralOf
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
@@ -55,7 +56,7 @@ fun CrewListRow(
                     crew.out -> "Your app is out"
                     crew.nightsDone -> "Your nights are done"
                     crew.owed == 0 -> "Done for tonight"
-                    else -> "${crew.owed} ${if (crew.owed == 1) "app" else "apps"} left tonight"
+                    else -> "${crew.owed} ${pluralOf(crew.owed, "app")} left tonight"
                 },
                 Modifier.weight(1f),
                 style = tileStyle(15f, 20f, FontWeight.Medium),

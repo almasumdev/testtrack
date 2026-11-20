@@ -145,11 +145,11 @@ internal fun RecordHero(
             }
         }
         if (record.charged && record.outcome == RecordOutcome.MOVED) {
-            CardNote("Your seat went with it, so no tix were spent twice.")
+            QuietNote("Your seat went with it, so no tix were spent twice.", Modifier.padding(top = 10.dp))
         }
         if (record.charged && record.outcome == RecordOutcome.CANCELLED) {
             val back = record.tixRefunded.takeIf { it > 0 } ?: record.tixSpent.takeIf { it > 0 } ?: CrewRules.SEAT_COST
-            CardNote("Your $back tix came back.")
+            QuietNote("Your $back tix came back.", Modifier.padding(top = 10.dp))
         }
     }
 }

@@ -1,12 +1,8 @@
 package com.eazyverse.testtrack.ui
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -41,8 +37,8 @@ internal fun withCrewExtras(
     val context = LocalContext.current
     val membership = rememberMembership()
     val extras: CrewExtrasViewModel = viewModel()
-    val picker =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+    val pickPicture =
+        rememberImagePicker { uri ->
             if (uri != null) extras.pick(context.findActivity(), uri) else extras.cancelFeedback()
         }
     return CrewActions(
@@ -68,7 +64,7 @@ internal fun withCrewExtras(
         onFeedback = { app -> membership.require { extras.askFeedback(app.id, app.label, app.packageName) } },
         onPickFeedback = { app ->
             extras.askFeedback(app.id, app.label, app.packageName, asking = false)
-            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            pickPicture()
         },
         onTellUpdate = { seat ->
             val why = extras.updateBlocked(context, seat.packageName, seat.versionCode)
@@ -91,8 +87,8 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
     val context = LocalContext.current
     val activity = context.findActivity()
     val extras: CrewExtrasViewModel = viewModel()
-    val picker =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+    val pickPicture =
+        rememberImagePicker { uri ->
             if (uri != null) extras.pick(activity, uri) else extras.cancelFeedback()
         }
 
@@ -111,15 +107,11 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
         onDispose { owner.lifecycle.removeObserver(watcher) }
     }
 
-    val consent =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            val data = result.data
-            if (result.resultCode == Activity.RESULT_OK && data != null) {
-                extras.startCapture(activity, result.resultCode, data)
-            } else {
-                extras.cancelFeedback()
-            }
-        }
+    val askCapture =
+        rememberCaptureConsent(
+            onGranted = { code, data -> extras.startCapture(activity, code, data) },
+            onRefused = { extras.cancelFeedback() },
+        )
 
     extras.feedbackFor?.takeIf { !it.capturing && it.asking }?.let { job ->
         Ask(
@@ -131,12 +123,12 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
                     "Once a run per app. Only the TestTrack team sees the picture.",
             confirm = "Start",
             dismiss = "Not now",
-            onConfirm = { consent.launch(wholeScreenCapture(context)) },
+            onConfirm = { askCapture() },
             onDismiss = { extras.cancelFeedback() },
         ) {
             InlineAction("Use saved feedback screenshot") {
                 extras.askFeedback(job.seatId, job.label, job.packageName, asking = false)
-                picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                pickPicture()
             }
         }
     }
@@ -213,12 +205,13 @@ internal fun AppealSheet(
         subtitle = "Tell the team what happened on the nights you missed. They usually answer within a day.",
         onDismiss = onDismiss,
     ) { close ->
-        DialogField(
+        OutlinedField(
             value = text,
             onValueChange = { text = it.take(CrewRules.APPEAL_MAX) },
             label = "What happened",
             singleLine = false,
-            minHeight = 110.dp,
+            minLines = 3,
+            maxLines = 6,
             maxLength = CrewRules.APPEAL_MAX,
             error = error,
         )

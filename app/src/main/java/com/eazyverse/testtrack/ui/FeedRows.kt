@@ -1,8 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -54,7 +52,6 @@ import com.eazyverse.testtrack.ui.theme.Tt
 @Composable
 fun FeedCard(
     modifier: Modifier = Modifier,
-    accent: Color? = null,
     /** A post needs room to breathe. */
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
     /** A card that does one thing does it from anywhere on it, not only from its chip. */
@@ -64,13 +61,7 @@ fun FeedCard(
     Column(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(CardRadius))
-            .background(Tt.colors.bg)
-            .border(
-                1.dp,
-                accent ?: Tt.colors.glassBorder,
-                RoundedCornerShape(CardRadius),
-            ).then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .tileFrame(onClick = onClick)
             .padding(padding),
         content = content,
     )
@@ -169,13 +160,10 @@ fun AskRow(
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val t = Tt.colors
-    val shape = RoundedCornerShape(14.dp)
     Row(
         modifier
             .fillMaxWidth()
-            .clip(shape)
-            .border(1.dp, t.cardLine, shape)
-            .clickable(onClick = onClick)
+            .tileFrame(onClick = onClick)
             .padding(start = 10.dp, end = if (trailing != null) 10.dp else 12.dp, top = 9.dp, bottom = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -247,10 +235,7 @@ fun FloatingActionBar(
             .fillMaxWidth()
             .padding(horizontal = gutter)
             .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(Tt.colors.bg)
-            .border(1.dp, Tt.colors.cardLine, RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
+            .tileFrame(onClick = onClick)
             .padding(12.dp),
         contentAlignment = Alignment.Center,
     ) {

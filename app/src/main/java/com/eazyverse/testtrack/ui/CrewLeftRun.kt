@@ -93,15 +93,15 @@ internal fun OwnerOutCard(
                     onAction = actions.onTakeSeat,
                 )
         }
-        CardNote(
+        val line =
             when {
                 appeal == null && mine.canAppeal ->
                     "Something went wrong, like a broken phone? Tell the team what happened. If they say no, " +
                         "you can put it in a new crew."
                 appeal != null && appeal.waiting -> "You wrote: ${appeal.text}"
                 else -> seatOutLine(mine)
-            },
-        )
+            }
+        QuietNote(line, Modifier.padding(top = 10.dp))
     }
 }
 

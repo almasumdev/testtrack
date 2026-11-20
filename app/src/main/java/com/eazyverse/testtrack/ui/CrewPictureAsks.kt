@@ -1,8 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import android.app.Activity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import com.eazyverse.testtrack.findActivity
@@ -14,24 +11,21 @@ import com.eazyverse.testtrack.findActivity
 
 @Composable
 internal fun CrewPictureAsks(vm: CrewViewModel) {
-    val context = LocalContext.current
-    val activity = context.findActivity()
+    val activity = LocalContext.current.findActivity()
     val pictures = vm.pictures
 
     // Android's own question comes after ours. A no leaves everything as it was.
-    val consent =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            val data = result.data
-            if (result.resultCode == Activity.RESULT_OK && data != null) {
-                pictures.start(activity, result.resultCode, data)
-            } else {
+    val askCapture =
+        rememberCaptureConsent(
+            onGranted = { code, data -> pictures.start(activity, code, data) },
+            onRefused = {
                 pictures.skip()
                 pictures.tell(
                     "Tonight needs a picture of each app, so TestTrack has to see your screen while " +
                         "they're open. Tap Open all when you're ready.",
                 )
-            }
-        }
+            },
+        )
 
     pictures.waitingFor?.let { stops ->
         Ask(
@@ -43,7 +37,7 @@ internal fun CrewPictureAsks(vm: CrewViewModel) {
                     "${if (stops.size == 1) "this app" else "all ${stops.size} tonight"}.",
             confirm = "Start",
             dismiss = "Not now",
-            onConfirm = { consent.launch(wholeScreenCapture(context)) },
+            onConfirm = { askCapture() },
             onDismiss = { pictures.skip() },
         )
     }

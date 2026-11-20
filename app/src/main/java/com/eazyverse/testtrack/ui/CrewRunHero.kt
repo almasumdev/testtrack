@@ -11,6 +11,7 @@ import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TriangleAlert
+import com.eazyverse.testtrack.domain.pluralOf
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -78,7 +79,7 @@ internal fun RunHero(
             DayMeter(crew.day, done, from = crew.firstNight, total = crew.runDays)
             // Tonight counts as done once it is, so the two sides always add up to this account's run.
             val daysDone = (crew.ownDay - if (done) 0 else 1).coerceIn(0, crew.ownNights)
-            MeterLabels("$daysDone ${if (daysDone == 1) "day" else "days"} done", "${crew.ownNights - daysDone} to go")
+            MeterLabels("$daysDone ${pluralOf(daysDone, "day")} done", "${crew.ownNights - daysDone} to go")
         },
         action =
             when {
@@ -103,7 +104,7 @@ internal fun NightsDoneHero(crew: Crew) {
         line = "Your nights are done. The crew closes when everyone else finishes.",
         meter = {
             DayMeter(crew.runDays, done = true, from = crew.firstNight, total = crew.runDays)
-            MeterLabels("${crew.ownNights} ${if (crew.ownNights == 1) "day" else "days"} done", "Nothing to open")
+            MeterLabels("${crew.ownNights} ${pluralOf(crew.ownNights, "day")} done", "Nothing to open")
         },
     )
 }

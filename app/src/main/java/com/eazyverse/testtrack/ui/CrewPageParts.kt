@@ -25,7 +25,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -263,34 +262,7 @@ internal fun TintBox(
 
 /** A small centred line under a card: what happens to your tix, and the like. */
 @Composable
-internal fun CardNote(text: String) {
-    Text(
-        text,
-        Modifier.fillMaxWidth().padding(top = 10.dp),
-        style = MaterialTheme.typography.bodySmall,
-        color = Tt.colors.text4,
-        textAlign = TextAlign.Center,
-    )
-}
-
-/** Three figures side by side, each in its own tile: how a finished run went. */
-@Composable
-internal fun StatTiles(vararg pairs: Pair<String, String>) {
-    Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        pairs.forEach { (value, label) ->
-            Column(
-                Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(10.dp))
-                    .border(1.dp, Tt.colors.cardLine, RoundedCornerShape(10.dp))
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-            ) {
-                Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(label, style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp), color = Tt.colors.text4)
-            }
-        }
-    }
-}
+internal fun CardNote(text: String) = QuietNote(text, Modifier.padding(top = 10.dp))
 
 /**
  * The reader's own app in this crew: its icon and name, where it stands, its sign-in as the crew

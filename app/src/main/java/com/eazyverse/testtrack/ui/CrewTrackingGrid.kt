@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.CalendarCheck
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
+import com.eazyverse.testtrack.domain.pluralOf
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.tabular
 import com.eazyverse.testtrack.viewmodel.AppNights
