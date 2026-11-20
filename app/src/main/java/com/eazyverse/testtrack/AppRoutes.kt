@@ -15,6 +15,7 @@ import com.eazyverse.testtrack.ui.AppPage
 import com.eazyverse.testtrack.ui.AskScreen
 import com.eazyverse.testtrack.ui.CrewSeatScreen
 import com.eazyverse.testtrack.ui.CrewViewModel
+import com.eazyverse.testtrack.ui.FeedViewModel
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 
 /**
@@ -46,17 +47,30 @@ internal fun NavGraphBuilder.appRoutes(
     }
 
     composable(Routes.APP, arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
+        // My apps' model for the app, the Crew tab's for its crew tile and Circle's for its
+        // feedback requests, all borrowed from the home entry underneath.
         val home = remember(entry) { nav.getBackStackEntry(Routes.HOME) }
         val apps: AppsViewModel = viewModel(home)
+        val crews: CrewViewModel = viewModel(home)
+        val feed: FeedViewModel = viewModel(home)
+        val context = LocalContext.current
+        val id = requireNotNull(entry.arguments?.getString("id"))
+        // Circle may not have been opened yet: read it once, unless a read is already on its way.
+        LaunchedEffect(Unit) { if (!feed.answered && feed.loadsStarted == feed.loadsFinished) feed.load(context) }
+        val pkg = apps.byId(id)?.pkg
         Inset {
             AppPage(
                 apps,
-                requireNotNull(entry.arguments?.getString("id")),
+                id,
                 onBack = { nav.popBackStack() },
                 onOpenCrew = { nav.push(Routes.crew(it)) },
                 onOpenRequest = { nav.push(Routes.check(it)) },
                 onFeedback = { nav.push(Routes.askFor(it)) },
+                crews = crews,
+                requests = feed.requests.filter { it.packageName == pkg },
+                requestsLoading = !feed.answered && feed.requests.isEmpty(),
                 onSeat = { nav.push(Routes.crewSeat(it)) },
+                onOpenChat = { nav.push(Routes.crewChat(it)) },
             )
         }
     }

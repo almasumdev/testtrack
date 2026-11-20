@@ -16,11 +16,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.ui.theme.Tt
 
-/** A running crew: the reader's app, their work, and the testers opening their app. The chat mark opens its chat. */
+/**
+ * A running crew: the reader's app, their work, and the testers opening their app. The chat mark
+ * opens its chat. Without [showApp] the app line at the foot is left out (the app's own page) and
+ * the chat mark moves up into the heading.
+ */
 @Composable
 fun CrewListRow(
     crew: Crew,
     onChat: () -> Unit = {},
+    showApp: Boolean = true,
     onOpen: () -> Unit,
 ) {
     val mine = crew.mine
@@ -32,7 +37,11 @@ fun CrewListRow(
             else -> Tone.ACCENT
         }
     CrewCard(padding = PaddingValues(16.dp), onClick = onOpen) {
-        CrewTileHeading(crew.name, "Night ${crew.day.coerceIn(0, crew.runDays)} of ${crew.runDays}")
+        CrewTileHeading(
+            crew.name,
+            "Night ${crew.day.coerceIn(0, crew.runDays)} of ${crew.runDays}",
+            trailing = headingChat(crew, showApp, onChat),
+        )
         // The crew's apps on every night, also when tonight owes nothing; faded once the reader's app is out.
         val showOpens = crew.strip.isNotEmpty()
         if (showOpens) {
@@ -71,9 +80,16 @@ fun CrewListRow(
                 color = Tone.WARN.ink(),
             )
         }
-        CrewTileApp(mine) { CrewChatTileButton(crew, onChat) }
+        if (showApp) CrewTileApp(mine) { CrewChatTileButton(crew, onChat) }
     }
 }
+
+/** The chat mark for a tile's heading, only when the app line that usually holds it is left out. */
+internal fun headingChat(
+    crew: Crew,
+    showApp: Boolean,
+    onChat: () -> Unit,
+): (@Composable () -> Unit)? = if (showApp || chatEntryOf(crew) == ChatEntry.NONE) null else ({ CrewChatTileButton(crew, onChat) })
 
 @Composable
 internal fun CrewRunRowLoading() {

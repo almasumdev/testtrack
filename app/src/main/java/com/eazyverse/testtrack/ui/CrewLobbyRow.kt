@@ -16,11 +16,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.ui.theme.Tt
 
-/** A crew's fifteen places first, the reader's app last. Opening the card still opens its crew; the chat mark opens its chat. */
+/**
+ * A crew's fifteen places first, the reader's app last. Opening the card still opens its crew; the
+ * chat mark opens its chat. Without [showApp] the app line is left out and the chat mark moves up
+ * into the heading.
+ */
 @Composable
 internal fun CrewLobbyRow(
     crew: Crew,
     onChat: () -> Unit = {},
+    showApp: Boolean = true,
     onOpen: () -> Unit,
 ) {
     val mine = crew.mine
@@ -29,6 +34,7 @@ internal fun CrewLobbyRow(
             crew.name,
             if (crew.out) "Sent back" else "${crew.filled} of ${CrewRules.SEATS} in",
             if (crew.out) Tone.BAD else null,
+            trailing = headingChat(crew, showApp, onChat),
         )
         if (!crew.out) {
             Spacer(Modifier.height(14.dp))
@@ -36,7 +42,7 @@ internal fun CrewLobbyRow(
         }
         Spacer(Modifier.height(if (crew.out) 14.dp else 9.dp))
         LobbyStanding(crew)
-        CrewTileApp(mine) { CrewChatTileButton(crew, onChat) }
+        if (showApp) CrewTileApp(mine) { CrewChatTileButton(crew, onChat) }
     }
 }
 

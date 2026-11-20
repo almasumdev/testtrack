@@ -24,17 +24,25 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.ui.theme.Tt
 
-/** Lobby and Run share the same crew heading and quiet detail. */
+/**
+ * Lobby and Run share the same crew heading and quiet detail. [trailing] sits after the detail, such
+ * as the chat button on a page that leaves out the tile's app line.
+ */
 @Composable
 internal fun CrewTileHeading(
     name: String,
     detail: String,
     detailTone: Tone? = null,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(name, Modifier.weight(1f), style = tileStyle(18f, 23f, FontWeight.SemiBold), color = Tt.colors.text)
         Spacer(Modifier.width(8.dp))
         Text(detail, style = tileStyle(12f, 17f, FontWeight.Normal), color = detailTone?.ink() ?: Tt.colors.text3)
+        if (trailing != null) {
+            Spacer(Modifier.width(10.dp))
+            trailing()
+        }
     }
 }
 

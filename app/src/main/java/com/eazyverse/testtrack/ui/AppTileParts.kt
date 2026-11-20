@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,10 +12,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,10 +39,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Hourglass
@@ -240,7 +244,8 @@ internal fun ProblemMark(
  * One start row on the app page, a Crew test or Get reviews block: an icon tile, a title with a line
  * under it, and an optional action at the end. It is a [CrewCard], so it has the corner and hairline of
  * every other tile on the page and the Circle rows. The line wraps to two rows of words instead of
- * being cut, and the action is held to [ActionMaxWidth] so it never takes the line's room.
+ * being cut. [pill] is a [SoftPill] that does what tapping the row does; [action] is anything else.
+ * Both are held to [ActionMaxWidth] so they never take the line's room. No chevron either way.
  */
 @Composable
 internal fun AppStartRow(
@@ -250,16 +255,17 @@ internal fun AppStartRow(
     modifier: Modifier = Modifier,
     action: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
+    pill: String? = null,
 ) {
     val t = Tt.colors
     CrewCard(
         modifier.heightIn(min = 60.dp),
-        padding = PaddingValues(start = 14.dp, top = 10.dp, end = 12.dp, bottom = 10.dp),
+        padding = PaddingValues(12.dp),
         onClick = onClick,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconTile(icon)
-            Spacer(Modifier.width(14.dp))
+            Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
                     title,
@@ -277,12 +283,12 @@ internal fun AppStartRow(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            if (action != null) {
-                Spacer(Modifier.width(8.dp))
+            if (pill != null && onClick != null) {
+                Spacer(Modifier.width(12.dp))
+                SoftPill(pill, onClick = onClick, modifier = Modifier.widthIn(max = ActionMaxWidth))
+            } else if (action != null) {
+                Spacer(Modifier.width(12.dp))
                 action()
-            } else if (onClick != null) {
-                Spacer(Modifier.width(6.dp))
-                Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = t.text4)
             }
         }
     }
@@ -290,3 +296,45 @@ internal fun AppStartRow(
 
 /** The most room an [AppStartRow] gives its action, so the line beside it keeps its words. */
 internal val ActionMaxWidth = 96.dp
+
+/**
+ * A soft pill: the tile fill with the accent ink, fully round, at least 32dp tall, never a chevron.
+ * An optional 15dp [icon] leads the words. While [busy] a 16dp loader takes the icon's place and
+ * the pill takes no taps; the caller says what it is doing in [text].
+ */
+@Composable
+internal fun SoftPill(
+    text: String,
+    icon: ImageVector? = null,
+    onClick: () -> Unit,
+    busy: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    val t = Tt.colors
+    Row(
+        modifier
+            .heightIn(min = 32.dp)
+            .clip(RoundedCornerShape(percent = 50))
+            .background(t.tile)
+            .clickable(enabled = !busy, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        if (busy) {
+            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = t.accentInk)
+            Spacer(Modifier.width(6.dp))
+        } else if (icon != null) {
+            Icon(icon, null, Modifier.size(15.dp), tint = t.accentInk)
+            Spacer(Modifier.width(6.dp))
+        }
+        Text(
+            text,
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.5.sp, lineHeight = 16.sp),
+            fontWeight = FontWeight.Bold,
+            color = t.accentInk,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+        )
+    }
+}

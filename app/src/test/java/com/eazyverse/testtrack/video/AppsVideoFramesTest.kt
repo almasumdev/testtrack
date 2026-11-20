@@ -19,6 +19,7 @@ import com.eazyverse.testtrack.ui.AppEntry
 import com.eazyverse.testtrack.ui.AppPage
 import com.eazyverse.testtrack.ui.AppsBody
 import com.eazyverse.testtrack.ui.AppsScreen
+import com.eazyverse.testtrack.ui.CrewViewModel
 import com.eazyverse.testtrack.ui.MainTab
 import com.eazyverse.testtrack.ui.Scene
 import com.eazyverse.testtrack.viewmodel.AddWay
@@ -248,6 +249,9 @@ class AppsVideoFramesTest {
                     onOpenCrew = {},
                     onOpenRequest = {},
                     onFeedback = {},
+                    crews = CrewViewModel(),
+                    requests = emptyList(),
+                    requestsLoading = false,
                 )
             }
         }

@@ -46,13 +46,17 @@ internal fun RecordTile(
     onAnswer: (Boolean) -> Unit,
     onClaim: () -> Unit,
     now: Instant = Instant.now(),
+    /** Off on the app's own page, which is the app already. */
+    showApp: Boolean = true,
+    /** A new seat for the same app, offered at the foot when its app was taken out; null for none. */
+    onPutIn: (() -> Unit)? = null,
 ) {
     CrewCard(padding = PaddingValues(16.dp), onClick = onOpen) {
         CrewTileHeading(record.crewName.ifBlank { crewNameOf(record.crewNumber) }, recordDates(record))
         Spacer(Modifier.height(10.dp))
         val (headline, tone) = recordHeadline(record)
         Text(headline, style = tileStyle(15f, 20f, FontWeight.Medium), color = tone.ink())
-        CrewTileApp(record.packageName, record.appName, record.appIcon, maxLines = 1)
+        if (showApp) CrewTileApp(record.packageName, record.appName, record.appIcon, maxLines = 1)
 
         detailsClear(crew?.detailsUntil, record.pruned || crew?.pruned == true, now)?.let { (text, last) ->
             Spacer(Modifier.height(10.dp))
@@ -84,6 +88,12 @@ internal fun RecordTile(
         }
 
         RecordResults(record, now)
+        if (onPutIn != null) {
+            Spacer(Modifier.height(8.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                InlineAction("Put in a new crew", onClick = onPutIn)
+            }
+        }
     }
 }
 
