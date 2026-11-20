@@ -1,36 +1,27 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -44,8 +35,8 @@ import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
- * What sits between a thread's groups: the day, a one-line note of what happened, and the (i) that
- * opens the rest of a note. [Thread] spaces them the way the design does, so a page only lists them.
+ * What sits between a thread's groups: the day, and a one-line note of what happened with an (i)
+ * that opens the rest of it. [Thread] spaces them the way the design does, so a page only lists them.
  */
 
 /** What a child of [Thread] is, for the space round it; anything else gets none of its own. */
@@ -181,32 +172,6 @@ internal fun ThreadNote(
     more: String? = null,
     moreTitle: String = "More about this",
 ) = ThreadNote(AnnotatedString(text), tone, icon, more?.let(::AnnotatedString), moreTitle)
-
-/**
- * A small (i) in [ink] that opens the app's callout with [content] in it, titled [title] for
- * TalkBack. Faint until it is open, then full ink on a round of its own colour.
- */
-@Composable
-internal fun InfoDot(
-    title: String,
-    ink: Color,
-    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
-) {
-    var open by remember { mutableStateOf(false) }
-    Box {
-        Box(
-            Modifier
-                .requiredSize(20.dp)
-                .clip(CircleShape)
-                .then(if (open) Modifier.background(ink.copy(alpha = 0.16f)) else Modifier)
-                .clickable(role = Role.Button, onClickLabel = title) { open = !open },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Lucide.Info, title, Modifier.size(14.dp).alpha(if (open) 1f else 0.75f), tint = ink)
-        }
-        Callout(open, { open = false }, title, iconInset = 3.dp, content = content)
-    }
-}
 
 /** A heading over a part of the page, with an optional quiet tag at its far end such as "Optional". */
 @Composable

@@ -62,25 +62,11 @@ val Waiting.pays: Int get() = if (noBox) reward / 2 else reward
 
 private const val HOUR = 3_600_000L
 
-/**
- * How long is left before a review accepts itself, as a chip says it: "1d 20h", "6h", "25m".
- *
- * Whole units, rounded down, so it never promises more time than there is. Past the deadline it
- * says so rather than counting into negatives; the server settles it on its own sweep.
- */
+/** [timeLeft] with nothing after it: "1d 20h", "6h", "25m", or "Due now". */
 fun timeLeft(
     until: Long,
     now: Long,
-): String {
-    val left = until - now
-    if (left <= 0) return "Due now"
-    val hours = left / HOUR
-    return when {
-        hours >= 24 -> if (hours % 24 == 0L) "${hours / 24}d" else "${hours / 24}d ${hours % 24}h"
-        hours >= 1 -> "${hours}h"
-        else -> "${maxOf(1, left / 60_000)}m"
-    }
-}
+): String = timeLeft(until, now, "")
 
 /** Under twelve hours left: worth drawing in a warning colour. */
 fun closeTo(

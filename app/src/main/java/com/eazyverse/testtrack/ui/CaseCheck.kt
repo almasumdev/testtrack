@@ -26,19 +26,19 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Hourglass
-import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Scale
 import com.composables.icons.lucide.Text
 import com.composables.icons.lucide.Users
 import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.domain.Case
+import com.eazyverse.testtrack.domain.pluralOf
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -77,19 +77,28 @@ fun CaseCheck(
                 null
             },
     ) {
-        CheckAppHead(case.appName, case.packageName, case.icon, case.isLive)
-        Spacer(Modifier.height(14.dp - HeadMarkRoom))
+        val context = LocalContext.current
+        AppHead(
+            case.packageName,
+            case.appName,
+            case.icon,
+            case.isLive,
+            sub = if (case.isLive) "Live app" else "Closed test",
+            onClick = { openPlay(context, case.packageName) }.takeIf { case.packageName.isNotBlank() },
+            onClickLabel = "Open ${case.appName} on Google Play",
+        )
+        Spacer(Modifier.height(14.dp - AppHeadMarkRoom))
         ChipRow {
             if (case.votesNeeded > 0) StatusChip("${case.votesCast} of ${case.votesNeeded} votes in", Tone.QUIET, Lucide.Users)
             StatusChip("$share tix to you", Tone.QUIET)
         }
         askedLine(case.feedback, case.needsChars, owner = false)?.let { (line, figure) ->
             Spacer(Modifier.height(14.dp))
-            InfoLine(Lucide.Text, strong(line, figure))
+            InfoLine(strong(line, figure), icon = Lucide.Text)
         }
         if (case.noBox) {
             Spacer(Modifier.height(14.dp))
-            InfoLine(Lucide.Info, AnnotatedString("Play showed them no review box, so they sent it in TestTrack for half pay."))
+            InfoLine("Play showed them no review box, so they sent it in TestTrack for half pay.")
         }
         val thread: @Composable () -> Unit = { CaseThread(case, proof) }
         val vote: @Composable () -> Unit = {
@@ -97,19 +106,16 @@ fun CaseCheck(
             VoteTiles(choice, enabled = voted == null && !busy, dimOthers = voted != null) { picked = it }
             Spacer(Modifier.height(12.dp))
             if (voted == null) {
-                InfoLine(Lucide.Scale, strong("Whoever you decide against pays $stake tix, $share to each of you.", "$stake tix"))
+                InfoLine(strong("Whoever you decide against pays $stake tix, $share to each of you.", "$stake tix"), icon = Lucide.Scale)
             } else {
                 val left = (case.votesNeeded - case.votesCast).coerceAtLeast(0)
                 InfoLine(
-                    Lucide.Hourglass,
-                    AnnotatedString(
-                        if (left > 0) {
-                            "Waiting for ${left.words()} more ${if (left == 1) "vote" else "votes"}. " +
-                                "Your $share tix come once it is decided."
-                        } else {
-                            "That was the last vote. Your $share tix come once it is decided."
-                        },
-                    ),
+                    if (left > 0) {
+                        "Waiting for ${left.words()} more ${pluralOf(left, "vote")}. Your $share tix come once it is decided."
+                    } else {
+                        "That was the last vote. Your $share tix come once it is decided."
+                    },
+                    icon = Lucide.Hourglass,
                 )
             }
         }

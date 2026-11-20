@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,34 +13,43 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.FlaskConical
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Play
+import com.composables.icons.lucide.Scale
 import com.eazyverse.testtrack.domain.textUseLabel
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
- * The pieces a review to check and a case to decide share: the app at the top, chips, plain lines
- * with a word or two in bold, the frame with its pinned answers, and the page while it loads.
+ * The pieces a review to check and a case to decide share: the kind of review, chips, plain lines with a word or two
+ * in bold, the frame with its pinned answers, and the page while it loads.
  */
+
+/** What kind of review a page or a row is about, as its label says it. */
+enum class CheckKind(
+    val label: String,
+    val icon: ImageVector,
+) {
+    PLAY("Live app", Lucide.Play),
+    CLOSED("Closed test", Lucide.FlaskConical),
+    DISPUTED("Disputed", Lucide.Scale),
+}
 
 /** What an (i) opens to: one plain sentence, in the callout's own ink. */
 internal val CheckLineStyle = tileStyle(13f, 18f, FontWeight.Normal)
@@ -67,53 +75,6 @@ internal fun strong(
 internal fun CalloutLine(text: AnnotatedString) {
     Text(text, style = CheckLineStyle, color = Tt.colors.text2)
 }
-
-/**
- * The app a page is about: its icon with where it is found on the corner, the name on up to two
- * lines, and one quiet line under it. A tap opens its Play page, as the old header's did.
- */
-@Composable
-internal fun CheckAppHead(
-    name: String,
-    packageName: String,
-    icon: String,
-    live: Boolean,
-    sub: String = if (live) "Live app" else "Closed test",
-) {
-    val t = Tt.colors
-    val context = LocalContext.current
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(enabled = packageName.isNotBlank(), onClickLabel = "Open $name on Google Play") {
-                openPlay(context, packageName)
-            }
-            // Room inside the press shape for the source mark, which hangs 5dp below the icon.
-            .padding(bottom = HeadMarkRoom),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.size(AppTileIcon)) {
-            AppMark(packageName, name, icon, size = AppTileIcon)
-            SourceMark(live = live, Modifier.align(Alignment.BottomEnd).offset(5.dp, 5.dp))
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(name, style = AppTileName, color = t.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(2.dp))
-            Text(
-                sub,
-                style = tileStyle(12.5f, 15f, FontWeight.Medium),
-                color = t.text3,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-/** The room [CheckAppHead] keeps under its icon for the source mark; what follows it counts it in. */
-internal val HeadMarkRoom = 6.dp
 
 /** A row of chips that wraps onto a second line rather than running off the page. */
 @OptIn(ExperimentalLayoutApi::class)

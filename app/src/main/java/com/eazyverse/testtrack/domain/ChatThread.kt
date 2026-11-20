@@ -270,11 +270,12 @@ object ChatThread {
             }
         }
 
-    /** "8:15 PM", in the phone's own time. */
+    /** "8:15 PM", or "20:15" when [hour24], in the phone's own time; blank without a time. */
     fun clock(
         at: Instant?,
         zone: ZoneId = ZoneId.systemDefault(),
-    ): String = at?.atZone(zone)?.format(DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())).orEmpty()
+        hour24: Boolean = false,
+    ): String = at?.let { clockTime(it, hour24, zone) }.orEmpty()
 
     /** "Gone in 21 h" for a picture still kept; blank once it is gone or with no time. */
     fun pictureLeft(

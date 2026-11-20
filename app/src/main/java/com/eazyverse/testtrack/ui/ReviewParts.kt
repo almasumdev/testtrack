@@ -71,7 +71,7 @@ internal fun ProveAsks(
     val ready = readyReview(job)
     if (asked == null && ready == null) return
     Column(Modifier.fillMaxWidth()) {
-        SendHeading("The developer asks")
+        SmallHeading("The developer asks")
         Spacer(Modifier.height(10.dp))
         ThreadGroup(
             listOfNotNull(

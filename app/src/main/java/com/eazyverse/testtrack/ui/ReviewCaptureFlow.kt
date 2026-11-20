@@ -1,8 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import android.app.Activity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -27,16 +24,10 @@ internal fun rememberReviewCapture(
     var guiding by remember(packageName) { mutableStateOf(false) }
     var askingOverlay by remember(packageName) { mutableStateOf(false) }
     var returningFromSettings by remember(packageName) { mutableStateOf(false) }
-    val consent =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            val data = result.data
-            if (result.resultCode == Activity.RESULT_OK && data != null) {
-                vm.startCapture(context, result.resultCode, data, packageName)
-            }
-        }
+    val consent = rememberCaptureConsent(onGranted = { code, data -> vm.startCapture(context, code, data, packageName) })
     val start: () -> Unit = {
         if (vm.requirePlayInstall(context)) {
-            if (vm.canFloat(context)) consent.launch(wholeScreenCapture(context)) else askingOverlay = true
+            if (vm.canFloat(context)) consent() else askingOverlay = true
         }
     }
     DisposableEffect(owner, vm, packageName) {

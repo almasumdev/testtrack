@@ -1,23 +1,9 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,18 +11,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Quote
 import com.eazyverse.testtrack.domain.Case
 import com.eazyverse.testtrack.domain.Waiting
-import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * The To check tab's rows, and the page each one opens: a review of your app to accept or refuse,
@@ -225,56 +204,3 @@ private class Voted(
 /** Reviews of the same app, by its package, or its name from an older server that sent none. */
 private fun Waiting.sameApp(other: Waiting): Boolean =
     if (packageName.isNotBlank() && other.packageName.isNotBlank()) packageName == other.packageName else appName == other.appName
-
-/** A back arrow and a title, the page scrolling under it, and the answers pinned above the dock. */
-@Composable
-internal fun CheckPage(
-    title: String,
-    onBack: () -> Unit,
-    actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(Modifier.fillMaxSize()) {
-        PageBar(title, onBack)
-        Column(
-            Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = Gutter, vertical = 8.dp),
-            content = content,
-        )
-        Row(
-            Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 10.dp, bottom = 12.dp + dockRoom()),
-            verticalAlignment = Alignment.CenterVertically,
-            content = actions,
-        )
-    }
-}
-
-/** Something somebody said, under who said it. */
-@Composable
-internal fun Said(
-    who: String,
-    words: String,
-) {
-    val t = Tt.colors
-    val shape = RoundedCornerShape(CardRadius)
-    Spacer(Modifier.height(14.dp))
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(t.glass)
-            .border(1.dp, t.glassBorder, shape)
-            .padding(14.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Lucide.Quote, null, Modifier.size(14.dp), tint = t.text3)
-            Spacer(Modifier.width(6.dp))
-            Text(who, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = t.text3)
-        }
-        Spacer(Modifier.height(6.dp))
-        Text(words, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.5.sp, lineHeight = 21.sp), color = t.text)
-    }
-}
