@@ -24,7 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -234,16 +233,12 @@ private fun DeleteAction(
     onClick: () -> Unit,
 ) {
     val t = Tt.colors
-    IconButton(onClick = onClick, enabled = !deleting, modifier = Modifier.size(48.dp)) {
+    val tint = if (canDelete) t.text2 else t.text4.copy(alpha = 0.55f)
+    PageBarIcon(Lucide.Trash2, "Delete app", onClick, tint = tint, enabled = !deleting) {
         if (deleting) {
             CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = t.text2)
         } else {
-            Icon(
-                Lucide.Trash2,
-                "Delete app",
-                Modifier.size(22.dp),
-                tint = if (canDelete) t.text2 else t.text4.copy(alpha = 0.55f),
-            )
+            Icon(Lucide.Trash2, "Delete app", Modifier.size(22.dp), tint = tint)
         }
     }
 }

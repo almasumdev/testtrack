@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Bell
 import com.composables.icons.lucide.BellOff
@@ -47,14 +49,21 @@ internal fun ChatMenu(
 ) {
     val t = Tt.colors
     var open by remember { mutableStateOf(false) }
-    Box {
-        IconButton(
-            onClick = { open = true },
-            Modifier.clip(CircleShape).background(if (open) t.glass2 else t.glass2.copy(alpha = 0f)),
-        ) { Icon(Lucide.EllipsisVertical, "Chat options", Modifier.size(20.dp), tint = t.text2) }
+    // Moved as a whole so the menu still opens from the ⋮ it belongs to. The thin glyph puts the
+    // button at the screen's edge, so the open mark is the ripple's 40dp, not the whole 48dp, and
+    // the menu is pulled back to end on the page's gutter.
+    val shift = barEndShift(Lucide.EllipsisVertical, 20.dp)
+    Box(Modifier.offset(x = shift)) {
+        IconButton(onClick = { open = true }) {
+            Box(
+                Modifier.size(40.dp).clip(CircleShape).background(if (open) t.glass2 else t.glass2.copy(alpha = 0f)),
+                contentAlignment = Alignment.Center,
+            ) { Icon(Lucide.EllipsisVertical, "Chat options", Modifier.size(20.dp), tint = t.text2) }
+        }
         DropdownMenu(
             expanded = open,
             onDismissRequest = { open = false },
+            offset = DpOffset(BarEdge - shift - Gutter, 0.dp),
             containerColor = t.sheet,
             shape = RoundedCornerShape(14.dp),
         ) {
@@ -126,5 +135,5 @@ private fun PickButton(
     tint: Color,
     onClick: () -> Unit,
 ) {
-    IconButton(onClick = onClick) { Icon(icon, label, Modifier.size(20.dp), tint = tint) }
+    PageBarIcon(icon, label, onClick, tint = tint, size = 20.dp)
 }
