@@ -294,19 +294,3 @@ internal fun AppStartRow(
 
 /** The most room an [AppStartRow] gives its action, so the line beside it keeps its words. */
 internal val ActionMaxWidth = 96.dp
-
-/**
- * A soft pill on My apps: [RowPill] in its small, soft look with no touch area beyond what is
- * drawn. An optional 15dp [icon] leads the words. While [busy] a loader takes the icon's place and
- * the pill takes no taps; the caller says what it is doing in [text].
- *
- * AskFeedback.kt and AskSections.kt still call this; they move to [RowPill] themselves.
- */
-@Composable
-internal fun SoftPill(
-    text: String,
-    icon: ImageVector? = null,
-    onClick: () -> Unit,
-    busy: Boolean = false,
-    modifier: Modifier = Modifier,
-) = RowPill(text, PillKind.SOFT, busy, modifier, icon, size = PillSize.SMALL, touchTarget = false, onClick = onClick)

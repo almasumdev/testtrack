@@ -90,7 +90,7 @@ fun CrewOpenTab(
                     guide.onAllow,
                     Modifier.padding(horizontal = Gutter),
                     icon = Lucide.Moon,
-                    trailing = { LookOnlyPill("Allow", PillKind.SOFT, guide.onAllow) },
+                    trailing = { RowPill("Allow", PillKind.SOFT, touchTarget = false, onClick = guide.onAllow) },
                 )
             }
         }

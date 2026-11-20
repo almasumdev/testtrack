@@ -127,16 +127,6 @@ fun TestingNotifications(modifier: Modifier = Modifier) {
     }
 }
 
-/** A row's pill with no 48dp of its own: the row around it is the target. Still used by CrewOpenTab; wave 3 moves it to [RowPill]. */
-@Composable
-internal fun LookOnlyPill(
-    label: String,
-    kind: PillKind,
-    onClick: () -> Unit,
-) {
-    RowPill(label, kind, touchTarget = false, onClick = onClick)
-}
-
 private fun wasAsked(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(ASKED, false)
 
 private fun saveAsked(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit { putBoolean(ASKED, true) }

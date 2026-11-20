@@ -11,19 +11,15 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -241,7 +237,8 @@ private fun RequestFooter(
             FooterRow(lineTop) {
                 Headline("${counts.toCheck} waiting for you", t.text, compact, Modifier.weight(1f))
                 Spacer(Modifier.width(12.dp))
-                CheckPill(onCheck)
+                // Drawn as the filled Button it was: 40dp tall, the theme's primary fill.
+                RowPill("Check", PillKind.PRIMARY, size = PillSize.SMALL, touchTarget = false, minHeight = 40.dp, onClick = onCheck)
             }
         RequestFoot.ASK_AGAIN ->
             Box(Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.CenterEnd) {
@@ -289,26 +286,6 @@ private fun Headline(
             fontWeight = FontWeight.Medium,
             color = tone,
         )
-    }
-}
-
-/** The filled button that takes the owner to the reviews waiting for them. */
-@Composable
-private fun CheckPill(onClick: () -> Unit) {
-    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-        Button(
-            onClick = onClick,
-            modifier = Modifier.heightIn(min = 32.dp),
-            shape = RoundedCornerShape(percent = 50),
-            elevation = null,
-            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 7.dp),
-        ) {
-            Text(
-                "Check",
-                style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.5.sp, lineHeight = 16.sp),
-                fontWeight = FontWeight.Bold,
-            )
-        }
     }
 }
 

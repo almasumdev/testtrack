@@ -74,8 +74,9 @@ internal fun Tone.soft(): Color =
 /**
  * How big a read-only chip is drawn. [SMALL] is a fact under a profile's name, [MEDIUM] a status
  * on a row, [LARGE] a fact sized with [ActionChip] so a row does not change size between the two.
+ * [FACT] is a fact under an app's name on its page: 13sp words, a 14dp icon, 11 by 5 inside.
  */
-enum class ChipSize { SMALL, MEDIUM, LARGE }
+enum class ChipSize { SMALL, MEDIUM, LARGE, FACT }
 
 /** One status, said in a word or two, in the one chip style every state uses. Nothing to tap. */
 @Composable
@@ -92,12 +93,14 @@ internal fun StatusChip(
             ChipSize.SMALL -> PaddingValues(start = if (icon != null) 8.dp else 10.dp, end = 10.dp, top = 4.dp, bottom = 4.dp)
             ChipSize.MEDIUM -> PaddingValues(horizontal = 10.dp, vertical = 4.dp)
             ChipSize.LARGE -> PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            ChipSize.FACT -> PaddingValues(horizontal = 11.dp, vertical = 5.dp)
         }
     val style =
         when (size) {
             ChipSize.SMALL -> MaterialTheme.typography.labelMedium.copy(fontSize = 11.5.sp)
             ChipSize.MEDIUM -> MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp)
             ChipSize.LARGE -> MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp)
+            ChipSize.FACT -> MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp)
         }
     Row(
         modifier
@@ -111,10 +114,10 @@ internal fun StatusChip(
                 when (size) {
                     ChipSize.SMALL -> 12.dp
                     ChipSize.MEDIUM -> 13.dp
-                    ChipSize.LARGE -> 14.dp
+                    ChipSize.LARGE, ChipSize.FACT -> 14.dp
                 }
             Icon(icon, null, Modifier.size(glyph), tint = ink)
-            Spacer(Modifier.width(if (size == ChipSize.LARGE) 6.dp else 5.dp))
+            Spacer(Modifier.width(if (size == ChipSize.LARGE || size == ChipSize.FACT) 6.dp else 5.dp))
         }
         Text(
             text,

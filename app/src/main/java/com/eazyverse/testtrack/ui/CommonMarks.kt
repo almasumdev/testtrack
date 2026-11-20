@@ -182,32 +182,6 @@ fun Avatar(
 }
 
 /**
- * Scannable down a column of twelve without reading any of them.
- *
- * Sized to match [ActionChip][com.eazyverse.testtrack.ui.ActionChip] and [Working] exactly, same
- * corner, same padding, same bumped-up text size, so a row does not visibly grow or shrink as it
- * moves between an actionable state and a settled one. It used to be a size of its own, smaller all
- * round, and a list mid scroll read as buttons of two different sizes rather than one list.
- */
-@Composable
-fun Pill(
-    text: String,
-    tone: Color,
-    background: Color,
-) {
-    Text(
-        text,
-        Modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .background(background)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        style = MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp),
-        fontWeight = FontWeight.SemiBold,
-        color = tone,
-    )
-}
-
-/**
  * A [TextButton] enforces Material's ~40dp minimum touch height no matter what contentPadding
  * says, which is too tall for a row meant to hold five or six of these side by side. Built on a
  * plain clickable [Box] instead, the same shape the [reportDetails]-reading "Reported" chip

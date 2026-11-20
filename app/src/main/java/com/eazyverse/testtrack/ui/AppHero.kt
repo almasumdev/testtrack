@@ -25,8 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -90,11 +88,11 @@ internal fun AppHero(
         )
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            AppChip(
-                if (live) Lucide.Globe else Lucide.FlaskConical,
+            StatusChip(
                 if (live) "Live" else "Closed test",
-                MaterialTheme.colorScheme.onSurfaceVariant,
-                Status.neutralSoft,
+                Tone.QUIET,
+                if (live) Lucide.Globe else Lucide.FlaskConical,
+                size = ChipSize.FACT,
             )
             chips()
         }
@@ -143,25 +141,4 @@ internal fun EditBadge(modifier: Modifier = Modifier) {
             .border(1.dp, Tt.colors.glassBorder, CircleShape),
         contentAlignment = Alignment.Center,
     ) { Icon(Lucide.Pencil, null, Modifier.size(15.dp), tint = Tt.colors.accentInk) }
-}
-
-/** A small fact about an app, as its page shows them: where it is found, whether it is real. */
-@Composable
-internal fun AppChip(
-    icon: ImageVector,
-    text: String,
-    tone: Color,
-    background: Color,
-) {
-    Row(
-        Modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .background(background)
-            .padding(horizontal = 11.dp, vertical = 5.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, null, Modifier.size(14.dp), tint = tone)
-        Spacer(Modifier.width(6.dp))
-        Text(text, style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp), fontWeight = FontWeight.SemiBold, color = tone)
-    }
 }

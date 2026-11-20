@@ -194,9 +194,9 @@ internal fun PickedApp(
         },
         chips = {
             if (testBuild) {
-                AppChip(Lucide.TriangleAlert, "Test build", Status.missed, Status.missedSoft)
+                StatusChip("Test build", Tone.BAD, Lucide.TriangleAlert, size = ChipSize.FACT)
             } else {
-                AppChip(Lucide.Clock, "Not checked yet", Status.short, Status.shortSoft)
+                StatusChip("Not checked yet", Tone.WARN, Lucide.Clock, size = ChipSize.FACT)
             }
         },
         below = {

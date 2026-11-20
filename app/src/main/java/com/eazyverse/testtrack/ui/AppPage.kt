@@ -244,9 +244,9 @@ private fun AppPageHero(
         icon = { AppMark(app.pkg, app.name, app.icon, size = AppHeroIcon, ownIcon = true) },
         chips = {
             if (app.verified) {
-                AppChip(Lucide.BadgeCheck, verifiedChip(app), Status.posted, Status.postedSoft)
+                StatusChip(verifiedChip(app), Tone.OK, Lucide.BadgeCheck, size = ChipSize.FACT)
             } else {
-                AppChip(Lucide.CircleAlert, verifiedChip(app), Status.short, Status.shortSoft)
+                StatusChip(verifiedChip(app), Tone.WARN, Lucide.CircleAlert, size = ChipSize.FACT)
             }
         },
         // A closed test can say it's live now; a live app has only its Live chip.

@@ -54,8 +54,11 @@ internal fun Modifier.clickableRole(
     onClick: () -> Unit,
 ): Modifier = semantics(mergeDescendants = true) { contentDescription = label }.clickable(onClick = onClick)
 
-/** The three looks of a row's own button: the night's main action, a step, or an answer. */
-enum class PillKind { SOLID, SOFT, GHOST, OK }
+/**
+ * The looks of a row's own button: the night's main action, a step, or an answer. [PRIMARY] is the
+ * theme's primary fill, the colour of [Primary], such as the request card's Check.
+ */
+enum class PillKind { SOLID, SOFT, GHOST, OK, PRIMARY }
 
 /**
  * How big a [RowPill] is drawn. [ROW] is a crew row's 34dp pill with one line of 14sp words.
@@ -82,6 +85,8 @@ internal fun RowPill(
     size: PillSize = PillSize.ROW,
     /** False where the pill is only as big as it is drawn, with no 48dp touch area around it. */
     touchTarget: Boolean = true,
+    /** The least it is drawn tall: 34dp on a row and 32dp when [size] is SMALL unless given. */
+    minHeight: Dp? = null,
     onClick: () -> Unit,
 ) {
     val (bg, fg) =
@@ -90,13 +95,14 @@ internal fun RowPill(
             PillKind.SOFT -> Tt.colors.tile to Tt.colors.accentInk
             PillKind.GHOST -> Tt.colors.bg to Tt.colors.accentInk
             PillKind.OK -> Status.posted to Tt.colors.inkOn(Status.posted)
+            PillKind.PRIMARY -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
         }
     val small = size == PillSize.SMALL
     // 34 to look at, 48 to touch, the way an icon button is built.
     Box(
         modifier
             .then(if (touchTarget) Modifier.minimumInteractiveComponentSize() else Modifier)
-            .heightIn(min = if (small) 32.dp else 34.dp)
+            .heightIn(min = minHeight ?: if (small) 32.dp else 34.dp)
             .clip(shape)
             .background(bg)
             .then(if (kind == PillKind.GHOST) Modifier.border(1.5.dp, Tt.colors.glassBorderStrong, shape) else Modifier)
