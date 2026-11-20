@@ -19,8 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Coins
 import com.composables.icons.lucide.EyeOff
-import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Text
 import com.eazyverse.testtrack.domain.ChatThread
@@ -129,7 +129,7 @@ internal fun SendProof(
                     ThreadNote(
                         noteText("No review box, half pay"),
                         NoteTone.INFO,
-                        Lucide.Info,
+                        Lucide.Coins,
                         more =
                             strong(
                                 "Play shows you no review box, so you send it here. It pays $pays and needs ${job.needsChars}+ characters.",

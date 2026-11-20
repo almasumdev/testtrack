@@ -5,8 +5,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.CheckCheck
 import com.composables.icons.lucide.CircleCheck
+import com.composables.icons.lucide.Coins
 import com.composables.icons.lucide.Hourglass
-import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Scale
 import com.composables.icons.lucide.Smartphone
@@ -137,7 +137,7 @@ private fun SubmittedNote(job: ReviewJob) {
         ThreadNote(
             noteText("Sent here, half pay"),
             NoteTone.INFO,
-            Lucide.Info,
+            Lucide.Coins,
             more = strong("Play showed you no review box, so it pays $pays.", pays),
             moreTitle = "Half pay",
         )

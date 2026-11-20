@@ -3,7 +3,7 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.CircleCheck
-import com.composables.icons.lucide.Info
+import com.composables.icons.lucide.Coins
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Scale
 import com.composables.icons.lucide.Text
@@ -73,7 +73,7 @@ internal fun ReviewThread(
             ThreadNote(
                 noteText("No review box, half pay"),
                 NoteTone.INFO,
-                Lucide.Info,
+                Lucide.Coins,
                 more =
                     strong(
                         "Play showed them no review box, so they sent it here. It pays ${review.pays} tix and the other $back tix come back to you.",
