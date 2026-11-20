@@ -90,6 +90,9 @@ internal fun AboutFields(
         label = "Full description",
         singleLine = false,
         minLines = 3,
+        // No cap: it grows with the text and the page scrolls.
+        maxLines = Int.MAX_VALUE,
+        keepInView = true,
         maxLength = FeedRules.FULL_DESC_MAX,
         capitalization = KeyboardCapitalization.Sentences,
         // A new line, not Done: the full description has paragraphs.

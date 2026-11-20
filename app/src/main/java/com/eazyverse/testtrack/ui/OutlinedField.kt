@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -23,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,8 +35,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +48,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.CircleAlert
@@ -93,6 +100,11 @@ internal fun OutlinedField(
      * keyboard away and then runs it if given; Next moves to the field below unless it is given.
      */
     onImeAction: (() -> Unit)? = null,
+    /**
+     * For a box that grows inside a page that scrolls: while it has focus and its text changes, the
+     * page scrolls so the box's bottom edge, its counter and a little room stay in view.
+     */
+    keepInView: Boolean = false,
 ) {
     val t = Tt.colors
     val focus = LocalFocusManager.current
@@ -152,7 +164,22 @@ internal fun OutlinedField(
                 ),
         )
     val labelDown = !focused && value.isEmpty()
-    Column(modifier.fillMaxWidth().then(if (enabled) Modifier else Modifier.alpha(DISABLED_ALPHA))) {
+    val requester = remember { BringIntoViewRequester() }
+    var size by remember { mutableStateOf(IntSize.Zero) }
+    val room = with(LocalDensity.current) { 12.dp.toPx() }
+    if (keepInView) {
+        LaunchedEffect(value, focused) {
+            if (focused && size.height > 0) {
+                requester.bringIntoView(Rect(0f, 0f, size.width.toFloat(), size.height + room))
+            }
+        }
+    }
+    Column(
+        modifier
+            .fillMaxWidth()
+            .then(if (keepInView) Modifier.onSizeChanged { size = it }.bringIntoViewRequester(requester) else Modifier)
+            .then(if (enabled) Modifier else Modifier.alpha(DISABLED_ALPHA)),
+    ) {
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
