@@ -66,7 +66,7 @@ internal fun CrewRunSummary(
                 Column(Modifier.weight(1f)) {
                     Text("$left", style = tileStyle(48f, 50f, FontWeight.Medium), color = Tt.colors.text)
                     Spacer(Modifier.height(4.dp))
-                    Text("apps left tonight", style = tileStyle(13f, 18f, FontWeight.Normal), color = Tt.colors.text2)
+                    Text("apps left tonight", style = TextStyles.PageLine, color = Tt.colors.text2)
                 }
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                     Row(verticalAlignment = Alignment.Bottom) {
@@ -74,7 +74,7 @@ internal fun CrewRunSummary(
                         Text(" / $total", style = tileStyle(17f, 26f, FontWeight.Normal), color = Tt.colors.text3)
                     }
                     Spacer(Modifier.height(7.dp))
-                    Text(if (reported) "completed" else "opened", style = tileStyle(13f, 18f, FontWeight.Normal), color = Tt.colors.text3)
+                    Text(if (reported) "completed" else "opened", style = TextStyles.PageLine, color = Tt.colors.text3)
                 }
             }
         } else {
@@ -98,7 +98,7 @@ internal fun CrewRunSummary(
                         "${going.size} ${pluralOf(going.size, "crew")}, " +
                             "$nights ${pluralOf(nights, "night")} to go"
                 },
-                style = tileStyle(13f, 18f, FontWeight.Normal),
+                style = TextStyles.PageLine,
                 color = Tt.colors.text3,
             )
         }

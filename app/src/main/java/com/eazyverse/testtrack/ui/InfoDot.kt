@@ -111,7 +111,6 @@ internal fun InfoDot(
 
 /** A status line's words: 13 on 18, medium; on the band, regular. */
 private val StatusWords = tileStyle(13f, 18f, FontWeight.Medium)
-private val BandWords = tileStyle(13f, 18f, FontWeight.Normal)
 private val StatusNote = tileStyle(12f, 17f, FontWeight.Normal)
 
 /**
@@ -159,7 +158,7 @@ internal fun StatusLine(
                     Text(
                         text,
                         Modifier.weight(1f, fill = false),
-                        style = if (band) BandWords else StatusWords,
+                        style = if (band) TextStyles.PageLine else StatusWords,
                         color =
                             if (band) {
                                 iconInk

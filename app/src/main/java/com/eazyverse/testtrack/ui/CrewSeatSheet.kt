@@ -123,13 +123,13 @@ private fun ColumnScope.CrewSeatList(
                 Row(Modifier.padding(horizontal = 2.dp), verticalAlignment = Alignment.Top) {
                     Icon(Lucide.TriangleAlert, null, Modifier.padding(top = 1.dp).size(16.dp), tint = t.warn)
                     Spacer(Modifier.width(8.dp))
-                    Text("Check your connection, then try again.", style = SeatNoteStyle, color = t.text2)
+                    Text("Check your connection, then try again.", style = TextStyles.PageLine, color = t.text2)
                 }
             apps.apps.isEmpty() ->
                 Text(
                     "Add the app you want tested. It needs a closed test on Play.",
                     Modifier.padding(horizontal = 2.dp),
-                    style = SeatNoteStyle,
+                    style = TextStyles.PageLine,
                     color = t.text2,
                 )
             else -> {
@@ -158,7 +158,7 @@ private fun ColumnScope.CrewSeatList(
                     Text(
                         "Can't go in now",
                         Modifier.padding(start = 2.dp, top = 16.dp, bottom = 8.dp),
-                        style = SeatNoteStyle.copy(fontSize = 13.sp, lineHeight = 16.sp),
+                        style = TextStyles.PageLine.copy(fontSize = 13.sp, lineHeight = 16.sp),
                         fontWeight = FontWeight.SemiBold,
                         color = t.text3,
                     )
@@ -184,5 +184,3 @@ private fun ColumnScope.CrewSeatList(
     }
     Spacer(Modifier.height(16.dp))
 }
-
-private val SeatNoteStyle = tileStyle(13f, 18f, FontWeight.Normal)

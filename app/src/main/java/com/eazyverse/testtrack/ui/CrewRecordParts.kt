@@ -420,7 +420,7 @@ internal fun ClearedNote(
             Spacer(Modifier.height(2.dp))
             Text(
                 "Nights, testers, apps and pictures are cleared $after after a crew ends. The result above stays.",
-                style = tileStyle(13f, 18f, FontWeight.Normal),
+                style = TextStyles.PageLine,
                 color = t.text3,
             )
         }

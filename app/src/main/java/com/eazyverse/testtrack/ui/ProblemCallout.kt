@@ -77,7 +77,6 @@ private val MarkGap = 4.dp
 private val DockGap = 8.dp
 
 private val TitleStyle = tileStyle(13.5f, 17f, FontWeight.SemiBold)
-private val SentenceStyle = tileStyle(13f, 18f, FontWeight.Normal)
 
 /** Where the callout goes, in window pixels, and where its caret points. */
 internal data class CalloutPlacement(
@@ -226,7 +225,7 @@ internal fun ProblemCallout(
                 Spacer(Modifier.width(9.dp))
                 Column {
                     Text(problem.title(app), style = TitleStyle, color = t.text)
-                    Text(problem.sentence(app), Modifier.padding(top = 1.dp), style = SentenceStyle, color = t.text2)
+                    Text(problem.sentence(app), Modifier.padding(top = 1.dp), style = TextStyles.PageLine, color = t.text2)
                 }
             }
         }

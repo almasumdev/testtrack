@@ -48,7 +48,7 @@ internal fun AppVerifyCard(
                     "Add this address to your closed track's testers, then tap Verify now."
                 },
                 Modifier.weight(1f, fill = false),
-                style = tileStyle(13f, 18f, FontWeight.Normal),
+                style = TextStyles.PageLine,
                 color = t.text2,
             )
             // The (i) in a 24dp slot, 2dp after the words, its round 22dp.
@@ -61,7 +61,7 @@ internal fun AppVerifyCard(
                 round = 22.dp,
                 slot = 24.dp,
             ) {
-                Text(ALSO_VERIFIED, style = tileStyle(13f, 18f, FontWeight.Normal), color = t.text2)
+                Text(ALSO_VERIFIED, style = TextStyles.PageLine, color = t.text2)
             }
         }
         if (!live) {

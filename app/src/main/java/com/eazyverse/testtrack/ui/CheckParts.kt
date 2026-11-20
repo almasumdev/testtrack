@@ -51,9 +51,6 @@ enum class CheckKind(
     DISPUTED("Disputed", Lucide.Scale),
 }
 
-/** What an (i) opens to: one plain sentence, in the callout's own ink. */
-internal val CheckLineStyle = tileStyle(13f, 18f, FontWeight.Normal)
-
 /** [text] with each of [phrases] in it drawn in the strongest ink, the way the design bolds a figure. */
 @Composable
 internal fun strong(
@@ -73,7 +70,7 @@ internal fun strong(
 /** An (i)'s callout: one plain sentence. */
 @Composable
 internal fun CalloutLine(text: AnnotatedString) {
-    Text(text, style = CheckLineStyle, color = Tt.colors.text2)
+    Text(text, style = TextStyles.PageLine, color = Tt.colors.text2)
 }
 
 /** A row of chips that wraps onto a second line rather than running off the page. */

@@ -62,7 +62,7 @@ internal fun CrewTileApp(
         Text(
             appName,
             if (trailing != null) Modifier.weight(1f) else Modifier,
-            style = tileStyle(13f, 18f, FontWeight.Normal),
+            style = TextStyles.PageLine,
             color = Tt.colors.text2,
             maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
