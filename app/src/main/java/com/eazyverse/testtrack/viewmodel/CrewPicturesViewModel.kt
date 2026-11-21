@@ -91,6 +91,10 @@ class CrewPicturesViewModel : ViewModel() {
     var gone by mutableStateOf(false)
         private set
 
+    /** The server refused this account the page (403 or 404), in its own words: not a connection problem. */
+    var refused by mutableStateOf<String?>(null)
+        private set
+
     fun load(crewId: String) {
         loading = true
         viewModelScope.launch {
@@ -123,13 +127,16 @@ class CrewPicturesViewModel : ViewModel() {
                         offDays = got.offDays.toSet(),
                     )
                 failed = null
+                refused = null
                 gone = false
             } catch (e: CancellationException) {
                 throw e
             } catch (e: ApiError) {
                 gone = e.status == 410 || e.code == DETAILS_GONE
-                failed = e.message
+                refused = if (!gone && isRefusal(e)) e.message else null
+                failed = if (refused == null) e.message else null
             } catch (_: Exception) {
+                refused = null
                 failed = "We could not reach TestTrack. Check your connection."
             } finally {
                 loading = false
@@ -141,3 +148,6 @@ class CrewPicturesViewModel : ViewModel() {
         const val DETAILS_GONE = "details_gone"
     }
 }
+
+/** The server answered and said no to this account (not allowed, or no such crew): trying again will not change it. */
+internal fun isRefusal(e: ApiError): Boolean = e.status == 403 || e.status == 404

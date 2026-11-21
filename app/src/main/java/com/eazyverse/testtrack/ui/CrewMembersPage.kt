@@ -62,6 +62,7 @@ fun CrewMembersPage(
         crew = crew,
         nights = pictures.pictures,
         failed = pictures.failed,
+        refused = pictures.refused,
         gone = pruned || pictures.gone,
         onBack = onBack,
         onRetry = { pictures.load(id) },
@@ -79,6 +80,8 @@ fun CrewMembersBody(
     onBack: () -> Unit,
     onRetry: () -> Unit,
     now: Instant = Instant.now(),
+    /** The server said no to this account, in its words: shown as what it is, never as a bad connection. */
+    refused: String? = null,
 ) {
     val hour24 = DateFormat.is24HourFormat(LocalContext.current)
     var profile by remember { mutableStateOf<CrewTester?>(null) }
@@ -97,6 +100,17 @@ fun CrewMembersBody(
                         Prop.Calendar,
                         instantOf(crew?.detailsUntil)?.let { shortDate(it) }?.let { "Details cleared on $it" } ?: "Details cleared",
                         "Testers and pictures are cleared 3 days after a crew ends. The result stays on the crew page.",
+                        action = "Back to ${crew?.name ?: "the crew"}",
+                        onAction = onBack,
+                        failed = true,
+                    )
+                }
+            nights == null && refused != null ->
+                Box(page) {
+                    RobotState(
+                        Prop.Lock,
+                        "Testers aren't shown here",
+                        refused,
                         action = "Back to ${crew?.name ?: "the crew"}",
                         onAction = onBack,
                         failed = true,
