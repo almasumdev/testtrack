@@ -145,7 +145,7 @@ private fun ThemeOption(
                         .size(20.dp)
                         .clip(CircleShape)
                         .background(t.accent)
-                        .border(2.dp, t.glass, CircleShape),
+                        .border(2.dp, t.bg, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(Lucide.Check, null, Modifier.size(11.dp), tint = t.onAccent)
