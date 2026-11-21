@@ -118,7 +118,7 @@ object TextStyles {
     val FeedbackTitleCompact = TtTypography.titleMedium.copy(fontSize = 16.sp, lineHeight = 20.sp)
 
     /** The You page's name, its letter in the face, and the address under it. */
-    val ProfileName = TtTypography.titleLarge.copy(fontSize = 18.sp)
+    val ProfileName = TtTypography.titleLarge.copy(fontSize = 18.sp, lineHeight = 22.sp)
     val ProfileLetter = TtTypography.titleLarge.copy(fontSize = 23.sp)
     val ProfileEmail = TtTypography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 17.sp, letterSpacing = 0.sp)
 

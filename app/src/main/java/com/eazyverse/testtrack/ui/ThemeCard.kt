@@ -117,8 +117,8 @@ private fun ThemeOption(
             .padding(start = 6.dp, top = 6.dp, end = 6.dp, bottom = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // The chosen one in a 2dp ring, 2dp clear of the picture.
-        Box(Modifier.border(2.dp, ring, RoundedCornerShape(10.dp)).padding(4.dp)) {
+        // The chosen one in a 2dp ring, 2dp clear of the picture; 14 = the picture's 10 plus the 4 between, so the curves run parallel.
+        Box(Modifier.border(2.dp, ring, RoundedCornerShape(14.dp)).padding(4.dp)) {
             // A hairline round the thumbnail itself, or the light one melts into the light card.
             Box(
                 Modifier
