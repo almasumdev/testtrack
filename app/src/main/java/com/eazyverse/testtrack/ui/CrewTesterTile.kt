@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -202,43 +199,32 @@ private fun NightsRing(tester: CrewTester) {
     }
 }
 
-/** The testers page while it loads: the summary, the grid's shape, the heading and three tiles, or as many as asked. */
+/**
+ * The testers page while it loads: the summary, the grid's shape, the heading and three tiles, or
+ * as many as asked. [lead] stands in for the summary's bar, such as a line the page already knows,
+ * and [days] and [note] give the grid the night numbers and foot line the page's own grid has.
+ */
 @Composable
 internal fun TestersLoading(
     gridRows: Int = SKELETON_GRID_ROWS,
     tiles: Int = SKELETON_TILES,
+    lead: (@Composable () -> Unit)? = null,
+    days: Boolean = false,
+    note: String? = null,
 ) {
-    val t = Tt.colors
     Column(
         Modifier
             .fillMaxSize()
             .padding(start = Gutter, end = Gutter, top = 8.dp)
             .semantics(mergeDescendants = true) { contentDescription = "Loading the testers" },
     ) {
-        Skeleton(height = 18.dp, modifier = Modifier.fillMaxWidth(0.7f))
-        Spacer(Modifier.height(12.dp))
-        CrewCard(padding = PaddingValues(horizontal = 6.dp, vertical = 12.dp)) {
-            Box(Modifier.padding(start = 4.dp, bottom = 10.dp)) { Skeleton(width = 110.dp, height = 24.dp, corner = 12.dp) }
-            repeat(gridRows) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.width(26.dp)) { Skeleton(width = 24.dp, height = 24.dp, corner = 12.dp) }
-                    Row(Modifier.weight(1f)) {
-                        repeat(CrewRules.RUN_DAYS) {
-                            Box(Modifier.weight(1f).padding(horizontal = 0.5.dp, vertical = 1.dp)) {
-                                Box(
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .aspectRatio(1f)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(Status.upcoming)
-                                        .background(t.accentInk.copy(alpha = 0.07f)),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+        if (lead != null) {
+            lead()
+        } else {
+            Skeleton(height = 18.dp, modifier = Modifier.fillMaxWidth(0.7f))
+            Spacer(Modifier.height(12.dp))
         }
+        TrackingGridSkeleton(gridRows, days, note)
         Box(Modifier.padding(top = 20.dp, bottom = 10.dp)) { Skeleton(width = 80.dp, height = 18.dp) }
         repeat(tiles) { i ->
             if (i > 0) Spacer(Modifier.height(8.dp))

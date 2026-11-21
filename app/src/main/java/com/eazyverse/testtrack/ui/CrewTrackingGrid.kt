@@ -110,22 +110,7 @@ internal fun TrackingGrid(
                 }
             }
         }
-        GridRow(lead = {}) {
-            for (day in 1..nights) {
-                val now = day == today
-                Text(
-                    "$day",
-                    Modifier
-                        .weight(1f)
-                        .then(if (now) Modifier.background(lit, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)) else Modifier),
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp, lineHeight = 14.sp),
-                    fontWeight = if (now) FontWeight.Bold else FontWeight.Normal,
-                    color = if (now) t.accentInk else t.text4,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                )
-            }
-        }
+        NightNumbers(nights, today, lit)
         testers.forEach { tester ->
             // Rows are 24 apart, too tight for a 40 target on the face alone, so the whole row
             // (face and squares) opens who it is.
@@ -170,15 +155,83 @@ internal fun TrackingGrid(
         if (showCounts) {
             CountsRow(counts, short, today, lit)
         }
-        Row(Modifier.padding(start = 4.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Lucide.Info, null, Modifier.size(12.dp), tint = t.text4)
-            Spacer(Modifier.width(4.dp))
+        GridNote(note)
+    }
+}
+
+/**
+ * A [TrackingGrid] on its way, in the same card: the chip's pill and [rows] faces with their
+ * nights. With [days] the night numbers stand over them, and a [note] is the grid's own foot line,
+ * so a page that asks for both does not move when the grid arrives.
+ */
+@Composable
+internal fun TrackingGridSkeleton(
+    rows: Int,
+    days: Boolean = false,
+    note: String? = null,
+) {
+    val t = Tt.colors
+    CrewCard(padding = PaddingValues(horizontal = 6.dp, vertical = 12.dp)) {
+        Box(Modifier.padding(start = 4.dp, bottom = 10.dp)) { Skeleton(width = 110.dp, height = 24.dp, corner = 12.dp) }
+        if (days) NightNumbers(CrewRules.RUN_DAYS, today = 0, lit = Color.Transparent)
+        repeat(rows) {
+            GridRow(lead = { Skeleton(width = 24.dp, height = 24.dp, corner = 12.dp) }) {
+                repeat(CrewRules.RUN_DAYS) {
+                    Box(Modifier.weight(1f).padding(horizontal = 0.5.dp, vertical = 1.dp)) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Status.upcoming)
+                                .background(t.accentInk.copy(alpha = 0.07f)),
+                        )
+                    }
+                }
+            }
+        }
+        if (note != null) GridNote(note)
+    }
+}
+
+/** The night numbers over the squares, [today]'s lit and bold. */
+@Composable
+private fun NightNumbers(
+    nights: Int,
+    today: Int,
+    lit: Color,
+) {
+    val t = Tt.colors
+    GridRow(lead = {}) {
+        for (day in 1..nights) {
+            val now = day == today
             Text(
-                note,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.5.sp),
-                color = t.text4,
+                "$day",
+                Modifier
+                    .weight(1f)
+                    .then(if (now) Modifier.background(lit, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)) else Modifier),
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp, lineHeight = 14.sp),
+                fontWeight = if (now) FontWeight.Bold else FontWeight.Normal,
+                color = if (now) t.accentInk else t.text4,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
             )
         }
+    }
+}
+
+/** The quiet line at the grid's foot. */
+@Composable
+private fun GridNote(note: String) {
+    val t = Tt.colors
+    Row(Modifier.padding(start = 4.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(Lucide.Info, null, Modifier.size(12.dp), tint = t.text4)
+        Spacer(Modifier.width(4.dp))
+        Text(
+            note,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.5.sp),
+            color = t.text4,
+        )
     }
 }
 

@@ -3,11 +3,17 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -149,7 +156,15 @@ fun PrivateTestersBody(
                             failed = true,
                         )
                     }
-                results == null -> TestersLoading(gridRows = 2, tiles = 2)
+                // The list's own shape: the line over it is known already, so it is drawn as it is.
+                results == null ->
+                    TestersLoading(
+                        gridRows = 3,
+                        tiles = 4,
+                        lead = { if (crewName.isNotBlank()) PrivateNote(crewName, daysLeft) else PrivateNoteSkeleton() },
+                        days = true,
+                        note = PRIVATE_GRID_NOTE,
+                    )
                 results.shown.isEmpty() ->
                     RobotState(
                         Prop.Letter,
@@ -180,23 +195,13 @@ private fun PrivateTestersList(
     daysLeft: Int,
     onRemove: (PrivateTester) -> Unit,
 ) {
-    val t = Tt.colors
     val tiles = remember(results) { privateOrder(results.shown) }
     val testers = remember(tiles, results.runDays) { tiles.associate { it.id to privateTesterOf(it, results.runDays) } }
     // Only those who said yes have nights to draw.
     val rows = tiles.mapNotNull { testers[it.id]?.takeIf { row -> row.squares.isNotEmpty() } }
     var profile by remember { mutableStateOf<CrewTester?>(null) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 8.dp, bottom = 20.dp)) {
-        item {
-            IconLine(
-                Lucide.Lock,
-                t.text4,
-                AnnotatedString("Only you see this. ${privateEndsLine(crewName, daysLeft)}"),
-                tileStyle(12.5f, 17f, FontWeight.Normal),
-                t.text4,
-                Modifier.padding(horizontal = Gutter).padding(bottom = 12.dp),
-            )
-        }
+        item { PrivateNote(crewName, daysLeft, Modifier.padding(horizontal = Gutter)) }
         if (rows.isNotEmpty()) {
             item {
                 Box(Modifier.padding(horizontal = Gutter)) {
@@ -208,7 +213,7 @@ private fun PrivateTestersList(
                         onFace = { profile = it },
                         chip = { StatusChip(chip, tone) },
                         showCounts = false,
-                        note = "Opened or not, each night they were in",
+                        note = PRIVATE_GRID_NOTE,
                     )
                 }
             }
@@ -227,3 +232,36 @@ private fun PrivateTestersList(
     }
     profile?.let { CrewMemberProfile(it) { profile = null } }
 }
+
+/** The quiet line over the list: who sees it, and when testing ends. */
+@Composable
+private fun PrivateNote(
+    crewName: String,
+    daysLeft: Int,
+    modifier: Modifier = Modifier,
+) {
+    val t = Tt.colors
+    IconLine(
+        Lucide.Lock,
+        t.text4,
+        AnnotatedString("Only you see this. ${privateEndsLine(crewName, daysLeft)}"),
+        NoteStyle,
+        t.text4,
+        modifier.padding(bottom = 12.dp),
+    )
+}
+
+/** The quiet line before the crew is known: its lock, and a bar where the words go, one line high. */
+@Composable
+private fun PrivateNoteSkeleton() {
+    val line = with(LocalDensity.current) { NoteStyle.lineHeight.toDp() }
+    Row(Modifier.padding(bottom = 12.dp).height(line), verticalAlignment = Alignment.CenterVertically) {
+        Icon(Lucide.Lock, null, Modifier.size(14.dp), tint = Tt.colors.text4)
+        Spacer(Modifier.width(6.dp))
+        Skeleton(height = 11.dp, modifier = Modifier.fillMaxWidth(0.7f))
+    }
+}
+
+private val NoteStyle = tileStyle(12.5f, 17f, FontWeight.Normal)
+
+private const val PRIVATE_GRID_NOTE = "Opened or not, each night they were in"
