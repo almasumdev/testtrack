@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Bell
 import com.composables.icons.lucide.CirclePlay
 import com.composables.icons.lucide.Download
-import com.composables.icons.lucide.ExternalLink
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.Lucide
@@ -55,18 +54,20 @@ internal fun MeSettings(
 ) {
     val context = LocalContext.current
     val links = LocalUriHandler.current
-    val out: @Composable () -> Unit = { Icon(Lucide.ExternalLink, null, Modifier.size(17.dp), tint = Tt.colors.text4) }
 
     Column {
-        SectionHeading("Testing", top = 16.dp, style = TextStyles.SectionTitleStyle)
+        SectionHeading("Testing", top = MeHeadingTop, bottom = MeHeadingBottom)
         TileGroup(count = 2) { index, place ->
             if (index == 0) {
+                // Joined, it opens the group on the web; not yet, the join steps open here.
                 TileRow(
                     Lucide.Users,
                     "Testers group",
                     place,
                     subtitle = "So owners can add you to tests",
-                    value = if (group) "Joined" else "Join",
+                    status = if (group) "Joined" else "Not joined",
+                    statusTone = if (group) Tone.OK else Tone.WARN,
+                    end = if (group) RowEnd.OUT else RowEnd.PAGE,
                     onClick = onGroup,
                 )
             } else {
@@ -75,7 +76,9 @@ internal fun MeSettings(
                     "Notifications",
                     place,
                     subtitle = "Crew news and nightly reminders",
-                    value = if (notifications) "On" else "Off",
+                    status = if (notifications) "On" else "Off",
+                    statusTone = if (notifications) Tone.OK else Tone.WARN,
+                    end = RowEnd.OUT,
                     onClick = { openNotificationSettings(context) },
                 )
             }
@@ -85,20 +88,24 @@ internal fun MeSettings(
 
         SupportGroup(onAbout)
 
-        SectionHeading("Account", top = 16.dp, style = TextStyles.SectionTitleStyle)
-        TileGroup(count = 3) { index, place ->
-            when (index) {
-                0 -> TileRow(Lucide.Pencil, "Edit profile", place, subtitle = "Your name and picture", onClick = onEdit)
-                1 ->
-                    TileRow(
-                        Lucide.Trash2,
-                        "Request account deletion",
-                        place,
-                        subtitle = "What is removed, and what is kept",
-                        trailing = out,
-                    ) { links.openUri("$SITE/delete-account") }
-                else -> TileRow(Lucide.LogOut, "Sign out", place, danger = true, onClick = onSignOut)
+        SectionHeading("Account", top = MeHeadingTop, bottom = MeHeadingBottom)
+        TileGroup(count = 2) { index, place ->
+            if (index == 0) {
+                TileRow(Lucide.Pencil, "Edit profile", place, subtitle = "Your name and picture", end = RowEnd.PAGE, onClick = onEdit)
+            } else {
+                TileRow(
+                    Lucide.Trash2,
+                    "Request account deletion",
+                    place,
+                    subtitle = "What is removed, and what is kept",
+                    end = RowEnd.OUT,
+                ) { links.openUri("$SITE/delete-account") }
             }
+        }
+        // Sign out on its own, a step apart, so it is never read as one more account row.
+        Spacer(Modifier.height(8.dp))
+        TileGroup(count = 1) { _, place ->
+            TileRow(Lucide.LogOut, "Sign out", place, danger = true, onClick = onSignOut)
         }
     }
 }
@@ -110,12 +117,11 @@ internal fun MeSettings(
 @Composable
 internal fun SupportGroup(onAbout: () -> Unit) {
     val context = LocalContext.current
-    val out: @Composable () -> Unit = { Icon(Lucide.ExternalLink, null, Modifier.size(17.dp), tint = Tt.colors.text4) }
     val gold = Tt.colors.gold
     var videos by remember { mutableStateOf(false) }
     if (videos) HowToSheet(onDismiss = { videos = false })
     Column {
-        SectionHeading("Support", top = 16.dp, style = TextStyles.SectionTitleStyle)
+        SectionHeading("Support", top = MeHeadingTop, bottom = MeHeadingBottom)
         // Left out on a phone with no mail app, where it could only open a dead end.
         val mailable = remember { canMail(context) }
         // The update row only while a newer version exists; without one the group is as it was.
@@ -129,6 +135,7 @@ internal fun SupportGroup(onAbout: () -> Unit) {
                         "How-to videos",
                         place,
                         subtitle = "Step by step, in English and Bangla",
+                        end = RowEnd.PAGE,
                         onClick = { videos = true },
                     )
                 SupportRow.ABOUT ->
@@ -137,6 +144,7 @@ internal fun SupportGroup(onAbout: () -> Unit) {
                         "About TestTrack",
                         place,
                         subtitle = "Who made it, and more apps",
+                        end = RowEnd.PAGE,
                         onClick = onAbout,
                     )
                 SupportRow.UPDATE -> update?.let { UpdateRow(it, place, Lucide.Download) }
@@ -153,7 +161,7 @@ internal fun SupportGroup(onAbout: () -> Unit) {
                                 withStyle(SpanStyle(color = gold)) { append("★★★★★") }
                                 append(" on Google Play")
                             },
-                        trailing = out,
+                        end = RowEnd.OUT,
                     ) {
                         ReviewMoment.markRated(context)
                         openPlayListing(context)
@@ -164,12 +172,16 @@ internal fun SupportGroup(onAbout: () -> Unit) {
                         "Send feedback",
                         place,
                         subtitle = "Something broken, or missing",
-                        trailing = out,
+                        end = RowEnd.OUT,
                     ) { sendFeedback(context) }
             }
         }
     }
 }
+
+/** The space over and under each heading on the You page. */
+internal val MeHeadingTop = 22.dp
+internal val MeHeadingBottom = 8.dp
 
 // No privacy row: the About page carries the policy, in its footer.
 private enum class SupportRow { VIDEOS, ABOUT, UPDATE, RATE, FEEDBACK }

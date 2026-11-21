@@ -62,12 +62,6 @@ object TextStyles {
      */
     val BlockHeadingStyle = TtTypography.titleMedium.copy(fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.Bold)
 
-    /**
-     * The Me tab's section headings: 16 bold on Material's title, whose 24 line gives the space
-     * above and below the words.
-     */
-    val SectionTitleStyle = TtTypography.titleMedium.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold)
-
     /** The app page's small "Earlier" heading: 12.5 on 16, semibold, on Material's label. */
     val EarlierStyle = TtTypography.labelMedium.copy(fontSize = 12.5.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
 
@@ -88,6 +82,21 @@ object TextStyles {
 
     /** The line under a [RowTitle]: 12.5 on 16, on Material's small body. */
     val RowLine = TtTypography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp)
+
+    /** A settings row's title: 15 on 19, semibold. */
+    val SettingTitle = tileStyle(15f, 19f, FontWeight.SemiBold)
+
+    /** The line under a [SettingTitle]: 12.5 on 17. */
+    val SettingLine = tileStyle(12.5f, 17f, FontWeight.Normal)
+
+    /** A record card's figure: 19 on 22, bold, tabular. */
+    val RecordValue = tileStyle(19f, 22f, FontWeight.Bold).copy(fontFeatureSettings = "tnum")
+
+    /** What a record card's figure counts: 12 on 14, medium. */
+    val RecordLabel = tileStyle(12f, 14f, FontWeight.Medium)
+
+    /** A theme's name under its picture: 13 on 16, semibold. */
+    val ChoiceLabel = tileStyle(13f, 16f, FontWeight.SemiBold)
 
     /** A small quiet label, such as the ends of a crew's progress bar: 12.5, on Material's small body. */
     val SmallLine = TtTypography.bodySmall.copy(fontSize = 12.5.sp)
@@ -111,7 +120,7 @@ object TextStyles {
     /** The You page's name, its letter in the face, and the address under it. */
     val ProfileName = TtTypography.titleLarge.copy(fontSize = 18.sp)
     val ProfileLetter = TtTypography.titleLarge.copy(fontSize = 23.sp)
-    val ProfileEmail = TtTypography.bodyMedium.copy(fontSize = 13.sp)
+    val ProfileEmail = TtTypography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 17.sp, letterSpacing = 0.sp)
 
     /** The figure in a small corner [CountBadge]: 10.5 on 13, tabular. */
     val SmallBadge = TtTypography.bodyMedium.copy(fontSize = 10.5.sp, lineHeight = 13.sp).tabular()

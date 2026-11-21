@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -154,8 +155,10 @@ fun MeBody(
 ) {
     if (signedOut) {
         // The sign-in ask, then what needs no account: About, rating and feedback, and the version.
+        val list = rememberLazyListState()
         LazyColumn(
-            Modifier.fillMaxSize(),
+            Modifier.fillMaxSize().scrollEdgeFade(list),
+            state = list,
             contentPadding = PaddingValues(start = Gutter, end = Gutter, bottom = FootRoom + dockRoom()),
         ) {
             item {
@@ -184,12 +187,14 @@ fun MeBody(
     // Until it arrives the account rows are already there; only the person and figures shimmer.
     val shown = profile.takeUnless { DebugLooks.holdLoading }
 
+    val list = rememberLazyListState()
     LazyColumn(
-        Modifier.fillMaxSize(),
+        Modifier.fillMaxSize().scrollEdgeFade(list),
+        state = list,
         contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = FootRoom + dockRoom()),
     ) {
         item { LoadSwap(shown == null) { if (it) WhoLoading() else shown?.let { p -> Who(p, onEdit) } } }
-        item { SectionHeading("Your record", top = 16.dp, style = TextStyles.SectionTitleStyle) }
+        item { SectionHeading("Your record", top = MeHeadingTop, bottom = MeHeadingBottom) }
         item {
             LoadSwap(shown == null) { waiting ->
                 if (waiting || shown == null) return@LoadSwap RecordGridLoading()
@@ -220,7 +225,7 @@ fun MeBody(
 }
 
 /**
- * The person: the face on the left, the name and address beside it, the small facts under both.
+ * The person: the face on the left, the name, address and small facts beside it.
  *
  * Straight on the page rather than in a box, so the points under it are the one boxed thing at the
  * top and the eye goes there next. The face is the part that does something, and the pencil on it
@@ -233,74 +238,72 @@ private fun Who(
     onEdit: () -> Unit,
 ) {
     val t = Tt.colors
-    Column(Modifier.padding(horizontal = 2.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // The badge sits outside the clip, or the circle cuts the pencil in half.
-            Box {
-                Box(
-                    Modifier
-                        .size(FaceSize)
-                        .clip(CircleShape)
-                        .clickableRole("Edit profile", onEdit)
-                        .background(t.glass)
-                        .border(1.dp, t.glassBorder, CircleShape)
-                        .padding(3.dp),
-                ) {
-                    Avatar(
-                        profile.photoUrl,
-                        initialOf(profile.displayName),
-                        size = FaceSize - 6.dp,
-                        letterStyle = TextStyles.ProfileLetter,
-                    )
-                }
-                Box(
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .clickable(onClick = onEdit)
-                        .background(t.glass)
-                        .padding(2.dp)
-                        .clip(CircleShape)
-                        .background(t.accent),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Lucide.Pencil, "Edit profile", Modifier.size(11.dp), tint = t.onAccent)
-                }
+    Row(Modifier.padding(start = 2.dp, top = 2.dp, end = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+        // The badge sits outside the clip, or the circle cuts the pencil in half.
+        Box {
+            Box(
+                Modifier
+                    .size(FaceSize)
+                    .clip(CircleShape)
+                    .clickableRole("Edit profile", onEdit)
+                    .background(t.glass)
+                    .border(1.dp, t.glassBorder, CircleShape)
+                    .padding(3.dp),
+            ) {
+                Avatar(
+                    profile.photoUrl,
+                    initialOf(profile.displayName),
+                    size = FaceSize - 6.dp,
+                    letterStyle = TextStyles.ProfileLetter,
+                )
             }
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    profile.displayName.ifBlank { profile.email.substringBefore('@') },
-                    style = TextStyles.ProfileName,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    profile.email,
-                    style = TextStyles.ProfileEmail,
-                    color = t.text3,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            Box(
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onEdit)
+                    .background(t.glass)
+                    .padding(2.dp)
+                    .clip(CircleShape)
+                    .background(t.accent),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Lucide.Pencil, "Edit profile", Modifier.size(10.dp), tint = t.onAccent)
             }
         }
-        // The facts on a row of their own under the name, full width and small, so the name and
-        // the address keep the column beside the face to themselves.
-        Spacer(Modifier.height(14.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            memberSince(profile.joinedAt)?.let { StatusChip(it, Tone.QUIET, Lucide.CalendarDays, size = ChipSize.SMALL) }
-            localTime(profile.timezone)?.let { StatusChip(it, Tone.QUIET, Lucide.Clock, size = ChipSize.SMALL) }
+        Spacer(Modifier.width(WhoGap))
+        Column(Modifier.weight(1f)) {
+            Text(
+                profile.displayName.ifBlank { profile.email.substringBefore('@') },
+                style = TextStyles.ProfileName,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                profile.email,
+                style = TextStyles.ProfileEmail,
+                color = t.text3,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(8.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                memberSince(profile.joinedAt)?.let { StatusChip(it, Tone.QUIET, Lucide.CalendarDays, size = ChipSize.SMALL) }
+                localTime(profile.timezone)?.let { StatusChip(it, Tone.QUIET, Lucide.Clock, size = ChipSize.SMALL) }
+            }
         }
     }
 }
 
 internal val FaceSize = 64.dp
+
+/** Between the face and the words beside it. */
+internal val WhoGap = 14.dp
 
 /** "Since Sep 2026", from the server's timestamp, or null if it cannot be read. */
 private fun memberSince(joinedAt: String): String? =
@@ -338,14 +341,16 @@ fun ordinal(place: Int): String {
 /** Under the version at the foot of the page: twice the gutter, so it does not sit on the dock. */
 private val FootRoom = Gutter * 2
 
+/** The version line's words: 12 on 16, medium. */
+private val VersionStyle = tileStyle(12f, 16f, FontWeight.Medium)
+
 /** The running version, quietly, at the foot: the short form only. */
 @Composable
 private fun VersionLine() {
     Text(
         "v${BuildConfig.VERSION_NAME}",
-        Modifier.fillMaxWidth().padding(top = 12.dp),
-        style = TextStyles.EarlierStyle,
-        fontWeight = FontWeight.Medium,
+        Modifier.fillMaxWidth().padding(top = 18.dp),
+        style = VersionStyle,
         color = Tt.colors.text4,
         textAlign = TextAlign.Center,
     )

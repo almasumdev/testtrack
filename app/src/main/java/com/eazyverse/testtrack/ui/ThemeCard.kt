@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -35,7 +34,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.SunMoon
@@ -50,23 +48,24 @@ import com.eazyverse.testtrack.viewmodel.ThemeMode
  * Appearance on the You page: a theme card without a colour row, because TestTrack has the one
  * palette.
  *
- * The app in miniature in each theme, its name under it, and a ring with a tick round the one in
- * use. System shows both, split corner to corner, because it is both depending on the phone. It
+ * The app in miniature in each theme, its name under it, and a ring round the one in use with a
+ * tick before its name. System shows both, split corner to corner, because it is both depending on the phone. It
  * needs no account, so it is on the page whether or not anybody is signed in.
  */
 @Composable
 internal fun AppearanceGroup() {
     val context = LocalContext.current
     val t = Tt.colors
-    val shape = TilePlace.ONLY.shape()
+    // The hairline tile's corner and line, so it sits with the record cards and the rows round it.
+    val shape = RoundedCornerShape(TileRadius)
     Column {
-        SectionHeading("Appearance", top = 16.dp, style = TextStyles.SectionTitleStyle)
+        SectionHeading("Appearance", top = MeHeadingTop, bottom = MeHeadingBottom)
         Column(
             Modifier
                 .fillMaxWidth()
                 .clip(shape)
                 .background(t.glass)
-                .border(1.dp, t.glassBorder, shape)
+                .border(1.dp, t.cardLine, shape)
                 .padding(6.dp),
         ) {
             // Laid out like a settings row, so the card reads as one of the rows that opens up.
@@ -113,55 +112,47 @@ private fun ThemeOption(
     // Inset from the card's corner by its 6 of padding, so the two curves run parallel.
     Column(
         modifier
-            .clip(RoundedCornerShape(TileRadius))
+            .clip(RoundedCornerShape(TileRadius - 6.dp))
             .selectable(selected, role = Role.RadioButton, onClick = onClick)
             .padding(start = 6.dp, top = 6.dp, end = 6.dp, bottom = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box {
-            Box(Modifier.border(2.dp, ring, RoundedCornerShape(14.dp)).padding(3.dp)) {
-                // A hairline round the thumbnail itself, or the light one melts into the light card.
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .border(1.dp, t.glassBorder, RoundedCornerShape(10.dp)),
-                ) {
-                    when (mode) {
-                        ThemeMode.LIGHT -> MiniScreen(OceanLight)
-                        ThemeMode.DARK -> MiniScreen(OceanDark)
-                        ThemeMode.SYSTEM -> {
-                            MiniScreen(OceanLight)
-                            MiniScreen(OceanDark, Modifier.clip(LowerRightHalf))
-                        }
+        // The chosen one in a 2dp ring, 2dp clear of the picture.
+        Box(Modifier.border(2.dp, ring, RoundedCornerShape(10.dp)).padding(4.dp)) {
+            // A hairline round the thumbnail itself, or the light one melts into the light card.
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .border(1.dp, t.glassBorder, RoundedCornerShape(10.dp)),
+            ) {
+                when (mode) {
+                    ThemeMode.LIGHT -> MiniScreen(OceanLight)
+                    ThemeMode.DARK -> MiniScreen(OceanDark)
+                    ThemeMode.SYSTEM -> {
+                        MiniScreen(OceanLight)
+                        MiniScreen(OceanDark, Modifier.clip(LowerRightHalf))
                     }
-                }
-            }
-            if (selected) {
-                Box(
-                    Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = 5.dp, y = (-5).dp)
-                        .size(20.dp)
-                        .clip(CircleShape)
-                        .background(t.accent)
-                        .border(2.dp, t.glass, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Lucide.Check, null, Modifier.size(11.dp), tint = t.onAccent)
                 }
             }
         }
         Spacer(Modifier.height(8.dp))
-        Text(
-            mode.label,
-            fontSize = 13.5.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-            color = if (selected) t.accentInk else t.text2,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        val ink = if (selected) t.accentInk else t.text2
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (selected) {
+                Icon(Lucide.Check, null, Modifier.size(13.dp), tint = ink)
+                Spacer(Modifier.width(4.dp))
+            }
+            Text(
+                mode.label,
+                style = TextStyles.ChoiceLabel,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                color = ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 

@@ -8,7 +8,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Layers
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Users
@@ -27,7 +26,7 @@ internal fun MeDebug(
 ) {
     var shown by remember { mutableIntStateOf(0) }
     Column {
-        SectionHeading("Debug", top = 16.dp, style = TextStyles.SectionTitleStyle)
+        SectionHeading("Debug", tag = "Debug builds only", tagBeside = true, top = MeHeadingTop, bottom = MeHeadingBottom)
         TileGroup(count = 2) { index, place ->
             if (index == 0) {
                 TileRow(
@@ -44,6 +43,7 @@ internal fun MeDebug(
                     "Show a snack",
                     place,
                     subtitle = "Each tap shows the next kind",
+                    end = RowEnd.NONE,
                     onClick = {
                         Snacks.show(DebugSnacks[shown % DebugSnacks.size])
                         shown++

@@ -3,20 +3,18 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,17 +27,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
@@ -164,138 +165,30 @@ fun CountBadge(
 
 // ---- surfaces --------------------------------------------------------------------------------
 
-/** Where a tile sits in its group, which decides which of its corners are round. */
-enum class TilePlace { ONLY, FIRST, MIDDLE, LAST }
-
-fun TilePlace.shape(): RoundedCornerShape {
-    val outer = 22.dp
-    val inner = 6.dp
-    return when (this) {
-        TilePlace.ONLY -> RoundedCornerShape(outer)
-        TilePlace.FIRST -> RoundedCornerShape(outer, outer, inner, inner)
-        TilePlace.MIDDLE -> RoundedCornerShape(inner)
-        TilePlace.LAST -> RoundedCornerShape(inner, inner, outer, outer)
-    }
-}
-
 /**
- * A run of tiles, three points apart, with no rules between them.
- *
- * Settings groups. Each row is its own tile, only the outer corners of the run are
- * round, and the gap is what separates them; a divider inside a group was a line doing a job the
- * gap already does.
+ * Fades the top [edge] of a scrolled list into the page, so a row slides out under the bar rather
+ * than being cut by it. Only once the list has moved: at the top nothing is faded.
  */
 @Composable
-fun TileGroup(
-    count: Int,
-    modifier: Modifier = Modifier,
-    tile: @Composable (index: Int, place: TilePlace) -> Unit,
-) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        repeat(count) { i ->
-            val place =
-                when {
-                    count == 1 -> TilePlace.ONLY
-                    i == 0 -> TilePlace.FIRST
-                    i == count - 1 -> TilePlace.LAST
-                    else -> TilePlace.MIDDLE
-                }
-            tile(i, place)
-        }
-    }
-}
-
-/**
- * One settings row: an icon tile, a title with an optional line under it, a value, a chevron.
- *
- * Sixty points at the least, so it takes a thumb comfortably. [danger] turns the title and the tile
- * red and drops the chevron; [trailing] replaces the chevron with anything else, a switch or an
- * external-link mark. [chosen] is a picker's chosen row, marked the one way every picker marks it:
- * the soft accent wash and a bolder title, with the check as its [trailing].
- */
-@Composable
-fun TileRow(
-    icon: ImageVector,
-    title: String,
-    place: TilePlace,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    value: String? = null,
-    danger: Boolean = false,
-    trailing: (@Composable () -> Unit)? = null,
-    /** A subtitle with styling in it, such as the gold stars in the rating row. Wins over [subtitle]. */
-    subtitleRich: AnnotatedString? = null,
-    /** Drawn instead of the icon tile, at its size: an app's own icon in a list of apps. */
-    leading: (@Composable () -> Unit)? = null,
-    chosen: Boolean = false,
-    /** A small mark and a colour for the subtitle, such as the green tick on a ready row. */
-    subtitleIcon: ImageVector? = null,
-    subtitleTone: Color? = null,
-    onClick: (() -> Unit)? = null,
-) {
-    val t = Tt.colors
-    val shape = place.shape()
-    Row(
-        modifier
-            .fillMaxWidth()
-            .heightIn(min = 60.dp)
-            .clip(shape)
-            .background(t.glass)
-            .then(if (chosen) Modifier.background(t.leafAccentSoft) else Modifier)
-            .border(1.dp, t.glassBorder, shape)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(start = 14.dp, top = 8.dp, end = 12.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (leading != null) leading() else IconTile(icon, danger = danger)
-        Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f)) {
-            // Title and subtitle together are exactly as tall as the 36dp icon tile beside them: a
-            // 20sp line and a 16sp one, with nothing between. Every row lines up the same way, and a
-            // subtitle never runs to a second line and pushes its row taller than the others.
-            Text(
-                title,
-                style = TextStyles.RowTitle,
-                fontWeight = if (chosen) FontWeight.Bold else FontWeight.SemiBold,
-                color = if (danger) t.bad else t.text,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            val sub = subtitleRich ?: subtitle?.let { AnnotatedString(it) }
-            if (sub != null) {
-                val tone = subtitleTone ?: t.text3
-                val line: @Composable () -> Unit = {
-                    Text(
-                        sub,
-                        style = TextStyles.RowLine,
-                        color = tone,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                if (subtitleIcon == null) {
-                    line()
-                } else {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(subtitleIcon, null, Modifier.size(13.dp), tint = tone)
-                        Spacer(Modifier.width(5.dp))
-                        line()
-                    }
-                }
+fun Modifier.scrollEdgeFade(
+    state: LazyListState,
+    edge: Dp = 22.dp,
+): Modifier {
+    // Any opaque ink will do: the mask keeps the list where it is opaque and nothing of its colour.
+    val ink = Tt.colors.bg
+    return this
+        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+        .drawWithContent {
+            drawContent()
+            if (state.canScrollBackward) {
+                val height = edge.toPx()
+                drawRect(
+                    Brush.verticalGradient(0f to ink.copy(alpha = 0f), 1f to ink, startY = 0f, endY = height),
+                    size = Size(size.width, height),
+                    blendMode = BlendMode.DstIn,
+                )
             }
         }
-        if (value != null) {
-            Spacer(Modifier.width(8.dp))
-            Text(value, style = MaterialTheme.typography.bodyMedium, color = t.text3)
-        }
-        if (trailing != null) {
-            Spacer(Modifier.width(6.dp))
-            trailing()
-        } else if (!danger && onClick != null) {
-            Spacer(Modifier.width(6.dp))
-            Icon(Lucide.ChevronRight, null, Modifier.size(18.dp), tint = t.text4)
-        }
-    }
 }
 
 /**

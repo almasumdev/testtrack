@@ -5,9 +5,11 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,7 +53,8 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * Each card is one fact read the same way: a tinted icon on the left, the figure and what it counts
  * on the right. Six of them in three rows scan in one look, which a big number with a pill and a
  * sentence under it did not; and the crews sit in the same grid instead of a second block of their
- * own. The rank is in gold, the one medal colour, and opens the Ranks tab.
+ * own. The rank is in gold, the one medal colour, and opens the Ranks tab; the rest use the plain
+ * tile. The two cards of a row grow together when a label takes two lines at large text.
  */
 @Composable
 internal fun RecordGrid(
@@ -68,7 +70,7 @@ internal fun RecordGrid(
     val t = Tt.colors
     val ranked = points > 0
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        StatPair {
             StatCard(
                 Lucide.Trophy,
                 if (ranked) "#$place" else "New",
@@ -76,14 +78,14 @@ internal fun RecordGrid(
                 tint = t.gold,
                 onClick = if (ranked) onOpenRanks else null,
             )
-            StatCard(Lucide.Star, "$points", "Points", tint = t.accentInk)
+            StatCard(Lucide.Star, "$points", "Points")
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        StatPair {
             StatCard(Lucide.Smartphone, "$opens", "${pluralOf(opens, "App")} opened")
             StatCard(Lucide.MessageSquareText, "$reviews", "${pluralOf(reviews, "Review")} accepted")
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatCard(Lucide.Users, "$crewsRunning", "${pluralOf(crewsRunning, "Crew")} going on")
+        StatPair {
+            StatCard(Lucide.Users, "$crewsRunning", "${pluralOf(crewsRunning, "Crew")} running")
             StatCard(Lucide.Moon, "${CrewRules.nightly(crewsFilled)}", "Apps a night")
         }
         if (!ranked) {
@@ -109,19 +111,25 @@ internal fun RecordGridLoading() {
         Modifier.semantics(mergeDescendants = true) { contentDescription = "Loading your record" },
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        StatPair {
             StatCard(Lucide.Trophy, null, "Rank", tint = t.gold)
-            StatCard(Lucide.Star, null, "Points", tint = t.accentInk)
+            StatCard(Lucide.Star, null, "Points")
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        StatPair {
             StatCard(Lucide.Smartphone, null, "Apps opened")
             StatCard(Lucide.MessageSquareText, null, "Reviews accepted")
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatCard(Lucide.Users, null, "Crews going on")
+        StatPair {
+            StatCard(Lucide.Users, null, "Crews running")
             StatCard(Lucide.Moon, null, "Apps a night")
         }
     }
+}
+
+/** Two stat cards side by side, both as tall as the taller one. */
+@Composable
+private fun StatPair(content: @Composable RowScope.() -> Unit) {
+    Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp), content = content)
 }
 
 /**
@@ -144,67 +152,64 @@ private fun RowScope.StatCard(
     Row(
         Modifier
             .weight(1f)
+            .fillMaxHeight()
             .tileFrame(onClick = onClick)
             .padding(start = 12.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconTile(icon, 38.dp, corner = 11.dp, glyph = 19.dp, tint = ink, ground = tint?.copy(alpha = 0.16f))
-        Spacer(Modifier.width(12.dp))
+        IconTile(icon, 36.dp, corner = 11.dp, glyph = 18.dp, tint = ink, ground = tint?.copy(alpha = 0.16f))
+        Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
             if (value == null) {
                 Box(Modifier.height(22.dp), contentAlignment = Alignment.CenterStart) {
                     Skeleton(width = 44.dp, height = 18.dp)
                 }
             } else {
-                Text(
-                    value,
-                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, lineHeight = 22.sp, fontFeatureSettings = "tnum"),
-                    fontWeight = FontWeight.Bold,
-                    color = t.text,
-                    maxLines = 1,
-                )
+                Text(value, style = TextStyles.RecordValue, color = t.text, maxLines = 1)
             }
             Text(
                 label,
-                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
+                style = TextStyles.RecordLabel,
                 color = t.text3,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
         }
         if (onClick != null) {
-            Icon(Lucide.ChevronRight, "Open", Modifier.size(16.dp), tint = t.text4)
+            Spacer(Modifier.width(4.dp))
+            Icon(Lucide.ChevronRight, "Open", Modifier.size(18.dp), tint = t.text4)
         }
     }
 }
 
-/** [Who] before the profile has arrived: the face's ring, then the name, address and facts as bars. */
+/**
+ * [Who] before the profile has arrived: the face's ring, then the name, address and facts as bars,
+ * the facts in the column beside the face as they are once it loads.
+ */
 @Composable
 internal fun WhoLoading() {
     val t = Tt.colors
-    Column(Modifier.padding(horizontal = 2.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .size(FaceSize)
-                    .clip(CircleShape)
-                    .background(t.glass)
-                    .border(1.dp, t.glassBorder, CircleShape)
-                    .padding(3.dp),
-            ) {
-                Skeleton(width = FaceSize - 6.dp, height = FaceSize - 6.dp, corner = FaceSize / 2)
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                Skeleton(width = 140.dp, height = 18.dp)
-                Spacer(Modifier.height(8.dp))
-                Skeleton(width = 190.dp, height = 12.dp)
-            }
+    Row(Modifier.padding(start = 2.dp, top = 2.dp, end = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier
+                .size(FaceSize)
+                .clip(CircleShape)
+                .background(t.glass)
+                .border(1.dp, t.glassBorder, CircleShape)
+                .padding(3.dp),
+        ) {
+            Skeleton(width = FaceSize - 6.dp, height = FaceSize - 6.dp, corner = FaceSize / 2)
         }
-        Spacer(Modifier.height(14.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Skeleton(width = 104.dp, height = 22.dp, corner = 11.dp)
-            Skeleton(width = 92.dp, height = 22.dp, corner = 11.dp)
+        Spacer(Modifier.width(WhoGap))
+        Column(Modifier.weight(1f)) {
+            Skeleton(width = 150.dp, height = 18.dp)
+            Spacer(Modifier.height(7.dp))
+            Skeleton(width = 180.dp, height = 12.dp)
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Skeleton(width = 104.dp, height = 22.dp, corner = 11.dp)
+                Skeleton(width = 90.dp, height = 22.dp, corner = 11.dp)
+            }
         }
     }
 }
