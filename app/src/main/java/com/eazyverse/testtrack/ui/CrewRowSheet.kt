@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -161,23 +162,25 @@ private fun SheetOption(
     tone: Tone,
     onClick: (() -> Unit)?,
 ) {
-    Row(
+    Column(
         Modifier
             .fillMaxWidth()
             .tileFrame(onClick = onClick, fill = Color.Transparent)
             .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        IconTile(Lucide.Flag, 36.dp, corner = 11.dp, glyph = 17.dp, tint = tone.ink())
-        Column(Modifier.weight(1f)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(Lucide.Flag, null, Modifier.size(17.dp), tint = tone.ink())
             Text(
                 title,
                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp),
                 fontWeight = FontWeight.SemiBold,
                 color = tone.ink(),
             )
-            Text(line, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text4)
         }
+        Spacer(Modifier.height(3.dp))
+        Text(line, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text4)
     }
 }
