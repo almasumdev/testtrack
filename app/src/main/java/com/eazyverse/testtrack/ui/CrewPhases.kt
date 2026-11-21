@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Flag
 import com.composables.icons.lucide.HandHeart
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Undo2
@@ -196,9 +197,10 @@ private fun LobbyYourApp(
     val (chip, tone) =
         when {
             mine.state == SeatState.CHECKING -> "Checking" to Tone.WARN
-            mine.reports > 0 -> "${mine.reports} ${pluralOf(mine.reports, "report")}" to Tone.WARN
+            mine.reports > 0 -> "${mine.reports}" to Tone.WARN
             else -> "In" to Tone.OK
         }
+    val reported = mine.state != SeatState.CHECKING && mine.reports > 0
     val status =
         when {
             mine.state == SeatState.CHECKING -> "Play couldn't check it, so members are trying it."
@@ -235,6 +237,8 @@ private fun LobbyYourApp(
             } else {
                 null
             },
+        chipIcon = if (reported) Lucide.Flag else null,
+        chipDescription = if (reported) "${mine.reports} ${pluralOf(mine.reports, "report")}" else null,
     )
 }
 

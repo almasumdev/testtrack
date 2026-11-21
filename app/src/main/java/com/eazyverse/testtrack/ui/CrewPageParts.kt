@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -86,6 +88,7 @@ internal fun StatusChip(
     icon: ImageVector? = null,
     modifier: Modifier = Modifier,
     size: ChipSize = ChipSize.MEDIUM,
+    description: String? = null,
 ) {
     val ink = tone.ink()
     val pad =
@@ -104,6 +107,7 @@ internal fun StatusChip(
         }
     Row(
         modifier
+            .then(if (description != null) Modifier.clearAndSetSemantics { contentDescription = description } else Modifier)
             .clip(RoundedCornerShape(percent = 50))
             .background(tone.soft())
             .padding(pad),
@@ -291,6 +295,8 @@ internal fun YourAppCard(
     status: String,
     extra: (@Composable () -> Unit)? = null,
     action: (@Composable () -> Unit)? = null,
+    chipIcon: ImageVector? = null,
+    chipDescription: String? = null,
 ) {
     CrewCard(
         padding =
@@ -312,7 +318,7 @@ internal fun YourAppCard(
                 Text(status, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text3)
             }
             Spacer(Modifier.width(10.dp))
-            StatusChip(chip, tone)
+            StatusChip(chip, tone, chipIcon, description = chipDescription)
         }
         if (seat.notes.isNotBlank()) {
             Spacer(Modifier.height(12.dp))
