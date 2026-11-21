@@ -10,6 +10,7 @@ import com.eazyverse.testtrack.data.PictureQueue
 import com.eazyverse.testtrack.data.RoundStore
 import com.eazyverse.testtrack.data.VisitCameraService
 import com.eazyverse.testtrack.data.VisitPictures
+import com.eazyverse.testtrack.ui.Snacks
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -20,11 +21,10 @@ import kotlinx.coroutines.launch
  * it; Not now opens nothing, and tonight is still owed. Afterwards it sends whatever pictures are
  * still on the phone, each time TestTrack is in front.
  *
- * Kept apart from the Crew page's view model, which [say] and [reload] lead back to.
+ * Kept apart from the Crew page's view model, which [reload] leads back to.
  */
 class NightPictures(
     private val scope: CoroutineScope,
-    private val say: (String) -> Unit,
     private val reload: (Activity) -> Unit,
 ) {
     /** A round waiting on tonight's screen-share yes. */
@@ -60,9 +60,6 @@ class NightPictures(
         waitingFor = null
     }
 
-    /** A line for the Crew page, from the asks this runs. */
-    fun tell(text: String) = say(text)
-
     /** Android said yes: the camera goes on and the round starts. */
     fun start(
         activity: Activity,
@@ -85,7 +82,7 @@ class NightPictures(
     ) {
         scope.launch {
             if (!VisitPictures.addPicked(activity, seatId, label, uri, day)) {
-                say("That picture could not be read. Choose another.")
+                Snacks.error("Couldn't read that picture. Choose another.")
                 return@launch
             }
             send(activity)

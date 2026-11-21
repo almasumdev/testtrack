@@ -33,14 +33,6 @@ class AskViewModel : ViewModel() {
     var posting by mutableStateOf(false)
         private set
 
-    /** Why the last try did not post, said under the bar; cleared when it closes or on the next try. */
-    var pageMessage by mutableStateOf<String?>(null)
-        private set
-
-    fun clearMessage() {
-        pageMessage = null
-    }
-
     /** The app is not verified yet. Said on the page so nobody forgets. */
     var unchecked by mutableStateOf(false)
         private set
@@ -147,7 +139,7 @@ class AskViewModel : ViewModel() {
     fun signedIn() {
         needsSignIn = false
         if (!ApiSession.signedIn) {
-            pageMessage = "Sign-in couldn't finish. Please try again. Your request is still here."
+            say("Sign-in didn't finish. Your request is still here.", ::requestSignIn)
             return
         }
         refreshBalance()
@@ -171,7 +163,7 @@ class AskViewModel : ViewModel() {
         isLive = app.live
         found = Listing(`package` = app.pkg, name = app.name, icon = app.icon, developer = app.developer)
         unchecked = !app.verified
-        pageMessage = null
+        Snacks.dismiss(SNACK)
     }
 
     private var pendingRequest: PostIn? = null
@@ -201,7 +193,7 @@ class AskViewModel : ViewModel() {
                                 .toString(),
                     ).also { pendingRequest = it }
         posting = true
-        pageMessage = null
+        Snacks.dismiss(SNACK)
         viewModelScope.launch {
             runCatching {
                 // Older servers silently ignore unknown fields; never charge an unintended review count.
@@ -237,8 +229,10 @@ class AskViewModel : ViewModel() {
                 if (it is ApiError && it.isAuth) {
                     requestSignIn()
                 } else {
-                    val why = if (it is IllegalStateException) it.message.orEmpty() else whyNot(it)
-                    pageMessage = "Couldn't send your request. $why"
+                    // A refusal this version can't get past says so, with nothing to try again.
+                    val stuck = it is IllegalStateException
+                    val why = if (stuck) it.message.orEmpty() else whyNot(it)
+                    say("Couldn't send your request. $why", if (stuck) null else ({ post(onDone) }))
                 }
             }
             posting = false
@@ -249,8 +243,17 @@ class AskViewModel : ViewModel() {
      * What to say about a failure. The app is on My apps already, so nothing here is looked up on
      * Play; the server's own sentence is shown as it is.
      */
-    private fun whyNot(error: Throwable): String =
-        if (error is ApiError) error.message else "Couldn't reach TestTrack. Check your connection and try again."
+    private fun whyNot(error: Throwable): String = if (error is ApiError) error.message else "Check your connection."
+
+    /** Why the last try did not post, said once; the next try or another app takes it away. */
+    private fun say(
+        text: String,
+        retry: (() -> Unit)?,
+    ) = Snacks.show(Snack(text, SnackTone.ERROR, retry?.let { SnackAction(Snacks.TRY_AGAIN, it) }, key = SNACK))
+
+    private companion object {
+        const val SNACK = "ask"
+    }
 }
 
 /** Why the button waits, for the hint over it. */

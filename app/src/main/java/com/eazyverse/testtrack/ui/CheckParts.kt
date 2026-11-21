@@ -151,7 +151,7 @@ internal fun CheckSkeleton(onBack: () -> Unit) {
                 Skeleton(width = 230.dp, height = 96.dp, corner = 18.dp)
             }
         }
-        Column(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 6.dp + dockRoom())) {
+        Column(Modifier.fillMaxWidth().snackFloor().padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 6.dp + dockRoom())) {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Skeleton(width = 190.dp, height = 12.dp) }
             Spacer(Modifier.height(10.dp))
             Skeleton(height = ButtonHeight, corner = 26.dp)
@@ -195,7 +195,7 @@ internal fun CheckFrame(
         }
         if (foot != null) {
             Column(
-                Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 6.dp + dockRoom()),
+                Modifier.fillMaxWidth().snackFloor().padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 6.dp + dockRoom()),
                 content = foot,
             )
         }

@@ -120,7 +120,6 @@ fun CrewChatScreen(
             jump = jump,
             seeking = vm.seeking,
             members = crew != null && !crew.pruned && (crew.phase == CrewPhase.RUN || crew.phase == CrewPhase.RECORD),
-            message = vm.message,
         )
     val actions =
         ChatActions(
@@ -175,7 +174,6 @@ fun CrewChatScreen(
             onTime = { timeShown = if (timeShown == it.id) null else it.id },
             onQuote = { quote -> vm.seek(quote) { jump = ChatJump(it, (jump?.n ?: 0) + 1) } },
             onLoadOlder = vm::loadOlder,
-            onClearMessage = vm::clearMessage,
         )
     CrewChatBody(view, actions, field)
 
@@ -245,15 +243,17 @@ internal fun CrewChatBody(
                             },
                     ) { if (!view.failed && !view.loading) ChatMenu(view, actions) }
                 }
-                PageMessage(view.message, actions.onClearMessage)
             }
         },
         bottomBar = {
-            when {
-                view.failed -> Unit
-                view.loading -> ChatComposerLoading()
-                !view.canPost || view.state != ChatState.OPEN -> ChatClosedBar(view.closedLine)
-                else -> ChatComposer(view, actions, field)
+            // The chat box is the page's floor: snacks sit just above it.
+            Box(Modifier.snackFloor()) {
+                when {
+                    view.failed -> Unit
+                    view.loading -> ChatComposerLoading()
+                    !view.canPost || view.state != ChatState.OPEN -> ChatClosedBar(view.closedLine)
+                    else -> ChatComposer(view, actions, field)
+                }
             }
         },
     ) { padding ->
@@ -321,7 +321,8 @@ private fun ChatThreadList(
         Modifier.fillMaxSize(),
         state = state,
         reverseLayout = true,
-        contentPadding = PaddingValues(start = ChatGutter, end = ChatGutter, top = 4.dp, bottom = 10.dp),
+        // Offline stays over the thread, so the newest message ends above it.
+        contentPadding = PaddingValues(start = ChatGutter, end = ChatGutter, top = 4.dp, bottom = 10.dp + snackRoom()),
     ) {
         items(rows, key = { it.key }) { row -> ChatRowView(row, shown, actions) }
         if (view.loadingOlder) item(key = "older") { ChatOlderSkeleton() }

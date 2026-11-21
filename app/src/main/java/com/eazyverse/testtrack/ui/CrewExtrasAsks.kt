@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -92,13 +91,6 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
             if (uri != null) extras.pick(activity, uri) else extras.cancelFeedback()
         }
 
-    // Its lines go where the Crew page says everything else.
-    LaunchedEffect(extras.message) {
-        extras.message?.let {
-            vm.pictures.tell(it)
-            extras.clearMessage()
-        }
-    }
     // Back from Play with the camera's picture: it goes to TestTrack and onto the feedback.
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner) {

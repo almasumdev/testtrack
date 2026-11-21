@@ -104,9 +104,6 @@ class FeedViewModel : ViewModel() {
     var answered by mutableStateOf(false)
         private set
 
-    var message by mutableStateOf<String?>(null)
-        private set
-
     /** Set once the API has refused us for good, so the screen can say so rather than spin. */
     var offline by mutableStateOf(false)
         private set
@@ -144,10 +141,6 @@ class FeedViewModel : ViewModel() {
 
     /** Which app a waiting review is of, since a review only carries the post's id. */
     fun appNameFor(postId: String): String = posts.firstOrNull { it.id == postId }?.appName ?: "Your app"
-
-    fun clearMessage() {
-        message = null
-    }
 
     /** This account's own requests for feedback, with what each has had. */
     var requests by mutableStateOf<List<Request>>(emptyList())
@@ -228,7 +221,7 @@ class FeedViewModel : ViewModel() {
                 part { requests = Api.myPosts().map(::requestOf) }
                 offline = false
             } catch (e: ApiError) {
-                message = e.message
+                Snacks.error(e.message)
                 if (e.isAuth) signedOut = true else offline = true
             } catch (e: Exception) {
                 offline = true
@@ -312,18 +305,17 @@ class FeedViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val closed = Api.closePost(id)
-                message =
-                    if (closed.refunded > 0) {
-                        "Closed. ${closed.refunded} tix came back to you."
-                    } else {
-                        "Closed. Reviews already under way can still finish."
-                    }
+                if (closed.refunded > 0) {
+                    Snacks.done("Closed. ${closed.refunded} tix came back to you.")
+                } else {
+                    Snacks.info("Closed. Reviews already under way can still finish.")
+                }
                 load(context)
                 MyAppsChanged.tell()
             } catch (e: ApiError) {
-                message = e.message
+                Snacks.error(e.message)
             } catch (_: Exception) {
-                message = "We could not reach TestTrack. Check your connection."
+                unreached { closeRequest(context, id) }
             } finally {
                 busy = false
             }
@@ -340,12 +332,12 @@ class FeedViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 Api.relistPost(id)
-                message = "Back in the feed. Testers can take it again."
+                Snacks.done("Back in the feed. Testers can take it again.")
                 load(context)
             } catch (e: ApiError) {
-                message = e.message
+                Snacks.error(e.message)
             } catch (_: Exception) {
-                message = "We could not reach TestTrack. Check your connection."
+                unreached { relistRequest(context, id) }
             } finally {
                 busy = false
             }
@@ -417,7 +409,7 @@ class FeedViewModel : ViewModel() {
     fun approve(
         context: Context,
         review: Waiting,
-    ) = decide(context, review.id, "Accepted. ${review.firstName} has been paid.") { Api.approve(review.id) }
+    ) = decide(context, review.id, Snack("Accepted. ${review.firstName} has been paid.", SnackTone.DONE)) { Api.approve(review.id) }
 
     /**
      * Refuse one, which is not free.
@@ -430,7 +422,7 @@ class FeedViewModel : ViewModel() {
         review: Waiting,
         reason: String,
         picture: Uri? = null,
-    ) = decide(context, review.id, "Refused. Three members will decide it.") {
+    ) = decide(context, review.id, Snack("Refused. Three members will decide it.")) {
         rejectWithPicture(context, review.id, reason, picture)
     }
 
@@ -438,7 +430,7 @@ class FeedViewModel : ViewModel() {
     fun askAgain(
         context: Context,
         review: Waiting,
-    ) = decide(context, review.id, "Asked. They have ${FeedRules.RECHECK_HOURS} hours to send a new screenshot.") {
+    ) = decide(context, review.id, Snack("Asked. They have ${FeedRules.RECHECK_HOURS} hours to send a new screenshot.")) {
         Api.check(review.id)
     }
 
@@ -446,14 +438,14 @@ class FeedViewModel : ViewModel() {
     fun acceptLater(
         context: Context,
         reviewId: String,
-    ) = decide(context, reviewId, "Accepted. The reviewer has been paid.") { Api.acceptLater(reviewId) }
+    ) = decide(context, reviewId, Snack("Accepted. The reviewer has been paid.", SnackTone.DONE)) { Api.acceptLater(reviewId) }
 
     /** Come down on one side of a case between two other people. */
     fun vote(
         context: Context,
         dispute: Case,
         forReviewer: Boolean,
-    ) = decide(context, dispute.id, "Counted. Thank you.") { Api.vote(dispute.id, forReviewer) }
+    ) = decide(context, dispute.id, Snack("Counted. Thank you.", SnackTone.DONE)) { Api.vote(dispute.id, forReviewer) }
 
     /**
      * One decision, one reload, one place failure is handled.
@@ -464,7 +456,7 @@ class FeedViewModel : ViewModel() {
     private fun decide(
         context: Context,
         id: String,
-        done: String,
+        done: Snack,
         block: suspend () -> Unit,
     ) {
         if (busy) return
@@ -472,21 +464,24 @@ class FeedViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 block()
-                message = done
+                Snacks.show(done)
                 // Decided, so its page has nothing left to ask; it closes on this.
                 decided = id
                 load(context)
                 MyAppsChanged.tell()
             } catch (e: ApiError) {
-                message = e.message
+                Snacks.error(e.message)
             } catch (_: Exception) {
-                message = "We could not reach TestTrack. Check your connection."
+                unreached { decide(context, id, done, block) }
             } finally {
                 busy = false
             }
         }
     }
 }
+
+/** No connection: said once, with the same call again on Try again. */
+private fun unreached(retry: () -> Unit) = Snacks.error("Couldn't reach TestTrack. Check your connection.", retry)
 
 /** How long an owner has to answer, as the server's rule; only used when it did not say. */
 private const val ONE_DAY = 24 * 3_600_000L

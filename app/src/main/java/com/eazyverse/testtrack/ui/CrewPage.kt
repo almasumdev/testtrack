@@ -91,14 +91,11 @@ fun CrewPage(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            Column {
-                // Its name, and once it runs, the way to its members. Where it stands is the first card.
-                PageBar(crew?.name ?: "Crew", onBack) {
-                    if (crew != null && (crew.phase == CrewPhase.RUN || (crew.phase == CrewPhase.RECORD && !noMembers))) {
-                        MembersButton(crew.members.size, onMembers)
-                    }
+            // Its name, and once it runs, the way to its members. Where it stands is the first card.
+            PageBar(crew?.name ?: "Crew", onBack) {
+                if (crew != null && (crew.phase == CrewPhase.RUN || (crew.phase == CrewPhase.RECORD && !noMembers))) {
+                    MembersButton(crew.members.size, onMembers)
                 }
-                PageMessage(vm.message, vm::clearMessage)
             }
         },
     ) { padding ->

@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Wifi
 import com.eazyverse.testtrack.data.ChatNotifications
 import com.eazyverse.testtrack.domain.ChatAllowance
 import com.eazyverse.testtrack.domain.ChatDraft
@@ -29,6 +31,9 @@ import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.chat
 import com.eazyverse.testtrack.net.muteChat
 import com.eazyverse.testtrack.net.readChat
+import com.eazyverse.testtrack.ui.Snack
+import com.eazyverse.testtrack.ui.SnackTone
+import com.eazyverse.testtrack.ui.Snacks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -38,6 +43,9 @@ import java.time.Instant
 
 /** Said when a tapped quote's message was deleted, or is no longer kept. */
 private const val GONE_LINE = "That message is gone."
+
+/** The offline snack's key: it stays until the chat is back, or the page is gone. */
+private const val OFFLINE = "chat-offline"
 
 /**
  * One crew's chat: what is held of it, the poll that keeps it current while it is on screen, and
@@ -108,10 +116,6 @@ class CrewChatViewModel : ViewModel() {
     /** The message being answered, shown over the field. */
     var replyTo by mutableStateOf<ChatLine?>(null)
         private set
-
-    /** A passing line under the bar. */
-    var message by mutableStateOf<String?>(null)
-        internal set
 
     /** This account's seat in the crew, which its messages are sent as. */
     val mySeat: String? get() = people.values.firstOrNull { it.mine }?.seatId
@@ -217,7 +221,9 @@ class CrewChatViewModel : ViewModel() {
             val page = Api.chat(crewId, since = cursor)
             val brought = page.messages.isNotEmpty() || page.reset
             apply(page, fresh = page.reset)
-            if (failures >= ChatPolling.OFFLINE_AFTER) message = "Back online."
+            if (failures >= ChatPolling.OFFLINE_AFTER) {
+                Snacks.show(Snack("Back online.", SnackTone.DONE, key = OFFLINE, icon = Lucide.Wifi))
+            }
             failures = 0
             emptyPolls = if (brought || page.moreAfter) 0 else emptyPolls + 1
             if (page.moreAfter) wake.trySend(Unit)
@@ -226,7 +232,9 @@ class CrewChatViewModel : ViewModel() {
             throw e
         } catch (_: Exception) {
             failures++
-            if (failures == ChatPolling.OFFLINE_AFTER) message = "You're offline. The chat catches up once you're back."
+            if (failures == ChatPolling.OFFLINE_AFTER) {
+                Snacks.show(Snack("You're offline. The chat catches up once you're back.", SnackTone.OFFLINE, sticky = true, key = OFFLINE))
+            }
         }
     }
 
@@ -313,9 +321,9 @@ class CrewChatViewModel : ViewModel() {
         if (seeking) return
         val held = lines.firstOrNull { it.id == quote.id }
         when {
-            quote.deleted || held?.deleted == true -> message = GONE_LINE
+            quote.deleted || held?.deleted == true -> Snacks.info(GONE_LINE)
             held != null -> onFound(held.id)
-            !moreBefore -> message = GONE_LINE
+            !moreBefore -> Snacks.info(GONE_LINE)
             else -> {
                 seeking = true
                 loadingOlder = true
@@ -325,11 +333,11 @@ class CrewChatViewModel : ViewModel() {
                             if (!older()) break
                         }
                         val found = lines.firstOrNull { it.id == quote.id }
-                        if (found == null || found.deleted) message = GONE_LINE else onFound(found.id)
+                        if (found == null || found.deleted) Snacks.info(GONE_LINE) else onFound(found.id)
                     } catch (e: CancellationException) {
                         throw e
                     } catch (_: Exception) {
-                        message = "Couldn't load older messages. Try again."
+                        Snacks.error("Couldn't load older messages.") { seek(quote, onFound) }
                     } finally {
                         seeking = false
                         loadingOlder = false
@@ -343,7 +351,7 @@ class CrewChatViewModel : ViewModel() {
     fun toggleMute() {
         val want = !muted
         muted = want
-        message = if (want) "Chat muted. You still hear when someone mentions you." else "Chat unmuted."
+        Snacks.done(if (want) "Chat muted. You still hear when someone mentions you." else "Chat unmuted.")
         viewModelScope.launch {
             try {
                 val done = Api.muteChat(crewId, want)
@@ -353,7 +361,7 @@ class CrewChatViewModel : ViewModel() {
                 throw e
             } catch (e: Exception) {
                 muted = !want
-                message = (e as? ApiError)?.message ?: "Couldn't change that. Try again."
+                if (e is ApiError) Snacks.error(e.message) else Snacks.error("Couldn't change that.", ::toggleMute)
             }
         }
     }
@@ -373,10 +381,6 @@ class CrewChatViewModel : ViewModel() {
     internal fun clearDraft() {
         draft = ChatDraft()
         replyTo = null
-    }
-
-    fun clearMessage() {
-        message = null
     }
 
     /** A line written here before the server has it. */
@@ -410,6 +414,8 @@ class CrewChatViewModel : ViewModel() {
 
     override fun onCleared() {
         stop()
+        // Offline is about this chat: it goes with the page.
+        Snacks.dismiss(OFFLINE)
         super.onCleared()
     }
 }

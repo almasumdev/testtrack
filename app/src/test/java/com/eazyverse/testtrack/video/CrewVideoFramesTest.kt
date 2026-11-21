@@ -644,7 +644,12 @@ class CrewVideoFramesTest {
         compose.onNodeWithText("Open all 14").assertIsEnabled()
         frame.write("demoInstalled")
         compose.onNodeWithText("Open all 14").performClick()
-        org.junit.Assert.assertTrue(vm.message.orEmpty().startsWith("Demo preview:"))
+        org.junit.Assert.assertTrue(
+            com.eazyverse.testtrack.ui.Snacks.showing
+                ?.text
+                .orEmpty()
+                .startsWith("Demo preview:"),
+        )
         org.junit.Assert.assertNull(vm.needsUsageFor)
         org.junit.Assert.assertNull(vm.needsOverlayFor)
         org.junit.Assert.assertTrue(demo.apps.none { it.done })

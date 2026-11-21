@@ -354,9 +354,6 @@ internal fun pageSection(
             Shot("Read only, crew ended") {
                 PageBox(s.view(ChatThread.rows(done, null)).copy(state = ChatState.READ_ONLY, canPost = false, closedLine = ended), a)
             },
-            Shot("A message over the page") {
-                PageBox(s.view(s.threadRows()).copy(message = "That picture couldn't be opened. Try another one."), a, 420.dp)
-            },
         ),
     )
 }

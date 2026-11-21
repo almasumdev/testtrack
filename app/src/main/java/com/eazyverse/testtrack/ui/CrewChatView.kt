@@ -49,7 +49,6 @@ internal data class ChatView(
     val seeking: Boolean = false,
     /** The crew has a members page to go to. */
     val members: Boolean = false,
-    val message: String? = null,
 ) {
     /** Anything said by a member or the team, rather than only the bot's news. */
     val talk: Boolean get() = rows.any { it is ChatRow.Line && it.line.kind != ChatKind.BOT }
@@ -139,5 +138,4 @@ internal class ChatActions(
     /** A reply's quote tapped: go to the message it quotes. */
     val onQuote: (ChatQuote) -> Unit = {},
     val onLoadOlder: () -> Unit = {},
-    val onClearMessage: () -> Unit = {},
 )

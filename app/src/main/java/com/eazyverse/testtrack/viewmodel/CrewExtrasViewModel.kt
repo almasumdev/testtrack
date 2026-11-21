@@ -21,6 +21,7 @@ import com.eazyverse.testtrack.net.appeal
 import com.eazyverse.testtrack.net.markDown
 import com.eazyverse.testtrack.net.sendFeedback
 import com.eazyverse.testtrack.net.tellUpdate
+import com.eazyverse.testtrack.ui.Snacks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -30,11 +31,9 @@ import kotlinx.coroutines.launch
  * The owner telling the crew about an update, read off the copy Play put on their own phone;
  * the owner marking their app down for a night; and a member's private feedback on Play for an
  * app, with its picture taken by the review camera over Play, or picked from the phone. Each
- * says what happened in [message] and has the Crew page read the crews again.
+ * says what happened in a snack and has the Crew page read the crews again.
  */
 class CrewExtrasViewModel : ViewModel() {
-    var message by mutableStateOf<String?>(null)
-        private set
     var busy by mutableStateOf(false)
         private set
 
@@ -118,7 +117,7 @@ class CrewExtrasViewModel : ViewModel() {
         reload: () -> Unit,
     ) = act(reload) {
         Api.markDown(seatId)
-        "Marked down tonight. Nobody owes it tonight, and nobody is marked down for it."
+        "Marked down. Nobody owes it tonight."
     }
 
     fun askAppeal(
@@ -219,13 +218,9 @@ class CrewExtrasViewModel : ViewModel() {
         "Feedback for ${job.label} sent. Thank you."
     }
 
-    fun clearMessage() {
-        message = null
-    }
-
     private fun act(
         reload: () -> Unit,
-        /** Where a failure is said instead of [message], such as inside the sheet that asked. */
+        /** Where a failure is said instead of a snack, such as inside the sheet that asked. */
         failed: ((String) -> Unit)? = null,
         block: suspend () -> String,
     ) {
@@ -233,14 +228,18 @@ class CrewExtrasViewModel : ViewModel() {
         busy = true
         viewModelScope.launch {
             try {
-                message = block()
+                Snacks.done(block())
                 reload()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: ApiError) {
-                (failed ?: { message = it })(e.message)
+                (failed ?: { Snacks.error(it) })(e.message)
             } catch (_: Exception) {
-                (failed ?: { message = it })("We could not reach TestTrack. Check your connection.")
+                if (failed != null) {
+                    failed("We could not reach TestTrack. Check your connection.")
+                } else {
+                    Snacks.error("Couldn't reach TestTrack. Check your connection.") { act(reload, null, block) }
+                }
             } finally {
                 busy = false
             }

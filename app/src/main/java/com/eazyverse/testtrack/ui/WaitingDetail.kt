@@ -94,7 +94,6 @@ fun CheckScreen(
         if (missing && feed.loadsFinished > opened && !feed.offline) onClose()
     }
     Column(Modifier.fillMaxSize()) {
-        PageMessage(feed.message, feed::clearMessage)
         when {
             review != null ->
                 ReviewCheck(

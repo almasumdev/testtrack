@@ -42,6 +42,7 @@ import com.composables.icons.lucide.Moon
 import com.composables.icons.lucide.Sun
 import com.eazyverse.testtrack.ui.Gutter
 import com.eazyverse.testtrack.ui.PageBar
+import com.eazyverse.testtrack.ui.SnackHost
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.exchangeBackground
@@ -72,6 +73,7 @@ class ChatGalleryActivity : ComponentActivity() {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Box(Modifier.fillMaxSize().exchangeBackground()) {
                         ChatGallery(samples, section, open, isDark, { isDark = !isDark }, ::finish)
+                        SnackHost()
                     }
                 }
             }

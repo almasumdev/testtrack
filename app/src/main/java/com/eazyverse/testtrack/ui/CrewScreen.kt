@@ -69,11 +69,8 @@ fun CrewScreen(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            Column {
-                // The tabs bring their own gutter and room above, the same as Circle's.
-                PhaseTabs(vm.tab, { vm.badge(it) }, { chatUnreadOf(vm.crews, it) > 0 }) { vm.showTab(it) }
-                PageMessage(vm.message, vm::clearMessage)
-            }
+            // The tabs bring their own gutter and room above, the same as Circle's.
+            PhaseTabs(vm.tab, { vm.badge(it) }, { chatUnreadOf(vm.crews, it) > 0 }) { vm.showTab(it) }
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {

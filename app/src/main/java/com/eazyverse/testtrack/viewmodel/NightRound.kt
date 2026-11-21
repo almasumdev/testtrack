@@ -11,6 +11,8 @@ import com.eazyverse.testtrack.data.VisitPictures
 import com.eazyverse.testtrack.domain.RoundRules
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
+import com.eazyverse.testtrack.ui.Snack
+import com.eazyverse.testtrack.ui.SnackTone
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -72,7 +74,7 @@ object NightRound {
     private var shooting: Job? = null
 
     /** Said on the Crew page the next time it is in front: the round's last word. */
-    private var pendingSay: String? = null
+    private var pendingSay: Snack? = null
 
     fun canFloat(context: Context): Boolean = Settings.canDrawOverlays(context)
 
@@ -112,7 +114,7 @@ object NightRound {
         tick(context)
         if (pictures) shoot(context, stop, round?.since ?: return)
         if (!InstalledApps.launch(context, stop.packageName)) {
-            pendingSay = "${stop.label} is not on this phone. Install it from its row first."
+            pendingSay = Snack("${stop.label} is not on this phone. Install it from its row first.")
             end(context)
             bringBack(context)
         }
@@ -231,7 +233,7 @@ object NightRound {
                     publish()
                 }
                 is Outcome.Failed -> {
-                    pendingSay = result.message
+                    pendingSay = Snack(result.message, SnackTone.ERROR)
                     end(context)
                     bringBack(context)
                 }
@@ -243,7 +245,7 @@ object NightRound {
                         round = moved.copy(index = moved.index + 1)
                         begin(context)
                     } else {
-                        pendingSay = RoundRules.lastWord(moved.skipped)
+                        pendingSay = lastSnack(moved.skipped)
                         end(context)
                         bringBack(context)
                     }
@@ -259,7 +261,7 @@ object NightRound {
      */
     fun onTestTrackInFront(
         context: Context,
-        say: (String?) -> Unit,
+        say: (Snack?) -> Unit,
     ) {
         val app = context.applicationContext
         pendingSay?.let {
@@ -296,14 +298,11 @@ object NightRound {
             when (val result = record(app, stop, since, shot)) {
                 is Outcome.Short -> {
                     end(app)
-                    say(
-                        "That was ${result.ms / 1000}s in ${stop.label}. " +
-                            "It needs ${COUNT_MS / 1000}, so it has not counted yet.",
-                    )
+                    say(Snack("${stop.label} was open ${result.ms / 1000}s. It needs ${COUNT_MS / 1000} to count."))
                 }
                 is Outcome.Failed -> {
                     end(app)
-                    say(result.message)
+                    say(Snack(result.message, SnackTone.ERROR))
                 }
                 is Outcome.Refused, Outcome.Counted -> {
                     val moved = if (result is Outcome.Refused) now.copy(skipped = now.skipped + result.message) else now
@@ -311,15 +310,15 @@ object NightRound {
                     when {
                         left == 0 -> {
                             end(app)
-                            say(RoundRules.lastWord(moved.skipped))
+                            say(lastSnack(moved.skipped))
                         }
                         endsHere && result is Outcome.Refused -> {
                             end(app)
-                            say("${result.message} Open all again for the $left left.")
+                            say(Snack("${result.message} Open all again for the $left left."))
                         }
                         endsHere -> {
                             end(app)
-                            say("${stop.label} counted. Open all again for the $left left.")
+                            say(Snack("${stop.label} counted. Open all again for the $left left."))
                         }
                         else -> {
                             round = moved.copy(index = moved.index + 1)
@@ -331,6 +330,10 @@ object NightRound {
             }
         }
     }
+
+    /** The round's last word: tonight done, or how many were left out and why. */
+    private fun lastSnack(skipped: List<String>) =
+        Snack(RoundRules.lastWord(skipped), if (skipped.isEmpty()) SnackTone.DONE else SnackTone.INFO)
 
     private sealed interface Outcome {
         data object Counted : Outcome

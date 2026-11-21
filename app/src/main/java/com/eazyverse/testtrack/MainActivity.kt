@@ -184,6 +184,8 @@ class MainActivity : ComponentActivity() {
                         } else {
                             Inset { NotConfigured() }
                         }
+                        // Every page's snacks, over the whole nav host. See [Snacks].
+                        SnackHost()
 
                         // The testers group is checked quietly, on launch and after signing in,
                         // with no dialog. Whatever needs it asks at the point of use. See

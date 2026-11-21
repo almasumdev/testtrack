@@ -68,6 +68,7 @@ import com.eazyverse.testtrack.ui.PictureText
 import com.eazyverse.testtrack.ui.PictureTool
 import com.eazyverse.testtrack.ui.PictureViewer
 import com.eazyverse.testtrack.ui.SegmentedTabs
+import com.eazyverse.testtrack.ui.Snacks
 import com.eazyverse.testtrack.ui.ToolsTopBar
 import com.eazyverse.testtrack.ui.WordsEntry
 import com.eazyverse.testtrack.ui.chatProfileOf
@@ -201,7 +202,6 @@ internal fun GalleryPage(
     var field by remember { mutableStateOf(TextFieldValue("")) }
     var shown by remember { mutableStateOf<String?>(null) }
     var jump by remember { mutableStateOf<ChatJump?>(null) }
-    var message by remember { mutableStateOf<String?>(null) }
     var held by remember { mutableStateOf(emptySet<String>()) }
     val picks = ChatSelect.picks(held, s.thread, writable = true)
     val rows = if (state == "page") s.threadRows() else emptyList()
@@ -212,7 +212,6 @@ internal fun GalleryPage(
             draft = draft,
             timeShown = shown,
             jump = jump,
-            message = message,
             picks = picks,
         )
     BackHandler(enabled = picks.active) { held = emptySet() }
@@ -241,9 +240,8 @@ internal fun GalleryPage(
             // The whole thread is held here, so a quoted message is either in it or gone.
             onQuote = { quote ->
                 val held = s.thread.firstOrNull { it.id == quote.id && !it.deleted }
-                if (quote.deleted || held == null) message = "That message is gone." else jump = ChatJump(held.id, (jump?.n ?: 0) + 1)
+                if (quote.deleted || held == null) Snacks.info("That message is gone.") else jump = ChatJump(held.id, (jump?.n ?: 0) + 1)
             },
-            onClearMessage = { message = null },
         )
     CrewChatBody(view, actions, field)
 }

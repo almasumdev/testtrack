@@ -16,6 +16,10 @@ import com.eazyverse.testtrack.net.Listing
 import com.eazyverse.testtrack.ui.AppEntry
 import com.eazyverse.testtrack.ui.FeedRules
 import com.eazyverse.testtrack.ui.MyAppsChanged
+import com.eazyverse.testtrack.ui.Snack
+import com.eazyverse.testtrack.ui.SnackAction
+import com.eazyverse.testtrack.ui.SnackTone
+import com.eazyverse.testtrack.ui.Snacks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -102,15 +106,9 @@ class AppAddViewModel : ViewModel() {
     var reading by mutableStateOf(false)
         private set
 
-    var iconError by mutableStateOf<String?>(null)
-        private set
-
     // ------------------------------------------------------------------ adding
 
     var adding by mutableStateOf(false)
-        private set
-
-    var addError by mutableStateOf<String?>(null)
         private set
 
     private var lookupJob: Job? = null
@@ -153,8 +151,7 @@ class AppAddViewModel : ViewModel() {
         reading = false
         picked = null
         pickedIcon = null
-        iconError = null
-        addError = null
+        Snacks.dismiss(SNACK)
         found = null
         return true
     }
@@ -190,7 +187,7 @@ class AppAddViewModel : ViewModel() {
             viewModelScope.launch {
                 try {
                     found = Api.lookupApp(query.trim(), closed = !isLive)
-                    addError = null
+                    Snacks.dismiss(SNACK)
                 } catch (error: CancellationException) {
                     throw error
                 } catch (error: Exception) {
@@ -253,7 +250,7 @@ class AppAddViewModel : ViewModel() {
         found = null
         pickedName = app.label.take(FeedRules.APP_NAME_MAX)
         pickedIcon = null
-        addError = null
+        Snacks.dismiss(SNACK)
         readIcon { AppIconData.ofInstalled(context.applicationContext, app.pkg) }
     }
 
@@ -270,14 +267,6 @@ class AppAddViewModel : ViewModel() {
         fullDesc = next.take(FeedRules.FULL_DESC_MAX)
     }
 
-    fun clearIconError() {
-        iconError = null
-    }
-
-    fun clearAddError() {
-        addError = null
-    }
-
     fun usePicture(
         context: Context,
         uri: Uri,
@@ -290,13 +279,12 @@ class AppAddViewModel : ViewModel() {
 
     private fun readIcon(read: () -> AppIconData.Encoded?) {
         reading = true
-        iconError = null
         iconJob?.cancel()
         iconJob =
             viewModelScope.launch {
                 val icon = withContext(Dispatchers.Default) { runCatching(read).getOrNull() }
                 if (icon == null) {
-                    iconError = "That picture could not be used. Try another one."
+                    say("Couldn't use that picture. Try another.")
                 } else {
                     pickedIcon = icon
                 }
@@ -336,21 +324,27 @@ class AppAddViewModel : ViewModel() {
             }
         if (adding) return
         adding = true
-        addError = null
+        Snacks.dismiss(SNACK)
         viewModelScope.launch {
             try {
                 val added = Api.addApp(body)
                 MyAppsChanged.tell()
                 onAdded(added.app.toEntry(), added.existing)
             } catch (e: ApiError) {
-                addError = e.message
+                say(e.message)
             } catch (_: Exception) {
-                addError = "Couldn't add it. Check your connection."
+                say("Couldn't add it. Check your connection.") { add(onAdded) }
             } finally {
                 adding = false
             }
         }
     }
+
+    /** Why adding or the picture did not work, said once; a new try or Back takes it away. */
+    private fun say(
+        text: String,
+        retry: (() -> Unit)? = null,
+    ) = Snacks.show(Snack(text, SnackTone.ERROR, retry?.let { SnackAction(Snacks.TRY_AGAIN, it) }, key = SNACK))
 
     private fun clearLookup() {
         lookupJob?.cancel()
@@ -359,6 +353,9 @@ class AppAddViewModel : ViewModel() {
     }
 
     private companion object {
+        /** This page's snacks, taken away together. */
+        const val SNACK = "app-add"
+
         const val QUERY_MAX = 2048
 
         /** The phone app search also matches package names, which run longer than a name. */

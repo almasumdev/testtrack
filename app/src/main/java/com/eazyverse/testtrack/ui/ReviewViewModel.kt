@@ -49,9 +49,6 @@ class ReviewViewModel : ViewModel() {
     var busy by mutableStateOf(false)
         private set
 
-    var message by mutableStateOf<String?>(null)
-        private set
-
     /**
      * The last call could not reach TestTrack. The page goes on showing the last saved answer
      * (see [ReviewKeep]) and says it is offline, rather than an error over a page that still works.
@@ -117,7 +114,7 @@ class ReviewViewModel : ViewModel() {
         gate.replace({ showProof(context, id) }) {
             val before = ProofStore.proof(context, id)
             val kept = withContext(Dispatchers.IO) { ProofStore.adopt(context, id, file) }
-            if (kept != null && before != null) message = "Your new screenshot replaced the one before. Hide anything personal again."
+            if (kept != null && before != null) Snacks.info("Your new screenshot replaced the one before. Hide anything personal again.")
         }
     }
 
@@ -170,10 +167,6 @@ class ReviewViewModel : ViewModel() {
     var sideloaded by mutableStateOf(false)
         private set
 
-    fun clearMessage() {
-        message = null
-    }
-
     /** Take the post on, or pick up wherever this account already was on it. */
     fun start(
         context: Context,
@@ -219,7 +212,7 @@ class ReviewViewModel : ViewModel() {
                 try {
                     look(context, first, settle = false)
                 } catch (e: ApiError) {
-                    message = e.message
+                    Snacks.error(e.message)
                     first
                 }
             keep(looked)
@@ -382,17 +375,20 @@ class ReviewViewModel : ViewModel() {
         val current = job ?: return
         val id = current.review.id
         // No message on success: the page itself turns into the sent screen.
-        run(waits = true, onOffline = { message = "You're offline. Your screenshot and note are saved; send them once you're back." }) {
+        run(waits = true, onOffline = {
+            Snacks.show(Snack("You're offline. Your screenshot and note are saved.", SnackTone.OFFLINE, sticky = true, key = OFFLINE))
+        }) {
             if (!requirePlayInstall(activity)) return@run
             // The picture is the one kept at this moment, read inside the gate: never one a
             // version with details hidden is still replacing, whatever the page showed.
             val sent = gate.send({ ProofStore.proof(activity, id) }) { sendProof(activity, current, Uri.fromFile(it), note) }
             if (sent == null) {
                 proof = null
-                message = "Add your screenshot again."
+                Snacks.error("Add your screenshot again.")
                 return@run
             }
             keep(current.copy(review = sent))
+            Snacks.dismiss(OFFLINE)
             offline = false
             dropProof(id)
         }
@@ -407,7 +403,7 @@ class ReviewViewModel : ViewModel() {
         val current = job ?: return
         run(waits = true) {
             keep(current.copy(review = replyWithPicture(activity, current, text, picture)))
-            message = "Sent. The developer and the members will see your answer."
+            Snacks.done("Sent. The developer and the members will see your answer.")
         }
     }
 
@@ -421,7 +417,7 @@ class ReviewViewModel : ViewModel() {
         run(waits = true) {
             keep(current.copy(review = Api.reportPost(current.review.postId, reason, note)))
             dropProof(current.review.id)
-            message = "Thanks. The developer is told why, and nothing counts against you."
+            Snacks.done("Thanks. The developer is told why. Nothing counts against you.")
             onDone()
         }
     }
@@ -464,7 +460,7 @@ class ReviewViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: ApiError) {
-                if (job == null) failure = e.message else message = e.message
+                if (job == null) failure = e.message else Snacks.error(e.message)
             } catch (_: IOException) {
                 // Not an error to show: the page carries on from what it saved, marked offline.
                 offline = true
@@ -473,14 +469,23 @@ class ReviewViewModel : ViewModel() {
                 // Reached us, but something on this side could not be read: not a lost connection.
                 Log.w("Review", "step failed", e)
                 val said = "Something went wrong. Try again in a moment."
-                if (job == null) failure = said else message = said
+                if (job == null) failure = said else Snacks.error(said)
             } finally {
                 busy = false
             }
         }
     }
 
+    // Offline is about this review: it goes with the page.
+    override fun onCleared() {
+        Snacks.dismiss(OFFLINE)
+        super.onCleared()
+    }
+
     private companion object {
+        /** The offline snack's key, taken away once a send goes or the page closes. */
+        const val OFFLINE = "review-offline"
+
         const val CLAIMED = "claimed"
         const val INSTALLED = "installed"
         const val USED = "used"

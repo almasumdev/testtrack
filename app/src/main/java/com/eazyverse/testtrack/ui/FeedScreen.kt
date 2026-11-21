@@ -178,7 +178,6 @@ fun FeedScreen(
                         gap = 14,
                     ) { vm.show(shownTabs[it]) }
                 }
-                PageMessage(vm.message, vm::clearMessage)
             }
         },
     ) { padding ->

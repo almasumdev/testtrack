@@ -72,16 +72,7 @@ fun AppAddScreen(
         containerColor = Color.Transparent,
         // The navigation route already applies safeDrawingPadding.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            Column {
-                PageBar("Add an app", onBack = { if (!vm.back()) onBack() })
-                PageMessage(
-                    vm.addError ?: vm.iconError,
-                    onDone = { if (vm.addError != null) vm.clearAddError() else vm.clearIconError() },
-                    error = true,
-                )
-            }
-        },
+        topBar = { PageBar("Add an app", onBack = { if (!vm.back()) onBack() }) },
     ) { padding ->
         // Each page starts at its top.
         val scroll = key(vm.starting) { rememberScrollState() }
@@ -121,7 +112,8 @@ fun AppAddScreen(
                 }
                 if (pinned) FootFade(Modifier.align(Alignment.BottomCenter))
             }
-            val padded = Modifier.padding(horizontal = Gutter)
+            // Pinned, the button is the page's floor; following a short page, the snack keeps to the bottom.
+            val padded = Modifier.padding(horizontal = Gutter).then(if (pinned) Modifier.snackFloor() else Modifier)
             if (vm.starting) {
                 Primary(
                     when {

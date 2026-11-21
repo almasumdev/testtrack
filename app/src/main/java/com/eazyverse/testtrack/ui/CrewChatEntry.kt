@@ -128,6 +128,7 @@ private fun BoxScope.ChatFab(
         Modifier
             .align(Alignment.BottomEnd)
             .padding(end = Gutter, bottom = 22.dp + dockRoom())
+            .snackFloor()
             .height(52.dp)
             .defaultMinSize(minWidth = 52.dp)
             .shadow(if (readOnly) 0.dp else 8.dp, shape)

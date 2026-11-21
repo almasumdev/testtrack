@@ -262,7 +262,7 @@ private fun BoxScope.PinnedBar(
         visible = showing,
         enter = slideInVertically { it } + fadeIn(),
         exit = slideOutVertically { it } + fadeOut(),
-        modifier = Modifier.align(Alignment.BottomCenter),
+        modifier = Modifier.align(Alignment.BottomCenter).snackFloor(),
     ) {
         PinnedMine(row = row, room = room, onJump = onJump)
     }

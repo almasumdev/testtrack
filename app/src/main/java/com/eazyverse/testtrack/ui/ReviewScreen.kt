@@ -99,8 +99,6 @@ fun ReviewScreen(
         busy = vm.busy,
         usageAccess = vm.usageAccess,
         onAllowUsage = { if (vm.requirePlayInstall(context)) vm.openUsageSettings(context) },
-        message = vm.message,
-        onMessageDone = vm::clearMessage,
         offline = vm.offline,
         failure = vm.failure,
         onRetry = { vm.start(context, post) },
@@ -176,8 +174,6 @@ fun ReviewBody(
     busy: Boolean = false,
     usageAccess: Boolean = true,
     onAllowUsage: () -> Unit = {},
-    message: String? = null,
-    onMessageDone: () -> Unit = {},
     offline: Boolean = false,
     failure: String? = null,
     onRetry: () -> Unit = {},
@@ -221,16 +217,18 @@ fun ReviewBody(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            Column {
-                PageBar(if (post.isLive) "Review" else "Feedback", onClose) {
-                    val reward = job?.reward ?: post.reward
-                    StatusChip(if (job?.noBox == true) "Half pay, +$reward tix" else "+$reward tix", Tone.TILE, size = ChipSize.LARGE)
-                }
-                PageMessage(message, onMessageDone)
+            PageBar(if (post.isLive) "Review" else "Feedback", onClose) {
+                val reward = job?.reward ?: post.reward
+                StatusChip(if (job?.noBox == true) "Half pay, +$reward tix" else "+$reward tix", Tone.TILE, size = ChipSize.LARGE)
             }
         },
         bottomBar = {
-            Column(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = if (threadFoot) 8.dp else 12.dp, bottom = 18.dp)) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .snackFloor()
+                    .padding(start = Gutter, end = Gutter, top = if (threadFoot) 8.dp else 12.dp, bottom = 18.dp),
+            ) {
                 if (job == null && failure != null) {
                     Primary("Try again", busy = spinning, onClick = onRetry)
                 } else if (job == null) {

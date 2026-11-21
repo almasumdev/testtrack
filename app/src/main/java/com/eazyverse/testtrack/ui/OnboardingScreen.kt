@@ -165,7 +165,11 @@ fun OnboardingBody(
             IntroSlide(IntroPages[index], distance)
         }
         Column(
-            Modifier.widthIn(max = 460.dp).fillMaxWidth().padding(horizontal = 28.dp),
+            Modifier
+                .widthIn(max = 460.dp)
+                .fillMaxWidth()
+                .snackFloor()
+                .padding(horizontal = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val progress = stringResource(R.string.intro_page, pager.currentPage + 1, IntroPages.size)

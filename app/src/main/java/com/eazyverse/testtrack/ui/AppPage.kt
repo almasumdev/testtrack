@@ -61,9 +61,6 @@ fun AppPage(
     /** The seat screen for this app. */
     onSeat: (String) -> Unit = {},
     onOpenChat: (String) -> Unit = {},
-    /** Left by the page this one came back from, such as a request that has just gone up. */
-    message: String? = null,
-    onMessageTaken: () -> Unit = {},
 ) {
     val context = LocalContext.current
     // Putting it in a crew: on the testers group first, then the seat screen on this app.
@@ -78,14 +75,6 @@ fun AppPage(
     var askLive by remember { mutableStateOf(false) }
     var askDelete by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf(false) }
-    // Said under the bar, such as why the bin can't delete this app.
-    var note by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(message) {
-        if (message != null) {
-            note = message
-            onMessageTaken()
-        }
-    }
     // The pencil goes straight to the gallery. Play's icon is filled in by the server once Play
     // shows the app, so a sheet of choices added a step and nothing else.
     val choosePicture =
@@ -99,21 +88,19 @@ fun AppPage(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         // The name is the page's own heading, so the bar is the way back and the bin.
         topBar = {
-            Column {
-                PageBar("", onBack, actions = {
-                    if (app != null) {
-                        val deleting = vm.acting == app.id && vm.actingOn == AppAction.DELETE
-                        DeleteAction(app.canDelete, deleting) {
-                            when {
-                                vm.acting == app.id -> Unit
-                                app.canDelete -> askDelete = true
-                                else -> note = "Can't delete. ${app.whyNotDelete}".trim()
-                            }
+            PageBar("", onBack, actions = {
+                if (app != null) {
+                    val deleting = vm.acting == app.id && vm.actingOn == AppAction.DELETE
+                    DeleteAction(app.canDelete, deleting) {
+                        when {
+                            vm.acting == app.id -> Unit
+                            app.canDelete -> askDelete = true
+                            // Why the bin can't delete this app.
+                            else -> Snacks.info("Can't delete. ${app.whyNotDelete}".trim())
                         }
                     }
-                })
-                PageMessage(note, onDone = { note = null })
-            }
+                }
+            })
         },
     ) { padding ->
         val scroll = rememberScrollState()

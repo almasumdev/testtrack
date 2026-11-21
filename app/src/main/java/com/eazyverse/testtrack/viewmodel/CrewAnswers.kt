@@ -7,6 +7,7 @@ import com.eazyverse.testtrack.ui.CrewRules
 import com.eazyverse.testtrack.ui.CrewSeat
 import com.eazyverse.testtrack.ui.CrewViewModel
 import com.eazyverse.testtrack.ui.MyAppsChanged
+import com.eazyverse.testtrack.ui.SnackTone
 
 /*
  * Answering for somebody else's app: a vote on one the Play check could not look at, or a report
@@ -24,13 +25,11 @@ fun CrewViewModel.vote(
     context = context,
     seat = seat.id,
     onDone = { answer ->
-        say(
-            when (answer.state) {
-                "confirmed" -> "${seat.appName} is in."
-                "rejected" -> "${seat.appName} went back to its owner to fix."
-                else -> "Thanks. One more answer decides it."
-            },
-        )
+        when (answer.state) {
+            "confirmed" -> say("${seat.appName} is in.", SnackTone.DONE)
+            "rejected" -> say("${seat.appName} went back to its owner to fix.")
+            else -> say("Thanks. One more answer decides it.", SnackTone.DONE)
+        }
     },
 ) { Api.vote(seat.id, installed, reason) }
 
@@ -52,13 +51,11 @@ fun CrewViewModel.report(
         context = context,
         seat = seatId,
         onDone = { seat ->
-            say(
-                when {
-                    seat.state == "rejected" -> "$appName went back to its owner to fix."
-                    running -> "Reported. ${seat.ownerName} has been told, and tonight doesn't count against you."
-                    else -> "Reported. ${seat.ownerName} has been told, and it no longer counts against you."
-                },
-            )
+            when {
+                seat.state == "rejected" -> say("$appName went back to its owner to fix.")
+                running -> say("Reported. ${seat.ownerName} has been told. Tonight doesn't count against you.", SnackTone.DONE)
+                else -> say("Reported. ${seat.ownerName} has been told. It no longer counts against you.", SnackTone.DONE)
+            }
         },
     ) { Api.report(seatId, reason) }
 }
@@ -76,13 +73,11 @@ fun CrewViewModel.leave(
     context = context,
     seat = seat.id,
     onDone = {
-        say(
-            when {
-                seat.charged == 0 -> "Taken back out. It was placed free, so there was nothing to refund. You can put an app in again."
-                seat.charged > 0 -> "Taken back out, and its ${seat.charged} tix are back. You can put an app in again."
-                else -> "Taken back out, and its ${CrewRules.SEAT_COST} tix are back. You can put an app in again."
-            },
-        )
+        when {
+            seat.charged == 0 -> say("Taken out. It was placed free, so nothing comes back.")
+            seat.charged > 0 -> say("Taken out. Its ${seat.charged} tix are back.", SnackTone.DONE)
+            else -> say("Taken out. Its ${CrewRules.SEAT_COST} tix are back.", SnackTone.DONE)
+        }
         MyAppsChanged.tell()
     },
 ) { Api.withdraw(seat.id) }

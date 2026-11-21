@@ -72,12 +72,8 @@ class CrewViewModel : ViewModel() {
     var opened by mutableStateOf<String?>(null)
         private set
 
-    /** A one line result of the last action, shown once and cleared. */
-    var message by mutableStateOf<String?>(null)
-        private set
-
     /** The Record tab's kept records, read with every load, and the two answers they ask. */
-    val records = CrewRecords(viewModelScope, say = { message = it })
+    val records = CrewRecords(viewModelScope)
 
     var loading by mutableStateOf(true)
         private set
@@ -131,14 +127,11 @@ class CrewViewModel : ViewModel() {
 
     private var settledTab = false
 
-    fun clearMessage() {
-        message = null
-    }
-
-    /** Say something once, from an action defined beside this class. */
-    internal fun say(text: String) {
-        message = text
-    }
+    /** Say something once, in a snack, from an action defined beside this class. */
+    internal fun say(
+        text: String,
+        tone: SnackTone = SnackTone.INFO,
+    ) = Snacks.show(Snack(text, tone))
 
     fun show(id: String?) {
         opened = id
@@ -227,7 +220,7 @@ class CrewViewModel : ViewModel() {
                 ReviewMoment.noteFinished(context, crews.filter { it.phase == CrewPhase.RECORD && !it.out }.map { it.id }.toSet())
                 offline = false
             } catch (e: ApiError) {
-                message = e.message
+                Snacks.error(e.message)
                 offline = true
             } catch (e: Exception) {
                 offline = true
@@ -300,13 +293,11 @@ class CrewViewModel : ViewModel() {
                             confirmBoxes = true,
                         ),
                     )
-                message =
-                    if (seat.state == "confirmed") {
-                        "${seat.appName} is in. Play shows it to the testers group."
-                    } else {
-                        "${seat.appName} is waiting. We could not reach Play just now and will " +
-                            "check it again shortly."
-                    }
+                if (seat.state == "confirmed") {
+                    say("${seat.appName} is in. Play shows it to the testers group.", SnackTone.DONE)
+                } else {
+                    say("${seat.appName} is waiting. We couldn't reach Play just now and will check again shortly.")
+                }
                 opened = null
                 tab = CrewPhase.LOBBY
                 onDone()
@@ -361,7 +352,7 @@ class CrewViewModel : ViewModel() {
     private var overlayAsked = false
 
     /** What a round needs before it starts: tonight's screen-share yes. */
-    val pictures = NightPictures(viewModelScope, say = { message = it }, reload = { load(it) })
+    val pictures = NightPictures(viewModelScope, reload = { load(it) })
 
     private fun round(
         context: Context,
@@ -369,11 +360,11 @@ class CrewViewModel : ViewModel() {
     ) {
         val first = apps.firstOrNull() ?: return
         DebugLooks.crewDemoRoundMessage(apps)?.let {
-            message = it
+            say(it)
             return
         }
         if (apps.any { it.packageName.isBlank() }) {
-            message = "${first.label} can't be opened from here. Open it from your phone's app list instead."
+            say("${first.label} can't open from here. Use your phone's app list.")
             return
         }
         // Asked at the first app somebody opens: without it the phone reads no time in the app,
@@ -431,7 +422,7 @@ class CrewViewModel : ViewModel() {
             return
         }
         NightRound.onTestTrackInFront(context) { said ->
-            said?.let { message = it }
+            said?.let(Snacks::show)
             load(context)
         }
         (context as? Activity)?.let(pictures::send) // What could not go yet.
@@ -457,9 +448,9 @@ class CrewViewModel : ViewModel() {
                 onDone(block())
                 context?.let { load(it) } ?: reload()
             } catch (e: ApiError) {
-                message = e.message
+                Snacks.error(e.message)
             } catch (_: Exception) {
-                message = "We could not reach TestTrack. Check your connection."
+                Snacks.error("Couldn't reach TestTrack. Check your connection.") { call(context, seat, onDone, block) }
             } finally {
                 acting = null
             }

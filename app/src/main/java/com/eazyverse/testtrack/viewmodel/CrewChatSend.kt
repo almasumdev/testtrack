@@ -17,6 +17,7 @@ import com.eazyverse.testtrack.net.ApiError
 import com.eazyverse.testtrack.net.ChatPostIn
 import com.eazyverse.testtrack.net.deleteChat
 import com.eazyverse.testtrack.net.sendChat
+import com.eazyverse.testtrack.ui.Snacks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -57,7 +58,7 @@ suspend fun CrewChatViewModel.sendPicture(
 ): Boolean {
     val captionProblem = ChatAllowance.problem(caption, limits, packages)
     if (!ChatAllowance.canPickPicture(captionProblem, messagesLeft, picturesLeft, canPost)) {
-        message = if (picturesLeft <= 0) "No pictures left today." else "That can't be sent right now."
+        if (picturesLeft <= 0) Snacks.info("No pictures left today.") else Snacks.error("That can't be sent right now.")
         return false
     }
     val app = context.applicationContext
@@ -122,7 +123,7 @@ fun CrewChatViewModel.delete(line: ChatLine) {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            message = (e as? ApiError)?.message ?: "Couldn't delete it. Try again."
+            if (e is ApiError) Snacks.error(e.message) else Snacks.error("Couldn't delete it.") { delete(line) }
         }
     }
 }

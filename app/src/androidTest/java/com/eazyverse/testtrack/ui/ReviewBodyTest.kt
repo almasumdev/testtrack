@@ -82,17 +82,17 @@ class ReviewBodyTest {
         note: String = "",
         onCapture: () -> Unit = {},
         job: ReviewJob? = ReviewJob(post(live), review(state, used), leftReview),
-        message: String? = null,
+        snack: String? = null,
         offline: Boolean = false,
         failure: String? = null,
         onGiveUp: (() -> Unit)? = null,
     ) {
+        snack?.let { Snacks.show(Snack(it, key = TEST_SNACK)) }
         compose.setContent {
             TestTrackTheme {
                 ReviewBody(
                     post = post(live),
                     job = job,
-                    message = message,
                     offline = offline,
                     failure = failure,
                     sideloaded = sideloaded,
@@ -104,6 +104,7 @@ class ReviewBodyTest {
                     onCapture = onCapture,
                     onGiveUp = onGiveUp,
                 )
+                SnackHost()
             }
         }
     }
@@ -328,9 +329,10 @@ class ReviewBodyTest {
     }
 
     @Test
-    fun a_message_is_shown_in_the_page() {
-        open("used", message = "That image could not be read. Try another.")
-        compose.onNodeWithText("That image could not be read. Try another.").assertIsDisplayed()
+    fun a_snack_is_shown_over_the_page() {
+        open("used", snack = "Couldn't read that picture. Choose another.")
+        compose.onNodeWithText("Couldn't read that picture. Choose another.").assertIsDisplayed()
+        Snacks.dismiss(TEST_SNACK)
     }
 
     @Test
@@ -339,3 +341,5 @@ class ReviewBodyTest {
         compose.onNodeWithText("Done").assertIsDisplayed()
     }
 }
+
+private const val TEST_SNACK = "test"

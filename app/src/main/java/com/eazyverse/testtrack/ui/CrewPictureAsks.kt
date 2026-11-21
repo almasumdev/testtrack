@@ -20,10 +20,7 @@ internal fun CrewPictureAsks(vm: CrewViewModel) {
             onGranted = { code, data -> pictures.start(activity, code, data) },
             onRefused = {
                 pictures.skip()
-                pictures.tell(
-                    "Tonight needs a picture of each app, so TestTrack has to see your screen while " +
-                        "they're open. Tap Open all when you're ready.",
-                )
+                Snacks.info("Tonight needs a picture of each app. Tap Open all when you're ready.")
             },
         )
 

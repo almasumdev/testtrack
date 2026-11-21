@@ -201,9 +201,13 @@ fun MainShell(
     var leaving by remember { mutableStateOf(false) }
     BackHandler(enabled = tab == MainTab.CIRCLE && !leaving) { leaving = true }
     LaunchedEffect(leaving) {
-        if (leaving) {
+        if (!leaving) return@LaunchedEffect
+        Snacks.show(Snack("Press back again to leave TestTrack", key = LEAVE_KEY, millis = LEAVE_WINDOW_MS))
+        try {
             delay(LEAVE_WINDOW_MS)
             leaving = false
+        } finally {
+            Snacks.dismiss(LEAVE_KEY)
         }
     }
 
@@ -428,7 +432,8 @@ fun MainShell(
                 },
                 Modifier
                     .align(Alignment.BottomCenter)
-                    .onSizeChanged { dockHeight = with(density) { it.height.toDp() } - DockTop },
+                    .onSizeChanged { dockHeight = with(density) { it.height.toDp() } - DockTop }
+                    .snackFloor(),
                 onAdd = { adding = !adding },
                 addExpanded = adding,
                 counts =
@@ -436,12 +441,6 @@ fun MainShell(
                         mapOf(MainTab.CIRCLE to it.circle, MainTab.GROUPS to it.crew, MainTab.APPS to it.apps)
                     } ?: emptyMap(),
                 dots = if (counts.crewChat > 0) setOf(MainTab.GROUPS) else emptySet(),
-            )
-            LeaveHint(
-                leaving,
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = dockHeight + 10.dp),
             )
         }
     }
@@ -486,6 +485,7 @@ fun MainShell(
 
 /** How long a second Back still leaves, after the first one on the first tab said it would. */
 private const val LEAVE_WINDOW_MS = 2_000L
+private const val LEAVE_KEY = "leave"
 
 /** The ground each tab stands on. */
 private val MainTab.scene: Scene

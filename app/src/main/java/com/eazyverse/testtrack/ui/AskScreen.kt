@@ -66,12 +66,7 @@ fun AskScreen(
         containerColor = Color.Transparent,
         // The navigation route already applies safeDrawingPadding.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            Column {
-                PageBar("Ask for feedback", onBack)
-                PageMessage(vm.pageMessage, onDone = vm::clearMessage, error = true)
-            }
-        },
+        topBar = { PageBar("Ask for feedback", onBack) },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             // The skeleton and the not-found state stand outside the scroll, so they know the

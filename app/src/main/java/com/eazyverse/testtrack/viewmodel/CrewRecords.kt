@@ -16,6 +16,7 @@ import com.eazyverse.testtrack.ui.NightMark
 import com.eazyverse.testtrack.ui.RecordApp
 import com.eazyverse.testtrack.ui.RecordBusy
 import com.eazyverse.testtrack.ui.RecordOutcome
+import com.eazyverse.testtrack.ui.Snacks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -29,11 +30,10 @@ import kotlinx.coroutines.launch
  *
  * Also the two things a record asks: the production question and a perfect run's claim. Each
  * answer comes back as the updated record and replaces it in place. Kept apart from the Crew
- * page's view model, which [say] leads back to.
+ * page's view model; a failed answer is said in a snack, with Try again.
  */
 class CrewRecords(
     private val scope: CoroutineScope,
-    private val say: (String) -> Unit,
 ) {
     /** Newest crew first; null until the first answer. */
     var items by mutableStateOf<List<CrewRecord>?>(null)
@@ -132,7 +132,7 @@ class CrewRecords(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                say(COULD_NOT_SEND)
+                Snacks.error(COULD_NOT_SEND) { act(crewId, what, block) }
                 // Answered or claimed already, maybe from another phone: show what the server has.
                 if (e is ApiError && e.status == 409) load(signedOut = false)
             } finally {
@@ -152,7 +152,7 @@ class CrewRecords(
     }
 
     private companion object {
-        const val COULD_NOT_SEND = "Couldn't send. Try again."
+        const val COULD_NOT_SEND = "Couldn't send."
     }
 }
 
