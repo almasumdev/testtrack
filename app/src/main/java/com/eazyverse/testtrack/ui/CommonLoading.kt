@@ -1,8 +1,13 @@
 package com.eazyverse.testtrack.ui
 
 import android.animation.ValueAnimator
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
@@ -164,6 +169,13 @@ fun LoadSwap(
 
 /** Long enough to read as a change of state, short enough not to hold anything up. */
 private const val LOAD_SWAP_MS = 320
+
+/**
+ * Fade through rather than cut or cross-fade: the old page goes first, then the new one comes in,
+ * so two pages' tabs and headings never sit on top of each other. The one spec for a page change.
+ */
+fun <S> fadeThrough(): AnimatedContentTransitionScope<S>.() -> ContentTransform =
+    { fadeIn(tween(160, delayMillis = 80)) togetherWith fadeOut(tween(80)) }
 
 /**
  * The one thin bar: 3dp with round ends, the primary ink on the empty track, no gap and no end mark.

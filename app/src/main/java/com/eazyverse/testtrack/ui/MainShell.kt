@@ -2,10 +2,6 @@ package com.eazyverse.testtrack.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -290,7 +286,7 @@ fun MainShell(
                         // one comes in, so two pages' tabs and headings never sit on top of each other.
                         AnimatedContent(
                             tab,
-                            transitionSpec = { fadeIn(tween(160, delayMillis = 80)) togetherWith fadeOut(tween(80)) },
+                            transitionSpec = fadeThrough(),
                             label = "page",
                         ) { page ->
                             // Drawn again when the account changes, so a tab signed in to from its

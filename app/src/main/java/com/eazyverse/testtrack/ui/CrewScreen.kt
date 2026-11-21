@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import android.content.Context
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -86,17 +87,23 @@ fun CrewScreen(
             }
             // An invite waits over every tab until it is answered.
             PrivateInviteRows(invites, { privates.pick(it) }, Modifier.padding(start = Gutter, end = Gutter, top = 12.dp))
-            when {
-                vm.offline && vm.crews.isEmpty() -> RobotOffline("Crews didn't load", onRetry = { vm.load(context) })
-                vm.tab == CrewPhase.RUN ->
-                    LoadSwap(vm.firstLoad) {
-                        if (it) CrewRunLoading() else CrewRunTab(vm, onSignIn, actions, onOpenCrew, onOpenChat, privateRun)
-                    }
-                vm.tab == CrewPhase.LOBBY ->
-                    LoadSwap(vm.firstLoad) { if (it) CrewLobbyLoading() else CrewLobbyTab(vm, onSignIn, actions, onOpenCrew, onOpenChat) }
-                vm.tab == CrewPhase.RECORD ->
-                    LoadSwap(vm.firstLoad) { if (it) CrewRecordLoading() else CrewRecordTab(vm, onSignIn, onOpenCrew) }
-                else -> CrewOpenTab(vm, actions, rememberCrewGuide(vm, myApps, onSignIn, onAddApp, onOpenCircle), volunteers)
+            // The first answer moves the tab itself (Open to Run when a crew is running), so the page
+            // changes under the reader. Fade through, as the main tabs do, rather than cut. Null is
+            // the offline page. Nothing animates on a return: the tab is already settled then.
+            val page = if (vm.offline && vm.crews.isEmpty()) null else vm.tab
+            AnimatedContent(page, Modifier.fillMaxSize(), transitionSpec = fadeThrough(), label = "crew page") { shown ->
+                when (shown) {
+                    null -> RobotOffline("Crews didn't load", onRetry = { vm.load(context) })
+                    CrewPhase.RUN ->
+                        LoadSwap(vm.firstLoad) {
+                            if (it) CrewRunLoading() else CrewRunTab(vm, onSignIn, actions, onOpenCrew, onOpenChat, privateRun)
+                        }
+                    CrewPhase.LOBBY ->
+                        LoadSwap(vm.firstLoad) { if (it) CrewLobbyLoading() else CrewLobbyTab(vm, onSignIn, actions, onOpenCrew, onOpenChat) }
+                    CrewPhase.RECORD ->
+                        LoadSwap(vm.firstLoad) { if (it) CrewRecordLoading() else CrewRecordTab(vm, onSignIn, onOpenCrew) }
+                    CrewPhase.OPEN -> CrewOpenTab(vm, actions, rememberCrewGuide(vm, myApps, onSignIn, onAddApp, onOpenCircle), volunteers)
+                }
             }
         }
     }
