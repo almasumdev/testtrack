@@ -79,6 +79,8 @@ internal fun withCrewExtras(
         onUninstall = { pkg -> uninstall(context, pkg) },
         onLeaveVolunteer = base.onLeaveVolunteer,
         onFindCrew = base.onFindCrew,
+        privateLine = base.privateLine,
+        onPrivateTesters = base.onPrivateTesters,
     )
 }
 

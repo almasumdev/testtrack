@@ -17,8 +17,11 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -29,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -36,6 +40,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.domain.pluralOf
 import com.eazyverse.testtrack.ui.theme.Tt
 
@@ -45,11 +51,18 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * is over), and their pictures of the last three nights, each opening whole when tapped.
  */
 
+/**
+ * [dayLabel] takes the place of the day count beside the name, such as a private tester's nights.
+ * [onRemove] puts a 32dp X at the tile's end. A tester with no nights yet, asked and not answered,
+ * has a dashed ring.
+ */
 @Composable
 internal fun TesterTile(
     tester: CrewTester,
     onFace: () -> Unit,
-    onPicture: (NightPicture) -> Unit,
+    onPicture: (NightPicture) -> Unit = {},
+    dayLabel: String? = null,
+    onRemove: (() -> Unit)? = null,
 ) {
     val t = Tt.colors
     CrewCard(padding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)) {
@@ -75,10 +88,11 @@ internal fun TesterTile(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    if (!tester.over) {
+                    val days = dayLabel ?: if (tester.squares.isEmpty()) "" else "${tester.days} ${pluralOf(tester.days, "day")}"
+                    if (!tester.over && (tester.otherDay || days.isNotEmpty())) {
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            if (tester.otherDay) "Their day ${tester.day}" else "${tester.days} ${pluralOf(tester.days, "day")}",
+                            if (tester.otherDay) "Their day ${tester.day}" else days,
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.5.sp, lineHeight = 15.sp),
                             color = t.text3,
                             maxLines = 1,
@@ -114,6 +128,15 @@ internal fun TesterTile(
                     }
                 }
             }
+            if (onRemove != null) {
+                Spacer(Modifier.width(4.dp))
+                // 32 drawn, 48 to touch, at the tile's end.
+                Box(Modifier.size(32.dp).wrapContentSize(unbounded = true)) {
+                    IconButton(onClick = onRemove) {
+                        Icon(Lucide.X, "Remove ${tester.name}", Modifier.size(18.dp), tint = t.text3)
+                    }
+                }
+            }
         }
     }
 }
@@ -136,13 +159,23 @@ private fun ringColor(square: Square): Color {
 @Composable
 private fun NightsRing(tester: CrewTester) {
     val colors = tester.squares.map { ringColor(it) }
+    val dashed = Tt.colors.glassBorderStrong
     val opened = tester.squares.count { it.counted }
     Box(
         Modifier.size(44.dp).semantics { contentDescription = "${tester.name}, opened yours on $opened ${pluralOf(opened, "night")}" },
         contentAlignment = Alignment.Center,
     ) {
         Canvas(Modifier.fillMaxSize()) {
-            if (colors.isEmpty()) return@Canvas
+            // No nights yet, asked and not answered: a dashed ring where they would go.
+            if (colors.isEmpty()) {
+                val stroke = 1.5.dp.toPx()
+                drawCircle(
+                    dashed,
+                    radius = size.minDimension / 2 - stroke / 2,
+                    style = Stroke(stroke, pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 2.5.dp.toPx()))),
+                )
+                return@Canvas
+            }
             val stroke = 4.dp.toPx()
             val sweep = 360f / colors.size
             val gap = 3f
@@ -169,9 +202,12 @@ private fun NightsRing(tester: CrewTester) {
     }
 }
 
-/** The testers page while it loads: the summary, the grid's shape, the heading and three tiles. */
+/** The testers page while it loads: the summary, the grid's shape, the heading and three tiles, or as many as asked. */
 @Composable
-internal fun TestersLoading() {
+internal fun TestersLoading(
+    gridRows: Int = SKELETON_GRID_ROWS,
+    tiles: Int = SKELETON_TILES,
+) {
     val t = Tt.colors
     Column(
         Modifier
@@ -183,7 +219,7 @@ internal fun TestersLoading() {
         Spacer(Modifier.height(12.dp))
         CrewCard(padding = PaddingValues(horizontal = 6.dp, vertical = 12.dp)) {
             Box(Modifier.padding(start = 4.dp, bottom = 10.dp)) { Skeleton(width = 110.dp, height = 24.dp, corner = 12.dp) }
-            repeat(SKELETON_GRID_ROWS) {
+            repeat(gridRows) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.width(26.dp)) { Skeleton(width = 24.dp, height = 24.dp, corner = 12.dp) }
                     Row(Modifier.weight(1f)) {
@@ -204,7 +240,7 @@ internal fun TestersLoading() {
             }
         }
         Box(Modifier.padding(top = 20.dp, bottom = 10.dp)) { Skeleton(width = 80.dp, height = 18.dp) }
-        repeat(SKELETON_TILES) { i ->
+        repeat(tiles) { i ->
             if (i > 0) Spacer(Modifier.height(8.dp))
             CrewCard(padding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

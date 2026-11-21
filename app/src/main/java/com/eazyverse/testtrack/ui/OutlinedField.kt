@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
@@ -85,6 +86,8 @@ internal fun OutlinedField(
     enabled: Boolean = true,
     /** A 36dp action in the top end corner of the box. */
     trailing: (@Composable () -> Unit)? = null,
+    /** An 18dp mark at the start of the box, such as a mail for an address. */
+    leadingIcon: ImageVector? = null,
     /** A plain line under the box where an error would go, such as how many characters there are. */
     hint: String? = null,
     /** The hint's ink; text3 when not given. */
@@ -238,6 +241,17 @@ internal fun OutlinedField(
                                 )
                             },
                             placeholder = placeholder?.let { { Text(it, color = t.text4) } },
+                            leadingIcon =
+                                leadingIcon?.let {
+                                    {
+                                        Icon(
+                                            it,
+                                            null,
+                                            Modifier.size(18.dp),
+                                            tint = if (isError) t.bad else t.text3,
+                                        )
+                                    }
+                                },
                             trailingIcon =
                                 if (password) {
                                     {

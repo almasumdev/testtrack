@@ -1,6 +1,7 @@
 package com.eazyverse.testtrack.viewmodel
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.getValue
@@ -50,7 +51,13 @@ class NightPictures(
     fun ask(
         stops: List<RoundStore.Stop>,
         float: Boolean,
+        context: Context? = null,
     ) {
+        // A private test's open takes no picture, so there is no screen-share to ask: it starts now.
+        if (context != null && stops.isNotEmpty() && stops.all { it.privateTestId.isNotBlank() }) {
+            NightRound.start(context, stops, float = float && NightRound.canFloat(context), pictures = false)
+            return
+        }
         this.float = float
         waitingFor = stops
     }

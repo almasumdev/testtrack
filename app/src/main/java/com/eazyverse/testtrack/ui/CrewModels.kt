@@ -299,6 +299,10 @@ data class CrewApp(
      * go unopened once without a miss. Shown only as a bare number; nothing invites a skip.
      */
     val skips: Int = 0,
+    /** A private test's ask: opened through the round, never owed and never in a crew's night. */
+    val privateTestId: String = "",
+    /** Its sign-in, for an app with no seat in the reader's crews to read it from. */
+    val notes: String = "",
 )
 
 /**

@@ -314,6 +314,7 @@ fun CrewRunPhase(
             crew.mine?.let { mine ->
                 item { CrewHeading("Your app") }
                 block { TestersCard(crew, mine, actions) }
+                privateRow(mine, actions)
             }
             return@CrewList
         }
@@ -323,6 +324,7 @@ fun CrewRunPhase(
         crew.mine?.let { mine ->
             item { CrewHeading("Your app") }
             block { TestersCard(crew, mine, actions) }
+            privateRow(mine, actions)
             block { OwnerToolsCard(mine, actions) }
         }
         if (crew.volunteer != null) {
@@ -337,6 +339,12 @@ fun CrewRunPhase(
         }
     }
 }
+
+/** The way to the owner's private testers, under their testers card while the run goes. */
+private fun LazyListScope.privateRow(
+    mine: CrewSeat,
+    actions: CrewActions,
+) = actions.privateLine(mine)?.let { line -> block { PrivateTestersRow(line) { actions.onPrivateTesters(mine) } } }
 
 /** Your app during a run, or after one: how many of the others opened it, and who. */
 @Composable

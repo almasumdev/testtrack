@@ -11,6 +11,8 @@ import com.eazyverse.testtrack.data.VisitPictures
 import com.eazyverse.testtrack.domain.RoundRules
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.net.ApiError
+import com.eazyverse.testtrack.net.PrivateVisitIn
+import com.eazyverse.testtrack.net.privateVisit
 import com.eazyverse.testtrack.ui.Snack
 import com.eazyverse.testtrack.ui.SnackTone
 import kotlinx.coroutines.CoroutineScope
@@ -245,7 +247,7 @@ object NightRound {
                         round = moved.copy(index = moved.index + 1)
                         begin(context)
                     } else {
-                        pendingSay = lastSnack(moved.skipped)
+                        pendingSay = lastSnack(moved)
                         end(context)
                         bringBack(context)
                     }
@@ -310,7 +312,7 @@ object NightRound {
                     when {
                         left == 0 -> {
                             end(app)
-                            say(lastSnack(moved.skipped))
+                            say(lastSnack(moved))
                         }
                         endsHere && result is Outcome.Refused -> {
                             end(app)
@@ -331,9 +333,13 @@ object NightRound {
         }
     }
 
-    /** The round's last word: tonight done, or how many were left out and why. */
-    private fun lastSnack(skipped: List<String>) =
-        Snack(RoundRules.lastWord(skipped), if (skipped.isEmpty()) SnackTone.DONE else SnackTone.INFO)
+    /** The round's last word: tonight done, or how many were left out and why. A private test is its own app's. */
+    private fun lastSnack(round: RoundStore.Round): Snack {
+        val skipped = round.skipped
+        val only = round.stops.singleOrNull()?.takeIf { it.privateTestId.isNotBlank() }
+        if (only != null && skipped.isEmpty()) return Snack("${only.label} counted for tonight.", SnackTone.DONE)
+        return Snack(RoundRules.lastWord(skipped), if (skipped.isEmpty()) SnackTone.DONE else SnackTone.INFO)
+    }
 
     private sealed interface Outcome {
         data object Counted : Outcome
@@ -364,6 +370,11 @@ object NightRound {
             // Which copy was opened: a copy Play did not put here, or one older than the owner's
             // newest past its 24 hours, is refused with what to do.
             val copy = InstalledApps.info(context, stop.packageName)
+            // A private test counts on its own ask, from the seconds and the copy, and nothing else.
+            if (stop.privateTestId.isNotBlank()) {
+                Api.privateVisit(stop.privateTestId, PrivateVisitIn(used, copy.installer.orEmpty()))
+                return Outcome.Counted
+            }
             Api.visit(stop.seatId, used, versionCode = copy.versionCode.takeIf { copy.installed }, installer = copy.installer.orEmpty())
             // The visit first, then its picture, in the background: the next app does not wait.
             if (taken != null) {

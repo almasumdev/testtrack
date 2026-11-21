@@ -367,6 +367,7 @@ fun AppNav(
                 onOpenAbout = { nav.push(Routes.ABOUT) },
                 onOpenCrew = { nav.push(Routes.crew(it)) },
                 onOpenChat = { nav.push(Routes.crewChat(it)) },
+                onOpenPrivate = { nav.push(PrivateRoutes.test(it)) },
                 onAskForApp = { nav.push(Routes.askFor(it)) },
                 onOpenApp = { nav.push(Routes.app(it)) },
                 onAddApp = { nav.push(Routes.APP_ADD) },
@@ -436,6 +437,8 @@ fun AppNav(
                     onMembers = { nav.push(Routes.crewMembers(id)) },
                     onOpenCrew = { nav.push(Routes.crew(it)) },
                     onChat = { nav.push(Routes.crewChat(id)) },
+                    onPrivateTesters = { nav.push(PrivateRoutes.testers(it)) },
+                    privates = viewModel(home),
                 )
             }
         }
@@ -450,6 +453,7 @@ fun AppNav(
 
         appRoutes(nav, openCrew, openCircle)
         chatRoutes(nav)
+        privateRoutes(nav)
 
         composable(Routes.ABOUT) {
             Inset { AboutScreen(onBack = { nav.popBackStack() }) }

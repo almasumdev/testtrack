@@ -23,8 +23,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
+import com.eazyverse.testtrack.viewmodel.PrivateTestsViewModel
 import com.eazyverse.testtrack.viewmodel.leave
 import com.eazyverse.testtrack.viewmodel.leaveVolunteer
+import com.eazyverse.testtrack.viewmodel.privateCountsLine
 import com.eazyverse.testtrack.viewmodel.report
 import com.eazyverse.testtrack.viewmodel.vote
 
@@ -54,6 +56,9 @@ fun CrewPage(
     onOpenCrew: ((String) -> Unit)? = null,
     /** The crew's chat. */
     onChat: () -> Unit = {},
+    /** The owner's private testers for their app in this crew, by its seat. */
+    onPrivateTesters: (String) -> Unit = {},
+    privates: PrivateTestsViewModel = viewModel(),
 ) {
     val context = LocalContext.current
     val dialogs = rememberCrewDialogs()
@@ -80,6 +85,11 @@ fun CrewPage(
     val record = if (finished) vm.records.record(id) else null
     // Nothing to see in the members once the details are cleared, or in a crew that never ran.
     val noMembers = crew?.pruned == true || record?.pruned == true || record?.outcome == RecordOutcome.CANCELLED
+    // The owner's app in a running crew can have private testers: their counts for its row.
+    val privateSeat = crew?.mine?.takeIf { crew.phase == CrewPhase.RUN && it.state == SeatState.CONFIRMED }
+    LaunchedEffect(privateSeat?.id, vm.reloading) {
+        if (privateSeat != null && !vm.reloading) privates.loadResults(privateSeat.id, quiet = true)
+    }
     // Put it in again: the seat screen on the same app when it is on My apps, else the picker.
     var seating by remember { mutableStateOf(false) }
     val actions =
@@ -90,7 +100,9 @@ fun CrewPage(
             // Back to the Crew tab's Open list, where the running crews with spots are.
             vm.showTab(CrewPhase.OPEN)
             onBack()
-        })
+        }, privateLine = { seat ->
+            if (seat.id == privateSeat?.id) privateCountsLine(privates.results[seat.id]) else null
+        }, onPrivateTesters = { onPrivateTesters(it.id) })
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -186,6 +198,8 @@ internal fun crewActions(
     onAddToCrew: () -> Unit,
     onMembers: () -> Unit = {},
     onFindCrew: () -> Unit = {},
+    privateLine: (CrewSeat) -> String? = { null },
+    onPrivateTesters: (CrewSeat) -> Unit = {},
 ): CrewActions {
     val context = LocalContext.current
     val membership = rememberMembership()
@@ -225,6 +239,8 @@ internal fun crewActions(
             onRetryPictures = { vm.pictures.send(context.findActivity()) },
             onLeaveVolunteer = { dialogs.leavingVolunteer = it },
             onFindCrew = onFindCrew,
+            privateLine = privateLine,
+            onPrivateTesters = onPrivateTesters,
         ),
     )
 }

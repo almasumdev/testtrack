@@ -379,15 +379,15 @@ class CrewViewModel : ViewModel() {
         }
         val stops =
             apps.map { app ->
-                val notes = crews.firstNotNullOfOrNull { c -> c.seats.firstOrNull { it.id == app.id } }?.notes.orEmpty()
-                RoundStore.Stop(app.id, app.packageName, app.label, notes, day = app.day)
+                val notes = crews.firstNotNullOfOrNull { c -> c.seats.firstOrNull { it.id == app.id } }?.notes ?: app.notes
+                RoundStore.Stop(app.id, app.packageName, app.label, notes, day = app.day, privateTestId = app.privateTestId)
             }
         if (!NightRound.canFloat(context) && !overlayAsked) {
             overlayAsked = true
             needsOverlayFor = stops
             return
         }
-        pictures.ask(stops, float = true)
+        pictures.ask(stops, float = true, context)
     }
 
     /** Both switches a round needs: usage access for the proof, drawing over apps for the timer. */
@@ -412,7 +412,7 @@ class CrewViewModel : ViewModel() {
     fun skipOverlay(context: Context) {
         val stops = needsOverlayFor ?: return
         needsOverlayFor = null
-        pictures.ask(stops, float = false)
+        pictures.ask(stops, float = false, context)
     }
 
     /**
@@ -422,7 +422,7 @@ class CrewViewModel : ViewModel() {
     fun settle(context: Context) {
         needsOverlayFor?.let { stops ->
             needsOverlayFor = null
-            pictures.ask(stops, float = NightRound.canFloat(context))
+            pictures.ask(stops, float = NightRound.canFloat(context), context)
             return
         }
         NightRound.onTestTrackInFront(context) { said ->
@@ -464,7 +464,7 @@ class CrewViewModel : ViewModel() {
     // Your crews' own channels, and the two events about your seats that come on yours.
     private val live =
         LiveReload("crew", viewModelScope) {
-            it.channel.startsWith("crew:") || it.type == "seat.mine" || it.type == "visit.recorded" || it.type == "volunteer.changed"
+            it.channel.startsWith("crew:") || it.type in setOf("seat.mine", "visit.recorded", "volunteer.changed", "private.changed")
         }
 
     // The kept crews, only without a connection; online the tabs shimmer until the server answers.

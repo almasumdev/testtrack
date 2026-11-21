@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.domain.ChatSignals
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.PrivateState
+import com.eazyverse.testtrack.viewmodel.PrivateTestsViewModel
 import com.eazyverse.testtrack.viewmodel.VolunteerViewModel
 
 /**
@@ -53,7 +55,10 @@ fun CrewScreen(
     onAddApp: () -> Unit = {},
     /** Circle, where reviews earn the tix a seat costs. */
     onOpenCircle: () -> Unit = {},
+    /** A private test's own page, from its tile on the Run tab. */
+    onOpenPrivate: (String) -> Unit = {},
     vm: CrewViewModel = viewModel(),
+    privates: PrivateTestsViewModel = viewModel(),
 ) {
     val context = LocalContext.current
     val dialogs = rememberCrewDialogs()
@@ -66,6 +71,10 @@ fun CrewScreen(
     CrewLifecycle(vm)
     val actions = crewActions(vm, dialogs, onSignIn, onAddToCrew)
     val volunteers = rememberVolunteerSection(vm, onSignIn, onOpenCrew)
+    // The asks made of the reader, read again after every crew load: a private.changed event is one.
+    LaunchedEffect(vm.reloading, vm.signedOut) { if (!vm.reloading && !vm.signedOut) privates.loadMine() }
+    val privateRun = rememberPrivateRun(vm, privates, onOpenPrivate)
+    val invites = if (vm.signedOut) emptyList() else privates.mine.orEmpty().filter { it.state == PrivateState.INVITED }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -79,10 +88,14 @@ fun CrewScreen(
             if (vm.running > 0 && vm.tab != CrewPhase.OPEN) {
                 TestingNotifications(Modifier.padding(start = Gutter, end = Gutter, top = 12.dp))
             }
+            // An invite waits over every tab until it is answered.
+            PrivateInviteRows(invites, { privates.pick(it) }, Modifier.padding(start = Gutter, end = Gutter, top = 12.dp))
             when {
                 vm.offline && vm.crews.isEmpty() -> RobotOffline("Crews didn't load", onRetry = { vm.load(context) })
                 vm.tab == CrewPhase.RUN ->
-                    LoadSwap(vm.firstLoad) { if (it) CrewRunLoading() else CrewRunTab(vm, onSignIn, actions, onOpenCrew, onOpenChat) }
+                    LoadSwap(vm.firstLoad) {
+                        if (it) CrewRunLoading() else CrewRunTab(vm, onSignIn, actions, onOpenCrew, onOpenChat, privateRun)
+                    }
                 vm.tab == CrewPhase.LOBBY ->
                     LoadSwap(vm.firstLoad) { if (it) CrewLobbyLoading() else CrewLobbyTab(vm, onSignIn, actions, onOpenCrew, onOpenChat) }
                 vm.tab == CrewPhase.RECORD ->
@@ -93,6 +106,21 @@ fun CrewScreen(
     }
     CrewDialogsHost(vm, dialogs)
     VolunteerJoinHost(vm, viewModel(), onOpenCrew)
+    PrivateInviteHost(privates)
+}
+
+/** The sheet for the invite picked over the tabs. Yes asks for the testers group first. */
+@Composable
+private fun PrivateInviteHost(privates: PrivateTestsViewModel) {
+    val membership = rememberMembership()
+    val invite = privates.picked ?: return
+    PrivateInviteSheet(
+        invite,
+        busy = privates.busy == invite.id,
+        onAccept = { close -> membership.require { privates.accept(invite, close) } },
+        onDecline = { close -> privates.decline(invite, close) },
+        onDismiss = { privates.pick(null) },
+    )
 }
 
 /**
@@ -170,6 +198,9 @@ class CrewActions(
     /** A volunteer leaves their spot, confirmed first; and the way to the volunteer list once it is over. */
     val onLeaveVolunteer: (Crew) -> Unit = {},
     val onFindCrew: () -> Unit = {},
+    /** The owner's private testers: the row's counts line, null where the row stays away, and its page. */
+    val privateLine: (CrewSeat) -> String? = { null },
+    val onPrivateTesters: (CrewSeat) -> Unit = {},
 )
 
 /**

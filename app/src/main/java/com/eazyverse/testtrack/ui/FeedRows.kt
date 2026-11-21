@@ -148,7 +148,8 @@ fun FeedAskRow(
  * apps both draw their way in with it, so the two read as the same control.
  *
  * A row that is about something other than adding passes its own [icon], and a [trailing] pill in
- * place of the chevron. The pill is only a look; the whole row is the target.
+ * place of the chevron. The pill is only a look; the whole row is the target. A [leading] mark,
+ * such as the app an invite is about, takes the icon tile's place.
  */
 @Composable
 fun AskRow(
@@ -158,6 +159,7 @@ fun AskRow(
     modifier: Modifier = Modifier,
     icon: ImageVector = Lucide.Plus,
     trailing: (@Composable () -> Unit)? = null,
+    leading: (@Composable () -> Unit)? = null,
 ) {
     val t = Tt.colors
     Row(
@@ -167,7 +169,7 @@ fun AskRow(
             .padding(start = 10.dp, end = if (trailing != null) 10.dp else 12.dp, top = 9.dp, bottom = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconTile(icon, 40.dp, glyph = 20.dp)
+        if (leading != null) leading() else IconTile(icon, 40.dp, glyph = 20.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(

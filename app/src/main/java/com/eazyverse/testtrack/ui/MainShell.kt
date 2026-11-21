@@ -86,10 +86,6 @@ enum class MainTab(
  * entries piling up behind whoever taps around before doing anything. The pushed screens still go
  * through the controller, which is what it is good at: a group, an app's dashboard, the submit
  * form, setup.
- *
- * Two of the tabs are stubs today, and the existing screens have been slotted in unchanged rather
- * than rebuilt to match Circle. That is the intended state of this step: Circle is the thing being
- * designed, and rebuilding the others against a layout still moving would mean doing it twice.
  */
 @Composable
 fun MainShell(
@@ -99,9 +95,10 @@ fun MainShell(
     onSignOut: () -> Unit,
     onCheck: (String) -> Unit = {},
     onOpenAbout: () -> Unit = {},
-    /** A crew's own page, and its chat from the chat mark on its tile. */
+    /** A crew's own page, its chat from the chat mark on its tile, and a private test's page. */
     onOpenCrew: (String) -> Unit = {},
     onOpenChat: (String) -> Unit = {},
+    onOpenPrivate: (String) -> Unit = {},
     /** Ask for feedback on this app from My apps. */
     onAskForApp: (String) -> Unit = {},
     /** An app's own page. */
@@ -339,6 +336,7 @@ fun MainShell(
                                             vm = crews,
                                             onOpenCrew = onOpenCrew,
                                             onOpenChat = onOpenChat,
+                                            onOpenPrivate = onOpenPrivate,
                                             myApps = apps.apps.takeIf { it.isNotEmpty() || !apps.loading },
                                             onAddApp = onAddApp,
                                             onOpenCircle = { show(MainTab.CIRCLE) },

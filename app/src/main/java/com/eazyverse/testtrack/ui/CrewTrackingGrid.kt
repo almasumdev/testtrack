@@ -77,6 +77,12 @@ internal fun TrackingGrid(
     onFace: (CrewTester) -> Unit = {},
     /** Opens what the squares mean; no (i) without it. */
     onKey: (() -> Unit)? = null,
+    /** The chip at the top in place of Google's count, for a grid that is not about Google's 12. */
+    chip: (@Composable () -> Unit)? = null,
+    /** The row of how many each night counted for, under the squares. */
+    showCounts: Boolean = true,
+    /** The quiet line at the foot. */
+    note: String = "Tap a face to see who it is",
 ) {
     val t = Tt.colors
     val short = remember(pictures) { shortNights(pictures) }
@@ -89,6 +95,7 @@ internal fun TrackingGrid(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             when {
+                chip != null -> chip()
                 finished -> StatusChip("$nights nights done", Tone.QUIET, Lucide.CalendarCheck)
                 short.isEmpty() -> StatusChip("On track for Google", Tone.OK)
                 else -> StatusChip("Short on ${pluralOf(short.size, "night")} ${short.joinToString()}", Tone.WARN)
@@ -160,35 +167,49 @@ internal fun TrackingGrid(
                 }
             }
         }
-        GridRow(lead = {}) {
-            counts.forEachIndexed { i, n ->
-                val day = i + 1
-                val now = day == today
-                Text(
-                    n?.toString().orEmpty(),
-                    Modifier
-                        .weight(1f)
-                        .then(
-                            if (now) Modifier.background(lit, RoundedCornerShape(bottomStart = 4.dp, bottomEnd = 4.dp)) else Modifier,
-                        ),
-                    style =
-                        MaterialTheme.typography.labelSmall
-                            .tabular()
-                            .copy(fontSize = 9.5.sp, lineHeight = 14.sp),
-                    fontWeight = if (day in short) FontWeight.Bold else FontWeight.Normal,
-                    color = if (day in short) t.bad else t.text4,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                )
-            }
+        if (showCounts) {
+            CountsRow(counts, short, today, lit)
         }
         Row(Modifier.padding(start = 4.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Lucide.Info, null, Modifier.size(12.dp), tint = t.text4)
             Spacer(Modifier.width(4.dp))
             Text(
-                "Tap a face to see who it is",
+                note,
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.5.sp),
                 color = t.text4,
+            )
+        }
+    }
+}
+
+/** Under each night, how many it counted for: in red and bold for a night short of Google's 12. */
+@Composable
+private fun CountsRow(
+    counts: List<Int?>,
+    short: List<Int>,
+    today: Int,
+    lit: Color,
+) {
+    val t = Tt.colors
+    GridRow(lead = {}) {
+        counts.forEachIndexed { i, n ->
+            val day = i + 1
+            val now = day == today
+            Text(
+                n?.toString().orEmpty(),
+                Modifier
+                    .weight(1f)
+                    .then(
+                        if (now) Modifier.background(lit, RoundedCornerShape(bottomStart = 4.dp, bottomEnd = 4.dp)) else Modifier,
+                    ),
+                style =
+                    MaterialTheme.typography.labelSmall
+                        .tabular()
+                        .copy(fontSize = 9.5.sp, lineHeight = 14.sp),
+                fontWeight = if (day in short) FontWeight.Bold else FontWeight.Normal,
+                color = if (day in short) t.bad else t.text4,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
             )
         }
     }

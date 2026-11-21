@@ -91,9 +91,9 @@ internal fun VolunteerJoinSheet(
     }
 }
 
-/** One line of the deal: its icon inline, a bold start (in [ink] for the warning) and the rest. */
+/** One line of a sheet's deal: its icon inline, a bold start (in [ink] for a warning) and the rest. */
 @Composable
-private fun SheetLine(
+internal fun SheetLine(
     icon: ImageVector,
     bold: String,
     rest: String,

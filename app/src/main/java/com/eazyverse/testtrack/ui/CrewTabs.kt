@@ -34,7 +34,8 @@ import androidx.compose.ui.unit.dp
  * and the grid of apps belongs inside it rather than poured out here.
  *
  * The top card keeps tonight's total, counted opens and one way to open the ready apps.
- * Updates hold warnings, installs and pictures; the guide explains the round.
+ * Updates hold warnings, installs and pictures; the guide explains the round. The reader's private
+ * tests come last, apart from the night: with no run going they are the whole tab.
  */
 @Composable
 fun CrewRunTab(
@@ -43,6 +44,7 @@ fun CrewRunTab(
     actions: CrewActions,
     onOpenCrew: (String) -> Unit,
     onOpenChat: (String) -> Unit,
+    privates: PrivateRunSection = PrivateRunSection(),
 ) {
     val runs = vm.crews.filter { it.phase == CrewPhase.RUN }
 
@@ -63,7 +65,7 @@ fun CrewRunTab(
         CrewRunLoading()
         return
     }
-    if (runs.isEmpty()) {
+    if (runs.isEmpty() && privates.tests.isEmpty()) {
         RobotState(
             Prop.Kite,
             "Nothing running",
@@ -76,22 +78,25 @@ fun CrewRunTab(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 12.dp, bottom = Gutter + dockRoom()),
     ) {
-        item("hero") {
-            Box(Modifier.padding(horizontal = Gutter)) {
-                CrewRunSummary(runs, vm.tonight, vm.doneTonight, actions)
+        if (runs.isNotEmpty()) {
+            item("hero") {
+                Box(Modifier.padding(horizontal = Gutter)) {
+                    CrewRunSummary(runs, vm.tonight, vm.doneTonight, actions)
+                }
             }
-        }
-        item("updates") {
-            CrewRunUpdates(runs, vm.tonight, actions, onOpenCrew)
-        }
+            item("updates") {
+                CrewRunUpdates(runs, vm.tonight, actions, onOpenCrew)
+            }
 
-        item { CrewHeading("Your runs") }
-        itemsIndexed(runs, key = { _, crew -> crew.id }) { index, crew ->
-            // Fades in, fades out and glides to its new place when the list changes.
-            Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) {
-                CrewListRow(crew, onChat = { onOpenChat(crew.id) }) { onOpenCrew(crew.id) }
+            item { CrewHeading("Your runs") }
+            itemsIndexed(runs, key = { _, crew -> crew.id }) { index, crew ->
+                // Fades in, fades out and glides to its new place when the list changes.
+                Box(Modifier.animateItem().padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)) {
+                    CrewListRow(crew, onChat = { onOpenChat(crew.id) }) { onOpenCrew(crew.id) }
+                }
             }
         }
+        privateTesting(privates)
     }
 }
 

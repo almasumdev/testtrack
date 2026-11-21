@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
  * ```
  * title    headline. Required; a message without one is dropped rather than posted blank.
  * body     supporting line.
- * kind     what it is about, from our server: "crew" opens the Crew tab, "chat" that crew's chat.
+ * kind     what it is about, from our server: "crew" and "private" open the Crew tab, "chat" that crew's chat.
  * ref      the id of the thing, so two notes about one crew replace each other.
  * count    chat only: messages waiting. mention: "1" when one of them names the reader.
  * ```
@@ -84,7 +84,8 @@ class PushService : FirebaseMessagingService() {
         val intent =
             Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                if (data["kind"] == "crew") putExtra(MainActivity.EXTRA_OPEN_CREW, true)
+                // A private test lives on the Crew tab too: an invite, an answer, or testing that stopped.
+                if (data["kind"] == "crew" || data["kind"] == "private") putExtra(MainActivity.EXTRA_OPEN_CREW, true)
             }
         // One slot per thing it is about, so a note about one crew replaces the last one about
         // it rather than stacking, and does not overwrite one about another.

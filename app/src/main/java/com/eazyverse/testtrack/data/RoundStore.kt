@@ -33,6 +33,8 @@ object RoundStore {
         val notes: String = "",
         /** The member's own night in that app's crew, which its picture is kept and sent for. */
         val day: Int = 0,
+        /** A private test's open rather than a crew's: recorded on that ask, with no picture. */
+        val privateTestId: String = "",
     )
 
     /** The apps of the round, which one is on screen, and since when. */
