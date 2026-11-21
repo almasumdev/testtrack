@@ -27,12 +27,11 @@ internal fun MeDebug(
     var shown by remember { mutableIntStateOf(0) }
     Column {
         SectionHeading("Debug", tag = "Debug builds only", tagBeside = true, top = MeHeadingTop, bottom = MeHeadingBottom)
-        TileGroup(count = 2) { index, place ->
+        TileGroup(count = 2) { index ->
             if (index == 0) {
                 TileRow(
                     Lucide.Users,
                     "Force not in testers group",
-                    place,
                     subtitle = "Ignores the remembered yes",
                     trailing = { DebugSwitch(noGroup, onNoGroup) },
                     onClick = { onNoGroup(!noGroup) },
@@ -41,7 +40,6 @@ internal fun MeDebug(
                 TileRow(
                     Lucide.Layers,
                     "Show a snack",
-                    place,
                     subtitle = "Each tap shows the next kind",
                     end = RowEnd.NONE,
                     onClick = {

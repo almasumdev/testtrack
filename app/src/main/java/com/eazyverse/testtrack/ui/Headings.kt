@@ -83,11 +83,11 @@ object TextStyles {
     /** The line under a [RowTitle]: 12.5 on 16, on Material's small body. */
     val RowLine = TtTypography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp)
 
-    /** A settings row's title: 15 on 19, semibold. */
-    val SettingTitle = tileStyle(15f, 19f, FontWeight.SemiBold)
+    /** A settings row's title: 16 on 20, semibold. */
+    val SettingTitle = tileStyle(16f, 20f, FontWeight.SemiBold)
 
-    /** The line under a [SettingTitle]: 12.5 on 17. */
-    val SettingLine = tileStyle(12.5f, 17f, FontWeight.Normal)
+    /** The line under a [SettingTitle]: 13 on 17. */
+    val SettingLine = tileStyle(13f, 17f, FontWeight.Normal)
 
     /** A record card's figure: 19 on 22, bold, tabular. */
     val RecordValue = tileStyle(19f, 22f, FontWeight.Bold).copy(fontFeatureSettings = "tnum")

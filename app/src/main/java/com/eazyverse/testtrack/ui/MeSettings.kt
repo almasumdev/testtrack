@@ -57,13 +57,12 @@ internal fun MeSettings(
 
     Column {
         SectionHeading("Testing", top = MeHeadingTop, bottom = MeHeadingBottom)
-        TileGroup(count = 2) { index, place ->
+        TileGroup(count = 2) { index ->
             if (index == 0) {
                 // Joined, it opens the group on the web; not yet, the join steps open here.
                 TileRow(
                     Lucide.Users,
                     "Testers group",
-                    place,
                     subtitle = "So owners can add you to tests",
                     status = if (group) "Joined" else "Not joined",
                     statusTone = if (group) Tone.OK else Tone.WARN,
@@ -74,7 +73,6 @@ internal fun MeSettings(
                 TileRow(
                     Lucide.Bell,
                     "Notifications",
-                    place,
                     subtitle = "Crew news and nightly reminders",
                     status = if (notifications) "On" else "Off",
                     statusTone = if (notifications) Tone.OK else Tone.WARN,
@@ -89,14 +87,13 @@ internal fun MeSettings(
         SupportGroup(onAbout)
 
         SectionHeading("Account", top = MeHeadingTop, bottom = MeHeadingBottom)
-        TileGroup(count = 2) { index, place ->
+        TileGroup(count = 2) { index ->
             if (index == 0) {
-                TileRow(Lucide.Pencil, "Edit profile", place, subtitle = "Your name and picture", end = RowEnd.PAGE, onClick = onEdit)
+                TileRow(Lucide.Pencil, "Edit profile", subtitle = "Your name and picture", end = RowEnd.PAGE, onClick = onEdit)
             } else {
                 TileRow(
                     Lucide.Trash2,
                     "Request account deletion",
-                    place,
                     subtitle = "What is removed, and what is kept",
                     end = RowEnd.OUT,
                 ) { links.openUri("$SITE/delete-account") }
@@ -104,8 +101,8 @@ internal fun MeSettings(
         }
         // Sign out on its own, a step apart, so it is never read as one more account row.
         Spacer(Modifier.height(8.dp))
-        TileGroup(count = 1) { _, place ->
-            TileRow(Lucide.LogOut, "Sign out", place, danger = true, onClick = onSignOut)
+        TileGroup(count = 1) {
+            TileRow(Lucide.LogOut, "Sign out", danger = true, onClick = onSignOut)
         }
     }
 }
@@ -127,13 +124,12 @@ internal fun SupportGroup(onAbout: () -> Unit) {
         // The update row only while a newer version exists; without one the group is as it was.
         val update = LocalUpdateOffer.current
         val support = SUPPORT.filter { (mailable || it != SupportRow.FEEDBACK) && (update != null || it != SupportRow.UPDATE) }
-        TileGroup(count = support.size) { index, place ->
+        TileGroup(count = support.size) { index ->
             when (support[index]) {
                 SupportRow.VIDEOS ->
                     TileRow(
                         Lucide.CirclePlay,
                         "How-to videos",
-                        place,
                         subtitle = "Step by step, in English and Bangla",
                         end = RowEnd.PAGE,
                         onClick = { videos = true },
@@ -142,19 +138,17 @@ internal fun SupportGroup(onAbout: () -> Unit) {
                     TileRow(
                         Lucide.Info,
                         "About TestTrack",
-                        place,
                         subtitle = "Who made it, and more apps",
                         end = RowEnd.PAGE,
                         onClick = onAbout,
                     )
-                SupportRow.UPDATE -> update?.let { UpdateRow(it, place, Lucide.Download) }
+                SupportRow.UPDATE -> update?.let { UpdateRow(it, Lucide.Download) }
                 SupportRow.RATE ->
                     // The stars are drawn in the sentence, not beside it, and are not a control: the
                     // whole row goes to the listing, always.
                     TileRow(
                         Lucide.Star,
                         "Enjoying TestTrack?",
-                        place,
                         subtitleRich =
                             buildAnnotatedString {
                                 append("Rate us ")
@@ -170,7 +164,6 @@ internal fun SupportGroup(onAbout: () -> Unit) {
                     TileRow(
                         Lucide.MessageSquare,
                         "Send feedback",
-                        place,
                         subtitle = "Something broken, or missing",
                         end = RowEnd.OUT,
                     ) { sendFeedback(context) }
@@ -181,7 +174,7 @@ internal fun SupportGroup(onAbout: () -> Unit) {
 
 /** The space over and under each heading on the You page. */
 internal val MeHeadingTop = 22.dp
-internal val MeHeadingBottom = 8.dp
+internal val MeHeadingBottom = 6.dp
 
 // No privacy row: the About page carries the policy, in its footer.
 private enum class SupportRow { VIDEOS, ABOUT, UPDATE, RATE, FEEDBACK }

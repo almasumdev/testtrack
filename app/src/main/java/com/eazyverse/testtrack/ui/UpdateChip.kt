@@ -181,7 +181,6 @@ private fun RoundButton(
 @Composable
 internal fun UpdateRow(
     offer: UpdateOffer,
-    place: TilePlace,
     icon: ImageVector,
 ) {
     val t = Tt.colors
@@ -195,7 +194,6 @@ internal fun UpdateRow(
     TileRow(
         icon,
         title,
-        place,
         subtitle = subtitle,
         trailing = {
             when (offer.state) {
