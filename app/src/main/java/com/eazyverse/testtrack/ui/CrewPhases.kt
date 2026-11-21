@@ -196,7 +196,7 @@ private fun LobbyYourApp(
     val (chip, tone) =
         when {
             mine.state == SeatState.CHECKING -> "Checking" to Tone.WARN
-            mine.reports > 0 -> "${mine.reports} of ${CrewRules.REPORTS_TO_RETURN} reports" to Tone.WARN
+            mine.reports > 0 -> "${mine.reports} ${pluralOf(mine.reports, "report")}" to Tone.WARN
             else -> "In" to Tone.OK
         }
     val status =

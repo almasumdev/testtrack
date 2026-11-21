@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.eazyverse.testtrack.domain.pluralOf
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
@@ -58,7 +59,7 @@ private fun LobbyStanding(crew: Crew) {
         when {
             crew.out -> if (mine?.state == SeatState.REMOVED) "Taken out by the team" else "Your app needs a fix"
             checking -> "Members are checking your app"
-            reported -> "${mine?.reports} of ${CrewRules.REPORTS_TO_RETURN} reports"
+            reported -> "${mine?.reports ?: 1} ${pluralOf(mine?.reports ?: 1, "report")}"
             !crew.filling -> if (crew.startsIn < 60_000L) "Starts any moment" else "Starts in ${untilStart(crew.startsIn)}"
             else -> "Your seat is held"
         }
