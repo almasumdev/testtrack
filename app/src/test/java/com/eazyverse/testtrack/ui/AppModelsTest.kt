@@ -23,8 +23,6 @@ class AppModelsTest {
         assertEquals("Live apps take feedback, not crews", crewStatus(app(live = true)))
         assertEquals("Crew 01 sent it back", crewStatus(app(crew = AppCrewStatus("rejected", "c", "Crew 01"))))
         assertEquals("Day 6 of 14 in Crew 01", crewStatus(app(crew = AppCrewStatus("testing", "c", "Crew 01", day = 6, runDays = 14))))
-        assertEquals("No feedback asked for yet", feedbackStatus(app()))
-        assertEquals("All 3 reviews in", feedbackStatus(app(feedback = AppFeedbackStatus("done", "p", 3, 3))))
         assertEquals("Verified by its crew", verifiedChip(app(verifiedBy = "crew")))
         assertEquals("Not verified", verifiedChip(app(verifiedBy = null)))
     }

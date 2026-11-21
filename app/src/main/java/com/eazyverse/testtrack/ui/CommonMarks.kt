@@ -90,13 +90,6 @@ fun AppIcon(
     }
 }
 
-/** The name this phone's launcher shows for an app, or null when it is not installed here. */
-@Composable
-fun installedLabel(pkg: String): String? {
-    val context = LocalContext.current
-    return remember(pkg, InstalledApps.revision) { InstalledApps.cachedInfo(context, pkg).label }
-}
-
 /**
  * The first letter of a name, capitalised, for a face or a tile with no picture: [fallback] when
  * the name is blank, so a disc is never empty.

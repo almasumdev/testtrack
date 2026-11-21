@@ -21,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -29,11 +28,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.FlaskConical
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Play
-import com.composables.icons.lucide.Scale
-import com.eazyverse.testtrack.domain.textUseLabel
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -44,11 +38,9 @@ import com.eazyverse.testtrack.ui.theme.Tt
 /** What kind of review a page or a row is about, as its label says it. */
 enum class CheckKind(
     val label: String,
-    val icon: ImageVector,
 ) {
-    PLAY("Live app", Lucide.Play),
-    CLOSED("Closed test", Lucide.FlaskConical),
-    DISPUTED("Disputed", Lucide.Scale),
+    PLAY("Live app"),
+    CLOSED("Closed test"),
 }
 
 /** [text] with each of [phrases] in it drawn in the strongest ink, the way the design bolds a figure. */
@@ -86,18 +78,6 @@ internal fun ChipRow(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         content = content,
     )
-}
-
-/** "100 characters, changed your ready review": how long a text is and whose words it is in. */
-internal fun textMeta(
-    written: String,
-    needs: Int,
-    use: String?,
-): String {
-    val label = textUseLabel(use)
-    if (needs <= 0) return label.orEmpty()
-    val length = "${plainLength(written)} characters"
-    return if (label == null) length else "$length, ${label.replaceFirstChar { it.lowercase() }}"
 }
 
 /** What the request asked each reviewer to write, as one line and its figure; null for stars alone. */

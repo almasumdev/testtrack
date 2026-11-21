@@ -30,7 +30,7 @@ class ProblemCalloutPlacementTest {
         windowHeightDp: Int = 800,
     ): Pair<CalloutPlacement, Int> {
         val window = IntSize(px(widthDp), px(windowHeightDp))
-        val popup = IntSize(calloutWidthPx(window.width, density), px(heightDp))
+        val popup = IntSize(px(minOf(260, widthDp - 32)), px(heightDp))
         return placeCallout(markAt(widthDp, topDp), window, popup, density, dock) to popup.width
     }
 
@@ -41,12 +41,6 @@ class ProblemCalloutPlacementTest {
             assertTrue("left at $widthDp", placed.x >= px(16))
             assertTrue("right at $widthDp", placed.x + width <= px(widthDp) - px(16) + 1)
         }
-    }
-
-    @Test
-    fun is_260dp_wide_unless_the_screen_is_narrower() {
-        assertEquals(px(260), calloutWidthPx(px(360), density))
-        assertEquals(px(260 - 8), calloutWidthPx(px(292 - 8), density))
     }
 
     @Test

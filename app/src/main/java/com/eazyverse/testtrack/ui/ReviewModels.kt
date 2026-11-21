@@ -135,19 +135,6 @@ data class ReviewJob(
     /** Used on two days already, so only the hours since it was taken are still to pass. */
     val usedOnTwoDays: Boolean get() = review.daysUsed >= 2
 
-    /**
-     * While [waitingForDay], the hours until it may open, at least one, from when the server says;
-     * null when it is not waiting or the server has not said.
-     */
-    val hoursToReturn: Int?
-        get() {
-            val at = review.returnsAt ?: return null
-            if (!waitingForDay) return null
-            val millis = instantOf(at)?.toEpochMilli() ?: return null
-            val left = millis - System.currentTimeMillis()
-            return if (left <= 0) 0 else ((left + 3_599_999) / 3_600_000).toInt().coerceAtLeast(1)
-        }
-
     val settled: Boolean
         get() = review.state in setOf("submitted", "approved", "rejected", "disputed", "abandoned", "expired")
 

@@ -1,6 +1,5 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
@@ -36,7 +34,6 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageSquare
 import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.TriangleAlert
-import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /** The line under a price's total: what there is to pay it from. Shared with the seat page's price. */
@@ -86,13 +83,6 @@ internal fun TwoChoice(
                 Text(label, style = MaterialTheme.typography.labelLarge, color = if (selected) Tt.colors.tileInk else Tt.colors.text2)
             }
         }
-    }
-}
-
-@Composable
-internal fun AskAppPlaceholder() {
-    Box(Modifier.fillMaxSize().background(Tt.colors.tile), contentAlignment = Alignment.Center) {
-        Image(painterResource(R.drawable.testtrack_robot), null, Modifier.size(36.dp))
     }
 }
 

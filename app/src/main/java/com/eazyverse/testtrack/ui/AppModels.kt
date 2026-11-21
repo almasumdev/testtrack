@@ -267,7 +267,7 @@ fun AppProblem.title(app: AppEntry): String =
     }
 
 /** One plain sentence for a problem, said under its title in the callout. */
-fun AppProblem.sentence(app: AppEntry): String =
+fun AppProblem.sentence(): String =
     when (this) {
         AppProblem.UNLISTED -> "Testers couldn't install it, so it's off Circle for now."
         AppProblem.NOT_VERIFIED -> "Add the testers group to your closed test, then tap Verify."
@@ -328,9 +328,6 @@ fun verifiedChip(app: AppEntry): String =
         else -> "Not verified"
     }
 
-/** Whether the crew row opens a crew rather than starting one. */
-val AppEntry.crewOpen: Boolean get() = crew?.state.let { it != null && it != "rejected" && it != "removed" }
-
 /** Where the app is with crews, short enough for one line of its row. */
 fun crewStatus(app: AppEntry): String {
     val crew = app.crew
@@ -346,15 +343,5 @@ fun crewStatus(app: AppEntry): String {
         crew.state == "rejected" -> "${crew.crewName} sent it back"
         crew.state == "removed" -> "Left ${crew.crewName} after missed days"
         else -> crew.crewName
-    }
-}
-
-/** Where the app is with feedback, short enough for one line of its row. */
-fun feedbackStatus(app: AppEntry): String {
-    val feedback = app.feedback ?: return "No feedback asked for yet"
-    return when (feedback.state) {
-        "collecting" -> "${feedback.done} of ${feedback.bought} reviews in"
-        "done" -> "All ${feedback.bought} reviews in"
-        else -> "Closed with ${feedback.done} of ${feedback.bought} reviews"
     }
 }

@@ -88,12 +88,6 @@ internal data class CalloutPlacement(
     val caretUp: Boolean,
 )
 
-/** The callout's width: 260dp, or what is left between the screen's sides on a narrow one. */
-internal fun calloutWidthPx(
-    windowWidthPx: Int,
-    density: Float,
-): Int = minOf(CalloutMaxWidth.value * density, windowWidthPx - 2 * CalloutScreenGap.value * density).roundToInt()
-
 /**
  * Pure placement: right edge 16dp in from the window's, under the mark with the caret up, or above it
  * with the caret down when the card would run into the dock. [popup] includes the caret's 8dp.
@@ -225,7 +219,7 @@ internal fun ProblemCallout(
                 Spacer(Modifier.width(9.dp))
                 Column {
                     Text(problem.title(app), style = TitleStyle, color = t.text)
-                    Text(problem.sentence(app), Modifier.padding(top = 1.dp), style = TextStyles.PageLine, color = t.text2)
+                    Text(problem.sentence(), Modifier.padding(top = 1.dp), style = TextStyles.PageLine, color = t.text2)
                 }
             }
         }

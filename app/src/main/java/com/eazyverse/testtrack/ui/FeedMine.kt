@@ -55,9 +55,6 @@ val PendingStates = setOf("submitted", "disputed")
 /** Decided, one way or the other. */
 val HistoryStates = setOf("approved", "rejected", "abandoned", "expired")
 
-/** Anything past the reviewer's own part: off the Feedback list for good. */
-val SentStates = PendingStates + HistoryStates
-
 @Composable
 fun MineBody(
     reviews: List<MyReview>,

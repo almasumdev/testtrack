@@ -37,10 +37,7 @@ data class Request(
     val closedAt: Long? = null,
     /** The tix that came back when it closed; null when not known. */
     val refunded: Int? = null,
-) {
-    /** Reviews still on their way, or waiting on the owner or the members. */
-    val underWay: Int get() = reviews.count { it.state in setOf("claimed", "installed", "used", "submitted", "checking", "disputed") }
-}
+)
 
 /** One review a request has had. */
 data class RequestReview(

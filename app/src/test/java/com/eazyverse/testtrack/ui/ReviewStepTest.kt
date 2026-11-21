@@ -138,7 +138,6 @@ class ReviewStepTest {
 
         // Used on two days already: only the hours since it was taken are left to pass.
         val twoDays = oneDay.copy(review = oneDay.review.copy(daysUsed = 2))
-        assertEquals(5, twoDays.hoursToReturn)
         assertTrue(twoDays.waitingForDay)
     }
 
@@ -197,7 +196,6 @@ class ReviewStepTest {
     fun a_closed_test_with_its_time_in_goes_to_google_play() {
         val closed = post.copy(isLive = false)
         val job = ReviewJob(closed, review("used", used = 120_000, needed = 120_000))
-        assertEquals(null, job.hoursToReturn)
         assertEquals(ReviewStep.LEAVE, job.step)
         assertEquals("Open Google Play", stepAction(job.step, job))
     }

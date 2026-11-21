@@ -84,20 +84,6 @@ object UsageRepo {
     }
 
     /**
-     * Foreground milliseconds for [pkg] between [since] and now.
-     *
-     * The window is the visit, handed in by the caller. Summed from raw events rather than
-     * `queryUsageStats`, whose daily buckets are written late. The rules for adding the events up
-     * live in [UsageSessions], where every ordering a phone produces is tested; this only reads
-     * the events, from [LOOK_BACK] before the window so a visit already under way is seen opening.
-     */
-    fun foregroundMsSince(
-        context: Context,
-        pkg: String,
-        since: Long,
-    ): Long = read(context, pkg, since).ms
-
-    /**
      * A reading for a visit that has just ended, taken the way a returning screen should take it.
      *
      * Some phones hand usage events to the system a moment late, so a reading taken the instant

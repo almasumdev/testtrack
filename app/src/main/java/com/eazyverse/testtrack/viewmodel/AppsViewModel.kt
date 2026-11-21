@@ -240,15 +240,6 @@ class AppsViewModel : ViewModel() {
         onDone: () -> Unit,
     ) = act(context, id, AppAction.DELETE, onDone) { Api.deleteApp(id) }
 
-    /** Give an app the icon it has on this phone. */
-    fun iconFromPhone(
-        context: Context,
-        id: String,
-        pkg: String,
-    ) = act(context, id, AppAction.ICON) {
-        Api.setAppIcon(id, IconIn(readIcon { AppIconData.ofInstalled(context.applicationContext, pkg) }))
-    }
-
     /** Give an app a picture its owner chose, cropped square. */
     fun iconFromPicture(
         context: Context,

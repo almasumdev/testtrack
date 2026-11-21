@@ -1,7 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import com.eazyverse.testtrack.domain.Evidence
-import com.eazyverse.testtrack.domain.Request
 import com.eazyverse.testtrack.domain.RequestReview
 import com.eazyverse.testtrack.domain.Waiting
 import com.eazyverse.testtrack.domain.pays
@@ -63,9 +62,8 @@ class ReviewCheckTest {
         assertTrue(job.rechecking)
         assertEquals(ReviewStep.PROVE, job.step)
         assertEquals(0, job.needsChars)
-        // It is the reviewer's to do, so it sits with the reviews in progress and under way.
+        // It is the reviewer's to do, so it sits with the reviews in progress.
         assertTrue("checking" in InProgressStates)
-        assertEquals(1, Request(id = "p1", appName = "Steps", reviews = listOf(RequestReview("r1", "checking"))).underWay)
     }
 
     @Test

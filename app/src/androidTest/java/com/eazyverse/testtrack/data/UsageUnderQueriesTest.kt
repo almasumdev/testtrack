@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
@@ -112,7 +113,7 @@ class UsageUnderQueriesTest {
             // Did it actually get there? Asked of UsageStatsManager itself, since that is the
             // thing under test and a foreground check from anywhere else would prove nothing
             // about it.
-            val ms = UsageRepo.foregroundMsSince(context, pkg, since)
+            val ms = runBlocking { UsageRepo.measure(context, pkg, since, needMs = 5_000, source = "test", settle = false) }
             if (ms >= 5_000) return
         }
 
