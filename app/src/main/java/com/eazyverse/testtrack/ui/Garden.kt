@@ -37,7 +37,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -229,7 +228,7 @@ fun TileRow(
             // subtitle never runs to a second line and pushes its row taller than the others.
             Text(
                 title,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
+                style = TextStyles.RowTitle,
                 fontWeight = if (chosen) FontWeight.Bold else FontWeight.SemiBold,
                 color = if (danger) t.bad else t.text,
                 maxLines = 1,
@@ -241,7 +240,7 @@ fun TileRow(
                 val line: @Composable () -> Unit = {
                     Text(
                         sub,
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
+                        style = TextStyles.RowLine,
                         color = tone,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

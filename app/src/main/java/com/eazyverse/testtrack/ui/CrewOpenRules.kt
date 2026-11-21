@@ -38,21 +38,17 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.CalendarDays
 import com.composables.icons.lucide.ChevronDown
 import com.composables.icons.lucide.Coins
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Moon
-import com.composables.icons.lucide.Scale
 import com.composables.icons.lucide.TriangleAlert
-import com.eazyverse.testtrack.ui.theme.Barlow
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -61,19 +57,18 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * Figures come from CrewRules and the crew's own run length, never a literal.
  */
 
-private val TileFigure =
-    TextStyle(fontFamily = Barlow, fontSize = 21.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum")
-private val TileUnit = TextStyle(fontFamily = Barlow, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
-private val TileLabel = TextStyle(fontFamily = Barlow, fontSize = 11.5.sp, lineHeight = 14.sp)
-private val LineStyle = TextStyle(fontFamily = Barlow, fontSize = 13.sp, lineHeight = 17.sp)
-private val HeadingStyle = TextStyle(fontFamily = Barlow, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold)
+private val TileFigure = TextStyles.RuleFigure
+private val TileUnit = TextStyles.RuleUnit
+private val TileLabel = TextStyles.RuleLabel
+private val LineStyle = TextStyles.RuleLine
+private val HeadingStyle = TextStyles.RuleHeading
 
 @Composable
 internal fun CrewRulesCard(runDays: Int = CrewRules.RUN_DAYS) {
     var open by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth()) {
-        Eyebrow(Lucide.Scale, "The rules")
-        Column(Modifier.padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SmallHeading("The rules", top = 0.dp)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FactTile("${CrewRules.SEATS}", "apps", "in a crew")
                 FactTile("$runDays", "nights", "from your midnight")

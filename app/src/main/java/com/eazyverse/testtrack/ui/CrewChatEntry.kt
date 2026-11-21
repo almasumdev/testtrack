@@ -124,7 +124,7 @@ private fun BoxScope.ChatFab(
 ) {
     val t = Tt.colors
     val readOnly = entry == ChatEntry.READ_ONLY
-    val shape = RoundedCornerShape(26.dp)
+    val shape = RoundedCornerShape(percent = 50)
     val count = if (readOnly) 0 else unread
     Row(
         Modifier

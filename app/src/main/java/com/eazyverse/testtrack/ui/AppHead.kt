@@ -94,7 +94,7 @@ internal fun AppHead(
             .then(
                 if (onClick != null) {
                     Modifier
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(TileRadius))
                         .clickable(onClickLabel = onClickLabel, onClick = onClick)
                         .padding(bottom = AppHeadMarkRoom)
                 } else {

@@ -157,7 +157,7 @@ private fun ColumnScope.AppPlate() {
         "Open each other's apps for fourteen days to get through Play's closed testing, and trade " +
             "real feedback for tix.",
         Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.5.sp, lineHeight = 21.sp),
+        style = TextStyles.AboutLead,
         color = t.text2,
         textAlign = TextAlign.Center,
     )

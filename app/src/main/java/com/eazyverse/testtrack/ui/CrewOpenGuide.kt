@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,13 +20,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Armchair
 import com.composables.icons.lucide.Download
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Trophy
-import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
@@ -53,31 +49,11 @@ private fun GuideRow(content: @Composable () -> Unit) {
     Box(Modifier.padding(horizontal = Gutter)) { content() }
 }
 
-/** A section's small capital label, with its icon when it has one. */
-@Composable
-internal fun Eyebrow(
-    icon: ImageVector?,
-    text: String,
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        if (icon != null) {
-            Icon(icon, null, Modifier.size(14.dp), tint = Tt.colors.text4)
-            Spacer(Modifier.width(6.dp))
-        }
-        Text(
-            text.uppercase(),
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 0.8.sp),
-            fontWeight = FontWeight.Bold,
-            color = Tt.colors.text4,
-        )
-    }
-}
-
 // ------------------------------------------------------------------ what a crew is
 
 @Composable
 private fun CrewStory() {
-    Eyebrow(Lucide.Users, "What a crew is")
+    SmallHeading("What a crew is", top = 0.dp)
     val strong = SpanStyle(fontWeight = FontWeight.SemiBold, color = Tt.colors.accentInk)
     Text(
         buildAnnotatedString {
@@ -86,15 +62,14 @@ private fun CrewStory() {
             withStyle(strong) { append("every day for ${CrewRules.RUN_DAYS} days") }
             append(". Everyone gets real testers on real phones.")
         },
-        Modifier.padding(top = 10.dp),
-        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+        style = MaterialTheme.typography.bodyMedium,
         color = Tt.colors.text2,
     )
     Text(
         "Google asks for ${CrewRules.FLOOR} testers over ${CrewRules.RUN_DAYS} days before production. A crew is " +
             "${CrewRules.SEATS}, so it still counts if a couple drop out.",
         Modifier.padding(top = 8.dp),
-        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+        style = MaterialTheme.typography.bodyMedium,
         color = Tt.colors.text2,
     )
 }
@@ -110,7 +85,7 @@ private class Step(
 /** Four steps, each one line under its name beside a 40dp tile, so the text is never taller than the icon. */
 @Composable
 private fun CrewJourney() {
-    Eyebrow(null, "How it goes")
+    SmallHeading("How it goes", top = 0.dp)
     val steps =
         listOf(
             Step(Lucide.Armchair, "Fill up", "Wait in the Lobby until all ${CrewRules.SEATS} are in"),
@@ -130,7 +105,7 @@ private fun JourneyRow(
     first: Boolean,
 ) {
     val t = Tt.colors
-    Row(Modifier.padding(top = if (first) 10.dp else 12.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.padding(top = if (first) 0.dp else 12.dp), verticalAlignment = Alignment.CenterVertically) {
         IconTile(step.icon, 40.dp, glyph = 20.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {

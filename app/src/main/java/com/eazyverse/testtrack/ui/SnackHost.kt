@@ -283,7 +283,7 @@ private fun SnackView(
                     .align(Alignment.CenterVertically)
                     .padding(vertical = 4.dp)
                     .height(40.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(percent = 50))
                     .clickable(role = Role.Button, onClick = onAction)
                     .padding(horizontal = 12.dp),
                 contentAlignment = Alignment.Center,

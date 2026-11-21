@@ -177,8 +177,8 @@ internal fun MeterLabels(
     end: String,
 ) {
     Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
-        Text(start, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp), color = Tt.colors.text4)
-        Text(end, style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp), color = Tt.colors.text4)
+        Text(start, Modifier.weight(1f), style = TextStyles.SmallLine, color = Tt.colors.text4)
+        Text(end, style = TextStyles.SmallLine, color = Tt.colors.text4)
     }
 }
 
@@ -205,7 +205,7 @@ internal fun CrewHero(
         Spacer(Modifier.height(10.dp))
         Text(
             headline,
-            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 23.sp, lineHeight = 27.sp),
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
         )
         Spacer(Modifier.height(4.dp))
@@ -286,7 +286,7 @@ internal fun YourAppCard(
             Column(Modifier.weight(1f)) {
                 Text(
                     seat.appName,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 19.sp),
+                    style = TextStyles.SeatName,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,

@@ -181,7 +181,7 @@ private fun FailedRow(
         Column(Modifier.weight(1f)) {
             Text(
                 title,
-                style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp),
+                style = TextStyles.ButtonWords,
                 fontWeight = FontWeight.SemiBold,
                 color = t.text,
             )

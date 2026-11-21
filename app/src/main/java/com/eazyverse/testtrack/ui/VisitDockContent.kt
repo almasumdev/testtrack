@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
@@ -41,7 +42,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Copy
 import com.composables.icons.lucide.KeyRound
@@ -49,6 +49,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pause
 import com.composables.icons.lucide.Play
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.ui.theme.tabular
 import kotlinx.coroutines.delay
 
 /*
@@ -117,7 +118,7 @@ fun VisitDockContent(
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Ring(ui)
-                    Text("${ui.index + 1} of ${ui.total}", fontSize = 10.5.sp, color = t.text4)
+                    Text("${ui.index + 1} of ${ui.total}", style = TextStyles.DeveloperStyle, color = t.text4)
                     if (ui.signIn.isNotEmpty()) Icon(Lucide.KeyRound, "Has a sign-in", Modifier.size(15.dp), tint = t.accentInk)
                     PlayPause(ui, onPlayPause)
                 }
@@ -132,13 +133,12 @@ fun VisitDockContent(
                     Column {
                         Text(
                             ui.app,
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleSmall,
                             color = t.text,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        Text("${ui.index + 1} of ${ui.total}", fontSize = 10.5.sp, color = t.text4)
+                        Text("${ui.index + 1} of ${ui.total}", style = TextStyles.DeveloperStyle, color = t.text4)
                     }
                     if (ui.signIn.isNotEmpty()) Icon(Lucide.KeyRound, "Has a sign-in", Modifier.size(15.dp), tint = t.accentInk)
                     PlayPause(ui, onPlayPause)
@@ -161,13 +161,12 @@ private fun OpenFlat(
             Column(Modifier.weight(1f)) {
                 Text(
                     ui.app,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleSmall,
                     color = Tt.colors.text,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(status(ui), fontSize = 11.sp, color = Tt.colors.text4)
+                Text(status(ui), style = TextStyles.DeveloperStyle, color = Tt.colors.text4)
             }
         }
         RoundDots(ui)
@@ -193,13 +192,12 @@ private fun OpenUpright(
             Spacer(Modifier.height(6.dp))
             Text(
                 ui.app,
-                fontSize = 12.5.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleSmall,
                 color = Tt.colors.text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Text(status(ui), fontSize = 10.5.sp, color = Tt.colors.text4)
+            Text(status(ui), style = TextStyles.DeveloperStyle, color = Tt.colors.text4)
         }
         RoundDots(ui)
         ui.signIn.forEach { (label, value) -> SignInLine(label, value, upright = true, onCopy = onCopy) }
@@ -236,7 +234,12 @@ private fun Ring(
         if (ui.counted) {
             Icon(Lucide.Check, "Counted", Modifier.size(15.dp), tint = done)
         } else {
-            Text("${ui.secondsLeft}", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Tt.colors.text)
+            Text(
+                "${ui.secondsLeft}",
+                style = MaterialTheme.typography.labelMedium.tabular(),
+                fontWeight = FontWeight.Bold,
+                color = Tt.colors.text,
+            )
         }
     }
 }
@@ -294,18 +297,25 @@ private fun SignInLine(
     if (upright) {
         Row(tap, verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(label, fontSize = 10.sp, color = Tt.colors.text4)
-                Text(value, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(label, style = TextStyles.DialogNote, color = Tt.colors.text4)
+                Text(
+                    value,
+                    style = TextStyles.PageLine,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ink,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
             Icon(Lucide.Copy, null, Modifier.size(13.dp), tint = if (copied) Status.posted else Tt.colors.accent)
         }
     } else {
         Row(tap, verticalAlignment = Alignment.CenterVertically) {
-            Text(label, Modifier.width(60.dp), fontSize = 10.5.sp, color = Tt.colors.text4)
+            Text(label, Modifier.width(60.dp), style = TextStyles.DialogNote, color = Tt.colors.text4)
             Text(
                 value,
                 Modifier.weight(1f),
-                fontSize = 12.sp,
+                style = TextStyles.PageLine,
                 fontWeight = FontWeight.SemiBold,
                 color = ink,
                 maxLines = 1,
@@ -367,9 +377,9 @@ private fun BigPlayPause(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val ink = Tt.colors.inkOn(if (ui.counted) Status.posted else Tt.colors.accent)
-        Icon(if (ui.counted || ui.paused) Lucide.Play else Lucide.Pause, null, Modifier.size(14.dp), tint = ink)
+        Icon(if (ui.counted || ui.paused) Lucide.Play else Lucide.Pause, null, Modifier.size(16.dp), tint = ink)
         Spacer(Modifier.width(6.dp))
-        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = ink)
+        Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = ink)
     }
 }
 

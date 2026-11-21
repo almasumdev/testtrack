@@ -49,7 +49,7 @@ internal fun MentionList(
     onPick: (MentionOption) -> Unit,
 ) {
     val t = Tt.colors
-    val shape = RoundedCornerShape(16.dp)
+    val shape = RoundedCornerShape(TileRadius)
     Box(Modifier.padding(MentionEdge)) {
         LazyColumn(
             Modifier

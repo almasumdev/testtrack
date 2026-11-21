@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,7 +34,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Play
@@ -131,7 +129,7 @@ internal fun HowToBody(
                     video.title,
                     // Clear of the close mark in the corner, when there is one.
                     Modifier.padding(end = if (onHide != null) 24.dp else 0.dp),
-                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
+                    style = TextStyles.RowTitle,
                     fontWeight = FontWeight.SemiBold,
                     color = t.text,
                     maxLines = 1,
@@ -140,7 +138,7 @@ internal fun HowToBody(
                 Spacer(Modifier.height(2.dp))
                 Text(
                     video.line,
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
+                    style = TextStyles.RowLine,
                     color = t.text3,
                 )
                 Spacer(Modifier.height(8.dp))
@@ -186,7 +184,7 @@ internal fun HowToCard(video: HowTo) {
             Column(Modifier.weight(1f)) {
                 Text(
                     video.title,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
+                    style = TextStyles.RowTitle,
                     fontWeight = FontWeight.SemiBold,
                     color = t.text,
                     maxLines = 1,
@@ -195,7 +193,7 @@ internal fun HowToCard(video: HowTo) {
                 Spacer(Modifier.height(2.dp))
                 Text(
                     video.line,
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp),
+                    style = TextStyles.RowLine,
                     color = t.text3,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -256,7 +254,7 @@ private fun Thumb(
                 .clip(RoundedCornerShape(4.dp))
                 .background(t.scrim)
                 .padding(horizontal = 4.dp),
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, lineHeight = 14.sp),
+            style = TextStyles.VideoLength,
             fontWeight = FontWeight.SemiBold,
             color = t.onAccent,
         )

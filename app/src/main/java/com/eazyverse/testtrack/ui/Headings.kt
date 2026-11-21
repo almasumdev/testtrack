@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Lucide
+import com.eazyverse.testtrack.ui.theme.Barlow
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.TtTypography
 
@@ -80,6 +81,47 @@ object TextStyles {
 
     /** The figure in a numbered step's circle: 12.5 on 14, bold. */
     val StepNumber = tileStyle(12.5f, 14f, FontWeight.Bold)
+
+    /** A list row's title, such as a settings row or a video: 16 on 20, on Material's large body. */
+    val RowTitle = TtTypography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp)
+
+    /** The line under a [RowTitle]: 12.5 on 16, on Material's small body. */
+    val RowLine = TtTypography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 16.sp)
+
+    /** A small quiet label, such as the ends of a crew's progress bar: 12.5, on Material's small body. */
+    val SmallLine = TtTypography.bodySmall.copy(fontSize = 12.5.sp)
+
+    /** A main button's words and a done row's title: 15, on Material's small title. */
+    val ButtonWords = TtTypography.titleSmall.copy(fontSize = 15.sp)
+
+    /** A name in a picker list, such as a private tester's address: 15 on 19, on Material's large body. */
+    val ListName = TtTypography.bodyLarge.copy(fontSize = 15.sp, lineHeight = 19.sp)
+
+    /** An app's name on a crew seat: 16 on 19, on Material's large body. */
+    val SeatName = TtTypography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 19.sp)
+
+    /** The About page's one line about the app: 14.5 on 21. */
+    val AboutLead = TtTypography.bodyMedium.copy(fontSize = 14.5.sp, lineHeight = 21.sp)
+
+    /** The feedback card's title: 18 on 23, or 16 on 20 when compact. */
+    val FeedbackTitle = TtTypography.titleMedium.copy(fontSize = 18.sp, lineHeight = 23.sp)
+    val FeedbackTitleCompact = TtTypography.titleMedium.copy(fontSize = 16.sp, lineHeight = 20.sp)
+
+    /** The You page's name, its letter in the face, and the address under it. */
+    val ProfileName = TtTypography.titleLarge.copy(fontSize = 18.sp)
+    val ProfileLetter = TtTypography.titleLarge.copy(fontSize = 23.sp)
+    val ProfileEmail = TtTypography.bodyMedium.copy(fontSize = 13.sp)
+
+    /** A video's length on its thumbnail: 10 on 14. */
+    val VideoLength = TtTypography.labelSmall.copy(fontSize = 10.sp, lineHeight = 14.sp)
+
+    /** The crew rules card: a fact's figure, its unit and label, a rule's line, the list heading. */
+    val RuleFigure =
+        TextStyle(fontFamily = Barlow, fontSize = 21.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum")
+    val RuleUnit = TextStyle(fontFamily = Barlow, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
+    val RuleLabel = TextStyle(fontFamily = Barlow, fontSize = 11.5.sp, lineHeight = 14.sp)
+    val RuleLine = TextStyle(fontFamily = Barlow, fontSize = 13.sp, lineHeight = 17.sp)
+    val RuleHeading = TextStyle(fontFamily = Barlow, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold)
 }
 
 /** How tall a [SectionHeading]'s words are, which the count badge is centred on. */

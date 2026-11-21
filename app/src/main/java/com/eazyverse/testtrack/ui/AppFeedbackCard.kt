@@ -139,11 +139,7 @@ internal fun RequestCard(
             Text(
                 requestTitle(state, counts),
                 Modifier.weight(1f),
-                style =
-                    MaterialTheme.typography.titleMedium.copy(
-                        fontSize = if (compact) 16.sp else 18.sp,
-                        lineHeight = if (compact) 20.sp else 23.sp,
-                    ),
+                style = if (compact) TextStyles.FeedbackTitleCompact else TextStyles.FeedbackTitle,
                 fontWeight = FontWeight.SemiBold,
                 color = t.text,
                 maxLines = 1,

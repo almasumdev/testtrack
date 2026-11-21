@@ -106,7 +106,7 @@ internal fun ChatComposer(
                 Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(TileRadius))
                     .background(t.glass2)
                     .padding(start = 12.dp, end = 2.dp, top = 10.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,

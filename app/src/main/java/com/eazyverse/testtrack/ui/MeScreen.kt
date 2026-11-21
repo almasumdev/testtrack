@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,7 +36,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.CalendarDays
 import com.composables.icons.lucide.Clock
@@ -252,7 +250,7 @@ private fun Who(
                         profile.photoUrl,
                         initialOf(profile.displayName),
                         size = FaceSize - 6.dp,
-                        letterStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 23.sp),
+                        letterStyle = TextStyles.ProfileLetter,
                     )
                 }
                 Box(
@@ -274,7 +272,7 @@ private fun Who(
             Column(Modifier.weight(1f)) {
                 Text(
                     profile.displayName.ifBlank { profile.email.substringBefore('@') },
-                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp),
+                    style = TextStyles.ProfileName,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -282,7 +280,7 @@ private fun Who(
                 Spacer(Modifier.height(2.dp))
                 Text(
                     profile.email,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                    style = TextStyles.ProfileEmail,
                     color = t.text3,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -346,7 +344,7 @@ private fun VersionLine() {
     Text(
         "v${BuildConfig.VERSION_NAME}",
         Modifier.fillMaxWidth().padding(top = 12.dp),
-        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp),
+        style = TextStyles.EarlierStyle,
         fontWeight = FontWeight.Medium,
         color = Tt.colors.text4,
         textAlign = TextAlign.Center,

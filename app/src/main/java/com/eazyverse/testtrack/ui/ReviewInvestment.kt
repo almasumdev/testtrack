@@ -143,7 +143,7 @@ private fun CountChip(
     Box(
         modifier
             .height(36.dp)
-            .choiceTile(chosen, enabled, RoundedCornerShape(18.dp), fill = Color.Transparent, onClick = onClick)
+            .choiceTile(chosen, enabled, RoundedCornerShape(percent = 50), fill = Color.Transparent, onClick = onClick)
             .semantics { contentDescription = "$count reviews" },
         contentAlignment = Alignment.Center,
     ) {

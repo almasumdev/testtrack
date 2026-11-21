@@ -239,7 +239,7 @@ fun Primary(
         }
         Text(
             label,
-            style = MaterialTheme.typography.titleSmall.copy(fontSize = if (small) 14.5.sp else 15.sp),
+            style = if (small) MaterialTheme.typography.titleSmall.copy(fontSize = 14.5.sp) else TextStyles.ButtonWords,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             maxLines = 2,

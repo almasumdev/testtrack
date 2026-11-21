@@ -114,7 +114,7 @@ private fun ThemeOption(
     // Inset from the card's corner by its 6 of padding, so the two curves run parallel.
     Column(
         modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(TileRadius))
             .selectable(selected, role = Role.RadioButton, onClick = onClick)
             .padding(start = 6.dp, top = 6.dp, end = 6.dp, bottom = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
