@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crew volunteers and private testers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 700; src: url("../../../app/src/main/res/font/plexmono_bold.ttf"); }
+
+  /* OceanLight / OceanDark, ui/theme/Tokens.kt. No new tokens. */
+  .light {
+    --bg:#F7FCFF; --text:#142F43; --text2:#203A4E; --text3:#223D50; --text4:#59758A;
+    --tabSelected:#2E4E66; --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2; --glassBorderStrong:#789AAF;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B; --badgeFill:#3A5B73;
+    --tile:#DCE6EE; --tileInk:#3A5B73; --leafAccentSoft:rgba(74,114,144,.16); --dock:#E8F3FA; --dockInk:#304C60;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --warn:#8A611C; --warnBg:rgba(154,110,36,.12);
+    --bad:#9E3B2E; --badBg:rgba(158,59,46,.12);
+    --field:#F7FCFF; --fieldBorder:#789AAF; --card:#F3F8FB; --cardLine:#E1ECF3; --sheet:#FFFFFF; --ring:rgba(20,47,67,.14); --track:#E4EEF4;
+    --inverse:#172F42; --onInverse:#EFF7FC; --inverseAccent:#A9C3D6; --sOk:#83D8C4; --sBad:#E4938A;
+    --primary:#3A5B73; --onPrimary:#FFFFFF; --scrim:rgba(20,34,48,.46); --sk:#E3EDF4;
+    --snackShadow:0 6px 20px rgba(16,47,70,.24); --kb:#E8EBEE; --key:#FFFFFF; --keyInk:#202124;
+  }
+  .dark {
+    --bg:#0F1011; --text:#ECEEF0; --text2:#BCC1C6; --text3:#9DA3A9; --text4:#757C82;
+    --tabSelected:#B6CCDC; --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41; --glassBorderStrong:#666D74;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA; --badgeFill:#4A7290;
+    --tile:#2A2D31; --tileInk:#A2BED2; --leafAccentSoft:#2A2D31; --dock:#1C1E20; --dockInk:#BCC1C6;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --warn:#D8B774; --warnBg:rgba(216,183,116,.14);
+    --bad:#E4938A; --badBg:rgba(228,147,138,.15);
+    --field:#141618; --fieldBorder:#666D74; --card:#1C1E20; --cardLine:#2D3034; --sheet:#1C1E20; --ring:rgba(255,255,255,.16); --track:#2D3034;
+    --inverse:#E8EBEE; --onInverse:#15181A; --inverseAccent:#3F6681; --sOk:#246B59; --sBad:#9E3B2E;
+    --primary:#93B3CA; --onPrimary:#0F1011; --scrim:rgba(0,0,0,.6); --sk:#212427;
+    --snackShadow:0 6px 22px rgba(0,0,0,.55); --kb:#1B1D20; --key:#3A3D41; --keyInk:#E8EAED;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  .top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 10px; padding: 12px 28px; background: #D9E0E5; border-bottom: 1px solid #C3CDD4; }
+  .top h1 { margin: 0 14px 0 0; font-size: 20px; font-weight: 700; }
+  .top a { font: 600 15px/20px "BarlowApp", "Barlow", sans-serif; padding: 8px 18px; border-radius: 20px; border: 1px solid #B3C0C9; background: #F4F7F9; color: #2D4A5F; text-decoration: none; }
+  .doc { padding: 6px 28px 80px; }
+  .part { font-size: 30px; font-weight: 700; margin: 40px 0 2px 4px; }
+  .partsub { font-size: 15px; color: #4F5C66; margin: 0 0 6px 4px; }
+  .grp { font-size: 15px; font-weight: 700; color: #4F5C66; margin: 26px 0 10px 4px; }
+  .row { display: flex; flex-wrap: wrap; gap: 28px 22px; align-items: flex-start; }
+  .state { display: flex; flex-direction: column; gap: 8px; }
+  .lbl { font-size: 15px; font-weight: 700; margin-left: 4px; display: flex; gap: 8px; align-items: center; max-width: 360px; }
+  .lbl .k { display: inline-grid; place-items: center; min-width: 30px; height: 24px; padding: 0 7px; border-radius: 8px; background: #2D4A5F; color: #fff; font-size: 13px; flex: none; }
+  .lbl .dk { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: #1A1D20; color: #DDE3E8; font-weight: 600; }
+  .mini { width: 360px; background: var(--bg); color: var(--text); border-radius: 18px; padding: 14px 16px; border: 1px solid #B9C5CE; display: flex; flex-direction: column; gap: 10px; }
+  .mcap { font-size: 12px; font-weight: 700; color: var(--text3); margin: 4px 0 -4px 2px; }
+
+  /* phone, 360 x 800 */
+  .phone { width: 360px; height: 800px; background: var(--bg); color: var(--text); border-radius: 26px; overflow: hidden; border: 1px solid #B9C5CE; position: relative; display: flex; flex-direction: column; }
+  .dark.phone, .dark.mini { border-color: #3A4046; }
+  .sbar { height: 26px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 18px 0 22px; font-size: 13px; font-weight: 600; }
+  .sbar .bat { width: 20px; height: 10px; border-radius: 3px; border: 1.5px solid currentColor; position: relative; }
+  .sbar .bat::after { content: ""; position: absolute; inset: 1px 3px 1px 1px; background: currentColor; border-radius: 1px; }
+  .gest { height: 20px; flex: none; display: grid; place-items: center; }
+  .gest i { width: 108px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .55; }
+  .pbar { height: 64px; flex: none; display: flex; align-items: center; }
+  .pbar .back { width: 48px; height: 48px; display: grid; place-items: center; margin-left: 4px; color: var(--text); flex: none; }
+  .pbar .t2 { margin-left: 4px; flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .pbar .t2 .a { font-size: 22px; line-height: 27px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pbar .t2 .b { font-size: 12.5px; line-height: 16px; color: var(--text3); font-weight: 500; white-space: nowrap; }
+  .mbtn { margin-right: 16px; height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid var(--cardLine); display: inline-flex; align-items: center; gap: 6px; color: var(--accentInk); font-size: 14px; font-weight: 700; }
+  .scroll { flex: 1; min-height: 0; overflow: hidden; padding: 8px 16px 12px; position: relative;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); }
+  .scroll.tab { padding-top: 12px; padding-bottom: 86px; }
+  .foot { flex: none; padding: 8px 16px 4px; }
+
+  svg.ic { display: block; flex: none; }
+  .inl { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .ai { display: grid; place-items: center; flex: none; overflow: hidden; box-shadow: inset 0 0 0 1px var(--ring); font-weight: 700; }
+  .light .nt { background: hsl(var(--h) 45% 89%); color: hsl(var(--h) 50% 32%); box-shadow: none; }
+  .dark .nt { background: hsl(var(--h) 30% 18%); color: hsl(var(--h) 55% 76%); box-shadow: none; }
+  .sk { display: block; background: var(--sk); border-radius: 6px; flex: none; }
+
+  /* crew tab chrome: HUD, segmented tabs, dock */
+  .lvl { display: flex; align-items: center; gap: 10px; padding: 4px 16px 2px; flex: none; }
+  .lvl .a { font-size: 17px; line-height: 21px; font-weight: 600; } .lvl .b { font-size: 12.5px; color: var(--text2); }
+  .tix { display: inline-flex; align-items: center; gap: 8px; font: 700 21px "PlexApp", monospace; color: var(--text); }
+  .tabs { margin: 8px 16px 0; height: 44px; border-radius: 22px; background: var(--card); border: 1px solid var(--cardLine); display: flex; padding: 3px; gap: 2px; flex: none; }
+  .tabs .sg { flex: 1; display: flex; align-items: center; justify-content: center; border-radius: 17px; font-size: 14px; font-weight: 500; color: var(--text2); white-space: nowrap; }
+  .tabs .sg.on { background: var(--leafAccentSoft); color: var(--tabSelected); font-weight: 600; }
+  .tabs .wc { margin-left: 5px; font: 700 11px/16px "PlexApp", monospace; color: var(--tileInk); background: var(--tile); border-radius: 8px; padding: 0 5px; }
+  .tabs .tdot { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); margin-left: 2px; transform: translateY(-6px); }
+  .dock { position: absolute; left: 0; right: 0; bottom: 0; height: 74px; background: var(--dock); display: flex; align-items: center; justify-content: space-around; color: var(--dockInk); border-top: 1px solid var(--cardLine); z-index: 4; }
+  .dock .d { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; font-weight: 500; }
+  .dock .d .pl { width: 52px; height: 30px; border-radius: 15px; display: grid; place-items: center; }
+  .dock .d.on .pl { background: var(--tile); }
+  .dock .plus { width: 56px; height: 40px; border-radius: 14px; background: var(--accent); color: var(--onAccent); display: grid; place-items: center; }
+
+  /* cards and heads (CrewCard = tileFrame, 14 corner) */
+  .card { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; padding: 14px 16px; }
+  .card.p16 { padding: 16px; } .card.p14 { padding: 14px; }
+  .card + .card { margin-top: 8px; }
+  .hd { display: flex; align-items: center; gap: 8px; font-size: 16px; line-height: 19px; font-weight: 700; margin: 20px 0 10px; }
+  .hd:first-child { margin-top: 4px; }
+  .hd .cb { min-width: 22px; height: 22px; border-radius: 11px; background: var(--badgeFill); color: var(--onAccent); font-size: 12px; font-weight: 700; display: grid; place-items: center; padding: 0 7px; }
+  .hd .tr { margin-left: auto; font-size: 12.5px; font-weight: 600; color: var(--text3); }
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; font-size: 12.5px; line-height: 16px; font-weight: 700; white-space: nowrap; flex: none; }
+  .chip.sm { font-size: 11.5px; font-weight: 600; padding: 3px 9px 3px 8px; gap: 4px; }
+  .chip.accent { background: var(--tile); color: var(--accentInk); } .chip.tile { background: var(--tile); color: var(--tileInk); }
+  .chip.ok { background: var(--okBg); color: var(--ok); } .chip.warn { background: var(--warnBg); color: var(--warn); }
+  .chip.bad { background: var(--badBg); color: var(--bad); } .chip.quiet { background: var(--glass2); color: var(--text3); }
+  .hh { margin-top: 10px; font-size: 23px; line-height: 27px; font-weight: 700; }
+  .hl { margin-top: 4px; font-size: 14px; line-height: 20px; color: var(--text2); }
+  .hl.warn { color: var(--warn); font-weight: 600; } .hl.bad { color: var(--bad); font-weight: 600; }
+  .segs { display: flex; gap: 4px; margin-top: 14px; } .segs i { flex: 1; height: 7px; border-radius: 4px; display: block; }
+  .ml { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12.5px; color: var(--text4); }
+  .tint { margin-top: 12px; border: 1px solid var(--cardLine); border-radius: 10px; padding: 8px 12px; font-size: 13px; line-height: 18px; color: var(--text2); }
+  .tint b { color: var(--text); font-weight: 600; }
+  .qn { font-size: 12.5px; line-height: 17px; color: var(--text4); }
+  .qn .inl { color: var(--text4); }
+  .it { display: flex; align-items: center; gap: 10px; }
+  .it .col { flex: 1; min-width: 0; }
+  .t16 { font-size: 16px; line-height: 19px; font-weight: 600; }
+  .t15 { font-size: 15px; line-height: 19px; font-weight: 600; }
+  .s12 { font-size: 12.5px; line-height: 16px; color: var(--text3); }
+  .ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .itile { display: grid; place-items: center; flex: none; background: var(--tile); color: var(--tileInk); }
+
+  /* buttons */
+  .pbtn { height: 52px; border-radius: 26px; background: var(--primary); color: var(--onPrimary); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 700; }
+  .pbtn.off { background: color-mix(in srgb, var(--text) 12%, transparent); color: color-mix(in srgb, var(--text) 38%, transparent); }
+  .sbtn { height: 52px; border-radius: 26px; background: var(--glass2); color: var(--text); display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14.5px; font-weight: 700; flex: 1; }
+  .sbtn.bad { background: var(--badBg); color: var(--bad); }
+  .two { display: flex; gap: 8px; }
+  .ia { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 8px; font-size: 14px; font-weight: 700; color: var(--accentInk); border-radius: 16px; white-space: nowrap; flex: none; }
+  .ia.bad { color: var(--bad); } .ia.q { color: var(--text3); }
+  .ia.u { text-decoration: underline; text-underline-offset: 3px; }
+  .rp { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 17px; background: var(--tile); color: var(--accentInk); font-size: 14px; font-weight: 700; white-space: nowrap; flex: none; }
+  .rp.ic { padding-left: 12px; }
+  .rp.solid { background: var(--accent); color: var(--onAccent); }
+  .xbtn { width: 32px; height: 32px; border-radius: 16px; display: grid; place-items: center; color: var(--text4); flex: none; margin-right: -6px; }
+  .fab { position: absolute; right: 16px; bottom: 30px; z-index: 3; height: 52px; padding: 0 18px 0 16px; border-radius: 26px; background: var(--accent); color: var(--onAccent); display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 14px rgba(16,47,70,.22); }
+  .fab .n { min-width: 20px; height: 20px; border-radius: 10px; background: var(--onAccent); color: var(--accent); font: 700 11.5px/20px "PlexApp", monospace; text-align: center; padding: 0 5px; }
+
+  /* crew tiles */
+  .th { display: flex; align-items: center; gap: 8px; min-height: 28px; }
+  .th .nm { font-size: 18px; line-height: 23px; font-weight: 600; white-space: nowrap; }
+  .th .dt { flex: 1; font-size: 12px; line-height: 17px; color: var(--text3); padding-top: 2px; }
+  .cp { height: 28px; border-radius: 99px; display: inline-flex; align-items: center; gap: 5px; padding: 0 12px 0 10px; background: var(--tile); color: var(--tileInk); font-size: 13.5px; font-weight: 600; flex: none; }
+  .strip { display: flex; gap: 4px; margin-top: 14px; }
+  .slot { position: relative; flex: none; }
+  .mk { position: absolute; right: -2px; bottom: -2px; width: 11px; height: 11px; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 0 1.5px var(--bg); background: var(--ok); color: var(--bg); }
+  .stand { display: flex; align-items: flex-start; gap: 12px; margin-top: 9px; }
+  .stand .h { flex: 1; font-size: 15px; line-height: 20px; font-weight: 500; }
+  .stand .h.ok { color: var(--ok); } .stand .h.bad { color: var(--bad); }
+  .stand .r { flex: 1; font-size: 12px; line-height: 17px; color: var(--text3); text-align: right; }
+  .tfoot { margin-top: 12px; display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 18px; color: var(--text2); }
+  .spots { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .spots .s12 { flex: 1; }
+  .faded { opacity: .55; }
+
+  /* app tile and its band (CrewRunAppTile, StatusLine band) */
+  .an { font-size: 16px; line-height: 19px; font-weight: 600; }
+  .ap { font-size: 12px; line-height: 14px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .band { margin-top: 10px; min-height: 44px; border-radius: 10px; background: color-mix(in srgb, var(--text) 5%, var(--bg)); display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 10px; font-size: 13px; line-height: 18px; color: var(--text3); }
+  .band .w { flex: 1; min-width: 0; }
+  .band.ok { color: var(--ok); } .band.warn { color: var(--warn); } .band.bad { color: var(--bad); } .band.acc { color: var(--accentInk); }
+
+  /* AskRow */
+  .ask { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border: 1px solid var(--cardLine); border-radius: 14px; background: var(--bg); }
+  .ask .col { flex: 1; min-width: 0; }
+  .ask .t { font-size: 14.5px; line-height: 19px; font-weight: 600; }
+  .ask .chev { color: var(--text4); }
+
+  /* lines with an inline icon */
+  .il { font-size: 13.5px; line-height: 19px; color: var(--text2); }
+  .il b { color: var(--text); font-weight: 600; }
+  .il .inl { color: var(--accentInk); }
+  .il.warn .inl, .il.warn b { color: var(--warn); }
+  .ils { display: flex; flex-direction: column; gap: 9px; }
+
+  /* the tracking grid (TrackingGrid) */
+  .grid { background: var(--bg); border: 1px solid var(--cardLine); border-radius: 14px; padding: 12px 6px; }
+  .grid .gt { display: flex; align-items: center; padding: 0 4px 10px; }
+  .grid .gt .sp { flex: 1; }
+  .gr { display: flex; align-items: center; }
+  .gr .fc { width: 26px; flex: none; position: relative; }
+  .gr .ns { flex: 1; display: flex; }
+  .gr .ns > span { flex: 1; padding: 1px .5px; display: block; }
+  .gr .ns > span.lit { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+  .gr .dn { flex: 1; text-align: center; font-size: 9.5px; line-height: 14px; color: var(--text4); }
+  .gr .dn.lit { color: var(--accentInk); font-weight: 700; background: color-mix(in srgb, var(--accent) 16%, transparent); border-radius: 4px 4px 0 0; }
+  .sq { display: block; aspect-ratio: 1; border-radius: 4px; border: 1px solid transparent; }
+  .sq.p { background: var(--ok); border-color: var(--ok); }
+  .sq.o { background: var(--okBg); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+  .sq.m { background: var(--badBg); border-color: var(--bad); }
+  .sq.n { background: var(--glass2); border-color: var(--glassBorder); }
+  .sq.t { border: 1.5px solid var(--accent); }
+  .sq.c { border-color: var(--glassBorder); }
+  .sq.b { border: 1px dashed var(--glassBorderStrong); }
+  .gnote { display: flex; align-items: center; gap: 4px; padding: 8px 4px 0; font-size: 11.5px; color: var(--text4); }
+  .vb { position: absolute; left: 14px; top: 13px; width: 13px; height: 13px; border-radius: 50%; background: var(--accent); color: var(--onAccent); display: grid; place-items: center; box-shadow: 0 0 0 1.5px var(--bg); }
+
+  /* avatars and tester tiles */
+  .av { border-radius: 50%; display: grid; place-items: center; flex: none; font-weight: 700; }
+  .ring { position: relative; width: 44px; height: 44px; flex: none; display: grid; place-items: center; }
+  .ring svg { position: absolute; inset: 0; }
+  .tt { display: flex; align-items: center; gap: 12px; padding: 10px 14px; }
+  .tt .col { flex: 1; min-width: 0; }
+  .tt .nmr { display: flex; align-items: center; gap: 8px; }
+  .tt .nmr .t15 { flex: 0 1 auto; min-width: 0; }
+  .tt .dd { margin-left: auto; font-size: 11.5px; color: var(--text3); white-space: nowrap; }
+  .tt .ln { margin-top: 2px; font-size: 12.5px; line-height: 17px; font-weight: 600; color: var(--text3); }
+  .tt .ln.ok { color: var(--ok); } .tt .ln.warn { color: var(--warn); } .tt .ln.bad { color: var(--bad); }
+  .thumbs { display: flex; gap: 6px; }
+  .thumb { width: 32px; height: 46px; border-radius: 6px; overflow: hidden; box-shadow: inset 0 0 0 1px var(--ring); }
+
+  /* chat bubbles (CrewChatBubble) */
+  .m { display: flex; gap: 8px; align-items: flex-end; margin-top: 10px; }
+  .m .col { max-width: 80%; display: flex; flex-direction: column; align-items: flex-start; }
+  .who { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text3); margin: 0 0 3px 12px; }
+  .bub { background: var(--glass2); color: var(--text); border-radius: 18px; padding: 7px 12px; font-size: 15px; line-height: 20px; }
+  .m.r { justify-content: flex-end; } .m.r .bub { background: var(--accent); color: var(--onAccent); }
+
+  /* outlined field, 48dp (OutlinedField) */
+  .fld { position: relative; height: 48px; border: 1px solid var(--fieldBorder); border-radius: 10px; padding: 0 14px; display: flex; align-items: center; font-size: 15px; font-weight: 500; color: var(--text); background: var(--sheet); }
+  .fld.foc { border: 2px solid var(--primary); padding: 0 13px; }
+  .fld.err { border: 2px solid var(--bad); padding: 0 13px; }
+  .fld .lab { position: absolute; top: -9px; left: 10px; padding: 0 4px; background: var(--sheet); font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text3); }
+  .fld.foc .lab { color: var(--accentInk); } .fld.err .lab { color: var(--bad); }
+  .fld .cur { display: inline-block; width: 2px; height: 18px; background: var(--primary); vertical-align: -3px; margin-left: 1px; }
+  .fld .lead { color: var(--text3); margin-right: 10px; }
+  .fe { margin: 5px 4px 0; font-size: 12px; line-height: 16px; color: var(--text3); font-weight: 600; }
+  .fe.bad { color: var(--bad); } .fe.ok { color: var(--ok); }
+  .found { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--cardLine); }
+  .found.on { background: var(--leafAccentSoft); border-color: transparent; }
+  .found .col { flex: 1; min-width: 0; }
+
+  /* sheets (PickerSheet), dialogs (Ask), snackbar (SnackHost) */
+  .scrimL { position: absolute; inset: 0; background: var(--scrim); z-index: 5; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--sheet); border-radius: 22px 22px 0 0; padding: 10px 16px 0; display: flex; flex-direction: column; }
+  .sheet > .hdl { width: 38px; height: 4px; border-radius: 2px; background: var(--text4); opacity: .5; margin: 0 auto 14px; flex: none; }
+  .sth { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .sth .stt { font-size: 17px; line-height: 22px; font-weight: 700; }
+  .sth .sts { margin-top: 2px; font-size: 12.5px; line-height: 16px; color: var(--text3); }
+  .kb { background: var(--kb); padding: 8px 4px 6px; display: flex; flex-direction: column; gap: 9px; flex: none; margin: 0 -16px; }
+  .kb .kr { display: flex; justify-content: center; gap: 5px; }
+  .kb .k { height: 40px; flex: 0 0 30px; border-radius: 6px; background: var(--key); color: var(--keyInk); display: grid; place-items: center; font: 400 17px Roboto, system-ui, sans-serif; box-shadow: 0 1px 0 rgba(0,0,0,.18); }
+  .kb .k.w { flex: 0 0 46px; font-size: 13px; } .kb .k.sp { flex: 0 0 150px; }
+  .dlgwrap { position: absolute; left: 22px; right: 22px; top: 50%; transform: translateY(-50%); z-index: 7; }
+  .dlg { background: var(--glass); border-radius: 18px; padding: 18px 16px 14px; position: relative; z-index: 1; }
+  .dlg h3 { margin: 0; font-size: 16px; line-height: 21px; font-weight: 700; }
+  .dlg p { margin: 6px 0 0; font-size: 13.5px; line-height: 19.5px; color: var(--text2); }
+  .dlg .btns { display: flex; justify-content: flex-end; gap: 6px; margin-top: 14px; }
+  .dlg .db { height: 52px; border-radius: 26px; padding: 0 18px; display: flex; align-items: center; font-size: 14px; font-weight: 700; }
+  .dlg .db.o { border: 1.5px solid var(--glassBorderStrong); color: var(--text); }
+  .dlg .db.f { background: var(--primary); color: var(--onPrimary); }
+  .dlg .db.d { background: var(--bad); color: var(--onAccent); }
+  .snack { position: absolute; left: 16px; right: 16px; z-index: 8; display: flex; align-items: flex-start; gap: 10px; min-height: 48px; padding: 14px 16px 14px 14px; border-radius: 14px; background: var(--inverse); color: var(--onInverse); box-shadow: var(--snackShadow); font-size: 14px; line-height: 19px; font-weight: 500; }
+  .snack.static { position: relative; left: auto; right: auto; box-shadow: none; }
+  .snack .st { flex: 1; }
+  .snack .sa { align-self: center; margin: -10px -4px -10px 0; padding: 0 12px; height: 40px; display: grid; place-items: center; color: var(--inverseAccent); font-weight: 700; font-size: 14.5px; }
+
+  /* empty and loading */
+  .sheet .strip { margin-top: 0; }
+  .rob { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 70px 18px 0; }
+  .rob .h { margin-top: 14px; font-size: 20px; line-height: 25px; font-weight: 700; }
+  .rob .b { margin-top: 6px; font-size: 14px; line-height: 20px; color: var(--text2); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="rg1" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg2" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg3" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg4" gradientUnits="userSpaceOnUse" x1="350" y1="277" x2="910" y2="744"><stop offset="0" stop-color="#32729B" stop-opacity="1.0"/><stop offset="1" stop-color="#1D5C82" stop-opacity="1.0"/></linearGradient><linearGradient id="rg5" gradientUnits="userSpaceOnUse" x1="310" y1="765" x2="568" y2="1056"><stop offset="0" stop-color="#F99B80" stop-opacity="1.0"/><stop offset="1" stop-color="#EF806B" stop-opacity="1.0"/></linearGradient><linearGradient id="rg6" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg7" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE" stop-opacity="1.0"/><stop offset="1" stop-color="#5E9DC5" stop-opacity="1.0"/></linearGradient><linearGradient id="rg8" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg9" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE" stop-opacity="1.0"/><stop offset="1" stop-color="#5E9DC5" stop-opacity="1.0"/></linearGradient><linearGradient id="rg10" gradientUnits="userSpaceOnUse" x1="486" y1="860" x2="584" y2="952"><stop offset="0" stop-color="#FFFFFF" stop-opacity="1.0"/><stop offset="1" stop-color="#E3ECF3" stop-opacity="1.0"/></linearGradient><linearGradient id="rg11" gradientUnits="userSpaceOnUse" x1="584" y1="876" x2="636" y2="892"><stop offset="0" stop-color="#E6EDF3" stop-opacity="1.0"/><stop offset="1" stop-color="#AFC0CE" stop-opacity="1.0"/></linearGradient><linearGradient id="rg12" gradientUnits="userSpaceOnUse" x1="584" y1="920" x2="636" y2="936"><stop offset="0" stop-color="#E6EDF3" stop-opacity="1.0"/><stop offset="1" stop-color="#AFC0CE" stop-opacity="1.0"/></linearGradient><linearGradient id="rg13" gradientUnits="userSpaceOnUse" x1="668" y1="852" x2="766" y2="960"><stop offset="0" stop-color="#F99B80" stop-opacity="1.0"/><stop offset="1" stop-color="#EF806B" stop-opacity="1.0"/></linearGradient></defs></svg>
+<div class="top"><h1>Crew volunteers and private testers</h1><a href="#vol">Volunteers</a><a href="#priv">Private testers</a></div>
+<div class="doc" id="doc"></div>
+<script>
+const R = {"level_robot_body": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><path d=\"M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z\" fill=\"url(#rg1)\"/></g>", "level_robot_head": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 530.0) rotate(0.0) scale(1 1) translate(-627.0 -530.0)\"><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><path d=\"M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z\" fill=\"url(#rg2)\"/><path d=\"M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z\" fill=\"url(#rg3)\"/><path d=\"M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z\" fill=\"#6CA9CF\"/><path d=\"M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z\" fill=\"#6CA9CF\"/></g><path d=\"M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z\" fill=\"url(#rg4)\"/><path d=\"M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z\" fill=\"#FFFCF1\"/><path d=\"M576 594 C602 620 651 620 677 594\" fill-opacity=\"0.000\" fill=\"#000000\" stroke=\"#17253B\" stroke-width=\"31\" stroke-linecap=\"round\"/></g></g>", "level_robot_eyes": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1 1) translate(-627.0 -529.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1 1) translate(-627.0 -529.0)\"><path d=\"M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z\" fill=\"#17253B\"/><path d=\"M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z\" fill=\"#17253B\"/><path d=\"M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z\" fill=\"#FFFFFF\"/><path d=\"M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z\" fill=\"#FFFFFF\"/></g></g></g>", "level_robot_antenna": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 278.0) rotate(0.0) scale(1 1) translate(-627.0 -278.0)\"><path d=\"M603 227 H650 V295 H603 Z\" fill=\"#1D5C82\"/><path d=\"M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z\" fill=\"url(#rg5)\"/><path d=\"M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z\" fill=\"#FFFFFF\"/></g></g>", "level_robot_hands": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><path d=\"M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z\" fill=\"url(#rg6)\"/><path d=\"M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z\" fill=\"url(#rg7)\"/><path d=\"M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z\" fill=\"url(#rg8)\"/><path d=\"M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z\" fill=\"url(#rg9)\"/></g>"};
+const L = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  tri: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  userPlus: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>',
+  userX: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/>',
+  hand: '<path d="M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"/><path d="m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9"/><path d="m2 15 6 6"/><path d="M19.5 8.5c.7-.7 1.5-1.6 1.5-2.7A2.73 2.73 0 0 0 16 4a2.78 2.78 0 0 0-5 1.8c0 1.2.8 2 1.5 2.8L16 12Z"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  msg: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  msq: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  logOut: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+  flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>',
+  circleCheck: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  circleX: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+  play: '<polygon points="6 3 20 12 6 21 6 3"/>',
+  eye: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+  calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  chev: '<path d="m9 18 6-6-6-6"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  book: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  wifi: '<path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/>',
+};
+const ic = (n, s = 16, w = 2) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${L[n]}</svg>`;
+const inl = (n, s = 15, w = 2.2) => `<span class="inl">${ic(n, s, w)}</span>`;
+/* arrow_back_ios_new */
+const BACK = `<svg width="22" height="22" viewBox="0 0 24 24" style="fill:currentColor"><path d="M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"/></svg>`;
+const sp = (h) => `<div style="height:${h}px;flex:none"></div>`;
+const robotHead = (s) => `<svg width="${s}" height="${s}" viewBox="12 -105 860 860" style="flex:none;display:block">${R.level_robot_antenna}${R.level_robot_head}${R.level_robot_eyes}</svg>`;
+const robotFull = (s) => `<svg width="${s}" height="${s * 980 / 880}" viewBox="0 0 880 980" style="display:block">${R.level_robot_body}${R.level_robot_head}${R.level_robot_eyes}${R.level_robot_antenna}${R.level_robot_hands}</svg>`;
+
+/* ---------- apps and people ---------- */
+const APPS = [
+  { n: 'Budget Buddy', p: 'com.hasanapps.budgetbuddy', h: 165 },
+  { n: 'Astra Match', p: 'com.astra.match', art: 'astra' },
+  { n: 'Baka Run', p: 'com.bakagames.run', art: 'baka' },
+  { n: 'Cherish', p: 'com.cherish.app', art: 'cherish' },
+  { n: 'EditMe', p: 'com.editme.photo', art: 'editme' },
+  { n: 'Auto Silent', p: 'com.quietly.autosilent', art: 'silent' },
+  { n: 'Music Player', p: 'com.tunebox.player', art: 'music' },
+  { n: 'Focus Flow', p: 'com.focusflow.app', h: 160 },
+  { n: 'Habit Hen', p: 'com.henhouse.habits', h: 30 },
+  { n: 'Quiz Quest', p: 'com.quizquest.game', h: 90 },
+  { n: 'Sleep Sound', p: 'com.calmwave.sleep', h: 240 },
+  { n: 'Pixel Pets', p: 'com.petlab.pixelpets', h: 20 },
+  { n: 'Tide Times', p: 'com.coastline.tidetimes', h: 200 },
+];
+const app = (name) => APPS.find((a) => a.n === name);
+function art(a, s) {
+  const base = `width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.3)}px;`;
+  const g = Math.round(s * 0.62);
+  const sv = (body) => `<svg width="${g}" height="${g}" viewBox="0 0 24 24">${body}</svg>`;
+  switch (a.art) {
+    case 'astra': return `<span class="ai" style="${base}background:radial-gradient(circle at 30% 30%,#7A52E8,#2A1670)">${sv('<polygon points="8 3 9.6 6.6 13.5 7 10.6 9.6 11.4 13.4 8 11.4 4.6 13.4 5.4 9.6 2.5 7 6.4 6.6" style="fill:#FFC83D"/><rect x="12" y="11" width="8" height="8" rx="2" transform="rotate(45 16 15)" style="fill:#4FC3F7"/>')}</span>`;
+    case 'baka': return `<span class="ai" style="${base}background:linear-gradient(170deg,#3A2F86,#7B4BC8);color:#FFD84A;font-size:${Math.max(5, s * 0.24)}px;line-height:1">BAKA</span>`;
+    case 'cherish': return `<span class="ai" style="${base}background:#0EA5E9">${sv('<circle cx="8.5" cy="12" r="4.5" style="fill:none;stroke:#fff;stroke-width:2.4"/><circle cx="15.5" cy="12" r="4.5" style="fill:none;stroke:#fff;stroke-width:2.4"/>')}</span>`;
+    case 'editme': return `<span class="ai" style="${base}background:linear-gradient(135deg,#8A2BE2,#E8459A);color:#fff;font-size:${s * 0.55}px">E</span>`;
+    case 'silent': return `<span class="ai" style="${base}background:#F3F4F6">${sv('<circle cx="11" cy="12" r="8" style="fill:none;stroke:#2B3A4A;stroke-width:2"/><path d="M11 7v5h3" style="fill:none;stroke:#2B3A4A;stroke-width:2;stroke-linecap:round"/>')}</span>`;
+    case 'music': return `<span class="ai" style="${base}background:#1F1F1F">${sv('<path d="M5 10v4M8.5 7v10M12 9v6M15.5 6v12M19 10v4" style="stroke:#F5B400;stroke-width:2;stroke-linecap:round"/>')}</span>`;
+    default: return `<span class="ai nt" style="${base}--h:${a.h};font-size:${Math.round(s * 0.45)}px">${a.n[0]}</span>`;
+  }
+}
+const P = {
+  hasan: { n: 'Hasan Rahman', e: 'hasan.apps@gmail.com', h: 165 },
+  lina: { n: 'Lina Akter', e: 'lina.akter@gmail.com', h: 330 },
+  omar: { n: 'Omar Faruk', e: 'omar.faruk@gmail.com', h: 35 },
+  sam: { n: 'Sam Rahman', e: 'sam.rahman@gmail.com', h: 205 },
+  rafi: { n: 'Rafi Islam', e: '', h: 120 },
+  tania: { n: 'Tania Sultana', e: '', h: 280 },
+  mina: { n: 'Mina Das', e: '', h: 60 },
+  jon: { n: 'Jon Park', e: '', h: 250 },
+  ayesha: { n: 'Ayesha Noor', e: '', h: 300 },
+};
+const avatar = (p, s) => `<span class="av nt" style="--h:${p.h};width:${s}px;height:${s}px;font-size:${Math.round(s * 0.44)}px">${p.n[0]}</span>`;
+
+/* ---------- chrome ---------- */
+const sbar = () => `<div class="sbar"><span>9:41</span><span style="display:flex;gap:6px;align-items:center">${ic('wifi', 14, 2.4)}<span class="bat"></span></span></div>`;
+const gest = () => `<div class="gest"><i></i></div>`;
+function tabs(sel, o = {}) {
+  return `<div class="tabs">${['Open', 'Lobby', 'Run', 'Record'].map((t) => {
+    const [n, dot] = o[t] || [0, false];
+    return `<span class="sg${t === sel ? ' on' : ''}">${t}${dot ? '<i class="tdot"></i>' : ''}${n ? `<span class="wc">${n}</span>` : ''}</span>`;
+  }).join('')}</div>`;
+}
+const dock = () => `<div class="dock">
+  <div class="d"><span class="pl">${ic('msq', 22)}</span>Circle</div>
+  <div class="d on"><span class="pl">${ic('users', 22)}</span>Crew</div>
+  <span class="plus">${ic('plus', 24, 2.4)}</span>
+  <div class="d"><span class="pl">${ic('grid', 22)}</span>My apps</div>
+  <div class="d"><span class="pl">${ic('user', 22)}</span>You</div></div>`;
+const hud = (tix = 290) => `<div class="lvl">${robotHead(44)}<div style="flex:1"><div class="a">Level 13</div><div class="b">275 exp to level 14</div></div><span class="tix">${ic('ticket', 24, 1.8)}${tix}</span></div>`;
+function crewTab(th, sel, o, body, extra = '', tix) {
+  return `<div class="phone ${th}">${sbar()}${hud(tix)}${tabs(sel, o)}<div class="scroll tab">${body}</div>${dock()}${extra}</div>`;
+}
+function page(th, title, body, o = {}) {
+  const sub = o.sub ? `<span class="b">${o.sub}</span>` : '';
+  return `<div class="phone ${th}">${sbar()}<div class="pbar"><span class="back">${BACK}</span><span class="t2"><span class="a">${title}</span>${sub}</span>${o.end || ''}</div>
+    <div class="scroll">${body}</div>${o.foot ? `<div class="foot">${o.foot}</div>` : ''}${gest()}${o.extra || ''}</div>`;
+}
+const membersBtn = (n) => `<span class="mbtn">${ic('users', 16, 2.2)}${n}</span>`;
+const fab = (n) => `<span class="fab">${ic('msg', 18, 2.2)}Chat${n ? `<span class="n">${n}</span>` : ''}</span>`;
+function snack(text, tone = 'done', o = {}) {
+  const icn = tone === 'done' ? ['circleCheck', 'var(--sOk)'] : tone === 'error' ? ['alert', 'var(--sBad)'] : ['info', 'var(--inverseAccent)'];
+  const pos = o.static ? '' : ` style="bottom:${o.bottom ?? 30}px"`;
+  return `<div class="snack${o.static ? ' static' : ''}"${pos}><span style="color:${icn[1]};margin-top:.5px">${ic(icn[0], 18, 2.2)}</span><span class="st">${text}</span>${o.action ? `<span class="sa">${o.action}</span>` : ''}</div>`;
+}
+function sheet(o) {
+  return `<div class="scrimL"></div><div class="sheet"><i class="hdl"></i><div class="sth">${o.leading || ''}<div style="flex:1;min-width:0"><div class="stt">${o.title}</div>${o.sub ? `<div class="sts">${o.sub}</div>` : ''}</div></div>${o.body}${o.kb ? kb() : sp(20) + gest()}</div>`;
+}
+function kb() {
+  const r = (keys) => `<div class="kr">${keys.split('').map((k) => `<span class="k">${k}</span>`).join('')}</div>`;
+  return `<div class="kb">${r('qwertyuiop')}${r('asdfghjkl')}<div class="kr"><span class="k w">&#8679;</span>${'zxcvbnm'.split('').map((k) => `<span class="k">${k}</span>`).join('')}<span class="k w">&#9003;</span></div>
+    <div class="kr"><span class="k w">?123</span><span class="k">@</span><span class="k sp"></span><span class="k">.</span><span class="k w">Go</span></div>${gest()}</div>`;
+}
+function dialog(title, body, dismiss, confirm, danger) {
+  const w = 96, f = 96 * 980 / 880, lift = 96 * 262 / 880, rise = 96 * 540 / 880;
+  return `<div class="scrimL"></div><div class="dlgwrap"><div style="position:relative;padding-top:${rise}px">
+    <svg width="${w}" height="${f}" viewBox="0 0 880 980" style="position:absolute;right:10px;top:0;z-index:0">${R.level_robot_antenna}${R.level_robot_head}${R.level_robot_eyes}</svg>
+    <div class="dlg"><h3>${title}</h3><p>${body}</p><div class="btns"><span class="db o">${dismiss}</span><span class="db ${danger ? 'd' : 'f'}">${confirm}</span></div></div>
+    <svg width="${w}" height="${f}" viewBox="0 0 880 980" style="position:absolute;right:10px;top:${-lift}px;z-index:2;pointer-events:none">${R.level_robot_hands}</svg></div></div>`;
+}
+
+/* ---------- parts ---------- */
+const chip = (t, tone, icon, sm) => `<span class="chip ${tone}${sm ? ' sm' : ''}">${icon ? ic(icon, sm ? 12 : 13, 2.4) : ''}${t}</span>`;
+const volTag = () => chip('Volunteer', 'tile', 'hand', true);
+const pbtn = (t, icon, cls = '') => `<div class="pbtn ${cls}">${icon ? ic(icon, 18, 2.2) : ''}${t}</div>`;
+const sbtn = (t, cls = '') => `<div class="sbtn ${cls}">${t}</div>`;
+const ia = (t, icon, cls = '') => `<span class="ia ${cls}">${icon ? ic(icon, 16, 2.2) : ''}${t}</span>`;
+const rp = (t, icon, cls = '') => `<span class="rp${icon ? ' ic' : ''} ${cls}">${icon ? ic(icon, 14, 2.4) : ''}${t}</span>`;
+const itile = (n, s = 36, tone = '') => `<span class="itile" style="width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.3)}px;${tone}">${ic(n, Math.round(s * 0.52), 2)}</span>`;
+const heading = (t, n, tr) => `<div class="hd">${t}${n != null ? `<span class="cb">${n}</span>` : ''}${tr ? `<span class="tr">${tr}</span>` : ''}</div>`;
+const ml = (a, b) => `<div class="ml"><span>${a}</span><span>${b}</span></div>`;
+/* DayMeter: before `from` greyed, past filled, tonight lit */
+function dayMeter(day, total, from = 1, done = false) {
+  let s = '';
+  for (let i = 0; i < total; i++) {
+    let c = 'var(--track)';
+    if (i < from - 1) c = 'var(--glassBorderStrong)';
+    else if (i < day - 1) c = done ? 'var(--ok)' : 'var(--accent)';
+    else if (i === day - 1) c = done ? 'var(--ok)' : 'color-mix(in srgb, var(--accent) 45%, transparent)';
+    s += `<i style="background:${c}"></i>`;
+  }
+  return `<div class="segs">${s}</div>`;
+}
+function hero(o) {
+  return `<div class="card p16">${chip(o.chip, o.tone, o.icon)}<div class="hh">${o.h}</div><div class="hl${o.lt ? ' ' + o.lt : ''}">${o.l}</div>${o.meter || ''}${o.extra || ''}${o.action ? sp(14) + pbtn(o.action, o.aicon) : ''}</div>`;
+}
+function band(text, tone, icon, actions = '') {
+  return `<div class="band ${tone}">${ic(icon, 15, 2.2)}<span class="w">${text}</span>${actions}</div>`;
+}
+function appTile(a, bnd, o = {}) {
+  return `<div class="card p14${o.cls ? ' ' + o.cls : ''}"><div class="it">${art(a, 44)}<div class="col"><div class="an">${a.n}</div><div class="ap">${o.sub || a.p}</div></div>${o.report ? ia('Report', 'flag') : ''}</div>${bnd}</div>`;
+}
+function strip(apps, s, done = 0) {
+  return `<div class="strip">${apps.map((a, i) => `<span class="slot" style="width:${s}px;height:${s}px">${art(a, s)}${i < done ? `<i class="mk">${ic('check', 8, 3.6)}</i>` : ''}</span>`).join('')}</div>`;
+}
+const askRow = (lead, t, s, trail) => `<div class="ask">${lead}<div class="col"><div class="t ell">${t}</div><div class="s12 ell">${s}</div></div>${trail ?? `<span class="chev">${ic('chev', 18)}</span>`}</div>`;
+
+/* the ring of nights round a face (TesterTile) */
+function ringSvg(sq) {
+  const col = { p: 'var(--ok)', o: 'var(--ok)', m: 'var(--bad)', n: 'var(--glassBorderStrong)', w: 'var(--accent)', t: 'var(--track)', c: 'var(--track)', b: 'transparent' };
+  const n = sq.length, sweep = 360 / n, r = 20, c = 22;
+  const pt = (a) => [c + r * Math.cos((a - 90) * Math.PI / 180), c + r * Math.sin((a - 90) * Math.PI / 180)];
+  return `<svg width="44" height="44" viewBox="0 0 44 44">${sq.map((k, i) => {
+    if (k === 'b') return '';
+    const a0 = i * sweep, a1 = a0 + sweep - 3; const [x0, y0] = pt(a0); const [x1, y1] = pt(a1);
+    return `<path d="M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}" fill="none" stroke="${col[k]}" stroke-width="4"/>`;
+  }).join('')}</svg>`;
+}
+function thumb(a) {
+  return `<span class="thumb" style="background:linear-gradient(180deg,hsl(${a.h ?? 200} 40% 86%) 0 22%,#fff 22% 100%);position:relative"><i style="position:absolute;left:5px;right:5px;top:15px;height:4px;border-radius:2px;background:hsl(${a.h ?? 200} 35% 70%)"></i><i style="position:absolute;left:5px;right:12px;top:24px;height:3px;border-radius:2px;background:#D9DEE3"></i><i style="position:absolute;left:5px;right:8px;top:30px;height:3px;border-radius:2px;background:#D9DEE3"></i></span>`;
+}
+function testerTile(p, o) {
+  const face = o.sq ? `<span class="ring">${ringSvg(o.sq)}${avatar(p, 32)}${o.vol ? `<i class="vb" style="left:29px;top:29px;width:16px;height:16px">${ic('hand', 10, 2.6)}</i>` : ''}</span>` : `<span class="ring" style="border:1.5px dashed var(--glassBorderStrong);border-radius:50%">${avatar(p, 32)}</span>`;
+  return `<div class="card tt">${face}<div class="col"><div class="nmr"><span class="t15 ell">${p.n}</span>${o.days ? `<span class="dd">${o.days}</span>` : ''}</div><div class="ln ${o.tone || ''} ell">${o.line}</div></div>${o.pics ? `<span class="thumbs">${o.pics.map(thumb).join('')}</span>` : ''}${o.x ? `<span class="xbtn">${ic('x', 18, 2.2)}</span>` : ''}${o.trail || ''}</div>`;
+}
+/* TrackingGrid: rows = [{p, vol, sq}] */
+function trackGrid(rows, o) {
+  const nights = 14, today = o.today;
+  const days = Array.from({ length: nights }, (_, i) => `<span class="dn${i + 1 === today ? ' lit' : ''}">${i + 1}</span>`).join('');
+  const body = rows.map((r) => `<div class="gr"><span class="fc">${avatar(r.p, 24)}${r.vol ? `<i class="vb">${ic('hand', 8, 2.6)}</i>` : ''}</span><span class="ns">${r.sq.map((k, i) => `<span class="${i + 1 === today ? 'lit' : ''}"><i class="sq ${k}"></i></span>`).join('')}</span></div>`).join('');
+  const counts = o.counts ? `<div class="gr"><span class="fc"></span>${o.counts.map((n, i) => `<span class="dn${i + 1 === today ? ' lit' : ''}" style="border-radius:0 0 4px 4px">${n ?? ''}</span>`).join('')}</div>` : '';
+  return `<div class="grid"><div class="gt">${o.chip}<span class="sp"></span><span style="color:var(--accentInk)">${ic('info', 18, 2)}</span></div>
+    <div class="gr"><span class="fc"></span>${days}</div>${body}${counts}<div class="gnote">${ic('info', 12, 2)}${o.note || 'Tap a face to see who it is'}</div></div>`;
+}
+const sqs = (s) => s.split('');
+const frame = (k, label, html, dark) => `<div class="state"><div class="lbl"><span class="k">${k}</span>${label}${dark ? '<span class="dk">Dark</span>' : ''}</div>${html}</div>`;
+
+/* ========== Feature 1: Volunteers ========== */
+const C58 = APPS; // 13 apps
+const C61 = [APPS[12], APPS[3], APPS[8], APPS[1], APPS[10], APPS[5], APPS[9], APPS[2], APPS[11], APPS[7], APPS[6], APPS[4]];
+const C55 = [APPS[7], APPS[0], APPS[11], APPS[2], APPS[9], APPS[4], APPS[12], APPS[6], APPS[1], APPS[10], APPS[3], APPS[8], APPS[5]];
+
+function openCrewCard() {
+  const icons = [APPS[1], APPS[2], APPS[3], APPS[4], APPS[5], APPS[6], APPS[7], APPS[8], APPS[9]];
+  const tile = (i) => i < 9 ? `<span style="flex:1;aspect-ratio:1;border-radius:9px;overflow:hidden;display:block">${art(icons[i], 36).replace('border-radius:11px', 'border-radius:9px').replace(/width:36px;height:36px;/, 'width:100%;height:100%;')}</span>`
+    : `<span style="flex:1;aspect-ratio:1;border-radius:9px;border:1.5px dashed var(--glassBorderStrong);display:grid;place-items:center;color:var(--text4)">${i === 9 ? ic('plus', 14, 2) : ''}</span>`;
+  const row = (a, b) => `<div style="display:flex;gap:5px">${Array.from({ length: 8 }, (_, j) => a + j < b ? tile(a + j) : '<span style="flex:1"></span>').join('')}</div>`;
+  return `<div class="card p16"><div class="it" style="gap:12px">${itile('users', 40)}<div class="col"><div class="t16">Crew 126, 6 of 15 seats left</div><div class="s12" style="color:var(--accentInk);display:flex;gap:4px;align-items:center;margin-top:2px">${ic('clock', 11, 2.4)}Likely starts tonight</div></div></div>
+    ${sp(14)}<div style="display:flex;flex-direction:column;gap:5px">${row(0, 8)}${row(8, 15)}</div>${sp(14)}${pbtn('Take a seat', 'plus')}</div>`;
+}
+/* the new row on the Open tab: a running crew with free spots */
+function spotRow(name, night, apps, state) {
+  const s = Math.min(22, Math.floor((328 - 32 - 4 * (apps.length - 1)) / apps.length));
+  let foot;
+  if (state.spots) foot = `${chip(state.spots === 1 ? '1 spot' : `${state.spots} spots`, 'ok', 'users')}<span class="s12">Up to ${state.tix} tix</span>${rp('Volunteer', 'hand')}`;
+  else if (state.full) foot = `${chip('Full', 'quiet')}<span class="s12">Spots open when someone leaves</span>`;
+  else if (state.mine) foot = `${chip('You volunteer here', 'ok', 'check')}<span class="s12"></span><span class="chev" style="color:var(--text4)">${ic('chev', 18)}</span>`;
+  else if (state.member) foot = `${chip('Your app is in it', 'quiet')}<span class="s12">Members can't volunteer</span>`;
+  else if (state.out) foot = `${chip('You were taken out', 'bad')}<span class="s12">Can't join again</span>`;
+  return `<div class="card p16${state.full ? ' faded' : ''}"><div class="th"><span class="nm">${name}</span><span class="dt">Night ${night} of 14</span></div>${strip(apps, s)}<div class="spots">${foot}</div></div>`;
+}
+const VOL_LINE = `<div class="qn" style="margin:-4px 0 10px">No app needed. Open a running crew's apps every night and earn 5 tix a night.</div>`;
+function v1(th) {
+  const body = `${openCrewCard()}${heading('Volunteer in a running crew', 2)}${VOL_LINE}
+    ${spotRow('Crew 58', 6, C58, { spots: 2, tix: 40 })}${spotRow('Crew 61', 11, C61, { spots: 1, tix: 15 })}${spotRow('Crew 55', 3, C55, { full: true })}`;
+  return crewTab(th, 'Open', { Run: [12, false] }, body);
+}
+function joinSheet() {
+  const s = 20;
+  return sheet({
+    title: 'Volunteer in Crew 58', sub: 'Night 6 of 14, 13 apps', leading: itile('hand', 36),
+    body: `${strip(C58, s)}${sp(14)}
+      <div class="ils">
+        <div class="il">${inl('moon')}<b>Open all 13 apps every night</b>, the same round as members, pictures too.</div>
+        <div class="il">${inl('ticket')}<b>5 tix for each night you finish.</b> Up to 40 tix in this crew.</div>
+        <div class="il warn">${inl('tri')}<b>Miss one night and you're out.</b> One app left unopened is a miss.</div>
+        <div class="il">${inl('msg')}Chat with the crew. Reports and votes stay with members.</div>
+        <div class="il">${inl('logOut')}Leave any time. The tix you earned stay yours.</div>
+      </div>
+      <div class="tint">${inl('clock', 14)}Your first night is <b>night 7</b>, from midnight your time. Install the apps before then.</div>
+      ${sp(16)}${pbtn('Volunteer', 'hand')}`,
+  });
+}
+function v2(th) { return v1(th).replace(/<\/div>$/, joinSheet() + '</div>'); }
+function v3(th) {
+  return `<div class="mini ${th}">
+    <div class="mcap">Already volunteering here</div>${spotRow('Crew 58', 9, C58, { mine: true })}
+    <div class="mcap">Member of this crew</div>${spotRow('Crew 61', 11, C61, { member: true })}
+    <div class="mcap">Taken out of it before</div>${spotRow('Crew 49', 8, C55, { out: true })}
+    <div class="mcap">No spots anywhere</div>
+    <div class="card p16" style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px">${itile('users', 40)}<div class="t15" style="margin-top:4px">No running crew has a free spot</div><div class="s12">Spots open when members leave. Check back tomorrow.</div></div>
+    <div class="mcap">Messages</div>
+    ${snack("You're in Crew 58. Your first night starts at midnight.", 'done', { static: true })}
+    ${snack('Crew 58 just filled up. Try another crew.', 'error', { static: true })}
+    ${snack('Another account on this phone volunteers in Crew 58.', 'error', { static: true })}
+  </div>`;
+}
+/* the volunteer's own card on the crew page */
+function volCard(done, tix, left) {
+  const stat = (n, l) => `<div style="flex:1"><div style="font-size:20px;line-height:24px;font-weight:700">${n}</div><div class="s12">${l}</div></div>`;
+  return `<div class="card"><div class="it" style="gap:12px">${itile('hand', 36)}<div class="col"><div class="t16">Volunteering</div><div class="s12">5 tix for each night you finish</div></div>${ia('Leave', 'logOut', 'bad')}</div>
+    <div class="tint" style="display:flex;gap:8px;padding:10px 12px">${stat(done, 'nights done')}${stat(tix + ' tix', 'earned')}${stat(left, 'nights to go')}</div></div>`;
+}
+function v4(th) {
+  const body = `${hero({ chip: 'Volunteer from night 7', tone: 'accent', icon: 'hand', h: 'Starts in 6 h 20 min', l: "Install the 13 apps before midnight, your time. Nothing counts until then.",
+      meter: dayMeter(6, 14, 7, true) + ml('You join on night 7', '8 nights for you') })}
+    ${heading('Install these', 13)}
+    ${appTile(app('Budget Buddy'), band('Not installed', 'warn', 'download', ia('Install')))}
+    ${appTile(app('Astra Match'), band('On your phone', 'ok', 'circleCheck'))}
+    ${appTile(app('Baka Run'), band('Not installed', 'warn', 'download', ia('Install')))}`;
+  return page(th, 'Crew 58', body, { extra: fab(0) + snack("You're in Crew 58. Your first night starts at midnight.", 'done', { bottom: 96 }) });
+}
+function volPage(th, extra = '') {
+  const body = `${hero({ chip: 'Day 3 of 8', tone: 'accent', icon: 'clock', h: '5 left tonight', l: 'Finish all 13 by midnight, your time. One left unopened and you\'re out.',
+      meter: dayMeter(9, 14, 7) + ml('2 nights done', '10 tix earned'), action: 'Open all 5' })}
+    ${heading('Your part')}${volCard(2, 10, 6)}
+    ${heading('Apps', 13)}
+    ${appTile(app('Budget Buddy'), band('Ready to test', 'q', 'moon', ia('Open')))}
+    ${appTile(app('Cherish'), band('Opened tonight', 'ok', 'circleCheck'))}`;
+  return page(th, 'Crew 58', body, { extra: fab(3) + extra });
+}
+const v5 = (th) => volPage(th);
+function v6(th) {
+  const sum = `<div class="card p16"><div class="it"><span class="t15" style="flex:1">Tonight</span>${ia('Nightly guide', 'book')}</div>
+    <div style="font-size:26px;line-height:32px;font-weight:700;margin-top:6px">7 apps left</div><div class="s12">2 crews</div>
+    <div class="segs" style="gap:0"><i style="flex:18;background:var(--accent);border-radius:4px 0 0 4px"></i><i style="flex:7;background:var(--track);border-radius:0 4px 4px 0"></i></div>${ml('18 of 25 opened', 'By your midnight')}${sp(14)}${pbtn('Open all 7', 'play')}</div>`;
+  const s = Math.min(22, Math.floor((328 - 32 - 4 * 12) / 13));
+  const member = `<div class="card p16"><div class="th"><span class="nm">Crew 61</span><span class="dt">Night 11 of 14</span><span class="cp">${ic('msg', 15, 2.2)}Chat</span></div>${strip(C61, s, 10)}
+    <div class="stand"><span class="h">2 apps left tonight</span><span class="r">12 of 14 opened yours</span></div><div class="tfoot">${art(app('Tide Times'), 28)}<span>Tide Times</span></div></div>`;
+  const vol = `<div class="card p16"><div class="th"><span class="nm">Crew 58</span><span class="dt">Night 9 of 14</span><span class="cp">${ic('msg', 15, 2.2)}Chat</span></div>${strip(C58, s, 8)}
+    <div class="stand"><span class="h">5 apps left tonight</span><span class="r">10 tix earned</span></div><div class="tfoot">${itile('hand', 28)}<span>Volunteering, 5 tix a night</span></div></div>`;
+  return crewTab(th, 'Run', { Run: [7, true] }, `${sum}${heading('Your runs')}${vol}${member}`);
+}
+function v7(th) {
+  return volPage(th, dialog('Leave Crew 58?', "You keep the 10 tix you earned. Tonight won't pay, and you can't volunteer in Crew 58 again.", 'Stay', 'Leave', true));
+}
+function v8(th) {
+  const body = `${hero({ chip: 'Out', tone: 'bad', icon: 'userX', h: "You're out of Crew 58", l: "Night 5 wasn't finished. Pixel Pets wasn't opened.",
+      extra: `<div class="tint" style="display:flex;gap:8px;padding:10px 12px"><div style="flex:1"><div style="font-size:20px;line-height:24px;font-weight:700">4</div><div class="s12">nights done</div></div><div style="flex:1"><div style="font-size:20px;line-height:24px;font-weight:700">20 tix</div><div class="s12">earned and kept</div></div></div>`,
+      action: 'Find another crew', aicon: 'hand' })}
+    ${sp(10)}<div class="qn">${inl('info', 14)}Volunteers are out after one missed night, so Crew 58 can't take you back.</div>`;
+  return page(th, 'Crew 58', body);
+}
+const V9ROWS = [
+  [P.lina, 'ppppppppptcccc'], [P.omar, 'pppppppppccccc'], [P.mina, 'pppppmpppccccc'], [P.jon, 'ppppppppptcccc'],
+  [P.ayesha, 'pppnpppppccccc'], [P.sam, 'ppppppppptcccc'], [{ n: 'Karim', h: 15 }, 'pppppppppccccc'], [{ n: 'Nadia', h: 345 }, 'ppppppppwccccc'],
+  [{ n: 'Ivan', h: 210 }, 'ppppppppptcccc'], [{ n: 'Priya', h: 100 }, 'pppppppppccccc'], [{ n: 'Ezra', h: 270 }, 'pppppppppccccc'], [{ n: 'Dina', h: 50 }, 'pppppppppccccc'],
+  [P.rafi, 'bbbbbbpppccccc', true], [P.tania, 'bbbbbbpptccccc', true],
+].map(([p, sq, vol]) => ({ p, sq: sqs(sq), vol }));
+function v9(th) {
+  const counts = Array.from({ length: 14 }, (_, i) => i < 9 ? V9ROWS.filter((r) => 'po'.includes(r.sq[i])).length : null);
+  const body = `<div class="t15">11 of 14 opened Budget Buddy tonight</div>${sp(12)}
+    ${trackGrid(V9ROWS, { today: 9, chip: chip('On track for Google', 'ok'), counts })}
+    ${heading('Members', 12)}
+    ${testerTile(P.lina, { sq: sqs('ppppppppptcccc'), days: '9 days', line: 'Not opened yet tonight', pics: [APPS[0], APPS[0], APPS[0]] })}
+    ${testerTile(P.omar, { sq: sqs('pppppppppccccc'), days: '9 days', line: 'Opened tonight', tone: 'ok', pics: [APPS[0], APPS[0], APPS[0]] })}`;
+  return page(th, 'Crew 58 testers', body);
+}
+function v9b(th) {
+  const body = `${testerTile({ n: 'Ezra', h: 270 }, { sq: sqs('pppppppppccccc'), days: '9 days', line: 'Opened tonight', tone: 'ok', pics: [APPS[0], APPS[0], APPS[0]] })}
+    ${testerTile({ n: 'Dina', h: 50 }, { sq: sqs('pppppppppccccc'), days: '9 days', line: 'Opened tonight', tone: 'ok', pics: [APPS[0], APPS[0], APPS[0]] })}
+    ${heading('Volunteers', 2)}
+    ${testerTile(P.rafi, { sq: sqs('bbbbbbpppccccc'), vol: true, days: '3 days', line: 'Opened tonight', tone: 'ok', pics: [APPS[0], APPS[0], APPS[0]] })}
+    ${testerTile(P.tania, { sq: sqs('bbbbbbpptccccc'), vol: true, days: '3 days', line: 'Not opened yet', pics: [APPS[0], APPS[0]] })}`;
+  return page(th, 'Crew 58 testers', `<div style="margin-top:-30px">${body}</div>`);
+}
+function v10(th) {
+  return `<div class="mini ${th}">
+    <div class="mcap">Crew chat: a volunteer's name carries the tag</div>
+    <div class="m"><span>${avatar(P.rafi, 28)}</span><div class="col"><div class="who">Rafi Islam ${volTag()}</div><div class="bub">Budget Buddy asks me to sign in. Is there a test account?</div></div></div>
+    <div class="m r"><div class="col" style="align-items:flex-end"><div class="bub">Yes, it's on the app's row. Tap its name.</div></div></div>
+    <div class="mcap">Profile sheet: the same tag, no app line</div>
+    <div class="card" style="display:flex;align-items:center;gap:12px">${avatar(P.rafi, 48)}<div class="col" style="flex:1"><div class="t16">Rafi Islam</div><div style="display:flex;gap:6px;margin-top:5px">${volTag()}${chip('From night 7', 'quiet', null, true)}</div></div></div>
+  </div>`;
+}
+
+/* ========== Feature 2: Private testers ========== */
+function testersCard() {
+  return `<div class="card"><div class="it" style="gap:12px">${art(app('Budget Buddy'), 52)}<div class="col"><div class="t16">Budget Buddy</div><div class="s12" style="margin-top:2px">Opened by 11 of 14 testers so far tonight.</div></div>${chip('11 of 14', 'accent')}</div>
+    <div class="segs">${Array.from({ length: 14 }, (_, i) => `<i style="background:${i < 11 ? 'var(--accent)' : 'var(--track)'}"></i>`).join('')}</div>${ml('Their day 9', '12 keep it counting')}${sp(12)}${sbtn('See who tested it')}</div>`;
+}
+function privRow(sub) {
+  return askRow(itile('lock', 40), 'Private testers', sub);
+}
+function p1(th) {
+  const body = `${hero({ chip: 'Day 9 of 14', tone: 'ok', icon: 'circleCheck', h: 'Tonight is done', l: 'All 12 opened. Day 10 begins at midnight, your time.', meter: dayMeter(9, 14, 1, true) + ml('9 days done', '5 to go') })}
+    ${heading('Your app')}${testersCard()}${sp(8)}${privRow('2 testing, 1 invited. Only you see them.')}
+    ${sp(8)}<div class="card"><div class="t16" style="font-weight:700">Tell your crew</div><div class="s12" style="margin-top:4px">They have version 1.4.0. After you tap Update they get 24 hours to install the new one.</div></div>`;
+  return page(th, 'Crew 58', body, { end: membersBtn(15), extra: fab(0) });
+}
+const fieldEl = (val, st, err) => `<div class="fld ${st}"><span class="lab">Email</span><span class="lead">${ic('mail', 18, 2)}</span>${val}${st === 'foc' || st === 'err' ? '<span class="cur"></span>' : ''}</div>`;
+function addSheet(o) {
+  return sheet({
+    title: 'Add a private tester', sub: 'Budget Buddy, until Crew 58 ends', leading: art(app('Budget Buddy'), 36), kb: true,
+    body: `${sp(6)}${fieldEl(o.val, o.st)}<div class="fe ${o.feTone || ''}">${o.fe}</div>${sp(12)}${o.result || ''}${sp(14)}${o.btn}${sp(12)}`,
+  });
+}
+function p1base(th) { return p1(th); }
+function p2(th) {
+  return p1base(th).replace(/<\/div>$/, addSheet({ val: 'sam.rahman@gmail.com', st: 'foc', fe: 'The email of their TestTrack account, exactly.',
+    result: `<div class="found"><span class="sk" style="width:40px;height:40px;border-radius:20px"></span><div class="col"><span class="sk" style="width:120px;height:15px"></span><span class="sk" style="width:170px;height:12px;margin-top:6px"></span></div></div>`,
+    btn: pbtn('Send invite', 'mail', 'off') }) + '</div>');
+}
+function p3(th) {
+  return p1base(th).replace(/<\/div>$/, addSheet({ val: 'sam.rahman@gmail.com', st: 'foc', fe: 'Found a TestTrack account.', feTone: 'ok',
+    result: `<div class="found on">${avatar(P.sam, 40)}<div class="col"><div class="t15">Sam Rahman</div><div class="s12 ell">sam.rahman@gmail.com</div></div><span style="color:var(--accentInk)">${ic('check', 20, 2.4)}</span></div>`,
+    btn: pbtn('Send invite', 'mail') }) + '</div>');
+}
+function p4(th) {
+  return p1base(th).replace(/<\/div>$/, addSheet({ val: 'sam.rahmen@gmail.com', st: 'err', fe: 'No TestTrack account uses this email.', feTone: 'bad',
+    result: `<div class="qn">${inl('info', 14)}Check the spelling, or ask them to sign in to TestTrack with it first.</div>`,
+    btn: pbtn('Send invite', 'mail', 'off') }) + '</div>');
+}
+function p5(th) {
+  return p1base(th).replace(/<\/div>$/, addSheet({ val: 'lina.akter@gmail.com', st: 'foc', fe: 'Lina already tests Budget Buddy.', feTone: '',
+    result: `<div class="found">${avatar(P.lina, 40)}<div class="col"><div class="t15">Lina Akter</div><div class="s12 ell">lina.akter@gmail.com</div></div>${chip('Testing', 'ok', null, true)}</div>`,
+    btn: pbtn('Send invite', 'mail', 'off') }) + '</div>');
+}
+function privList(th, extra = '') {
+  const rows = [{ p: P.lina, sq: sqs('bbpppnpppccccc') }, { p: P.omar, sq: sqs('bbbbbpppntcccc') }];
+  // private grid: opened / not opened / tonight / to come / before they joined; no pictures, no Google counts
+  const grid = trackGrid(rows, { today: 9, chip: chip('1 of 2 opened tonight', 'accent'), note: 'Opened or not, each night they were in' });
+  const body = `<div class="qn" style="margin-bottom:12px">${inl('lock', 14)}Only you see this. Testing ends with Crew 58, in 6 days.</div>
+    ${grid}${heading('Testers', 3)}
+    ${testerTile(P.lina, { sq: sqs('bbpppnpppccccc'), days: '7 nights', line: 'Opened tonight', tone: 'ok', x: true })}
+    ${testerTile(P.omar, { sq: sqs('bbbbbpppntcccc'), days: '4 nights', line: 'Not opened tonight', x: true })}
+    ${testerTile(P.sam, { line: 'Invited, no answer yet', x: true })}`;
+  return page(th, 'Private testers', body, { sub: 'Budget Buddy, Crew 58', foot: pbtn('Add a tester', 'userPlus'), extra });
+}
+const p6 = (th) => privList(th, snack('Invite sent to Sam Rahman', 'done', { bottom: 96 }));
+function p7(th) {
+  const body = `<div class="rob">${robotFull(110)}<div class="h">No private testers yet</div><div class="b">Add people by the email of their TestTrack account. They open Budget Buddy when they like, and only you see it.</div></div>`;
+  return page(th, 'Private testers', body, { sub: 'Budget Buddy, Crew 58', foot: pbtn('Add a tester', 'userPlus') });
+}
+function p8(th) {
+  const skRow = `<div class="card tt"><span class="sk" style="width:44px;height:44px;border-radius:22px"></span><div class="col"><span class="sk" style="width:55%;height:15px"></span><span class="sk" style="width:35%;height:12px;margin-top:6px"></span></div></div>`;
+  const g = `<div class="grid" style="padding:12px 10px"><span class="sk" style="width:120px;height:24px;border-radius:12px;margin-bottom:12px"></span>${[0, 1].map(() => `<div style="display:flex;gap:3px;margin-top:3px"><span class="sk" style="width:24px;height:18px;border-radius:12px"></span>${Array.from({ length: 14 }, () => '<span class="sk" style="flex:1;height:18px;border-radius:4px"></span>').join('')}</div>`).join('')}</div>`;
+  const body = `<span class="sk" style="width:70%;height:14px;margin-bottom:14px"></span>${g}<div style="margin:20px 0 10px"><span class="sk" style="width:80px;height:18px"></span></div>${skRow}${skRow}`;
+  return page(th, 'Private testers', body, { sub: 'Budget Buddy, Crew 58', foot: pbtn('Add a tester', 'userPlus', 'off') });
+}
+const p9 = (th) => privList(th, dialog('Remove Omar Faruk?', 'Omar stops testing Budget Buddy, and their nights leave this list.', 'Keep', 'Remove', true));
+/* Y: the invite */
+function inviteRow() { return askRow(art(app('Budget Buddy'), 40), 'Invite from Hasan Rahman', 'Test Budget Buddy. No tix, no rules.', rp('See')); }
+function p10(th) {
+  const body = `${inviteRow()}<div class="rob" style="padding-top:90px">${robotFull(110)}<div class="h">Nothing running</div><div class="b">When a crew of yours fills up it starts that night, and what you owe shows up here.</div></div>`;
+  return crewTab(th, 'Run', {}, body, '', 120);
+}
+function p11(th) {
+  return p10(th).replace(/<\/div>$/, sheet({
+    title: 'Test Budget Buddy?', sub: 'From Hasan Rahman, hasan.apps@gmail.com', leading: art(app('Budget Buddy'), 36),
+    body: `<div class="ils">
+      <div class="il">${inl('play')}Open it from TestTrack when you like.</div>
+      <div class="il">${inl('eye')}<b>Only Hasan sees</b> the nights you open it.</div>
+      <div class="il">${inl('ticket')}No tix and no rules. Stop any time.</div>
+      <div class="il">${inl('calendar')}Ends with Hasan's crew, in 6 days.</div></div>
+      ${sp(18)}<div class="two">${sbtn('Decline')}<div class="pbtn" style="flex:1">Accept</div></div>`,
+  }) + '</div>');
+}
+function privTile(a, owner, bnd) { return appTile(a, bnd, { sub: `For ${owner}` }); }
+function p12(th) {
+  const body = `${heading('Private testing', 2)}
+    ${privTile(app('Budget Buddy'), 'Hasan Rahman', band('Not opened tonight', 'q', 'moon', ia('Open')))}
+    ${privTile(app('Tide Times'), 'Mina Das', band('Opened tonight', 'ok', 'circleCheck'))}
+    ${sp(10)}<div class="qn">${inl('lock', 14)}No tix and no rules here. Only each app's owner sees when you open it.</div>`;
+  return crewTab(th, 'Run', {}, body, snack("You're testing Budget Buddy for Hasan.", 'done', { bottom: 86 }), 120);
+}
+function p13(th) {
+  const sq = 'bbbbooonoccccc';
+  const segs = sq.split('').map((k, i) => {
+    const c = { o: 'var(--ok)', n: 'var(--glass2)', c: 'var(--track)', b: 'transparent' }[k];
+    return `<i style="background:${c};${k === 'b' ? 'box-shadow:inset 0 0 0 1px var(--glassBorderStrong)' : ''}${i === 8 ? ';box-shadow:0 0 0 1.5px var(--bg),0 0 0 3px var(--accent)' : ''}"></i>`;
+  }).join('');
+  const body = `<div class="it" style="gap:12px;margin-top:4px">${art(app('Budget Buddy'), 52)}<div class="col"><div class="t16">Budget Buddy</div><div class="s12">com.hasanapps.budgetbuddy</div></div></div>${sp(16)}
+    <div class="card p16">${chip('Opened tonight', 'ok', 'circleCheck')}<div class="hl" style="margin-top:10px">You opened it on 4 of 5 nights. Hasan sees each one, nobody else does.</div>
+      <div class="segs">${segs}</div>${ml('Night 9 of 14', 'Ends in 6 days')}</div>
+    ${sp(12)}<div class="qn">${inl('info', 14)}Opening counts after 10 seconds in front, as in a crew. No picture is taken.</div>`;
+  return page(th, 'Budget Buddy', body, { sub: 'Private testing for Hasan', foot: `${pbtn('Open Budget Buddy', 'play')}<div style="display:flex;justify-content:center;margin-top:6px">${ia('Stop testing', null, 'bad u')}</div>` });
+}
+function p14(th) {
+  return `<div class="mini ${th}">
+    <div class="mcap">Their side: crew ended or Hasan left</div>
+    ${privTile(app('Budget Buddy'), 'Hasan Rahman', band('Crew 58 ended, so testing stopped', 'q', 'calendar'))}
+    ${privTile(app('Budget Buddy'), 'Hasan Rahman', band('Hasan left the crew, so testing stopped', 'q', 'logOut'))}
+    <div class="mcap">Owner's side: answers on the list</div>
+    ${testerTile(P.sam, { line: 'Declined your invite', tone: 'bad', x: true })}
+    <div class="mcap">Add sheet: a crew member's email</div>
+    <div><div class="fld foc" style="background:var(--bg)"><span class="lab" style="background:var(--bg)">Email</span><span class="lead">${ic('mail', 18, 2)}</span>mina.das@gmail.com</div><div class="fe">Mina is in Crew 58, so Mina already tests it.</div></div>
+    <div class="mcap">Messages</div>
+    ${snack('Omar Faruk removed', 'done', { static: true })}
+    ${snack("Couldn't send the invite. Check your connection.", 'error', { static: true, action: 'Try again' })}
+  </div>`;
+}
+
+/* ---------- the page ---------- */
+const doc = `
+<div class="part" id="vol">Volunteers</div><div class="partsub">Free spots in a running crew. No app, no cost, 5 tix a night, out after one missed night.</div>
+<div class="grp">Find a crew and join</div>
+<div class="row">${frame('V1', 'Open tab: running crews with spots', v1('light'))}${frame('V2', 'Join sheet', v2('light'))}${frame('V3', 'Other row states and messages', v3('light'))}</div>
+<div class="grp">Volunteering</div>
+<div class="row">${frame('V4', 'Joined, before the first night', v4('light'))}${frame('V5', 'Crew page, a night in progress', v5('dark'), true)}${frame('V6', 'Run tab: crew tile for a volunteer', v6('light'))}</div>
+<div class="grp">Leaving and taken out</div>
+<div class="row">${frame('V7', 'Leave confirm', v7('light'))}${frame('V8', 'Taken out after a missed night', v8('light'))}</div>
+<div class="grp">How members see volunteers</div>
+<div class="row">${frame('V9', 'Testers page: volunteers in the grid', v9('light'))}${frame('V10', 'Same page further down: Volunteers section', v9b('light'))}${frame('V11', 'Chat and profile', v10('light'))}</div>
+
+<div class="part" id="priv">Private testers</div><div class="partsub">An app owner adds testers to their own app while the crew runs. Only the owner sees the results.</div>
+<div class="grp">Owner adds a tester</div>
+<div class="row">${frame('P1', 'Crew page: the new Private testers row', p1('light'))}${frame('P2', 'Add by email: looking it up', p2('light'))}${frame('P3', 'Exact match found', p3('light'))}</div>
+<div class="row" style="margin-top:28px">${frame('P4', 'No account with that email', p4('light'))}${frame('P5', 'Already a tester', p5('light'))}</div>
+<div class="grp">Owner's private results</div>
+<div class="row">${frame('P6', 'Private testers: results and invite sent', p6('dark'), true)}${frame('P7', 'Empty', p7('light'))}${frame('P8', 'Loading', p8('light'))}${frame('P9', 'Remove a tester', p9('light'))}</div>
+<div class="grp">The invited person</div>
+<div class="row">${frame('P10', 'Invite row on the Crew tab', p10('light'))}${frame('P11', 'Accept or decline', p11('light'))}${frame('P12', 'Run tab: private testing', p12('dark'), true)}${frame('P13', 'The app, opened from its tile', p13('light'))}</div>
+<div class="grp">Ends and edges</div>
+<div class="row">${frame('P14', 'When testing stops, answers, messages', p14('light'))}</div>`;
+document.getElementById('doc').innerHTML = doc;
+</script>
+</body>
+</html>
