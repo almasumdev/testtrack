@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Close marker options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 700; src: url("../../../app/src/main/res/font/plexmono_bold.ttf"); }
+
+  /* OceanLight / OceanDark, ui/theme/Tokens.kt */
+  .light {
+    --text:#142F43; --text4:#59758A;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --onOk:#FFFFFF;
+    --app:#E9ECEE; --block:#D3D8DC; --block2:#DEE2E5; --bar:#9AA3AA;
+  }
+  .dark {
+    --text:#ECEEF0; --text4:#757C82;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --onOk:#0F1011;
+    --app:#1F2225; --block:#33373B; --block2:#2A2D31; --bar:#6E767D;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  .top { position: sticky; top: 0; z-index: 9; display: flex; align-items: center; gap: 10px; padding: 12px 28px; background: #D9E0E5; border-bottom: 1px solid #C3CDD4; }
+  .top h1 { margin: 0 14px 0 0; font-size: 20px; font-weight: 700; }
+  .top button { font: 600 15px/20px "BarlowApp", "Barlow", sans-serif; padding: 8px 18px; border-radius: 20px; border: 1px solid #B3C0C9; background: #F4F7F9; color: #2D4A5F; cursor: pointer; }
+  .top button.on { background: #2D4A5F; color: #fff; border-color: #2D4A5F; }
+  .doc { padding: 6px 28px 80px; }
+  .page { font-size: 26px; font-weight: 700; margin: 44px 0 0 4px; }
+  .pl { font-size: 17px; font-weight: 700; margin: 26px 0 10px 4px; color: #2D4A5F; }
+  .grid { display: flex; flex-wrap: wrap; gap: 30px 26px; align-items: flex-start; }
+  .state { display: flex; flex-direction: column; gap: 7px; }
+  .tag { font-size: 14px; font-weight: 700; margin-left: 4px; }
+  .pair { display: flex; gap: 18px; }
+  .src { font: 500 11.5px/14px "IBM Plex Mono", monospace; color: #7A858E; margin-left: 4px; max-width: 740px; }
+  .th { font-size: 11px; font-weight: 700; letter-spacing: .5px; color: #7A858E; margin: 0 0 4px 4px; text-transform: uppercase; }
+  body.only-light .fr.dark, body.only-dark .fr.light { display: none; }
+
+  /* The phone: 360 x 760 dp at 1px per dp. Status bar 24, gesture bar 24. */
+  .phone { position: relative; width: 360px; height: 760px; border-radius: 26px; overflow: hidden; background: var(--app); box-shadow: 0 0 0 7px #15181B, 0 10px 30px rgba(0,0,0,.25); margin: 7px; }
+  .sb { position: absolute; left: 0; right: 0; top: 0; height: 24px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font: 600 12px/1 "BarlowApp", sans-serif; color: var(--bar); }
+  .sb i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--bar); margin-left: 5px; }
+  .nb { position: absolute; left: 0; right: 0; bottom: 0; height: 24px; display: grid; place-items: center; }
+  .nb::after { content: ""; width: 108px; height: 4px; border-radius: 2px; background: var(--bar); opacity: .7; }
+  .fake { position: absolute; left: 0; right: 0; top: 24px; bottom: 24px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .fake .ab { height: 28px; display: flex; gap: 12px; align-items: center; }
+  .fake .ab b { width: 24px; height: 24px; border-radius: 6px; background: var(--block); }
+  .fake .ab s { width: 150px; height: 14px; border-radius: 7px; background: var(--block); }
+  .fake .hero { height: 170px; border-radius: 16px; background: var(--block2); }
+  .fake .ln { height: 12px; border-radius: 6px; background: var(--block2); }
+  .fake .rw { display: flex; gap: 12px; align-items: center; height: 56px; }
+  .fake .rw b { width: 44px; height: 44px; border-radius: 12px; background: var(--block); flex: none; }
+  .fake .rw span { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .fake .rw span s { height: 11px; border-radius: 6px; background: var(--block); width: 70%; }
+  .fake .rw span s + s { width: 45%; background: var(--block2); }
+  .fake .btn { margin-top: auto; height: 44px; border-radius: 22px; background: var(--block); }
+
+  /* The floating window. Its 8dp padding is the dock's own transparent margin. */
+  .win { position: absolute; left: 0; top: 0; visibility: hidden; }
+  .win.dockw { padding: 8px; }
+  .dock { background: var(--glass); border-radius: 24px; box-shadow: inset 0 0 0 1px var(--glassBorder), 0 6px 12px rgba(0,0,0,.20), 0 2px 4px rgba(0,0,0,.12); color: var(--text); }
+  .dock.open { border-radius: 22px; }
+  .name { font: 600 14px/20px "BarlowApp", "Barlow", sans-serif; letter-spacing: .1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+  .dev { font: 500 12.5px/14px "BarlowApp", "Barlow", sans-serif; color: var(--text4); }
+  .ico { display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  .ring { position: relative; width: 34px; height: 34px; flex: none; display: grid; place-items: center; }
+  .ring svg.rs { position: absolute; inset: 0; overflow: visible; }
+  .ring b { position: relative; font: 700 12px/16px "PlexApp", "IBM Plex Mono", monospace; letter-spacing: .5px; color: var(--text); }
+
+  .pp { width: 48px; height: 48px; display: grid; place-items: center; flex: none; }
+  .pp span { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--onAccent); }
+  .pp.ok span { background: var(--ok); color: var(--onOk); }
+
+  .cflat { display: flex; align-items: center; gap: 8px; padding-left: 6px; }
+  .cflat .tx { display: flex; flex-direction: column; min-width: 0; }
+  .cup { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0 1px; }
+
+  .oflat { width: 276px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .oflat .hd { display: flex; align-items: center; }
+  .oflat .hd .tx { flex: 1; min-width: 0; margin-left: 8px; }
+  .oup { width: 232px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .oup .hd { display: flex; flex-direction: column; align-items: center; max-width: 100%; }
+  .oup .hd .name { margin-top: 6px; max-width: 100%; }
+  .oup .hd .dev { width: fit-content; max-width: 100%; }
+
+  .dots { display: flex; gap: 3px; width: 100%; }
+  .dots i { flex: 1; height: 4px; border-radius: 2px; background: var(--glass2); }
+  .dots i.d { background: var(--ok); }
+  .dots i.c { background: var(--accent); }
+
+  /* Sign-in line: 48dp touch slot, the tinted pill inside is only as tall as its words. */
+  .si { width: 100%; min-height: 48px; display: flex; align-items: center; }
+  .si > div { width: 100%; border-radius: 12px; background: var(--glass2); padding: 7px 9px; display: flex; align-items: center; color: var(--accent); }
+  .si.cp > div { background: var(--okBg); color: var(--ok); }
+  .si .lb { font: 400 12.5px/17px "BarlowApp", "Barlow", sans-serif; color: var(--text4); }
+  .si .vl { font: 600 13px/18px "BarlowApp", "Barlow", sans-serif; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .si.cp .vl { color: var(--ok); }
+  .si.flat .lb { width: 60px; flex: none; }
+  .si.flat .vl { flex: 1; min-width: 0; }
+  .si.up .col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+  .big { min-height: 48px; display: flex; align-items: center; justify-content: center; align-self: center; }
+  .big span { display: flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 999px; background: var(--accent); color: var(--onAccent); font: 700 14px/20px "BarlowApp", "Barlow", sans-serif; letter-spacing: .1px; }
+  .big.ok span { background: var(--ok); color: var(--onOk); }
+
+  .touch { position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgba(120,130,140,.35); box-shadow: 0 0 0 2px rgba(255,255,255,.5); pointer-events: none; }
+  .ghost { position: absolute; width: 54px; height: 54px; border-radius: 50%; border: 2px dashed rgba(110,120,130,.55); }
+  .win.cam { width: 64px; height: 64px; }
+</style>
+<style>
+  .card { position: relative; }
+  .tgt { position: absolute; width: 48px; height: 48px; display: grid; place-items: center; z-index: 1; }
+  body.showtouch .tgt, body.showtouch .tgtw { outline: 1.5px dashed #E0457B; outline-offset: -1px; }
+  .soft { width: 28px; height: 28px; border-radius: 50%; background: var(--glass2); display: grid; place-items: center; color: var(--text4); }
+  .plain { color: var(--text4); }
+  .light { --gbs:#789AAF; } .dark { --gbs:#666D74; }
+  .handle { width: 32px; height: 4px; border-radius: 2px; background: var(--gbs); }
+  .tgtw { position: absolute; left: 50%; margin-left: -48px; width: 96px; top: 0; height: 48px; display: flex; justify-content: center; padding-top: 8px; z-index: 1; }
+  .oup.hb { padding-top: 22px; }
+  .band { position: absolute; top: 0; right: 0; bottom: 0; width: 22px; background: var(--glass2); display: grid; place-items: center; color: var(--text4); border-radius: 0 22px 22px 0; }
+  .band .tgt { right: -8px; top: 50%; margin-top: -24px; }
+  .oup.bd { margin-right: 22px; }
+  .chev { color: var(--text4); margin-top: 2px; }
+  .row4 { display: flex; gap: 18px; align-items: flex-start; }
+  .arrow { align-self: center; font: 700 30px/1 "BarlowApp", sans-serif; color: #7A858E; padding: 0 2px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Close marker on the open run control</h1>
+  <button id="tt">Show 48dp touch areas</button>
+</div>
+<div class="doc" id="doc"></div>
+<script>
+const I = {
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  key: '<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>',
+  play: '<polygon points="6 3 20 12 6 21 6 3"/>',
+  min: '<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" x2="21" y1="10" y2="3"/><line x1="3" x2="10" y1="21" y2="14"/>',
+  right: '<path d="m9 18 6-6-6-6"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  up: '<path d="m18 15-6-6-6 6"/>',
+};
+const ico = (n, s, color) => `<svg class="ico" width="${s}" height="${s}" viewBox="0 0 24 24" ${color ? `style="color:${color}"` : ''}>${I[n]}</svg>`;
+
+// Paused, app 2 of 5, with a sign-in: as in all-floats.html
+const u = { app: 'Habit Garden', index: 1, total: 5, secs: 12, signIn: [['Username', 'tester@habitgarden.app'], ['Password', 'Garden2024!']] };
+function ring() {
+  const c = 2 * Math.PI * 17, f = (20 - u.secs) / 20;
+  return `<div class="ring"><svg class="rs" width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="17" fill="none" stroke="var(--glass2)" stroke-width="4"/><circle cx="17" cy="17" r="17" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-dasharray="${c * f} ${c}" transform="rotate(-90 17 17)"/></svg><b>${u.secs}</b></div>`;
+}
+const dots = () => `<div class="dots">${[0, 1, 2, 3, 4].map((i) => `<i class="${i < u.index ? 'd' : i === u.index ? 'c' : ''}"></i>`).join('')}</div>`;
+const lines = () => u.signIn.map(([l, v]) => `<div class="si up"><div><span class="col"><span class="lb">${l}</span><span class="vl">${v}</span></span>${ico('copy', 13)}</div></div>`).join('');
+const big = () => `<div class="big"><span>${ico('play', 16)}Play</span></div>`;
+const header = (after = '') => `<div class="hd">${ring()}<div class="name">${u.app}</div><div class="dev">Paused, app ${u.index + 1} of ${u.total}</div>${after}</div>`;
+const body = (cls = '', after = '') => `<div class="oup ${cls}">${header(after)}${dots()}${lines()}${big()}</div>`;
+const corner = (inner) => `<div class="tgt" style="top:0;right:0">${inner}</div>`;
+
+const OPTIONS = [
+  ['A', 'Minimise icon, top corner', 'Lucide Minimize2 16dp, text4, no fill, 48dp corner target',
+    () => `<div class="dock open card">${corner(`<span class="plain">${ico('min', 16)}</span>`)}${body()}</div>`],
+  ['B', 'Grab handle bar on top', '32 x 4dp bar in glassBorderStrong, 96 x 48dp target; tap closes, drag moves',
+    () => `<div class="dock open card"><div class="tgtw"><span class="handle"></span></div>${body('hb')}</div>`],
+  ['C', 'Edge strip pointing home', '22dp glass2 strip on the docked side, Lucide ChevronRight 16dp, 48dp target',
+    () => `<div class="dock open card"><div class="band">${ico('right', 16)}<div class="tgt"></div></div>${body('bd')}</div>`],
+  ['D', 'X in a soft circle', 'Lucide X 15dp in a 28dp glass2 circle, 48dp corner target',
+    () => `<div class="dock open card">${corner(`<span class="soft">${ico('x', 15)}</span>`)}${body()}</div>`],
+  ['E', 'Chevron under the header', 'Lucide ChevronUp 16dp, text4; the whole header is the target',
+    () => `<div class="dock open card">${body('', `<span class="chev">${ico('up', 16)}</span>`)}</div>`],
+];
+
+const closed = () => `<div class="dock"><div class="cup">${ring()}<div class="dev">${u.index + 1} of ${u.total}</div>${ico('key', 15, 'var(--accentInk)')}<div class="pp"><span>${ico('play', 15)}</span></div></div></div>`;
+
+const FAKE = `<div class="sb"><span>21:04</span><span><i></i><i></i><i></i></span></div>
+<div class="fake"><div class="ab"><b></b><s></s></div><div class="hero"></div><div class="ln" style="width:80%"></div><div class="ln" style="width:55%"></div>
+<div class="rw"><b></b><span><s></s><s></s></span></div><div class="rw"><b></b><span><s></s><s></s></span></div><div class="rw"><b></b><span><s></s><s></s></span></div>
+<div class="btn"></div></div><div class="nb"></div>`;
+const phone = (t, win) => `<div class="phone ${t}">${FAKE}<div class="win dockw" data-edge="RIGHT" data-along="0.6">${win}</div></div>`;
+const fr = (label, t, win) => `<div><div class="th">${label}</div>${phone(t, win)}</div>`;
+
+let html = '';
+for (const [k, name, spec, open] of OPTIONS) {
+  html += `<div class="state" style="margin-top:34px"><div class="tag" style="font-size:17px">${k}. ${name}</div>
+  <div class="row4">${fr('Open, light', 'light', open())}<div class="arrow">&rsaquo;</div>${fr('Closes to', 'light', closed())}
+  ${fr('Open, dark', 'dark', open())}<div class="arrow">&rsaquo;</div>${fr('Closes to', 'dark', closed())}</div>
+  <div class="src">${spec}</div></div>`;
+}
+document.getElementById('doc').innerHTML = html;
+
+// dockCorner, domain/DockGeometry.kt:62
+const SCREEN = { width: 360, height: 760, top: 24, bottom: 24, margin: 4 };
+function dockCorner(edge, along, w, h, s = SCREEN) {
+  const m = s.margin, freeX = Math.max(s.width - 2 * m - w, 0), freeY = Math.max(s.height - s.top - s.bottom - 2 * m - h, 0);
+  const x = edge === 'LEFT' ? m : edge === 'RIGHT' ? s.width - m - w : m + along * freeX;
+  const y = edge === 'TOP' ? s.top + m : edge === 'BOTTOM' ? s.height - s.bottom - m - h : s.top + m + along * freeY;
+  return [x, y];
+}
+document.fonts.ready.then(() => requestAnimationFrame(() => document.querySelectorAll('.win').forEach((w) => {
+  const [x, y] = dockCorner(w.dataset.edge, +w.dataset.along, w.offsetWidth, w.offsetHeight);
+  w.style.left = x + 'px'; w.style.top = y + 'px'; w.style.visibility = 'visible';
+})));
+const tt = document.getElementById('tt');
+tt.onclick = () => { document.body.classList.toggle('showtouch'); tt.classList.toggle('on'); };
+if (location.hash === '#touch') tt.click();
+</script>
+</body>
+</html>
