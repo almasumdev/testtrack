@@ -60,7 +60,6 @@ data class TtTokens(
     val dockInk: Color,
     /** The contour lines on the ground, and the light behind them. */
     val contour: Color,
-    val contourDeep: Color,
     val glow: Color,
     val ok: Color,
     val okBg: Color,
@@ -87,24 +86,12 @@ data class TtTokens(
     val snackOk: Color,
     val snackBad: Color,
     val snackWarn: Color,
-    /** A read-only panel: a soft diagonal gradient, a glow in one corner, a dashed edge. */
-    val panelTop: Color,
-    val panelBottom: Color,
-    val panelGlow: Color,
-    val panelLine: Color,
-    val panelOutline: Color,
     /** The podium. The one place this app reaches for colours outside the palette. */
     val gold: Color,
     val silver: Color,
     val bronze: Color,
-    /** The tix counter: a raised navy pill, lighter at the top, standing on a darker edge. */
-    val tixTop: Color,
+    /** The tix counter pill. */
     val tixBottom: Color,
-    val tixEdge: Color,
-    /** The navy the tix ticket's edge is drawn in (res/drawable/tix_ticket), for a number on it. */
-    val ticketInk: Color,
-    /** The streak of light across the ticket where a request shows what it pays. */
-    val ticketShine: Color,
     /** The sign-in sheet's own surface, and the hairline along its top edge. */
     val sheet: Color,
     val sheetLine: Color,
@@ -137,7 +124,6 @@ data class TtTokens(
 ) {
     val primary: Color get() = if (isDark) accentInk else accent
     val onPrimary: Color get() = if (isDark) bg else onAccent
-    val selectedFill: Color get() = if (isDark) leafAccentSoft else leafAccent
     val onSecondary: Color get() = if (isDark) bg else onSelected
 
     /**
@@ -229,7 +215,6 @@ val OceanLight =
         dock = Color(0xFFE8F3FA),
         dockInk = Color(0xFF304C60),
         contour = Color(0xFFC8DDEA),
-        contourDeep = Color(0xFFABCADD),
         glow = Color(0xFFF5F9FB),
         ok = OkLight,
         okBg = OkLight.alpha(0.12f),
@@ -255,19 +240,10 @@ val OceanLight =
         snackOk = OkDark,
         snackBad = BadDark,
         snackWarn = WarnDark,
-        panelTop = Color(0xFFF7FCFF),
-        panelBottom = Color(0xFFE3F0F8),
-        panelGlow = Color(0xFFB8CCDB).alpha(0.60f),
-        panelLine = Color(0xFF4A7290).alpha(0.22f),
-        panelOutline = Color(0xFF94B8CF),
         gold = Color(0xFF9A7B1F),
         silver = Color(0xFF6B7488),
         bronze = Color(0xFF8A5A34),
-        tixTop = Color(0xFF3F6680),
         tixBottom = Color(0xFF2B4A60),
-        tixEdge = Color(0xFF1E3749),
-        ticketInk = Color(0xFF17405E),
-        ticketShine = Color(0xFFFFFFFF),
         sheet = Color(0xFFFFFFFF),
         sheetLine = Color(0xFFDCE8F0),
         ring = Color(0xFF142F43).alpha(0.14f),
@@ -314,7 +290,6 @@ val OceanDark =
         dock = Color(0xFF1C1E20),
         dockInk = Color(0xFFBCC1C6),
         contour = Color(0xFF1C1E20),
-        contourDeep = Color(0xFF292C2F),
         glow = Color(0xFF1D2023),
         ok = OkDark,
         okBg = OkDark.alpha(0.12f),
@@ -340,20 +315,11 @@ val OceanDark =
         snackOk = OkLight,
         snackBad = BadLight,
         snackWarn = WarnLight,
-        panelTop = Color(0xFF1F2225),
-        panelBottom = Color(0xFF18191B),
-        panelGlow = Color(0xFF93B3CA).alpha(0.06f),
-        panelLine = Color(0xFF93B3CA).alpha(0.1f),
-        panelOutline = Color(0xFF40464C),
         gold = Color(0xFFE3A93C),
         silver = Color(0xFFB4BCCB),
         bronze = Color(0xFFC58455),
-        tixTop = Color(0xFF4A7290),
         tixBottom = Color(0xFF355A75),
-        tixEdge = Color(0xFF14232E),
         // The ticket is the same at night, as the drawable is.
-        ticketInk = Color(0xFF17405E),
-        ticketShine = Color(0xFFFFFFFF),
         sheet = Color(0xFF1C1E20),
         sheetLine = Color(0xFF2D3034),
         ring = Color(0xFFFFFFFF).alpha(0.16f),
