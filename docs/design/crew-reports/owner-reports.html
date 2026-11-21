@@ -331,12 +331,17 @@
   .new { outline: 2px dashed #D9822B; outline-offset: 3px; border-radius: 10px; }
   .legend { font-size: 13px; color: #4F5C66; margin: 6px 0 0 4px; display: flex; align-items: center; gap: 8px; }
   .legend i { width: 22px; height: 12px; border: 2px dashed #D9822B; border-radius: 4px; display: inline-block; }
+  .opt2 { padding: 10px 12px; border: 1px solid var(--cardLine); border-radius: 14px; }
+  .opt2 .t { display: flex; align-items: center; gap: 8px; font-size: 15px; line-height: 19px; font-weight: 600; color: var(--warn); }
+  .opt2 .l { margin-top: 3px; font-size: 12.5px; line-height: 17px; color: var(--text4); }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="rg1" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg2" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg3" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg4" gradientUnits="userSpaceOnUse" x1="350" y1="277" x2="910" y2="744"><stop offset="0" stop-color="#32729B" stop-opacity="1.0"/><stop offset="1" stop-color="#1D5C82" stop-opacity="1.0"/></linearGradient><linearGradient id="rg5" gradientUnits="userSpaceOnUse" x1="310" y1="765" x2="568" y2="1056"><stop offset="0" stop-color="#F99B80" stop-opacity="1.0"/><stop offset="1" stop-color="#EF806B" stop-opacity="1.0"/></linearGradient><linearGradient id="rg6" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg7" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE" stop-opacity="1.0"/><stop offset="1" stop-color="#5E9DC5" stop-opacity="1.0"/></linearGradient><linearGradient id="rg8" gradientUnits="userSpaceOnUse" x1="230" y1="436" x2="1000" y2="985"><stop offset="0" stop-color="#245F84" stop-opacity="1.0"/><stop offset="1" stop-color="#174866" stop-opacity="1.0"/></linearGradient><linearGradient id="rg9" gradientUnits="userSpaceOnUse" x1="270" y1="846" x2="960" y2="966"><stop offset="0" stop-color="#80BCDE" stop-opacity="1.0"/><stop offset="1" stop-color="#5E9DC5" stop-opacity="1.0"/></linearGradient><linearGradient id="rg10" gradientUnits="userSpaceOnUse" x1="486" y1="860" x2="584" y2="952"><stop offset="0" stop-color="#FFFFFF" stop-opacity="1.0"/><stop offset="1" stop-color="#E3ECF3" stop-opacity="1.0"/></linearGradient><linearGradient id="rg11" gradientUnits="userSpaceOnUse" x1="584" y1="876" x2="636" y2="892"><stop offset="0" stop-color="#E6EDF3" stop-opacity="1.0"/><stop offset="1" stop-color="#AFC0CE" stop-opacity="1.0"/></linearGradient><linearGradient id="rg12" gradientUnits="userSpaceOnUse" x1="584" y1="920" x2="636" y2="936"><stop offset="0" stop-color="#E6EDF3" stop-opacity="1.0"/><stop offset="1" stop-color="#AFC0CE" stop-opacity="1.0"/></linearGradient><linearGradient id="rg13" gradientUnits="userSpaceOnUse" x1="668" y1="852" x2="766" y2="960"><stop offset="0" stop-color="#F99B80" stop-opacity="1.0"/><stop offset="1" stop-color="#EF806B" stop-opacity="1.0"/></linearGradient></defs></svg>
 <div class="top"><h1>Owner sees crew reports</h1></div>
 <div class="doc" id="doc"></div>
 <script>
+const R = {"level_robot_body": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><path d=\"M384 784 C426 730 471 713 520 710 L728 710 C778 715 824 736 866 784 L888 946 C824 1005 735 1031 627 1031 C518 1031 428 1005 363 946 Z\" fill=\"url(#rg1)\"/></g>", "level_robot_head": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 530.0) rotate(0.0) scale(1 1) translate(-627.0 -530.0)\"><g transform=\"translate(0.0 0.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><path d=\"M309 436 C250 430 215 483 215 546 C215 609 249 659 309 654 L330 624 V465 Z\" fill=\"url(#rg2)\"/><path d=\"M944 436 C1003 430 1039 483 1039 546 C1039 609 1004 659 944 654 L923 624 V465 Z\" fill=\"url(#rg3)\"/><path d=\"M267 546 A25 59 0 1 1 217 546 A25 59 0 1 1 267 546 Z\" fill=\"#6CA9CF\"/><path d=\"M1037 546 A25 59 0 1 1 987 546 A25 59 0 1 1 1037 546 Z\" fill=\"#6CA9CF\"/></g><path d=\"M627 277 C428 277 332 328 302 452 C286 514 283 608 307 656 C332 718 409 743 627 743 C845 743 922 718 947 656 C971 608 968 514 952 452 C922 328 826 277 627 277 Z\" fill=\"url(#rg4)\"/><path d=\"M627 372 C481 372 399 387 366 455 C346 492 341 550 350 590 C363 656 397 677 627 677 C857 677 891 656 904 590 C913 550 908 492 888 455 C855 387 773 372 627 372 Z\" fill=\"#FFFCF1\"/><path d=\"M576 594 C602 620 651 620 677 594\" fill-opacity=\"0.000\" fill=\"#000000\" stroke=\"#17253B\" stroke-width=\"31\" stroke-linecap=\"round\"/></g></g>", "level_robot_eyes": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1 1) translate(-627.0 -529.0)\"><g transform=\"translate(627.0 529.0) rotate(0.0) scale(1 1) translate(-627.0 -529.0)\"><path d=\"M542 529 A61 61 0 1 1 420 529 A61 61 0 1 1 542 529 Z\" fill=\"#17253B\"/><path d=\"M833 529 A61 61 0 1 1 711 529 A61 61 0 1 1 833 529 Z\" fill=\"#17253B\"/><path d=\"M515 504 A19 19 0 1 1 477 504 A19 19 0 1 1 515 504 Z\" fill=\"#FFFFFF\"/><path d=\"M805 504 A19 19 0 1 1 767 504 A19 19 0 1 1 805 504 Z\" fill=\"#FFFFFF\"/></g></g></g>", "level_robot_antenna": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><g transform=\"translate(627.0 278.0) rotate(0.0) scale(1 1) translate(-627.0 -278.0)\"><path d=\"M603 227 H650 V295 H603 Z\" fill=\"#1D5C82\"/><path d=\"M687 187 A60 60 0 1 1 567 187 A60 60 0 1 1 687 187 Z\" fill=\"url(#rg5)\"/><path d=\"M618 164 A14 14 0 1 1 590 164 A14 14 0 1 1 618 164 Z\" fill=\"#FFFFFF\"/></g></g>", "level_robot_hands": "<g transform=\"translate(-185.0 -110.0) rotate(0.0) scale(1 1) translate(-0.0 -0.0)\"><path d=\"M302 829 C263 834 230 870 229 912 C226 957 252 992 294 996 C335 1000 366 969 371 925 C375 878 345 835 302 829 Z\" fill=\"url(#rg6)\"/><path d=\"M307 847 C276 841 253 873 254 910 C254 943 275 966 307 966 C340 966 368 947 371 923 C374 894 348 852 307 847 Z\" fill=\"url(#rg7)\"/><path d=\"M951 829 C990 834 1023 870 1024 912 C1027 957 1001 992 959 996 C918 1000 887 969 882 925 C878 878 908 835 951 829 Z\" fill=\"url(#rg8)\"/><path d=\"M946 847 C977 841 1000 873 999 910 C999 943 978 966 946 966 C913 966 885 947 882 923 C879 894 905 852 946 847 Z\" fill=\"url(#rg9)\"/></g>"};
 const L = {
   check: '<path d="M20 6 9 17l-5-5"/>',
   x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
@@ -508,6 +513,8 @@ const frame = (k, label, html, dark) => `<div class="state"><div class="lbl"><sp
 Object.assign(L, {
   undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/>',
   copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  chevD: '<path d="m6 9 6 6 6-6"/>',
+  chevU: '<path d="m18 15-6-6-6 6"/>',
   pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>',
 });
 const ME = app('Budget Buddy');
@@ -521,8 +528,9 @@ const REPORTS = [
 function quotes(list, footer, tone = 'warn', o = {}) {
   const n = list.length;
   const shown = o.open ? list : list.slice(0, 3);
-  const more = n > 3 ? ia(o.open ? 'Show less' : `Show all ${n}`) : '';
-  return `<div class="qb ${tone}"><div class="qt">${n} ${n === 1 ? 'report' : 'reports'}</div>
+  const more = n > 3 ? `<span class="ia">${o.open ? 'Show less' : `Show all ${n}`}${ic(o.open ? 'chevU' : 'chevD', 16, 2.2)}</span>` : '';
+  const title = o.noTitle ? '' : `<div class="qt">${n} ${n === 1 ? 'report' : 'reports'}</div>`;
+  return `<div class="qb ${tone}">${title}
     ${shown.map((r) => `<div class="qi"><div class="qw">${r.w}</div><div class="qx">“${r.t}”</div></div>`).join('')}
     ${more}<div class="qf">${footer}</div></div>`;
 }
@@ -540,13 +548,13 @@ const lobbyHero = () => hero({ chip: 'Full, 15 of 15', tone: 'ok', icon: 'clock'
 
 /* 1. Lobby, 1 report */
 function F1(th) {
-  const card = yourApp('1 of 2 reports', 'warn', 'Play shows it to the testers group, but a member had trouble.',
-    sp(12) + signIn() + quotes(REPORTS.slice(4), 'One more report sends it back. Check the sign-in still works.'));
+  const card = yourApp('1 report', 'warn', 'Play shows it to the testers group, but a member had trouble.',
+    sp(12) + signIn() + quotes(REPORTS.slice(4), 'One more report sends it back. Check the sign-in still works.', 'warn', { noTitle: true }));
   return tallPage(th, 'Crew 126', lobbyHero() + heading('Your app') + card, { sub: 'Starts in 6 h', end: membersBtn(15) });
 }
 /* 2. Sent back, 2 reports */
 function F2(th) {
-  const two = [{ w: 'Before the run, Nov 21', t: 'Sign-in says the password is wrong. Tried twice.' }, REPORTS[4]];
+  const two = [{ w: 'Nov 21', t: 'Sign-in says the password is wrong. Tried twice.' }, { w: 'Nov 18', t: REPORTS[4].t }];
   const h = hero({ chip: 'Sent back', tone: 'bad', icon: 'undo', h: 'Your app came back', l: 'Two members reported it before the run.',
     extra: quotes(two, "What members wrote. Who wrote it isn't shown.", 'bad'), action: 'Fix it, then put it in again' });
   return tallPage(th, 'Crew 126', h + qn("Your 100 tix are back. Fix what's wrong, then put it in a crew again."), { sub: 'Sent back', end: membersBtn(15) });
@@ -579,11 +587,25 @@ function lobbyBehind() {
 function F5a(th) {
   const a = app('Habit Hen');
   const body = `<div class="sgl">Sign-in for testers</div><div class="tint" style="padding:12px;color:var(--text4);font-size:14px">No sign-in needed. It opens straight in.</div>${sp(16)}${pbtn('Install on Play')}${sp(12)}
-    <div class="opt">${itile('flag', 36, 'color:var(--warn)')}<div class="col"><div class="t">You reported it</div><div class="l">Its owner has what you wrote. If it still won't work once the run starts, report it that night.</div></div></div>${sp(6)}`;
+    <div class="opt2"><div class="t">${ic('flag', 17, 2)}You reported it</div><div class="l">Its owner has what you wrote. If it still won't work once the run starts, report it that night.</div></div>${sp(6)}`;
   return page(th, 'Crew 126', lobbyBehind(), { sub: 'Starts in 6 h', end: membersBtn(15), extra: sheet({ leading: art(a, 44), title: a.n, sub: a.p, body }) });
 }
 function F5b(th) {
-  return page(th, 'Crew 126', lobbyBehind(), { sub: 'Starts in 6 h', end: membersBtn(15), extra: snack("Reported. Hasan has been told. If it still won't work once the run starts, report it that night.", 'done', { bottom: 30 }) });
+  return page(th, 'Crew 126', lobbyBehind(), { sub: 'Starts in 6 h', end: membersBtn(15), extra: snack('Reported. Hasan has been told.', 'done', { bottom: 30 }) });
+}
+
+/* 6. Lobby report dialog (CrewReportDialog via Ask) */
+function F6(th) {
+  const w = 96, f = 96 * 980 / 880, lift = 96 * 262 / 880, rise = 96 * 540 / 880;
+  const fields = `<div class="fld" style="background:var(--glass);margin-top:16px"><span class="lab" style="background:var(--glass)">What's wrong</span><span style="flex:1">The sign-in details don't work</span><span style="color:var(--text3)">${ic('chevD', 20, 2)}</span></div>
+    <div class="fld" style="background:var(--glass);margin-top:14px;height:auto;min-height:84px;align-items:flex-start;padding-top:13px"><span class="lab" style="background:var(--glass)">Details</span><span style="color:var(--text4);font-weight:400">Anything that helps them fix it</span></div>
+    <div class="fe">Optional</div>`;
+  const dlg = `<div class="scrimL"></div><div class="dlgwrap"><div style="position:relative;padding-top:${rise}px">
+    <svg width="${w}" height="${f}" viewBox="0 0 880 980" style="position:absolute;right:10px;top:0;z-index:0">${R.level_robot_antenna}${R.level_robot_head}${R.level_robot_eyes}</svg>
+    <div class="dlg"><h3>Report Habit Hen?</h3><p>Rafi sees what you write, not your name. 2 reports send it back to be fixed. If it still won't work once the run starts, report it that night.</p>${fields}
+    <div class="btns"><span class="db o">Cancel</span><span class="db f">Report</span></div></div>
+    <svg width="${w}" height="${f}" viewBox="0 0 880 980" style="position:absolute;right:10px;top:${-lift}px;z-index:2;pointer-events:none">${R.level_robot_hands}</svg></div></div>`;
+  return page(th, 'Crew 126', lobbyBehind(), { sub: 'Starts in 6 h', end: membersBtn(15), extra: dlg });
 }
 
 const pair = (k, label, fn) => `<div class="grp">${k}. ${label}</div><div class="row">${frame(k, label, fn('light'))}${frame(k, label, fn('dark'), true)}</div>`;
@@ -592,7 +614,8 @@ document.getElementById('doc').innerHTML =
   + pair('2', 'Sent back, 2 reports', F2)
   + `<div class="grp">3. Run, 5 reports</div><div class="row">${frame('3a', 'Collapsed', F3('light', false))}${frame('3b', 'Show all 5 tapped', F3('light', true))}${frame('3a', 'Collapsed', F3('dark', false), true)}${frame('3b', 'Show all 5 tapped', F3('dark', true), true)}</div>`
   + pair('4', 'App page, 2 reports', F4)
-  + `<div class="grp">5. Reporter side</div><div class="row">${frame('5a', 'Row sheet after reporting', F5a('light'))}${frame('5a', 'Row sheet after reporting', F5a('dark'), true)}${frame('5b', 'Snack', F5b('light'))}${frame('5b', 'Snack', F5b('dark'), true)}</div>`;
+  + `<div class="grp">5. Reporter side</div><div class="row">${frame('5a', 'Row sheet after reporting', F5a('light'))}${frame('5a', 'Row sheet after reporting', F5a('dark'), true)}${frame('5b', 'Snack', F5b('light'))}${frame('5b', 'Snack', F5b('dark'), true)}</div>`
+  + pair('6', 'Lobby report dialog', F6);
 </script>
 </body>
 </html>
