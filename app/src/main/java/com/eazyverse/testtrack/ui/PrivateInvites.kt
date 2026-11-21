@@ -57,6 +57,7 @@ internal fun PrivateInviteSheet(
         title = "Test ${invite.appName}?",
         onDismiss = onDismiss,
         subtitle = "From ${invite.ownerName}",
+        subtitleSingleLine = true,
         skipHalf = true,
         leading = { AppMark(invite.packageName, invite.appName, invite.icon, size = 36.dp) },
     ) { close ->

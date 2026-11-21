@@ -57,6 +57,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -85,7 +86,7 @@ internal val PickerTitleLineHeight = 22.sp
  * The rest are for the one sheet that needs a different look or a lock, and every one defaults to
  * what the other sheets use. [containerColor] and [topLine] (a hairline along the top edge) change
  * the surface; [handleGap] and [headerGap] are the space under the handle and under the title row;
- * [titleLiveRegion] makes a screen reader read the title again when it changes. [dismissible]
+ * [subtitleSingleLine] keeps the subtitle to one line with an ellipsis. [titleLiveRegion] makes a screen reader read the title again when it changes. [dismissible]
  * false holds the sheet open: no swipe down, no tap outside, no Back. The caller says when to let go.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,6 +95,7 @@ internal fun PickerSheet(
     title: String,
     onDismiss: () -> Unit,
     subtitle: String? = null,
+    subtitleSingleLine: Boolean = false,
     tall: Boolean = false,
     full: Boolean = false,
     skipHalf: Boolean = tall || full,
@@ -221,7 +223,13 @@ internal fun PickerSheet(
                         )
                         if (subtitle != null) {
                             Spacer(Modifier.height(4.dp))
-                            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text3)
+                            Text(
+                                subtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Tt.colors.text3,
+                                maxLines = if (subtitleSingleLine) 1 else Int.MAX_VALUE,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
                 }

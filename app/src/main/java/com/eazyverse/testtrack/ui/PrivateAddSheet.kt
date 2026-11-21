@@ -61,7 +61,8 @@ internal fun PrivateAddSheet(
     PickerSheet(
         title = "Add a private tester",
         onDismiss = onDismiss,
-        subtitle = "$appName, until $crewName ends",
+        subtitle = "Until $crewName ends",
+        subtitleSingleLine = true,
         skipHalf = true,
         leading = { AppMark(packageName, appName, icon, size = 36.dp, ownIcon = true) },
     ) { close ->
