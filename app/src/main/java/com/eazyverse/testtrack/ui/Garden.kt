@@ -56,17 +56,13 @@ import com.eazyverse.testtrack.ui.theme.tabular
 
 // ---- the ground ----------------------------------------------------------------------------
 
-/** Which arrangement of app-card accents a tab uses. */
-enum class Scene { CIRCLE, CREW, RANKS, APPS, PROFILE }
-
 /** Shared TestTrack ground, replacing the old contour-map artwork. */
 @Composable
 fun Backdrop(
-    scene: Scene,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    Box(modifier.fillMaxSize().exchangeBackground(variant = scene.ordinal), content = content)
+    Box(modifier.fillMaxSize().exchangeBackground(), content = content)
 }
 
 // ---- marks -----------------------------------------------------------------------------------
@@ -228,29 +224,6 @@ val CardRadius = 18.dp
 
 /** The Circle tile's corner: tickets, the ask row, every hairline tile. */
 val TileRadius = 14.dp
-
-/**
- * Row [index] of a list of [count], as a tile of its own.
- *
- * Every list that stands on the page ground is drawn this way: a hairline tile on the page ground,
- * all four corners rounded, eight points apart, like the Circle rows. [count] is kept so callers do
- * not change, but every row is shaped the same.
- */
-@Composable
-fun ListTile(
-    index: Int,
-    @Suppress("UNUSED_PARAMETER") count: Int,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        Modifier
-            .padding(start = Gutter, end = Gutter, top = if (index > 0) 8.dp else 0.dp)
-            .fillMaxWidth()
-            .tileFrame(),
-    ) {
-        content()
-    }
-}
 
 /**
  * The hairline tile: the page colour inside a 1dp card line, clipped to [shape]. With [onClick] the

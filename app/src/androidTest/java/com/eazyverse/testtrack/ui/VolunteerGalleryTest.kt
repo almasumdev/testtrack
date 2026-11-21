@@ -102,7 +102,7 @@ class VolunteerGalleryTest {
         name: String,
         content: @Composable () -> Unit,
     ) {
-        screen = { key(name) { TestTrackTheme { Backdrop(Scene.CREW) { content() } } } }
+        screen = { key(name) { TestTrackTheme { Backdrop { content() } } } }
         compose.mainClock.advanceTimeBy(1_500)
         val bitmap = compose.onRoot().captureToImage().asAndroidBitmap()
         File(out, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }

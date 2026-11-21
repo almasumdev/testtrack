@@ -225,7 +225,6 @@ fun MainShell(
     // ask that cleared it.
     val activity = context.findActivity()
     LaunchedEffect(activity) {
-        if (activity == null) return@LaunchedEffect
         ReviewMoment.askDue.collect { due ->
             if (!due) return@collect
             delay(1_500)
@@ -251,7 +250,7 @@ fun MainShell(
     var dockHeight by remember { mutableStateOf(0.dp) }
     // The update's offer for the header and the You page, and the restart dialog behind both.
     ProvideUpdateOffer(update) {
-        Backdrop(scene = tab.scene) {
+        Backdrop {
             Scaffold(
                 // The status bar and the sides only. The bottom is left to the dock, which lifts itself
                 // over the navigation bar, so the page can run under both.
@@ -484,14 +483,3 @@ fun MainShell(
 /** How long a second Back still leaves, after the first one on the first tab said it would. */
 private const val LEAVE_WINDOW_MS = 2_000L
 private const val LEAVE_KEY = "leave"
-
-/** The ground each tab stands on. */
-private val MainTab.scene: Scene
-    get() =
-        when (this) {
-            MainTab.CIRCLE -> Scene.CIRCLE
-            MainTab.GROUPS -> Scene.CREW
-            MainTab.RANKS -> Scene.RANKS
-            MainTab.APPS -> Scene.APPS
-            MainTab.PROFILE -> Scene.PROFILE
-        }

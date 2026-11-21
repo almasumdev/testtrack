@@ -247,15 +247,10 @@ object GroupGate {
      * the script's address, the group's name and the retry policy, and the server held its own
      * copies of all three. The server now keeps a copy of the member list, so this is usually a
      * database read on its side, and there is one place where any of it can be wrong.
-     *
-     * The token is still taken, because the caller has one and dropping the parameter would
-     * ripple through five call sites for no gain. It is no longer sent anywhere: the server knows
-     * who is asking from our own session, which is a stronger claim than a token the phone chose.
+     * The server knows who is asking from our own session, which is a stronger claim than a token
+     * the phone chose.
      */
-    suspend fun check(
-        idToken: String,
-        afterJoin: Boolean = false,
-    ): GateResult =
+    suspend fun check(afterJoin: Boolean = false): GateResult =
         withContext(Dispatchers.IO) {
             try {
                 val me = Api.me()

@@ -67,7 +67,7 @@ internal object LivePort : GroupPort {
     override val email: String? get() = Session.email
     override val member: Boolean get() = Session.isGroupMember
 
-    override suspend fun check(afterJoin: Boolean): GateResult = DebugOverrides.group(GroupGate.check("", afterJoin))
+    override suspend fun check(afterJoin: Boolean): GateResult = DebugOverrides.group(GroupGate.check(afterJoin))
 
     override fun saveMember(value: Boolean) = Session.updateMember(value)
 }

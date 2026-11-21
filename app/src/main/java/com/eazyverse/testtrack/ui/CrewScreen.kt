@@ -214,7 +214,6 @@ private fun PhaseTabs(
         selected = CrewPhase.entries.indexOf(selected),
         counts = CrewPhase.entries.map(badge),
         chatDots = CrewPhase.entries.map(chatDot),
-        gap = 14,
     ) { onSelect(CrewPhase.entries[it]) }
 }
 

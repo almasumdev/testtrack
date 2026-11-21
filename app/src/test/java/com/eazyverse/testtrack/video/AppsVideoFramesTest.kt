@@ -21,7 +21,6 @@ import com.eazyverse.testtrack.ui.AppsBody
 import com.eazyverse.testtrack.ui.AppsScreen
 import com.eazyverse.testtrack.ui.CrewViewModel
 import com.eazyverse.testtrack.ui.MainTab
-import com.eazyverse.testtrack.ui.Scene
 import com.eazyverse.testtrack.viewmodel.AppAddViewModel
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.PhoneApp
@@ -133,7 +132,7 @@ class AppsVideoFramesTest {
     fun a01_empty() {
         // The list's own empty state, as a signed-in account with nothing added sees it.
         ApiSession.load(compose.activity)
-        frame.show { Ground { TabShell(MainTab.APPS, Scene.APPS) { AppsBody(apps = emptyList(), onAdd = {}) } } }
+        frame.show { Ground { TabShell(MainTab.APPS) { AppsBody(apps = emptyList(), onAdd = {}) } } }
         runCatching { frame.target("addEmpty", tap("Add an app")) }
         frame.write("empty")
     }
@@ -222,7 +221,7 @@ class AppsVideoFramesTest {
     @Test
     fun a08_list() {
         val vm = apps(listOf(added))
-        frame.show { Ground { TabShell(MainTab.APPS, Scene.APPS) { AppsScreen(vm = vm) } } }
+        frame.show { Ground { TabShell(MainTab.APPS) { AppsScreen(vm = vm) } } }
         runCatching { frame.target("appRow", tap(focus.name)) }
         runCatching { frame.target("addApp", tap("Add an app")) }
         frame.write("list")

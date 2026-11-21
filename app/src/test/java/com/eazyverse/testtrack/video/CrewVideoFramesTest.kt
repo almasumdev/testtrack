@@ -53,7 +53,6 @@ import com.eazyverse.testtrack.ui.CrewViewModel
 import com.eazyverse.testtrack.ui.DebugLooks
 import com.eazyverse.testtrack.ui.DockUi
 import com.eazyverse.testtrack.ui.MainTab
-import com.eazyverse.testtrack.ui.Scene
 import com.eazyverse.testtrack.ui.SeatBoxes
 import com.eazyverse.testtrack.ui.SeatState
 import com.eazyverse.testtrack.ui.VisitDockContent
@@ -274,7 +273,7 @@ class CrewVideoFramesTest {
     @Test
     fun c01_open() {
         val vm = crews()
-        frame.show { Ground { TabShell(MainTab.GROUPS, Scene.CREW) { CrewScreen(vm = vm) } } }
+        frame.show { Ground { TabShell(MainTab.GROUPS) { CrewScreen(vm = vm) } } }
         frame.settle(800)
         frame.target("takeSeat", compose.onNode(hasText("Take a seat", substring = true) and hasClickAction()))
         frame.target("headline", compose.onNodeWithText("seats left", substring = true))
@@ -299,7 +298,7 @@ class CrewVideoFramesTest {
         val vm = crews(list = emptyList())
         frame.show {
             Ground {
-                TabShell(MainTab.GROUPS, Scene.CREW) {
+                TabShell(MainTab.GROUPS) {
                     CrewOpenTab(
                         vm,
                         CrewActions({}, {}, {}, {}, {}, {}),
@@ -426,7 +425,7 @@ class CrewVideoFramesTest {
     fun c09_run() {
         val vm = crews(list = listOf(running))
         vm.setState("tab", CrewPhase.RUN)
-        frame.show { Ground { TabShell(MainTab.GROUPS, Scene.CREW) { CrewScreen(vm = vm) } } }
+        frame.show { Ground { TabShell(MainTab.GROUPS) { CrewScreen(vm = vm) } } }
         frame.settle(800)
         runCatching { frame.target("openAll", compose.onAllNodes(hasText("Run all", substring = true) and hasClickAction())[0]) }
         frame.write("run")

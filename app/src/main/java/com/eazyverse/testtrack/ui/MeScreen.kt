@@ -74,7 +74,6 @@ fun MeScreen(
 
     MeBody(
         profile = vm.profile,
-        loading = vm.loading,
         offline = vm.offline,
         signedOut = vm.signedOut,
         // Not before the profile arrives, or an empty name could be saved over the real one.
@@ -138,7 +137,6 @@ fun MeScreen(
 @Composable
 fun MeBody(
     profile: ApiProfile?,
-    loading: Boolean = false,
     offline: Boolean = false,
     signedOut: Boolean = false,
     onEdit: () -> Unit = {},
@@ -318,25 +316,6 @@ private fun localTime(zone: String): String? =
         .replace('_', ' ')
         .takeIf { it.isNotBlank() && zone.contains('/') }
         ?.let { "$it time" }
-
-/**
- * "1st", "2nd", "3rd".
- *
- * Eleventh through thirteenth are the exception every naive version gets wrong, and they are
- * exactly the places a board this size is full of.
- */
-fun ordinal(place: Int): String {
-    if (place <= 0) return "unranked"
-    val suffix =
-        when {
-            place % 100 in 11..13 -> "th"
-            place % 10 == 1 -> "st"
-            place % 10 == 2 -> "nd"
-            place % 10 == 3 -> "rd"
-            else -> "th"
-        }
-    return "$place$suffix"
-}
 
 /** Under the version at the foot of the page: twice the gutter, so it does not sit on the dock. */
 private val FootRoom = Gutter * 2

@@ -136,13 +136,13 @@ class AppTileStatusTest {
     fun the_callout_says_a_title_and_one_plain_sentence_for_each() {
         val sent = app(crew = crew("rejected"))
         assertEquals("Sent back by Crew 07", AppProblem.SENT_BACK.title(sent))
-        assertEquals("Fix what the crew found, then put it in again.", AppProblem.SENT_BACK.sentence(sent))
+        assertEquals("Fix what the crew found, then put it in again.", AppProblem.SENT_BACK.sentence())
         assertEquals("Taken out of Crew 07", AppProblem.TAKEN_OUT.title(sent))
-        assertEquals("It's no longer in this run.", AppProblem.TAKEN_OUT.sentence(sent))
+        assertEquals("It's no longer in this run.", AppProblem.TAKEN_OUT.sentence())
         assertEquals("Not verified yet", AppProblem.NOT_VERIFIED.title(sent))
-        assertEquals("Add the testers group to your closed test, then tap Verify.", AppProblem.NOT_VERIFIED.sentence(sent))
+        assertEquals("Add the testers group to your closed test, then tap Verify.", AppProblem.NOT_VERIFIED.sentence())
         assertEquals("Can't be installed", AppProblem.UNLISTED.title(sent))
-        assertEquals("Testers couldn't install it, so it's off Circle for now.", AppProblem.UNLISTED.sentence(sent))
+        assertEquals("Testers couldn't install it, so it's off Circle for now.", AppProblem.UNLISTED.sentence())
         assertEquals("Sent back by its crew", AppProblem.SENT_BACK.title(app()))
     }
 }

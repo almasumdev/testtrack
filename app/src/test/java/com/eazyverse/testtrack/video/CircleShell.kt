@@ -39,7 +39,6 @@ import com.eazyverse.testtrack.ui.FeedViewModel
 import com.eazyverse.testtrack.ui.LocalDockRoom
 import com.eazyverse.testtrack.ui.MainBar
 import com.eazyverse.testtrack.ui.MainTab
-import com.eazyverse.testtrack.ui.Scene
 import com.eazyverse.testtrack.ui.TopHud
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -54,18 +53,17 @@ import org.junit.Assert.assertEquals
  * header's numbers passed in as MainShell would pass them from its model.
  */
 @Composable
-internal fun CircleShell(feed: FeedViewModel) = TabShell(MainTab.CIRCLE, Scene.CIRCLE) { FeedScreen(vm = feed) }
+internal fun CircleShell(feed: FeedViewModel) = TabShell(MainTab.CIRCLE) { FeedScreen(vm = feed) }
 
 /** Any of the main tabs, laid out as [CircleShell] lays out Circle. */
 @Composable
 internal fun TabShell(
     tab: MainTab,
-    scene: Scene,
     page: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
     var dock by remember { mutableStateOf(0.dp) }
-    Backdrop(scene = scene) {
+    Backdrop {
         Scaffold(
             modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)),
             containerColor = Color.Transparent,

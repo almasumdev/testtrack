@@ -68,7 +68,6 @@ fun SegmentedTabs(
     counts: List<Int> = emptyList(),
     /** New chat per tab, drawn as a small dot right after the label. False, or an absent entry, draws nothing. */
     chatDots: List<Boolean> = emptyList(),
-    @Suppress("UNUSED_PARAMETER") gap: Int = 20,
     onSelect: (Int) -> Unit,
 ) {
     if (labels.isEmpty()) return

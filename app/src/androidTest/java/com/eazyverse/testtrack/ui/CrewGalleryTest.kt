@@ -330,7 +330,7 @@ class CrewGalleryTest {
         content: @Composable () -> Unit,
     ) {
         // Keyed by the shot, so each is a fresh screen rather than the last one scrolled.
-        screen = { key(name) { TestTrackTheme { Backdrop(Scene.CREW) { content() } } } }
+        screen = { key(name) { TestTrackTheme { Backdrop { content() } } } }
         compose.mainClock.advanceTimeBy(1_500)
         save(name)
         if (scrolled) {
@@ -532,7 +532,7 @@ class CrewGalleryTest {
         val running = run("Crew 02", day = 6, doneCount = 4)
         val vm = CrewViewModel()
         vm.preview(listOf(running), tab = CrewPhase.RUN)
-        screen = { key("m") { TestTrackTheme { Backdrop(Scene.CREW) { CrewMembersPage(vm, running.id, onBack = {}) } } } }
+        screen = { key("m") { TestTrackTheme { Backdrop { CrewMembersPage(vm, running.id, onBack = {}) } } } }
         settle()
         val shoot = { name: String ->
             val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
@@ -558,7 +558,7 @@ class CrewGalleryTest {
             {
                 key(
                     "g",
-                ) { TestTrackTheme { Backdrop(Scene.CREW) { CrewOpenTab(vm, CrewActions({}, {}, {}, {}, {}, {}, { _, _ -> }), guide) } } }
+                ) { TestTrackTheme { Backdrop { CrewOpenTab(vm, CrewActions({}, {}, {}, {}, {}, {}, { _, _ -> }), guide) } } }
             }
         settle()
         val shoot = { name: String ->

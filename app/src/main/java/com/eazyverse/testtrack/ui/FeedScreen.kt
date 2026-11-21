@@ -178,7 +178,6 @@ fun FeedScreen(
                                     else -> 0
                                 }
                             },
-                        gap = 14,
                     ) { vm.show(shownTabs[it]) }
                 }
             }
