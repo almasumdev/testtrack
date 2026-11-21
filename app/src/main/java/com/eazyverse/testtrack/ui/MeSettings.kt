@@ -12,10 +12,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Bell
@@ -54,6 +56,8 @@ internal fun MeSettings(
 ) {
     val context = LocalContext.current
     val links = LocalUriHandler.current
+    val okInk = Tone.OK.ink()
+    val warnInk = Tone.WARN.ink()
 
     Column {
         SectionHeading("Testing", top = MeHeadingTop, bottom = MeHeadingBottom)
@@ -63,7 +67,12 @@ internal fun MeSettings(
                 TileRow(
                     Lucide.Users,
                     "Testers group",
-                    subtitle = if (group) "Joined, so owners can add you to tests" else "Not joined yet. Join so owners can add you",
+                    subtitleRich =
+                        if (group) {
+                            stateLine("Joined", okInk, ", so owners can add you to tests")
+                        } else {
+                            stateLine("Not joined yet", warnInk, ". Join so owners can add you")
+                        },
                     end = if (group) RowEnd.OUT else RowEnd.PAGE,
                     onClick = onGroup,
                 )
@@ -71,7 +80,12 @@ internal fun MeSettings(
                 TileRow(
                     Lucide.Bell,
                     "Notifications",
-                    subtitle = if (notifications) "On for crew news and nightly reminders" else "Off. Turn on for crew news and reminders",
+                    subtitleRich =
+                        if (notifications) {
+                            stateLine("On", okInk, " for crew news and nightly reminders")
+                        } else {
+                            stateLine("Off", warnInk, ". Turn on for crew news and reminders")
+                        },
                     end = RowEnd.OUT,
                     onClick = { openNotificationSettings(context) },
                 )
@@ -101,6 +115,16 @@ internal fun MeSettings(
             TileRow(Lucide.LogOut, "Sign out", danger = true, onClick = onSignOut)
         }
     }
+}
+
+/** A row's state line: the state word in its tone ink and semibold, the rest in the row's own colour. */
+private fun stateLine(
+    state: String,
+    ink: Color,
+    rest: String,
+) = buildAnnotatedString {
+    withStyle(SpanStyle(color = ink, fontWeight = FontWeight.SemiBold)) { append(state) }
+    append(rest)
 }
 
 /**
