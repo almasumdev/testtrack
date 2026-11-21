@@ -385,7 +385,7 @@ private fun TestersCard(
 
 /**
  * It is over, and this is what it was: what came of the run and what it still asks, the reader's
- * app, their nights and the other apps. Once the details are cleared, only the result stays.
+ * app, their nights and the other apps. Once the details are cleared, the result and the apps stay.
  */
 @Composable
 fun CrewRecordPhase(
@@ -399,6 +399,11 @@ fun CrewRecordPhase(
     onMembers: () -> Unit,
     /** Opens another crew's page, for an app moved there; null hides the way there. */
     onOpenCrew: ((String) -> Unit)? = null,
+    /** Whether an app is on this phone, read fresh enough to redraw when it changes. */
+    installed: (String) -> Boolean = { false },
+    /** This crew's Uninstall all run, if one has started. */
+    run: UninstallRunState? = null,
+    uninstall: UninstallActions = UninstallActions(),
     now: Instant = Instant.now(),
 ) {
     if (record == null) {
@@ -415,9 +420,19 @@ fun CrewRecordPhase(
             item { CrewHeading("Your nights") }
             block { NightsCard(record, showStrip = !pruned) }
         }
-        if (!pruned && record.crewApps.isNotEmpty()) {
+        // The apps are kept with the record when the details are cleared, so this stays after it.
+        if (record.crewApps.isNotEmpty()) {
             item { CrewHeading("Apps", "${record.crewApps.size}") }
-            block { RecordAppsCard(record.crewApps) }
+            block {
+                UninstallAllSection(
+                    apps = record.crewApps,
+                    crewName = record.crewName,
+                    opens = uninstallOpensLine(record, now),
+                    installed = installed,
+                    run = run?.takeIf { it.crewId == crew.id },
+                    actions = uninstall,
+                )
+            }
         }
         if (pruned) block { ClearedNote(clearedOn(crew.detailsUntil), keptDays(record.endedAt, crew.detailsUntil)) }
     }

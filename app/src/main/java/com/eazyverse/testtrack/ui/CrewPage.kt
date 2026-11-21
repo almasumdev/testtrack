@@ -27,11 +27,16 @@ import com.composables.icons.lucide.Timer
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.PrivateTestsViewModel
+import com.eazyverse.testtrack.viewmodel.UninstallPhone
 import com.eazyverse.testtrack.viewmodel.leave
 import com.eazyverse.testtrack.viewmodel.leaveVolunteer
 import com.eazyverse.testtrack.viewmodel.privateCountsLine
 import com.eazyverse.testtrack.viewmodel.report
 import com.eazyverse.testtrack.viewmodel.vote
+import kotlinx.coroutines.delay
+
+/** The short pause on a ticked-off app before the next confirm opens. */
+private const val UNINSTALL_TICK_MS = 400L
 
 /**
  * One crew on a page of its own, opened from any of Crew's tabs or from its app on My apps.
@@ -86,6 +91,26 @@ fun CrewPage(
     val finished = crew?.phase == CrewPhase.RECORD
     LaunchedEffect(id, finished) { if (finished) vm.records.loadOne(id) }
     val record = if (finished) vm.records.record(id) else null
+    // Uninstall all on the finished page. A tick after an app is gone, then the next confirm.
+    val phone = remember(context) { UninstallPhone.of(context) }
+    val uninstallActions =
+        remember(vm, phone, id) {
+            UninstallActions(
+                onAll = { packages -> vm.uninstall.start(phone, id, packages) },
+                onOne = { pkg -> phone.ask(pkg) },
+                onStop = { vm.uninstall.stop() },
+                onNext = { vm.uninstall.next(phone) },
+            )
+        }
+    val uninstallRun = vm.uninstall.state
+    val uninstallStep = uninstallRun?.step
+    val uninstallDone = uninstallRun?.removed?.size
+    LaunchedEffect(uninstallStep, uninstallDone) {
+        if (uninstallStep == UninstallStep.TICK) {
+            delay(UNINSTALL_TICK_MS)
+            vm.uninstall.next(phone)
+        }
+    }
     // Nothing to see in the members once the details are cleared, or in a crew that never ran.
     val noMembers = crew?.pruned == true || record?.pruned == true || record?.outcome == RecordOutcome.CANCELLED
     // The owner's app in a running crew can have private testers: their counts for its row.
@@ -148,6 +173,9 @@ fun CrewPage(
                             onClaim = { vm.records.claimPerfect(id) },
                             onMembers = onMembers,
                             onOpenCrew = onOpenCrew,
+                            installed = { pkg -> vm.copyOf(context, pkg).installed },
+                            run = vm.uninstall.state,
+                            uninstall = uninstallActions,
                         )
                 }
             }
@@ -256,6 +284,7 @@ internal fun crewActions(
 internal fun CrewLifecycle(vm: CrewViewModel) {
     val context = LocalContext.current
     val owner = LocalLifecycleOwner.current
+    val phone = remember(context) { UninstallPhone.of(context) }
     DisposableEffect(owner) {
         val watcher =
             LifecycleEventObserver { _, event ->
@@ -263,10 +292,15 @@ internal fun CrewLifecycle(vm: CrewViewModel) {
                     Lifecycle.Event.ON_RESUME -> {
                         // Back from Play, an app may be on the phone now: its row moves to Open.
                         vm.refreshInstalled(context)
+                        // Back from Android's uninstall confirm: read what it came to, fresh.
+                        vm.uninstall.onResume(phone)
                         vm.settle(context)
                         vm.startLive(context)
                     }
-                    Lifecycle.Event.ON_PAUSE -> vm.stopLive()
+                    Lifecycle.Event.ON_PAUSE -> {
+                        vm.uninstall.onPause()
+                        vm.stopLive()
+                    }
                     else -> Unit
                 }
             }

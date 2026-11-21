@@ -180,16 +180,15 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
  * Android's own "uninstall this app?" for one package. TestTrack removes nothing by itself: the
  * phone asks, and the person says yes or no.
  */
-private fun uninstall(
+internal fun uninstall(
     context: Context,
     packageName: String,
-) {
+): Boolean =
     runCatching {
         context.startActivity(
             Intent(Intent.ACTION_DELETE, Uri.fromParts("package", packageName, null)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
-    }
-}
+    }.isSuccess
 
 /**
  * The owner's appeal, in their own words: once per app, read by the team. It closes only once

@@ -183,6 +183,37 @@ fun detailsClear(
     }
 }
 
+/**
+ * When Uninstall all opens: [CrewRules.UNINSTALL_AFTER_DAYS] days after the whole crew finished
+ * ([CrewRecord.doneAt]), or after its end when that is missing. Null when neither is known.
+ */
+fun uninstallOpensAt(r: CrewRecord): Instant? =
+    (instantOf(r.doneAt) ?: instantOf(r.endedAt))?.plus(CrewRules.UNINSTALL_AFTER_DAYS.toLong(), ChronoUnit.DAYS)
+
+/** Uninstall all is open. A record with no known end is not held back: the crew is over. */
+fun uninstallOpen(
+    r: CrewRecord,
+    now: Instant = Instant.now(),
+): Boolean = uninstallOpensAt(r)?.let { now >= it } ?: true
+
+/**
+ * "Opens Nov 24, in 2 days" while Uninstall all is locked, worded like [detailsClear]: the days
+ * are whole calendar days on this phone, and the last one is "Opens today". Null once it is open.
+ */
+fun uninstallOpensLine(
+    r: CrewRecord,
+    now: Instant = Instant.now(),
+    zone: ZoneId = ZoneId.systemDefault(),
+): String? {
+    val opens = uninstallOpensAt(r)?.takeIf { now < it } ?: return null
+    val days = ChronoUnit.DAYS.between(now.atZone(zone).toLocalDate(), opens.atZone(zone).toLocalDate())
+    return when {
+        days <= 0 -> "Opens today"
+        days == 1L -> "Opens ${shortDate(opens, zone)}, in 1 day"
+        else -> "Opens ${shortDate(opens, zone)}, in $days days"
+    }
+}
+
 /** The member's nights as counts: from the nights while they are there, else from the kept counts. */
 fun nightCountsOf(r: CrewRecord): Map<NightMark, Int> =
     if (r.nights.isNotEmpty()) r.nights.groupingBy { it }.eachCount() else r.nightCounts.filterValues { it > 0 }
@@ -222,14 +253,6 @@ fun nightLabel(
         NightMark.AFTER_LEFT -> if (outcome == RecordOutcome.REMOVED) "after it was taken out" else "after you left"
         NightMark.NOT_IN -> "not in your run"
     }
-
-/** The line over the other apps: how many, and how many of them left. */
-fun appsSummary(apps: List<RecordApp>): String {
-    val n = apps.size
-    val left = apps.count { it.left }
-    val base = "$n other ${pluralOf(n, "app")}"
-    return if (left > 0) "$base, $left left the crew" else base
-}
 
 /** The day a crew's details were cleared, "Nov 20", or null when it is not known. */
 fun clearedOn(

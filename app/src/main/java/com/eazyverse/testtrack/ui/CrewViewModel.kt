@@ -24,6 +24,7 @@ import com.eazyverse.testtrack.viewmodel.LiveReload
 import com.eazyverse.testtrack.viewmodel.NightPictures
 import com.eazyverse.testtrack.viewmodel.NightRound
 import com.eazyverse.testtrack.viewmodel.ReviewMoment
+import com.eazyverse.testtrack.viewmodel.UninstallRun
 import kotlinx.coroutines.launch
 import java.util.TimeZone
 
@@ -74,6 +75,9 @@ class CrewViewModel : ViewModel() {
 
     /** The Record tab's kept records, read with every load, and the two answers they ask. */
     val records = CrewRecords(viewModelScope)
+
+    /** Uninstall all on a finished crew's page; its run outlives the page being left and opened again. */
+    val uninstall = UninstallRun(viewModelScope)
 
     var loading by mutableStateOf(true)
         private set

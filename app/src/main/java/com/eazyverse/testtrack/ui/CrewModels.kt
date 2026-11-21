@@ -79,6 +79,12 @@ object CrewRules {
     const val RUN_DAYS = 14
 
     /**
+     * Days after the whole crew has finished before Uninstall all opens. This phone only: the
+     * server does not enforce it, and one crew's last nights can still be checked until then.
+     */
+    const val UNINSTALL_AFTER_DAYS = 2
+
+    /**
      * What a seat costs, as the server charges it (rules.SEAT_COST). Back in full if the app
      * leaves before its run; kept once the run has it. The server's answer is the one that counts.
      */

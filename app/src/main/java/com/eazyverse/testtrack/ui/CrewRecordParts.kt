@@ -24,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -343,43 +342,7 @@ private fun nightIcon(mark: NightMark): Triple<ImageVector, Dp, Color>? =
         else -> null
     }
 
-/**
- * The other apps in the crew as icons, those that left faded, with a line over them and what the
- * fade means under them. The icons are only faces: nothing here opens.
- */
-@Composable
-internal fun RecordAppsCard(apps: List<RecordApp>) {
-    CrewCard(padding = PaddingValues(14.dp)) {
-        Text(appsSummary(apps), style = tileStyle(14f, 19f, FontWeight.SemiBold), color = Tt.colors.text)
-        Spacer(Modifier.height(12.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            apps.forEach { app ->
-                Box(Modifier.size(36.dp).alpha(if (app.left) 0.4f else 1f)) {
-                    AppMark(app.packageName, app.name, app.icon, size = 36.dp)
-                }
-            }
-        }
-        if (apps.any { it.left }) {
-            Spacer(Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier
-                        .size(12.dp)
-                        .alpha(0.4f)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Tt.colors.text4),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text("Left the crew", style = tileStyle(12f, 16f, FontWeight.Normal), color = Tt.colors.text4)
-            }
-        }
-    }
-}
-
-/** Once the details are cleared: when, and that the result above stays. */
+/** Once the details are cleared: when, and that the result and the apps list stay. */
 @Composable
 internal fun ClearedNote(
     on: String?,
@@ -419,7 +382,7 @@ internal fun ClearedNote(
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                "Nights, testers, apps and pictures are cleared $after after a crew ends. The result above stays.",
+                "Nights, testers and pictures are cleared $after after a crew ends. The result and the apps list stay.",
                 style = TextStyles.PageLine,
                 color = t.text3,
             )
@@ -462,13 +425,7 @@ internal fun RecordPageLoading() {
             Skeleton(height = 20.dp, corner = 5.dp)
         }
         SkeletonHead(60.dp)
-        CrewCard(padding = PaddingValues(14.dp)) {
-            Skeleton(width = 220.dp, height = 16.dp)
-            Spacer(Modifier.height(12.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                repeat(CrewRules.NIGHTLY - 1) { Skeleton(width = 36.dp, height = 36.dp, corner = 10.dp) }
-            }
-        }
+        UninstallAllLoading()
     }
 }
 
