@@ -24,14 +24,18 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.eazyverse.testtrack.data.RoundStore
 import com.eazyverse.testtrack.data.overlayScreen
 import com.eazyverse.testtrack.domain.DockScreen
+import com.eazyverse.testtrack.domain.dockAnchor
 import com.eazyverse.testtrack.domain.dockCorner
 import com.eazyverse.testtrack.domain.stickTo
 import com.eazyverse.testtrack.ui.DockCardGap
 import com.eazyverse.testtrack.ui.DockShadowRoom
+import com.eazyverse.testtrack.ui.DockSizes
 import com.eazyverse.testtrack.ui.DockUi
 import com.eazyverse.testtrack.ui.VisitDockContent
 import com.eazyverse.testtrack.ui.signInParts
 import com.eazyverse.testtrack.ui.theme.TestTrackTheme
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 /**
  * The window the testing control floats in, over whatever app is being tested.
@@ -52,6 +56,14 @@ class VisitDockWindow(
     private var owner: DockOwner? = null
     private var animator: ValueAnimator? = null
     private var dragging = false
+
+    /**
+     * Opening or closing is under way. The window is then held at the larger of the two sizes (an
+     * exact size, set together with its place), so it never changes size mid-beat; [settle] puts it
+     * back to wrapping the card once the card has finished.
+     */
+    private var morphing = false
+    private var sizes: DockSizes? = null
 
     private var ui by mutableStateOf<DockUi?>(null)
     private var spot by mutableStateOf(RoundStore.spot(context))
@@ -124,11 +136,18 @@ class VisitDockWindow(
                     TestTrackTheme {
                         ui?.let { shown ->
                             VisitDockContent(
-                                ui = shown.copy(upright = spot.edge.upright, open = open),
-                                onToggleOpen = { open = !open },
+                                ui =
+                                    dockAnchor(spot).let { (ax, ay) ->
+                                        shown.copy(upright = spot.edge.upright, open = open, anchorX = ax, anchorY = ay)
+                                    },
+                                onToggleOpen = ::toggle,
                                 onPlayPause = onPlayPause,
                                 onCopy = ::copy,
+                                onSizes = ::measured,
+                                onSettled = ::settle,
                                 onDrag = { delta ->
+                                    // Not while the card is changing size: it is held still till it is done.
+                                    if (morphing) return@VisitDockContent
                                     dragging = true
                                     animator?.cancel()
                                     params.x += delta.x.toInt()
@@ -141,9 +160,10 @@ class VisitDockWindow(
                     }
                 }
             }
-        // A new size (opened, closed, turned on a side) is placed back on its edge.
+        // A new size (the text changed, turned on a side) is placed back on its edge. Not while
+        // opening or closing: the window then holds one size and its place, and [settle] ends it.
         compose.addOnLayoutChangeListener { v, l, t, r, b, ol, ot, or, ob ->
-            if (!dragging && (r - l != or - ol || b - t != ob - ot)) place(v, animate = false)
+            if (!dragging && !morphing && (r - l != or - ol || b - t != ob - ot)) place(v, animate = false)
         }
         view = compose
         val (x, y) = corner(compose)
@@ -159,22 +179,91 @@ class VisitDockWindow(
         owner?.stop()
         owner = null
         open = false
+        morphing = false
+        sizes = null
+        params.width = WindowManager.LayoutParams.WRAP_CONTENT
+        params.height = WindowManager.LayoutParams.WRAP_CONTENT
     }
 
     /** Let go: stick to the edge nearest the control's centre, and remember it. */
     private fun stick() {
         val v = view ?: return
+        if (!dragging) return
         dragging = false
         val screen = screen()
         spot = stickTo(params.x + v.width / 2f, params.y + v.height / 2f, screen)
         RoundStore.keepSpot(context, spot)
         // Closed once it is let go, not while it moves: shrinking under the finger would lose the
-        // drag. The edge is where it was dropped; its small size is placed on it when laid out.
+        // drag. The edge is where it was dropped; the card closes onto it.
         if (open) {
+            beginMorph()
             open = false
             return
         }
         place(v, animate = true)
+    }
+
+    /** A tap on the control: open it, or close it. */
+    private fun toggle() {
+        beginMorph()
+        open = !open
+    }
+
+    /** The card's sizes, closed and open, as last laid out. */
+    private fun measured(s: DockSizes) {
+        sizes = s
+        // The card turned on a side, or its text grew, while the window holds one size: fit again.
+        if (morphing && !dragging && (params.width != morphWidth(s) || params.height != morphHeight(s))) {
+            view?.post { if (morphing) refit() }
+        }
+    }
+
+    private fun morphWidth(s: DockSizes) = max(s.closedW, s.openW) + 2 * room.roundToInt()
+
+    private fun morphHeight(s: DockSizes) = max(s.closedH, s.openH) + 2 * room.roundToInt()
+
+    /**
+     * Before the card changes size: hold the window at the larger of the two sizes, and put it where
+     * a window of that size goes on this edge. Both are set in one update, so the card, which sits
+     * on the docked edge inside the window, does not move on screen. Then the card can change size
+     * inside it without the window being resized or moved once on the way.
+     */
+    private fun beginMorph() {
+        val s = sizes ?: return
+        if (view == null || morphing) return
+        morphing = true
+        animator?.cancel()
+        refit(s)
+    }
+
+    private fun refit(s: DockSizes? = sizes) {
+        s ?: return
+        animator?.cancel()
+        params.width = morphWidth(s)
+        params.height = morphHeight(s)
+        val (x, y) = dockCorner(spot, params.width.toFloat(), params.height.toFloat(), screen(), room)
+        params.x = x.toInt()
+        params.y = y.toInt()
+        update()
+    }
+
+    /**
+     * The card has finished: the window goes back to wrapping it, and to the place for the size it
+     * ended at, in one update.
+     */
+    private fun settle() {
+        val s = sizes ?: return
+        if (view == null || !morphing) return
+        morphing = false
+        animator?.cancel()
+        val w = (if (open) s.openW else s.closedW) + 2 * room.roundToInt()
+        val h = (if (open) s.openH else s.closedH) + 2 * room.roundToInt()
+        params.width = WindowManager.LayoutParams.WRAP_CONTENT
+        params.height = WindowManager.LayoutParams.WRAP_CONTENT
+        val (x, y) = dockCorner(spot, w.toFloat(), h.toFloat(), screen(), room)
+        params.x = x.toInt()
+        params.y = y.toInt()
+        update()
     }
 
     private fun place(

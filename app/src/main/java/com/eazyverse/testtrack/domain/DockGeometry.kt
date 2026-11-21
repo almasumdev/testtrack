@@ -77,6 +77,21 @@ fun dockCorner(
     return (x - room) to (y - room)
 }
 
+/**
+ * Where on a control of any size the dock holds it still, as a share of its width and of its height
+ * (0 is left or top, 1 is right or bottom): the docked edge itself, and [DockSpot.along] on the
+ * other axis. [dockCorner] puts a control of every size at exactly that point of its own box, so a
+ * control that is growing can be drawn inside a window of its largest size at this point and sit
+ * where [dockCorner] would put it at each size on the way.
+ */
+fun dockAnchor(spot: DockSpot): Pair<Float, Float> =
+    when (spot.edge) {
+        DockEdge.TOP -> spot.along to 0f
+        DockEdge.BOTTOM -> spot.along to 1f
+        DockEdge.LEFT -> 0f to spot.along
+        DockEdge.RIGHT -> 1f to spot.along
+    }
+
 /** The control's own top-left corner, with no room around it. */
 private fun controlCorner(
     spot: DockSpot,
