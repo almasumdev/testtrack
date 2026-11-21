@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -145,7 +146,7 @@ private fun Editor(
 ) {
     val t = Tt.colors
     val context = LocalContext.current
-    remember { loadWordsFace(context) }
+    SideEffect { loadWordsFace(context) }
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
     val history = remember(bitmap) { EditHistory(PictureDoc(bitmap.width, bitmap.height)) }

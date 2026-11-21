@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -275,11 +276,15 @@ private fun EditorFrame(
 ) {
     val t = Tt.colors
     val context = LocalContext.current
-    remember { loadWordsFace(context) }
+    SideEffect { loadWordsFace(context) }
     val first = editedDoc(bitmap)
-    val history = remember { EditHistory(PictureDoc(bitmap.width, bitmap.height)).apply { if (edited) commit(first) } }
-    val start = history.doc
-    remember { if (shape != CropShape.FREE) history.commit(start.copy(crop = start.cropFor(shape))) }
+    val history =
+        remember {
+            EditHistory(PictureDoc(bitmap.width, bitmap.height)).apply {
+                if (edited) commit(first)
+                if (shape != CropShape.FREE) commit(doc.copy(crop = doc.cropFor(shape)))
+            }
+        }
     val doc = history.doc
     val pen = t.pens.getOrElse(2) { t.onPhoto }
     val penWidth = with(LocalDensity.current) { 6.dp.toPx() }

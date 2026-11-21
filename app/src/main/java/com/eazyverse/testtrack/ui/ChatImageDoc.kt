@@ -255,7 +255,7 @@ internal class EditHistory(
     /** Keep [next] as the picture now, with what it was before for undo. */
     fun commit(next: PictureDoc) {
         if (next == doc) return
-        before.addLast(doc)
+        before.add(doc)
         doc = next
     }
 
@@ -272,6 +272,6 @@ internal class EditHistory(
     fun rollback(mark: Int) {
         if (before.size <= mark) return
         doc = before[mark]
-        while (before.size > mark) before.removeLast()
+        while (before.size > mark) before.removeAt(before.lastIndex)
     }
 }

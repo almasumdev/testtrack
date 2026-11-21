@@ -230,6 +230,7 @@ class AppsVideoFramesTest {
     @Test
     fun a09_page() {
         val vm = apps(listOf(added))
+        val crewVm = CrewViewModel()
         frame.show {
             Pushed {
                 AppPage(
@@ -239,7 +240,7 @@ class AppsVideoFramesTest {
                     onOpenCrew = {},
                     onOpenRequest = {},
                     onFeedback = {},
-                    crews = CrewViewModel(),
+                    crews = crewVm,
                     requests = emptyList(),
                     requestsLoading = false,
                 )
