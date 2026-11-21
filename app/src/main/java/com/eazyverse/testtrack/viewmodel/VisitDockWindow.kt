@@ -26,6 +26,8 @@ import com.eazyverse.testtrack.data.overlayScreen
 import com.eazyverse.testtrack.domain.DockScreen
 import com.eazyverse.testtrack.domain.dockCorner
 import com.eazyverse.testtrack.domain.stickTo
+import com.eazyverse.testtrack.ui.DockCardGap
+import com.eazyverse.testtrack.ui.DockShadowRoom
 import com.eazyverse.testtrack.ui.DockUi
 import com.eazyverse.testtrack.ui.VisitDockContent
 import com.eazyverse.testtrack.ui.signInParts
@@ -61,10 +63,12 @@ class VisitDockWindow(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                // Screen coordinates, status bar included, so the edges are the screen's own.
+                // Screen coordinates, status bar included, so the edges are the screen's own. No
+                // limits: the shadow room around the card may reach past the screen edge.
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT,
             ).apply { gravity = Gravity.TOP or Gravity.START }
 
@@ -93,9 +97,19 @@ class VisitDockWindow(
             )
     }
 
-    /** Where the control is on screen now, as left, top, right, bottom: for the device test. */
+    /** The transparent room round the card for its shadow, in pixels. */
+    private val room: Float get() = DockShadowRoom.value * context.resources.displayMetrics.density
+
+    /**
+     * Where the card is on screen now, as left, top, right, bottom: for the device test. The card,
+     * not the window, so the shadow room is left out.
+     */
     internal val bounds: IntArray?
-        get() = view?.let { intArrayOf(params.x, params.y, params.x + it.width, params.y + it.height) }
+        get() =
+            view?.let {
+                val r = room.toInt()
+                intArrayOf(params.x + r, params.y + r, params.x + it.width - r, params.y + it.height - r)
+            }
 
     @SuppressLint("ClickableViewAccessibility")
     fun show() {
@@ -192,7 +206,7 @@ class VisitDockWindow(
     }
 
     private fun corner(v: View): Pair<Int, Int> {
-        val (x, y) = dockCorner(spot, v.width.toFloat(), v.height.toFloat(), screen())
+        val (x, y) = dockCorner(spot, v.width.toFloat(), v.height.toFloat(), screen(), room)
         return x.toInt() to y.toInt()
     }
 
@@ -200,7 +214,11 @@ class VisitDockWindow(
         view?.let { runCatching { windows.updateViewLayout(it, params) } }
     }
 
-    private fun screen(): DockScreen = overlayScreen(context)
+    /** The card's old built-in gap to its window counts toward its gap to the screen edge. */
+    private fun screen(): DockScreen {
+        val base = overlayScreen(context)
+        return base.copy(margin = base.margin + DockCardGap.value * context.resources.displayMetrics.density)
+    }
 
     private fun copy(text: String) {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager

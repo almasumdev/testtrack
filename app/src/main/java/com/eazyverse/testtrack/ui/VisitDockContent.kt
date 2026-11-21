@@ -60,6 +60,18 @@ import kotlinx.coroutines.delay
  * upright on a side, and it opens the same way it lies.
  */
 
+/**
+ * Transparent room the window keeps around the card so its 10dp shadow (about 10dp down and 10dp of
+ * blur, less on the other sides) is not cut off by the window's edge.
+ */
+val DockShadowRoom = 24.dp
+
+/**
+ * The gap between the card and the window's edge before the shadow room was added. The window
+ * placement still counts it as part of the gap to the screen edge, so the card has not moved.
+ */
+val DockCardGap = 8.dp
+
 /** Everything the control shows. */
 data class DockUi(
     val app: String,
@@ -100,7 +112,7 @@ fun VisitDockContent(
         }
     Box(
         Modifier
-            .padding(8.dp)
+            .padding(DockShadowRoom)
             .shadow(10.dp, shape)
             .clip(shape)
             .background(t.glass)

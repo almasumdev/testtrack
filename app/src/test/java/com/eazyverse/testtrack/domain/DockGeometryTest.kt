@@ -44,4 +44,16 @@ class DockGeometryTest {
         val (bx, _) = dockCorner(DockSpot(DockEdge.BOTTOM, 1f), 600f, 100f, screen)
         assertEquals(1080f - 20f - 600f, bx, 0.01f)
     }
+
+    @Test
+    fun shadow_room_grows_the_window_without_moving_the_control() {
+        val room = 40f
+        for (edge in DockEdge.values()) {
+            val spot = DockSpot(edge, 0.3f)
+            val (x, y) = dockCorner(spot, 300f, 200f, screen)
+            val (rx, ry) = dockCorner(spot, 300f + 2 * room, 200f + 2 * room, screen, room)
+            assertEquals(x, rx + room, 0.01f)
+            assertEquals(y, ry + room, 0.01f)
+        }
+    }
 }

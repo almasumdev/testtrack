@@ -58,8 +58,27 @@ fun stickTo(
     return DockSpot(edge, along.coerceIn(0f, 1f))
 }
 
-/** The control's top-left corner for [spot], given its [width] and [height], kept on screen. */
+/**
+ * The window's top-left corner for [spot], given its [width] and [height], kept on screen.
+ *
+ * [room] is transparent space all round inside the window, kept only so the control's shadow is
+ * not cut off by the window's edge. The edge gap and the snapping are the control's own, not the
+ * window's: the control sits exactly where it would in a window with no [room], and the window
+ * reaches [room] further out on every side (it may lie partly off screen on the edge side).
+ */
 fun dockCorner(
+    spot: DockSpot,
+    width: Float,
+    height: Float,
+    screen: DockScreen,
+    room: Float = 0f,
+): Pair<Float, Float> {
+    val (x, y) = controlCorner(spot, width - 2 * room, height - 2 * room, screen)
+    return (x - room) to (y - room)
+}
+
+/** The control's own top-left corner, with no room around it. */
+private fun controlCorner(
     spot: DockSpot,
     width: Float,
     height: Float,
