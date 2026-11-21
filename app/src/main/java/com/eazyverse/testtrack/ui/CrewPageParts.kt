@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,8 +25,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -81,6 +85,7 @@ internal fun Tone.soft(): Color =
 enum class ChipSize { SMALL, MEDIUM, LARGE, FACT }
 
 /** One status, said in a word or two, in the one chip style every state uses. Nothing to tap. */
+@Suppress("DEPRECATION")
 @Composable
 internal fun StatusChip(
     text: String,
@@ -94,16 +99,24 @@ internal fun StatusChip(
     val pad =
         when (size) {
             ChipSize.SMALL -> PaddingValues(start = if (icon != null) 8.dp else 10.dp, end = 10.dp, top = 4.dp, bottom = 4.dp)
-            ChipSize.MEDIUM -> PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-            ChipSize.LARGE -> PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-            ChipSize.FACT -> PaddingValues(horizontal = 11.dp, vertical = 5.dp)
+            // A mark carries its own air, so with one the start edge gives 2dp back to even it out.
+            ChipSize.MEDIUM -> PaddingValues(start = if (icon != null) 8.dp else 10.dp, end = 10.dp, top = 4.dp, bottom = 4.dp)
+            ChipSize.LARGE -> PaddingValues(start = if (icon != null) 10.dp else 12.dp, end = 12.dp, top = 6.dp, bottom = 6.dp)
+            ChipSize.FACT -> PaddingValues(start = if (icon != null) 9.dp else 11.dp, end = 11.dp, top = 5.dp, bottom = 5.dp)
         }
-    val style =
+    val base =
         when (size) {
             ChipSize.SMALL -> MaterialTheme.typography.labelMedium.copy(fontSize = 11.5.sp)
             ChipSize.MEDIUM -> MaterialTheme.typography.labelMedium.copy(fontSize = 12.5.sp)
             ChipSize.LARGE -> MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp)
             ChipSize.FACT -> MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp)
+        }
+    // With a mark the line is trimmed to the font's own height, so it centres against the mark.
+    val style =
+        if (icon == null) {
+            base
+        } else {
+            base.copy(platformStyle = PlatformTextStyle(includeFontPadding = false), lineHeightStyle = TicketLineHeight)
         }
     Row(
         modifier
@@ -122,15 +135,40 @@ internal fun StatusChip(
                 }
             Icon(icon, null, Modifier.size(glyph), tint = ink)
             Spacer(Modifier.width(if (size == ChipSize.LARGE || size == ChipSize.FACT) 6.dp else 5.dp))
+            // The words sit in a box as tall as the line they had before, so the chip keeps its
+            // height, with the trimmed text centred in it: level with the mark, not hanging low.
+            // Barlow's figures (700/1000 tall) centre 0.05em under the middle of its line box, so
+            // the words are lifted by that much.
+            val lift = with(LocalDensity.current) { (style.fontSize.toPx() * 0.05f).toDp() }
+            Box(
+                Modifier.height(with(LocalDensity.current) { style.lineHeight.toDp() }),
+                contentAlignment = Alignment.Center,
+            ) {
+                ChipText(text, style, size, ink, Modifier.offset(y = -lift))
+            }
+        } else {
+            ChipText(text, style, size, ink, Modifier)
         }
-        Text(
-            text,
-            style = style,
-            fontWeight = if (size == ChipSize.MEDIUM) FontWeight.Bold else FontWeight.SemiBold,
-            color = ink,
-            maxLines = 1,
-        )
     }
+}
+
+/** The words of a [StatusChip]. */
+@Composable
+private fun ChipText(
+    text: String,
+    style: TextStyle,
+    size: ChipSize,
+    ink: Color,
+    modifier: Modifier,
+) {
+    Text(
+        text,
+        modifier,
+        style = style,
+        fontWeight = if (size == ChipSize.MEDIUM) FontWeight.Bold else FontWeight.SemiBold,
+        color = ink,
+        maxLines = 1,
+    )
 }
 
 /** A row of equal segments, each its own colour: seats taken, or days of the run. */
