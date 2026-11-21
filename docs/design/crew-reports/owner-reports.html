@@ -552,8 +552,8 @@ function quotes(list, footer, tone = 'warn', o = {}) {
 const signIn = () => `<div class="tint" style="padding:4px 12px">
   <div class="cpy"><span class="k2">Username</span><span class="v">crew@budgetbuddy.app</span><span class="c">${ic('copy', 16)}</span></div>
   <div class="cpy"><span class="k2">Password</span><span class="v">Crew126!</span><span class="c">${ic('copy', 16)}</span></div></div>`;
-function yourApp(chipTxt, tone, status, extra = '', action = '') {
-  return `<div class="card"><div class="it" style="gap:12px">${art(ME, 52)}<div class="col"><div class="yan">${ME.n}</div><div class="s12" style="margin-top:2px">${status}</div></div>${chip(chipTxt, tone)}</div>${extra}${action}</div>`;
+function yourApp(chipTxt, tone, status, extra = '', action = '', chipIcon) {
+  return `<div class="card"><div class="it" style="gap:12px">${art(ME, 52)}<div class="col"><div class="yan">${ME.n}</div><div class="s12" style="margin-top:2px">${status}</div></div>${chip(chipTxt, tone, chipIcon)}</div>${extra}${action}</div>`;
 }
 const seatMeter = (n) => `<div class="segs" style="gap:4px">${Array.from({ length: 15 }, (_, i) => `<i style="height:6px;border-radius:3px;background:${i < n ? 'var(--primary)' : 'var(--track)'}"></i>`).join('')}</div>`;
 const segMeter = (on, total) => `<div class="segs">${Array.from({ length: total }, (_, i) => `<i style="background:${i < on ? 'var(--accent)' : 'var(--track)'}"></i>`).join('')}</div>`;
@@ -563,8 +563,8 @@ const lobbyHero = () => hero({ chip: 'Full, 15 of 15', tone: 'ok', icon: 'clock'
 
 /* 1. Lobby, 1 report */
 function F1(th) {
-  const card = yourApp('1 report', 'warn', 'Play shows it to the testers group, but a member had trouble.',
-    sp(12) + signIn() + quotes(REPORTS.slice(4), 'One more report sends it back. Check the sign-in still works.', 'warn', { noTitle: true }));
+  const card = yourApp('1', 'warn', 'Play shows it to the testers group, but a member had trouble.',
+    sp(12) + signIn() + quotes(REPORTS.slice(4), 'One more report sends it back. Check the sign-in still works.', 'warn', { noTitle: true }), '', 'flag');
   return tallPage(th, 'Crew 126', lobbyHero() + heading('Your app') + card, { sub: 'Starts in 6 h', end: membersBtn(15) });
 }
 /* 2. Sent back, 2 reports */
