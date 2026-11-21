@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Floats over other apps</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "BarlowApp"; font-weight: 400; src: url("../../../app/src/main/res/font/barlow_regular.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 500; src: url("../../../app/src/main/res/font/barlow_medium.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 600; src: url("../../../app/src/main/res/font/barlow_semibold.ttf"); }
+  @font-face { font-family: "BarlowApp"; font-weight: 700; src: url("../../../app/src/main/res/font/barlow_bold.ttf"); }
+  @font-face { font-family: "PlexApp"; font-weight: 700; src: url("../../../app/src/main/res/font/plexmono_bold.ttf"); }
+
+  /* OceanLight / OceanDark, ui/theme/Tokens.kt */
+  .light {
+    --text:#142F43; --text4:#59758A;
+    --glass:#F2F9FD; --glass2:#DFEDF6; --glassBorder:#B7D1E2;
+    --accent:#3A5B73; --onAccent:#FFFFFF; --accentInk:#22394B;
+    --ok:#246B59; --okBg:rgba(36,107,89,.12); --onOk:#FFFFFF;
+    --app:#E9ECEE; --block:#D3D8DC; --block2:#DEE2E5; --bar:#9AA3AA;
+  }
+  .dark {
+    --text:#ECEEF0; --text4:#757C82;
+    --glass:#1C1E20; --glass2:#292C2F; --glassBorder:#383C41;
+    --accent:#4A7290; --onAccent:#FFFFFF; --accentInk:#93B3CA;
+    --ok:#83D8C4; --okBg:rgba(131,216,196,.12); --onOk:#0F1011;
+    --app:#1F2225; --block:#33373B; --block2:#2A2D31; --bar:#6E767D;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #D9E0E5; font-family: "BarlowApp", "Barlow", system-ui, sans-serif; color: #1B2B36; }
+  .top { position: sticky; top: 0; z-index: 9; display: flex; align-items: center; gap: 10px; padding: 12px 28px; background: #D9E0E5; border-bottom: 1px solid #C3CDD4; }
+  .top h1 { margin: 0 14px 0 0; font-size: 20px; font-weight: 700; }
+  .top button { font: 600 15px/20px "BarlowApp", "Barlow", sans-serif; padding: 8px 18px; border-radius: 20px; border: 1px solid #B3C0C9; background: #F4F7F9; color: #2D4A5F; cursor: pointer; }
+  .top button.on { background: #2D4A5F; color: #fff; border-color: #2D4A5F; }
+  .doc { padding: 6px 28px 80px; }
+  .page { font-size: 26px; font-weight: 700; margin: 44px 0 0 4px; }
+  .pl { font-size: 17px; font-weight: 700; margin: 26px 0 10px 4px; color: #2D4A5F; }
+  .grid { display: flex; flex-wrap: wrap; gap: 30px 26px; align-items: flex-start; }
+  .state { display: flex; flex-direction: column; gap: 7px; }
+  .tag { font-size: 14px; font-weight: 700; margin-left: 4px; }
+  .pair { display: flex; gap: 18px; }
+  .src { font: 500 11.5px/14px "IBM Plex Mono", monospace; color: #7A858E; margin-left: 4px; max-width: 740px; }
+  .th { font-size: 11px; font-weight: 700; letter-spacing: .5px; color: #7A858E; margin: 0 0 4px 4px; text-transform: uppercase; }
+  body.only-light .fr.dark, body.only-dark .fr.light { display: none; }
+
+  /* The phone: 360 x 760 dp at 1px per dp. Status bar 24, gesture bar 24. */
+  .phone { position: relative; width: 360px; height: 760px; border-radius: 26px; overflow: hidden; background: var(--app); box-shadow: 0 0 0 7px #15181B, 0 10px 30px rgba(0,0,0,.25); margin: 7px; }
+  .sb { position: absolute; left: 0; right: 0; top: 0; height: 24px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font: 600 12px/1 "BarlowApp", sans-serif; color: var(--bar); }
+  .sb i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--bar); margin-left: 5px; }
+  .nb { position: absolute; left: 0; right: 0; bottom: 0; height: 24px; display: grid; place-items: center; }
+  .nb::after { content: ""; width: 108px; height: 4px; border-radius: 2px; background: var(--bar); opacity: .7; }
+  .fake { position: absolute; left: 0; right: 0; top: 24px; bottom: 24px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .fake .ab { height: 28px; display: flex; gap: 12px; align-items: center; }
+  .fake .ab b { width: 24px; height: 24px; border-radius: 6px; background: var(--block); }
+  .fake .ab s { width: 150px; height: 14px; border-radius: 7px; background: var(--block); }
+  .fake .hero { height: 170px; border-radius: 16px; background: var(--block2); }
+  .fake .ln { height: 12px; border-radius: 6px; background: var(--block2); }
+  .fake .rw { display: flex; gap: 12px; align-items: center; height: 56px; }
+  .fake .rw b { width: 44px; height: 44px; border-radius: 12px; background: var(--block); flex: none; }
+  .fake .rw span { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .fake .rw span s { height: 11px; border-radius: 6px; background: var(--block); width: 70%; }
+  .fake .rw span s + s { width: 45%; background: var(--block2); }
+  .fake .btn { margin-top: auto; height: 44px; border-radius: 22px; background: var(--block); }
+
+  /* The floating window. Its 8dp padding is the dock's own transparent margin. */
+  .win { position: absolute; left: 0; top: 0; visibility: hidden; }
+  .win.dockw { padding: 8px; }
+  .dock { background: var(--glass); border-radius: 24px; box-shadow: inset 0 0 0 1px var(--glassBorder), 0 6px 12px rgba(0,0,0,.20), 0 2px 4px rgba(0,0,0,.12); color: var(--text); }
+  .dock.open { border-radius: 22px; }
+  .name { font: 600 14px/20px "BarlowApp", "Barlow", sans-serif; letter-spacing: .1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+  .dev { font: 500 12.5px/14px "BarlowApp", "Barlow", sans-serif; color: var(--text4); }
+  .ico { display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  .ring { position: relative; width: 34px; height: 34px; flex: none; display: grid; place-items: center; }
+  .ring svg.rs { position: absolute; inset: 0; overflow: visible; }
+  .ring b { position: relative; font: 700 12px/16px "PlexApp", "IBM Plex Mono", monospace; letter-spacing: .5px; color: var(--text); }
+
+  .pp { width: 48px; height: 48px; display: grid; place-items: center; flex: none; }
+  .pp span { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--onAccent); }
+  .pp.ok span { background: var(--ok); color: var(--onOk); }
+
+  .cflat { display: flex; align-items: center; gap: 8px; padding-left: 6px; }
+  .cflat .tx { display: flex; flex-direction: column; min-width: 0; }
+  .cup { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0 1px; }
+
+  .oflat { width: 276px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .oflat .hd { display: flex; align-items: center; }
+  .oflat .hd .tx { flex: 1; min-width: 0; margin-left: 8px; }
+  .oup { width: 232px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .oup .hd { display: flex; flex-direction: column; align-items: center; max-width: 100%; }
+  .oup .hd .name { margin-top: 6px; max-width: 100%; }
+  .oup .hd .dev { width: fit-content; max-width: 100%; }
+
+  .dots { display: flex; gap: 3px; width: 100%; }
+  .dots i { flex: 1; height: 4px; border-radius: 2px; background: var(--glass2); }
+  .dots i.d { background: var(--ok); }
+  .dots i.c { background: var(--accent); }
+
+  /* Sign-in line: 48dp touch slot, the tinted pill inside is only as tall as its words. */
+  .si { width: 100%; min-height: 48px; display: flex; align-items: center; }
+  .si > div { width: 100%; border-radius: 12px; background: var(--glass2); padding: 7px 9px; display: flex; align-items: center; color: var(--accent); }
+  .si.cp > div { background: var(--okBg); color: var(--ok); }
+  .si .lb { font: 400 12.5px/17px "BarlowApp", "Barlow", sans-serif; color: var(--text4); }
+  .si .vl { font: 600 13px/18px "BarlowApp", "Barlow", sans-serif; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .si.cp .vl { color: var(--ok); }
+  .si.flat .lb { width: 60px; flex: none; }
+  .si.flat .vl { flex: 1; min-width: 0; }
+  .si.up .col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+  .big { min-height: 48px; display: flex; align-items: center; justify-content: center; align-self: center; }
+  .big span { display: flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 999px; background: var(--accent); color: var(--onAccent); font: 700 14px/20px "BarlowApp", "Barlow", sans-serif; letter-spacing: .1px; }
+  .big.ok span { background: var(--ok); color: var(--onOk); }
+
+  .touch { position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgba(120,130,140,.35); box-shadow: 0 0 0 2px rgba(255,255,255,.5); pointer-events: none; }
+  .ghost { position: absolute; width: 54px; height: 54px; border-radius: 50%; border: 2px dashed rgba(110,120,130,.55); }
+  .win.cam { width: 64px; height: 64px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Floats over other apps</h1>
+  <button data-v="both" class="on">Light and dark</button>
+  <button data-v="only-light">Light</button>
+  <button data-v="only-dark">Dark</button>
+</div>
+<div class="doc" id="doc"></div>
+
+<script>
+// ---------- Lucide icons (com.composables.icons.lucide) ----------
+const I = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  key: '<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>',
+  pause: '<rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/>',
+  play: '<polygon points="6 3 20 12 6 21 6 3"/>',
+};
+const ico = (n, s, color) => `<svg class="ico" width="${s}" height="${s}" viewBox="0 0 24 24" ${color ? `style="color:${color}"` : ''}>${I[n]}</svg>`;
+
+// ---------- The night's testing control (ui/VisitDockContent.kt) ----------
+const TOTAL = 20; // NightRound.VISIT_MS / 1000
+
+function status(u) {
+  const of = `app ${u.index + 1} of ${u.total}`;
+  if (u.counted && u.picture === true) return `Counted with its picture, ${of}`;
+  if (u.counted && u.picture === false) return `No picture yet, ${of}`;
+  if (u.counted) return `Taking its picture, ${of}`;
+  if (u.paused) return `Paused, ${of}`;
+  return `${u.secs}s to go, ${of}`;
+}
+
+function ring(u) {
+  const c = 2 * Math.PI * 17;
+  const f = u.counted ? 1 : Math.min(Math.max(TOTAL - u.secs, 0), TOTAL) / TOTAL;
+  const col = u.counted ? 'var(--ok)' : 'var(--accent)';
+  const arc = f > 0 ? `<circle cx="17" cy="17" r="17" fill="none" stroke="${col}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${c * f} ${c}" transform="rotate(-90 17 17)"/>` : '';
+  const mid = u.counted ? ico('check', 15, 'var(--ok)') : `<b>${u.secs}</b>`;
+  return `<div class="ring"><svg class="rs" width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="17" fill="none" stroke="var(--glass2)" stroke-width="4"/>${arc}</svg>${mid}</div>`;
+}
+
+function pp(u) {
+  const play = u.counted || u.paused;
+  return `<div class="pp ${u.counted ? 'ok' : ''}"><span>${ico(play ? 'play' : 'pause', 15)}</span></div>`;
+}
+
+function big(u) {
+  const label = u.counted ? (u.index + 1 < u.total ? 'Next app' : 'Finish') : u.paused ? 'Play' : 'Pause';
+  return `<div class="big ${u.counted ? 'ok' : ''}"><span>${ico(u.counted || u.paused ? 'play' : 'pause', 16)}${label}</span></div>`;
+}
+
+function dots(u) {
+  let s = '';
+  for (let i = 0; i < Math.min(u.total, 14); i++) s += `<i class="${i < u.index ? 'd' : i === u.index ? 'c' : ''}"></i>`;
+  return `<div class="dots">${s}</div>`;
+}
+
+function signIn(u, upright) {
+  return (u.signIn || []).map(([l, v], i) => {
+    const cp = u.copied === i;
+    const icon = ico('copy', 13);
+    return upright
+      ? `<div class="si up ${cp ? 'cp' : ''}"><div><span class="col"><span class="lb">${l}</span><span class="vl">${v}</span></span>${icon}</div></div>`
+      : `<div class="si flat ${cp ? 'cp' : ''}"><div><span class="lb">${l}</span><span class="vl">${v}</span>${icon}</div></div>`;
+  }).join('');
+}
+
+const key = (u) => (u.signIn && u.signIn.length ? ico('key', 15, 'var(--accentInk)') : '');
+
+function dock(u, upright, open) {
+  let inner;
+  if (open && upright) {
+    inner = `<div class="oup"><div class="hd">${ring(u)}<div class="name">${u.app}</div><div class="dev">${status(u)}</div></div>${dots(u)}${signIn(u, true)}${big(u)}</div>`;
+  } else if (open) {
+    inner = `<div class="oflat"><div class="hd">${ring(u)}<div class="tx"><div class="name">${u.app}</div><div class="dev">${status(u)}</div></div></div>${dots(u)}${signIn(u, false)}${big(u)}</div>`;
+  } else if (upright) {
+    inner = `<div class="cup">${ring(u)}<div class="dev">${u.index + 1} of ${u.total}</div>${key(u)}${pp(u)}</div>`;
+  } else {
+    inner = `<div class="cflat">${ring(u)}<div class="tx"><div class="name">${u.app}</div><div class="dev">${u.index + 1} of ${u.total}</div></div>${key(u)}${pp(u)}</div>`;
+  }
+  return `<div class="dock ${open ? 'open' : ''}">${inner}</div>`;
+}
+
+// ---------- The review camera button (res/drawable/review_capture_button.xml) ----------
+const CAM = `<svg width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="32" cy="33.5" r="27" fill="rgba(0,0,0,.12)"/>
+  <circle cx="32" cy="32" r="27" fill="#1D5C82"/>
+  <g transform="translate(18.2 17.6) scale(1.15)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14.5,4h-5L7,7H4a2,2 0,0 0,-2 2v9a2,2 0,0 0,2 2h16a2,2 0,0 0,2 -2V9a2,2 0,0 0,-2 -2h-3l-2.5,-3z"/>
+    <circle cx="12" cy="13" r="3"/>
+  </g></svg>`;
+
+// ---------- Fake "other app" and phone ----------
+const FAKE = `<div class="sb"><span>21:04</span><span><i></i><i></i><i></i></span></div>
+<div class="fake"><div class="ab"><b></b><s></s></div><div class="hero"></div><div class="ln" style="width:80%"></div><div class="ln" style="width:55%"></div>
+<div class="rw"><b></b><span><s></s><s></s></span></div><div class="rw"><b></b><span><s></s><s></s></span></div><div class="rw"><b></b><span><s></s><s></s></span></div>
+<div class="btn"></div></div><div class="nb"></div>`;
+
+// Placement: data-edge + data-along go through dockCorner (domain/DockGeometry.kt:62);
+// data-x/data-y put a window somewhere free (mid-drag).
+function phone(theme, winHtml, place, extra = '') {
+  const attrs = place.free ? `data-x="${place.x}" data-y="${place.y}"` : `data-edge="${place.edge}" data-along="${place.along}"`;
+  return `<div class="phone ${theme}">${FAKE}${extra}<div class="win ${place.cls}" ${attrs}>${winHtml}</div></div>`;
+}
+
+// ---------- States ----------
+const SIGN = [['Username', 'tester@habitgarden.app'], ['Password', 'Garden2024!']];
+const base = { app: 'Habit Garden', index: 1, total: 5, secs: 14, paused: false, counted: false, picture: null, signIn: [] };
+const S = (o) => Object.assign({}, base, o);
+const RIGHT = { edge: 'RIGHT', along: 0.6, cls: 'dockw' }; // RoundStore.kt:69 first spot
+const BOTTOM = { edge: 'BOTTOM', along: 0.5, cls: 'dockw' };
+const TOP = { edge: 'TOP', along: 0.3, cls: 'dockw' };
+const LEFT = { edge: 'LEFT', along: 0.35, cls: 'dockw' };
+
+const C = 'ui/VisitDockContent.kt';
+const groups = [
+  { page: 'Night run control', sub: 'Closed, on a side (first spot: right edge, 60% down)', items: [
+    ['Running', S({}), true, false, RIGHT, `${C}:113  ring :219  button :331`],
+    ['Running, app has a sign-in', S({ signIn: SIGN, secs: 9 }), true, false, RIGHT, `${C}:122`],
+    ['Paused', S({ paused: true, secs: 11 }), true, false, RIGHT, `${C}:335`],
+    ['Counted', S({ counted: true, secs: 0 }), true, false, RIGHT, `${C}:234  :342`],
+    ['Left edge', S({ secs: 5 }), true, false, LEFT, `viewmodel/VisitDockWindow.kt:151  domain/DockGeometry.kt:73`],
+  ]},
+  { sub: 'Closed, flat on the top or bottom', items: [
+    ['Running, bottom edge', S({}), false, false, BOTTOM, `${C}:125`],
+    ['Has a sign-in, top edge', S({ signIn: SIGN, secs: 17 }), false, false, TOP, `${C}:143`],
+    ['Paused', S({ paused: true, secs: 11 }), false, false, BOTTOM, `${C}:335`],
+    ['Counted', S({ counted: true, secs: 0 }), false, false, BOTTOM, `${C}:234  :342`],
+  ]},
+  { sub: 'Open, on a side (tap the ring)', items: [
+    ['Running, with sign-in', S({ signIn: SIGN, secs: 12 }), true, true, RIGHT, `${C}:179  status :214`],
+    ['Paused', S({ signIn: SIGN, paused: true, secs: 12 }), true, true, RIGHT, `${C}:213  :367`],
+    ['Counted, taking its picture', S({ signIn: SIGN, counted: true, secs: 0 }), true, true, RIGHT, `${C}:212`],
+    ['Counted with its picture', S({ signIn: SIGN, counted: true, secs: 0, picture: true }), true, true, RIGHT, `${C}:210  :366`],
+    ['Counted, no picture', S({ signIn: SIGN, counted: true, secs: 0, picture: false }), true, true, RIGHT, `${C}:211`],
+    ['Last app counted', S({ signIn: SIGN, counted: true, secs: 0, picture: true, index: 4 }), true, true, RIGHT, `${C}:366`],
+    ['Password copied', S({ signIn: SIGN, secs: 8, copied: 1 }), true, true, RIGHT, `${C}:284`],
+    ['Sign-in note without labels', S({ signIn: [['Sign-in', 'Any email works, code 1234']], secs: 15 }), true, true, RIGHT, `${C}:389`],
+    ['No sign-in', S({ secs: 15 }), true, true, RIGHT, `${C}:203`],
+  ]},
+  { sub: 'Open, flat on the top or bottom', items: [
+    ['Running, with sign-in', S({ signIn: SIGN, secs: 12 }), false, true, BOTTOM, `${C}:151`],
+    ['Counted with its picture', S({ signIn: SIGN, counted: true, secs: 0, picture: true }), false, true, BOTTOM, `${C}:210`],
+    ['Password copied', S({ signIn: SIGN, secs: 8, copied: 1 }), false, true, TOP, `${C}:284`],
+    ['No sign-in', S({ secs: 15 }), false, true, BOTTOM, `${C}:173`],
+  ]},
+  { sub: 'Moving', items: [
+    ['Being dragged', S({ secs: 10 }), true, false, { free: true, x: 150, y: 300, cls: 'dockw', touch: [174, 330] }, `viewmodel/VisitDockWindow.kt:117`],
+    ['Dragged while open (closes on let go)', S({ signIn: SIGN, secs: 10 }), true, true, { free: true, x: 50, y: 250, cls: 'dockw', touch: [170, 290] }, `viewmodel/VisitDockWindow.kt:159`],
+  ]},
+];
+
+const R = 'data/ReviewCaptureService.kt';
+const camItems = [
+  ['Waiting, first time (right edge, 76% down)', { edge: 'RIGHT', along: 0.76, cls: 'cam' }, '', 'light', `${R}:138  spot :237  res/drawable/review_capture_button.xml`],
+  ['Moved to the left edge', { edge: 'LEFT', along: 0.4, cls: 'cam' }, '', 'light', `${R}:207`],
+  ['Moved to the top edge', { edge: 'TOP', along: 0.7, cls: 'cam' }, '', 'light', `${R}:207`],
+  ['Being dragged', { free: true, x: 130, y: 360, cls: 'cam' }, 'touch', 'light', `${R}:178`],
+  ['Pressed: hidden while the picture is taken', { edge: 'RIGHT', along: 0.76, cls: 'cam', hidden: true }, 'ghost', 'light', `${R}:259`],
+  ['Over a dark app (same colours)', { edge: 'RIGHT', along: 0.76, cls: 'cam' }, '', 'dark', `res/drawable/review_capture_button.xml:13`],
+];
+
+// ---------- Build ----------
+const doc = document.getElementById('doc');
+let html = '';
+for (const g of groups) {
+  if (g.page) html += `<div class="page">${g.page}</div>`;
+  html += `<div class="pl">${g.sub}</div><div class="grid">`;
+  for (const [name, u, upright, open, place, src] of g.items) {
+    const touch = place.touch ? `<div class="touch" style="left:${place.touch[0] - 22}px;top:${place.touch[1] - 22}px;z-index:2"></div>` : '';
+    const fr = (t) => `<div class="fr ${t}"><div class="th">${t}</div>${phone(t, dock(u, upright, open), place, touch)}</div>`;
+    html += `<div class="state"><div class="tag">${name}</div><div class="pair">${fr('light')}${fr('dark')}</div><div class="src">${src}</div></div>`;
+  }
+  html += `</div>`;
+}
+html += `<div class="page">Review camera button</div><div class="pl">Same in light and dark</div><div class="grid">`;
+for (const [name, place, extra, t, src] of camItems) {
+  let ex = '';
+  if (extra === 'touch') ex = `<div class="touch" style="left:${place.x + 10}px;top:${place.y + 10}px;z-index:2"></div>`;
+  html += `<div class="state"><div class="tag">${name}</div>${phone(t, place.hidden ? '' : CAM, place, ex)}<div class="src">${src}</div></div>`;
+}
+html += `</div>`;
+doc.innerHTML = html;
+
+// dockCorner, as in domain/DockGeometry.kt
+const SCREEN = { width: 360, height: 760, top: 24, bottom: 24, margin: 4 };
+function dockCorner(edge, along, w, h, s = SCREEN) {
+  const m = s.margin;
+  const freeX = Math.max(s.width - 2 * m - w, 0);
+  const freeY = Math.max(s.height - s.top - s.bottom - 2 * m - h, 0);
+  const x = edge === 'LEFT' ? m : edge === 'RIGHT' ? s.width - m - w : m + along * freeX;
+  const y = edge === 'TOP' ? s.top + m : edge === 'BOTTOM' ? s.height - s.bottom - m - h : s.top + m + along * freeY;
+  return [x, y];
+}
+
+function placeAll() {
+  document.querySelectorAll('.win').forEach((w) => {
+    const ph = w.parentElement;
+    let x, y;
+    if (w.dataset.x !== undefined) { x = +w.dataset.x; y = +w.dataset.y; }
+    else {
+      const ww = w.classList.contains('cam') ? 64 : w.offsetWidth;
+      const hh = w.classList.contains('cam') ? 64 : w.offsetHeight;
+      [x, y] = dockCorner(w.dataset.edge, +w.dataset.along, ww, hh);
+      if (!w.innerHTML.trim()) {
+        const g = document.createElement('div');
+        g.className = 'ghost';
+        g.style.left = x + 5 + 'px'; g.style.top = y + 5 + 'px';
+        ph.appendChild(g);
+      }
+    }
+    w.style.left = x + 'px'; w.style.top = y + 'px'; w.style.visibility = 'visible';
+  });
+}
+document.fonts.ready.then(() => requestAnimationFrame(placeAll));
+
+document.querySelectorAll('.top button').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('.top button').forEach((x) => x.classList.toggle('on', x === b));
+  document.body.className = b.dataset.v === 'both' ? '' : b.dataset.v;
+}));
+</script>
+</body>
+</html>
