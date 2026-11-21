@@ -71,7 +71,9 @@ data class ApiNightPicture(
 
 @Serializable
 data class ApiTesterPictures(
-    @SerialName("seat_id") val seatId: String,
+    /** Their seat; blank for a volunteer, who has [volunteerId] instead. */
+    @SerialName("seat_id") val seatId: String = "",
+    @SerialName("volunteer_id") val volunteerId: String = "",
     val name: String,
     /** Their own day of the run, and whether their app has left it. */
     val day: Int = 0,
@@ -102,6 +104,8 @@ data class ApiCrewPictures(
     /** Nights the app was let off for everybody. */
     @SerialName("off_days") val offDays: List<Int> = emptyList(),
     val testers: List<ApiTesterPictures> = emptyList(),
+    /** Volunteers' nights with the reader's app, in the same shape; empty from an older server. */
+    val volunteers: List<ApiTesterPictures> = emptyList(),
 )
 
 @Serializable
@@ -254,6 +258,10 @@ data class ApiCrew(
     /** Others' messages not read yet; bot lines never count. */
     @SerialName("chat_unread") val chatUnread: Int = 0,
     @SerialName("chat_muted") val chatMuted: Boolean = false,
+    /** The crew's volunteers, for its members; never in [members], so older builds never see them. */
+    val volunteers: List<ApiVolunteerRow> = emptyList(),
+    /** The reader's own volunteer spot here, when that is how they are in it. */
+    val volunteer: ApiVolunteerMe? = null,
 )
 
 @Serializable
@@ -265,4 +273,6 @@ data class CrewList(
     val blocked: String? = null,
     /** The crew this account's waiting app is in, when that is why a seat is blocked; null from an older server. */
     @SerialName("blocked_crew") val blockedCrew: String? = null,
+    /** Crews this account volunteers in, each with its [ApiCrew.volunteer]; empty from an older server. */
+    val volunteering: List<ApiCrew> = emptyList(),
 )

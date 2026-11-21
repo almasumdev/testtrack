@@ -199,8 +199,11 @@ class CrewViewModel : ViewModel() {
         offline = false
     }
 
-    /** Everything the tab shows, in one call. Safe to run on every resume. */
-    fun load(context: Context) {
+    /** Everything the tab shows, in one call. Safe to run on every resume. [then] runs once a fresh answer is in. */
+    fun load(
+        context: Context,
+        then: () -> Unit = {},
+    ) {
         if (previewing) return
         val mine = ++loads
         reloading = true
@@ -216,6 +219,7 @@ class CrewViewModel : ViewModel() {
                 // away again, and a crew's page reads that as the crew being gone.
                 if (mine != loads) return@launch
                 apply(answer)
+                then()
                 // A test cycle completed is TestTrack's value moment; only fresh answers count.
                 ReviewMoment.noteFinished(context, crews.filter { it.phase == CrewPhase.RECORD && !it.out }.map { it.id }.toSet())
                 offline = false
@@ -234,7 +238,7 @@ class CrewViewModel : ViewModel() {
     }
 
     private fun apply(answer: com.eazyverse.testtrack.net.CrewList) {
-        crews = answer.mine.map { it.toCrew() }
+        crews = answer.mine.map { it.toCrew() } + answer.volunteering.map { it.toVolunteerCrew() }
         open = answer.open?.toCrew(member = false)
         blocked = answer.blocked
         blockedCrew = answer.blockedCrew
@@ -460,7 +464,7 @@ class CrewViewModel : ViewModel() {
     // Your crews' own channels, and the two events about your seats that come on yours.
     private val live =
         LiveReload("crew", viewModelScope) {
-            it.channel.startsWith("crew:") || it.type == "seat.mine" || it.type == "visit.recorded"
+            it.channel.startsWith("crew:") || it.type == "seat.mine" || it.type == "visit.recorded" || it.type == "volunteer.changed"
         }
 
     // The kept crews, only without a connection; online the tabs shimmer until the server answers.

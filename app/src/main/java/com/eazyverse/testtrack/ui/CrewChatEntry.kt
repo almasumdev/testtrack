@@ -68,6 +68,8 @@ internal fun chatEntryOf(
 ): ChatEntry =
     when {
         crew == null || crew.chatState == ChatState.OFF || crew.chatState == ChatState.GONE -> ChatEntry.NONE
+        // A volunteer spot that is over: the page says what happened, with no way into the chat.
+        crew.volunteer?.ended == true -> ChatEntry.NONE
         crew.phase == CrewPhase.RECORD -> if (pruned || crew.pruned) ChatEntry.NONE else ChatEntry.READ_ONLY
         crew.phase == CrewPhase.LOBBY || crew.phase == CrewPhase.RUN -> ChatEntry.OPEN
         else -> ChatEntry.NONE

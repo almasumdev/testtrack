@@ -139,12 +139,15 @@ private fun CrewChatViewModel.post(
             if (pictureId != null && !job.pictureSent) {
                 val uri = Uri.parse(requireNotNull(job.pictureUri))
                 val app = requireNotNull(context)
+                // A volunteer's "seat" in the chat is their volunteer id, which is no seat: the crew goes instead.
+                val seat = people.values.firstOrNull { it.mine && !it.volunteer }?.seatId
                 pictureId =
                     ServerUpload.send(
                         pictureId,
                         ServerUpload.CHAT,
                         "image/jpeg",
-                        seatId = mySeat,
+                        seatId = seat,
+                        crewId = if (seat == null) crewId else null,
                         remint = { fresh -> pending[id] = job.copy(pictureId = fresh) },
                     ) { pictureBytes(app, uri) }
                 pending[id] = (pending[id] ?: job).copy(pictureId = pictureId, pictureSent = true)

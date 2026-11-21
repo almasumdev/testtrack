@@ -45,6 +45,8 @@ internal fun CrewRowSheet(
     sheet: RowSheet,
     crewName: String,
     actions: CrewActions,
+    /** The reader volunteers in this crew: no Report, which stays with members. */
+    volunteer: Boolean = false,
     onDismiss: () -> Unit,
 ) {
     val seat = sheet.seat
@@ -120,7 +122,7 @@ internal fun CrewRowSheet(
                         "Say why. ${CrewRules.VOTES_TO_DECIDE} No answers send it back to ${seat.owner}.",
                         Tone.BAD,
                     ) { then { actions.onVote(seat, false) } }
-                sheet.kind == SheetKind.ASKED -> Unit
+                sheet.kind == SheetKind.ASKED || volunteer -> Unit
                 // During the run a report lets off only the night it is sent on; tomorrow the row
                 // is owed again, and Report is back here if it is still broken.
                 seat.reported ->

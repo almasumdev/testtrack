@@ -30,6 +30,7 @@ fun CrewListRow(
     onOpen: () -> Unit,
 ) {
     val mine = crew.mine
+    val spot = crew.volunteer
     val tone =
         when {
             crew.out -> Tone.BAD
@@ -53,6 +54,7 @@ fun CrewListRow(
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
             Text(
                 when {
+                    spot?.ended == true -> "You're out"
                     crew.out -> "Your app is out"
                     crew.nightsDone -> "Your nights are done"
                     crew.owed == 0 -> "Done for tonight"
@@ -62,6 +64,16 @@ fun CrewListRow(
                 style = tileStyle(15f, 20f, FontWeight.Medium),
                 color = if (tone == Tone.ACCENT) Tt.colors.text else tone.ink(),
             )
+            if (spot != null && !spot.ended) {
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    "${spot.tixEarned} tix earned",
+                    Modifier.weight(1f),
+                    style = tileStyle(12f, 17f, FontWeight.Normal),
+                    color = Tt.colors.text3,
+                    textAlign = TextAlign.End,
+                )
+            }
             if (!crew.out && mine != null && crew.testers.isNotEmpty()) {
                 Spacer(Modifier.width(12.dp))
                 Text(
@@ -81,7 +93,11 @@ fun CrewListRow(
                 color = Tone.WARN.ink(),
             )
         }
-        if (showApp) CrewTileApp(mine) { CrewChatTileButton(crew, onChat) }
+        if (showApp && spot != null) {
+            CrewTileVolunteer(crew) { CrewChatTileButton(crew, onChat) }
+        } else if (showApp) {
+            CrewTileApp(mine) { CrewChatTileButton(crew, onChat) }
+        }
     }
 }
 

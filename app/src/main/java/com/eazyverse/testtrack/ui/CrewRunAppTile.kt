@@ -46,8 +46,11 @@ internal fun CrewRunAppTile(
     actions: CrewActions,
     onSheet: (RowSheet) -> Unit,
     kind: CrewRunAppKind = CrewRunAppKind.REQUIRED,
+    /** The reader volunteers here: reports and Play feedback stay with members. */
+    volunteer: Boolean = false,
 ) {
     val left = kind == CrewRunAppKind.LEFT
+    val reports = !left && !app.reported && !volunteer
     val largeText = LocalDensity.current.fontScale > 1.3f
     val status = crewRunAppState(app, seat, kind, actions)
     var screenshotChoice by remember(app.id) { mutableStateOf(false) }
@@ -66,7 +69,7 @@ internal fun CrewRunAppTile(
                     },
                 ),
             )
-            if (!left && !app.reported && !largeText) {
+            if (reports && !largeText) {
                 Spacer(Modifier.width(4.dp))
                 InlineAction(
                     "Report",
@@ -75,7 +78,7 @@ internal fun CrewRunAppTile(
                 ) { actions.onReport(seat) }
             }
         }
-        if (!left && !app.reported && largeText) {
+        if (reports && largeText) {
             InlineAction(
                 "Report",
                 Modifier.align(Alignment.End),
@@ -102,7 +105,7 @@ internal fun CrewRunAppTile(
                     null
                 },
         )
-        if (!app.feedbackSent && !app.reported && kind == CrewRunAppKind.REQUIRED && !status.feedbackAction) {
+        if (!volunteer && !app.feedbackSent && !app.reported && kind == CrewRunAppKind.REQUIRED && !status.feedbackAction) {
             FeedbackAction(app, actions)
         }
     }

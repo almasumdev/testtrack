@@ -123,6 +123,9 @@ object CrewRules {
     /** The longest appeal to get a taken-out app back, as the server keeps it. */
     const val APPEAL_MAX = 500
 
+    /** What a volunteer earns for each whole night (rules.VOLUNTEER_NIGHT_TIX). */
+    const val VOLUNTEER_NIGHT_TIX = 5
+
     /** What being in this many crews costs every evening, which is the only honest warning. */
     fun nightly(crews: Int) = crews * NIGHTLY
 }
@@ -224,7 +227,37 @@ data class CrewMember(
     val icon: String = "",
     /** When their app was taken out of the run (ISO time); blank while it is in. */
     val outAt: String = "",
+    /** A volunteer: no app here, testing everyone's. Never in [Crew.members], only [Crew.volunteers]. */
+    val volunteer: Boolean = false,
+    /** Their first night in the run: 1 for a member unless put in part-way, later for a volunteer. */
+    val firstNight: Int = 1,
 )
+
+/** How the reader is in a crew: with an app of their own, or as a volunteer with none. */
+enum class CrewRole { MEMBER, VOLUNTEER }
+
+/**
+ * The reader's own volunteer spot in a crew. [state] is the server's: active, left, out (one
+ * missed night), released (an app came back and took the spot), removed (by the team) or done.
+ */
+data class CrewVolunteer(
+    val id: String,
+    val state: String = "active",
+    /** Whole nights paid so far, and the tix they came to. */
+    val nightsPaid: Int = 0,
+    val tixEarned: Int = 0,
+    /** Why the spot ended, in the server's words; blank while active. */
+    val endReason: String = "",
+    /** The last whole night that counted for them; null while active. */
+    val lastNight: Int? = null,
+) {
+    /** The spot is over before the run: left, out, released or removed. Not a run that finished. */
+    val ended: Boolean get() = state in ENDED
+
+    private companion object {
+        val ENDED = setOf("left", "out", "released", "removed")
+    }
+}
 
 /**
  * One app owed a visit tonight.
@@ -319,7 +352,14 @@ data class Crew(
     val chatState: ChatState = ChatState.OFF,
     val chatUnread: Int = 0,
     val chatMuted: Boolean = false,
+    /** The crew's volunteers, who test every app and have none here; members only, so never the reader. */
+    val volunteers: List<CrewMember> = emptyList(),
+    /** The reader's own volunteer spot, when that is how they are in this crew; null for a member. */
+    val volunteer: CrewVolunteer? = null,
 ) {
+    /** A member with an app here, or a volunteer with none. */
+    val role: CrewRole get() = if (volunteer != null) CrewRole.VOLUNTEER else CrewRole.MEMBER
+
     /** Days of the run that are this account's: all of them, or what was left when it joined. */
     val ownNights: Int get() = (runDays - firstNight + 1).coerceAtLeast(0)
 
@@ -327,7 +367,7 @@ data class Crew(
      * This account's own nights are over while the others are still on their last: members ahead
      * in time zone finish first. Nothing is left to open, and the crew closes when everyone is done.
      */
-    val nightsDone: Boolean get() = phase == CrewPhase.RUN && day > runDays
+    val nightsDone: Boolean get() = phase == CrewPhase.RUN && (day > runDays || volunteer?.state == "done")
 
     /** Which of this account's own days it is, counted from its first night. */
     val ownDay: Int get() = (day - firstNight + 1).coerceAtLeast(0)
@@ -341,8 +381,8 @@ data class Crew(
      */
     val mayVote: Boolean get() = filling && mine?.state == SeatState.CONFIRMED
 
-    /** This account's app is no longer part of it. */
-    val out: Boolean get() = mine?.state == SeatState.REJECTED || mine?.state == SeatState.REMOVED
+    /** This account's app is no longer part of it, or its volunteer spot ended. */
+    val out: Boolean get() = mine?.state == SeatState.REJECTED || mine?.state == SeatState.REMOVED || volunteer?.ended == true
 
     /** Owed tonight, in this crew alone. */
     val owed: Int get() = apps.count { !it.done && !it.reported }
@@ -362,8 +402,8 @@ data class Crew(
     /** Members still in the run. */
     val stayed: Int get() = members.count { !it.out }
 
-    /** The others still in the run: the people testing this account's app. */
-    val testers: List<CrewMember> get() = members.filter { !it.mine && !it.out }
+    /** The others still in the run, volunteers too: the people testing this account's app. */
+    val testers: List<CrewMember> get() = members.filter { !it.mine && !it.out } + volunteers.filter { !it.out }
 
     /** Of [testers], those who have opened this account's app on their current day. */
     val openedMineTonight: Int get() = testers.count { it.openedMineToday }
@@ -375,6 +415,7 @@ data class Crew(
     val standing: String
         get() =
             when {
+                volunteer?.ended == true -> "You're out"
                 out && phase != CrewPhase.RECORD -> "Your app is out"
                 phase == CrewPhase.OPEN -> "${CrewRules.SEATS - taken} seats left"
                 phase == CrewPhase.LOBBY && filling -> "Filling, $filled of ${CrewRules.SEATS}"

@@ -39,6 +39,8 @@ internal fun RunHero(
                 "${refused.first().label} wasn't installed from Google Play, so install it from Play first."
             refused.size == 1 -> "${refused.first().label} needs its update before it counts."
             refused.isNotEmpty() -> "${refused.size} apps need an update or a copy from Google Play first."
+            // A volunteer's whole rule, said every night: one app left unopened ends the spot.
+            crew.volunteer != null -> "Finish all ${crew.apps.size} by midnight, your time. One left unopened and you're out."
             last -> "${clean}Tonight is the last night."
             else -> "${clean}Day ${crew.ownDay + 1} begins at midnight, your time."
         }
@@ -70,9 +72,15 @@ internal fun RunHero(
         lineTone = if (crew.atRisk && !done) Tone.WARN else null,
         meter = {
             DayMeter(crew.day, done, from = crew.firstNight, total = crew.runDays)
-            // Tonight counts as done once it is, so the two sides always add up to this account's run.
-            val daysDone = (crew.ownDay - if (done) 0 else 1).coerceIn(0, crew.ownNights)
-            MeterLabels("$daysDone ${pluralOf(daysDone, "day")} done", "${crew.ownNights - daysDone} to go")
+            val spot = crew.volunteer
+            if (spot != null) {
+                // Paid nights and what they came to: what a volunteer is here for.
+                MeterLabels("${spot.nightsPaid} ${pluralOf(spot.nightsPaid, "night")} done", "${spot.tixEarned} tix earned")
+            } else {
+                // Tonight counts as done once it is, so the two sides always add up to this account's run.
+                val daysDone = (crew.ownDay - if (done) 0 else 1).coerceIn(0, crew.ownNights)
+                MeterLabels("$daysDone ${pluralOf(daysDone, "day")} done", "${crew.ownNights - daysDone} to go")
+            }
         },
         action =
             when {

@@ -29,6 +29,7 @@ internal fun ApiChatPerson.toPerson() =
         day = day,
         inCrew = inCrew,
         mine = mine,
+        volunteer = volunteer,
     )
 
 internal fun ApiChatLimits.toLimits() =

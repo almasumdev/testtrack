@@ -77,6 +77,8 @@ data class ApiChatPerson(
     val day: Int = 0,
     @SerialName("in_crew") val inCrew: Boolean = true,
     val mine: Boolean = false,
+    /** A volunteer, with no app here: [seatId] is their volunteer id and the app fields are blank. */
+    val volunteer: Boolean = false,
 )
 
 /** One line of the chat. */

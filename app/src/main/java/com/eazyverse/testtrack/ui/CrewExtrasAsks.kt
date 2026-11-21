@@ -77,6 +77,8 @@ internal fun withCrewExtras(
         updateBlocked = { seat -> extras.updateBlocked(context, seat.packageName, seat.versionCode) },
         onAppeal = { seat -> extras.askAppeal(seat.id, seat.appName) },
         onUninstall = { pkg -> uninstall(context, pkg) },
+        onLeaveVolunteer = base.onLeaveVolunteer,
+        onFindCrew = base.onFindCrew,
     )
 }
 

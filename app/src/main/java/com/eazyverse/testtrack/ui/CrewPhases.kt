@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.HandHeart
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Undo2
 import com.composables.icons.lucide.Users
@@ -67,7 +68,7 @@ private fun CrewList(
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = ListTop, bottom = Gutter + dockRoom())) {
         content { sheet = it }
     }
-    sheet?.let { CrewRowSheet(it, crew.name, actions) { sheet = null } }
+    sheet?.let { CrewRowSheet(it, crew.name, actions, volunteer = crew.volunteer != null) { sheet = null } }
 }
 
 /**
@@ -80,7 +81,11 @@ fun CrewLobbyPhase(
     actions: CrewActions,
 ) {
     val mine = crew.mine
-    val others = crew.seats.filter { !it.mine && it.state != SeatState.REJECTED }
+    // A volunteer joins a run already going: only the apps still in it are theirs to install.
+    val others =
+        crew.seats.filter {
+            !it.mine && it.state != SeatState.REJECTED && (crew.volunteer == null || it.state == SeatState.CONFIRMED)
+        }
     val asked = if (crew.mayVote) others.filter { it.state == SeatState.CHECKING } else emptyList()
     val install = others - asked.toSet()
 
@@ -94,6 +99,11 @@ fun CrewLobbyPhase(
             return@CrewList
         }
         block { LobbyHero(crew) }
+        // Not in the first drawing: the way out before the first night, so a spot taken by mistake can be given back.
+        if (crew.volunteer != null) {
+            item { CrewHeading("Your part") }
+            block { VolunteerCard(crew, actions) }
+        }
         if (mine != null) {
             item { CrewHeading("Your app") }
             block { LobbyYourApp(crew, mine, actions) }
@@ -104,7 +114,7 @@ fun CrewLobbyPhase(
             rows("ask", asked, { it.id }) { seat, place -> AskedRow(seat, place, actions, onSheet) }
         }
         if (install.isNotEmpty()) {
-            item { CrewHeading("Install these") }
+            item { CrewHeading("Install these", if (crew.volunteer != null) "${install.size}" else null) }
             rows("in", install, { it.id }) { seat, place -> InstallRow(seat, place, actions, onSheet) }
         }
     }
@@ -143,6 +153,20 @@ private fun LobbyHero(crew: Crew) {
             meter = {
                 SeatMeter(crew.filled, checking)
                 MeterLabels("${crew.filled} in" + if (checking > 0) ", $checking being checked" else "", "${CrewRules.SEATS} seats")
+            },
+        )
+    } else if (crew.volunteer != null) {
+        // A volunteer, waiting for their first night: the same late start, said in nights.
+        val apps = crew.seats.count { it.state == SeatState.CONFIRMED }
+        CrewHero(
+            chip = "Volunteer from night ${crew.firstNight}",
+            tone = Tone.ACCENT,
+            icon = Lucide.HandHeart,
+            headline = "Starts in ${untilStart(crew.startsIn)}",
+            line = "Install the $apps apps before midnight, your time. Nothing counts until then.",
+            meter = {
+                DayMeter(crew.firstNight - 1, done = true, from = crew.firstNight, total = crew.runDays)
+                MeterLabels("You join on night ${crew.firstNight}", "${crew.ownNights} ${pluralOf(crew.ownNights, "night")} for you")
             },
         )
     } else if (crew.firstNight > 1) {
@@ -272,6 +296,10 @@ fun CrewRunPhase(
     val refused = owed.filter { refusedHere(it, actions.copyOf(it.packageName)) }
 
     CrewList(crew, actions) { onSheet ->
+        if (crew.volunteer?.ended == true) {
+            block { VolunteerEndedHero(crew, actions) }
+            return@CrewList
+        }
         if (crew.out) {
             block { OwnerOutCard(crew, actions) }
             return@CrewList
@@ -279,6 +307,10 @@ fun CrewRunPhase(
         // Ahead in time zone: this account's last night is over while the others finish theirs.
         if (crew.nightsDone) {
             block { NightsDoneHero(crew) }
+            if (crew.volunteer != null) {
+                item { CrewHeading("Your part") }
+                block { VolunteerCard(crew, actions) }
+            }
             crew.mine?.let { mine ->
                 item { CrewHeading("Your app") }
                 block { TestersCard(crew, mine, actions) }
@@ -293,10 +325,14 @@ fun CrewRunPhase(
             block { TestersCard(crew, mine, actions) }
             block { OwnerToolsCard(mine, actions) }
         }
+        if (crew.volunteer != null) {
+            item { CrewHeading("Your part") }
+            block { VolunteerCard(crew, actions) }
+        }
         if (apps.isNotEmpty()) {
             item { CrewHeading("Apps", "${apps.size}") }
             rows("app", apps, { it.app.id }) { entry, _ ->
-                CrewRunAppTile(entry.app, seatOf(entry.app), actions, onSheet, entry.kind)
+                CrewRunAppTile(entry.app, seatOf(entry.app), actions, onSheet, entry.kind, volunteer = crew.volunteer != null)
             }
         }
     }

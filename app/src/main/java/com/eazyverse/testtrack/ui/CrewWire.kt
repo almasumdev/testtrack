@@ -3,6 +3,8 @@ package com.eazyverse.testtrack.ui
 import com.eazyverse.testtrack.domain.ChatState
 import com.eazyverse.testtrack.net.ApiCrew
 import com.eazyverse.testtrack.net.ApiSeat
+import com.eazyverse.testtrack.net.ApiVolunteerMe
+import com.eazyverse.testtrack.net.ApiVolunteerRow
 
 /*
  * The server's crews, in the shape the screens already speak.
@@ -196,6 +198,79 @@ fun ApiCrew.toCrew(member: Boolean = true): Crew {
         chatState = ChatState.of(chatState),
         chatUnread = chatUnread,
         chatMuted = chatMuted,
+        volunteers = volunteers.map { it.toMember() },
+    )
+}
+
+/** One volunteer, as the crew's members see them: a tester with no app. */
+fun ApiVolunteerRow.toMember() =
+    CrewMember(
+        id = id,
+        name = name,
+        appName = "",
+        day = day,
+        doneToday = doneToday,
+        owedToday = owedToday,
+        nightDone = nightDone,
+        out = state != "active" && state != "done",
+        openedMineToday = openedMineToday,
+        openedMineAt = openedMineAt.orEmpty(),
+        openedMineDays = openedMineDays,
+        openedMinePicture = openedMinePicture,
+        openedMineByHand = openedMineByHand,
+        photo = photo,
+        email = email,
+        outAt = outAt.orEmpty(),
+        volunteer = true,
+        firstNight = firstNight,
+    )
+
+/**
+ * A crew the reader volunteers in. The server sends it as a member would see it, with the day,
+ * first night and tonight's marks in the volunteer's own calendar and no seat of theirs.
+ *
+ * Owed tonight: every confirmed app whose own run has reached the volunteer's night, unless it is
+ * marked down or let off. Before the volunteer's first night it is a Lobby, the apps to install;
+ * a spot that ended stays a Run with nothing to open, so its page can say what happened.
+ */
+fun ApiCrew.toVolunteerCrew(): Crew {
+    val me = volunteer ?: ApiVolunteerMe()
+    val base = toCrew()
+    val first = firstNight.coerceAtLeast(me.firstNight)
+    val mine =
+        CrewVolunteer(
+            id = me.id,
+            state = me.state,
+            nightsPaid = me.nightsPaid,
+            tixEarned = me.tixEarned,
+            endReason = me.endReason,
+            lastNight = me.lastNight,
+        )
+    val waiting = !mine.ended && me.state == "active" && day < first
+    val going = !waiting && me.state == "active" && day in 1..base.runDays
+    val run = members.filter { !it.mine && it.state == "confirmed" }
+    return base.copy(
+        phase = if (waiting) CrewPhase.LOBBY else CrewPhase.RUN,
+        filling = false,
+        apps = if (going) run.filter { it.firstNight <= day && !it.offTonight }.map { it.toApp(name, day) } else emptyList(),
+        optional = if (going) run.filter { it.optionalTonight }.map { it.toApp(name, day) } else emptyList(),
+        left =
+            if (going) {
+                members.filter { it.state == "removed" }.map { it.toApp(name, day).copy(outAt = it.outAt.orEmpty()) }
+            } else {
+                emptyList()
+            },
+        strip =
+            if (waiting) {
+                emptyList()
+            } else {
+                run.map { it.toApp(name, day) } +
+                    members.filter { it.state == "removed" }.map { it.toApp(name, day).copy(outAt = it.outAt.orEmpty(), out = true) }
+            },
+        firstNight = first,
+        startsIn = if (startsInMs > 0) startsInMs else me.startsInMs,
+        finishedDays = 0,
+        volunteer = mine,
     )
 }
 

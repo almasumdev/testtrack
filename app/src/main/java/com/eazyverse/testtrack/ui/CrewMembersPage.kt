@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.HandHeart
 import com.composables.icons.lucide.Image
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Users
@@ -133,10 +134,20 @@ fun CrewMembersBody(
                             )
                         }
                     }
-                    item { CrewHeading("Testers", "${tiles.size}") }
-                    itemsIndexed(tiles, key = { _, tester -> tester.id }) { index, tester ->
-                        Box(Modifier.padding(horizontal = Gutter).padding(bottom = if (index < tiles.size - 1) 8.dp else 0.dp)) {
-                            TesterTile(tester, onFace = { profile = tester }, onPicture = { open = it })
+                    // Volunteers under their own heading once there are any; otherwise one list as before.
+                    val volunteers = tiles.filter { it.volunteer }
+                    val sections =
+                        if (volunteers.isEmpty()) {
+                            listOf("Testers" to tiles)
+                        } else {
+                            listOf("Members" to tiles.filter { !it.volunteer }, "Volunteers" to volunteers)
+                        }
+                    sections.forEach { (title, list) ->
+                        item { CrewHeading(title, "${list.size}") }
+                        itemsIndexed(list, key = { _, tester -> tester.id }) { index, tester ->
+                            Box(Modifier.padding(horizontal = Gutter).padding(bottom = if (index < list.size - 1) 8.dp else 0.dp)) {
+                                TesterTile(tester, onFace = { profile = tester }, onPicture = { open = it })
+                            }
                         }
                     }
                 }
@@ -189,9 +200,14 @@ private fun notesOf(
     }
     val stillIn = testers.count { !it.out }
     val out = testers.size - stillIn
-    return listOf(
+    return listOfNotNull(
         Lucide.Users to "$stillIn still in${if (out > 0) ", $out left" else ""}. ${CrewRules.FLOOR} need to keep opening it every day.",
         Lucide.Image to "Pictures of the last 3 nights. Tap one to see it whole.",
+        if (testers.any { it.volunteer }) {
+            Lucide.HandHeart to "A hand marks a volunteer. They have no app here and count for Google like members."
+        } else {
+            null
+        },
     )
 }
 

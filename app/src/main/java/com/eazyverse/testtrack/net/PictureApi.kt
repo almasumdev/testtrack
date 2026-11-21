@@ -19,6 +19,7 @@ data class UploadOut(
  *
  * Sending the same id again answers the same way, so a try that died half way is simply repeated.
  * [kind] is `visit`, `crew_feedback` or `review`; [seatId] is the app's seat for the two crew kinds.
+ * A chat picture from somebody with no seat in the crew, such as a volunteer, names [crewId] instead.
  */
 suspend fun Api.upload(
     id: String,
@@ -26,8 +27,9 @@ suspend fun Api.upload(
     bytes: ByteArray,
     mime: String,
     seatId: String? = null,
+    crewId: String? = null,
 ): UploadOut {
-    val seat = seatId?.let { "&seat_id=$it" }.orEmpty()
+    val seat = seatId?.let { "&seat_id=$it" }.orEmpty() + crewId?.let { "&crew_id=$it" }.orEmpty()
     return send(Request.Builder().url(url("/uploads/$id?kind=$kind$seat")).put(bytes.toRequestBody(mime.toMediaType())))
 }
 

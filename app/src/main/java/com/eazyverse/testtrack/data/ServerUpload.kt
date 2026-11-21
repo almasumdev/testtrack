@@ -19,7 +19,7 @@ object ServerUpload {
     const val CREW_FEEDBACK = "crew_feedback"
     const val REVIEW = "review"
 
-    /** A picture in a crew's chat, kept a day. Sent with the sender's seat. */
+    /** A picture in a crew's chat, kept a day. Sent with the sender's seat, or the crew when they have none. */
     const val CHAT = "chat"
 
     /** The two types the server takes. Anything else is redrawn as a JPEG before it goes. */
@@ -58,18 +58,20 @@ object ServerUpload {
         kind: String,
         mime: String,
         seatId: String? = null,
+        /** A chat picture's crew, for a sender with no seat in it. */
+        crewId: String? = null,
         remint: (String) -> Unit = {},
         bytes: () -> ByteArray,
     ): String {
         val data = withContext(Dispatchers.IO) { bytes() }
         try {
-            return Api.upload(id, kind, data, mime, seatId).id.ifBlank { id }
+            return Api.upload(id, kind, data, mime, seatId, crewId).id.ifBlank { id }
         } catch (e: ApiError) {
             if (e.status != TAKEN) throw e.readable()
         }
         val fresh = newId().also(remint)
         try {
-            return Api.upload(fresh, kind, data, mime, seatId).id.ifBlank { fresh }
+            return Api.upload(fresh, kind, data, mime, seatId, crewId).id.ifBlank { fresh }
         } catch (e: ApiError) {
             // Taken twice cannot be the id's fault. Never read as a final no: it is tried again.
             throw if (e.status == TAKEN) ApiError(0, e.code, LATER) else e.readable()

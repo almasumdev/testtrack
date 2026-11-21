@@ -70,6 +70,8 @@ fun CrewOpenTab(
     vm: CrewViewModel,
     actions: CrewActions,
     guide: CrewGuide = CrewGuide(),
+    /** Running crews with volunteer spots, under the crew taking seats; none without it. */
+    volunteers: VolunteerSection? = null,
 ) {
     val notificationsOff = rememberNotificationsOff()
     LazyColumn(
@@ -105,6 +107,7 @@ fun CrewOpenTab(
             }
         }
 
+        volunteers?.let { volunteerSpots(it) }
         crewGuide(vm.open?.runDays ?: CrewRules.RUN_DAYS)
     }
 }

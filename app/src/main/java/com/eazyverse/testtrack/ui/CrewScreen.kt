@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.domain.ChatSignals
 import com.eazyverse.testtrack.ui.theme.Tt
+import com.eazyverse.testtrack.viewmodel.VolunteerViewModel
 
 /**
  * Crew: one cohort, at whatever point it has reached.
@@ -64,6 +65,7 @@ fun CrewScreen(
     LaunchedEffect(Unit) { ChatSignals.news.collect { vm.load(context) } }
     CrewLifecycle(vm)
     val actions = crewActions(vm, dialogs, onSignIn, onAddToCrew)
+    val volunteers = rememberVolunteerSection(vm, onSignIn, onOpenCrew)
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -85,11 +87,40 @@ fun CrewScreen(
                     LoadSwap(vm.firstLoad) { if (it) CrewLobbyLoading() else CrewLobbyTab(vm, onSignIn, actions, onOpenCrew, onOpenChat) }
                 vm.tab == CrewPhase.RECORD ->
                     LoadSwap(vm.firstLoad) { if (it) CrewRecordLoading() else CrewRecordTab(vm, onSignIn, onOpenCrew) }
-                else -> CrewOpenTab(vm, actions, rememberCrewGuide(vm, myApps, onSignIn, onAddApp, onOpenCircle))
+                else -> CrewOpenTab(vm, actions, rememberCrewGuide(vm, myApps, onSignIn, onAddApp, onOpenCircle), volunteers)
             }
         }
     }
     CrewDialogsHost(vm, dialogs)
+    VolunteerJoinHost(vm, viewModel(), onOpenCrew)
+}
+
+/**
+ * The Open tab's volunteer list, read whenever the tab shows and after each crew load. Volunteer
+ * asks a stranger to sign in, and a member to be on the testers group, before the sheet opens.
+ */
+@Composable
+private fun rememberVolunteerSection(
+    vm: CrewViewModel,
+    onSignIn: () -> Unit,
+    onOpenCrew: (String) -> Unit,
+    volunteers: VolunteerViewModel = viewModel(),
+): VolunteerSection {
+    val membership = rememberMembership()
+    LaunchedEffect(vm.tab, vm.reloading) { if (vm.tab == CrewPhase.OPEN && !vm.reloading) volunteers.load() }
+    return VolunteerSection(
+        spots = volunteers.spots,
+        failed = volunteers.failed,
+        onVolunteer = { spot ->
+            val blocked = volunteers.blocked
+            when {
+                vm.signedOut -> onSignIn()
+                blocked != null -> Snacks.error(blocked)
+                else -> membership.require { volunteers.pick(spot) }
+            }
+        },
+        onOpen = { onOpenCrew(it.crewId) },
+    )
 }
 
 /** What a crew's rows can ask for, passed down as one value rather than six lambdas each. */
@@ -136,6 +167,9 @@ class CrewActions(
     val onAppeal: (CrewSeat) -> Unit = {},
     /** Android's own uninstall prompt for an app that left the run. */
     val onUninstall: (String) -> Unit = {},
+    /** A volunteer leaves their spot, confirmed first; and the way to the volunteer list once it is over. */
+    val onLeaveVolunteer: (Crew) -> Unit = {},
+    val onFindCrew: () -> Unit = {},
 )
 
 /**

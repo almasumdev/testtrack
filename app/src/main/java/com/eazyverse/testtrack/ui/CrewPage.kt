@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.leave
+import com.eazyverse.testtrack.viewmodel.leaveVolunteer
 import com.eazyverse.testtrack.viewmodel.report
 import com.eazyverse.testtrack.viewmodel.vote
 
@@ -85,7 +86,11 @@ fun CrewPage(
         crewActions(vm, dialogs, onSignIn, onAddToCrew = {
             apps.load(context)
             seating = true
-        }, onMembers = onMembers)
+        }, onMembers = onMembers, onFindCrew = {
+            // Back to the Crew tab's Open list, where the running crews with spots are.
+            vm.showTab(CrewPhase.OPEN)
+            onBack()
+        })
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -93,7 +98,9 @@ fun CrewPage(
         topBar = {
             // Its name, and once it runs, the way to its members. Where it stands is the first card.
             PageBar(crew?.name ?: "Crew", onBack) {
-                if (crew != null && (crew.phase == CrewPhase.RUN || (crew.phase == CrewPhase.RECORD && !noMembers))) {
+                // A volunteer has no app here, so nobody's testing of theirs to look at.
+                val membersPage = crew?.phase == CrewPhase.RUN || (crew?.phase == CrewPhase.RECORD && !noMembers)
+                if (crew != null && crew.volunteer == null && membersPage) {
                     MembersButton(crew.members.size, onMembers)
                 }
             }
@@ -162,6 +169,9 @@ internal class CrewDialogs {
 
     /** Answered "it didn't install", which asks why first. */
     var refusing by mutableStateOf<CrewSeat?>(null)
+
+    /** A volunteer spot being left, confirmed first: that crew never takes them back. */
+    var leavingVolunteer by mutableStateOf<Crew?>(null)
 }
 
 @Composable
@@ -175,6 +185,7 @@ internal fun crewActions(
     onSignIn: () -> Unit,
     onAddToCrew: () -> Unit,
     onMembers: () -> Unit = {},
+    onFindCrew: () -> Unit = {},
 ): CrewActions {
     val context = LocalContext.current
     val membership = rememberMembership()
@@ -212,6 +223,8 @@ internal fun crewActions(
             latePicture = { id -> waiting.any { it.seatId == id && it.late() } },
             picturesStuck = stuck,
             onRetryPictures = { vm.pictures.send(context.findActivity()) },
+            onLeaveVolunteer = { dialogs.leavingVolunteer = it },
+            onFindCrew = onFindCrew,
         ),
     )
 }
@@ -291,6 +304,28 @@ internal fun CrewDialogsHost(
                 vm.leave(context, seat)
             },
             onDismiss = { dialogs.leaving = null },
+        )
+    }
+
+    dialogs.leavingVolunteer?.let { crew ->
+        val tix = crew.volunteer?.tixEarned ?: 0
+        val kept = if (tix > 0) "You keep the $tix tix you earned. " else ""
+        Ask(
+            title = "Leave ${crew.name}?",
+            body =
+                if (crew.phase == CrewPhase.LOBBY) {
+                    "You can't volunteer in ${crew.name} again."
+                } else {
+                    "${kept}Tonight won't pay, and you can't volunteer in ${crew.name} again."
+                },
+            confirm = "Leave",
+            dismiss = "Stay",
+            destructive = true,
+            onConfirm = {
+                dialogs.leavingVolunteer = null
+                vm.leaveVolunteer(context, crew)
+            },
+            onDismiss = { dialogs.leavingVolunteer = null },
         )
     }
 

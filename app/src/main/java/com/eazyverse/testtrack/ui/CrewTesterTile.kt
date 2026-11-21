@@ -54,11 +54,15 @@ internal fun TesterTile(
     val t = Tt.colors
     CrewCard(padding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .clip(CircleShape)
-                    .clickable(onClickLabel = "See who this is", onClick = onFace),
-            ) { NightsRing(tester) }
+            Box {
+                Box(
+                    Modifier
+                        .clip(CircleShape)
+                        .clickable(onClickLabel = "See who this is", onClick = onFace),
+                ) { NightsRing(tester) }
+                // A volunteer's hand, on the ring's lower corner.
+                if (tester.volunteer) VolunteerBadge(16.dp, Modifier.align(Alignment.BottomEnd).offset(x = 1.dp, y = 1.dp))
+            }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

@@ -352,7 +352,7 @@ internal fun chatProfileOf(
     person: ChatPerson?,
     crew: Crew?,
 ): CrewTester {
-    val member = crew?.members?.firstOrNull { it.id == seatId }
+    val member = (crew?.members.orEmpty() + crew?.volunteers.orEmpty()).firstOrNull { it.id == seatId }
     val seat = crew?.seats?.firstOrNull { it.id == seatId }
     val phase = crew?.phase
     val over = phase != CrewPhase.RUN || (member?.day ?: 0) <= 0
@@ -377,5 +377,7 @@ internal fun chatProfileOf(
         line = line,
         tone = tone,
         over = over,
+        volunteer = person?.volunteer == true || member?.volunteer == true,
+        firstNight = member?.firstNight ?: 1,
     )
 }

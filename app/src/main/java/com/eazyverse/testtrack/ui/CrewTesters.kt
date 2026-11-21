@@ -67,6 +67,9 @@ internal data class CrewTester(
     val openedTonight: Boolean = false,
     /** Their run is over: the crew finished, or their own last night is behind them. */
     val over: Boolean = false,
+    /** A volunteer, with no app here, and the first night that was theirs. */
+    val volunteer: Boolean = false,
+    val firstNight: Int = 1,
 )
 
 /**
@@ -134,7 +137,7 @@ internal fun outDayOf(
 
 /**
  * Every tester of the reader's app, in the grid's order: as the server lists them, with those
- * out of the run last. [crew] adds who each one is (face, email, app); without it the pictures
+ * out of the run last, and volunteers after every member. [crew] adds who each one is (face, email, app); without it the pictures
  * alone are drawn, with initials.
  */
 internal fun testersOf(
@@ -144,7 +147,7 @@ internal fun testersOf(
     hour24: Boolean = false,
 ): List<CrewTester> {
     val finished = crew?.phase == CrewPhase.RECORD
-    val members = crew?.members.orEmpty().associateBy { it.id }
+    val members = (crew?.members.orEmpty() + crew?.volunteers.orEmpty()).associateBy { it.id }
     val seats = crew?.seats.orEmpty().associateBy { it.id }
     return pictures.testers
         .map { tester ->
@@ -184,8 +187,10 @@ internal fun testersOf(
                 pictures = lastPictures(tester, pictures, if (over) pictures.runDays else tester.day, outDay),
                 openedTonight = !over && !tester.out && tonight?.counted == true,
                 over = over,
+                volunteer = tester.volunteer,
+                firstNight = tester.firstNight,
             )
-        }.sortedBy { it.out }
+        }.sortedWith(compareBy({ it.volunteer }, { it.out }))
 }
 
 /**

@@ -30,6 +30,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.Calendar
+import com.composables.icons.lucide.HandHeart
 import com.composables.icons.lucide.LogOut
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -71,6 +72,13 @@ internal fun CrewMemberProfile(
                         color = t.text,
                     )
                     if (member.mine) StatusChip("You", Tone.QUIET)
+                }
+                // A volunteer has no app line below, so the tag and their first night say who they are.
+                if (member.volunteer) {
+                    Row(Modifier.padding(top = 5.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        StatusChip("Volunteer", Tone.TILE, Lucide.HandHeart, size = ChipSize.SMALL)
+                        if (member.firstNight > 1) StatusChip("From night ${member.firstNight}", Tone.QUIET, size = ChipSize.SMALL)
+                    }
                 }
                 if (member.email.isNotBlank()) {
                     SelectionContainer {

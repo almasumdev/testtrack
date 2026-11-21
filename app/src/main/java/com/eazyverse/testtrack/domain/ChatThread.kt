@@ -45,6 +45,8 @@ data class ChatPerson(
     val day: Int = 0,
     val inCrew: Boolean = true,
     val mine: Boolean = false,
+    /** A volunteer: in the crew with no app of their own, and [seatId] is their volunteer id. */
+    val volunteer: Boolean = false,
 )
 
 enum class ChatKind {

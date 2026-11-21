@@ -59,6 +59,8 @@ data class MemberNights(
     val email: String = "",
     /** The night their app was taken out of the run, as the server says it; null while in or unsaid. */
     val outDay: Int? = null,
+    /** A volunteer, with no app here: [seatId] is their volunteer id. */
+    val volunteer: Boolean = false,
 ) {
     /** They did not owe the app that night: reported, let off, or covered by a skip. */
     fun notOwed(
@@ -98,9 +100,10 @@ class CrewPicturesViewModel : ViewModel() {
                     AppNights(
                         got.appName,
                         got.runDays,
-                        got.testers.map { t ->
+                        (got.testers + got.volunteers).map { t ->
+                            val volunteer = t.volunteerId.isNotBlank()
                             MemberNights(
-                                t.seatId,
+                                if (volunteer) t.volunteerId else t.seatId,
                                 t.name,
                                 t.day,
                                 t.out,
@@ -112,7 +115,9 @@ class CrewPicturesViewModel : ViewModel() {
                                 reportedDays = t.reportedDays.toSet(),
                                 photo = t.photo,
                                 email = t.email,
-                                outDay = t.outDay,
+                                // A volunteer's is their last whole night: the nights after it are not theirs.
+                                outDay = if (volunteer) t.outDay?.plus(1) else t.outDay,
+                                volunteer = volunteer,
                             )
                         },
                         offDays = got.offDays.toSet(),

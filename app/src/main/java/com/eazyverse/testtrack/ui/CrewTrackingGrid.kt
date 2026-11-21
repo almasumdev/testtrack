@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -127,19 +128,23 @@ internal fun TrackingGrid(
                         .clip(RoundedCornerShape(6.dp))
                         .clickable(onClickLabel = "See who this is") { onFace(tester) },
                 lead = {
-                    Box(
-                        Modifier
-                            .size(24.dp)
-                            .clip(CircleShape)
-                            .semantics { contentDescription = tester.name }
-                            .then(if (tester.out) Modifier.alpha(0.45f) else Modifier),
-                    ) {
-                        Avatar(
-                            tester.photo,
-                            initialOf(tester.name),
-                            size = 24.dp,
-                            letterStyle = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                        )
+                    Box {
+                        Box(
+                            Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .semantics { contentDescription = if (tester.volunteer) "${tester.name}, volunteer" else tester.name }
+                                .then(if (tester.out) Modifier.alpha(0.45f) else Modifier),
+                        ) {
+                            Avatar(
+                                tester.photo,
+                                initialOf(tester.name),
+                                size = 24.dp,
+                                letterStyle = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                            )
+                        }
+                        // A volunteer's hand, on the face's lower corner.
+                        if (tester.volunteer) VolunteerBadge(13.dp, Modifier.align(Alignment.BottomEnd).offset(x = 3.dp, y = 2.dp))
                     }
                 },
             ) {

@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.BadgeCheck
 import com.composables.icons.lucide.Ban
+import com.composables.icons.lucide.HandHeart
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.domain.ChatKind
 import com.eazyverse.testtrack.domain.ChatLine
@@ -210,7 +211,7 @@ internal fun ChatMessage(
                     QuoteTap(onTap = { if (picking) hold() else actions.onQuote(quote) }, onHold = hold)
                 }
             Column(horizontalAlignment = if (line.mine) Alignment.End else Alignment.Start) {
-                if (!line.mine && first) AuthorName(view.authorName(line), team)
+                if (!line.mine && first) AuthorName(view.authorName(line), team, volunteer = person?.volunteer == true)
                 Box(
                     Modifier
                         .clip(bubbleShape(line.mine, first, last))
@@ -261,6 +262,8 @@ internal fun AuthorName(
     max: Dp = bubbleMax(),
     /** Round it: 12 in from the bubble's edge and 2 over it unless given. */
     padding: PaddingValues = PaddingValues(start = 12.dp, bottom = 2.dp),
+    /** The author volunteers in the crew: their tag after the name. */
+    volunteer: Boolean = false,
 ) {
     val t = Tt.colors
     Row(
@@ -279,6 +282,10 @@ internal fun AuthorName(
         if (team) {
             Spacer(Modifier.width(3.dp))
             Icon(Lucide.BadgeCheck, "TestTrack team", Modifier.size(12.dp), tint = t.accentInk)
+        }
+        if (volunteer) {
+            Spacer(Modifier.width(6.dp))
+            StatusChip("Volunteer", Tone.TILE, Lucide.HandHeart, size = ChipSize.SMALL)
         }
     }
 }

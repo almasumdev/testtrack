@@ -42,7 +42,11 @@ internal fun CrewLobbyRow(
         }
         Spacer(Modifier.height(if (crew.out) 14.dp else 9.dp))
         LobbyStanding(crew)
-        if (showApp) CrewTileApp(mine) { CrewChatTileButton(crew, onChat) }
+        if (showApp && crew.volunteer != null) {
+            CrewTileVolunteer(crew) { CrewChatTileButton(crew, onChat) }
+        } else if (showApp) {
+            CrewTileApp(mine) { CrewChatTileButton(crew, onChat) }
+        }
     }
 }
 
