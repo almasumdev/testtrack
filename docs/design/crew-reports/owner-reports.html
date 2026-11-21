@@ -334,6 +334,21 @@
   .opt2 { padding: 10px 12px; border: 1px solid var(--cardLine); border-radius: 14px; }
   .opt2 .t { display: flex; align-items: center; gap: 8px; font-size: 15px; line-height: 19px; font-weight: 600; color: var(--warn); }
   .opt2 .l { margin-top: 3px; font-size: 12.5px; line-height: 17px; color: var(--text4); }
+  /* the shared Ask, as docs/design/dialogs/final.html draws it (newAsk + buttons pill) */
+  .dw2 { position: absolute; left: 22px; right: 22px; top: 50%; transform: translateY(-50%); z-index: 7; }
+  .nd { background: var(--sheet); border-radius: 12px; padding: 16px 16px 12px; position: relative; z-index: 1; }
+  .nd .tt { display: block; padding: 0; gap: 0; font-size: 16px; line-height: 20px; font-weight: 700; }
+  .nd .b { margin-top: 6px; font-size: 13.5px; line-height: 19px; color: var(--text2); }
+  .nd .c { margin-top: 12px; }
+  .nd .fld { min-height: 48px; height: auto; border: 1px solid var(--glassBorderStrong); background: transparent; }
+  .nd .fld.dd { padding-right: 8px; }
+  .nd .fld.dd .ddv { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nd .fld.dd .ddc { width: 32px; height: 32px; display: grid; place-items: center; color: var(--text3); flex: none; }
+  .nd .fld.ml { align-items: flex-start; padding-top: 13px; min-height: 84px; color: var(--text4); font-weight: 400; }
+  .nd .fe { display: flex; justify-content: space-between; margin: 5px 4px 0; font-size: 12px; line-height: 16px; color: var(--text3); font-weight: 600; }
+  .nd .br { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 12px; }
+  .nd .tb { min-height: 40px; padding: 0 10px; display: inline-flex; align-items: center; font-size: 14.5px; font-weight: 700; color: var(--accentInk); border-radius: 10px; white-space: nowrap; margin: 0; gap: 0; }
+  .nd .pl { min-height: 40px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 14.5px; font-weight: 700; border-radius: 10px; background: var(--primary); color: var(--onPrimary); white-space: nowrap; margin-left: 4px; }
 </style>
 </head>
 <body>
@@ -594,16 +609,18 @@ function F5b(th) {
   return page(th, 'Crew 126', lobbyBehind(), { sub: 'Starts in 6 h', end: membersBtn(15), extra: snack('Reported. Hasan has been told.', 'done', { bottom: 30 }) });
 }
 
-/* 6. Lobby report dialog (CrewReportDialog via Ask) */
+/* 6. Lobby report dialog: CrewReportDialog through the shared Ask (dialogs/final.html newAsk + buttons pill) */
 function F6(th) {
   const w = 96, f = 96 * 980 / 880, lift = 96 * 262 / 880, rise = 96 * 540 / 880;
-  const fields = `<div class="fld" style="background:var(--glass);margin-top:16px"><span class="lab" style="background:var(--glass)">What's wrong</span><span style="flex:1">The sign-in details don't work</span><span style="color:var(--text3)">${ic('chevD', 20, 2)}</span></div>
-    <div class="fld" style="background:var(--glass);margin-top:14px;height:auto;min-height:84px;align-items:flex-start;padding-top:13px"><span class="lab" style="background:var(--glass)">Details</span><span style="color:var(--text4);font-weight:400">Anything that helps them fix it</span></div>
-    <div class="fe">Optional</div>`;
-  const dlg = `<div class="scrimL"></div><div class="dlgwrap"><div style="position:relative;padding-top:${rise}px">
+  const dd = `<div class="fld dd"><span class="lab">What's wrong</span><span class="ddv">The sign-in details don't work</span><span class="ddc">${ic('chevD', 20, 2)}</span></div>`;
+  const det = `<div class="fld ml"><span class="lab">Details</span>Anything that helps them fix it</div><div class="fe"><span>Optional</span><span>0/280</span></div>`;
+  const card = `<div class="nd"><div class="tt">Report Habit Hen?</div>
+    <div class="b">Rafi sees what you write, not your name. 2 reports send it back to be fixed. If it still won't work once the run starts, report it that night.</div>
+    <div class="c">${dd}${sp(14)}${det}</div>
+    <div class="br"><span class="tb">Cancel</span><span class="pl">Report</span></div></div>`;
+  const dlg = `<div class="scrimL"></div><div class="dw2"><div style="position:relative;padding-top:${rise}px">
     <svg width="${w}" height="${f}" viewBox="0 0 880 980" style="position:absolute;right:10px;top:0;z-index:0">${R.level_robot_antenna}${R.level_robot_head}${R.level_robot_eyes}</svg>
-    <div class="dlg"><h3>Report Habit Hen?</h3><p>Rafi sees what you write, not your name. 2 reports send it back to be fixed. If it still won't work once the run starts, report it that night.</p>${fields}
-    <div class="btns"><span class="db o">Cancel</span><span class="db f">Report</span></div></div>
+    ${card}
     <svg width="${w}" height="${f}" viewBox="0 0 880 980" style="position:absolute;right:10px;top:${-lift}px;z-index:2;pointer-events:none">${R.level_robot_hands}</svg></div></div>`;
   return page(th, 'Crew 126', lobbyBehind(), { sub: 'Starts in 6 h', end: membersBtn(15), extra: dlg });
 }
