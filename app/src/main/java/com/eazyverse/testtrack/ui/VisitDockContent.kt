@@ -55,6 +55,7 @@ import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Copy
 import com.composables.icons.lucide.KeyRound
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Minimize2
 import com.composables.icons.lucide.Pause
 import com.composables.icons.lucide.Play
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -178,6 +179,7 @@ fun VisitDockContent(
                     } else {
                         OpenFlat(ui, onToggleOpen, onPlayPause, onCopy)
                     }
+                    MinimiseButton(onToggleOpen, Modifier.align(Alignment.TopEnd))
                 }
             },
         ) { measurables, constraints ->
@@ -286,7 +288,8 @@ private fun OpenFlat(
         Row(Modifier.fillMaxWidth().clickable(onClick = onToggleOpen), verticalAlignment = Alignment.CenterVertically) {
             Ring(ui)
             Spacer(Modifier.width(8.dp))
-            Column(Modifier.weight(1f)) {
+            // End room so a long name stops before the minimise icon in the corner.
+            Column(Modifier.weight(1f).padding(end = 24.dp)) {
                 Text(
                     ui.app,
                     style = MaterialTheme.typography.titleSmall,
@@ -330,6 +333,20 @@ private fun OpenUpright(
         RoundDots(ui)
         ui.signIn.forEach { (label, value) -> SignInLine(label, value, upright = true, onCopy = onCopy) }
         BigPlayPause(ui, onPlayPause)
+    }
+}
+
+/** Quiet corner icon that closes the open card: 16 to look at, 48 to touch, no fill. */
+@Composable
+private fun MinimiseButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier.size(48.dp).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Lucide.Minimize2, "Make smaller", Modifier.size(16.dp), tint = Tt.colors.text4)
     }
 }
 
