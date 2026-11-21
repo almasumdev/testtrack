@@ -142,36 +142,41 @@ fun PrivateTestersBody(
             subtitle = listOf(appName, crewName).filter { it.isNotBlank() }.joinToString(", ").ifBlank { null },
         )
         Box(Modifier.weight(1f).fillMaxWidth()) {
-            when {
-                results == null && fault != null ->
-                    if (fault.offline) {
-                        RobotOffline("Private testers didn't load", onRetry = onRetry)
-                    } else {
+            // The list's own shape: the line over it is known already, so it is drawn as it is.
+            val loading: @Composable () -> Unit = {
+                TestersLoading(
+                    gridRows = 3,
+                    tiles = 4,
+                    lead = { if (crewName.isNotBlank()) PrivateNote(crewName, daysLeft) else PrivateNoteSkeleton() },
+                    days = true,
+                    note = PRIVATE_GRID_NOTE,
+                )
+            }
+            LoadSwap(DebugLooks.holdLoading || (results == null && fault == null), Modifier.fillMaxSize()) { waiting ->
+                when {
+                    waiting -> loading()
+                    results == null && fault != null ->
+                        if (fault.offline) {
+                            RobotOffline("Private testers didn't load", onRetry = onRetry)
+                        } else {
+                            RobotState(
+                                Prop.Notes,
+                                "Private testers didn't load",
+                                fault.message,
+                                action = "Back",
+                                onAction = onBack,
+                                failed = true,
+                            )
+                        }
+                    results == null -> loading()
+                    results.shown.isEmpty() ->
                         RobotState(
-                            Prop.Notes,
-                            "Private testers didn't load",
-                            fault.message,
-                            action = "Back",
-                            onAction = onBack,
-                            failed = true,
+                            Prop.Letter,
+                            "No private testers yet",
+                            "Add people by the email of their TestTrack account. They open $appName when they like, and only you see it.",
                         )
-                    }
-                // The list's own shape: the line over it is known already, so it is drawn as it is.
-                results == null ->
-                    TestersLoading(
-                        gridRows = 3,
-                        tiles = 4,
-                        lead = { if (crewName.isNotBlank()) PrivateNote(crewName, daysLeft) else PrivateNoteSkeleton() },
-                        days = true,
-                        note = PRIVATE_GRID_NOTE,
-                    )
-                results.shown.isEmpty() ->
-                    RobotState(
-                        Prop.Letter,
-                        "No private testers yet",
-                        "Add people by the email of their TestTrack account. They open $appName when they like, and only you see it.",
-                    )
-                else -> PrivateTestersList(results, crewName, today, daysLeft, onRemove)
+                    else -> PrivateTestersList(results, crewName, today, daysLeft, onRemove)
+                }
             }
             FootFade(Modifier.align(Alignment.BottomCenter))
         }
