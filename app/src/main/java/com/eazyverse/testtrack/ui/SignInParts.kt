@@ -1,23 +1,17 @@
 package com.eazyverse.testtrack.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,40 +56,6 @@ internal fun Actions(content: @Composable () -> Unit) {
 }
 
 /**
- * Google asks for its own mark on a plain surface rather than a tinted button, which also keeps it
- * distinct from the app's own primary actions. The plain surface is the sheet's own in light and
- * the page's in dark, where it reads as sunk into the sheet.
- */
-@Composable
-internal fun GooglePill(onClick: () -> Unit) {
-    val t = Tt.colors
-    val fill = if (t.isDark) t.bg else t.sheet
-    Button(
-        onClick = onClick,
-        shape = RoundedCornerShape(percent = 50),
-        elevation = null,
-        border = BorderStroke(1.dp, t.sheetOutline),
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor = fill,
-                contentColor = t.text,
-            ),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
-        modifier = Modifier.fillMaxWidth().heightIn(min = ButtonHeight),
-    ) {
-        GoogleMark(Modifier.size(20.dp))
-        Spacer(Modifier.width(12.dp))
-        Text(
-            "Continue with Google",
-            style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp),
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-        )
-    }
-}
-
-/**
  * An account row with nothing in it yet: the shape of what is arriving, not a spinner.
  * A circle and two bars, at 46 and 72 per cent of the width.
  */
@@ -113,14 +72,14 @@ internal fun AccountSkeleton() {
     }
 }
 
-/** The account row's frame: 64 high, 16 corners, one hairline. */
+/** The account row's frame: 64 high, the shared hairline tile on the sheet's surface. */
 @Composable
 internal fun AccountRowFrame(content: @Composable RowScope.() -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
             .height(64.dp)
-            .border(1.dp, Tt.colors.sheetOutline, RoundedCornerShape(16.dp))
+            .tileFrame(fill = Tt.colors.sheet)
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         content = content,

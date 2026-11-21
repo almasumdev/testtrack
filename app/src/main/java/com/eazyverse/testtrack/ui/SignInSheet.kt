@@ -248,7 +248,7 @@ fun SignInSheetBody(
                 when (state) {
                     SignInUi.Idle -> {
                         Why(reason.why)
-                        Actions { GooglePill(onPress) }
+                        Actions { GoogleButton("Continue with Google", onClick = onPress) }
                         QuietNote("Google Play links testers by their Google account.", Modifier.padding(top = 12.dp))
                     }
 
@@ -259,13 +259,13 @@ fun SignInSheetBody(
 
                     SignInUi.Cancelled -> {
                         Why("You can try again or keep looking around.")
-                        Actions { GooglePill(onPress) }
+                        Actions { GoogleButton("Continue with Google", onClick = onPress) }
                         InlineAction("Keep looking around", Modifier.padding(top = 6.dp), fullWidth = true, onClick = onClose)
                     }
 
                     SignInUi.Offline -> {
                         Why("Sign-in needs the internet. Check your Wi-Fi or mobile data, then try again.")
-                        Actions { GooglePill(onPress) }
+                        Actions { GoogleButton("Continue with Google", onClick = onPress) }
                     }
 
                     SignInUi.NoAccount -> {
@@ -282,7 +282,7 @@ fun SignInSheetBody(
 
                     is SignInUi.Failed -> {
                         Why(state.body ?: DEFAULT_FAILURE)
-                        Actions { GooglePill(onPress) }
+                        Actions { GoogleButton("Continue with Google", onClick = onPress) }
                     }
 
                     is SignInUi.SignedIn -> SignedIn(state, onOk)

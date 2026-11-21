@@ -1,7 +1,9 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,13 +29,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.eazyverse.testtrack.ui.theme.GoogleEdgeDark
+import com.eazyverse.testtrack.ui.theme.GoogleEdgeLight
+import com.eazyverse.testtrack.ui.theme.GoogleFillDark
+import com.eazyverse.testtrack.ui.theme.GoogleFillLight
+import com.eazyverse.testtrack.ui.theme.GoogleInkDark
+import com.eazyverse.testtrack.ui.theme.GoogleInkLight
 import com.eazyverse.testtrack.ui.theme.LocalStatusColors
+import com.eazyverse.testtrack.ui.theme.RobotoMedium
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
@@ -383,5 +394,64 @@ fun Notice(
         Icon(icon, null, Modifier.padding(top = 1.dp).size(16.dp), tint = tone)
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f), content = content)
+    }
+}
+
+/** The three sizes of [GoogleButton]: a sheet's full-width button, a smaller one, the top bar's. */
+enum class GoogleButtonSize(
+    val height: Dp,
+    val mark: Dp,
+    val words: Float,
+    val start: Dp,
+    val end: Dp,
+    val gap: Dp,
+) {
+    REGULAR(52.dp, 20.dp, 15f, 24.dp, 24.dp, 12.dp),
+    SMALL(40.dp, 18.dp, 14f, 16.dp, 16.dp, 10.dp),
+    COMPACT(36.dp, 16.dp, 13f, 10.dp, 12.dp, 8.dp),
+}
+
+/**
+ * Google's own sign-in button, drawn the way Google's brand rules ask: the full-colour G, Roboto
+ * Medium, and Google's fixed white (or near-black in dark) pill with its grey edge, so it never
+ * passes for one of the app's own buttons. [REGULAR][GoogleButtonSize.REGULAR] takes the row's
+ * width; the others are as wide as their words.
+ */
+@Composable
+fun GoogleButton(
+    label: String,
+    modifier: Modifier = Modifier,
+    size: GoogleButtonSize = GoogleButtonSize.REGULAR,
+    onClick: () -> Unit,
+) {
+    val dark = Tt.colors.isDark
+    val shape = RoundedCornerShape(percent = 50)
+    Row(
+        modifier
+            .then(if (size == GoogleButtonSize.REGULAR) Modifier.fillMaxWidth() else Modifier)
+            .heightIn(min = size.height)
+            .clip(shape)
+            .background(if (dark) GoogleFillDark else GoogleFillLight)
+            .border(1.dp, if (dark) GoogleEdgeDark else GoogleEdgeLight, shape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(start = size.start, end = size.end),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        GoogleMark(Modifier.size(size.mark))
+        Spacer(Modifier.width(size.gap))
+        Text(
+            label,
+            style =
+                TextStyle(
+                    fontFamily = RobotoMedium,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = size.words.sp,
+                    lineHeight = 20.sp,
+                ),
+            color = if (dark) GoogleInkDark else GoogleInkLight,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+        )
     }
 }

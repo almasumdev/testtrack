@@ -30,6 +30,9 @@ val PlexMono =
         Font(R.font.plexmono_bold, FontWeight.Bold),
     )
 
+/** Google's sign-in button sets its words in Roboto Medium, as Google's brand rules ask. */
+val RobotoMedium = FontFamily(Font(R.font.roboto_medium, FontWeight.Medium))
+
 private val Base = Typography()
 
 private fun TextStyle.barlow(weight: FontWeight? = null) = copy(fontFamily = Barlow, fontWeight = weight ?: fontWeight)

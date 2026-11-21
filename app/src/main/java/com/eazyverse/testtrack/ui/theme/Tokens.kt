@@ -108,8 +108,6 @@ data class TtTokens(
     /** The sign-in sheet's own surface, and the hairline along its top edge. */
     val sheet: Color,
     val sheetLine: Color,
-    /** The edge of the Google pill and of the account row on that sheet. */
-    val sheetOutline: Color,
     /** The faint ring round an avatar, so a pale photo still has an edge. */
     val ring: Color,
     /** The empty run of a thin progress bar. */
@@ -170,6 +168,17 @@ val PlayBlue = Color(0xFF00A0FF)
 val PlayGreen = Color(0xFF00F076)
 val PlayYellow = Color(0xFFFFCE00)
 val PlayRed = Color(0xFFFF3A44)
+
+/**
+ * Google's sign-in button, in Google's own colours: a fixed white or near-black fill, its grey
+ * edge and its ink. A brand rule rather than a role, so these do not follow the palette.
+ */
+val GoogleFillLight = Color(0xFFFFFFFF)
+val GoogleEdgeLight = Color(0xFF747775)
+val GoogleInkLight = Color(0xFF1F1F1F)
+val GoogleFillDark = Color(0xFF131314)
+val GoogleEdgeDark = Color(0xFF8E918F)
+val GoogleInkDark = Color(0xFFE3E3E3)
 
 private val PhotoBad = Color(0xFFFF8A80)
 private val Pens =
@@ -261,7 +270,6 @@ val OceanLight =
         ticketShine = Color(0xFFFFFFFF),
         sheet = Color(0xFFFFFFFF),
         sheetLine = Color(0xFFDCE8F0),
-        sheetOutline = Color(0xFFB7D1E2),
         ring = Color(0xFF142F43).alpha(0.14f),
         track = Color(0xFFE4EEF4),
         card = Color(0xFFF3F8FB),
@@ -348,7 +356,6 @@ val OceanDark =
         ticketShine = Color(0xFFFFFFFF),
         sheet = Color(0xFF1C1E20),
         sheetLine = Color(0xFF2D3034),
-        sheetOutline = Color(0xFF3E4348),
         ring = Color(0xFFFFFFFF).alpha(0.16f),
         track = Color(0xFF2D3034),
         card = Color(0xFF1C1E20),

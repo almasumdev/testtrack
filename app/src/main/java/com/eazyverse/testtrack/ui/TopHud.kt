@@ -9,7 +9,6 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -136,7 +133,7 @@ fun TopHud(
                 } else if (signedIn) {
                     TixLoading()
                 } else {
-                    SignInChip(onSignIn)
+                    GoogleButton("Sign in", size = GoogleButtonSize.COMPACT, onClick = onSignIn)
                 }
             }
         }
@@ -183,34 +180,9 @@ fun TopHud(
             when (state) {
                 2 -> TixFigure(tix, onOpenYou)
                 1 -> TixLoading()
-                else -> SignInChip(onSignIn)
+                else -> GoogleButton("Sign in", size = GoogleButtonSize.COMPACT, onClick = onSignIn)
             }
         }
-    }
-}
-
-/** Explicit Google sign-in action beside the guest robot. */
-@Composable
-private fun SignInChip(onClick: () -> Unit) {
-    Row(
-        Modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .border(
-                1.dp,
-                MaterialTheme.colorScheme.outlineVariant,
-                RoundedCornerShape(percent = 50),
-            ).clickable(onClick = onClick)
-            .padding(start = 11.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        GoogleMark(Modifier.size(16.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(
-            "Sign in",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
     }
 }
 
