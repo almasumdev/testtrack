@@ -17,13 +17,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.Role
@@ -67,17 +67,9 @@ internal fun AppHero(
 ) {
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(AppHeroIcon + 8.dp).then(if (onChangeIcon != null) Modifier.iconTap(onChangeIcon) else Modifier)) {
-            icon()
-            if (iconBusy) {
-                Box(
-                    Modifier
-                        .size(AppHeroIcon)
-                        .clip(RoundedCornerShape(AppHeroIcon * 0.3f))
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)),
-                    contentAlignment = Alignment.Center,
-                ) { CircularProgressIndicator(Modifier.size(26.dp), strokeWidth = 2.5.dp, color = Tt.colors.accentInk) }
-            }
-            if (onChangeIcon != null) EditBadge(Modifier.align(Alignment.BottomEnd))
+            // A new icon on its way: the icon's own shape, shimmering, and the pencil faded until it lands.
+            if (iconBusy) Skeleton(AppHeroIcon, AppHeroIcon, corner = AppHeroIcon * 0.3f) else icon()
+            if (onChangeIcon != null) EditBadge(Modifier.align(Alignment.BottomEnd).alpha(if (iconBusy) 0.45f else 1f))
         }
         Spacer(Modifier.height(12.dp))
         AppHeroName(name, onRename)

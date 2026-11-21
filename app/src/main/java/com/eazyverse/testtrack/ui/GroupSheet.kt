@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -30,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
@@ -316,16 +314,7 @@ private fun Account(
 /** A thin determinate line that fills while the joined face is up, the time the sheet then waits. */
 @Composable
 private fun JoinedLine() {
-    val t = Tt.colors
     val fill = remember { Animatable(0f) }
     LaunchedEffect(Unit) { fill.animateTo(1f, tween(GROUP_JOINED_MS, easing = LinearEasing)) }
-    LinearProgressIndicator(
-        progress = { fill.value },
-        modifier = Modifier.fillMaxWidth().height(3.dp),
-        color = t.primary,
-        trackColor = t.track,
-        strokeCap = StrokeCap.Round,
-        gapSize = 0.dp,
-        drawStopIndicator = {},
-    )
+    ThinBar(progress = { fill.value })
 }

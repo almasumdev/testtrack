@@ -12,13 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -139,7 +137,6 @@ internal fun SignedIn(
     state: SignInUi.SignedIn,
     onOk: () -> Unit,
 ) {
-    val t = Tt.colors
     // The title row gives 12; the account row sits 16 under it.
     Spacer(Modifier.height(4.dp))
     AccountRow(state.name, state.email, state.photo)
@@ -150,13 +147,7 @@ internal fun SignedIn(
         Primary("OK", onClick = onOk)
     } else {
         Spacer(Modifier.height(14.dp))
-        LinearProgressIndicator(
-            modifier = Modifier.fillMaxWidth().height(3.dp),
-            color = t.primary,
-            trackColor = t.track,
-            strokeCap = StrokeCap.Round,
-            gapSize = 0.dp,
-        )
+        ThinBar()
     }
 }
 

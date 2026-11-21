@@ -5,6 +5,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,6 +19,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
@@ -163,3 +165,35 @@ fun LoadSwap(
 
 /** Long enough to read as a change of state, short enough not to hold anything up. */
 private const val LOAD_SWAP_MS = 320
+
+/**
+ * The one thin bar: 3dp with round ends, the primary ink on the empty track, no gap and no end mark.
+ * With no [progress] it runs to and fro while something is on its way; with one it fills.
+ */
+@Composable
+fun ThinBar(
+    modifier: Modifier = Modifier,
+    progress: (() -> Float)? = null,
+) {
+    val t = Tt.colors
+    val bar = modifier.fillMaxWidth().height(3.dp)
+    if (progress == null) {
+        LinearProgressIndicator(
+            modifier = bar,
+            color = t.primary,
+            trackColor = t.track,
+            strokeCap = StrokeCap.Round,
+            gapSize = 0.dp,
+        )
+    } else {
+        LinearProgressIndicator(
+            progress = progress,
+            modifier = bar,
+            color = t.primary,
+            trackColor = t.track,
+            strokeCap = StrokeCap.Round,
+            gapSize = 0.dp,
+            drawStopIndicator = {},
+        )
+    }
+}

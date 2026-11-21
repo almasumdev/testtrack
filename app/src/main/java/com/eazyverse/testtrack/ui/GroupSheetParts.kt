@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -98,13 +96,7 @@ internal fun GroupAccountRow(
             }
         }
         if (running) {
-            LinearProgressIndicator(
-                modifier = Modifier.fillMaxWidth().height(3.dp).align(Alignment.BottomCenter),
-                color = t.primary,
-                trackColor = t.track,
-                strokeCap = StrokeCap.Butt,
-                gapSize = 0.dp,
-            )
+            ThinBar(Modifier.align(Alignment.BottomCenter))
         }
     }
 }

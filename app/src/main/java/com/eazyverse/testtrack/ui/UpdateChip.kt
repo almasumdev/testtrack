@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -231,12 +230,7 @@ internal fun UpdateRow(
                             color = t.accentInk,
                         )
                         Spacer(Modifier.height(4.dp))
-                        val bar = Modifier.width(72.dp).height(5.dp).clip(RoundedCornerShape(3.dp))
-                        if (offer.progress >= 0f) {
-                            LinearProgressIndicator(progress = { offer.progress }, modifier = bar, color = t.accent, trackColor = t.glass2)
-                        } else {
-                            LinearProgressIndicator(modifier = bar, color = t.accent, trackColor = t.glass2)
-                        }
+                        ThinBar(Modifier.width(72.dp), progress = if (offer.progress >= 0f) ({ offer.progress }) else null)
                     }
             }
         },
