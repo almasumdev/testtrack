@@ -123,15 +123,21 @@ object Snacks {
     const val TRY_AGAIN = "Try again"
 }
 
-/** How long a snack shows before accessibility settings have their say. */
+/**
+ * How long a snack shows before accessibility settings have their say, as the design page times
+ * them: with a button 8s, an error 6s, two lines 5s, one line 3s. Offline is sticky and has none.
+ */
 internal val Snack.baseMillis: Long
     get() =
         millis ?: when {
-            tone == SnackTone.ERROR -> 8_000L
-            action != null -> 6_000L
-            tone == SnackTone.DONE || tone == SnackTone.OFFLINE -> 5_000L
+            action != null -> 8_000L
+            tone == SnackTone.ERROR -> 6_000L
+            text.length > TWO_LINES_FROM -> 5_000L
             else -> 3_000L
         }
+
+/** About where a snack's words wrap to a second line on a phone. */
+private const val TWO_LINES_FROM = 60
 
 /** What the host knows of the page under it: the tops of what is pinned, and the snack's own height. */
 internal object SnackPlace {
