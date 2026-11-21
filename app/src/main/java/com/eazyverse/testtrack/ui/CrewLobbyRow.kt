@@ -65,7 +65,7 @@ private fun LobbyStanding(crew: Crew) {
     val detail =
         when {
             crew.out -> mine?.let(::lobbyRefund).orEmpty()
-            checking -> "${mine?.yes} Yes, ${mine.no} No"
+            checking -> "${mine.yes} Yes, ${mine.no} No"
             reported -> "Check the report"
             !crew.filling -> if (crew.firstNight > 1) "Your day ${crew.firstNight}" else "At midnight"
             else -> "${(CrewRules.SEATS - crew.filled).coerceAtLeast(0)} more to start"

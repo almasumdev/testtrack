@@ -150,10 +150,10 @@ fun RanksBody(
     val listed = mine != null && rows.any { it.id == mine.id }
 
     /** The podium does not scroll, so anybody on it is on screen for as long as the tab is. */
-    val onPodium = listed && podium && mine != null && mine.place <= PODIUM
+    val onPodium = listed && podium && mine.place <= PODIUM
 
     /** The row in the scrolling part that is the reader's own, where they are in it at all. */
-    val anchor: Any? = if (listed && !onPodium) mine?.id else null
+    val anchor: Any? = if (listed && !onPodium) mine.id else null
 
     // Pinned only while the real row is off screen, and gone the moment it arrives. Nobody should
     // be looking at themselves in two places on the same list.

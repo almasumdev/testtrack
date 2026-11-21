@@ -250,7 +250,7 @@ internal fun AskButtons(
                 }
             }
             pairWidth <= width -> {
-                val altHeight = altP!!.height
+                val altHeight = altP.height
                 layout(width, altHeight + pairHeight) {
                     altP.placeRelative(-altShift, 0)
                     placePair(dismissP, confirmP, width, pairGap, altHeight, pairHeight)

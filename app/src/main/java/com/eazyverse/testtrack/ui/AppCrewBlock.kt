@@ -67,7 +67,7 @@ internal fun AppCrewBlock(
                     onAnswer = { answer -> crews.records.answerProdAccess(it.crewId, answer) },
                     onClaim = { crews.records.claimPerfect(it.crewId) },
                     showApp = false,
-                    onPutIn = if (seat?.state == "removed") putIn else null,
+                    onPutIn = if (seat.state == "removed") putIn else null,
                 )
             }
         CrewBlockTile.LOADING -> CrewRunRowLoading()
