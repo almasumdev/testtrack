@@ -215,8 +215,8 @@ private fun LobbyYourApp(
             when {
                 mine.state == SeatState.CHECKING ->
                     Quotes(emptyList(), "${mine.yes} Yes and ${mine.no} No so far. $DECIDES Make sure the sign-in works.")
-                mine.reasons.isNotEmpty() ->
-                    Quotes(mine.reasons, "One more report sends it back. Check the sign-in still works.")
+                mine.reportList.isNotEmpty() ->
+                    SeatReports(mine, "One more report sends it back. Check the sign-in still works.")
             }
         },
         action =
@@ -254,7 +254,7 @@ private fun SentBack(
             headline = if (byTeam) "The TestTrack team took your app out" else "Your app came back",
             line = mine.outReason.ifBlank { if (byTeam) "It is not in ${crew.name} any more." else "It came back to you before the run." },
             extra = {
-                if (mine.reasons.isNotEmpty()) Quotes(mine.reasons, "What members wrote. Who wrote it isn't shown.", Tone.BAD)
+                SeatReports(mine, "What members wrote. Who wrote it isn't shown.", Tone.BAD, dateOnly = true)
             },
             action = if (byTeam) "Put it in a crew again" else "Fix it, then put it in again",
             onAction = actions.onTakeSeat,
@@ -375,6 +375,7 @@ private fun TestersCard(
                 }
             SegmentMeter(testers.coerceAtLeast(1)) { i -> if (i < opened) fill else Tt.colors.track }
             MeterLabels(if (finished) "${crew.finishedDays} days done" else "Their day ${crew.day}", "${CrewRules.FLOOR} keep it counting")
+            SeatReports(mine, "What members wrote, newest first. Who wrote it isn't shown.", title = true)
         },
         action = {
             Spacer(Modifier.height(12.dp))

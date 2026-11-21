@@ -26,6 +26,9 @@ fun shortDate(
     zone: ZoneId = ZoneId.systemDefault(),
 ): String = at.atZone(zone).format(MONTH_DAY)
 
+/** A calendar day as "Nov 9". */
+fun shortDate(date: java.time.LocalDate): String = date.format(MONTH_DAY)
+
 /** [shortDate] for a time in epoch milliseconds. */
 fun shortDate(
     millis: Long,

@@ -76,6 +76,10 @@ internal fun AppCrewBlock(
             SeatRow(app, canOpen) { seat?.let { onOpenCrew(it.crewId) } }
         }
     }
+    // Not crew.mine: an owner can hold two seats in one crew, and this page is one app's.
+    crew?.seats?.firstOrNull { it.mine && it.packageName == app.pkg }?.let {
+        SeatReports(it, "What members wrote, newest first. Who wrote it isn't shown.", title = true)
+    }
 }
 
 /** Which tile the app page's crew block draws. */

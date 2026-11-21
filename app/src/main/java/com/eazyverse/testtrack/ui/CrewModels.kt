@@ -136,11 +136,18 @@ object CrewRules {
     fun nightly(crews: Int) = crews * NIGHTLY
 }
 
+/** One report: what it said, its night (0 is before the run, null is not known) and its day ("2026-11-21"). */
+data class SeatReport(
+    val reason: String,
+    val night: Int? = null,
+    val on: String = "",
+)
+
 /**
  * One app's place in a crew.
  *
- * [reasons] and [outReason] are only ever filled in on your own seat: what reports said, and why
- * it left, are for its owner and nobody else.
+ * [reasons], [reportNotes] and [outReason] are only ever filled in on your own seat: what reports
+ * said, and why it left, are for its owner and nobody else.
  */
 data class CrewSeat(
     val id: String,
@@ -157,9 +164,11 @@ data class CrewSeat(
     /** This account's app. */
     val mine: Boolean = false,
     val reports: Int = 0,
-    /** This account reported it. */
+    /** This account reported it: tonight's report, or before the run any report (which excuses nothing). */
     val reported: Boolean = false,
     val reasons: List<String> = emptyList(),
+    /** What each report said with its night and day, newest first; empty from an older server. */
+    val reportNotes: List<SeatReport> = emptyList(),
     val outReason: String = "",
     /** An app the Play check could not look at is decided by members: answers so far. */
     val yes: Int = 0,
@@ -180,7 +189,11 @@ data class CrewSeat(
     /** Whether its owner may ask to get it back, and the server's words when not. */
     val canAppeal: Boolean = true,
     val appealBlocked: String = "",
-)
+) {
+    /** Reports newest first: [reportNotes], or from an older server [reasons] reversed with no night or day. */
+    val reportList: List<SeatReport>
+        get() = reportNotes.ifEmpty { reasons.reversed().map { SeatReport(it) } }
+}
 
 /**
  * An owner asking to get their app back into the run it was taken out of, and the team's answer.

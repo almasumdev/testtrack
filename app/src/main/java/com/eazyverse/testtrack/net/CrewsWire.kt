@@ -120,6 +120,14 @@ data class ReportIn(
     val reason: String,
 )
 
+/** One report on an app: what it said, the night it was filed (0 = before the run) and the day. */
+@Serializable
+data class ApiSeatReport(
+    val reason: String,
+    val night: Int? = null,
+    val on: String = "",
+)
+
 @Serializable
 data class ApiSeat(
     val id: String,
@@ -139,7 +147,7 @@ data class ApiSeat(
     val mine: Boolean,
     /** Reports filed against it so far. */
     val reports: Int = 0,
-    /** This account reported it, which excuses this account from it. */
+    /** This account reported it: tonight's report, or before the run any report (which excuses nothing). */
     val reported: Boolean = false,
     /** For an app the Play check could not look at: members' answers so far, and this account's. */
     val yes: Int = 0,
@@ -147,6 +155,8 @@ data class ApiSeat(
     @SerialName("my_vote") val myVote: Boolean? = null,
     /** What the reports said. Only ever sent to the seat's owner, without who said it. */
     val reasons: List<String> = emptyList(),
+    /** The same reports with when each was filed, newest first. Only on the owner's own seat. */
+    @SerialName("report_notes") val reportNotes: List<ApiSeatReport> = emptyList(),
     /** Why it left the crew. Only ever sent to the seat's owner. */
     @SerialName("out_reason") val outReason: String = "",
     /** Opened by this account on its own current day. */

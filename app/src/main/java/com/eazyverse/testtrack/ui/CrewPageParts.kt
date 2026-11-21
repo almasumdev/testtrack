@@ -227,12 +227,19 @@ internal fun CrewHero(
     }
 }
 
-/** Words members wrote, quoted, in an edged block; who wrote them is never shown. */
+/**
+ * Words members wrote, quoted, in an edged block; who wrote them is never shown. A [title] leads
+ * in the tone's colour, [labels] say when above each line (labels[i] for lines[i], blank draws
+ * nothing), and [more] sits between the lines and the footer.
+ */
 @Composable
 internal fun Quotes(
     lines: List<String>,
     footer: String,
     tone: Tone = Tone.WARN,
+    labels: List<String> = emptyList(),
+    title: String = "",
+    more: (@Composable () -> Unit)? = null,
 ) {
     Column(
         Modifier
@@ -243,7 +250,17 @@ internal fun Quotes(
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        lines.forEach { Text("“$it”", style = MaterialTheme.typography.bodyMedium, color = Tt.colors.text2) }
+        if (title.isNotBlank()) {
+            Text(title, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = tone.ink())
+        }
+        lines.forEachIndexed { i, line ->
+            Column {
+                val label = labels.getOrNull(i).orEmpty()
+                if (label.isNotBlank()) Text(label, style = MaterialTheme.typography.labelSmall, color = Tt.colors.text4)
+                Text("“$line”", style = MaterialTheme.typography.bodyMedium, color = Tt.colors.text2)
+            }
+        }
+        more?.invoke()
         if (footer.isNotBlank()) Text(footer, style = MaterialTheme.typography.bodySmall, color = Tt.colors.text4)
     }
 }

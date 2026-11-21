@@ -256,6 +256,8 @@ internal fun InlineAction(
     label: String,
     modifier: Modifier = Modifier,
     leading: ImageVector? = null,
+    /** An icon after the words, such as a chevron on something that opens or folds in place. */
+    trailing: ImageVector? = null,
     enabled: Boolean = true,
     busy: Boolean = false,
     /** The words' ink: the accent's, or red for an action that costs something. */
@@ -302,6 +304,10 @@ internal fun InlineAction(
                     maxLines = 2,
                 )
                 if (busy) CircularProgressIndicator(Modifier.size(18.dp), color = color, strokeWidth = 2.dp)
+            }
+            if (trailing != null) {
+                Spacer(Modifier.width(4.dp))
+                Icon(trailing, null, Modifier.size(16.dp))
             }
         }
     }
