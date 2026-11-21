@@ -57,16 +57,13 @@ import com.eazyverse.testtrack.viewmodel.ThemeMode
 internal fun AppearanceGroup() {
     val context = LocalContext.current
     val t = Tt.colors
-    // The hairline tile's corner and line, so it sits with the record cards and the rows round it.
-    val shape = RoundedCornerShape(TileRadius)
     Column {
         SectionHeading("Appearance", top = MeHeadingTop, bottom = MeHeadingBottom)
+        // The same hairline tile as the rows round it, so it sits with the record cards.
         Column(
             Modifier
                 .fillMaxWidth()
-                .clip(shape)
-                .background(t.glass)
-                .border(1.dp, t.cardLine, shape)
+                .tileFrame()
                 .padding(6.dp),
         ) {
             // Laid out like a settings row, so the card reads as one of the rows that opens up.
