@@ -84,13 +84,13 @@ private fun MissedNightCard(
             if (index > 0) Spacer(Modifier.height(12.dp))
             StatusLine(
                 Lucide.TriangleAlert,
-                if (risky.size == 1) "Missed yesterday" else "${crew.name} · Missed yesterday",
+                if (risky.size == 1) "Missed yesterday" else "Missed yesterday in ${crew.name}",
                 tone = Tone.WARN,
                 note =
                     buildAnnotatedString {
-                        if (risky.size == 1) append("${crew.name} · ")
-                        append("${crew.owed} ${pluralOf(crew.owed, "app")} left · ")
-                        withStyle(deadline) { append("Before midnight") }
+                        append("${crew.owed} ${pluralOf(crew.owed, "app")} left ")
+                        if (risky.size == 1) append("in ${crew.name} ")
+                        withStyle(deadline) { append("before midnight") }
                     },
                 info = "Miss tonight too and your app leaves this crew. Finish all owed apps before your local midnight.",
             ) { InlineAction("View crew") { onOpenCrew(crew.id) } }

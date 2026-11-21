@@ -176,9 +176,11 @@ private fun FeedbackLabel(
         Spacer(Modifier.width(7.dp))
         Text(
             buildAnnotatedString {
-                append("Private feedback")
-                withStyle(SpanStyle(color = if (app.feedbackLate) ink else Tt.colors.text3)) {
-                    append(if (app.feedbackLate) " · Overdue" else " · By night ${app.feedbackDueDay}")
+                if (app.feedbackLate) {
+                    append("Private feedback overdue")
+                } else {
+                    append("Private feedback ")
+                    withStyle(SpanStyle(color = Tt.colors.text3)) { append("by night ${app.feedbackDueDay}") }
                 }
             },
             style = tileStyle(12f, 17f, FontWeight.Normal),

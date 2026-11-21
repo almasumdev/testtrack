@@ -495,7 +495,7 @@ class CrewVideoFramesTest {
         val updatesHeading = compose.onNodeWithText("Updates").fetchSemanticsNode().boundsInRoot
         org.junit.Assert.assertTrue("Updates are outside and below the start card", updatesHeading.top > startButton.bottom)
         compose.onNodeWithText("Missed yesterday").assertExists()
-        compose.onNodeWithText("Crew 61 · 12 apps left · Before midnight").assertExists()
+        compose.onNodeWithText("12 apps left in Crew 61 before midnight").assertExists()
         compose.onNodeWithText("View crew").performClick()
         org.junit.Assert.assertEquals("crew-61", openedCrew)
         compose.onNodeWithText("Run all 16").performClick()

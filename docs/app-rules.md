@@ -90,7 +90,7 @@ than pretended to be enforced.
 ## Icon and text sizing
 
 Size a leading status icon to the primary text line and align it with that line. For example,
-the small feedback icon sits beside the compact "Private feedback · By night 7" line.
+the small feedback icon sits beside the compact "Private feedback by night 7" line.
 Do not stretch a status icon to cover the title and subtitle together.
 
 Keep app artwork at its approved fixed size. Fit and align its title/ID block within the available

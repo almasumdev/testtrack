@@ -90,7 +90,7 @@ class CrewUpdatesFramesTest {
             CrewActions({}, {}, { did += "install ${it.id}" }, {}, {}, {}, isInstalled = { false })
         }
         compose.onNodeWithText("Missed yesterday").assertExists()
-        compose.onNodeWithText("Crew 66 · 1 app left · Before midnight").assertExists()
+        compose.onNodeWithText("1 app left in Crew 66 before midnight").assertExists()
         compose.onNodeWithText("View crew").performClick()
         assertEquals(listOf("crew crew"), did)
         frame.write("compactUpdatesRiskDark")
@@ -107,7 +107,7 @@ class CrewUpdatesFramesTest {
     @Test fun addScreenshotKeepsBothRecoveryPaths() {
         show(listOf(crew.copy(apps = listOf(app.copy(pictureDue = true)))))
         compose.onNodeWithText("Screenshot missing").assertExists()
-        compose.onNodeWithText("Auto Silent · Test time saved").assertExists()
+        compose.onNodeWithText("Test time saved for Auto Silent").assertExists()
         frame.write("compactUpdatesMissing")
         compose.onNodeWithText("Add").performClick()
         compose.onNodeWithText("Retake screenshot").performClick()
@@ -141,10 +141,10 @@ class CrewUpdatesFramesTest {
         compose.onNodeWithText("Retry").performClick()
         frame.write("compactUpdatesFailed")
         compose.runOnIdle { late.value = true }
-        compose.onNodeWithText("Upload waiting · 3h+").assertExists()
+        compose.onNodeWithText("Upload waiting over 3 hours").assertExists()
         compose.onNodeWithText("Retry").performClick()
         assertEquals(listOf("retry", "retry"), did)
-        compose.onNodeWithContentDescription("About Upload waiting · 3h+").performClick()
+        compose.onNodeWithContentDescription("About Upload waiting over 3 hours").performClick()
         frame.settle(300)
         compose.onNodeWithText("These screenshots have waited over 3 hours.", substring = true).assertExists()
         frame.write("compactUpdatesLateInfo")

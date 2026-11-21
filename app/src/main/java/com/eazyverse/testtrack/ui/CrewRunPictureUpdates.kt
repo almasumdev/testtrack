@@ -29,7 +29,7 @@ internal fun CrewRunPictureUpdates(
                     Lucide.Image,
                     "Screenshot missing",
                     tone = Tone.WARN,
-                    note = AnnotatedString("${app.label} · Test time saved"),
+                    note = AnnotatedString("Test time saved for ${app.label}"),
                     info =
                         "Your app time is saved. Add an app screenshot to count this test. " +
                             "You can retake it or use a saved screenshot.",
@@ -43,7 +43,7 @@ internal fun CrewRunPictureUpdates(
         val noun = pluralOf(sending.size, "screenshot")
         val label =
             when {
-                late -> "Upload waiting · 3h+"
+                late -> "Upload waiting over 3 hours"
                 why != null -> "${sending.size} ${if (sending.size == 1) "upload failed" else "uploads failed"}"
                 else -> "Uploading ${sending.size} $noun"
             }

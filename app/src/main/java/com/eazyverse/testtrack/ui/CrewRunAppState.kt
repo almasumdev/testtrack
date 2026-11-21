@@ -46,9 +46,9 @@ internal fun crewRunAppState(
         app.reported ->
             CrewRunAppState(
                 when {
-                    !installed -> "Reported · not installed"
-                    notPlay -> "Reported · Play copy needed"
-                    old -> "Reported · update needed"
+                    !installed -> "Reported, not installed"
+                    notPlay -> "Reported, needs the Play copy"
+                    old -> "Reported, needs an update"
                     else -> "Reported for tonight"
                 },
                 Lucide.Flag,
