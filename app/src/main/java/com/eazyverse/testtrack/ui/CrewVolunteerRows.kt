@@ -150,16 +150,20 @@ internal fun SpotIcons(icons: List<String>) {
     }
 }
 
-/** Nothing has a spot: the small robot state in the list's place. */
+/** Nothing has a spot: the small robot state in a card, in the place of the spot rows. */
 @Composable
 private fun NoSpotsCard() {
-    RobotState(
-        Prop.Kite,
-        "No free spots",
-        "Spots open when members leave. Check back tomorrow.",
-        fill = false,
-        compact = true,
-    )
+    CrewCard(padding = PaddingValues(16.dp)) {
+        RobotState(
+            Prop.Kite,
+            "No free spots",
+            "Spots open when members leave. Check back tomorrow.",
+            fill = false,
+            compact = true,
+            // The card's 16dp plus this 8dp is the same space above the robot as under the line.
+            pad = PaddingValues(vertical = 8.dp),
+        )
+    }
 }
 
 @Composable
