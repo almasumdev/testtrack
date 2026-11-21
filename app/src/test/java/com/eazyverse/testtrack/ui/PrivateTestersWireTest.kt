@@ -132,7 +132,7 @@ class PrivateTestersWireTest {
         assertEquals(listOf("lina", "omar", "sam", "rafi"), privateOrder(read.shown).map { it.id })
         assertEquals("1 of 2 opened tonight" to Tone.ACCENT, privateChipOf(read.shown))
         assertTrue(privateTesterOf(byId.getValue("sam"), 14).squares.isEmpty())
-        assertEquals("Testing ends with Crew 58, in 6 days.", privateEndsLine("Crew 58", 6))
+        assertEquals("Testing ends with Crew 58 in 6 days.", privateEndsLine("Crew 58", 6))
     }
 
     @Test

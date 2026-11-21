@@ -43,6 +43,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -241,31 +242,46 @@ internal fun CropBar(
         Row(
             Modifier.weight(1f).horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) { CropShape.entries.forEach { ShapeChip(it.label, it == shape) { onShape(it) } } }
+        ) { CropShape.entries.forEach { PhotoChip(it.label, selected = it == shape) { onShape(it) } } }
     }
 }
 
+/**
+ * A chip on a photo: the crop bar's shapes, or [PartSize.SMALL] laid over a picture's corner. A dark
+ * see-through fill with the photo's light ink, or when [selected] the light fill with dark ink.
+ * Regular is 34dp with 14sp bold words; small is 30dp with 12.5sp. An optional [icon] leads them.
+ */
 @Composable
-private fun ShapeChip(
+internal fun PhotoChip(
     label: String,
-    on: Boolean,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    selected: Boolean = false,
+    size: PartSize = PartSize.REGULAR,
     onClick: () -> Unit,
 ) {
     val t = Tt.colors
-    Box(
-        Modifier
-            .heightIn(min = 36.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(if (on) t.onPhoto else t.photoScrim)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center,
+    val small = size == PartSize.SMALL
+    val ink = if (selected) t.photo else t.onPhoto
+    Row(
+        modifier
+            .heightIn(min = if (small) 30.dp else 34.dp)
+            .clip(RoundedCornerShape(percent = 50))
+            .background(if (selected) t.onPhoto else t.photoScrim)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = if (small) 12.dp else 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (icon != null) {
+            Icon(icon, null, Modifier.size(if (small) 14.dp else 15.dp), tint = ink)
+            Spacer(Modifier.width(6.dp))
+        }
         Text(
             label,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = if (on) t.photo else t.onPhoto,
+            style = if (small) TextStyles.PhotoChipSmall else MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = ink,
+            maxLines = 1,
         )
     }
 }

@@ -15,21 +15,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import com.composables.icons.lucide.Camera
@@ -90,67 +86,30 @@ private fun EmptyProofBox(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(Lucide.Camera, "No screenshot yet", Modifier.size(26.dp), tint = t.text4)
+        Box(Modifier.semantics { contentDescription = "No screenshot yet" }) {
+            IconTile(Lucide.Camera, 40.dp, glyph = 20.dp)
+        }
         Spacer(Modifier.height(12.dp))
-        // The pair is 290dp wide, two equal halves; alone, Capture keeps the width of one half.
-        Row(
-            Modifier
-                .padding(horizontal = 12.dp)
-                .widthIn(max = if (onGallery != null) 290.dp else 141.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            val primary = t.primary
-            BoxButton(
+        Row(Modifier.padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            RowPill(
                 "Capture on Play",
-                Lucide.Camera,
-                fill = lerp(t.bg, primary, 0.2f),
-                ink = t.accentInk,
-                edge = lerp(t.bg, primary, 0.45f),
-                modifier = Modifier.weight(1f),
+                PillKind.SOFT,
+                leading = Lucide.Camera,
+                size = PillSize.SMALL,
+                touchTarget = false,
                 onClick = onCapture,
             )
             if (onGallery != null) {
-                BoxButton(
+                RowPill(
                     "Gallery",
-                    Lucide.Image,
-                    fill = t.bg,
-                    ink = t.text2,
-                    edge = t.glassBorder,
-                    modifier = Modifier.weight(1f),
+                    PillKind.GHOST,
+                    leading = Lucide.Image,
+                    size = PillSize.SMALL,
+                    touchTarget = false,
                     onClick = onGallery,
                 )
             }
         }
-    }
-}
-
-/** One of the empty box's two buttons: 36dp, fully round, a 1dp edge, the same width as its pair. */
-@Composable
-private fun BoxButton(
-    label: String,
-    icon: ImageVector,
-    fill: Color,
-    ink: Color,
-    edge: Color,
-    modifier: Modifier,
-    onClick: () -> Unit,
-) {
-    val shape = RoundedCornerShape(percent = 50)
-    Row(
-        modifier
-            .height(36.dp)
-            .clip(shape)
-            .background(fill)
-            .border(1.dp, edge, shape)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, null, Modifier.size(15.dp), tint = ink)
-        Spacer(Modifier.width(6.dp))
-        Text(label, style = tileStyle(13.5f, 18f, FontWeight.Bold), color = ink, maxLines = 1)
     }
 }
 
@@ -195,32 +154,19 @@ private fun FilledProofBox(
         ) {
             Icon(Lucide.X, "Remove", Modifier.size(14.dp), tint = t.onPhoto)
         }
-        OverChip("Hide details", Lucide.EyeOff, Modifier.align(Alignment.BottomStart), onHideDetails)
-        OverChip("Retake", Lucide.Camera, Modifier.align(Alignment.BottomEnd), onRetake)
-    }
-}
-
-/** A dark chip laid over the picture's corner: 30dp, the photo's own ink. */
-@Composable
-private fun OverChip(
-    label: String,
-    icon: ImageVector,
-    modifier: Modifier,
-    onClick: () -> Unit,
-) {
-    val t = Tt.colors
-    Row(
-        modifier
-            .padding(8.dp)
-            .height(30.dp)
-            .clip(RoundedCornerShape(15.dp))
-            .background(t.photoScrim)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, null, Modifier.size(14.dp), tint = t.onPhoto)
-        Spacer(Modifier.width(6.dp))
-        Text(label, style = tileStyle(12.5f, 16f, FontWeight.Bold), color = t.onPhoto, maxLines = 1)
+        PhotoChip(
+            "Hide details",
+            Modifier.align(Alignment.BottomStart).padding(8.dp),
+            icon = Lucide.EyeOff,
+            size = PartSize.SMALL,
+            onClick = onHideDetails,
+        )
+        PhotoChip(
+            "Retake",
+            Modifier.align(Alignment.BottomEnd).padding(8.dp),
+            icon = Lucide.Camera,
+            size = PartSize.SMALL,
+            onClick = onRetake,
+        )
     }
 }

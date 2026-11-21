@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.ArrowRight
@@ -147,7 +148,8 @@ internal fun StepRow(
     title: String,
     now: Boolean,
     done: Boolean = false,
-) = StepRow(number, AnnotatedString(title), now, done)
+    minHeight: Dp = 36.dp,
+) = StepRow(number, AnnotatedString(title), now, done, minHeight)
 
 /**
  * The same row with a title that can carry bold words. A [done] step shows a tick on the soft
@@ -159,10 +161,12 @@ internal fun StepRow(
     title: AnnotatedString,
     now: Boolean,
     done: Boolean = false,
+    /** The row's least height: 36 in a checklist, 32 over a how-to's picture. */
+    minHeight: Dp = 36.dp,
 ) {
     val t = Tt.colors
     val current = now && !done
-    Row(Modifier.fillMaxWidth().heightIn(min = 36.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().heightIn(min = minHeight), verticalAlignment = Alignment.CenterVertically) {
         Box(
             Modifier
                 .size(22.dp)

@@ -1,8 +1,6 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,7 +27,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.FileText
 import com.composables.icons.lucide.Lucide
@@ -46,9 +43,6 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * give. The chosen tile is washed and checked, the way a picker marks its chosen row.
  */
 
-private val LevelName = tileStyle(15f, 18f, FontWeight.SemiBold)
-private val LevelNameChosen = tileStyle(15f, 18f, FontWeight.Bold)
-private val LevelFrom = tileStyle(12f, 15f, FontWeight.Normal)
 private val PageLineBold = tileStyle(13f, 18f, FontWeight.SemiBold)
 private val CountLine = tileStyle(12.5f, 15f, FontWeight.Normal)
 
@@ -81,45 +75,18 @@ internal fun AskLevelTiles(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         FeedRules.Feedback.entries.forEach { level ->
-            LevelTile(level, level == chosen, enabled, { onChoose(level) }, Modifier.weight(1f))
+            ChoiceTile(
+                level.icon(),
+                level.tileName(),
+                "From ${level.least} tix",
+                selected = level == chosen,
+                enabled = enabled,
+                modifier = Modifier.weight(1f),
+            ) { onChoose(level) }
         }
     }
     Spacer(Modifier.height(8.dp))
     Text(chosen.line(), style = TextStyles.PageLine, color = Tt.colors.text2)
-}
-
-@Composable
-private fun LevelTile(
-    level: FeedRules.Feedback,
-    chosen: Boolean,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier,
-) {
-    val t = Tt.colors
-    Box(modifier.choiceTile(chosen, enabled, onClick = onClick)) {
-        // The design's 11/12/10 inside its 1dp line, which this border draws inside the tile.
-        Column(Modifier.fillMaxWidth().padding(start = 13.dp, end = 13.dp, top = 12.dp, bottom = 11.dp)) {
-            Icon(level.icon(), null, Modifier.size(18.dp), tint = t.tileInk)
-            Spacer(Modifier.height(6.dp))
-            Text(
-                level.tileName(),
-                style = if (chosen) LevelNameChosen else LevelName,
-                color = if (chosen) t.tabSelected else t.text,
-                maxLines = 1,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text("From ${level.least} tix", style = LevelFrom, color = t.text3, maxLines = 1)
-        }
-        if (chosen) {
-            Icon(
-                Lucide.Check,
-                null,
-                Modifier.align(Alignment.TopEnd).padding(top = 11.dp, end = 11.dp).size(15.dp),
-                tint = t.tabSelected,
-            )
-        }
-    }
 }
 
 /**

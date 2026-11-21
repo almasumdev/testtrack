@@ -19,9 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -57,7 +57,7 @@ internal fun SourcedAppMark(
 internal val AppHeadMarkRoom = 6.dp
 
 /** The line under an app's name in [AppHead]. */
-private val AppHeadSub = tileStyle(12.5f, 15f, FontWeight.Medium)
+private val AppHeadSub = TextStyles.AppSubLine
 
 /**
  * The app a page is about: [SourcedAppMark], the name on up to two lines and [sub] under it. The
@@ -69,6 +69,10 @@ private val AppHeadSub = tileStyle(12.5f, 15f, FontWeight.Medium)
  *
  * [subGap] and [subStyle] set the line under the name: 2dp under it at 12.5 on 15 unless given,
  * such as the review page's and the picker's package, flush under the name at 12.5 on 14.
+ *
+ * [mark] is the icon's size. The usual [AppTileIcon] grows with the font size; any other size, such
+ * as a crew tile's 44dp, stays as it is at every font size. [markTag] and [textTag] tag the icon and
+ * the words for a test.
  */
 @Composable
 internal fun AppHead(
@@ -85,9 +89,12 @@ internal fun AppHead(
     trailing: (@Composable RowScope.() -> Unit)? = null,
     subGap: Dp = 2.dp,
     subStyle: TextStyle = AppHeadSub,
+    mark: Dp = AppTileIcon,
+    markTag: String? = null,
+    textTag: String? = null,
 ) {
     val t = Tt.colors
-    val mark = AppTileIcon * LocalDensity.current.fontScale.coerceAtLeast(1f)
+    val markSize = if (mark == AppTileIcon) mark * LocalDensity.current.fontScale.coerceAtLeast(1f) else mark
     Row(
         modifier
             .fillMaxWidth()
@@ -103,9 +110,17 @@ internal fun AppHead(
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SourcedAppMark(pkg, name, icon, live, size = mark, ownIcon = ownIcon)
+        SourcedAppMark(
+            pkg,
+            name,
+            icon,
+            live,
+            size = markSize,
+            ownIcon = ownIcon,
+            modifier = if (markTag != null) Modifier.testTag(markTag) else Modifier,
+        )
         Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f).then(if (textTag != null) Modifier.testTag(textTag) else Modifier)) {
             Text(name, style = AppTileName, color = t.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (sub.isNotEmpty()) {
                 Spacer(Modifier.height(subGap))
@@ -134,4 +149,23 @@ internal fun AppHead(
     trailing: (@Composable RowScope.() -> Unit)? = null,
     subGap: Dp = 2.dp,
     subStyle: TextStyle = AppHeadSub,
-) = AppHead(pkg, name, icon, live, AnnotatedString(sub), modifier, ownIcon, onClick, onClickLabel, trailing, subGap, subStyle)
+    mark: Dp = AppTileIcon,
+    markTag: String? = null,
+    textTag: String? = null,
+) = AppHead(
+    pkg,
+    name,
+    icon,
+    live,
+    AnnotatedString(sub),
+    modifier,
+    ownIcon,
+    onClick,
+    onClickLabel,
+    trailing,
+    subGap,
+    subStyle,
+    mark,
+    markTag,
+    textTag,
+)

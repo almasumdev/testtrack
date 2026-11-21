@@ -49,8 +49,6 @@ import kotlin.math.roundToInt
 
 private const val TABULAR = "tnum"
 private val StepValue = tileStyle(18f, 22f, FontWeight.Bold).copy(fontFeatureSettings = TABULAR)
-private val ChipText = tileStyle(14f, 17f, FontWeight.SemiBold).copy(fontFeatureSettings = TABULAR)
-private val ChipTextChosen = tileStyle(14f, 17f, FontWeight.Bold).copy(fontFeatureSettings = TABULAR)
 private val PayValue = tileStyle(16f, 19f, FontWeight.Bold).copy(fontFeatureSettings = TABULAR)
 private val EndLabel = tileStyle(12f, 14f, FontWeight.Normal).copy(fontFeatureSettings = TABULAR)
 
@@ -149,7 +147,8 @@ private fun CountChip(
     ) {
         Text(
             "$count",
-            style = if (chosen) ChipTextChosen else ChipText,
+            style = TextStyles.CountChip,
+            fontWeight = if (chosen) FontWeight.Bold else FontWeight.SemiBold,
             color = if (chosen) t.tabSelected else t.text2,
         )
     }

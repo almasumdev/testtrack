@@ -1,27 +1,18 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Hourglass
@@ -32,7 +23,6 @@ import com.composables.icons.lucide.Users
 import com.composables.icons.lucide.X
 import com.eazyverse.testtrack.domain.Case
 import com.eazyverse.testtrack.domain.pluralOf
-import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * A case between a developer and a reviewer, for a member to decide: both sides as one thread,
@@ -186,44 +176,26 @@ private fun VoteTiles(
     onPick: (Boolean) -> Unit,
 ) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        VoteTile(Lucide.Check, "The review stands", "The reviewer is paid", picked == true, enabled, dimOthers, Modifier.weight(1f)) {
-            onPick(true)
-        }
-        VoteTile(Lucide.X, "The developer is right", "Nothing is paid", picked == false, enabled, dimOthers, Modifier.weight(1f)) {
-            onPick(false)
-        }
+        ChoiceTile(
+            Lucide.Check,
+            "The review stands",
+            "The reviewer is paid",
+            picked == true,
+            enabled,
+            Modifier.weight(1f),
+            dim = dimOthers,
+            fadeWhenOff = false,
+        ) { onPick(true) }
+        ChoiceTile(
+            Lucide.X,
+            "The developer is right",
+            "Nothing is paid",
+            picked == false,
+            enabled,
+            Modifier.weight(1f),
+            dim = dimOthers,
+            fadeWhenOff = false,
+        ) { onPick(false) }
     }
 }
 
-@Composable
-private fun VoteTile(
-    icon: ImageVector,
-    name: String,
-    line: String,
-    selected: Boolean,
-    enabled: Boolean,
-    dim: Boolean,
-    modifier: Modifier,
-    onClick: () -> Unit,
-) {
-    val t = Tt.colors
-    Box(
-        modifier
-            .alpha(if (dim && !selected) 0.45f else 1f)
-            .choiceTile(selected, enabled, fadeWhenOff = false, onClick = onClick)
-            .padding(start = 12.dp, end = 12.dp, top = 11.dp, bottom = 10.dp),
-    ) {
-        Column {
-            Icon(icon, null, Modifier.size(18.dp), tint = t.tileInk)
-            Spacer(Modifier.height(6.dp))
-            Text(
-                name,
-                style = tileStyle(15f, 18f, if (selected) FontWeight.Bold else FontWeight.SemiBold),
-                color = if (selected) t.tabSelected else t.text,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(line, style = tileStyle(12f, 15f, FontWeight.Normal), color = t.text3)
-        }
-        if (selected) Icon(Lucide.Check, null, Modifier.align(Alignment.TopEnd).size(15.dp), tint = t.tabSelected)
-    }
-}

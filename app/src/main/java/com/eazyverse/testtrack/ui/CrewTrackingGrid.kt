@@ -155,7 +155,7 @@ internal fun TrackingGrid(
         if (showCounts) {
             CountsRow(counts, short, today, lit)
         }
-        GridNote(note)
+        QuietNote(note, Modifier.padding(top = 8.dp))
     }
 }
 
@@ -190,7 +190,7 @@ internal fun TrackingGridSkeleton(
                 }
             }
         }
-        if (note != null) GridNote(note)
+        if (note != null) QuietNote(note, Modifier.padding(top = 8.dp))
     }
 }
 
@@ -217,21 +217,6 @@ private fun NightNumbers(
                 maxLines = 1,
             )
         }
-    }
-}
-
-/** The quiet line at the grid's foot. */
-@Composable
-private fun GridNote(note: String) {
-    val t = Tt.colors
-    Row(Modifier.padding(start = 4.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(Lucide.Info, null, Modifier.size(12.dp), tint = t.text4)
-        Spacer(Modifier.width(4.dp))
-        Text(
-            note,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.5.sp),
-            color = t.text4,
-        )
     }
 }
 

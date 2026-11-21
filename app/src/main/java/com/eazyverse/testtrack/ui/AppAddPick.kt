@@ -89,9 +89,6 @@ internal fun PhoneAppSheet(
 }
 
 private val PhoneAppIcon = 44.dp
-private val PhoneAppName = tileStyle(16f, 19f, FontWeight.SemiBold)
-private val PhoneAppNameChosen = tileStyle(16f, 19f, FontWeight.Bold)
-private val PhoneAppPackage = tileStyle(12.5f, 15f, FontWeight.Medium)
 
 /** One app on this phone: its own 14dp tile, the chosen one washed, with the check at the end. */
 @Composable
@@ -114,13 +111,14 @@ private fun PhoneAppTile(
         Column(Modifier.weight(1f)) {
             Text(
                 app.label,
-                style = if (chosen) PhoneAppNameChosen else PhoneAppName,
+                style = AppTileName,
+                fontWeight = if (chosen) FontWeight.Bold else FontWeight.SemiBold,
                 color = if (chosen) t.tabSelected else t.text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(2.dp))
-            Text(app.pkg, style = PhoneAppPackage, color = t.text3, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(app.pkg, style = TextStyles.AppSubLine, color = t.text3, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Spacer(Modifier.width(12.dp))
         if (app.testBuild) {

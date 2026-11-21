@@ -105,7 +105,7 @@ internal fun privateEndsLine(
     if (daysLeft <= 0) {
         "Testing ends with $crewName after tonight."
     } else {
-        "Testing ends with $crewName, in $daysLeft ${pluralOf(daysLeft, "day")}."
+        "Testing ends with $crewName in $daysLeft ${pluralOf(daysLeft, "day")}."
     }
 
 /** Why an ask the reader said yes to stopped, as far as the phone can tell. */

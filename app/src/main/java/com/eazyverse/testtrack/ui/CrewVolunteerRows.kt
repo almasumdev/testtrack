@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Check
@@ -152,28 +151,16 @@ internal fun SpotIcons(icons: List<String>) {
     }
 }
 
-/** Nothing has a spot: one quiet card in the list's place. */
+/** Nothing has a spot: the small robot state in the list's place. */
 @Composable
 private fun NoSpotsCard() {
-    CrewCard(padding = PaddingValues(16.dp)) {
-        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            IconTile(Lucide.Users, 40.dp, glyph = 20.dp)
-            Spacer(Modifier.height(10.dp))
-            Text(
-                "No running crew has a free spot",
-                style = tileStyle(15f, 19f, FontWeight.SemiBold),
-                color = Tt.colors.text,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                "Spots open when members leave. Check back tomorrow.",
-                style = tileStyle(12.5f, 16f, FontWeight.Normal),
-                color = Tt.colors.text3,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
+    RobotState(
+        Prop.Kite,
+        "No free spots",
+        "Spots open when members leave. Check back tomorrow.",
+        fill = false,
+        compact = true,
+    )
 }
 
 @Composable

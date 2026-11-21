@@ -252,7 +252,7 @@ internal fun ChatEmptyNote(
         fill = false,
         robot = 140.dp,
         pad = PaddingValues(horizontal = 32.dp, vertical = 24.dp),
-        titleStyle = chatStyle(17f, 22f).copy(fontWeight = FontWeight.SemiBold),
+        titleStyle = TextStyles.ChatEmptyTitle,
         titleColor = t.text,
         titleGap = 4.dp,
         lineColor = t.text3,

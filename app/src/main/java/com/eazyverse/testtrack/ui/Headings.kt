@@ -33,6 +33,7 @@ import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Barlow
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.ui.theme.TtTypography
+import com.eazyverse.testtrack.ui.theme.tabular
 
 /*
  * Headings over the parts of a page, and the few text styles every page line is set in.
@@ -111,6 +112,21 @@ object TextStyles {
     val ProfileName = TtTypography.titleLarge.copy(fontSize = 18.sp)
     val ProfileLetter = TtTypography.titleLarge.copy(fontSize = 23.sp)
     val ProfileEmail = TtTypography.bodyMedium.copy(fontSize = 13.sp)
+
+    /** The figure in a small corner [CountBadge]: 10.5 on 13, tabular. */
+    val SmallBadge = TtTypography.bodyMedium.copy(fontSize = 10.5.sp, lineHeight = 13.sp).tabular()
+
+    /** A small photo chip's words: 12.5 on 16, bold. */
+    val PhotoChipSmall = tileStyle(12.5f, 16f, FontWeight.Bold)
+
+    /** The line under an app's name, its package or developer: 12.5 on 15, medium. */
+    val AppSubLine = tileStyle(12.5f, 15f, FontWeight.Medium)
+
+    /** A count to pick, such as how many reviews: 14 on 17, tabular. */
+    val CountChip = tileStyle(14f, 17f, FontWeight.SemiBold).copy(fontFeatureSettings = "tnum")
+
+    /** The empty chat's title: 17 on 22, semibold. */
+    val ChatEmptyTitle = TtTypography.bodyMedium.copy(fontSize = 17.sp, lineHeight = 22.sp, fontWeight = FontWeight.SemiBold)
 
     /** A video's length on its thumbnail: 10 on 14. */
     val VideoLength = TtTypography.labelSmall.copy(fontSize = 10.sp, lineHeight = 14.sp)

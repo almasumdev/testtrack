@@ -39,6 +39,9 @@ import com.eazyverse.testtrack.viewmodel.ReviewMoment
  * The rest set a page's own look where it was drawn that way: [robotGap] under the robot,
  * [titleStyle] and [titleColor], [titleGap] under the title, [lineColor] and [lineMax] for the line,
  * [footerGap] over the footer. [soft] draws the way out as a soft pill, such as a quiet "Try again".
+ *
+ * [compact] is the small one in a list's place, such as no free spots: a 56dp robot 10dp over a
+ * section heading's words, 4dp over a page line.
  */
 @Composable
 fun RobotState(
@@ -63,21 +66,22 @@ fun RobotState(
     lineMax: Dp = 300.dp,
     footerGap: Dp = 10.dp,
     soft: Boolean = false,
+    compact: Boolean = false,
 ) {
     val body: @Composable ColumnScope.() -> Unit = {
-        RobotHolding(prop, size = robot, description = title)
-        Spacer(Modifier.height(robotGap))
+        RobotHolding(prop, size = if (compact) 56.dp else robot, description = title)
+        Spacer(Modifier.height(if (compact) 10.dp else robotGap))
         Text(
             title,
-            style = titleStyle,
+            style = if (compact) TextStyles.HeadingStyle else titleStyle,
             color = titleColor,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(titleGap))
+        Spacer(Modifier.height(if (compact) 4.dp else titleGap))
         Text(
             line,
             Modifier.widthIn(max = lineMax),
-            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
+            style = if (compact) TextStyles.PageLine else MaterialTheme.typography.bodyMedium,
             color = lineColor,
             textAlign = TextAlign.Center,
         )

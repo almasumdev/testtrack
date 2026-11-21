@@ -12,7 +12,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Flag
@@ -55,29 +54,30 @@ internal fun CrewRunAppTile(
     val status = crewRunAppState(app, seat, kind, actions)
     var screenshotChoice by remember(app.id) { mutableStateOf(false) }
     CrewCard(modifier = Modifier.testTag("crew-run-app-${app.id}"), padding = PaddingValues(14.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            AppHeading(
-                app,
-                seat,
-                Modifier.weight(1f).then(
-                    if (left) {
-                        Modifier
-                    } else {
-                        Modifier.clickable {
-                            onSheet(RowSheet(seat, if (app.done || app.reported) SheetKind.DONE else SheetKind.TONIGHT, app))
-                        }
-                    },
-                ),
-            )
-            if (reports && !largeText) {
-                Spacer(Modifier.width(4.dp))
-                InlineAction(
-                    "Report",
-                    leading = Lucide.Flag,
-                    enabled = !app.reported,
-                ) { actions.onReport(seat) }
-            }
-        }
+        AppHead(
+            app.packageName,
+            app.label,
+            seat.icon,
+            live = null,
+            sub = app.packageName,
+            modifier =
+                if (left) {
+                    Modifier
+                } else {
+                    Modifier.clickable {
+                        onSheet(RowSheet(seat, if (app.done || app.reported) SheetKind.DONE else SheetKind.TONIGHT, app))
+                    }
+                },
+            trailing =
+                if (reports && !largeText) {
+                    { InlineAction("Report", leading = Lucide.Flag, enabled = !app.reported) { actions.onReport(seat) } }
+                } else {
+                    null
+                },
+            mark = 44.dp,
+            markTag = "crew-app-icon-${app.id}",
+            textTag = "crew-app-text-${app.id}",
+        )
         if (reports && largeText) {
             InlineAction(
                 "Report",
@@ -111,37 +111,6 @@ internal fun CrewRunAppTile(
     }
     if (screenshotChoice) {
         CrewScreenshotChoice(app, actions) { screenshotChoice = false }
-    }
-}
-
-@Composable
-private fun AppHeading(
-    app: CrewApp,
-    seat: CrewSeat,
-    modifier: Modifier,
-) {
-    val side = 44.dp
-    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(side).testTag("crew-app-icon-${app.id}")) {
-            AppMark(app.packageName, app.label, seat.icon, size = side)
-        }
-        Spacer(Modifier.width(10.dp))
-        Column(Modifier.weight(1f).testTag("crew-app-text-${app.id}")) {
-            Text(
-                app.label,
-                style = AppTileName,
-                color = Tt.colors.text,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                app.packageName,
-                style = tileStyle(12f, 14f, FontWeight.Normal),
-                color = Tt.colors.text3,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
     }
 }
 

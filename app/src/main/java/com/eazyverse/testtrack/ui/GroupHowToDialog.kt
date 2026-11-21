@@ -3,7 +3,6 @@ package com.eazyverse.testtrack.ui
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,13 +10,11 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -74,7 +71,6 @@ internal val PlaySteps =
         PlayStep("Roll out a release to that track", R.drawable.play_step4),
     )
 
-private val StepStyle = tileStyle(15f, 20f, FontWeight.SemiBold)
 
 /**
  * The steps. With [verify] and [onVerify], as from the seat page, the check sits at the end;
@@ -133,7 +129,7 @@ internal fun GroupHowToDialog(
                 SeatAddressRow()
                 PlaySteps.forEachIndexed { index, step ->
                     Spacer(Modifier.height(if (index == 0) 20.dp else 24.dp))
-                    StepHeading(index + 1, step.text)
+                    StepRow(index + 1, step.text, now = true, minHeight = 32.dp)
                     Spacer(Modifier.height(10.dp))
                     StepPicture(step) { hintSeen = true }
                     if (index == 0 && !hintSeen) {
@@ -170,21 +166,6 @@ internal fun DialogSystemBars(dark: Boolean) {
             isAppearanceLightStatusBars = !dark
             isAppearanceLightNavigationBars = !dark
         }
-    }
-}
-
-@Composable
-private fun StepHeading(
-    number: Int,
-    text: String,
-) {
-    val t = Tt.colors
-    Row(Modifier.fillMaxWidth().heightIn(min = 32.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(24.dp).clip(CircleShape).background(t.tile), contentAlignment = Alignment.Center) {
-            Text("$number", style = TextStyles.StepNumber, color = t.tileInk)
-        }
-        Spacer(Modifier.width(12.dp))
-        Text(text, style = StepStyle, color = t.text)
     }
 }
 

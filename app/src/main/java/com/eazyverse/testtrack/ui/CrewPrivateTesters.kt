@@ -3,17 +3,13 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,14 +19,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Lock
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.UserPlus
-import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.AppNights
 import com.eazyverse.testtrack.viewmodel.PrivateResults
 import com.eazyverse.testtrack.viewmodel.PrivateState
@@ -245,28 +237,15 @@ private fun PrivateNote(
     daysLeft: Int,
     modifier: Modifier = Modifier,
 ) {
-    val t = Tt.colors
-    IconLine(
-        Lucide.Lock,
-        t.text4,
-        AnnotatedString("Only you see this. ${privateEndsLine(crewName, daysLeft)}"),
-        NoteStyle,
-        t.text4,
-        modifier.padding(bottom = 12.dp),
-    )
+    QuietNote("Only you see this. ${privateEndsLine(crewName, daysLeft)}", modifier.padding(bottom = 12.dp))
 }
 
-/** The quiet line before the crew is known: its lock, and a bar where the words go, one line high. */
+/** The quiet line before the crew is known: a bar where the words go, one line high and centred. */
 @Composable
 private fun PrivateNoteSkeleton() {
-    val line = with(LocalDensity.current) { NoteStyle.lineHeight.toDp() }
-    Row(Modifier.padding(bottom = 12.dp).height(line), verticalAlignment = Alignment.CenterVertically) {
-        Icon(Lucide.Lock, null, Modifier.size(14.dp), tint = Tt.colors.text4)
-        Spacer(Modifier.width(6.dp))
+    Box(Modifier.fillMaxWidth().padding(bottom = 12.dp).height(16.dp), contentAlignment = Alignment.Center) {
         Skeleton(height = 11.dp, modifier = Modifier.fillMaxWidth(0.7f))
     }
 }
-
-private val NoteStyle = tileStyle(12.5f, 17f, FontWeight.Normal)
 
 private const val PRIVATE_GRID_NOTE = "Opened or not, each night they were in"

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -111,24 +113,49 @@ fun IconTile(
     }
 }
 
-/** A count in a small filled pill, beside a heading. Above [cap] it reads "cap+". */
+/** How big a shared chip or badge is drawn: its usual size, or the smaller one for a corner. */
+enum class PartSize { REGULAR, SMALL }
+
+/**
+ * A count in a small filled pill, beside a heading or in the bar. Above [cap] it reads "cap+".
+ *
+ * [PartSize.SMALL] is the one on a button's corner: 18dp at the least, 10.5 bold, with a 1.5dp
+ * [ring] in the ground under it so it stands clear of the button.
+ */
 @Composable
 fun CountBadge(
     count: Int,
     cap: Int = Int.MAX_VALUE,
+    size: PartSize = PartSize.REGULAR,
+    ring: Color? = null,
+    modifier: Modifier = Modifier,
+) {
+    CountBadge(if (count > cap) "$cap+" else "$count", size, ring, modifier)
+}
+
+/** A [CountBadge] whose words are already written, such as "9+". */
+@Composable
+fun CountBadge(
+    text: String,
+    size: PartSize = PartSize.REGULAR,
+    ring: Color? = null,
+    modifier: Modifier = Modifier,
 ) {
     val t = Tt.colors
+    val small = size == PartSize.SMALL
+    val least = if (small) 18.dp else 22.dp
     Box(
-        Modifier
-            .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
+        modifier
+            .defaultMinSize(minWidth = least, minHeight = least)
             .clip(CircleShape)
             .background(t.badgeFill)
-            .padding(horizontal = 7.dp),
+            .then(if (ring != null) Modifier.border(1.5.dp, ring, CircleShape) else Modifier)
+            .padding(horizontal = if (small) 4.dp else 7.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            if (count > cap) "$cap+" else "$count",
-            style = MaterialTheme.typography.labelMedium.tabular(),
+            text,
+            style = if (small) TextStyles.SmallBadge else MaterialTheme.typography.labelMedium.tabular(),
             fontWeight = FontWeight.Bold,
             color = t.onAccent,
         )
@@ -381,6 +408,56 @@ fun Modifier.choiceTile(
         .border(1.dp, if (selected) chosenLine else line, shape)
         .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
         .then(if (enabled || !fadeWhenOff) Modifier else Modifier.alpha(DISABLED_ALPHA))
+
+/**
+ * One answer of a few side by side, drawn on [choiceTile]: an 18dp icon, the [name] and a quiet
+ * [line] under it, 12 inside. Chosen, the name goes bold in the selected ink and a check sits 11
+ * from the top right corner. [dim] fades it once another answer is the one that counts; [fadeWhenOff]
+ * false keeps it at full strength while not [enabled], such as a vote that is being sent.
+ */
+@Composable
+fun ChoiceTile(
+    icon: ImageVector,
+    name: String,
+    line: String,
+    selected: Boolean,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    dim: Boolean = false,
+    fadeWhenOff: Boolean = true,
+    onClick: () -> Unit,
+) {
+    val t = Tt.colors
+    Box(
+        modifier
+            .alpha(if (dim && !selected) 0.45f else 1f)
+            .choiceTile(selected, enabled, fadeWhenOff = fadeWhenOff, onClick = onClick),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(12.dp)) {
+            Icon(icon, null, Modifier.size(18.dp), tint = t.tileInk)
+            Spacer(Modifier.height(6.dp))
+            Text(
+                name,
+                style = ChoiceName,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                color = if (selected) t.tabSelected else t.text,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(line, style = ChoiceLine, color = t.text3)
+        }
+        if (selected) {
+            Icon(
+                Lucide.Check,
+                null,
+                Modifier.align(Alignment.TopEnd).padding(top = 11.dp, end = 11.dp).size(15.dp),
+                tint = t.tabSelected,
+            )
+        }
+    }
+}
+
+private val ChoiceName = tileStyle(15f, 18f, FontWeight.SemiBold)
+private val ChoiceLine = tileStyle(12f, 15f, FontWeight.Normal)
 
 /**
  * How much of the bottom of the screen the floating dock covers, system bar included.
