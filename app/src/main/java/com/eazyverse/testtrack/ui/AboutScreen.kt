@@ -332,7 +332,7 @@ private fun FeedbackAsk(
     onLater: () -> Unit,
 ) = Ask(
     title = "Tell us what could be better",
-    body = "We read every message, and it is the fastest way to get it fixed.",
+    body = "We read every message.",
     confirm = "Send feedback",
     onConfirm = onSend,
     dismiss = "Not now",

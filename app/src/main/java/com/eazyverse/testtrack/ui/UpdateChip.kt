@@ -90,7 +90,7 @@ fun ProvideUpdateOffer(
             title = "Restart to update?",
             body =
                 (offer.version?.let { "Version $it is ready. " } ?: "The update is ready. ") +
-                    "TestTrack closes and opens again on it in a few seconds.",
+                    "TestTrack restarts in a few seconds.",
             confirm = "Restart",
             dismiss = "Later",
             onConfirm = {

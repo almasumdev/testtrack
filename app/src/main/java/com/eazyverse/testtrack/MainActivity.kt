@@ -41,6 +41,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.data.AppUpdateService
 import com.eazyverse.testtrack.data.AuthRepo
 import com.eazyverse.testtrack.data.EmulatorGate
@@ -205,12 +207,15 @@ class MainActivity : ComponentActivity() {
                         }
                         GroupSheet(membership)
 
-                        // Said once, in the server's own words, after the account was signed out.
+                        // Said once, after the account was signed out. The title says what
+                        // happened, so the body is only what to do about it.
                         val gone by AccountGone.notice.collectAsState()
-                        gone?.let { said ->
+                        if (gone != null) {
                             Ask(
                                 title = "This account was deleted",
-                                body = said,
+                                icon = Lucide.TriangleAlert,
+                                tone = Tone.WARN,
+                                body = "Write to support to get it back.",
                                 confirm = "OK",
                                 dismiss = null,
                                 onConfirm = AccountGone::seen,

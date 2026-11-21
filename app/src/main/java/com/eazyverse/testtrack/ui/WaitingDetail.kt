@@ -156,8 +156,8 @@ fun CheckScreen(
         Ask(
             title = "Ask for a new screenshot?",
             body =
-                "They get ${FeedRules.RECHECK_HOURS} hours to show their review on Play again. ${FeedRules.RECHECK_FEE} tix " +
-                    "are held from you: they get them if they show it, you get them back if not. You can ask once.",
+                "They get ${FeedRules.RECHECK_HOURS} hours to show it on Play again. ${FeedRules.RECHECK_FEE} tix " +
+                    "are held until then. You can ask once.",
             confirm = "Ask",
             onConfirm = {
                 askingAgain = false
@@ -171,8 +171,8 @@ fun CheckScreen(
         Ask(
             title = "Accept it after all?",
             body =
-                "The reviewer is paid ${later.reward} tix and the members stop deciding. Members who already voted " +
-                    "get ${FeedRules.JUROR_FEE} tix each from your ${FeedRules.STAKE} tix stake, and the rest comes back to you.",
+                "The reviewer gets ${later.reward} tix and the vote ends. Voters get ${FeedRules.JUROR_FEE} tix " +
+                    "each from your stake, and the rest comes back.",
             confirm = "Accept and pay",
             onConfirm = {
                 acceptingLater = false

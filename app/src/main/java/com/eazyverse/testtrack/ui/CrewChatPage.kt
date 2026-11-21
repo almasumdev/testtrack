@@ -183,9 +183,9 @@ fun CrewChatScreen(
             title = if (many) "Delete ${deleting.size} messages?" else "Delete this message?",
             body =
                 if (many) {
-                    "They go for everyone in $name. They still count toward today's messages."
+                    "Gone for everyone in $name. They still count for today."
                 } else {
-                    "It goes for everyone in $name. It still counts toward today's messages."
+                    "Gone for everyone in $name. It still counts for today."
                 },
             confirm = "Delete",
             dismiss = "Keep ${if (many) "them" else "it"}",

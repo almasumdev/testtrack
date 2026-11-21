@@ -101,10 +101,10 @@ fun PrivateTestersScreen(
         val asked = tester.state == PrivateState.INVITED
         val first = tester.name.substringBefore(' ')
         Ask(
-            title = if (asked) "Cancel the invite to ${tester.name}?" else "Remove ${tester.name}?",
+            title = if (asked) "Cancel ${tester.name}'s invite?" else "Remove ${tester.name}?",
             body =
                 if (asked) {
-                    "$first can't accept it after this. You can ask again later."
+                    "You can ask again later."
                 } else {
                     "$first stops testing $appName, and their nights leave this list."
                 },

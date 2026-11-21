@@ -165,9 +165,7 @@ fun AppPage(
     if (askLive && app != null) {
         Ask(
             title = "Mark ${app.name} live?",
-            body =
-                "We'll check its public Play page. Once it's live it takes feedback, but it can " +
-                    "never go into a crew again.",
+            body = "We check its Play page. Once live, it can't go into a crew again.",
             confirm = "Mark it live",
             onConfirm = {
                 askLive = false
@@ -190,7 +188,7 @@ fun AppPage(
     if (askDelete && app != null) {
         Ask(
             title = "Delete ${app.name}?",
-            body = "It comes off My apps. Nothing has happened to it yet, so there is nothing to keep.",
+            body = "It comes off My apps.",
             confirm = "Delete",
             destructive = true,
             onConfirm = {

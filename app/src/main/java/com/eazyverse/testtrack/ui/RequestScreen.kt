@@ -136,14 +136,14 @@ fun RequestCheck(
         Ask(
             title = "Close this request?",
             body =
-                (
-                    if (request.refundable > 0) {
-                        "Nobody new can take it, and ${request.refundable} tix for the ${request.open} " +
-                            "slots nobody took come back to you now. "
-                    } else {
-                        "Nobody new can take it. "
-                    }
-                ) + "Reviews already under way can finish, and any that end unpaid give their tix back too.",
+                "Nobody new can take it. " +
+                    (
+                        if (request.refundable > 0) {
+                            "${request.refundable} tix for the ${request.open} open slots come back now. "
+                        } else {
+                            ""
+                        }
+                    ) + "Reviews under way can finish.",
             confirm = "Close it",
             onConfirm = {
                 closing = false
@@ -156,8 +156,8 @@ fun RequestCheck(
         Ask(
             title = "Accept it after all?",
             body =
-                "The reviewer is paid ${request.reward} tix and the members stop deciding. Members who already voted " +
-                    "get ${FeedRules.JUROR_FEE} tix each from your ${FeedRules.STAKE} tix stake, and the rest comes back to you.",
+                "The reviewer gets ${request.reward} tix and the vote ends. Voters get ${FeedRules.JUROR_FEE} tix " +
+                    "each from your stake, and the rest comes back.",
             confirm = "Accept and pay",
             onConfirm = {
                 accepting = null

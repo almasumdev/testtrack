@@ -21,6 +21,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Timer
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.viewmodel.AppsViewModel
 import com.eazyverse.testtrack.viewmodel.PrivateTestsViewModel
@@ -308,10 +311,8 @@ internal fun CrewDialogsHost(
 
     dialogs.leaving?.let { seat ->
         Ask(
-            title = "Take ${seat.appName} back out?",
-            body =
-                "It leaves ${seat.crew.ifBlank { "this crew" }} and your ${CrewRules.SEAT_COST} tix come back. You " +
-                    "can put it in a crew again any time.",
+            title = "Take ${seat.appName} out?",
+            body = "Your ${CrewRules.SEAT_COST} tix come back. You can put it in a crew again any time.",
             confirm = "Take it out",
             dismiss = "Keep it in",
             destructive = true,
@@ -330,9 +331,9 @@ internal fun CrewDialogsHost(
             title = "Leave ${crew.name}?",
             body =
                 if (crew.phase == CrewPhase.LOBBY) {
-                    "You can't volunteer in ${crew.name} again."
+                    "You can't volunteer here again."
                 } else {
-                    "${kept}Tonight won't pay, and you can't volunteer in ${crew.name} again."
+                    "${kept}Tonight won't pay, and you can't volunteer here again."
                 },
             confirm = "Leave",
             dismiss = "Stay",
@@ -350,10 +351,10 @@ internal fun CrewDialogsHost(
     vm.needsOverlayFor?.let {
         Ask(
             title = "Keep the timer on screen?",
+            icon = Lucide.Timer,
             body =
-                "TestTrack can float a small timer over each app, with its sign-in to copy, so you " +
-                    "know when 10 seconds are in and can go straight to the next. Android calls this " +
-                    "“Display over other apps”.",
+                "A small timer floats over each app with its sign-in, so you know when " +
+                    "${CrewRules.OPEN_SECONDS} seconds are in.",
             confirm = "Allow",
             dismiss = "Not now",
             onConfirm = { vm.allowOverlay(context) },
@@ -372,9 +373,8 @@ internal fun CrewDialogsHost(
     vm.needsUsageFor?.let { label ->
         Ask(
             title = "Let TestTrack see the time",
-            body =
-                "Android only tells us how long $label was open if usage access is on. Without " +
-                    "it a visit cannot be counted, however long you stay.",
+            icon = Lucide.Clock,
+            body = "Without usage access, Android won't say how long $label was open, so the visit can't count.",
             confirm = "Open settings",
             dismiss = "Not now",
             onConfirm = { vm.openUsageSettings(context.findActivity()) },

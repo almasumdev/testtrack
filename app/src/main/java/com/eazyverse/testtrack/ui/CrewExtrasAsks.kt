@@ -13,11 +13,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.MessageSquareText
+import com.composables.icons.lucide.TriangleAlert
 import com.eazyverse.testtrack.findActivity
 import com.eazyverse.testtrack.viewmodel.CrewExtrasViewModel
 
@@ -111,27 +115,34 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
 
     extras.feedbackFor?.takeIf { !it.capturing && it.asking }?.let { job ->
         Ask(
-            title = "Private feedback for ${job.label}",
-            body =
-                "1. Tap Start and allow screen sharing.\n" +
-                    "2. On its Play page, tap \"Send private feedback\" and write what you found.\n" +
-                    "3. Before you send it, tap TestTrack's round camera button to take its picture.\n" +
-                    "Once a run per app. Only the TestTrack team sees the picture.",
+            title = "Private feedback",
+            icon = Lucide.MessageSquareText,
+            note = "Once a run per app. Only our team sees the picture.",
             confirm = "Start",
             dismiss = "Not now",
             onConfirm = { askCapture() },
             onDismiss = { extras.cancelFeedback() },
-        ) {
-            InlineAction("Use saved feedback screenshot") {
+            alt = "Use saved",
+            onAlt = {
                 extras.askFeedback(job.seatId, job.label, job.packageName, asking = false)
                 pickPicture()
-            }
+            },
+        ) {
+            DialogSteps(
+                listOf(
+                    "Tap Start and allow screen sharing.",
+                    "On Play, tap Send private feedback and write it.",
+                    "Before sending, tap the round camera button.",
+                ).map { AnnotatedString(it) },
+            )
         }
     }
 
     extras.explain?.let { why ->
         Ask(
-            title = "Update can't be told yet",
+            title = "Can't tell the crew yet",
+            icon = Lucide.TriangleAlert,
+            tone = Tone.WARN,
             body = why,
             confirm = "OK",
             dismiss = null,
@@ -153,9 +164,7 @@ internal fun CrewExtrasAsks(vm: CrewViewModel) {
     extras.confirmDown?.let { seatId ->
         Ask(
             title = "Mark your app down tonight?",
-            body =
-                "Nobody in the crew owes it tonight, and nobody is marked down for it. It costs you a " +
-                    "night towards Google's 14, and you can do it ${CrewRules.DOWN_NIGHTS} times a run.",
+            body = "Nobody owes it tonight. It costs you one of Google's 14 nights. You have ${CrewRules.DOWN_NIGHTS} a run.",
             confirm = "Mark it down",
             dismiss = "Keep it",
             onConfirm = {

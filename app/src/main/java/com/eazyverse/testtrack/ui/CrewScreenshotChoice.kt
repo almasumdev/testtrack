@@ -10,18 +10,18 @@ internal fun CrewScreenshotChoice(
     onDismiss: () -> Unit,
 ) {
     Ask(
-        title = "Complete your test",
-        body = "Your app time is saved. Add an app screenshot so this test counts.",
-        confirm = "Retake screenshot",
+        title = "Add a screenshot",
+        body = "Your time is saved. Add one so this test counts.",
+        confirm = "Retake",
         onConfirm = {
             onDismiss()
             actions.onOpen(app)
         },
         onDismiss = onDismiss,
-    ) {
-        InlineAction("Use saved app screenshot") {
+        alt = "Use saved",
+        onAlt = {
             onDismiss()
             actions.onPickPicture(app)
-        }
-    }
+        },
+    )
 }

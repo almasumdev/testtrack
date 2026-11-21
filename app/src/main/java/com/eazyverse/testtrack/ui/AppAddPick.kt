@@ -261,7 +261,6 @@ private fun RenameApp(
     var typed by remember { mutableStateOf(current) }
     Ask(
         title = "The app's name",
-        body = "Use the name Play shows.",
         confirm = "Save",
         confirmEnabled = typed.isNotBlank(),
         onConfirm = {
@@ -274,6 +273,7 @@ private fun RenameApp(
             value = typed,
             onValueChange = { typed = it.take(FeedRules.APP_NAME_MAX) },
             label = "Name",
+            hint = "As Play shows it",
             maxLength = FeedRules.APP_NAME_MAX,
         )
     }

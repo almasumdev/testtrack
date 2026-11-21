@@ -77,7 +77,7 @@ fun PrivateTestScreen(
     if (stopping && test != null) {
         Ask(
             title = "Stop testing ${test.appName}?",
-            body = "${test.ownerName} keeps the nights you opened. Only a new invite starts it again.",
+            body = "${test.ownerName.substringBefore(' ')} keeps the nights you opened. Only a new invite starts it again.",
             confirm = "Stop testing",
             dismiss = "Keep testing",
             destructive = true,

@@ -2,6 +2,8 @@ package com.eazyverse.testtrack.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import com.composables.icons.lucide.Camera
+import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.findActivity
 
 /*
@@ -27,11 +29,10 @@ internal fun CrewPictureAsks(vm: CrewViewModel) {
     pictures.waitingFor?.let { stops ->
         Ask(
             title = "A picture of each app",
+            icon = Lucide.Camera,
             body =
-                "Each app is open for ${CrewRules.OPEN_SECONDS} seconds, with a picture taken along the way. " +
-                    "Each app's picture goes to TestTrack so its owner can see it. Android asks " +
-                    "next whether TestTrack can see your screen. Say yes once and it covers " +
-                    "${if (stops.size == 1) "this app" else "all ${stops.size} tonight"}.",
+                "Each app stays open ${CrewRules.OPEN_SECONDS} seconds and its owner gets a picture. " +
+                    "Android asks once to share your screen.",
             confirm = "Start",
             dismiss = "Not now",
             onConfirm = { askCapture() },

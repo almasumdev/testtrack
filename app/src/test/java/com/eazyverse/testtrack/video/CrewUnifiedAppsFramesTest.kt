@@ -194,11 +194,11 @@ class CrewUnifiedAppsFramesTest {
         frame.settle(800)
         compose.mainClock.autoAdvance = true
         control(app.id, "Add screenshot").performClick()
-        compose.onNodeWithText("Your app time is saved. Add an app screenshot so this test counts.").assertExists()
-        compose.onNodeWithText("Retake screenshot").assertExists()
-        compose.onNodeWithText("Use saved app screenshot").performClick()
+        compose.onNodeWithText("Your time is saved. Add one so this test counts.").assertExists()
+        compose.onNodeWithText("Retake").assertExists()
+        compose.onNodeWithText("Use saved").performClick()
         org.junit.Assert.assertTrue(picked)
-        compose.onNodeWithText("Complete your test").assertDoesNotExist()
+        compose.onNodeWithText("Add a screenshot").assertDoesNotExist()
     }
 
     @Test fun largeTextKeepsIconFixed() {

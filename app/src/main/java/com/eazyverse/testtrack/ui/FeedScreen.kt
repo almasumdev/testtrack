@@ -43,6 +43,8 @@ import coil.ImageLoader
 import coil.compose.SubcomposeAsyncImage
 import coil.network.HttpException
 import coil.request.ImageRequest
+import com.composables.icons.lucide.Bell
+import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.net.Api
 import com.eazyverse.testtrack.viewmodel.proofSource
 import kotlinx.serialization.encodeToString
@@ -132,7 +134,8 @@ fun FeedScreen(
     if (offeringNotify) {
         Ask(
             title = "Turn on notifications?",
-            body = "We let you know when a review of your app comes in or a review you sent is accepted.",
+            icon = Lucide.Bell,
+            body = "We tell you when a review of your app comes in or yours is accepted.",
             confirm = "Allow",
             dismiss = "Not now",
             onConfirm = {

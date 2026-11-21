@@ -123,7 +123,7 @@ fun MeScreen(
     if (signingOut) {
         Ask(
             title = "Sign out?",
-            body = "Your crews, reviews and tix stay on your account. Sign in again any time to pick up where you left off.",
+            body = "Your crews, reviews and tix stay on your account.",
             confirm = "Sign out",
             destructive = true,
             onConfirm = {
