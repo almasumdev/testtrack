@@ -4,18 +4,21 @@ import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,14 +31,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.icons.lucide.Camera
-import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
 
 /**
@@ -46,7 +45,8 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * account is allowed to change: the email came from Google and the balance comes from the ledger.
  *
  * The picker is permissionless, it hands back one item the person chose and never gives the app
- * the library, which is why there is no permission prompt anywhere in this flow.
+ * the library, which is why there is no permission prompt anywhere in this flow. The photo is one
+ * row, not a face with a camera badge: the whole row is the target and says what a tap does.
  */
 @Composable
 fun MeEditDialog(
@@ -68,87 +68,36 @@ fun MeEditDialog(
     val choose = rememberImagePicker { uri -> if (uri != null) framing = uri }
     Ask(
         title = "Edit profile",
-        body = "Your name and photo are shown to everyone on TestTrack.",
         confirm = if (busy) "Saving" else "Save",
-        confirmEnabled = typed.trim().isNotBlank() && !busy,
+        confirmEnabled = typed.trim().isNotBlank(),
+        busy = busy,
         onConfirm = { onSave(typed, picked) },
-        onDismiss = { if (!busy) onDismiss() },
+        onDismiss = onDismiss,
     ) {
-        // The picture in the middle with its camera badge, and the one thing to do with it under it.
-        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                Modifier
-                    .size(72.dp)
-                    .semantics { contentDescription = "Choose a picture" }
-                    // No press highlight: the photo and its camera badge already say what a tap
-                    // does, and a ripple over a face read as a glitch.
-                    .clickable(
-                        interactionSource = null,
-                        indication = null,
-                        enabled = !busy,
-                        onClick = choose,
-                    ),
-            ) {
-                val chosen = picked
-                if (chosen != null) {
-                    val image = remember(chosen) { chosen.asImageBitmap() }
-                    Image(image, null, Modifier.size(72.dp).clip(CircleShape), contentScale = ContentScale.Crop)
-                } else {
-                    Avatar(
-                        photo,
-                        initialOf(typed),
-                        size = 72.dp,
-                        letterStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 28.sp),
-                    )
-                }
-                // Saving a new photo takes a moment on mobile data; the photo itself says so.
-                // Drawn before the camera badge, which sits half off the photo's edge, so the dim
-                // covers the photo only and the badge stays whole on top.
-                if (busy && picked != null) {
-                    Box(Modifier.matchParentSize().clip(CircleShape).background(t.scrim), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.5.dp, color = t.onAccent)
-                    }
-                }
-                Box(
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(t.glass)
-                        .padding(2.dp)
-                        .clip(CircleShape)
-                        .background(t.accent),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Lucide.Camera, null, Modifier.size(12.dp), tint = t.onAccent)
-                }
-            }
-            Spacer(Modifier.height(6.dp))
+        PhotoRow(
+            photo = photo,
+            picked = picked,
+            letter = initialOf(typed),
+            saving = busy && picked != null,
+            enabled = !busy,
+            onClick = choose,
+        )
+        if (error != null) {
             Text(
-                "Change photo",
-                Modifier.clip(RoundedCornerShape(6.dp)).clickable(enabled = !busy, onClick = choose).padding(4.dp),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = t.accentInk,
+                error,
+                Modifier.padding(top = 6.dp),
+                style = TextStyles.DialogNote,
+                color = t.bad,
             )
-            if (error != null) {
-                Text(
-                    error,
-                    Modifier.padding(top = 4.dp),
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp),
-                    color = t.bad,
-                    textAlign = TextAlign.Center,
-                )
-            }
         }
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(14.dp))
         OutlinedField(
             value = typed,
             onValueChange = { typed = it.take(NAME_MAX) },
             label = "Name",
             placeholder = "Rafiul",
             error = if (typed.isNotEmpty() && typed.isBlank()) "That is only spaces." else null,
-            hint = "It doesn't have to be your real name.",
+            hint = "Shown to everyone. Any name works.",
             maxLength = NAME_MAX,
         )
     }
@@ -164,5 +113,64 @@ fun MeEditDialog(
         )
     }
 }
+
+/**
+ * The picture and the one thing to do with it, as one row and one tap: the face at 48dp, then what
+ * a tap does and where the picture comes from. While a new picture saves, the face dims under a
+ * spinner and the row says so.
+ */
+@Composable
+private fun PhotoRow(
+    photo: String,
+    picked: Bitmap?,
+    letter: String,
+    saving: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val t = Tt.colors
+    val shape = RoundedCornerShape(10.dp)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .clip(shape)
+            .border(1.dp, t.cardLine, shape)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(start = 8.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(PhotoSize)) {
+            if (picked != null) {
+                val image = remember(picked) { picked.asImageBitmap() }
+                Image(image, null, Modifier.size(PhotoSize).clip(CircleShape), contentScale = ContentScale.Crop)
+            } else {
+                Avatar(photo, letter, size = PhotoSize, letterStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp))
+            }
+            if (saving) {
+                Box(Modifier.matchParentSize().clip(CircleShape).background(t.scrim), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = t.onAccent)
+                }
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                when {
+                    saving -> "Saving photo"
+                    picked != null || photo.isNotBlank() -> "Change photo"
+                    else -> "Add a photo"
+                },
+                style = PhotoLabel,
+                color = if (saving) t.text3 else t.accentInk,
+            )
+            Text("From your gallery", Modifier.padding(top = 1.dp), style = PhotoFrom, color = t.text3)
+        }
+    }
+}
+
+private val PhotoSize = 48.dp
+private val PhotoLabel = tileStyle(14.5f, 19f, FontWeight.Bold)
+private val PhotoFrom = tileStyle(12.5f, 16f, FontWeight.Normal)
 
 private const val NAME_MAX = 40

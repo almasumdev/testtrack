@@ -464,7 +464,7 @@ class MeEditDialogTest {
                 MeEditDialog(name = "Rafiul", onSave = { _, _ -> }, onDismiss = {})
             }
         }
-        compose.onNodeWithText("Change photo").assertIsDisplayed()
+        compose.onNodeWithText("Add a photo").assertIsDisplayed()
         // And it saves without one, since the name is the only required half.
         compose.onNodeWithText("Save").assertIsEnabled()
     }
