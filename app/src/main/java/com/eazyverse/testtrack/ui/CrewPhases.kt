@@ -32,28 +32,16 @@ import java.time.Instant
 /** The space under the bar, the same 8dp as every other page with a back bar. */
 private val ListTop = 8.dp
 
-/** Where a row sits in its run of rows, which rounds its outer corners. */
-internal fun placeOf(
-    index: Int,
-    count: Int,
-): TilePlace =
-    when {
-        count == 1 -> TilePlace.ONLY
-        index == 0 -> TilePlace.FIRST
-        index == count - 1 -> TilePlace.LAST
-        else -> TilePlace.MIDDLE
-    }
-
 private fun LazyListScope.block(content: @Composable () -> Unit) = item { Box(Modifier.padding(horizontal = Gutter)) { content() } }
 
 private fun <T> LazyListScope.rows(
     key: String,
     list: List<T>,
     id: (T) -> String,
-    row: @Composable (T, TilePlace) -> Unit,
+    row: @Composable (T) -> Unit,
 ) = itemsIndexed(list, key = { _, it -> "$key-${id(it)}" }) { index, it ->
     Box(Modifier.animateItem().padding(horizontal = Gutter).padding(bottom = if (index < list.size - 1) 8.dp else 0.dp)) {
-        row(it, placeOf(index, list.size))
+        row(it)
     }
 }
 
@@ -111,11 +99,11 @@ fun CrewLobbyPhase(
         if (asked.isNotEmpty()) {
             item { CrewHeading("Does it install for you?", "${asked.size}") }
             item { AskedSteps() }
-            rows("ask", asked, { it.id }) { seat, place -> AskedRow(seat, place, actions, onSheet) }
+            rows("ask", asked, { it.id }) { seat -> AskedRow(seat, actions, onSheet) }
         }
         if (install.isNotEmpty()) {
             item { CrewHeading("Install these", if (crew.volunteer != null) "${install.size}" else null) }
-            rows("in", install, { it.id }) { seat, place -> InstallRow(seat, place, actions, onSheet) }
+            rows("in", install, { it.id }) { seat -> InstallRow(seat, actions, onSheet) }
         }
     }
 }
@@ -333,7 +321,7 @@ fun CrewRunPhase(
         }
         if (apps.isNotEmpty()) {
             item { CrewHeading("Apps", "${apps.size}") }
-            rows("app", apps, { it.app.id }) { entry, _ ->
+            rows("app", apps, { it.app.id }) { entry ->
                 CrewRunAppTile(entry.app, seatOf(entry.app), actions, onSheet, entry.kind, volunteer = crew.volunteer != null)
             }
         }

@@ -79,24 +79,6 @@ class CrewRunCardsTest {
     }
 
     @Test
-    fun feedbackOwedListsEachAppWithItsNight() {
-        val apps =
-            listOf(
-                CrewApp(id = "a", label = "Tiny Tasks", owner = "Nadia", feedbackDueDay = 7, feedbackLate = true),
-                CrewApp(id = "b", label = "Lift Log", owner = "Grace", feedbackDueDay = 7),
-                CrewApp(id = "c", label = "Done Already", owner = "Ravi", feedbackSent = true),
-            )
-        show { PlayFeedbackCard(Crew(id = "c1", name = "Crew 05", phase = CrewPhase.RUN, apps = apps), actions()) }
-        compose.onNodeWithText("1 feedback late").assertIsDisplayed()
-        compose.onNodeWithText("Late: its opens don't count until it's sent").assertIsDisplayed()
-        compose.onNodeWithText("Due by night 7").assertIsDisplayed()
-        assertEquals(0, compose.onAllNodes(hasText("Done Already")).fetchSemanticsNodes().size)
-        compose.onAllNodes(hasText("Send") and hasClickAction())[0].performClick()
-        compose.onAllNodes(hasText("Pick") and hasClickAction())[1].performClick()
-        assertEquals(listOf("feedback Tiny Tasks", "pick feedback Lift Log"), did)
-    }
-
-    @Test
     fun theOwnersUpdateSaysWhyWhenItCannotGoYet() {
         val mine =
             CrewSeat(
@@ -118,29 +100,6 @@ class CrewRunCardsTest {
         compose.onNode(hasText("Update") and hasClickAction()).performClick()
         compose.onNode(hasText("Down tonight") and hasClickAction()).assertIsNotEnabled()
         assertEquals(listOf("tell Focus Flow"), did)
-    }
-
-    @Test
-    fun tonightsRowAsksForTheUpdateOrTheFeedbackFirst() {
-        val seat = CrewSeat(id = "s", appName = "Lingo Cards", owner = "Daniel", packageName = "com.example.lingo")
-        val old =
-            CrewApp(
-                id = "s",
-                label = "Lingo Cards",
-                packageName = "com.example.lingo",
-                owner = "Daniel",
-                versionCode = 12,
-                updateRequired = true,
-            )
-        val late = old.copy(versionCode = null, updateRequired = false, feedbackLate = true)
-        show {
-            TonightRow(old, seat, placeOf(0, 2), actions(localVersion = 11)) {}
-            TonightRow(late, seat, placeOf(1, 2), actions(localVersion = 11)) {}
-        }
-        compose.onNodeWithText("Update needed", substring = true).assertIsDisplayed()
-        compose.onNode(hasText("Update") and hasClickAction()).performClick()
-        compose.onNode(hasText("Feedback") and hasClickAction()).performClick()
-        assertEquals(listOf("update Lingo Cards", "feedback Lingo Cards"), did)
     }
 
     @Test

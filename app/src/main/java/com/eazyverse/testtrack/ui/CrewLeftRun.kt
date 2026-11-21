@@ -1,18 +1,13 @@
 package com.eazyverse.testtrack.ui
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.CircleX
 import com.composables.icons.lucide.Hourglass
 import com.composables.icons.lucide.Lucide
-import com.eazyverse.testtrack.ui.theme.Tt
 
 /*
  * An app taken out of a run, from both sides.
@@ -102,38 +97,5 @@ internal fun OwnerOutCard(
                 else -> seatOutLine(mine)
             }
         QuietNote(line, Modifier.padding(top = 10.dp))
-    }
-}
-
-/** Under the Left the run heading: why those rows have nothing to open. */
-@Composable
-internal fun LeftRunNote() {
-    Text(
-        "You don't need to open these",
-        style = MaterialTheme.typography.bodySmall,
-        color = Tt.colors.text3,
-        modifier = Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, bottom = 8.dp),
-    )
-}
-
-/**
- * Run: an app that left. Faded, with nothing to open; from a day after it left, Uninstall, which
- * is Android's own prompt. Open all never reaches it: it is not on tonight's list.
- */
-@Composable
-internal fun LeftRow(
-    app: CrewApp,
-    seat: CrewSeat,
-    place: TilePlace,
-    actions: CrewActions,
-) {
-    val gone = outLongEnough(app.outAt)
-    val line = if (gone) "Out of the run. You can uninstall it now." else "Out of the run. Nothing to open."
-    CrewPageRow(app.packageName, app.label, AnnotatedString(line), place, icon = seat.icon, out = true, onOpen = {}) {
-        if (gone) {
-            RowPill("Uninstall", PillKind.GHOST) { actions.onUninstall(app.packageName) }
-        } else {
-            StatusChip("Out", Tone.QUIET)
-        }
     }
 }

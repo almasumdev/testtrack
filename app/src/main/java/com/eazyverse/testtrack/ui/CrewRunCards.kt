@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
@@ -71,54 +70,6 @@ internal fun OwnerToolsCard(
                 )
             }
             QuietNote("Down tonight: ${mine.downsLeft} of ${CrewRules.DOWN_NIGHTS} left this run.", Modifier.padding(top = 10.dp))
-        }
-    }
-}
-
-/** The apps still waiting on this member's private feedback on Play. */
-@Composable
-internal fun PlayFeedbackCard(
-    crew: Crew,
-    actions: CrewActions,
-) {
-    val owed = crew.apps.filter { !it.feedbackSent && !it.reported }
-    if (owed.isEmpty()) return
-    val late = owed.filter { it.feedbackLate }
-    Box(Modifier.padding(top = 8.dp)) {
-        CrewCard {
-            StatusChip(
-                if (late.isNotEmpty()) "${late.size} feedback late" else "${owed.size} feedback to send",
-                if (late.isNotEmpty()) Tone.WARN else Tone.ACCENT,
-            )
-            Text(
-                "Private feedback on Play",
-                Modifier.padding(top = 8.dp),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                "Once for each app, by your night ${CrewRules.FEEDBACK_BY_NIGHT} with it. After that, opening an app " +
-                    "counts only once its feedback is sent.",
-                Modifier.padding(top = 4.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = Tt.colors.text3,
-            )
-            owed.sortedBy { it.feedbackDueDay }.forEach { app ->
-                Spacer(Modifier.height(10.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(app.label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                        Text(
-                            if (app.feedbackLate) "Late: its opens don't count until it's sent" else "Due by night ${app.feedbackDueDay}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (app.feedbackLate) Tt.colors.warn else Tt.colors.text4,
-                        )
-                    }
-                    RowPill("Send", PillKind.SOLID) { actions.onFeedback(app) }
-                    Spacer(Modifier.width(6.dp))
-                    RowPill("Pick", PillKind.SOFT) { actions.onPickFeedback(app) }
-                }
-            }
         }
     }
 }

@@ -180,20 +180,12 @@ internal fun ownerLine(
     if (tail.isNotBlank()) append(", $tail")
 }
 
-/** A picture of the app has waited more than 3 hours to send: said on its row in red until it goes. */
-@Composable
-private fun lateLine() =
-    buildAnnotatedString {
-        withStyle(SpanStyle(color = Tone.BAD.ink(), fontWeight = FontWeight.SemiBold)) { append("Picture waiting over 3 hours") }
-    }
-
 /** One row of a crew's page. [trailing] is the pill or the chip; the chevron always follows. */
 @Composable
 internal fun CrewPageRow(
     packageName: String,
     title: String,
     line: AnnotatedString,
-    @Suppress("UNUSED_PARAMETER") place: TilePlace,
     onOpen: () -> Unit,
     /** Play's icon, drawn when the app is not on this phone. */
     icon: String = "",
@@ -244,12 +236,11 @@ private fun QuietMark(count: Int) {
 @Composable
 internal fun InstallRow(
     seat: CrewSeat,
-    place: TilePlace,
     actions: CrewActions,
     onSheet: (RowSheet) -> Unit,
 ) {
     val installed = actions.isInstalled(seat.packageName)
-    CrewPageRow(seat.packageName, seat.appName, ownerLine(seat.owner, seat.notes.isNotBlank()), place, icon = seat.icon, onOpen = {
+    CrewPageRow(seat.packageName, seat.appName, ownerLine(seat.owner, seat.notes.isNotBlank()), icon = seat.icon, onOpen = {
         onSheet(RowSheet(seat, SheetKind.INSTALL))
     }) {
         when {
@@ -265,7 +256,6 @@ internal fun InstallRow(
 @Composable
 internal fun AskedRow(
     seat: CrewSeat,
-    place: TilePlace,
     actions: CrewActions,
     onSheet: (RowSheet) -> Unit,
 ) {
@@ -280,7 +270,6 @@ internal fun AskedRow(
         seat.packageName,
         seat.appName,
         ownerLine(seat.owner, seat.notes.isNotBlank() && !installed, tail),
-        place,
         onOpen = { onSheet(RowSheet(seat, SheetKind.ASKED)) },
         icon = seat.icon,
     ) {
@@ -289,90 +278,6 @@ internal fun AskedRow(
             seat.myVote == false -> StatusChip("You said No", Tone.WARN)
             installed -> RowPill("It installed", PillKind.OK, busy = actions.busySeat == seat.id) { actions.onVote(seat, true) }
             else -> RowPill("Install", PillKind.SOFT) { actions.onInstall(seat) }
-        }
-    }
-}
-
-/** Run: an app owed tonight. Open if it is on the phone, Install first if it is not. */
-@Composable
-internal fun TonightRow(
-    app: CrewApp,
-    seat: CrewSeat,
-    place: TilePlace,
-    actions: CrewActions,
-    onSheet: (RowSheet) -> Unit,
-) {
-    val installed = actions.isInstalled(app.packageName)
-    // A copy Play did not put here never counts: installing it from Play is the way out.
-    val notPlay = installed && !actions.fromPlay(app.packageName)
-    // Older than the owner's newest: still counts for its 24 hours, then only once updated.
-    val old = olderHere(app, actions)
-    val note =
-        when {
-            !installed -> "not on your phone"
-            notPlay -> "Install it from Play"
-            old && app.updateRequired -> "update needed"
-            old -> updateBy(app)?.let { "update by $it" } ?: "update out"
-            app.feedbackLate -> "feedback late"
-            else -> ""
-        }
-    CrewPageRow(
-        app.packageName,
-        app.label,
-        // An update out says only that, with its deadline, so the line is not cut: whose it is
-        // is in the row's sheet.
-        when {
-            actions.latePicture(app.id) -> lateLine()
-            notPlay || old -> AnnotatedString(note.replaceFirstChar(Char::uppercase))
-            else -> ownerLine(app.owner, seat.notes.isNotBlank(), note)
-        },
-        place,
-        onOpen = { onSheet(RowSheet(seat, SheetKind.TONIGHT, app)) },
-        icon = seat.icon,
-        mark = app.skips,
-    ) {
-        when {
-            !installed -> RowPill("Install", PillKind.SOFT) { actions.onInstall(seat) }
-            notPlay -> RowPill("Install", PillKind.SOLID) { actions.onInstall(seat) }
-            // From the moment the owner tells the crew, as the notification says: Update is the
-            // button, soft while the old copy still counts and solid once it no longer does. Open
-            // is still in the row's sheet for those 24 hours.
-            old -> RowPill("Update", if (app.updateRequired) PillKind.SOLID else PillKind.SOFT) { actions.onUpdateApp(app) }
-            app.feedbackLate -> RowPill("Feedback", PillKind.SOLID) { actions.onFeedback(app) }
-            else -> RowPill("Open", PillKind.SOLID) { actions.onOpen(app) }
-        }
-    }
-}
-
-/** Run: an app already opened tonight, or reported. Only a chip; the row still opens its sheet. */
-@Composable
-internal fun DoneRow(
-    app: CrewApp,
-    seat: CrewSeat,
-    place: TilePlace,
-    actions: CrewActions? = null,
-    onSheet: (RowSheet) -> Unit,
-) {
-    // Opened tonight on the old copy: the update is still to do before the 24 hours run out.
-    val old = actions != null && actions.isInstalled(app.packageName) && olderHere(app, actions)
-    // A copy Play did not put here does not count on any night, so the row says how to fix it.
-    val notPlay = actions != null && actions.isInstalled(app.packageName) && !actions.fromPlay(app.packageName)
-    val note = if (old) (if (app.updateRequired) "update needed" else updateBy(app)?.let { "update by $it" } ?: "update out") else ""
-    val line =
-        when {
-            actions?.latePicture(app.id) == true -> lateLine()
-            notPlay -> AnnotatedString("Install it from Play")
-            old -> AnnotatedString(note.replaceFirstChar(Char::uppercase))
-            else -> ownerLine(app.owner, false)
-        }
-    CrewPageRow(app.packageName, app.label, line, place, icon = seat.icon, onOpen = {
-        onSheet(RowSheet(seat, SheetKind.DONE, app))
-    }) {
-        when {
-            app.reported -> StatusChip("Reported", Tone.WARN)
-            notPlay && actions != null -> RowPill("Install", PillKind.SOFT) { actions.onInstall(seat) }
-            old && actions != null -> RowPill("Update", PillKind.SOFT) { actions.onUpdateApp(app) }
-            else -> StatusChip("Opened", Tone.OK)
         }
     }
 }

@@ -38,7 +38,6 @@ import com.eazyverse.testtrack.ui.MainTab
 import com.eazyverse.testtrack.ui.NightPicture
 import com.eazyverse.testtrack.ui.PictureSource
 import com.eazyverse.testtrack.ui.PictureViewer
-import com.eazyverse.testtrack.ui.Scene
 import com.eazyverse.testtrack.ui.VisitDockContent
 import com.eazyverse.testtrack.ui.nightProves
 import com.eazyverse.testtrack.ui.nightTitle
@@ -198,7 +197,7 @@ class CrewPictureFramesTest {
         val vm = crews()
         show {
             Ground {
-                TabShell(MainTab.GROUPS, Scene.CREW) {
+                TabShell(MainTab.GROUPS) {
                     // Everything set: the terms and the button to take a seat.
                     CrewOpenTab(
                         vm,
@@ -389,8 +388,7 @@ class CrewPictureFramesTest {
     }
 
     /**
-     * Tonight's rows for an app whose update is past its 24 hours and one whose feedback is late,
-     * and the owner's card twice: Update ready, and Update waiting on a copy from Play.
+     * The owner's card twice: Update ready, and Update waiting on a copy from Play.
      */
     @Test
     fun p13_rowsAndOwner() {
@@ -419,15 +417,6 @@ class CrewPictureFramesTest {
         show {
             Pushed {
                 androidx.compose.foundation.layout.Column(Modifier.padding(16.dp)) {
-                    listOf(3, 2).forEachIndexed { k, i ->
-                        com.eazyverse.testtrack.ui.TonightRow(
-                            running.apps[i],
-                            seats[i],
-                            com.eazyverse.testtrack.ui
-                                .placeOf(k, 2),
-                            actions,
-                        ) {}
-                    }
                     com.eazyverse.testtrack.ui
                         .OwnerToolsCard(mine, actions)
                     com.eazyverse.testtrack.ui

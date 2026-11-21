@@ -82,36 +82,11 @@ class CrewRowsTest {
 
     private fun show(content: @androidx.compose.runtime.Composable () -> Unit) = compose.setContent { TestTrackTheme { content() } }
 
-    // ------------------------------------------------------------------ tonight
-
-    @Test
-    fun an_app_on_the_phone_offers_open() {
-        show { TonightRow(app(), seat(), TilePlace.ONLY, actions(onPhone = true)) {} }
-        compose.onNodeWithText("Open").assertIsDisplayed().performClick()
-        assertEquals(1, opened)
-    }
-
-    @Test
-    fun an_app_not_on_the_phone_offers_install_first() {
-        show { TonightRow(app(), seat(), TilePlace.ONLY, actions(onPhone = false)) {} }
-        compose.onNodeWithText("by Rafiul, not on your phone").assertIsDisplayed()
-        compose.onNodeWithText("Install").performClick()
-        assertEquals(1, installed)
-        compose.onNodeWithText("Open").assertDoesNotExist()
-    }
-
-    @Test
-    fun an_app_done_tonight_says_opened_or_reported() {
-        show { DoneRow(app(done = true), seat(), TilePlace.FIRST) {} }
-        compose.onNodeWithText("Opened").assertIsDisplayed()
-        compose.onNodeWithText("Open").assertDoesNotExist()
-    }
-
     // ------------------------------------------------------------------ the lobby
 
     @Test
     fun a_lobby_app_offers_install_and_says_when_it_has_a_sign_in() {
-        show { InstallRow(seat(notes = signInNotes("tester@example.com", "hunter2", "")), TilePlace.ONLY, actions(onPhone = false)) {} }
+        show { InstallRow(seat(notes = signInNotes("tester@example.com", "hunter2", "")), actions(onPhone = false)) {} }
         compose.onNodeWithText("by Rafiul, has a sign-in").assertIsDisplayed()
         compose.onNodeWithText("Install").performClick()
         assertEquals(1, installed)
@@ -119,28 +94,28 @@ class CrewRowsTest {
 
     @Test
     fun a_lobby_app_already_installed_or_reported_says_so() {
-        show { InstallRow(seat(reported = true), TilePlace.ONLY, actions(onPhone = true)) {} }
+        show { InstallRow(seat(reported = true), actions(onPhone = true)) {} }
         compose.onNodeWithText("Reported").assertIsDisplayed()
         compose.onNodeWithText("Install").assertDoesNotExist()
     }
 
     @Test
     fun an_asked_app_goes_install_then_it_installed() {
-        show { AskedRow(seat(state = SeatState.CHECKING), TilePlace.ONLY, actions(onPhone = true)) {} }
+        show { AskedRow(seat(state = SeatState.CHECKING), actions(onPhone = true)) {} }
         compose.onNodeWithText("It installed").performClick()
         assertEquals(true, vote)
     }
 
     @Test
     fun an_asked_app_not_installed_offers_install() {
-        show { AskedRow(seat(state = SeatState.CHECKING), TilePlace.ONLY, actions(onPhone = false)) {} }
+        show { AskedRow(seat(state = SeatState.CHECKING), actions(onPhone = false)) {} }
         compose.onNodeWithText("Install").assertIsDisplayed()
         compose.onNodeWithText("It installed").assertDoesNotExist()
     }
 
     @Test
     fun once_answered_it_says_what_you_said() {
-        show { AskedRow(seat(state = SeatState.CHECKING, myVote = false), TilePlace.ONLY, actions(onPhone = true)) {} }
+        show { AskedRow(seat(state = SeatState.CHECKING, myVote = false), actions(onPhone = true)) {} }
         compose.onNodeWithText("You said No").assertIsDisplayed()
         compose.onNodeWithText("It installed").assertDoesNotExist()
     }
