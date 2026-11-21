@@ -338,7 +338,7 @@ private fun status(ui: DockUi) =
         ui.counted && ui.picture == true -> "Counted with its picture, app ${ui.index + 1} of ${ui.total}"
         ui.counted && ui.picture == false -> "No picture yet, app ${ui.index + 1} of ${ui.total}"
         ui.counted -> "Taking its picture, app ${ui.index + 1} of ${ui.total}"
-        ui.paused -> "Paused, app ${ui.index + 1} of ${ui.total}"
+        ui.paused -> "Held, ${ui.secondsLeft}s to go, app ${ui.index + 1} of ${ui.total}"
         else -> "${ui.secondsLeft}s to go, app ${ui.index + 1} of ${ui.total}"
     }
 
