@@ -1,5 +1,7 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
@@ -23,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,11 +34,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +51,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.CircleAlert
@@ -52,6 +59,7 @@ import com.composables.icons.lucide.Eye
 import com.composables.icons.lucide.EyeOff
 import com.composables.icons.lucide.Lucide
 import com.eazyverse.testtrack.ui.theme.Tt
+import kotlinx.coroutines.awaitCancellation
 
 /**
  * An outlined field whose label sits inside while it is empty and moves up into a notch in the top
@@ -64,6 +72,11 @@ import com.eazyverse.testtrack.ui.theme.Tt
  *
  * A [trailing] action, such as an X that removes the field, sits in the box's top end corner and
  * the text keeps clear of it. A field that is not [enabled] takes no typing and is drawn faded.
+ *
+ * With [onTap] it is a picker's box rather than a field: nothing to type, the label always up in
+ * its notch, the value on one line cut short with an ellipsis (or the [placeholder] in the hint's
+ * ink), and a tap anywhere on it runs [onTap]. [active] draws it focused, for while its list is open.
+ * See [DropdownField].
  */
 @Composable
 internal fun OutlinedField(
@@ -104,12 +117,29 @@ internal fun OutlinedField(
      * the middle.
      */
     onEndEdit: (() -> Unit)? = null,
+    onTap: (() -> Unit)? = null,
+    active: Boolean = false,
 ) {
     val t = Tt.colors
     val focus = LocalFocusManager.current
     val dismissKeyboard = rememberDismissKeyboard()
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
+    val picker = onTap != null
+    // A picker's box is never focused itself; it is drawn so while its list is open.
+    if (picker) {
+        LaunchedEffect(active) {
+            if (active) {
+                val focus = FocusInteraction.Focus()
+                interaction.emit(focus)
+                try {
+                    awaitCancellation()
+                } finally {
+                    interaction.tryEmit(FocusInteraction.Unfocus(focus))
+                }
+            }
+        }
+    }
     var shown by rememberSaveable { mutableStateOf(false) }
     val finish = {
         dismissKeyboard()
@@ -162,7 +192,7 @@ internal fun OutlinedField(
                     letterSpacing = 0.sp,
                 ),
         )
-    val labelDown = !focused && value.isEmpty()
+    val labelDown = !picker && !focused && value.isEmpty()
     // The text with its caret, so an edit at the very end can be told from one in the middle.
     var editingValue by remember { mutableStateOf(TextFieldValue(value)) }
     val displayedValue =
@@ -173,7 +203,8 @@ internal fun OutlinedField(
         }
     Column(modifier.fillMaxWidth().then(if (enabled) Modifier else Modifier.alpha(DISABLED_ALPHA))) {
         BasicTextField(
-            value = displayedValue,
+            // A picker draws its value itself, cut short, so the field under it holds nothing.
+            value = if (picker) TextFieldValue("") else displayedValue,
             onValueChange = { next ->
                 val changed = next.text != displayedValue.text
                 editingValue = next
@@ -185,7 +216,12 @@ internal fun OutlinedField(
                 }
             },
             enabled = enabled,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            readOnly = picker,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .then(if (picker) Modifier.focusProperties { canFocus = false } else Modifier),
             textStyle =
                 typography.bodyLarge.copy(
                     fontSize = 15.sp,
@@ -220,8 +256,15 @@ internal fun OutlinedField(
                 Box(propagateMinConstraints = true) {
                     MaterialTheme(typography = fieldTypography) {
                         OutlinedTextFieldDefaults.DecorationBox(
-                            value = value,
-                            innerTextField = inner,
+                            // A picker's label stays up in its notch even with nothing picked, which
+                            // the decoration does for any value that is not empty.
+                            value = if (picker) value.ifEmpty { " " } else value,
+                            innerTextField =
+                                if (picker) {
+                                    { PickerValue(value, placeholder, inner) }
+                                } else {
+                                    inner
+                                },
                             enabled = true,
                             singleLine = singleLine,
                             visualTransformation = transformation,
@@ -240,7 +283,7 @@ internal fun OutlinedField(
                                         },
                                 )
                             },
-                            placeholder = placeholder?.let { { Text(it, color = t.text4) } },
+                            placeholder = placeholder?.takeIf { !picker }?.let { { Text(it, color = t.text4) } },
                             leadingIcon =
                                 leadingIcon?.let {
                                     {
@@ -308,6 +351,15 @@ internal fun OutlinedField(
                             trailing()
                         }
                     }
+                    if (onTap != null) {
+                        // Over everything, the trailing mark too: the whole box is the one target.
+                        Box(
+                            Modifier
+                                .matchParentSize()
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable(enabled = enabled, role = Role.DropdownList, onClickLabel = label, onClick = onTap),
+                        )
+                    }
                 }
             },
         )
@@ -350,6 +402,28 @@ internal fun OutlinedField(
                 }
             }
         }
+    }
+}
+
+/** A picker's value on one line, cut short, or its placeholder in the hint's ink. */
+@Composable
+private fun PickerValue(
+    value: String,
+    placeholder: String?,
+    inner: @Composable () -> Unit,
+) {
+    val t = Tt.colors
+    Box(contentAlignment = Alignment.CenterStart) {
+        inner()
+        Text(
+            value.ifEmpty { placeholder.orEmpty() },
+            color = if (value.isEmpty()) t.text4 else t.text,
+            fontWeight = if (value.isEmpty()) FontWeight.Normal else FontWeight.Medium,
+            fontSize = 15.sp,
+            lineHeight = 20.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

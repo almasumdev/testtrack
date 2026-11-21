@@ -1,10 +1,7 @@
 package com.eazyverse.testtrack.ui
 
 import android.content.Context
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,20 +9,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eazyverse.testtrack.domain.ChatSignals
-import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.PrivateState
 import com.eazyverse.testtrack.viewmodel.PrivateTestsViewModel
 import com.eazyverse.testtrack.viewmodel.VolunteerViewModel
@@ -222,13 +218,32 @@ private fun PhaseTabs(
     ) { onSelect(CrewPhase.entries[it]) }
 }
 
+/** What can be wrong with an app in a crew, said the way its owner can act on. */
+internal val crewReportReasons =
+    listOf(
+        "It won't install from Play",
+        "Play says it isn't available",
+        "The testers link shows nothing",
+        "It needs a newer Android",
+        "It crashes when it opens",
+        "The sign-in details don't work",
+        "It freezes or never loads",
+        "It's not the app that was listed",
+    )
+
+/** Answering that an app did not install: only the install reasons. */
+private val crewInstallReasons = crewReportReasons.take(4)
+
+private const val SOMETHING_ELSE = "Something else"
+private const val DETAILS_MAX = 280
+
 /**
  * Reporting an app: what went wrong, in words its owner can act on.
  *
  * A reason is required, because a report is a message to the owner about what to fix and the
- * owner is told straight away. Who sent it is not.
+ * owner is told straight away. Who sent it is not. A listed reason may carry details; "Something
+ * else" is only its details, so those need a sentence.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CrewReportDialog(
     seat: CrewSeat,
@@ -239,72 +254,51 @@ fun CrewReportDialog(
     /** Sent during the run, when a report lets off only tonight; before it, the whole run. */
     running: Boolean = false,
 ) {
-    var reason by remember { mutableStateOf("") }
-    val enough = reason.trim().length >= CrewRules.REPORT_MIN_CHARS
+    var reason by rememberSaveable { mutableStateOf<String?>(null) }
+    var details by rememberSaveable { mutableStateOf("") }
+    val other = reason == SOMETHING_ELSE
+    val said = details.trim()
+    val ready = reason != null && (!other || said.length >= CrewRules.REPORT_MIN_CHARS)
+    val owner = seat.owner.substringBefore(' ')
+    val options = (if (answering) crewInstallReasons else crewReportReasons) + SOMETHING_ELSE
     Ask(
         title = if (answering) "${seat.appName} didn't install?" else "Report ${seat.appName}?",
         body =
-            if (answering) {
-                "${seat.owner} is told what you write, without your name. Two members saying it " +
-                    "didn't install send it back to be fixed."
-            } else {
-                "${seat.owner} is told what you write, without your name. Before the run starts, " +
-                    "${CrewRules.REPORTS_TO_RETURN} reports send an app back to be fixed."
-            },
+            "$owner sees what you write, not your name. " +
+                when {
+                    answering -> "Two members saying it send it back to be fixed."
+                    running -> "If you can't open it, tonight won't count against you."
+                    else -> "${CrewRules.REPORTS_TO_RETURN} reports send it back to be fixed."
+                },
         confirm = if (answering) "Send" else "Report",
-        confirmEnabled = enough,
-        onConfirm = { onReport(reason.trim()) },
-        onDismiss = onDismiss,
-        content = {
-            // The usual reasons, one tap each; the field below takes anything else.
-            val quick =
-                if (answering) {
-                    listOf("Play says it isn't available", "The testers link shows nothing", "It needs a newer Android")
-                } else {
-                    listOf("It won't install from Play", "It crashes when it opens", "The sign-in doesn't work")
-                }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                quick.forEach { text ->
-                    val picked = reason.trim() == text
-                    RowPill(
-                        text,
-                        if (picked) PillKind.SOFT else PillKind.GHOST,
-                        size = PillSize.SMALL,
-                        touchTarget = false,
-                    ) { reason = text }
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-            OutlinedField(
-                value = reason,
-                onValueChange = { reason = it.take(280) },
-                label = "What went wrong",
-                placeholder = "Play says the item was not found",
-                singleLine = false,
-                minLines = 3,
-                maxLines = 6,
-                maxLength = 280,
-                error =
-                    if (reason.isNotBlank() && !enough) {
-                        "A little more, so they know what to fix."
-                    } else {
-                        null
-                    },
+        confirmEnabled = ready,
+        onConfirm = {
+            val picked = reason ?: return@Ask
+            onReport(
+                when {
+                    other -> said
+                    said.isEmpty() -> picked
+                    else -> "$picked: $said"
+                },
             )
-            if (!answering) {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    if (running) {
-                        "If you can't open it, tonight won't count against you. Still broken on a later night? Report it again then."
-                    } else {
-                        "It also stops counting against you if you cannot open it."
-                    },
-                    style = DialogBody,
-                    color = Tt.colors.text4,
-                )
-            }
         },
-    )
+        onDismiss = onDismiss,
+    ) {
+        DropdownField("What's wrong", options.map { it to it }, reason, onPick = { reason = it })
+        Spacer(Modifier.height(14.dp))
+        OutlinedField(
+            value = details,
+            onValueChange = { details = it.take(DETAILS_MAX) },
+            label = "Details",
+            placeholder = "Anything that helps them fix it",
+            singleLine = false,
+            minLines = 3,
+            maxLines = 6,
+            maxLength = DETAILS_MAX,
+            hint = if (other) null else "Optional",
+            imeAction = ImeAction.Default,
+        )
+    }
 }
 
 /**

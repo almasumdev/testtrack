@@ -3,6 +3,7 @@ package com.eazyverse.testtrack.ui
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -178,18 +179,24 @@ class CrewRowsTest {
         var sent: String? = null
         show { CrewReportDialog(seat(), onReport = { sent = it }, onDismiss = {}) }
         compose.onNodeWithText("Report").assertIsNotEnabled()
-        compose.onNodeWithText("Play says the item was not found").performTextInput("broken")
+        // "Something else" is only its details, so those need a sentence.
+        compose.onNodeWithText("Choose one").performClick()
+        compose.onNodeWithText("Something else").performClick()
+        compose.onNode(hasSetTextAction()).performTextInput("broken")
         compose.onNodeWithText("Report").assertIsNotEnabled()
         assertNull(sent)
     }
 
     @Test
-    fun a_quick_reason_is_one_tap() {
+    fun a_listed_reason_is_enough_and_details_ride_along() {
         var sent: String? = null
         show { CrewReportDialog(seat(), onReport = { sent = it }, onDismiss = {}) }
+        compose.onNodeWithText("Choose one").performClick()
         compose.onNodeWithText("It crashes when it opens").performClick()
-        compose.onNodeWithText("Report").assertIsEnabled().performClick()
-        assertEquals("It crashes when it opens", sent)
+        compose.onNodeWithText("Report").assertIsEnabled()
+        compose.onNode(hasSetTextAction()).performTextInput("On the second screen")
+        compose.onNodeWithText("Report").performClick()
+        assertEquals("It crashes when it opens: On the second screen", sent)
     }
 
     // ------------------------------------------------------------------ members
