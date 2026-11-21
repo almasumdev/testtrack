@@ -62,9 +62,15 @@ object NightRound {
     private var window: VisitDockWindow? = null
     private var ticker: Job? = null
 
-    /** Time the control has been up and running for this app, and whether it is paused. */
+    /**
+     * Time the control has been up and running for this app, and whether it is paused. Pause only
+     * holds the move to the next app: the clock, the picture and the recording go on without it.
+     */
     private var ranMs = 0L
     private var paused = false
+
+    /** This app's recording once it is made (counted or refused), so a held app is never recorded twice. */
+    private var recorded: Outcome? = null
 
     /** The move to the next app is under way, so the clock and the button do not start another. */
     private var advancing = false
@@ -107,6 +113,7 @@ object NightRound {
         RoundStore.save(context, round)
         ranMs = 0
         paused = false
+        recorded = null
         advancing = false
         shot = null
         shotFailed = false
@@ -124,9 +131,10 @@ object NightRound {
 
     /**
      * The control's clock. Once an app has had its twenty seconds, a floating round records it and
-     * opens the next by itself, as the August app did; pause holds it for longer. Without the
-     * control there is nothing over the app to move on from, and the round goes on when TestTrack
-     * is back in front.
+     * opens the next by itself, as the August app did. Pause does not stop the clock: it only holds
+     * the move, so the app is still recorded, with its picture, the moment its time is in, and the
+     * next app opens when the tester plays. Without the control there is nothing over the app to
+     * move on from, and the round goes on when TestTrack is back in front.
      */
     private fun tick(context: Context) {
         ticker?.cancel()
@@ -136,11 +144,12 @@ object NightRound {
                 while (isActive) {
                     delay(250)
                     val now = System.currentTimeMillis()
-                    if (!paused && ranMs < VISIT_MS) {
+                    if (ranMs < VISIT_MS) {
                         ranMs = (ranMs + now - last).coerceAtMost(VISIT_MS)
                         publish()
                     }
-                    if (!paused && ranMs >= VISIT_MS && window != null) next(context)
+                    // A held app that is already recorded waits for play without asking again.
+                    if (ranMs >= VISIT_MS && window != null && !(paused && recorded != null)) next(context)
                     last = now
                 }
             }
@@ -208,29 +217,53 @@ object NightRound {
         return shot
     }
 
-    /** The control's one button: pause or play while the clock runs, the next app once it counts. */
+    /**
+     * The control's one button. While the clock runs it holds or releases the move to the next app;
+     * once the time is in, play moves on at once, and play before that waits only the time left.
+     */
     private fun playPause(context: Context) {
-        if (advancing) return
-        if (ranMs >= VISIT_MS) {
-            next(context)
-        } else {
-            paused = !paused
-            publish()
+        if (advancing) {
+            // The recording is under way: a play now is the go-ahead for the move after it.
+            if (paused) {
+                paused = false
+                publish()
+            }
+            return
+        }
+        when {
+            paused -> {
+                paused = false
+                publish()
+                if (ranMs >= VISIT_MS) next(context)
+            }
+            ranMs >= VISIT_MS -> next(context)
+            else -> {
+                paused = true
+                publish()
+            }
         }
     }
 
+    /**
+     * Records the app on screen, with its picture, once its time is in, held or not, and then moves
+     * on unless the tester has it paused. A held app that is already recorded moves on at once when
+     * played.
+     */
     private fun next(context: Context) {
         if (advancing) return
         val now = round ?: return
         val stop = now.current ?: return
         advancing = true
         scope.launch {
-            val taken = picture()
-            when (val result = record(context, stop, now.since, taken)) {
+            val result =
+                recorded ?: run {
+                    val taken = picture()
+                    record(context, stop, now.since, taken)
+                }
+            when (result) {
                 is Outcome.Short -> {
                     // Left the app part way, by the phone's own count: the clock goes back to that.
                     ranMs = result.ms
-                    paused = false
                     advancing = false
                     publish()
                 }
@@ -242,6 +275,13 @@ object NightRound {
                 // Refused anyway (an update past its 24 hours, a copy not from Play): skipped, and
                 // on to the rest. Its row keeps its button, and the page says what is left.
                 is Outcome.Refused, Outcome.Counted -> {
+                    recorded = result
+                    // Held: it is recorded and stays on screen until the tester plays.
+                    if (paused) {
+                        advancing = false
+                        publish()
+                        return@launch
+                    }
                     val moved = if (result is Outcome.Refused) now.copy(skipped = now.skipped + result.message) else now
                     if (moved.index + 1 < moved.stops.size) {
                         round = moved.copy(index = moved.index + 1)
@@ -297,7 +337,8 @@ object NightRound {
         scope.launch {
             // Back in TestTrack, so a picture not taken yet can no longer be: what is in hand goes.
             shooting?.cancel()
-            when (val result = record(app, stop, since, shot)) {
+            // A held app was already recorded when its time came in: not recorded a second time.
+            when (val result = recorded ?: record(app, stop, since, shot)) {
                 is Outcome.Short -> {
                     end(app)
                     say(Snack("${stop.label} was open ${result.ms / 1000}s. It needs ${COUNT_MS / 1000} to count."))
