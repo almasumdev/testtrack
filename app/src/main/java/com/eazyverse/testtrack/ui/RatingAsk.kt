@@ -6,12 +6,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,6 +19,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.eazyverse.testtrack.R
 import com.eazyverse.testtrack.ui.theme.Tt
@@ -39,6 +35,9 @@ import com.eazyverse.testtrack.viewmodel.ReviewMoment
 @Composable
 fun RatingStars(
     modifier: Modifier = Modifier,
+    /** Each star's touch box and its drawn size: 48 and 30 on the About page, smaller in a dialog. */
+    box: Dp = 48.dp,
+    glyph: Dp = 30.dp,
     onRate: (Int) -> Unit,
 ) {
     val gold = Tt.colors.gold
@@ -47,7 +46,7 @@ fun RatingStars(
         for (star in 1..5) {
             Box(
                 Modifier
-                    .size(48.dp)
+                    .size(box)
                     .pointerInput(star) {
                         awaitEachGesture {
                             awaitFirstDown()
@@ -62,7 +61,7 @@ fun RatingStars(
                 Image(
                     painterResource(if (star <= held) R.drawable.ic_star_filled else R.drawable.ic_star_outline),
                     "$star of 5 stars",
-                    Modifier.size(30.dp),
+                    Modifier.size(glyph),
                     colorFilter = ColorFilter.tint(gold),
                 )
             }
@@ -74,8 +73,8 @@ fun RatingStars(
  * The ask after a value moment, when Play's own card could not be shown: the About page's rating
  * bank in a dialog, with the two ways out an unbidden ask owes somebody.
  *
- * A low star swaps this same dialog's contents for the feedback ask, keeping `Never`, because this
- * one came without being asked for. One dialog on screen, never a stack to dismiss.
+ * A low star swaps this same dialog's contents for the feedback ask. One dialog on screen, never a
+ * stack to dismiss. "Don't ask again" is only on the first: a low star already answered.
  */
 @Composable
 fun RatingAsk(onClose: () -> Unit) {
@@ -95,13 +94,14 @@ fun RatingAsk(onClose: () -> Unit) {
     if (low == 0) {
         Ask(
             title = "Enjoying TestTrack?",
-            body = "Rate it on Google Play and support our work.",
-            confirm = null,
-            onConfirm = {},
-            dismiss = null,
+            body = "Rate it on Google Play.",
+            dismiss = "Not now",
             onDismiss = ::later,
+            alt = "Don't ask again",
+            onAlt = ::never,
+            altQuiet = true,
         ) {
-            RatingStars(Modifier.align(Alignment.CenterHorizontally)) { stars ->
+            RatingStars(Modifier.align(Alignment.CenterHorizontally), box = 44.dp, glyph = 28.dp) { stars ->
                 if (stars == 5 || !canMail(context)) {
                     ReviewMoment.markRated(context)
                     openPlayListing(context)
@@ -110,41 +110,19 @@ fun RatingAsk(onClose: () -> Unit) {
                     low = stars
                 }
             }
-            Spacer(Modifier.height(4.dp))
-            Exits {
-                DialogButton("Never", DialogButtonKind.OUTLINE, onClick = ::never)
-                DialogButton("Not now", DialogButtonKind.OUTLINE, onClick = ::later)
-            }
         }
     } else {
         Ask(
             title = "Tell us what could be better",
-            body = "We read every message, and it is the fastest way to get it fixed.",
-            confirm = null,
-            onConfirm = {},
-            dismiss = null,
+            body = "We read every message.",
+            confirm = "Send feedback",
+            onConfirm = {
+                ReviewMoment.markAsked(context)
+                sendFeedback(context, stars = low)
+                onClose()
+            },
+            dismiss = "Not now",
             onDismiss = ::later,
-        ) {
-            Exits {
-                DialogButton("Never", DialogButtonKind.OUTLINE, onClick = ::never)
-                DialogButton("Not now", DialogButtonKind.OUTLINE, onClick = ::later)
-                DialogButton("Send feedback", DialogButtonKind.FILL) {
-                    ReviewMoment.markAsked(context)
-                    sendFeedback(context, stars = low)
-                    onClose()
-                }
-            }
-        }
+        )
     }
-}
-
-/** A dialog's own row of answers, at its end, where [Ask] puts its two. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun Exits(content: @Composable () -> Unit) {
-    FlowRow(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) { content() }
 }

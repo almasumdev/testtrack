@@ -181,7 +181,7 @@ private fun StepHeading(
     val t = Tt.colors
     Row(Modifier.fillMaxWidth().heightIn(min = 32.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(24.dp).clip(CircleShape).background(t.tile), contentAlignment = Alignment.Center) {
-            Text("$number", style = tileStyle(12.5f, 14f, FontWeight.Bold), color = t.tileInk)
+            Text("$number", style = TextStyles.StepNumber, color = t.tileInk)
         }
         Spacer(Modifier.width(12.dp))
         Text(text, style = StepStyle, color = t.text)

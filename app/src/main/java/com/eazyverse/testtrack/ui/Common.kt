@@ -177,6 +177,11 @@ fun Primary(
     destructive: Boolean = false,
     /** Keeps its full colour while [busy], rather than greying out as a disabled button does. */
     busyKeepsFill: Boolean = false,
+    /**
+     * The dialog's answer: 40 high with 10dp corners, as wide as its words rather than the row.
+     * Still a 48dp touch target.
+     */
+    small: Boolean = false,
     onClick: () -> Unit,
 ) {
     val dismissKeyboard = rememberDismissKeyboard()
@@ -199,26 +204,31 @@ fun Primary(
                 colors
             },
         // A full pill, the main button: the one filled shape on a screen, so it is the
-        // one place the eye lands.
-        shape = RoundedCornerShape(percent = 50),
+        // one place the eye lands. In a dialog, a small block that sits beside its way out.
+        shape = if (small) RoundedCornerShape(10.dp) else RoundedCornerShape(percent = 50),
         elevation = null,
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
-        modifier = modifier.fillMaxWidth().heightIn(min = ButtonHeight),
+        contentPadding = PaddingValues(horizontal = if (small) 16.dp else 24.dp, vertical = if (small) 6.dp else 8.dp),
+        modifier =
+            if (small) {
+                modifier.heightIn(min = SmallButtonHeight)
+            } else {
+                modifier.fillMaxWidth().heightIn(min = ButtonHeight)
+            },
     ) {
         if (busy) {
             androidx.compose.material3.CircularProgressIndicator(
-                Modifier.size(16.dp),
+                Modifier.size(if (small) 15.dp else 16.dp),
                 strokeWidth = 2.dp,
                 color = if (destructive) Tt.colors.onBad else MaterialTheme.colorScheme.onPrimary,
             )
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(if (small) 8.dp else 10.dp))
         } else if (mark != null) {
             Icon(mark, null, Modifier.size(18.dp))
             Spacer(Modifier.width(10.dp))
         }
         Text(
             label,
-            style = MaterialTheme.typography.titleSmall.copy(fontSize = 15.sp),
+            style = MaterialTheme.typography.titleSmall.copy(fontSize = if (small) 14.5.sp else 15.sp),
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             maxLines = 2,
@@ -243,20 +253,27 @@ internal fun InlineAction(
     underline: Boolean = false,
     /** Takes the whole width, its words centred, such as a way out under a page's button. */
     fullWidth: Boolean = false,
+    /** A dialog's text button: 40 high with a 48dp touch target, 14.5sp words, 10dp corners. */
+    dialog: Boolean = false,
     onClick: () -> Unit,
 ) {
     val dismissKeyboard = rememberDismissKeyboard()
     // Match the 32dp header mark without reserving blank space. Compose still expands touch bounds.
-    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+    // A dialog's button keeps Material's 48dp target, which its row is laid out around.
+    val touch = if (dialog) LocalMinimumInteractiveComponentSize.current else Dp.Unspecified
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides touch) {
         TextButton(
             onClick = {
                 dismissKeyboard()
                 onClick()
             },
-            modifier = modifier.then(if (fullWidth) Modifier.fillMaxWidth() else Modifier).heightIn(min = 32.dp),
+            modifier =
+                modifier
+                    .then(if (fullWidth) Modifier.fillMaxWidth() else Modifier)
+                    .heightIn(min = if (dialog) SmallButtonHeight else 32.dp),
             enabled = enabled && !busy,
-            shape = RoundedCornerShape(percent = 50),
-            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+            shape = if (dialog) RoundedCornerShape(10.dp) else RoundedCornerShape(percent = 50),
+            contentPadding = PaddingValues(horizontal = if (dialog) 10.dp else 8.dp, vertical = 4.dp),
             colors = ButtonDefaults.textButtonColors(contentColor = color, disabledContentColor = Tt.colors.text4),
         ) {
             if (leading != null) {
@@ -267,7 +284,7 @@ internal fun InlineAction(
                 Text(
                     label,
                     Modifier.alpha(if (busy) 0f else 1f),
-                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                    style = MaterialTheme.typography.labelLarge.copy(fontSize = if (dialog) 14.5.sp else 14.sp),
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                     textDecoration = if (underline) TextDecoration.Underline else null,
@@ -281,6 +298,9 @@ internal fun InlineAction(
 
 /** Every button's height, filled, soft or outlined: the garden look's one pill. */
 val ButtonHeight = 52.dp
+
+/** A dialog's buttons: the small filled answer and the text buttons beside it. */
+val SmallButtonHeight = 40.dp
 
 /**
  * The outlined pill, the partner of [Primary]: a 1.5dp accent edge and accent words, as on the

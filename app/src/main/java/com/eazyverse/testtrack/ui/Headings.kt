@@ -68,6 +68,18 @@ object TextStyles {
 
     /** The app page's small "Earlier" heading: 12.5 on 16, semibold, on Material's label. */
     val EarlierStyle = TtTypography.labelMedium.copy(fontSize = 12.5.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
+
+    /** A dialog's title: 16 on 20, bold. */
+    val DialogTitle = tileStyle(16f, 20f, FontWeight.Bold)
+
+    /** A dialog's words: 13.5 on 19. */
+    val DialogBody = tileStyle(13.5f, 19f, FontWeight.Normal)
+
+    /** The small grey line under a dialog's words: 12.5 on 17, in text4. */
+    val DialogNote = tileStyle(12.5f, 17f, FontWeight.Normal)
+
+    /** The figure in a numbered step's circle: 12.5 on 14, bold. */
+    val StepNumber = tileStyle(12.5f, 14f, FontWeight.Bold)
 }
 
 /** How tall a [SectionHeading]'s words are, which the count badge is centred on. */

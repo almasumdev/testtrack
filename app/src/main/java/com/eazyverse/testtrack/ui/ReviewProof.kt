@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Coins
 import com.composables.icons.lucide.EyeOff
+import com.composables.icons.lucide.Layers
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Text
 import com.eazyverse.testtrack.domain.ChatThread
@@ -48,6 +49,7 @@ fun ReviewGuideDialog(
 ) {
     Ask(
         title = if (live) "Review it on Google Play" else "Send feedback on Google Play",
+        note = "Android asks once to capture the screen. Drag the button aside if it's in the way.",
         confirm = "Got it",
         dismiss = null,
         onConfirm = onOk,
@@ -57,25 +59,18 @@ fun ReviewGuideDialog(
             (
                 if (live) {
                     listOf(
-                        "The app's Google Play page opens.",
-                        "Rate it and write your review, in your own words.",
-                        "Once it is posted, tap the blue camera button.",
-                        "You come straight back with the screenshot.",
+                        "The app's Play page opens.",
+                        "Rate it and write your review.",
+                        "Once posted, tap the blue camera button.",
                     )
                 } else {
                     listOf(
-                        "The app's Google Play page opens.",
-                        "Under the testing section, send the developer private feedback.",
-                        "Once it is sent, tap the blue camera button.",
-                        "You come straight back with the screenshot.",
+                        "The app's Play page opens.",
+                        "Under testing, send the developer private feedback.",
+                        "Once sent, tap the blue camera button.",
                     )
                 }
             ).map { AnnotatedString(it) },
-        )
-        Spacer(Modifier.height(8.dp))
-        DialogNote(
-            "Android asks to let TestTrack capture the screen. It takes one picture, then stops. " +
-                "If the button is in the way, drag it to any edge.",
         )
     }
 }
@@ -88,9 +83,8 @@ fun OverlayPermissionDialog(
 ) {
     Ask(
         title = "Allow the camera button",
-        body =
-            "The camera button floats over Google Play. Allow “Display over other apps” for " +
-                "TestTrack. When you return, capture continues if permission is granted.",
+        icon = Lucide.Layers,
+        body = "It floats over Google Play. Turn on Display over other apps, then come back.",
         confirm = "Open settings",
         onConfirm = onOpen,
         onDismiss = onDismiss,
