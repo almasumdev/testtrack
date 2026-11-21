@@ -52,16 +52,6 @@ class MainBarTest {
     }
 
     @Test
-    fun ranks_marks_you_and_you_still_returns_to_the_profile() {
-        var selected: MainTab? = null
-        compose.setContent {
-            TestTrackTheme { MainBar(MainTab.RANKS, { selected = it }) }
-        }
-        compose.onNodeWithContentDescription("You").assertIsSelected().performClick()
-        assertEquals(MainTab.PROFILE, selected)
-    }
-
-    @Test
     fun narrow_bar_with_large_text_keeps_names_and_accessible_counts() {
         compose.setContent {
             TestTrackTheme {

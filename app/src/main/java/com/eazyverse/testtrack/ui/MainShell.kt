@@ -42,7 +42,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.LayoutGrid
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageSquare
-import com.composables.icons.lucide.Trophy
 import com.composables.icons.lucide.User
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.data.Session
@@ -54,7 +53,7 @@ import com.eazyverse.testtrack.viewmodel.TabCountsViewModel
 import kotlinx.coroutines.delay
 
 /**
- * The shell pages. Ranks is reached from You rather than from the bottom bar.
+ * The shell pages. Ranks is hidden for now and has no tab (see RanksScreen.kt).
  *
  * Order is deliberate and not alphabetical: the two you open the app for are on the left, the two
  * about you are on the right. The bar puts Add between them; it opens a menu, not a page.
@@ -73,7 +72,6 @@ enum class MainTab(
 ) {
     CIRCLE("Circle", Lucide.MessageSquare),
     GROUPS("Crew", Lucide.Users),
-    RANKS("Ranks", Lucide.Trophy),
     APPS("My apps", Lucide.LayoutGrid),
     PROFILE("You", Lucide.User),
 }
@@ -189,7 +187,7 @@ fun MainShell(
     // Back from a tab returns to the first one rather than closing the app, which is what a bottom
     // bar has taught everybody to expect. Off on the first tab, so Back there still leaves.
     BackHandler(enabled = tab != MainTab.CIRCLE) {
-        show(if (tab == MainTab.RANKS) MainTab.PROFILE else MainTab.CIRCLE)
+        show(MainTab.CIRCLE)
     }
 
     // On the first tab Back leaves, so the first press only says so and the second, inside the
@@ -356,8 +354,6 @@ fun MainShell(
                                             },
                                         )
                                     }
-                                    MainTab.RANKS -> RanksScreen()
-
                                     MainTab.APPS ->
                                         AppsScreen(
                                             onOpenApp = onOpenApp,
@@ -378,7 +374,6 @@ fun MainShell(
                                     MainTab.PROFILE ->
                                         MeScreen(
                                             onSignOut = onSignOut,
-                                            onOpenRanks = { show(MainTab.RANKS) },
                                             notifications = Session.notificationsGranted,
                                             onAbout = onOpenAbout,
                                             onSignIn = {

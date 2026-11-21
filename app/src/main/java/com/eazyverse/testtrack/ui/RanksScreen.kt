@@ -1,5 +1,7 @@
 package com.eazyverse.testtrack.ui
 
+// Hidden from every entry point since 2026-11-21; returns with the planned ranks update.
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut

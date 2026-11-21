@@ -53,8 +53,8 @@ import com.eazyverse.testtrack.ui.theme.Tt
  * Each card is one fact read the same way: a tinted icon on the left, the figure and what it counts
  * on the right. Six of them in three rows scan in one look, which a big number with a pill and a
  * sentence under it did not; and the crews sit in the same grid instead of a second block of their
- * own. The rank is in gold, the one medal colour, and opens the Ranks tab; the rest use the plain
- * tile. The two cards of a row grow together when a label takes two lines at large text.
+ * own. The rank is in gold, the one medal colour, and for now only says Ranks are coming back; the
+ * rest use the plain tile. The two cards of a row grow together when a label takes two lines at large text.
  */
 @Composable
 internal fun RecordGrid(
@@ -65,7 +65,6 @@ internal fun RecordGrid(
     crewsRunning: Int,
     /** Crews that have filled: a crew still filling owes nothing a night yet. */
     crewsFilled: Int = crewsRunning,
-    onOpenRanks: () -> Unit = {},
 ) {
     val t = Tt.colors
     val ranked = points > 0
@@ -76,7 +75,8 @@ internal fun RecordGrid(
                 if (ranked) "#$place" else "New",
                 if (ranked) "Rank" else "Not ranked yet",
                 tint = t.gold,
-                onClick = if (ranked) onOpenRanks else null,
+                onClick = { Snacks.info("Ranks will be back soon with a proper update.") },
+                chevron = false,
             )
             StatCard(Lucide.Star, "$points", "Points")
         }
@@ -137,7 +137,7 @@ private fun StatPair(content: @Composable RowScope.() -> Unit) {
  * one still on its way, drawn as a bar the figure's height.
  *
  * [tint] colours the icon and its tile; left alone it is the palette's own tile blue. A card with
- * [onClick] shows a chevron so it reads as something that goes somewhere.
+ * [onClick] shows a chevron so it reads as something that goes somewhere, unless [chevron] is off.
  */
 @Composable
 private fun RowScope.StatCard(
@@ -146,6 +146,7 @@ private fun RowScope.StatCard(
     label: String,
     tint: Color? = null,
     onClick: (() -> Unit)? = null,
+    chevron: Boolean = onClick != null,
 ) {
     val t = Tt.colors
     val ink = tint ?: t.tileInk
@@ -175,7 +176,7 @@ private fun RowScope.StatCard(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        if (onClick != null) {
+        if (chevron) {
             Spacer(Modifier.width(4.dp))
             Icon(Lucide.ChevronRight, "Open", Modifier.size(18.dp), tint = t.text4)
         }

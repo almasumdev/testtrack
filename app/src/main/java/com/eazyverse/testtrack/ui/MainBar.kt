@@ -66,8 +66,8 @@ internal val DockTop = 0.dp
 /**
  * Quiet tile: four named tabs and one Add action on the full-width ground.
  *
- * The centre tile is a button, never a selected page. Ranks belongs to You, which stays marked
- * while its ranks page is open. The whole row grows with text, and each slot keeps a thumb's room.
+ * The centre tile is a button, never a selected page. The whole row grows with text, and each slot
+ * keeps a thumb's room.
  */
 @Composable
 fun MainBar(
@@ -83,9 +83,8 @@ fun MainBar(
 ) {
     val t = Tt.colors
     val haptic = LocalHapticFeedback.current
-    val active = if (selected == MainTab.RANKS) MainTab.PROFILE else selected
     val tabs = remember { listOf(MainTab.CIRCLE, MainTab.GROUPS, null, MainTab.APPS, MainTab.PROFILE) }
-    val movement = updateTransition(tabs.indexOf(active), label = "tab-movement")
+    val movement = updateTransition(tabs.indexOf(selected), label = "tab-movement")
     val selection by movement.animateFloat(
         transitionSpec = {
             if (initialState.crossesAdd(targetState)) {
@@ -182,7 +181,7 @@ fun MainBar(
                             }
                         }
                     } else {
-                        val chosen = tab == active
+                        val chosen = tab == selected
                         val count = counts[tab] ?: 0
                         val source = remember { MutableInteractionSource() }
                         val pressed by source.collectIsPressedAsState()

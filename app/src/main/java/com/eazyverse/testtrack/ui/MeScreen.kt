@@ -57,7 +57,6 @@ import java.time.format.DateTimeFormatter
 fun MeScreen(
     onSignOut: () -> Unit,
     onSignIn: () -> Unit = {},
-    onOpenRanks: () -> Unit = {},
     /** Whether notifications are allowed, read live by the shell; shown on the Notifications row. */
     notifications: Boolean = false,
     onAbout: () -> Unit = {},
@@ -86,7 +85,6 @@ fun MeScreen(
         // Asked first: one tap on the last row of the page should not end the session.
         onSignOut = { signingOut = true },
         onSignIn = onSignIn,
-        onOpenRanks = onOpenRanks,
         notifications = notifications,
         onAbout = onAbout,
         onRetry = { vm.load(context) },
@@ -142,7 +140,6 @@ fun MeBody(
     onEdit: () -> Unit = {},
     onSignOut: () -> Unit = {},
     onSignIn: () -> Unit = {},
-    onOpenRanks: () -> Unit = {},
     notifications: Boolean = false,
     onAbout: () -> Unit = {},
     group: Boolean = false,
@@ -203,7 +200,6 @@ fun MeBody(
                     reviews = shown.reviews,
                     crewsRunning = shown.crewsRunning,
                     crewsFilled = shown.crewsFilled,
-                    onOpenRanks = onOpenRanks,
                 )
             }
         }
