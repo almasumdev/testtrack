@@ -257,7 +257,7 @@ fun CrewReportDialog(
     onDismiss: () -> Unit,
     /** An answer for an app waiting on members, rather than a report on one already in. */
     answering: Boolean = false,
-    /** Sent during the run, when a report lets off only tonight; before it, the whole run. */
+    /** Sent during the run, when a report lets off only tonight; before it, nothing is let off. */
     running: Boolean = false,
 ) {
     var reason by rememberSaveable { mutableStateOf<String?>(null) }
@@ -274,7 +274,9 @@ fun CrewReportDialog(
                 when {
                     answering -> "Two members saying it send it back to be fixed."
                     running -> "If you can't open it, tonight won't count against you."
-                    else -> "${CrewRules.REPORTS_TO_RETURN} reports send it back to be fixed."
+                    else ->
+                        "${CrewRules.REPORTS_TO_RETURN} reports send it back to be fixed. " +
+                            "If it still won't work once the run starts, report it that night."
                 },
         confirm = if (answering) "Send" else "Report",
         confirmEnabled = ready,

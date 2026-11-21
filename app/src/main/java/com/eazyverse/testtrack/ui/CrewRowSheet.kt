@@ -130,7 +130,7 @@ internal fun CrewRowSheet(
                     SheetOption(
                         "You reported it",
                         if (sheet.kind == SheetKind.INSTALL) {
-                            "Its owner has what you wrote. It no longer counts against you."
+                            "Its owner has what you wrote. If it still won't work once the run starts, report it that night."
                         } else {
                             "Its owner has what you wrote. Tonight doesn't count against you."
                         },

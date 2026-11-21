@@ -2,7 +2,6 @@ package com.eazyverse.testtrack.viewmodel
 
 import android.content.Context
 import com.eazyverse.testtrack.net.Api
-import com.eazyverse.testtrack.ui.CrewPhase
 import com.eazyverse.testtrack.ui.CrewRules
 import com.eazyverse.testtrack.ui.CrewSeat
 import com.eazyverse.testtrack.ui.CrewViewModel
@@ -38,7 +37,8 @@ fun CrewViewModel.vote(
  *
  * The owner hears about it, without your name. Before the run, a second report from somebody
  * else sends it back; during the run it only tells them, and excuses you from that app for the
- * night it is sent on. A later night it is owed again, and can be reported again.
+ * night it is sent on. A later night it is owed again, and can be reported again. A report sent
+ * before the run excuses nothing: if it still fails once the run starts, report it that night.
  */
 fun CrewViewModel.report(
     context: Context,
@@ -46,15 +46,13 @@ fun CrewViewModel.report(
     appName: String,
     reason: String,
 ) {
-    val running = crews.any { crew -> crew.phase == CrewPhase.RUN && crew.seats.any { it.id == seatId } }
     call(
         context = context,
         seat = seatId,
         onDone = { seat ->
             when {
                 seat.state == "rejected" -> say("$appName went back to its owner to fix.")
-                running -> say("Reported. ${seat.ownerName} has been told. Tonight doesn't count against you.", SnackTone.DONE)
-                else -> say("Reported. ${seat.ownerName} has been told. It no longer counts against you.", SnackTone.DONE)
+                else -> say("Reported. ${seat.ownerName} has been told.", SnackTone.DONE)
             }
         },
     ) { Api.report(seatId, reason) }

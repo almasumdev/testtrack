@@ -47,7 +47,10 @@ copy decision, not a schema one.
 > filling); during the run a report only tells the owner and the team, and excuses the reporter
 > from that app for the night it is sent on (30 October 2026: not the nights before it, not the
 > nights after). On a later night the app is owed again and can be reported again, once a night.
-> A report before the run still excuses the whole run. Nothing already judged changes.
+> **Changed, 22 November 2026:** a report sent before the run starts excuses nothing. It still
+> tells the owner and counts toward sending the app back, but once the run starts the reporter
+> owes the app like anyone else and reports it that night if it still fails. Reports sent before
+> 22 November 2026 keep their old meaning (the whole run). Nothing already judged changes.
 >
 > **Voting is back as the fallback (October 2026).** When the checker cannot run, instead of the
 > app going in unchecked after 12 hours, members decide it: those whose own app is already in the
@@ -150,8 +153,9 @@ place, and move a seat between crews at any time, from the admin panel
 Decided 1 November 2026. A day is missed when three or more of the apps you owed are unopened at
 your own midnight, or you opened none of them. One or two left is not a miss, though it still costs
 the refund below. One miss is a warning; two in a row and your app leaves the run, nobody opens it
-any more and you owe nothing more there. An app you reported is not counted against you on the
-night you reported it. Every member gets an evening reminder at 20:00 their time while anything is
+any more and you owe nothing more there. An app you reported during the run is not counted against
+you on the night you reported it; a report sent before the run excuses nothing (reports sent before
+22 November 2026 keep their old whole-run meaning). Every member gets an evening reminder at 20:00 their time while anything is
 left.
 
 A night already over on 1 November 2026 keeps the rule it was judged by, where one app left unopened
@@ -291,15 +295,17 @@ whose crew notes (commit 9776af2, removed in 65cac3c) are a different thing.
   do not count, until they send it. For a seat that joined part-way, the 7 days count from that
   member's own first night with it.
 - **A reported app is excused.** A member who reported an app as not installing owes it no
-  feedback either.
+  feedback either, on the same terms as the nights above: a report sent before the run excuses
+  nothing (22 November 2026; earlier reports keep their old whole-run meaning).
 - **Nobody verifies it in the app.** The screenshot is seen only by the team, on the admin panel's
   seat page, who may act on a false one. The owner reads the feedback itself in Play Console.
 - **No reward.** No tix either way.
 
 ## Nights let off
 
-Decided and built 28 October 2026. Reporting an app excuses it for the member who reported it, on
-the night they report it; two more ways to let a night off, so nobody is marked down for something
+Decided and built 28 October 2026. Reporting an app during the run excuses it for the member who
+reported it, on the night they report it (a report sent before the run excuses nothing since
+22 November 2026; earlier ones keep their old meaning); two more ways to let a night off, so nobody is marked down for something
 they could not do:
 
 - **The owner marks their app down tonight**, from their crew page, twice a run
