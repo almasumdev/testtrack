@@ -1,13 +1,24 @@
 package com.eazyverse.testtrack.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Info
 import com.composables.icons.lucide.Lucide
@@ -70,6 +81,37 @@ internal fun InfoLine(
     infoTitle: String = "More about this",
     infoLook: InfoDotLook = InfoDotLook.FADE,
 ) = InfoLine(AnnotatedString(text), modifier, tone, icon, info?.let(::AnnotatedString), infoTitle, infoLook)
+
+/**
+ * A soft tinted bar with an accent [icon] at the start and one line of [text] after it, such as
+ * the offer under a section heading. Stays on one line; space around it goes in [modifier].
+ */
+@Composable
+internal fun TintedNote(
+    text: AnnotatedString,
+    modifier: Modifier = Modifier,
+    icon: ImageVector = Lucide.Info,
+) {
+    val t = Tt.colors
+    Row(
+        modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(t.glass2)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, null, Modifier.size(16.dp), tint = t.accentInk)
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text,
+            style = TextStyles.PageLine,
+            color = t.text2,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
 
 /**
  * A small grey line, such as what happens to your tix under a card. Centred across the width

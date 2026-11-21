@@ -22,12 +22,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.HandHeart
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Ticket
 import com.composables.icons.lucide.Users
 import com.eazyverse.testtrack.ui.theme.Tt
 import com.eazyverse.testtrack.viewmodel.SpotState
@@ -57,12 +62,15 @@ internal fun LazyListScope.volunteerSpots(section: VolunteerSection) {
         Column {
             // The list's 8dp gap and these 12 make the usual 20 above a heading.
             CrewHeading("Volunteer in a running crew", if (open > 0) "$open" else null, top = 12.dp)
-            Text(
-                "No app needed. Open a running crew's apps every night and earn " +
-                    "${CrewRules.VOLUNTEER_NIGHT_TIX} tix a night.",
-                Modifier.padding(horizontal = Gutter).padding(bottom = 2.dp),
-                style = TextStyles.DialogNote,
-                color = Tt.colors.text4,
+            val strong = SpanStyle(fontWeight = FontWeight.Bold, color = Tt.colors.text)
+            TintedNote(
+                buildAnnotatedString {
+                    append("No app needed. Earn ")
+                    withStyle(strong) { append("${CrewRules.VOLUNTEER_NIGHT_TIX} tix") }
+                    append(" a night")
+                },
+                Modifier.padding(horizontal = Gutter).padding(top = 4.dp, bottom = 2.dp),
+                Lucide.Ticket,
             )
         }
     }
